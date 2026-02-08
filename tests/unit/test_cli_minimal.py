@@ -283,9 +283,7 @@ class TestMainEdgeCases:
     def test_verbose_enables_debug(self, mock_fn: MagicMock) -> None:
         with patch("logging.basicConfig") as mock_config:
             main(["version", "-v"])
-            assert any(
-                c.kwargs.get("level") == logging.DEBUG for c in mock_config.call_args_list
-            )
+            assert any(c.kwargs.get("level") == logging.DEBUG for c in mock_config.call_args_list)
 
     @patch(f"{_CLI}.cmd_workflow_list", return_value=1)
     def test_propagates_nonzero(self, mock_fn: MagicMock) -> None:

@@ -554,9 +554,7 @@ class TestLoadConfig:
         assert cfg.user_id == "default_override"
         assert cfg.target_level == 4
 
-    def test_env_overrides_defaults(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_overrides_defaults(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Env vars take precedence over defaults."""
         monkeypatch.chdir(tmp_path)
         # Clear other EMPATHY_ env vars
@@ -568,9 +566,7 @@ class TestLoadConfig:
         cfg = load_config(defaults={"user_id": "should_lose"})
         assert cfg.user_id == "env_wins"
 
-    def test_file_overrides_defaults(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_file_overrides_defaults(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Config file values override custom defaults."""
         monkeypatch.chdir(tmp_path)
         # Clear EMPATHY_ env vars

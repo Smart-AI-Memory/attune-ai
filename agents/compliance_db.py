@@ -97,7 +97,8 @@ class ComplianceDatabase:
     def _init_schema(self) -> None:
         """Initialize database schema if not exists."""
         with self._get_connection() as conn:
-            conn.executescript("""
+            conn.executescript(
+                """
                 CREATE TABLE IF NOT EXISTS compliance_audits (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     audit_date TIMESTAMP NOT NULL,
@@ -133,7 +134,8 @@ class ComplianceDatabase:
                 CREATE INDEX IF NOT EXISTS idx_audits_date ON compliance_audits(audit_date DESC);
                 CREATE INDEX IF NOT EXISTS idx_gaps_severity ON compliance_gaps(severity, detected_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_status_framework ON compliance_status(compliance_framework, effective_date DESC);
-                """)
+                """
+            )
 
     def record_audit(
         self,
@@ -195,11 +197,13 @@ class ComplianceDatabase:
                     (audit_type,),
                 )
             else:
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     SELECT * FROM compliance_audits
                     ORDER BY audit_date DESC
                     LIMIT 1
-                    """)
+                    """
+                )
 
             row = cursor.fetchone()
             if row is None:

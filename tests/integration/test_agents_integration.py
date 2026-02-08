@@ -17,7 +17,8 @@ class TestMarkdownAgentParserIntegration:
 
     def test_parse_complete_agent_file(self, tmp_path):
         """Test parsing a complete agent markdown file."""
-        agent_md = dedent("""
+        agent_md = dedent(
+            """
             ---
             name: code-reviewer
             description: Reviews code for quality, security, and best practices
@@ -40,7 +41,8 @@ class TestMarkdownAgentParserIntegration:
             - Check for security vulnerabilities
             - Verify coding standards
             - Look for performance issues
-        """).strip()
+        """
+        ).strip()
 
         agent_file = tmp_path / "code-reviewer.md"
         agent_file.write_text(agent_md)
@@ -59,14 +61,16 @@ class TestMarkdownAgentParserIntegration:
 
     def test_parse_minimal_agent_file(self, tmp_path):
         """Test parsing agent with minimal fields uses defaults."""
-        agent_md = dedent("""
+        agent_md = dedent(
+            """
             ---
             name: simple-agent
             description: A simple agent
             ---
 
             Just do the task.
-        """).strip()
+        """
+        ).strip()
 
         agent_file = tmp_path / "simple-agent.md"
         agent_file.write_text(agent_md)
@@ -81,14 +85,16 @@ class TestMarkdownAgentParserIntegration:
 
     def test_parse_invalid_yaml_raises_error(self, tmp_path):
         """Test that invalid YAML raises appropriate error."""
-        agent_md = dedent("""
+        agent_md = dedent(
+            """
             ---
             name: [invalid yaml
             description: broken
             ---
 
             Content
-        """).strip()
+        """
+        ).strip()
 
         agent_file = tmp_path / "invalid.md"
         agent_file.write_text(agent_md)
@@ -108,7 +114,9 @@ class TestAgentLoaderIntegration:
         agents.mkdir()
 
         # Create architect agent
-        (agents / "architect.md").write_text(dedent("""
+        (agents / "architect.md").write_text(
+            dedent(
+                """
             ---
             name: architect
             description: Designs system architecture
@@ -118,10 +126,14 @@ class TestAgentLoaderIntegration:
             ---
 
             You design scalable systems.
-        """).strip())
+        """
+            ).strip()
+        )
 
         # Create reviewer agent
-        (agents / "reviewer.md").write_text(dedent("""
+        (agents / "reviewer.md").write_text(
+            dedent(
+                """
             ---
             name: reviewer
             description: Reviews code quality
@@ -131,12 +143,16 @@ class TestAgentLoaderIntegration:
             ---
 
             You review code.
-        """).strip())
+        """
+            ).strip()
+        )
 
         # Create subdirectory with empathy specialist
         specialists = agents / "specialists"
         specialists.mkdir()
-        (specialists / "empathy-specialist.md").write_text(dedent("""
+        (specialists / "empathy-specialist.md").write_text(
+            dedent(
+                """
             ---
             name: empathy-specialist
             description: Operates at Level 4+ with pattern learning
@@ -147,7 +163,9 @@ class TestAgentLoaderIntegration:
             ---
 
             You anticipate needs.
-        """).strip())
+        """
+            ).strip()
+        )
 
         return agents
 
@@ -326,13 +344,17 @@ class TestAgentRegistryIntegration:
         agents_dir = tmp_path / "agents"
         agents_dir.mkdir()
 
-        (agents_dir / "agent1.md").write_text(dedent("""
+        (agents_dir / "agent1.md").write_text(
+            dedent(
+                """
             ---
             name: loaded-agent
             description: Loaded from file
             ---
             System prompt here.
-        """).strip())
+        """
+            ).strip()
+        )
 
         registry = AgentRegistry()
         count = registry.load_from_directory(agents_dir)
@@ -396,14 +418,16 @@ class TestAgentConfigValidation:
         """Test empathy level must be in valid range."""
         from pydantic import ValidationError
 
-        agent_md = dedent("""
+        agent_md = dedent(
+            """
             ---
             name: invalid-empathy
             description: Invalid empathy level
             empathy_level: 10
             ---
             Content
-        """).strip()
+        """
+        ).strip()
 
         agent_file = tmp_path / "invalid.md"
         agent_file.write_text(agent_md)
@@ -416,7 +440,8 @@ class TestAgentConfigValidation:
     def test_tools_as_list_and_string(self, tmp_path):
         """Test tools can be specified as list or comma-separated."""
         # List format
-        agent_md_list = dedent("""
+        agent_md_list = dedent(
+            """
             ---
             name: list-tools
             description: Tools as list
@@ -425,7 +450,8 @@ class TestAgentConfigValidation:
               - Write
             ---
             Content
-        """).strip()
+        """
+        ).strip()
 
         # String format (some parsers support this)
         agent_file = tmp_path / "list.md"

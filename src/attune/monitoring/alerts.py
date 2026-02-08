@@ -288,7 +288,8 @@ class AlertEngine:
         cursor = conn.cursor()
 
         # Alerts configuration table
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS alerts (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -302,10 +303,12 @@ class AlertEngine:
                 severity TEXT DEFAULT 'warning',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         # Alert history table for audit trail
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS alert_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 alert_id TEXT NOT NULL,
@@ -318,7 +321,8 @@ class AlertEngine:
                 delivery_error TEXT,
                 FOREIGN KEY (alert_id) REFERENCES alerts(id)
             )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()

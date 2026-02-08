@@ -26,7 +26,8 @@ class TestCommandLoader:
     def commands_dir(self, tmp_path):
         """Create a temporary commands directory with test files."""
         # Create command files
-        (tmp_path / "commit.md").write_text("""---
+        (tmp_path / "commit.md").write_text(
+            """---
 name: commit
 description: Create a git commit
 category: git
@@ -35,9 +36,11 @@ category: git
 ## Steps
 1. Stage files
 2. Commit
-""")
+"""
+        )
 
-        (tmp_path / "test.md").write_text("""---
+        (tmp_path / "test.md").write_text(
+            """---
 name: test
 description: Run tests
 category: test
@@ -46,13 +49,16 @@ aliases: [t]
 
 ## Steps
 1. Run pytest
-""")
+"""
+        )
 
-        (tmp_path / "review.md").write_text("""Review code - Automated code review.
+        (tmp_path / "review.md").write_text(
+            """Review code - Automated code review.
 
 ## Overview
 Review code for issues.
-""")
+"""
+        )
 
         # Create files that should be skipped
         (tmp_path / "README.md").write_text("# Commands Directory")
@@ -125,12 +131,14 @@ Review code for issues.
         # Create a file that will fail to parse (no name, no source context)
         # Actually, since we pass source, it should get name from filename
         # Let's create an empty frontmatter without name
-        (tmp_path / "valid2.md").write_text("""---
+        (tmp_path / "valid2.md").write_text(
+            """---
 category: git
 ---
 
 Body without explicit name.
-""")
+"""
+        )
 
         # Should load both - one gets name from content, other from filename
         commands = loader.load_directory(tmp_path)
@@ -157,12 +165,14 @@ Body without explicit name.
 
     def test_validate_directory(self, loader, tmp_path):
         """Test validating all files in directory."""
-        (tmp_path / "valid.md").write_text("""---
+        (tmp_path / "valid.md").write_text(
+            """---
 name: valid
 ---
 
 Body.
-""")
+"""
+        )
         (tmp_path / "invalid.md").write_text("")  # Empty file
 
         results = loader.validate_directory(tmp_path)
@@ -199,20 +209,24 @@ Body.
     def test_duplicate_names_keeps_first(self, loader, tmp_path):
         """Test that duplicate command names keep first occurrence."""
         # Create two files with same command name
-        (tmp_path / "first.md").write_text("""---
+        (tmp_path / "first.md").write_text(
+            """---
 name: duplicate
 description: First version
 ---
 
 First body.
-""")
-        (tmp_path / "second.md").write_text("""---
+"""
+        )
+        (tmp_path / "second.md").write_text(
+            """---
 name: duplicate
 description: Second version
 ---
 
 Second body.
-""")
+"""
+        )
 
         commands = loader.load_directory(tmp_path)
 

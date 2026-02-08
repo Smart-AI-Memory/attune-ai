@@ -96,9 +96,7 @@ class TestValidateBashCommand:
         assert "__import__()" in reason
 
     def test_blocks_subprocess_shell_true(self) -> None:
-        allowed, reason = validate_bash_command(
-            "python -c 'subprocess.call(\"ls\", shell=True)'"
-        )
+        allowed, reason = validate_bash_command("python -c 'subprocess.call(\"ls\", shell=True)'")
         assert allowed is False
         assert "shell=True" in reason
 
@@ -178,33 +176,23 @@ class TestMain:
         assert result["allowed"] is True
 
     def test_blocks_dangerous_bash(self) -> None:
-        result = main(
-            {"tool_name": "Bash", "tool_input": {"command": "python -c 'eval(x)'"}}
-        )
+        result = main({"tool_name": "Bash", "tool_input": {"command": "python -c 'eval(x)'"}})
         assert result["allowed"] is False
 
     def test_allows_safe_edit(self) -> None:
-        result = main(
-            {"tool_name": "Edit", "tool_input": {"file_path": "src/app.py"}}
-        )
+        result = main({"tool_name": "Edit", "tool_input": {"file_path": "src/app.py"}})
         assert result["allowed"] is True
 
     def test_blocks_edit_to_system_dir(self) -> None:
-        result = main(
-            {"tool_name": "Edit", "tool_input": {"file_path": "/etc/passwd"}}
-        )
+        result = main({"tool_name": "Edit", "tool_input": {"file_path": "/etc/passwd"}})
         assert result["allowed"] is False
 
     def test_allows_safe_write(self) -> None:
-        result = main(
-            {"tool_name": "Write", "tool_input": {"file_path": "src/new.py"}}
-        )
+        result = main({"tool_name": "Write", "tool_input": {"file_path": "src/new.py"}})
         assert result["allowed"] is True
 
     def test_blocks_write_null_bytes(self) -> None:
-        result = main(
-            {"tool_name": "Write", "tool_input": {"file_path": "src/\x00bad.py"}}
-        )
+        result = main({"tool_name": "Write", "tool_input": {"file_path": "src/\x00bad.py"}})
         assert result["allowed"] is False
 
     def test_allows_unknown_tool(self) -> None:

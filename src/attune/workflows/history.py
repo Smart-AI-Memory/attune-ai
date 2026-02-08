@@ -67,7 +67,8 @@ class WorkflowHistoryStore:
         Idempotent - safe to call multiple times.
         """
         # Main workflow runs table
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS workflow_runs (
                 run_id TEXT PRIMARY KEY,
                 workflow_name TEXT NOT NULL,
@@ -87,10 +88,12 @@ class WorkflowHistoryStore:
                 summary TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         # Workflow stages (1:many relationship)
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS workflow_stages (
                 stage_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 run_id TEXT NOT NULL,
@@ -104,34 +107,45 @@ class WorkflowHistoryStore:
                 output_tokens INTEGER DEFAULT 0,
                 FOREIGN KEY (run_id) REFERENCES workflow_runs(run_id)
             )
-        """)
+        """
+        )
 
         # Indexes for common queries
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_workflow_name
             ON workflow_runs(workflow_name)
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_started_at
             ON workflow_runs(started_at DESC)
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_provider
             ON workflow_runs(provider)
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_success
             ON workflow_runs(success)
-        """)
+        """
+        )
 
         # Index for stage queries
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_run_stages
             ON workflow_stages(run_id)
-        """)
+        """
+        )
 
         self.conn.commit()
         logger.debug(f"History store initialized: {self.db_path}")
@@ -333,7 +347,8 @@ class WorkflowHistoryStore:
         cursor = self.conn.cursor()
 
         # Total runs by workflow
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 workflow_name,
                 COUNT(*) as runs,
@@ -342,41 +357,49 @@ class WorkflowHistoryStore:
                 SUM(success) as successful
             FROM workflow_runs
             GROUP BY workflow_name
-        """)
+        """
+        )
         by_workflow = {row["workflow_name"]: dict(row) for row in cursor.fetchall()}
 
         # Total runs by provider
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 provider,
                 COUNT(*) as runs,
                 SUM(total_cost) as cost
             FROM workflow_runs
             GROUP BY provider
-        """)
+        """
+        )
         by_provider = {row["provider"]: dict(row) for row in cursor.fetchall()}
 
         # Total cost by tier
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 tier,
                 SUM(cost) as total_cost
             FROM workflow_stages
             WHERE skipped = 0
             GROUP BY tier
-        """)
+        """
+        )
         by_tier = {row["tier"]: row["total_cost"] for row in cursor.fetchall()}
 
         # Recent runs (last 10)
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM workflow_runs
             ORDER BY started_at DESC
             LIMIT 10
-        """)
+        """
+        )
         recent_runs = [dict(row) for row in cursor.fetchall()]
 
         # Totals
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 COUNT(*) as total_runs,
                 SUM(success) as successful_runs,
@@ -384,7 +407,8 @@ class WorkflowHistoryStore:
                 SUM(savings) as total_savings,
                 AVG(CASE WHEN success = 1 THEN savings_percent ELSE NULL END) as avg_savings_percent
             FROM workflow_runs
-        """)
+        """
+        )
         totals = dict(cursor.fetchone())
 
         return {

@@ -33,7 +33,10 @@ class TestCmdDashboardStart:
         """Create a mock args namespace for dashboard start."""
         return types.SimpleNamespace(host=host, port=port)
 
-    @patch("attune.cli_commands.utility_commands.cmd_dashboard_start.__module__", new="attune.cli_commands.utility_commands")
+    @patch(
+        "attune.cli_commands.utility_commands.cmd_dashboard_start.__module__",
+        new="attune.cli_commands.utility_commands",
+    )
     def test_success_returns_zero(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test dashboard starts successfully and returns 0."""
         args = self._make_args()
@@ -444,7 +447,9 @@ class TestCmdValidate:
 
         # Mock workflow registry
         mock_registry = {"code-review": {}, "test-gen": {}, "security": {}}
-        with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY=mock_registry)}):
+        with patch.dict(
+            "sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY=mock_registry)}
+        ):
             result = cmd_validate(args)
 
         assert result == 0

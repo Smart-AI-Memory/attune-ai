@@ -268,13 +268,15 @@ class TestTriggerEvaluation:
     def test_evaluate_numeric_greater_than(self, tmp_path):
         """Test numeric > comparison."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   test-wizard:
     triggers:
       - condition: "severity > 5"
         next: "next-wizard"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         # Should trigger when severity > 5
@@ -291,13 +293,15 @@ chains:
     def test_evaluate_equality_condition(self, tmp_path):
         """Test equality == comparison."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   test-wizard:
     triggers:
       - condition: "status == 'failed'"
         next: "error-handler"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         result = {"status": "failed"}
@@ -311,13 +315,15 @@ chains:
     def test_evaluate_not_equal_condition(self, tmp_path):
         """Test != comparison."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   test-wizard:
     triggers:
       - condition: "result != null"
         next: "processor"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         result = {"result": "data"}
@@ -327,13 +333,15 @@ chains:
     def test_evaluate_handles_missing_variable(self, tmp_path):
         """Test condition with missing variable returns False."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   test-wizard:
     triggers:
       - condition: "nonexistent > 5"
         next: "next-wizard"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         result = {"other_var": 10}
@@ -343,13 +351,15 @@ chains:
     def test_should_trigger_chain(self, tmp_path):
         """Test should_trigger_chain returns correct tuple."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   test-wizard:
     triggers:
       - condition: "count > 0"
         next: "next-wizard"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         # Should trigger
@@ -508,13 +518,15 @@ class TestChainExecutionManagement:
     def test_complete_step_triggers_new_chains(self, tmp_path):
         """Test complete_step checks for new triggered chains."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   step1:
     triggers:
       - condition: "success == true"
         next: "step2"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         execution = executor.create_execution("step1")
@@ -532,13 +544,15 @@ chains:
     def test_complete_step_does_not_duplicate_wizards(self, tmp_path):
         """Test complete_step doesn't add duplicate wizards."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 chains:
   step1:
     triggers:
       - condition: "success == true"
         next: "step2"
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         execution = executor.create_execution("step1")
@@ -572,14 +586,16 @@ class TestTemplateManagement:
     def test_get_template_returns_steps(self, tmp_path):
         """Test get_template returns template steps."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 templates:
   full-scan:
     steps:
       - security-scan
       - code-analysis
       - report-generation
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         template = executor.get_template("full-scan")
@@ -596,13 +612,15 @@ templates:
     def test_list_templates_returns_all(self, tmp_path):
         """Test list_templates returns all templates."""
         config_file = tmp_path / "chains.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 templates:
   template1:
     steps: ["step1", "step2"]
   template2:
     steps: ["step3", "step4"]
-""")
+"""
+        )
         executor = ChainExecutor(config_path=config_file)
 
         templates = executor.list_templates()

@@ -290,12 +290,14 @@ class PhasedProcessingPattern(BasePattern, CodeGeneratorMixin):
             if phase.parallel_with:
                 parallel_info = f"  # Can run in parallel with: {', '.join(phase.parallel_with)}"
 
-            phase_implementations.append(f"""
+            phase_implementations.append(
+                f"""
         # Phase {i}: {phase.description}{parallel_info}
         logger.info("Phase {i}: {phase.name}")
         {phase.name}_result = await self._{phase.name}(context)
         context["{phase.name}_result"] = {phase.name}_result
-""")
+"""
+            )
 
         phases_code = "".join(phase_implementations)
 
@@ -358,7 +360,8 @@ class PhasedWizard:
         """Generate stub methods for each phase."""
         methods = []
         for phase in self.phases:
-            methods.append(f'''
+            methods.append(
+                f'''
     async def _{phase.name}(self, context: dict[str, Any]) -> dict[str, Any]:
         """Phase: {phase.description}
 
@@ -370,7 +373,8 @@ class PhasedWizard:
         """
         # TODO: Implement {phase.name} phase
         return {{"status": "not_implemented"}}
-''')
+'''
+            )
         return "\n".join(methods)
 
 

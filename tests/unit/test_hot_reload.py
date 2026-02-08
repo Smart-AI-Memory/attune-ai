@@ -70,9 +70,7 @@ class TestHotReloadConfig:
         config = HotReloadConfig()
         assert config.reload_delay == 2.0
 
-    def test_watch_dirs_from_env(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_watch_dirs_from_env(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         d1 = tmp_path / "dir1"
         d2 = tmp_path / "dir2"
         d1.mkdir()
@@ -95,9 +93,7 @@ class TestHotReloadConfig:
         assert d["reload_delay"] == 1.0
         assert isinstance(d["watch_dirs"], list)
 
-    def test_default_watch_dirs_filters_nonexistent(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_watch_dirs_filters_nonexistent(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Default dirs that don't exist should be filtered out."""
         monkeypatch.delenv("HOT_RELOAD_WATCH_DIRS", raising=False)
         config = HotReloadConfig()
@@ -192,12 +188,8 @@ class TestWorkflowReloader:
     def test_reload_import_error(self) -> None:
         """ImportError during reload should return failure."""
         reloader = self._make_reloader()
-        with patch.object(
-            importlib, "import_module", side_effect=ImportError("no such module")
-        ):
-            result = reloader.reload_workflow(
-                "wf-1", "/fake/workflows/my_workflow.py"
-            )
+        with patch.object(importlib, "import_module", side_effect=ImportError("no such module")):
+            result = reloader.reload_workflow("wf-1", "/fake/workflows/my_workflow.py")
         assert result.success is False
         assert "Import failed" in result.message
 
@@ -207,9 +199,7 @@ class TestWorkflowReloader:
         fake_module = types.ModuleType("workflows.test_wf")
         fake_module.some_function = lambda: None
         with patch.object(importlib, "import_module", return_value=fake_module):
-            result = reloader.reload_workflow(
-                "wf-1", "/fake/workflows/test_wf.py"
-            )
+            result = reloader.reload_workflow("wf-1", "/fake/workflows/test_wf.py")
         assert result.success is False
         assert "No workflow class found" in result.message
 
@@ -223,9 +213,7 @@ class TestWorkflowReloader:
 
         fake_module.TestWorkflow = TestWorkflow
         with patch.object(importlib, "import_module", return_value=fake_module):
-            result = reloader.reload_workflow(
-                "wf-1", "/fake/workflows/test_wf.py"
-            )
+            result = reloader.reload_workflow("wf-1", "/fake/workflows/test_wf.py")
         assert result.success is True
         assert reloader.get_reload_count() == 1
 
@@ -239,9 +227,7 @@ class TestWorkflowReloader:
 
         fake_module.TestWorkflow = TestWorkflow
         with patch.object(importlib, "import_module", return_value=fake_module):
-            result = reloader.reload_workflow(
-                "wf-1", "/fake/workflows/test_wf.py"
-            )
+            result = reloader.reload_workflow("wf-1", "/fake/workflows/test_wf.py")
         assert result.success is False
         assert "Registration failed" in result.message
 
@@ -266,9 +252,7 @@ class TestWorkflowReloader:
         """Notification callback is called on failure."""
         notify = MagicMock()
         reloader = self._make_reloader(register_ok=True, notify_fn=notify)
-        with patch.object(
-            importlib, "import_module", side_effect=ImportError("nope")
-        ):
+        with patch.object(importlib, "import_module", side_effect=ImportError("nope")):
             reloader.reload_workflow("wf-1", "/fake/workflows/test_wf.py")
         notify.assert_called()
         call_data = notify.call_args[0][0]
@@ -277,12 +261,8 @@ class TestWorkflowReloader:
     def test_unexpected_error_handled(self) -> None:
         """Unexpected exceptions should be caught and returned as failure."""
         reloader = self._make_reloader()
-        with patch.object(
-            importlib, "import_module", side_effect=RuntimeError("boom")
-        ):
-            result = reloader.reload_workflow(
-                "wf-1", "/fake/workflows/test_wf.py"
-            )
+        with patch.object(importlib, "import_module", side_effect=RuntimeError("boom")):
+            result = reloader.reload_workflow("wf-1", "/fake/workflows/test_wf.py")
         assert result.success is False
         assert "Unexpected error" in result.message
 

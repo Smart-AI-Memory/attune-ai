@@ -552,9 +552,9 @@ class TestPlanGenerator:
             steps = generator._build_steps({})
 
             assert len(steps) == 1
-            assert steps[0].tier_recommendation == expected_model, (
-                f"Expected {expected_model} for {tier}, got {steps[0].tier_recommendation}"
-            )
+            assert (
+                steps[0].tier_recommendation == expected_model
+            ), f"Expected {expected_model} for {tier}, got {steps[0].tier_recommendation}"
 
     @patch("attune.meta_workflows.plan_generator.get_template")
     def test_build_steps_excluded_agent(self, mock_get_template):

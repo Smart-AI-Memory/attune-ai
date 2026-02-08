@@ -72,18 +72,14 @@ class TestAskUserQuestion:
         assert result == {"Pattern": "parallel"}
 
     @patch("attune.tools._is_running_in_claude_code", return_value=False)
-    def test_ask_user_question_no_handler_no_claude_code(
-        self, mock_check: object
-    ) -> None:
+    def test_ask_user_question_no_handler_no_claude_code(self, mock_check: object) -> None:
         """Should raise NotImplementedError when no handler and not in Claude Code."""
         with pytest.raises(NotImplementedError, match="AskUserQuestion requires"):
             AskUserQuestion(SAMPLE_QUESTIONS)
 
     @patch("attune.tools._is_running_in_claude_code", return_value=True)
     @patch("attune.tools._ask_via_claude_code_ipc")
-    def test_ask_user_question_claude_code_mode(
-        self, mock_ipc: object, mock_check: object
-    ) -> None:
+    def test_ask_user_question_claude_code_mode(self, mock_ipc: object, mock_check: object) -> None:
         """Should delegate to IPC when in Claude Code and no custom handler."""
         mock_ipc.return_value = {"Pattern": "sequential"}
 
@@ -103,27 +99,21 @@ class TestIsRunningInClaudeCode:
         with patch.object(Path, "exists", return_value=False):
             assert _is_running_in_claude_code() is False
 
-    def test_is_running_in_claude_code_session_env(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_is_running_in_claude_code_session_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """CLAUDE_CODE_SESSION set should return True."""
         monkeypatch.setenv("CLAUDE_CODE_SESSION", "1")
         monkeypatch.delenv("CLAUDE_AGENT_MODE", raising=False)
 
         assert _is_running_in_claude_code() is True
 
-    def test_is_running_in_claude_code_agent_env(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_is_running_in_claude_code_agent_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """CLAUDE_AGENT_MODE set should return True."""
         monkeypatch.delenv("CLAUDE_CODE_SESSION", raising=False)
         monkeypatch.setenv("CLAUDE_AGENT_MODE", "1")
 
         assert _is_running_in_claude_code() is True
 
-    def test_is_running_in_claude_code_marker_file(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_is_running_in_claude_code_marker_file(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Marker file /tmp/.claude-code exists should return True."""
         monkeypatch.delenv("CLAUDE_CODE_SESSION", raising=False)
         monkeypatch.delenv("CLAUDE_AGENT_MODE", raising=False)

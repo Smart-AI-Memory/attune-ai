@@ -614,11 +614,13 @@ class TestSecurityIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create project structure
             (Path(tmpdir) / "src").mkdir()
-            (Path(tmpdir) / "src" / "main.py").write_text("""
+            (Path(tmpdir) / "src" / "main.py").write_text(
+                """
 def main():
     '''Main function.'''
     return 42
-""")
+"""
+            )
 
             # Create excluded sensitive files
             (Path(tmpdir) / ".env").write_text("API_KEY=secret")

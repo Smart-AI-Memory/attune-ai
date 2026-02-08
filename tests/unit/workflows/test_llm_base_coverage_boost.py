@@ -468,11 +468,14 @@ def helper_function():
         """Test _validate requires docstring."""
         gen = TestGeneratorLLM()
 
-        no_docstring = """
+        no_docstring = (
+            """
 import pytest
 def test_something():
     assert True
-""" * 5  # Make it long enough
+"""
+            * 5
+        )  # Make it long enough
 
         assert gen._validate(no_docstring) is False
 

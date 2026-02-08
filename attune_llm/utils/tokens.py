@@ -233,7 +233,9 @@ def count_message_tokens(
     return counts
 
 
-def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-5-20250929") -> float:
+def estimate_cost(
+    input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-5-20250929"
+) -> float:
     """Estimate cost in USD based on token counts.
 
     Args:

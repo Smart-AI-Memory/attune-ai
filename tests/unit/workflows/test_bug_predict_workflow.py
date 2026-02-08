@@ -190,13 +190,15 @@ class TestScanStage:
         workflow = BugPredictionWorkflow(patterns_dir=str(tmp_path))
 
         bad_file = tmp_path / "bad.py"
-        bad_file.write_text("""
+        bad_file.write_text(
+            """
 def process():
     try:
         risky()
     except Exception:
         print("error")  # Bad: just printing
-""")
+"""
+        )
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
         result, _, _ = await workflow._scan(input_data, ModelTier.CHEAP)
@@ -214,11 +216,13 @@ def process():
         workflow = BugPredictionWorkflow(patterns_dir=str(tmp_path))
 
         todo_file = tmp_path / "todo.py"
-        todo_file.write_text("""
+        todo_file.write_text(
+            """
 def incomplete():
     # TODO: Implement this
     pass
-""")
+"""
+        )
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
         result, _, _ = await workflow._scan(input_data, ModelTier.CHEAP)

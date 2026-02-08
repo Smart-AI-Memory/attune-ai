@@ -96,7 +96,10 @@ def calculate_total(items: list[dict]) -> float:
 
         with patch("attune.models.token_estimator.TIKTOKEN_AVAILABLE", False):
             # Also block the attune_llm import so we fall through to the heuristic
-            with patch.dict("sys.modules", {"attune_llm": None, "attune_llm.utils": None, "attune_llm.utils.tokens": None}):
+            with patch.dict(
+                "sys.modules",
+                {"attune_llm": None, "attune_llm.utils": None, "attune_llm.utils.tokens": None},
+            ):
                 tokens = estimate_tokens(text)
                 expected = max(1, int(len(text) * TOKENS_PER_CHAR_HEURISTIC))
                 assert tokens == expected

@@ -86,11 +86,13 @@ class TestWorkflowConfigLoading:
         """Test loading config from YAML file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "workflows.yaml"
-            config_path.write_text("""
+            config_path.write_text(
+                """
 default_provider: openai
 workflow_providers:
   research: anthropic
-""")
+"""
+            )
 
             config = WorkflowConfig.load(config_path)
 
@@ -154,12 +156,14 @@ workflow_providers:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "attune.config.yaml"
             # attune.config.yaml has root provider and model_preferences
-            config_path.write_text("""
+            config_path.write_text(
+                """
 provider: openai
 model_preferences:
   cheap: gpt-4o-mini
   capable: gpt-4o
-""")
+"""
+            )
 
             config = WorkflowConfig.load(config_path)
 

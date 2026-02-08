@@ -448,10 +448,12 @@ def temp_project_dir(tmp_path):
     (project / "src" / "__init__.py").touch()
     (project / "tests" / "__init__.py").touch()
     (project / "README.md").write_text("# Test Project\n\nA test project for testing.")
-    (project / "pyproject.toml").write_text("""[project]
+    (project / "pyproject.toml").write_text(
+        """[project]
 name = "test-project"
 version = "0.1.0"
-""")
+"""
+    )
 
     return project
 

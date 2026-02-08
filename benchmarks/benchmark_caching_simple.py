@@ -74,7 +74,8 @@ async def benchmark_security_audit(cache):
     test_dir = Path("/tmp/empathy_security_test")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "app.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 import os
 
 def run_command(user_input):
@@ -84,7 +85,8 @@ def run_command(user_input):
 def get_secret():
     password = "admin123"  # Hardcoded secret
     return password
-""")
+"""
+    )
 
     workflow = SecurityAuditWorkflow(cache=cache, enable_cache=True)
 

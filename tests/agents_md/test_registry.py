@@ -100,16 +100,20 @@ class TestAgentRegistry:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
 
-            (tmpdir / "agent1.md").write_text("""---
+            (tmpdir / "agent1.md").write_text(
+                """---
 name: agent1
 ---
 Agent 1.
-""")
-            (tmpdir / "agent2.md").write_text("""---
+"""
+            )
+            (tmpdir / "agent2.md").write_text(
+                """---
 name: agent2
 ---
 Agent 2.
-""")
+"""
+            )
 
             count = registry.load_from_directory(tmpdir)
 
@@ -124,11 +128,13 @@ Agent 2.
             suffix=".md",
             delete=False,
         ) as f:
-            f.write("""---
+            f.write(
+                """---
 name: file-agent
 ---
 From file.
-""")
+"""
+            )
             f.flush()
 
             config = registry.load_from_file(f.name)
@@ -141,21 +147,25 @@ From file.
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
 
-            (tmpdir / "agent1.md").write_text("""---
+            (tmpdir / "agent1.md").write_text(
+                """---
 name: agent1
 ---
 Original.
-""")
+"""
+            )
 
             registry.load_from_directory(tmpdir)
             assert registry.get("agent1").system_prompt.strip() == "Original."
 
             # Modify the file
-            (tmpdir / "agent1.md").write_text("""---
+            (tmpdir / "agent1.md").write_text(
+                """---
 name: agent1
 ---
 Updated.
-""")
+"""
+            )
 
             registry.reload()
             assert registry.get("agent1").system_prompt.strip() == "Updated."

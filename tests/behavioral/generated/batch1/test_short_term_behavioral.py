@@ -12,7 +12,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.memory.short_term import RedisShortTermMemory
+pytest.importorskip("redis")
+
+from attune.memory.short_term import RedisShortTermMemory  # noqa: E402
 from attune.memory.types import (
     AccessTier,
     AgentCredentials,
@@ -1028,9 +1030,7 @@ class TestAgentWorkingMemory:
     ):
         """Given credentials, when clearing working memory, then deletes all keys."""
         # Given
-        mock_redis_client.scan_iter.return_value = iter(
-            [b"empathy:working:contributor_agent:key1"]
-        )
+        mock_redis_client.scan_iter.return_value = iter([b"empathy:working:contributor_agent:key1"])
         mock_redis_client.delete.return_value = 1
 
         # When

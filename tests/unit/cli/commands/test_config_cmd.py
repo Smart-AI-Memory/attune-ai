@@ -20,9 +20,13 @@ import pytest
 # The config_cmd module imports from attune.config which may not have all
 # these exports. We mock them at import time.
 _mock_config = types.ModuleType("attune.config")
-_mock_config.ConfigLoader = type("ConfigLoader", (), {
-    "discover_config_path": staticmethod(lambda: None),
-})
+_mock_config.ConfigLoader = type(
+    "ConfigLoader",
+    (),
+    {
+        "discover_config_path": staticmethod(lambda: None),
+    },
+)
 _mock_config.ConfigLoader.discover_config_path.__doc__ = "Search: 1. path"
 _mock_config.UnifiedConfig = MagicMock()
 _mock_config.get_loader = MagicMock()
@@ -156,9 +160,7 @@ class TestCmdConfigShow:
     """Tests for cmd_config_show()."""
 
     @patch(f"{_CMD}.load_unified_config")
-    def test_show_all_default(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_show_all_default(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_config = MagicMock()
         mock_config.to_dict.return_value = {"routing": {"tier": "cheap"}}
         mock_load.return_value = mock_config
@@ -168,9 +170,7 @@ class TestCmdConfigShow:
         assert "routing" in capsys.readouterr().out
 
     @patch(f"{_CMD}.load_unified_config")
-    def test_show_json_format(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_show_json_format(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_config = MagicMock()
         mock_config.to_dict.return_value = {"key": "val"}
         mock_load.return_value = mock_config
@@ -205,9 +205,7 @@ class TestCmdConfigShow:
         assert "Unknown section" in capsys.readouterr().err
 
     @patch(f"{_CMD}.load_unified_config", side_effect=ValueError("bad"))
-    def test_show_value_error(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_show_value_error(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         result = cmd_config_show(Namespace(section=None, json=False))
         assert result == 1
 
@@ -236,9 +234,7 @@ class TestCmdConfigSet:
         assert "Invalid key format" in capsys.readouterr().err
 
     @patch(f"{_CMD}.load_unified_config", side_effect=ValueError("broken"))
-    def test_load_error(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_load_error(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         result = cmd_config_set(Namespace(key="routing.tier", value="val"))
         assert result == 1
 
@@ -260,9 +256,7 @@ class TestCmdConfigSet:
         mock_config.set_value.assert_called_once_with("routing.tier", "capable")
 
     @patch(f"{_CMD}.load_unified_config")
-    def test_unknown_key(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_unknown_key(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_config = MagicMock()
         mock_config.get_value.side_effect = KeyError("nope")
         mock_config.get_all_keys.return_value = ["routing.tier"]
@@ -302,9 +296,7 @@ class TestCmdConfigGet:
         assert result == 1
 
     @patch(f"{_CMD}.load_unified_config")
-    def test_successful_get(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_successful_get(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_config = MagicMock()
         mock_config.get_value.return_value = "cheap"
         mock_load.return_value = mock_config
@@ -313,9 +305,7 @@ class TestCmdConfigGet:
         assert "cheap" in capsys.readouterr().out
 
     @patch(f"{_CMD}.load_unified_config")
-    def test_unknown_key(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_unknown_key(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_config = MagicMock()
         mock_config.get_value.side_effect = KeyError("nope")
         mock_config.get_all_keys.return_value = ["routing.tier"]
@@ -324,9 +314,7 @@ class TestCmdConfigGet:
         assert result == 1
 
     @patch(f"{_CMD}.load_unified_config", side_effect=ValueError("broken"))
-    def test_load_error(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_load_error(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         result = cmd_config_get(Namespace(key="routing.tier"))
         assert result == 1
 
@@ -385,9 +373,7 @@ class TestCmdConfigValidate:
         assert result == 0
 
     @patch(f"{_CMD}.load_unified_config", side_effect=ValueError("broken"))
-    def test_load_error(
-        self, mock_load: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_load_error(self, mock_load: MagicMock, capsys: pytest.CaptureFixture) -> None:
         result = cmd_config_validate(Namespace())
         assert result == 1
 
@@ -441,9 +427,7 @@ class TestCmdConfigListKeys:
     """Tests for cmd_config_list_keys()."""
 
     @patch(f"{_CMD}.UnifiedConfig")
-    def test_lists_keys(
-        self, mock_cls: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_lists_keys(self, mock_cls: MagicMock, capsys: pytest.CaptureFixture) -> None:
         mock_instance = MagicMock()
         mock_instance.get_all_keys.return_value = [
             "routing.tier",

@@ -15,13 +15,16 @@ from attune_llm.security import SecureMemDocsIntegration
 def benchmark_pipeline(iterations=100):
     """Benchmark the complete pipeline with parallel execution"""
     # Test content with PII
-    test_content = """
+    test_content = (
+        """
     Patient: John Doe
     Email: john.doe@hospital.com
     Phone: 555-123-4567
     MRN: 1234567
     Clinical protocol notes...
-    """ * 5  # ~1KB of content
+    """
+        * 5
+    )  # ~1KB of content
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # Setup

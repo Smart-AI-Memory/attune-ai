@@ -31,9 +31,7 @@ try:
 except Exception:
     _REDIS_RUNNING = False
 
-_skip_no_redis = pytest.mark.skipif(
-    not _REDIS_RUNNING, reason="Redis not running on localhost"
-)
+_skip_no_redis = pytest.mark.skipif(not _REDIS_RUNNING, reason="Redis not running on localhost")
 
 
 @pytest.fixture

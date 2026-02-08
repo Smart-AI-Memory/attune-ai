@@ -228,9 +228,7 @@ class TelemetryAnalytics:
 
         # Count Opus fallbacks (calls with fallback_used and ended up on Opus)
         opus_fallbacks = sum(
-            1
-            for c in anthropic_calls
-            if c.model_id == "claude-opus-4-6" and c.fallback_used
+            1 for c in anthropic_calls if c.model_id == "claude-opus-4-6" and c.fallback_used
         )
 
         # Calculate costs

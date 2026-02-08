@@ -94,7 +94,8 @@ class AuthDatabase:
     def _init_schema(self) -> None:
         """Initialize database schema if not exists."""
         with self._get_connection() as conn:
-            conn.executescript("""
+            conn.executescript(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT UNIQUE NOT NULL,
@@ -115,7 +116,8 @@ class AuthDatabase:
 
                 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
                 CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email, attempted_at);
-                """)
+                """
+            )
 
     def _hash_password(self, password: str) -> str:
         """Hash password using bcrypt.

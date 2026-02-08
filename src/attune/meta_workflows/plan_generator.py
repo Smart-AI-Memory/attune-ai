@@ -294,11 +294,13 @@ What risks exist? What's the recommended path forward?
         """
         steps_text = []
         for step in plan.steps:
-            steps_text.append(f"""
+            steps_text.append(
+                f"""
 ### {step.role}
 Use the Task tool with subagent_type="Explore" to:
 {step.prompt}
-""")
+"""
+            )
 
         return f"""# {plan.template_name}
 

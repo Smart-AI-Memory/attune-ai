@@ -232,13 +232,16 @@ class HaystackAdapter(BaseAdapter):
         pipeline = Pipeline()
 
         # Add prompt builder
-        template = config.system_prompt or """
+        template = (
+            config.system_prompt
+            or """
         Answer the question based on the context.
 
         Context: {{context}}
         Question: {{query}}
         Answer:
         """
+        )
         prompt_builder = PromptBuilder(template=template)
         pipeline.add_component("prompt_builder", prompt_builder)
 

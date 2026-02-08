@@ -224,27 +224,19 @@ class TestCmdProviderShow:
         captured = capsys.readouterr().out
         assert "Provider module not available" in captured
 
-    def test_show_generic_exception_returns_one(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_show_generic_exception_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
         """cmd_provider_show returns 1 when a generic exception is raised."""
         mock_module = MagicMock()
-        mock_module.get_provider_config = MagicMock(
-            side_effect=RuntimeError("connection failed")
-        )
+        mock_module.get_provider_config = MagicMock(side_effect=RuntimeError("connection failed"))
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             result = cmd_provider_show(SimpleNamespace())
 
         assert result == 1
 
-    def test_show_generic_exception_prints_error(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_show_generic_exception_prints_error(self, capsys: pytest.CaptureFixture[str]) -> None:
         """cmd_provider_show prints the exception message on generic error."""
         mock_module = MagicMock()
-        mock_module.get_provider_config = MagicMock(
-            side_effect=RuntimeError("connection failed")
-        )
+        mock_module.get_provider_config = MagicMock(side_effect=RuntimeError("connection failed"))
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             cmd_provider_show(SimpleNamespace())
 
@@ -472,28 +464,20 @@ class TestCmdProviderSet:
         captured = capsys.readouterr().out
         assert "Provider module not available" in captured
 
-    def test_set_generic_exception_returns_one(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_set_generic_exception_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
         """cmd_provider_set returns 1 when a generic exception is raised."""
         mock_module = MagicMock()
-        mock_module.get_provider_config = MagicMock(
-            side_effect=ValueError("invalid provider")
-        )
+        mock_module.get_provider_config = MagicMock(side_effect=ValueError("invalid provider"))
 
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             result = cmd_provider_set(SimpleNamespace(name="openai"))
 
         assert result == 1
 
-    def test_set_generic_exception_prints_error(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_set_generic_exception_prints_error(self, capsys: pytest.CaptureFixture[str]) -> None:
         """cmd_provider_set prints the exception message on generic error."""
         mock_module = MagicMock()
-        mock_module.get_provider_config = MagicMock(
-            side_effect=ValueError("invalid provider")
-        )
+        mock_module.get_provider_config = MagicMock(side_effect=ValueError("invalid provider"))
 
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             cmd_provider_set(SimpleNamespace(name="openai"))
@@ -512,9 +496,7 @@ class TestCmdProviderSet:
         mock_module = MagicMock()
         mock_module.ProviderMode = mock_mode
         mock_module.get_provider_config = MagicMock(return_value=config)
-        mock_module.set_provider_config = MagicMock(
-            side_effect=OSError("disk full")
-        )
+        mock_module.set_provider_config = MagicMock(side_effect=OSError("disk full"))
 
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             result = cmd_provider_set(SimpleNamespace(name="openai"))
@@ -532,9 +514,7 @@ class TestCmdProviderSet:
         mock_module = MagicMock()
         mock_module.ProviderMode = mock_mode
         mock_module.get_provider_config = MagicMock(return_value=config)
-        mock_module.set_provider_config = MagicMock(
-            side_effect=OSError("disk full")
-        )
+        mock_module.set_provider_config = MagicMock(side_effect=OSError("disk full"))
 
         with patch.dict("sys.modules", {"attune.models.provider_config": mock_module}):
             cmd_provider_set(SimpleNamespace(name="openai"))

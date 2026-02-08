@@ -153,7 +153,8 @@ async def benchmark_security_audit(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_test_audit")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "app.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 import os
 import subprocess
 
@@ -170,7 +171,8 @@ def process_data(data):
     # SQL injection risk
     query = f"SELECT * FROM users WHERE name = '{data}'"
     return execute_query(query)
-""")
+"""
+    )
 
     workflow = SecurityAuditWorkflow(cache=cache, enable_cache=True)
 
@@ -221,7 +223,8 @@ async def benchmark_bug_predict(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_test_bugs")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "buggy.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 def divide_numbers(a, b):
     # Missing zero check
     return a / b
@@ -241,7 +244,8 @@ def broad_exception():
     except:
         # Bare except
         pass
-""")
+"""
+    )
 
     workflow = BugPredictionWorkflow(cache=cache, enable_cache=True)
 
@@ -292,7 +296,8 @@ async def benchmark_refactor_plan(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_test_refactor")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "messy.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 class DataProcessor:
     def process(self, data):
         # Long method with multiple responsibilities
@@ -315,7 +320,8 @@ class DataProcessor:
                 valid_results.append(r)
 
         return valid_results
-""")
+"""
+    )
 
     workflow = RefactorPlanWorkflow(cache=cache, enable_cache=True)
 
@@ -436,7 +442,8 @@ async def benchmark_test_generation(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_testgen_bench")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "calculator.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 def add(a, b):
     return a + b
 
@@ -445,7 +452,8 @@ def subtract(a, b):
 
 def multiply(a, b):
     return a * b
-""")
+"""
+    )
 
     workflow = TestGenerationWorkflow(cache=cache, enable_cache=True)
 
@@ -497,7 +505,8 @@ async def benchmark_perf_audit(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_perfaudit_bench")
     test_dir.mkdir(exist_ok=True)
     test_file = test_dir / "slow_code.py"
-    test_file.write_text("""
+    test_file.write_text(
+        """
 import time
 
 def slow_function():
@@ -514,7 +523,8 @@ def repeated_calls():
     for i in range(100):
         data.append(slow_function())
     return data
-""")
+"""
+    )
 
     workflow = PerformanceAuditWorkflow(cache=cache, enable_cache=True)
 
@@ -566,12 +576,14 @@ async def benchmark_dependency_check(cache) -> BenchmarkResult:
     test_dir = Path("/tmp/empathy_depcheck_bench")
     test_dir.mkdir(exist_ok=True)
     req_file = test_dir / "requirements.txt"
-    req_file.write_text("""
+    req_file.write_text(
+        """
 requests==2.25.0
 numpy==1.19.0
 pandas==1.1.0
 flask==1.1.2
-""")
+"""
+    )
 
     workflow = DependencyCheckWorkflow(cache=cache, enable_cache=True)
 
@@ -784,7 +796,8 @@ async def benchmark_keyboard_shortcuts(cache) -> BenchmarkResult:
 
     # Create a simple package.json with commands
     package_json = test_dir / "package.json"
-    package_json.write_text("""{
+    package_json.write_text(
+        """{
   "name": "test-extension",
   "contributes": {
     "commands": [
@@ -794,7 +807,8 @@ async def benchmark_keyboard_shortcuts(cache) -> BenchmarkResult:
       {"command": "extension.debug", "title": "Start Debugging"}
     ]
   }
-}""")
+}"""
+    )
 
     workflow = KeyboardShortcutWorkflow(cache=cache, enable_cache=True)
 

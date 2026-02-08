@@ -124,19 +124,23 @@ class TestCmdTelemetryShow:
     """Tests for cmd_telemetry_show."""
 
     @patch("attune.cli_commands.telemetry_commands.TelemetryStore", create=True)
-    def test_show_with_workflow_data(self, _mock_cls: MagicMock, capsys: pytest.CaptureFixture) -> None:
+    def test_show_with_workflow_data(
+        self, _mock_cls: MagicMock, capsys: pytest.CaptureFixture
+    ) -> None:
         """Test show command displays workflow data correctly."""
         records = [
-            _make_workflow_record(total_cost=0.05, total_input_tokens=1000, total_output_tokens=500),
-            _make_workflow_record(total_cost=0.10, total_input_tokens=2000, total_output_tokens=800),
+            _make_workflow_record(
+                total_cost=0.05, total_input_tokens=1000, total_output_tokens=500
+            ),
+            _make_workflow_record(
+                total_cost=0.10, total_input_tokens=2000, total_output_tokens=800
+            ),
         ]
         mock_store = MagicMock()
         mock_store.get_workflows.return_value = records
         mock_store.get_calls.return_value = []
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))
 
         assert result == 0
@@ -159,9 +163,7 @@ class TestCmdTelemetryShow:
         mock_store.get_workflows.return_value = []
         mock_store.get_calls.return_value = calls
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=30))
 
         assert result == 0
@@ -177,9 +179,7 @@ class TestCmdTelemetryShow:
         mock_store.get_workflows.return_value = []
         mock_store.get_calls.return_value = []
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))
 
         assert result == 0
@@ -203,9 +203,7 @@ class TestCmdTelemetryShow:
         mock_store = MagicMock()
         mock_store.get_workflows.side_effect = RuntimeError("database locked")
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))
 
         assert result == 1
@@ -227,14 +225,14 @@ class TestCmdTelemetrySavings:
         # 10,000 tokens at actual cost $0.05
         # Premium baseline: 10000 * 45/1M = $0.45
         records = [
-            _make_workflow_record(total_cost=0.05, total_input_tokens=5000, total_output_tokens=5000),
+            _make_workflow_record(
+                total_cost=0.05, total_input_tokens=5000, total_output_tokens=5000
+            ),
         ]
         mock_store = MagicMock()
         mock_store.get_workflows.return_value = records
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_savings(_make_args(days=7))
 
         assert result == 0
@@ -255,9 +253,7 @@ class TestCmdTelemetrySavings:
         mock_store = MagicMock()
         mock_store.get_workflows.return_value = records
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_savings(_make_args(days=7))
 
         assert result == 0
@@ -269,9 +265,7 @@ class TestCmdTelemetrySavings:
         mock_store = MagicMock()
         mock_store.get_workflows.return_value = []
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_savings(_make_args(days=30))
 
         assert result == 0
@@ -292,9 +286,7 @@ class TestCmdTelemetrySavings:
         mock_store = MagicMock()
         mock_store.get_workflows.side_effect = OSError("disk error")
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_savings(_make_args(days=7))
 
         assert result == 1
@@ -309,9 +301,7 @@ class TestCmdTelemetrySavings:
         mock_store = MagicMock()
         mock_store.get_workflows.return_value = records
 
-        with patch(
-            "attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True
-        ):
+        with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_savings(_make_args(days=7))
 
         assert result == 0
@@ -363,9 +353,9 @@ class TestCmdTelemetryExport:
             # Patch at module level since the import happens at the top of the function
             with patch(
                 "builtins.__import__",
-                wraps=__builtins__.__import__
-                if hasattr(__builtins__, "__import__")
-                else __import__,
+                wraps=(
+                    __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+                ),
             ):
                 pass
 
@@ -386,9 +376,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output=str(output_file), format="csv")
-            )
+            result = cmd_telemetry_export(_make_args(output=str(output_file), format="csv"))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -423,9 +411,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output=str(output_file), format="json")
-            )
+            result = cmd_telemetry_export(_make_args(output=str(output_file), format="json"))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -455,9 +441,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output=str(output_file), format="csv")
-            )
+            result = cmd_telemetry_export(_make_args(output=str(output_file), format="csv"))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -482,9 +466,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output=str(output_file), format="json")
-            )
+            result = cmd_telemetry_export(_make_args(output=str(output_file), format="json"))
 
         assert result == 0
         data = json.loads(output_file.read_text())
@@ -510,9 +492,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output="/etc/passwd", format="json")
-            )
+            result = cmd_telemetry_export(_make_args(output="/etc/passwd", format="json"))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -530,9 +510,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output="/tmp/test.json", format="json")
-            )
+            result = cmd_telemetry_export(_make_args(output="/tmp/test.json", format="json"))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -556,9 +534,7 @@ class TestCmdTelemetryExport:
                 "attune.config": mock_config_module,
             },
         ):
-            result = cmd_telemetry_export(
-                _make_args(output="/tmp/out.json", format="json")
-            )
+            result = cmd_telemetry_export(_make_args(output="/tmp/out.json", format="json"))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -714,9 +690,7 @@ class TestCmdTelemetryRoutingStats:
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow=None, stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow=None, stage=None, days=7))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -740,9 +714,7 @@ class TestCmdTelemetryRoutingStats:
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow=None, stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow=None, stage=None, days=7))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -761,9 +733,7 @@ class TestCmdTelemetryRoutingStats:
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow=None, stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow=None, stage=None, days=7))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -775,9 +745,7 @@ class TestCmdTelemetryRoutingStats:
             "sys.modules",
             {"attune.models": None, "attune.telemetry": None},
         ):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow=None, stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow=None, stage=None, days=7))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -790,17 +758,13 @@ class TestCmdTelemetryRoutingStats:
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow=None, stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow=None, stage=None, days=7))
 
         assert result == 1
         captured = capsys.readouterr().out
         assert "Error:" in captured
 
-    def test_routing_stats_missing_attrs_uses_defaults(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_stats_missing_attrs_uses_defaults(self, capsys: pytest.CaptureFixture) -> None:
         """Test routing stats uses defaults when args lack workflow/stage/days."""
         mock_tracker = MagicMock()
         mock_tracker.get_stats.return_value = {
@@ -819,9 +783,7 @@ class TestCmdTelemetryRoutingStats:
 
         assert result == 0
 
-    def test_routing_stats_empty_performance_by_model(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_stats_empty_performance_by_model(self, capsys: pytest.CaptureFixture) -> None:
         """Test routing stats skips per-model section when empty."""
         mock_tracker = MagicMock()
         mock_router = MagicMock()
@@ -835,9 +797,7 @@ class TestCmdTelemetryRoutingStats:
         }
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_stats(
-                _make_args(workflow="test", stage=None, days=7)
-            )
+            result = cmd_telemetry_routing_stats(_make_args(workflow="test", stage=None, days=7))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -873,9 +833,7 @@ class TestCmdTelemetryRoutingCheck:
             },
         )
 
-    def test_routing_check_all_with_recommendations(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_all_with_recommendations(self, capsys: pytest.CaptureFixture) -> None:
         """Test --all flag finds recommendations across workflows."""
         mock_tracker = MagicMock()
         mock_tracker.get_stats.return_value = {
@@ -888,9 +846,7 @@ class TestCmdTelemetryRoutingCheck:
         ]
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=True, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=True, workflow=None))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -898,9 +854,7 @@ class TestCmdTelemetryRoutingCheck:
         assert "code-review" in captured
         assert "Low success rate" in captured
 
-    def test_routing_check_all_no_recommendations(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_all_no_recommendations(self, capsys: pytest.CaptureFixture) -> None:
         """Test --all when all workflows are performing well."""
         mock_tracker = MagicMock()
         mock_tracker.get_stats.return_value = {
@@ -910,9 +864,7 @@ class TestCmdTelemetryRoutingCheck:
         mock_router.recommend_tier_upgrade.return_value = (False, "Fine")
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=True, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=True, workflow=None))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -927,17 +879,13 @@ class TestCmdTelemetryRoutingCheck:
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=True, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=True, workflow=None))
 
         assert result == 0
         captured = capsys.readouterr().out
         assert "No workflow data found" in captured
 
-    def test_routing_check_all_skips_failing_workflows(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_all_skips_failing_workflows(self, capsys: pytest.CaptureFixture) -> None:
         """Test --all gracefully skips workflows that throw exceptions."""
         mock_tracker = MagicMock()
         mock_tracker.get_stats.return_value = {
@@ -950,17 +898,13 @@ class TestCmdTelemetryRoutingCheck:
         ]
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=True, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=True, workflow=None))
 
         assert result == 0
         captured = capsys.readouterr().out
         assert "good-wf" in captured
 
-    def test_routing_check_specific_workflow_upgrade(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_specific_workflow_upgrade(self, capsys: pytest.CaptureFixture) -> None:
         """Test specific workflow that needs upgrade."""
         mock_tracker = MagicMock()
         mock_router = MagicMock()
@@ -970,9 +914,7 @@ class TestCmdTelemetryRoutingCheck:
         )
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=False, workflow="code-review")
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=False, workflow="code-review"))
 
         assert result == 0
         captured = capsys.readouterr().out
@@ -980,9 +922,7 @@ class TestCmdTelemetryRoutingCheck:
         assert "Success rate below threshold" in captured
         assert "code-review" in captured
 
-    def test_routing_check_specific_workflow_ok(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_specific_workflow_ok(self, capsys: pytest.CaptureFixture) -> None:
         """Test specific workflow performing well."""
         mock_tracker = MagicMock()
         mock_router = MagicMock()
@@ -992,26 +932,20 @@ class TestCmdTelemetryRoutingCheck:
         )
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=False, workflow="test-gen")
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=False, workflow="test-gen"))
 
         assert result == 0
         captured = capsys.readouterr().out
         assert "Performing well" in captured
         assert "All metrics within range" in captured
 
-    def test_routing_check_neither_all_nor_workflow(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_neither_all_nor_workflow(self, capsys: pytest.CaptureFixture) -> None:
         """Test routing check returns error when neither --all nor --workflow specified."""
         mock_tracker = MagicMock()
         mock_router = MagicMock()
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=False, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=False, workflow=None))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -1023,9 +957,7 @@ class TestCmdTelemetryRoutingCheck:
             "sys.modules",
             {"attune.models": None, "attune.telemetry": None},
         ):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=False, workflow=None)
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=False, workflow=None))
 
         assert result == 1
         captured = capsys.readouterr().out
@@ -1038,17 +970,13 @@ class TestCmdTelemetryRoutingCheck:
         mock_router.recommend_tier_upgrade.side_effect = RuntimeError("crash")
 
         with self._patch_routing_imports(mock_tracker, mock_router):
-            result = cmd_telemetry_routing_check(
-                _make_args(all=False, workflow="some-wf")
-            )
+            result = cmd_telemetry_routing_check(_make_args(all=False, workflow="some-wf"))
 
         assert result == 1
         captured = capsys.readouterr().out
         assert "Error:" in captured
 
-    def test_routing_check_missing_attrs_uses_defaults(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_routing_check_missing_attrs_uses_defaults(self, capsys: pytest.CaptureFixture) -> None:
         """Test routing check defaults when args lack workflow/all attributes."""
         mock_tracker = MagicMock()
         mock_router = MagicMock()

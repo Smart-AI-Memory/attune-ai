@@ -587,14 +587,17 @@ def scenario_6_performance():
     print_info("Running performance benchmarks...\n")
 
     # Test data
-    test_content = """
+    test_content = (
+        """
     Patient: John Doe
     Email: john.doe@hospital.com
     Phone: 555-123-4567
     SSN: 123-45-6789
     Card: 4532-1234-5678-9010
 
-    """ * 10  # Repeat to get ~1KB of text
+    """
+        * 10
+    )  # Repeat to get ~1KB of text
 
     # PII Scrubbing benchmark
     print(f"{Colors.OKBLUE}🔍 PII Scrubbing:{Colors.ENDC}")

@@ -136,7 +136,8 @@ async def demo_real_world_flow():
     """Demo: Real-world user flow."""
     print_section("DEMO: Real-World User Flow")
 
-    print("""
+    print(
+        """
 📖 Scenario: Developer's typical workflow
 
 1. Morning: Check what to work on (in Claude Code)
@@ -181,7 +182,8 @@ async def demo_real_world_flow():
    - Workflow commands for automation (CI/CD, hooks, scripts)
    - Natural language routing maps to skills
    - Simple and focused! ✨
-    """)
+    """
+    )
 
 
 async def demo_suggestions():
@@ -221,7 +223,8 @@ async def main():
         print("✅ DEMO COMPLETE")
         print("=" * 70)
 
-        print("""
+        print(
+            """
 🎯 Key Takeaways:
 
 1. **Three Input Methods**
@@ -250,7 +253,8 @@ async def main():
 2. In Claude Code: /dev commit (interactive commit)
 3. Natural language: "debug the login issue"
 4. In CI/CD: empathy workflow run security-audit
-        """)
+        """
+        )
 
     except Exception as e:
         print(f"\n❌ Error: {e}")

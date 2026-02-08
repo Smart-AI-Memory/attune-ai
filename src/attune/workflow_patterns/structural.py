@@ -139,15 +139,18 @@ class MultiStagePattern(WorkflowPattern):
         # Generate stage routing
         stage_routing = []
         for _i, stage in enumerate(stages):
-            stage_routing.append(f"""        if stage_name == "{stage}":
-            return await self._{stage}(input_data, tier)""")
+            stage_routing.append(
+                f"""        if stage_name == "{stage}":
+            return await self._{stage}(input_data, tier)"""
+            )
 
         stage_routing_code = "\n".join(stage_routing)
 
         # Generate stage method templates
         stage_methods = []
         for stage in stages:
-            stage_methods.append(f'''    async def _{stage}(
+            stage_methods.append(
+                f'''    async def _{stage}(
         self,
         input_data: Any,
         tier: ModelTier,
@@ -172,7 +175,8 @@ class MultiStagePattern(WorkflowPattern):
             )
             return result.content, result.input_tokens, result.output_tokens
 
-        return {{"stage": "{stage}", "input": input_data}}, 0, 0''')
+        return {{"stage": "{stage}", "input": input_data}}, 0, 0'''
+            )
 
         return [
             CodeSection(

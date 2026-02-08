@@ -361,7 +361,8 @@ class TestRealDocumentationAnalyzer:
         src_dir = tmp_path / "src"
         src_dir.mkdir()
         test_file = src_dir / "test.py"
-        test_file.write_text('''"""Module docstring."""
+        test_file.write_text(
+            '''"""Module docstring."""
 
 def documented_function():
     """Function docstring."""
@@ -373,7 +374,8 @@ class DocumentedClass:
     def method(self):
         """Method docstring."""
         pass
-''')
+'''
+        )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
         report = analyzer.analyze()
@@ -388,13 +390,15 @@ class DocumentedClass:
         src_dir = tmp_path / "src"
         src_dir.mkdir()
         test_file = src_dir / "test.py"
-        test_file.write_text("""def undocumented_function():
+        test_file.write_text(
+            """def undocumented_function():
     pass
 
 class UndocumentedClass:
     def method(self):
         pass
-""")
+"""
+        )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
         report = analyzer.analyze()
@@ -562,10 +566,12 @@ class TestRealTestGenerator:
         src_dir = tmp_path / "src"
         src_dir.mkdir()
         source_file = src_dir / "example.py"
-        source_file.write_text("""
+        source_file.write_text(
+            """
 def add(a: int, b: int) -> int:
     return a + b
-""")
+"""
+        )
 
         generator = RealTestGenerator(project_root=str(tmp_path), use_llm=False)
 
@@ -609,12 +615,16 @@ def add(a: int, b: int) -> int:
         # Setup mock LLM response
         mock_client = Mock()
         mock_response = Mock()
-        mock_response.content = [Mock(text="""
+        mock_response.content = [
+            Mock(
+                text="""
 import pytest
 
 def test_example():
     assert True
-""")]
+"""
+            )
+        ]
         mock_client.messages.create.return_value = mock_response
 
         # Mock the Anthropic import
@@ -646,12 +656,16 @@ def test_example():
         """Test that LLM response with markdown fences is cleaned."""
         mock_client = Mock()
         mock_response = Mock()
-        mock_response.content = [Mock(text="""```python
+        mock_response.content = [
+            Mock(
+                text="""```python
 import pytest
 
 def test_example():
     assert True
-```""")]
+```"""
+            )
+        ]
         mock_client.messages.create.return_value = mock_response
 
         # Mock the Anthropic import
@@ -755,12 +769,14 @@ class TestRealTestValidator:
         """Test validation of passing tests."""
         # Create a simple passing test
         test_file = tmp_path / "test_example.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 import pytest
 
 def test_passes():
     assert True
-""")
+"""
+        )
 
         mock_result = Mock()
         mock_result.returncode = 0  # Success
@@ -777,10 +793,12 @@ def test_passes():
     def test_validate_tests_with_failing_tests(self, tmp_path):
         """Test validation detects failing tests."""
         test_file = tmp_path / "test_fail.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 def test_fails():
     assert False
-""")
+"""
+        )
 
         mock_result = Mock()
         mock_result.returncode = 1  # Failure
@@ -1059,14 +1077,18 @@ class TestRealDocumentationAnalyzerEdgeCases:
         src_dir = tmp_path / "src"
         src_dir.mkdir()
 
-        (src_dir / "__init__.py").write_text("""
+        (src_dir / "__init__.py").write_text(
+            """
 def public_function():
     pass
-""")
-        (src_dir / "__main__.py").write_text("""
+"""
+        )
+        (src_dir / "__main__.py").write_text(
+            """
 def main():
     pass
-""")
+"""
+        )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
         report = analyzer.analyze(target_path="src")
@@ -1080,11 +1102,13 @@ def main():
         src_dir.mkdir()
 
         (src_dir / "broken.py").write_text("def invalid syntax:")
-        (src_dir / "valid.py").write_text("""
+        (src_dir / "valid.py").write_text(
+            """
 def valid_function():
     '''Documented'''
     pass
-""")
+"""
+        )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
         report = analyzer.analyze(target_path="src")
@@ -1098,7 +1122,8 @@ def valid_function():
         src_dir = tmp_path / "src"
         src_dir.mkdir()
 
-        (src_dir / "test.py").write_text("""
+        (src_dir / "test.py").write_text(
+            """
 def public_function():
     pass
 
@@ -1110,7 +1135,8 @@ class PublicClass:
 
 class _PrivateClass:
     pass
-""")
+"""
+        )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
         report = analyzer.analyze(target_path="src")

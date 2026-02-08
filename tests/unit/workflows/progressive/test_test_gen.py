@@ -64,12 +64,14 @@ class TestProgressiveTestGenWorkflow:
 
         # Create file with no functions
         file_with_no_funcs = tmp_path / "no_funcs.py"
-        file_with_no_funcs.write_text('''
+        file_with_no_funcs.write_text(
+            '''
 """Module with no functions."""
 
 # Just a comment
 x = 42
-''')
+'''
+        )
 
         result = workflow.execute(target_file=str(file_with_no_funcs))
 
@@ -82,7 +84,8 @@ x = 42
 
         # Create simple file with 2 functions
         sample_file = tmp_path / "sample.py"
-        sample_file.write_text('''
+        sample_file.write_text(
+            '''
 def add(a, b):
     """Add two numbers."""
     return a + b
@@ -90,7 +93,8 @@ def add(a, b):
 def multiply(x, y):
     """Multiply two numbers."""
     return x * y
-''')
+'''
+        )
 
         functions = workflow._parse_functions(sample_file)
 
@@ -108,7 +112,8 @@ def multiply(x, y):
         workflow = ProgressiveTestGenWorkflow()
 
         sample_file = tmp_path / "sample.py"
-        sample_file.write_text('''
+        sample_file.write_text(
+            '''
 def documented_func(param1: str, param2: int) -> bool:
     """This is a well-documented function.
 
@@ -120,7 +125,8 @@ def documented_func(param1: str, param2: int) -> bool:
         A boolean value
     """
     return len(param1) > param2
-''')
+'''
+        )
 
         functions = workflow._parse_functions(sample_file)
 
@@ -134,10 +140,12 @@ def documented_func(param1: str, param2: int) -> bool:
 
         # Create file with syntax error
         bad_file = tmp_path / "bad.py"
-        bad_file.write_text("""
+        bad_file.write_text(
+            """
 def broken_func(
     # Missing closing paren and body
-""")
+"""
+        )
 
         functions = workflow._parse_functions(bad_file)
 
@@ -396,7 +404,8 @@ class TestExecuteTestFile:
     def test_execute_valid_test_file(self, tmp_path):
         """Test executing valid test file with passing tests."""
         test_file = tmp_path / "test_sample.py"
-        test_file.write_text('''
+        test_file.write_text(
+            '''
 def test_passing():
     """Test that passes."""
     assert 1 + 1 == 2
@@ -404,7 +413,8 @@ def test_passing():
 def test_also_passing():
     """Another passing test."""
     assert True
-''')
+'''
+        )
 
         result = execute_test_file(test_file)
 
@@ -432,22 +442,26 @@ class TestCalculateCoverage:
         """Test coverage calculation with valid files."""
         # Create source file
         source_file = tmp_path / "sample.py"
-        source_file.write_text("""
+        source_file.write_text(
+            """
 def add(a, b):
     return a + b
 
 def multiply(x, y):
     return x * y
-""")
+"""
+        )
 
         # Create test file
         test_file = tmp_path / "test_sample.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 from sample import add
 
 def test_add():
     assert add(1, 2) == 3
-""")
+"""
+        )
 
         coverage = calculate_coverage(test_file, source_file)
 
@@ -464,7 +478,8 @@ class TestIntegrationEndToEnd:
         """Test complete workflow from file to results."""
         # Create sample Python file
         source_file = tmp_path / "calculator.py"
-        source_file.write_text('''
+        source_file.write_text(
+            '''
 def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
@@ -472,7 +487,8 @@ def add(a: int, b: int) -> int:
 def subtract(a: int, b: int) -> int:
     """Subtract two numbers."""
     return a - b
-''')
+'''
+        )
 
         # Create workflow with escalation disabled (single tier)
         config = EscalationConfig(enabled=False)
@@ -494,11 +510,13 @@ def subtract(a: int, b: int) -> int:
     def test_end_to_end_with_escalation(self, tmp_path):
         """Test workflow with escalation enabled."""
         source_file = tmp_path / "app.py"
-        source_file.write_text('''
+        source_file.write_text(
+            '''
 def complex_function(data: dict) -> list:
     """Complex function that processes data."""
     return [item for item in data.values() if item > 0]
-''')
+'''
+        )
 
         # Create workflow with escalation enabled
         config = EscalationConfig(
@@ -525,10 +543,12 @@ def complex_function(data: dict) -> list:
     def test_workflow_generates_report(self, tmp_path):
         """Test workflow generates proper report."""
         source_file = tmp_path / "simple.py"
-        source_file.write_text("""
+        source_file.write_text(
+            """
 def hello() -> str:
     return "world"
-""")
+"""
+        )
 
         workflow = ProgressiveTestGenWorkflow()
         result = workflow.execute(target_file=str(source_file))

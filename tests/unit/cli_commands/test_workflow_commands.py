@@ -647,9 +647,7 @@ class TestCmdWorkflowRunJsonOutput:
     def test_run_json_output_mode_dict(self, mock_discover, capsys):
         """Test that --json flag outputs result as JSON."""
         mock_discover.return_value = {
-            "wf": _make_workflow_class(
-                execute_return={"status": "ok", "count": 5}
-            ),
+            "wf": _make_workflow_class(execute_return={"status": "ok", "count": 5}),
         }
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run

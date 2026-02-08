@@ -288,7 +288,8 @@ def main():
 
         # Create error comment
         with open("pr_comment.md", "w") as f:
-            f.write(f"""## 🔒 Security Scan Results
+            f.write(
+                f"""## 🔒 Security Scan Results
 
 ⚠️ **Error:** Could not complete security scan
 
@@ -297,7 +298,8 @@ def main():
 ```
 
 Please check the workflow logs for details.
-""")
+"""
+            )
 
         if args.github_output:
             with open(args.github_output, "a") as f:

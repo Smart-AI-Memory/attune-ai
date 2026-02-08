@@ -70,14 +70,16 @@ class TestHybridRouterInit:
     def test_init_loads_existing_preferences(self, tmp_path):
         """Test HybridRouter loads existing preferences from YAML."""
         prefs_path = tmp_path / "prefs.yaml"
-        prefs_path.write_text("""
+        prefs_path.write_text(
+            """
 preferences:
   mycommand:
     skill: testing
     args: run
     usage_count: 3
     confidence: 0.9
-""")
+"""
+        )
         router = HybridRouter(preferences_path=str(prefs_path))
         assert "mycommand" in router.preferences
         assert router.preferences["mycommand"].skill == "testing"
@@ -191,14 +193,16 @@ class TestInferCommand:
     def test_infer_command_learned_preference(self, tmp_path):
         """Test learned preference takes priority."""
         prefs_path = tmp_path / "prefs.yaml"
-        prefs_path.write_text("""
+        prefs_path.write_text(
+            """
 preferences:
   mykey:
     skill: custom
     args: custom-args
     usage_count: 5
     confidence: 0.9
-""")
+"""
+        )
         router = HybridRouter(preferences_path=str(prefs_path))
         result = router._infer_command("mykey")
         assert result is not None
@@ -341,14 +345,16 @@ class TestGetSuggestions:
     def test_get_suggestions_includes_learned(self, tmp_path):
         """Test suggestions include learned preferences."""
         prefs_path = tmp_path / "prefs.yaml"
-        prefs_path.write_text("""
+        prefs_path.write_text(
+            """
 preferences:
   custom:
     skill: myskill
     args: myargs
     usage_count: 1
     confidence: 0.8
-""")
+"""
+        )
         router = HybridRouter(preferences_path=str(prefs_path))
         suggestions = router.get_suggestions("cust")
         assert any("custom" in s for s in suggestions)
@@ -464,13 +470,15 @@ class TestBackwardCompatibility:
     def test_loads_old_slash_command_format(self, tmp_path):
         """Test loading old format with slash_command field."""
         prefs_path = tmp_path / "prefs.yaml"
-        prefs_path.write_text("""
+        prefs_path.write_text(
+            """
 preferences:
   oldkey:
     slash_command: /dev commit
     usage_count: 5
     confidence: 0.9
-""")
+"""
+        )
         router = HybridRouter(preferences_path=str(prefs_path))
         assert "oldkey" in router.preferences
         assert router.preferences["oldkey"].skill == "dev"

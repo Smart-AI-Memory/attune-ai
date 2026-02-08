@@ -22,9 +22,7 @@ def _mock_batch_workflow():
     The batch.py module does a top-level import of BatchProcessingWorkflow,
     so we patch it on the target module after it has been imported.
     """
-    with patch(
-        "attune.cli.commands.batch.BatchProcessingWorkflow"
-    ) as mock_cls:
+    with patch("attune.cli.commands.batch.BatchProcessingWorkflow") as mock_cls:
         mock_cls.return_value = MagicMock()
         yield mock_cls
 
@@ -141,9 +139,7 @@ class TestCmdBatchSubmit:
         mock_request.task_id = "task_1"
         mock_workflow_instance.load_requests_from_file.return_value = [mock_request]
         mock_workflow_instance.batch_provider.create_batch.return_value = "batch_xyz789"
-        mock_workflow_instance._format_messages.return_value = [
-            {"role": "user", "content": "test"}
-        ]
+        mock_workflow_instance._format_messages.return_value = [{"role": "user", "content": "test"}]
 
         args = _make_args(input_file=str(input_file))
 
@@ -364,8 +360,8 @@ class TestCmdBatchStatus:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-123")
 
         mock_workflow_instance = _mock_batch_workflow.return_value
-        mock_workflow_instance.batch_provider.get_batch_status.side_effect = (
-            ConnectionError("API unreachable")
+        mock_workflow_instance.batch_provider.get_batch_status.side_effect = ConnectionError(
+            "API unreachable"
         )
 
         args = _make_args(batch_id="batch_err", json=False)
@@ -442,7 +438,10 @@ class TestCmdBatchResults:
         mock_workflow_instance.batch_provider.get_batch_status.return_value = status
 
         # Simulate results as list of dict-like objects
-        result_1 = {"custom_id": "t1", "result": {"type": "succeeded", "message": {"content": "ok"}}}
+        result_1 = {
+            "custom_id": "t1",
+            "result": {"type": "succeeded", "message": {"content": "ok"}},
+        }
         result_2 = {"custom_id": "t2", "result": {"type": "errored", "error": "timeout"}}
         mock_workflow_instance.batch_provider.get_batch_results.return_value = [
             result_1,
@@ -531,9 +530,7 @@ class TestCmdBatchResults:
         mock_workflow_instance = _mock_batch_workflow.return_value
         mock_workflow_instance.batch_provider.get_batch_status.return_value = status
 
-        results_data = [
-            {"custom_id": f"t{i}", "result": {"type": "succeeded"}} for i in range(5)
-        ]
+        results_data = [{"custom_id": f"t{i}", "result": {"type": "succeeded"}} for i in range(5)]
         mock_workflow_instance.batch_provider.get_batch_results.return_value = results_data
 
         args = _make_args(batch_id="batch_all_ok", output_file="results.json")

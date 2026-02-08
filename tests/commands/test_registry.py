@@ -187,18 +187,22 @@ class TestCommandRegistry:
 
     def test_load_from_directory(self, registry, tmp_path):
         """Test loading commands from directory."""
-        (tmp_path / "cmd1.md").write_text("""---
+        (tmp_path / "cmd1.md").write_text(
+            """---
 name: cmd1
 ---
 
 Body.
-""")
-        (tmp_path / "cmd2.md").write_text("""---
+"""
+        )
+        (tmp_path / "cmd2.md").write_text(
+            """---
 name: cmd2
 ---
 
 Body.
-""")
+"""
+        )
 
         count = registry.load_from_directory(tmp_path)
 
@@ -209,13 +213,15 @@ Body.
     def test_load_from_file(self, registry, tmp_path):
         """Test loading single command file."""
         file_path = tmp_path / "single.md"
-        file_path.write_text("""---
+        file_path.write_text(
+            """---
 name: single
 description: Single command
 ---
 
 Body.
-""")
+"""
+        )
 
         config = registry.load_from_file(file_path)
 
@@ -224,25 +230,29 @@ Body.
 
     def test_reload(self, registry, tmp_path):
         """Test reloading commands."""
-        (tmp_path / "cmd.md").write_text("""---
+        (tmp_path / "cmd.md").write_text(
+            """---
 name: cmd
 description: Original
 ---
 
 Body.
-""")
+"""
+        )
 
         registry.load_from_directory(tmp_path)
         assert registry.get("cmd").description == "Original"
 
         # Modify file
-        (tmp_path / "cmd.md").write_text("""---
+        (tmp_path / "cmd.md").write_text(
+            """---
 name: cmd
 description: Updated
 ---
 
 Body.
-""")
+"""
+        )
 
         count = registry.reload()
 

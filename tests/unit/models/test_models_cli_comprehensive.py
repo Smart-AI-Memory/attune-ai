@@ -274,11 +274,13 @@ class TestValidateFileRealData:
     def test_validate_valid_yaml_file(self, tmp_path):
         """Test validating a valid workflow YAML config file."""
         config_file = tmp_path / "valid_config.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 name: test-workflow
 description: Test workflow for validation
 default_provider: anthropic
-""")
+"""
+        )
 
         result = validate_file(str(config_file))
 
@@ -291,10 +293,12 @@ default_provider: anthropic
     def test_validate_invalid_yaml_syntax(self, tmp_path, capsys):
         """Test validating a YAML file with syntax errors."""
         config_file = tmp_path / "invalid_syntax.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 mode: [
   invalid: yaml: syntax
-""")
+"""
+        )
 
         with pytest.raises(Exception):
             # Invalid YAML should raise exception
@@ -311,10 +315,12 @@ mode: [
     def test_validate_file_json_format(self, tmp_path, capsys):
         """Test validation output in JSON format."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 mode: single
 primary_provider: anthropic
-""")
+"""
+        )
 
         validate_file(str(config_file), format="json")
 

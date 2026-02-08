@@ -23,37 +23,45 @@ class TestAgentLoader:
             tmpdir = Path(tmpdir)
 
             # Create valid agent files
-            (tmpdir / "agent1.md").write_text("""---
+            (tmpdir / "agent1.md").write_text(
+                """---
 name: agent1
 description: First agent
 ---
 Agent 1 instructions.
-""")
-            (tmpdir / "agent2.md").write_text("""---
+"""
+            )
+            (tmpdir / "agent2.md").write_text(
+                """---
 name: agent2
 description: Second agent
 model: opus
 ---
 Agent 2 instructions.
-""")
+"""
+            )
 
             # Create a subdirectory with an agent
             subdir = tmpdir / "subdir"
             subdir.mkdir()
-            (subdir / "agent3.md").write_text("""---
+            (subdir / "agent3.md").write_text(
+                """---
 name: agent3
 description: Nested agent
 ---
 Agent 3 instructions.
-""")
+"""
+            )
 
             # Create files that should be skipped
             (tmpdir / "README.md").write_text("# README\nNot an agent.")
-            (tmpdir / "_private.md").write_text("""---
+            (tmpdir / "_private.md").write_text(
+                """---
 name: private
 ---
 Should be skipped.
-""")
+"""
+            )
 
             yield tmpdir
 
@@ -119,11 +127,13 @@ Should be skipped.
     def test_validate_directory(self, loader, temp_agents_dir):
         """Test validating a directory of agents."""
         # Add an invalid agent
-        (temp_agents_dir / "invalid.md").write_text("""---
+        (temp_agents_dir / "invalid.md").write_text(
+            """---
 description: No name
 ---
 Invalid.
-""")
+"""
+        )
 
         errors = loader.validate_directory(temp_agents_dir)
 
@@ -139,12 +149,14 @@ Invalid.
     def test_duplicate_names_warning(self, loader, temp_agents_dir):
         """Test that duplicate agent names are handled."""
         # Create a duplicate
-        (temp_agents_dir / "agent1_copy.md").write_text("""---
+        (temp_agents_dir / "agent1_copy.md").write_text(
+            """---
 name: agent1
 description: Duplicate
 ---
 Duplicate.
-""")
+"""
+        )
 
         agents = loader.load_directory(temp_agents_dir)
 
@@ -162,20 +174,24 @@ class TestLoadAgentsFromPaths:
 
             # Create a file
             file_path = tmpdir / "single.md"
-            file_path.write_text("""---
+            file_path.write_text(
+                """---
 name: single
 ---
 Single agent.
-""")
+"""
+            )
 
             # Create a directory with agents
             dir_path = tmpdir / "agents"
             dir_path.mkdir()
-            (dir_path / "dir_agent.md").write_text("""---
+            (dir_path / "dir_agent.md").write_text(
+                """---
 name: dir-agent
 ---
 Directory agent.
-""")
+"""
+            )
 
             agents = load_agents_from_paths([file_path, dir_path])
 
