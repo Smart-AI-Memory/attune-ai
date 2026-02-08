@@ -115,9 +115,7 @@ class APIKeyAuth:
             return False
 
         # Constant-time comparison via HMAC
-        provided_hash = hmac.new(
-            b"empathy-api-key-auth", provided_key.encode(), "sha256"
-        ).digest()
+        provided_hash = hmac.new(b"empathy-api-key-auth", provided_key.encode(), "sha256").digest()
         return hmac.compare_digest(provided_hash, self._key_hash)
 
 

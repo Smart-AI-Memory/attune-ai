@@ -416,9 +416,7 @@ class TrafficAllocator:
         """Deterministic allocation based on user ID hash."""
         # Hash user ID for consistent assignment (not for security)
         hash_val = int(
-            hashlib.sha256(
-                f"{self.experiment.experiment_id}:{user_id}".encode()
-            ).hexdigest(),
+            hashlib.sha256(f"{self.experiment.experiment_id}:{user_id}".encode()).hexdigest(),
             16,
         )
         bucket = hash_val % 100
