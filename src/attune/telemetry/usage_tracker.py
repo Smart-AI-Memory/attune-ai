@@ -30,6 +30,9 @@ class UsageTracker:
 
     # Class-level lock for thread safety across all instances
     _lock = threading.Lock()
+    # Monotonic sequence counter for deterministic ordering
+    # (datetime may have low resolution on some platforms)
+    _seq_counter: int = 0
     # Singleton instance
     _instance: "UsageTracker | None" = None
 
@@ -112,9 +115,11 @@ class UsageTracker:
 
         """
         # Build entry
+        UsageTracker._seq_counter += 1
         entry: dict[str, Any] = {
             "v": "1.0",
             "ts": datetime.utcnow().isoformat() + "Z",
+            "seq": UsageTracker._seq_counter,
             "workflow": workflow,
             "tier": tier,
             "model": model,
@@ -298,8 +303,10 @@ class UsageTracker:
                 logger.debug(f"Failed to read telemetry file: {file.name}")
                 continue
 
-        # Sort by timestamp (most recent first) and limit
-        entries.sort(key=lambda e: e.get("ts", ""), reverse=True)
+        # Sort by timestamp (most recent first), using sequence number as
+        # tiebreaker when timestamps are identical (can happen on platforms
+        # with low datetime resolution, e.g. ~15ms on some Windows systems)
+        entries.sort(key=lambda e: (e.get("ts", ""), e.get("seq", 0)), reverse=True)
         return entries[:limit]
 
     def get_stats(self, days: int = 30) -> dict[str, Any]:
