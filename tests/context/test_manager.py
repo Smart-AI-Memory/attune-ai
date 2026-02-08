@@ -1,6 +1,7 @@
 """Tests for the ContextManager class."""
 
 import tempfile
+import time
 from datetime import datetime
 
 from attune_llm.context.compaction import CompactState
@@ -209,12 +210,15 @@ class TestContextManager:
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = ContextManager(storage_dir=tmpdir)
 
-            # Save multiple sessions
+            # Save multiple sessions with delay to ensure distinct filenames
+            # (some platforms have low-resolution timestamps that can collide)
             manager.session_id = "session-alpha"
             collab1 = CollaborationState(user_id="session_user")
             collab1.trust_level = 0.6
             collab1.current_level = 2
             manager.save_for_compaction(collab1)
+
+            time.sleep(0.05)  # Ensure distinct timestamp on all platforms
 
             manager.session_id = "session-beta"
             collab2 = CollaborationState(user_id="session_user")
@@ -327,10 +331,12 @@ class TestContextManager:
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = ContextManager(storage_dir=tmpdir)
 
-            # Save some states
+            # Save some states with delays to ensure distinct filenames
+            # (some platforms have low-resolution timestamps that can collide)
             for _i in range(3):
                 collab = CollaborationState(user_id="clear_user")
                 manager.save_for_compaction(collab)
+                time.sleep(0.05)  # Ensure distinct timestamp on all platforms
 
             # Clear
             cleared = manager.clear_states("clear_user")

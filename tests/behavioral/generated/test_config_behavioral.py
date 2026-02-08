@@ -8,6 +8,7 @@ Licensed under Apache 2.0
 
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -98,8 +99,9 @@ def test_validate_file_path_success():
 
 def test_validate_file_path_dangerous_path_raises_error():
     """Verify validation prevents writes to system directories."""
+    dangerous_path = "C:\\Windows\\System32\\test.txt" if sys.platform == "win32" else "/etc/passwd"
     with pytest.raises(ValueError):
-        _validate_file_path("/etc/passwd")
+        _validate_file_path(dangerous_path)
 
 
 def test_validate_file_path_null_bytes_raises_error():

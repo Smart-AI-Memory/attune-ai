@@ -81,7 +81,8 @@ class TestProviderDetection:
     """Tests for provider detection logic (Anthropic-only)."""
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
-    def test_detect_anthropic_from_env(self):
+    @patch.object(ProviderConfig, "_load_env_files", return_value={})
+    def test_detect_anthropic_from_env(self, mock_env):
         """Test detection of Anthropic from environment variable."""
         available = ProviderConfig.detect_available_providers()
         assert "anthropic" in available

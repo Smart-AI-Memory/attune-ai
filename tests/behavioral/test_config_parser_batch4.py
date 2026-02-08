@@ -14,6 +14,7 @@ Licensed under Apache 2.0
 
 import json
 import os
+import sys
 from dataclasses import asdict
 from unittest.mock import patch
 
@@ -53,16 +54,29 @@ class TestFilePathValidation:
 
     def test_blocks_system_directories(self):
         """Test validation blocks writes to system directories."""
-        dangerous_paths = ["/etc/passwd", "/sys/kernel", "/proc/self", "/dev/null"]
+        if sys.platform == "win32":
+            dangerous_paths = [
+                "C:\\Windows\\System32\\test",
+                "C:\\Windows\\SysWOW64\\test",
+                "C:\\Program Files\\test",
+                "C:\\Program Files (x86)\\test",
+            ]
+        else:
+            dangerous_paths = ["/etc/passwd", "/sys/kernel", "/proc/self", "/dev/null"]
         for path in dangerous_paths:
             with pytest.raises(ValueError, match="Cannot write to system directory"):
                 _validate_file_path(path)
 
     def test_blocks_path_traversal(self):
         """Test validation blocks path traversal to system directories."""
-        # On macOS, /etc resolves to /private/etc, so test the resolved path
-        with pytest.raises(ValueError, match="Cannot write to system directory"):
-            _validate_file_path("/private/etc/passwd")
+        if sys.platform == "win32":
+            # On Windows, test a system directory path
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Windows\\System32\\drivers\\etc\\hosts")
+        else:
+            # On macOS, /etc resolves to /private/etc, so test the resolved path
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("/private/etc/passwd")
 
     def test_requires_non_empty_string(self):
         """Test validation requires non-empty string."""

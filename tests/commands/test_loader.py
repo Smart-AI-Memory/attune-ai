@@ -185,7 +185,7 @@ Body.
     def test_validate_directory_nonexistent(self, loader):
         """Test validating non-existent directory."""
         results = loader.validate_directory("/nonexistent")
-        assert "/nonexistent" in str(list(results.keys())[0])
+        assert "nonexistent" in str(list(results.keys())[0])
 
     def test_get_command_names(self, loader, commands_dir):
         """Test getting command names without full loading."""

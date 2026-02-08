@@ -382,8 +382,9 @@ class FileSessionMemory:
         tmp_path = validated_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
 
-        # Atomic rename
-        tmp_path.rename(validated_path)
+        # Atomic rename (use replace() for cross-platform support -
+        # rename() fails on Windows when target exists)
+        tmp_path.replace(validated_path)
 
     def _archive_session(self, state: SessionState) -> Path:
         """Archive a session to compressed storage."""

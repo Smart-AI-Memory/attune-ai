@@ -51,11 +51,28 @@ def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
         except ValueError:
             raise ValueError(f"path must be within {allowed_dir}")
 
-    # Check for dangerous system paths
-    dangerous_paths = ["/etc", "/sys", "/proc", "/dev"]
-    for dangerous in dangerous_paths:
-        if str(resolved).startswith(dangerous):
-            raise ValueError(f"Cannot write to system directory: {dangerous}")
+    # Check for dangerous system paths (cross-platform)
+    import sys
+
+    resolved_str = str(resolved)
+    if sys.platform == "win32":
+        resolved_lower = resolved_str.lower()
+        win_dangerous = [
+            "\\windows\\system32",
+            "\\windows\\syswow64",
+            "\\program files",
+        ]
+        for dangerous in win_dangerous:
+            if dangerous in resolved_lower:
+                raise ValueError(f"Cannot write to system directory: {dangerous}")
+        for marker in ["\\etc\\", "\\sys\\", "\\proc\\", "\\dev\\"]:
+            if marker in resolved_lower or resolved_lower.endswith(marker.rstrip("\\")):
+                raise ValueError(f"Cannot write to system directory: {marker.strip(chr(92))}")
+    else:
+        dangerous_paths = ["/etc", "/sys", "/proc", "/dev"]
+        for dangerous in dangerous_paths:
+            if resolved_str.startswith(dangerous + "/") or resolved_str == dangerous:
+                raise ValueError(f"Cannot write to system directory: {dangerous}")
 
     return resolved
 

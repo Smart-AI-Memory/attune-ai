@@ -163,12 +163,13 @@ class TestCommandConfig:
     def test_to_dict(self):
         """Test conversion to dictionary."""
         meta = CommandMetadata(name="test", tags=["tag1"])
+        source = Path("/path/to/test.md")
         config = CommandConfig(
             name="test",
             description="Desc",
             body="Body",
             metadata=meta,
-            source_file=Path("/path/to/test.md"),
+            source_file=source,
         )
 
         data = config.to_dict()
@@ -177,7 +178,7 @@ class TestCommandConfig:
         assert data["description"] == "Desc"
         assert data["body"] == "Body"
         assert data["metadata"]["tags"] == ["tag1"]
-        assert data["source_file"] == "/path/to/test.md"
+        assert data["source_file"] == str(source)
 
     def test_from_dict(self):
         """Test creation from dictionary."""

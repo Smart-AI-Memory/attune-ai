@@ -7,6 +7,7 @@ Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
@@ -156,9 +157,16 @@ class TestValidateFilePathBehavior:
         """Test that _validate_file_path blocks dangerous system paths."""
         from attune.config import _validate_file_path
 
-        # Test paths that are reliably blocked across all operating systems
-        # Note: /etc may resolve to /private/etc on macOS and not be blocked
-        dangerous_paths = ["/sys/kernel", "/proc/self", "/dev/null"]
+        # Test paths that are reliably blocked (cross-platform)
+        if sys.platform == "win32":
+            dangerous_paths = [
+                "C:\\Windows\\System32\\test",
+                "C:\\Windows\\SysWOW64\\test",
+                "C:\\Program Files\\test",
+            ]
+        else:
+            # Note: /etc may resolve to /private/etc on macOS and not be blocked
+            dangerous_paths = ["/sys/kernel", "/proc/self", "/dev/null"]
 
         for path in dangerous_paths:
             # BEHAVIORAL: Actually call _validate_file_path and expect error

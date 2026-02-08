@@ -8,6 +8,7 @@ Licensed under Apache 2.0
 
 import json
 import os
+import sys
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
@@ -96,19 +97,31 @@ class TestValidateFilePath:
 
     def test_rejects_dangerous_system_paths(self):
         """Given system path, when validating, then raises ValueError."""
-        # Given
-        dangerous_paths = ["/etc/passwd", "/sys/kernel", "/proc/self", "/dev/null"]
+        # Given - use platform-appropriate dangerous paths
+        if sys.platform == "win32":
+            dangerous_paths = [
+                "C:\\Windows\\System32\\test",
+                "C:\\Windows\\SysWOW64\\test",
+                "C:\\Program Files\\test",
+            ]
+        else:
+            dangerous_paths = ["/etc/passwd", "/sys/kernel", "/proc/self", "/dev/null"]
 
         # When/Then
         for path in dangerous_paths:
-            # Mock Path.resolve to ensure it returns the dangerous path
-            with patch("pathlib.Path.resolve") as mock_resolve:
-                mock_resolved = Mock(spec=Path)
-                mock_resolved.__str__ = Mock(return_value=path)
-                mock_resolve.return_value = mock_resolved
-
+            if sys.platform == "win32":
+                # On Windows, paths resolve naturally to blocked directories
                 with pytest.raises(ValueError, match="Cannot write to system directory"):
                     _validate_file_path(path)
+            else:
+                # Mock Path.resolve to ensure it returns the dangerous path
+                with patch("pathlib.Path.resolve") as mock_resolve:
+                    mock_resolved = Mock(spec=Path)
+                    mock_resolved.__str__ = Mock(return_value=path)
+                    mock_resolve.return_value = mock_resolved
+
+                    with pytest.raises(ValueError, match="Cannot write to system directory"):
+                        _validate_file_path(path)
 
 
 class TestEmpathyConfigInit:
@@ -530,10 +543,13 @@ class TestEmpathyConfigToYaml:
         """Given dangerous path, when saving, then validates path."""
         # Given
         config = EmpathyConfig()
+        dangerous_path = (
+            "C:\\Windows\\System32\\test.yaml" if sys.platform == "win32" else "/etc/passwd"
+        )
 
         # When/Then
         with pytest.raises(ValueError):
-            config.to_yaml("/etc/passwd")
+            config.to_yaml(dangerous_path)
 
 
 class TestEmpathyConfigToJson:
@@ -576,10 +592,13 @@ class TestEmpathyConfigToJson:
         """Given dangerous path, when saving JSON, then validates path."""
         # Given
         config = EmpathyConfig()
+        dangerous_path = (
+            "C:\\Windows\\System32\\test.json" if sys.platform == "win32" else "/etc/shadow"
+        )
 
         # When/Then
         with pytest.raises(ValueError):
-            config.to_json("/etc/shadow")
+            config.to_json(dangerous_path)
 
 
 class TestEmpathyConfigToDict:

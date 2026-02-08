@@ -132,16 +132,24 @@ class TestValidateFilePath:
 
     def test_rejects_dangerous_system_paths(self):
         """Given a dangerous system path, when validating, then raises ValueError."""
-        # Test system directory paths that should be blocked
-        dangerous_patterns = [
-            "/etc/",
-            "/sys/",
-            "/proc/",
-            "/dev/",
-            "/private/etc/",
-            "/usr/bin/",
-            "/bin/",
-        ]
+        # Test system directory paths that should be blocked (cross-platform)
+        if sys.platform == "win32":
+            dangerous_patterns = [
+                "C:\\Windows\\System32\\",
+                "C:\\Windows\\SysWOW64\\",
+                "C:\\Program Files\\",
+                "C:\\Program Files (x86)\\",
+            ]
+        else:
+            dangerous_patterns = [
+                "/etc/",
+                "/sys/",
+                "/proc/",
+                "/dev/",
+                "/private/etc/",
+                "/usr/bin/",
+                "/bin/",
+            ]
 
         for pattern in dangerous_patterns:
             with pytest.raises(ValueError, match="Cannot write to system directory"):
