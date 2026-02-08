@@ -694,7 +694,7 @@ async def test_health_check_integration(tmp_path):
         assert report.grade in ["A", "B", "C"]
         assert len(report.category_scores) == 5
         assert len(report.recommendations) > 0
-        assert report.execution_time > 0
+        assert report.execution_time >= 0  # May be 0.0 with fast mocks on Windows
 
         # Verify tracking history was saved
         history_file = workflow.tracking_dir / "history.jsonl"

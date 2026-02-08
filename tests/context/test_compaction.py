@@ -1,6 +1,7 @@
 """Tests for compaction state management."""
 
 import tempfile
+import time
 from pathlib import Path
 
 from attune_llm.context.compaction import (
@@ -376,7 +377,7 @@ class TestCompactionStateManager:
                 max_states_per_user=5,
             )
 
-            # Save 3 states
+            # Save 3 states (sleep ensures unique timestamps on Windows)
             for i in range(3):
                 state = CompactState(
                     user_id="all_states_user",
@@ -384,6 +385,7 @@ class TestCompactionStateManager:
                     empathy_level=i + 1,
                 )
                 manager.save_state(state)
+                time.sleep(0.02)
 
             states = manager.get_all_states("all_states_user")
             assert len(states) == 3
@@ -397,7 +399,7 @@ class TestCompactionStateManager:
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = CompactionStateManager(storage_dir=tmpdir)
 
-            # Save states
+            # Save states (sleep ensures unique timestamps on Windows)
             for _i in range(3):
                 state = CompactState(
                     user_id="clear_user",
@@ -405,6 +407,7 @@ class TestCompactionStateManager:
                     empathy_level=1,
                 )
                 manager.save_state(state)
+                time.sleep(0.02)
 
             # Clear
             removed = manager.clear_user_states("clear_user")
