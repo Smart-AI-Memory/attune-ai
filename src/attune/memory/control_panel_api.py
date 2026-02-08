@@ -84,9 +84,14 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
     def _get_cors_origin(self) -> str:
         """Get appropriate CORS origin header value."""
+        origin = self.headers.get("Origin", "")
+
+        # Prevent HTTP response splitting via CRLF injection
+        if "\r" in origin or "\n" in origin:
+            return "http://localhost:8765"
+
         if self.allowed_origins is None:
             # Default: allow localhost only
-            origin = self.headers.get("Origin", "")
             if origin.startswith("http://localhost") or origin.startswith("https://localhost"):
                 return origin
             return "http://localhost:8765"
@@ -94,7 +99,6 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
         if "*" in self.allowed_origins:
             return "*"
 
-        origin = self.headers.get("Origin", "")
         if origin in self.allowed_origins:
             return origin
 
@@ -352,6 +356,7 @@ def run_api_server(
     if ssl_certfile and ssl_keyfile:
         if Path(ssl_certfile).exists() and Path(ssl_keyfile).exists():
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context.minimum_version = ssl.TLSVersion.TLSv1_2
             context.load_cert_chain(ssl_certfile, ssl_keyfile)
             server.socket = context.wrap_socket(server.socket, server_side=True)
             use_https = True

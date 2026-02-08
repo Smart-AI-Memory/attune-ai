@@ -350,7 +350,7 @@ class HeartbeatCoordinator:
                     return result if isinstance(result, dict) else None
             return None
         except Exception as e:
-            logger.debug(f"Failed to retrieve heartbeat {key}: {e}")
+            logger.debug("Failed to retrieve heartbeat %s", key, exc_info=True)
             return None
 
     def get_stale_agents(self, threshold_seconds: float = 60.0) -> list[AgentHeartbeat]:

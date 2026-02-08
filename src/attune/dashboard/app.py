@@ -429,11 +429,11 @@ async def get_system_health():
             "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.exception("Health check failed")
         return {
             "status": "unhealthy",
             "redis_available": False,
-            "error": str(e),
+            "error": "Health check failed. Check server logs for details.",
             "timestamp": datetime.utcnow().isoformat(),
         }
 

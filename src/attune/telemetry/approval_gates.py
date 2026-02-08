@@ -435,7 +435,10 @@ class ApprovalGate:
             logger.debug(f"Failed to send approval_response signal: {e}")
 
         logger.info(
-            f"Approval response recorded: {request_id} → {'APPROVED' if approved else 'REJECTED'} by {responder}"
+            "Approval response recorded: %s → %s by %s",
+            request_id,
+            "APPROVED" if approved else "REJECTED",
+            responder,
         )
         return True
 

@@ -367,7 +367,7 @@ class WizardFactoryTester:
             from jinja2 import Environment, FileSystemLoader
 
             template_dir = Path("scaffolding/templates")
-            env = Environment(loader=FileSystemLoader(str(template_dir)))
+            env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=True)
 
             templates = [
                 "linear_flow_wizard.py.jinja2",

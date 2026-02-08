@@ -333,7 +333,7 @@ class EventStreamer:
             return events
 
         except Exception as e:
-            logger.error(f"Failed to get recent events for {event_type}: {e}")
+            logger.error("Failed to get recent events for %s", event_type, exc_info=True)
             return []
 
     def get_stream_info(self, event_type: str) -> dict[str, Any]:

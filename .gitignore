@@ -233,3 +233,12 @@ uv.lock
 # Dev scripts (local only)
 /scripts/profile_workflows.py
 planning/
+
+# Healthcare examples (demo files with simulated patient data)
+attune_healthcare/examples/
+
+# VS Code memory panel (separate project)
+vscode-memory-panel/
+
+# Workflow scaffolding (code generation templates)
+workflow_scaffolding/

@@ -416,8 +416,8 @@ class TrafficAllocator:
         """Deterministic allocation based on user ID hash."""
         # Hash user ID for consistent assignment (not for security)
         hash_val = int(
-            hashlib.md5(
-                f"{self.experiment.experiment_id}:{user_id}".encode(), usedforsecurity=False
+            hashlib.sha256(
+                f"{self.experiment.experiment_id}:{user_id}".encode()
             ).hexdigest(),
             16,
         )

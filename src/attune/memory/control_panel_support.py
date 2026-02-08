@@ -7,6 +7,7 @@ Licensed under Fair Source 0.9
 """
 
 import hashlib
+import hmac
 import os
 import time
 from collections import defaultdict
@@ -87,10 +88,12 @@ class APIKeyAuth:
         """
         self.api_key = api_key or os.environ.get("EMPATHY_MEMORY_API_KEY")
         self.enabled = bool(self.api_key)
-        self._key_hash: str | None = None
+        self._key_hash: bytes | None = None
         if self.enabled and self.api_key:
-            # Store hash of API key for comparison
-            self._key_hash = hashlib.sha256(self.api_key.encode()).hexdigest()
+            # Store HMAC of API key for secure comparison
+            self._key_hash = hmac.new(
+                b"empathy-api-key-auth", self.api_key.encode(), "sha256"
+            ).digest()
             logger.info("api_key_auth_enabled")
         else:
             logger.info("api_key_auth_disabled", reason="no_key_configured")
@@ -111,9 +114,11 @@ class APIKeyAuth:
         if not provided_key:
             return False
 
-        # Constant-time comparison via hash
-        provided_hash = hashlib.sha256(provided_key.encode()).hexdigest()
-        return provided_hash == self._key_hash
+        # Constant-time comparison via HMAC
+        provided_hash = hmac.new(
+            b"empathy-api-key-auth", provided_key.encode(), "sha256"
+        ).digest()
+        return hmac.compare_digest(provided_hash, self._key_hash)
 
 
 @dataclass
