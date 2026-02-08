@@ -19,6 +19,7 @@ This test suite demonstrates progressive complexity:
 Phase 2 Focus: Testing stateful systems with external dependencies
 """
 
+import importlib.util
 import time
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -429,6 +430,10 @@ class TestConnectionRetry:
         assert config.retry_base_delay == 0.5
         assert config.retry_max_delay == 10.0
 
+    @pytest.mark.skipif(
+        not importlib.util.find_spec("redis"),
+        reason="redis not installed",
+    )
     @patch("attune.memory.short_term.redis.Redis")
     @patch("attune.memory.short_term.logger")
     def test_connection_retry_on_failure(self, mock_logger, mock_redis_class):

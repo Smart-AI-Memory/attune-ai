@@ -486,13 +486,11 @@ class TestMultiBackendMonitoring:
 
     def test_registers_backend(self):
         """Test registering a monitoring backend."""
-        from attune.monitoring.multi_backend import get_multi_backend
+        from attune.monitoring.multi_backend import TelemetryBackend, get_multi_backend
 
         monitor = get_multi_backend()
 
-        mock_backend = Mock()
-        mock_backend.log_call = Mock()
-        mock_backend.log_workflow = Mock()
+        mock_backend = Mock(spec=TelemetryBackend)
 
         # add_backend takes only one argument (the backend object)
         monitor.add_backend(mock_backend)
@@ -504,14 +502,16 @@ class TestMultiBackendMonitoring:
         """Test sending metrics to all registered backends."""
         from datetime import datetime
 
-        from attune.monitoring.multi_backend import LLMCallRecord, get_multi_backend
+        from attune.monitoring.multi_backend import (
+            LLMCallRecord,
+            TelemetryBackend,
+            get_multi_backend,
+        )
 
         monitor = get_multi_backend()
 
-        backend1 = Mock()
-        backend1.log_call = Mock()
-        backend2 = Mock()
-        backend2.log_call = Mock()
+        backend1 = Mock(spec=TelemetryBackend)
+        backend2 = Mock(spec=TelemetryBackend)
 
         monitor.add_backend(backend1)
         monitor.add_backend(backend2)
@@ -539,17 +539,20 @@ class TestMultiBackendMonitoring:
         """Test graceful handling of backend failures."""
         from datetime import datetime
 
-        from attune.monitoring.multi_backend import LLMCallRecord, get_multi_backend
+        from attune.monitoring.multi_backend import (
+            LLMCallRecord,
+            TelemetryBackend,
+            get_multi_backend,
+        )
 
         monitor = get_multi_backend()
 
         # Backend that always fails
-        failing_backend = Mock()
+        failing_backend = Mock(spec=TelemetryBackend)
         failing_backend.log_call = Mock(side_effect=Exception("Backend unavailable"))
 
         # Working backend
-        working_backend = Mock()
-        working_backend.log_call = Mock()
+        working_backend = Mock(spec=TelemetryBackend)
 
         monitor.add_backend(failing_backend)
         monitor.add_backend(working_backend)

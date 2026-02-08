@@ -18,6 +18,7 @@ Licensed under Apache 2.0
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -452,18 +453,20 @@ class TestAuthStrategyPersistence:
 class TestGetAuthStrategy:
     """Test get_auth_strategy function."""
 
-    def test_get_auth_strategy_loads_from_home(self):
+    @patch("attune.models.auth_strategy.configure_auth_interactive")
+    def test_get_auth_strategy_loads_from_home(self, mock_interactive):
         """Test that get_auth_strategy loads from home directory."""
-        # This will load from ~/.attune/auth_strategy.json if it exists
-        # or return default if it doesn't
+        # Prevent interactive prompt in CI (no stdin available)
+        mock_interactive.return_value = AuthStrategy()
         strategy = get_auth_strategy()
 
         assert isinstance(strategy, AuthStrategy)
 
-    def test_get_auth_strategy_returns_default_if_not_configured(self):
+    @patch("attune.models.auth_strategy.configure_auth_interactive")
+    def test_get_auth_strategy_returns_default_if_not_configured(self, mock_interactive):
         """Test that get_auth_strategy returns default if not configured."""
-        # Since we can't control the user's home directory in tests,
-        # we just verify it returns a valid AuthStrategy
+        # Prevent interactive prompt in CI (no stdin available)
+        mock_interactive.return_value = AuthStrategy()
         strategy = get_auth_strategy()
 
         assert isinstance(strategy, AuthStrategy)

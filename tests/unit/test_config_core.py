@@ -60,7 +60,14 @@ class TestValidateFilePath:
             "/usr/bin/python",
             "/usr/sbin/nologin",
             "/bin/sh",
-            "/sbin/init",
+            pytest.param(
+                "/sbin/init",
+                marks=pytest.mark.skipif(
+                    not Path("/sbin/init").exists()
+                    or not str(Path("/sbin/init").resolve()).startswith(("/sbin", "/usr/sbin")),
+                    reason="/sbin/init resolves outside /sbin on this OS (e.g. to systemd)",
+                ),
+            ),
         ],
     )
     def test_rejects_system_directories(self, dangerous: str) -> None:

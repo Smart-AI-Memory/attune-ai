@@ -10,6 +10,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under Fair Source License 0.9
 """
 
+import os
 from datetime import datetime, timedelta
 
 import pytest
@@ -18,7 +19,11 @@ from attune.models.empathy_executor import EmpathyLLMExecutor
 from attune.models.fallback import SONNET_TO_OPUS_FALLBACK, CircuitBreaker, ResilientExecutor
 from attune.models.telemetry import TelemetryAnalytics, get_telemetry_store
 
+HAS_API_KEY = bool(os.getenv("ANTHROPIC_API_KEY"))
+needs_api_key = pytest.mark.skipif(not HAS_API_KEY, reason="ANTHROPIC_API_KEY not set")
 
+
+@needs_api_key
 class TestSonnetOpusFallback:
     """Test suite for Sonnet → Opus fallback mechanism."""
 
@@ -206,6 +211,7 @@ class TestSonnetOpusAnalytics:
 
 
 # Integration test scenarios
+@needs_api_key
 @pytest.mark.integration
 class TestSonnetOpusFallbackIntegration:
     """Integration tests for real-world scenarios."""

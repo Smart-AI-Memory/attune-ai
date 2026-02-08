@@ -1,6 +1,7 @@
 """Tests for attune.tools - interactive user prompting tools."""
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,6 +13,12 @@ from attune.tools import (
     _ask_via_claude_code_ipc,
     _is_running_in_claude_code,
     set_ask_user_question_handler,
+)
+
+# Skip entire module when running inside Claude Code (env vars interfere with tests)
+pytestmark = pytest.mark.skipif(
+    bool(os.getenv("CLAUDE_CODE_SESSION") or os.getenv("CLAUDE_AGENT_MODE")),
+    reason="Tests interfere with Claude Code environment variables",
 )
 
 
