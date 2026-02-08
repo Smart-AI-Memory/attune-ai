@@ -414,12 +414,11 @@ class TrafficAllocator:
 
     def _fixed_allocation(self, user_id: str) -> Variant:
         """Deterministic allocation based on user ID hash."""
-        # Hash user ID for consistent assignment (not for security)
-        hash_val = int(
-            hashlib.sha256(f"{self.experiment.experiment_id}:{user_id}".encode()).hexdigest(),
-            16,
-        )
-        bucket = hash_val % 100
+        # Deterministic bucket assignment using CRC32 (not cryptographic/not for security)
+        import zlib
+
+        bucket_key = f"{self.experiment.experiment_id}:{user_id}"
+        bucket = zlib.crc32(bucket_key.encode()) % 100
 
         cumulative = 0.0
         for variant in self.experiment.variants:

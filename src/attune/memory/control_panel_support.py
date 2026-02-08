@@ -6,6 +6,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under Fair Source 0.9
 """
 
+import hashlib
 import hmac
 import os
 import time
@@ -88,11 +89,12 @@ class APIKeyAuth:
         self.api_key = api_key or os.environ.get("EMPATHY_MEMORY_API_KEY")
         self.enabled = bool(self.api_key)
         self._key_hash: bytes | None = None
+        self._salt = b"empathy-api-key-auth-salt"
         if self.enabled and self.api_key:
-            # Store HMAC of API key for secure comparison
-            self._key_hash = hmac.new(
-                b"empathy-api-key-auth", self.api_key.encode(), "sha256"
-            ).digest()
+            # Store PBKDF2 derived key for secure comparison
+            self._key_hash = hashlib.pbkdf2_hmac(
+                "sha256", self.api_key.encode(), self._salt, iterations=100_000
+            )
             logger.info("api_key_auth_enabled")
         else:
             logger.info("api_key_auth_disabled", reason="no_key_configured")
@@ -113,8 +115,10 @@ class APIKeyAuth:
         if not provided_key:
             return False
 
-        # Constant-time comparison via HMAC
-        provided_hash = hmac.new(b"empathy-api-key-auth", provided_key.encode(), "sha256").digest()
+        # Constant-time comparison via PBKDF2
+        provided_hash = hashlib.pbkdf2_hmac(
+            "sha256", provided_key.encode(), self._salt, iterations=100_000
+        )
         return hmac.compare_digest(provided_hash, self._key_hash)
 
 
