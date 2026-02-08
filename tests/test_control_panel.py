@@ -14,6 +14,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under Fair Source 0.9
 """
 
+import importlib.util
 import json
 import tempfile
 from pathlib import Path
@@ -512,6 +513,10 @@ class TestMemoryControlPanelHealthCheck:
 class TestMemoryControlPanelInternalMethods:
     """Test internal/private methods"""
 
+    @pytest.mark.skipif(
+        not importlib.util.find_spec("redis"),
+        reason="redis not installed",
+    )
     @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.control_panel._check_redis_running")
     def test_get_short_term_creates_instance(self, mock_check, mock_redis_cls):
@@ -526,6 +531,10 @@ class TestMemoryControlPanelInternalMethods:
         assert memory is not None
         assert panel._short_term is not None
 
+    @pytest.mark.skipif(
+        not importlib.util.find_spec("redis"),
+        reason="redis not installed",
+    )
     @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.control_panel._check_redis_running")
     def test_get_short_term_reuses_instance(self, mock_check, mock_redis_cls):

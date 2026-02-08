@@ -14,8 +14,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from attune.memory.short_term.transactions import TransactionManager
-from attune.memory.types import AccessTier, AgentCredentials, StagedPattern
+pytest.importorskip("redis")
+
+from attune.memory.short_term.transactions import TransactionManager  # noqa: E402
+from attune.memory.types import AccessTier, AgentCredentials, StagedPattern  # noqa: E402
 
 
 @pytest.fixture

@@ -22,9 +22,9 @@ sys.modules.setdefault("watchdog.events", MagicMock())
 sys.modules.setdefault("watchdog.observers", MagicMock())
 
 # We need to reset the global _config singleton between tests
-import attune.hot_reload.config as _config_module
-from attune.hot_reload.config import HotReloadConfig, get_hot_reload_config
-from attune.hot_reload.reloader import ReloadResult, WorkflowReloader
+import attune.hot_reload.config as _config_module  # noqa: E402
+from attune.hot_reload.config import HotReloadConfig, get_hot_reload_config  # noqa: E402
+from attune.hot_reload.reloader import ReloadResult, WorkflowReloader  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # HotReloadConfig

@@ -69,7 +69,7 @@ def main():
         try:
             with open(file_path, encoding="utf-8") as f:
                 code = f.read()
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             print(f"⚠️  Could not read {file_path}: {e}")
             continue
 

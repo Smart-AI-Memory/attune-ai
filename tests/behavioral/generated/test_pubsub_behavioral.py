@@ -15,8 +15,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from attune.memory.short_term.pubsub import PubSubManager
-from attune.memory.types import AccessTier, AgentCredentials
+pytest.importorskip("redis")
+
+from attune.memory.short_term.pubsub import PubSubManager  # noqa: E402
+from attune.memory.types import AccessTier, AgentCredentials  # noqa: E402
 
 if TYPE_CHECKING:
     pass

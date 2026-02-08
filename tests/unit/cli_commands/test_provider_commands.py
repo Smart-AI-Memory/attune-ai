@@ -56,7 +56,7 @@ class TestCmdProviderShow:
         with patch(
             "attune.cli_commands.provider_commands.get_provider_config",
             create=True,
-        ) as mock_get:
+        ) as _mock_get:
             # The function does a late import; we must patch the import mechanism.
             mock_module = MagicMock()
             mock_module.get_provider_config = MagicMock(return_value=config)

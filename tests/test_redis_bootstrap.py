@@ -696,6 +696,7 @@ class TestStopRedis:
 class TestGetRedisOrMock:
     """Test get_redis_or_mock convenience function"""
 
+    @pytest.mark.skipif(not REDIS_AVAILABLE, reason="redis not installed")
     @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.redis_bootstrap.ensure_redis")
     def test_get_redis_real_connection(self, mock_ensure, mock_redis_cls):
