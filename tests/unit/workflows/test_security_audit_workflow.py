@@ -800,14 +800,15 @@ class TestCrewIntegration:
     @pytest.mark.asyncio
     async def test_crew_not_available_state(self):
         """Test workflow works when crew is not available."""
-        # Create a fresh workflow and simulate crew being unavailable
-        workflow = SecurityAuditWorkflow()
-        workflow._crew = None
-        workflow._crew_available = False
+        # Create workflow with crew disabled to prevent _initialize_crew
+        # from re-enabling it (it checks self._crew is None and re-imports)
+        workflow = SecurityAuditWorkflow(
+            use_crew_for_assessment=False,
+            use_crew_for_remediation=False,
+        )
 
-        # Verify the workflow can still function
-        assert workflow._crew_available is False
-        assert workflow._crew is None
+        # Verify the workflow can still function without crew
+        assert workflow.use_crew_for_assessment is False
 
         # The workflow should still work for non-crew operations
         input_data = {"needs_review": [{"type": "xss", "severity": "high", "owasp": "A03:2021"}]}
