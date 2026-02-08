@@ -26,8 +26,8 @@ print("\n1️⃣  Testing CLI Import Fix (StateManager)")
 print("-" * 70)
 
 try:
-    from attune.cli.commands.inspect import cmd_inspect
-    from attune.cli.commands.metrics import cmd_metrics_show
+    from attune.cli.commands.inspect import cmd_inspect  # noqa: F401
+    from attune.cli.commands.metrics import cmd_metrics_show  # noqa: F401
 
     print("✅ inspect.py imports successfully")
     print("✅ metrics.py imports successfully")
@@ -41,7 +41,7 @@ print("\n2️⃣  Testing Routing CLI Commands")
 print("-" * 70)
 
 try:
-    from attune.cli.commands.routing import (
+    from attune.cli.commands.routing import (  # noqa: F401
         cmd_routing_check,
         cmd_routing_models,
         cmd_routing_stats,
@@ -117,7 +117,7 @@ print("\n5️⃣  Testing Batch Processing")
 print("-" * 70)
 
 try:
-    from attune.workflows.batch_processing import (
+    from attune.workflows.batch_processing import (  # noqa: F401
         BatchProcessingWorkflow,
         BatchRequest,
         BatchResult,

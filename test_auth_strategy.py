@@ -78,7 +78,7 @@ def test_auth_strategy():
 
     comparison = max_strategy.get_pros_cons(medium_module)
 
-    for mode_name, mode_data in comparison.items():
+    for _mode_name, mode_data in comparison.items():
         print(f"\n   ### {mode_data['name']}")
         print(f"   Cost: {mode_data['cost']}")
         print("\n   Pros:")
