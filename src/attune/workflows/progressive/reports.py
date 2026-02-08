@@ -155,7 +155,7 @@ def save_results_to_disk(result: ProgressiveWorkflowResult, storage_path: str) -
         }
 
         summary_file = validated_dir / "summary.json"
-        summary_file.write_text(json.dumps(summary, indent=2))
+        summary_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
         # Save each tier result
         for i, tier_result in enumerate(result.tier_results):
@@ -182,11 +182,11 @@ def save_results_to_disk(result: ProgressiveWorkflowResult, storage_path: str) -
             }
 
             tier_file = validated_dir / f"tier_{i}_{tier_result.tier.value}.json"
-            tier_file.write_text(json.dumps(tier_data, indent=2))
+            tier_file.write_text(json.dumps(tier_data, indent=2), encoding="utf-8")
 
         # Save human-readable report
         report_file = validated_dir / "report.txt"
-        report_file.write_text(generate_progression_report(result))
+        report_file.write_text(generate_progression_report(result), encoding="utf-8")
 
         logger.info(f"Saved progressive results to {validated_dir}")
 
@@ -249,17 +249,17 @@ def load_result_from_disk(
     if not summary_file.exists():
         raise FileNotFoundError(f"Summary file not found for task {task_id}")
 
-    summary = json.loads(summary_file.read_text())
+    summary = json.loads(summary_file.read_text(encoding="utf-8"))
 
     # Load tier results
     tier_results = []
     for tier_file in sorted(task_dir.glob("tier_*.json")):
-        tier_data = json.loads(tier_file.read_text())
+        tier_data = json.loads(tier_file.read_text(encoding="utf-8"))
         tier_results.append(tier_data)
 
     # Load report
     report_file = task_dir / "report.txt"
-    report = report_file.read_text() if report_file.exists() else ""
+    report = report_file.read_text(encoding="utf-8") if report_file.exists() else ""
 
     return {"summary": summary, "tier_results": tier_results, "report": report}
 
@@ -294,7 +294,7 @@ def list_saved_results(storage_path: str = ".attune/progressive_runs") -> list[d
             continue
 
         try:
-            summary = json.loads(summary_file.read_text())
+            summary = json.loads(summary_file.read_text(encoding="utf-8"))
             summaries.append(summary)
         except (json.JSONDecodeError, OSError) as e:
             logger.warning(f"Failed to load summary from {task_dir}: {e}")
@@ -342,7 +342,7 @@ def cleanup_old_results(
             continue
 
         try:
-            summary = json.loads(summary_file.read_text())
+            summary = json.loads(summary_file.read_text(encoding="utf-8"))
             timestamp_str = summary.get("timestamp")
 
             if not timestamp_str:

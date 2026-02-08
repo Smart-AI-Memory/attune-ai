@@ -264,13 +264,21 @@ class TestShouldExcludeFile:
         assert _should_exclude_file("build/module.pyc", patterns) is True
 
     def test_case_sensitive_matching(self, bug_predict_workflow):
-        """Test that pattern matching is case-sensitive.
+        """Test that pattern matching respects OS case sensitivity.
 
         Teaching Pattern: Testing case sensitivity assumptions.
+        On Windows, fnmatch is case-insensitive (uses os.path.normcase).
+        On Unix, fnmatch is case-sensitive.
         """
+        import sys
+
         result = _should_exclude_file("Tests/TEST_FOO.PY", ["**/test_*.py"])
-        # Should NOT match because pattern is lowercase
-        assert result is False
+        if sys.platform == "win32":
+            # Windows fnmatch is case-insensitive
+            assert result is True
+        else:
+            # Unix fnmatch is case-sensitive
+            assert result is False
 
 
 # =============================================================================
