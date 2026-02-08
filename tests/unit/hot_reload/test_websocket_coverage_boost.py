@@ -15,7 +15,7 @@ import pytest
 
 pytest.importorskip("watchdog", reason="watchdog required for hot-reload tests")
 
-from attune.hot_reload.websocket import (
+from attune.hot_reload.websocket import (  # noqa: E402
     ReloadNotificationManager,
     create_notification_callback,
     get_notification_manager,

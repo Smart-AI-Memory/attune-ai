@@ -44,7 +44,7 @@ def test_health_file_structure():
         # Check for score if present
         if "score" in data:
             score = data["score"]
-            assert isinstance(score, (int, float))
+            assert isinstance(score, int | float)
             assert 0 <= score <= 100, "Health score should be between 0-100"
     else:
         pytest.skip("Health file doesn't exist yet")

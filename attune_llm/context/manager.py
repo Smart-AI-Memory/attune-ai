@@ -229,7 +229,7 @@ class ContextManager:
         for key, value in preferences.items():
             if key not in result:
                 # Skip complex nested structures
-                if isinstance(value, (str, int, float, bool)):
+                if isinstance(value, str | int | float | bool):
                     result[key] = value
                 elif isinstance(value, list) and len(value) <= 5:
                     result[key] = value

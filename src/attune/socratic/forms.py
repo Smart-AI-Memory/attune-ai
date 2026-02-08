@@ -191,7 +191,7 @@ class FormField:
                 return False, f"Maximum {v.max_length} characters allowed"
 
         # Check numeric range
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             if v.min_value is not None and value < v.min_value:
                 return False, f"Value must be at least {v.min_value}"
             if v.max_value is not None and value > v.max_value:

@@ -140,7 +140,7 @@ class BehavioralTestLLMGenerator(LLMWorkflowGenerator):
         tree = copy.deepcopy(tree)
 
         for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 continue
 
             # Preserve docstring if present, replace rest of body with ...
@@ -380,7 +380,7 @@ class ModuleAnalyzer(ast.NodeVisitor):
         )
 
         for item in node.body:
-            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
                 method_info = self._extract_function_info(item)
                 methods.append(asdict(method_info))
 

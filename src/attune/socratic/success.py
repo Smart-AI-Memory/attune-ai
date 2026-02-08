@@ -130,7 +130,7 @@ class SuccessMetric:
                 return met, score, explanation
 
         # Ensure numeric value for other types
-        if not isinstance(value, (int, float)):
+        if not isinstance(value, int | float):
             return False, 0.0, f"Expected numeric value, got {type(value)}"
 
         # Calculate score based on direction
@@ -208,8 +208,8 @@ class SuccessMetric:
         # Comparison to baseline
         if (
             baseline is not None
-            and isinstance(value, (int, float))
-            and isinstance(baseline, (int, float))
+            and isinstance(value, int | float)
+            and isinstance(baseline, int | float)
         ):
             diff = value - baseline
             pct_change = (diff / baseline * 100) if baseline != 0 else 0

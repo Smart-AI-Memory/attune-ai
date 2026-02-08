@@ -171,5 +171,5 @@ class TestWorkflowPattern:
         )
 
         # Then - should convert to enums
-        assert isinstance(pattern.category, (PatternCategory, str))
-        assert isinstance(pattern.complexity, (WorkflowComplexity, str))
+        assert isinstance(pattern.category, PatternCategory | str)
+        assert isinstance(pattern.complexity, WorkflowComplexity | str)

@@ -124,7 +124,7 @@ def test_telemetry_metrics_validation():
 
     # Verify all metrics are non-negative
     for key, value in valid_metrics.items():
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             assert value >= 0, f"{key} should be non-negative"
 
     # Verify baseline = actual + savings (use approx for floating point)

@@ -176,7 +176,7 @@ def is_in_docstring_or_comment(line_content: str, file_content: str, line_num: i
         docstrings = []
         for node in ast.walk(tree):
             # Only these node types can have docstrings
-            if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef, ast.Module)):
+            if isinstance(node, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef | ast.Module):
                 docstring = ast.get_docstring(node)
                 if docstring:
                     docstrings.append(docstring)

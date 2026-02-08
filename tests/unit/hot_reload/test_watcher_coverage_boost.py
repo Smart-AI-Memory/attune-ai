@@ -14,9 +14,9 @@ import pytest
 
 pytest.importorskip("watchdog", reason="watchdog required for hot-reload tests")
 
-from watchdog.events import FileSystemEvent
+from watchdog.events import FileSystemEvent  # noqa: E402
 
-from attune.hot_reload.watcher import WorkflowFileHandler, WorkflowFileWatcher
+from attune.hot_reload.watcher import WorkflowFileHandler, WorkflowFileWatcher  # noqa: E402
 
 
 @pytest.mark.unit

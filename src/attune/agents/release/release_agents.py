@@ -139,7 +139,7 @@ class ReleaseAgent:
                 "agent_id": self.agent_id,
                 "role": self.role,
                 "result_summary": {
-                    k: v for k, v in result.items() if isinstance(v, (str, int, float, bool))
+                    k: v for k, v in result.items() if isinstance(v, str | int | float | bool)
                 },
                 "tier_used": self.current_tier.value,
                 "timestamp": time.time(),
@@ -689,7 +689,7 @@ class DocumentationAgent(ReleaseAgent):
                     continue
 
                 for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                         # Skip private/dunder methods
                         if node.name.startswith("_") and not node.name.startswith("__"):
                             continue

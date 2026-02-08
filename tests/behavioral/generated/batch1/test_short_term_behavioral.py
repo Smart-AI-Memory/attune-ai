@@ -15,7 +15,7 @@ import pytest
 pytest.importorskip("redis")
 
 from attune.memory.short_term import RedisShortTermMemory  # noqa: E402
-from attune.memory.types import (
+from attune.memory.types import (  # noqa: E402
     AccessTier,
     AgentCredentials,
     PaginatedResult,

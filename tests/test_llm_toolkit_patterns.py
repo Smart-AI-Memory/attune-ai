@@ -442,7 +442,7 @@ class TestGitIntegration:
         # Method should handle gracefully if not in git repo
         if hasattr(injector, "_get_recent_changes"):
             result = injector._get_recent_changes()
-            assert result is None or isinstance(result, (list, dict))
+            assert result is None or isinstance(result, list | dict)
 
     def test_get_changed_files(self, tmp_path):
         """Test getting changed files."""

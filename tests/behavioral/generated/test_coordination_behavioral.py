@@ -381,7 +381,7 @@ class TestConflictResolver:
         match_score = conflict_resolver._calculate_context_match(sample_pattern, context)
 
         # Then
-        assert isinstance(match_score, (float, int))
+        assert isinstance(match_score, float | int)
         assert 0 <= match_score <= 1
 
     def test_given_pattern_when_calculating_team_alignment_then_returns_score(
@@ -395,7 +395,7 @@ class TestConflictResolver:
         alignment = conflict_resolver._calculate_team_alignment(sample_pattern, context)
 
         # Then
-        assert isinstance(alignment, (float, int))
+        assert isinstance(alignment, float | int)
         assert alignment >= 0
 
     def test_given_resolution_result_when_generating_reasoning_then_returns_string(

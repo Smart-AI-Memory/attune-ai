@@ -51,8 +51,8 @@ class TestTokenCostsStructure:
         """
         # Given / When / Then
         for tier, costs in TOKEN_COSTS.items():
-            assert isinstance(costs["input"], (int, float)), f"{tier} input cost is not numeric"
-            assert isinstance(costs["output"], (int, float)), f"{tier} output cost is not numeric"
+            assert isinstance(costs["input"], int | float), f"{tier} input cost is not numeric"
+            assert isinstance(costs["output"], int | float), f"{tier} output cost is not numeric"
             assert costs["input"] > 0, f"{tier} input cost must be positive"
             assert costs["output"] > 0, f"{tier} output cost must be positive"
 

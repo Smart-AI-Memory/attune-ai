@@ -228,9 +228,9 @@ class TestPrintCostsRealData:
                 assert "input_cost" in costs
                 assert "output_cost" in costs
                 assert "total_cost" in costs
-                assert isinstance(costs["input_cost"], (int, float))
-                assert isinstance(costs["output_cost"], (int, float))
-                assert isinstance(costs["total_cost"], (int, float))
+                assert isinstance(costs["input_cost"], int | float)
+                assert isinstance(costs["output_cost"], int | float)
+                assert isinstance(costs["total_cost"], int | float)
 
     def test_print_costs_anthropic_only(self, capsys):
         """Test cost estimates for Anthropic only."""
@@ -797,8 +797,8 @@ class TestEdgeCases:
                 assert "id" in info
                 assert "input_cost_per_million" in info
                 assert "output_cost_per_million" in info
-                assert isinstance(info["input_cost_per_million"], (int, float))
-                assert isinstance(info["output_cost_per_million"], (int, float))
+                assert isinstance(info["input_cost_per_million"], int | float)
+                assert isinstance(info["output_cost_per_million"], int | float)
                 assert info["input_cost_per_million"] >= 0
                 assert info["output_cost_per_million"] >= 0
 

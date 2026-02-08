@@ -68,7 +68,7 @@ class Task:
         for key in self.context_keys:
             if key in context:
                 value = context[key]
-                if isinstance(value, (dict, list)):
+                if isinstance(value, dict | list):
                     value = json.dumps(value, indent=2)
                 context_lines.append(f"<{key}>")
                 context_lines.append(str(value))

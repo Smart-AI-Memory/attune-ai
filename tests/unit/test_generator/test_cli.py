@@ -21,8 +21,8 @@ import pytest
 
 pytest.importorskip("jinja2", reason="jinja2 required for test_generator tests")
 
-from attune.test_generator.cli import cmd_analyze, cmd_generate, main
-from attune.test_generator.risk_analyzer import RiskAnalysis
+from attune.test_generator.cli import cmd_analyze, cmd_generate, main  # noqa: E402
+from attune.test_generator.risk_analyzer import RiskAnalysis  # noqa: E402
 
 
 @pytest.mark.unit

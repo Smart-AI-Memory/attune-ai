@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("jinja2", reason="jinja2 required for test_generator tests")
 
-from attune.test_generator.risk_analyzer import RiskAnalysis, RiskAnalyzer
+from attune.test_generator.risk_analyzer import RiskAnalysis, RiskAnalyzer  # noqa: E402
 
 
 class TestRiskAnalysisDataClass:
@@ -251,7 +251,7 @@ class TestRiskAnalyzer:
         result = analyzer.analyze(workflow_id="wizard", pattern_ids=["linear_flow"])
 
         # Should have test priorities (dict or list)
-        assert isinstance(result.test_priorities, (dict, list))
+        assert isinstance(result.test_priorities, dict | list)
         # Should not be empty
         assert len(result.test_priorities) > 0
 

@@ -8,10 +8,10 @@ import pytest
 
 pytest.importorskip("jinja2", reason="jinja2 required for test_generator tests")
 
-from pathlib import Path
+from pathlib import Path  # noqa: E402
 
-from attune.test_generator.generator import TestGenerator
-from attune.test_generator.risk_analyzer import RiskAnalyzer
+from attune.test_generator.generator import TestGenerator  # noqa: E402
+from attune.test_generator.risk_analyzer import RiskAnalyzer  # noqa: E402
 
 
 class TestTestGeneratorInitialization:
