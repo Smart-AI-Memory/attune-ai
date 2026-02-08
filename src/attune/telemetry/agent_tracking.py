@@ -349,7 +349,7 @@ class HeartbeatCoordinator:
                     result = json.loads(data)
                     return result if isinstance(result, dict) else None
             return None
-        except Exception as e:
+        except Exception:
             logger.debug("Failed to retrieve heartbeat %s", key, exc_info=True)
             return None
 

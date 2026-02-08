@@ -428,7 +428,7 @@ async def get_system_health():
             "pending_approvals": pending_approvals,
             "timestamp": datetime.utcnow().isoformat(),
         }
-    except Exception as e:
+    except Exception:
         logger.exception("Health check failed")
         return {
             "status": "unhealthy",

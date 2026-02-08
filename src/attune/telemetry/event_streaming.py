@@ -332,7 +332,7 @@ class EventStreamer:
 
             return events
 
-        except Exception as e:
+        except Exception:
             logger.error("Failed to get recent events for %s", event_type, exc_info=True)
             return []
 

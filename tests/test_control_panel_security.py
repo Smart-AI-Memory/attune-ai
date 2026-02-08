@@ -305,7 +305,7 @@ class TestAPIKeyAuth:
         # This tests that the implementation uses hashing
         # The internal _key_hash should be set
         assert auth._key_hash is not None
-        assert len(auth._key_hash) == 64  # SHA-256 produces 64 hex chars
+        assert len(auth._key_hash) == 32  # HMAC-SHA256 digest is 32 bytes
 
 
 # =============================================================================

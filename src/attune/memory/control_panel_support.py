@@ -6,7 +6,6 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under Fair Source 0.9
 """
 
-import hashlib
 import hmac
 import os
 import time
