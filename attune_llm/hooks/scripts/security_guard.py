@@ -169,8 +169,8 @@ def main(context: dict[str, Any]) -> dict[str, Any]:
     tool_input = context.get("tool_input", {})
 
     if not tool_name:
-        # No tool info — allow by default (defensive)
-        return {"allowed": True}
+        # No tool info — fail closed (block unknown tool calls)
+        return {"allowed": False, "reason": "Blocked: missing tool_name in hook context"}
 
     if tool_name == "Bash":
         command = tool_input.get("command", "")
@@ -201,18 +201,25 @@ def _read_stdin_context() -> dict[str, Any]:
         if raw:
             return json.loads(raw)
     except (json.JSONDecodeError, ValueError) as e:
-        logger.debug("Could not parse stdin JSON: %s", e)
-    return {}
+        logger.warning("Could not parse stdin JSON (fail-closed): %s", e)
+    return {"_parse_error": True}
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     context = _read_stdin_context()
+
+    # Fail-closed: if we couldn't parse stdin, block the tool call
+    if context.get("_parse_error"):
+        print("Blocked: could not parse hook context (fail-closed)", file=sys.stderr)
+        sys.exit(2)
+
     result = main(context)
 
-    if not result.get("allowed", True):
+    if not result.get("allowed", False):
         # Block: print reason to stderr, exit 2
-        print(result["reason"], file=sys.stderr)
+        reason = result.get("reason", "Blocked by security guard")
+        print(reason, file=sys.stderr)
         sys.exit(2)
 
     # Allow: exit 0

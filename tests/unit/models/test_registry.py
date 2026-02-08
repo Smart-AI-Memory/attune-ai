@@ -304,7 +304,7 @@ class TestRegistryHelpers:
         """
         from attune.models.registry import get_pricing_for_model
 
-        pricing = get_pricing_for_model("claude-3-5-haiku-20241022")
+        pricing = get_pricing_for_model("claude-haiku-4-5-20251001")
 
         assert pricing is not None
         assert "input" in pricing

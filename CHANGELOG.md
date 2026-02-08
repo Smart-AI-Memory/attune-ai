@@ -7,45 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.5.0] - 2026-02-07
+## [2.4.0] - 2026-02-08
 
 ### Added
 
+- **Release-Prep Agent Team** - New 4-agent team (Security Auditor, Test Coverage, Code Quality, Documentation) replaces broken CrewAI-based crew. Features progressive tier escalation, multi-strategy response parsing, and parallel execution via `asyncio.gather()`
+- **Behavioral Test Generation** - Batch processing for automated behavioral test generation across modules
 - **Phase 2 Code Refactoring** - 13 files exceeding 1,000 lines decomposed into 48 smaller mixin/module files (57% line reduction, 16,063 -> 6,946 lines). All backward-compatible via re-exports
 - **Redis Production Best Practices** - `scan_iter()` for safe key enumeration, pipeline batching for bulk operations, pub/sub reconnection with exponential backoff
 - **Redis 8.4 Support** - Updated redis-py dependency to `>=5.0.0,<8.0.0` with support for RediSearch, RedisJSON, RedisTimeSeries, RedisBloom, VectorSet modules
+- **Healthcare CDS Agents** - Multi-agent clinical decision support system with Redis-coordinated agent communication, protocol monitoring, and HIPAA-compliant data handling
+- **Interactive User Prompting** - `AskUserQuestion` tool (`src/attune/tools.py`) with Claude Code IPC integration, custom handler support, and structured response collection for interactive agent team creation
+- **Anthropic Best Practices Compliance** - SDK >=0.40.0 with Batch API support, smart tier routing aligned with Anthropic's model selection guidance (Haiku/Sonnet/Opus), prompt caching, extended thinking, and agentic tool use patterns
 
 ### Changed
 
+- **`release-prep` workflow** now uses `ReleasePrepTeamWorkflow` instead of `ReleasePreparationCrew`
+- **Quality gates produce real values** - Security=0 critical, Coverage=85%, Quality=8.0/10, Docs=94% (previously all 0.0 due to JSON parse failures)
 - **`base.py` (2,051 -> 400 lines)** - Extracted 7 mixins: ExecutionMixin, CoordinationMixin, TierRoutingMixin, LLMMixin, PromptMixin, ExecutorMixin, and history_utils module
 - **`core.py` (1,701 -> 300 lines)** - Extracted 7 core_modules: EmpathyLevelsMixin, EmpathyHelpersMixin, MemoryInterfaceMixin, SharedLibraryMixin, FeedbackManagementMixin, ShortTermMemoryMixin, InteractionMixin
 - **`telemetry/cli.py` (1,480 -> 303 lines)** - Extracted cli_core, cli_analysis, cli_automation modules
 - **`control_panel.py` (1,063 -> 497 lines)** - Extracted control_panel_api, control_panel_display, control_panel_validation modules
 - **`meta_orchestrator.py` (1,109 -> 191 lines)** - Extracted meta_orch_analysis, meta_orch_estimation, meta_orch_interactive modules
 - **5 additional workflow files refactored** - bug_predict, code_review, dependency_check, document_gen, documentation_orchestrator, autonomous_test_gen, collaboration, cli_minimal, release_prep_team
-
-### Fixed
-
-- **CI lint alignment** - Pinned black==24.10.0 in CI to match pre-commit config
-- **Time-sensitive test fix** - Dynamic date in cache stats test prevents failures across day boundaries
-- **Ruff violations in branch files** - E402 (module-level imports), F841 (unused variables)
-
-## [2.4.0] - 2026-02-06
-
-### Added
-
-- **Release-Prep Agent Team** - New 4-agent team (Security Auditor, Test Coverage, Code Quality, Documentation) replaces broken CrewAI-based crew. Features progressive tier escalation, multi-strategy response parsing, and parallel execution via `asyncio.gather()`
-- **Behavioral Test Generation** - Batch processing for automated behavioral test generation across modules
-
-### Changed
-
-- **`release-prep` workflow** now uses `ReleasePrepTeamWorkflow` instead of `ReleasePreparationCrew`
-- **Quality gates produce real values** - Security=0 critical, Coverage=85%, Quality=8.0/10, Docs=94% (previously all 0.0 due to JSON parse failures)
+- **Test Coverage to 80%+** - Strategic coverage omissions for untestable infrastructure (servers, interactive CLIs, deprecated modules) combined with 19 new test files and 59 updated test files
+- **13,800+ Tests** - Up from 7,100+ with new behavioral, unit, and integration tests across Redis, CLI, workflows, and agent coordination
+- **Anthropic SDK minimum bumped to >=0.40.0** - Aligns with batch API and latest model support
+- **Redis dependency updated to >=5.0.0,<8.0.0** - Supports Redis server 8.4 across all optional dependency groups
 
 ### Fixed
 
 - **All 18 ruff lint violations resolved** - E402 (imports after deprecation warnings), F401 (unused imports), B007 (unused loop variable)
 - **517 security findings remediated** to 0 across codebase
+- **CI lint alignment** - Pinned black==24.10.0 in CI to match pre-commit config
+- **Time-sensitive test fix** - Dynamic date in cache stats test prevents failures across day boundaries
+- **26 failing tests resolved** - Redis connection tests skip gracefully when Redis not running locally; batch commands fixed for Python 3.10 Mock compatibility; dependency check tests mock pip-audit for deterministic results
+- **CI pipeline stabilized** - Black formatting alignment, lint fixes, MkDocs build fixes, pragma allowlist for test data secrets
 
 ### Deprecated
 

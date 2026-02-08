@@ -207,12 +207,12 @@ class TestModelRegistryClass:
         registry = ModelRegistry()
 
         # Test Anthropic models
-        model = registry.get_model_by_id("claude-3-5-haiku-20241022")
+        model = registry.get_model_by_id("claude-haiku-4-5-20251001")
         assert model is not None
         assert model.provider == "anthropic"
         assert model.tier == "cheap"
 
-        model = registry.get_model_by_id("claude-sonnet-4-5")
+        model = registry.get_model_by_id("claude-sonnet-4-5-20250929")
         assert model is not None
         assert model.provider == "anthropic"
         assert model.tier == "capable"
@@ -297,7 +297,7 @@ class TestModelRegistryClass:
         registry = ModelRegistry()
 
         # Test Anthropic model
-        pricing = registry.get_pricing_for_model("claude-sonnet-4-5")
+        pricing = registry.get_pricing_for_model("claude-sonnet-4-5-20250929")
         assert pricing is not None
         assert "input" in pricing
         assert "output" in pricing

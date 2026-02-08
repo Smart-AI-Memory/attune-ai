@@ -90,7 +90,7 @@ class AdaptiveModelRouter:
         ...     max_cost=0.01
         ... )
         >>> print(f"Using {model}")
-        Using claude-3-5-haiku-20241022
+        Using claude-haiku-4-5-20251001
         >>>
         >>> # Check if we should upgrade tier
         >>> should_upgrade, reason = router.recommend_tier_upgrade(
@@ -129,7 +129,7 @@ class AdaptiveModelRouter:
             tier: Tier name (CHEAP, CAPABLE, or PREMIUM)
 
         Returns:
-            Model ID from registry (e.g., "claude-3-5-haiku-20241022")
+            Model ID from registry (e.g., "claude-haiku-4-5-20251001")
         """
         registry = _get_registry()
 
@@ -140,11 +140,11 @@ class AdaptiveModelRouter:
 
         # Fallback to known models if registry lookup fails
         fallbacks = {
-            "cheap": "claude-3-5-haiku-20241022",
-            "capable": "claude-sonnet-4-5",
-            "premium": "claude-opus-4-5-20251101",
+            "cheap": "claude-haiku-4-5-20251001",
+            "capable": "claude-sonnet-4-5-20250929",
+            "premium": "claude-opus-4-6",
         }
-        return fallbacks.get(tier_lower, "claude-3-5-haiku-20241022")
+        return fallbacks.get(tier_lower, "claude-haiku-4-5-20251001")
 
     def get_best_model(
         self,
@@ -167,7 +167,7 @@ class AdaptiveModelRouter:
             min_success_rate: Minimum acceptable success rate (0.0 - 1.0)
 
         Returns:
-            Model ID to use (e.g., "claude-3-5-haiku-20241022")
+            Model ID to use (e.g., "claude-haiku-4-5-20251001")
 
         Example:
             >>> model = router.get_best_model(
@@ -177,7 +177,7 @@ class AdaptiveModelRouter:
             ...     min_success_rate=0.9
             ... )
             >>> print(model)
-            claude-3-5-haiku-20241022
+            claude-haiku-4-5-20251001
         """
         # Get performance data for all models on this workflow/stage
         performances = self._analyze_model_performance(workflow, stage)

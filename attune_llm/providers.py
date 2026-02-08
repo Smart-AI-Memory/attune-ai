@@ -75,10 +75,11 @@ class BaseLLMProvider(ABC):
 class AnthropicProvider(BaseLLMProvider):
     """Anthropic (Claude) provider with enhanced features.
 
-    Supports Claude 3 family models with advanced capabilities:
+    Supports Claude 4.5/4.6 family models with advanced capabilities:
     - Extended context windows (200K tokens)
     - Prompt caching for faster repeated queries
-    - Thinking mode for complex reasoning
+    - Extended thinking for complex reasoning
+    - Streaming for real-time output
     - Batch processing for cost optimization
     """
 
@@ -86,8 +87,9 @@ class AnthropicProvider(BaseLLMProvider):
         self,
         api_key: str | None = None,
         model: str = "claude-sonnet-4-5-20250929",
-        use_prompt_caching: bool = True,  # CHANGED: Default to True for 20-30% cost savings
+        use_prompt_caching: bool = True,  # Default to True for 20-30% cost savings
         use_thinking: bool = False,
+        thinking_budget: int = 10000,
         use_batch: bool = False,
         **kwargs,
     ):
@@ -95,6 +97,7 @@ class AnthropicProvider(BaseLLMProvider):
         self.model = model
         self.use_prompt_caching = use_prompt_caching
         self.use_thinking = use_thinking
+        self.thinking_budget = thinking_budget
         self.use_batch = use_batch
 
         # Validate API key is provided
@@ -102,6 +105,14 @@ class AnthropicProvider(BaseLLMProvider):
             raise ValueError(
                 "API key is required for Anthropic provider. "
                 "Provide via api_key parameter or ANTHROPIC_API_KEY environment variable",
+            )
+
+        # Warn if API key doesn't match expected format
+        if api_key and not api_key.startswith("sk-ant-"):
+            logger.warning(
+                "API key does not start with 'sk-ant-'. "
+                "Anthropic API keys typically start with 'sk-ant-api03-'. "
+                "Verify you are using a valid Anthropic API key."
             )
 
         # Lazy import to avoid requiring anthropic if not used
@@ -164,14 +175,32 @@ class AnthropicProvider(BaseLLMProvider):
         if self.use_thinking:
             api_kwargs["thinking"] = {
                 "type": "enabled",
-                "budget_tokens": 2000,  # Allow 2K tokens for reasoning
+                "budget_tokens": self.thinking_budget,
             }
 
         # Add any additional kwargs
         api_kwargs.update(kwargs)
 
-        # Call Anthropic API (async with AsyncAnthropic)
-        response = await self.client.messages.create(**api_kwargs)  # type: ignore[call-overload]
+        # Call Anthropic API (async with AsyncAnthropic) with typed error handling
+        try:
+            import anthropic
+
+            response = await self.client.messages.create(**api_kwargs)  # type: ignore[call-overload]
+        except anthropic.RateLimitError as e:
+            logger.warning(f"Rate limited by Anthropic API: {e}")
+            raise
+        except anthropic.APIConnectionError as e:
+            logger.error(f"Connection error to Anthropic API: {e}")
+            raise
+        except anthropic.APITimeoutError as e:
+            logger.error(f"Anthropic API request timed out: {e}")
+            raise
+        except anthropic.AuthenticationError as e:
+            logger.error(f"Anthropic API authentication failed: {e}")
+            raise
+        except anthropic.APIStatusError as e:
+            logger.error(f"Anthropic API error (status {e.status_code}): {e}")
+            raise
 
         # Extract thinking content if present
         thinking_content = None
@@ -191,7 +220,7 @@ class AnthropicProvider(BaseLLMProvider):
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
             "provider": "anthropic",
-            "model_family": "claude-3",
+            "model": self.model,
         }
 
         # Add cache performance metrics if available
@@ -282,10 +311,66 @@ class AnthropicProvider(BaseLLMProvider):
             **{**kwargs, "system": system_parts},
         )
 
+    async def generate_stream(
+        self,
+        messages: list[dict[str, str]],
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+        **kwargs,
+    ):
+        """Stream response from Anthropic API for real-time output.
+
+        Yields text chunks as they arrive from the API.
+
+        Args:
+            messages: List of {"role": "user/assistant", "content": "..."}
+            system_prompt: Optional system prompt
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
+            **kwargs: Provider-specific options
+
+        Yields:
+            str: Text chunks as they are generated
+
+        """
+        import anthropic
+
+        api_kwargs: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": messages,
+        }
+
+        if system_prompt and self.use_prompt_caching:
+            api_kwargs["system"] = [
+                {
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                },
+            ]
+        elif system_prompt:
+            api_kwargs["system"] = system_prompt
+
+        api_kwargs.update(kwargs)
+
+        try:
+            async with self.client.messages.stream(**api_kwargs) as stream:
+                async for text in stream.text_stream:
+                    yield text
+        except anthropic.RateLimitError as e:
+            logger.warning(f"Rate limited during streaming: {e}")
+            raise
+        except anthropic.APIConnectionError as e:
+            logger.error(f"Connection error during streaming: {e}")
+            raise
+
     def get_model_info(self) -> dict[str, Any]:
-        """Get Claude model information with extended context capabilities"""
+        """Get Claude model information with extended context capabilities."""
         model_info = {
-            "claude-3-opus-20240229": {
+            "claude-opus-4-6": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 15.00,
                 "cost_per_1m_output": 75.00,
@@ -293,7 +378,7 @@ class AnthropicProvider(BaseLLMProvider):
                 "supports_thinking": True,
                 "ideal_for": "Complex reasoning, large codebases",
             },
-            "claude-3-5-sonnet-20241022": {
+            "claude-sonnet-4-5-20250929": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 3.00,
                 "cost_per_1m_output": 15.00,
@@ -301,12 +386,12 @@ class AnthropicProvider(BaseLLMProvider):
                 "supports_thinking": True,
                 "ideal_for": "General development, balanced cost/performance",
             },
-            "claude-3-haiku-20240307": {
+            "claude-haiku-4-5-20251001": {
                 "max_tokens": 200000,
-                "cost_per_1m_input": 0.25,
-                "cost_per_1m_output": 1.25,
+                "cost_per_1m_input": 1.00,
+                "cost_per_1m_output": 5.00,
                 "supports_prompt_caching": True,
-                "supports_thinking": False,
+                "supports_thinking": True,
                 "ideal_for": "Fast responses, simple tasks",
             },
         }
@@ -319,6 +404,7 @@ class AnthropicProvider(BaseLLMProvider):
                 "cost_per_1m_output": 15.00,
                 "supports_prompt_caching": True,
                 "supports_thinking": True,
+                "ideal_for": "General development",
             },
         )
 

@@ -60,7 +60,7 @@ class TestFallbackStep:
         )
 
         # Should return model ID from registry
-        assert step.model_id == "claude-3-5-haiku-20241022"
+        assert step.model_id == "claude-haiku-4-5-20251001"
 
 
 class TestFallbackPolicy:

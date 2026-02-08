@@ -696,14 +696,16 @@ class TestStopRedis:
 class TestGetRedisOrMock:
     """Test get_redis_or_mock convenience function"""
 
+    @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.redis_bootstrap.ensure_redis")
-    def test_get_redis_real_connection(self, mock_ensure):
+    def test_get_redis_real_connection(self, mock_ensure, mock_redis_cls):
         """Test getting real Redis connection"""
         mock_status = RedisStatus(
             available=True,
             method=RedisStartMethod.ALREADY_RUNNING,
         )
         mock_ensure.return_value = mock_status
+        mock_redis_cls.return_value.ping.return_value = True
 
         memory, status = get_redis_or_mock()
         assert status.available is True

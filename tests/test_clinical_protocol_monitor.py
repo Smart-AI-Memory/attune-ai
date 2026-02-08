@@ -9,10 +9,15 @@ Tests cover:
 - Predictions (Level 4)
 """
 
+import importlib.util
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+
+_healthcare_available = importlib.util.find_spec("attune_healthcare") is not None
+if not _healthcare_available:
+    pytest.skip("attune_healthcare not installed (optional plugin)", allow_module_level=True)
 
 from attune_healthcare.monitors.clinical_protocol_monitor import ClinicalProtocolMonitor
 from attune_healthcare.monitors.monitoring.protocol_checker import (
@@ -251,11 +256,11 @@ class TestAnalyzeMethod:
 
         with (
             patch(
-                "empathy_healthcare_plugin.monitors.clinical_protocol_monitor.parse_sensor_data",
+                "attune_healthcare.monitors.clinical_protocol_monitor.parse_sensor_data",
                 return_value={"heart_rate": 105},
             ),
             patch(
-                "empathy_healthcare_plugin.monitors.clinical_protocol_monitor.normalize_vitals",
+                "attune_healthcare.monitors.clinical_protocol_monitor.normalize_vitals",
                 return_value={"heart_rate": 105},
             ),
             patch.object(

@@ -47,6 +47,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python attune_llm/hooks/scripts/telemetry_hook.py",
+            "timeout": 3,
+            "statusMessage": "Recording telemetry..."
+          }
+        ]
+      }
     ]
   }
 }

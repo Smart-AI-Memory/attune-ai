@@ -902,7 +902,7 @@ confidence_threshold: 0.85
 # Unknown fields (should be ignored, not cause TypeError)
 provider: anthropic
 model_preferences:
-  cheap: claude-3-5-haiku-20241022
+  cheap: claude-haiku-4-5-20251001
   capable: claude-sonnet-4-5-20250514
 workflows:
   max_cost_per_run: 5.00

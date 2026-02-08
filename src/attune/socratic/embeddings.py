@@ -284,7 +284,7 @@ Example: [0.8, 0.2, 0.5, ...]"""
 
         try:
             response = client.messages.create(
-                model="claude-3-5-haiku-20241022",
+                model="claude-haiku-4-5-20251001",
                 max_tokens=200,
                 messages=[{"role": "user", "content": prompt}],
             )

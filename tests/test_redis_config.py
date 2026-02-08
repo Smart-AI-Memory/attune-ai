@@ -17,6 +17,16 @@ from unittest.mock import patch
 import pytest
 
 from attune.memory.short_term import RedisConfig
+
+# Check if Redis is actually running locally
+try:
+    import redis as _redis_mod
+
+    _r = _redis_mod.Redis(host="localhost", port=6379, socket_connect_timeout=1)
+    _r.ping()
+    _REDIS_RUNNING = True
+except Exception:
+    _REDIS_RUNNING = False
 from attune.redis_config import (
     _resolve_redis_mode,
     check_redis_connection,
@@ -203,6 +213,7 @@ class TestGetRedisMemory:
         memory = get_redis_memory(use_mock=True)
         assert memory.ping() is True
 
+    @pytest.mark.skipif(not _REDIS_RUNNING, reason="Redis not running on localhost")
     def test_with_url(self):
         """Test creating memory with URL"""
         # Use mock to avoid actual connection

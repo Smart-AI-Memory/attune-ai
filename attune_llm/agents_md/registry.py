@@ -226,7 +226,11 @@ class AgentRegistry:
         """
         self._agents.clear()
 
-        for directory in self._load_paths:
+        # Copy _load_paths and clear it to avoid duplicates when load_from_directory appends
+        paths_to_reload = list(self._load_paths)
+        self._load_paths.clear()
+
+        for directory in paths_to_reload:
             if directory.exists():
                 self.load_from_directory(directory, overwrite=True)
 

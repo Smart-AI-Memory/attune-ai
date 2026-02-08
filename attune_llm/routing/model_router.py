@@ -178,11 +178,11 @@ class ModelRouter:
 
         Example:
             >>> router.route("summarize")
-            'claude-3-5-haiku-20241022'
+            'claude-haiku-4-5-20251001'
             >>> router.route("fix_bug")
-            'claude-sonnet-4-5-20250514'
+            'claude-sonnet-4-5-20250929'
             >>> router.route("coordinate")
-            'claude-opus-4-5-20251101'
+            'claude-opus-4-6'
 
         """
         provider = provider or self._default_provider

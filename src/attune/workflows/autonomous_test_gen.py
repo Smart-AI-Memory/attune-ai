@@ -435,7 +435,7 @@ Return ONLY the complete Python test file content, no explanations."""
             )
             client = anthropic.Anthropic(api_key=api_key)
             response = client.messages.create(
-                model="claude-sonnet-4-5",  # capable tier
+                model="claude-sonnet-4-5-20250929",  # capable tier
                 max_tokens=40000,  # Very generous total budget for comprehensive tests
                 thinking={
                     "type": "enabled",

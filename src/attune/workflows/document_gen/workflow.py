@@ -93,6 +93,7 @@ class DocumentGenerationWorkflow(
 
         """
         super().__init__(**kwargs)
+        self.tier_map = dict(self.__class__.tier_map)  # Instance copy to avoid mutating class
         self.skip_polish_threshold = skip_polish_threshold
         self.max_sections = max_sections
         self._user_max_write_tokens = max_write_tokens  # Store user preference

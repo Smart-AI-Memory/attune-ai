@@ -79,17 +79,17 @@ class TestModelRouter:
     def test_route_cheap_task(self, router):
         """Test routing cheap task to cheap model."""
         model = router.route("summarize")
-        assert model == "claude-3-5-haiku-20241022"
+        assert model == "claude-haiku-4-5-20251001"
 
     def test_route_capable_task(self, router):
         """Test routing capable task to capable model."""
         model = router.route("fix_bug")
-        assert model == "claude-sonnet-4-5"
+        assert model == "claude-sonnet-4-5-20250929"
 
     def test_route_premium_task(self, router):
         """Test routing premium task to premium model."""
         model = router.route("coordinate")
-        assert model == "claude-opus-4-5-20251101"  # Opus 4.5
+        assert model == "claude-opus-4-6"  # Opus 4.5
 
     # test_route_with_openai_provider deleted - OpenAI removed in v5.0.0 (Anthropic-only)
     # test_route_with_ollama_provider deleted - Ollama removed in v5.0.0 (Anthropic-only)
@@ -103,7 +103,7 @@ class TestModelRouter:
         """Test getting full model config."""
         config = router.get_config("fix_bug")
 
-        assert config.model_id == "claude-sonnet-4-5"
+        assert config.model_id == "claude-sonnet-4-5-20250929"
         assert config.cost_per_1k_input == 0.003
         assert config.cost_per_1k_output == 0.015
         assert config.max_tokens == 8192
@@ -113,8 +113,8 @@ class TestModelRouter:
         """Test cost estimation for cheap tier."""
         cost = router.estimate_cost("summarize", input_tokens=10000, output_tokens=2000)
 
-        # Haiku 3.5: $0.80/M input, $4.00/M output (unified registry pricing)
-        expected = (10000 / 1000) * 0.0008 + (2000 / 1000) * 0.004
+        # Haiku 4.5: $1.00/M input, $5.00/M output (unified registry pricing)
+        expected = (10000 / 1000) * 0.001 + (2000 / 1000) * 0.005
         assert cost == pytest.approx(expected, rel=0.01)
 
     def test_estimate_cost_capable(self, router):
@@ -152,7 +152,7 @@ class TestModelRouter:
         assert tier == ModelTier.PREMIUM
 
         model = router.route("my_special_task")
-        assert model == "claude-opus-4-5-20251101"  # Opus 4.5
+        assert model == "claude-opus-4-6"  # Opus 4.5
 
     def test_add_task_routing(self, router):
         """Test adding custom routing dynamically."""

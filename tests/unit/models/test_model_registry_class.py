@@ -87,9 +87,9 @@ class TestModelRegistryInitialization:
         registry = ModelRegistry()
 
         # Should have cache entries for all Anthropic models
-        assert "claude-3-5-haiku-20241022" in registry._model_id_cache
-        assert "claude-sonnet-4-5" in registry._model_id_cache
-        assert "claude-opus-4-5-20251101" in registry._model_id_cache
+        assert "claude-haiku-4-5-20251001" in registry._model_id_cache
+        assert "claude-sonnet-4-5-20250929" in registry._model_id_cache
+        assert "claude-opus-4-6" in registry._model_id_cache
 
 
 @pytest.mark.unit
@@ -100,10 +100,10 @@ class TestGetModelById:
         """Test retrieving Haiku model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-3-5-haiku-20241022")
+        model = registry.get_model_by_id("claude-haiku-4-5-20251001")
 
         assert model is not None
-        assert model.id == "claude-3-5-haiku-20241022"
+        assert model.id == "claude-haiku-4-5-20251001"
         assert model.provider == "anthropic"
         assert model.tier == "cheap"
 
@@ -111,10 +111,10 @@ class TestGetModelById:
         """Test retrieving Sonnet model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-sonnet-4-5")
+        model = registry.get_model_by_id("claude-sonnet-4-5-20250929")
 
         assert model is not None
-        assert model.id == "claude-sonnet-4-5"
+        assert model.id == "claude-sonnet-4-5-20250929"
         assert model.provider == "anthropic"
         assert model.tier == "capable"
 
@@ -122,10 +122,10 @@ class TestGetModelById:
         """Test retrieving Opus model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-opus-4-5-20251101")
+        model = registry.get_model_by_id("claude-opus-4-6")
 
         assert model is not None
-        assert model.id == "claude-opus-4-5-20251101"
+        assert model.id == "claude-opus-4-6"
         assert model.provider == "anthropic"
         assert model.tier == "premium"
 
@@ -142,10 +142,10 @@ class TestGetModelById:
         registry = ModelRegistry()
 
         # First call
-        model1 = registry.get_model_by_id("claude-sonnet-4-5")
+        model1 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
 
         # Second call should return same object from cache
-        model2 = registry.get_model_by_id("claude-sonnet-4-5")
+        model2 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
 
         assert model1 is model2  # Same object reference
 
@@ -372,19 +372,19 @@ class TestGetPricingForModel:
         """Test getting pricing for Haiku model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-3-5-haiku-20241022")
+        pricing = registry.get_pricing_for_model("claude-haiku-4-5-20251001")
 
         assert pricing is not None
         assert "input" in pricing
         assert "output" in pricing
-        assert pricing["input"] == 0.80
-        assert pricing["output"] == 4.00
+        assert pricing["input"] == 1.00
+        assert pricing["output"] == 5.00
 
     def test_get_pricing_for_sonnet(self):
         """Test getting pricing for Sonnet model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-sonnet-4-5")
+        pricing = registry.get_pricing_for_model("claude-sonnet-4-5-20250929")
 
         assert pricing is not None
         assert pricing["input"] == 3.00
@@ -394,7 +394,7 @@ class TestGetPricingForModel:
         """Test getting pricing for Opus model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-opus-4-5-20251101")
+        pricing = registry.get_pricing_for_model("claude-opus-4-6")
 
         assert pricing is not None
         assert pricing["input"] == 15.00
@@ -433,10 +433,10 @@ class TestRegistryPerformance:
 
         # Multiple calls should all hit cache
         for _ in range(100):
-            model = registry.get_model_by_id("claude-sonnet-4-5")
+            model = registry.get_model_by_id("claude-sonnet-4-5-20250929")
             assert model is not None
 
         # All calls should return same object reference (cache hit)
-        model1 = registry.get_model_by_id("claude-sonnet-4-5")
-        model2 = registry.get_model_by_id("claude-sonnet-4-5")
+        model1 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+        model2 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
         assert model1 is model2

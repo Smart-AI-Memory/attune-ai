@@ -21,6 +21,20 @@ from attune.memory.types import AccessTier, AgentCredentials
 if TYPE_CHECKING:
     pass
 
+# Check if Redis is actually running (it may be in the cloud, not localhost)
+try:
+    import redis as _redis_mod
+
+    _r = _redis_mod.Redis(host="localhost", port=6379, socket_connect_timeout=1)
+    _r.ping()
+    _REDIS_RUNNING = True
+except Exception:
+    _REDIS_RUNNING = False
+
+_skip_no_redis = pytest.mark.skipif(
+    not _REDIS_RUNNING, reason="Redis not running on localhost"
+)
+
 
 @pytest.fixture
 def mock_base_ops() -> Mock:
@@ -33,6 +47,8 @@ def mock_base_ops() -> Mock:
     base.use_mock = False
     base._client = Mock()
     base._client.pubsub.return_value = Mock()
+    base._config = Mock()
+    base._config.to_redis_kwargs.return_value = {"host": "localhost", "port": 6379}
     base._metrics = Mock()
     return base
 
@@ -321,6 +337,7 @@ class TestPubSubManagerPublish:
 class TestPubSubManagerSubscribe:
     """Test PubSubManager subscribe behavior."""
 
+    @_skip_no_redis
     def test_subscribe_registers_handler_in_subscriptions(
         self,
         pubsub_manager: PubSubManager,
@@ -344,6 +361,7 @@ class TestPubSubManagerSubscribe:
         assert full_channel in pubsub_manager._subscriptions
         assert handler in pubsub_manager._subscriptions[full_channel]
 
+    @_skip_no_redis
     def test_subscribe_multiple_handlers_to_same_channel(
         self,
         pubsub_manager: PubSubManager,
@@ -370,6 +388,7 @@ class TestPubSubManagerSubscribe:
         assert handler1 in pubsub_manager._subscriptions[full_channel]
         assert handler2 in pubsub_manager._subscriptions[full_channel]
 
+    @_skip_no_redis
     def test_subscribe_to_different_channels(
         self,
         pubsub_manager: PubSubManager,
@@ -412,13 +431,15 @@ class TestPubSubManagerSubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
 
-        # When
-        pubsub_manager.subscribe(channel, handler)
+        # When - source creates new redis.Redis() for pubsub, not _client.pubsub()
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            pubsub_manager.subscribe(channel, handler)
 
         # Then
-        mock_base_ops._client.pubsub.assert_called_once()
+        mock_redis_instance.pubsub.assert_called_once()
         assert pubsub_manager._pubsub is mock_pubsub
 
     def test_subscribe_starts_listener_thread_on_first_subscription(
@@ -434,13 +455,15 @@ class TestPubSubManagerSubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
 
         # When
-        with patch.object(threading, "Thread") as mock_thread_cls:
-            mock_thread_instance = Mock()
-            mock_thread_cls.return_value = mock_thread_instance
-            pubsub_manager.subscribe(channel, handler)
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            with patch.object(threading, "Thread") as mock_thread_cls:
+                mock_thread_instance = Mock()
+                mock_thread_cls.return_value = mock_thread_instance
+                pubsub_manager.subscribe(channel, handler)
 
         # Then
         mock_thread_cls.assert_called_once()
@@ -460,10 +483,12 @@ class TestPubSubManagerSubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
 
         # When
-        pubsub_manager.subscribe(channel, handler)
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            pubsub_manager.subscribe(channel, handler)
 
         # Then
         expected_channel = f"{PubSubManager.PREFIX_PUBSUB}{channel}"
@@ -487,15 +512,17 @@ class TestPubSubManagerSubscribe:
         handler1 = Mock()
         handler2 = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
 
-        # When
-        pubsub_manager.subscribe(channel1, handler1)
-        pubsub_manager.subscribe(channel2, handler2)
+        # When - source creates redis.Redis() only on first subscribe
+        with patch("redis.Redis", return_value=mock_redis_instance) as mock_redis_cls:
+            pubsub_manager.subscribe(channel1, handler1)
+            pubsub_manager.subscribe(channel2, handler2)
 
         # Then
-        # pubsub() should only be called once (on first subscribe)
-        mock_base_ops._client.pubsub.assert_called_once()
+        # Redis() should only be called once (on first subscribe)
+        mock_redis_cls.assert_called_once()
 
     def test_subscribe_returns_true_on_success(
         self,
@@ -510,10 +537,12 @@ class TestPubSubManagerSubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
 
         # When
-        result = pubsub_manager.subscribe(channel, handler)
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            result = pubsub_manager.subscribe(channel, handler)
 
         # Then
         assert result is True
@@ -701,8 +730,10 @@ class TestPubSubManagerUnsubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
-        pubsub_manager.subscribe(channel, handler)
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            pubsub_manager.subscribe(channel, handler)
 
         # When
         result = pubsub_manager.unsubscribe(channel)
@@ -725,8 +756,10 @@ class TestPubSubManagerUnsubscribe:
         channel = "test_channel"
         handler = Mock()
         mock_pubsub = Mock()
-        mock_base_ops._client.pubsub.return_value = mock_pubsub
-        pubsub_manager.subscribe(channel, handler)
+        mock_redis_instance = Mock()
+        mock_redis_instance.pubsub.return_value = mock_pubsub
+        with patch("redis.Redis", return_value=mock_redis_instance):
+            pubsub_manager.subscribe(channel, handler)
 
         # When
         pubsub_manager.unsubscribe(channel)
@@ -815,6 +848,7 @@ class TestPubSubManagerClose:
         mock_pubsub.close.assert_called_once()
         assert pubsub_manager._pubsub is None
 
+    @_skip_no_redis
     def test_close_clears_subscriptions(
         self,
         pubsub_manager: PubSubManager,

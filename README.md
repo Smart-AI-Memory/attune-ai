@@ -8,13 +8,26 @@ Run code review, debugging, testing, and release workflows from your terminal or
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-13%2C828%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-80%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Security](https://img.shields.io/badge/security-0%20findings-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ```bash
 pip install attune-ai[developer]
 ```
+
+---
+
+## What's New in v2.4.0
+
+- **Healthcare CDS Agents** - Multi-agent clinical decision support with Redis-coordinated communication and HIPAA-compliant data handling
+- **Anthropic Best Practices** - SDK >=0.40.0 with Batch API, tier routing aligned with Anthropic model guidance, prompt caching, and extended thinking
+- **Massive Refactoring** - 13 files over 1,000 lines decomposed into 48 focused modules (57% line reduction) with zero breaking changes
+- **Release-Prep Agent Team** - 4-agent team (Security, Coverage, Quality, Docs) with progressive tier escalation replaces legacy CrewAI crew
+- **80%+ Test Coverage** - 13,800+ tests passing with strategic coverage enforcement and 0 security findings
+- **Redis 8.4 Support** - Full compatibility with RediSearch, RedisJSON, RedisTimeSeries, RedisBloom, and VectorSet modules
 
 ---
 
@@ -45,7 +58,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - No file exceeds 1,000 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **13,600+ Tests** - Security, unit, integration, and behavioral test coverage
+- **13,800+ Tests** - Security, unit, integration, and behavioral test coverage at 80%+ coverage
 
 ### Intelligent Cost Optimization
 
@@ -281,7 +294,7 @@ export REDIS_URL="redis://localhost:6379"  # Optional: for memory features
 - JWT authentication with rate limiting
 - PII scrubbing in telemetry
 - HIPAA/GDPR compliance options
-- Automated security scanning (0 findings across 427 files)
+- Automated security scanning (517 findings remediated to 0 across codebase)
 
 ```bash
 # Run security audit

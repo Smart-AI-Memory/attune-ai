@@ -151,12 +151,12 @@ class TestModelInfo:
             id="haiku",
             provider="anthropic",
             tier="cheap",
-            input_cost_per_million=0.80,  # Claude 3.5 Haiku pricing
-            output_cost_per_million=4.00,
+            input_cost_per_million=1.00,  # Claude Haiku 4.5 pricing
+            output_cost_per_million=5.00,
         )
-        # $0.80 per million = $0.0008 per 1k
-        assert model.cost_per_1k_input == pytest.approx(0.0008)
-        assert model.cost_per_1k_output == pytest.approx(0.004)
+        # $1.00 per million = $0.001 per 1k
+        assert model.cost_per_1k_input == pytest.approx(0.001)
+        assert model.cost_per_1k_output == pytest.approx(0.005)
 
     def test_to_router_config(self):
         """Test to_router_config method."""
@@ -179,7 +179,7 @@ class TestModelInfo:
     def test_to_workflow_config(self):
         """Test to_workflow_config method."""
         model = ModelInfo(
-            id="claude-sonnet-4-5",
+            id="claude-sonnet-4-5-20250929",
             provider="anthropic",
             tier="capable",
             input_cost_per_million=2.5,
@@ -189,7 +189,7 @@ class TestModelInfo:
             supports_tools=True,
         )
         config = model.to_workflow_config()
-        assert config["name"] == "claude-sonnet-4-5"
+        assert config["name"] == "claude-sonnet-4-5-20250929"
         assert config["provider"] == "anthropic"
         assert config["tier"] == "capable"
         assert config["input_cost_per_million"] == 2.5

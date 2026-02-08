@@ -60,7 +60,7 @@ def _build_model_pricing() -> dict[str, dict[str, float]]:
 MODEL_PRICING = _build_model_pricing()
 
 # Default premium model for baseline comparison
-BASELINE_MODEL = "claude-opus-4-5-20251101"
+BASELINE_MODEL = "claude-opus-4-6"
 
 
 class CostTracker:

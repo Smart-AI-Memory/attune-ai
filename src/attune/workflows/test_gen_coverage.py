@@ -292,7 +292,7 @@ Return ONLY the complete Python test file with additions, no explanations."""
 
                 client = anthropic.Anthropic(api_key=api_key)
                 response = client.messages.create(
-                    model="claude-sonnet-4-5",
+                    model="claude-sonnet-4-5-20250929",
                     max_tokens=40000,  # Very generous total budget for coverage improvement
                     thinking={
                         "type": "enabled",

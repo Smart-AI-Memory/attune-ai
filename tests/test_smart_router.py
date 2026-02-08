@@ -255,7 +255,7 @@ class TestChainExecutor:
         triggers = executor.get_triggered_chains("security-audit", result)
 
         assert len(triggers) >= 1
-        assert any(t.next_workflow == "dependency-check" for t in triggers)
+        assert any(t.next_workflow == "bug-predict" for t in triggers)
 
     def test_condition_evaluation_greater_than(self):
         """Test condition evaluation with greater than."""
@@ -287,7 +287,7 @@ class TestChainExecutor:
 
         should, triggers = executor.should_trigger_chain(
             "bug-predict",
-            {"risk_score": 0.9},
+            {"high_risk_count": 10},
         )
 
         assert should is True
@@ -316,7 +316,7 @@ class TestChainExecutor:
 
         triggers = executor.get_triggered_chains(
             "security-audit",
-            {"high_severity_count": 3},
+            {"high_severity_count": 5},
         )
 
         execution = executor.create_execution("security-audit", triggers)

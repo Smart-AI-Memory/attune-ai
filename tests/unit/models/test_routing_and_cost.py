@@ -476,7 +476,7 @@ class TestCostTrackingAccuracy:
 
         # Log request with specific token counts
         request = tracker.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1500,
             output_tokens=500,
             task_type="summarize",
@@ -493,16 +493,16 @@ class TestCostTrackingAccuracy:
         """
         tracker = CostTracker(storage_dir=str(tmp_path))
 
-        # Use Haiku: $0.80/M input, $4.00/M output
+        # Use Haiku: $1.00/M input, $5.00/M output
         request = tracker.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1_000_000,  # 1M tokens
             output_tokens=1_000_000,  # 1M tokens
             task_type="summarize",
         )
 
-        # Expected: (1M / 1M) * 0.80 + (1M / 1M) * 4.00 = 4.80
-        expected_cost = 0.80 + 4.00
+        # Expected: (1M / 1M) * 1.00 + (1M / 1M) * 5.00 = 6.00
+        expected_cost = 1.00 + 5.00
         assert abs(request["actual_cost"] - expected_cost) < 0.01
 
     def test_different_models_have_different_costs(self, tmp_path):
@@ -512,9 +512,9 @@ class TestCostTrackingAccuracy:
         """
         tracker = CostTracker(storage_dir=str(tmp_path))
 
-        # Haiku (cheap): $0.80/M input
+        # Haiku (cheap): $1.00/M input
         haiku_req = tracker.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="summarize",
@@ -522,7 +522,7 @@ class TestCostTrackingAccuracy:
 
         # Sonnet (capable): $3.00/M input
         sonnet_req = tracker.log_request(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-5-20250929",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="generate_code",
@@ -530,7 +530,7 @@ class TestCostTrackingAccuracy:
 
         # Opus (premium): $15.00/M input
         opus_req = tracker.log_request(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="coordinate",
@@ -550,14 +550,14 @@ class TestCostTrackingAccuracy:
         # Simulate fallback: tried Haiku, fell back to Sonnet
         # Cost should reflect Sonnet usage, not Haiku
         request = tracker.log_request(
-            model="claude-sonnet-4-5",  # Fell back to this
+            model="claude-sonnet-4-5-20250929",  # Fell back to this
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
         )
 
         # Should use Sonnet pricing, not Haiku pricing
-        sonnet_pricing = MODEL_PRICING["claude-sonnet-4-5"]
+        sonnet_pricing = MODEL_PRICING["claude-sonnet-4-5-20250929"]
         expected_cost = (1000 / 1_000_000) * sonnet_pricing["input"] + (
             500 / 1_000_000
         ) * sonnet_pricing["output"]
@@ -575,7 +575,7 @@ class TestCostTrackingAccuracy:
         costs = []
         for _i in range(5):
             req = tracker.log_request(
-                model="claude-3-5-haiku-20241022",
+                model="claude-haiku-4-5-20251001",
                 input_tokens=1000,
                 output_tokens=500,
                 task_type="summarize",
@@ -597,7 +597,7 @@ class TestCostTrackingAccuracy:
         # Create tracker and log request
         tracker1 = CostTracker(storage_dir=str(tmp_path))
         tracker1.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
@@ -620,14 +620,14 @@ class TestCostTrackingAccuracy:
 
         # Log requests with different tiers
         tracker.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
             tier="cheap",
         )
         tracker.log_request(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-5-20250929",
             input_tokens=1000,
             output_tokens=500,
             task_type="generate_code",
@@ -660,7 +660,7 @@ class TestCostTrackingAccuracy:
 
         # Log expensive request
         tracker.log_request(
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-6",
             input_tokens=10_000_000,  # 10M tokens
             output_tokens=1_000_000,  # 1M tokens
             task_type="coordinate",
@@ -744,7 +744,7 @@ class TestRoutingDecisions:
         start_time = time.time()
 
         tracker.log_request(
-            model="claude-3-5-haiku-20241022",
+            model="claude-haiku-4-5-20251001",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
@@ -865,7 +865,7 @@ class TestRoutingAndCostIntegration:
 
         # Log cost (would be done by executor)
         tracker.log_request(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-5-20250929",
             input_tokens=1000,
             output_tokens=500,
             task_type="generate_code",
@@ -887,7 +887,7 @@ class TestRoutingAndCostIntegration:
         # Simulate: tried cheap, fell back to capable
         # Log the actual model used (capable)
         request = tracker.log_request(
-            model="claude-sonnet-4-5",  # Fell back to capable
+            model="claude-sonnet-4-5-20250929",  # Fell back to capable
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",  # Originally cheap task

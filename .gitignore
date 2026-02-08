@@ -224,6 +224,9 @@ benchmarks/profiles/*.dat
 # Duplicate rules (use .claude/rules/empathy/)
 .claude/rules/attune/
 
+# Claude Code local settings (user-specific, not shared)
+.claude/settings.local.json
+
 # UV lock file (use pip-tools or poetry for prod)
 uv.lock
 

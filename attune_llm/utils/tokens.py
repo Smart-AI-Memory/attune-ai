@@ -233,7 +233,7 @@ def count_message_tokens(
     return counts
 
 
-def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-5") -> float:
+def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-5-20250929") -> float:
     """Estimate cost in USD based on token counts.
 
     Args:
@@ -277,7 +277,7 @@ def calculate_cost_with_cache(
     output_tokens: int,
     cache_creation_tokens: int,
     cache_read_tokens: int,
-    model: str = "claude-sonnet-4-5",
+    model: str = "claude-sonnet-4-5-20250929",
 ) -> dict[str, Any]:
     """Calculate cost including Anthropic prompt caching.
 

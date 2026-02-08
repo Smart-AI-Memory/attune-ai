@@ -40,7 +40,7 @@ Use conversational language to access features:
 
 **📊 Natural Language Routing** - Intent detection and keyword mapping allow conversational access to all features.
 
-**🧪 Comprehensive Testing** - 7,168+ tests passing (99.9% success rate) with auth strategy integration tests.
+**🧪 Comprehensive Testing** - 13,800+ tests passing at 80%+ coverage with 0 security findings.
 
 ---
 
@@ -81,6 +81,7 @@ Registered in `.claude/settings.json`, these hooks run automatically:
 | Stop | `session_end.py` | Saves session state and triggers cleanup |
 | PreToolUse (Bash) | `security_guard.py` | Blocks eval/exec, __import__, rm -rf / |
 | PreToolUse (Edit/Write) | `security_guard.py` | Validates file paths, blocks system directory writes |
+| PostToolUse (Bash/Edit/Write) | `telemetry_hook.py` | Records tool usage for cost tracking and analytics |
 
 Hook scripts live in `attune_llm/hooks/scripts/` and follow the Claude Code stdin JSON protocol.
 
@@ -127,6 +128,6 @@ src/attune/
 
 ---
 
-**Version:** 2.5.0 (2026-02-07)
+**Version:** 2.4.0 (2026-02-08)
 **License:** Apache 2.0 - Free and open source
 **Repository:** https://github.com/Smart-AI-Memory/attune-ai

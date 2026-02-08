@@ -44,7 +44,7 @@ class ModelInfo:
     properties for compatibility with code expecting per-1k pricing.
 
     Attributes:
-        id: Model identifier (e.g., "claude-3-5-haiku-20241022")
+        id: Model identifier (e.g., "claude-haiku-4-5-20251001")
         provider: Provider name (e.g., "anthropic")
         tier: Tier level (e.g., "cheap")
         input_cost_per_million: Input token cost per million tokens
@@ -125,21 +125,21 @@ class ModelInfo:
 MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     # Anthropic Claude Models
-    # Intelligent fallback: Sonnet 4.5 → Opus 4.5 (5x cost increase for complex tasks)
+    # Intelligent fallback: Sonnet 4.5 → Opus 4.6 (5x cost increase for complex tasks)
     # -------------------------------------------------------------------------
     "anthropic": {
         "cheap": ModelInfo(
-            id="claude-3-5-haiku-20241022",
+            id="claude-haiku-4-5-20251001",
             provider="anthropic",
             tier="cheap",
-            input_cost_per_million=0.80,
-            output_cost_per_million=4.00,
+            input_cost_per_million=1.00,
+            output_cost_per_million=5.00,
             max_tokens=8192,
-            supports_vision=False,
+            supports_vision=True,
             supports_tools=True,
         ),
         "capable": ModelInfo(
-            id="claude-sonnet-4-5",  # Updated to Sonnet 4.5 (2026)
+            id="claude-sonnet-4-5-20250929",
             provider="anthropic",
             tier="capable",
             input_cost_per_million=3.00,
@@ -149,7 +149,7 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_tools=True,
         ),
         "premium": ModelInfo(
-            id="claude-opus-4-5-20251101",
+            id="claude-opus-4-6",
             provider="anthropic",
             tier="premium",
             input_cost_per_million=15.00,
@@ -177,19 +177,19 @@ class ModelRegistry:
         >>> registry = ModelRegistry()
         >>> model = registry.get_model("anthropic", "capable")
         >>> print(model.id)
-        claude-sonnet-4-5
+        claude-sonnet-4-5-20250929
 
         >>> models = registry.get_models_by_tier("cheap")
         >>> print(len(models))
-        5
+        1
 
-        >>> model = registry.get_model_by_id("claude-opus-4-5-20251101")
+        >>> model = registry.get_model_by_id("claude-opus-4-6")
         >>> print(model.tier)
         premium
 
         >>> providers = registry.list_providers()
         >>> print(providers)
-        ['anthropic', 'openai', 'google', 'ollama', 'hybrid']
+        ['anthropic']
 
     """
 
@@ -239,7 +239,7 @@ class ModelRegistry:
             >>> registry = ModelRegistry()
             >>> model = registry.get_model("anthropic", "capable")
             >>> print(model.id)
-            claude-sonnet-4-5
+            claude-sonnet-4-5-20250929
 
         """
         if provider.lower() != "anthropic":
@@ -261,22 +261,18 @@ class ModelRegistry:
         Uses O(1) cache lookup for fast performance.
 
         Args:
-            model_id: Model identifier (e.g., "claude-3-5-haiku-20241022")
+            model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
 
         Returns:
             ModelInfo if found, None otherwise
 
         Example:
             >>> registry = ModelRegistry()
-            >>> model = registry.get_model_by_id("claude-opus-4-5-20251101")
+            >>> model = registry.get_model_by_id("claude-opus-4-6")
             >>> print(model.provider)
             anthropic
             >>> print(model.tier)
             premium
-
-            >>> model = registry.get_model_by_id("gpt-4o-mini")
-            >>> print(f"{model.provider}/{model.tier}")
-            openai/cheap
 
         """
         return self._model_id_cache.get(model_id)
@@ -303,7 +299,7 @@ class ModelRegistry:
             >>> premium_models = registry.get_models_by_tier("premium")
             >>> for model in premium_models:
             ...     print(f"{model.provider}: {model.id}")
-            anthropic: claude-opus-4-5-20251101
+            anthropic: claude-opus-4-6
 
         """
         return self._tier_cache.get(tier.lower(), [])
@@ -357,18 +353,18 @@ class ModelRegistry:
         """Get pricing for a model by its ID.
 
         Args:
-            model_id: Model identifier (e.g., "claude-3-5-haiku-20241022")
+            model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
 
         Returns:
             Dict with 'input' and 'output' keys (per-million pricing), or None
 
         Example:
             >>> registry = ModelRegistry()
-            >>> pricing = registry.get_pricing_for_model("claude-sonnet-4-5")
+            >>> pricing = registry.get_pricing_for_model("claude-sonnet-4-5-20250929")
             >>> print(pricing)
             {'input': 3.0, 'output': 15.0}
 
-            >>> pricing = registry.get_pricing_for_model("claude-opus-4-5-20251101")
+            >>> pricing = registry.get_pricing_for_model("claude-opus-4-6")
             >>> print(f"${pricing['input']}/M input, ${pricing['output']}/M output")
             $15.0/M input, $75.0/M output
 
@@ -428,7 +424,7 @@ def get_pricing_for_model(model_id: str) -> dict[str, float] | None:
     """Get pricing for a model by its ID.
 
     Args:
-        model_id: Model identifier (e.g., "claude-3-5-haiku-20241022")
+        model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
 
     Returns:
         Dict with 'input' and 'output' keys (per-million pricing), or None
@@ -466,7 +462,7 @@ def get_tiers() -> list[str]:
 # These are tier-level pricing aliases for when specific model isn't known
 
 TIER_PRICING: dict[str, dict[str, float]] = {
-    "cheap": {"input": 0.80, "output": 4.00},  # Haiku 3.5 pricing
-    "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4 pricing
-    "premium": {"input": 15.00, "output": 75.00},  # Opus 4.5 pricing
+    "cheap": {"input": 1.00, "output": 5.00},  # Haiku 4.5 pricing
+    "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.5 pricing
+    "premium": {"input": 15.00, "output": 75.00},  # Opus 4.6 pricing
 }

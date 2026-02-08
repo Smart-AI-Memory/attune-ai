@@ -132,7 +132,7 @@ class ChainExecutor:
             # Load templates
             templates = data.get("templates", {})
             for name, template in templates.items():
-                self._templates[name] = template.get("steps", [])
+                self._templates[name] = template.get("steps", template.get("workflows", []))
 
         except (yaml.YAMLError, OSError) as e:
             print(f"Warning: Could not load chain config: {e}")

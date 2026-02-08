@@ -30,6 +30,16 @@ from attune.memory.short_term import (  # noqa: E402
 )
 
 
+def _redis_running() -> bool:
+    """Check if Redis is actually running on localhost."""
+    try:
+        r = redis.Redis(host="localhost", port=6379, socket_connect_timeout=1)
+        r.ping()
+        return True
+    except Exception:
+        return False
+
+
 class TestRedisFallbackBehavior:
     """Test that RedisShortTermMemory gracefully falls back to mock when Redis unavailable."""
 
@@ -294,6 +304,10 @@ class TestErrorHandlingEdgeCases:
 class TestConfigurationValidation:
     """Test configuration validation for Redis connection."""
 
+    @pytest.mark.skipif(
+        not _redis_running(),
+        reason="Redis not running on localhost",
+    )
     def test_validates_retry_configuration(self):
         """Test that retry configuration is validated."""
         config = RedisConfig(

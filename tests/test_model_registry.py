@@ -83,12 +83,12 @@ class TestModelInfo:
             id="test",
             provider="test",
             tier="cheap",
-            input_cost_per_million=0.80,  # $0.80 per million
-            output_cost_per_million=4.00,  # $4.00 per million
+            input_cost_per_million=1.00,  # $1.00 per million
+            output_cost_per_million=5.00,  # $5.00 per million
         )
         # Per-1k should be per-million / 1000
-        assert info.cost_per_1k_input == pytest.approx(0.0008)
-        assert info.cost_per_1k_output == pytest.approx(0.004)
+        assert info.cost_per_1k_input == pytest.approx(0.001)
+        assert info.cost_per_1k_output == pytest.approx(0.005)
 
     def test_to_router_config(self):
         """Test conversion to ModelRouter format."""
@@ -96,15 +96,15 @@ class TestModelInfo:
             id="claude-haiku",
             provider="anthropic",
             tier="cheap",
-            input_cost_per_million=0.80,
-            output_cost_per_million=4.00,
+            input_cost_per_million=1.00,
+            output_cost_per_million=5.00,
             max_tokens=8192,
             supports_tools=True,
         )
         config = info.to_router_config()
         assert config["model_id"] == "claude-haiku"
-        assert config["cost_per_1k_input"] == pytest.approx(0.0008)
-        assert config["cost_per_1k_output"] == pytest.approx(0.004)
+        assert config["cost_per_1k_input"] == pytest.approx(0.001)
+        assert config["cost_per_1k_output"] == pytest.approx(0.005)
         assert config["max_tokens"] == 8192
         assert config["supports_tools"] is True
 
@@ -134,12 +134,12 @@ class TestModelInfo:
             id="test",
             provider="test",
             tier="cheap",
-            input_cost_per_million=0.80,
-            output_cost_per_million=4.00,
+            input_cost_per_million=1.00,
+            output_cost_per_million=5.00,
         )
         pricing = info.to_cost_tracker_pricing()
-        assert pricing["input"] == 0.80
-        assert pricing["output"] == 4.00
+        assert pricing["input"] == 1.00
+        assert pricing["output"] == 5.00
 
     def test_frozen_dataclass(self):
         """Verify ModelInfo is immutable."""
@@ -172,7 +172,7 @@ class TestModelRegistry:
         """Verify Anthropic model configurations."""
         cheap = MODEL_REGISTRY["anthropic"]["cheap"]
         assert "haiku" in cheap.id.lower()
-        assert cheap.input_cost_per_million == 0.80
+        assert cheap.input_cost_per_million == 1.00
 
         capable = MODEL_REGISTRY["anthropic"]["capable"]
         assert "sonnet" in capable.id.lower()
@@ -190,7 +190,7 @@ class TestHelperFunctions:
         """Test getting a valid model."""
         model = get_model("anthropic", "cheap")
         assert model is not None
-        assert model.id == "claude-3-5-haiku-20241022"
+        assert model.id == "claude-haiku-4-5-20251001"
 
     def test_get_model_case_insensitive(self):
         """Test case insensitivity."""
@@ -216,10 +216,10 @@ class TestHelperFunctions:
 
     def test_get_pricing_for_model_found(self):
         """Test getting pricing for existing model."""
-        pricing = get_pricing_for_model("claude-3-5-haiku-20241022")
+        pricing = get_pricing_for_model("claude-haiku-4-5-20251001")
         assert pricing is not None
-        assert pricing["input"] == 0.80
-        assert pricing["output"] == 4.00
+        assert pricing["input"] == 1.00
+        assert pricing["output"] == 5.00
 
     def test_get_pricing_for_model_not_found(self):
         """Test getting pricing for non-existent model."""
@@ -243,8 +243,8 @@ class TestTierPricing:
 
     def test_tier_pricing_values(self):
         """Verify tier pricing matches Anthropic defaults."""
-        assert TIER_PRICING["cheap"]["input"] == 0.80
-        assert TIER_PRICING["cheap"]["output"] == 4.00
+        assert TIER_PRICING["cheap"]["input"] == 1.00
+        assert TIER_PRICING["cheap"]["output"] == 5.00
 
         assert TIER_PRICING["capable"]["input"] == 3.00
         assert TIER_PRICING["capable"]["output"] == 15.00

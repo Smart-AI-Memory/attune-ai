@@ -512,10 +512,12 @@ class TestMemoryControlPanelHealthCheck:
 class TestMemoryControlPanelInternalMethods:
     """Test internal/private methods"""
 
+    @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.control_panel._check_redis_running")
-    def test_get_short_term_creates_instance(self, mock_check):
+    def test_get_short_term_creates_instance(self, mock_check, mock_redis_cls):
         """Test _get_short_term creates instance on first call"""
         mock_check.return_value = True
+        mock_redis_cls.return_value.ping.return_value = True
 
         panel = MemoryControlPanel()
         assert panel._short_term is None
@@ -524,10 +526,12 @@ class TestMemoryControlPanelInternalMethods:
         assert memory is not None
         assert panel._short_term is not None
 
+    @patch("attune.memory.short_term.base.redis.Redis")
     @patch("attune.memory.control_panel._check_redis_running")
-    def test_get_short_term_reuses_instance(self, mock_check):
+    def test_get_short_term_reuses_instance(self, mock_check, mock_redis_cls):
         """Test _get_short_term reuses existing instance"""
         mock_check.return_value = True
+        mock_redis_cls.return_value.ping.return_value = True
 
         panel = MemoryControlPanel()
         memory1 = panel._get_short_term()

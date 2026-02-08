@@ -47,6 +47,14 @@ def create_mock_coordinator():
             return [k for k in mock_client._store.keys() if k.startswith("empathy:heartbeat:")]
         return []
 
+    def mock_scan_iter(match="", count=100):
+        """Mock Redis scan_iter - iterate keys matching pattern."""
+        if match == "empathy:heartbeat:*":
+            return iter(
+                [k for k in mock_client._store.keys() if k.startswith("empathy:heartbeat:")]
+            )
+        return iter([])
+
     def mock_delete(key):
         """Mock Redis delete - remove key."""
         if key in mock_client._store:
@@ -64,6 +72,7 @@ def create_mock_coordinator():
     mock_client.setex = mock_setex
     mock_client.get = mock_get
     mock_client.keys = mock_keys
+    mock_client.scan_iter = mock_scan_iter
     mock_client.delete = mock_delete
 
     # Create mock memory with Redis client

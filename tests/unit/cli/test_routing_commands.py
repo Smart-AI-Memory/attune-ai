@@ -20,7 +20,7 @@ class TestRoutingCommands:
             {
                 "workflow": "code-review",
                 "stage": "analysis",
-                "model": "claude-3-5-haiku-20241022",
+                "model": "claude-haiku-4-5-20251001",
                 "tier": "CHEAP",
                 "provider": "anthropic",
                 "cost": 0.0016,
@@ -30,7 +30,7 @@ class TestRoutingCommands:
             {
                 "workflow": "code-review",
                 "stage": "analysis",
-                "model": "claude-sonnet-4-5",
+                "model": "claude-sonnet-4-5-20250929",
                 "tier": "CAPABLE",
                 "provider": "anthropic",
                 "cost": 0.0077,
@@ -61,15 +61,15 @@ class TestRoutingCommands:
             "workflow": "code-review",
             "stage": "all",
             "days_analyzed": 7,
-            "models_used": ["claude-3-5-haiku-20241022", "claude-sonnet-4-5"],
+            "models_used": ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
             "performance_by_model": {
-                "claude-3-5-haiku-20241022": {
+                "claude-haiku-4-5-20251001": {
                     "calls": 80,
                     "success_rate": 0.95,
                     "avg_cost": 0.0016,
                     "avg_latency_ms": 1200,
                 },
-                "claude-sonnet-4-5": {
+                "claude-sonnet-4-5-20250929": {
                     "calls": 20,
                     "success_rate": 1.0,
                     "avg_cost": 0.0077,
@@ -122,7 +122,7 @@ class TestRoutingCommands:
                 assert "ADAPTIVE ROUTING STATISTICS" in captured.out
                 assert "code-review" in captured.out
                 assert "100" in captured.out  # Total calls
-                assert "claude-3-5-haiku-20241022" in captured.out
+                assert "claude-haiku-4-5-20251001" in captured.out
 
     def test_routing_stats_no_data(self, mock_telemetry, mock_router, capsys):
         """Test routing stats with no data."""
@@ -256,7 +256,7 @@ class TestRoutingCommands:
             captured = capsys.readouterr()
             assert "MODEL PERFORMANCE COMPARISON" in captured.out
             assert "ANTHROPIC" in captured.out
-            assert "claude-3-5-haiku-20241022" in captured.out
+            assert "claude-haiku-4-5-20251001" in captured.out
 
 
 if __name__ == "__main__":

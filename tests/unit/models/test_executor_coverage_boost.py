@@ -23,13 +23,13 @@ class TestLLMResponse:
         """Test creating LLMResponse with required fields."""
         response = LLMResponse(
             content="Test response",
-            model_id="claude-sonnet-4-5",
+            model_id="claude-sonnet-4-5-20250929",
             provider="anthropic",
             tier="capable",
         )
 
         assert response.content == "Test response"
-        assert response.model_id == "claude-sonnet-4-5"
+        assert response.model_id == "claude-sonnet-4-5-20250929"
         assert response.provider == "anthropic"
         assert response.tier == "capable"
 
@@ -37,7 +37,7 @@ class TestLLMResponse:
         """Test creating LLMResponse with all fields populated."""
         response = LLMResponse(
             content="Complete response",
-            model_id="claude-3-5-haiku-20241022",
+            model_id="claude-haiku-4-5-20251001",
             provider="anthropic",
             tier="cheap",
             tokens_input=1000,

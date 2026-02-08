@@ -299,7 +299,7 @@ class TestAnthropicBatchProvider:
         requests = [
             {
                 "custom_id": "task_1",
-                "model": "claude-sonnet-4-5",
+                "model": "claude-sonnet-4-5-20250929",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 100,
             }

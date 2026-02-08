@@ -549,9 +549,9 @@ workflow_providers:
 # Override default models for specific provider/tier combinations
 custom_models:
   anthropic:
-    cheap: claude-3-5-haiku-20241022
+    cheap: claude-haiku-4-5-20251001
     capable: claude-sonnet-4-20250514
-    premium: claude-opus-4-5-20251101
+    premium: claude-opus-4-6
   openai:
     cheap: gpt-4o-mini
     capable: gpt-4o
@@ -564,7 +564,7 @@ custom_models:
   hybrid:
     cheap: gpt-4o-mini           # OpenAI - cheapest per token
     capable: claude-sonnet-4-20250514   # Anthropic - best code/reasoning
-    premium: claude-opus-4-5-20251101   # Anthropic - best overall
+    premium: claude-opus-4-6   # Anthropic - best overall
 
 # =============================================================================
 # CUSTOM PRICING (per million tokens)
@@ -641,5 +641,5 @@ workflow_xml_configs:
 # EMPATHY_WORKFLOW_RESEARCH_PROVIDER=anthropic # Per-workflow
 # EMPATHY_MODEL_CHEAP=gpt-4o-mini              # Tier model override
 # EMPATHY_MODEL_CAPABLE=claude-sonnet-4-20250514
-# EMPATHY_MODEL_PREMIUM=claude-opus-4-5-20251101
+# EMPATHY_MODEL_PREMIUM=claude-opus-4-6
 """

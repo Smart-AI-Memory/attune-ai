@@ -391,7 +391,7 @@ class TestListKeys:
         """Given pattern, when listing keys, then returns matching keys."""
         # Given
         pattern = "test:*"
-        mock_redis_client.keys.return_value = [b"test:key1", b"test:key2"]
+        mock_redis_client.scan_iter.return_value = iter([b"test:key1", b"test:key2"])
 
         # When
         result = memory_instance._keys(pattern)
@@ -1028,7 +1028,9 @@ class TestAgentWorkingMemory:
     ):
         """Given credentials, when clearing working memory, then deletes all keys."""
         # Given
-        mock_redis_client.keys.return_value = [b"empathy:working:contributor_agent:key1"]
+        mock_redis_client.scan_iter.return_value = iter(
+            [b"empathy:working:contributor_agent:key1"]
+        )
         mock_redis_client.delete.return_value = 1
 
         # When

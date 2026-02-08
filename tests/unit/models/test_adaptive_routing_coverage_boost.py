@@ -25,7 +25,7 @@ class TestModelPerformance:
     def test_create_model_performance_with_required_fields(self):
         """Test creating ModelPerformance with required fields."""
         perf = ModelPerformance(
-            model_id="claude-3-5-haiku-20241022",
+            model_id="claude-haiku-4-5-20251001",
             tier="CHEAP",
             success_rate=0.95,
             avg_latency_ms=850.5,
@@ -33,7 +33,7 @@ class TestModelPerformance:
             sample_size=100,
         )
 
-        assert perf.model_id == "claude-3-5-haiku-20241022"
+        assert perf.model_id == "claude-haiku-4-5-20251001"
         assert perf.tier == "CHEAP"
         assert perf.success_rate == 0.95
         assert perf.avg_latency_ms == 850.5
@@ -739,8 +739,8 @@ class TestGetDefaultModel:
         # Mock registry structure
         mock_registry = {
             "anthropic": {
-                "cheap": MagicMock(id="claude-3-5-haiku-20241022"),
-                "capable": MagicMock(id="claude-sonnet-4-5"),
+                "cheap": MagicMock(id="claude-haiku-4-5-20251001"),
+                "capable": MagicMock(id="claude-sonnet-4-5-20250929"),
             }
         }
         mock_get_registry.return_value = mock_registry
@@ -749,7 +749,7 @@ class TestGetDefaultModel:
         router = AdaptiveModelRouter(mock_telemetry)
 
         model = router._get_default_model("CHEAP")
-        assert model == "claude-3-5-haiku-20241022"
+        assert model == "claude-haiku-4-5-20251001"
 
     @patch("attune.models.adaptive_routing._get_registry")
     def test_get_default_model_falls_back_when_registry_missing(self, mock_get_registry):
@@ -761,7 +761,7 @@ class TestGetDefaultModel:
 
         model = router._get_default_model("CHEAP")
         # Should fall back to hardcoded default
-        assert model == "claude-3-5-haiku-20241022"
+        assert model == "claude-haiku-4-5-20251001"
 
     @patch("attune.models.adaptive_routing._get_registry")
     def test_get_default_model_handles_case_insensitive_tier(self, mock_get_registry):

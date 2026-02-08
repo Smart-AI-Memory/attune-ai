@@ -21,14 +21,14 @@ class TestModelPerformance:
     def test_model_performance_required_fields(self):
         """Test ModelPerformance has all required fields."""
         perf = ModelPerformance(
-            model_id="claude-3-5-haiku-20241022",
+            model_id="claude-haiku-4-5-20251001",
             tier="CHEAP",
             success_rate=0.95,
             avg_latency_ms=250.0,
             avg_cost=0.003,
             sample_size=100,
         )
-        assert perf.model_id == "claude-3-5-haiku-20241022"
+        assert perf.model_id == "claude-haiku-4-5-20251001"
         assert perf.tier == "CHEAP"
         assert perf.success_rate == 0.95
         assert perf.avg_latency_ms == 250.0
@@ -119,7 +119,7 @@ class TestGetBestModel:
             {
                 "workflow": "test-workflow",
                 "stage": "analysis",
-                "model": "claude-3-5-haiku-20241022",
+                "model": "claude-haiku-4-5-20251001",
                 "tier": "CHEAP",
                 "success": True,
                 "cost": 0.002,
@@ -131,7 +131,7 @@ class TestGetBestModel:
         router = AdaptiveModelRouter(mock_telemetry)
         model = router.get_best_model(workflow="test-workflow", stage="analysis")
 
-        assert model == "claude-3-5-haiku-20241022"
+        assert model == "claude-haiku-4-5-20251001"
 
     def test_get_best_model_filters_by_min_success_rate(self, mock_logger):
         """Test filters models below min_success_rate."""

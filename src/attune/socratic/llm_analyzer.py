@@ -220,9 +220,9 @@ class LLMGoalAnalyzer:
 
     # Model selection by tier
     MODELS = {
-        "cheap": "claude-3-5-haiku-20241022",
+        "cheap": "claude-haiku-4-5-20251001",
         "capable": "claude-sonnet-4-5-20250514",
-        "premium": "claude-opus-4-5-20251101",
+        "premium": "claude-opus-4-6",
     }
 
     def __init__(
