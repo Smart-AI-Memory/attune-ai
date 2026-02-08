@@ -300,8 +300,10 @@ class RealTestGenerator:
 
         # Create unique test name from full path to avoid collisions
         # Example: src/attune/telemetry/cli.py → test_src_empathy_os_telemetry_cli_generated.py
-        relative_path = str(source_path.relative_to(self.project_root))
-        test_name = f"test_{relative_path.replace('/', '_').replace('.py', '')}_generated.py"
+        # Use PurePosixPath parts to handle both / and \ separators (Windows compatibility)
+        relative_path = source_path.relative_to(self.project_root)
+        parts_str = "_".join(relative_path.parts)
+        test_name = f"test_{parts_str.replace('.py', '')}_generated.py"
         test_path = self.output_dir / test_name
 
         # Generate tests using LLM or template
@@ -312,6 +314,7 @@ class RealTestGenerator:
 
         # Write test file
         validated_path = _validate_file_path(str(test_path))
+        validated_path.parent.mkdir(parents=True, exist_ok=True)
         validated_path.write_text(test_code)
 
         logger.info(f"Generated test file: {test_path}")

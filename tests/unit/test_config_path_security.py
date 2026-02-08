@@ -166,15 +166,14 @@ class TestXMLConfigPathValidation:
             config.save_to_file(valid_path)
             assert Path(valid_path).exists()
 
-    def test_save_to_file_uses_default_path(self):
+    def test_save_to_file_uses_default_path(self, tmp_path, monkeypatch):
         """Test that save_to_file uses default path when not specified."""
         config = EmpathyXMLConfig()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            # Use default path relative to current directory
-            config.save_to_file(".attune/config.json")
-            assert Path(".attune/config.json").exists()
+        monkeypatch.chdir(tmp_path)
+        # Use default path relative to current directory
+        config.save_to_file(".attune/config.json")
+        assert (tmp_path / ".attune" / "config.json").exists()
 
 
 class TestCrossModuleConsistency:

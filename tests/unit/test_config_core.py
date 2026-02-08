@@ -9,6 +9,7 @@ Licensed under Fair Source License 0.9
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -57,15 +58,34 @@ class TestValidateFilePath:
             "/sys/kernel/config",
             "/proc/self/environ",
             "/dev/random",
-            "/usr/bin/python",
-            "/usr/sbin/nologin",
-            "/bin/sh",
+            pytest.param(
+                "/usr/bin/python",
+                marks=pytest.mark.skipif(
+                    sys.platform == "win32",
+                    reason="/usr/bin/python does not exist on Windows",
+                ),
+            ),
+            pytest.param(
+                "/usr/sbin/nologin",
+                marks=pytest.mark.skipif(
+                    sys.platform == "win32",
+                    reason="/usr/sbin/nologin does not exist on Windows",
+                ),
+            ),
+            pytest.param(
+                "/bin/sh",
+                marks=pytest.mark.skipif(
+                    sys.platform == "win32",
+                    reason="/bin/sh does not exist on Windows",
+                ),
+            ),
             pytest.param(
                 "/sbin/init",
                 marks=pytest.mark.skipif(
-                    not Path("/sbin/init").exists()
+                    sys.platform == "win32"
+                    or not Path("/sbin/init").exists()
                     or not str(Path("/sbin/init").resolve()).startswith(("/sbin", "/usr/sbin")),
-                    reason="/sbin/init resolves outside /sbin on this OS (e.g. to systemd)",
+                    reason="/sbin/init resolves outside /sbin on this OS or does not exist on Windows",
                 ),
             ),
         ],

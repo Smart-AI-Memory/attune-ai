@@ -106,7 +106,7 @@ class TestRandomUsageDocumentation:
         if not conftest_path.exists():
             pytest.skip(f"conftest.py not found at {conftest_path}")
 
-        content = conftest_path.read_text()
+        content = conftest_path.read_text(encoding="utf-8")
 
         # Check for security note in docstring
         assert "Security Note" in content or "security note" in content.lower()
@@ -129,7 +129,7 @@ class TestRandomUsageDocumentation:
         if not ab_testing_path.exists():
             pytest.skip(f"ab_testing.py not found at {ab_testing_path}")
 
-        content = ab_testing_path.read_text()
+        content = ab_testing_path.read_text(encoding="utf-8")
 
         # Check for security note near random import
         lines = content.split("\n")
@@ -159,7 +159,7 @@ class TestNoActualVulnerabilities:
         eval_exec_found = []
 
         for py_file in py_files:
-            content = py_file.read_text()
+            content = py_file.read_text(encoding="utf-8")
 
             # Parse AST to find actual eval/exec calls (not in strings/comments)
             try:
@@ -191,7 +191,7 @@ class TestNoActualVulnerabilities:
         if not history_path.exists():
             pytest.skip("history.py not found")
 
-        content = history_path.read_text()
+        content = history_path.read_text(encoding="utf-8")
 
         # Find all cursor.execute calls
         execute_pattern = r"cursor\.execute\s*\("
@@ -242,7 +242,7 @@ class TestCodeSecurity:
         # Look for files that generate tokens/secrets
         security_files = []
         for py_file in src_path.rglob("*.py"):
-            content = py_file.read_text()
+            content = py_file.read_text(encoding="utf-8")
             if any(
                 keyword in content.lower() for keyword in ["token", "secret", "password", "api_key"]
             ):
@@ -277,7 +277,7 @@ class TestCodeSecurity:
             if "secrets_detector.py" in str(py_file):
                 continue
 
-            content = py_file.read_text()
+            content = py_file.read_text(encoding="utf-8")
 
             for pattern in secret_patterns:
                 matches = re.finditer(pattern, content, re.IGNORECASE)
