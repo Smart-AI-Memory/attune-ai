@@ -9,8 +9,6 @@ Licensed under Fair Source License 0.9
 
 import json
 import os
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -23,10 +21,13 @@ import pytest
 
 
 @pytest.fixture
-def temp_dir() -> Generator[Path, None, None]:
-    """Create a temporary directory for tests."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+def temp_dir(tmp_path) -> Path:
+    """Create a temporary directory for tests.
+
+    Uses pytest's tmp_path which handles cleanup after the session,
+    avoiding WinError 32 when SQLite files are still locked.
+    """
+    return tmp_path
 
 
 @pytest.fixture

@@ -39,7 +39,7 @@ class VSCodeKeybindingsGenerator:
             output_file = output_dir / f"{layout.value}.json"
             bindings = self._generate_bindings(shortcuts.manifest, layout_shortcuts)
             validated_output = _validate_file_path(str(output_file))
-            validated_output.write_text(json.dumps(bindings, indent=2))
+            validated_output.write_text(json.dumps(bindings, indent=2), encoding="utf-8")
             generated_files[layout.value] = validated_output
 
         return generated_files
@@ -107,7 +107,7 @@ class CLIAliasGenerator:
 
         validated_output = _validate_file_path(str(output_file))
         if not layout_shortcuts:
-            validated_output.write_text("# No shortcuts generated\n")
+            validated_output.write_text("# No shortcuts generated\n", encoding="utf-8")
             return validated_output
 
         lines = [
@@ -128,7 +128,7 @@ class CLIAliasGenerator:
             short_alias = f"e{shortcut.key}"
             lines.append(f'alias {short_alias}="{cli_alias}"  # {shortcut.mnemonic}')
 
-        validated_output.write_text("\n".join(lines))
+        validated_output.write_text("\n".join(lines), encoding="utf-8")
         return validated_output
 
     def _find_cli_alias(self, manifest: FeatureManifest, feature_id: str) -> str | None:
@@ -194,7 +194,7 @@ Hold **{prefix}** (Mac: **{mac_prefix}**) then press one key:
 
         validated_output = _validate_file_path(str(output_file))
         if not layout_shortcuts:
-            validated_output.write_text("# No shortcuts generated\n")
+            validated_output.write_text("# No shortcuts generated\n", encoding="utf-8")
             return validated_output
 
         manifest = shortcuts.manifest
@@ -212,7 +212,7 @@ Hold **{prefix}** (Mac: **{mac_prefix}**) then press one key:
             full_table=self._generate_full_table(manifest, layout_shortcuts),
         )
 
-        validated_output.write_text(content)
+        validated_output.write_text(content, encoding="utf-8")
         return validated_output
 
     def _generate_cheatsheet(

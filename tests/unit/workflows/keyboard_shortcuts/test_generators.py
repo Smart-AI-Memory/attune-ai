@@ -155,7 +155,7 @@ class TestVSCodeKeybindingsGenerator:
         generated_files = generator.generate(sample_generated_shortcuts, output_dir)
 
         qwerty_file = generated_files["qwerty"]
-        content = json.loads(qwerty_file.read_text())
+        content = json.loads(qwerty_file.read_text(encoding="utf-8"))
 
         assert isinstance(content, list)
 
@@ -167,7 +167,7 @@ class TestVSCodeKeybindingsGenerator:
         generated_files = generator.generate(sample_generated_shortcuts, output_dir)
 
         qwerty_file = generated_files["qwerty"]
-        bindings = json.loads(qwerty_file.read_text())
+        bindings = json.loads(qwerty_file.read_text(encoding="utf-8"))
 
         assert len(bindings) == 3
 
@@ -292,7 +292,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "#!/bin/bash" in content
         assert "Keyboard Conductor CLI Aliases" in content
@@ -305,7 +305,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "My Ship Docks" in content
 
@@ -316,7 +316,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert 'alias em="empathy morning"' in content
         assert 'alias es="empathy ship"' in content
@@ -328,7 +328,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "# M = Morning" in content
         assert "# S = Ship" in content
@@ -340,7 +340,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         # Dashboard has no cli_alias, should not appear
         assert "ed=" not in content or "dashboard" not in content.lower()
@@ -367,7 +367,7 @@ class TestCLIAliasGenerator:
         output_file = tmp_path / "aliases.sh"
         generator.generate(generated, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         # Should use Dvorak since QWERTY not available
         assert "Dvorak phrase" in content
@@ -381,7 +381,7 @@ class TestCLIAliasGenerator:
 
         generator.generate(generated, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "# No shortcuts generated" in content
 
@@ -433,7 +433,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "empathy-framework" in content
 
@@ -444,7 +444,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "My Ship Docks" in content
 
@@ -455,7 +455,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "ctrl+shift+e" in content.lower()
         assert "cmd+shift+e" in content.lower()  # Mac version
@@ -467,7 +467,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         # Should contain keyboard layout characters
         assert "[Q][W][E]" in content or "Q][W][E" in content
@@ -479,7 +479,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "Scale 1" in content or "The Basics" in content
         assert "Scale 2" in content or "The Workflows" in content
@@ -492,7 +492,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         # Should contain table headers
         assert "| Key |" in content or "|Key|" in content
@@ -506,7 +506,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(sample_generated_shortcuts, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "Empathy Framework" in content
 
@@ -519,7 +519,7 @@ class TestMarkdownDocGenerator:
 
         generator.generate(generated, output_file)
 
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
 
         assert "# No shortcuts generated" in content
 

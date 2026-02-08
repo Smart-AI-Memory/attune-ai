@@ -382,11 +382,12 @@ class TestErrorMessages:
     def test_system_directory_error_mentions_directory(self):
         """Test that system directory errors mention which directory."""
         # Test with /sys which is blocked on all platforms
-        with pytest.raises(ValueError, match="/sys"):
+        # On Windows the error message says "sys" (without /), on Unix "/sys"
+        with pytest.raises(ValueError, match="sys"):
             _validate_file_path("/sys/test")
 
         # Test with /proc
-        with pytest.raises(ValueError, match="/proc"):
+        with pytest.raises(ValueError, match="proc"):
             _validate_file_path("/proc/test")
 
     def test_null_byte_error_is_clear(self):
@@ -396,12 +397,14 @@ class TestErrorMessages:
 
     def test_allowed_dir_error_mentions_directory(self, tmp_path):
         """Test that allowed_dir errors mention the allowed directory."""
+        import re
+
         allowed_dir = tmp_path / "allowed"
         allowed_dir.mkdir()
 
         outside_path = tmp_path / "forbidden" / "file.txt"
 
-        with pytest.raises(ValueError, match=str(allowed_dir)):
+        with pytest.raises(ValueError, match=re.escape(str(allowed_dir))):
             _validate_file_path(str(outside_path), allowed_dir=str(allowed_dir))
 
 

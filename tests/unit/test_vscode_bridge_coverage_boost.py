@@ -512,7 +512,7 @@ class TestSendToVSCode:
         result = send_to_vscode("Review complete")
 
         assert "Results written to" in result
-        assert ".attune/code-review-results.json" in result
+        assert "code-review-results.json" in result
         assert "VS Code will update automatically" in result
 
         # Verify file was created

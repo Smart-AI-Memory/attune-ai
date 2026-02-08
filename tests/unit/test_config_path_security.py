@@ -234,15 +234,19 @@ class TestCrossModuleConsistency:
         workflow_config = WorkflowConfig()
         xml_config = EmpathyXMLConfig()
 
+        original_cwd = os.getcwd()
         with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+            try:
+                os.chdir(tmpdir)
 
-            # All should accept relative paths
-            empathy_config.to_json("empathy.json")
-            assert Path("empathy.json").exists()
+                # All should accept relative paths
+                empathy_config.to_json("empathy.json")
+                assert Path("empathy.json").exists()
 
-            workflow_config.save("workflows.json")
-            assert Path("workflows.json").exists()
+                workflow_config.save("workflows.json")
+                assert Path("workflows.json").exists()
 
-            xml_config.save_to_file("xml_config.json")
-            assert Path("xml_config.json").exists()
+                xml_config.save_to_file("xml_config.json")
+                assert Path("xml_config.json").exists()
+            finally:
+                os.chdir(original_cwd)
