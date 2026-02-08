@@ -37,13 +37,7 @@ jobs:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
     - name: Run new Phase 1 tests
-      run: |
-        pytest tests/unit/memory/test_long_term_security.py \
-               tests/unit/scanner/test_file_traversal.py \
-               tests/unit/cache/test_eviction_policies.py \
-               tests/integration/test_api_endpoints.py \
-               tests/unit/workflows/test_workflow_execution.py \
-               -v --tb=short
+      run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/cache/test_eviction_policies.py tests/integration/test_api_endpoints.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
 
     - name: Track per-file test results
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
