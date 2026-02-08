@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -277,9 +278,11 @@ class CompactionStateManager:
         user_dir = self._get_user_dir(state.user_id)
         user_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate filename with timestamp (microseconds for uniqueness)
+        # Generate filename with timestamp + uuid suffix for guaranteed uniqueness
+        # (datetime.now() may have low resolution on some Windows systems)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        filename = f"compact_{timestamp}.json"
+        unique_suffix = uuid.uuid4().hex[:8]
+        filename = f"compact_{timestamp}_{unique_suffix}.json"
         filepath = user_dir / filename
 
         # Save state
