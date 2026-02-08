@@ -206,31 +206,36 @@ class InteractiveModeMixin:
         agent_summary = ", ".join([a.role for a in agents])
 
         # Ask user for approach
-        response = AskUserQuestion(
-            questions=[
-                {
-                    "header": "Approach",
-                    "question": "How would you like to create the agent team?",
-                    "multiSelect": False,
-                    "options": [
-                        {
-                            "label": f"Use recommended: {recommended_pattern.value} (Recommended)",
-                            "description": f"Auto-selected based on task analysis. "
-                            f"{len(agents)} agents: {agent_summary}. "
-                            f"Confidence: {confidence:.0%}",
-                        },
-                        {
-                            "label": "Customize team composition",
-                            "description": "Choose specific agents and pattern manually",
-                        },
-                        {
-                            "label": "Show all 10 patterns",
-                            "description": "Learn about patterns and select one",
-                        },
-                    ],
-                }
-            ]
-        )
+        try:
+            response = AskUserQuestion(
+                questions=[
+                    {
+                        "header": "Approach",
+                        "question": "How would you like to create the agent team?",
+                        "multiSelect": False,
+                        "options": [
+                            {
+                                "label": f"Use recommended: {recommended_pattern.value} (Recommended)",
+                                "description": f"Auto-selected based on task analysis. "
+                                f"{len(agents)} agents: {agent_summary}. "
+                                f"Confidence: {confidence:.0%}",
+                            },
+                            {
+                                "label": "Customize team composition",
+                                "description": "Choose specific agents and pattern manually",
+                            },
+                            {
+                                "label": "Show all 10 patterns",
+                                "description": "Learn about patterns and select one",
+                            },
+                        ],
+                    }
+                ]
+            )
+        except (NotImplementedError, RuntimeError) as e:
+            logger.warning(f"AskUserQuestion unavailable: {e}")
+            logger.info("Falling back to automatic selection")
+            return self.create_execution_plan(requirements, agents, recommended_pattern)
 
         # Handle user response
         user_choice = response.get("Approach", "")
@@ -275,22 +280,26 @@ class InteractiveModeMixin:
             return self.create_execution_plan(requirements, suggested_agents, suggested_pattern)
 
         # Step 1: Agent selection
-        agent_response = AskUserQuestion(
-            questions=[
-                {
-                    "header": "Agents",
-                    "question": "Which agents should be included in the team?",
-                    "multiSelect": True,
-                    "options": [
-                        {
-                            "label": agent.role,
-                            "description": f"{agent.id} - {', '.join(agent.capabilities[:3])}",
-                        }
-                        for agent in suggested_agents
-                    ],
-                }
-            ]
-        )
+        try:
+            agent_response = AskUserQuestion(
+                questions=[
+                    {
+                        "header": "Agents",
+                        "question": "Which agents should be included in the team?",
+                        "multiSelect": True,
+                        "options": [
+                            {
+                                "label": agent.role,
+                                "description": f"{agent.id} - {', '.join(agent.capabilities[:3])}",
+                            }
+                            for agent in suggested_agents
+                        ],
+                    }
+                ]
+            )
+        except (NotImplementedError, RuntimeError) as e:
+            logger.warning(f"AskUserQuestion unavailable: {e}")
+            return self.create_execution_plan(requirements, suggested_agents, suggested_pattern)
 
         # Filter agents based on user selection
         selected_agent_roles = agent_response.get("Agents", [])
@@ -303,33 +312,37 @@ class InteractiveModeMixin:
             selected_agents = suggested_agents
 
         # Step 2: Pattern selection
-        pattern_response = AskUserQuestion(
-            questions=[
-                {
-                    "header": "Pattern",
-                    "question": "Which composition pattern should be used?",
-                    "multiSelect": False,
-                    "options": [
-                        {
-                            "label": f"{suggested_pattern.value} (Recommended)",
-                            "description": self._get_pattern_description(suggested_pattern),
-                        },
-                        {
-                            "label": "sequential",
-                            "description": "Execute agents one after another (A → B → C)",
-                        },
-                        {
-                            "label": "parallel",
-                            "description": "Execute agents simultaneously (A || B || C)",
-                        },
-                        {
-                            "label": "tool_enhanced",
-                            "description": "Single agent with comprehensive tool access",
-                        },
-                    ],
-                }
-            ]
-        )
+        try:
+            pattern_response = AskUserQuestion(
+                questions=[
+                    {
+                        "header": "Pattern",
+                        "question": "Which composition pattern should be used?",
+                        "multiSelect": False,
+                        "options": [
+                            {
+                                "label": f"{suggested_pattern.value} (Recommended)",
+                                "description": self._get_pattern_description(suggested_pattern),
+                            },
+                            {
+                                "label": "sequential",
+                                "description": "Execute agents one after another (A → B → C)",
+                            },
+                            {
+                                "label": "parallel",
+                                "description": "Execute agents simultaneously (A || B || C)",
+                            },
+                            {
+                                "label": "tool_enhanced",
+                                "description": "Single agent with comprehensive tool access",
+                            },
+                        ],
+                    }
+                ]
+            )
+        except (NotImplementedError, RuntimeError) as e:
+            logger.warning(f"AskUserQuestion unavailable: {e}")
+            return self.create_execution_plan(requirements, selected_agents, suggested_pattern)
 
         # Parse pattern choice
         pattern_choice = pattern_response.get("Pattern", suggested_pattern.value)
@@ -375,62 +388,67 @@ class InteractiveModeMixin:
             return self.create_execution_plan(requirements, suggested_agents, suggested_pattern)
 
         # Present all patterns with descriptions
-        pattern_response = AskUserQuestion(
-            questions=[
-                {
-                    "header": "Pattern",
-                    "question": "Choose a composition pattern (with preview):",
-                    "multiSelect": False,
-                    "options": [
-                        {
-                            "label": "sequential",
-                            "description": "A → B → C | Step-by-step pipeline | "
-                            "Example: Parse → Analyze → Report",
-                        },
-                        {
-                            "label": "parallel",
-                            "description": "A || B || C | Independent tasks | "
-                            "Example: Security + Quality + Performance audits",
-                        },
-                        {
-                            "label": "debate",
-                            "description": "A ⇄ B ⇄ C → Synthesis | Multiple perspectives | "
-                            "Example: 3 reviewers discuss approach",
-                        },
-                        {
-                            "label": "teaching",
-                            "description": "Junior → Expert validation | Draft + review | "
-                            "Example: Cheap model drafts, expert validates",
-                        },
-                        {
-                            "label": "refinement",
-                            "description": "Draft → Review → Polish | Iterative improvement | "
-                            "Example: Code → Review → Refine",
-                        },
-                        {
-                            "label": "adaptive",
-                            "description": "Classifier → Specialist | Dynamic routing | "
-                            "Example: Analyze task type → Route to expert",
-                        },
-                        {
-                            "label": "tool_enhanced (NEW)",
-                            "description": "Single agent + tools | Most efficient | "
-                            "Example: File reader with analysis tools",
-                        },
-                        {
-                            "label": "prompt_cached_sequential (NEW)",
-                            "description": "Shared large context | Cost-optimized | "
-                            "Example: 3 agents using same codebase docs",
-                        },
-                        {
-                            "label": "delegation_chain (NEW)",
-                            "description": "Coordinator → Specialists | Hierarchical | "
-                            "Example: Task planner delegates to architects",
-                        },
-                    ],
-                }
-            ]
-        )
+        try:
+            pattern_response = AskUserQuestion(
+                questions=[
+                    {
+                        "header": "Pattern",
+                        "question": "Choose a composition pattern (with preview):",
+                        "multiSelect": False,
+                        "options": [
+                            {
+                                "label": "sequential",
+                                "description": "A → B → C | Step-by-step pipeline | "
+                                "Example: Parse → Analyze → Report",
+                            },
+                            {
+                                "label": "parallel",
+                                "description": "A || B || C | Independent tasks | "
+                                "Example: Security + Quality + Performance audits",
+                            },
+                            {
+                                "label": "debate",
+                                "description": "A ⇄ B ⇄ C → Synthesis | Multiple perspectives | "
+                                "Example: 3 reviewers discuss approach",
+                            },
+                            {
+                                "label": "teaching",
+                                "description": "Junior → Expert validation | Draft + review | "
+                                "Example: Cheap model drafts, expert validates",
+                            },
+                            {
+                                "label": "refinement",
+                                "description": "Draft → Review → Polish | Iterative improvement | "
+                                "Example: Code → Review → Refine",
+                            },
+                            {
+                                "label": "adaptive",
+                                "description": "Classifier → Specialist | Dynamic routing | "
+                                "Example: Analyze task type → Route to expert",
+                            },
+                            {
+                                "label": "tool_enhanced (NEW)",
+                                "description": "Single agent + tools | Most efficient | "
+                                "Example: File reader with analysis tools",
+                            },
+                            {
+                                "label": "prompt_cached_sequential (NEW)",
+                                "description": "Shared large context | Cost-optimized | "
+                                "Example: 3 agents using same codebase docs",
+                            },
+                            {
+                                "label": "delegation_chain (NEW)",
+                                "description": "Coordinator → Specialists | Hierarchical | "
+                                "Example: Task planner delegates to architects",
+                            },
+                        ],
+                    }
+                ]
+            )
+        except (NotImplementedError, RuntimeError) as e:
+            logger.warning(f"AskUserQuestion unavailable: {e}")
+            suggested_pattern = self._choose_composition_pattern(requirements, suggested_agents)
+            return self.create_execution_plan(requirements, suggested_agents, suggested_pattern)
 
         # Parse pattern choice
         pattern_choice = pattern_response.get("Pattern", "sequential")

@@ -6,8 +6,7 @@ added to support user choice when automatic selection has low confidence.
 Created: 2026-01-29
 """
 
-import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -20,9 +19,7 @@ from attune.orchestration.meta_orchestrator import (
     TaskRequirements,
 )
 
-# Mock the tools module since it doesn't exist yet
-mock_tools = MagicMock()
-sys.modules["attune.tools"] = mock_tools
+# attune.tools now exists - no module-level mock needed
 
 
 # ============================================================================

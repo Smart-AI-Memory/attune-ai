@@ -37,7 +37,11 @@ def security_audit_workflow(cost_tracker):
     """
     from attune.workflows.security_audit import SecurityAuditWorkflow
 
-    return SecurityAuditWorkflow(cost_tracker=cost_tracker)
+    return SecurityAuditWorkflow(
+        cost_tracker=cost_tracker,
+        use_crew_for_assessment=False,
+        use_crew_for_remediation=False,
+    )
 
 
 @pytest.fixture
