@@ -25,6 +25,8 @@ from typing import Any
 
 from ..config import _validate_file_path
 from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult, WorkflowStage
+from ..workflows.context import WorkflowContext
+from ..workflows.services import ParsingService, PromptService
 
 
 @dataclass
@@ -38,7 +40,11 @@ class TestGenerationTask:
 
 
 class ParallelTestGenerationWorkflow(BaseWorkflow):
-    """Generate and complete behavioral tests in parallel using multi-tier LLMs."""
+    """Generate and complete behavioral tests in parallel using multi-tier LLMs.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
+    """
 
     def __init__(self):
         super().__init__(
@@ -85,6 +91,22 @@ Generate complete, runnable tests that will increase coverage.""",
                     task_type="validation",
                 ),
             },
+        )
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for parallel test generation.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("parallel-test-generation", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
         )
 
     def discover_low_coverage_modules(self, top_n: int = 200) -> list[tuple[str, float]]:

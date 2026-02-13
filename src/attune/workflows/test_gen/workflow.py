@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from ..base import BaseWorkflow, ModelTier
+from ..context import WorkflowContext
+from ..services import ParsingService, PromptService
 from .ast_analyzer import ASTFunctionAnalyzer
 from .config import DEFAULT_SKIP_PATTERNS
 from .test_templates import (
@@ -24,6 +26,9 @@ class TestGenerationWorkflow(BaseWorkflow):
 
     Prioritizes test generation for files that have historically
     been bug-prone and have low test coverage.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "test-gen"
@@ -85,6 +90,21 @@ class TestGenerationWorkflow(BaseWorkflow):
                     self._bug_hotspots = list(files)
             except (json.JSONDecodeError, OSError):
                 pass
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for test generation.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+        """
+        return WorkflowContext(
+            prompt=PromptService("test-gen", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
         """Downgrade review stage if few tests generated.

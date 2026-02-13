@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from attune.workflows.base import BaseWorkflow, ModelTier
+from attune.workflows.context import WorkflowContext
+from attune.workflows.services import ParsingService, PromptService
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,8 @@ logger = logging.getLogger(__name__)
 class DocumentManagerWorkflow(BaseWorkflow):
     """You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the empathy-framework.
 
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
 
     Usage:
         workflow = DocumentManagerWorkflow()
@@ -46,6 +50,22 @@ class DocumentManagerWorkflow(BaseWorkflow):
 
         """
         super().__init__(**kwargs)
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for document management.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("document-manager", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     async def run_stage(
         self,

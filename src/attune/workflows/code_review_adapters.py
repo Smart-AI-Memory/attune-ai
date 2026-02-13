@@ -12,7 +12,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from attune_llm.agent_factory.crews import CodeReviewReport
+    from attune.agent_factory.crews import CodeReviewReport
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def _check_crew_available() -> bool:
 
     """
     try:
-        from attune_llm.agent_factory.crews import CodeReviewCrew  # noqa: F401
+        from attune.agent_factory.crews import CodeReviewCrew  # noqa: F401
 
         return True
     except ImportError:
@@ -55,7 +55,7 @@ async def _get_crew_review(
         return None
 
     try:
-        from attune_llm.agent_factory.crews import CodeReviewConfig, CodeReviewCrew
+        from attune.agent_factory.crews import CodeReviewConfig, CodeReviewCrew
 
         # Build config from dict
         crew_config = CodeReviewConfig(**(config or {}))

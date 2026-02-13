@@ -25,7 +25,7 @@ from attune.context.compaction import (
 )
 
 if TYPE_CHECKING:
-    from attune_llm.state import CollaborationState, UserPattern
+    from attune.llm.state import CollaborationState, UserPattern
 
 logger = logging.getLogger(__name__)
 

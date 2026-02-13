@@ -20,7 +20,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from attune_llm.state import CollaborationState
+    from attune.llm.state import CollaborationState
 
 logger = logging.getLogger(__name__)
 

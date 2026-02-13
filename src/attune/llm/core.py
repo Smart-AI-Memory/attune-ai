@@ -1,0 +1,983 @@
+"""Empathy LLM - Core Wrapper
+
+Main class that wraps any LLM provider with Attune AI levels.
+
+Copyright 2025 Smart AI Memory, LLC
+Licensed under the Apache License, Version 2.0
+"""
+
+import asyncio
+import logging
+import time
+from typing import Any
+
+# Import from consolidated memory module
+from attune.memory import (
+    AuditLogger,
+    ClaudeMemoryConfig,
+    ClaudeMemoryLoader,
+    PIIScrubber,
+    SecretsDetector,
+    SecurityError,
+)
+from attune.routing import ModelRouter
+
+from .levels import EmpathyLevel
+from .providers import (
+    AnthropicProvider,
+    BaseLLMProvider,
+    GeminiProvider,
+    LocalProvider,
+    OpenAIProvider,
+)
+from .state import CollaborationState, PatternType, UserPattern
+
+logger = logging.getLogger(__name__)
+
+
+class EmpathyLLM:
+    """Wraps any LLM provider with Attune AI levels.
+
+    Automatically progresses from Level 1 (reactive) to Level 4 (anticipatory)
+    based on user collaboration state.
+
+    Security Features (Phase 3):
+        - PII Scrubbing: Automatically detect and redact PII from user inputs
+        - Secrets Detection: Block requests containing API keys, passwords, etc.
+        - Audit Logging: Comprehensive compliance logging (SOC2, HIPAA, GDPR)
+        - Backward Compatible: Security disabled by default
+
+    Example:
+        >>> llm = EmpathyLLM(provider="anthropic", target_level=4)
+        >>> response = await llm.interact(
+        ...     user_id="developer_123",
+        ...     user_input="Help me optimize my code",
+        ...     context={"code_snippet": "..."}
+        ... )
+        >>> print(response["content"])
+
+    Example with Security:
+        >>> llm = EmpathyLLM(
+        ...     provider="anthropic",
+        ...     target_level=4,
+        ...     enable_security=True,
+        ...     security_config={
+        ...         "audit_log_dir": "/var/log/empathy",
+        ...         "block_on_secrets": True,
+        ...         "enable_pii_scrubbing": True
+        ...     }
+        ... )
+        >>> response = await llm.interact(
+        ...     user_id="user@company.com",
+        ...     user_input="My email is john@example.com"
+        ... )
+        >>> # PII automatically scrubbed, request logged
+
+    Example with Model Routing (Cost Optimization):
+        >>> llm = EmpathyLLM(
+        ...     provider="anthropic",
+        ...     enable_model_routing=True  # Enable smart model selection
+        ... )
+        >>> # Simple task -> uses Haiku (cheap)
+        >>> response = await llm.interact(
+        ...     user_id="dev",
+        ...     user_input="Summarize this function",
+        ...     task_type="summarize"
+        ... )
+        >>> # Complex task -> uses Opus (premium)
+        >>> response = await llm.interact(
+        ...     user_id="dev",
+        ...     user_input="Design the architecture",
+        ...     task_type="architectural_decision"
+        ... )
+
+    """
+
+    def __init__(
+        self,
+        provider: str = "anthropic",
+        target_level: int = 3,
+        api_key: str | None = None,
+        model: str | None = None,
+        pattern_library: dict | None = None,
+        claude_memory_config: ClaudeMemoryConfig | None = None,
+        project_root: str | None = None,
+        enable_security: bool | None = None,
+        security_config: dict | None = None,
+        enable_model_routing: bool = False,
+        **kwargs: Any,
+    ):
+        """Initialize EmpathyLLM.
+
+        Args:
+            provider: "anthropic", "openai", or "local"
+            target_level: Target empathy level (1-5)
+            api_key: API key for provider (if needed)
+            model: Specific model to use (overrides routing if set)
+            pattern_library: Shared pattern library (Level 5)
+            claude_memory_config: Configuration for Claude memory integration (v1.8.0+)
+            project_root: Project root directory for loading .claude/CLAUDE.md
+            enable_security: Enable Phase 2 security controls.
+                - If None (default): Check ATTUNE_ENABLE_SECURITY env var
+                - If env var not set: Defaults to False (disabled)
+                - In production environments, a warning is logged if security is disabled
+            security_config: Security configuration dictionary with options:
+                - audit_log_dir: Directory for audit logs (default: "./logs")
+                - block_on_secrets: Block requests with detected secrets (default: True)
+                - enable_pii_scrubbing: Enable PII detection/scrubbing (default: True)
+                - enable_name_detection: Enable name PII detection (default: False)
+                - enable_audit_logging: Enable audit logging (default: True)
+                - enable_console_logging: Log to console for debugging (default: False)
+            enable_model_routing: Enable smart model routing for cost optimization.
+                When enabled, uses ModelRouter to select appropriate model tier:
+                - CHEAP (Haiku): summarize, classify, triage tasks
+                - CAPABLE (Sonnet): code generation, bug fixes, security review
+                - PREMIUM (Opus): coordination, synthesis, architectural decisions
+            **kwargs: Provider-specific options
+
+        """
+        import os
+        import warnings
+
+        self.target_level = target_level
+        self.pattern_library = pattern_library or {}
+        self.project_root = project_root
+        self._provider_name = provider
+        self._explicit_model = model  # Track if user explicitly set a model
+
+        # Resolve enable_security from env var if not explicitly set
+        if enable_security is None:
+            env_security = os.getenv("ATTUNE_ENABLE_SECURITY", "").lower()
+            enable_security = env_security in ("1", "true", "yes", "on")
+
+        # Production environment detection
+        is_production = self._detect_production_environment()
+
+        # Warn if security disabled in production
+        if not enable_security and is_production:
+            warning_msg = (
+                "SECURITY WARNING: Security controls are disabled in a production environment. "
+                "This exposes your application to PII leakage and credential exposure risks. "
+                "Enable security by setting ATTUNE_ENABLE_SECURITY=true or passing enable_security=True."
+            )
+            logger.warning(warning_msg)
+            warnings.warn(warning_msg, UserWarning, stacklevel=2)
+
+        # Initialize provider
+        self.provider = self._create_provider(provider, api_key, model, **kwargs)
+
+        # Track collaboration states for different users
+        self.states: dict[str, CollaborationState] = {}
+
+        # Initialize model routing for cost optimization
+        self.enable_model_routing = enable_model_routing
+        self.model_router: ModelRouter | None = None
+        if enable_model_routing:
+            self.model_router = ModelRouter(default_provider=provider)
+            logger.info(f"Model routing enabled for provider: {provider}")
+
+        # Initialize Claude memory integration (v1.8.0+)
+        self.claude_memory_config = claude_memory_config
+        self.claude_memory_loader = None
+        self._cached_memory = None
+
+        if claude_memory_config and claude_memory_config.enabled:
+            self.claude_memory_loader = ClaudeMemoryLoader(claude_memory_config)
+            # Load memory once at initialization
+            self._cached_memory = self.claude_memory_loader.load_all_memory(project_root)
+            logger.info(
+                f"EmpathyLLM initialized with Claude memory: "
+                f"{len(self._cached_memory)} chars loaded",
+            )
+
+        # Initialize Phase 3 security controls (v1.8.0+)
+        self.enable_security = enable_security
+        self.security_config = security_config or {}
+        self.pii_scrubber = None
+        self.secrets_detector = None
+        self.audit_logger = None
+
+        if enable_security:
+            self._initialize_security()
+
+        logger.info(
+            f"EmpathyLLM initialized: provider={provider}, target_level={target_level}, "
+            f"security={'enabled' if enable_security else 'disabled'}, "
+            f"model_routing={'enabled' if enable_model_routing else 'disabled'}",
+        )
+
+    def _initialize_security(self):
+        """Initialize Phase 3 security modules based on configuration"""
+        # Extract security config options
+        enable_pii_scrubbing = self.security_config.get("enable_pii_scrubbing", True)
+        enable_name_detection = self.security_config.get("enable_name_detection", False)
+        enable_audit_logging = self.security_config.get("enable_audit_logging", True)
+        audit_log_dir = self.security_config.get("audit_log_dir", "./logs")
+        enable_console_logging = self.security_config.get("enable_console_logging", False)
+
+        # Initialize PII Scrubber
+        if enable_pii_scrubbing:
+            self.pii_scrubber = PIIScrubber(enable_name_detection=enable_name_detection)
+            logger.info("PII Scrubber initialized")
+
+        # Initialize Secrets Detector
+        self.secrets_detector = SecretsDetector(
+            enable_entropy_analysis=True,
+            entropy_threshold=4.5,
+            min_entropy_length=20,
+        )
+        logger.info("Secrets Detector initialized")
+
+        # Initialize Audit Logger
+        if enable_audit_logging:
+            self.audit_logger = AuditLogger(
+                log_dir=audit_log_dir,
+                enable_console_logging=enable_console_logging,
+            )
+            logger.info(f"Audit Logger initialized: {audit_log_dir}")
+
+    def _detect_production_environment(self) -> bool:
+        """Detect if running in a production environment.
+
+        Checks common environment indicators:
+        - NODE_ENV=production
+        - ENVIRONMENT=production or ENVIRONMENT=prod
+        - FLASK_ENV=production
+        - DJANGO_ENV=production
+        - RAILWAY_ENVIRONMENT=production (Railway)
+        - VERCEL_ENV=production (Vercel)
+        - AWS_EXECUTION_ENV (Lambda)
+        - KUBERNETES_SERVICE_HOST (K8s)
+        - DYNO (Heroku)
+
+        Returns:
+            True if production indicators are detected
+        """
+        import os
+
+        # Explicit production indicators
+        production_vars = {
+            "NODE_ENV": "production",
+            "ENVIRONMENT": ("production", "prod"),
+            "FLASK_ENV": "production",
+            "DJANGO_ENV": "production",
+            "RAILWAY_ENVIRONMENT": "production",
+            "VERCEL_ENV": "production",
+        }
+
+        for var, expected in production_vars.items():
+            value = os.getenv(var, "").lower()
+            if isinstance(expected, tuple):
+                if value in expected:
+                    return True
+            elif value == expected:
+                return True
+
+        # Platform-specific indicators (presence implies production)
+        production_platform_vars = [
+            "AWS_EXECUTION_ENV",  # AWS Lambda
+            "KUBERNETES_SERVICE_HOST",  # Kubernetes
+            "DYNO",  # Heroku
+            "RENDER_SERVICE_ID",  # Render
+            "FLY_APP_NAME",  # Fly.io
+        ]
+
+        for var in production_platform_vars:
+            if os.getenv(var):
+                return True
+
+        return False
+
+    def _create_provider(
+        self,
+        provider: str,
+        api_key: str | None,
+        model: str | None,
+        **kwargs,
+    ) -> BaseLLMProvider:
+        """Create appropriate provider instance
+
+        Falls back to environment variables if api_key not provided:
+        - ANTHROPIC_API_KEY for Anthropic
+        - OPENAI_API_KEY for OpenAI
+        - GOOGLE_API_KEY or GEMINI_API_KEY for Google/Gemini
+        """
+        import os
+
+        # Check environment variables if api_key not provided
+        if api_key is None:
+            if provider == "anthropic":
+                api_key = os.getenv("ANTHROPIC_API_KEY")
+            elif provider == "openai":
+                api_key = os.getenv("OPENAI_API_KEY")
+            elif provider in ("google", "gemini"):
+                api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+
+        if provider == "anthropic":
+            return AnthropicProvider(
+                api_key=api_key,
+                model=model or "claude-sonnet-4-5-20250929",
+                **kwargs,
+            )
+        if provider == "openai":
+            return OpenAIProvider(api_key=api_key, model=model or "gpt-4-turbo-preview", **kwargs)
+        if provider in ("google", "gemini"):
+            return GeminiProvider(api_key=api_key, model=model or "gemini-1.5-pro", **kwargs)
+        if provider == "local":
+            return LocalProvider(
+                endpoint=kwargs.get("endpoint", "http://localhost:11434"),
+                model=model or "llama2",
+                **kwargs,
+            )
+        raise ValueError(f"Unknown provider: {provider}")
+
+    def _get_or_create_state(self, user_id: str) -> CollaborationState:
+        """Get or create collaboration state for user"""
+        if user_id not in self.states:
+            self.states[user_id] = CollaborationState(user_id=user_id)
+        return self.states[user_id]
+
+    def _determine_level(self, state: CollaborationState) -> int:
+        """Determine which empathy level to use.
+
+        Progresses automatically based on state, up to target_level.
+        """
+        # Start at Level 1
+        level = 1
+
+        # Progress through levels if state allows
+        for candidate_level in range(2, self.target_level + 1):
+            if state.should_progress_to_level(candidate_level):
+                level = candidate_level
+            else:
+                break
+
+        return level
+
+    def _build_system_prompt(self, level: int) -> str:
+        """Build system prompt including Claude memory (if enabled).
+
+        Claude memory is prepended to the level-specific prompt,
+        so instructions from CLAUDE.md files affect all interactions.
+
+        Args:
+            level: Empathy level (1-5)
+
+        Returns:
+            Complete system prompt
+
+        """
+        level_prompt = EmpathyLevel.get_system_prompt(level)
+
+        # If Claude memory is enabled and loaded, prepend it
+        if self._cached_memory:
+            return f"""{self._cached_memory}
+
+---
+# Attune AI Instructions
+{level_prompt}
+
+Follow the CLAUDE.md instructions above, then apply the Attune AI below.
+"""
+        return level_prompt
+
+    def reload_memory(self):
+        """Reload Claude memory files.
+
+        Useful if CLAUDE.md files have been updated during runtime.
+        Call this to pick up changes without restarting.
+        """
+        if self.claude_memory_loader:
+            # Clear cache before reloading to pick up file changes
+            self.claude_memory_loader.clear_cache()
+            self._cached_memory = self.claude_memory_loader.load_all_memory(self.project_root)
+            logger.info(f"Claude memory reloaded: {len(self._cached_memory)} chars")
+        else:
+            logger.warning("Claude memory not enabled, cannot reload")
+
+    async def interact(
+        self,
+        user_id: str,
+        user_input: str,
+        context: dict[str, Any] | None = None,
+        force_level: int | None = None,
+        task_type: str | None = None,
+    ) -> dict[str, Any]:
+        """Main interaction method.
+
+        Automatically selects appropriate empathy level and responds.
+
+        Phase 3 Security Pipeline (if enabled):
+            1. PII Scrubbing: Detect and redact PII from user input
+            2. Secrets Detection: Block requests containing secrets
+            3. LLM Interaction: Process sanitized input
+            4. Audit Logging: Log request details for compliance
+
+        Model Routing (if enable_model_routing=True):
+            Routes to appropriate model based on task_type:
+            - CHEAP (Haiku): summarize, classify, triage, match_pattern
+            - CAPABLE (Sonnet): generate_code, fix_bug, review_security, write_tests
+            - PREMIUM (Opus): coordinate, synthesize_results, architectural_decision
+
+        Args:
+            user_id: Unique user identifier
+            user_input: User's input/question
+            context: Optional context dictionary
+            force_level: Force specific level (for testing/demos)
+            task_type: Type of task for model routing (e.g., "summarize", "fix_bug").
+                If not provided with routing enabled, defaults to "capable" tier.
+
+        Returns:
+            Dictionary with:
+                - content: LLM response
+                - level_used: Which empathy level was used
+                - proactive: Whether action was proactive
+                - metadata: Additional information (includes routed_model if routing enabled)
+                - security: Security details (if enabled)
+
+        Raises:
+            SecurityError: If secrets detected and block_on_secrets=True
+
+        """
+        start_time = time.time()
+        state = self._get_or_create_state(user_id)
+        context = context or {}
+
+        # Model routing: determine which model to use for this request
+        routed_model: str | None = None
+        routing_metadata: dict[str, Any] = {}
+
+        if self.enable_model_routing and self.model_router and not self._explicit_model:
+            # Route based on task_type (default to "generate_code" if not specified)
+            effective_task = task_type or "generate_code"
+            routed_model = self.model_router.route(effective_task, self._provider_name)
+            tier = self.model_router.get_tier(effective_task)
+
+            routing_metadata = {
+                "model_routing_enabled": True,
+                "task_type": effective_task,
+                "routed_model": routed_model,
+                "routed_tier": tier.value,
+            }
+            logger.info(
+                f"Model routing: task={effective_task} -> model={routed_model} (tier={tier.value})",
+            )
+
+        # Initialize security tracking
+        pii_detections: list[dict] = []
+        secrets_detections: list[dict] = []
+        sanitized_input = user_input
+        security_metadata: dict[str, Any] = {}
+
+        # Phase 3: Security Pipeline (Step 1 - PII Scrubbing)
+        if self.enable_security and self.pii_scrubber:
+            sanitized_input, pii_detections = self.pii_scrubber.scrub(user_input)
+            security_metadata["pii_detected"] = len(pii_detections)
+            security_metadata["pii_scrubbed"] = len(pii_detections) > 0
+            if pii_detections:
+                logger.info(
+                    f"PII detected for user {user_id}: {len(pii_detections)} items scrubbed",
+                )
+
+        # Phase 3: Security Pipeline (Step 2 - Secrets Detection)
+        if self.enable_security and self.secrets_detector:
+            secrets_detections = self.secrets_detector.detect(sanitized_input)
+            security_metadata["secrets_detected"] = len(secrets_detections)
+
+            if secrets_detections:
+                block_on_secrets = self.security_config.get("block_on_secrets", True)
+                logger.warning(
+                    f"Secrets detected for user {user_id}: {len(secrets_detections)} secrets, "
+                    f"blocking={block_on_secrets}",
+                )
+
+                # Log security violation
+                if self.audit_logger:
+                    self.audit_logger.log_security_violation(
+                        user_id=user_id,
+                        violation_type="secrets_detected",
+                        severity="HIGH",
+                        details={
+                            "secret_count": len(secrets_detections),
+                            "secret_types": [s.secret_type.value for s in secrets_detections],
+                            "event_type": "llm_request",
+                        },
+                        blocked=block_on_secrets,
+                    )
+
+                if block_on_secrets:
+                    raise SecurityError(
+                        f"Request blocked: {len(secrets_detections)} secret(s) detected in input. "
+                        f"Please remove sensitive credentials before submitting.",
+                    )
+
+        # Determine level to use
+        level = force_level if force_level is not None else self._determine_level(state)
+
+        logger.info(f"User {user_id}: Level {level} interaction")
+
+        # Record user input (sanitized version if security enabled)
+        state.add_interaction("user", sanitized_input, level)
+
+        # Phase 3: Security Pipeline (Step 3 - LLM Interaction with sanitized input)
+        # Route to appropriate level handler using sanitized input
+        # Pass routed_model for cost-optimized model selection
+        if level == 1:
+            result = await self._level_1_reactive(sanitized_input, state, context, routed_model)
+        elif level == 2:
+            result = await self._level_2_guided(sanitized_input, state, context, routed_model)
+        elif level == 3:
+            result = await self._level_3_proactive(sanitized_input, state, context, routed_model)
+        elif level == 4:
+            result = await self._level_4_anticipatory(sanitized_input, state, context, routed_model)
+        elif level == 5:
+            result = await self._level_5_systems(sanitized_input, state, context, routed_model)
+        else:
+            raise ValueError(f"Invalid level: {level}")
+
+        # Record assistant response
+        state.add_interaction("assistant", result["content"], level, result.get("metadata"))
+
+        # Add level info to result
+        result["level_used"] = level
+        result["level_description"] = EmpathyLevel.get_description(level)
+
+        # Add security metadata to result
+        if self.enable_security:
+            result["security"] = security_metadata
+
+        # Add model routing metadata to result
+        if routing_metadata:
+            result["metadata"].update(routing_metadata)
+
+        # Phase 3: Security Pipeline (Step 4 - Audit Logging)
+        if self.enable_security and self.audit_logger:
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            # Calculate approximate sizes
+            request_size_bytes = len(user_input.encode("utf-8"))
+            response_size_bytes = len(result["content"].encode("utf-8"))
+
+            # Extract memory sources if Claude Memory is enabled
+            memory_sources = []
+            if self._cached_memory:
+                memory_sources = ["claude_memory"]
+
+            self.audit_logger.log_llm_request(
+                user_id=user_id,
+                empathy_level=level,
+                provider=self.provider.__class__.__name__.replace("Provider", "").lower(),
+                model=result.get("metadata", {}).get("model", "unknown"),
+                memory_sources=memory_sources,
+                pii_count=len(pii_detections),
+                secrets_count=len(secrets_detections),
+                request_size_bytes=request_size_bytes,
+                response_size_bytes=response_size_bytes,
+                duration_ms=duration_ms,
+                sanitization_applied=len(pii_detections) > 0,
+                classification_verified=True,
+                status="success",
+            )
+
+        return result
+
+    async def _level_1_reactive(
+        self,
+        user_input: str,
+        state: CollaborationState,
+        context: dict[str, Any],
+        model_override: str | None = None,
+    ) -> dict[str, Any]:
+        """Level 1: Reactive - Simple Q&A
+
+        No memory, no patterns, just respond to question.
+        """
+        generate_kwargs: dict[str, Any] = {
+            "messages": [{"role": "user", "content": user_input}],
+            "system_prompt": self._build_system_prompt(1),
+            "temperature": EmpathyLevel.get_temperature_recommendation(1),
+            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(1),
+        }
+        if model_override:
+            generate_kwargs["model"] = model_override
+
+        response = await self.provider.generate(**generate_kwargs)
+
+        return {
+            "content": response.content,
+            "proactive": False,
+            "metadata": {"tokens_used": response.tokens_used, "model": response.model},
+        }
+
+    async def _level_2_guided(
+        self,
+        user_input: str,
+        state: CollaborationState,
+        context: dict[str, Any],
+        model_override: str | None = None,
+    ) -> dict[str, Any]:
+        """Level 2: Guided - Ask clarifying questions
+
+        Uses conversation history for context.
+        """
+        # Include conversation history
+        messages = state.get_conversation_history(max_turns=5)
+        messages.append({"role": "user", "content": user_input})
+
+        generate_kwargs: dict[str, Any] = {
+            "messages": messages,
+            "system_prompt": self._build_system_prompt(2),
+            "temperature": EmpathyLevel.get_temperature_recommendation(2),
+            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(2),
+        }
+        if model_override:
+            generate_kwargs["model"] = model_override
+
+        response = await self.provider.generate(**generate_kwargs)
+
+        return {
+            "content": response.content,
+            "proactive": False,
+            "metadata": {
+                "tokens_used": response.tokens_used,
+                "model": response.model,
+                "history_turns": len(messages) - 1,
+            },
+        }
+
+    async def _level_3_proactive(
+        self,
+        user_input: str,
+        state: CollaborationState,
+        context: dict[str, Any],
+        model_override: str | None = None,
+    ) -> dict[str, Any]:
+        """Level 3: Proactive - Act on detected patterns
+
+        Checks for matching patterns and acts proactively.
+        """
+        # Check for matching pattern
+        matching_pattern = state.find_matching_pattern(user_input)
+
+        if matching_pattern:
+            # Proactive action based on pattern
+            prompt = f"""
+User said: "{user_input}"
+
+Pattern detected: When you {matching_pattern.trigger}, you typically {matching_pattern.action}.
+
+Confidence: {matching_pattern.confidence:.0%}. Proactively {matching_pattern.action}.
+
+[Provide the expected result/action]
+
+Was this helpful? If not, I can adjust my pattern detection.
+"""
+
+            messages = [{"role": "user", "content": prompt}]
+            proactive = True
+            pattern_info = {
+                "pattern_type": matching_pattern.pattern_type.value,
+                "trigger": matching_pattern.trigger,
+                "confidence": matching_pattern.confidence,
+            }
+
+        else:
+            # Standard response + pattern detection
+            messages = state.get_conversation_history(max_turns=10)
+            messages.append({"role": "user", "content": user_input})
+            proactive = False
+            pattern_info = None
+
+            # Run pattern detection in background (non-blocking)
+            asyncio.create_task(self._detect_patterns_async(state, user_input))
+
+        generate_kwargs: dict[str, Any] = {
+            "messages": messages,
+            "system_prompt": self._build_system_prompt(3),
+            "temperature": EmpathyLevel.get_temperature_recommendation(3),
+            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(3),
+        }
+        if model_override:
+            generate_kwargs["model"] = model_override
+
+        response = await self.provider.generate(**generate_kwargs)
+
+        return {
+            "content": response.content,
+            "proactive": proactive,
+            "metadata": {
+                "tokens_used": response.tokens_used,
+                "model": response.model,
+                "pattern": pattern_info,
+            },
+        }
+
+    async def _level_4_anticipatory(
+        self,
+        user_input: str,
+        state: CollaborationState,
+        context: dict[str, Any],
+        model_override: str | None = None,
+    ) -> dict[str, Any]:
+        """Level 4: Anticipatory - Predict future needs
+
+        Analyzes trajectory and alerts to future bottlenecks.
+        """
+        # Build prompt with trajectory analysis context
+        trajectory_prompt = f"""
+User request: "{user_input}"
+
+COLLABORATION CONTEXT:
+- Total interactions: {len(state.interactions)}
+- Trust level: {state.trust_level:.2f}
+- Detected patterns: {len(state.detected_patterns)}
+- Success rate: {state.success_rate:.0%}
+
+TASK:
+1. Respond to immediate request
+2. Analyze trajectory (where is this headed?)
+3. Predict future bottlenecks (if any)
+4. Alert with prevention steps (if needed)
+
+Use anticipatory format:
+- Current state analysis
+- Trajectory prediction
+- Alert (if bottleneck predicted)
+- Prevention steps (actionable)
+- Reasoning (based on experience)
+"""
+
+        messages = state.get_conversation_history(max_turns=15)
+        messages.append({"role": "user", "content": trajectory_prompt})
+
+        generate_kwargs: dict[str, Any] = {
+            "messages": messages,
+            "system_prompt": self._build_system_prompt(4),
+            "temperature": EmpathyLevel.get_temperature_recommendation(4),
+            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(4),
+        }
+        if model_override:
+            generate_kwargs["model"] = model_override
+
+        response = await self.provider.generate(**generate_kwargs)
+
+        return {
+            "content": response.content,
+            "proactive": True,  # Level 4 is inherently proactive
+            "metadata": {
+                "tokens_used": response.tokens_used,
+                "model": response.model,
+                "trajectory_analyzed": True,
+                "trust_level": state.trust_level,
+            },
+        }
+
+    async def _level_5_systems(
+        self,
+        user_input: str,
+        state: CollaborationState,
+        context: dict[str, Any],
+        model_override: str | None = None,
+    ) -> dict[str, Any]:
+        """Level 5: Systems - Cross-domain pattern learning
+
+        Leverages shared pattern library across domains.
+        """
+        # Include pattern library context
+        pattern_context = ""
+        if self.pattern_library:
+            pattern_context = f"\n\nSHARED PATTERN LIBRARY:\n{self.pattern_library}"
+
+        prompt = f"""
+User request: "{user_input}"
+
+{pattern_context}
+
+TASK:
+1. Respond to request
+2. Check if relevant cross-domain patterns apply
+3. Contribute new patterns if discovered
+4. Show how principle generalizes across domains
+"""
+
+        messages = state.get_conversation_history(max_turns=20)
+        messages.append({"role": "user", "content": prompt})
+
+        generate_kwargs: dict[str, Any] = {
+            "messages": messages,
+            "system_prompt": self._build_system_prompt(5),
+            "temperature": EmpathyLevel.get_temperature_recommendation(5),
+            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(5),
+        }
+        if model_override:
+            generate_kwargs["model"] = model_override
+
+        response = await self.provider.generate(**generate_kwargs)
+
+        return {
+            "content": response.content,
+            "proactive": True,
+            "metadata": {
+                "tokens_used": response.tokens_used,
+                "model": response.model,
+                "pattern_library_size": len(self.pattern_library),
+                "systems_level": True,
+            },
+        }
+
+    async def _detect_patterns_async(
+        self,
+        state: CollaborationState,
+        current_input: str,
+    ) -> None:
+        """Detect user behavior patterns in background.
+
+        Analyzes conversation history to identify:
+        - Sequential patterns: User always does X then Y
+        - Preference patterns: User prefers certain formats/styles
+        - Temporal patterns: User does X at specific times
+        - Conditional patterns: When Z happens, user does X
+
+        This runs asynchronously to avoid blocking the main response.
+        Detected patterns enable Level 3 proactive interactions.
+        """
+        try:
+            from datetime import datetime
+
+            interactions = state.interactions
+            if len(interactions) < 3:
+                # Need at least 3 interactions to detect patterns
+                return
+
+            # Analyze recent interactions for sequential patterns
+            recent = interactions[-10:]  # Last 10 interactions
+            user_messages = [i for i in recent if i.role == "user"]
+
+            if len(user_messages) < 2:
+                return
+
+            # Pattern 1: Sequential patterns (X followed by Y)
+            for i in range(len(user_messages) - 1):
+                current = user_messages[i].content.lower()
+                next_msg = user_messages[i + 1].content.lower()
+
+                # Detect common sequential patterns
+                sequential_triggers = [
+                    ("review", "fix"),  # Review then fix
+                    ("debug", "test"),  # Debug then test
+                    ("implement", "test"),  # Implement then test
+                    ("refactor", "review"),  # Refactor then review
+                ]
+
+                for trigger, action in sequential_triggers:
+                    if trigger in current and action in next_msg:
+                        pattern = UserPattern(
+                            pattern_type=PatternType.SEQUENTIAL,
+                            trigger=trigger,
+                            action=f"Typically follows with {action}",
+                            confidence=0.6 + (0.1 * min(i, 3)),  # Increase with occurrences
+                            occurrences=1,
+                            last_seen=datetime.now(),
+                            context={"detected_from": "sequential_analysis"},
+                        )
+                        state.add_pattern(pattern)
+
+            # Pattern 2: Preference patterns
+            preference_indicators = {
+                "concise": "brief, concise responses",
+                "detailed": "comprehensive, detailed responses",
+                "example": "responses with examples",
+                "step by step": "step-by-step explanations",
+                "code": "code-focused responses",
+            }
+
+            for indicator, preference in preference_indicators.items():
+                occurrences = sum(1 for m in user_messages if indicator in m.content.lower())
+                if occurrences >= 2:
+                    pattern = UserPattern(
+                        pattern_type=PatternType.PREFERENCE,
+                        trigger=indicator,
+                        action=f"User prefers {preference}",
+                        confidence=min(0.9, 0.5 + (0.1 * occurrences)),
+                        occurrences=occurrences,
+                        last_seen=datetime.now(),
+                        context={"preference_type": indicator},
+                    )
+                    state.add_pattern(pattern)
+
+            # Pattern 3: Conditional patterns (error -> debug)
+            conditional_triggers = [
+                ("error", "debug", "When errors occur, user asks for debugging"),
+                ("failed", "fix", "When tests fail, user asks for fixes"),
+                ("slow", "optimize", "When performance issues arise, user asks for optimization"),
+            ]
+
+            for condition, response_keyword, description in conditional_triggers:
+                for i, msg in enumerate(user_messages[:-1]):
+                    if condition in msg.content.lower():
+                        next_msg = user_messages[i + 1].content.lower()
+                        if response_keyword in next_msg:
+                            pattern = UserPattern(
+                                pattern_type=PatternType.CONDITIONAL,
+                                trigger=condition,
+                                action=description,
+                                confidence=0.7,
+                                occurrences=1,
+                                last_seen=datetime.now(),
+                                context={"condition": condition, "response": response_keyword},
+                            )
+                            state.add_pattern(pattern)
+
+            logger.debug(
+                f"Pattern detection complete. Detected {len(state.detected_patterns)} patterns.",
+            )
+
+        except Exception as e:
+            # Pattern detection should never break the main flow
+            logger.warning(f"Pattern detection error (non-critical): {e}")
+
+    def update_trust(self, user_id: str, outcome: str, magnitude: float = 1.0):
+        """Update trust level based on interaction outcome.
+
+        Args:
+            user_id: User identifier
+            outcome: "success" or "failure"
+            magnitude: How much to adjust (0.0 to 1.0)
+
+        """
+        state = self._get_or_create_state(user_id)
+        state.update_trust(outcome, magnitude)
+
+        logger.info(f"Trust updated for {user_id}: {outcome} -> {state.trust_level:.2f}")
+
+    def add_pattern(self, user_id: str, pattern: UserPattern):
+        """Manually add a detected pattern.
+
+        Args:
+            user_id: User identifier
+            pattern: UserPattern instance
+
+        """
+        state = self._get_or_create_state(user_id)
+        state.add_pattern(pattern)
+
+        logger.info(f"Pattern added for {user_id}: {pattern.pattern_type.value}")
+
+    def get_statistics(self, user_id: str) -> dict[str, Any]:
+        """Get collaboration statistics for user.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            Dictionary with stats
+
+        """
+        state = self._get_or_create_state(user_id)
+        return state.get_statistics()
+
+    def reset_state(self, user_id: str):
+        """Reset collaboration state for user"""
+        if user_id in self.states:
+            del self.states[user_id]
+            logger.info(f"State reset for {user_id}")

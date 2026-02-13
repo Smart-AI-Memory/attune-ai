@@ -12,7 +12,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from attune_llm.agent_factory.crews import SecurityReport
+    from attune.agent_factory.crews import SecurityReport
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def _check_crew_available() -> bool:
 
     """
     try:
-        from attune_llm.agent_factory.crews import SecurityAuditCrew  # noqa: F401
+        from attune.agent_factory.crews import SecurityAuditCrew  # noqa: F401
 
         return True
     except ImportError:
@@ -53,7 +53,7 @@ async def _get_crew_audit(
         return None
 
     try:
-        from attune_llm.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
 
         # Build config from dict
         crew_config = SecurityAuditConfig(**(config or {}))

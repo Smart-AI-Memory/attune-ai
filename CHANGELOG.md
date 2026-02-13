@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Feature Availability API**: New `MemoryFeatures` and `TelemetryFeatures` classes provide runtime checking of dependency availability with helpful error messages and install instructions. Enables graceful degradation when Redis is not installed.
+- **`attune features` CLI command**: User-facing command displays all memory and telemetry features with status indicators (✅ available, ⚠️ missing/not configured) and installation instructions for missing dependencies.
+- **FEATURES.md documentation**: Comprehensive 390+ line guide covering core vs optional features, installation options, Python API, graceful degradation patterns, Redis setup, troubleshooting, and migration guide.
+- **40 new tests**: Added 29 unit tests (`test_memory_features.py`, `test_telemetry_features.py`) and 11 integration tests (`test_graceful_degradation.py`) verifying feature availability API and graceful degradation behavior. All passing with 100% success rate.
+
+### Changed
+
+- **Modular Architecture Evolution - Phase 3D Complete**: Memory and telemetry modules now split into core (always available, file-based) vs optional (Redis-enhanced) features. File-first architecture ensures base functionality works without Redis installation. Redis becomes an optional enhancement for real-time features (short-term memory, cross-session coordination, event streaming, agent heartbeats).
+- **Modular Architecture Evolution - Phase 2D Complete**: Migrated all 15 active workflows extending `BaseWorkflow` to support composition via `WorkflowContext` pattern. Each workflow now provides a `default_context()` classmethod for pre-configured prompt and parsing services. This enables future mixin removal while maintaining 100% backward compatibility.
+
+### Removed
+
+- **BehavioralTestGenerationWorkflow**: Removed problematic test generation workflow (`test_gen_behavioral.py`) that was replaced by the working `ParallelTestGenerationWorkflow`. Cleaned up all imports and registry references.
+
+### Deprecated
+
+- **`attune_llm/` package shims**: The `attune_llm/` package directory contains backward-compatibility shims that re-export from `src/attune/`. These shims will be removed in **v3.0.0**. All new code should import from `attune.*` instead of `attune_llm.*`. See migration guide in documentation for details.
+
 ## [2.6.3] - 2026-02-11
 
 ### Fixed

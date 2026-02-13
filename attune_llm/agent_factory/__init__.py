@@ -1,53 +1,19 @@
-"""Attune AI - Universal Agent Factory
+"""attune_llm.agent_factory - DEPRECATED. Use attune.agent_factory instead.
 
-Create agents using your preferred framework while retaining Empathy's
-cost optimization, pattern learning, and memory features.
+This module has been moved to attune.agent_factory as part of the package
+consolidation effort. This shim will be removed in v3.0.0.
 
-Supported Frameworks:
-- LangChain: Chains, tools, and retrieval
-- LangGraph: Stateful multi-agent graphs
-- AutoGen: Conversational multi-agent systems
-- Haystack: RAG and document pipelines
-- Native: Empathy's built-in agent system
-
-Usage:
-    from attune_llm.agent_factory import AgentFactory, Framework
-
-    # Create factory with preferred framework
-    factory = AgentFactory(framework=Framework.LANGGRAPH)
-
-    # Create agents
-    researcher = factory.create_agent("researcher", tools=[...])
-    writer = factory.create_agent("writer", model_tier="premium")
-
-    # Create workflows
-    pipeline = factory.create_workflow([researcher, writer])
-
-    # Create wizards with framework backing
-    debug_wizard = factory.create_wizard("debugging")
-
-Copyright 2025 Smart-AI-Memory
+Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from attune_llm.agent_factory.base import (
-    AgentCapability,
-    AgentConfig,
-    AgentRole,
-    BaseAdapter,
-    BaseAgent,
-    WorkflowConfig,
-)
-from attune_llm.agent_factory.factory import AgentFactory
-from attune_llm.agent_factory.framework import Framework
+import warnings
 
-__all__ = [
-    "AgentCapability",
-    "AgentConfig",
-    "AgentFactory",
-    "AgentRole",
-    "BaseAdapter",
-    "BaseAgent",
-    "Framework",
-    "WorkflowConfig",
-]
+warnings.warn(
+    "attune_llm.agent_factory is deprecated. Use attune.agent_factory instead. "
+    "Will be removed in v3.0.0.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from attune.agent_factory import *  # noqa: F401,F403

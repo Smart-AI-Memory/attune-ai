@@ -14,6 +14,8 @@ from typing import Any
 
 from attune.models import ModelTier
 from attune.workflows.base import BaseWorkflow, WorkflowResult
+from attune.workflows.context import WorkflowContext
+from attune.workflows.services import ParsingService, PromptService
 
 
 @dataclass
@@ -35,6 +37,9 @@ class SEOOptimizationWorkflow(BaseWorkflow):
     2. Interactive approval workflow
     3. Multi-agent coordination
     4. Structured reporting
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
 
     Usage:
         workflow = SEOOptimizationWorkflow()
@@ -71,6 +76,22 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         self._scan_result = None
         self._analyze_result = None
         self._recommend_result = None
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for SEO optimization.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("seo-optimization", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     async def execute(
         self,

@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from attune.hooks.config import HookEvent
     from attune.hooks.registry import HookRegistry
     from attune.learning.storage import LearnedSkillsStorage
-    from attune_llm.state import CollaborationState
+    from attune.llm.state import CollaborationState
 
 logger = logging.getLogger(__name__)
 

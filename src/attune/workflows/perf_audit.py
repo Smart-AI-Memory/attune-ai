@@ -20,7 +20,9 @@ from pathlib import Path
 from typing import Any
 
 from .base import BaseWorkflow, ModelTier
+from .context import WorkflowContext
 from .output import Finding, WorkflowReport, get_console
+from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 # Define step configurations for executor-based execution
@@ -125,6 +127,9 @@ class PerformanceAuditWorkflow(BaseWorkflow):
 
     Uses static analysis to find common performance anti-patterns
     and algorithmic complexity issues.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "perf-audit"
@@ -156,6 +161,21 @@ class PerformanceAuditWorkflow(BaseWorkflow):
         self.enable_auth_strategy = enable_auth_strategy
         self._hotspot_count: int = 0
         self._auth_mode_used: str | None = None
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for performance auditing.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+        """
+        return WorkflowContext(
+            prompt=PromptService("perf-audit", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
         """Downgrade optimize stage if few hotspots.

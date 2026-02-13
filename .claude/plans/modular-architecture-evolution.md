@@ -13,10 +13,10 @@
 | **3B** | Extraction | Dashboard + Socratic as optional extras | **COMPLETE** | 3 |
 | **3C** | Extraction | Lazy loading improvements | **COMPLETE** | 3 |
 | **2B-2C** | Workflows | WorkflowContext + BaseWorkflow update | **COMPLETE** | 3 |
-| **1C** | Consolidation | Move LLM core + agent_factory (highest risk) | Pending | |
-| **2D** | Workflows | Migrate concrete workflows | Pending | |
-| **1D** | Consolidation | Cleanup shims and config | Pending | |
-| **3D** | Extraction | Memory/telemetry splitting | Pending | |
+| **1C** | Consolidation | Move LLM core + agent_factory (highest risk) | **COMPLETE** | 4 |
+| **2D** | Workflows | Migrate concrete workflows (15/15, 100%) | **COMPLETE** | 4-5 |
+| **1D** | Consolidation | Cleanup shims and config (after 2D) | **COMPLETE** | 5 |
+| **3D** | Extraction | Memory/telemetry splitting | **COMPLETE** | 5 |
 
 ---
 
@@ -66,21 +66,39 @@ from attune.hooks import *  # noqa: F401,F403
 | `attune_llm/commands/` | `src/attune/commands/` | Done |
 | `attune_llm/pattern_*.py`, `git_pattern_extractor.py` | `src/attune/patterns/` | Done |
 
-### Phase 1C: Move the LLM core (Higher risk)
+### Phase 1C: Move the LLM core (COMPLETE - Session 4)
 
-Create `src/attune/llm/` sub-package for the most interconnected pieces:
+Created `src/attune/llm/` sub-package for the most interconnected pieces:
 
-- `attune_llm/core.py` (EmpathyLLM) -> `src/attune/llm/core.py`
-- `attune_llm/providers.py` -> `src/attune/llm/providers.py`
-- `attune_llm/state.py` -> `src/attune/llm/state.py`
-- `attune_llm/levels.py` -> `src/attune/llm/levels.py`
-- `attune_llm/agent_factory/` -> `src/attune/agent_factory/`
+- ✅ `attune_llm/core.py` (EmpathyLLM) -> `src/attune/llm/core.py`
+- ✅ `attune_llm/providers.py` -> `src/attune/llm/providers.py`
+- ✅ `attune_llm/state.py` -> `src/attune/llm/state.py`
+- ✅ `attune_llm/levels.py` -> `src/attune/llm/levels.py`
+- ✅ `attune_llm/agent_factory/` -> `src/attune/agent_factory/`
 
-### Phase 1D: Cleanup
+**Completed (2026-02-13):**
 
-- Remove `"."` from `setuptools.packages.find.where` in pyproject.toml
-- Remove `attune_llm` from ruff `known-first-party`
-- Set deprecation target: remove shims in v3.0.0
+- Created deprecation shims in `attune_llm/` for all migrated modules
+- Updated all imports in `src/attune/` to use new paths
+- Fixed routing import in core.py (now uses `attune.routing`)
+- Updated all agent_factory internal imports
+- Tests passing, deprecation warnings working correctly
+
+### Phase 1D: Cleanup and Documentation (COMPLETE - Session 5)
+
+**COMPLETED:**
+
+- ✅ Removed `test_gen_behavioral.py` - Problematic workflow replaced by `ParallelTestGenerationWorkflow`
+- ✅ Cleaned up all imports/references to `BehavioralTestGenerationWorkflow` from `__init__.py`
+- ✅ Documented deprecation timeline in CHANGELOG.md
+- ✅ Added v3.0.0 removal notice for `attune_llm/` shims in CHANGELOG
+- ✅ Updated migration guide (`docs/migration-guide.md`) with package consolidation instructions and import mapping table
+
+**DO NOT (until v3.0.0):**
+
+- ❌ Remove `attune_llm/` directory (shims bridge the gap for backward compatibility)
+- ❌ Remove `"."` from `setuptools.packages.find.where` in pyproject.toml (package still exists)
+- ❌ Remove `attune_llm` from ruff `known-first-party` (imports still valid)
 
 ---
 
@@ -123,9 +141,35 @@ class WorkflowContext:
 
 Add `ctx: WorkflowContext | None` parameter to `BaseWorkflow.__init__`. When provided, proxy methods delegate to `ctx.service.method()`. When `None`, fall back to mixin behavior. 100% backward compat.
 
-### Phase 2D: Migrate concrete workflows incrementally
+### Phase 2D: Migrate concrete workflows incrementally (COMPLETE - Session 5)
 
 Start with simpler workflows and migrate to `WorkflowContext`. Leave complex ones on mixins until stable.
+
+**Progress: 15/15 workflows migrated (100%)**
+
+#### Completed
+
+- ✅ BugPredictionWorkflow (Session 2 or 3)
+- ✅ DependencyCheckWorkflow (Session 2 or 3)
+- ✅ ResearchSynthesisWorkflow (Session 2 or 3)
+- ✅ TestGenerationWorkflow (Session 4)
+- ✅ PerformanceAuditWorkflow (Session 4)
+- ✅ CodeReviewWorkflow (Session 4)
+- ✅ SecurityAuditWorkflow (Session 4)
+- ✅ RefactorPlanWorkflow (Session 5)
+- ✅ ReleasePreparationWorkflow (Session 5)
+- ✅ DocumentManagerWorkflow (Session 5)
+- ✅ KeyboardShortcutWorkflow (Session 5)
+- ✅ NewSampleWorkflow1Workflow (Session 5)
+- ✅ SEOOptimizationWorkflow (Session 5)
+- ✅ DocumentGenerationWorkflow (Session 5)
+- ✅ ParallelTestGenerationWorkflow (Session 5)
+
+All workflows extending `BaseWorkflow` now support composition via `WorkflowContext` with `default_context()` classmethod.
+
+#### Excluded (Deprecated/Problematic)
+
+- ❌ BehavioralTestGenerationWorkflow - Problematic implementation, replaced by ParallelTestGenerationWorkflow. Candidate for removal in cleanup phase.
 
 ---
 

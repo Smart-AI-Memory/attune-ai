@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from ..base import BaseWorkflow, ModelTier
+from ..context import WorkflowContext
+from ..services import ParsingService, PromptService
 from .api_reference import APIReferenceMixin
 from .chunked_generation import ChunkedGenerationMixin
 from .config import DOC_GEN_STEPS, TOKEN_COSTS  # noqa: F401  # re-export
@@ -31,6 +33,9 @@ class DocumentGenerationWorkflow(
     Uses cheap models for outlining, capable models for content
     generation, and premium models for final polish and consistency
     review.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
 
     Usage:
         workflow = DocumentGenerationWorkflow()
@@ -112,6 +117,22 @@ class DocumentGenerationWorkflow(
         self._cost_warning_issued: bool = False
         self._partial_results: dict = {}
         self._auth_mode_used: str | None = None  # Track which auth was recommended
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for document generation.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("doc-gen", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
         """Skip polish for short documents."""

@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any
 
 from .base import BaseWorkflow, ModelTier
+from .context import WorkflowContext
+from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,9 @@ class RefactorPlanWorkflow(BaseWorkflow):
 
     Analyzes tech debt trends over time to identify growing
     problem areas and generate prioritized refactoring plans.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "refactor-plan"
@@ -94,6 +99,22 @@ class RefactorPlanWorkflow(BaseWorkflow):
         self._crew_available = False
         self._load_debt_history()
 
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for refactor planning.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("refactor-plan", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
+
     def _load_debt_history(self) -> None:
         """Load tech debt history from pattern library."""
         debt_file = Path(self.patterns_dir) / "tech_debt.json"
@@ -111,7 +132,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
             return
 
         try:
-            from attune_llm.agent_factory.crews.refactoring import RefactoringCrew
+            from attune.agent_factory.crews.refactoring import RefactoringCrew
 
             self._crew = RefactoringCrew()
             self._crew_available = True

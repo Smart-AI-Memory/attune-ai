@@ -259,7 +259,7 @@ class CrewBasedPattern(WorkflowPattern):
             return
 
         try:
-            from attune_llm.agent_factory.crews import {crew_name}
+            from attune.agent_factory.crews import {crew_name}
 
             self._crew = {crew_name}()
             self._crew_available = True

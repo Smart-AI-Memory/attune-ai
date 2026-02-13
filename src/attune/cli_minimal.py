@@ -14,6 +14,7 @@ Monitoring commands:
                                       (opens web UI at http://localhost:8000)
 
 Utility commands:
+    attune features                   Show available features and dependencies
     attune telemetry show             Display usage summary
     attune telemetry savings          Show cost savings
     attune telemetry export           Export to CSV/JSON
@@ -60,6 +61,7 @@ from attune.cli_commands.telemetry_commands import (  # noqa: F401
 )
 from attune.cli_commands.utility_commands import (  # noqa: F401
     cmd_dashboard_start,
+    cmd_features,
     cmd_setup,
     cmd_validate,
     cmd_version,
@@ -228,6 +230,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
     # --- Utility commands ---
+    subparsers.add_parser("features", help="Show available features and dependencies")
     subparsers.add_parser("validate", help="Validate configuration")
 
     version_parser = subparsers.add_parser("version", help="Show version")
@@ -299,6 +302,9 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "setup":
         return cmd_setup(args)
+
+    elif args.command == "features":
+        return cmd_features(args)
 
     elif args.command == "validate":
         return cmd_validate(args)

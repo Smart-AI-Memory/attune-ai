@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from .base import BaseWorkflow, ModelTier
+from .context import WorkflowContext
 from .security_audit_filters import SecurityFilterMixin
 from .security_audit_patterns import (
     DETECTION_PATTERNS,  # noqa: F401  # re-export
@@ -34,6 +35,7 @@ from .security_audit_report import (
     format_security_report,
     main,  # noqa: F401  # re-export
 )
+from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 logger = logging.getLogger(__name__)
@@ -55,6 +57,9 @@ class SecurityAuditWorkflow(SecurityFilterMixin, BaseWorkflow):
 
     Scans code for security vulnerabilities while respecting
     team decisions about false positives and accepted risks.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "security-audit"
@@ -104,6 +109,21 @@ class SecurityAuditWorkflow(SecurityFilterMixin, BaseWorkflow):
         self._auth_mode_used: str | None = None  # Track which auth was recommended
         self._load_team_decisions()
 
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for security auditing.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+        """
+        return WorkflowContext(
+            prompt=PromptService("security-audit", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
+
     def _load_team_decisions(self) -> None:
         """Load team security decisions for false positive filtering."""
         decisions_file = Path(self.patterns_dir) / "security" / "team_decisions.json"
@@ -123,7 +143,7 @@ class SecurityAuditWorkflow(SecurityFilterMixin, BaseWorkflow):
             return
 
         try:
-            from attune_llm.agent_factory.crews.security_audit import SecurityAuditCrew
+            from attune.agent_factory.crews.security_audit import SecurityAuditCrew
 
             self._crew = SecurityAuditCrew()
             self._crew_available = True
@@ -725,7 +745,7 @@ Provide a detailed remediation plan with specific fixes."""
 
         """
         try:
-            from attune_llm.agent_factory.crews import (
+            from attune.agent_factory.crews import (
                 SecurityAuditConfig,
                 SecurityAuditCrew,
             )

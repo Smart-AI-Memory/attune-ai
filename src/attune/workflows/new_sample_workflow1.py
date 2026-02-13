@@ -13,6 +13,8 @@ import logging
 from typing import Any
 
 from attune.workflows.base import BaseWorkflow, ModelTier
+from attune.workflows.context import WorkflowContext
+from attune.workflows.services import ParsingService, PromptService
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,8 @@ logger = logging.getLogger(__name__)
 class NewSampleWorkflow1Workflow(BaseWorkflow):
     """A team leader that has 10 years of experiance coding.
 
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
 
     Usage:
         workflow = NewSampleWorkflow1Workflow()
@@ -48,6 +52,22 @@ class NewSampleWorkflow1Workflow(BaseWorkflow):
 
         """
         super().__init__(**kwargs)
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for this workflow.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("new-sample-workflow1", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     async def run_stage(
         self,

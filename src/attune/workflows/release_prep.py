@@ -19,6 +19,8 @@ from datetime import datetime
 from typing import Any
 
 from .base import BaseWorkflow, ModelTier
+from .context import WorkflowContext
+from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 # Define step configurations for executor-based execution
@@ -41,6 +43,9 @@ class ReleasePreparationWorkflow(BaseWorkflow):
 
     When use_security_crew=True, adds an additional crew_security stage
     that runs SecurityAuditCrew for comprehensive security analysis.
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "release-prep"
@@ -99,6 +104,22 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                 "changelog": ModelTier.CAPABLE,
                 "approve": ModelTier.PREMIUM,
             }
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for release preparation.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("release-prep", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
         """Skip approval if all checks pass cleanly.

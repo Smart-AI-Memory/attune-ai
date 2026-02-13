@@ -66,7 +66,6 @@ if TYPE_CHECKING:
     from .step_config import WorkflowStepConfig
     from .test_coverage_boost_crew import TestCoverageBoostCrew, TestCoverageBoostCrewResult
     from .test_gen import TestGenerationWorkflow
-    from .test_gen_behavioral import BehavioralTestGenerationWorkflow
     from .test_gen_parallel import ParallelTestGenerationWorkflow
     from .xml_enhanced_crew import XMLAgent, XMLTask
 
@@ -142,10 +141,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "TestCoverageBoostCrew": (".test_coverage_boost_crew", "TestCoverageBoostCrew"),
     "TestCoverageBoostCrewResult": (".test_coverage_boost_crew", "TestCoverageBoostCrewResult"),
     "TestGenerationWorkflow": (".test_gen", "TestGenerationWorkflow"),
-    "BehavioralTestGenerationWorkflow": (
-        ".test_gen_behavioral",
-        "BehavioralTestGenerationWorkflow",
-    ),
     "ParallelTestGenerationWorkflow": (".test_gen_parallel", "ParallelTestGenerationWorkflow"),
     # Additional workflows (restored to registry)
     "TestMaintenanceWorkflow": (".test_maintenance", "TestMaintenanceWorkflow"),
@@ -236,7 +231,6 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "perf-audit": "PerformanceAuditWorkflow",
     # Generation workflows
     "test-gen": "TestGenerationWorkflow",
-    "test-gen-behavioral": "BehavioralTestGenerationWorkflow",
     "test-gen-parallel": "ParallelTestGenerationWorkflow",
     "refactor-plan": "RefactorPlanWorkflow",
     # Operational workflows
@@ -532,7 +526,6 @@ __all__ = [
     "SecurityAuditWorkflow",
     "SEOOptimizationWorkflow",
     "TestGenerationWorkflow",
-    "BehavioralTestGenerationWorkflow",
     "ParallelTestGenerationWorkflow",
     # Configuration
     "WorkflowConfig",

@@ -67,8 +67,8 @@ def cmd_frameworks(args):
     import json as json_mod
 
     try:
-        from attune_llm.agent_factory import AgentFactory
-        from attune_llm.agent_factory.framework import (
+        from attune.agent_factory import AgentFactory
+        from attune.agent_factory.framework import (
             get_framework_info,
             get_recommended_framework,
         )

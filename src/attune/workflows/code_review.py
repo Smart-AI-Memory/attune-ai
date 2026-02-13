@@ -13,6 +13,8 @@ from typing import Any
 
 from .base import BaseWorkflow, ModelTier
 from .code_review_report import format_code_review_report  # noqa: F401
+from .context import WorkflowContext
+from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 # Define step configurations for executor-based execution
@@ -33,6 +35,9 @@ class CodeReviewWorkflow(BaseWorkflow):
     Uses cheap models for classification, capable models for security
     and bug scanning, and premium models only for complex architectural
     reviews (10+ files or core module changes).
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
 
     Usage:
         workflow = CodeReviewWorkflow()
@@ -100,6 +105,21 @@ class CodeReviewWorkflow(BaseWorkflow):
                 "architect_review": ModelTier.PREMIUM,
             }
 
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for code review.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+        """
+        return WorkflowContext(
+            prompt=PromptService("code-review", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
+
     async def _initialize_crew(self) -> None:
         """Initialize the CodeReviewCrew."""
         if self._crew is not None:
@@ -108,7 +128,7 @@ class CodeReviewWorkflow(BaseWorkflow):
         try:
             import logging
 
-            from attune_llm.agent_factory.crews.code_review import CodeReviewCrew
+            from attune.agent_factory.crews.code_review import CodeReviewCrew
 
             self._crew = CodeReviewCrew()
             self._crew_available = True

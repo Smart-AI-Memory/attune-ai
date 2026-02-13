@@ -18,6 +18,8 @@ from typing import Any
 import yaml
 
 from attune.workflows.base import BaseWorkflow, ModelTier
+from attune.workflows.context import WorkflowContext
+from attune.workflows.services import ParsingService, PromptService
 
 from .generators import ComprehensiveGenerator
 from .parsers import CompositeParser
@@ -40,6 +42,9 @@ class KeyboardShortcutWorkflow(BaseWorkflow):
     - Scale 1 (Daily): 4 most-used features on home row
     - Scale 2 (Frequent): Next 4 features on adjacent keys
     - Scale 3 (Advanced): Remaining features logically placed
+
+    Supports composition via ``WorkflowContext`` -- use ``default_context()``
+    to get a pre-configured context with prompt and parsing services.
     """
 
     name = "keyboard-shortcuts"
@@ -57,6 +62,22 @@ class KeyboardShortcutWorkflow(BaseWorkflow):
         super().__init__(**kwargs)
         self.parser = CompositeParser()
         self.generator = ComprehensiveGenerator()
+
+    @classmethod
+    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
+        """Create a WorkflowContext pre-configured for keyboard shortcuts.
+
+        Args:
+            xml_config: Optional XML prompt configuration dict.
+
+        Returns:
+            WorkflowContext with prompt and parsing services.
+
+        """
+        return WorkflowContext(
+            prompt=PromptService("keyboard-shortcuts", xml_config=xml_config),
+            parsing=ParsingService(xml_config=xml_config),
+        )
 
     async def run_stage(
         self,

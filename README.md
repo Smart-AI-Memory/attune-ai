@@ -147,13 +147,27 @@ attune workflow run test-gen --path ./src
 attune telemetry show
 ```
 
-### Need all features?
+### Optional Features
+
+**Redis-enhanced memory** (for multi-session coordination, real-time events):
 
 ```bash
-pip install attune-ai[developer]
+pip install 'attune-ai[memory]'
 ```
 
-This adds multi-LLM support, agents, and memory features.
+**All features** (includes memory, dashboard, agents):
+
+```bash
+pip install 'attune-ai[all]'
+```
+
+**Check what's available:**
+
+```bash
+attune features
+```
+
+See [Feature Availability Guide](docs/FEATURES.md) for detailed information about core vs optional features.
 
 ---
 
