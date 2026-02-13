@@ -16,6 +16,7 @@ Licensed under the Apache License, Version 2.0
 import asyncio
 import logging
 import time
+import warnings
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,10 @@ class PRReviewWorkflow:
     ):
         """Initialize the workflow.
 
+        .. deprecated:: 5.3.0
+            Use :class:`CodeReviewWorkflow` via ``attune workflow run code-review``.
+            Will be removed in v6.0.0.
+
         Args:
             provider: LLM provider to use (anthropic, openai, etc.)
             use_code_crew: Enable CodeReviewCrew
@@ -82,6 +87,13 @@ class PRReviewWorkflow:
             security_crew_config: Configuration for SecurityAuditCrew
 
         """
+        warnings.warn(
+            "PRReviewWorkflow is deprecated since v5.3.0. "
+            "Use CodeReviewWorkflow via 'attune workflow run code-review' instead. "
+            "Will be removed in v6.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.provider = provider
         self.use_code_crew = use_code_crew
         self.use_security_crew = use_security_crew

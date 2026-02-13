@@ -27,6 +27,7 @@ import json
 import logging
 import subprocess
 import sys
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -83,6 +84,11 @@ class AutonomousTestGenerator(
     ):
         """Initialize generator.
 
+        .. deprecated:: 5.3.0
+            Use :class:`ParallelTestGenerationWorkflow` via
+            ``attune workflow run test-gen-parallel``.
+            Will be removed in v6.0.0.
+
         Args:
             agent_id: Unique agent identifier
             batch_num: Batch number (1-18)
@@ -92,6 +98,13 @@ class AutonomousTestGenerator(
             enable_coverage_guided: Enable Phase 3 coverage-guided generation (default: False)
             target_coverage: Target coverage percentage (default: 0.80 = 80%)
         """
+        warnings.warn(
+            "AutonomousTestGenerator is deprecated since v5.3.0. "
+            "Use ParallelTestGenerationWorkflow via 'attune workflow run test-gen-parallel' instead. "
+            "Will be removed in v6.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.agent_id = agent_id
         self.batch_num = batch_num
         self.modules = modules

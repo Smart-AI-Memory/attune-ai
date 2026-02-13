@@ -2,7 +2,7 @@
 
 AI-powered developer workflows with Socratic discovery, persistent memory, and multi-agent orchestration for Claude Code. One command -- `/attune` -- intelligently routes you to security audits, code reviews, test generation, performance analysis, and more through a guided, conversational interface.
 
-**Version:** 5.3.0 | **License:** Apache 2.0 | **Python:** 3.10+
+**Version:** 2.7.0 | **License:** Apache 2.0 | **Python:** 3.10+
 
 ## Installation
 

@@ -20,13 +20,13 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.6.3
+## What's New in v2.7.0
 
-- **MkDocs Strict Build** - Fixed 79 broken documentation links, builds with zero warnings
-- **Attune Rebrand** - Full empathy-to-attune rename across source, tests, docs, and configs
-- **4,839 Tests Passing** - 85% coverage, all quality gates green
-- **Tier Savings Monitoring** - CI alerts when cost savings drop below 80% threshold
-- **Production Smoke Tests** - Resilient to client-side rendering in Next.js
+- **Workflow Consolidation** - 12 overlapping workflows consolidated into 4 canonical groups with backward-compatible migration aliases
+- **Feature Availability API** - Runtime checking of optional dependencies (Redis, etc.) with graceful degradation
+- **Modular Architecture** - Phase 2D/3D/2E complete: WorkflowContext composition, memory/telemetry splitting, workflow registry cleanup
+- **433+ New Tests** - Feature availability, workflow consolidation, and 6 workflow test suites
+- **`attune features` CLI** - See what's available and what needs installing at a glance
 
 ---
 

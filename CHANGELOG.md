@@ -7,31 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-02-13
+
 ### Added
 
 - **Feature Availability API**: New `MemoryFeatures` and `TelemetryFeatures` classes provide runtime checking of dependency availability with helpful error messages and install instructions. Enables graceful degradation when Redis is not installed.
-- **`attune features` CLI command**: User-facing command displays all memory and telemetry features with status indicators (✅ available, ⚠️ missing/not configured) and installation instructions for missing dependencies.
+- **`attune features` CLI command**: User-facing command displays all memory and telemetry features with status indicators (available, missing/not configured) and installation instructions for missing dependencies.
 - **FEATURES.md documentation**: Comprehensive 540-line guide covering core vs optional features, installation options, Python API, graceful degradation patterns, Redis setup, troubleshooting, and migration guide.
-- **412 new tests**: 40 tests for feature availability + graceful degradation, 372 tests across 6 workflow/module test suites covering utility commands, event streaming, simple storage, code review, release prep, and security audit workflows.
+- **412+ new tests**: 40 tests for feature availability + graceful degradation, 372 tests across 6 workflow/module test suites, 21 workflow consolidation tests.
 
 ### Fixed
 
 - **20 failing tests**: Converted 14 duplicate files in `attune_llm/agent_factory/` to proper deprecation shims, resolving `isinstance()` identity mismatches. Updated test import paths from `attune_llm.*` to `attune.*` canonical locations.
-- **FeatureStatus cross-enum comparison bug**: Fixed `cmd_features()` CLI command where telemetry core features showed ⚠️ instead of ✅ due to cross-module enum identity comparison. Now uses string value comparison.
+- **FeatureStatus cross-enum comparison bug**: Fixed `cmd_features()` CLI command where telemetry core features showed incorrect status due to cross-module enum identity comparison. Now uses string value comparison.
 - **CI security-scan.yml**: Fixed stale `empathy workflow run security-audit` command to `attune workflow run security-audit` in GitHub Actions workflow.
 
 ### Changed
 
-- **Modular Architecture Evolution - Phase 3D Complete**: Memory and telemetry modules now split into core (always available, file-based) vs optional (Redis-enhanced) features. File-first architecture ensures base functionality works without Redis installation. Redis becomes an optional enhancement for real-time features (short-term memory, cross-session coordination, event streaming, agent heartbeats).
-- **Modular Architecture Evolution - Phase 2D Complete**: Migrated all 15 active workflows extending `BaseWorkflow` to support composition via `WorkflowContext` pattern. Each workflow now provides a `default_context()` classmethod for pre-configured prompt and parsing services. This enables future mixin removal while maintaining 100% backward compatibility.
+- **Modular Architecture Evolution - Phase 2E Complete**: Consolidated 12 overlapping workflows into 4 canonical groups using the existing migration system. Removed 7 deprecated slugs (`pro-review`, `pr-review`, `document-manager`, `orchestrated-release-prep`, `autonomous-test-gen`, `progressive-test-gen`, `test-coverage-boost`) from active registry. All deprecated slugs redirect to canonical workflows via `WORKFLOW_ALIASES` in `migration.py`. Backward compatibility preserved: all class names remain importable.
+- **Modular Architecture Evolution - Phase 3D Complete**: Memory and telemetry modules now split into core (always available, file-based) vs optional (Redis-enhanced) features. File-first architecture ensures base functionality works without Redis installation.
+- **Modular Architecture Evolution - Phase 2D Complete**: Migrated all 15 active workflows extending `BaseWorkflow` to support composition via `WorkflowContext` pattern. Each workflow now provides a `default_context()` classmethod for pre-configured prompt and parsing services.
 
 ### Removed
 
-- **BehavioralTestGenerationWorkflow**: Removed problematic test generation workflow (`test_gen_behavioral.py`) that was replaced by the working `ParallelTestGenerationWorkflow`. Cleaned up all imports and registry references.
+- **BehavioralTestGenerationWorkflow**: Removed problematic test generation workflow (`test_gen_behavioral.py`) replaced by `ParallelTestGenerationWorkflow`.
+- **NewSampleWorkflow1Workflow**: Removed empty template with TODO stubs and zero logic (`new_sample_workflow1.py`).
+- **LLMBaseWorkflow**: Removed unused abstract base class with 0% coverage (`llm_base.py`).
 
 ### Deprecated
 
-- **`attune_llm/` package shims**: The `attune_llm/` package directory contains backward-compatibility shims that re-export from `src/attune/`. These shims will be removed in **v3.0.0**. All new code should import from `attune.*` instead of `attune_llm.*`. See migration guide in documentation for details.
+- **8 workflow classes**: `DocumentManagerWorkflow`, `ManageDocumentationCrew`, `ReleasePreparationCrew`, `OrchestratedReleasePrepWorkflow`, `CodeReviewPipeline`, `PRReviewWorkflow`, `AutonomousTestGenerator`, `ProgressiveTestGenWorkflow` now emit `DeprecationWarning` on instantiation. Use canonical workflows instead.
+- **7 workflow CLI slugs**: `pro-review`, `pr-review`, `document-manager`, `orchestrated-release-prep`, `autonomous-test-gen`, `progressive-test-gen`, `test-coverage-boost` are removed from active registry and handled by the migration system with interactive redirect.
+- **`attune_llm/` package shims**: The `attune_llm/` package directory contains backward-compatibility shims that re-export from `src/attune/`. These shims will be removed in **v3.0.0**. All new code should import from `attune.*` instead of `attune_llm.*`.
 
 ## [2.6.3] - 2026-02-11
 

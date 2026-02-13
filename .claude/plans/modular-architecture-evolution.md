@@ -17,6 +17,7 @@
 | **2D** | Workflows | Migrate concrete workflows (15/15, 100%) | **COMPLETE** | 4-5 |
 | **1D** | Consolidation | Cleanup shims and config (after 2D) | **COMPLETE** | 5 |
 | **3D** | Extraction | Memory/telemetry splitting | **COMPLETE** | 5 |
+| **2E** | Workflows | Consolidate 12 overlapping workflows into 4 canonical groups | **COMPLETE** | 8 |
 
 ---
 
@@ -212,9 +213,41 @@ Split into core (always available) vs optional (needs Redis).
 
 ---
 
+## Phase 2E: Workflow Consolidation (COMPLETE - Session 8)
+
+Consolidated 12 overlapping workflows into 4 canonical groups using the existing migration system (`migration.py`).
+
+**Registry changes:** Removed 7 deprecated slugs from `_DEFAULT_WORKFLOW_NAMES`, redirected through `WORKFLOW_ALIASES` in `migration.py`:
+
+| Removed Slug | Canonical Slug | Migration Kwargs |
+| ---- | ---- | ---- |
+| `pro-review` | `code-review` | `mode=premium` |
+| `pr-review` | `code-review` | `mode=security` |
+| `document-manager` | `doc-gen` | (deprecated) |
+| `orchestrated-release-prep` | `release-prep` | `mode=full` |
+| `autonomous-test-gen` | `test-gen-parallel` | `autonomous=True` |
+| `progressive-test-gen` | `test-gen-parallel` | `progressive=True` |
+| `test-coverage-boost` | `test-gen` | `target=coverage` |
+
+**Deprecation warnings added to 8 classes:**
+`DocumentManagerWorkflow`, `ManageDocumentationCrew` (already had), `ReleasePreparationCrew` (already had), `OrchestratedReleasePrepWorkflow`, `CodeReviewPipeline`, `PRReviewWorkflow`, `AutonomousTestGenerator`, `ProgressiveTestGenWorkflow`
+
+**Backward compatibility preserved:** All class names remain in `_LAZY_WORKFLOW_IMPORTS` for direct imports. Migration system handles slug resolution with interactive dialog for first-time users.
+
+---
+
 ## Refactoring Candidates (Future Work)
 
 Identified during QA session 6 (2026-02-13). These are flagged for future cleanup -- no changes now.
+
+### Removed (Session 7)
+
+| File | Reason | Status |
+| ---- | ------ | ------ |
+| `src/attune/workflows/new_sample_workflow1.py` | Empty template with TODO stubs, zero logic | **REMOVED** |
+| `src/attune/workflows/llm_base.py` | Unused abstract base class, 0% coverage, zero imports | **REMOVED** |
+
+### Remaining Candidates
 
 | File | Issue | Suggested Action |
 | ---- | ----- | ---------------- |
@@ -222,9 +255,7 @@ Identified during QA session 6 (2026-02-13). These are flagged for future cleanu
 | `src/attune/workflows/test_gen/workflow.py` | 7% coverage, 285 LOC, multiple TODOs | Redesign or consolidate with test_gen_parallel |
 | `src/attune/workflows/autonomous_test_gen.py` | 13% coverage, 229 LOC | Overlaps with test_gen/, consolidate |
 | `src/attune/workflows/progressive/` | 5-12% coverage across 4 files | Evaluate if dead code, remove or test |
-| `src/attune/memory/simple_storage.py` | 12% coverage, overlaps with storage_backend.py | Consolidate storage implementations |
-| `src/attune/workflows/new_sample_workflow1.py` | All TODOs, no real logic | Remove or implement properly |
-| `src/attune/workflows/llm_base.py` | 0% coverage, 117 LOC, has TODO | May be superseded by BaseWorkflow |
+| `src/attune/memory/simple_storage.py` | 12% coverage, overlaps with storage_backend.py | Consolidate into long_term.py (imports LongTermMemory) |
 | `src/attune/telemetry/cli_analysis.py` | 0% coverage, 186 LOC | Evaluate if unused, remove or test |
 | `src/attune/telemetry/cli_automation.py` | 0% coverage, 209 LOC | Evaluate if unused, remove or test |
 

@@ -269,6 +269,10 @@ class OrchestratedReleasePrepWorkflow:
     ):
         """Initialize orchestrated release prep workflow.
 
+        .. deprecated:: 5.2.0
+            Use :class:`ReleasePrepTeamWorkflow` via ``attune workflow run release-prep``.
+            Will be removed in v6.0.0.
+
         Args:
             quality_gates: Custom quality gate thresholds
             agent_ids: Specific agent IDs to use (defaults to domain defaults)
@@ -277,6 +281,13 @@ class OrchestratedReleasePrepWorkflow:
         Raises:
             ValueError: If quality gates are invalid
         """
+        warnings.warn(
+            "OrchestratedReleasePrepWorkflow is deprecated since v5.2.0. "
+            "Use ReleasePrepTeamWorkflow via 'attune workflow run release-prep' instead. "
+            "Will be removed in v6.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.quality_gates = {**self.DEFAULT_QUALITY_GATES}
         if quality_gates:
             self.quality_gates.update(quality_gates)

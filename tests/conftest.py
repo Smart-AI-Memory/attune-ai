@@ -29,7 +29,6 @@ try:
     import attune.workflows.batch_processing  # noqa: F401
     import attune.workflows.history  # noqa: F401
     import attune.workflows.manage_docs  # noqa: F401
-    import attune.workflows.new_sample_workflow1  # noqa: F401
     import attune.workflows.progressive.core  # noqa: F401
     import attune.workflows.progressive.orchestrator  # noqa: F401
     import attune.workflows.progressive.test_gen  # noqa: F401

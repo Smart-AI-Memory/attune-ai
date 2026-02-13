@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 
 import heapq
 import logging
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -45,10 +46,20 @@ class DocumentManagerWorkflow(BaseWorkflow):
     ):
         """Initialize document-manager workflow.
 
+        .. deprecated:: 4.0.0
+            Use :class:`DocumentGenerationWorkflow` instead.
+            Will be removed in v5.0.0.
+
         Args:
             **kwargs: Additional arguments passed to BaseWorkflow
 
         """
+        warnings.warn(
+            "DocumentManagerWorkflow is deprecated. Use DocumentGenerationWorkflow instead. "
+            "Will be removed in v5.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(**kwargs)
 
     @classmethod

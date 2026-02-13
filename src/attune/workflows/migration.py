@@ -38,6 +38,7 @@ MIGRATION_MODE_LEGACY = "legacy"  # Keep using old syntax (deprecated)
 WORKFLOW_ALIASES: dict[str, tuple[str, dict[str, Any]]] = {
     # Code Review consolidation
     "pro-review": ("code-review", {"mode": "premium"}),
+    "pr-review": ("code-review", {"mode": "security"}),
     # Test Generation consolidation
     "test-gen-behavioral": ("test-gen", {"style": "behavioral"}),
     "test-coverage-boost": ("test-gen", {"target": "coverage"}),

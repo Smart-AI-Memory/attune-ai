@@ -111,10 +111,12 @@ class TestCrossSessionCoordinatorMockMode:
     """Tests that verify mock mode raises appropriate errors."""
 
     def test_raises_on_mock_mode(self):
-        """Should raise ValueError when memory is in mock mode."""
+        """Should raise error when Redis is not available or memory is in mock mode."""
         memory = RedisShortTermMemory(use_mock=True)
 
-        with pytest.raises(ValueError, match="requires Redis"):
+        # Phase 3D: require_redis() guard fires first (ImportError),
+        # before the mock mode check (ValueError). Both prevent usage without Redis.
+        with pytest.raises((ImportError, ValueError)):
             CrossSessionCoordinator(memory=memory)
 
 

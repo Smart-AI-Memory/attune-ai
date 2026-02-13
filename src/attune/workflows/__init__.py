@@ -224,6 +224,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "code-review": "CodeReviewWorkflow",
     # Documentation workflows
     "doc-gen": "DocumentGenerationWorkflow",
+    "doc-orchestrator": "DocumentationOrchestrator",
     "seo-optimization": "SEOOptimizationWorkflow",
     # Analysis workflows
     "bug-predict": "BugPredictionWorkflow",
@@ -235,34 +236,28 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "refactor-plan": "RefactorPlanWorkflow",
     # Operational workflows
     "dependency-check": "DependencyCheckWorkflow",
-    # release-prep-legacy removed - handled by migration system (use release-prep instead)
     # Composite security pipeline (v3.0)
     "secure-release": "SecureReleasePipeline",
-    # Code review crew integration (v3.1)
-    "pro-review": "CodeReviewPipeline",
-    "pr-review": "PRReviewWorkflow",
-    # Documentation management (v3.5)
-    "doc-orchestrator": "DocumentationOrchestrator",
-    # manage-docs removed - handled by migration system (was deprecated)
     # Keyboard Conductor (v3.6)
     "keyboard-shortcuts": "KeyboardShortcutWorkflow",
-    # User-generated workflows (document-manager kept for backward compat, handled by migration)
-    "document-manager": "DocumentManagerWorkflow",
-    # Meta-orchestration workflows (v4.0.0 - CANONICAL)
+    # Meta-orchestration workflows (v4.0.0)
     "orchestrated-health-check": "OrchestratedHealthCheckWorkflow",
-    "orchestrated-release-prep": "OrchestratedReleasePrepWorkflow",
-    # Release preparation (v5.2 — agent team replaces orchestrated version)
+    # Release preparation (v5.2 — agent team is canonical)
     "release-prep": "ReleasePrepTeamWorkflow",
-    # Experimental aliases removed (use production versions instead)
     # Research and synthesis workflows
     "research-synthesis": "ResearchSynthesisWorkflow",
     # Test management workflows
-    "test-coverage-boost": "TestCoverageBoostCrew",
     "test-maintenance": "TestMaintenanceWorkflow",
-    "autonomous-test-gen": "AutonomousTestGenerator",
-    # Batch and progressive workflows
+    # Batch processing
     "batch-processing": "BatchProcessingWorkflow",
-    "progressive-test-gen": "ProgressiveTestGenWorkflow",
+    # Consolidated slugs removed from registry -- handled by migration system:
+    # "pro-review" -> code-review (migration.py)
+    # "pr-review" -> code-review (migration.py)
+    # "document-manager" -> doc-gen (migration.py)
+    # "orchestrated-release-prep" -> release-prep (migration.py)
+    # "autonomous-test-gen" -> test-gen-parallel (migration.py)
+    # "progressive-test-gen" -> test-gen-parallel (migration.py)
+    # "test-coverage-boost" -> test-gen (migration.py)
 }
 
 # Opt-in workflows - class names for lazy loading

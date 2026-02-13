@@ -40,18 +40,12 @@ BASEWORKFLOW_NAMES = [
     "refactor-plan",
     "dependency-check",
     "keyboard-shortcuts",
-    "document-manager",
     "research-synthesis",
 ]
 
 # Workflows that need special constructor arguments
 SPECIAL_CONSTRUCTOR_ARGS: dict[str, dict[str, Any]] = {
     "test-maintenance": {"project_root": "."},
-    "autonomous-test-gen": {
-        "agent_id": "test",
-        "batch_num": 1,
-        "modules": [{"name": "test_mod", "path": "test.py"}],
-    },
     "batch-processing": {
         "api_key": os.getenv("ANTHROPIC_API_KEY", ""),
     },
@@ -69,12 +63,7 @@ API_KEY_REQUIRED = {
 
 # Workflows whose instances lack a `name` attribute
 NO_NAME_ATTRIBUTE = {
-    "pro-review",
-    "pr-review",
     "orchestrated-health-check",
-    "orchestrated-release-prep",
-    "progressive-test-gen",
-    "autonomous-test-gen",
     "batch-processing",
 }
 
@@ -117,9 +106,9 @@ class TestWorkflowRegistry:
             assert workflow_class is not None, f"{workflow_info['name']} resolved to None"
 
     def test_minimum_workflow_count(self):
-        """Test that at least 20 workflows are registered."""
+        """Test that at least 15 workflows are registered."""
         workflows = list_workflows()
-        assert len(workflows) >= 20, f"Expected >= 20 workflows, got {len(workflows)}"
+        assert len(workflows) >= 15, f"Expected >= 15 workflows, got {len(workflows)}"
 
 
 # ===========================================================================
@@ -128,33 +117,29 @@ class TestWorkflowRegistry:
 
 
 # Expected registered workflow names (from _DEFAULT_WORKFLOW_NAMES)
+# Note: Consolidated slugs (pro-review, pr-review, document-manager,
+# orchestrated-release-prep, autonomous-test-gen, progressive-test-gen,
+# test-coverage-boost) are handled by the migration system and no longer
+# appear in the active registry.
 EXPECTED_WORKFLOWS = [
     "code-review",
     "doc-gen",
+    "doc-orchestrator",
     "seo-optimization",
     "bug-predict",
     "security-audit",
     "perf-audit",
     "test-gen",
-    "test-gen-behavioral",
     "test-gen-parallel",
     "refactor-plan",
     "dependency-check",
     "secure-release",
-    "pro-review",
-    "pr-review",
-    "doc-orchestrator",
     "keyboard-shortcuts",
-    "document-manager",
     "orchestrated-health-check",
-    "orchestrated-release-prep",
     "release-prep",
     "research-synthesis",
-    "test-coverage-boost",
     "test-maintenance",
-    "autonomous-test-gen",
     "batch-processing",
-    "progressive-test-gen",
 ]
 
 

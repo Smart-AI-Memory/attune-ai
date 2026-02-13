@@ -15,6 +15,7 @@ Licensed under the Apache License, Version 2.0
 import asyncio
 import logging
 import time
+import warnings
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -73,6 +74,10 @@ class CodeReviewPipeline:
     ):
         """Initialize the pipeline.
 
+        .. deprecated:: 5.3.0
+            Use :class:`CodeReviewWorkflow` via ``attune workflow run code-review``.
+            Will be removed in v6.0.0.
+
         Args:
             provider: LLM provider to use (anthropic, openai, etc.)
             mode: Review mode ("full", "standard", "quick")
@@ -81,6 +86,13 @@ class CodeReviewPipeline:
             **kwargs: Additional arguments (for CLI compatibility)
 
         """
+        warnings.warn(
+            "CodeReviewPipeline is deprecated since v5.3.0. "
+            "Use CodeReviewWorkflow via 'attune workflow run code-review' instead. "
+            "Will be removed in v6.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.provider = provider
         self.mode = mode
         self.parallel_crew = parallel_crew

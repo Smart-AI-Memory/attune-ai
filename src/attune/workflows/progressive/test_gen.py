@@ -7,6 +7,7 @@ to capable to premium tiers based on test quality metrics.
 import ast
 import logging
 import subprocess
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -48,9 +49,21 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
     def __init__(self, config: EscalationConfig | None = None):
         """Initialize progressive test generation workflow.
 
+        .. deprecated:: 5.3.0
+            Use :class:`ParallelTestGenerationWorkflow` via
+            ``attune workflow run test-gen-parallel``.
+            Will be removed in v6.0.0.
+
         Args:
             config: Escalation configuration (uses defaults if None)
         """
+        warnings.warn(
+            "ProgressiveTestGenWorkflow is deprecated since v5.3.0. "
+            "Use ParallelTestGenerationWorkflow via 'attune workflow run test-gen-parallel' instead. "
+            "Will be removed in v6.0.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         self.target_file: Path | None = None
 
