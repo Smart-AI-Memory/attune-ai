@@ -212,6 +212,24 @@ Split into core (always available) vs optional (needs Redis).
 
 ---
 
+## Refactoring Candidates (Future Work)
+
+Identified during QA session 6 (2026-02-13). These are flagged for future cleanup -- no changes now.
+
+| File | Issue | Suggested Action |
+| ---- | ----- | ---------------- |
+| `src/attune/workflows/__init__.py` | 2 silent `except: pass` in discovery loop, complex registry logic | Add logging, simplify discovery |
+| `src/attune/workflows/test_gen/workflow.py` | 7% coverage, 285 LOC, multiple TODOs | Redesign or consolidate with test_gen_parallel |
+| `src/attune/workflows/autonomous_test_gen.py` | 13% coverage, 229 LOC | Overlaps with test_gen/, consolidate |
+| `src/attune/workflows/progressive/` | 5-12% coverage across 4 files | Evaluate if dead code, remove or test |
+| `src/attune/memory/simple_storage.py` | 12% coverage, overlaps with storage_backend.py | Consolidate storage implementations |
+| `src/attune/workflows/new_sample_workflow1.py` | All TODOs, no real logic | Remove or implement properly |
+| `src/attune/workflows/llm_base.py` | 0% coverage, 117 LOC, has TODO | May be superseded by BaseWorkflow |
+| `src/attune/telemetry/cli_analysis.py` | 0% coverage, 186 LOC | Evaluate if unused, remove or test |
+| `src/attune/telemetry/cli_automation.py` | 0% coverage, 209 LOC | Evaluate if unused, remove or test |
+
+---
+
 ## What NOT to do
 
 - No big-bang rewrite -- each phase ships independently
