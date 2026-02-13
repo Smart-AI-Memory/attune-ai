@@ -17,7 +17,7 @@ from datetime import datetime
 
 import pytest
 
-from attune_llm.state import CollaborationState, Interaction, PatternType, UserPattern
+from attune.llm.state import CollaborationState, Interaction, PatternType, UserPattern
 
 
 class TestUserPattern:

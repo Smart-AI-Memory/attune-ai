@@ -12,7 +12,7 @@ Tests the base classes and enums for the Agent Factory:
 
 import pytest
 
-from attune_llm.agent_factory.base import (
+from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
     AgentRole,

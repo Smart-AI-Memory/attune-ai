@@ -8,25 +8,25 @@ Coverage target: 80%+
 
 import pytest
 
+from attune.agent_factory.adapters.native import (
+    NativeAdapter,
+    NativeAgent,
+    NativeWorkflow,
+)
+from attune.agent_factory.base import (
+    AgentCapability,
+    AgentConfig,
+    AgentRole,
+    WorkflowConfig,
+)
+from attune.agent_factory.factory import AgentFactory
+from attune.agent_factory.framework import Framework
 from attune.routing.model_router import (
     ModelConfig,
     ModelRouter,
     ModelTier,
     TaskRouting,
 )
-from attune_llm.agent_factory.adapters.native import (
-    NativeAdapter,
-    NativeAgent,
-    NativeWorkflow,
-)
-from attune_llm.agent_factory.base import (
-    AgentCapability,
-    AgentConfig,
-    AgentRole,
-    WorkflowConfig,
-)
-from attune_llm.agent_factory.factory import AgentFactory
-from attune_llm.agent_factory.framework import Framework
 
 # =============================================================================
 # Native Adapter Tests

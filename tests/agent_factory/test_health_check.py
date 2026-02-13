@@ -10,7 +10,7 @@ Tests the health check crew including:
 - HealthCheckConfig dataclass
 """
 
-from attune_llm.agent_factory.crews.health_check import (
+from attune.agent_factory.crews.health_check import (
     FixStatus,
     HealthCategory,
     HealthCheckConfig,

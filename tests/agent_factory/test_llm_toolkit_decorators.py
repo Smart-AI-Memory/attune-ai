@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune_llm.agent_factory.decorators import (
+from attune.agent_factory.decorators import (
     graceful_degradation,
     log_performance,
     retry_on_failure,
@@ -250,7 +250,7 @@ class TestLogPerformance:
         async def fast_operation():
             return "quick"
 
-        with patch("attune_llm.agent_factory.decorators.logger") as mock_logger:
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
             result = await fast_operation()
 
             assert result == "quick"
@@ -265,7 +265,7 @@ class TestLogPerformance:
             await asyncio.sleep(0.02)
             return "slow"
 
-        with patch("attune_llm.agent_factory.decorators.logger") as mock_logger:
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
             result = await slow_operation()
 
             assert result == "slow"
@@ -492,7 +492,7 @@ class TestGracefulDegradation:
         async def operation():
             raise ValueError("Test error")
 
-        with patch("attune_llm.agent_factory.decorators.logger") as mock_logger:
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
             await operation()
             mock_logger.error.assert_called_once()
 
@@ -504,7 +504,7 @@ class TestGracefulDegradation:
         async def operation():
             raise ValueError("Test error")
 
-        with patch("attune_llm.agent_factory.decorators.logger") as mock_logger:
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
             await operation()
             mock_logger.warning.assert_called_once()
 

@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune_llm.state import CollaborationState
+from attune.llm.state import CollaborationState
 
 # =============================================================================
 # EmpathyLLM Initialization Tests
@@ -21,10 +21,10 @@ from attune_llm.state import CollaborationState
 class TestEmpathyLLMInit:
     """Tests for EmpathyLLM initialization."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_init_defaults(self, mock_provider_class):
         """Test initialization with default values."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -35,10 +35,10 @@ class TestEmpathyLLMInit:
         assert llm.enable_security is False
         assert llm.enable_model_routing is False
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_init_custom_level(self, mock_provider_class):
         """Test initialization with custom target level."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -46,10 +46,10 @@ class TestEmpathyLLMInit:
 
         assert llm.target_level == 5
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_init_with_pattern_library(self, mock_provider_class):
         """Test initialization with pattern library."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -58,11 +58,11 @@ class TestEmpathyLLMInit:
 
         assert llm.pattern_library == patterns
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.ModelRouter")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.ModelRouter")
     def test_init_with_model_routing(self, mock_router, mock_provider_class):
         """Test initialization with model routing enabled."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -75,10 +75,10 @@ class TestEmpathyLLMInit:
 class TestEmpathyLLMProviderCreation:
     """Tests for provider creation."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_create_anthropic_provider(self, mock_provider_class):
         """Test creating Anthropic provider."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider = MagicMock()
         mock_provider_class.return_value = mock_provider
@@ -88,10 +88,10 @@ class TestEmpathyLLMProviderCreation:
         mock_provider_class.assert_called_once()
         assert llm.provider == mock_provider
 
-    @patch("attune_llm.core.OpenAIProvider")
+    @patch("attune.llm.core.OpenAIProvider")
     def test_create_openai_provider(self, mock_provider_class):
         """Test creating OpenAI provider."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider = MagicMock()
         mock_provider_class.return_value = mock_provider
@@ -100,10 +100,10 @@ class TestEmpathyLLMProviderCreation:
 
         mock_provider_class.assert_called_once()
 
-    @patch("attune_llm.core.GeminiProvider")
+    @patch("attune.llm.core.GeminiProvider")
     def test_create_gemini_provider(self, mock_provider_class):
         """Test creating Gemini provider."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider = MagicMock()
         mock_provider_class.return_value = mock_provider
@@ -112,10 +112,10 @@ class TestEmpathyLLMProviderCreation:
 
         mock_provider_class.assert_called_once()
 
-    @patch("attune_llm.core.GeminiProvider")
+    @patch("attune.llm.core.GeminiProvider")
     def test_create_google_provider_alias(self, mock_provider_class):
         """Test creating Google provider (alias for Gemini)."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider = MagicMock()
         mock_provider_class.return_value = mock_provider
@@ -124,10 +124,10 @@ class TestEmpathyLLMProviderCreation:
 
         mock_provider_class.assert_called_once()
 
-    @patch("attune_llm.core.LocalProvider")
+    @patch("attune.llm.core.LocalProvider")
     def test_create_local_provider(self, mock_provider_class):
         """Test creating local provider."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider = MagicMock()
         mock_provider_class.return_value = mock_provider
@@ -136,19 +136,19 @@ class TestEmpathyLLMProviderCreation:
 
         mock_provider_class.assert_called_once()
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_create_unknown_provider_raises(self, mock_provider_class):
         """Test that unknown provider raises ValueError."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         with pytest.raises(ValueError, match="Unknown provider"):
             EmpathyLLM(provider="unknown", api_key="test-key")
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "env-key"})
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_api_key_from_environment(self, mock_provider_class):
         """Test API key loaded from environment variable."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -162,13 +162,13 @@ class TestEmpathyLLMProviderCreation:
 class TestEmpathyLLMSecurity:
     """Tests for security features."""
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.PIIScrubber")
-    @patch("attune_llm.core.SecretsDetector")
-    @patch("attune_llm.core.AuditLogger")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.PIIScrubber")
+    @patch("attune.llm.core.SecretsDetector")
+    @patch("attune.llm.core.AuditLogger")
     def test_init_with_security_enabled(self, mock_audit, mock_secrets, mock_pii, mock_provider):
         """Test initialization with security enabled."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider.return_value = MagicMock()
 
@@ -186,12 +186,12 @@ class TestEmpathyLLMSecurity:
         assert llm.secrets_detector is not None
         assert llm.audit_logger is not None
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.PIIScrubber")
-    @patch("attune_llm.core.SecretsDetector")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.PIIScrubber")
+    @patch("attune.llm.core.SecretsDetector")
     def test_init_security_without_audit(self, mock_secrets, mock_pii, mock_provider):
         """Test security without audit logging."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider.return_value = MagicMock()
 
@@ -209,10 +209,10 @@ class TestEmpathyLLMSecurity:
 class TestEmpathyLLMStateManagement:
     """Tests for collaboration state management."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_get_or_create_state_new_user(self, mock_provider_class):
         """Test creating state for new user."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -223,10 +223,10 @@ class TestEmpathyLLMStateManagement:
         assert state.user_id == "user123"
         assert "user123" in llm.states
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_get_or_create_state_existing_user(self, mock_provider_class):
         """Test getting state for existing user."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -244,10 +244,10 @@ class TestEmpathyLLMStateManagement:
 class TestEmpathyLLMLevelDetermination:
     """Tests for empathy level determination."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_determine_level_immediate_to_two(self, mock_provider_class):
         """Test that level 2 is immediate (guided questions always helpful)."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -259,10 +259,10 @@ class TestEmpathyLLMLevelDetermination:
         # Level 2 is always appropriate per progression criteria
         assert level == 2
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_determine_level_respects_target(self, mock_provider_class):
         """Test that level doesn't exceed target."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -278,10 +278,10 @@ class TestEmpathyLLMLevelDetermination:
 class TestEmpathyLLMSystemPrompt:
     """Tests for system prompt building."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_build_system_prompt_basic(self, mock_provider_class):
         """Test building basic system prompt."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -291,10 +291,10 @@ class TestEmpathyLLMSystemPrompt:
         assert "REACTIVE" in prompt
         assert isinstance(prompt, str)
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_build_system_prompt_with_memory(self, mock_provider_class):
         """Test system prompt includes cached memory."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -310,12 +310,12 @@ class TestEmpathyLLMSystemPrompt:
 class TestEmpathyLLMMemoryManagement:
     """Tests for memory management."""
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.ClaudeMemoryLoader")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.ClaudeMemoryLoader")
     def test_init_with_claude_memory(self, mock_loader_class, mock_provider_class):
         """Test initialization with Claude memory enabled."""
+        from attune.llm.core import EmpathyLLM
         from attune_llm.claude_memory import ClaudeMemoryConfig
-        from attune_llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
         mock_loader = MagicMock()
@@ -328,12 +328,12 @@ class TestEmpathyLLMMemoryManagement:
         assert llm._cached_memory == "# Memory Content"
         assert llm.claude_memory_loader is not None
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.ClaudeMemoryLoader")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.ClaudeMemoryLoader")
     def test_reload_memory(self, mock_loader_class, mock_provider_class):
         """Test reloading memory."""
+        from attune.llm.core import EmpathyLLM
         from attune_llm.claude_memory import ClaudeMemoryConfig
-        from attune_llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
         mock_loader = MagicMock()
@@ -348,10 +348,10 @@ class TestEmpathyLLMMemoryManagement:
         mock_loader.clear_cache.assert_called_once()
         assert mock_loader.load_all_memory.call_count == 2
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_reload_memory_not_enabled(self, mock_provider_class):
         """Test reload_memory when memory not enabled."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -364,12 +364,12 @@ class TestEmpathyLLMMemoryManagement:
 class TestEmpathyLLMInteract:
     """Tests for interact method."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_interact_basic(self, mock_provider_class):
         """Test basic interaction."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -394,12 +394,12 @@ class TestEmpathyLLMInteract:
         assert "level_used" in result
         assert result["level_used"] >= 1
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_interact_with_force_level(self, mock_provider_class):
         """Test interaction with forced level."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -423,14 +423,14 @@ class TestEmpathyLLMInteract:
 
         assert result["level_used"] == 3
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.PIIScrubber")
-    @patch("attune_llm.core.SecretsDetector")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.PIIScrubber")
+    @patch("attune.llm.core.SecretsDetector")
     @pytest.mark.asyncio
     async def test_interact_with_pii_scrubbing(self, mock_secrets, mock_pii, mock_provider_class):
         """Test interaction with PII scrubbing."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -470,13 +470,13 @@ class TestEmpathyLLMInteract:
         assert result["security"]["pii_detected"] == 1
         assert result["security"]["pii_scrubbed"] is True
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.PIIScrubber")
-    @patch("attune_llm.core.SecretsDetector")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.PIIScrubber")
+    @patch("attune.llm.core.SecretsDetector")
     @pytest.mark.asyncio
     async def test_interact_blocks_secrets(self, mock_secrets, mock_pii, mock_provider_class):
         """Test that secrets are blocked."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -507,11 +507,11 @@ class TestEmpathyLLMInteract:
                 user_input="My API key is sk-abc123",
             )
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_interact_invalid_level_raises(self, mock_provider_class):
         """Test that invalid level raises error."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -528,14 +528,14 @@ class TestEmpathyLLMInteract:
 class TestEmpathyLLMModelRouting:
     """Tests for model routing functionality."""
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.ModelRouter")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.ModelRouter")
     @pytest.mark.asyncio
     async def test_interact_with_model_routing(self, mock_router_class, mock_provider_class):
         """Test interaction with model routing."""
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
         from attune.routing.model_router import ModelTier
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -578,12 +578,12 @@ class TestEmpathyLLMModelRouting:
 class TestEmpathyLLMIntegration:
     """Integration tests for EmpathyLLM."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_multiple_interactions_track_state(self, mock_provider_class):
         """Test that multiple interactions properly track state."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -608,12 +608,12 @@ class TestEmpathyLLMIntegration:
         state = llm.states["user123"]
         assert len(state.interactions) >= 3
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_different_users_have_separate_states(self, mock_provider_class):
         """Test that different users have separate states."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -645,10 +645,10 @@ class TestEmpathyLLMIntegration:
 class TestStateMethods:
     """Tests for state management methods."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_update_trust_success(self, mock_provider_class):
         """Test updating trust on success."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -661,10 +661,10 @@ class TestStateMethods:
         # Trust should increase on success
         assert state.trust_level > 0.5
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_update_trust_failure(self, mock_provider_class):
         """Test updating trust on failure."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -680,13 +680,13 @@ class TestStateMethods:
         # Trust should decrease on failure
         assert llm.states["user123"].trust_level <= initial_trust
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_add_pattern(self, mock_provider_class):
         """Test manually adding a pattern."""
         from datetime import datetime
 
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.state import PatternType, UserPattern
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.state import PatternType, UserPattern
 
         mock_provider_class.return_value = MagicMock()
 
@@ -706,10 +706,10 @@ class TestStateMethods:
         state = llm.states["user123"]
         assert len(state.detected_patterns) >= 1
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_get_statistics(self, mock_provider_class):
         """Test getting user statistics."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -721,10 +721,10 @@ class TestStateMethods:
         assert isinstance(stats, dict)
         assert "trust_level" in stats or "user_id" in stats or len(stats) >= 0
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_reset_state(self, mock_provider_class):
         """Test resetting user state."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -739,10 +739,10 @@ class TestStateMethods:
 
         assert "user123" not in llm.states
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     def test_reset_state_nonexistent_user(self, mock_provider_class):
         """Test resetting state for nonexistent user."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_provider_class.return_value = MagicMock()
 
@@ -760,12 +760,12 @@ class TestStateMethods:
 class TestLevelMethods:
     """Tests for level-specific methods."""
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_level_1_reactive(self, mock_provider_class):
         """Test level 1 reactive method."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -791,12 +791,12 @@ class TestLevelMethods:
         assert "content" in result
         assert result["proactive"] is False
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_level_1_reactive_with_model_override(self, mock_provider_class):
         """Test level 1 with model override."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -824,12 +824,12 @@ class TestLevelMethods:
         call_kwargs = mock_provider.generate.call_args[1]
         assert call_kwargs.get("model") == "custom-model"
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_level_4_anticipatory(self, mock_provider_class):
         """Test level 4 anticipatory method."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -857,12 +857,12 @@ class TestLevelMethods:
         assert "metadata" in result
         assert result["metadata"]["trajectory_analyzed"] is True
 
-    @patch("attune_llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AnthropicProvider")
     @pytest.mark.asyncio
     async def test_level_5_systems(self, mock_provider_class):
         """Test level 5 systems method."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -899,11 +899,11 @@ class TestLevelMethods:
 class TestProviderEnvVariables:
     """Tests for provider API key environment variable fallback."""
 
-    @patch("attune_llm.core.OpenAIProvider")
+    @patch("attune.llm.core.OpenAIProvider")
     @patch.dict("os.environ", {"OPENAI_API_KEY": "env-openai-key"})
     def test_openai_key_from_environment(self, mock_openai_class):
         """Test OpenAI provider uses env var when key not provided."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_openai_class.return_value = MagicMock()
 
@@ -914,11 +914,11 @@ class TestProviderEnvVariables:
         call_kwargs = mock_openai_class.call_args[1]
         assert call_kwargs["api_key"] == "env-openai-key"
 
-    @patch("attune_llm.core.GeminiProvider")
+    @patch("attune.llm.core.GeminiProvider")
     @patch.dict("os.environ", {"GOOGLE_API_KEY": "env-google-key"})
     def test_gemini_key_from_environment(self, mock_gemini_class):
         """Test Gemini provider uses GOOGLE_API_KEY env var."""
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         mock_gemini_class.return_value = MagicMock()
 
@@ -928,13 +928,13 @@ class TestProviderEnvVariables:
         call_kwargs = mock_gemini_class.call_args[1]
         assert call_kwargs["api_key"] == "env-google-key"
 
-    @patch("attune_llm.core.GeminiProvider")
+    @patch("attune.llm.core.GeminiProvider")
     @patch.dict("os.environ", {"GEMINI_API_KEY": "env-gemini-key"}, clear=False)
     def test_gemini_key_from_gemini_env(self, mock_gemini_class):
         """Test Gemini provider falls back to GEMINI_API_KEY."""
         import os
 
-        from attune_llm.core import EmpathyLLM
+        from attune.llm.core import EmpathyLLM
 
         # Clear GOOGLE_API_KEY if exists to test fallback
         if "GOOGLE_API_KEY" in os.environ:
@@ -955,13 +955,13 @@ class TestProviderEnvVariables:
 class TestAuditLogging:
     """Tests for audit logging functionality."""
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.AuditLogger")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AuditLogger")
     @pytest.mark.asyncio
     async def test_interact_with_audit_logging(self, mock_audit_class, mock_provider_class):
         """Test interaction with audit logging enabled."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(
@@ -989,13 +989,13 @@ class TestAuditLogging:
         # Verify audit logger was called
         mock_audit.log_llm_request.assert_called_once()
 
-    @patch("attune_llm.core.AnthropicProvider")
-    @patch("attune_llm.core.AuditLogger")
+    @patch("attune.llm.core.AnthropicProvider")
+    @patch("attune.llm.core.AuditLogger")
     @pytest.mark.asyncio
     async def test_audit_logging_captures_metadata(self, mock_audit_class, mock_provider_class):
         """Test that audit logging captures correct metadata."""
-        from attune_llm.core import EmpathyLLM
-        from attune_llm.providers import LLMResponse
+        from attune.llm.core import EmpathyLLM
+        from attune.llm.providers import LLMResponse
 
         mock_provider = MagicMock()
         mock_provider.generate = AsyncMock(

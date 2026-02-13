@@ -1,4 +1,4 @@
-"""Unit tests for attune_llm.levels module
+"""Unit tests for attune.llm.levels module
 
 Tests EmpathyLevel enum and class methods to achieve 95%+ coverage.
 
@@ -6,7 +6,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from attune_llm.levels import EmpathyLevel
+from attune.llm.levels import EmpathyLevel
 
 
 class TestEmpathyLevelDescriptions:

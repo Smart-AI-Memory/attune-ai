@@ -11,8 +11,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune_llm.core import EmpathyLLM
-from attune_llm.state import CollaborationState, PatternType, UserPattern
+from attune.llm.core import EmpathyLLM
+from attune.llm.state import CollaborationState, PatternType, UserPattern
 
 # ============================================================================
 # Fixtures
@@ -44,7 +44,7 @@ def mock_provider(mock_provider_response):
 
 def test_empathy_llm_initialization_anthropic():
     """Test EmpathyLLM initialization with Anthropic provider"""
-    with patch("attune_llm.core.AnthropicProvider") as mock_anthropic:
+    with patch("attune.llm.core.AnthropicProvider") as mock_anthropic:
         llm = EmpathyLLM(provider="anthropic", target_level=3, api_key="test-key")
 
         assert llm.target_level == 3
@@ -55,7 +55,7 @@ def test_empathy_llm_initialization_anthropic():
 
 def test_empathy_llm_initialization_openai():
     """Test EmpathyLLM initialization with OpenAI provider"""
-    with patch("attune_llm.core.OpenAIProvider") as mock_openai:
+    with patch("attune.llm.core.OpenAIProvider") as mock_openai:
         llm = EmpathyLLM(provider="openai", target_level=4, api_key="test-key")
 
         assert llm.target_level == 4
@@ -64,7 +64,7 @@ def test_empathy_llm_initialization_openai():
 
 def test_empathy_llm_initialization_local():
     """Test EmpathyLLM initialization with local provider"""
-    with patch("attune_llm.core.LocalProvider") as mock_local:
+    with patch("attune.llm.core.LocalProvider") as mock_local:
         llm = EmpathyLLM(provider="local", target_level=2, model="llama2")
 
         assert llm.target_level == 2
@@ -81,7 +81,7 @@ def test_empathy_llm_initialization_with_pattern_library():
     """Test initialization with custom pattern library"""
     pattern_lib = {"pattern1": "data1", "pattern2": "data2"}
 
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic", pattern_library=pattern_lib)
 
         assert llm.pattern_library == pattern_lib
@@ -89,7 +89,7 @@ def test_empathy_llm_initialization_with_pattern_library():
 
 def test_empathy_llm_initialization_custom_model():
     """Test initialization with custom model"""
-    with patch("attune_llm.core.AnthropicProvider") as mock_anthropic:
+    with patch("attune.llm.core.AnthropicProvider") as mock_anthropic:
         EmpathyLLM(provider="anthropic", model="custom-model-123")
 
         # Should pass custom model to provider
@@ -104,7 +104,7 @@ def test_empathy_llm_initialization_custom_model():
 
 def test_get_or_create_state_new_user():
     """Test creating new state for user"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         state = llm._get_or_create_state("user123")
@@ -116,7 +116,7 @@ def test_get_or_create_state_new_user():
 
 def test_get_or_create_state_existing_user():
     """Test retrieving existing state for user"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Create initial state
@@ -135,7 +135,7 @@ def test_get_or_create_state_existing_user():
 
 def test_determine_level_starts_at_level_2():
     """Test level determination starts at level 2 (guided)"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic", target_level=5)
         state = CollaborationState(user_id="test")
 
@@ -147,7 +147,7 @@ def test_determine_level_starts_at_level_2():
 
 def test_determine_level_respects_target():
     """Test level determination respects target_level"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic", target_level=2)
         state = CollaborationState(user_id="test")
 
@@ -165,7 +165,7 @@ def test_determine_level_respects_target():
 @pytest.mark.asyncio
 async def test_interact_level_1_reactive(mock_provider):
     """Test Level 1 reactive interaction"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=1)
 
         result = await llm.interact(user_id="test_user", user_input="Hello", force_level=1)
@@ -180,7 +180,7 @@ async def test_interact_level_1_reactive(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_level_2_guided(mock_provider):
     """Test Level 2 guided interaction"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=2)
 
         # First interaction to build history
@@ -196,7 +196,7 @@ async def test_interact_level_2_guided(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_level_3_proactive_no_pattern(mock_provider):
     """Test Level 3 proactive without matching pattern"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=3)
 
         result = await llm.interact(user_id="test_user", user_input="Test input", force_level=3)
@@ -211,7 +211,7 @@ async def test_interact_level_3_proactive_with_pattern(mock_provider):
     """Test Level 3 proactive with matching pattern"""
     from datetime import datetime
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=3)
 
         # Add a pattern
@@ -235,7 +235,7 @@ async def test_interact_level_3_proactive_with_pattern(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_level_4_anticipatory(mock_provider):
     """Test Level 4 anticipatory interaction"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=4)
 
         result = await llm.interact(user_id="test_user", user_input="Test request", force_level=4)
@@ -251,7 +251,7 @@ async def test_interact_level_5_systems(mock_provider):
     """Test Level 5 systems interaction"""
     pattern_lib = {"cross_domain_pattern": "test_data"}
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=5, pattern_library=pattern_lib)
 
         result = await llm.interact(user_id="test_user", user_input="Test request", force_level=5)
@@ -266,7 +266,7 @@ async def test_interact_level_5_systems(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_invalid_level(mock_provider):
     """Test interaction with invalid level raises ValueError"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic")
 
         with pytest.raises(ValueError, match="Invalid level"):
@@ -276,7 +276,7 @@ async def test_interact_invalid_level(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_with_context(mock_provider):
     """Test interaction with additional context"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=1)
 
         context = {"project_name": "test_project", "file_count": 42}
@@ -294,7 +294,7 @@ async def test_interact_with_context(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_updates_state(mock_provider):
     """Test that interact updates collaboration state"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=1)
 
         # Perform interaction
@@ -312,7 +312,7 @@ async def test_interact_updates_state(mock_provider):
 
 def test_update_trust_success():
     """Test updating trust on successful interaction"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Create initial state
@@ -328,7 +328,7 @@ def test_update_trust_success():
 
 def test_update_trust_failure():
     """Test updating trust on failed interaction"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Create state with some trust
@@ -345,7 +345,7 @@ def test_update_trust_failure():
 
 def test_update_trust_creates_state_if_needed():
     """Test that update_trust creates state if it doesn't exist"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Update trust for non-existent user
@@ -364,7 +364,7 @@ def test_add_pattern():
     """Test adding a pattern for user"""
     from datetime import datetime
 
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         pattern = UserPattern(
@@ -388,7 +388,7 @@ def test_add_pattern_creates_state_if_needed():
     """Test that add_pattern creates state if it doesn't exist"""
     from datetime import datetime
 
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         pattern = UserPattern(
@@ -414,7 +414,7 @@ def test_add_pattern_creates_state_if_needed():
 
 def test_get_statistics():
     """Test getting collaboration statistics"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Create state and add some data
@@ -431,7 +431,7 @@ def test_get_statistics():
 
 def test_get_statistics_creates_state_if_needed():
     """Test that get_statistics creates state if needed"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         stats = llm.get_statistics("new_user")
@@ -447,7 +447,7 @@ def test_get_statistics_creates_state_if_needed():
 
 def test_reset_state():
     """Test resetting user state"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Create state
@@ -463,7 +463,7 @@ def test_reset_state():
 
 def test_reset_state_nonexistent_user():
     """Test resetting state for user that doesn't exist"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         # Should not raise error
@@ -481,7 +481,7 @@ def test_reset_state_nonexistent_user():
 @pytest.mark.asyncio
 async def test_multiple_users_independent_states(mock_provider):
     """Test that multiple users have independent states"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=2)
 
         # Interact with user 1
@@ -504,7 +504,7 @@ async def test_multiple_users_independent_states(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_includes_level_description(mock_provider):
     """Test that interact result includes level description"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=3)
 
         result = await llm.interact(user_id="test_user", user_input="Test", force_level=2)
@@ -523,7 +523,7 @@ async def test_level_3_proactive_with_matching_pattern_builds_prompt(mock_provid
     """Test Level 3 builds proactive prompt when pattern matches - COVERS 234-248"""
     from datetime import datetime
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=3)
 
         # Increase trust level so pattern will trigger (needs > 0.6)
@@ -573,7 +573,7 @@ async def test_level_3_proactive_pattern_includes_confidence_in_prompt(mock_prov
     """Test Level 3 includes confidence in proactive prompt"""
     from datetime import datetime
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=3)
 
         # Increase trust level so pattern will trigger (needs > 0.6)
@@ -614,7 +614,7 @@ async def test_level_3_proactive_pattern_includes_confidence_in_prompt(mock_prov
 @pytest.mark.asyncio
 async def test_level_5_systems_with_empty_pattern_library(mock_provider):
     """Test Level 5 with empty pattern library - COVERS 344->347"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         # Initialize with empty pattern library (default)
         llm = EmpathyLLM(provider="anthropic", target_level=5)
 
@@ -645,7 +645,7 @@ async def test_level_5_systems_with_populated_pattern_library(mock_provider):
         "validation": {"pattern": "schema-based", "domains": ["api", "database"]},
     }
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=5, pattern_library=pattern_lib)
 
         result = await llm.interact(
@@ -672,7 +672,7 @@ async def test_level_5_systems_pattern_library_in_prompt(mock_provider):
     """Test Level 5 includes pattern library in prompt when available"""
     pattern_lib = {"test_pattern": "test_value"}
 
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(provider="anthropic", target_level=5, pattern_library=pattern_lib)
 
         await llm.interact(
@@ -697,7 +697,7 @@ async def test_level_5_systems_pattern_library_in_prompt(mock_provider):
 
 def test_empathy_llm_initialization_with_model_routing():
     """Test EmpathyLLM initialization with model routing enabled"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -711,7 +711,7 @@ def test_empathy_llm_initialization_with_model_routing():
 
 def test_empathy_llm_initialization_without_model_routing():
     """Test EmpathyLLM initialization with model routing disabled (default)"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic", target_level=3, api_key="test-key")
 
         assert llm.enable_model_routing is False
@@ -720,7 +720,7 @@ def test_empathy_llm_initialization_without_model_routing():
 
 def test_empathy_llm_explicit_model_overrides_routing():
     """Test that explicit model parameter disables routing"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -737,7 +737,7 @@ def test_empathy_llm_explicit_model_overrides_routing():
 @pytest.mark.asyncio
 async def test_interact_with_task_type_routes_model(mock_provider):
     """Test that task_type parameter routes to appropriate model"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -763,7 +763,7 @@ async def test_interact_with_task_type_routes_model(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_with_fix_bug_routes_to_capable(mock_provider):
     """Test that fix_bug task routes to capable tier (Sonnet)"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -784,7 +784,7 @@ async def test_interact_with_fix_bug_routes_to_capable(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_with_coordinate_routes_to_premium(mock_provider):
     """Test that coordinate task routes to premium tier (Opus)"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -805,7 +805,7 @@ async def test_interact_with_coordinate_routes_to_premium(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_passes_routed_model_to_provider(mock_provider):
     """Test that routed model is passed to provider.generate()"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -828,7 +828,7 @@ async def test_interact_passes_routed_model_to_provider(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_without_routing_no_metadata(mock_provider):
     """Test that without routing enabled, no routing metadata is added"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,
@@ -850,7 +850,7 @@ async def test_interact_without_routing_no_metadata(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_default_task_type(mock_provider):
     """Test that default task_type is used when not specified"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=3,

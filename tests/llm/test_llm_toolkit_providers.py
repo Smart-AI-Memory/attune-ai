@@ -15,7 +15,7 @@ import pytest
 _openai_available = importlib.util.find_spec("openai") is not None
 _aiohttp_available = importlib.util.find_spec("aiohttp") is not None
 
-from attune_llm.providers import (  # noqa: E402
+from attune.llm.providers import (  # noqa: E402
     AnthropicBatchProvider,
     AnthropicProvider,
     BaseLLMProvider,
@@ -507,7 +507,7 @@ class TestGeminiProvider:
                 # Need to reimport the module to trigger the import error
                 import importlib
 
-                import attune_llm.providers as providers_mod
+                import attune.llm.providers as providers_mod
 
                 importlib.reload(providers_mod)
                 providers_mod.GeminiProvider(api_key="test-key")
@@ -520,7 +520,7 @@ class TestGeminiProvider:
 
         with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
             # Need to reimport to use mocked module
-            from attune_llm.providers import GeminiProvider as GP
+            from attune.llm.providers import GeminiProvider as GP
 
             provider = GP.__new__(GP)
             provider.api_key = "test-key"

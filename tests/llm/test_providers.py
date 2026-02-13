@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune_llm.providers import (
+from attune.llm.providers import (
     AnthropicProvider,
     BaseLLMProvider,
     LLMResponse,

@@ -18,9 +18,9 @@ class TestMemoryAwareAgentCreation:
 
     def test_memory_aware_agent_creation(self):
         """Test creating a memory-aware agent wrapper."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -41,9 +41,9 @@ class TestMemoryAwareAgentCreation:
 
     def test_memory_aware_agent_with_custom_config(self):
         """Test creating memory-aware agent with custom config."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -71,8 +71,8 @@ class TestFactoryMemoryIntegration:
 
     def test_factory_creates_memory_aware_agent(self):
         """Test factory wraps agent with memory integration when enabled."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         with tempfile.TemporaryDirectory() as tmpdir:
             graph_path = Path(tmpdir) / "test_graph.json"
@@ -90,8 +90,8 @@ class TestFactoryMemoryIntegration:
 
     def test_factory_respects_memory_disabled(self):
         """Test factory does not wrap when memory_graph_enabled=False."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -105,8 +105,8 @@ class TestFactoryMemoryIntegration:
 
     def test_factory_memory_config_params(self):
         """Test factory passes memory config params correctly."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         with tempfile.TemporaryDirectory() as tmpdir:
             graph_path = Path(tmpdir) / "custom_graph.json"
@@ -134,9 +134,9 @@ class TestMemoryAwareAgentInvoke:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_memory_aware_agent_invoke_success(self):
         """Test successful invocation through memory-aware wrapper."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -160,9 +160,9 @@ class TestMemoryAwareAgentInvoke:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_memory_aware_agent_adds_metadata(self):
         """Test memory-aware agent adds graph metadata."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -186,9 +186,9 @@ class TestMemoryAwareAgentSimilarFindings:
     @pytest.mark.asyncio
     async def test_query_similar_findings(self):
         """Test querying for similar findings."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -223,9 +223,9 @@ class TestMemoryAwareAgentSimilarFindings:
 
     def test_contains_finding_patterns(self):
         """Test detection of finding patterns in text."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -246,9 +246,9 @@ class TestMemoryAwareAgentSimilarFindings:
 
     def test_infer_finding_type(self):
         """Test inference of finding type from text."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -276,9 +276,9 @@ class TestMemoryAwareAgentDelegation:
 
     def test_add_tool_delegation(self):
         """Test add_tool is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -298,9 +298,9 @@ class TestMemoryAwareAgentDelegation:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_conversation_history_delegation(self):
         """Test conversation history is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -322,9 +322,9 @@ class TestMemoryAwareAgentDelegation:
 
     def test_model_property_delegation(self):
         """Test model property is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test", model_tier="premium"))
@@ -343,7 +343,7 @@ class TestAgentConfigMemoryFields:
 
     def test_agent_config_memory_defaults(self):
         """Test AgentConfig has memory graph defaults."""
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.base import AgentConfig
 
         config = AgentConfig(name="test")
 
@@ -354,7 +354,7 @@ class TestAgentConfigMemoryFields:
 
     def test_agent_config_memory_custom(self):
         """Test AgentConfig with custom memory values."""
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.base import AgentConfig
 
         config = AgentConfig(
             name="test",
@@ -375,9 +375,9 @@ class TestMemoryAwareAgentGraphStats:
 
     def test_get_graph_stats(self):
         """Test getting graph statistics."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -401,9 +401,9 @@ class TestMemoryAwareAgentGraphStats:
 
     def test_graph_property(self):
         """Test graph property returns MemoryGraph instance."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -424,9 +424,9 @@ class TestCombinedWrappers:
 
     def test_factory_creates_both_wrappers(self):
         """Test factory can create agent with both wrappers."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.memory_integration import MemoryAwareAgent
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.memory_integration import MemoryAwareAgent
+        from attune.agent_factory.resilient import ResilientAgent
 
         with tempfile.TemporaryDirectory() as tmpdir:
             graph_path = Path(tmpdir) / "test_graph.json"
@@ -450,7 +450,7 @@ class TestCombinedWrappers:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_combined_wrappers_invoke(self):
         """Test invoking agent with both wrappers."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         with tempfile.TemporaryDirectory() as tmpdir:
             graph_path = Path(tmpdir) / "test_graph.json"

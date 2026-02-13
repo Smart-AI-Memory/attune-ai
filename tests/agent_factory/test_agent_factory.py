@@ -19,7 +19,7 @@ class TestFramework:
 
     def test_framework_from_string(self):
         """Test converting strings to Framework enum."""
-        from attune_llm.agent_factory.framework import Framework
+        from attune.agent_factory.framework import Framework
 
         assert Framework.from_string("native") == Framework.NATIVE
         assert Framework.from_string("langchain") == Framework.LANGCHAIN
@@ -33,14 +33,14 @@ class TestFramework:
 
     def test_framework_from_string_invalid(self):
         """Test invalid framework string raises error."""
-        from attune_llm.agent_factory.framework import Framework
+        from attune.agent_factory.framework import Framework
 
         with pytest.raises(ValueError):
             Framework.from_string("invalid_framework")
 
     def test_detect_installed_frameworks(self):
         """Test framework detection includes native."""
-        from attune_llm.agent_factory.framework import (
+        from attune.agent_factory.framework import (
             Framework,
             detect_installed_frameworks,
         )
@@ -50,7 +50,7 @@ class TestFramework:
 
     def test_get_recommended_framework(self):
         """Test framework recommendations."""
-        from attune_llm.agent_factory.framework import Framework, get_recommended_framework
+        from attune.agent_factory.framework import Framework, get_recommended_framework
 
         # Native should always be available as fallback
         rec = get_recommended_framework("general")
@@ -58,7 +58,7 @@ class TestFramework:
 
     def test_get_framework_info(self):
         """Test framework info retrieval."""
-        from attune_llm.agent_factory.framework import Framework, get_framework_info
+        from attune.agent_factory.framework import Framework, get_framework_info
 
         info = get_framework_info(Framework.NATIVE)
         assert "name" in info
@@ -72,7 +72,7 @@ class TestAgentConfig:
 
     def test_agent_config_defaults(self):
         """Test AgentConfig has sensible defaults."""
-        from attune_llm.agent_factory.base import AgentConfig, AgentRole
+        from attune.agent_factory.base import AgentConfig, AgentRole
 
         config = AgentConfig(name="test")
 
@@ -85,7 +85,7 @@ class TestAgentConfig:
 
     def test_agent_config_custom(self):
         """Test AgentConfig with custom values."""
-        from attune_llm.agent_factory.base import AgentCapability, AgentConfig, AgentRole
+        from attune.agent_factory.base import AgentCapability, AgentConfig, AgentRole
 
         config = AgentConfig(
             name="researcher",
@@ -106,7 +106,7 @@ class TestNativeAdapter:
 
     def test_native_adapter_available(self):
         """Test native adapter is always available."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.adapters.native import NativeAdapter
 
         adapter = NativeAdapter()
         assert adapter.is_available() is True
@@ -114,8 +114,8 @@ class TestNativeAdapter:
 
     def test_native_adapter_create_agent(self):
         """Test creating an agent with native adapter."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig, AgentRole
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig, AgentRole
 
         adapter = NativeAdapter()
         config = AgentConfig(name="test", role=AgentRole.RESEARCHER)
@@ -127,8 +127,8 @@ class TestNativeAdapter:
 
     def test_native_adapter_create_workflow(self):
         """Test creating a workflow with native adapter."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig, WorkflowConfig
 
         adapter = NativeAdapter()
 
@@ -143,7 +143,7 @@ class TestNativeAdapter:
 
     def test_native_adapter_create_tool(self):
         """Test creating a tool with native adapter."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.adapters.native import NativeAdapter
 
         adapter = NativeAdapter()
 
@@ -161,7 +161,7 @@ class TestAgentFactory:
 
     def test_factory_creation_native(self):
         """Test creating factory with native framework."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -169,7 +169,7 @@ class TestAgentFactory:
 
     def test_factory_creation_string_framework(self):
         """Test creating factory with string framework."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         factory = AgentFactory(framework="native")
 
@@ -177,7 +177,7 @@ class TestAgentFactory:
 
     def test_factory_auto_framework(self):
         """Test factory auto-selects framework."""
-        from attune_llm.agent_factory import AgentFactory
+        from attune.agent_factory import AgentFactory
 
         factory = AgentFactory()  # Auto-detect
 
@@ -185,7 +185,7 @@ class TestAgentFactory:
 
     def test_factory_create_agent(self):
         """Test creating agent through factory."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -196,7 +196,7 @@ class TestAgentFactory:
 
     def test_factory_create_workflow(self):
         """Test creating workflow through factory."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -213,8 +213,8 @@ class TestAgentFactory:
 
     def test_factory_convenience_methods(self):
         """Test convenience methods for creating agents."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.base import AgentRole
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.base import AgentRole
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -229,7 +229,7 @@ class TestAgentFactory:
 
     def test_factory_list_frameworks(self):
         """Test listing frameworks."""
-        from attune_llm.agent_factory import AgentFactory
+        from attune.agent_factory import AgentFactory
 
         frameworks = AgentFactory.list_frameworks()
 
@@ -238,7 +238,7 @@ class TestAgentFactory:
 
     def test_factory_recommend_framework(self):
         """Test framework recommendations."""
-        from attune_llm.agent_factory import AgentFactory
+        from attune.agent_factory import AgentFactory
 
         rec = AgentFactory.recommend_framework("general")
         assert rec is not None
@@ -252,8 +252,8 @@ class TestNativeAgent:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_native_agent_invoke(self):
         """Test invoking native agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
 
         adapter = NativeAdapter()
         agent = adapter.create_agent(AgentConfig(name="test"))
@@ -268,8 +268,8 @@ class TestNativeAgent:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_native_agent_conversation_history(self):
         """Test agent tracks conversation history."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
 
         adapter = NativeAdapter()
         agent = adapter.create_agent(AgentConfig(name="test"))
@@ -292,8 +292,8 @@ class TestNativeWorkflow:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_native_workflow_sequential(self):
         """Test sequential workflow execution."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig, WorkflowConfig
 
         adapter = NativeAdapter()
 
@@ -316,8 +316,8 @@ class TestNativeWorkflow:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_native_workflow_parallel(self):
         """Test parallel workflow execution."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig, WorkflowConfig
 
         adapter = NativeAdapter()
 
@@ -374,7 +374,7 @@ class TestLangGraphAdapter:
 
     def test_langgraph_available(self):
         """Test LangGraph availability check."""
-        from attune_llm.agent_factory.adapters.langgraph_adapter import _check_langgraph
+        from attune.agent_factory.adapters.langgraph_adapter import _check_langgraph
 
         # Just verify it returns a boolean
         result = _check_langgraph()
@@ -384,11 +384,11 @@ class TestLangGraphAdapter:
         """Test creating agent with LangGraph if fully installed."""
         import os
 
-        from attune_llm.agent_factory.adapters.langgraph_adapter import (
+        from attune.agent_factory.adapters.langgraph_adapter import (
             LangGraphAdapter,
             _check_langgraph,
         )
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.base import AgentConfig
 
         if not _check_langgraph():
             pytest.skip("LangGraph not installed")
@@ -413,7 +413,7 @@ class TestModelTierRouting:
 
     def test_get_model_for_tier(self):
         """Test model selection by tier."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.adapters.native import NativeAdapter
 
         adapter = NativeAdapter()
 
@@ -432,7 +432,7 @@ class TestAgentRoles:
 
     def test_role_enum_values(self):
         """Test AgentRole enum has expected values."""
-        from attune_llm.agent_factory.base import AgentRole
+        from attune.agent_factory.base import AgentRole
 
         assert AgentRole.RESEARCHER.value == "researcher"
         assert AgentRole.WRITER.value == "writer"
@@ -441,8 +441,8 @@ class TestAgentRoles:
 
     def test_factory_role_string_conversion(self):
         """Test factory converts role strings."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.base import AgentRole
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.base import AgentRole
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -458,7 +458,7 @@ class TestToolCreation:
 
     def test_native_tool_creation(self):
         """Test tool creation with native adapter."""
-        from attune_llm.agent_factory import AgentFactory, Framework
+        from attune.agent_factory import AgentFactory, Framework
 
         factory = AgentFactory(framework=Framework.NATIVE)
 

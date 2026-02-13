@@ -17,7 +17,7 @@ class TestResilienceConfig:
 
     def test_resilience_config_defaults(self):
         """Test ResilienceConfig has sensible defaults."""
-        from attune_llm.agent_factory.resilient import ResilienceConfig
+        from attune.agent_factory.resilient import ResilienceConfig
 
         config = ResilienceConfig()
 
@@ -32,7 +32,7 @@ class TestResilienceConfig:
 
     def test_resilience_config_custom(self):
         """Test ResilienceConfig with custom values."""
-        from attune_llm.agent_factory.resilient import ResilienceConfig
+        from attune.agent_factory.resilient import ResilienceConfig
 
         config = ResilienceConfig(
             failure_threshold=5,
@@ -48,8 +48,8 @@ class TestResilienceConfig:
 
     def test_resilience_config_from_agent_config(self):
         """Test creating ResilienceConfig from AgentConfig."""
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig
 
         agent_config = AgentConfig(
             name="test",
@@ -71,9 +71,9 @@ class TestResilientAgentCreation:
 
     def test_resilient_agent_creation(self):
         """Test creating a resilient agent wrapper."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -86,9 +86,9 @@ class TestResilientAgentCreation:
 
     def test_resilient_agent_with_custom_config(self):
         """Test creating resilient agent with custom config."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -108,8 +108,8 @@ class TestFactoryResilienceIntegration:
 
     def test_factory_creates_resilient_agent(self):
         """Test factory wraps agent with resilience when enabled."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.resilient import ResilientAgent
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -123,8 +123,8 @@ class TestFactoryResilienceIntegration:
 
     def test_factory_respects_resilience_disabled(self):
         """Test factory does not wrap when resilience_enabled=False."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.resilient import ResilientAgent
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -138,8 +138,8 @@ class TestFactoryResilienceIntegration:
 
     def test_factory_resilience_config_params(self):
         """Test factory passes resilience config params correctly."""
-        from attune_llm.agent_factory import AgentFactory, Framework
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory import AgentFactory, Framework
+        from attune.agent_factory.resilient import ResilientAgent
 
         factory = AgentFactory(framework=Framework.NATIVE)
 
@@ -164,9 +164,9 @@ class TestResilientAgentInvoke:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_resilient_agent_invoke_success(self):
         """Test successful invocation through resilient wrapper."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -187,9 +187,9 @@ class TestResilientAgentInvoke:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_resilient_agent_adds_metadata(self):
         """Test resilient agent adds resilience metadata."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -212,8 +212,8 @@ class TestResilientAgentTimeout:
     @pytest.mark.asyncio
     async def test_timeout_triggers_on_slow_operation(self):
         """Test that timeout triggers for slow operations."""
-        from attune_llm.agent_factory.base import AgentConfig, BaseAgent
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.base import AgentConfig, BaseAgent
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         # Create a slow mock agent
         class SlowAgent(BaseAgent):
@@ -240,8 +240,8 @@ class TestResilientAgentTimeout:
     @pytest.mark.asyncio
     async def test_timeout_with_fallback(self):
         """Test that fallback is used when timeout occurs."""
-        from attune_llm.agent_factory.base import AgentConfig, BaseAgent
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.base import AgentConfig, BaseAgent
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         class SlowAgent(BaseAgent):
             async def invoke(self, input_data, context=None):
@@ -275,8 +275,8 @@ class TestResilientAgentRetry:
     @pytest.mark.asyncio
     async def test_retry_on_transient_error(self):
         """Test retry mechanism on transient errors."""
-        from attune_llm.agent_factory.base import AgentConfig, BaseAgent
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.base import AgentConfig, BaseAgent
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         # Agent that fails twice then succeeds
         call_count = 0
@@ -310,8 +310,8 @@ class TestResilientAgentRetry:
     @pytest.mark.asyncio
     async def test_retry_exhausted_raises(self):
         """Test that exception is raised when retries exhausted."""
-        from attune_llm.agent_factory.base import AgentConfig, BaseAgent
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.base import AgentConfig, BaseAgent
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         class AlwaysFailingAgent(BaseAgent):
             async def invoke(self, input_data, context=None):
@@ -341,9 +341,9 @@ class TestResilientAgentCircuitBreaker:
     @pytest.mark.asyncio
     async def test_circuit_breaker_opens(self):
         """Test circuit breaker opens after failures."""
+        from attune.agent_factory.base import AgentConfig, BaseAgent
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
         from attune.resilience import CircuitOpenError
-        from attune_llm.agent_factory.base import AgentConfig, BaseAgent
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         class AlwaysFailingAgent(BaseAgent):
             async def invoke(self, input_data, context=None):
@@ -375,9 +375,9 @@ class TestResilientAgentCircuitBreaker:
 
     def test_circuit_state_property(self):
         """Test circuit_state property."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -389,9 +389,9 @@ class TestResilientAgentCircuitBreaker:
 
     def test_reset_circuit_breaker(self):
         """Test manual circuit breaker reset."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -415,9 +415,9 @@ class TestResilientAgentDelegation:
 
     def test_add_tool_delegation(self):
         """Test add_tool is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -433,9 +433,9 @@ class TestResilientAgentDelegation:
     @pytest.mark.skip(reason="Integration test requiring valid ANTHROPIC_API_KEY")
     async def test_conversation_history_delegation(self):
         """Test conversation history is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilienceConfig, ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilienceConfig, ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test"))
@@ -457,9 +457,9 @@ class TestResilientAgentDelegation:
 
     def test_model_property_delegation(self):
         """Test model property is delegated to wrapped agent."""
-        from attune_llm.agent_factory.adapters.native import NativeAdapter
-        from attune_llm.agent_factory.base import AgentConfig
-        from attune_llm.agent_factory.resilient import ResilientAgent
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.base import AgentConfig
+        from attune.agent_factory.resilient import ResilientAgent
 
         adapter = NativeAdapter()
         base_agent = adapter.create_agent(AgentConfig(name="test", model_tier="premium"))
@@ -474,7 +474,7 @@ class TestAgentConfigResilienceFields:
 
     def test_agent_config_resilience_defaults(self):
         """Test AgentConfig has resilience defaults."""
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.base import AgentConfig
 
         config = AgentConfig(name="test")
 
@@ -485,7 +485,7 @@ class TestAgentConfigResilienceFields:
 
     def test_agent_config_resilience_custom(self):
         """Test AgentConfig with custom resilience values."""
-        from attune_llm.agent_factory.base import AgentConfig
+        from attune.agent_factory.base import AgentConfig
 
         config = AgentConfig(
             name="test",

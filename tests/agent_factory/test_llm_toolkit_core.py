@@ -8,7 +8,7 @@ Coverage target: 80%+
 
 from datetime import datetime, timedelta
 
-from attune_llm.agent_factory.base import (
+from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
     AgentRole,
@@ -17,8 +17,8 @@ from attune_llm.agent_factory.base import (
     BaseWorkflow,
     WorkflowConfig,
 )
-from attune_llm.levels import EmpathyLevel
-from attune_llm.state import CollaborationState, Interaction, PatternType, UserPattern
+from attune.llm.levels import EmpathyLevel
+from attune.llm.state import CollaborationState, Interaction, PatternType, UserPattern
 
 # =============================================================================
 # Agent Factory Base Tests
