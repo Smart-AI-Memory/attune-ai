@@ -70,7 +70,9 @@ class TestMockModeBasics:
         This allows the code to work even without optional dependencies.
         """
         # Mock REDIS_AVAILABLE as False in base module where it's checked
-        with patch("attune.memory.short_term.base.REDIS_AVAILABLE", False):
+        # Also bypass the require_redis guard added in Phase 3D
+        with patch("attune.memory.short_term.base.REDIS_AVAILABLE", False), \
+             patch("attune.memory.short_term.facade.MemoryFeatures.require_redis"):
             memory = RedisShortTermMemory()  # use_mock=False, but Redis unavailable
 
             assert memory.use_mock is True  # Automatically switched to mock mode

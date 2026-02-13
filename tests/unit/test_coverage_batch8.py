@@ -2182,21 +2182,21 @@ class TestInitializeCrew:
         """Test crew initialization handles ImportError gracefully."""
         wf = CodeReviewWorkflow(cost_tracker=cost_tracker, use_crew=True)
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "attune_llm": None,
-                "attune_llm.agent_factory": None,
-                "attune_llm.agent_factory.crews": None,
-                "attune_llm.agent_factory.crews.code_review": None,
-            },
-        ):
+        original_import = (
+            __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+        )
+
+        def mock_import(name, *args, **kwargs):
+            if "agent_factory.crews" in name:
+                raise ImportError("No module named 'attune.agent_factory.crews'")
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
             try:
                 await wf._initialize_crew()
             except (ImportError, TypeError):
                 pass
             # Crew should not be available after import error
-            # May or may not have been set depending on error handling
             assert wf._crew is None or wf._crew_available is False
 
     @pytest.mark.asyncio

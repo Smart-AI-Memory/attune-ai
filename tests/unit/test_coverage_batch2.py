@@ -1153,34 +1153,26 @@ class TestCheckCrewAvailable:
         """Test _check_crew_available returns False when crew can't be imported."""
         from attune.workflows.code_review_adapters import _check_crew_available
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "attune_llm": None,
-                "attune_llm.agent_factory": None,
-                "attune_llm.agent_factory.crews": None,
-            },
-        ):
-            # Force an ImportError by patching builtins.__import__
-            original_import = (
-                __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
-            )
+        # Force an ImportError by patching builtins.__import__
+        original_import = (
+            __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+        )
 
-            def mock_import(name, *args, **kwargs):
-                if "attune_llm" in name:
-                    raise ImportError("No module named 'attune_llm'")
-                return original_import(name, *args, **kwargs)
+        def mock_import(name, *args, **kwargs):
+            if "agent_factory.crews" in name:
+                raise ImportError("No module named 'attune.agent_factory.crews'")
+            return original_import(name, *args, **kwargs)
 
-            with patch("builtins.__import__", side_effect=mock_import):
-                result = _check_crew_available()
-                assert result is False
+        with patch("builtins.__import__", side_effect=mock_import):
+            result = _check_crew_available()
+            assert result is False
 
     def test_returns_true_when_import_succeeds(self) -> None:
         """Test _check_crew_available returns True when crew can be imported."""
         from attune.workflows.code_review_adapters import _check_crew_available
 
         mock_module = MagicMock()
-        with patch.dict("sys.modules", {"attune_llm.agent_factory.crews": mock_module}):
+        with patch.dict("sys.modules", {"attune.agent_factory.crews": mock_module}):
             mock_module.CodeReviewCrew = MagicMock()
             result = _check_crew_available()
             assert result is True
@@ -1231,7 +1223,7 @@ class TestGetCrewReview:
         ):
             with patch.dict(
                 "sys.modules",
-                {"attune_llm.agent_factory.crews": mock_module},
+                {"attune.agent_factory.crews": mock_module},
             ):
                 result = self._run_async(_get_crew_review(diff="diff", timeout=0.01))
                 assert result is None
@@ -1258,7 +1250,7 @@ class TestGetCrewReview:
         ):
             with patch.dict(
                 "sys.modules",
-                {"attune_llm.agent_factory.crews": mock_module},
+                {"attune.agent_factory.crews": mock_module},
             ):
                 result = self._run_async(_get_crew_review(diff="diff"))
                 assert result is None
@@ -1286,7 +1278,7 @@ class TestGetCrewReview:
         ):
             with patch.dict(
                 "sys.modules",
-                {"attune_llm.agent_factory.crews": mock_module},
+                {"attune.agent_factory.crews": mock_module},
             ):
                 result = self._run_async(
                     _get_crew_review(diff="diff", files_changed=["a.py"], config={"strict": True})
