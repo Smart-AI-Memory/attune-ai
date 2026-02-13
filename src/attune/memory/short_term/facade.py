@@ -47,6 +47,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from attune.memory.features import MemoryFeatures
 from attune.memory.short_term.base import (
     REDIS_AVAILABLE,  # noqa: F401 - re-exported
     BaseOperations,
@@ -150,7 +151,14 @@ class RedisShortTermMemory:
             config: Full RedisConfig for advanced settings (overrides other args)
             enable_local_cache: Enable local LRU cache layer
             local_cache_max_size: Maximum entries in local cache
+
+        Raises:
+            ImportError: If Redis package is not installed (when use_mock=False)
         """
+        # Check Redis availability (except in mock mode)
+        if not use_mock and (config is None or not config.use_mock):
+            MemoryFeatures.require_redis("Short-term memory")
+
         # Initialize base operations (handles connection, basic CRUD)
         self._base = BaseOperations(
             host=host,

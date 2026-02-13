@@ -80,6 +80,7 @@ if TYPE_CHECKING:
         generate_agent_id,
     )
     from .edges import REVERSE_EDGE_TYPES, WORKFLOW_EDGE_PATTERNS, Edge, EdgeType
+    from .features import FeatureInfo, FeatureStatus, MemoryFeatures
     from .file_session import FileSessionConfig, FileSessionMemory, get_file_session_memory
     from .graph import MemoryGraph
     from .long_term import (
@@ -159,6 +160,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "WORKFLOW_EDGE_PATTERNS": (".edges", "WORKFLOW_EDGE_PATTERNS"),
     "Edge": (".edges", "Edge"),
     "EdgeType": (".edges", "EdgeType"),
+    # features
+    "FeatureInfo": (".features", "FeatureInfo"),
+    "FeatureStatus": (".features", "FeatureStatus"),
+    "MemoryFeatures": (".features", "MemoryFeatures"),
     # file_session
     "FileSessionConfig": (".file_session", "FileSessionConfig"),
     "FileSessionMemory": (".file_session", "FileSessionMemory"),
@@ -281,9 +286,12 @@ __all__ = [
     "EdgeType",
     "EncryptionManager",
     "Environment",
+    "FeatureInfo",
+    "FeatureStatus",
     "FileSessionConfig",
     "FileSessionMemory",
     "MemDocsStorage",
+    "MemoryFeatures",
     "MemoryConfig",
     "MemoryControlPanel",
     "MemoryGraph",

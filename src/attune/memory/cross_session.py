@@ -31,6 +31,8 @@ from typing import Any
 
 import structlog
 
+from attune.memory.features import MemoryFeatures
+
 from .short_term import AccessTier, AgentCredentials, RedisShortTermMemory
 
 logger = structlog.get_logger(__name__)
@@ -155,7 +157,14 @@ class CrossSessionCoordinator:
             access_tier: Access tier for this session
             capabilities: List of capabilities this session supports
             auto_announce: Whether to announce presence on init
+
+        Raises:
+            ValueError: If memory is in mock mode (Redis required)
+            ImportError: If Redis package is not installed
         """
+        # Verify Redis is available (not just checking mock mode)
+        MemoryFeatures.require_redis("Cross-session coordination")
+
         if memory.use_mock:
             raise ValueError(
                 "Cross-session communication requires Redis. "

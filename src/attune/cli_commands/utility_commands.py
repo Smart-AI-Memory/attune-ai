@@ -275,3 +275,67 @@ def cmd_version(args: Namespace) -> int:
             pass
 
     return 0
+
+
+def cmd_features(args: Namespace) -> int:
+    """Show available memory and telemetry features."""
+    from attune.memory.features import MemoryFeatures
+    from attune.telemetry.features import TelemetryFeatures
+
+    print("\n" + "=" * 70)
+    print("ATTUNE AI - FEATURE AVAILABILITY")
+    print("=" * 70)
+
+    # Memory features
+    print("\n📦 MEMORY FEATURES\n")
+    print(f"{'Feature':<30} {'Status':<15} {'Details'}")
+    print("-" * 70)
+
+    memory_features = MemoryFeatures.list_all_features()
+    for name, info in sorted(memory_features.items()):
+        is_available = info.status.value == "available"
+        status_symbol = "✅" if is_available else "⚠️"
+        status_text = info.status.value.replace("_", " ").title()
+        print(f"{status_symbol} {info.name:<28} {status_text:<15} {info.message}")
+
+        if info.install_command and not is_available:
+            print(f"   {'':>28} Install: {info.install_command}")
+
+    # Telemetry features
+    print("\n\n📊 TELEMETRY FEATURES\n")
+    print(f"{'Feature':<30} {'Status':<15} {'Details'}")
+    print("-" * 70)
+
+    telemetry_features = TelemetryFeatures.list_all_features()
+    for name, info in sorted(telemetry_features.items()):
+        is_available = info.status.value == "available"
+        status_symbol = "✅" if is_available else "⚠️"
+        status_text = info.status.value.replace("_", " ").title()
+        print(f"{status_symbol} {info.name:<28} {status_text:<15} {info.message}")
+
+        if info.install_command and not is_available:
+            print(f"   {'':>28} Install: {info.install_command}")
+
+    # Installation instructions summary
+    print("\n" + "=" * 70)
+    redis_available = MemoryFeatures.is_redis_available()
+
+    if not redis_available:
+        print("\n💡 To enable Redis-enhanced features:")
+        print("   1. Install Redis package:")
+        print("      pip install 'attune-ai[memory]'")
+        print("\n   2. Install and start Redis server:")
+        print("      • macOS: brew install redis && brew services start redis")
+        print("      • Linux: sudo apt install redis-server")
+        print("      • Docker: docker run -d -p 6379:6379 redis:alpine")
+        print("\n   See: https://redis.io/docs/install/")
+    else:
+        redis_running = MemoryFeatures.is_redis_running()
+        if redis_running:
+            print("\n✅ Redis is installed and running - all features available!")
+        else:
+            print("\n⚠️  Redis package installed but server not running")
+            print("   Start Redis server to enable enhanced features")
+
+    print("\n" + "=" * 70 + "\n")
+    return 0

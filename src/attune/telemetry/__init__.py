@@ -18,22 +18,26 @@ from .agent_coordination import CoordinationSignal, CoordinationSignals
 from .agent_tracking import AgentHeartbeat, HeartbeatCoordinator
 from .approval_gates import ApprovalGate, ApprovalRequest, ApprovalResponse
 from .event_streaming import EventStreamer, StreamEvent
+from .features import FeatureInfo, FeatureStatus, TelemetryFeatures
 from .feedback_loop import FeedbackEntry, FeedbackLoop, QualityStats, TierRecommendation
 from .usage_tracker import UsageTracker
 
 __all__ = [
-    "UsageTracker",
-    "HeartbeatCoordinator",
-    "AgentHeartbeat",
-    "CoordinationSignals",
-    "CoordinationSignal",
-    "EventStreamer",
-    "StreamEvent",
     "ApprovalGate",
     "ApprovalRequest",
     "ApprovalResponse",
-    "FeedbackLoop",
+    "AgentHeartbeat",
+    "CoordinationSignal",
+    "CoordinationSignals",
+    "EventStreamer",
+    "FeatureInfo",
+    "FeatureStatus",
     "FeedbackEntry",
+    "FeedbackLoop",
+    "HeartbeatCoordinator",
     "QualityStats",
+    "StreamEvent",
+    "TelemetryFeatures",
     "TierRecommendation",
+    "UsageTracker",
 ]
