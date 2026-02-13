@@ -48,7 +48,7 @@ jobs:
         continue-on-error: true  # Don't fail job, we'll control blocking in next step
         run: |
           # Run security audit and capture output
-          empathy workflow run security-audit --json > security_results.json 2>&1 || true
+          attune workflow run security-audit --json > security_results.json 2>&1 || true
 
           # Check if scan succeeded
           if [ $? -eq 0 ]; then
