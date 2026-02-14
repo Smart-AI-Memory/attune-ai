@@ -222,7 +222,7 @@ class ProgressiveTelemetry:
         from pathlib import Path
 
         try:
-            telemetry_dir = Path.home() / ".empathy" / "telemetry"
+            telemetry_dir = Path.home() / ".attune" / "telemetry"
             telemetry_dir.mkdir(parents=True, exist_ok=True)
 
             events_file = telemetry_dir / "progressive_events.jsonl"

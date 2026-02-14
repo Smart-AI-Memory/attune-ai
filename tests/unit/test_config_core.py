@@ -126,7 +126,7 @@ class TestEmpathyConfigDefaults:
         assert cfg.trust_erosion_rate == 0.10
         assert cfg.persistence_enabled is True
         assert cfg.persistence_backend == "sqlite"
-        assert cfg.persistence_path == "./empathy_data"
+        assert cfg.persistence_path == "./attune_data"
         assert cfg.state_persistence is True
         assert cfg.metrics_enabled is True
         assert cfg.log_level == "INFO"

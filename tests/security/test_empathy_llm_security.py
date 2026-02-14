@@ -53,7 +53,7 @@ def temp_audit_dir():
 
 def test_empathy_llm_security_disabled_by_default():
     """Test that security is disabled by default (backward compatibility)"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         llm = EmpathyLLM(provider="anthropic")
 
         assert llm.enable_security is False
@@ -64,7 +64,7 @@ def test_empathy_llm_security_disabled_by_default():
 
 def test_empathy_llm_security_enabled():
     """Test that security modules are initialized when enabled"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         with tempfile.TemporaryDirectory() as tmpdir:
             llm = EmpathyLLM(
                 provider="anthropic",
@@ -80,7 +80,7 @@ def test_empathy_llm_security_enabled():
 
 def test_empathy_llm_security_custom_config():
     """Test security with custom configuration"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         with tempfile.TemporaryDirectory() as tmpdir:
             security_config = {
                 "audit_log_dir": tmpdir,
@@ -104,7 +104,7 @@ def test_empathy_llm_security_custom_config():
 
 def test_empathy_llm_security_pii_scrubbing_disabled():
     """Test security with PII scrubbing disabled"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         with tempfile.TemporaryDirectory() as tmpdir:
             security_config = {
                 "audit_log_dir": tmpdir,
@@ -130,7 +130,7 @@ def test_empathy_llm_security_pii_scrubbing_disabled():
 @pytest.mark.asyncio
 async def test_interact_with_pii_scrubbing(mock_provider, temp_audit_dir):
     """Test that PII is scrubbed from user input before LLM call"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -168,7 +168,7 @@ async def test_interact_with_pii_scrubbing(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_without_pii(mock_provider, temp_audit_dir):
     """Test interaction with no PII in input"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -189,7 +189,7 @@ async def test_interact_without_pii(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_pii_all_empathy_levels(mock_provider, temp_audit_dir):
     """Test PII scrubbing works across all empathy levels"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=5,
@@ -221,7 +221,7 @@ async def test_interact_pii_all_empathy_levels(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_blocks_secrets(mock_provider, temp_audit_dir):
     """Test that requests with secrets are blocked by default"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -246,7 +246,7 @@ async def test_interact_blocks_secrets(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_logs_secrets_when_not_blocking(mock_provider, temp_audit_dir):
     """Test that secrets are logged but request proceeds when block_on_secrets=False"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -273,7 +273,7 @@ async def test_interact_logs_secrets_when_not_blocking(mock_provider, temp_audit
 @pytest.mark.asyncio
 async def test_interact_detects_multiple_secret_types(mock_provider, temp_audit_dir):
     """Test detection of multiple types of secrets"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -299,7 +299,7 @@ async def test_interact_detects_multiple_secret_types(mock_provider, temp_audit_
 @pytest.mark.asyncio
 async def test_interact_no_secrets_detected(mock_provider, temp_audit_dir):
     """Test interaction with no secrets in input"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -324,7 +324,7 @@ async def test_interact_no_secrets_detected(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_logs_successful_request(mock_provider, temp_audit_dir):
     """Test that successful requests are logged to audit trail"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=2,
@@ -365,7 +365,7 @@ async def test_interact_logs_successful_request(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_logs_pii_detection(mock_provider, temp_audit_dir):
     """Test that PII detections are logged in audit trail"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -390,7 +390,7 @@ async def test_interact_logs_pii_detection(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_logs_security_violation(mock_provider, temp_audit_dir):
     """Test that security violations are logged separately"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -440,7 +440,7 @@ async def test_interact_logs_security_violation(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_pii_and_secrets_combined(mock_provider, temp_audit_dir):
     """Test interaction with both PII and secrets in input"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -464,7 +464,7 @@ async def test_interact_pii_and_secrets_combined(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_security_across_all_levels(mock_provider, temp_audit_dir):
     """Test that security works consistently across all empathy levels"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=5,
@@ -500,7 +500,7 @@ async def test_interact_security_across_all_levels(mock_provider, temp_audit_dir
 @pytest.mark.asyncio
 async def test_interact_security_disabled_no_scrubbing(mock_provider):
     """Test that with security disabled, no scrubbing occurs (backward compatibility)"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -526,7 +526,7 @@ async def test_interact_security_disabled_no_scrubbing(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_security_disabled_secrets_not_blocked(mock_provider):
     """Test that with security disabled, secrets are not blocked"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -550,7 +550,7 @@ async def test_interact_security_disabled_secrets_not_blocked(mock_provider):
 @pytest.mark.asyncio
 async def test_interact_empty_input(mock_provider, temp_audit_dir):
     """Test security handling with empty input"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -570,7 +570,7 @@ async def test_interact_empty_input(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_large_input_with_pii(mock_provider, temp_audit_dir):
     """Test security with large input containing multiple PII instances"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -592,7 +592,7 @@ async def test_interact_large_input_with_pii(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_interact_unicode_with_pii(mock_provider, temp_audit_dir):
     """Test security with unicode characters and PII"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -616,7 +616,7 @@ async def test_interact_unicode_with_pii(mock_provider, temp_audit_dir):
 @pytest.mark.asyncio
 async def test_multiple_users_independent_security_logging(mock_provider, temp_audit_dir):
     """Test that multiple users' interactions are logged independently"""
-    with patch("attune_llm.core.AnthropicProvider", return_value=mock_provider):
+    with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
             target_level=1,
@@ -658,7 +658,7 @@ async def test_multiple_users_independent_security_logging(mock_provider, temp_a
 
 def test_security_config_defaults():
     """Test that security config uses sensible defaults"""
-    with patch("attune_llm.core.AnthropicProvider"):
+    with patch("attune.llm.core.AnthropicProvider"):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Minimal config - should use defaults
             llm = EmpathyLLM(

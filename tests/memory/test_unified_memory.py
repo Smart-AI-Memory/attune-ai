@@ -49,7 +49,7 @@ class TestMemoryConfig:
         assert config.claude_memory_enabled is True
         # File-first architecture fields
         assert config.file_session_enabled is True
-        assert config.file_session_dir == ".empathy"
+        assert config.file_session_dir == ".attune"
         assert config.redis_required is False
 
     def test_memory_config_custom_values(self):

@@ -2349,9 +2349,7 @@ class TestPerfCheckDeep:
             "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
         }
 
-        result, in_t, out_t = asyncio.get_event_loop().run_until_complete(
-            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
-        )
+        result, in_t, out_t = asyncio.run(workflow._perf_check_deep(input_data, ModelTier.CAPABLE))
 
         workflow._call_llm.assert_called_once()
         assert result["perf_deep_ran"] is True
@@ -2377,9 +2375,7 @@ class TestPerfCheckDeep:
             "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
         }
 
-        result, _, _ = asyncio.get_event_loop().run_until_complete(
-            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
-        )
+        result, _, _ = asyncio.run(workflow._perf_check_deep(input_data, ModelTier.CAPABLE))
 
         assert result["perf_findings"][0]["false_positive"] is True
         assert result["perf_findings"][0]["suggestion"] == "Test fixture, ignore"
@@ -2404,9 +2400,7 @@ class TestPerfCheckDeep:
             "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
         }
 
-        result, _, _ = asyncio.get_event_loop().run_until_complete(
-            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
-        )
+        result, _, _ = asyncio.run(workflow._perf_check_deep(input_data, ModelTier.CAPABLE))
 
         # Should still return valid result with originals marked as validated
         assert result["perf_deep_ran"] is True
@@ -2457,7 +2451,7 @@ class TestQualityCheckDeep:
             "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
         }
 
-        result, in_t, out_t = asyncio.get_event_loop().run_until_complete(
+        result, in_t, out_t = asyncio.run(
             workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
         )
 
@@ -2492,9 +2486,7 @@ class TestQualityCheckDeep:
             "quality_by_severity": {"high": 1, "medium": 1, "low": 0},
         }
 
-        result, _, _ = asyncio.get_event_loop().run_until_complete(
-            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
-        )
+        result, _, _ = asyncio.run(workflow._quality_check_deep(input_data, ModelTier.CAPABLE))
 
         assert result["quality_findings"][0]["false_positive"] is True
         assert result["quality_findings"][1]["false_positive"] is False
@@ -2519,9 +2511,7 @@ class TestQualityCheckDeep:
             "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
         }
 
-        result, _, _ = asyncio.get_event_loop().run_until_complete(
-            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
-        )
+        result, _, _ = asyncio.run(workflow._quality_check_deep(input_data, ModelTier.CAPABLE))
 
         assert result["quality_deep_ran"] is True
         assert result["quality_findings"][0]["validated"] is True

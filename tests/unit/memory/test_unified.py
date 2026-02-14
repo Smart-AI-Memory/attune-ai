@@ -67,7 +67,7 @@ class TestMemoryConfig:
         assert config.auto_promote_threshold == 0.8
         # File-first architecture fields
         assert config.file_session_enabled is True
-        assert config.file_session_dir == ".empathy"
+        assert config.file_session_dir == ".attune"
         assert config.redis_required is False
 
     def test_custom_config(self):

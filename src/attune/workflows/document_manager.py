@@ -1,4 +1,4 @@
-"""You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the empathy-framework.
+"""You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the attune-ai framework.
 
 Stages:
 1. process - Process
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentManagerWorkflow(BaseWorkflow):
-    """You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the empathy-framework.
+    """You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the attune-ai framework.
 
     Supports composition via ``WorkflowContext`` -- use ``default_context()``
     to get a pre-configured context with prompt and parsing services.
@@ -34,7 +34,7 @@ class DocumentManagerWorkflow(BaseWorkflow):
     """
 
     name = "document-manager"
-    description = "You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the empathy-framework."
+    description = "You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the attune-ai framework."
     stages = ["process"]
     tier_map = {
         "process": ModelTier.CAPABLE,

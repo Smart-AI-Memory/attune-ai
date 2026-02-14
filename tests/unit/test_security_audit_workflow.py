@@ -30,7 +30,7 @@ from attune.workflows.security_audit import SecurityAuditWorkflow
 
 def _run(coro):
     """Run an async coroutine in a new event loop."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def _make_mock_report(findings=None, risk_score=50, summary="test summary"):

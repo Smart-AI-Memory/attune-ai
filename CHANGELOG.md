@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-02-14
+
+### Fixed
+
+- **Config file auto-detection broken for `.empathy.yml`/`.empathy.json`**: Both `EmpathyConfig.from_file()` and `load_config()` were missing `.empathy.*` from their search paths, causing user config files to be silently ignored and defaults used instead. Added `.empathy.yml`, `.empathy.yaml`, and `.empathy.json` to search paths with highest priority.
+- **Telemetry events written to wrong directory**: Progressive telemetry was writing to `~/.empathy/telemetry/` instead of `~/.attune/telemetry/`, orphaning event data.
+- **Document manager still referenced "empathy-framework"**: Updated to "attune-ai framework" to match project branding.
+- **Security test mock target incorrect**: Tests patched `attune_llm.core.AnthropicProvider` (shim) instead of `attune.llm.core.AnthropicProvider` (canonical), causing real API calls during tests.
+- **Async test failures in full suite**: Replaced deprecated `asyncio.get_event_loop().run_until_complete()` with `asyncio.run()` in code review and security audit test helpers.
+- **Memory/config tests using old `.empathy` defaults**: Updated 4 test assertions to match the `.attune` directory defaults set in v2.7.0 rebrand.
+
+### Changed
+
+- **Refactor: Split `providers.py` (1,058 lines) into `providers/` package**: 6 focused modules (`base.py`, `anthropic.py`, `anthropic_batch.py`, `openai.py`, `gemini.py`, `local.py`) with backward-compatible `__init__.py` re-exports.
+- **Refactor: Extract `CodeReviewAnalysisMixin` from `code_review.py`**: Reduced from 1,568 to 977 lines by extracting 5 analysis stage methods and 5 helper functions into a separate mixin module.
+- **Refactor: Split `real_tools.py` (1,149 lines) into `tools/` package**: 5 domain modules (`testing.py`, `quality.py`, `security.py`, `performance.py`, `_shared.py`) with backward-compatible shim.
+
 ## [2.7.0] - 2026-02-13
 
 ### Added
