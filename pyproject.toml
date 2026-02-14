@@ -118,7 +118,7 @@ crewai = [
 # Hybrid caching for 70% cost reduction (v3.8.0+)
 # Includes semantic similarity matching with sentence-transformers
 cache = [
-    "sentence-transformers>=2.0.0,<4.0.0",
+    "sentence-transformers>=2.0.0,<6.0.0",
     "torch>=2.0.0,<3.0.0",
     "numpy>=1.24.0,<3.0.0",
 ]
