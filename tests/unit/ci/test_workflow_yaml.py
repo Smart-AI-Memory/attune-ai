@@ -21,7 +21,7 @@ def _load_all_workflows() -> dict[str, dict]:
     """Load and parse all workflow YAML files."""
     workflows = {}
     for path in sorted(WORKFLOWS_DIR.glob("*.yml")):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             workflows[path.name] = yaml.safe_load(f)
     return workflows
 
