@@ -1562,24 +1562,21 @@ class TestGetCrewReview:
         """Test returns None on timeout."""
         import attune.workflows.code_review_adapters as adapters_mod
 
+        mock_crew = MagicMock()
+
+        async def slow_review(**kwargs):
+            await asyncio.sleep(10)
+
+        mock_crew.review = slow_review
+
+        mock_crews_mod = MagicMock()
+        mock_crews_mod.CodeReviewConfig.return_value = MagicMock()
+        mock_crews_mod.CodeReviewCrew.return_value = mock_crew
+
         with patch.object(adapters_mod, "_check_crew_available", return_value=True):
-            with patch(
-                "attune.agent_factory.crews.code_review.CodeReviewConfig"
-            ) as mock_config_cls:
-                mock_config_cls.return_value = MagicMock()
-                with patch(
-                    "attune.agent_factory.crews.code_review.CodeReviewCrew"
-                ) as mock_crew_cls:
-                    mock_crew = MagicMock()
-
-                    async def slow_review(**kwargs):
-                        await asyncio.sleep(10)
-
-                    mock_crew.review = slow_review
-                    mock_crew_cls.return_value = mock_crew
-
-                    result = await adapters_mod._get_crew_review(diff="code", timeout=0.01)
-                    assert result is None
+            with patch.dict("sys.modules", {"attune.agent_factory.crews": mock_crews_mod}):
+                result = await adapters_mod._get_crew_review(diff="code", timeout=0.01)
+                assert result is None
 
     @pytest.mark.asyncio
     async def test_get_crew_review_exception(self):

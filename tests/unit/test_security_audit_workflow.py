@@ -395,7 +395,8 @@ class TestAssessStage:
             ],
         }
 
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assessment = result["assessment"]
         # 1 critical (25) + 1 high (10) + 1 medium (3) = 38
         assert assessment["risk_score"] == 38
@@ -416,7 +417,8 @@ class TestAssessStage:
                 {"severity": "critical", "owasp": "A03", "type": "sql_injection"},
             ],
         }
-        _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            _run(wf._assess(input_data, None))
         assert wf._has_critical is True
 
     def test_assess_no_critical_findings(self):
@@ -430,7 +432,8 @@ class TestAssessStage:
                 {"severity": "low", "owasp": "A02", "type": "insecure_random"},
             ],
         }
-        _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            _run(wf._assess(input_data, None))
         assert wf._has_critical is False
 
     def test_assess_risk_score_capped_at_100(self):
@@ -445,7 +448,8 @@ class TestAssessStage:
                 {"severity": "critical", "owasp": "A03", "type": f"vuln{i}"} for i in range(5)
             ],
         }
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assert result["assessment"]["risk_score"] == 100
         assert result["assessment"]["risk_level"] == "critical"
 
@@ -456,7 +460,8 @@ class TestAssessStage:
         wf._crew_available = False
 
         input_data = {"needs_review": []}
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assert "formatted_report" in result
 
 

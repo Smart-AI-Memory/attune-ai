@@ -190,7 +190,7 @@ class TestCheckRedis:
             with patch.object(HealthcareMCPServer, "__init__", lambda self: None):
                 server = HealthcareMCPServer.__new__(HealthcareMCPServer)
 
-                with patch("builtins.__import__", side_effect=ImportError("no redis")):
+                with patch.dict("sys.modules", {"redis": None}):
                     with patch("attune.mcp.healthcare.logger") as mock_logger:
                         server._check_redis()
                         mock_logger.warning.assert_called()
