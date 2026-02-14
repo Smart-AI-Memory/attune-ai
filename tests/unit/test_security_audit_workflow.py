@@ -6,6 +6,7 @@ error handling, and default_context classmethod.
 
 import asyncio
 import json
+import sys
 import textwrap
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -281,6 +282,7 @@ class TestTriageScanning:
         ]
         assert len(secret_findings) == 0
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="chmod(0o000) has no effect on Windows")
     def test_triage_handles_unreadable_file(self, tmp_path):
         """Test graceful handling when file read fails."""
         bad_file = tmp_path / "broken.py"

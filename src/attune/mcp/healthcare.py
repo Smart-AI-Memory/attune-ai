@@ -15,7 +15,9 @@ import asyncio
 import json
 import logging
 import sys
+import tempfile
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from attune.mcp.server import EmpathyMCPServer, handle_request
@@ -746,7 +748,11 @@ def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler("/tmp/attune-healthcare-mcp.log")],  # nosec B108
+        handlers=[
+            logging.FileHandler(  # nosec B108
+                str(Path(tempfile.gettempdir()) / "attune-healthcare-mcp.log")
+            )
+        ],
     )
 
     try:

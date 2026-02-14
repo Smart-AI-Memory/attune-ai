@@ -102,14 +102,14 @@ TEST_FIXTURE_PATTERNS = [
 
 # Test file patterns - findings here are informational, not critical
 TEST_FILE_PATTERNS = [
-    r"/tests/",
-    r"/test_",
+    r"[/\\]tests[/\\]",
+    r"[/\\]test_",
     r"_test\.py$",
     r"_demo\.py$",
     r"_example\.py$",
-    r"/examples/",
-    r"/demo",
-    r"coach/vscode-extension",  # Example VSCode extension
+    r"[/\\]examples[/\\]",
+    r"[/\\]demo",
+    r"coach[/\\]vscode-extension",  # Example VSCode extension
 ]
 
 # Common security vulnerability patterns (OWASP Top 10 inspired)

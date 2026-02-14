@@ -997,7 +997,7 @@ class TestSEOOptimizationConfig:
         )
         assert config.mode == "fix"
         assert config.interactive is False
-        assert str(config.docs_path) == "/tmp/docs"
+        assert config.docs_path == Path("/tmp/docs")
 
 
 class TestSEOOptimizationWorkflow:

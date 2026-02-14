@@ -97,7 +97,7 @@ class TestSchemaValidation:
         assert len(yml_files) >= 10, f"Expected >= 10 workflow files, found {len(yml_files)}"
 
         for path in yml_files:
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
             assert isinstance(data, dict), f"{path.name} did not parse as a YAML mapping"
 
@@ -213,7 +213,7 @@ class TestSHAPinning:
     def test_sha_pinned_actions_have_version_comment(self, filename):
         """SHA-pinned actions should include a version comment for readability."""
         path = WORKFLOWS_DIR / filename
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         for line_num, line in enumerate(text.splitlines(), 1):
             stripped = line.strip()
             if not stripped.startswith("uses:"):
