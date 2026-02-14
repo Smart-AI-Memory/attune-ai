@@ -191,7 +191,7 @@ class TestSaveResultsToDisk:
         save_results_to_disk(sample_result, str(storage_path))
 
         summary_file = storage_path / sample_result.task_id / "summary.json"
-        summary = json.loads(summary_file.read_text())
+        summary = json.loads(summary_file.read_text(encoding="utf-8"))
 
         assert summary["workflow"] == "test-gen"
         assert summary["task_id"] == "test-gen-20260117-143022"
@@ -207,7 +207,7 @@ class TestSaveResultsToDisk:
         save_results_to_disk(sample_result, str(storage_path))
 
         tier_file = storage_path / sample_result.task_id / "tier_0_cheap.json"
-        tier_data = json.loads(tier_file.read_text())
+        tier_data = json.loads(tier_file.read_text(encoding="utf-8"))
 
         assert tier_data["tier"] == "cheap"
         assert tier_data["model"] == "gpt-4o-mini"
@@ -224,7 +224,7 @@ class TestSaveResultsToDisk:
         save_results_to_disk(sample_result, str(storage_path))
 
         report_file = storage_path / sample_result.task_id / "report.txt"
-        report = report_file.read_text()
+        report = report_file.read_text(encoding="utf-8")
 
         assert "PROGRESSIVE ESCALATION REPORT" in report
         assert "test-gen" in report
@@ -234,7 +234,7 @@ class TestSaveResultsToDisk:
         # Use path with null byte which will fail validation
         invalid_path = str(tmp_path / "test\x00path")
 
-        with pytest.raises(ValueError, match="null byte"):
+        with pytest.raises(ValueError, match="null byte|null character"):
             save_results_to_disk(sample_result, invalid_path)
 
     @pytest.fixture

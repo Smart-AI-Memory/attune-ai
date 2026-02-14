@@ -1961,16 +1961,16 @@ class TestGetCrewAudit:
 
         from attune.workflows.security_adapters import _get_crew_audit
 
-        mock_crew_class = MagicMock()
         mock_crew_instance = MagicMock()
 
         async def slow_audit(target: str) -> None:
             await asyncio.sleep(100)
 
         mock_crew_instance.audit = slow_audit
-        mock_crew_class.return_value = mock_crew_instance
 
-        mock_config_class = MagicMock()
+        mock_crews_mod = MagicMock()
+        mock_crews_mod.SecurityAuditCrew.return_value = mock_crew_instance
+        mock_crews_mod.SecurityAuditConfig.return_value = MagicMock()
 
         with patch(
             "attune.workflows.security_adapters._check_crew_available",
@@ -1978,14 +1978,7 @@ class TestGetCrewAudit:
         ):
             with patch.dict(
                 "sys.modules",
-                {
-                    "attune_llm": MagicMock(),
-                    "attune_llm.agent_factory": MagicMock(),
-                    "attune_llm.agent_factory.crews": MagicMock(
-                        SecurityAuditCrew=mock_crew_class,
-                        SecurityAuditConfig=mock_config_class,
-                    ),
-                },
+                {"attune.agent_factory.crews": mock_crews_mod},
             ):
                 result = await _get_crew_audit("/path", timeout=0.01)
         assert result is None

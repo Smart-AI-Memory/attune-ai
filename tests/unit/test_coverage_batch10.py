@@ -2315,7 +2315,7 @@ class TestPatternLearnerInit:
             executions_dir="/tmp/test_executions",
             memory=mock_memory,
         )
-        assert str(learner.executions_dir) == "/tmp/test_executions"
+        assert learner.executions_dir == Path("/tmp/test_executions")
         assert learner.memory is mock_memory
 
 

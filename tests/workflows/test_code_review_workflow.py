@@ -44,7 +44,17 @@ class TestCodeReviewWorkflowInit:
 
         assert workflow.use_crew is True
         assert "crew_review" in workflow.stages
-        assert workflow.stages == ["classify", "crew_review", "scan", "architect_review"]
+        assert workflow.stages == [
+            "classify",
+            "crew_review",
+            "scan",
+            "perf_check",
+            "perf_check_deep",
+            "health_monitor",
+            "quality_check",
+            "quality_check_deep",
+            "architect_review",
+        ]
 
     def test_tier_map(self):
         """Test tier mapping for stages."""

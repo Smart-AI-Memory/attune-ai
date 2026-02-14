@@ -1,1 +1,0 @@
-{"score": 98, "lint": {"errors": 1, "warnings": 0}, "types": {"errors": 0}, "security": {"high": 0, "medium": 0, "low": 0}, "tests": {"passed": 11322, "failed": 0, "total": 11322, "coverage": 15}, "tech_debt": {"total": 0, "todos": 0, "fixmes": 0, "hacks": 0}, "timestamp": "2026-01-26T12:25:00.118231"}

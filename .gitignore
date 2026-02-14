@@ -192,14 +192,17 @@ benchmarks/profiles/*.prof
 benchmarks/profiles/*.dat
 .env.test
 
-# Attune runtime data (session state, not source code)
-.attune/socratic/sessions/
-.attune/history.db
-.attune/patterns*.db
-.attune/*.jsonl
-.attune/health_history/
-.attune/health_tracking/
-.attune/progressive_runs/
+# Attune runtime data (all session state, not source code)
+.attune/
+
+# Pattern memory (auto-generated during sessions)
+patterns/code_review_memory.json
+patterns/debugging/all_patterns.json
+patterns/refactoring_memory.json
+
+# Test artifacts
+test_wizard_risk_analysis.json
+test.json
 
 # macOS Finder duplicate files (additional patterns)
 * 3.json

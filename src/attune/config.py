@@ -327,12 +327,15 @@ class EmpathyConfig:
 
         Looks for configuration files in this order:
         1. Provided filepath
-        2. .attune.yml
-        3. .attune.yaml
-        4. attune.config.yml
-        5. attune.config.yaml
-        6. .attune.json
-        7. attune.config.json
+        2. .empathy.yml
+        3. .empathy.yaml
+        4. .attune.yml
+        5. .attune.yaml
+        6. attune.config.yml
+        7. attune.config.yaml
+        8. .empathy.json
+        9. .attune.json
+        10. attune.config.json
 
         Args:
             filepath: Optional explicit path to config file
@@ -347,10 +350,13 @@ class EmpathyConfig:
         """
         search_paths = [
             filepath,
+            ".empathy.yml",
+            ".empathy.yaml",
             ".attune.yml",
             ".attune.yaml",
             "attune.config.yml",
             "attune.config.yaml",
+            ".empathy.json",
             ".attune.json",
             "attune.config.json",
         ]
@@ -535,10 +541,13 @@ def load_config(
     else:
         # Check default config file locations
         for default_path in [
+            ".empathy.yml",
+            ".empathy.yaml",
             ".attune.yml",
             ".attune.yaml",
             "attune.config.yml",
             "attune.config.yaml",
+            ".empathy.json",
             ".attune.json",
             "attune.config.json",
         ]:

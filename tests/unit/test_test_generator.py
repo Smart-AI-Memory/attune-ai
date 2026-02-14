@@ -13,7 +13,9 @@ from unittest.mock import patch
 
 import pytest
 
-from attune.test_generator.risk_analyzer import RiskAnalysis, RiskAnalyzer
+pytest.importorskip("jinja2", reason="jinja2 required for test_generator")
+
+from attune.test_generator.risk_analyzer import RiskAnalysis, RiskAnalyzer  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

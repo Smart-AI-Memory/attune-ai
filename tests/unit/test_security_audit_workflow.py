@@ -6,6 +6,7 @@ error handling, and default_context classmethod.
 
 import asyncio
 import json
+import sys
 import textwrap
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -30,7 +31,7 @@ from attune.workflows.security_audit import SecurityAuditWorkflow
 
 def _run(coro):
     """Run an async coroutine in a new event loop."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def _make_mock_report(findings=None, risk_score=50, summary="test summary"):
@@ -281,6 +282,7 @@ class TestTriageScanning:
         ]
         assert len(secret_findings) == 0
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="chmod(0o000) has no effect on Windows")
     def test_triage_handles_unreadable_file(self, tmp_path):
         """Test graceful handling when file read fails."""
         bad_file = tmp_path / "broken.py"
@@ -395,7 +397,8 @@ class TestAssessStage:
             ],
         }
 
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assessment = result["assessment"]
         # 1 critical (25) + 1 high (10) + 1 medium (3) = 38
         assert assessment["risk_score"] == 38
@@ -416,7 +419,8 @@ class TestAssessStage:
                 {"severity": "critical", "owasp": "A03", "type": "sql_injection"},
             ],
         }
-        _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            _run(wf._assess(input_data, None))
         assert wf._has_critical is True
 
     def test_assess_no_critical_findings(self):
@@ -430,7 +434,8 @@ class TestAssessStage:
                 {"severity": "low", "owasp": "A02", "type": "insecure_random"},
             ],
         }
-        _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            _run(wf._assess(input_data, None))
         assert wf._has_critical is False
 
     def test_assess_risk_score_capped_at_100(self):
@@ -445,7 +450,8 @@ class TestAssessStage:
                 {"severity": "critical", "owasp": "A03", "type": f"vuln{i}"} for i in range(5)
             ],
         }
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assert result["assessment"]["risk_score"] == 100
         assert result["assessment"]["risk_level"] == "critical"
 
@@ -456,7 +462,8 @@ class TestAssessStage:
         wf._crew_available = False
 
         input_data = {"needs_review": []}
-        result, _, _ = _run(wf._assess(input_data, None))
+        with patch.object(wf, "_initialize_crew", new_callable=AsyncMock):
+            result, _, _ = _run(wf._assess(input_data, None))
         assert "formatted_report" in result
 
 

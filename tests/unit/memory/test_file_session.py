@@ -25,7 +25,7 @@ class TestFileSessionConfig:
         """Test default configuration values."""
         config = FileSessionConfig()
 
-        assert config.base_dir == ".empathy"
+        assert config.base_dir == ".attune"
         assert config.sessions_subdir == "sessions"
         assert config.patterns_subdir == "patterns"
         assert config.working_ttl_seconds == 3600
