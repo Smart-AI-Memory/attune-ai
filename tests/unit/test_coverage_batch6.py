@@ -448,8 +448,10 @@ class TestManageDocumentationCrew:
 
     def test_initialization_emits_deprecation_warning(self) -> None:
         """Test that ManageDocumentationCrew emits a deprecation warning."""
-        with pytest.warns(DeprecationWarning, match="deprecated since v4.3.0"):
-            ManageDocumentationCrew()
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            with pytest.warns(DeprecationWarning, match="deprecated since v4.3.0"):
+                ManageDocumentationCrew()
 
     def test_crew_attributes(self, crew: ManageDocumentationCrew) -> None:
         """Test crew has expected attributes."""

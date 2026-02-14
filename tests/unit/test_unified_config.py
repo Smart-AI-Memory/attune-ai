@@ -75,6 +75,9 @@ class TestUnifiedConfigGetSetValue:
     def test_set_value_valid(self):
         config = UnifiedConfig()
         old_modified = config._modified
+        import time
+
+        time.sleep(0.02)  # Ensure timestamp changes (Windows timer resolution ~15.6ms)
         config.set_value("auth.strategy", "api")
         assert config.get_value("auth.strategy") == "api"
         assert config._modified != old_modified
