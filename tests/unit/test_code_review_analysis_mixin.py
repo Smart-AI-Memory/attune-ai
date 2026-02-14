@@ -21,11 +21,12 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import asyncio
 import json
 import textwrap
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from attune.workflows.code_review_analysis_mixin import (
     CHARS_PER_TOKEN_ESTIMATE,
@@ -51,11 +52,6 @@ class _FakeHost(CodeReviewAnalysisMixin):
 
         self.logger = logging.getLogger("test")
         self._call_llm = AsyncMock(return_value=("{}", 10, 10))
-
-
-def _run(coro):
-    """Run an async coroutine synchronously."""
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +284,8 @@ class TestParseDeepEnrichment:
     def test_json_in_markdown_code_block(self):
         original = [{"type": "issue", "severity": "high"}]
         response = (
-            '```json\n{"findings": [{"index": 0, "validated": true, "false_positive": false}]}\n```'
+            '```json\n{"findings": [{"index": 0, "validated": true,'
+            ' "false_positive": false}]}\n```'
         )
 
         result = _parse_deep_enrichment(response, original)
@@ -423,25 +420,29 @@ class TestRecountByKey:
 class TestPerfCheck:
     """Tests for CodeReviewAnalysisMixin._perf_check."""
 
-    def test_no_files(self):
+    @pytest.mark.asyncio
+    async def test_no_files(self):
         host = _FakeHost()
-        result, in_t, out_t = _run(host._perf_check({"files_changed": []}, "cheap"))
+        result, in_t, out_t = await host._perf_check({"files_changed": []}, "cheap")
         assert result["perf_finding_count"] == 0
         assert result["perf_findings"] == []
 
-    def test_nonexistent_files_skipped(self):
+    @pytest.mark.asyncio
+    async def test_nonexistent_files_skipped(self):
         host = _FakeHost()
-        result, _, _ = _run(host._perf_check({"files_changed": ["/nonexistent/file.py"]}, "cheap"))
+        result, _, _ = await host._perf_check({"files_changed": ["/nonexistent/file.py"]}, "cheap")
         assert result["perf_finding_count"] == 0
 
-    def test_non_python_files_skipped(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_non_python_files_skipped(self, tmp_path):
         txt = tmp_path / "data.txt"
         txt.write_text("some content")
         host = _FakeHost()
-        result, _, _ = _run(host._perf_check({"files_changed": [str(txt)]}, "cheap"))
+        result, _, _ = await host._perf_check({"files_changed": [str(txt)]}, "cheap")
         assert result["perf_finding_count"] == 0
 
-    def test_detects_perf_patterns(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_detects_perf_patterns(self, tmp_path):
         """Create a Python file with known perf anti-patterns."""
         src = tmp_path / "slow.py"
         src.write_text(
@@ -455,7 +456,7 @@ class TestPerfCheck:
         )
 
         host = _FakeHost()
-        result, in_t, out_t = _run(host._perf_check({"files_changed": [str(src)]}, "cheap"))
+        result, in_t, out_t = await host._perf_check({"files_changed": [str(src)]}, "cheap")
 
         # Should find at least one pattern (depends on PERF_PATTERNS content)
         assert isinstance(result["perf_findings"], list)
@@ -466,20 +467,22 @@ class TestPerfCheck:
         assert in_t >= 0
         assert out_t >= 0
 
-    def test_preserves_input_data(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_preserves_input_data(self):
         host = _FakeHost()
-        result, _, _ = _run(
-            host._perf_check({"files_changed": [], "extra_key": "preserved"}, "cheap")
+        result, _, _ = await host._perf_check(
+            {"files_changed": [], "extra_key": "preserved"}, "cheap"
         )
         assert result["extra_key"] == "preserved"
 
-    def test_unreadable_file_skipped(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_unreadable_file_skipped(self, tmp_path):
         src = tmp_path / "unreadable.py"
         src.write_text("content")
 
         host = _FakeHost()
         with patch.object(Path, "read_text", side_effect=OSError("Permission denied")):
-            result, _, _ = _run(host._perf_check({"files_changed": [str(src)]}, "cheap"))
+            result, _, _ = await host._perf_check({"files_changed": [str(src)]}, "cheap")
         assert result["perf_finding_count"] == 0
 
 
@@ -491,15 +494,17 @@ class TestPerfCheck:
 class TestPerfCheckDeep:
     """Tests for CodeReviewAnalysisMixin._perf_check_deep."""
 
-    def test_no_findings_short_circuit(self):
+    @pytest.mark.asyncio
+    async def test_no_findings_short_circuit(self):
         host = _FakeHost()
         input_data = {"perf_findings": [], "files_changed": []}
-        result, in_t, out_t = _run(host._perf_check_deep(input_data, "capable"))
+        result, in_t, out_t = await host._perf_check_deep(input_data, "capable")
         assert in_t == 0
         assert out_t == 0
         host._call_llm.assert_not_called()
 
-    def test_calls_llm_with_findings(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_calls_llm_with_findings(self, tmp_path):
         src = tmp_path / "code.py"
         src.write_text("line1\nline2\nline3\nline4\nline5\n")
 
@@ -532,7 +537,7 @@ class TestPerfCheckDeep:
             "files_changed": [str(src)],
         }
 
-        result, in_t, out_t = _run(host._perf_check_deep(input_data, "capable"))
+        result, in_t, out_t = await host._perf_check_deep(input_data, "capable")
 
         host._call_llm.assert_called_once()
         assert result["perf_deep_ran"] is True
@@ -541,7 +546,8 @@ class TestPerfCheckDeep:
         assert in_t == 100
         assert out_t == 50
 
-    def test_false_positive_reduces_count(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_false_positive_reduces_count(self, tmp_path):
         src = tmp_path / "code.py"
         src.write_text("content\n")
 
@@ -557,12 +563,18 @@ class TestPerfCheckDeep:
 
         input_data = {
             "perf_findings": [
-                {"type": "issue", "file": str(src), "line": 1, "description": "d", "impact": "high"}
+                {
+                    "type": "issue",
+                    "file": str(src),
+                    "line": 1,
+                    "description": "d",
+                    "impact": "high",
+                }
             ],
             "files_changed": [],
         }
 
-        result, _, _ = _run(host._perf_check_deep(input_data, "capable"))
+        result, _, _ = await host._perf_check_deep(input_data, "capable")
         assert result["perf_finding_count"] == 0  # false positive excluded
 
 
@@ -574,9 +586,10 @@ class TestPerfCheckDeep:
 class TestHealthMonitor:
     """Tests for CodeReviewAnalysisMixin._health_monitor."""
 
-    def test_returns_health_snapshot(self):
+    @pytest.mark.asyncio
+    async def test_returns_health_snapshot(self):
         host = _FakeHost()
-        result, in_t, out_t = _run(host._health_monitor({"files_changed": []}, "cheap"))
+        result, in_t, out_t = await host._health_monitor({"files_changed": []}, "cheap")
 
         assert "health_snapshot" in result
         snapshot = result["health_snapshot"]
@@ -586,24 +599,28 @@ class TestHealthMonitor:
         assert in_t == 0
         assert out_t >= 0
 
-    def test_preserves_input_data(self):
+    @pytest.mark.asyncio
+    async def test_preserves_input_data(self):
         host = _FakeHost()
-        result, _, _ = _run(host._health_monitor({"files_changed": [], "key": "val"}, "cheap"))
+        result, _, _ = await host._health_monitor({"files_changed": [], "key": "val"}, "cheap")
         assert result["key"] == "val"
 
-    def test_handles_missing_cache_monitor(self):
+    @pytest.mark.asyncio
+    async def test_handles_missing_cache_monitor(self):
         host = _FakeHost()
         with patch.dict("sys.modules", {"attune.cache_monitor": None}):
-            result, _, _ = _run(host._health_monitor({}, "cheap"))
+            result, _, _ = await host._health_monitor({}, "cheap")
         assert "health_snapshot" in result
 
-    def test_handles_missing_cost_tracker(self):
+    @pytest.mark.asyncio
+    async def test_handles_missing_cost_tracker(self):
         host = _FakeHost()
         with patch("attune.workflows.code_review_analysis_mixin.logger"):
-            result, _, _ = _run(host._health_monitor({}, "cheap"))
+            result, _, _ = await host._health_monitor({}, "cheap")
         assert "health_snapshot" in result
 
-    def test_handles_import_errors_gracefully(self):
+    @pytest.mark.asyncio
+    async def test_handles_import_errors_gracefully(self):
         """All three metric sources can fail with ImportError."""
         host = _FakeHost()
 
@@ -619,7 +636,7 @@ class TestHealthMonitor:
                 else __builtins__.__import__(name, *a, **kw)  # type: ignore[union-attr]
             ),
         ):
-            result, _, _ = _run(host._health_monitor({}, "cheap"))
+            result, _, _ = await host._health_monitor({}, "cheap")
 
         snapshot = result["health_snapshot"]
         # Should have empty dicts for all three, not crash
@@ -636,13 +653,15 @@ class TestHealthMonitor:
 class TestQualityCheck:
     """Tests for CodeReviewAnalysisMixin._quality_check."""
 
-    def test_no_files(self):
+    @pytest.mark.asyncio
+    async def test_no_files(self):
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": []}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": []}, "cheap")
         assert result["quality_finding_count"] == 0
         assert result["quality_findings"] == []
 
-    def test_detects_bare_except(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_detects_bare_except(self, tmp_path):
         src = tmp_path / "bad.py"
         src.write_text(
             textwrap.dedent(
@@ -656,13 +675,14 @@ class TestQualityCheck:
         )
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         bare_excepts = [f for f in result["quality_findings"] if f["type"] == "bare_except"]
         assert len(bare_excepts) >= 1
         assert bare_excepts[0]["severity"] == "high"
 
-    def test_allows_except_with_noqa(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_allows_except_with_noqa(self, tmp_path):
         src = tmp_path / "ok.py"
         src.write_text(
             textwrap.dedent(
@@ -676,78 +696,86 @@ class TestQualityCheck:
         )
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         bare_excepts = [f for f in result["quality_findings"] if f["type"] == "bare_except"]
         assert len(bare_excepts) == 0
 
-    def test_detects_long_file(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_detects_long_file(self, tmp_path):
         src = tmp_path / "long.py"
         src.write_text("\n".join(f"line_{i} = {i}" for i in range(MAX_FILE_LINES + 100)))
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         long_files = [f for f in result["quality_findings"] if f["type"] == "long_file"]
         assert len(long_files) == 1
         assert long_files[0]["severity"] == "medium"
 
-    def test_detects_todo_comments(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_detects_todo_comments(self, tmp_path):
         src = tmp_path / "todos.py"
         src.write_text("# TODO: fix this\n# FIXME: also this\nx = 1\n")
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         todos = [f for f in result["quality_findings"] if f["type"] == "todo_fixme"]
         assert len(todos) == 1
         assert "2" in todos[0]["description"]  # 2 TODO/FIXME found
 
-    def test_detects_missing_return_type_hint(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_detects_missing_return_type_hint(self, tmp_path):
         src = tmp_path / "nohint.py"
         src.write_text("def compute(x):\n    return x * 2\n")
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         missing_hints = [f for f in result["quality_findings"] if f["type"] == "missing_type_hint"]
         assert len(missing_hints) == 1
         assert "compute" in missing_hints[0]["description"]
 
-    def test_skips_private_functions(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_skips_private_functions(self, tmp_path):
         src = tmp_path / "private.py"
         src.write_text("def _helper(x):\n    return x\n")
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         missing_hints = [f for f in result["quality_findings"] if f["type"] == "missing_type_hint"]
         assert len(missing_hints) == 0
 
-    def test_function_with_return_hint_not_flagged(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_function_with_return_hint_not_flagged(self, tmp_path):
         src = tmp_path / "hinted.py"
         src.write_text("def compute(x: int) -> int:\n    return x * 2\n")
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         missing_hints = [f for f in result["quality_findings"] if f["type"] == "missing_type_hint"]
         assert len(missing_hints) == 0
 
-    def test_non_python_files_skipped(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_non_python_files_skipped(self, tmp_path):
         txt = tmp_path / "notes.txt"
         txt.write_text("except:\nTODO: stuff\n")
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(txt)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(txt)]}, "cheap")
         assert result["quality_finding_count"] == 0
 
-    def test_preserves_input_data(self):
+    @pytest.mark.asyncio
+    async def test_preserves_input_data(self):
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [], "context": "data"}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [], "context": "data"}, "cheap")
         assert result["context"] == "data"
 
-    def test_by_severity_counts(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_by_severity_counts(self, tmp_path):
         src = tmp_path / "mixed.py"
         src.write_text(
             textwrap.dedent(
@@ -762,7 +790,7 @@ class TestQualityCheck:
         )
 
         host = _FakeHost()
-        result, _, _ = _run(host._quality_check({"files_changed": [str(src)]}, "cheap"))
+        result, _, _ = await host._quality_check({"files_changed": [str(src)]}, "cheap")
 
         by_sev = result["quality_by_severity"]
         assert by_sev["high"] >= 1  # bare except
@@ -777,15 +805,17 @@ class TestQualityCheck:
 class TestQualityCheckDeep:
     """Tests for CodeReviewAnalysisMixin._quality_check_deep."""
 
-    def test_no_findings_short_circuit(self):
+    @pytest.mark.asyncio
+    async def test_no_findings_short_circuit(self):
         host = _FakeHost()
         input_data = {"quality_findings": [], "files_changed": []}
-        result, in_t, out_t = _run(host._quality_check_deep(input_data, "capable"))
+        result, in_t, out_t = await host._quality_check_deep(input_data, "capable")
         assert in_t == 0
         assert out_t == 0
         host._call_llm.assert_not_called()
 
-    def test_calls_llm_with_findings(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_calls_llm_with_findings(self, tmp_path):
         src = tmp_path / "code.py"
         src.write_text("line1\nline2\nline3\n")
 
@@ -818,14 +848,15 @@ class TestQualityCheckDeep:
             "files_changed": [str(src)],
         }
 
-        result, in_t, out_t = _run(host._quality_check_deep(input_data, "capable"))
+        result, in_t, out_t = await host._quality_check_deep(input_data, "capable")
 
         host._call_llm.assert_called_once()
         assert result["quality_deep_ran"] is True
         assert result["quality_finding_count"] == 1
         assert result["quality_findings"][0]["suggestion"] == "add specific exception types"
 
-    def test_false_positive_reduces_count(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_false_positive_reduces_count(self, tmp_path):
         src = tmp_path / "code.py"
         src.write_text("content\n")
 
@@ -857,10 +888,11 @@ class TestQualityCheckDeep:
             "files_changed": [],
         }
 
-        result, _, _ = _run(host._quality_check_deep(input_data, "capable"))
+        result, _, _ = await host._quality_check_deep(input_data, "capable")
         assert result["quality_finding_count"] == 0
 
-    def test_overwrites_quality_keys_from_input(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_overwrites_quality_keys_from_input(self, tmp_path):
         """Deep results should replace CHEAP-stage quality keys."""
         src = tmp_path / "code.py"
         src.write_text("x = 1\n")
@@ -884,7 +916,7 @@ class TestQualityCheckDeep:
             "other_data": "keep",
         }
 
-        result, _, _ = _run(host._quality_check_deep(input_data, "capable"))
+        result, _, _ = await host._quality_check_deep(input_data, "capable")
         assert result["other_data"] == "keep"
         assert result["quality_deep_ran"] is True
 
