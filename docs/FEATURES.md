@@ -12,7 +12,7 @@ These features work without any additional dependencies beyond the base install 
 
 | Feature | Description |
 |---------|-------------|
-| **File session storage** | Local file-based session memory in `.empathy/` directory |
+| **File session storage** | Local file-based session memory in `.attune/` directory |
 | **Long-term memory** | Persistent pattern storage using file-based MemDocsStorage |
 | **Security features** | PII scrubbing, secrets detection, and audit logging |
 | **Graph structures** | Pattern graph with nodes, edges, and relationships |
@@ -22,7 +22,7 @@ These features work without any additional dependencies beyond the base install 
 
 | Feature | Description |
 |---------|-------------|
-| **Usage tracking** | Local JSON Lines usage logs in `~/.empathy/telemetry/` |
+| **Usage tracking** | Local JSON Lines usage logs in `~/.attune/telemetry/` |
 | **Feedback loop** | Quality feedback collection for adaptive routing |
 | **CLI commands** | All CLI features work without Redis |
 
@@ -533,6 +533,6 @@ else:
 
 ---
 
-**Version:** 2.6.4+
-**Last Updated:** 2026-02-13
+**Version:** 2.7.3
+**Last Updated:** 2026-02-14
 **Status:** Complete

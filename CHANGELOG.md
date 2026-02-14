@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.3] - 2026-02-14
+
+### Security
+
+- **HTTP Response Splitting (CodeQL #111, #112)**: Added `_sanitize_origin()` to strip control characters from Origin header before using in CORS response headers in `control_panel_api.py`.
+- **Clear-text logging of sensitive data (CodeQL #110)**: Extracted `_has_env_key()` helper returning `bool` to avoid flowing sensitive environment variable values through print statements in `utility_commands.py`.
+- **Biased cryptographic random (CodeQL #107)**: Replaced misused `crypto.getRandomValues` with `Math.random()` for mock demo data in archived bias-wizard.
+
+### Fixed
+
+- **MkDocs strict build failure**: Fixed 3 broken links in `docs/FEATURES.md` to `../README.md`, `CONFIGURATION.md`, and `API.md` that caused the docs CI job to fail on every PR.
+- **Stale `.empathy/` references in documentation**: Updated `FEATURES.md` and `migration-guide.md` to reference `.attune/` directories, matching the v2.7.0 rebrand.
+
+### Changed
+
+- **Dependency updates**: Updated bcrypt (<6.0.0), sentence-transformers (<6.0.0), langchain-text-splitters (<1.2.0), langgraph-checkpoint (<5.0.0).
+- **CI updates**: Bumped actions/setup-python (v4→v6), actions/upload-artifact (v3→v6), codecov/codecov-action (v4→v5).
+
 ## [2.7.2] - 2026-02-14
 
 ### Fixed

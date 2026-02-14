@@ -163,7 +163,7 @@ print("Migration successful!")
 
 ### Session Learning (New)
 - Extracts patterns from user interactions
-- Storage: `.empathy/learned_skills/`
+- Storage: `.attune/learned_skills/`
 - Complements existing system
 
 ## New Imports
@@ -188,7 +188,7 @@ from attune_llm.learning import SessionEvaluator, PatternExtractor
 ```
 project/
 ├── .claude/commands/       # NEW: Slash commands
-├── .empathy/
+├── .attune/
 │   ├── compact_states/     # NEW: Context preservation
 │   └── learned_skills/     # NEW: Session patterns
 ├── agents_md/              # NEW: Markdown agents
