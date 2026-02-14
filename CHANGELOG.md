@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-02-14
+
+### Fixed
+
+- **`attune.__version__` reported "2.7.0" instead of actual version**: The `__init__.py` hardcoded version string was not bumped during the v2.7.1 release. Now kept in sync with `pyproject.toml`.
+
 ## [2.7.1] - 2026-02-14
 
 ### Fixed
