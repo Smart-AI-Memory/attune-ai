@@ -75,13 +75,12 @@ export default function BiasWizard() {
   };
 
   const runBiasTests = () => {
-    // Simulate bias detection using crypto for secure randomness
-    const getSecureRandom = () => crypto.getRandomValues(new Uint32Array(1))[0] / (2**32);
+    // Simulate bias detection with mock data (not security-critical)
     const mockResults = selectedBiasTypes.map(type => ({
       type,
-      severity: getSecureRandom() > 0.5 ? 'high' : getSecureRandom() > 0.5 ? 'medium' : 'low',
-      score: Math.floor(getSecureRandom() * 30) + 20, // 20-50 bias score
-      examples: 2 + Math.floor(getSecureRandom() * 3),
+      severity: Math.random() > 0.5 ? 'high' : Math.random() > 0.5 ? 'medium' : 'low',
+      score: Math.floor(Math.random() * 30) + 20, // 20-50 bias score
+      examples: 2 + Math.floor(Math.random() * 3),
     }));
     setBiasResults(mockResults);
     toast.success('Bias analysis complete!');

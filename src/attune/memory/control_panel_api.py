@@ -10,6 +10,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import re
 import signal
 import ssl
 import sys
@@ -82,13 +83,18 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
         return False
 
+    @staticmethod
+    def _sanitize_origin(origin: str) -> str:
+        """Strip control characters from an origin string to prevent response splitting."""
+        # Remove all ASCII control characters (0x00-0x1F, 0x7F)
+        return re.sub(r"[\x00-\x1f\x7f]", "", origin)
+
     def _get_cors_origin(self) -> str:
         """Get appropriate CORS origin header value."""
         origin = self.headers.get("Origin", "")
 
-        # Prevent HTTP response splitting via CRLF injection
-        if "\r" in origin or "\n" in origin:
-            return "http://localhost:8765"
+        # Sanitize origin to prevent HTTP response splitting via CRLF injection
+        origin = self._sanitize_origin(origin)
 
         if self.allowed_origins is None:
             # Default: allow localhost only

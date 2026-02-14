@@ -184,10 +184,19 @@ def cmd_setup(args: Namespace) -> int:
     return 0
 
 
-def cmd_validate(args: Namespace) -> int:
-    """Validate configuration."""
+def _has_env_key(name: str) -> bool:
+    """Check if an environment variable is set and non-empty.
+
+    Returns only a boolean to avoid exposing sensitive values to callers.
+    """
     import os
 
+    val = os.environ.get(name, "")
+    return len(val) > 0
+
+
+def cmd_validate(args: Namespace) -> int:
+    """Validate configuration."""
     print("\n🔍 Validating configuration...\n")
 
     errors = []
@@ -210,7 +219,7 @@ def cmd_validate(args: Namespace) -> int:
     if not config_found:
         warnings.append("No attune.config file found (using defaults)")
 
-    # Check for API keys
+    # Check for API keys (helper returns bool to avoid logging sensitive values)
     api_keys = {
         "ANTHROPIC_API_KEY": "Anthropic (Claude)",
         "OPENAI_API_KEY": "OpenAI (GPT)",
@@ -219,7 +228,7 @@ def cmd_validate(args: Namespace) -> int:
 
     keys_found = 0
     for key, name in api_keys.items():
-        if os.environ.get(key):
+        if _has_env_key(key):
             print(f"  ✅ {name} API key set")
             keys_found += 1
 
