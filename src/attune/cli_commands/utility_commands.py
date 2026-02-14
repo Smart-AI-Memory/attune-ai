@@ -219,7 +219,8 @@ def cmd_validate(args: Namespace) -> int:
 
     keys_found = 0
     for key, name in api_keys.items():
-        if os.environ.get(key):
+        # Check presence without retrieving the sensitive value
+        if key in os.environ:
             print(f"  ✅ {name} API key set")
             keys_found += 1
 
