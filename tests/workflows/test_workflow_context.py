@@ -305,9 +305,14 @@ class TestTelemetryProxyDelegation:
 
         wf = DummyWorkflow(ctx=ctx)
         wf._track_telemetry(
-            stage="stage1", tier=ModelTier.CHEAP, model="claude-3-haiku",
-            cost=0.001, tokens={"input": 100, "output": 50},
-            cache_hit=False, cache_type=None, duration_ms=500,
+            stage="stage1",
+            tier=ModelTier.CHEAP,
+            model="claude-3-haiku",
+            cost=0.001,
+            tokens={"input": 100, "output": 50},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=500,
         )
 
         mock_tel.track_call.assert_called_once()
@@ -363,7 +368,12 @@ class TestPromptProxyDelegation:
 
         wf = DummyWorkflow(ctx=ctx)
         result = wf._render_plain_prompt(
-            "reviewer", "find bugs", ["step1"], ["rule1"], "code", "def foo(): pass",
+            "reviewer",
+            "find bugs",
+            ["step1"],
+            ["rule1"],
+            "code",
+            "def foo(): pass",
         )
 
         assert result == "Plain prompt text"
@@ -381,14 +391,13 @@ class TestParsingProxyDelegation:
         mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
 
         mock_parsing = MagicMock(spec=ParsingService)
-        mock_parsing.extract_findings.return_value = [
-            {"id": "abc", "file": "test.py", "line": 10}
-        ]
+        mock_parsing.extract_findings.return_value = [{"id": "abc", "file": "test.py", "line": 10}]
         ctx = WorkflowContext(parsing=mock_parsing)
 
         wf = DummyWorkflow(ctx=ctx)
         findings = wf._extract_findings_from_response(
-            "test.py:10: issue found", ["test.py"],
+            "test.py:10: issue found",
+            ["test.py"],
         )
 
         assert len(findings) == 1
@@ -485,9 +494,7 @@ class TestIsXmlEnabledProxy:
 
     @patch("attune.workflows.base.CostTracker")
     @patch("attune.workflows.config.WorkflowConfig.load")
-    def test_is_xml_enabled_returns_false_when_service_says_false(
-        self, mock_config, mock_tracker
-    ):
+    def test_is_xml_enabled_returns_false_when_service_says_false(self, mock_config, mock_tracker):
         """Test _is_xml_enabled returns False when PromptService says False."""
         mock_config.return_value = MagicMock()
         mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
@@ -501,9 +508,7 @@ class TestIsXmlEnabledProxy:
 
     @patch("attune.workflows.base.CostTracker")
     @patch("attune.workflows.config.WorkflowConfig.load")
-    def test_is_xml_enabled_falls_back_without_prompt_service(
-        self, mock_config, mock_tracker
-    ):
+    def test_is_xml_enabled_falls_back_without_prompt_service(self, mock_config, mock_tracker):
         """Test _is_xml_enabled falls back to mixin when no prompt service."""
         mock_config.return_value = MagicMock()
         mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
@@ -641,7 +646,12 @@ class TestCompositionEndToEnd:
 
         wf = DummyWorkflow(ctx=ctx)
         result = wf._render_xml_prompt(
-            "analyst", "find bugs", ["step1"], ["rule1"], "code", "def foo(): pass",
+            "analyst",
+            "find bugs",
+            ["step1"],
+            ["rule1"],
+            "code",
+            "def foo(): pass",
         )
         assert result == "<prompt>test</prompt>"
         mock_prompt.render_xml.assert_called_once()
@@ -655,7 +665,9 @@ class TestCompositionEndToEnd:
 
         mock_parsing = MagicMock(spec=ParsingService)
         mock_parsing.parse_xml_response.return_value = {
-            "_parsed_response": None, "_raw": "test", "xml_parsed": False,
+            "_parsed_response": None,
+            "_raw": "test",
+            "xml_parsed": False,
         }
         ctx = WorkflowContext(parsing=mock_parsing)
 

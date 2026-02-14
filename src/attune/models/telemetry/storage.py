@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .backend import _parse_timestamp
 from .data_models import (
@@ -31,7 +32,7 @@ class TelemetryStore:
     Supports both core telemetry and Tier 1 automation monitoring.
     """
 
-    def __init__(self, storage_dir: str = ".empathy"):
+    def __init__(self, storage_dir: str = ".attune"):
         """Initialize telemetry store.
 
         Args:
@@ -157,6 +158,95 @@ class TelemetryStore:
                     continue
 
         return records
+
+    def get_summary(
+        self,
+        since: datetime | None = None,
+    ) -> dict[str, Any]:
+        """Get aggregated telemetry summary in a single JSONL pass.
+
+        Streams records from JSONL files and computes totals without loading
+        all records into memory. Prefers workflow records; falls back to
+        LLM call records if no workflows exist.
+
+        Args:
+            since: Only include records after this time
+
+        Returns:
+            Dict with workflow_count, call_count, total_cost, total_tokens, source
+
+        """
+        # Try workflows first
+        wf_count = 0
+        total_cost = 0.0
+        total_tokens = 0
+
+        if self.workflows_file.exists():
+            with open(self.workflows_file) as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if since:
+                            record_time = _parse_timestamp(data.get("started_at", ""))
+                            if record_time < since:
+                                continue
+                        wf_count += 1
+                        total_cost += data.get("total_cost", 0.0)
+                        total_tokens += data.get("total_input_tokens", 0)
+                        total_tokens += data.get("total_output_tokens", 0)
+                    except (json.JSONDecodeError, KeyError, ValueError):
+                        continue
+
+        if wf_count > 0:
+            return {
+                "workflow_count": wf_count,
+                "call_count": 0,
+                "total_cost": total_cost,
+                "total_tokens": total_tokens,
+                "source": "workflows",
+            }
+
+        # Fall back to LLM calls
+        call_count = 0
+        total_cost = 0.0
+        total_tokens = 0
+
+        if self.calls_file.exists():
+            with open(self.calls_file) as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if since:
+                            record_time = _parse_timestamp(data.get("timestamp", ""))
+                            if record_time < since:
+                                continue
+                        call_count += 1
+                        total_cost += data.get("estimated_cost", 0.0)
+                        total_tokens += data.get("input_tokens", 0)
+                        total_tokens += data.get("output_tokens", 0)
+                    except (json.JSONDecodeError, KeyError, ValueError):
+                        continue
+
+        if call_count > 0:
+            return {
+                "workflow_count": 0,
+                "call_count": call_count,
+                "total_cost": total_cost,
+                "total_tokens": total_tokens,
+                "source": "calls",
+            }
+
+        return {
+            "workflow_count": 0,
+            "call_count": 0,
+            "total_cost": 0.0,
+            "total_tokens": 0,
+            "source": "none",
+        }
 
     # Tier 1 automation monitoring methods
 

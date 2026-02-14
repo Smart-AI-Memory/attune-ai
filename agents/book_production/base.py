@@ -64,7 +64,8 @@ class AgentConfig:
 
     def __post_init__(self):
         warnings.warn(
-            "AgentConfig is deprecated. Use UnifiedAgentConfig from " "attune.config.agent_config instead.",
+            "AgentConfig is deprecated. Use UnifiedAgentConfig from "
+            "attune.config.agent_config instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -441,7 +442,7 @@ class BaseAgent(ABC):
         # NOTE: MemDocs is designed for doc-intelligence (EmpathyAdapter, DocumentIndex),
         #       not general pattern storage. Local pattern cache is appropriate for this use case.
         # DECISION: Phase 1.2 - Skipped full MemDocs integration. Local cache sufficient.
-        # If doc-intelligence features needed, see empathy_llm_toolkit/memdocs/ for examples.
+        # If doc-intelligence features needed, see attune/memdocs/ for examples.
         # For now, use local pattern cache (recommended approach)
         return await self._search_local_patterns(query, collection_name, limit)
 
@@ -476,7 +477,7 @@ class BaseAgent(ABC):
         # NOTE: MemDocs is designed for doc-intelligence (EmpathyAdapter, DocumentIndex),
         #       not general pattern storage. Local pattern cache is appropriate for this use case.
         # DECISION: Phase 1.2 - Skipped full MemDocs integration. Local cache sufficient.
-        # If doc-intelligence features needed, see empathy_llm_toolkit/memdocs/ for examples.
+        # If doc-intelligence features needed, see attune/memdocs/ for examples.
         # For now, store locally (recommended approach)
         return await self._store_local_pattern(pattern, collection_name)
 

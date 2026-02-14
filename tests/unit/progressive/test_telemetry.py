@@ -102,7 +102,7 @@ class TestProgressiveTelemetry:
     def test_track_escalation(self, tmp_path, monkeypatch):
         """Test escalation tracking."""
         # Use tmp_path for telemetry directory
-        telemetry_dir = tmp_path / ".empathy" / "telemetry"
+        telemetry_dir = tmp_path / ".attune" / "telemetry"
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         telemetry = ProgressiveTelemetry("test-workflow", user_id="test-user")
@@ -134,14 +134,12 @@ class TestProgressiveTelemetry:
 
     def test_track_budget_exceeded(self, tmp_path, monkeypatch, caplog):
         """Test budget exceeded tracking."""
-        telemetry_dir = tmp_path / ".empathy" / "telemetry"
+        telemetry_dir = tmp_path / ".attune" / "telemetry"
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         telemetry = ProgressiveTelemetry("test-workflow")
 
-        telemetry.track_budget_exceeded(
-            current_cost=7.50, max_budget=5.00, action="abort"
-        )
+        telemetry.track_budget_exceeded(current_cost=7.50, max_budget=5.00, action="abort")
 
         # Verify event was written
         events_file = telemetry_dir / "progressive_events.jsonl"
@@ -162,14 +160,12 @@ class TestProgressiveTelemetry:
 
     def test_track_custom_event_success(self, tmp_path, monkeypatch):
         """Test custom event tracking."""
-        telemetry_dir = tmp_path / ".empathy" / "telemetry"
+        telemetry_dir = tmp_path / ".attune" / "telemetry"
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         telemetry = ProgressiveTelemetry("test-workflow", user_id="user123")
 
-        telemetry._track_custom_event(
-            event_type="test_event", data={"key": "value", "count": 42}
-        )
+        telemetry._track_custom_event(event_type="test_event", data={"key": "value", "count": 42})
 
         # Verify event was written
         events_file = telemetry_dir / "progressive_events.jsonl"
@@ -187,7 +183,7 @@ class TestProgressiveTelemetry:
     def test_track_custom_event_handles_write_error(self, tmp_path, monkeypatch, caplog):
         """Test custom event tracking handles write errors."""
         # Make telemetry dir read-only to cause write error
-        telemetry_dir = tmp_path / ".empathy" / "telemetry"
+        telemetry_dir = tmp_path / ".attune" / "telemetry"
         telemetry_dir.mkdir(parents=True)
         telemetry_dir.chmod(0o444)  # Read-only
 
@@ -203,7 +199,7 @@ class TestProgressiveTelemetry:
 
     def test_track_custom_event_anonymous_user(self, tmp_path, monkeypatch):
         """Test custom event tracking with no user ID."""
-        telemetry_dir = tmp_path / ".empathy" / "telemetry"
+        telemetry_dir = tmp_path / ".attune" / "telemetry"
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         telemetry = ProgressiveTelemetry("test-workflow", user_id=None)
@@ -328,7 +324,7 @@ class TestTelemetryIntegration:
         assert mock_tracker.track_llm_call.call_count == 2
 
         # Verify events file has escalation event
-        events_file = tmp_path / ".empathy" / "telemetry" / "progressive_events.jsonl"
+        events_file = tmp_path / ".attune" / "telemetry" / "progressive_events.jsonl"
         assert events_file.exists()
 
         with events_file.open() as f:

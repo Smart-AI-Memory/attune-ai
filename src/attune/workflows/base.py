@@ -448,13 +448,25 @@ class BaseWorkflow(
         """Track telemetry -- delegates to TelemetryService when ctx is provided."""
         if self._ctx and self._ctx.telemetry:
             self._ctx.telemetry.track_call(
-                stage=stage, tier=tier, model=model, cost=cost,
-                tokens=tokens, cache_hit=cache_hit, cache_type=cache_type,
+                stage=stage,
+                tier=tier,
+                model=model,
+                cost=cost,
+                tokens=tokens,
+                cache_hit=cache_hit,
+                cache_type=cache_type,
                 duration_ms=duration_ms,
             )
             return
         super()._track_telemetry(
-            stage, tier, model, cost, tokens, cache_hit, cache_type, duration_ms,
+            stage,
+            tier,
+            model,
+            cost,
+            tokens,
+            cache_hit,
+            cache_type,
+            duration_ms,
         )
 
     def _emit_call_telemetry(
@@ -474,27 +486,37 @@ class BaseWorkflow(
         """Emit call record -- delegates to TelemetryService when ctx is provided."""
         if self._ctx and self._ctx.telemetry:
             self._ctx.telemetry.emit_call_record(
-                step_name=step_name, task_type=task_type, tier=tier,
-                model_id=model_id, input_tokens=input_tokens,
-                output_tokens=output_tokens, cost=cost, latency_ms=latency_ms,
-                success=success, error_message=error_message,
+                step_name=step_name,
+                task_type=task_type,
+                tier=tier,
+                model_id=model_id,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=cost,
+                latency_ms=latency_ms,
+                success=success,
+                error_message=error_message,
                 fallback_used=fallback_used,
             )
             return
         super()._emit_call_telemetry(
-            step_name, task_type, tier, model_id, input_tokens,
-            output_tokens, cost, latency_ms, success, error_message,
+            step_name,
+            task_type,
+            tier,
+            model_id,
+            input_tokens,
+            output_tokens,
+            cost,
+            latency_ms,
+            success,
+            error_message,
             fallback_used,
         )
 
     def _emit_workflow_telemetry(self, result: Any) -> None:
         """Emit workflow record -- delegates to TelemetryService when ctx is provided."""
         if self._ctx and self._ctx.telemetry:
-            model_fn = (
-                self.get_model_for_tier
-                if hasattr(self, "get_model_for_tier")
-                else None
-            )
+            model_fn = self.get_model_for_tier if hasattr(self, "get_model_for_tier") else None
             self._ctx.telemetry.emit_workflow_record(result, model_fn)
             return
         super()._emit_workflow_telemetry(result)
@@ -525,10 +547,16 @@ class BaseWorkflow(
         """Build cached system prompt -- delegates to PromptService when ctx is provided."""
         if self._ctx and self._ctx.prompt:
             return self._ctx.prompt.build_cached_system_prompt(
-                role, guidelines, documentation, examples,
+                role,
+                guidelines,
+                documentation,
+                examples,
             )
         return super()._build_cached_system_prompt(
-            role, guidelines, documentation, examples,
+            role,
+            guidelines,
+            documentation,
+            examples,
         )
 
     def _render_xml_prompt(
@@ -544,12 +572,22 @@ class BaseWorkflow(
         """Render XML prompt -- delegates to PromptService when ctx is provided."""
         if self._ctx and self._ctx.prompt:
             return self._ctx.prompt.render_xml(
-                role, goal, instructions, constraints,
-                input_type, input_payload, extra,
+                role,
+                goal,
+                instructions,
+                constraints,
+                input_type,
+                input_payload,
+                extra,
             )
         return super()._render_xml_prompt(
-            role, goal, instructions, constraints,
-            input_type, input_payload, extra,
+            role,
+            goal,
+            instructions,
+            constraints,
+            input_type,
+            input_payload,
+            extra,
         )
 
     def _render_plain_prompt(
@@ -564,12 +602,20 @@ class BaseWorkflow(
         """Render plain prompt -- delegates to PromptService when ctx is provided."""
         if self._ctx and self._ctx.prompt:
             return self._ctx.prompt.render_plain(
-                role, goal, instructions, constraints,
-                input_type, input_payload,
+                role,
+                goal,
+                instructions,
+                constraints,
+                input_type,
+                input_payload,
             )
         return super()._render_plain_prompt(
-            role, goal, instructions, constraints,
-            input_type, input_payload,
+            role,
+            goal,
+            instructions,
+            constraints,
+            input_type,
+            input_payload,
         )
 
     # --- Parsing proxies (ResponseParsingMixin -> ParsingService) ---
@@ -589,10 +635,14 @@ class BaseWorkflow(
         """Extract findings -- delegates to ParsingService when ctx is provided."""
         if self._ctx and self._ctx.parsing:
             return self._ctx.parsing.extract_findings(
-                response, files_changed, code_context,
+                response,
+                files_changed,
+                code_context,
             )
         return super()._extract_findings_from_response(
-            response, files_changed, code_context,
+            response,
+            files_changed,
+            code_context,
         )
 
     # --- Tier routing proxies (TierRoutingMixin -> TierService) ---
@@ -607,7 +657,9 @@ class BaseWorkflow(
         if self._ctx and self._ctx.tier:
             return self._ctx.tier.get_tier(stage_name, input_data, budget_remaining)
         return super()._get_tier_with_routing(
-            stage_name, input_data, budget_remaining,
+            stage_name,
+            input_data,
+            budget_remaining,
         )
 
     # --- Coordination proxies (CoordinationMixin -> CoordinationService) ---
@@ -622,10 +674,16 @@ class BaseWorkflow(
         """Send signal -- delegates to CoordinationService when ctx is provided."""
         if self._ctx and self._ctx.coordination:
             return self._ctx.coordination.send_signal(
-                signal_type, target_agent, payload, ttl_seconds,
+                signal_type,
+                target_agent,
+                payload,
+                ttl_seconds,
             )
         return super().send_signal(
-            signal_type, target_agent, payload, ttl_seconds,
+            signal_type,
+            target_agent,
+            payload,
+            ttl_seconds,
         )
 
     def wait_for_signal(
@@ -638,10 +696,16 @@ class BaseWorkflow(
         """Wait for signal -- delegates to CoordinationService when ctx is provided."""
         if self._ctx and self._ctx.coordination:
             return self._ctx.coordination.wait_for_signal(
-                signal_type, source_agent, timeout, poll_interval,
+                signal_type,
+                source_agent,
+                timeout,
+                poll_interval,
             )
         return super().wait_for_signal(
-            signal_type, source_agent, timeout, poll_interval,
+            signal_type,
+            source_agent,
+            timeout,
+            poll_interval,
         )
 
     def check_signal(
@@ -653,8 +717,12 @@ class BaseWorkflow(
         """Check signal -- delegates to CoordinationService when ctx is provided."""
         if self._ctx and self._ctx.coordination:
             return self._ctx.coordination.check_signal(
-                signal_type, source_agent, consume,
+                signal_type,
+                source_agent,
+                consume,
             )
         return super().check_signal(
-            signal_type, source_agent, consume,
+            signal_type,
+            source_agent,
+            consume,
         )

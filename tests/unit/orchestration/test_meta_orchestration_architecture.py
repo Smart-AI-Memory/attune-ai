@@ -242,19 +242,55 @@ class TestQualityGatesEnforcement:
         """Set up test fixtures."""
         self.orchestrator = MetaOrchestrator()
 
-    @pytest.mark.skip(
-        reason="create_execution_plan() doesn't exist as standalone method - see ARCHITECTURAL_GAPS_ANALYSIS.md Gap 1.3"
-    )
     def test_quality_gates_copied_to_execution_plan(self):
         """Test that quality gates from requirements appear in execution plan."""
-        # TODO: Extract create_execution_plan() method for testability
-        pass
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.MODERATE,
+            domain=TaskDomain.TESTING,
+            capabilities_needed=["analyze_gaps"],
+            quality_gates={"min_coverage": 80, "max_complexity": 10},
+        )
+        agents = [
+            AgentTemplate(
+                id="test_agent",
+                role="Tester",
+                capabilities=["analyze_gaps"],
+                tier_preference="CAPABLE",
+                tools=["coverage_analyzer"],
+                default_instructions="Analyze coverage",
+                quality_gates={"min_coverage": 80},
+            )
+        ]
+        plan = self.orchestrator.create_execution_plan(
+            requirements, agents, CompositionPattern.SEQUENTIAL
+        )
 
-    @pytest.mark.skip(reason="create_execution_plan() doesn't exist as standalone method")
+        assert plan.quality_gates == {"min_coverage": 80, "max_complexity": 10}
+
     def test_minimum_quality_gate_defaults(self):
-        """Test that minimum quality standards are enforced by default."""
-        # TODO: Implement after create_execution_plan() is extracted
-        pass
+        """Test that empty quality gates produce empty dict in plan."""
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.SIMPLE,
+            domain=TaskDomain.TESTING,
+            capabilities_needed=["analyze_gaps"],
+            quality_gates={},
+        )
+        agents = [
+            AgentTemplate(
+                id="test_agent",
+                role="Tester",
+                capabilities=["analyze_gaps"],
+                tier_preference="CHEAP",
+                tools=[],
+                default_instructions="Test",
+                quality_gates={},
+            )
+        ]
+        plan = self.orchestrator.create_execution_plan(
+            requirements, agents, CompositionPattern.SEQUENTIAL
+        )
+
+        assert plan.quality_gates == {}
 
 
 # ============================================================================
@@ -269,17 +305,66 @@ class TestCostAndDurationEstimation:
         """Set up test fixtures."""
         self.orchestrator = MetaOrchestrator()
 
-    @pytest.mark.skip(reason="Requires create_execution_plan() method - architectural gap")
     def test_cost_estimation_increases_with_complexity(self):
         """Test that more complex tasks have higher estimated costs."""
-        # TODO: Re-enable when create_execution_plan() is extracted
-        pass
+        base_agent = AgentTemplate(
+            id="agent_cheap",
+            role="Worker",
+            capabilities=["work"],
+            tier_preference="CHEAP",
+            tools=[],
+            default_instructions="Work",
+            quality_gates={},
+        )
+        premium_agent = AgentTemplate(
+            id="agent_premium",
+            role="Expert",
+            capabilities=["work"],
+            tier_preference="PREMIUM",
+            tools=[],
+            default_instructions="Expert work",
+            quality_gates={},
+        )
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.SIMPLE,
+            domain=TaskDomain.TESTING,
+            capabilities_needed=["work"],
+        )
 
-    @pytest.mark.skip(reason="Requires create_execution_plan() method - architectural gap")
+        plan_small = self.orchestrator.create_execution_plan(
+            requirements, [base_agent], CompositionPattern.SEQUENTIAL
+        )
+        plan_large = self.orchestrator.create_execution_plan(
+            requirements,
+            [base_agent, premium_agent, base_agent, premium_agent, base_agent],
+            CompositionPattern.SEQUENTIAL,
+        )
+
+        assert plan_large.estimated_cost >= plan_small.estimated_cost
+
     def test_duration_estimation_reasonable(self):
         """Test that duration estimates are in reasonable ranges."""
-        # TODO: Re-enable when create_execution_plan() is extracted
-        pass
+        agent = AgentTemplate(
+            id="test_agent",
+            role="Worker",
+            capabilities=["work"],
+            tier_preference="CAPABLE",
+            tools=[],
+            default_instructions="Work",
+            quality_gates={},
+        )
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.MODERATE,
+            domain=TaskDomain.TESTING,
+            capabilities_needed=["work"],
+        )
+
+        plan = self.orchestrator.create_execution_plan(
+            requirements, [agent, agent], CompositionPattern.SEQUENTIAL
+        )
+
+        assert plan.estimated_duration > 0
+        assert plan.estimated_duration < 86400  # Less than 24 hours
 
 
 # ============================================================================

@@ -2,7 +2,7 @@
 
 **AI-powered developer workflows with cost optimization and intelligent routing.**
 
-Run code review, debugging, testing, and release workflows from your terminal or Claude Code. Smart tier routing saves 34-86% on LLM costs.
+The easiest way to run code review, debugging, testing, and release workflows from your terminal or Claude Code. Just type `/attune` and let Socratic discovery guide you. Smart tier routing saves 34-86% on LLM costs.
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
@@ -22,11 +22,13 @@ pip install attune-ai[developer]
 
 ## What's New in v2.7.0
 
-- **Workflow Consolidation** - 12 overlapping workflows consolidated into 4 canonical groups with backward-compatible migration aliases
+- **Workflow Consolidation** - Overlapping workflows consolidated into canonical groups with backward-compatible migration aliases
 - **Feature Availability API** - Runtime checking of optional dependencies (Redis, etc.) with graceful degradation
-- **Modular Architecture** - Phase 2D/3D/2E complete: WorkflowContext composition, memory/telemetry splitting, workflow registry cleanup
+- **Modular Architecture** - WorkflowContext composition, clean memory/telemetry splitting, streamlined workflow registry
+- **Deep Analysis Stages** - Code review now LLM-validates performance and quality findings to filter false positives and add fix suggestions
 - **433+ New Tests** - Feature availability, workflow consolidation, and 6 workflow test suites
 - **`attune features` CLI** - See what's available and what needs installing at a glance
+- **Easiest version to learn** - Simplified command hubs, Socratic discovery, and natural language routing make Attune the most approachable release yet
 
 ---
 
@@ -34,7 +36,7 @@ pip install attune-ai[developer]
 
 | | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 27+ built-in | Build from scratch | None | PR review only |
+| **Ready-to-use workflows** | 15 built-in | Build from scratch | None | PR review only |
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
 | **Cost in Claude Code** | $0 (skill-based) | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |

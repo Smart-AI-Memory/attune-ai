@@ -414,7 +414,7 @@ class TestCmdValidate:
         # Force the WORKFLOW_REGISTRY import inside cmd_validate to raise ImportError.
         # The function does: from attune.workflows import WORKFLOW_REGISTRY
         # We remove the module from sys.modules temporarily and insert a broken one.
-        original_module = sys.modules.get("attune.workflows")
+        sys.modules.get("attune.workflows")
 
         def _fake_import(name: str, *a: object, **kw: object) -> object:
             if name == "attune.workflows":

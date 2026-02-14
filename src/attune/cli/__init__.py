@@ -25,7 +25,7 @@ def get_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("empathy-framework")
+        return version("attune-ai")
     except Exception:  # noqa: BLE001
         return "dev"
 
@@ -44,11 +44,11 @@ def main() -> int:
 
     # Create main parser
     parser = argparse.ArgumentParser(
-        prog="empathy", description="Attune AI - Context-aware development automation"
+        prog="attune", description="Attune AI - Context-aware development automation"
     )
 
     # Add global flags
-    parser.add_argument("--version", action="version", version=f"empathy {get_version()}")
+    parser.add_argument("--version", action="version", version=f"attune {get_version()}")
 
     # Create subparsers
     subparsers = parser.add_subparsers(

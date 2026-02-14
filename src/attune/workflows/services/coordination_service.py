@@ -60,9 +60,7 @@ class CoordinationService:
                 from attune.telemetry import HeartbeatCoordinator
 
                 self._heartbeat_coordinator = HeartbeatCoordinator()
-                logger.debug(
-                    f"Heartbeat tracking initialized for {self._workflow_name}"
-                )
+                logger.debug(f"Heartbeat tracking initialized for {self._workflow_name}")
             except ImportError as e:
                 logger.warning(f"HeartbeatCoordinator import failed: {e}")
                 self._enable_heartbeat = False
@@ -182,12 +180,8 @@ class CoordinationService:
             try:
                 from attune.telemetry import CoordinationSignals
 
-                self._coordination_signals = CoordinationSignals(
-                    agent_id=self._agent_id
-                )
-                logger.debug(
-                    f"Coordination signals initialized for {self._workflow_name}"
-                )
+                self._coordination_signals = CoordinationSignals(agent_id=self._agent_id)
+                logger.debug(f"Coordination signals initialized for {self._workflow_name}")
             except ImportError as e:
                 logger.warning(f"CoordinationSignals import failed: {e}")
                 self._enable_coordination = False

@@ -66,7 +66,7 @@ def cmd_auth_setup(args: Any) -> int:
         print(f"  Tier: {strategy.subscription_tier.value}")
         print(f"  Mode: {strategy.default_mode.value}")
         print()
-        print("Run 'empathy auth status' to view your configuration.")
+        print("Run 'attune auth status' to view your configuration.")
         return 0
 
     except KeyboardInterrupt:
@@ -120,7 +120,7 @@ def cmd_auth_status(args: Any) -> int:
             config_text.append(f"{strategy.default_mode.value.upper()}\n", style="bold")
             config_text.append("Setup Completed: ", style="cyan")
             config_text.append(
-                "✅ Yes\n" if strategy.setup_completed else "❌ No (run 'empathy auth setup')\n"
+                "✅ Yes\n" if strategy.setup_completed else "❌ No (run 'attune auth setup')\n"
             )
 
             console.print(Panel(config_text, title="Authentication Strategy", border_style="blue"))
@@ -187,7 +187,7 @@ def cmd_auth_status(args: Any) -> int:
 
     except FileNotFoundError:
         print("❌ No authentication strategy configured.")
-        print("Run 'empathy auth setup' to configure your strategy.")
+        print("Run 'attune auth setup' to configure your strategy.")
         return 1
     except Exception as e:
         print(f"❌ Error reading configuration: {e}")
@@ -210,14 +210,14 @@ def cmd_auth_reset(args: Any) -> int:
         print("⚠️  WARNING: This will delete your authentication strategy configuration.")
         print(f"Location: {AUTH_STRATEGY_FILE}")
         print("\nUse --confirm to proceed:")
-        print("  empathy auth reset --confirm")
+        print("  attune auth reset --confirm")
         return 1
 
     try:
         if AUTH_STRATEGY_FILE.exists():
             AUTH_STRATEGY_FILE.unlink()
             print("✅ Authentication strategy reset successfully.")
-            print("Run 'empathy auth setup' to configure a new strategy.")
+            print("Run 'attune auth setup' to configure a new strategy.")
             return 0
         else:
             print("ℹ️  No configuration file found - nothing to reset.")
@@ -242,7 +242,7 @@ def cmd_auth_recommend(args: Any) -> int:
 
     if not file_path_str:
         print("❌ Error: file_path is required")
-        print("Usage: empathy auth recommend <file_path>")
+        print("Usage: attune auth recommend <file_path>")
         return 1
 
     file_path = Path(file_path_str)
@@ -364,7 +364,7 @@ def cmd_auth_recommend(args: Any) -> int:
 
     except FileNotFoundError:
         print("\n❌ No authentication strategy configured.")
-        print("Run 'empathy auth setup' to configure your strategy first.")
+        print("Run 'attune auth setup' to configure your strategy first.")
         return 1
     except Exception as e:
         print(f"\n❌ Error analyzing file: {e}")

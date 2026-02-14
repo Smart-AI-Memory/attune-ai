@@ -71,7 +71,7 @@ def cmd_review(args):
     """Pattern-based code review against historical bugs.
 
     Note: This command has been deprecated. The underlying workflow module
-    has been removed. Use 'empathy workflow run bug-predict' instead.
+    has been removed. Use 'attune workflow run bug-predict' instead.
 
     Args:
         args: Namespace object from argparse.
@@ -84,7 +84,7 @@ def cmd_review(args):
     print("The CodeReviewWorkflow module has been removed.")
     print("Please use one of these alternatives:")
     print()
-    print("  empathy workflow run bug-predict    # Scan for risky patterns")
+    print("  attune workflow run bug-predict    # Scan for risky patterns")
     print("  ruff check <files>                  # Fast linting")
     print("  bandit -r <path>                    # Security scanning")
     print()

@@ -8,23 +8,26 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 from attune.config import _validate_file_path
 
+logger = logging.getLogger(__name__)
+
 # Discovery tips with conditions
 DISCOVERY_TIPS = {
     # After first commands
     "after_first_inspect": {
-        "tip": "Try 'empathy ship' before commits for automated pre-flight checks",
+        "tip": "Try 'attune ship' before commits for automated pre-flight checks",
         "trigger": "inspect",
         "min_uses": 1,
         "priority": 2,
         "shown": False,
     },
     "after_first_health": {
-        "tip": "Use 'empathy fix-all' to auto-fix lint and format issues",
+        "tip": "Use 'attune fix-all' to auto-fix lint and format issues",
         "trigger": "health",
         "min_uses": 1,
         "priority": 2,
@@ -32,14 +35,14 @@ DISCOVERY_TIPS = {
     },
     # After accumulating usage
     "after_10_inspects": {
-        "tip": "You've got patterns! Run 'empathy sync-claude' to share them with Claude Code",
+        "tip": "You've got patterns! Run 'attune sync-claude' to share them with Claude Code",
         "trigger": "inspect",
         "min_uses": 10,
         "priority": 1,
         "shown": False,
     },
     "after_5_ships": {
-        "tip": "Start your day with 'empathy morning' for a productivity briefing",
+        "tip": "Start your day with 'attune morning' for a productivity briefing",
         "trigger": "ship",
         "min_uses": 5,
         "priority": 1,
@@ -47,27 +50,27 @@ DISCOVERY_TIPS = {
     },
     # Context-based tips
     "high_tech_debt": {
-        "tip": "Tech debt is trending up. Try 'empathy status' for priority focus areas",
+        "tip": "Tech debt is trending up. Try 'attune status' for priority focus areas",
         "condition": lambda stats: stats.get("tech_debt_trend") == "increasing",
         "priority": 1,
         "shown": False,
     },
     "no_patterns": {
-        "tip": "Run 'empathy learn' to extract patterns from your git history",
+        "tip": "Run 'attune learn' to extract patterns from your git history",
         "condition": lambda stats: stats.get("patterns_learned", 0) == 0
         and stats.get("total_commands", 0) > 5,
         "priority": 1,
         "shown": False,
     },
     "cost_savings": {
-        "tip": "Check your API savings with 'empathy costs' - model routing can save 80%!",
+        "tip": "Check your API savings with 'attune costs' - model routing can save 80%!",
         "condition": lambda stats: stats.get("api_requests", 0) > 10,
         "priority": 2,
         "shown": False,
     },
     # Weekly reminders
     "weekly_sync": {
-        "tip": "Weekly reminder: Run 'empathy sync-claude' to keep Claude Code patterns current",
+        "tip": "Weekly reminder: Run 'attune sync-claude' to keep Claude Code patterns current",
         "condition": lambda stats: _days_since_sync(stats) >= 7,
         "priority": 2,
         "shown": False,
@@ -97,7 +100,7 @@ class DiscoveryEngine:
         engine.mark_shown("after_first_inspect")
     """
 
-    def __init__(self, storage_dir: str = ".empathy"):
+    def __init__(self, storage_dir: str = ".attune"):
         """Initialize discovery engine."""
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
@@ -211,8 +214,9 @@ class DiscoveryEngine:
                     condition = tip_config["condition"]
                     if callable(condition) and condition(self.state):
                         should_show = True
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001
+                    # INTENTIONAL: Discovery tip conditions are optional; log but don't break
+                    logger.debug("Discovery condition '%s' failed", tip_id, exc_info=True)
 
             if should_show:
                 tips_to_show.append(
@@ -266,7 +270,7 @@ class DiscoveryEngine:
 _engine: DiscoveryEngine | None = None
 
 
-def get_engine(storage_dir: str = ".empathy") -> DiscoveryEngine:
+def get_engine(storage_dir: str = ".attune") -> DiscoveryEngine:
     """Get or create the global discovery engine."""
     global _engine
     if _engine is None:

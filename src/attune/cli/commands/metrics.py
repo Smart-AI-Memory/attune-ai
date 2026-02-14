@@ -42,7 +42,7 @@ def cmd_metrics_show(args):
         logger.info(f"\nFirst Use: {stats['first_use']}")
         logger.info(f"Last Use: {stats['last_use']}")
 
-        logger.info("\nEmpathy Level Usage:")
+        logger.info("\nLevel Usage:")
         logger.info(f"  Level 1: {stats.get('level_1_count', 0)} uses")
         logger.info(f"  Level 2: {stats.get('level_2_count', 0)} uses")
         logger.info(f"  Level 3: {stats.get('level_3_count', 0)} uses")

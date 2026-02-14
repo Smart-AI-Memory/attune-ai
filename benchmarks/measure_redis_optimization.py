@@ -23,7 +23,7 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
 
 from attune.memory.short_term import RedisShortTermMemory
-from attune.memory.types import AgentCredentials, AccessTier, RedisConfig
+from attune.memory.types import AccessTier, AgentCredentials, RedisConfig
 
 
 def measure_redis_performance():
@@ -41,8 +41,8 @@ def measure_redis_performance():
 
     print("\n📊 Test Configuration:")
     print(f"  Keys: {len(test_keys)}")
-    print(f"  Operations: 300 (3 passes)")
-    print(f"  Expected local cache hit rate: 66%+ (2/3 passes)")
+    print("  Operations: 300 (3 passes)")
+    print("  Expected local cache hit rate: 66%+ (2/3 passes)")
 
     # =========================================================================
     # Test 1: WITHOUT local cache
@@ -80,7 +80,7 @@ def measure_redis_performance():
 
     total_duration1 = write_duration1 + read_duration1_pass1 + read_duration1_pass2
 
-    print(f"\n✅ Results:")
+    print("\n✅ Results:")
     print(f"  Write (100 items): {write_duration1:.3f}s ({write_duration1*10:.2f}ms per item)")
     print(f"  Read Pass 1: {read_duration1_pass1:.3f}s ({read_duration1_pass1*10:.2f}ms per item)")
     print(f"  Read Pass 2: {read_duration1_pass2:.3f}s ({read_duration1_pass2*10:.2f}ms per item)")
@@ -125,12 +125,12 @@ def measure_redis_performance():
     total_duration2 = write_duration2 + read_duration2_pass1 + read_duration2_pass2
     cache_stats = memory2.get_local_cache_stats()
 
-    print(f"\n✅ Results:")
+    print("\n✅ Results:")
     print(f"  Write (100 items): {write_duration2:.3f}s ({write_duration2*10:.2f}ms per item)")
     print(f"  Read Pass 1: {read_duration2_pass1:.3f}s ({read_duration2_pass1*10:.2f}ms per item)")
     print(f"  Read Pass 2: {read_duration2_pass2:.3f}s ({read_duration2_pass2*10:.2f}ms per item)")
     print(f"  Total: {total_duration2:.3f}s")
-    print(f"\n📊 Local Cache Stats:")
+    print("\n📊 Local Cache Stats:")
     print(f"  Enabled: {cache_stats['enabled']}")
     print(f"  Size: {cache_stats['size']}/{cache_stats['max_size']}")
     print(f"  Hits: {cache_stats['hits']}")
@@ -148,7 +148,7 @@ def measure_redis_performance():
     time_saved = total_duration1 - total_duration2
     time_saved_pct = (time_saved / total_duration1 * 100) if total_duration1 > 0 else 0
 
-    print(f"\n🚀 Overall Performance:")
+    print("\n🚀 Overall Performance:")
     print(f"  Without local cache: {total_duration1:.3f}s")
     print(f"  With local cache: {total_duration2:.3f}s")
     print(f"  Speedup: {speedup:.2f}x")
@@ -159,13 +159,13 @@ def measure_redis_performance():
     pass2_saved = read_duration1_pass2 - read_duration2_pass2
     pass2_saved_pct = (pass2_saved / read_duration1_pass2 * 100) if read_duration1_pass2 > 0 else 0
 
-    print(f"\n🎯 Cache Impact (Read Pass 3 - fully cached):")
+    print("\n🎯 Cache Impact (Read Pass 3 - fully cached):")
     print(f"  Without cache: {read_duration1_pass2:.3f}s")
     print(f"  With cache: {read_duration2_pass2:.3f}s")
     print(f"  Speedup: {pass2_speedup:.2f}x")
     print(f"  Time saved: {pass2_saved:.3f}s ({pass2_saved_pct:.1f}%)")
 
-    print(f"\n✅ Success Criteria:")
+    print("\n✅ Success Criteria:")
     if cache_stats["hit_rate"] >= 50:
         print(f"  ✓ Cache hit rate: {cache_stats['hit_rate']:.1f}% (target: >50%)")
     else:

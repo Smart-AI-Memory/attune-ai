@@ -8,8 +8,9 @@ Licensed under the Apache License, Version 2.0
 
 from pathlib import Path
 
-from attune.workflow_patterns import get_workflow_pattern_registry
 from workflow_scaffolding.generator import WorkflowGenerator
+
+from attune.workflow_patterns import get_workflow_pattern_registry
 
 
 def test_pattern_registry():
@@ -170,9 +171,9 @@ def run_all_tests():
         print("\n✓ Workflow Factory is ready to use!")
         print("\nNext steps:")
         print("  1. Try creating a workflow:")
-        print("     empathy workflow create my-workflow --patterns multi-stage")
+        print("     attune workflow create my-workflow --patterns multi-stage")
         print("  2. List available patterns:")
-        print("     empathy workflow list-patterns")
+        print("     attune workflow list-patterns")
         print("=" * 70 + "\n")
 
     except AssertionError as e:

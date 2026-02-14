@@ -54,7 +54,7 @@ def _collect_cache_stats(days: int = 7) -> dict[str, Any]:
     # Try to find log files
     log_paths = [
         Path.cwd() / "attune.log",
-        Path.home() / ".empathy" / "logs" / "attune.log",
+        Path.home() / ".attune" / "logs" / "attune.log",
         Path("/tmp/attune.log"),  # nosec B108 - temp log file location
     ]
 

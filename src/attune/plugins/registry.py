@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 _ENTRY_POINT_GROUP = "attune.plugins"
 
 # Legacy entry point group for backward compatibility (removed in v3.0.0)
-_LEGACY_ENTRY_POINT_GROUP = "empathy_framework.plugins"
+_LEGACY_ENTRY_POINT_GROUP = "attune_framework.plugins"
 
 # Module-level discovery cache: avoids repeated importlib.metadata scans.
 # Maps entry-point name -> loaded plugin class.  Populated on first
@@ -50,7 +50,7 @@ class PluginRegistry:
         software = "attune_software.plugin:SoftwarePlugin"
         healthcare = "attune_healthcare.plugin:HealthcarePlugin"
 
-        Also checks the legacy "empathy_framework.plugins" group for
+        Also checks the legacy "attune_framework.plugins" group for
         backward compatibility (will be removed in v3.0.0).
 
         Discovery results are cached at module level so that repeated
@@ -91,9 +91,7 @@ class PluginRegistry:
                 self.logger.info(f"Successfully loaded plugin: {name}")
             except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: graceful degradation, log but don't crash
-                self.logger.warning(
-                    f"Failed to init plugin '{name}': {e}", exc_info=True
-                )
+                self.logger.warning(f"Failed to init plugin '{name}': {e}", exc_info=True)
 
         self._auto_discovered = True
         self.logger.info(f"Auto-discovery complete. {len(self._plugins)} plugins loaded.")

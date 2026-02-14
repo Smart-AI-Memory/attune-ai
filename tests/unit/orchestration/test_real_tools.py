@@ -1173,6 +1173,7 @@ class TestToolRegistry:
             "security_auditor",
             "code_quality_analyzer",
             "documentation_analyzer",
+            "performance_profiler",
         }
 
         assert set(REAL_TOOLS.keys()) == expected_tools

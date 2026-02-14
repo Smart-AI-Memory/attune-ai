@@ -70,7 +70,7 @@ class MemoryConfig:
 
     # File-first architecture settings (always available)
     file_session_enabled: bool = True  # Use file-based session as primary
-    file_session_dir: str = ".empathy"  # Directory for file-based storage
+    file_session_dir: str = ".attune"  # Directory for file-based storage
 
     # Short-term memory settings (Redis - optional enhancement)
     redis_url: str | None = None
@@ -123,8 +123,8 @@ class MemoryConfig:
         return cls(
             environment=environment,
             # File-first settings (always available)
-            file_session_enabled=os.getenv("EMPATHY_FILE_SESSION", "true").lower() == "true",
-            file_session_dir=os.getenv("EMPATHY_FILE_SESSION_DIR", ".empathy"),
+            file_session_enabled=os.getenv("ATTUNE_FILE_SESSION", "true").lower() == "true",
+            file_session_dir=os.getenv("ATTUNE_FILE_SESSION_DIR", ".attune"),
             # Redis settings (optional)
             redis_url=os.getenv("REDIS_URL"),
             redis_host=os.getenv("EMPATHY_REDIS_HOST", "localhost"),

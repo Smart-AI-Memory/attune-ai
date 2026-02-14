@@ -9,11 +9,14 @@ Licensed under the Apache License, Version 2.0
 """
 
 import asyncio
+import logging
 import os
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 warnings.warn(
     "release_prep_crew is deprecated. Use 'attune workflow run release-prep' "
@@ -385,7 +388,7 @@ class ReleasePreparationCrew:
         """Initialize the crew with configured agents.
 
         .. deprecated:: 4.3.0
-            Use meta-workflow system instead: ``empathy meta-workflow run release-prep``
+            Use meta-workflow system instead: ``attune meta-workflow run release-prep``
 
         Args:
             project_root: Root directory of project to analyze
@@ -398,7 +401,7 @@ class ReleasePreparationCrew:
         """
         warnings.warn(
             "ReleasePreparationCrew is deprecated since v4.3.0. "
-            "Use meta-workflow system instead: empathy meta-workflow run release-prep. "
+            "Use meta-workflow system instead: attune meta-workflow run release-prep. "
             "See docs/CREWAI_MIGRATION.md for migration guide.",
             DeprecationWarning,
             stacklevel=2,
@@ -430,8 +433,9 @@ class ReleasePreparationCrew:
                         provider="anthropic",
                         api_key=api_key,
                     )
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001
+                    # INTENTIONAL: Executor is optional; log but don't block workflow
+                    logger.debug("EmpathyLLMExecutor initialization failed", exc_info=True)
 
         # Initialize ProjectIndex if available
         if HAS_PROJECT_INDEX and ProjectIndex is not None:

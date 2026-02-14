@@ -24,8 +24,19 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from .methodologies.pattern_compose import PatternCompose
-from .methodologies.tdd_first import TDDFirst
+
+def __getattr__(name: str):
+    """Lazy imports for methodology classes that depend on dev-time packages."""
+    if name == "PatternCompose":
+        from .methodologies.pattern_compose import PatternCompose
+
+        return PatternCompose
+    if name == "TDDFirst":
+        from .methodologies.tdd_first import TDDFirst
+
+        return TDDFirst
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "PatternCompose",

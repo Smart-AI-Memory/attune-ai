@@ -21,7 +21,6 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -35,7 +34,6 @@ from attune.workflows.code_review_adapters import (
     merge_code_review_results,
     workflow_findings_to_crew_format,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -146,16 +144,40 @@ class TestCodeReviewWorkflowInit:
         """Test default instantiation without crew."""
         assert workflow.name == "code-review"
         assert workflow.description == "Tiered code analysis with conditional premium review"
-        assert workflow.stages == ["classify", "scan", "architect_review"]
+        assert workflow.stages == [
+            "classify",
+            "scan",
+            "perf_check",
+            "perf_check_deep",
+            "health_monitor",
+            "quality_check",
+            "quality_check_deep",
+            "architect_review",
+        ]
         assert workflow.tier_map["classify"] == ModelTier.CHEAP
         assert workflow.tier_map["scan"] == ModelTier.CAPABLE
+        assert workflow.tier_map["perf_check"] == ModelTier.CHEAP
+        assert workflow.tier_map["perf_check_deep"] == ModelTier.CAPABLE
+        assert workflow.tier_map["health_monitor"] == ModelTier.CHEAP
+        assert workflow.tier_map["quality_check"] == ModelTier.CHEAP
+        assert workflow.tier_map["quality_check_deep"] == ModelTier.CAPABLE
         assert workflow.tier_map["architect_review"] == ModelTier.PREMIUM
 
     def test_init_with_crew(self, workflow_with_crew):
         """Test instantiation with crew enabled adds crew_review stage."""
         wf = workflow_with_crew
         assert "crew_review" in wf.stages
-        assert wf.stages == ["classify", "crew_review", "scan", "architect_review"]
+        assert wf.stages == [
+            "classify",
+            "crew_review",
+            "scan",
+            "perf_check",
+            "perf_check_deep",
+            "health_monitor",
+            "quality_check",
+            "quality_check_deep",
+            "architect_review",
+        ]
         assert wf.tier_map["crew_review"] == ModelTier.CAPABLE
 
     def test_custom_file_threshold(self, mock_config, mock_cost_tracker):
@@ -172,9 +194,7 @@ class TestCodeReviewWorkflowInit:
     def test_custom_core_modules(self, mock_config, mock_cost_tracker):
         """Test custom core modules override defaults."""
         custom = ["my_app/engine/"]
-        wf = CodeReviewWorkflow(
-            core_modules=custom, use_crew=False, enable_auth_strategy=False
-        )
+        wf = CodeReviewWorkflow(core_modules=custom, use_crew=False, enable_auth_strategy=False)
         assert wf.core_modules == custom
 
     def test_initial_state(self, workflow):
@@ -267,7 +287,7 @@ class TestRunStageDispatch:
         """Test run_stage dispatches 'scan' to _scan."""
         with patch.object(workflow, "_scan", new_callable=AsyncMock) as mock_scan:
             mock_scan.return_value = ({"scan_results": "ok"}, 200, 100)
-            result = await workflow.run_stage("scan", ModelTier.CAPABLE, {})
+            await workflow.run_stage("scan", ModelTier.CAPABLE, {})
             mock_scan.assert_called_once()
 
     @pytest.mark.asyncio
@@ -275,19 +295,15 @@ class TestRunStageDispatch:
         """Test run_stage dispatches 'architect_review' to _architect_review."""
         with patch.object(workflow, "_architect_review", new_callable=AsyncMock) as mock_arch:
             mock_arch.return_value = ({"verdict": "approve"}, 300, 150)
-            result = await workflow.run_stage("architect_review", ModelTier.PREMIUM, {})
+            await workflow.run_stage("architect_review", ModelTier.PREMIUM, {})
             mock_arch.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_dispatch_crew_review(self, workflow_with_crew):
         """Test run_stage dispatches 'crew_review' to _crew_review."""
-        with patch.object(
-            workflow_with_crew, "_crew_review", new_callable=AsyncMock
-        ) as mock_crew:
+        with patch.object(workflow_with_crew, "_crew_review", new_callable=AsyncMock) as mock_crew:
             mock_crew.return_value = ({"crew_review": {}}, 100, 50)
-            result = await workflow_with_crew.run_stage(
-                "crew_review", ModelTier.CAPABLE, {}
-            )
+            await workflow_with_crew.run_stage("crew_review", ModelTier.CAPABLE, {})
             mock_crew.assert_called_once()
 
     @pytest.mark.asyncio
@@ -442,9 +458,7 @@ class TestScanStage:
         """Test basic scan produces expected output keys."""
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("No issues found", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, in_t, out_t = await workflow._scan(
                     {
                         "code_to_review": "def safe(): pass",
@@ -468,9 +482,7 @@ class TestScanStage:
         """Test scan with critical issues sets has_critical and lowers score."""
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("CRITICAL: SQL injection found", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, _, _ = await workflow._scan(
                     {
                         "code_to_review": "cursor.execute(user_input)",
@@ -506,9 +518,7 @@ class TestScanStage:
         }
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("No additional issues", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, _, _ = await workflow._scan(
                     {
                         "code_to_review": "import os",
@@ -532,9 +542,7 @@ class TestScanStage:
         ]
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("Issues found with HIGH severity", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=findings
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=findings):
                 result, _, _ = await workflow._scan(
                     {
                         "code_to_review": "code",
@@ -556,9 +564,7 @@ class TestScanStage:
         """Test scan adds helpful message when no findings."""
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("Code looks clean", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, _, _ = await workflow._scan(
                     {"code_to_review": "good code", "classification": "feature"},
                     ModelTier.CAPABLE,
@@ -670,9 +676,7 @@ class TestCrewReviewStage:
                         0,
                         0,
                     )
-                    result, in_t, out_t = await mock_method(
-                        {"diff": "code"}, ModelTier.CAPABLE
-                    )
+                    result, in_t, out_t = await mock_method({"diff": "code"}, ModelTier.CAPABLE)
                     assert result["crew_review"]["fallback"] is True
 
     @pytest.mark.asyncio
@@ -913,9 +917,7 @@ class TestArchitectReviewStage:
         """Test architect review falls back to _call_llm if executor fails."""
         workflow._executor = MagicMock()
         workflow._api_key = "test-key"
-        with patch.object(
-            workflow, "run_step_with_executor", new_callable=AsyncMock
-        ) as mock_exec:
+        with patch.object(workflow, "run_step_with_executor", new_callable=AsyncMock) as mock_exec:
             mock_exec.side_effect = RuntimeError("Executor failed")
             with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
                 mock_llm.return_value = ("APPROVE", 300, 150)
@@ -1005,9 +1007,7 @@ class TestArchitectReviewStage:
         """Test architect review succeeds with executor."""
         workflow._executor = MagicMock()
         workflow._api_key = "test-key"
-        with patch.object(
-            workflow, "run_step_with_executor", new_callable=AsyncMock
-        ) as mock_exec:
+        with patch.object(workflow, "run_step_with_executor", new_callable=AsyncMock) as mock_exec:
             mock_exec.return_value = ("APPROVE: Good code", 300, 150, 0.01)
             with patch.object(workflow, "_is_xml_enabled", return_value=False):
                 with patch.object(
@@ -1149,14 +1149,8 @@ class TestMergeVerdicts:
 
     def test_approve_with_suggestions_middle(self):
         """Test approve_with_suggestions is between approve and request_changes."""
-        assert (
-            _merge_verdicts("approve", "approve_with_suggestions")
-            == "approve_with_suggestions"
-        )
-        assert (
-            _merge_verdicts("approve_with_suggestions", "request_changes")
-            == "request_changes"
-        )
+        assert _merge_verdicts("approve", "approve_with_suggestions") == "approve_with_suggestions"
+        assert _merge_verdicts("approve_with_suggestions", "request_changes") == "request_changes"
 
     def test_hyphen_normalization(self):
         """Test that hyphens are normalized to underscores."""
@@ -1509,9 +1503,7 @@ class TestCheckCrewAvailable:
         from attune.workflows.code_review_adapters import _check_crew_available
 
         # Temporarily make the import fail by blocking the module
-        with _patch.dict(
-            sys.modules, {"attune.agent_factory.crews": None}
-        ):
+        with _patch.dict(sys.modules, {"attune.agent_factory.crews": None}):
             result = _check_crew_available()
             assert result is False
 
@@ -1540,9 +1532,7 @@ class TestInitializeCrew:
 
         workflow_with_crew._crew = None
         # Block the crews module to simulate ImportError
-        with patch.dict(
-            sys.modules, {"attune.agent_factory.crews.code_review": None}
-        ):
+        with patch.dict(sys.modules, {"attune.agent_factory.crews.code_review": None}):
             await workflow_with_crew._initialize_crew()
             assert workflow_with_crew._crew_available is False
 
@@ -1571,10 +1561,6 @@ class TestGetCrewReview:
     async def test_get_crew_review_timeout(self):
         """Test returns None on timeout."""
         import attune.workflows.code_review_adapters as adapters_mod
-        from attune.agent_factory.crews.code_review import (
-            CodeReviewConfig,
-            CodeReviewCrew,
-        )
 
         with patch.object(adapters_mod, "_check_crew_available", return_value=True):
             with patch(
@@ -1592,9 +1578,7 @@ class TestGetCrewReview:
                     mock_crew.review = slow_review
                     mock_crew_cls.return_value = mock_crew
 
-                    result = await adapters_mod._get_crew_review(
-                        diff="code", timeout=0.01
-                    )
+                    result = await adapters_mod._get_crew_review(diff="code", timeout=0.01)
                     assert result is None
 
     @pytest.mark.asyncio
@@ -1602,7 +1586,6 @@ class TestGetCrewReview:
         """Test returns None on unexpected exception."""
         import attune.workflows.code_review_adapters as adapters_mod
 
-        original_check = adapters_mod._check_crew_available
         with patch.object(adapters_mod, "_check_crew_available", return_value=True):
             # Make the inner import of CodeReviewConfig raise
             with patch.dict(
@@ -1645,9 +1628,7 @@ class TestClassifyAuthStrategy:
             assert result["classification"] is not None
 
     @pytest.mark.asyncio
-    async def test_classify_auth_strategy_exception_handled(
-        self, mock_config, mock_cost_tracker
-    ):
+    async def test_classify_auth_strategy_exception_handled(self, mock_config, mock_cost_tracker):
         """Test that auth strategy exceptions are caught gracefully."""
         wf = CodeReviewWorkflow(use_crew=False, enable_auth_strategy=True)
 
@@ -1684,9 +1665,7 @@ class TestScanFormattedReport:
         """Test scan result includes formatted report for display."""
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("No issues found", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, _, _ = await workflow._scan(
                     {
                         "code_to_review": "clean code",
@@ -1705,9 +1684,7 @@ class TestScanFormattedReport:
         workflow._auth_mode_used = "subscription"
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("OK", 200, 100)
-            with patch.object(
-                workflow, "_extract_findings_from_response", return_value=[]
-            ):
+            with patch.object(workflow, "_extract_findings_from_response", return_value=[]):
                 result, _, _ = await workflow._scan(
                     {"code_to_review": "code", "classification": "feat"},
                     ModelTier.CAPABLE,
@@ -1715,3 +1692,952 @@ class TestScanFormattedReport:
 
                 assert result["auth_mode_used"] == "subscription"
                 assert result["model_tier_used"] == "capable"
+
+
+# ===========================================================================
+# 21. _perf_check Stage Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestPerfCheckStage:
+    """Tests for the _perf_check performance baseline stage."""
+
+    @pytest.mark.asyncio
+    async def test_perf_check_detects_n_plus_one(self, workflow, tmp_path):
+        """Test that perf_check detects N+1 query patterns."""
+        bad_file = tmp_path / "bad.py"
+        # Pattern requires .query( on the same line as "for x in y:"
+        bad_file.write_text("for item in items: db.query(item.id)\n")
+        input_data = {"files_changed": [str(bad_file)]}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["perf_finding_count"] > 0
+        assert any(f["type"] == "n_plus_one" for f in result["perf_findings"])
+
+    @pytest.mark.asyncio
+    async def test_perf_check_detects_nested_loops(self, workflow, tmp_path):
+        """Test that perf_check detects triple nested loops."""
+        bad_file = tmp_path / "nested.py"
+        bad_file.write_text(
+            "for a in x:\n" "    for b in y:\n" "        for c in z:\n" "            pass\n"
+        )
+        input_data = {"files_changed": [str(bad_file)]}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["perf_finding_count"] > 0
+        assert any(f["type"] == "nested_loops" for f in result["perf_findings"])
+
+    @pytest.mark.asyncio
+    async def test_perf_check_clean_file(self, workflow, tmp_path):
+        """Test that perf_check returns zero findings for clean code."""
+        clean_file = tmp_path / "clean.py"
+        clean_file.write_text("def add(x: int, y: int) -> int:\n    return x + y\n")
+        input_data = {"files_changed": [str(clean_file)]}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["perf_finding_count"] == 0
+        assert result["perf_findings"] == []
+
+    @pytest.mark.asyncio
+    async def test_perf_check_skips_non_python(self, workflow, tmp_path):
+        """Test that perf_check skips non-Python files."""
+        js_file = tmp_path / "app.js"
+        js_file.write_text("for (let x of items) { db.query(x); }")
+        input_data = {"files_changed": [str(js_file)]}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["perf_finding_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_perf_check_skips_missing_file(self, workflow):
+        """Test that perf_check gracefully handles missing files."""
+        input_data = {"files_changed": ["/nonexistent/path.py"]}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["perf_finding_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_perf_check_preserves_input_data(self, workflow, tmp_path):
+        """Test that perf_check preserves prior stage data."""
+        clean_file = tmp_path / "ok.py"
+        clean_file.write_text("x = 1\n")
+        input_data = {"files_changed": [str(clean_file)], "classification": "feat"}
+        result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
+
+        assert result["classification"] == "feat"
+        assert "perf_findings" in result
+
+    def test_skip_perf_check_no_files(self, workflow):
+        """Test that perf_check is skipped when no files_changed."""
+        should_skip, reason = workflow.should_skip_stage("perf_check", {})
+        assert should_skip is True
+        assert "no files_changed" in reason.lower()
+
+    def test_no_skip_perf_check_with_files(self, workflow):
+        """Test that perf_check is NOT skipped when files_changed present."""
+        should_skip, reason = workflow.should_skip_stage("perf_check", {"files_changed": ["a.py"]})
+        assert should_skip is False
+
+
+# ===========================================================================
+# 22. _health_monitor Stage Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestHealthMonitorStage:
+    """Tests for the _health_monitor proactive monitoring stage."""
+
+    @pytest.mark.asyncio
+    async def test_health_monitor_returns_snapshot(self, workflow):
+        """Test that health_monitor returns a health_snapshot dict."""
+        mock_monitor = MagicMock()
+        mock_monitor.get_all_stats.return_value = {
+            "llm_cache": MagicMock(to_dict=lambda: {"hit_rate": 0.75, "hits": 30, "misses": 10})
+        }
+        mock_tracker = MagicMock()
+        mock_tracker.get_today.return_value = {"total_cost": 0.05}
+        mock_usage = MagicMock()
+        mock_usage.get_stats.return_value = {"total_calls": 42}
+
+        # Patch at the module where the lazy import resolves
+        with (
+            patch("attune.cache_monitor.CacheMonitor.get_instance", return_value=mock_monitor),
+            patch("attune.cost_tracker.get_tracker", return_value=mock_tracker),
+            patch("attune.telemetry.UsageTracker.get_instance", return_value=mock_usage),
+        ):
+            result, _, _ = await workflow._health_monitor({}, ModelTier.CHEAP)
+
+        snapshot = result["health_snapshot"]
+        assert "cache_stats" in snapshot
+        assert "cost_today" in snapshot
+        assert "usage_stats_7d" in snapshot
+        assert snapshot["cost_today"]["total_cost"] == 0.05
+        assert snapshot["usage_stats_7d"]["total_calls"] == 42
+
+    @pytest.mark.asyncio
+    async def test_health_monitor_handles_import_errors(self, workflow):
+        """Test that health_monitor degrades gracefully on missing deps."""
+        # The method uses lazy imports with try/except ImportError,
+        # so with no mocks the real imports may or may not work.
+        # We force ImportError for each.
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "attune.cache_monitor": None,
+                    "attune.cost_tracker": None,
+                    "attune.telemetry": None,
+                },
+            ),
+        ):
+            result, _, _ = await workflow._health_monitor({}, ModelTier.CHEAP)
+
+        snapshot = result["health_snapshot"]
+        assert snapshot["cache_stats"] == {}
+        assert snapshot["cost_today"] == {}
+        assert snapshot["usage_stats_7d"] == {}
+
+    @pytest.mark.asyncio
+    async def test_health_monitor_preserves_input_data(self, workflow):
+        """Test that health_monitor preserves prior stage data."""
+        input_data = {"scan_results": "some scan", "classification": "refactor"}
+        result, _, _ = await workflow._health_monitor(input_data, ModelTier.CHEAP)
+
+        assert result["classification"] == "refactor"
+        assert result["scan_results"] == "some scan"
+        assert "health_snapshot" in result
+
+    def test_health_monitor_never_skipped(self, workflow):
+        """Test that health_monitor is never skipped (no skip rule)."""
+        should_skip, reason = workflow.should_skip_stage("health_monitor", {})
+        assert should_skip is False
+
+
+# ===========================================================================
+# 23. _quality_check Stage Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestQualityCheckStage:
+    """Tests for the _quality_check code quality stage."""
+
+    @pytest.mark.asyncio
+    async def test_quality_check_detects_bare_except(self, workflow, tmp_path):
+        """Test that quality_check flags bare except clauses."""
+        bad_file = tmp_path / "bad.py"
+        bad_file.write_text("try:\n" "    risky()\n" "except:\n" "    pass\n")
+        input_data = {"files_changed": [str(bad_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        assert result["quality_finding_count"] > 0
+        assert any(f["type"] == "bare_except" for f in result["quality_findings"])
+
+    @pytest.mark.asyncio
+    async def test_quality_check_ignores_noqa(self, workflow, tmp_path):
+        """Test that quality_check respects # noqa comments."""
+        ok_file = tmp_path / "ok.py"
+        ok_file.write_text(
+            "try:\n" "    risky()\n" "except Exception:  # noqa: BLE001\n" "    pass\n"
+        )
+        input_data = {"files_changed": [str(ok_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        bare_excepts = [f for f in result["quality_findings"] if f["type"] == "bare_except"]
+        assert len(bare_excepts) == 0
+
+    @pytest.mark.asyncio
+    async def test_quality_check_detects_todos(self, workflow, tmp_path):
+        """Test that quality_check counts TODO/FIXME comments."""
+        todo_file = tmp_path / "todo.py"
+        todo_file.write_text("# TODO: fix this\n" "x = 1\n" "# FIXME: also this\n")
+        input_data = {"files_changed": [str(todo_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        todo_findings = [f for f in result["quality_findings"] if f["type"] == "todo_fixme"]
+        assert len(todo_findings) == 1
+        assert "2" in todo_findings[0]["description"]  # 2 TODO/FIXME
+
+    @pytest.mark.asyncio
+    async def test_quality_check_detects_long_files(self, workflow, tmp_path):
+        """Test that quality_check flags files with >500 lines."""
+        long_file = tmp_path / "long.py"
+        long_file.write_text("x = 1\n" * 501)
+        input_data = {"files_changed": [str(long_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        long_findings = [f for f in result["quality_findings"] if f["type"] == "long_file"]
+        assert len(long_findings) == 1
+        assert "501" in long_findings[0]["description"]
+
+    @pytest.mark.asyncio
+    async def test_quality_check_detects_missing_type_hint(self, workflow, tmp_path):
+        """Test that quality_check flags public functions without return type hints."""
+        bad_file = tmp_path / "nohint.py"
+        bad_file.write_text("def calculate(x, y):\n    return x + y\n")
+        input_data = {"files_changed": [str(bad_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        hint_findings = [f for f in result["quality_findings"] if f["type"] == "missing_type_hint"]
+        assert len(hint_findings) == 1
+        assert "calculate" in hint_findings[0]["description"]
+
+    @pytest.mark.asyncio
+    async def test_quality_check_skips_private_functions(self, workflow, tmp_path):
+        """Test that quality_check does not flag private functions."""
+        ok_file = tmp_path / "private.py"
+        ok_file.write_text("def _internal(x):\n    return x\n")
+        input_data = {"files_changed": [str(ok_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        hint_findings = [f for f in result["quality_findings"] if f["type"] == "missing_type_hint"]
+        assert len(hint_findings) == 0
+
+    @pytest.mark.asyncio
+    async def test_quality_check_clean_file(self, workflow, tmp_path):
+        """Test that quality_check returns zero findings for clean code."""
+        clean_file = tmp_path / "clean.py"
+        clean_file.write_text("def add(x: int, y: int) -> int:\n    return x + y\n")
+        input_data = {"files_changed": [str(clean_file)]}
+        result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
+
+        assert result["quality_finding_count"] == 0
+
+    def test_skip_quality_check_no_files(self, workflow):
+        """Test that quality_check is skipped when no files_changed."""
+        should_skip, reason = workflow.should_skip_stage("quality_check", {})
+        assert should_skip is True
+        assert "no files_changed" in reason.lower()
+
+    def test_no_skip_quality_check_with_files(self, workflow):
+        """Test that quality_check is NOT skipped when files present."""
+        should_skip, reason = workflow.should_skip_stage(
+            "quality_check", {"files_changed": ["a.py"]}
+        )
+        assert should_skip is False
+
+
+# ===========================================================================
+# 24. Report Formatter - New Sections
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestReportNewSections:
+    """Tests for the new perf/health/quality sections in the report."""
+
+    def test_report_includes_perf_section(self):
+        """Test that report includes PERFORMANCE CHECK when perf data present."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "N+1 query",
+                    "impact": "high",
+                }
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+        }
+        report = format_code_review_report(result, input_data)
+        assert "PERFORMANCE CHECK" in report
+        assert "N+1 query" in report
+
+    def test_report_includes_health_section(self):
+        """Test that report includes HEALTH MONITOR when snapshot present."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "health_snapshot": {
+                "cache_stats": {"llm": {"hit_rate": 0.8}},
+                "cost_today": {"total_cost": 0.05},
+                "usage_stats_7d": {"total_calls": 42},
+            }
+        }
+        report = format_code_review_report(result, input_data)
+        assert "HEALTH MONITOR" in report
+        assert "80%" in report
+        assert "$0.05" in report
+        assert "42" in report
+
+    def test_report_includes_quality_section(self):
+        """Test that report includes QUALITY CHECK when quality data present."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "quality_findings": [
+                {
+                    "type": "bare_except",
+                    "file": "a.py",
+                    "line": 3,
+                    "description": "Bare except",
+                    "severity": "high",
+                }
+            ],
+            "quality_finding_count": 1,
+            "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
+        }
+        report = format_code_review_report(result, input_data)
+        assert "QUALITY CHECK" in report
+        assert "Bare except" in report
+
+    def test_report_shows_clean_perf(self):
+        """Test that report shows clean message when no perf findings."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "perf_findings": [],
+            "perf_finding_count": 0,
+            "perf_by_impact": {"high": 0, "medium": 0, "low": 0},
+        }
+        report = format_code_review_report(result, input_data)
+        assert "PERFORMANCE CHECK" in report
+        assert "No performance anti-patterns" in report
+
+    def test_report_shows_clean_quality(self):
+        """Test that report shows clean message when no quality findings."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "quality_findings": [],
+            "quality_finding_count": 0,
+            "quality_by_severity": {"high": 0, "medium": 0, "low": 0},
+        }
+        report = format_code_review_report(result, input_data)
+        assert "QUALITY CHECK" in report
+        assert "No quality issues" in report
+
+
+# ===========================================================================
+# 25. Report Coverage Boost Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestReportCoverageBoost:
+    """Tests to improve report formatter coverage (error path, security findings, arch review)."""
+
+    def test_report_error_input_path(self):
+        """Test report renders INPUT ERROR when error flag is set."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {"error": True, "error_message": "No code provided for review."}
+        report = format_code_review_report(result, input_data)
+
+        assert "INPUT ERROR" in report
+        assert "No code provided for review." in report
+        # Should NOT contain the normal sections
+        assert "SECURITY ANALYSIS" not in report
+
+    def test_report_error_input_default_message(self):
+        """Test report uses default error message when none provided."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {"error": True}
+        report = format_code_review_report(result, input_data)
+
+        assert "INPUT ERROR" in report
+        assert "No code provided for review." in report
+
+    def test_report_security_findings_display(self):
+        """Test report renders security findings with severity icons."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "request_changes", "model_tier_used": "capable"}
+        input_data = {
+            "has_critical_issues": True,
+            "security_score": 60,
+            "security_findings": [
+                {"severity": "critical", "title": "SQL Injection in db.py"},
+                {"severity": "high", "title": "XSS in template"},
+                {"severity": "medium", "title": "Missing CSRF token"},
+                {"severity": "low", "title": "Cookie without httponly"},
+            ],
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "SECURITY ANALYSIS" in report
+        assert "60/100" in report
+        assert "SQL Injection in db.py" in report
+        assert "[CRITICAL]" in report
+        assert "[HIGH]" in report
+        assert "[MEDIUM]" in report
+        assert "[LOW]" in report
+
+    def test_report_architectural_review_section(self):
+        """Test report renders architectural review text."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {
+            "verdict": "approve_with_suggestions",
+            "model_tier_used": "premium",
+            "architectural_review": (
+                "The code follows SOLID principles well. "
+                "Consider extracting the validation logic."
+            ),
+            "recommendations": [
+                "Extract validation into a separate module",
+                "Add integration tests for the pipeline",
+            ],
+        }
+        input_data = {}
+        report = format_code_review_report(result, input_data)
+
+        assert "ARCHITECTURAL REVIEW" in report
+        assert "SOLID principles" in report
+        assert "RECOMMENDATIONS" in report
+        assert "1. Extract validation" in report
+        assert "2. Add integration tests" in report
+
+    def test_report_crew_review_section(self):
+        """Test report renders crew review when available."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "capable"}
+        input_data = {
+            "crew_review": {
+                "available": True,
+                "fallback": False,
+                "quality_score": 88,
+                "finding_count": 3,
+                "agents_used": ["review_lead", "security_agent"],
+                "summary": "Minor quality improvements recommended.",
+            }
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "CREW REVIEW ANALYSIS" in report
+        assert "88/100" in report
+        assert "3" in report
+        assert "review_lead, security_agent" in report
+        assert "Minor quality improvements" in report
+
+    def test_report_scan_results_truncation(self):
+        """Test report truncates long scan results."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "capable"}
+        long_scan = "X" * 1000
+        input_data = {"scan_results": long_scan}
+        report = format_code_review_report(result, input_data)
+
+        assert "Scan Summary:" in report
+        assert "..." in report
+
+    def test_report_no_content_message(self):
+        """Test report shows helpful message when no content sections present."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "unknown", "model_tier_used": "cheap"}
+        input_data = {}
+        report = format_code_review_report(result, input_data)
+
+        assert "NO ISSUES FOUND" in report
+        assert "No code was provided" in report
+
+    def test_report_classification_section(self):
+        """Test report renders classification summary."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {"classification": "Feature: Adding new API endpoint for user search"}
+        report = format_code_review_report(result, input_data)
+
+        assert "CLASSIFICATION" in report
+        assert "Adding new API endpoint" in report
+
+
+# ===========================================================================
+# 26. Deep Stage Helper Functions
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestDeepStageHelpers:
+    """Test helper functions for deep analysis stages."""
+
+    def test_gather_file_snippets_reads_context_lines(self, tmp_path):
+        """Test _gather_file_snippets reads surrounding lines."""
+        from attune.workflows.code_review import _gather_file_snippets
+
+        test_file = tmp_path / "sample.py"
+        test_file.write_text("line1\nline2\nline3\nline4\nline5\nline6\nline7\n")
+        findings = [{"file": str(test_file), "line": 4}]
+        snippets = _gather_file_snippets(findings, context_lines=2)
+
+        assert str(test_file) in snippets
+        assert 4 in snippets[str(test_file)]
+        snippet_text = snippets[str(test_file)][4]
+        assert "line2" in snippet_text
+        assert "line4" in snippet_text
+        assert "line6" in snippet_text
+
+    def test_gather_file_snippets_missing_file_skipped(self):
+        """Test _gather_file_snippets skips nonexistent files."""
+        from attune.workflows.code_review import _gather_file_snippets
+
+        findings = [{"file": "/nonexistent/file.py", "line": 10}]
+        snippets = _gather_file_snippets(findings)
+        assert snippets == {}
+
+    def test_format_findings_for_prompt_structure(self):
+        """Test _format_findings_for_prompt produces indexed output."""
+        from attune.workflows.code_review import _format_findings_for_prompt
+
+        findings = [
+            {
+                "file": "a.py",
+                "line": 10,
+                "type": "bare_except",
+                "description": "Bare except",
+                "severity": "high",
+            },
+            {
+                "file": "b.py",
+                "line": 20,
+                "type": "todo_fixme",
+                "description": "TODO found",
+                "severity": "low",
+            },
+        ]
+        result = _format_findings_for_prompt(findings, {})
+        assert "[0]" in result
+        assert "[1]" in result
+        assert "bare_except" in result
+        assert "todo_fixme" in result
+
+    def test_parse_deep_enrichment_valid_json(self):
+        """Test _parse_deep_enrichment parses valid JSON response."""
+        from attune.workflows.code_review import _parse_deep_enrichment
+
+        originals = [
+            {"type": "bare_except", "severity": "high", "file": "a.py", "line": 10},
+            {"type": "todo_fixme", "severity": "low", "file": "b.py", "line": 20},
+        ]
+        response = '{"findings": [{"index": 0, "validated": true, "false_positive": false, "suggestion": "Use specific exceptions"}, {"index": 1, "validated": true, "false_positive": true, "suggestion": "Test fixture"}]}'
+        enriched = _parse_deep_enrichment(response, originals)
+
+        assert len(enriched) == 2
+        assert enriched[0]["validated"] is True
+        assert enriched[0]["false_positive"] is False
+        assert enriched[0]["suggestion"] == "Use specific exceptions"
+        assert enriched[1]["false_positive"] is True
+
+    def test_parse_deep_enrichment_malformed_json_returns_originals(self):
+        """Test _parse_deep_enrichment handles malformed JSON gracefully."""
+        from attune.workflows.code_review import _parse_deep_enrichment
+
+        originals = [
+            {"type": "bare_except", "severity": "high", "file": "a.py", "line": 10},
+        ]
+        response = "This is not valid JSON at all"
+        enriched = _parse_deep_enrichment(response, originals)
+
+        assert len(enriched) == 1
+        assert enriched[0]["validated"] is True
+        assert enriched[0]["false_positive"] is False
+        # Original fields preserved
+        assert enriched[0]["type"] == "bare_except"
+
+    def test_recount_by_key_excludes_false_positives(self):
+        """Test _recount_by_key excludes false positives from counts."""
+        from attune.workflows.code_review import _recount_by_key
+
+        findings = [
+            {"severity": "high", "false_positive": False},
+            {"severity": "high", "false_positive": True},
+            {"severity": "medium", "false_positive": False},
+            {"severity": "low", "false_positive": False},
+        ]
+        counts = _recount_by_key(findings, "severity")
+        assert counts == {"high": 1, "medium": 1, "low": 1}
+
+
+# ===========================================================================
+# 27. _perf_check_deep Stage Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestPerfCheckDeep:
+    """Test _perf_check_deep LLM enrichment stage."""
+
+    def test_perf_check_deep_skipped_when_no_findings(self, workflow):
+        """Test that should_skip_stage gates perf_check_deep on zero findings."""
+        should_skip, reason = workflow.should_skip_stage(
+            "perf_check_deep", {"perf_finding_count": 0}
+        )
+        assert should_skip is True
+        assert "no perf findings" in reason.lower()
+
+    def test_perf_check_deep_not_skipped_with_findings(self, workflow):
+        """Test that should_skip_stage allows perf_check_deep when findings exist."""
+        should_skip, reason = workflow.should_skip_stage(
+            "perf_check_deep", {"perf_finding_count": 3}
+        )
+        assert should_skip is False
+
+    def test_perf_check_deep_calls_llm_with_findings(self, workflow):
+        """Test _perf_check_deep calls _call_llm when findings present."""
+        llm_response = '{"findings": [{"index": 0, "validated": true, "false_positive": false, "suggestion": "Use generator"}]}'
+        workflow._call_llm = AsyncMock(return_value=(llm_response, 100, 50))
+
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "N+1 query",
+                    "impact": "high",
+                },
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+        }
+
+        result, in_t, out_t = asyncio.get_event_loop().run_until_complete(
+            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        workflow._call_llm.assert_called_once()
+        assert result["perf_deep_ran"] is True
+        assert in_t == 100
+        assert out_t == 50
+
+    def test_perf_check_deep_enriches_findings(self, workflow):
+        """Test _perf_check_deep merges LLM enrichment into findings."""
+        llm_response = '{"findings": [{"index": 0, "validated": true, "false_positive": true, "suggestion": "Test fixture, ignore"}]}'
+        workflow._call_llm = AsyncMock(return_value=(llm_response, 50, 30))
+
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "test_x.py",
+                    "line": 5,
+                    "description": "N+1 query",
+                    "impact": "high",
+                },
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+        }
+
+        result, _, _ = asyncio.get_event_loop().run_until_complete(
+            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        assert result["perf_findings"][0]["false_positive"] is True
+        assert result["perf_findings"][0]["suggestion"] == "Test fixture, ignore"
+        # Count should exclude false positives
+        assert result["perf_finding_count"] == 0
+
+    def test_perf_check_deep_handles_llm_error_gracefully(self, workflow):
+        """Test _perf_check_deep handles malformed LLM response."""
+        workflow._call_llm = AsyncMock(return_value=("NOT JSON", 50, 30))
+
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "a.py",
+                    "line": 5,
+                    "description": "N+1 query",
+                    "impact": "high",
+                },
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+        }
+
+        result, _, _ = asyncio.get_event_loop().run_until_complete(
+            workflow._perf_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        # Should still return valid result with originals marked as validated
+        assert result["perf_deep_ran"] is True
+        assert result["perf_findings"][0]["validated"] is True
+        assert result["perf_findings"][0]["false_positive"] is False
+
+
+# ===========================================================================
+# 28. _quality_check_deep Stage Tests
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestQualityCheckDeep:
+    """Test _quality_check_deep LLM enrichment stage."""
+
+    def test_quality_check_deep_skipped_when_no_findings(self, workflow):
+        """Test that should_skip_stage gates quality_check_deep on zero findings."""
+        should_skip, reason = workflow.should_skip_stage(
+            "quality_check_deep", {"quality_finding_count": 0}
+        )
+        assert should_skip is True
+        assert "no quality findings" in reason.lower()
+
+    def test_quality_check_deep_not_skipped_with_findings(self, workflow):
+        """Test that should_skip_stage allows quality_check_deep when findings exist."""
+        should_skip, reason = workflow.should_skip_stage(
+            "quality_check_deep", {"quality_finding_count": 2}
+        )
+        assert should_skip is False
+
+    def test_quality_check_deep_calls_llm_with_findings(self, workflow):
+        """Test _quality_check_deep calls _call_llm when findings present."""
+        llm_response = '{"findings": [{"index": 0, "validated": true, "false_positive": false, "suggestion": "Add specific types"}]}'
+        workflow._call_llm = AsyncMock(return_value=(llm_response, 80, 40))
+
+        input_data = {
+            "quality_findings": [
+                {
+                    "type": "bare_except",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "Bare except",
+                    "severity": "high",
+                },
+            ],
+            "quality_finding_count": 1,
+            "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
+        }
+
+        result, in_t, out_t = asyncio.get_event_loop().run_until_complete(
+            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        workflow._call_llm.assert_called_once()
+        assert result["quality_deep_ran"] is True
+        assert in_t == 80
+        assert out_t == 40
+
+    def test_quality_check_deep_enriches_findings(self, workflow):
+        """Test _quality_check_deep merges enrichment and recounts."""
+        llm_response = '{"findings": [{"index": 0, "validated": true, "false_positive": true, "suggestion": "Intentional broad catch"}, {"index": 1, "validated": true, "false_positive": false, "suggestion": "Consider splitting file"}]}'
+        workflow._call_llm = AsyncMock(return_value=(llm_response, 50, 30))
+
+        input_data = {
+            "quality_findings": [
+                {
+                    "type": "bare_except",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "Bare except",
+                    "severity": "high",
+                },
+                {
+                    "type": "long_file",
+                    "file": "b.py",
+                    "line": None,
+                    "description": "600 lines",
+                    "severity": "medium",
+                },
+            ],
+            "quality_finding_count": 2,
+            "quality_by_severity": {"high": 1, "medium": 1, "low": 0},
+        }
+
+        result, _, _ = asyncio.get_event_loop().run_until_complete(
+            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        assert result["quality_findings"][0]["false_positive"] is True
+        assert result["quality_findings"][1]["false_positive"] is False
+        # Count excludes false positives
+        assert result["quality_finding_count"] == 1
+
+    def test_quality_check_deep_handles_llm_error_gracefully(self, workflow):
+        """Test _quality_check_deep handles malformed LLM response."""
+        workflow._call_llm = AsyncMock(return_value=("INVALID", 50, 30))
+
+        input_data = {
+            "quality_findings": [
+                {
+                    "type": "bare_except",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "Bare except",
+                    "severity": "high",
+                },
+            ],
+            "quality_finding_count": 1,
+            "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
+        }
+
+        result, _, _ = asyncio.get_event_loop().run_until_complete(
+            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
+        )
+
+        assert result["quality_deep_ran"] is True
+        assert result["quality_findings"][0]["validated"] is True
+        assert result["quality_findings"][0]["false_positive"] is False
+
+
+# ===========================================================================
+# 29. Report Deep Enrichment Display
+# ===========================================================================
+
+
+@pytest.mark.unit
+class TestReportDeepEnrichment:
+    """Test report formatting with deep analysis enrichment."""
+
+    def test_perf_report_shows_false_positive_marker(self):
+        """Test perf section marks false positives in report."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "capable"}
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "test.py",
+                    "line": 5,
+                    "description": "N+1 query",
+                    "impact": "high",
+                    "false_positive": True,
+                    "suggestion": "Test fixture",
+                },
+            ],
+            "perf_finding_count": 0,
+            "perf_by_impact": {"high": 0, "medium": 0, "low": 0},
+            "perf_deep_ran": True,
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "[FALSE POSITIVE]" in report
+        assert "→ Test fixture" in report
+        assert "LLM-validated" in report
+
+    def test_perf_report_shows_suggestion(self):
+        """Test perf section displays suggestions from deep analysis."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve_with_suggestions", "model_tier_used": "capable"}
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "db.py",
+                    "line": 42,
+                    "description": "N+1 query",
+                    "impact": "high",
+                    "false_positive": False,
+                    "suggestion": "Use select_related()",
+                },
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+            "perf_deep_ran": True,
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "→ Use select_related()" in report
+        assert "[FALSE POSITIVE]" not in report
+
+    def test_quality_report_shows_deep_analysis_badge(self):
+        """Test quality section shows LLM-validated badge."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "capable"}
+        input_data = {
+            "quality_findings": [
+                {
+                    "type": "bare_except",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "Bare except",
+                    "severity": "high",
+                    "false_positive": False,
+                    "suggestion": "Catch ValueError",
+                },
+            ],
+            "quality_finding_count": 1,
+            "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
+            "quality_deep_ran": True,
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "QUALITY CHECK" in report
+        assert "LLM-validated" in report
+        assert "→ Catch ValueError" in report
+
+    def test_report_without_deep_unchanged(self):
+        """Test report renders normally when deep stages did not run."""
+        from attune.workflows.code_review_report import format_code_review_report
+
+        result = {"verdict": "approve", "model_tier_used": "cheap"}
+        input_data = {
+            "perf_findings": [
+                {
+                    "type": "n_plus_one",
+                    "file": "a.py",
+                    "line": 10,
+                    "description": "N+1 query",
+                    "impact": "high",
+                },
+            ],
+            "perf_finding_count": 1,
+            "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
+        }
+        report = format_code_review_report(result, input_data)
+
+        assert "PERFORMANCE CHECK" in report
+        assert "[FALSE POSITIVE]" not in report
+        assert "LLM-validated" not in report
+        assert "→" not in report

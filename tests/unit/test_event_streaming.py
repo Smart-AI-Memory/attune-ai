@@ -19,10 +19,7 @@ import json
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from attune.telemetry.event_streaming import EventStreamer, StreamEvent
-
 
 # ---------------------------------------------------------------------------
 # StreamEvent dataclass tests
@@ -189,11 +186,16 @@ class TestEventStreamerInit:
     def test_init_with_memory_none_graceful_degradation(self) -> None:
         """Test initialization with memory=None degrades gracefully."""
         # Patch the local import inside __init__ so it raises ImportError
-        with patch.dict("sys.modules", {"attune.telemetry": MagicMock(
-            UsageTracker=MagicMock(
-                get_instance=MagicMock(side_effect=ImportError("no tracker"))
-            )
-        )}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "attune.telemetry": MagicMock(
+                    UsageTracker=MagicMock(
+                        get_instance=MagicMock(side_effect=ImportError("no tracker"))
+                    )
+                )
+            },
+        ):
             streamer = EventStreamer(memory=None)
             assert streamer.memory is None
 
@@ -217,6 +219,7 @@ class TestEventStreamerInit:
         """Test __init__ handles ImportError when UsageTracker is not available."""
         # Make the import itself fail
         import sys
+
         saved = sys.modules.get("attune.telemetry")
         sys.modules["attune.telemetry"] = None  # type: ignore[assignment]
         try:
@@ -421,9 +424,7 @@ class TestEventStreamerConsumeEvents:
         streamer = EventStreamer.__new__(EventStreamer)
         streamer.memory = mock_memory
 
-        events = list(
-            streamer.consume_events(event_types=["agent_heartbeat", "agent_error"])
-        )
+        list(streamer.consume_events(event_types=["agent_heartbeat", "agent_error"]))
 
         mock_client.xread.assert_called_once()
         call_args = mock_client.xread.call_args
@@ -491,9 +492,7 @@ class TestEventStreamerConsumeEvents:
         streamer = EventStreamer.__new__(EventStreamer)
         streamer.memory = mock_memory
 
-        events = list(
-            streamer.consume_events(event_types=["agent_heartbeat"], count=5)
-        )
+        events = list(streamer.consume_events(event_types=["agent_heartbeat"], count=5))
 
         assert len(events) == 1
         assert events[0].event_id == "1706356800000-0"
@@ -511,11 +510,7 @@ class TestEventStreamerConsumeEvents:
         streamer = EventStreamer.__new__(EventStreamer)
         streamer.memory = mock_memory
 
-        list(
-            streamer.consume_events(
-                event_types=["test"], block_ms=1000, count=1
-            )
-        )
+        list(streamer.consume_events(event_types=["test"], block_ms=1000, count=1))
 
         call_args = mock_client.xread.call_args
         assert call_args[1]["block"] == 1000

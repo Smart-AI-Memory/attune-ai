@@ -145,8 +145,8 @@ Examples:
   %(prog)s serve               Start Redis + API server (recommended)
 
 Quick Start:
-  1. pip install empathy-framework
-  2. empathy-memory serve
+  1. pip install attune-ai
+  2. attune-memory serve
   3. Open http://localhost:8765/api/status in browser
         """,
     )
@@ -171,7 +171,7 @@ Quick Start:
         "-V",
         "--version",
         action="version",
-        version=f"empathy-memory {__version__}",
+        version=f"attune-memory {__version__}",
     )
     parser.add_argument(
         "--host",

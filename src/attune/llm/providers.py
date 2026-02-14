@@ -236,10 +236,13 @@ class AnthropicProvider(BaseLLMProvider):
                 # Log cache performance for monitoring with detailed cost savings
                 # Cache reads cost 90% less than regular input tokens
                 # Cache writes cost 25% more than regular input tokens
+                from attune.models.registry import get_pricing_for_model
+
+                pricing = get_pricing_for_model(self.model)
+                input_cost_per_million = pricing["input"] if pricing else 3.00
+                input_cost_per_token = input_cost_per_million / 1_000_000
+
                 if cache_read > 0:
-                    # Cache reads cost 90% less than regular input tokens
-                    # TODO: Pull per-model rate from config when multi-model support lands
-                    input_cost_per_token = 3.00 / 1_000_000  # Sonnet 4.5: $3/M input tokens
                     savings_per_token = input_cost_per_token * 0.9
                     total_savings = cache_read * savings_per_token
                     logger.info(
@@ -247,8 +250,8 @@ class AnthropicProvider(BaseLLMProvider):
                         f"(saved ${total_savings:.4f} vs full price)"
                     )
                 if cache_creation > 0:
-                    # Cache write cost: $3.75/M tokens (25% markup)
-                    write_cost = cache_creation * 0.00375 / 1000
+                    write_cost_per_token = input_cost_per_token * 1.25
+                    write_cost = cache_creation * write_cost_per_token
                     logger.debug(
                         f"Cache WRITE: {cache_creation:,} tokens written to cache "
                         f"(cost ${write_cost:.4f})"

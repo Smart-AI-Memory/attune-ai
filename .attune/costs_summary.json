@@ -71,8 +71,16 @@
       "actual_cost": 0.001254,
       "baseline_cost": 0.0099,
       "savings": 0.008646
+    },
+    "2026-02-14": {
+      "requests": 10,
+      "input_tokens": 10901,
+      "output_tokens": 221,
+      "actual_cost": 0.03745,
+      "baseline_cost": 0.18009,
+      "savings": 0.14264
     }
   },
   "created_at": "2026-01-22T14:01:07.301107",
-  "last_updated": "2026-02-01T00:33:04.646956"
+  "last_updated": "2026-02-14T00:48:21.451392"
 }

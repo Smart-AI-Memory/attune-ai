@@ -118,7 +118,7 @@ class TestTelemetryFeatures:
         """Test that all listed features have required attributes."""
         features = TelemetryFeatures.list_all_features()
 
-        for name, info in features.items():
+        for _name, info in features.items():
             assert isinstance(info, FeatureInfo)
             assert hasattr(info, "status")
             assert hasattr(info, "message")

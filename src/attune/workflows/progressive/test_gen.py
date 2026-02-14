@@ -172,8 +172,9 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         base_task = self._build_test_gen_task(items)
         _prompt = self.meta_orchestrator.build_tier_prompt(tier, base_task, context)  # noqa: F841
 
-        # TODO: Call LLM API with _prompt
-        # For now, simulate test generation
+        # TODO(llm-integration): Call LLM API with _prompt
+        # Deferred: Requires LLM API integration (tracked in P2B debt register)
+        # For now, returns simulated test generation results
         generated_tests = self._simulate_test_generation(tier, items)
 
         return generated_tests

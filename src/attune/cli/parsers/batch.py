@@ -24,7 +24,7 @@ def register_parsers(subparsers):
     # Main batch command
     batch_parser = subparsers.add_parser(
         "batch",
-        help="Batch processing via Anthropic Batch API (50% cost savings)",
+        help="Batch processing via Anthropic Batch API (50%% cost savings)",
         description="Submit and manage batch processing jobs for non-urgent tasks",
     )
 

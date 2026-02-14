@@ -8,47 +8,47 @@ Licensed under the Apache License, Version 2.0
 
 CHEATSHEET = {
     "Getting Started": [
-        ("empathy init", "Create a new config file"),
-        ("empathy workflow", "Interactive setup workflow"),
-        ("empathy run", "Interactive REPL mode"),
+        ("attune init", "Create a new config file"),
+        ("attune workflow", "Interactive setup workflow"),
+        ("attune run", "Interactive REPL mode"),
     ],
     "Daily Workflow": [
-        ("empathy morning", "Start-of-day briefing"),
-        ("empathy status", "What needs attention now"),
-        ("empathy ship", "Pre-commit validation"),
+        ("attune morning", "Start-of-day briefing"),
+        ("attune status", "What needs attention now"),
+        ("attune ship", "Pre-commit validation"),
     ],
     "Code Quality": [
-        ("empathy health", "Quick health check"),
-        ("empathy health --deep", "Comprehensive check"),
-        ("empathy health --fix", "Auto-fix issues"),
-        ("empathy fix-all", "Fix all lint/format issues"),
+        ("attune health", "Quick health check"),
+        ("attune health --deep", "Comprehensive check"),
+        ("attune health --fix", "Auto-fix issues"),
+        ("attune fix-all", "Fix all lint/format issues"),
     ],
     "Pattern Learning": [
-        ("empathy learn --analyze 20", "Learn from last 20 commits"),
-        ("empathy sync-claude", "Sync patterns to Claude Code"),
-        ("empathy inspect patterns", "View learned patterns"),
+        ("attune learn --analyze 20", "Learn from last 20 commits"),
+        ("attune sync-claude", "Sync patterns to Claude Code"),
+        ("attune inspect patterns", "View learned patterns"),
     ],
     "Code Review": [
-        ("empathy review", "Review recent changes"),
-        ("empathy review --staged", "Review staged changes only"),
+        ("attune review", "Review recent changes"),
+        ("attune review --staged", "Review staged changes only"),
     ],
     "Memory & State": [
-        ("empathy inspect state", "View saved states"),
-        ("empathy inspect metrics --user-id X", "View user metrics"),
-        ("empathy export patterns.json", "Export patterns"),
+        ("attune inspect state", "View saved states"),
+        ("attune inspect metrics --user-id X", "View user metrics"),
+        ("attune export patterns.json", "Export patterns"),
     ],
     "Advanced": [
-        ("empathy costs", "View API cost tracking"),
-        ("empathy dashboard", "Launch visual dashboard"),
+        ("attune costs", "View API cost tracking"),
+        ("attune dashboard", "Launch visual dashboard"),
         ("Attune AIs", "List agent frameworks"),
-        ("empathy workflow list", "List multi-model workflows"),
-        ("empathy new <template>", "Create project from template"),
+        ("attune workflow list", "List multi-model workflows"),
+        ("attune new <template>", "Create project from template"),
     ],
 }
 
 EXPLAIN_CONTENT = {
     "morning": """
-HOW 'empathy morning' WORKS:
+HOW 'attune morning' WORKS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This command aggregates multiple data sources to give you a prioritized
 start-of-day briefing:
@@ -79,12 +79,12 @@ start-of-day briefing:
 
 TIPS:
 • Run this first thing each day
-• Use 'empathy morning --verbose' for details
-• Pair with 'empathy status --select N' to dive deeper
+• Use 'attune morning --verbose' for details
+• Pair with 'attune status --select N' to dive deeper
 """,
     "ship": """
-HOW 'empathy ship' WORKS:
-━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW 'attune ship' WORKS:
+━━━━━━━━━━━━━━━━━━━━━━━━
 Pre-commit validation pipeline that ensures code quality before shipping:
 
 1. HEALTH CHECKS
@@ -112,11 +112,11 @@ EXIT CODES:
 • 1 = Issues found, review before committing
 
 TIPS:
-• Add to pre-commit hook: empathy ship --skip-sync
-• Use 'empathy ship --verbose' to see all checks
+• Add to pre-commit hook: attune ship --skip-sync
+• Use 'attune ship --verbose' to see all checks
 """,
     "learn": """
-HOW 'empathy learn' WORKS:
+HOW 'attune learn' WORKS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 Extracts patterns from your git history to teach Claude about your codebase:
 
@@ -145,9 +145,9 @@ Extracts patterns from your git history to teach Claude about your codebase:
    - Loaded by Claude Code automatically
 
 USAGE EXAMPLES:
-• empathy learn --analyze 10    # Last 10 commits
-• empathy learn --analyze 100   # Deeper history
-• empathy sync-claude           # Apply patterns to Claude
+• attune learn --analyze 10    # Last 10 commits
+• attune learn --analyze 100   # Deeper history
+• attune sync-claude           # Apply patterns to Claude
 
 TIPS:
 • Run weekly to keep patterns current
@@ -155,7 +155,7 @@ TIPS:
 • Check ./patterns/ to see what was learned
 """,
     "health": """
-HOW 'empathy health' WORKS:
+HOW 'attune health' WORKS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 Code health dashboard that runs multiple quality checks:
 
@@ -186,10 +186,10 @@ Code health dashboard that runs multiple quality checks:
    - Simple lint errors
 
 USAGE:
-• empathy health              # Quick check
-• empathy health --deep       # Full check
-• empathy health --fix        # Auto-fix issues
-• empathy health --trends 30  # 30-day trend
+• attune health              # Quick check
+• attune health --deep       # Full check
+• attune health --fix        # Auto-fix issues
+• attune health --trends 30  # 30-day trend
 
 TIPS:
 • Run quick checks before commits
@@ -197,7 +197,7 @@ TIPS:
 • Track trends to catch regressions
 """,
     "sync-claude": """
-HOW 'empathy sync-claude' WORKS:
+HOW 'attune sync-claude' WORKS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Converts learned patterns into Claude Code rules:
 
@@ -208,7 +208,7 @@ Converts learned patterns into Claude Code rules:
    - tech_debt.json → Known debt items
 
 2. GENERATES RULES
-   Creates .claude/rules/empathy/:
+   Creates .claude/rules/attune/:
    - debugging.md
    - security.md
    - tech_debt.md
@@ -230,12 +230,12 @@ FILE STRUCTURE:
 .claude/
   CLAUDE.md             # Project instructions
   rules/
-    empathy/            # Generated rules
+    attune/             # Generated rules
       debugging.md
       security.md
 
 TIPS:
-• Run after 'empathy learn'
+• Run after 'attune learn'
 • Commit .claude/rules/ to share with team
 • Weekly sync keeps Claude current
 """,

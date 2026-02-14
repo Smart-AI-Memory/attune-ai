@@ -21,7 +21,7 @@ def register_parsers(subparsers):
         "--level",
         type=int,
         default=4,
-        help="Target empathy level (1-5, default: 4)",
+        help="Target level (1-5, default: 4)",
     )
     parser_run.set_defaults(func=inspect.cmd_run)
 

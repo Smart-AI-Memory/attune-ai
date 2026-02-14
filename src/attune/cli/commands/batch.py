@@ -74,10 +74,10 @@ def cmd_batch_submit(args):
 
         print("\n✅ Batch submitted successfully!")
         print(f"   Batch ID: {batch_id}")
-        print(f"\nMonitor status with: empathy batch status {batch_id}")
-        print(f"Retrieve results with: empathy batch results {batch_id} output.json")
+        print(f"\nMonitor status with: attune batch status {batch_id}")
+        print(f"Retrieve results with: attune batch results {batch_id} output.json")
         print(
-            f"Or wait for completion: empathy batch wait {batch_id} output.json --poll-interval 300"
+            f"Or wait for completion: attune batch wait {batch_id} output.json --poll-interval 300"
         )
 
         return 0
@@ -127,7 +127,7 @@ def cmd_batch_status(args):
 
         if status.processing_status == "ended":
             print("\n✅ Batch processing completed!")
-            print(f"   Retrieve results with: empathy batch results {batch_id} output.json")
+            print(f"   Retrieve results with: attune batch results {batch_id} output.json")
         else:
             print("\n⏳ Batch still processing...")
 
@@ -169,7 +169,7 @@ def cmd_batch_results(args):
 
         if status.processing_status != "ended":
             print(f"❌ Error: Batch has not ended processing (status: {status.processing_status})")
-            print(f"   Wait for completion with: empathy batch wait {batch_id} {output_file}")
+            print(f"   Wait for completion with: attune batch wait {batch_id} {output_file}")
             return 1
 
         # Get results
@@ -248,7 +248,7 @@ def cmd_batch_wait(args):
 
     except TimeoutError:
         print(f"\n⏰ Timeout: Batch did not complete within {timeout}s")
-        print(f"   Check status with: empathy batch status {batch_id}")
+        print(f"   Check status with: attune batch status {batch_id}")
         return 1
     except Exception as e:
         logger.exception("Failed to wait for batch")

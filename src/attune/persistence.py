@@ -273,7 +273,7 @@ class StateManager:
     - User personalization
     """
 
-    def __init__(self, storage_path: str = "./empathy_state"):
+    def __init__(self, storage_path: str = "./attune_state"):
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True, parents=True)
 

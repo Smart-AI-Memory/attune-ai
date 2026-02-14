@@ -23,10 +23,10 @@ from attune.workflows.release_prep import (
     format_release_prep_report,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def workflow():
@@ -83,6 +83,7 @@ def clean_input_data():
 # Test: Workflow instantiation
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestWorkflowInstantiation:
     """Test workflow creation with various configurations."""
@@ -90,7 +91,9 @@ class TestWorkflowInstantiation:
     def test_default_instantiation(self, workflow):
         """Test default workflow has correct name, stages, and tier map."""
         assert workflow.name == "release-prep"
-        assert workflow.description == "Pre-release quality gate with health, security, and changelog"
+        assert (
+            workflow.description == "Pre-release quality gate with health, security, and changelog"
+        )
         assert workflow.stages == ["health", "security", "changelog", "approve"]
         assert workflow.skip_approve_if_clean is True
         assert workflow.use_security_crew is False
@@ -109,7 +112,11 @@ class TestWorkflowInstantiation:
         """Test that enabling security crew adds crew_security stage."""
         assert "crew_security" in workflow_with_crew.stages
         assert workflow_with_crew.stages == [
-            "health", "security", "crew_security", "changelog", "approve",
+            "health",
+            "security",
+            "crew_security",
+            "changelog",
+            "approve",
         ]
         assert workflow_with_crew.crew_config == {"scan_depth": "deep"}
 
@@ -139,6 +146,7 @@ class TestWorkflowInstantiation:
 # Test: Configuration / step definitions
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestStepConfig:
     """Test RELEASE_PREP_STEPS configuration."""
@@ -166,6 +174,7 @@ class TestStepConfig:
 # ---------------------------------------------------------------------------
 # Test: default_context classmethod
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestDefaultContext:
@@ -199,6 +208,7 @@ class TestDefaultContext:
 # ---------------------------------------------------------------------------
 # Test: should_skip_stage
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestShouldSkipStage:
@@ -240,6 +250,7 @@ class TestShouldSkipStage:
 # ---------------------------------------------------------------------------
 # Test: run_stage routing
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestRunStageRouting:
@@ -292,6 +303,7 @@ class TestRunStageRouting:
 # ---------------------------------------------------------------------------
 # Test: _health stage
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestHealthStage:
@@ -348,6 +360,7 @@ class TestHealthStage:
     @pytest.mark.asyncio
     async def test_health_tool_timeout(self, workflow):
         """Test health stage when a tool times out."""
+
         def fake_run(*args, **kwargs):
             raise subprocess.TimeoutExpired(cmd="ruff", timeout=60)
 
@@ -364,6 +377,7 @@ class TestHealthStage:
     @pytest.mark.asyncio
     async def test_health_tool_not_found(self, workflow):
         """Test health stage when a tool is not installed."""
+
         def fake_run(*args, **kwargs):
             raise FileNotFoundError("ruff not found")
 
@@ -391,7 +405,9 @@ class TestHealthStage:
     async def test_health_default_path(self, workflow):
         """Test health stage defaults to '.' if no path given."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result) as mock_run:
+        with patch(
+            "attune.workflows.release_prep.subprocess.run", return_value=mock_result
+        ) as mock_run:
             await workflow._health({}, ModelTier.CHEAP)
 
         # Verify ruff was called with "." as path
@@ -484,6 +500,7 @@ class TestHealthStage:
 # ---------------------------------------------------------------------------
 # Test: _security stage
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestSecurityStage:
@@ -623,6 +640,7 @@ class TestSecurityStage:
 # Test: _changelog stage
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestChangelogStage:
     """Test the changelog generation stage."""
@@ -674,7 +692,9 @@ class TestChangelogStage:
         """Test changelog uses custom since parameter."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result) as mock_run:
+        with patch(
+            "attune.workflows.release_prep.subprocess.run", return_value=mock_result
+        ) as mock_run:
             await workflow._changelog(
                 {"path": "/project", "since": "2 weeks ago"},
                 ModelTier.CAPABLE,
@@ -711,6 +731,7 @@ class TestChangelogStage:
 # Test: _crew_security stage
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestCrewSecurityStage:
     """Test the crew security stage."""
@@ -719,9 +740,7 @@ class TestCrewSecurityStage:
     async def test_crew_security_import_error(self, workflow_with_crew):
         """Test crew_security falls back when security_adapters import fails."""
         with patch.dict("sys.modules", {"attune.workflows.security_adapters": None}):
-            with patch(
-                "attune.workflows.release_prep.ReleasePreparationWorkflow._crew_security"
-            ) as mock_method:
+            with patch("attune.workflows.release_prep.ReleasePreparationWorkflow._crew_security"):
                 # Since we can't easily trigger ImportError mid-method,
                 # test the fallback path directly
                 pass
@@ -845,9 +864,7 @@ class TestCrewSecurityStage:
         mock_module.merge_security_results = MagicMock(return_value={})
 
         with patch.dict(sys.modules, {"attune.workflows.security_adapters": mock_module}):
-            result, _, _ = await workflow_with_crew._crew_security(
-                {"path": "."}, ModelTier.PREMIUM
-            )
+            result, _, _ = await workflow_with_crew._crew_security({"path": "."}, ModelTier.PREMIUM)
 
         assert result["crew_security"]["fallback"] is False
         assert workflow_with_crew._has_blockers is False
@@ -856,6 +873,7 @@ class TestCrewSecurityStage:
 # ---------------------------------------------------------------------------
 # Test: _approve stage
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestApproveStage:
@@ -885,9 +903,7 @@ class TestApproveStage:
         clean_input_data["health"]["passed"] = False
         clean_input_data["health"]["failed_checks"] = ["lint", "types"]
 
-        workflow._call_llm = AsyncMock(
-            return_value=("Issues found. Not ready.", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("Issues found. Not ready.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -920,9 +936,7 @@ class TestApproveStage:
         """Test approve stage when no commits in period."""
         clean_input_data["changelog"]["total_commits"] = 0
 
-        workflow._call_llm = AsyncMock(
-            return_value=("No changes to release.", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("No changes to release.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -936,9 +950,7 @@ class TestApproveStage:
         """Test approve stage generates warnings for medium issues."""
         clean_input_data["security"]["medium_severity"] = 5
 
-        workflow._call_llm = AsyncMock(
-            return_value=("Some warnings but OK.", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("Some warnings but OK.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -953,9 +965,7 @@ class TestApproveStage:
         """Test approve stage warns about low test count."""
         clean_input_data["health"]["checks"]["tests"]["test_count"] = 3
 
-        workflow._call_llm = AsyncMock(
-            return_value=("Low test count noted.", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("Low test count noted.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -968,9 +978,7 @@ class TestApproveStage:
         """Test approve stage uses XML prompt when enabled."""
         workflow._is_xml_enabled = MagicMock(return_value=True)
         workflow._render_xml_prompt = MagicMock(return_value="<xml>prompt</xml>")
-        workflow._call_llm = AsyncMock(
-            return_value=("<response>good</response>", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("<response>good</response>", 100, 200))
         workflow._parse_xml_response = MagicMock(
             return_value={"xml_parsed": True, "summary": "All clear"}
         )
@@ -985,9 +993,7 @@ class TestApproveStage:
     async def test_approve_includes_auth_mode(self, workflow, clean_input_data):
         """Test that auth_mode_used is included when set."""
         workflow._auth_mode_used = "subscription"
-        workflow._call_llm = AsyncMock(
-            return_value=("Good to go.", 100, 200)
-        )
+        workflow._call_llm = AsyncMock(return_value=("Good to go.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -999,12 +1005,8 @@ class TestApproveStage:
     async def test_approve_executor_fallback(self, workflow, clean_input_data):
         """Test approve falls back to _call_llm when executor fails."""
         workflow._executor = MagicMock()
-        workflow.run_step_with_executor = AsyncMock(
-            side_effect=RuntimeError("executor error")
-        )
-        workflow._call_llm = AsyncMock(
-            return_value=("Fallback response.", 100, 200)
-        )
+        workflow.run_step_with_executor = AsyncMock(side_effect=RuntimeError("executor error"))
+        workflow._call_llm = AsyncMock(return_value=("Fallback response.", 100, 200))
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
 
@@ -1017,6 +1019,7 @@ class TestApproveStage:
 # ---------------------------------------------------------------------------
 # Test: format_release_prep_report
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestFormatReport:

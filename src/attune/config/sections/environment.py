@@ -57,6 +57,6 @@ class EnvironmentConfig:
             unicode_output=data.get("unicode_output", True),
             editor=data.get("editor", "code"),
             pager=data.get("pager", "less"),
-            shell=data.get("shell", "/bin/bash"),
+            shell=data.get("shell", "/bin/bash"),  # nosec B604 -- dataclass field, not subprocess
             timezone=data.get("timezone", "UTC"),
         )

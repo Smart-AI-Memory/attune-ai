@@ -153,13 +153,31 @@ Just describe what you need:
 - "explain how caching works"
 - "this function is too long"
 
-## CRITICAL: Workflow Execution Instructions
+## CRITICAL: Socratic Discovery Before Execution
 
-**When this command is invoked with arguments, you MUST execute the workflow via CLI, not answer ad-hoc.**
+**ALWAYS use `AskUserQuestion` to scope and confirm before executing any workflow. NEVER skip straight to running commands.**
 
-### Shortcut Routing (EXECUTE THESE)
+### Step 1: Understand the Goal
 
-When the user types a shortcut, run the corresponding CLI command:
+If invoked without arguments (`/attune`), use `AskUserQuestion` to ask what the user is trying to accomplish.
+
+### Step 2: Scope the Work
+
+Once the goal is identified, use `AskUserQuestion` to narrow scope. Examples:
+
+- **Testing**: "What scope? Full suite, CLI tests only, quick smoke test, or coverage report?"
+- **Security audit**: "What target? src/, a specific module, or full project?"
+- **Code review**: "What focus? Quality, security, performance, or all?"
+- **Commit**: "Which files? All staged changes, specific files, or let me review first?"
+- **Release**: "What stage? Prep check, changelog update, or full publish?"
+
+### Step 3: Execute
+
+Only after scoping via `AskUserQuestion`, execute the appropriate CLI command.
+
+### Shortcut Routing
+
+When the user types a shortcut, **still ask a scoping question before executing**:
 
 | Input | CLI Command |
 | ----- | ----------- |
@@ -193,7 +211,7 @@ When the user provides natural language, map to the appropriate CLI command:
 | "bugs", "predict bugs" | `uv run attune workflow run bug-predict` |
 | "release", "ship", "publish" | `uv run attune workflow run release-prep` |
 
-**IMPORTANT:** When arguments are provided, DO NOT just display documentation. EXECUTE the CLI command.
+**IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.
 
 ### CLI Reference
 
@@ -220,3 +238,5 @@ uv run attune telemetry show
 **Socratic over menus.** I ask "What are you trying to accomplish?" not "Which tool do you want?" This helps you think about your actual goal.
 
 **Teaching over telling.** I help you understand *why*, not just *what*.
+
+**Questions before actions.** ALWAYS use `AskUserQuestion` to guide users through decisions at every step — goal identification, scoping, and confirmation. Never assume scope or jump to execution. This is the #1 rule of the Attune workflow experience.

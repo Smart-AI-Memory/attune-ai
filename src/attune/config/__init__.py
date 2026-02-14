@@ -23,7 +23,7 @@ except ImportError:
 
 # Load the original config.py module directly
 config_py_path = Path(__file__).parent.parent / "config.py"
-spec = importlib.util.spec_from_file_location("empathy_os_config_legacy", config_py_path)
+spec = importlib.util.spec_from_file_location("attune_config_legacy", config_py_path)
 if spec and spec.loader:
     legacy_config = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(legacy_config)
@@ -48,7 +48,7 @@ from attune.config.agent_config import (  # noqa: E402
     UnifiedAgentConfig,
     WorkflowMode,
 )
-from attune.config.agent_config import (
+from attune.config.agent_config import (  # noqa: E402
     WorkflowConfig as AgentWorkflowConfig,
 )
 from attune.config.xml_config import (  # noqa: E402

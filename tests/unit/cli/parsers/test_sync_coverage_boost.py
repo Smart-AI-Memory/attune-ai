@@ -82,4 +82,4 @@ class TestRegisterParsers:
         args = parser.parse_args(["sync-claude"])
 
         # Then
-        assert args.output_dir == ".claude/rules/empathy"
+        assert args.output_dir == ".claude/rules/attune"

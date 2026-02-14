@@ -2,7 +2,7 @@
 
 .. deprecated:: 4.3.0
     This workflow is deprecated in favor of the meta-workflow system.
-    Use ``empathy meta-workflow run test-coverage-boost`` instead.
+    Use ``attune meta-workflow run test-coverage-boost`` instead.
     See docs/CREWAI_MIGRATION.md for migration guide.
 
 This module provides a CrewAI-based workflow that uses 3 specialized agents
@@ -14,6 +14,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import json
+import logging
 import re
 import warnings
 from dataclasses import dataclass, field
@@ -21,6 +22,8 @@ from datetime import datetime
 from pathlib import Path
 
 from attune.models.executor import ExecutionContext
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -204,7 +207,7 @@ class TestCoverageBoostCrew:
         """Initialize the test coverage boost crew.
 
         .. deprecated:: 4.3.0
-            Use meta-workflow system instead: ``empathy meta-workflow run test-coverage-boost``
+            Use meta-workflow system instead: ``attune meta-workflow run test-coverage-boost``
 
         Args:
             target_coverage: Target coverage percentage (0-100)
@@ -213,7 +216,7 @@ class TestCoverageBoostCrew:
         """
         warnings.warn(
             "TestCoverageBoostCrew is deprecated since v4.3.0. "
-            "Use meta-workflow system instead: empathy meta-workflow run test-coverage-boost. "
+            "Use meta-workflow system instead: attune meta-workflow run test-coverage-boost. "
             "See docs/CREWAI_MIGRATION.md for migration guide.",
             DeprecationWarning,
             stacklevel=2,
@@ -388,8 +391,8 @@ CRITICAL FORMATTING RULES:
                         "code": code,
                     }
                 )
-            except Exception:
-                # Skip files that can't be read
+            except (FileNotFoundError, PermissionError, OSError, ValueError) as e:
+                logger.debug("Skipping unreadable file: %s", e)
                 continue
 
         return result

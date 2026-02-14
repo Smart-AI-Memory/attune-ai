@@ -123,22 +123,16 @@ def _make_signal(
 class TestCmdTelemetryShow:
     """Tests for cmd_telemetry_show."""
 
-    @patch("attune.cli_commands.telemetry_commands.TelemetryStore", create=True)
-    def test_show_with_workflow_data(
-        self, _mock_cls: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_show_with_workflow_data(self, capsys: pytest.CaptureFixture) -> None:
         """Test show command displays workflow data correctly."""
-        records = [
-            _make_workflow_record(
-                total_cost=0.05, total_input_tokens=1000, total_output_tokens=500
-            ),
-            _make_workflow_record(
-                total_cost=0.10, total_input_tokens=2000, total_output_tokens=800
-            ),
-        ]
         mock_store = MagicMock()
-        mock_store.get_workflows.return_value = records
-        mock_store.get_calls.return_value = []
+        mock_store.get_summary.return_value = {
+            "source": "workflows",
+            "workflow_count": 2,
+            "call_count": 0,
+            "total_cost": 0.15,
+            "total_tokens": 4300,
+        }
 
         with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))
@@ -150,18 +144,16 @@ class TestCmdTelemetryShow:
         assert "2" in captured  # 2 workflow runs
         assert "$0.15" in captured  # total cost
 
-    @patch("attune.cli_commands.telemetry_commands.TelemetryStore", create=True)
-    def test_show_with_call_data_no_workflows(
-        self, _mock_cls: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_show_with_call_data_no_workflows(self, capsys: pytest.CaptureFixture) -> None:
         """Test show command falls back to calls when no workflows exist."""
-        calls = [
-            _make_call_record(estimated_cost=0.01, input_tokens=200, output_tokens=100),
-            _make_call_record(estimated_cost=0.02, input_tokens=300, output_tokens=150),
-        ]
         mock_store = MagicMock()
-        mock_store.get_workflows.return_value = []
-        mock_store.get_calls.return_value = calls
+        mock_store.get_summary.return_value = {
+            "source": "calls",
+            "workflow_count": 0,
+            "call_count": 2,
+            "total_cost": 0.03,
+            "total_tokens": 750,
+        }
 
         with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=30))
@@ -176,8 +168,13 @@ class TestCmdTelemetryShow:
     def test_show_with_no_data(self, capsys: pytest.CaptureFixture) -> None:
         """Test show command when no telemetry data exists."""
         mock_store = MagicMock()
-        mock_store.get_workflows.return_value = []
-        mock_store.get_calls.return_value = []
+        mock_store.get_summary.return_value = {
+            "source": "none",
+            "workflow_count": 0,
+            "call_count": 0,
+            "total_cost": 0.0,
+            "total_tokens": 0,
+        }
 
         with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))
@@ -201,7 +198,7 @@ class TestCmdTelemetryShow:
     def test_show_generic_exception(self, capsys: pytest.CaptureFixture) -> None:
         """Test show command handles unexpected errors gracefully."""
         mock_store = MagicMock()
-        mock_store.get_workflows.side_effect = RuntimeError("database locked")
+        mock_store.get_summary.side_effect = RuntimeError("database locked")
 
         with patch("attune.models.telemetry.TelemetryStore", return_value=mock_store, create=True):
             result = cmd_telemetry_show(_make_args(days=7))

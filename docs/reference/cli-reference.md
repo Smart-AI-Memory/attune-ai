@@ -1,10 +1,10 @@
 ---
-description: CLI Reference API reference: Complete reference for the `empathy` command-line interface. --- ## Quick Reference # Workflows empa
+description: CLI Reference API reference: Complete reference for the `attune` command-line interface.
 ---
 
 # CLI Reference
 
-Complete reference for the `empathy` command-line interface.
+Complete reference for the `attune` command-line interface.
 
 ---
 
@@ -12,34 +12,34 @@ Complete reference for the `empathy` command-line interface.
 
 ```bash
 # Workflows
-empathy workflow list                    # List available workflows
-empathy workflow info <name>             # Show workflow details
-empathy workflow run <name> [options]    # Execute a workflow
+attune workflow list                    # List available workflows
+attune workflow info <name>             # Show workflow details
+attune workflow run <name> [options]    # Execute a workflow
 
 # Telemetry
-empathy telemetry show                   # Display usage summary
-empathy telemetry savings                # Show cost savings
-empathy telemetry export -o <file>       # Export to CSV/JSON
+attune telemetry show                   # Display usage summary
+attune telemetry savings                # Show cost savings
+attune telemetry export -o <file>       # Export to CSV/JSON
 
 # Provider
-empathy provider show                    # Show current provider
-empathy provider set <name>              # Set provider (anthropic)
+attune provider show                    # Show current provider
+attune provider set <name>              # Set provider (anthropic)
 
 # Utilities
-empathy validate                         # Validate configuration
-empathy version                          # Show version
+attune validate                         # Validate configuration
+attune version                          # Show version
 ```
 
 ---
 
 ## Workflow Commands
 
-### `empathy workflow list`
+### `attune workflow list`
 
 List all available workflows registered in the framework.
 
 ```bash
-empathy workflow list
+attune workflow list
 ```
 
 **Output:**
@@ -55,17 +55,17 @@ empathy workflow list
 
 Total: 4 workflows
 
-Run a workflow: empathy workflow run <name>
+Run a workflow: attune workflow run <name>
 ```
 
 ---
 
-### `empathy workflow info <name>`
+### `attune workflow info <name>`
 
 Show detailed information about a specific workflow.
 
 ```bash
-empathy workflow info security-audit
+attune workflow info security-audit
 ```
 
 **Arguments:**
@@ -76,22 +76,22 @@ empathy workflow info security-audit
 
 ---
 
-### `empathy workflow run <name>`
+### `attune workflow run <name>`
 
 Execute a workflow with optional parameters.
 
 ```bash
 # Basic usage
-empathy workflow run security-audit
+attune workflow run security-audit
 
 # With target path
-empathy workflow run security-audit --path ./src
+attune workflow run security-audit --path ./src
 
 # With JSON input
-empathy workflow run bug-predict --input '{"threshold": 0.8}'
+attune workflow run bug-predict --input '{"threshold": 0.8}'
 
 # Output as JSON (for CI/CD)
-empathy workflow run security-audit --path ./src --json
+attune workflow run security-audit --path ./src --json
 ```
 
 **Arguments:**
@@ -113,29 +113,29 @@ empathy workflow run security-audit --path ./src --json
 
 ```bash
 # Security audit on src directory
-empathy workflow run security-audit --path ./src
+attune workflow run security-audit --path ./src
 
 # Bug prediction with custom threshold
-empathy workflow run bug-predict --input '{"path":"./src","threshold":0.7}'
+attune workflow run bug-predict --input '{"path":"./src","threshold":0.7}'
 
 # Test coverage targeting 80%
-empathy workflow run test-coverage --path ./src --target 80
+attune workflow run test-coverage --path ./src --target 80
 
 # CI/CD friendly output
-empathy workflow run security-audit --path ./src --json > results.json
+attune workflow run security-audit --path ./src --json > results.json
 ```
 
 ---
 
 ## Telemetry Commands
 
-### `empathy telemetry show`
+### `attune telemetry show`
 
 Display usage summary including API calls, tokens, and costs.
 
 ```bash
-empathy telemetry show
-empathy telemetry show --days 7
+attune telemetry show
+attune telemetry show --days 7
 ```
 
 **Options:**
@@ -158,13 +158,13 @@ empathy telemetry show --days 7
 
 ---
 
-### `empathy telemetry savings`
+### `attune telemetry savings`
 
 Show cost savings from intelligent tier routing.
 
 ```bash
-empathy telemetry savings
-empathy telemetry savings --days 90
+attune telemetry savings
+attune telemetry savings --days 90
 ```
 
 **Options:**
@@ -190,13 +190,13 @@ empathy telemetry savings --days 90
 
 ---
 
-### `empathy telemetry export`
+### `attune telemetry export`
 
 Export telemetry data to a file.
 
 ```bash
-empathy telemetry export -o telemetry.json
-empathy telemetry export -o telemetry.csv --format csv
+attune telemetry export -o telemetry.json
+attune telemetry export -o telemetry.csv --format csv
 ```
 
 **Options:**
@@ -211,12 +211,12 @@ empathy telemetry export -o telemetry.csv --format csv
 
 ## Provider Commands
 
-### `empathy provider show`
+### `attune provider show`
 
 Display current LLM provider configuration.
 
 ```bash
-empathy provider show
+attune provider show
 ```
 
 **Output:**
@@ -235,12 +235,12 @@ empathy provider show
 
 ---
 
-### `empathy provider set <name>`
+### `attune provider set <name>`
 
 Set the active LLM provider.
 
 ```bash
-empathy provider set anthropic
+attune provider set anthropic
 ```
 
 **Arguments:**
@@ -255,16 +255,17 @@ empathy provider set anthropic
 
 ## Utility Commands
 
-### `empathy validate`
+### `attune validate`
 
 Validate your configuration and environment.
 
 ```bash
-empathy validate
+attune validate
 ```
 
 **Checks:**
-- Configuration file (empathy.config.json/yml)
+
+- Configuration file (attune.config.json/yml)
 - API keys (ANTHROPIC_API_KEY)
 - Workflow registration
 
@@ -272,7 +273,7 @@ empathy validate
 ```
 🔍 Validating configuration...
 
-  ✅ Config file: empathy.config.yml
+  ✅ Config file: attune.config.yml
   ✅ Anthropic (Claude) API key set
   ✅ 12 workflows registered
 
@@ -283,13 +284,13 @@ empathy validate
 
 ---
 
-### `empathy version`
+### `attune version`
 
 Show version information.
 
 ```bash
-empathy version
-empathy version --verbose
+attune version
+attune version --verbose
 ```
 
 **Options:**
@@ -316,8 +317,8 @@ These options work with any command:
 | Variable | Description |
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Anthropic API key (required) |
-| `EMPATHY_CONFIG` | Custom config file path |
-| `EMPATHY_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING) |
+| `ATTUNE_CONFIG` | Custom config file path |
+| `ATTUNE_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING) |
 
 ---
 
@@ -334,13 +335,7 @@ These options work with any command:
 
 The framework includes additional CLI tools:
 
-| Tool | Description |
-|------|-------------|
-| `empathy-inspect` | Code inspection pipeline |
-| `empathy-memory` | Memory control panel |
-| `empathy-sync-claude` | Sync patterns to Claude Code |
-
-See [CLI Guide](CLI_GUIDE.md) for detailed documentation on these tools.
+See [All CLI Entry Points](#all-cli-entry-points) below for the full list of available CLIs.
 
 ---
 
@@ -357,3 +352,33 @@ For interactive features, use Claude Code slash commands instead of CLI:
 | `/help` | Navigation hub overview |
 
 These provide guided, conversational experiences built on top of the same framework.
+
+---
+
+## All CLI Entry Points
+
+### Primary (Canonical)
+
+| Command | Module | Description |
+| --- | --- | --- |
+| `attune <command>` | `attune.cli_minimal` | Automation-focused CLI (workflows, telemetry, provider, validate) |
+| `python -m attune.cli` | `attune.cli` | Full-featured modular CLI (30+ commands) |
+
+### Specialty CLIs
+
+Invoked via `python -m <module>`:
+
+| Command | Description |
+| --- | --- |
+| `python -m attune.models` | Model registry, auth setup, cost estimation |
+| `python -m attune.test_generator` | AI-powered test generation and risk analysis |
+| `python -m attune.scaffolding` | Project scaffolding and boilerplate generation |
+| `python -m attune.socratic` | Socratic question-driven workflow selection |
+| `python -m attune.telemetry` | Detailed telemetry and cost analysis |
+| `python -m attune.project_index` | Project indexing and code scanning |
+
+### Deprecated
+
+| Entry Point | Replacement | Removal Target |
+| --- | --- | --- |
+| `attune.cli_unified` | `attune` (cli_minimal) | v5.0.0 |

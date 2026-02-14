@@ -25,12 +25,12 @@ def cmd_version(args):
     """
     logger.info("Displaying version information")
     try:
-        version = get_version("empathy")
+        version = get_version("attune-ai")
     except Exception as e:
         # Package metadata not available or invalid (development install)
         logger.debug(f"Version not available: {e}")
         version = "unknown"
-    logger.info(f"Empathy v{version}")
+    logger.info(f"Attune v{version}")
     logger.info("Copyright 2025 Smart-AI-Memory")
     logger.info("Licensed under the Apache License, Version 2.0")
     logger.info("\n✨ Built with Claude Code + MemDocs + VS Code transformative stack")
@@ -52,7 +52,7 @@ def cmd_cheatsheet(args):
 
     print()
     print("=" * 60)
-    print("  EMPATHY FRAMEWORK - QUICK REFERENCE")
+    print("  ATTUNE AI - QUICK REFERENCE")
     print("=" * 60)
 
     if category:
@@ -82,8 +82,8 @@ def cmd_cheatsheet(args):
 
     print()
     print("-" * 60)
-    print("  Use: empathy <command> --explain  for detailed explanation")
-    print("  Use: empathy onboard              for interactive tutorial")
+    print("  Use: attune <command> --explain  for detailed explanation")
+    print("  Use: attune onboard              for interactive tutorial")
     print("=" * 60)
     print()
 
@@ -137,22 +137,22 @@ Let's check your current setup first...
             "content": """
 First, let's create a configuration file for your project.
 
-Run: empathy init
+Run: attune init
 
 This creates attune.config.yaml with sensible defaults.
-Alternatively, use 'empathy workflow' for an interactive setup.
+Alternatively, use 'attune workflow' for an interactive setup.
 """,
             "check": lambda: _file_exists("attune.config.yaml")
             or _file_exists("attune.config.yml"),
-            "action": "empathy init",
+            "action": "attune init",
         },
         {
             "title": "Step 2: Learn From Your History",
             "content": """
-Empathy can learn patterns from your git commit history.
+Attune can learn patterns from your git commit history.
 This teaches Claude about your codebase's patterns and past bugs.
 
-Run: empathy learn --analyze 10
+Run: attune learn --analyze 10
 
 This analyzes the last 10 commits and extracts:
 - Bug fix patterns
@@ -160,37 +160,37 @@ This analyzes the last 10 commits and extracts:
 - Technical debt markers
 """,
             "check": lambda: _file_exists("patterns/debugging.json"),
-            "action": "empathy learn --analyze 10",
+            "action": "attune learn --analyze 10",
         },
         {
             "title": "Step 3: Sync Patterns to Claude",
             "content": """
 Now let's share what we learned with Claude Code.
 
-Run: empathy sync-claude
+Run: attune sync-claude
 
-This creates .claude/rules/empathy/ with markdown rules
+This creates .claude/rules/attune/ with markdown rules
 that Claude Code automatically loads when you work in this directory.
 """,
-            "check": lambda: _file_exists(".claude/rules/empathy/debugging.md"),
-            "action": "empathy sync-claude",
+            "check": lambda: _file_exists(".claude/rules/attune/debugging.md"),
+            "action": "attune sync-claude",
         },
         {
             "title": "Step 4: Check Code Health",
             "content": """
 Let's run a quick health check on your codebase.
 
-Run: empathy health
+Run: attune health
 
 This checks:
 - Linting issues
 - Type errors
 - Formatting problems
 
-Try 'empathy health --fix' to auto-fix what's possible.
+Try 'attune health --fix' to auto-fix what's possible.
 """,
             "check": lambda: stats.get("command_counts", {}).get("health", 0) > 0,
-            "action": "empathy health",
+            "action": "attune health",
         },
         {
             "title": "Step 5: Daily Workflow",
@@ -198,16 +198,16 @@ Try 'empathy health --fix' to auto-fix what's possible.
 You're almost there! Here's your recommended daily workflow:
 
 MORNING:
-  empathy morning     - Get your priority briefing
+  attune morning     - Get your priority briefing
 
 BEFORE COMMITS:
-  empathy ship        - Validate before committing
+  attune ship        - Validate before committing
 
 WEEKLY:
-  empathy learn       - Update patterns from new commits
-  empathy sync-claude - Keep Claude current
+  attune learn       - Update patterns from new commits
+  attune sync-claude - Keep Claude current
 
-You've completed the basics! Run 'empathy cheatsheet' anytime
+You've completed the basics! Run 'attune cheatsheet' anytime
 for a quick reference of all commands.
 """,
             "check": lambda: True,
@@ -237,7 +237,7 @@ for a quick reference of all commands.
         if current_step < len(steps) - 1:
             print("  [DONE] This step is complete!")
             print()
-            print(f"  Continue with: empathy onboard --step {current_step + 2}")
+            print(f"  Continue with: attune onboard --step {current_step + 2}")
             # Auto-advance
             engine.state["onboarding_step"] = current_step + 1
             engine._save()
@@ -247,7 +247,7 @@ for a quick reference of all commands.
             _show_achievements(engine)
     elif step_data["action"]:
         print(f"  NEXT: Run '{step_data['action']}'")
-        print("        Then run 'empathy onboard' to continue")
+        print("        Then run 'attune onboard' to continue")
 
     print()
     print("-" * 60)
@@ -276,7 +276,7 @@ def cmd_explain(args):
         available = ", ".join(EXPLAIN_CONTENT.keys())
         print(f"\nNo detailed explanation available for '{command}'")
         print(f"Available: {available}")
-        print("\nTry: empathy cheatsheet  for a quick reference")
+        print("\nTry: attune cheatsheet  for a quick reference")
         print()
 
 
@@ -298,7 +298,7 @@ def cmd_achievements(args):
 
     print()
     print("=" * 60)
-    print("  YOUR EMPATHY FRAMEWORK JOURNEY")
+    print("  YOUR ATTUNE AI JOURNEY")
     print("=" * 60)
     print()
 

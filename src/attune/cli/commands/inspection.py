@@ -47,11 +47,11 @@ def inspect_cmd(
     format_out: str = "text",
 ) -> None:
     """Deep inspection with code analysis."""
-    args = ["empathy-inspect", str(path)]
+    args = ["attune-inspect", str(path)]
     if format_out != "text":
         args.extend(["--format", format_out])
 
     result = subprocess.run(args, check=False, capture_output=False)
     if result.returncode != 0:
-        console.print("[yellow]Note: empathy-inspect may not be installed[/yellow]")
-        console.print("Install with: pip install empathy-framework[software]")
+        console.print("[yellow]Note: attune-inspect may not be installed[/yellow]")
+        console.print("Install with: pip install attune-framework[software]")

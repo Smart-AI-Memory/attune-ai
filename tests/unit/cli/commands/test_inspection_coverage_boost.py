@@ -49,7 +49,7 @@ class TestInspectCmd:
 
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        assert "empathy-inspect" in args[0]
+        assert "attune-inspect" in args[0]
 
     @patch("subprocess.run")
     @patch("attune.cli.commands.inspection.console")

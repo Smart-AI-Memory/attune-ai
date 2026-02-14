@@ -26,7 +26,7 @@ class EmpathyMCPServer:
         self.resources = self._register_resources()
         self.prompts = self._register_prompts()
         self._memory = None
-        self._empathy_level = 3  # Default: Level3Proactive
+        self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
 
         # Check for updates (non-blocking, cached per session)
@@ -174,7 +174,10 @@ class EmpathyMCPServer:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "key": {"type": "string", "description": "Unique identifier for the stored data"},
+                        "key": {
+                            "type": "string",
+                            "description": "Unique identifier for the stored data",
+                        },
                         "value": {"type": "string", "description": "Content to store"},
                         "classification": {
                             "type": "string",
@@ -233,17 +236,17 @@ class EmpathyMCPServer:
                     "required": ["key"],
                 },
             },
-            "empathy_get_level": {
-                "name": "empathy_get_level",
+            "attune_get_level": {
+                "name": "attune_get_level",
                 "description": (
-                    "Get current empathy level (1-5). "
+                    "Get current interaction level (1-5). "
                     "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
                 ),
                 "input_schema": {"type": "object", "properties": {}},
             },
-            "empathy_set_level": {
-                "name": "empathy_set_level",
-                "description": "Set empathy level (1-5) for this session.",
+            "attune_set_level": {
+                "name": "attune_set_level",
+                "description": "Set interaction level (1-5) for this session.",
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -251,7 +254,7 @@ class EmpathyMCPServer:
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 5,
-                            "description": "Empathy level (1-5)",
+                            "description": "Interaction level (1-5)",
                         },
                     },
                     "required": ["level"],
@@ -290,19 +293,19 @@ class EmpathyMCPServer:
         """
         return {
             "workflows": {
-                "uri": "empathy://workflows",
+                "uri": "attune://workflows",
                 "name": "Available Workflows",
-                "description": "List of all available Empathy workflows",
+                "description": "List of all available Attune workflows",
                 "mime_type": "application/json",
             },
             "auth_config": {
-                "uri": "empathy://auth/config",
+                "uri": "attune://auth/config",
                 "name": "Authentication Configuration",
                 "description": "Current authentication strategy configuration",
                 "mime_type": "application/json",
             },
             "telemetry": {
-                "uri": "empathy://telemetry",
+                "uri": "attune://telemetry",
                 "name": "Telemetry Data",
                 "description": "Cost tracking and performance metrics",
                 "mime_type": "application/json",
@@ -493,10 +496,10 @@ class EmpathyMCPServer:
                 return await self._handle_memory_search(arguments)
             elif tool_name == "memory_forget":
                 return await self._handle_memory_forget(arguments)
-            elif tool_name == "empathy_get_level":
-                return await self._handle_empathy_get_level()
-            elif tool_name == "empathy_set_level":
-                return await self._handle_empathy_set_level(arguments)
+            elif tool_name == "attune_get_level":
+                return await self._handle_attune_get_level()
+            elif tool_name == "attune_set_level":
+                return await self._handle_attune_set_level(arguments)
             elif tool_name == "context_get":
                 return await self._handle_context_get(arguments)
             elif tool_name == "context_set":
@@ -678,11 +681,14 @@ class EmpathyMCPServer:
             pattern_type = args.get("pattern_type")
 
             # Use short-term stash for simple key-value storage
-            memory.stash(key, {
-                "value": value,
-                "classification": classification,
-                "pattern_type": pattern_type,
-            })
+            memory.stash(
+                key,
+                {
+                    "value": value,
+                    "classification": classification,
+                    "pattern_type": pattern_type,
+                },
+            )
 
             # If pattern_type is specified, also persist as a long-term pattern
             result: dict[str, Any] = {"success": True, "key": key, "classification": classification}
@@ -701,7 +707,10 @@ class EmpathyMCPServer:
 
         except ImportError as e:
             logger.error(f"Memory module not available: {e}")
-            return {"success": False, "error": "attune-ai memory module not installed. Run: pip install attune-ai"}
+            return {
+                "success": False,
+                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+            }
         except Exception as e:
             logger.exception("memory_store failed")
             return {"success": False, "error": str(e)}
@@ -734,7 +743,10 @@ class EmpathyMCPServer:
 
         except ImportError as e:
             logger.error(f"Memory module not available: {e}")
-            return {"success": False, "error": "attune-ai memory module not installed. Run: pip install attune-ai"}
+            return {
+                "success": False,
+                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+            }
         except Exception as e:
             logger.exception("memory_retrieve failed")
             return {"success": False, "error": str(e)}
@@ -757,7 +769,8 @@ class EmpathyMCPServer:
             elif hasattr(memory, "list_patterns"):
                 all_patterns = memory.list_patterns()
                 results = [
-                    p for p in all_patterns
+                    p
+                    for p in all_patterns
                     if query.lower() in str(p).lower()
                     and (pattern_type is None or p.get("pattern_type") == pattern_type)
                 ]
@@ -766,7 +779,10 @@ class EmpathyMCPServer:
 
         except ImportError as e:
             logger.error(f"Memory module not available: {e}")
-            return {"success": False, "error": "attune-ai memory module not installed. Run: pip install attune-ai"}
+            return {
+                "success": False,
+                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+            }
         except Exception as e:
             logger.exception("memory_search failed")
             return {"success": False, "error": str(e)}
@@ -805,13 +821,16 @@ class EmpathyMCPServer:
 
         except ImportError as e:
             logger.error(f"Memory module not available: {e}")
-            return {"success": False, "error": "attune-ai memory module not installed. Run: pip install attune-ai"}
+            return {
+                "success": False,
+                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+            }
         except Exception as e:
             logger.exception("memory_forget failed")
             return {"success": False, "error": str(e)}
 
-    async def _handle_empathy_get_level(self) -> dict[str, Any]:
-        """Get current empathy level."""
+    async def _handle_attune_get_level(self) -> dict[str, Any]:
+        """Get current interaction level."""
         level_names = {
             1: "Reactive",
             2: "Guided",
@@ -821,19 +840,19 @@ class EmpathyMCPServer:
         }
         return {
             "success": True,
-            "level": self._empathy_level,
-            "name": level_names.get(self._empathy_level, "Unknown"),
+            "level": self._attune_level,
+            "name": level_names.get(self._attune_level, "Unknown"),
             "description": {
                 1: "Respond when asked. Minimal proactive guidance.",
                 2: "Collaborative exploration with clarifying questions.",
                 3: "Act before being asked. Suggest improvements.",
                 4: "Predict future needs. Prepare for likely next steps.",
                 5: "Build structures that help at scale.",
-            }.get(self._empathy_level, ""),
+            }.get(self._attune_level, ""),
         }
 
-    async def _handle_empathy_set_level(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Set empathy level for this session.
+    async def _handle_attune_set_level(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Set interaction level for this session.
 
         Args:
             args: Must contain level (integer 1-5)
@@ -845,8 +864,8 @@ class EmpathyMCPServer:
                 "error": "Level must be an integer between 1 and 5",
             }
 
-        previous = self._empathy_level
-        self._empathy_level = level
+        previous = self._attune_level
+        self._attune_level = level
 
         level_names = {
             1: "Reactive",
@@ -990,7 +1009,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler("/tmp/empathy-mcp.log")],  # nosec B108
+        handlers=[logging.FileHandler("/tmp/attune-mcp.log")],  # nosec B108
     )
 
     try:

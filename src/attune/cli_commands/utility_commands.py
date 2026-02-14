@@ -292,7 +292,7 @@ def cmd_features(args: Namespace) -> int:
     print("-" * 70)
 
     memory_features = MemoryFeatures.list_all_features()
-    for name, info in sorted(memory_features.items()):
+    for _name, info in sorted(memory_features.items()):
         is_available = info.status.value == "available"
         status_symbol = "✅" if is_available else "⚠️"
         status_text = info.status.value.replace("_", " ").title()
@@ -307,7 +307,7 @@ def cmd_features(args: Namespace) -> int:
     print("-" * 70)
 
     telemetry_features = TelemetryFeatures.list_all_features()
-    for name, info in sorted(telemetry_features.items()):
+    for _name, info in sorted(telemetry_features.items()):
         is_available = info.status.value == "available"
         status_symbol = "✅" if is_available else "⚠️"
         status_text = info.status.value.replace("_", " ").title()

@@ -453,9 +453,7 @@ class TestCleanupOldResults:
         (old_dir / "summary.json").write_text(json.dumps(old_summary))
 
         # Cleanup with dry_run=True
-        deleted, retained = cleanup_old_results(
-            str(storage_path), retention_days=30, dry_run=True
-        )
+        deleted, retained = cleanup_old_results(str(storage_path), retention_days=30, dry_run=True)
 
         assert deleted == 1
         assert retained == 0

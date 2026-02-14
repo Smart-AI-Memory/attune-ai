@@ -110,9 +110,9 @@ class EmpathyConfig:
     """Configuration for EmpathyOS instance
 
     Can be loaded from:
-    - YAML file (.empathy.yml, attune.config.yml)
-    - JSON file (.empathy.json, attune.config.json)
-    - Environment variables (EMPATHY_*)
+    - YAML file (.attune.yml, attune.config.yml)
+    - JSON file (.attune.json, attune.config.json)
+    - Environment variables (ATTUNE_*)
     - Direct instantiation
     """
 
@@ -128,11 +128,11 @@ class EmpathyConfig:
     # Persistence settings
     persistence_enabled: bool = True
     persistence_backend: str = "sqlite"  # "sqlite", "json", "none"
-    persistence_path: str = "./empathy_data"
+    persistence_path: str = "./attune_data"
 
     # State management
     state_persistence: bool = True
-    state_path: str = "./empathy_state"
+    state_path: str = "./attune_state"
 
     # Metrics settings
     metrics_enabled: bool = True
@@ -327,11 +327,11 @@ class EmpathyConfig:
 
         Looks for configuration files in this order:
         1. Provided filepath
-        2. .empathy.yml
-        3. .empathy.yaml
+        2. .attune.yml
+        3. .attune.yaml
         4. attune.config.yml
         5. attune.config.yaml
-        6. .empathy.json
+        6. .attune.json
         7. attune.config.json
 
         Args:
@@ -347,11 +347,11 @@ class EmpathyConfig:
         """
         search_paths = [
             filepath,
-            ".empathy.yml",
-            ".empathy.yaml",
+            ".attune.yml",
+            ".attune.yaml",
             "attune.config.yml",
             "attune.config.yaml",
-            ".empathy.json",
+            ".attune.json",
             "attune.config.json",
         ]
 
@@ -514,7 +514,7 @@ def load_config(
 
     Example:
         >>> # Load from file, override with env vars
-        >>> config = load_config("empathy.yml", use_env=True)
+        >>> config = load_config("attune.config.yml", use_env=True)
 
         >>> # Load with custom defaults
         >>> config = load_config(defaults={"target_level": 4})
@@ -535,11 +535,11 @@ def load_config(
     else:
         # Check default config file locations
         for default_path in [
-            ".empathy.yml",
-            ".empathy.yaml",
+            ".attune.yml",
+            ".attune.yaml",
             "attune.config.yml",
             "attune.config.yaml",
-            ".empathy.json",
+            ".attune.json",
             "attune.config.json",
         ]:
             if Path(default_path).exists():

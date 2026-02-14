@@ -3,6 +3,7 @@
 This module re-exports from attune.agents_md.registry for backward compatibility.
 Will be removed in attune-ai v3.0.0.
 """
+
 import warnings
 
 warnings.warn(

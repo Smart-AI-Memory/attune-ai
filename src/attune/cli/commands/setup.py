@@ -51,7 +51,7 @@ def cmd_init(args):
 
     logger.info("\nNext steps:")
     logger.info(f"  1. Edit {output_path} to customize settings")
-    logger.info("  2. Use 'empathy run' to start using the framework")
+    logger.info("  2. Use 'attune run' to start using the framework")
 
 
 def cmd_validate(args):
@@ -128,8 +128,8 @@ def cmd_setup(args):
     }
     use_case = use_case_map.get(use_case_choice, "general")
 
-    # Step 2: Empathy level
-    print("\n2. What empathy level do you want to target?")
+    # Step 2: Target level
+    print("\n2. What interaction level do you want to target?")
     print("   [1] Level 1 - Reactive (basic Q&A)")
     print("   [2] Level 2 - Guided (asks clarifying questions)")
     print("   [3] Level 3 - Proactive (offers improvements)")

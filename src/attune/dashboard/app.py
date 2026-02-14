@@ -460,8 +460,9 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
-            except Exception:
-                pass  # Client disconnected
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Clients disconnect frequently, best-effort broadcast
+                logger.debug("Failed to send to WebSocket client", exc_info=True)
 
 
 manager = ConnectionManager()

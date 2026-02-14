@@ -145,30 +145,30 @@ Just describe what you need — no need to memorize commands:
 
 **Do NOT dump the full Workflow Directory tables.** The tables above are reference documentation — the primary interface is the clickable AskUserQuestion funnel.
 
-### Shortcut Routing (EXECUTE THESE)
+### Shortcut Routing (SCOPE THEN EXECUTE)
 
-When the user types a shortcut, run the corresponding CLI command:
+When the user types a shortcut, **use AskUserQuestion to scope before executing**:
 
-| Input | CLI Command |
-| ----- | ----------- |
-| `/attune security` | `uv run attune workflow run security-audit` |
-| `/attune test` | `uv run pytest` |
-| `/attune coverage` | `uv run pytest --cov=src --cov-report=term-missing` |
-| `/attune perf` | `uv run attune workflow run perf-audit` |
-| `/attune review` | `uv run attune workflow run code-review` |
-| `/attune bug-predict` | `uv run attune workflow run bug-predict` |
-| `/attune test-gen` | `uv run attune workflow run test-gen` |
-| `/attune commit` | Use git to stage and commit changes |
-| `/attune pr` | Use gh to create a pull request |
-| `/attune release` | `uv run attune workflow run release-prep` |
-| `/attune debug` | Start interactive debugging session |
-| `/attune refactor` | Analyze code and suggest refactoring |
-| `/attune docs` | Generate documentation |
-| `/attune explain` | Read and explain the specified code |
+| Input | Scoping Question | CLI Command |
+| ----- | ---------------- | ----------- |
+| `/attune security` | "What target? src/, a specific module, or full project?" | `uv run attune workflow run security-audit --path <target>` |
+| `/attune test` | "What scope? Full suite, CLI tests only, specific file, or quick smoke test?" | `uv run pytest <scope>` |
+| `/attune coverage` | "What scope? Full project, specific module, or just changed files?" | `uv run pytest --cov=src --cov-report=term-missing <scope>` |
+| `/attune perf` | "What target? src/, a specific module, or full project?" | `uv run attune workflow run perf-audit --path <target>` |
+| `/attune review` | "What focus? Quality, security, performance, or all? Which files?" | `uv run attune workflow run code-review --path <target>` |
+| `/attune bug-predict` | "What target? src/, a specific module, or full project?" | `uv run attune workflow run bug-predict --path <target>` |
+| `/attune test-gen` | "What target? A specific file, module, or directory?" | `uv run attune workflow run test-gen --path <target>` |
+| `/attune commit` | "Which files? All staged changes, specific files, or let me review first?" | Use git to stage and commit changes |
+| `/attune pr` | "What base branch? What kind of change is this?" | Use gh to create a pull request |
+| `/attune release` | "What stage? Prep check, changelog update, or full publish?" | `uv run attune workflow run release-prep` |
+| `/attune debug` | "What's the issue? Error message, unexpected behavior, or performance problem?" | Start interactive debugging session |
+| `/attune refactor` | "What area? Which files or functions need refactoring?" | Analyze code and suggest refactoring |
+| `/attune docs` | "What kind? API docs, README update, architecture overview, or changelog?" | Generate documentation |
+| `/attune explain` | "What code? Which file, function, or module do you want explained?" | Read and explain the specified code |
 
-### Natural Language Routing (EXECUTE THESE)
+### Natural Language Routing (SCOPE THEN EXECUTE)
 
-When the user provides natural language, map to the appropriate CLI command:
+When the user provides natural language, **use AskUserQuestion to scope**, then map to the appropriate CLI command:
 
 | Pattern | CLI Command |
 | ------- | ----------- |
@@ -181,7 +181,7 @@ When the user provides natural language, map to the appropriate CLI command:
 | "bugs", "predict bugs" | `uv run attune workflow run bug-predict` |
 | "release", "ship", "publish" | `uv run attune workflow run release-prep` |
 
-**IMPORTANT:** When arguments are provided, DO NOT just display documentation. EXECUTE the CLI command.
+**IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.
 
 ### CLI Reference
 
@@ -202,3 +202,11 @@ uv run pytest -k "test_name"
 # Telemetry
 uv run attune telemetry show
 ```
+
+## Philosophy
+
+**Socratic over menus.** Ask "What are you trying to accomplish?" not "Which tool do you want?"
+
+**Teaching over telling.** Help users understand *why*, not just *what*.
+
+**Questions before actions.** ALWAYS use `AskUserQuestion` to guide users through decisions at every step — goal identification, scoping, and confirmation. Never assume scope or jump to execution. This is the #1 rule of the Attune workflow experience.

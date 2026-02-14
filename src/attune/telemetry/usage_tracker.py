@@ -51,7 +51,7 @@ class UsageTracker:
             max_file_size_mb: Max size in MB before rotation (default: 10)
 
         """
-        self.telemetry_dir = telemetry_dir or Path.home() / ".empathy" / "telemetry"
+        self.telemetry_dir = telemetry_dir or Path.home() / ".attune" / "telemetry"
         self.retention_days = retention_days
         self.max_file_size_mb = max_file_size_mb
         self.usage_file = self.telemetry_dir / "usage.jsonl"
@@ -562,13 +562,20 @@ class UsageTracker:
         # Calculate hit rate
         hit_rate = (hit_count / total_requests) if total_requests > 0 else 0.0
 
-        # Estimate savings (cache reads cost 90% less)
-        # Assume Sonnet 4.5 pricing: $3.00/M input tokens
-        # Cache reads: $0.30/M (90% discount)
-        # Full price would be: $3.00/M
-        # Savings per token: $2.70/M
-        savings_per_token = 0.0000027  # $2.70 / 1M tokens
-        savings = total_reads * savings_per_token
+        # Estimate savings using per-model pricing from registry
+        # Cache reads cost 90% less than regular input tokens
+        from attune.models.registry import get_pricing_for_model
+
+        total_savings = 0.0
+        for entry in entries:
+            prompt_cache = entry.get("prompt_cache", {})
+            read_tokens = prompt_cache.get("read_tokens", 0)
+            if read_tokens > 0:
+                model_id = entry.get("model", "")
+                pricing = get_pricing_for_model(model_id) if model_id else None
+                cost_per_token = (pricing["input"] if pricing else 3.00) / 1_000_000
+                total_savings += read_tokens * cost_per_token * 0.9
+        savings = total_savings
 
         # Calculate hit rates for workflows
         for wf_stats in by_workflow.values():

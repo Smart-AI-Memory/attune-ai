@@ -6,9 +6,7 @@ error handling, and default_context classmethod.
 
 import asyncio
 import json
-import os
 import textwrap
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -25,10 +23,10 @@ from attune.workflows.security_adapters import (
 )
 from attune.workflows.security_audit import SecurityAuditWorkflow
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _run(coro):
     """Run an async coroutine in a new event loop."""
@@ -120,16 +118,20 @@ class TestSecurityAuditWorkflowInit:
         decisions_dir = tmp_path / "security"
         decisions_dir.mkdir(parents=True)
         decisions_file = decisions_dir / "team_decisions.json"
-        decisions_file.write_text(json.dumps({
-            "decisions": [
+        decisions_file.write_text(
+            json.dumps(
                 {
-                    "finding_hash": "sql_injection",
-                    "decision": "false_positive",
-                    "reason": "Not user input",
-                    "decided_by": "lead_dev",
-                },
-            ]
-        }))
+                    "decisions": [
+                        {
+                            "finding_hash": "sql_injection",
+                            "decision": "false_positive",
+                            "reason": "Not user input",
+                            "decided_by": "lead_dev",
+                        },
+                    ]
+                }
+            )
+        )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
         assert "sql_injection" in wf._team_decisions
@@ -220,7 +222,7 @@ class TestTriageScanning:
         We use innerHTML to trigger an xss finding that is not skipped.
         """
         vuln_file = tmp_path / "app.py"
-        vuln_file.write_text('element.innerHTML = userInput\n')
+        vuln_file.write_text("element.innerHTML = userInput\n")
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
         result, in_tok, out_tok = _run(
@@ -242,9 +244,7 @@ class TestTriageScanning:
         vuln_file.write_text('password = "secret"\n')
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None))
         assert result["finding_count"] == 0
 
     def test_triage_single_file(self, tmp_path):
@@ -255,18 +255,14 @@ class TestTriageScanning:
         vuln_file.write_text("os.system('rm -rf /')\n")
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(vuln_file), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(vuln_file), "file_types": [".py"]}, None))
         assert result["files_scanned"] == 1
         assert result["finding_count"] >= 1
 
     def test_triage_nonexistent_path(self):
         """Test scanning a path that does not exist."""
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": "/nonexistent/path"}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": "/nonexistent/path"}, None))
         assert result["files_scanned"] == 0
         assert result["finding_count"] == 0
 
@@ -278,13 +274,10 @@ class TestTriageScanning:
         test_file.write_text('password = "testpass123"\n')
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None))
         # hardcoded_secret in test files should be skipped
         secret_findings = [
-            f for f in result["findings"]
-            if f["type"] == "hardcoded_secret" and f.get("is_test")
+            f for f in result["findings"] if f["type"] == "hardcoded_secret" and f.get("is_test")
         ]
         assert len(secret_findings) == 0
 
@@ -297,9 +290,7 @@ class TestTriageScanning:
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
         try:
-            result, _, _ = _run(
-                wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None)
-            )
+            result, _, _ = _run(wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None))
             # Should not crash - OSError is caught
             assert result["files_scanned"] == 0
         finally:
@@ -329,16 +320,20 @@ class TestAnalyzeStage:
         """Test that team decision of false_positive is applied."""
         decisions_dir = tmp_path / "security"
         decisions_dir.mkdir(parents=True)
-        (decisions_dir / "team_decisions.json").write_text(json.dumps({
-            "decisions": [
+        (decisions_dir / "team_decisions.json").write_text(
+            json.dumps(
                 {
-                    "finding_hash": "xss",
-                    "decision": "false_positive",
-                    "reason": "Test code only",
-                    "decided_by": "security_team",
-                },
-            ]
-        }))
+                    "decisions": [
+                        {
+                            "finding_hash": "xss",
+                            "decision": "false_positive",
+                            "reason": "Test code only",
+                            "decided_by": "security_team",
+                        },
+                    ]
+                }
+            )
+        )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
         input_data = {
@@ -354,12 +349,20 @@ class TestAnalyzeStage:
         """Test accepted and deferred team decisions."""
         decisions_dir = tmp_path / "security"
         decisions_dir.mkdir(parents=True)
-        (decisions_dir / "team_decisions.json").write_text(json.dumps({
-            "decisions": [
-                {"finding_hash": "xss", "decision": "accepted", "reason": "Low risk"},
-                {"finding_hash": "sql_injection", "decision": "deferred", "reason": "Next sprint"},
-            ]
-        }))
+        (decisions_dir / "team_decisions.json").write_text(
+            json.dumps(
+                {
+                    "decisions": [
+                        {"finding_hash": "xss", "decision": "accepted", "reason": "Low risk"},
+                        {
+                            "finding_hash": "sql_injection",
+                            "decision": "deferred",
+                            "reason": "Next sprint",
+                        },
+                    ]
+                }
+            )
+        )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
         input_data = {
@@ -439,8 +442,7 @@ class TestAssessStage:
         # 5 critical = 125, should cap at 100
         input_data = {
             "needs_review": [
-                {"severity": "critical", "owasp": "A03", "type": f"vuln{i}"}
-                for i in range(5)
+                {"severity": "critical", "owasp": "A03", "type": f"vuln{i}"} for i in range(5)
             ],
         }
         result, _, _ = _run(wf._assess(input_data, None))
@@ -679,16 +681,27 @@ class TestMergeSecurityResults:
                 {"type": "xss", "file": "a.py", "line": 10, "severity": "high"},
             ],
             "risk_score": 40,
-            "assessment": {"risk_score": 40, "severity_breakdown": {"critical": 0, "high": 1, "medium": 0, "low": 0}},
+            "assessment": {
+                "risk_score": 40,
+                "severity_breakdown": {"critical": 0, "high": 1, "medium": 0, "low": 0},
+            },
             "summary": "Crew summary",
             "agents_used": ["scanner"],
         }
         wf = {
             "findings": [
                 {"type": "xss", "file": "a.py", "line": 10, "severity": "high"},  # duplicate
-                {"type": "sql_injection", "file": "b.py", "line": 5, "severity": "critical"},  # unique
+                {
+                    "type": "sql_injection",
+                    "file": "b.py",
+                    "line": 5,
+                    "severity": "critical",
+                },  # unique
             ],
-            "assessment": {"risk_score": 50, "severity_breakdown": {"critical": 1, "high": 1, "medium": 0, "low": 0}},
+            "assessment": {
+                "risk_score": 50,
+                "severity_breakdown": {"critical": 1, "high": 1, "medium": 0, "low": 0},
+            },
         }
         result = merge_security_results(crew, wf)
 
@@ -730,9 +743,7 @@ class TestRunStageRoutes:
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
         from attune.workflows.base import ModelTier
 
-        result, _, _ = _run(
-            wf.run_stage("triage", ModelTier.CHEAP, {"path": "/nonexistent"})
-        )
+        result, _, _ = _run(wf.run_stage("triage", ModelTier.CHEAP, {"path": "/nonexistent"}))
         assert "findings" in result
         assert "files_scanned" in result
 
@@ -741,9 +752,7 @@ class TestRunStageRoutes:
         wf = SecurityAuditWorkflow()
         from attune.workflows.base import ModelTier
 
-        result, _, _ = _run(
-            wf.run_stage("analyze", ModelTier.CAPABLE, {"findings": []})
-        )
+        result, _, _ = _run(wf.run_stage("analyze", ModelTier.CAPABLE, {"findings": []}))
         assert "analyzed_findings" in result
 
     def test_run_stage_assess(self):
@@ -753,9 +762,7 @@ class TestRunStageRoutes:
         wf._crew_available = False
         from attune.workflows.base import ModelTier
 
-        result, _, _ = _run(
-            wf.run_stage("assess", ModelTier.CAPABLE, {"needs_review": []})
-        )
+        result, _, _ = _run(wf.run_stage("assess", ModelTier.CAPABLE, {"needs_review": []}))
         assert "assessment" in result
 
     def test_run_stage_remediate(self):
@@ -773,9 +780,7 @@ class TestRunStageRoutes:
                 "severity_breakdown": {},
             },
         }
-        result, _, _ = _run(
-            wf.run_stage("remediate", ModelTier.PREMIUM, input_data)
-        )
+        result, _, _ = _run(wf.run_stage("remediate", ModelTier.PREMIUM, input_data))
         assert "remediation_plan" in result
 
 
@@ -848,9 +853,7 @@ class TestRemediateStage:
         wf = SecurityAuditWorkflow()
         wf._executor = MagicMock()
         wf._api_key = "test-key"
-        wf.run_step_with_executor = AsyncMock(
-            return_value=("Executor remediation", 60, 120, 0.01)
-        )
+        wf.run_step_with_executor = AsyncMock(return_value=("Executor remediation", 60, 120, 0.01))
 
         input_data = {
             "assessment": {
@@ -944,17 +947,22 @@ class TestGetCrewAudit:
 
         mock_config_cls = MagicMock()
 
-        with patch(
-            "attune.workflows.security_adapters._check_crew_available",
-            return_value=True,
-        ), patch.dict("sys.modules", {}), patch(
-            "attune.agent_factory.crews.SecurityAuditCrew",
-            mock_crew_cls,
-            create=True,
-        ), patch(
-            "attune.agent_factory.crews.SecurityAuditConfig",
-            mock_config_cls,
-            create=True,
+        with (
+            patch(
+                "attune.workflows.security_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch.dict("sys.modules", {}),
+            patch(
+                "attune.agent_factory.crews.SecurityAuditCrew",
+                mock_crew_cls,
+                create=True,
+            ),
+            patch(
+                "attune.agent_factory.crews.SecurityAuditConfig",
+                mock_config_cls,
+                create=True,
+            ),
         ):
             result = _run(_get_crew_audit("/some/path", timeout=0.01))
             assert result is None
@@ -967,15 +975,19 @@ class TestGetCrewAudit:
         mock_crew_cls.return_value = mock_crew_instance
         mock_config_cls = MagicMock()
 
-        with patch(
-            "attune.workflows.security_adapters._check_crew_available",
-            return_value=True,
-        ), patch(
-            "attune.agent_factory.crews.SecurityAuditConfig",
-            mock_config_cls,
-        ), patch(
-            "attune.agent_factory.crews.SecurityAuditCrew",
-            mock_crew_cls,
+        with (
+            patch(
+                "attune.workflows.security_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch(
+                "attune.agent_factory.crews.SecurityAuditConfig",
+                mock_config_cls,
+            ),
+            patch(
+                "attune.agent_factory.crews.SecurityAuditCrew",
+                mock_crew_cls,
+            ),
         ):
             result = _run(_get_crew_audit("/some/path"))
             assert result is None
@@ -988,16 +1000,18 @@ class TestTriageScanningFilters:
     def test_triage_filters_sql_safe_parameterization(self, tmp_path):
         """Test sql_injection findings with safe parameterization are filtered."""
         sql_file = tmp_path / "db.py"
-        sql_file.write_text(textwrap.dedent("""\
+        sql_file.write_text(
+            textwrap.dedent(
+                """\
             import sqlite3
             placeholders = ",".join("?" * len(ids))
             cursor.execute(f"SELECT * FROM users WHERE id IN ({placeholders})", ids)
-        """))
+        """
+            )
+        )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(sql_file), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(sql_file), "file_types": [".py"]}, None))
         sql_findings = [f for f in result["findings"] if f["type"] == "sql_injection"]
         # Safe parameterization should be filtered out
         assert len(sql_findings) == 0
@@ -1009,9 +1023,7 @@ class TestTriageScanningFilters:
         test_file.write_text("value = random.randint(1, 100)\n")
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(test_file), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(test_file), "file_types": [".py"]}, None))
         random_findings = [f for f in result["findings"] if f["type"] == "insecure_random"]
         # Test file random usage should be filtered or downgraded
         # (file is in a test path, no crypto indicators)
@@ -1021,15 +1033,17 @@ class TestTriageScanningFilters:
     def test_triage_filters_command_injection_in_docs(self, tmp_path):
         """Test command_injection in documentation strings is filtered."""
         doc_file = tmp_path / "docs.py"
-        doc_file.write_text(textwrap.dedent("""\
+        doc_file.write_text(
+            textwrap.dedent(
+                """\
             # This is an example of dangerous eval() usage
             # eval(user_input) is insecure and should be avoided
-        """))
+        """
+            )
+        )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(doc_file), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(doc_file), "file_types": [".py"]}, None))
         cmd_findings = [f for f in result["findings"] if f["type"] == "command_injection"]
         # Comment-based patterns should be filtered as documentation
         assert len(cmd_findings) == 0
@@ -1037,16 +1051,18 @@ class TestTriageScanningFilters:
     def test_triage_filters_detection_code(self, tmp_path):
         """Test that security scanner detection code is not flagged."""
         scanner_file = tmp_path / "checker.py"
-        scanner_file.write_text(textwrap.dedent("""\
+        scanner_file.write_text(
+            textwrap.dedent(
+                """\
             import re
             for match in re.finditer(r'eval\\(', content):
                 print("Found eval usage")
-        """))
+        """
+            )
+        )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
-        result, _, _ = _run(
-            wf._triage({"path": str(scanner_file), "file_types": [".py"]}, None)
-        )
+        result, _, _ = _run(wf._triage({"path": str(scanner_file), "file_types": [".py"]}, None))
         # Detection code should not be flagged
         eval_findings = [f for f in result["findings"] if f["type"] == "command_injection"]
         assert len(eval_findings) == 0
@@ -1197,12 +1213,14 @@ class TestRemediateWithCrewAndXml:
         wf._executor = None
         wf._api_key = None
         wf._call_llm = AsyncMock(return_value=("plan", 50, 100))
-        wf._parse_xml_response = MagicMock(return_value={
-            "xml_parsed": True,
-            "summary": "XML summary",
-            "findings": [{"id": 1}],
-            "checklist": ["item1"],
-        })
+        wf._parse_xml_response = MagicMock(
+            return_value={
+                "xml_parsed": True,
+                "summary": "XML summary",
+                "findings": [{"id": 1}],
+                "checklist": ["item1"],
+            }
+        )
 
         input_data = {
             "assessment": {

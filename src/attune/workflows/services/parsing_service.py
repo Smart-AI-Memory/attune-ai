@@ -124,17 +124,19 @@ class ParsingService:
                         column = 1
                         message = ""
 
-                    findings.append({
-                        "id": str(uuid.uuid4())[:8],
-                        "file": file_path,
-                        "line": line,
-                        "column": column,
-                        "severity": self.infer_severity(message),
-                        "category": self.infer_category(message),
-                        "message": message.strip() if message else "",
-                        "details": "",
-                        "recommendation": "",
-                    })
+                    findings.append(
+                        {
+                            "id": str(uuid.uuid4())[:8],
+                            "file": file_path,
+                            "line": line,
+                            "column": column,
+                            "severity": self.infer_severity(message),
+                            "category": self.infer_category(message),
+                            "message": message.strip() if message else "",
+                            "details": "",
+                            "recommendation": "",
+                        }
+                    )
 
         # Deduplicate by file:line
         seen: set[tuple[str, int]] = set()
@@ -200,7 +202,8 @@ class ParsingService:
         # "line X in file.py"
         match = re.search(
             r"line\s+(\d+)\s+(?:in|of)\s+([^\s]+\.(?:py|ts|tsx|js|jsx|java|go|rb|php))",
-            location, re.IGNORECASE,
+            location,
+            re.IGNORECASE,
         )
         if match:
             return (match.group(2), int(match.group(1)), 1)
@@ -208,7 +211,8 @@ class ParsingService:
         # "file.py line X"
         match = re.search(
             r"([^\s]+\.(?:py|ts|tsx|js|jsx|java|go|rb|php))\s+line\s+(\d+)",
-            location, re.IGNORECASE,
+            location,
+            re.IGNORECASE,
         )
         if match:
             return (match.group(1), int(match.group(2)), 1)
@@ -229,22 +233,48 @@ class ParsingService:
         """
         text_lower = text.lower()
 
-        if any(w in text_lower for w in [
-            "critical", "severe", "exploit", "vulnerability",
-            "injection", "remote code execution", "rce",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "critical",
+                "severe",
+                "exploit",
+                "vulnerability",
+                "injection",
+                "remote code execution",
+                "rce",
+            ]
+        ):
             return "critical"
 
-        if any(w in text_lower for w in [
-            "high", "security", "unsafe", "dangerous",
-            "xss", "csrf", "auth", "password", "secret",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "high",
+                "security",
+                "unsafe",
+                "dangerous",
+                "xss",
+                "csrf",
+                "auth",
+                "password",
+                "secret",
+            ]
+        ):
             return "high"
 
-        if any(w in text_lower for w in [
-            "warning", "issue", "problem", "bug",
-            "error", "deprecated", "leak",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "warning",
+                "issue",
+                "problem",
+                "bug",
+                "error",
+                "deprecated",
+                "leak",
+            ]
+        ):
             return "medium"
 
         if any(w in text_lower for w in ["low", "minor", "style", "format", "typo"]):
@@ -261,27 +291,60 @@ class ParsingService:
         """
         text_lower = text.lower()
 
-        if any(w in text_lower for w in [
-            "security", "vulnerability", "injection", "xss",
-            "csrf", "auth", "encrypt", "password", "secret", "unsafe",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "security",
+                "vulnerability",
+                "injection",
+                "xss",
+                "csrf",
+                "auth",
+                "encrypt",
+                "password",
+                "secret",
+                "unsafe",
+            ]
+        ):
             return "security"
 
-        if any(w in text_lower for w in [
-            "performance", "slow", "memory", "leak",
-            "inefficient", "optimization", "cache",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "performance",
+                "slow",
+                "memory",
+                "leak",
+                "inefficient",
+                "optimization",
+                "cache",
+            ]
+        ):
             return "performance"
 
-        if any(w in text_lower for w in [
-            "complex", "refactor", "duplicate",
-            "maintainability", "readability", "documentation",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "complex",
+                "refactor",
+                "duplicate",
+                "maintainability",
+                "readability",
+                "documentation",
+            ]
+        ):
             return "maintainability"
 
-        if any(w in text_lower for w in [
-            "style", "format", "lint", "convention", "whitespace",
-        ]):
+        if any(
+            w in text_lower
+            for w in [
+                "style",
+                "format",
+                "lint",
+                "convention",
+                "whitespace",
+            ]
+        ):
             return "style"
 
         return "correctness"

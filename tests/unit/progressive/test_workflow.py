@@ -155,9 +155,7 @@ class TestProgressiveWorkflow:
         """Test cost calculation with actual token count."""
         workflow = ProgressiveWorkflow()
 
-        cost = workflow._calculate_tier_cost(
-            Tier.CAPABLE, item_count=10, actual_tokens=20000
-        )
+        cost = workflow._calculate_tier_cost(Tier.CAPABLE, item_count=10, actual_tokens=20000)
 
         # 20000 / 1000 * $0.003 = $0.06
         assert cost == 0.06
@@ -200,9 +198,7 @@ class TestProgressiveWorkflow:
         workflow = ProgressiveWorkflow(config=config)
 
         # Previous tier cost $0.50, escalation cost $1.00, total $1.50
-        approved = workflow._request_escalation_approval(
-            Tier.CHEAP, Tier.CAPABLE, 30, 1.00
-        )
+        approved = workflow._request_escalation_approval(Tier.CHEAP, Tier.CAPABLE, 30, 1.00)
 
         assert approved is True
 
@@ -439,9 +435,7 @@ class TestProgressiveWorkflowEdgeCases:
         workflow = ProgressiveWorkflow(config=config)
 
         # Cost exceeds auto_approve threshold
-        approved = workflow._request_escalation_approval(
-            Tier.CHEAP, Tier.PREMIUM, 10, 5.00
-        )
+        approved = workflow._request_escalation_approval(Tier.CHEAP, Tier.PREMIUM, 10, 5.00)
 
         assert approved is False  # Denied in non-interactive mode
 
@@ -523,9 +517,7 @@ class TestInteractiveApprovalPaths:
         # Mock input to return 'y'
         with patch("builtins.input", return_value="y"):
             with patch("sys.stdin.isatty", return_value=True):
-                approved = workflow._request_escalation_approval(
-                    Tier.CHEAP, Tier.CAPABLE, 10, 2.50
-                )
+                approved = workflow._request_escalation_approval(Tier.CHEAP, Tier.CAPABLE, 10, 2.50)
 
         assert approved is True
 
@@ -540,8 +532,6 @@ class TestInteractiveApprovalPaths:
         # Mock input to return 'n'
         with patch("builtins.input", return_value="n"):
             with patch("sys.stdin.isatty", return_value=True):
-                approved = workflow._request_escalation_approval(
-                    Tier.CHEAP, Tier.CAPABLE, 10, 2.50
-                )
+                approved = workflow._request_escalation_approval(Tier.CHEAP, Tier.CAPABLE, 10, 2.50)
 
         assert approved is False

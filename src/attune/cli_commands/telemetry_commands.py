@@ -30,24 +30,17 @@ def cmd_telemetry_show(args: Namespace) -> int:
         print("-" * 60)
         print(f"  Period:         Last {args.days} days")
 
-        # Get workflow records from store
-        # TODO: Consider adding aggregate methods to TelemetryStore for better performance
-        # with large datasets (e.g., store.get_total_cost(), store.get_token_counts())
-        workflows = store.get_workflows(limit=1000)
-        calls = store.get_calls(limit=1000)
+        # Use single-pass aggregation for efficiency with large datasets
+        summary = store.get_summary()
 
-        if workflows:
-            total_cost = sum(r.total_cost for r in workflows)
-            total_tokens = sum(r.total_input_tokens + r.total_output_tokens for r in workflows)
-            print(f"  Workflow runs:  {len(workflows):,}")
-            print(f"  Total tokens:   {total_tokens:,}")
-            print(f"  Total cost:     ${total_cost:.2f}")
-        elif calls:
-            total_cost = sum(c.estimated_cost for c in calls)
-            total_tokens = sum(c.input_tokens + c.output_tokens for c in calls)
-            print(f"  API calls:      {len(calls):,}")
-            print(f"  Total tokens:   {total_tokens:,}")
-            print(f"  Total cost:     ${total_cost:.2f}")
+        if summary["source"] == "workflows":
+            print(f"  Workflow runs:  {summary['workflow_count']:,}")
+            print(f"  Total tokens:   {summary['total_tokens']:,}")
+            print(f"  Total cost:     ${summary['total_cost']:.2f}")
+        elif summary["source"] == "calls":
+            print(f"  API calls:      {summary['call_count']:,}")
+            print(f"  Total tokens:   {summary['total_tokens']:,}")
+            print(f"  Total cost:     ${summary['total_cost']:.2f}")
         else:
             print("  No telemetry data found.")
 

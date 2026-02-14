@@ -16,10 +16,10 @@ from rich.console import Console
 console = Console()
 
 
-def get_empathy_version() -> str:
-    """Get the installed version of empathy-framework."""
+def get_attune_version() -> str:
+    """Get the installed version of attune-ai."""
     try:
-        return get_version("empathy-framework")
+        return get_version("attune-ai")
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Version detection fallback for dev installs
         return "dev"
@@ -28,5 +28,5 @@ def get_empathy_version() -> str:
 def version_callback(value: bool) -> None:
     """Show version and exit."""
     if value:
-        console.print(f"[bold blue]Attune AI[/bold blue] v{get_empathy_version()}")
+        console.print(f"[bold blue]Attune AI[/bold blue] v{get_attune_version()}")
         raise typer.Exit()

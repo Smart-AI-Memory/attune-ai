@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Attune AI (formerly Attune AI) will be documented in this file.
+All notable changes to Attune AI (formerly Empathy Framework) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -21,9 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **20 failing tests**: Converted 14 duplicate files in `attune_llm/agent_factory/` to proper deprecation shims, resolving `isinstance()` identity mismatches. Updated test import paths from `attune_llm.*` to `attune.*` canonical locations.
 - **FeatureStatus cross-enum comparison bug**: Fixed `cmd_features()` CLI command where telemetry core features showed incorrect status due to cross-module enum identity comparison. Now uses string value comparison.
 - **CI security-scan.yml**: Fixed stale `empathy workflow run security-audit` command to `attune workflow run security-audit` in GitHub Actions workflow.
+- **CHANGELOG header**: Fixed "formerly Attune AI" typo to "formerly Empathy Framework".
 
 ### Changed
 
+- **Complete empathy→attune rebrand across CLI and source**: Renamed all user-facing strings, function names, environment variables, directory defaults, MCP tools, and config search paths from the legacy "Empathy Framework" branding to "Attune AI".
+  - CLI functions: `get_empathy_version()` → `get_attune_version()`
+  - Environment variables: `EMPATHY_*` → `ATTUNE_*`
+  - Directory defaults: `.empathy` → `.attune`
+  - Config search paths: `.empathy.yml/.yaml/.json` → `.attune.yml/.yaml/.json`
+  - MCP tools: `empathy_get_level`/`empathy_set_level` → `attune_get_level`/`attune_set_level`
+  - MCP URI scheme: `empathy://` → `attune://`
+  - Plugin entry points: `empathy_framework.plugins` → `attune_framework.plugins`
+  - User-facing strings updated across CLI commands, discovery engine, cost tracker, scaffolding, and memory subsystem
 - **Modular Architecture Evolution - Phase 2E Complete**: Consolidated 12 overlapping workflows into 4 canonical groups using the existing migration system. Removed 7 deprecated slugs (`pro-review`, `pr-review`, `document-manager`, `orchestrated-release-prep`, `autonomous-test-gen`, `progressive-test-gen`, `test-coverage-boost`) from active registry. All deprecated slugs redirect to canonical workflows via `WORKFLOW_ALIASES` in `migration.py`. Backward compatibility preserved: all class names remain importable.
 - **Modular Architecture Evolution - Phase 3D Complete**: Memory and telemetry modules now split into core (always available, file-based) vs optional (Redis-enhanced) features. File-first architecture ensures base functionality works without Redis installation.
 - **Modular Architecture Evolution - Phase 2D Complete**: Migrated all 15 active workflows extending `BaseWorkflow` to support composition via `WorkflowContext` pattern. Each workflow now provides a `default_context()` classmethod for pre-configured prompt and parsing services.

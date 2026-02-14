@@ -73,7 +73,7 @@ def cmd_frameworks(args):
             get_recommended_framework,
         )
     except ImportError:
-        print("Agent Factory not available. Install empathy-framework with all dependencies.")
+        print("Agent Factory not available. Install attune-framework with all dependencies.")
         return 1
 
     show_all = getattr(args, "all", False)

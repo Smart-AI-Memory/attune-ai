@@ -18,10 +18,8 @@ from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
-from test_generator import TestGenerator
 
 from attune.config import _validate_file_path
-from patterns import get_pattern_registry
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +36,9 @@ class PatternCompose:
 
     def __init__(self):
         """Initialize Pattern-Compose methodology."""
+        from attune.test_generator import TestGenerator
+        from patterns import get_pattern_registry
+
         self.registry = get_pattern_registry()
         self.test_generator = TestGenerator()
 
@@ -92,7 +93,7 @@ class PatternCompose:
         # Determine output directory
         if output_dir is None:
             if workflow_type == "domain":
-                output_dir = Path("empathy_llm_toolkit/workflows")
+                output_dir = Path("attune/workflows")
             else:
                 output_dir = Path("workflows")
 

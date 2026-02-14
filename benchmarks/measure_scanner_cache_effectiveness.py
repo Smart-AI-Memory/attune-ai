@@ -110,7 +110,7 @@ def measure_cache_effectiveness():
     else:
         print(f"  Hash cache: NEEDS IMPROVEMENT ({hash_hit_rate_2:.1f}% hit rate)")
 
-    print(f"\n📊 Cache Sizes:")
+    print("\n📊 Cache Sizes:")
     print(f"  Hash: {hash_stats2.currsize}/{hash_stats2.maxsize} entries")
     print(f"  Parse: {parse_stats2.currsize}/{parse_stats2.maxsize} entries")
 

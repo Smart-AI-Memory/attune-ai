@@ -105,9 +105,20 @@ class HealthcareMCPServer(EmpathyMCPServer):
 
         if isinstance(parsed, dict) and "vitals" not in parsed:
             vital_keys = {
-                "hr", "heart_rate", "systolic_bp", "diastolic_bp", "bp",
-                "respiratory_rate", "rr", "temp_f", "temp_c", "temperature",
-                "o2_sat", "spo2", "mental_status", "pain",
+                "hr",
+                "heart_rate",
+                "systolic_bp",
+                "diastolic_bp",
+                "bp",
+                "respiratory_rate",
+                "rr",
+                "temp_f",
+                "temp_c",
+                "temperature",
+                "o2_sat",
+                "spo2",
+                "mental_status",
+                "pain",
             }
             vitals = {k: v for k, v in parsed.items() if k in vital_keys}
             if vitals:
@@ -195,7 +206,7 @@ class HealthcareMCPServer(EmpathyMCPServer):
                         "sensor_data": {
                             "type": "string",
                             "description": (
-                                'Vital signs as JSON string, e.g. '
+                                "Vital signs as JSON string, e.g. "
                                 '{"hr": 110, "systolic_bp": 85, "respiratory_rate": 24}'
                             ),
                         },
@@ -298,7 +309,7 @@ class HealthcareMCPServer(EmpathyMCPServer):
                         },
                         "sensor_data": {
                             "type": "string",
-                            "description": 'Vital signs as JSON string',
+                            "description": "Vital signs as JSON string",
                         },
                         "protocol_name": {
                             "type": "string",
@@ -333,7 +344,7 @@ class HealthcareMCPServer(EmpathyMCPServer):
                         },
                         "sensor_data": {
                             "type": "string",
-                            "description": 'Vital signs as JSON string',
+                            "description": "Vital signs as JSON string",
                         },
                         "protocol_name": {
                             "type": "string",
@@ -578,10 +589,12 @@ class HealthcareMCPServer(EmpathyMCPServer):
             return {"success": False, "error": "ecg_metrics is required"}
 
         agent = ECGAnalyzerAgent()
-        result = agent.process({
-            "ecg_metrics": ecg_metrics,
-            "patient_context": patient_context,
-        })
+        result = agent.process(
+            {
+                "ecg_metrics": ecg_metrics,
+                "patient_context": patient_context,
+            }
+        )
 
         ecg = agent.result_to_ecg_analysis(result)
 

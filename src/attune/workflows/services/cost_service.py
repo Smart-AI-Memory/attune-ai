@@ -104,9 +104,7 @@ class CostService:
             tier_name = stage.tier.value
             by_tier[tier_name] = by_tier.get(tier_name, 0.0) + stage.cost
 
-            baseline_cost += self.calculate_baseline_cost(
-                stage.input_tokens, stage.output_tokens
-            )
+            baseline_cost += self.calculate_baseline_cost(stage.input_tokens, stage.output_tokens)
 
         savings = baseline_cost - total_cost
         savings_percent = (savings / baseline_cost * 100) if baseline_cost > 0 else 0.0

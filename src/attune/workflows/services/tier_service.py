@@ -109,9 +109,7 @@ class TierService:
         input_size = self._estimate_input_tokens(input_data)
         complexity = self._assess_complexity(input_data)
 
-        stage_index = (
-            self._stages.index(stage_name) if stage_name in self._stages else 0
-        )
+        stage_index = self._stages.index(stage_name) if stage_name in self._stages else 0
         if stage_index == 0:
             latency_sensitivity = "high"
         elif stage_index < len(self._stages) // 2:
@@ -134,10 +132,7 @@ class TierService:
         from ..compat import ModelTier
 
         num_stages = len(self._stages)
-        premium_stages = sum(
-            1 for s in self._stages
-            if self._tier_map.get(s) == ModelTier.PREMIUM
-        )
+        premium_stages = sum(1 for s in self._stages if self._tier_map.get(s) == ModelTier.PREMIUM)
 
         if num_stages <= 2 and premium_stages == 0:
             return "simple"
@@ -163,7 +158,8 @@ class TierService:
             return current_tier
 
         should_upgrade, reason = router.recommend_tier_upgrade(
-            workflow=self._workflow_name, stage=stage_name,
+            workflow=self._workflow_name,
+            stage=stage_name,
         )
 
         if should_upgrade:
@@ -192,9 +188,7 @@ class TierService:
                 from attune.models import AdaptiveModelRouter
                 from attune.telemetry import UsageTracker
 
-                self._adaptive_router = AdaptiveModelRouter(
-                    telemetry=UsageTracker.get_instance()
-                )
+                self._adaptive_router = AdaptiveModelRouter(telemetry=UsageTracker.get_instance())
             except (ImportError, AttributeError, OSError) as e:
                 logger.debug(f"Adaptive routing unavailable: {e}")
                 self._enable_adaptive = False

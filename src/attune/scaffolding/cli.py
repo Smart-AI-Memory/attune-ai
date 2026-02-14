@@ -13,11 +13,6 @@ import argparse
 import logging
 import sys
 
-from patterns import get_pattern_registry
-
-from .methodologies.pattern_compose import PatternCompose
-from .methodologies.tdd_first import TDDFirst
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s: %(message)s",
@@ -44,6 +39,12 @@ def cmd_create(args):
     print(f"Type: {workflow_type}")
     print(f"Methodology: {methodology}")
     print()
+
+    # Lazy imports — patterns package is a dev-time dependency at the project root
+    from patterns import get_pattern_registry
+
+    from .methodologies.pattern_compose import PatternCompose
+    from .methodologies.tdd_first import TDDFirst
 
     # Get pattern recommendations
     registry = get_pattern_registry()
@@ -132,14 +133,14 @@ def cmd_list_patterns(args):
         args: Command line arguments
 
     """
+    from patterns import get_pattern_registry
+    from patterns.core import PatternCategory
+
     registry = get_pattern_registry()
 
     print(f"\n{'=' * 60}")
     print("Available Patterns")
     print(f"{'=' * 60}\n")
-
-    # Group by category
-    from patterns.core import PatternCategory
 
     for category in PatternCategory:
         patterns = registry.list_by_category(category)

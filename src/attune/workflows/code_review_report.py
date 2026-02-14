@@ -13,12 +13,151 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 
+def _format_perf_section(input_data: dict) -> list[str]:
+    """Format the PERFORMANCE CHECK report section."""
+    lines: list[str] = []
+    perf_findings = input_data.get("perf_findings", [])
+    perf_count = input_data.get("perf_finding_count", 0)
+    perf_by_impact = input_data.get("perf_by_impact", {})
+    if perf_count > 0 or perf_findings:
+        perf_icon = (
+            "🔴"
+            if perf_by_impact.get("high", 0) > 0
+            else ("🟡" if perf_by_impact.get("medium", 0) > 0 else "🟢")
+        )
+        lines.append("-" * 60)
+        lines.append("PERFORMANCE CHECK")
+        lines.append("-" * 60)
+        lines.append(
+            f"Perf Issues: {perf_icon} {perf_count} "
+            f"(High: {perf_by_impact.get('high', 0)}, "
+            f"Medium: {perf_by_impact.get('medium', 0)}, "
+            f"Low: {perf_by_impact.get('low', 0)})"
+        )
+        if input_data.get("perf_deep_ran"):
+            lines.append("Deep Analysis: ✅ LLM-validated")
+        for finding in perf_findings[:10]:
+            impact = finding.get("impact", "low").upper()
+            desc = finding.get("description", "")
+            file_loc = finding.get("file", "?")
+            line_num = finding.get("line", "?")
+            impact_icon = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🟢"}.get(impact, "⚪")
+            line = f"  {impact_icon} [{impact}] {desc} ({file_loc}:{line_num})"
+            if finding.get("false_positive"):
+                line += " [FALSE POSITIVE]"
+            lines.append(line)
+            suggestion = finding.get("suggestion")
+            if suggestion:
+                lines.append(f"    → {suggestion}")
+        lines.append("")
+    elif "perf_findings" in input_data:
+        lines.append("-" * 60)
+        lines.append("PERFORMANCE CHECK")
+        lines.append("-" * 60)
+        lines.append("Perf Issues: 🟢 0 — No performance anti-patterns detected")
+        lines.append("")
+    return lines
+
+
+def _format_health_section(input_data: dict) -> list[str]:
+    """Format the HEALTH MONITOR report section."""
+    lines: list[str] = []
+    health_snapshot = input_data.get("health_snapshot", {})
+    if health_snapshot:
+        lines.append("-" * 60)
+        lines.append("HEALTH MONITOR")
+        lines.append("-" * 60)
+
+        cache_stats = health_snapshot.get("cache_stats", {})
+        if cache_stats:
+            lines.append("Cache Metrics:")
+            for name, stats in cache_stats.items():
+                if isinstance(stats, dict):
+                    hit_rate = stats.get("hit_rate", 0)
+                    lines.append(f"  {name}: {hit_rate:.0%} hit rate")
+                else:
+                    lines.append(f"  {name}: {stats}")
+        else:
+            lines.append("Cache Metrics: No active caches")
+
+        cost_today = health_snapshot.get("cost_today", {})
+        if cost_today:
+            total = cost_today.get("total_cost", cost_today.get("total", 0))
+            lines.append(
+                f"Cost Today: ${total:.4f}"
+                if isinstance(total, int | float)
+                else f"Cost Today: {total}"
+            )
+        else:
+            lines.append("Cost Today: No cost data")
+
+        usage_stats = health_snapshot.get("usage_stats_7d", {})
+        if usage_stats:
+            total_calls = usage_stats.get("total_calls", usage_stats.get("count", "N/A"))
+            lines.append(f"Usage (7d): {total_calls} LLM calls")
+        else:
+            lines.append("Usage (7d): No telemetry data")
+        lines.append("")
+    return lines
+
+
+def _format_quality_section(input_data: dict) -> list[str]:
+    """Format the QUALITY CHECK report section."""
+    lines: list[str] = []
+    quality_findings = input_data.get("quality_findings", [])
+    quality_count = input_data.get("quality_finding_count", 0)
+    quality_by_severity = input_data.get("quality_by_severity", {})
+    if quality_count > 0 or quality_findings:
+        quality_icon = (
+            "🔴"
+            if quality_by_severity.get("high", 0) > 0
+            else ("🟡" if quality_by_severity.get("medium", 0) > 0 else "🟢")
+        )
+        lines.append("-" * 60)
+        lines.append("QUALITY CHECK")
+        lines.append("-" * 60)
+        lines.append(
+            f"Quality Issues: {quality_icon} {quality_count} "
+            f"(High: {quality_by_severity.get('high', 0)}, "
+            f"Medium: {quality_by_severity.get('medium', 0)}, "
+            f"Low: {quality_by_severity.get('low', 0)})"
+        )
+        if input_data.get("quality_deep_ran"):
+            lines.append("Deep Analysis: ✅ LLM-validated")
+        for finding in quality_findings[:10]:
+            severity = finding.get("severity", "low").upper()
+            desc = finding.get("description", "")
+            file_loc = finding.get("file", "?")
+            line_num = finding.get("line")
+            loc_str = f"{file_loc}:{line_num}" if line_num else file_loc
+            sev_icon = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🟢"}.get(severity, "⚪")
+            line = f"  {sev_icon} [{severity}] {desc} ({loc_str})"
+            if finding.get("false_positive"):
+                line += " [FALSE POSITIVE]"
+            lines.append(line)
+            suggestion = finding.get("suggestion")
+            if suggestion:
+                lines.append(f"    → {suggestion}")
+        lines.append("")
+    elif "quality_findings" in input_data:
+        lines.append("-" * 60)
+        lines.append("QUALITY CHECK")
+        lines.append("-" * 60)
+        lines.append("Quality Issues: 🟢 0 — No quality issues detected")
+        lines.append("")
+    return lines
+
+
 def format_code_review_report(result: dict, input_data: dict) -> str:
     """Format code review output as a human-readable report.
 
+    Renders all workflow stage results — classification, security scan,
+    performance check, health monitor, quality check, architectural review,
+    and crew review — into a structured text report.
+
     Args:
-        result: The architect_review stage result
-        input_data: Input data from previous stages
+        result: Final stage result dict (verdict, recommendations, etc.)
+        input_data: Accumulated data from all prior stages
 
     Returns:
         Formatted report string
@@ -99,6 +238,15 @@ def format_code_review_report(result: dict, input_data: dict) -> str:
         lines.append(summary)
         lines.append("")
 
+    # Performance check results
+    lines.extend(_format_perf_section(input_data))
+
+    # Health monitor snapshot
+    lines.extend(_format_health_section(input_data))
+
+    # Quality check results
+    lines.extend(_format_quality_section(input_data))
+
     # Architectural review
     arch_review = result.get("architectural_review", "")
     if arch_review:
@@ -139,6 +287,9 @@ def format_code_review_report(result: dict, input_data: dict) -> str:
         input_data.get("classification"),
         input_data.get("security_findings"),
         input_data.get("scan_results"),
+        input_data.get("perf_findings"),
+        input_data.get("health_snapshot"),
+        input_data.get("quality_findings"),
         result.get("architectural_review"),
         result.get("recommendations"),
     ]

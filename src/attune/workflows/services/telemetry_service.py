@@ -220,9 +220,7 @@ class TelemetryService:
             WorkflowStageRecord(
                 stage_name=s.name,
                 tier=s.tier.value if hasattr(s.tier, "value") else str(s.tier),
-                model_id=(
-                    model_for_tier_fn(s.tier) if model_for_tier_fn else "unknown"
-                ),
+                model_id=(model_for_tier_fn(s.tier) if model_for_tier_fn else "unknown"),
                 input_tokens=s.input_tokens,
                 output_tokens=s.output_tokens,
                 cost=s.cost,

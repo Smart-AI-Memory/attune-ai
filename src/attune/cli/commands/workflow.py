@@ -125,8 +125,8 @@ def cmd_workflow(args):
                 print()
 
             print("-" * 60)
-            print("  Use: empathy workflow describe <name>")
-            print("  Use: empathy workflow run <name> [--input JSON]")
+            print("  Use: attune workflow describe <name>")
+            print("  Use: attune workflow run <name> [--input JSON]")
             print("=" * 60 + "\n")
 
     elif action == "describe":
@@ -134,7 +134,7 @@ def cmd_workflow(args):
         name = args.name
         if not name:
             print("Error: workflow name required")
-            print("Usage: empathy workflow describe <name>")
+            print("Usage: attune workflow describe <name>")
             return 1
 
         try:
@@ -171,7 +171,7 @@ def cmd_workflow(args):
 
         except KeyError:
             print(f"Error: Workflow '{name}' not found")
-            print("\nRun 'empathy workflow list' to see available workflows")
+            print("\nRun 'attune workflow list' to see available workflows")
             return 1
 
     elif action == "run":
@@ -179,7 +179,7 @@ def cmd_workflow(args):
         name = args.name
         if not name:
             print("Error: workflow name required")
-            print('Usage: empathy workflow run <name> --input \'{"key": "value"}\'')
+            print('Usage: attune workflow run <name> --input \'{"key": "value"}\'')
             return 1
 
         try:
@@ -406,7 +406,7 @@ def cmd_workflow(args):
 
         except KeyError:
             print(f"Error: Workflow '{name}' not found")
-            print("\nRun 'empathy workflow list' to see available workflows")
+            print("\nRun 'attune workflow list' to see available workflows")
             return 1
         except json_mod.JSONDecodeError as e:
             print(f"Error parsing input JSON: {e}")
@@ -444,8 +444,8 @@ def cmd_workflow(args):
         print("  - Custom model mappings")
         print("  - Model pricing")
         print("\nOr use environment variables:")
-        print("  EMPATHY_WORKFLOW_PROVIDER=openai")
-        print("  EMPATHY_MODEL_PREMIUM=gpt-5.2")
+        print("  ATTUNE_WORKFLOW_PROVIDER=openai")
+        print("  ATTUNE_MODEL_PREMIUM=gpt-5.2")
 
     else:
         print(f"Unknown action: {action}")
@@ -458,7 +458,7 @@ def cmd_workflow(args):
 def cmd_workflow_legacy(args):
     """Interactive setup workflow (DEPRECATED).
 
-    DEPRECATED: This command is deprecated in favor of 'empathy init'.
+    DEPRECATED: This command is deprecated in favor of 'attune init'.
     It will be removed in version 5.0.
 
     Guides user through initial framework configuration step by step.
@@ -473,14 +473,14 @@ def cmd_workflow_legacy(args):
 
     warnings.warn(
         "The 'workflow-setup' command is deprecated. "
-        "Use 'empathy init' instead. "
+        "Use 'attune init' instead. "
         "This command will be removed in version 5.0.",
         DeprecationWarning,
         stacklevel=2,
     )
 
-    print("⚠️  DEPRECATED: This command is being replaced by 'empathy init'")
-    print("    Please use 'empathy init' for interactive setup.")
+    print("⚠️  DEPRECATED: This command is being replaced by 'attune init'")
+    print("    Please use 'attune init' for interactive setup.")
     print("    This command will be removed in version 5.0.\n")
     print("=" * 60)
 
@@ -504,8 +504,8 @@ def cmd_workflow_legacy(args):
     }
     use_case = use_case_map.get(use_case_choice, "general")
 
-    # Step 2: Empathy level
-    print("\n2. What empathy level do you want to target?")
+    # Step 2: Target level
+    print("\n2. What interaction level do you want to target?")
     print("   [1] Level 1 - Reactive (basic Q&A)")
     print("   [2] Level 2 - Guided (asks clarifying questions)")
     print("   [3] Level 3 - Proactive (offers improvements)")
@@ -553,7 +553,7 @@ def cmd_workflow_legacy(args):
         "confidence_threshold": 0.75,
         "persistence_enabled": True,
         "persistence_backend": "sqlite",
-        "persistence_path": ".empathy",
+        "persistence_path": ".attune",
         "metrics_enabled": True,
         "use_case": use_case,
     }
@@ -612,5 +612,5 @@ llm_provider: "{llm_provider}"
         env_var = env_var_map.get(llm_provider, "API_KEY")
         print(f"  2. Set {env_var} environment variable")
 
-    print("  3. Run: empathy-framework run --config attune.config.yml")
-    print("\nHappy empathizing! 🧠✨\n")
+    print("  3. Run: attune run --config attune.config.yml")
+    print("\nHappy coding! 🧠✨\n")

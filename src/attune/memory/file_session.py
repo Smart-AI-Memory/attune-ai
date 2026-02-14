@@ -55,7 +55,7 @@ class FileSessionConfig:
     """Configuration for file-based session memory."""
 
     # Storage locations
-    base_dir: str = ".empathy"
+    base_dir: str = ".attune"
     sessions_subdir: str = "sessions"
     patterns_subdir: str = "patterns"
     archive_subdir: str = "archive"
@@ -754,7 +754,7 @@ class FileSessionMemory:
 
 def get_file_session_memory(
     user_id: str,
-    base_dir: str = ".empathy",
+    base_dir: str = ".attune",
     **kwargs,
 ) -> FileSessionMemory:
     """Create a file-based session memory instance.

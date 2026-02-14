@@ -40,7 +40,7 @@ def cmd_sync_claude(args):
 
     if not patterns_dir.exists():
         print(f"✗ Patterns directory not found: {patterns_dir}")
-        print("  Run 'empathy learn --analyze 20' first to learn patterns")
+        print("  Run 'attune learn --analyze 20' first to learn patterns")
         return 1
 
     # Create output directory
@@ -84,7 +84,7 @@ def cmd_sync_claude(args):
     print("=" * 60 + "\n")
 
     if synced_count == 0:
-        print("No patterns to sync. Run 'empathy learn' first.")
+        print("No patterns to sync. Run 'attune learn' first.")
         return 1
 
     return 0

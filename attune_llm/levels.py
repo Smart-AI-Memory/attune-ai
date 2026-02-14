@@ -10,8 +10,7 @@ Licensed under the Apache License, Version 2.0
 import warnings
 
 warnings.warn(
-    "attune_llm.levels is deprecated. Use attune.llm.levels instead. "
-    "Will be removed in v3.0.0.",
+    "attune_llm.levels is deprecated. Use attune.llm.levels instead. " "Will be removed in v3.0.0.",
     DeprecationWarning,
     stacklevel=2,
 )

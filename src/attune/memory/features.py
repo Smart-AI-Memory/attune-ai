@@ -8,8 +8,11 @@ Licensed under the Apache License, Version 2.0
 """
 
 import importlib
+import logging
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class FeatureStatus(Enum):
@@ -88,7 +91,12 @@ class MemoryFeatures:
 
             client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
             return client.ping()
-        except Exception:
+        except ImportError:
+            logger.debug("redis module not installed")
+            return False
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Redis availability is optional; any failure means unavailable
+            logger.debug("Redis ping failed", exc_info=True)
             return False
 
     @staticmethod

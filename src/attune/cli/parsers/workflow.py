@@ -72,6 +72,6 @@ def register_parsers(subparsers):
     # Legacy workflow-setup command (DEPRECATED)
     parser_workflow_setup = subparsers.add_parser(
         "workflow-setup",
-        help="[DEPRECATED] Interactive setup wizard (use 'empathy init' instead)",
+        help="[DEPRECATED] Interactive setup wizard (use 'attune init' instead)",
     )
     parser_workflow_setup.set_defaults(func=workflow.cmd_workflow_legacy)

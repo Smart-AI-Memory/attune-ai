@@ -19,15 +19,15 @@ logger = get_logger(__name__)
 
 
 def cmd_run(args):
-    """Interactive REPL for testing empathy interactions.
+    """Interactive REPL for testing Attune AI interactions.
 
-    Starts an interactive session for testing empathy levels and features.
+    Starts an interactive session for testing interaction levels and features.
 
     Args:
         args: Namespace object from argparse with attributes:
             - config (str | None): Path to configuration file.
             - user_id (str | None): User ID (default: cli_user).
-            - level (int): Target empathy level (1-5).
+            - level (int): Target level (1-5).
 
     Returns:
         None: Runs interactive REPL until user exits.
@@ -51,15 +51,15 @@ def cmd_run(args):
     print(f"Target Level: {config.target_level}")
     print(f"Confidence Threshold: {config.confidence_threshold:.0%}")
 
-    # Create EmpathyOS instance
+    # Create Attune OS instance
     try:
-        empathy = EmpathyOS(
+        attune_os = EmpathyOS(
             user_id=config.user_id,
             target_level=config.target_level,
             confidence_threshold=config.confidence_threshold,
             persistence_enabled=config.persistence_enabled,
         )
-        print("✓ Empathy OS initialized")
+        print("✓ Attune OS initialized")
     except ValueError as e:
         # Invalid configuration parameters
         print(f"✗ Configuration error: {e}")
@@ -70,8 +70,8 @@ def cmd_run(args):
         sys.exit(1)
     except Exception as e:
         # Unexpected initialization failure
-        logger.exception(f"Unexpected error initializing Empathy OS: {e}")
-        print(f"✗ Failed to initialize Empathy OS: {e}")
+        logger.exception(f"Unexpected error initializing Attune OS: {e}")
+        print(f"✗ Failed to initialize Attune OS: {e}")
         sys.exit(1)
 
     print("\n" + "=" * 50)
@@ -97,31 +97,31 @@ def cmd_run(args):
                 print("  help - Show this help message")
                 print("  trust - Show current trust level")
                 print("  stats - Show session statistics")
-                print("  level - Show current empathy level")
+                print("  level - Show current level")
                 print()
                 continue
 
             if user_input.lower() == "trust":
-                trust = empathy.collaboration_state.trust_level
+                trust = attune_os.collaboration_state.trust_level
                 print(f"\n  Current trust level: {trust:.0%}\n")
                 continue
 
             if user_input.lower() == "level":
-                current_level = empathy.collaboration_state.current_level
-                print(f"\n  Current empathy level: {current_level}\n")
+                current_level = attune_os.collaboration_state.current_level
+                print(f"\n  Current level: {current_level}\n")
                 continue
 
             if user_input.lower() == "stats":
                 print("\n  Session Statistics:")
-                print(f"    Trust: {empathy.collaboration_state.trust_level:.0%}")
-                print(f"    Current Level: {empathy.collaboration_state.current_level}")
+                print(f"    Trust: {attune_os.collaboration_state.trust_level:.0%}")
+                print(f"    Current Level: {attune_os.collaboration_state.current_level}")
                 print(f"    Target Level: {config.target_level}")
                 print()
                 continue
 
             # Process interaction
             start_time = time.time()
-            response = empathy.interact(user_id=config.user_id, user_input=user_input, context={})
+            response = attune_os.interact(user_id=config.user_id, user_input=user_input, context={})
             duration = (time.time() - start_time) * 1000
 
             # Display response with level indicator
@@ -143,12 +143,12 @@ def cmd_run(args):
             # Ask for feedback
             feedback = input("Was this helpful? (y/n/skip): ").strip().lower()
             if feedback == "y":
-                empathy.record_success(success=True)
-                trust = empathy.collaboration_state.trust_level
+                attune_os.record_success(success=True)
+                trust = attune_os.collaboration_state.trust_level
                 print(f"  ✓ Trust increased to {trust:.0%}\n")
             elif feedback == "n":
-                empathy.record_success(success=False)
-                trust = empathy.collaboration_state.trust_level
+                attune_os.record_success(success=False)
+                trust = attune_os.collaboration_state.trust_level
                 print(f"  ✗ Trust decreased to {trust:.0%}\n")
 
         except KeyboardInterrupt:
@@ -213,7 +213,7 @@ def cmd_inspect(args):
                     print(f"     Success rate: {pattern.success_rate:.0%}")
         except FileNotFoundError:
             print(f"✗ Pattern library not found: {db_path}")
-            print("  Tip: Use 'empathy-framework workflow' to set up your first project")
+            print("  Tip: Use 'attune workflow' to set up your first project")
             sys.exit(1)
         except (ValueError, KeyError) as e:
             # Invalid pattern data format
@@ -228,7 +228,7 @@ def cmd_inspect(args):
     elif inspect_type == "metrics":
         if not user_id:
             print("✗ User ID required for metrics inspection")
-            print("  Usage: empathy-framework inspect metrics --user-id USER_ID")
+            print("  Usage: attune inspect metrics --user-id USER_ID")
             sys.exit(1)
 
         try:
@@ -239,7 +239,7 @@ def cmd_inspect(args):
             print(f"  Total operations: {stats.get('total_operations', 0)}")
             print(f"  Success rate: {stats.get('success_rate', 0):.0%}")
             print(f"  Average response time: {stats.get('avg_response_time_ms', 0):.0f}ms")
-            print("\n  Empathy level usage:")
+            print("\n  Level usage:")
             for level in range(1, 6):
                 count = stats.get(f"level_{level}_count", 0)
                 print(f"    Level {level}: {count} times")

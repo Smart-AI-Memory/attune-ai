@@ -297,8 +297,9 @@ class LLMFeatureAnalyzer:
         2. Send code snippets to LLM for analysis
         3. Extract feature descriptions and usage patterns
         """
-        # TODO: Implement LLM-based feature discovery
-        # For now, return empty list
+        # TODO(llm-integration): Implement LLM-based feature discovery
+        # Deferred: Requires LLM API integration (tracked in P2B debt register)
+        # Returns empty list until LLM analysis is available
         return []
 
 

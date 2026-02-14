@@ -134,7 +134,12 @@ class PromptService:
         """
         if not self.xml_enabled:
             return self.render_plain(
-                role, goal, instructions, constraints, input_type, input_payload,
+                role,
+                goal,
+                instructions,
+                constraints,
+                input_type,
+                input_payload,
             )
 
         from attune.prompts import PromptContext, XmlPromptTemplate, get_template

@@ -139,9 +139,7 @@ class TestTimeoutEnforcement:
     )
     def test_every_job_has_timeout(self, workflow_file, job_id, job_dict):
         """Every job must have 'timeout-minutes' set."""
-        assert "timeout-minutes" in job_dict, (
-            f"{workflow_file}:{job_id} missing timeout-minutes"
-        )
+        assert "timeout-minutes" in job_dict, f"{workflow_file}:{job_id} missing timeout-minutes"
 
     @pytest.mark.parametrize(
         "workflow_file, job_id, job_dict",
@@ -152,9 +150,9 @@ class TestTimeoutEnforcement:
         """Job timeouts must be between 1 and 30 minutes."""
         timeout = job_dict.get("timeout-minutes")
         if timeout is not None:
-            assert 1 <= timeout <= 30, (
-                f"{workflow_file}:{job_id} timeout={timeout} outside 1-30 range"
-            )
+            assert (
+                1 <= timeout <= 30
+            ), f"{workflow_file}:{job_id} timeout={timeout} outside 1-30 range"
 
 
 # ===========================================================================
@@ -172,18 +170,18 @@ class TestConcurrencyControls:
         assert "concurrency" in workflow, f"{filename} missing concurrency block"
         conc = workflow["concurrency"]
         assert "group" in conc, f"{filename} concurrency missing 'group'"
-        assert conc.get("cancel-in-progress") is True, (
-            f"{filename} concurrency missing cancel-in-progress: true"
-        )
+        assert (
+            conc.get("cancel-in-progress") is True
+        ), f"{filename} concurrency missing cancel-in-progress: true"
 
     @pytest.mark.parametrize("filename", sorted(WORKFLOWS_FORBIDDING_CONCURRENCY))
     def test_dangerous_workflows_lack_concurrency(self, filename):
         """Release/publish/metrics workflows must not cancel in-progress runs."""
         workflow = ALL_WORKFLOWS[filename]
         conc = workflow.get("concurrency", {})
-        assert conc.get("cancel-in-progress") is not True, (
-            f"{filename} must not have cancel-in-progress (dangerous to interrupt)"
-        )
+        assert (
+            conc.get("cancel-in-progress") is not True
+        ), f"{filename} must not have cancel-in-progress (dangerous to interrupt)"
 
 
 # ===========================================================================
@@ -199,9 +197,7 @@ class TestSHAPinning:
         ALL_USES,
         ids=[f"{wf}:{jid}:step{idx}" for wf, jid, idx, _ in ALL_USES],
     )
-    def test_all_uses_directives_are_sha_pinned(
-        self, workflow_file, job_id, step_idx, uses_value
-    ):
+    def test_all_uses_directives_are_sha_pinned(self, workflow_file, job_id, step_idx, uses_value):
         """All 'uses' action references must use a 40-char SHA, not a mutable tag."""
         if uses_value.startswith("./"):
             pytest.skip("Local action, no SHA needed")
@@ -209,9 +205,9 @@ class TestSHAPinning:
         parts = uses_value.split("@", 1)
         assert len(parts) == 2, f"No @ in uses: {uses_value}"
         ref = parts[1].split()[0]  # strip trailing comment
-        assert SHA_PATTERN.fullmatch(ref), (
-            f"{workflow_file}:{job_id} step {step_idx} uses mutable ref: {uses_value}"
-        )
+        assert SHA_PATTERN.fullmatch(
+            ref
+        ), f"{workflow_file}:{job_id} step {step_idx} uses mutable ref: {uses_value}"
 
     @pytest.mark.parametrize("filename", sorted(ALL_WORKFLOWS.keys()))
     def test_sha_pinned_actions_have_version_comment(self, filename):
@@ -226,9 +222,9 @@ class TestSHAPinning:
             if uses_value.startswith("./"):
                 continue
             if "@" in uses_value and SHA_PATTERN.search(uses_value):
-                assert "#" in uses_value, (
-                    f"{filename}:{line_num} SHA-pinned action missing version comment: {stripped}"
-                )
+                assert (
+                    "#" in uses_value
+                ), f"{filename}:{line_num} SHA-pinned action missing version comment: {stripped}"
 
 
 # ===========================================================================
@@ -262,12 +258,11 @@ class TestPipCaching:
             job = workflow.get("jobs", {}).get(job_id)
             assert job is not None, f"Exception references missing job: {filename}:{job_id}"
             has_setup_python = any(
-                "setup-python" in step.get("uses", "")
-                for step in job.get("steps", [])
+                "setup-python" in step.get("uses", "") for step in job.get("steps", [])
             )
-            assert has_setup_python, (
-                f"Exception {filename}:{job_id} has no setup-python step (stale exception)"
-            )
+            assert (
+                has_setup_python
+            ), f"Exception {filename}:{job_id} has no setup-python step (stale exception)"
 
 
 # ===========================================================================
@@ -319,9 +314,9 @@ class TestMyPyBlocking:
                 break
 
         assert mypy_step is not None, "tests.yml:lint has no mypy step"
-        assert mypy_step.get("continue-on-error") is not True, (
-            "mypy step must not have continue-on-error: true"
-        )
+        assert (
+            mypy_step.get("continue-on-error") is not True
+        ), "mypy step must not have continue-on-error: true"
         run_cmd = mypy_step.get("run", "")
         assert "|| true" not in run_cmd, "mypy run command must not use '|| true'"
         assert "|| exit 0" not in run_cmd, "mypy run command must not use '|| exit 0'"

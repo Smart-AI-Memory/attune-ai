@@ -178,7 +178,7 @@ def cmd_patterns_resolve(args):
     if not args.root_cause or not args.fix:
         print("✗ --root-cause and --fix are required when resolving a bug")
         print(
-            "  Example: empathy patterns resolve bug_123 --root-cause 'Null check' --fix 'Added ?.'",
+            "  Example: attune patterns resolve bug_123 --root-cause 'Null check' --fix 'Added ?.'",
         )
         sys.exit(1)
 
@@ -203,5 +203,5 @@ def cmd_patterns_resolve(args):
                 print("⚠ Failed to regenerate summary")
     else:
         print(f"✗ Failed to resolve: {args.bug_id}")
-        print("  Use 'empathy patterns resolve' (no args) to list investigating bugs")
+        print("  Use 'attune patterns resolve' (no args) to list investigating bugs")
         sys.exit(1)

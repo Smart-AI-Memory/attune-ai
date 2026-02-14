@@ -19,7 +19,8 @@
         "ms-python.mypy-type-checker",
         "tamasfe.even-better-toml",
         "redhat.vscode-yaml",
-        "GitHub.copilot"
+        "GitHub.copilot",
+        "DotJoshJohnson.xml"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",

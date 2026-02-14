@@ -170,7 +170,13 @@ class TestGetRedisConfig:
         ):
             # Clear specific vars
             env_backup = {}
-            for key in ["REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_HOST", "REDIS_PORT", "EMPATHY_REDIS_MOCK"]:
+            for key in [
+                "REDIS_URL",
+                "REDIS_PRIVATE_URL",
+                "REDIS_HOST",
+                "REDIS_PORT",
+                "EMPATHY_REDIS_MOCK",
+            ]:
                 env_backup[key] = os.environ.pop(key, None)
 
             try:

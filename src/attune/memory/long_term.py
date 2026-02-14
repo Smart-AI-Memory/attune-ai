@@ -875,7 +875,13 @@ class SecureMemDocsIntegration:
                 if metadata.get("pii_removed", 0) > 0:
                     stats["with_pii_scrubbed"] += 1
 
-            except Exception:
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Log but continue aggregating remaining patterns
+                logger.warning(
+                    "Failed to retrieve pattern for stats",
+                    pattern_id=pattern_id,
+                    exc_info=True,
+                )
                 continue
 
         return stats

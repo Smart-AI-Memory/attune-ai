@@ -101,9 +101,7 @@ class TestCmdShowReport:
         report_text = "Sample Progressive Report"
         (task_dir / "report.txt").write_text(report_text)
 
-        args = argparse.Namespace(
-            task_id="test-task", storage_path=str(storage_path), json=False
-        )
+        args = argparse.Namespace(task_id="test-task", storage_path=str(storage_path), json=False)
         exit_code = cmd_show_report(args)
 
         assert exit_code == 0
@@ -122,9 +120,7 @@ class TestCmdShowReport:
         (task_dir / "summary.json").write_text(json.dumps(summary))
         (task_dir / "report.txt").write_text("report")
 
-        args = argparse.Namespace(
-            task_id="test-task", storage_path=str(storage_path), json=True
-        )
+        args = argparse.Namespace(task_id="test-task", storage_path=str(storage_path), json=True)
         exit_code = cmd_show_report(args)
 
         assert exit_code == 0
@@ -159,9 +155,7 @@ class TestCmdShowReport:
         summary = {"task_id": "test-task", "workflow": "test-gen"}
         (task_dir / "summary.json").write_text(json.dumps(summary))
 
-        args = argparse.Namespace(
-            task_id="test-task", storage_path=str(storage_path), json=False
-        )
+        args = argparse.Namespace(task_id="test-task", storage_path=str(storage_path), json=False)
         exit_code = cmd_show_report(args)
 
         assert exit_code == 0
@@ -277,9 +271,7 @@ class TestCmdCleanup:
         }
         (recent_dir / "summary.json").write_text(json.dumps(recent_summary))
 
-        args = argparse.Namespace(
-            storage_path=str(storage_path), retention_days=30, dry_run=False
-        )
+        args = argparse.Namespace(storage_path=str(storage_path), retention_days=30, dry_run=False)
         exit_code = cmd_cleanup(args)
 
         assert exit_code == 0
@@ -305,9 +297,7 @@ class TestCmdCleanup:
         }
         (old_dir / "summary.json").write_text(json.dumps(old_summary))
 
-        args = argparse.Namespace(
-            storage_path=str(storage_path), retention_days=30, dry_run=True
-        )
+        args = argparse.Namespace(storage_path=str(storage_path), retention_days=30, dry_run=True)
         exit_code = cmd_cleanup(args)
 
         assert exit_code == 0

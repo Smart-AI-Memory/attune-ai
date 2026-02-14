@@ -3,9 +3,9 @@
 Performance profiling and memory analysis commands.
 
 Usage:
-    empathy profile memory-scan         # Scan for memory leaks
-    empathy profile memory-scan --json  # JSON output for CI
-    empathy profile memory-test         # Profile memory module
+    attune profile memory-scan         # Scan for memory leaks
+    attune profile memory-scan --json  # JSON output for CI
+    attune profile memory-test         # Profile memory module
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -74,10 +74,10 @@ def memory_scan(
     - Large list comprehensions that could be generators
 
     Examples:
-        empathy profile memory-scan                    # Scan src/
-        empathy profile memory-scan src/attune     # Scan specific dir
-        empathy profile memory-scan --feature "cache"  # Scan cache-related files
-        empathy profile memory-scan --json > report.json  # CI integration
+        attune profile memory-scan                    # Scan src/
+        attune profile memory-scan src/attune     # Scan specific dir
+        attune profile memory-scan --feature "cache"  # Scan cache-related files
+        attune profile memory-scan --json > report.json  # CI integration
     """
     scanner_path = (
         Path(__file__).parent.parent.parent.parent.parent / "benchmarks" / "memory_leak_scanner.py"
@@ -119,8 +119,8 @@ def memory_test(
     for key operations like search, store, and retrieve.
 
     Examples:
-        empathy profile memory-test          # Profile unified memory
-        empathy profile memory-test unified  # Same as above
+        attune profile memory-test          # Profile unified memory
+        attune profile memory-test unified  # Same as above
     """
     try:
         import memory_profiler  # noqa: F401 - check if installed
@@ -164,8 +164,8 @@ def hot_files(
     detected memory leak patterns.
 
     Examples:
-        empathy profile hot-files             # Scan src/
-        empathy profile hot-files --top 20    # Show top 20
+        attune profile hot-files             # Scan src/
+        attune profile hot-files --top 20    # Show top 20
     """
     scanner_path = (
         Path(__file__).parent.parent.parent.parent.parent / "benchmarks" / "memory_leak_scanner.py"
@@ -196,7 +196,7 @@ def callback() -> None:
     and performance bottlenecks in your codebase.
 
     [bold]Quick Start:[/bold]
-        empathy profile memory-scan      Scan for memory issues
-        empathy profile hot-files        Show riskiest files
-        empathy profile memory-test      Profile memory module
+        attune profile memory-scan      Scan for memory issues
+        attune profile hot-files        Show riskiest files
+        attune profile memory-test      Profile memory module
     """

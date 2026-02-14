@@ -13,6 +13,8 @@ python -m attune.models.auth_cli setup    # Configure authentication
 python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
+**CLI:** `attune <command>` (canonical) or `python -m attune.cli` (full). See `docs/reference/cli-reference.md`.
+
 ---
 
 ## Command Hubs
@@ -41,6 +43,34 @@ Use `/hub-name` to access organized workflows:
 - Type hints and docstrings required on all public APIs
 - Minimum 80% test coverage
 - Security tests required for file operations
+
+---
+
+## Socratic Interaction Rule
+
+**ALWAYS use `AskUserQuestion` to guide users through workflow discovery and scoping. NEVER skip straight to execution.**
+
+This is the core design principle of Attune AI's developer experience. When a user invokes `/attune` or any workflow:
+
+1. **Initial discovery**: Use `AskUserQuestion` to understand their goal (what are you trying to accomplish?)
+2. **Scoping**: Use `AskUserQuestion` to narrow scope (which files? what test subset? what level of detail?)
+3. **Confirmation**: Use `AskUserQuestion` if there are meaningful choices before execution (approach, format, targets)
+4. **Then execute**: Only run CLI commands or tools after the user has been guided through the relevant decisions
+
+**Examples of when to ask:**
+
+- User says "run tests" → Ask: which tests? full suite, CLI only, or quick smoke test?
+- User says "security audit" → Ask: which path? src/, tests/, or full project?
+- User says "review code" → Ask: which files or area? what focus (security, quality, performance)?
+- User says "commit" → Ask: which files to stage? what kind of change is this?
+
+**Do NOT:**
+
+- Jump straight to running commands without scoping
+- Assume the user wants the broadest possible execution
+- Skip questions just because the next step seems obvious
+
+This rule applies to ALL workflow interactions, not just `/attune`.
 
 ---
 

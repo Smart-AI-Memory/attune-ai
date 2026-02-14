@@ -2872,14 +2872,18 @@ class TestParsePyproject(TestDependencyParserMixin):
     def test_pep621_dependencies(self, tmp_path: Path) -> None:
         """Test parsing PEP 621 style dependencies from pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(textwrap.dedent("""\
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
             [project]
             name = "my-package"
             dependencies = [
                 "requests>=2.28.0",
                 "flask==2.3.0",
             ]
-        """))
+        """
+            )
+        )
 
         parser = self._make_parser()
         deps = parser._parse_pyproject(pyproject)
@@ -2891,7 +2895,9 @@ class TestParsePyproject(TestDependencyParserMixin):
     def test_poetry_dependencies(self, tmp_path: Path) -> None:
         """Test parsing Poetry style dependencies."""
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(textwrap.dedent("""\
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
             [tool.poetry.dependencies]
             python = "^3.10"
             requests = "^2.28.0"
@@ -2899,7 +2905,9 @@ class TestParsePyproject(TestDependencyParserMixin):
 
             [tool.poetry.dev-dependencies]
             pytest = "^7.0"
-        """))
+        """
+            )
+        )
 
         parser = self._make_parser()
         deps = parser._parse_pyproject(pyproject)
@@ -2918,11 +2926,15 @@ class TestParsePyproject(TestDependencyParserMixin):
     def test_poetry_deps_dict_spec(self, tmp_path: Path) -> None:
         """Test Poetry deps with dict spec (like extras or git)."""
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(textwrap.dedent("""\
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
             [tool.poetry.dependencies]
             python = "^3.10"
             my-lib = {version = "^1.0", extras = ["all"]}
-        """))
+        """
+            )
+        )
 
         parser = self._make_parser()
         deps = parser._parse_pyproject(pyproject)
@@ -2933,13 +2945,17 @@ class TestParsePyproject(TestDependencyParserMixin):
     def test_pyproject_fallback(self, tmp_path: Path) -> None:
         """Test the fallback TOML parser."""
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(textwrap.dedent("""\
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
             [project]
             dependencies = [
                 "requests>=2.28.0",
                 "flask==2.3.0",
             ]
-        """))
+        """
+            )
+        )
 
         parser = self._make_parser()
         deps = parser._parse_pyproject_fallback(pyproject)
@@ -3023,7 +3039,9 @@ class TestParsePoetryLock(TestDependencyParserMixin):
     def test_basic_poetry_lock(self, tmp_path: Path) -> None:
         """Test parsing poetry.lock with pinned versions."""
         lock_file = tmp_path / "poetry.lock"
-        lock_file.write_text(textwrap.dedent("""\
+        lock_file.write_text(
+            textwrap.dedent(
+                """\
             [[package]]
             name = "requests"
             version = "2.28.2"
@@ -3031,7 +3049,9 @@ class TestParsePoetryLock(TestDependencyParserMixin):
             [[package]]
             name = "flask"
             version = "2.3.0"
-        """))
+        """
+            )
+        )
 
         parser = self._make_parser()
         deps = parser._parse_poetry_lock(lock_file)

@@ -25,7 +25,7 @@ def register_parsers(subparsers):
     )
     parser_sync_claude.add_argument(
         "--output-dir",
-        default=".claude/rules/empathy",
-        help="Target Claude Code rules directory (default: .claude/rules/empathy)",
+        default=".claude/rules/attune",
+        help="Target Claude Code rules directory (default: .claude/rules/attune)",
     )
     parser_sync_claude.set_defaults(func=sync.cmd_sync_claude)

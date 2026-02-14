@@ -6,6 +6,8 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from attune.workflows.base import ModelTier
@@ -26,7 +28,7 @@ class TestDocumentManagerWorkflow:
         assert workflow.name == "document-manager"
         assert (
             workflow.description
-            == "You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the empathy-framework."
+            == "You are an expert in the creating wide many types of documents. You use program libraries, systems, style guide, and industry best practices, to efficiently create and update documentation for the attune-ai framework."
         )
         assert workflow.stages == ["process"]
 
@@ -37,21 +39,50 @@ class TestDocumentManagerWorkflow:
 
     @pytest.mark.asyncio
     async def test_workflow_execution_basic(self, workflow):
-        """Test basic workflow execution."""
-        # Skip for now - execute() signature requires no args but workflow needs data
-        # This test needs to be redesigned to match actual workflow API
-        pytest.skip("Workflow execute() signature changed - test needs redesign")
+        """Test basic workflow execution with mocked LLM."""
+        mock_response = ("# Generated Documentation\n\nAPI docs here.", 500, 200)
+
+        with patch.object(
+            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+        ):
+            result = await workflow.execute(path=".")
+
+        assert result is not None
+        assert result.final_output is not None
+        assert len(result.stages) == 1
+        assert result.stages[0].name == "process"
+        assert result.error is None
 
     @pytest.mark.asyncio
-    async def test_workflow_error_handling(self, workflow):
-        """Test workflow handles errors gracefully."""
-        # Test with invalid input
-        with pytest.raises(Exception):
-            await workflow.execute(None)
+    async def test_workflow_execution_empty_input(self, workflow):
+        """Test workflow execution with no input kwargs defaults to current dir."""
+        mock_response = ("# Docs for current directory", 300, 100)
 
+        with patch.object(
+            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+        ):
+            result = await workflow.execute()
 
-# TODO: Add more test cases
-# - Test each stage individually
-# - Test edge cases
-# - Test error conditions
-# - Test with real data
+        assert result is not None
+        assert result.final_output is not None
+
+    @pytest.mark.asyncio
+    async def test_workflow_execution_handles_llm_error(self, workflow):
+        """Test workflow handles LLM call failure gracefully."""
+        with patch.object(
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("API unavailable"),
+        ):
+            result = await workflow.execute(path=".")
+
+        # execute() catches errors and returns a result with error info
+        assert result is not None
+        assert result.error is not None
+
+    @pytest.mark.asyncio
+    async def test_run_stage_unknown_raises(self, workflow):
+        """Test that run_stage raises ValueError for unknown stage names."""
+        with pytest.raises(ValueError, match="Unknown stage"):
+            await workflow.run_stage("nonexistent_stage", ModelTier.CAPABLE, {})

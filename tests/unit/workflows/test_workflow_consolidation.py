@@ -59,16 +59,16 @@ class TestRegistryConsolidation:
         from attune.workflows import _DEFAULT_WORKFLOW_NAMES
 
         for slug in self.CANONICAL_SLUGS:
-            assert slug in _DEFAULT_WORKFLOW_NAMES, (
-                f"Canonical slug '{slug}' missing from _DEFAULT_WORKFLOW_NAMES"
-            )
+            assert (
+                slug in _DEFAULT_WORKFLOW_NAMES
+            ), f"Canonical slug '{slug}' missing from _DEFAULT_WORKFLOW_NAMES"
 
     def test_removed_slugs_have_migration_aliases(self):
         """Every removed slug should have a corresponding migration alias."""
         for slug in self.REMOVED_SLUGS:
-            assert slug in WORKFLOW_ALIASES, (
-                f"'{slug}' removed from registry but has no migration alias"
-            )
+            assert (
+                slug in WORKFLOW_ALIASES
+            ), f"'{slug}' removed from registry but has no migration alias"
 
     def test_lazy_imports_preserved(self):
         """Deprecated classes should still be importable via lazy loading."""
@@ -84,9 +84,9 @@ class TestRegistryConsolidation:
             "TestCoverageBoostCrew",
         ]
         for cls_name in preserved_classes:
-            assert cls_name in _LAZY_WORKFLOW_IMPORTS, (
-                f"'{cls_name}' should remain in _LAZY_WORKFLOW_IMPORTS for backward compat"
-            )
+            assert (
+                cls_name in _LAZY_WORKFLOW_IMPORTS
+            ), f"'{cls_name}' should remain in _LAZY_WORKFLOW_IMPORTS for backward compat"
 
 
 class TestMigrationAliases:
@@ -108,9 +108,9 @@ class TestMigrationAliases:
     def test_alias_resolves_to_canonical(self, old_slug, expected_canonical):
         """Each deprecated slug should resolve to its canonical workflow."""
         resolved_name, kwargs, was_migrated = resolve_workflow_migration(old_slug)
-        assert resolved_name == expected_canonical, (
-            f"'{old_slug}' resolved to '{resolved_name}', expected '{expected_canonical}'"
-        )
+        assert (
+            resolved_name == expected_canonical
+        ), f"'{old_slug}' resolved to '{resolved_name}', expected '{expected_canonical}'"
         assert was_migrated is True
 
     def test_canonical_slug_passes_through(self):

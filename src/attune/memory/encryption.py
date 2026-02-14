@@ -72,7 +72,7 @@ class EncryptionManager:
                 raise ValueError("Invalid EMPATHY_MASTER_KEY format") from e
 
         # Check key file
-        key_file = Path.home() / ".empathy" / "master.key"
+        key_file = Path.home() / ".attune" / "master.key"
         if key_file.exists():
             try:
                 return key_file.read_bytes()

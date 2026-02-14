@@ -88,8 +88,13 @@ class WorkflowContext:
         """
         result: dict[str, Any] = {}
         for name in (
-            "cache", "cost", "telemetry", "prompt",
-            "parsing", "tier", "coordination",
+            "cache",
+            "cost",
+            "telemetry",
+            "prompt",
+            "parsing",
+            "tier",
+            "coordination",
         ):
             svc = getattr(self, name)
             if svc is not None:

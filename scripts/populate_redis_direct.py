@@ -98,8 +98,8 @@ def generate_test_data():
             "payload": {"message": message, "demo": True},
         }
 
-        # Key format matches CoordinationSignals API: empathy:signal:{target}:{type}:{id}
-        key = f"empathy:signal:{target}:{signal_type}:{signal_data['signal_id']}".encode()
+        # Key format matches CoordinationSignals API: attune:signal:{target}:{type}:{id}
+        key = f"attune:signal:{target}:{signal_type}:{signal_data['signal_id']}".encode()
         value = json.dumps(signal_data).encode()
         r.setex(key, 300, value)  # 5 minute TTL
 
@@ -175,9 +175,7 @@ def generate_test_data():
         base_quality = tier_quality[tier]
 
         for j in range(num_samples):
-            quality = base_quality + (
-                int.from_bytes(os.urandom(4), "big") / (2**32) * 0.15 - 0.075
-            )
+            quality = base_quality + (int.from_bytes(os.urandom(4), "big") / (2**32) * 0.15 - 0.075)
             quality = max(0.0, min(1.0, quality))  # Clamp to 0-1
 
             feedback_id = f"fb-{int(time.time() * 1000)}-{feedback_count}"

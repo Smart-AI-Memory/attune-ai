@@ -68,6 +68,7 @@ class ExecutionStrategy(ABC):
             RealCodeQualityAnalyzer,
             RealCoverageAnalyzer,
             RealDocumentationAnalyzer,
+            RealPerformanceProfiler,
             RealSecurityAuditor,
         )
 
@@ -145,17 +146,22 @@ class ExecutionStrategy(ABC):
                 confidence = report.completeness_percentage / 100.0
 
             elif agent.id == "performance_optimizer" or "performance" in agent.role.lower():
-                # Performance analysis placeholder - mark as passed for now
-                # TODO: Implement real performance profiling
-                logger.warning("Performance analysis not yet implemented, returning placeholder")
+                profiler = RealPerformanceProfiler(project_root)
+                report = profiler.analyze(target_path)
+
                 output = {
                     "agent_role": agent.role,
-                    "message": "Performance analysis not yet implemented",
-                    "passed": True,
-                    "placeholder": True,
+                    "score": report.score,
+                    "total_files": report.total_files,
+                    "functions_analyzed": report.functions_analyzed,
+                    "high_complexity_count": len(report.high_complexity),
+                    "large_functions_count": len(report.large_functions),
+                    "high_complexity": report.high_complexity,
+                    "large_functions": report.large_functions,
+                    "passed": report.passed,
                 }
-                success = True
-                confidence = 1.0
+                success = report.passed
+                confidence = report.score / 10.0
 
             elif agent.id == "test_generator":
                 # Test generation requires different handling (LLM-based)

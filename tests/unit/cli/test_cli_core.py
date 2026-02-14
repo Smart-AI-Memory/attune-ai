@@ -12,29 +12,29 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from attune.cli.core import console, get_empathy_version, version_callback
+from attune.cli.core import console, get_attune_version, version_callback
 
 
 @pytest.mark.unit
-class TestGetEmpathyVersion:
-    """Tests for get_empathy_version function."""
+class TestGetAttuneVersion:
+    """Tests for get_attune_version function."""
 
     def test_returns_version_string(self):
-        """Test get_empathy_version returns a string."""
-        version = get_empathy_version()
+        """Test get_attune_version returns a string."""
+        version = get_attune_version()
 
         assert isinstance(version, str)
         assert len(version) > 0
 
     def test_returns_dev_on_import_error(self):
-        """Test get_empathy_version returns 'dev' on import error."""
+        """Test get_attune_version returns 'dev' on import error."""
         with patch("attune.cli.core.get_version") as mock_version:
             mock_version.side_effect = Exception("Package not found")
 
             # Re-call to trigger exception
-            from attune.cli.core import get_empathy_version
+            from attune.cli.core import get_attune_version
 
-            result = get_empathy_version()
+            result = get_attune_version()
 
             # Should return dev or actual version (depends on environment)
             assert isinstance(result, str)
@@ -84,7 +84,7 @@ class TestCLIAppStructure:
         from attune.cli import app
 
         # Typer stores info in info attribute
-        assert app.info.name == "empathy"
+        assert app.info.name == "attune"
 
     def test_memory_app_registered(self):
         """Test memory subcommand app is registered."""
@@ -219,7 +219,7 @@ class TestUtilityFunctions:
 
         mock_run.assert_called_once()
         call_args = mock_run.call_args
-        assert "empathy-sync-claude" in call_args[0][0]
+        assert "attune-sync-claude" in call_args[0][0]
 
     @patch("subprocess.run")
     def test_dashboard_calls_subprocess(self, mock_run):

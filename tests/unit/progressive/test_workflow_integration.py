@@ -58,15 +58,17 @@ class MockProgressiveWorkflow(ProgressiveWorkflow):
             if tier == Tier.CHEAP and i % 3 == 0:
                 quality = 65  # Below threshold
 
-            generated.append({
-                "item": item,
-                "quality_score": quality,
-                "passed": quality >= 80,
-                "syntax_errors": [],
-                "coverage": quality * 0.9,
-                "assertions": quality / 15,
-                "confidence": quality / 100,
-            })
+            generated.append(
+                {
+                    "item": item,
+                    "quality_score": quality,
+                    "passed": quality >= 80,
+                    "syntax_errors": [],
+                    "coverage": quality * 0.9,
+                    "assertions": quality / 15,
+                    "confidence": quality / 100,
+                }
+            )
 
         return generated
 
@@ -139,7 +141,7 @@ class TestProgressiveWorkflowIntegration:
         # Should have escalated to capable tier
         assert len(result.tier_results) >= 1
         # Check if any tier escalated
-        escalated = any(r.escalated for r in result.tier_results)
+        any(r.escalated for r in result.tier_results)
         # Could be True or False depending on quality
 
     def test_execute_progressive_user_cancels_initial(self, monkeypatch):
@@ -197,7 +199,7 @@ class TestProgressiveWorkflowIntegration:
         workflow = MockProgressiveWorkflow(config=config, user_id="test-user")
 
         items = ["item1", "item2"]
-        result = workflow.execute(items)
+        workflow.execute(items)
 
         # Telemetry should be initialized
         assert workflow.telemetry is not None
@@ -403,7 +405,9 @@ class TestEscalationEdgeCases:
         monkeypatch.setenv("ATTUNE_NON_INTERACTIVE", "1")
 
         config = EscalationConfig(
-            enabled=True, auto_approve_under=10.00, cheap_min_attempts=1  # Allow escalation after 1 attempt
+            enabled=True,
+            auto_approve_under=10.00,
+            cheap_min_attempts=1,  # Allow escalation after 1 attempt
         )
 
         # Mock workflow that triggers escalation

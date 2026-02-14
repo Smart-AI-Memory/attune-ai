@@ -7,7 +7,7 @@ Features:
 - Log each API request with model, tokens, and task type
 - Calculate actual cost vs baseline (if all requests used premium model)
 - Generate weekly/monthly reports
-- Integrate with `empathy costs` and `empathy morning` commands
+- Integrate with `attune costs` and `attune morning` commands
 - **Performance optimized**: Batch writes (50 requests) + JSONL format
 
 Model pricing is sourced from attune.models.MODEL_REGISTRY.
@@ -90,7 +90,7 @@ class CostTracker:
         self._load_requests()
         return self.data.get("requests", [])
 
-    def __init__(self, storage_dir: str = ".empathy", batch_size: int = 50):
+    def __init__(self, storage_dir: str = ".attune", batch_size: int = 50):
         """Initialize cost tracker.
 
         Args:
@@ -589,7 +589,7 @@ class CostTracker:
 
 def cmd_costs(args):
     """CLI command handler for costs."""
-    tracker = CostTracker(storage_dir=getattr(args, "empathy_dir", ".empathy"))
+    tracker = CostTracker(storage_dir=getattr(args, "attune_dir", ".attune"))
     days = getattr(args, "days", 7)
 
     if getattr(args, "json", False):
@@ -606,7 +606,7 @@ def cmd_costs(args):
 _tracker: CostTracker | None = None
 
 
-def get_tracker(storage_dir: str = ".empathy") -> CostTracker:
+def get_tracker(storage_dir: str = ".attune") -> CostTracker:
     """Get or create the global cost tracker."""
     global _tracker
     if _tracker is None:

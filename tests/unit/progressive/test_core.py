@@ -217,9 +217,7 @@ class TestFailureAnalysis:
     def test_failure_severity_critical(self):
         """Test CRITICAL severity classification."""
         # Severity due to many syntax errors
-        analysis1 = FailureAnalysis(
-            syntax_errors=[SyntaxError(f"error {i}") for i in range(6)]
-        )
+        analysis1 = FailureAnalysis(syntax_errors=[SyntaxError(f"error {i}") for i in range(6)])
         assert analysis1.failure_severity == "CRITICAL"
 
         # Severity due to very low pass rate

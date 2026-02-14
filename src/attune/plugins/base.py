@@ -293,7 +293,7 @@ class BasePlugin(ABC):
 
         self._initialized = True
 
-    def on_activate(self) -> None:
+    def on_activate(self) -> None:  # noqa: B027 -- intentional no-op default; subclasses override
         """Called after the plugin is fully registered in the registry.
 
         Override to perform post-registration setup such as:
