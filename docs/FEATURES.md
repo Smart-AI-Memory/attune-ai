@@ -527,10 +527,9 @@ else:
 
 ## See Also
 
-- [Installation Guide](../README.md#installation)
-- [Configuration Guide](CONFIGURATION.md)
+- [Installation Guide](getting-started/installation.md)
+- [Configuration Guide](reference/configuration.md)
 - [Architecture Overview](ARCHITECTURE.md)
-- [API Documentation](API.md)
 
 ---
 
