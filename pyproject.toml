@@ -189,6 +189,7 @@ dev = [
     "pytest-picked>=0.5.0,<1.0",  # Run tests for uncommitted changes
     "black>=24.3.0,<27.0",  # CVE fix: PYSEC-2024-48
     "mypy>=1.0,<2.0",
+    "types-PyYAML>=6.0,<7.0",  # Type stubs for PyYAML
     "ruff>=0.1,<1.0",
     "coverage>=7.0,<8.0",
     "bandit>=1.7,<2.0",
