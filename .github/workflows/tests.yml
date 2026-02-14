@@ -92,7 +92,7 @@ jobs:
       run: ruff check .
 
     - name: Type check with MyPy
-      run: mypy src/attune attune_llm --ignore-missing-imports
+      run: mypy -p attune -p attune_llm --ignore-missing-imports
 
     - name: Security scan with Bandit
       run: bandit -c .bandit -r src/ attune_llm/ attune_software/ --severity-level medium --confidence-level medium
