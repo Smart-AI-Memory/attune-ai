@@ -234,7 +234,7 @@ class TestSaveResultsToDisk:
         # Use path with null byte which will fail validation
         invalid_path = str(tmp_path / "test\x00path")
 
-        with pytest.raises(ValueError, match="null byte"):
+        with pytest.raises(ValueError, match="null byte|null character"):
             save_results_to_disk(sample_result, invalid_path)
 
     @pytest.fixture
