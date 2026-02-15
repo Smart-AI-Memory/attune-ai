@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Guided wizard system**: New `BaseWizard` framework with step types (QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW), session management, and workflow delegation. Includes `SecurityWizard` with multi-stage SecurityAuditWorkflow integration (#24).
+- **Creation capabilities in Socratic discovery**: Added `CREATE` intent category to the Socratic router, enabling `/attune` to route "scaffold", "generate", and "create" requests.
+
+### Fixed
+
+- **Security wizard validation**: Replaced 4 `assert` statements with explicit `RuntimeError` raises, removed unused variable captures, and eliminated redundant `bool()` wrappers in `security_wizard.py`.
+- **Stale IntentCategory enum test**: Updated `test_intent_category_enum_values` expected count from 6 to 7 after `CREATE` category was added.
+
+### Documentation
+
+- **Wizard guides**: Added getting started, architecture, and custom development guides for the wizard system.
+- **FAQ markdownlint fixes**: Fixed ~70 markdownlint warnings in `docs/reference/FAQ.md` (MD031, MD032, MD036, MD040, MD034).
+
+### Changed
+
+- **Dev dependency**: Added `types-PyYAML` for mypy stubs (#22).
+
 ## [2.7.3] - 2026-02-14
 
 ### Security
