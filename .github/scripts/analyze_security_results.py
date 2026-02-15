@@ -28,21 +28,52 @@ def parse_security_results(results_file: Path) -> dict:
         with open(results_file) as f:
             content = f.read()
 
-        # Try to parse as JSON
+        if not content.strip():
+            return {"error": "Security results file is empty", "findings": []}
+
+        # Try to parse as clean JSON first
         try:
             data = json.loads(content)
+            return data
         except json.JSONDecodeError:
-            # Output might be mixed with logs, try to extract JSON
-            # Look for WorkflowResult pattern
-            import re
+            pass
 
-            json_match = re.search(r'\{[^}]*"findings":\s*\[[^\]]*\][^}]*\}', content, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group())
-            else:
-                return {"error": "Could not parse security results", "findings": []}
+        # Output is likely mixed with rich text/progress bars from CLI
+        # Strategy: find the last valid JSON object in the output
+        import re
 
-        return data
+        # Try to find JSON objects with common result keys
+        # Search from the end of output (JSON result is typically last)
+        json_patterns = [
+            # Full JSON object with findings array
+            r'\{[^{}]*"findings"\s*:\s*\[[\s\S]*?\]\s*[^{}]*\}',
+            # WorkflowResult-style output
+            r'\{[^{}]*"result"\s*:\s*\{[\s\S]*?\}\s*[^{}]*\}',
+            # Any top-level JSON object (greedy, from last { to last })
+        ]
+
+        for pattern in json_patterns:
+            matches = list(re.finditer(pattern, content, re.DOTALL))
+            if matches:
+                # Try the last match first (most likely the final result)
+                for match in reversed(matches):
+                    try:
+                        data = json.loads(match.group())
+                        return data
+                    except json.JSONDecodeError:
+                        continue
+
+        # Last resort: try each line as JSON (some CLIs output JSON on a single line)
+        for line in reversed(content.splitlines()):
+            line = line.strip()
+            if line.startswith("{") and line.endswith("}"):
+                try:
+                    data = json.loads(line)
+                    return data
+                except json.JSONDecodeError:
+                    continue
+
+        return {"error": "Could not parse security results from mixed output", "findings": []}
 
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Script needs graceful error handling for CI

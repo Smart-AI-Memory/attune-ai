@@ -16,8 +16,8 @@ question:
       description: "Run tests, check coverage, audit security, or verify quality"
     - label: "🚀 Ship my changes"
       description: "Commit, create PR, prepare release, or publish"
-    - label: "📚 Understand or document"
-      description: "Explain code, generate docs, or learn patterns"
+    - label: "🏗️ Create or extend"
+      description: "Build custom wizards, agents, teams, or generate docs"
 ---
 
 # attune
@@ -141,14 +141,14 @@ Just describe what you need — no need to memorize commands:
   1. **Fix or improve code** — "/dev - Debug, review, refactor, commit, PR"
   2. **Validate my work** — "/testing + /workflows - Tests, coverage, security, perf"
   3. **Ship my changes** — "/release + /plan - Plan features, prepare release, publish"
-  4. **Understand or document** — "/docs + /agent - Explain code, generate docs, manage agents"
+  4. **Create or extend** — "/wizard + /agent - Create wizards, agents, teams, or generate docs"
 
 **Step 2 — Hub Selection:** Based on their choice, present a second AskUserQuestion with the specific hubs:
 
 - "Fix or improve code" → Options: `/dev`, `/deep-review`, `/wizard run`
 - "Validate my work" → Options: `/testing run`, `/testing coverage`, `/workflows security`, `/workflows perf`
 - "Ship my changes" → Options: `/release prep`, `/release health`, `/plan feature`, `/plan architecture`
-- "Understand or document" → Options: `/docs generate`, `/docs explain`, `/docs changelog`, `/agent list`
+- "Create or extend" → Options: `/wizard create`, `/agent create`, `/docs generate`, `/docs explain`
 
 **Step 3 — Execute:** Invoke the selected hub skill via the Skill tool.
 
@@ -175,6 +175,8 @@ When the user types a shortcut, **use AskUserQuestion to scope before executing*
 | `/attune docs` | "What kind? API docs, README update, architecture overview, or changelog?" | Generate documentation |
 | `/attune explain` | "What code? Which file, function, or module do you want explained?" | Read and explain the specified code |
 | `/attune wizard` | "What do you need? Run, create, list, or edit a wizard?" | Invoke `/wizard` hub |
+| `/attune create` | "What do you want to create? A wizard, agent, agent team, or docs?" | Route to `/wizard create`, `/agent create`, or `/docs generate` |
+| `/attune agent` | "What do you need? Create, list, or run an agent?" | Invoke `/agent` hub |
 
 ### Natural Language Routing (SCOPE THEN EXECUTE)
 
@@ -190,6 +192,7 @@ When the user provides natural language, **use AskUserQuestion to scope**, then 
 | "performance", "perf", "bottleneck" | `uv run attune workflow run perf-audit` |
 | "bugs", "predict bugs" | `uv run attune workflow run bug-predict` |
 | "release", "ship", "publish" | `uv run attune workflow run release-prep` |
+| "create", "build", "new wizard", "new agent" | Route to `/wizard create` or `/agent create` |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.
 

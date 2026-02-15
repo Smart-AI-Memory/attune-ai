@@ -38,11 +38,12 @@ class TestSocraticRouter:
             "VALIDATE": "validate",
             "SHIP": "ship",
             "UNDERSTAND": "understand",
+            "CREATE": "create",
             "UNKNOWN": "unknown",
         }
         for name, value in expected.items():
             assert IntentCategory[name].value == value
-        assert len(IntentCategory) == 6
+        assert len(IntentCategory) == 7
 
     # ---- WorkflowOption dataclass ----
 

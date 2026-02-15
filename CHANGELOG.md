@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-02-15
+
+### Documentation
+
+- **README.md updated for v2.8.0 release**: Updated "What's New" section from v2.7.0 to v2.8.0, corrected test badge (4,839 → 14,910), updated test count (8,800+ → 14,910+) and coverage (82% → 83%).
+- **CLAUDE.md version bump**: Updated framework version references from v2.7.3 to v2.8.1.
+
+## [2.8.0] - 2026-02-15
+
+### Added
+
+- **Guided wizard system**: New `BaseWizard` framework with step types (QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW), session management, and workflow delegation. Includes `SecurityWizard` with multi-stage SecurityAuditWorkflow integration (#24).
+- **Creation capabilities in Socratic discovery**: Added `CREATE` intent category to the Socratic router, enabling `/attune` to route "scaffold", "generate", and "create" requests.
+
+### Fixed
+
+- **Security wizard validation**: Replaced 4 `assert` statements with explicit `RuntimeError` raises, removed unused variable captures, and eliminated redundant `bool()` wrappers in `security_wizard.py`.
+- **Stale IntentCategory enum test**: Updated `test_intent_category_enum_values` expected count from 6 to 7 after `CREATE` category was added.
+
+### Documentation
+
+- **Wizard guides**: Added getting started, architecture, and custom development guides for the wizard system.
+- **FAQ markdownlint fixes**: Fixed ~70 markdownlint warnings in `docs/reference/FAQ.md` (MD031, MD032, MD036, MD040, MD034).
+
+### Changed
+
+- **Dev dependency**: Added `types-PyYAML` for mypy stubs (#22).
+
 ## [2.7.3] - 2026-02-14
 
 ### Security
@@ -373,7 +401,8 @@ This is the inaugural release of **attune-ai** (v2.0.0), a complete rebrand from
 
 #### Migration Required
 
-**Installation:**
+#### Installation
+
 ```bash
 # Uninstall old package
 pip uninstall empathy-framework
@@ -382,7 +411,8 @@ pip uninstall empathy-framework
 pip install attune-ai
 ```
 
-**Import Changes:**
+#### Import Changes
+
 ```python
 # OLD (empathy-framework v5.x and below)
 from empathy_os.config import EmpathyConfig
@@ -393,7 +423,8 @@ from attune.config import EmpathyConfig
 from attune.workflows import CodeReviewWorkflow
 ```
 
-**CLI Command:**
+#### CLI Command
+
 ```bash
 # OLD: empathy workflow run code-review
 # NEW: attune workflow run code-review
@@ -448,8 +479,8 @@ from attune.workflows import CodeReviewWorkflow
 
 This release maintains 100% API compatibility at the code level - only package and module names changed. All functionality remains identical to v5.3.0.
 
-**PyPI**: https://pypi.org/project/attune-ai/
-**GitHub**: https://github.com/Smart-AI-Memory/attune-ai (pending repository rename)
+**PyPI**: <https://pypi.org/project/attune-ai/>
+**GitHub**: <https://github.com/Smart-AI-Memory/attune-ai> (pending repository rename)
 
 ## [5.3.0] - 2026-01-31
 

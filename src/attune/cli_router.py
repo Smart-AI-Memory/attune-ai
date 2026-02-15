@@ -141,6 +141,16 @@ class HybridRouter:
             "wizard-run": ("wizard", "run"),
             "create-wizard": ("wizard", "create"),
             "new-wizard": ("wizard", "create"),
+            # Agent commands → /agent skill
+            "agent": ("agent", ""),
+            "agent-create": ("agent", "create"),
+            "create-agent": ("agent", "create"),
+            "new-agent": ("agent", "create"),
+            "agent-list": ("agent", "list"),
+            "agent-run": ("agent", "run"),
+            "create-team": ("agent", "create-team"),
+            "new-team": ("agent", "create-team"),
+            "agent-team": ("agent", "create-team"),
         }
 
         # Hub descriptions for disambiguation
@@ -154,6 +164,7 @@ class HybridRouter:
             "plan": "Development planning and architecture",
             "release": "Release preparation and publishing",
             "wizard": "Guided multi-step wizards with XML task decomposition",
+            "agent": "Create and manage custom AI agents and teams",
             "utilities": "Utility tools (profiling, dependencies)",
         }
 

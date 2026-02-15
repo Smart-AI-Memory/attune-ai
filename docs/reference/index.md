@@ -53,9 +53,9 @@ quick reference materials for when you need to look something up.
 
 ### Wizards
 
-- [Industry Wizards](wizards.md) - Domain-specific wizards
-- [Software Wizards](software-wizards.md) - Software development wizards
-- [Wizards Reference](wizards.md) - All wizard documentation
+- [Getting Started](../guides/wizards-getting-started.md) - Run your first wizard in under 10 minutes
+- [Architecture](../guides/wizard-architecture.md) - How the wizard system works internally
+- [Custom Development](../guides/wizard-custom-development.md) - Build Python-based wizards
 
 ## Help
 

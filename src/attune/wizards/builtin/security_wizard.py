@@ -52,14 +52,14 @@ def _has_findings(session: WizardSession) -> bool:
     # Workflow output format: findings list from triage
     findings = scan_result.get("findings", [])
     if isinstance(findings, list) and findings:
-        return bool(
-            any(f.get("severity") in ("critical", "high") for f in findings if isinstance(f, dict))
+        return any(
+            f.get("severity") in ("critical", "high") for f in findings if isinstance(f, dict)
         )
 
     # Legacy LLM output format: severity counts
     n_critical = int(scan_result.get("critical_issues", 0))
     n_high = int(scan_result.get("high_issues", 0))
-    return bool((n_critical + n_high) > 0)
+    return (n_critical + n_high) > 0
 
 
 class SecurityWizard(BaseWizard):
@@ -232,7 +232,8 @@ class SecurityWizard(BaseWizard):
         Raises:
             RuntimeError: If the workflow is not available.
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         workflow = self._get_or_create_workflow()
         if workflow is None:
             raise RuntimeError("SecurityAuditWorkflow not available")
@@ -241,7 +242,7 @@ class SecurityWizard(BaseWizard):
         input_data: dict[str, Any] = {"path": target}
 
         # Stage 1: Triage — quick pattern scan
-        triage_result, t_in, t_out = await workflow.run_stage(
+        triage_result, _, _ = await workflow.run_stage(
             "triage",
             ModelTier.CHEAP,
             input_data,
@@ -250,7 +251,7 @@ class SecurityWizard(BaseWizard):
 
         # Stage 2: Analyze — deep analysis with team decision filtering
         analyze_input = {**input_data, **triage_result}
-        analyze_result, a_in, a_out = await workflow.run_stage(
+        analyze_result, _, _ = await workflow.run_stage(
             "analyze",
             ModelTier.CAPABLE,
             analyze_input,
@@ -259,7 +260,7 @@ class SecurityWizard(BaseWizard):
 
         # Stage 3: Assess — risk scoring and severity classification
         assess_input = {**analyze_input, **analyze_result}
-        assess_result, s_in, s_out = await workflow.run_stage(
+        assess_result, _, _ = await workflow.run_stage(
             "assess",
             ModelTier.CAPABLE,
             assess_input,
@@ -290,7 +291,8 @@ class SecurityWizard(BaseWizard):
         Raises:
             RuntimeError: If the workflow is not available.
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         workflow = self._get_or_create_workflow()
         if workflow is None:
             raise RuntimeError("SecurityAuditWorkflow not available")
@@ -303,7 +305,7 @@ class SecurityWizard(BaseWizard):
             **self._workflow_state.get("assess", {}),
         }
 
-        remediate_result, r_in, r_out = await workflow.run_stage(
+        remediate_result, _, _ = await workflow.run_stage(
             "remediate",
             ModelTier.PREMIUM,
             input_data,
@@ -336,7 +338,8 @@ class SecurityWizard(BaseWizard):
         Returns:
             PromptContext for the LLM call.
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         if step.id == "scan":
             target = self._session.get("target_path", "src/")
@@ -390,7 +393,8 @@ class SecurityWizard(BaseWizard):
             step: The step that produced this result.
             result: Parsed LLM response or workflow output.
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         if step.id == "scan":
             self._session.set("scan_findings", result)
         elif step.id == "generate_fixes":

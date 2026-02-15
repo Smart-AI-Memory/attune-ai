@@ -18,7 +18,8 @@ description: Frequently Asked Questions API reference: **Last Updated:** January
 5. [Cost Optimization](#cost-optimization)
 6. [Results & ROI](#results--roi)
 7. [Common Concerns](#common-concerns)
-8. [Advanced Topics](#advanced-topics)
+8. [Wizards](#wizards)
+9. [Advanced Topics](#advanced-topics)
 
 ---
 
@@ -28,14 +29,16 @@ description: Frequently Asked Questions API reference: **Last Updated:** January
 
 Attune AI is an open-source Python framework that gives AI assistants persistent memory, multi-agent coordination, and anticipatory intelligence.
 
-**Core capabilities:**
+#### Core capabilities
+
 - 🧠 **Persistent Memory**: Pattern library that survives sessions (git-based + optional Redis)
 - 🤝 **Multi-Agent Coordination**: AI teams that share context and validate each other
 - 🔮 **Anticipatory Intelligence**: Predicts bugs 30-90 days out based on learned patterns
 - 🛡️ **Enterprise-Ready**: Local-first, HIPAA-compliant options, comprehensive security
 - 💰 **Cost Optimization**: Smart tier routing saves 80-96% on LLM costs
 
-**Quick start:**
+#### Quick start
+
 ```bash
 pip install attune-ai
 empathy-memory serve
@@ -88,6 +91,7 @@ except (ValueError, SyntaxError) as e:
 ```
 
 **Step 3:** Add to project context:
+
 - Claude Code: `.claude/CLAUDE.md`
 - GitHub Copilot: `.github/copilot-instructions.md`
 - Cursor: `.cursorrules`
@@ -98,20 +102,23 @@ except (ValueError, SyntaxError) as e:
 
 ### What's the difference between prompting and project memory?
 
-**Traditional prompting:**
+#### Traditional prompting
+
 - Include instructions in every prompt
 - Consumes context window
 - Need to repeat every session
 - Example: "Use type hints. Validate paths. [Your question]"
 
-**Project memory:**
+#### Project memory
+
 - Standards loaded once at session start
 - Available on-demand
 - Persists across all sessions
 - Zero context window cost
 - Example: Just ask your question, AI knows standards
 
-**Think of it like:**
+#### Think of it like
+
 - Prompting = telling someone the rules every time
 - Project memory = giving them a handbook once
 
@@ -123,7 +130,8 @@ Yes! Our production standards file is available:
 
 **Location:** `.claude/rules/attune/coding-standards-index.md`
 
-**Contents:**
+#### Contents
+
 - Security rules (eval, path validation, SQL injection)
 - Exception handling patterns
 - File operations
@@ -139,14 +147,16 @@ Yes! Our production standards file is available:
 
 ### How much time does this save?
 
-**Our measured results (30 days):**
+#### Our measured results (30 days)
 
-**Before:**
+#### Before
+
 - 47% of code review comments were standards violations
 - 12 linter violations per PR average
 - ~2 hours/week explaining standards
 
-**After:**
+#### After
+
 - 18% of code review comments are standards violations (-62%)
 - 3 linter violations per PR average (-75%)
 - ~20 min/week on standards questions (-83%)
@@ -154,7 +164,8 @@ Yes! Our production standards file is available:
 
 **Time saved:** ~80 hours/month in code review
 
-**Your results will vary based on:**
+#### Your results will vary based on
+
 - Team size (solo: 10-20h/month, team of 5+: 100+h/month)
 - Current code review burden
 - How often you repeat standards
@@ -167,12 +178,14 @@ Yes! Our production standards file is available:
 
 Yes! GitHub Copilot supports project-level instructions.
 
-**Setup:**
+#### Setup
+
 1. Create `.github/copilot-instructions.md` in your repository
 2. Add your coding standards with examples
 3. Copilot reads it automatically
 
-**Example:**
+#### Example
+
 ```markdown
 # Python Coding Standards
 
@@ -193,13 +206,15 @@ Always:
 
 Yes! Cursor supports project rules via `.cursorrules` file.
 
-**Setup:**
+#### Setup
+
 1. Create `.cursorrules` in project root
 2. Add your standards
 3. Cursor applies them automatically
 
-**Example:**
-```
+#### Example
+
+```text
 Follow Python standards in .ai/python-standards.md
 Use type hints, validate file paths, catch specific exceptions
 ```
@@ -212,12 +227,14 @@ Use type hints, validate file paths, catch specific exceptions
 
 Yes! Claude Code has native support for project memory.
 
-**Setup:**
+#### Setup
+
 1. Create `.claude/CLAUDE.md` in your project
 2. Reference standards with `@./path/to/standards.md`
 3. Claude loads them at session start
 
-**Example:**
+#### Example
+
 ```markdown
 # Project Context
 
@@ -238,7 +255,8 @@ Critical rules:
 
 Not yet. ChatGPT doesn't currently support persistent project-level context. You would need to include standards in each conversation.
 
-**Alternatives:**
+#### Alternatives
+
 - Create a custom GPT with standards in instructions
 - Use a browser extension to inject standards
 - Copy/paste standards at conversation start
@@ -250,12 +268,14 @@ Not yet. ChatGPT doesn't currently support persistent project-level context. You
 ### How long does setup take?
 
 **Initial setup:** 4-8 hours
+
 - Identify top 5-10 coding standard violations (1-2 hours)
 - Document with real code examples (2-4 hours)
 - Write actual implementation functions (1-2 hours)
 - Add to project context (30 minutes)
 
 **Maintenance:** ~1 hour/month
+
 - Update when standards change
 - Add new patterns as discovered
 - Keep examples current
@@ -272,7 +292,8 @@ Start with your **top 5 coding standard violations**:
 2. What do you keep commenting about?
 3. Document those patterns first
 
-**Common starting points:**
+#### Common starting points
+
 - Security: eval(), path validation, SQL injection
 - Type hints / type checking
 - Exception handling (specific vs bare)
@@ -287,14 +308,16 @@ Start with your **top 5 coding standard violations**:
 
 **Always use real code examples**, not abstract descriptions.
 
-**❌ Bad (abstract):**
-```
+#### Bad (abstract)
+
+```text
 Always handle errors properly
 Use best practices
 Follow team conventions
 ```
 
-**✅ Good (concrete):**
+#### Good (concrete)
+
 ```python
 ## Error Handling: Catch Specific Exceptions
 
@@ -317,7 +340,8 @@ except IOError as e:
 **Why:** Bare except catches system signals, makes debugging impossible
 ```
 
-**Include:**
+#### Include
+
 - ❌ What NOT to do (with code example)
 - ✅ What TO do instead (with code example)
 - **Why** it matters (security? performance? maintainability?)
@@ -370,7 +394,7 @@ try {
 
 ### How do I keep standards updated?
 
-**Integrate with code review process:**
+#### Integrate with code review process
 
 1. **When code review finds violation:**
    - Fix the code
@@ -383,8 +407,9 @@ try {
 
 3. **Result:** Pattern doesn't repeat
 
-**Example workflow:**
-```
+#### Example workflow
+
+```text
 Code review finds: bare except:
 → Fix it: catch ValueError specifically
 → Add to standards file (takes 10 min)
@@ -402,14 +427,16 @@ Code review finds: bare except:
 
 **NEW in v3.10.0:** Automatic cost optimization that tries cheaper tiers first and only upgrades when quality gates fail.
 
-**How it works:**
+#### How it works
+
 1. Start with CHEAP tier (Haiku - $0.03/1M tokens)
 2. Validate output with quality gates
 3. If validation fails → upgrade to CAPABLE (Sonnet 4.5 - $0.09/1M)
 4. Still failing? → upgrade to PREMIUM (Opus 4.5 - $0.45/1M)
 5. Track savings and learn from patterns
 
-**Enable it:**
+#### Enable it
+
 ```bash
 empathy workflow run health-check --use-recommended-tier
 ```
@@ -422,14 +449,16 @@ empathy workflow run health-check --use-recommended-tier
 
 ### When should I use tier fallback?
 
-**✅ Use tier fallback when:**
+#### When to use tier fallback
+
 - Cost is a primary concern
 - Workflow has measurable quality metrics (health score, test coverage)
 - CHEAP tier often succeeds (simple refactoring, docs, health checks)
 - You can tolerate 2-3x latency increase on quality failures
 - You want automatic cost optimization
 
-**❌ Don't use tier fallback when:**
+#### When NOT to use tier fallback
+
 - Time is critical (tier upgrades add latency)
 - Quality gates are hard to define
 - PREMIUM tier is always required (complex reasoning, novel problems)
@@ -443,20 +472,24 @@ empathy workflow run health-check --use-recommended-tier
 
 ### How much can I save with tier fallback?
 
-**Real savings depend on your workflow success rates:**
+#### Real savings depend on your workflow success rates
 
-**Scenario 1: CHEAP often succeeds (60% of stages)**
+#### Scenario 1: CHEAP often succeeds (60% of stages)
+
 - Both stages succeed at CHEAP: **~90% savings** vs. all-PREMIUM
 - Typical result: **60-70% overall savings**
 
-**Scenario 2: Mixed success (40% CHEAP, 40% CAPABLE, 20% PREMIUM)**
+#### Scenario 2: Mixed success (40% CHEAP, 40% CAPABLE, 20% PREMIUM)
+
 - Real-world mix: **40-50% savings** vs. all-PREMIUM
 
-**Scenario 3: CHEAP rarely succeeds (20% of stages)**
+#### Scenario 3: CHEAP rarely succeeds (20% of stages)
+
 - Most stages need CAPABLE or PREMIUM: **10-20% savings**
 - May not be worth the latency cost
 
-**Track your actual savings:**
+#### Track your actual savings
+
 ```bash
 empathy telemetry savings --days 30
 ```
@@ -467,19 +500,22 @@ empathy telemetry savings --days 30
 
 ### What are quality gates?
 
-**Quality gates = validation checks that decide if a tier's output is acceptable.**
+#### Quality gates defined
 
 **Default quality gates** (all workflows):
+
 - ✅ Execution succeeded (no exceptions)
 - ✅ Output is not empty
 - ✅ No error keys in response
 
 **Workflow-specific gates** (health-check):
+
 - ✅ Health score ≥ 95 (configurable with `--health-score-threshold`)
 - ✅ Diagnosis data present
 - ✅ Required fields populated
 
 **Custom quality gates:** Override `validate_output()` in your workflow:
+
 ```python
 def validate_output(self, stage_output: dict) -> tuple[bool, str | None]:
     # Custom validation logic
@@ -494,14 +530,16 @@ def validate_output(self, stage_output: dict) -> tuple[bool, str | None]:
 
 ### Can I customize the tier fallback behavior?
 
-**Yes! Several customization options:**
+#### Customization options
 
-**1. Change the starting threshold:**
+#### 1. Change the starting threshold
+
 ```bash
 empathy workflow run health-check --use-recommended-tier --health-score-threshold 90
 ```
 
-**2. Use Python API for full control:**
+#### 2. Use Python API for full control
+
 ```python
 from attune.workflows import get_workflow
 
@@ -515,7 +553,8 @@ workflow = workflow_cls(
 result = await workflow.execute(path=".")
 ```
 
-**3. Create custom workflows with specific quality gates:**
+#### 3. Create custom workflows with specific quality gates
+
 ```python
 class MyWorkflow(BaseWorkflow):
     def validate_output(self, stage_output: dict) -> tuple[bool, str | None]:
@@ -538,7 +577,8 @@ class MyWorkflow(BaseWorkflow):
 - ✅ **Backward compatible** (opt-in, default behavior unchanged)
 - ✅ **Full telemetry tracking**
 
-**Deployment checklist completed:**
+#### Deployment checklist completed
+
 - ✅ All unit tests pass
 - ✅ Code coverage ≥80% on critical modules
 - ✅ Documentation updated
@@ -553,24 +593,28 @@ class MyWorkflow(BaseWorkflow):
 
 ### What results can I expect?
 
-**Conservative estimates (based on our data):**
+#### Conservative estimates (based on our data)
 
-**Solo developer:**
+#### Solo developer
+
 - Time saved: 10-20 hours/month
 - Code review improvements: -40% standards comments
 - Prevention: 2-3 bugs caught before writing
 
-**Team of 5:**
+#### Team of 5
+
 - Time saved: 50-100 hours/month
 - Code review improvements: -60% standards comments
 - Prevention: 5-10 bugs caught before writing
 
-**Team of 10+:**
+#### Team of 10+
+
 - Time saved: 100-200 hours/month
 - Code review improvements: -70% standards comments
 - Prevention: 10-20 bugs caught before writing
 
-**Key factors:**
+#### Key factors
+
 - Current code review burden
 - How often you repeat standards
 - Team size and turnover
@@ -580,21 +624,24 @@ class MyWorkflow(BaseWorkflow):
 
 ### How do I measure impact?
 
-**Track these metrics for 30 days:**
+#### Track these metrics for 30 days
 
-**Before implementation:**
+#### Before implementation
+
 - % of code review comments on standards
 - Linter violations per PR
 - Time spent explaining standards
 - Security issues caught in review
 
-**After implementation:**
+#### After implementation
+
 - Same metrics
 - Calculate reduction
 - Note patterns that stopped recurring
 
-**Example tracking:**
-```
+#### Example tracking
+
+```text
 Week 1: 15 linter violations, 12 standards comments
 Week 2: 12 linter violations, 9 standards comments
 Week 3: 8 linter violations, 6 standards comments
@@ -609,22 +656,25 @@ Result: -67% violations, -67% comments
 
 ### Isn't this overengineered?
 
-**Fair question! It depends on your situation.**
+#### It depends on your situation
 
-**When this is overkill:**
+#### When this is overkill
+
 - Solo dev who rarely repeats standards
 - Small team with perfect code review adherence
 - Simple codebase with few patterns
 - No security requirements
 
-**When this pays off:**
+#### When this pays off
+
 - Team of 3+ developers
 - Onboarding new developers regularly
 - Recurring standards violations in code review
 - Complex codebase with security requirements
 - High cost of bugs (security, compliance, $$$)
 
-**The lightweight version:**
+#### The lightweight version
+
 - Document top 3 violations only
 - Skip the rest
 - Still saves time, much less work
@@ -635,20 +685,23 @@ Result: -67% violations, -67% comments
 
 ### Does AI replace code review?
 
-**No! This complements code review, doesn't replace it.**
+#### This complements code review, doesn't replace it
 
-**What it does:**
+#### What it does
+
 - Reduces noise (fewer "use type hints" comments)
 - Lets reviewers focus on logic, architecture, edge cases
 - Prevents obvious issues
 
-**What it doesn't do:**
+#### What it doesn't do
+
 - Replace human judgment
 - Catch business logic bugs
 - Understand context-specific requirements
 - Make architectural decisions
 
-**Think of it like a linter on steroids:**
+#### Think of it like a linter on steroids
+
 - Linters catch syntax issues
 - This catches patterns linters can't detect
 - Humans focus on the hard problems
@@ -659,9 +712,10 @@ Result: -67% violations, -67% comments
 
 ### What about AI hallucinations?
 
-**Valid concern! Here's how we handle it:**
+#### How we handle it
 
-**1. Reference actual implementations:**
+#### 1. Reference actual implementations
+
 ```python
 ## File Path Validation
 
@@ -672,7 +726,8 @@ Result: -67% violations, -67% comments
 
 When AI uses `validate_file_path()`, it's using a tested, production function, not generating something new.
 
-**2. Include test patterns:**
+#### 2. Include test patterns
+
 ```python
 ## Tests Required
 
@@ -683,11 +738,13 @@ def test_validate_file_path_blocks_traversal():
 
 AI generates tests that match your existing test suite.
 
-**3. Code review still catches issues:**
+#### 3. Code review still catches issues
+
 - AI-generated code goes through normal review
 - Standards reduce noise, but humans verify logic
 
-**4. Start with high-confidence patterns:**
+#### 4. Start with high-confidence patterns
+
 - Security rules (eval, path validation)
 - Well-established best practices
 - Patterns you've used 100+ times
@@ -696,7 +753,7 @@ AI generates tests that match your existing test suite.
 
 ### What if my team disagrees on standards?
 
-**Document the disagreement and decision:**
+#### Document the disagreement and decision
 
 ```python
 ## String Formatting: Use f-strings (Python 3.6+)
@@ -716,11 +773,52 @@ message = f"Hello, {name}"  # Readable, fast
 - Documented in standards for new team members
 ```
 
-**Benefits:**
+#### Benefits
+
 - New team members see the decision
 - Context preserved ("why did we choose this?")
 - Reduces re-litigating decisions
 - Standards document becomes team memory
+
+---
+
+## Wizards
+
+### What are wizards?
+
+Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context, runs AI analysis, decomposes work into tasks, and previews results before acting.
+
+#### Built-in wizards
+
+| ID | Name | Use Case |
+| ---- | ------ | ---------- |
+| `debug` | Debugging Wizard | Investigating errors, finding root causes |
+| `test-gen` | Test Generation Wizard | Creating tests for untested code |
+| `refactor` | Refactoring Wizard | Planning safe, incremental refactoring |
+| `security` | Security Audit Wizard | Scanning for vulnerabilities |
+| `release-prep` | Release Preparation Wizard | Pre-release readiness checks |
+
+**Quick start:** `/wizard run debug` in Claude Code, or see the [Getting Started guide](../guides/wizards-getting-started.md).
+
+---
+
+### How do I create a custom wizard?
+
+Two approaches:
+
+**YAML (no Python required):** Create a `.attune/wizards/my-wizard.yaml` file with step definitions. See [Getting Started](../guides/wizards-getting-started.md).
+
+**Python (for advanced logic):** Subclass `BaseWizard` with custom step handling, workflow delegation, and conditional steps. See [Custom Wizard Development](../guides/wizard-custom-development.md).
+
+---
+
+### How does the wizard system work internally?
+
+Wizards follow a step-based execution model with 5 step types: QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW, and CONFIRM. Session state flows between steps, and conditions can skip steps dynamically.
+
+Production wizards delegate LLM steps to multi-stage workflow engines for deeper analysis, with graceful fallback to basic LLM calls.
+
+**Deep dive:** [Wizard Architecture](../guides/wizard-architecture.md)
 
 ---
 
@@ -730,7 +828,7 @@ message = f"Hello, {name}"  # Readable, fast
 
 Yes! Use symlinks or git submodules:
 
-```
+```text
 company-standards/
 ├── python-standards.md
 ├── typescript-standards.md
@@ -747,7 +845,8 @@ project-b/
 └── src/
 ```
 
-**Benefits:**
+#### Benefits
+
 - Update once, applies everywhere
 - Consistent standards across org
 - New projects inherit standards automatically
@@ -756,9 +855,9 @@ project-b/
 
 ### How do I handle language-specific vs general standards?
 
-**Structure by specificity:**
+#### Structure by specificity
 
-```
+```text
 standards/
 ├── general.md              # Applies to all projects
 │   ├── Code review process
@@ -774,7 +873,8 @@ standards/
     └── style.md            # Python style guide
 ```
 
-**Reference in project:**
+#### Reference in project
+
 ```markdown
 # .claude/CLAUDE.md
 
@@ -812,7 +912,8 @@ result = df['column_name']
 - NaN/null handling
 ```
 
-**Other DS patterns:**
+#### Other DS patterns
+
 - Data validation (schema, types, ranges)
 - Reproducibility (random seeds, versioning)
 - Performance (vectorization, avoid loops)
@@ -822,7 +923,7 @@ result = df['column_name']
 
 ### How do I version control standards?
 
-**Treat standards like code:**
+#### Treat standards like code
 
 ```bash
 git add .claude/rules/python-standards.md
@@ -830,7 +931,8 @@ git commit -m "docs: Add SQL injection prevention pattern"
 git push
 ```
 
-**Use CHANGELOG:**
+#### Use CHANGELOG
+
 ```markdown
 # Standards Changelog
 
@@ -844,7 +946,8 @@ git push
 - Updated: Type hints (Python 3.10 syntax)
 ```
 
-**Benefits:**
+#### Benefits
+
 - Track what changed and when
 - See evolution of standards
 - Revert if pattern doesn't work
@@ -869,8 +972,8 @@ git push
 
 ### Commercial Support
 
-- **Email:** admin@smartaimemory.com
-- **Website:** https://smartaimemory.com
+- **Email:** <admin@smartaimemory.com>
+- **Website:** <https://smartaimemory.com>
 
 ---
 

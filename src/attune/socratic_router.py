@@ -43,6 +43,7 @@ class IntentCategory(Enum):
     VALIDATE = "validate"  # Test, review, audit
     SHIP = "ship"  # Commit, PR, release
     UNDERSTAND = "understand"  # Explain, document, explore
+    CREATE = "create"  # Build new wizards, agents, teams, workflows
     UNKNOWN = "unknown"  # Needs clarification
 
 
@@ -301,6 +302,49 @@ INTENT_PATTERNS: dict[IntentCategory, dict[str, Any]] = {
             WorkflowOption(
                 label="Something specific",
                 description="Ask about a specific part of the codebase",
+                skill="attune",
+                args="",
+            ),
+        ],
+    },
+    IntentCategory.CREATE: {
+        "keywords": [
+            "create",
+            "build",
+            "new",
+            "define",
+            "custom",
+            "wizard",
+            "agent",
+            "team",
+            "scaffold",
+            "generate agent",
+            "make a",
+            "set up",
+        ],
+        "question": "What would you like to create?",
+        "options": [
+            WorkflowOption(
+                label="Create a wizard",
+                description="Define a new custom guided workflow (YAML-based)",
+                skill="wizard",
+                args="create",
+            ),
+            WorkflowOption(
+                label="Create an agent",
+                description="Define a new specialized AI agent with role and tools",
+                skill="agent",
+                args="create",
+            ),
+            WorkflowOption(
+                label="Create an agent team",
+                description="Build a multi-agent collaboration pipeline",
+                skill="agent",
+                args="create-team",
+            ),
+            WorkflowOption(
+                label="Something else",
+                description="Describe what you want to create",
                 skill="attune",
                 args="",
             ),
