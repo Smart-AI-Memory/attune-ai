@@ -76,8 +76,8 @@ For release decisions, use structured reasoning to make a go/no-go recommendatio
 
 | Input | Action |
 | ----- | ------ |
-| `/release prep` | `uv run attune workflow run release-prep` |
-| `/release security` | `uv run attune workflow run security-audit` |
+| `/release prep` | Run Release-Prep wizard: version info → readiness check → changelog → decompose tasks → preview → confirm |
+| `/release security` | Run Security wizard: define scope → scan → generate fixes → decompose remediation → preview |
 | `/release health` | Run pytest + coverage + ruff + bandit, report aggregate results |
 | `/release publish` | `uv run python -m build && uv run twine upload dist/*` |
 | `/release version <v>` | Update version in pyproject.toml and `src/attune/__init__.py` |
@@ -86,8 +86,8 @@ For release decisions, use structured reasoning to make a go/no-go recommendatio
 
 | Pattern | Action |
 | ------- | ------ |
-| "prepare", "prep", "ready" | `uv run attune workflow run release-prep` |
-| "security", "vulnerabilities", "scan" | `uv run attune workflow run security-audit` |
+| "prepare", "prep", "ready" | Run Release-Prep wizard flow |
+| "security", "vulnerabilities", "scan" | Run Security wizard flow |
 | "health", "status", "ready to ship" | Run full health check |
 | "publish", "pypi", "upload" | Build and publish |
 | "version", "bump" | Update version numbers |

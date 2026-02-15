@@ -79,7 +79,7 @@ For planning tasks, use structured reasoning to produce thorough plans:
 | ----- | ------ |
 | `/plan feature <desc>` | Break feature into numbered tasks with files, dependencies, and risks |
 | `/plan tdd <module>` | Design test cases first, then create implementation plan |
-| `/plan refactor <path>` | Read code at path, analyze structure, plan incremental refactoring steps |
+| `/plan refactor <path>` | Run Refactor wizard: describe goal → analyze structure → decompose steps → preview → confirm |
 | `/plan architecture` | Analyze project structure, evaluate architecture, propose improvements |
 | `/plan review <path>` | `uv run attune workflow run code-review --path <path>` |
 
@@ -115,7 +115,7 @@ When generating plans, use this structure:
 | ------- | ------ |
 | "plan", "break down", "steps" | Break into implementation tasks |
 | "tdd", "test first", "design tests" | TDD scaffolding |
-| "refactor", "restructure", "reorganize" | Refactoring strategy |
+| "refactor", "restructure", "reorganize" | Run Refactor wizard flow |
 | "architecture", "design", "structure" | Architecture review |
 | "review", "evaluate" | Code review with planning |
 

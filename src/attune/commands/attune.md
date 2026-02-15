@@ -104,6 +104,15 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | [Quality Only](src/attune/commands/deep-review.md) `/deep-review quality` | Code quality and style analysis |
 | [Test Gaps Only](src/attune/commands/deep-review.md) `/deep-review tests` | Coverage analysis and missing test detection |
 
+### Wizards — [/wizard](src/attune/commands/wizard.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Run Wizard](src/attune/commands/wizard.md) `/wizard run <id>` | Execute a guided multi-step wizard by ID |
+| [List Wizards](src/attune/commands/wizard.md) `/wizard list` | Show all wizards (built-in + custom) with metadata |
+| [Create Wizard](src/attune/commands/wizard.md) `/wizard create` | Define a new custom guided workflow via YAML |
+| [Edit Wizard](src/attune/commands/wizard.md) `/wizard edit <id>` | Modify an existing custom wizard |
+
 ## Natural Language
 
 Just describe what you need — no need to memorize commands:
@@ -136,7 +145,7 @@ Just describe what you need — no need to memorize commands:
 
 **Step 2 — Hub Selection:** Based on their choice, present a second AskUserQuestion with the specific hubs:
 
-- "Fix or improve code" → Options: `/dev`, `/deep-review`
+- "Fix or improve code" → Options: `/dev`, `/deep-review`, `/wizard run`
 - "Validate my work" → Options: `/testing run`, `/testing coverage`, `/workflows security`, `/workflows perf`
 - "Ship my changes" → Options: `/release prep`, `/release health`, `/plan feature`, `/plan architecture`
 - "Understand or document" → Options: `/docs generate`, `/docs explain`, `/docs changelog`, `/agent list`
@@ -165,6 +174,7 @@ When the user types a shortcut, **use AskUserQuestion to scope before executing*
 | `/attune refactor` | "What area? Which files or functions need refactoring?" | Analyze code and suggest refactoring |
 | `/attune docs` | "What kind? API docs, README update, architecture overview, or changelog?" | Generate documentation |
 | `/attune explain` | "What code? Which file, function, or module do you want explained?" | Read and explain the specified code |
+| `/attune wizard` | "What do you need? Run, create, list, or edit a wizard?" | Invoke `/wizard` hub |
 
 ### Natural Language Routing (SCOPE THEN EXECUTE)
 
