@@ -47,20 +47,49 @@ jobs:
         id: security_scan
         continue-on-error: true  # Don't fail job, we'll control blocking in next step
         run: |
-          # Run security audit and capture output
-          # Keep stderr separate so JSON output stays valid
-          attune workflow run security-audit --json > security_results.json 2>security_scan_stderr.log
+          # Run security audit and capture raw output
+          # --json flag outputs JSON but CLI also prints rich text (progress, panels)
+          # Capture everything, then extract JSON in post-processing
+          attune workflow run security-audit --json > security_results_raw.txt 2>security_scan_stderr.log
           scan_exit=$?
+
+          # Extract JSON from mixed output (CLI prints rich text before JSON result)
+          # The JSON result is the last { ... } block in the output
+          python3 -c "
+          import json, sys
+          content = open('security_results_raw.txt').read()
+          # Try parsing whole file as JSON
+          try:
+              json.loads(content)
+              open('security_results.json', 'w').write(content)
+              sys.exit(0)
+          except json.JSONDecodeError:
+              pass
+          # Find last JSON object in output
+          last_brace = content.rfind('}')
+          if last_brace == -1:
+              open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'No JSON found in output'}))
+              sys.exit(0)
+          # Walk backwards to find matching opening brace
+          depth = 0
+          for i in range(last_brace, -1, -1):
+              if content[i] == '}': depth += 1
+              elif content[i] == '{': depth -= 1
+              if depth == 0:
+                  try:
+                      data = json.loads(content[i:last_brace+1])
+                      open('security_results.json', 'w').write(json.dumps(data, indent=2))
+                      sys.exit(0)
+                  except json.JSONDecodeError:
+                      break
+          open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'Could not extract JSON from CLI output'}))
+          "
 
           # Check if scan succeeded
           if [ $scan_exit -eq 0 ]; then
             echo "scan_status=success" >> $GITHUB_OUTPUT
           else
             echo "scan_status=failed" >> $GITHUB_OUTPUT
-            # If JSON file is empty or invalid, create a fallback
-            if [ ! -s security_results.json ] || ! python -c "import json; json.load(open('security_results.json'))" 2>/dev/null; then
-              echo '{"findings": [], "error": "Security audit exited with code '"$scan_exit"'. Check security_scan_stderr.log for details."}' > security_results.json
-            fi
           fi
 
       - name: Parse and analyze results
@@ -155,6 +184,7 @@ jobs:
         with:
           name: security-scan-results
           path: |
+            security_results_raw.txt
             security_results.json
             security_scan_stderr.log
             analysis.json
