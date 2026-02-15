@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-02-15
+
+### Documentation
+
+- **README.md updated for v2.8.0 release**: Updated "What's New" section from v2.7.0 to v2.8.0, corrected test badge (4,839 → 14,910), updated test count (8,800+ → 14,910+) and coverage (82% → 83%).
+- **CLAUDE.md version bump**: Updated framework version references from v2.7.3 to v2.8.1.
+
 ## [2.8.0] - 2026-02-15
 
 ### Added

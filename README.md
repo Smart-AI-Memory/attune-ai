@@ -8,7 +8,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-4839%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-14910%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -20,15 +20,13 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.7.0
+## What's New in v2.8.1
 
-- **Workflow Consolidation** - Overlapping workflows consolidated into canonical groups with backward-compatible migration aliases
-- **Feature Availability API** - Runtime checking of optional dependencies (Redis, etc.) with graceful degradation
-- **Modular Architecture** - WorkflowContext composition, clean memory/telemetry splitting, streamlined workflow registry
-- **Deep Analysis Stages** - Code review now LLM-validates performance and quality findings to filter false positives and add fix suggestions
-- **433+ New Tests** - Feature availability, workflow consolidation, and 6 workflow test suites
-- **`attune features` CLI** - See what's available and what needs installing at a glance
-- **Easiest version to learn** - Simplified command hubs, Socratic discovery, and natural language routing make Attune the most approachable release yet
+- **Guided Wizard System** - New `BaseWizard` framework with step types (QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW), session management, and workflow delegation. Includes `SecurityWizard` for multi-stage security audits.
+- **Socratic Discovery: CREATE Intent** - `/attune` now routes "scaffold", "generate", and "create" requests through a new `CREATE` intent category.
+- **Security Wizard Hardening** - Replaced `assert` statements with explicit `RuntimeError` raises, removed unused captures, eliminated redundant wrappers.
+- **14,910 Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
+- **Wizard Documentation** - Getting started, architecture, and custom development guides for the wizard system.
 
 ---
 
@@ -76,7 +74,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - No file exceeds 1,000 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **8,800+ Unit Tests** - Security, unit, integration, and behavioral test coverage at 82% coverage
+- **14,910+ Unit Tests** - Security, unit, integration, and behavioral test coverage at 83% coverage
 
 ### Intelligent Cost Optimization
 
