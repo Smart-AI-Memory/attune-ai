@@ -241,7 +241,7 @@ class SecurityWizard(BaseWizard):
         input_data: dict[str, Any] = {"path": target}
 
         # Stage 1: Triage — quick pattern scan
-        triage_result, t_in, t_out = await workflow.run_stage(
+        triage_result, _, _ = await workflow.run_stage(
             "triage",
             ModelTier.CHEAP,
             input_data,
@@ -250,7 +250,7 @@ class SecurityWizard(BaseWizard):
 
         # Stage 2: Analyze — deep analysis with team decision filtering
         analyze_input = {**input_data, **triage_result}
-        analyze_result, a_in, a_out = await workflow.run_stage(
+        analyze_result, _, _ = await workflow.run_stage(
             "analyze",
             ModelTier.CAPABLE,
             analyze_input,
@@ -259,7 +259,7 @@ class SecurityWizard(BaseWizard):
 
         # Stage 3: Assess — risk scoring and severity classification
         assess_input = {**analyze_input, **analyze_result}
-        assess_result, s_in, s_out = await workflow.run_stage(
+        assess_result, _, _ = await workflow.run_stage(
             "assess",
             ModelTier.CAPABLE,
             assess_input,
@@ -303,7 +303,7 @@ class SecurityWizard(BaseWizard):
             **self._workflow_state.get("assess", {}),
         }
 
-        remediate_result, r_in, r_out = await workflow.run_stage(
+        remediate_result, _, _ = await workflow.run_stage(
             "remediate",
             ModelTier.PREMIUM,
             input_data,
