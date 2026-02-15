@@ -68,8 +68,8 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | `/testing run -k <pattern>` | `uv run pytest -k "<pattern>" -v` |
 | `/testing coverage` | `uv run pytest --cov=src --cov-report=term-missing` |
 | `/testing coverage <target>` | `uv run pytest --cov=<target> --cov-report=term-missing` |
-| `/testing generate <module>` | `uv run attune workflow run test-gen-behavioral --path <module>` |
-| `/testing generate batch` | `uv run attune workflow run test-gen-behavioral --batch` |
+| `/testing generate <module>` | Run Test-Gen wizard: select target → analyze coverage gaps → decompose test tasks → preview → confirm |
+| `/testing generate batch` | Run Test-Gen wizard in batch mode for multiple modules |
 | `/testing tdd` | Guide TDD cycle: write failing test, implement, refactor |
 
 ### Natural Language Routing (EXECUTE THESE)
@@ -78,7 +78,7 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | ------- | ------ |
 | "run tests", "pytest", "test suite" | `uv run pytest -v` |
 | "coverage", "how much is covered" | `uv run pytest --cov=src --cov-report=term-missing` |
-| "generate tests", "write tests for" | `uv run attune workflow run test-gen-behavioral --path <target>` |
+| "generate tests", "write tests for" | Run Test-Gen wizard flow |
 | "tdd", "test first", "red green refactor" | Guide TDD workflow |
 | "failing", "broken test", "why does this fail" | Debug the failing test |
 
@@ -97,7 +97,6 @@ uv run pytest -k "test_name"
 uv run pytest --cov=src --cov-report=term-missing
 uv run pytest --cov=src --cov-report=html
 
-# Test generation
-uv run attune workflow run test-gen-behavioral --path <module>
-uv run attune workflow run test-gen-behavioral --batch
+# Test generation (via wizard)
+# Use /wizard run test-gen or /testing generate <module>
 ```

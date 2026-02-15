@@ -74,8 +74,8 @@ For analysis workflows, use structured reasoning before presenting results:
 
 | Input | Action |
 | ----- | ------ |
-| `/workflows security` | `uv run attune workflow run security-audit` |
-| `/workflows security <path>` | `uv run attune workflow run security-audit --path <path>` |
+| `/workflows security` | Run Security wizard: define scope → scan → generate fixes → decompose remediation → preview |
+| `/workflows security <path>` | Run Security wizard for the specified path |
 | `/workflows bugs` | `uv run attune workflow run bug-predict` |
 | `/workflows bugs <path>` | `uv run attune workflow run bug-predict --path <path>` |
 | `/workflows perf` | `uv run attune workflow run perf-audit` |
@@ -87,7 +87,7 @@ For analysis workflows, use structured reasoning before presenting results:
 
 | Pattern | Action |
 | ------- | ------ |
-| "security", "vulnerabilities", "cwe" | `uv run attune workflow run security-audit` |
+| "security", "vulnerabilities", "cwe" | Run Security wizard flow |
 | "bugs", "predict", "risky code" | `uv run attune workflow run bug-predict` |
 | "performance", "slow", "bottleneck" | `uv run attune workflow run perf-audit` |
 | "review", "quality" | `uv run attune workflow run code-review` |
