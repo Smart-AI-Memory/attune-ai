@@ -56,7 +56,7 @@
 ## Migration Candidates
 
 | # | Workflow | Wizard | Priority | Complexity | Target |
-|---|----------|--------|----------|------------|--------|
+| --- | ---------- | -------- | ---------- | ------------ | -------- |
 | 1 | `CodeReviewWorkflow` | New: CodeReviewWizard | Medium | Medium | v2.9 |
 | 2 | `BugPredictWorkflow` | New: BugPredictWizard | Low | Low | v2.9 |
 | 3 | `PerfAuditWorkflow` | New: PerfAuditWizard | Low | Medium | v3.0 |
@@ -208,7 +208,7 @@ Use this checklist when migrating any workflow to a wizard:
 ## Testing Requirements Per Migration
 
 | Test Category | What to Verify |
-|---------------|----------------|
+| --------------- | ---------------- |
 | Import | Wizard class loads without error |
 | Registry | `get_wizard("<id>")` returns the correct class |
 | Listing | `list_wizards()` includes the new wizard |
@@ -223,7 +223,7 @@ Use this checklist when migrating any workflow to a wizard:
 ## Risk Mitigation
 
 | Risk | Mitigation |
-|------|------------|
+| ------ | ------------ |
 | Workflow API changes break wizard wrapper | Wrapper catches all exceptions, falls back to LLM |
 | Circular imports | Lazy import inside `_get_or_create_workflow()` |
 | Performance overhead of double initialization | Lazy instantiation, cached on instance |
@@ -235,7 +235,7 @@ Use this checklist when migrating any workflow to a wizard:
 ## Timeline Summary
 
 | Version | Milestone |
-|---------|-----------|
+| --------- | ----------- |
 | v2.8 (current) | SecurityWizard + RefactorWizard wrappers |
 | v2.9 | CodeReview, BugPredict, TestGen wizard wrappers |
 | v3.0 | PerfAudit, SecureRelease, SEO wizard wrappers + soft deprecation |

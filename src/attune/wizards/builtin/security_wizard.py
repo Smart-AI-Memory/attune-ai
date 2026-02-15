@@ -52,14 +52,14 @@ def _has_findings(session: WizardSession) -> bool:
     # Workflow output format: findings list from triage
     findings = scan_result.get("findings", [])
     if isinstance(findings, list) and findings:
-        return any(
-            f.get("severity") in ("critical", "high") for f in findings if isinstance(f, dict)
+        return bool(
+            any(f.get("severity") in ("critical", "high") for f in findings if isinstance(f, dict))
         )
 
     # Legacy LLM output format: severity counts
-    critical = int(scan_result.get("critical_issues", 0))
-    high = int(scan_result.get("high_issues", 0))
-    return (critical + high) > 0
+    n_critical = int(scan_result.get("critical_issues", 0))
+    n_high = int(scan_result.get("high_issues", 0))
+    return bool((n_critical + n_high) > 0)
 
 
 class SecurityWizard(BaseWizard):
