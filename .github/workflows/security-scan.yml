@@ -48,13 +48,19 @@ jobs:
         continue-on-error: true  # Don't fail job, we'll control blocking in next step
         run: |
           # Run security audit and capture output
-          attune workflow run security-audit --json > security_results.json 2>&1 || true
+          # Keep stderr separate so JSON output stays valid
+          attune workflow run security-audit --json > security_results.json 2>security_scan_stderr.log
+          scan_exit=$?
 
           # Check if scan succeeded
-          if [ $? -eq 0 ]; then
+          if [ $scan_exit -eq 0 ]; then
             echo "scan_status=success" >> $GITHUB_OUTPUT
           else
             echo "scan_status=failed" >> $GITHUB_OUTPUT
+            # If JSON file is empty or invalid, create a fallback
+            if [ ! -s security_results.json ] || ! python -c "import json; json.load(open('security_results.json'))" 2>/dev/null; then
+              echo '{"findings": [], "error": "Security audit exited with code '"$scan_exit"'. Check security_scan_stderr.log for details."}' > security_results.json
+            fi
           fi
 
       - name: Parse and analyze results
@@ -150,6 +156,7 @@ jobs:
           name: security-scan-results
           path: |
             security_results.json
+            security_scan_stderr.log
             analysis.json
             pr_comment.md
           retention-days: 90
