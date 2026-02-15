@@ -77,6 +77,23 @@ const faqData: FAQCategory[] = [
     ],
   },
   {
+    category: 'Wizards',
+    questions: [
+      {
+        question: 'What are wizards?',
+        answer: 'Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context via questions, runs AI analysis, decomposes work into tasks, and previews results before acting. Attune AI ships with 5 built-in wizards: debug, test-gen, refactor, security, and release-prep.',
+      },
+      {
+        question: 'How do I run a wizard?',
+        answer: 'From Claude Code, type /wizard run debug (or any wizard ID). From Python: from attune.wizards import get_wizard; wizard = get_wizard("debug")(); result = await wizard.run(). See the Getting Started guide for a full walkthrough.',
+      },
+      {
+        question: 'Can I create custom wizards?',
+        answer: 'Yes! Two approaches: (1) YAML-based — create a .attune/wizards/my-wizard.yaml file with step definitions, no Python required. (2) Python-based — subclass BaseWizard for advanced logic like workflow delegation, conditional steps, and custom result processing. See the Custom Wizard Development guide.',
+      },
+    ],
+  },
+  {
     category: 'Use Cases',
     questions: [
       {

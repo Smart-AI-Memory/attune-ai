@@ -115,16 +115,22 @@ export default function WizardsPage() {
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link
-                  href="/framework-docs/tutorials/quickstart/"
+                  href="/framework-docs/guides/wizards-getting-started/"
                   className="btn btn-primary"
                 >
-                  Get Started
+                  Getting Started Guide
                 </Link>
                 <Link
-                  href="/workflows"
+                  href="/framework-docs/guides/wizard-architecture/"
                   className="btn btn-outline"
                 >
-                  View Workflows
+                  Architecture
+                </Link>
+                <Link
+                  href="/framework-docs/guides/wizard-custom-development/"
+                  className="btn btn-outline"
+                >
+                  Build Your Own
                 </Link>
               </div>
             </div>

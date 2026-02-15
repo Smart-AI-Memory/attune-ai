@@ -18,7 +18,8 @@ description: Frequently Asked Questions API reference: **Last Updated:** January
 5. [Cost Optimization](#cost-optimization)
 6. [Results & ROI](#results--roi)
 7. [Common Concerns](#common-concerns)
-8. [Advanced Topics](#advanced-topics)
+8. [Wizards](#wizards)
+9. [Advanced Topics](#advanced-topics)
 
 ---
 
@@ -721,6 +722,46 @@ message = f"Hello, {name}"  # Readable, fast
 - Context preserved ("why did we choose this?")
 - Reduces re-litigating decisions
 - Standards document becomes team memory
+
+---
+
+## Wizards
+
+### What are wizards?
+
+Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context, runs AI analysis, decomposes work into tasks, and previews results before acting.
+
+**Built-in wizards:**
+
+| ID | Name | Use Case |
+| ---- | ------ | ---------- |
+| `debug` | Debugging Wizard | Investigating errors, finding root causes |
+| `test-gen` | Test Generation Wizard | Creating tests for untested code |
+| `refactor` | Refactoring Wizard | Planning safe, incremental refactoring |
+| `security` | Security Audit Wizard | Scanning for vulnerabilities |
+| `release-prep` | Release Preparation Wizard | Pre-release readiness checks |
+
+**Quick start:** `/wizard run debug` in Claude Code, or see the [Getting Started guide](../guides/wizards-getting-started.md).
+
+---
+
+### How do I create a custom wizard?
+
+Two approaches:
+
+**YAML (no Python required):** Create a `.attune/wizards/my-wizard.yaml` file with step definitions. See [Getting Started](../guides/wizards-getting-started.md).
+
+**Python (for advanced logic):** Subclass `BaseWizard` with custom step handling, workflow delegation, and conditional steps. See [Custom Wizard Development](../guides/wizard-custom-development.md).
+
+---
+
+### How does the wizard system work internally?
+
+Wizards follow a step-based execution model with 5 step types: QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW, and CONFIRM. Session state flows between steps, and conditions can skip steps dynamically.
+
+Production wizards delegate LLM steps to multi-stage workflow engines for deeper analysis, with graceful fallback to basic LLM calls.
+
+**Deep dive:** [Wizard Architecture](../guides/wizard-architecture.md)
 
 ---
 

@@ -254,8 +254,9 @@ nav:
           - Persistence: reference/persistence.md
           - LLM Toolkit: reference/llm-toolkit.md
       - Wizards:
-          - Industry Wizards: reference/wizards.md
-          - Software Wizards: reference/software-wizards.md
+          - Getting Started: guides/wizards-getting-started.md
+          - Architecture: guides/wizard-architecture.md
+          - Custom Development: guides/wizard-custom-development.md
       - Help:
           - FAQ: reference/FAQ.md
           - Troubleshooting: reference/TROUBLESHOOTING.md
