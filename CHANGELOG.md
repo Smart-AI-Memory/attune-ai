@@ -392,7 +392,8 @@ This is the inaugural release of **attune-ai** (v2.0.0), a complete rebrand from
 
 #### Migration Required
 
-**Installation:**
+#### Installation
+
 ```bash
 # Uninstall old package
 pip uninstall empathy-framework
@@ -401,7 +402,8 @@ pip uninstall empathy-framework
 pip install attune-ai
 ```
 
-**Import Changes:**
+#### Import Changes
+
 ```python
 # OLD (empathy-framework v5.x and below)
 from empathy_os.config import EmpathyConfig
@@ -412,7 +414,8 @@ from attune.config import EmpathyConfig
 from attune.workflows import CodeReviewWorkflow
 ```
 
-**CLI Command:**
+#### CLI Command
+
 ```bash
 # OLD: empathy workflow run code-review
 # NEW: attune workflow run code-review
@@ -467,8 +470,8 @@ from attune.workflows import CodeReviewWorkflow
 
 This release maintains 100% API compatibility at the code level - only package and module names changed. All functionality remains identical to v5.3.0.
 
-**PyPI**: https://pypi.org/project/attune-ai/
-**GitHub**: https://github.com/Smart-AI-Memory/attune-ai (pending repository rename)
+**PyPI**: <https://pypi.org/project/attune-ai/>
+**GitHub**: <https://github.com/Smart-AI-Memory/attune-ai> (pending repository rename)
 
 ## [5.3.0] - 2026-01-31
 
