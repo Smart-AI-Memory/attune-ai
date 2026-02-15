@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-02-15
+
 ### Added
 
 - **Guided wizard system**: New `BaseWizard` framework with step types (QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW), session management, and workflow delegation. Includes `SecurityWizard` with multi-stage SecurityAuditWorkflow integration (#24).
