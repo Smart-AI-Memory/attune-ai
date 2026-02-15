@@ -128,6 +128,19 @@ class HybridRouter:
             # Batch test generation (enhanced)
             "batch-tests": ("testing", "generate --batch"),
             "bulk-tests": ("testing", "generate --batch"),
+            # Wizard commands → /wizard skill
+            "wizard": ("wizard", ""),
+            "wizard-debug": ("wizard", "run debug"),
+            "wizard-test": ("wizard", "run test-gen"),
+            "wizard-refactor": ("wizard", "run refactor"),
+            "wizard-security": ("wizard", "run security"),
+            "wizard-release": ("wizard", "run release-prep"),
+            "wizard-create": ("wizard", "create"),
+            "wizard-list": ("wizard", "list"),
+            "wizard-edit": ("wizard", "edit"),
+            "wizard-run": ("wizard", "run"),
+            "create-wizard": ("wizard", "create"),
+            "new-wizard": ("wizard", "create"),
         }
 
         # Hub descriptions for disambiguation
@@ -140,6 +153,7 @@ class HybridRouter:
             "docs": "Documentation generation",
             "plan": "Development planning and architecture",
             "release": "Release preparation and publishing",
+            "wizard": "Guided multi-step wizards with XML task decomposition",
             "utilities": "Utility tools (profiling, dependencies)",
         }
 

@@ -356,6 +356,7 @@ software = "attune_software.plugin:SoftwarePlugin"
 code-review = "attune.workflows.code_review:CodeReviewWorkflow"
 doc-gen = "attune.workflows.document_gen:DocumentGenerationWorkflow"
 bug-predict = "attune.workflows.bug_predict:BugPredictionWorkflow"
+# Superseded by wizards — kept for backward compatibility until migration
 security-audit = "attune.workflows.security_audit:SecurityAuditWorkflow"
 perf-audit = "attune.workflows.perf_audit:PerformanceAuditWorkflow"
 test-gen = "attune.workflows.test_gen:TestGenerationWorkflow"
@@ -371,6 +372,14 @@ test-coverage-boost = "attune.workflows.test_coverage_boost_crew:TestCoverageBoo
 secure-release = "attune.workflows.secure_release:SecureReleasePipeline"
 pro-review = "attune.workflows.code_review_pipeline:CodeReviewPipeline"
 pr-review = "attune.workflows.pr_review:PRReviewWorkflow"
+
+# Wizard entry points for auto-discovery
+[project.entry-points."empathy.wizards"]
+debug = "attune.wizards.builtin.debug_wizard:DebugWizard"
+test-gen = "attune.wizards.builtin.test_gen_wizard:TestGenWizard"
+refactor = "attune.wizards.builtin.refactor_wizard:RefactorWizard"
+security = "attune.wizards.builtin.security_wizard:SecurityWizard"
+release-prep = "attune.wizards.builtin.release_prep_wizard:ReleasePrepWizard"
 
 [tool.setuptools]
 # Automatic package discovery

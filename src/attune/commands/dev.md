@@ -65,14 +65,14 @@ Use this context to inform your actions (e.g., which files changed, current bran
 
 | Input | Action |
 | ----- | ------ |
-| `/dev debug` | Start interactive debugging: read error, trace code, identify root cause |
-| `/dev debug <description>` | Debug the described issue: search codebase, trace execution, find root cause |
+| `/dev debug` | Run Debug wizard: gather error details → analyze root cause → decompose fix → preview → confirm |
+| `/dev debug <description>` | Run Debug wizard with the described error |
 | `/dev review` | `uv run attune workflow run code-review` |
 | `/dev review <path>` | `uv run attune workflow run code-review --path <path>` |
 | `/dev commit` | Use git to stage and commit with conventional commit format |
 | `/dev pr` | Use gh to create a pull request with summary and test plan |
-| `/dev refactor` | Analyze code structure, suggest and apply refactoring |
-| `/dev refactor <path>` | Refactor the specified file or module |
+| `/dev refactor` | Run Refactor wizard: describe goal → analyze structure → decompose steps → preview → confirm |
+| `/dev refactor <path>` | Run Refactor wizard for the specified file or module |
 | `/dev quality` | `uv run attune workflow run bug-predict` |
 | `/dev quality <path>` | `uv run attune workflow run bug-predict --path <path>` |
 
@@ -80,11 +80,11 @@ Use this context to inform your actions (e.g., which files changed, current bran
 
 | Pattern | Action |
 | ------- | ------ |
-| "debug", "fix", "error", "bug", "trace" | Start debugging session |
+| "debug", "fix", "error", "bug", "trace" | Run Debug wizard flow |
 | "review", "quality", "analyze" | `uv run attune workflow run code-review` |
 | "commit", "save", "stage" | Use git to stage and commit |
 | "pr", "pull request", "merge" | Use gh to create pull request |
-| "refactor", "clean up", "simplify" | Analyze and refactor code |
+| "refactor", "clean up", "simplify" | Run Refactor wizard flow |
 | "predict", "risky" | `uv run attune workflow run bug-predict` |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. EXECUTE the action.
