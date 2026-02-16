@@ -16,7 +16,7 @@ export interface SEOConfig {
 const defaultMetadata = {
   siteName: 'Smart AI Memory',
   title: 'Smart AI Memory - Building the Future of AI-Human Collaboration',
-  description: 'Production-ready framework for building Level 4 Anticipatory AI systems. Empathy Framework enables AI to predict problems before they happen.',
+  description: 'AI-powered developer workflows for Claude Code with cost optimization, multi-agent orchestration, and workflow automation.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',
@@ -25,7 +25,7 @@ const defaultMetadata = {
     'Anticipatory Intelligence',
     'AI-Human Collaboration',
     'Level 4 AI',
-    'Empathy Framework',
+    'Attune AI',
     'Claude Code',
     'AI Development',
     'Machine Learning',
@@ -156,7 +156,7 @@ export function generateStructuredData(type: 'organization' | 'product' | 'artic
         description: defaultMetadata.description,
         sameAs: [
           'https://github.com/Smart-AI-Memory',
-          'https://github.com/Smart-AI-Memory/empathy',
+          'https://github.com/Smart-AI-Memory/attune-ai',
         ],
         contactPoint: {
           '@type': 'ContactPoint',
@@ -170,10 +170,10 @@ export function generateStructuredData(type: 'organization' | 'product' | 'artic
       return {
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
-        name: productData?.name || 'Empathy',
+        name: productData?.name || 'Attune AI',
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'Cross-platform',
-        description: productData?.description || 'A 5-level maturity model for AI-human collaboration',
+        description: productData?.description || 'AI-powered developer workflows for Claude Code',
         url: productData?.url || `${defaultMetadata.url}/framework`,
         author: {
           '@type': 'Organization',

@@ -3,7 +3,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
-import { FEATURES, FEATURE_COUNTS } from '@/lib/features';
+import { FEATURES } from '@/lib/features';
 
 // Map canonical features to homepage display with links
 const featureLinks: Record<string, string> = {
@@ -40,7 +40,7 @@ const features = homepageFeatureIds
     link: featureLinks[f.id] || '/framework-docs/',
   }));
 
-const codeExample = `from empathy_os.orchestration import MetaOrchestrator
+const codeExample = `from attune.orchestration import MetaOrchestrator
 
 # Let the framework compose the right agent team automatically
 orchestrator = MetaOrchestrator()
@@ -53,10 +53,11 @@ print(f"Strategy: {plan.strategy.value}")      # sequential
 print(f"Agents: {[a.role for a in plan.agents]}")  # [Analyzer, Generator, Validator]
 print(f"Estimated cost: \${plan.estimated_cost:.2f}")
 
-# Execute with progressive tier escalation (CHEAP → CAPABLE → PREMIUM)
-result = await plan.execute()
-print(f"Tests generated: {result.tests_created}")
-print(f"Actual cost: \${result.actual_cost:.2f}")`;
+# Compose into executable team with tier escalation (CHEAP → CAPABLE → PREMIUM)
+team = orchestrator.compose_team(task="Boost test coverage to 90%")
+result = await team.execute()
+print(f"Success: {result.success}")
+print(f"Total cost: \${result.total_cost:.2f}")`;
 
 
 export default function Home() {
@@ -77,7 +78,7 @@ export default function Home() {
                 <TestsBadge />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--border)] text-sm font-medium">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  v4.6.6 Stable
+                  v2.9.0 Stable
                 </span>
               </div>
 
@@ -95,7 +96,7 @@ export default function Home() {
                   className="btn btn-primary text-lg px-8 py-4"
                   aria-label="Get started with the framework"
                 >
-                  pip install empathy-framework
+                  pip install attune-ai
                 </Link>
                 <Link
                   href="/workflows"
@@ -215,7 +216,7 @@ export default function Home() {
                   Read the Docs
                 </Link>
                 <a
-                  href="https://github.com/Smart-AI-Memory/empathy-framework"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-outline text-lg px-8 py-4"

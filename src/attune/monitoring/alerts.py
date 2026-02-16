@@ -276,7 +276,7 @@ class AlertEngine:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.telemetry_dir = (
-            Path(telemetry_dir) if telemetry_dir else Path.home() / ".empathy" / "telemetry"
+            Path(telemetry_dir) if telemetry_dir else Path.home() / ".attune" / "telemetry"
         )
 
         self._cooldown_cache: dict[str, float] = {}  # alert_id -> last_triggered_time

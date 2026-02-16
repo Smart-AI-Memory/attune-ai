@@ -521,7 +521,7 @@ Automatically enabled for all LLM calls. Track cache performance:
 
 ```bash
 # CLI: View cache statistics
-empathy cache stats
+attune cache stats
 
 # Python API
 from attune.telemetry import UsageTracker
@@ -542,16 +542,16 @@ Submit non-urgent tasks for asynchronous processing:
 
 ```bash
 # CLI: Submit batch
-empathy batch submit requests.json
+attune batch submit requests.json
 
 # CLI: Check status
-empathy batch status msgbatch_abc123
+attune batch status msgbatch_abc123
 
 # CLI: Get results
-empathy batch results msgbatch_abc123 output.json
+attune batch results msgbatch_abc123 output.json
 
 # CLI: Wait for completion
-empathy batch wait msgbatch_abc123 output.json --poll-interval 300
+attune batch wait msgbatch_abc123 output.json --poll-interval 300
 ```
 
 ### 3. Adaptive Routing ($2,000/year Potential Savings)
@@ -608,63 +608,63 @@ print(f"Estimated cost: ${cost:.4f}")
 
 ```bash
 # List available workflows
-empathy workflow list
+attune workflow list
 
 # Run workflow
-empathy workflow run code-review --input '{"path": "./src"}'
+attune workflow run code-review --input '{"path": "./src"}'
 
 # Run with JSON output
-empathy workflow run bug-predict --json
+attune workflow run bug-predict --json
 ```
 
 ### Telemetry Commands
 
 ```bash
 # Show usage statistics
-empathy telemetry show --limit 100
+attune telemetry show --limit 100
 
 # Export to CSV
-empathy telemetry export output.csv --format csv
+attune telemetry export output.csv --format csv
 
 # Reset telemetry data
-empathy telemetry reset
+attune telemetry reset
 ```
 
 ### Batch Processing Commands
 
 ```bash
 # Submit batch job
-empathy batch submit requests.json
+attune batch submit requests.json
 
 # Check batch status
-empathy batch status msgbatch_abc123 [--json]
+attune batch status msgbatch_abc123 [--json]
 
 # Get batch results
-empathy batch results msgbatch_abc123 output.json
+attune batch results msgbatch_abc123 output.json
 
 # Wait for completion
-empathy batch wait msgbatch_abc123 output.json --poll-interval 300 --timeout 86400
+attune batch wait msgbatch_abc123 output.json --poll-interval 300 --timeout 86400
 ```
 
 ### Cache Commands
 
 ```bash
 # View cache statistics
-empathy cache stats [--verbose] [--json]
+attune cache stats [--verbose] [--json]
 ```
 
 ### Routing Commands
 
 ```bash
 # View routing statistics
-empathy routing stats code-review [--stage analysis] [--days 7]
+attune routing stats code-review [--stage analysis] [--days 7]
 
 # Check tier upgrade recommendations
-empathy routing check code-review [--stage analysis]
-empathy routing check --all
+attune routing check code-review [--stage analysis]
+attune routing check --all
 
 # Compare model performance
-empathy routing models --provider anthropic [--days 30]
+attune routing models --provider anthropic [--days 30]
 ```
 
 ---
@@ -678,9 +678,9 @@ empathy routing models --provider anthropic [--days 30]
 export ANTHROPIC_API_KEY="your-api-key-here"
 
 # Optional
-export EMPATHY_LOG_LEVEL="INFO"           # DEBUG, INFO, WARNING, ERROR
-export EMPATHY_CACHE_DIR="~/.empathy"     # Cache directory
-export EMPATHY_REDIS_URL="redis://localhost:6379"  # Redis connection
+export ATTUNE_LOG_LEVEL="INFO"            # DEBUG, INFO, WARNING, ERROR
+export ATTUNE_CACHE_DIR="~/.empathy"      # Cache directory
+export ATTUNE_REDIS_URL="redis://localhost:6379"  # Redis connection
 ```
 
 ### Configuration File

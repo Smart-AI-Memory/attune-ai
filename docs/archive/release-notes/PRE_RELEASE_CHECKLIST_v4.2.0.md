@@ -97,10 +97,10 @@ description: Pre-Release Checklist - v4.2.0: **Version:** 4.2.0 **Date:** 2026-0
 
 | Command | Status | Result |
 |---------|--------|--------|
-| `empathy meta-workflow list-templates` | ✅ PASS | Shows all 5 templates |
-| `empathy meta-workflow inspect <template_id>` | ✅ PASS | Displays details |
-| `empathy meta-workflow list-runs` | ✅ PASS | Shows execution history |
-| `empathy meta-workflow analytics <template_id>` | ✅ PASS | Shows insights |
+| `attune meta-workflow list-templates` | ✅ PASS | Shows all 5 templates |
+| `attune meta-workflow inspect <template_id>` | ✅ PASS | Displays details |
+| `attune meta-workflow list-runs` | ✅ PASS | Shows execution history |
+| `attune meta-workflow analytics <template_id>` | ✅ PASS | Shows insights |
 
 ---
 

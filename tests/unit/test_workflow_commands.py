@@ -706,26 +706,15 @@ class TestShipWorkflow:
         def mock_run_command(cmd, capture=True):
             return True, ""
 
-        def mock_sync_patterns(project_root, verbose):
-            return {"synced": ["pattern1", "pattern2"]}
-
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(workflow_commands, "_load_stats", lambda: {"commands": {}})
-
-        # Mock the sync_patterns import
-        import sys
-        from unittest.mock import MagicMock
-
-        mock_module = MagicMock()
-        mock_module.sync_patterns = mock_sync_patterns
-        sys.modules["attune_llm.cli.sync_claude"] = mock_module
 
         result = workflow_commands.ship_workflow(project_root=str(tmp_path), skip_sync=False)
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "patterns synced" in captured.out
+        assert "Patterns synced" in captured.out
 
 
 class TestRunTestsOnly:

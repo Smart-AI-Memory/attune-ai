@@ -166,6 +166,33 @@ class TestMemoryConfig:
 
 
 @pytest.mark.unit
+class TestAttuneEnvPrefix:
+    """Test ATTUNE_ prefix env vars for MemoryConfig."""
+
+    def test_attune_env_production(self):
+        """Test ATTUNE_ENV sets production environment."""
+        env_vars = {
+            "ATTUNE_ENV": "production",
+            "ATTUNE_REDIS_MOCK": "false",
+            "ATTUNE_STORAGE_DIR": "/attune/storage",
+        }
+        with patch.dict(os.environ, env_vars, clear=True):
+            config = MemoryConfig.from_environment()
+            assert config.environment == Environment.PRODUCTION
+            assert config.storage_dir == "/attune/storage"
+
+    def test_attune_prefix_takes_precedence(self):
+        """Test ATTUNE_ wins over EMPATHY_ for memory config."""
+        env_vars = {
+            "ATTUNE_STORAGE_DIR": "/attune/storage",
+            "EMPATHY_STORAGE_DIR": "/empathy/storage",
+        }
+        with patch.dict(os.environ, env_vars, clear=True):
+            config = MemoryConfig.from_environment()
+            assert config.storage_dir == "/attune/storage"
+
+
+@pytest.mark.unit
 class TestUnifiedMemoryInit:
     """Tests for UnifiedMemory initialization."""
 

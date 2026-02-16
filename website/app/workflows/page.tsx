@@ -208,7 +208,7 @@ export default function WorkflowsPage() {
                   Get Started
                 </Link>
                 <a
-                  href="https://github.com/Smart-AI-Memory/empathy-framework"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)]"
@@ -278,7 +278,7 @@ export default function WorkflowsPage() {
                 All Workflows in Your VSCode Dashboard
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Access all 14 workflows from the Empathy Dashboard panel in VSCode.
+                Access all 14 workflows from the Attune AI Dashboard panel in VSCode.
                 Input files, folders, or custom prompts—get results without leaving your editor.
               </p>
               <div className="grid sm:grid-cols-3 gap-6">
@@ -316,14 +316,14 @@ export default function WorkflowsPage() {
                 Ready to Supercharge Your Development?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Install the Empathy Framework and start using all 14 workflows today.
+                Install Attune AI and start using all 14 workflows today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/framework-docs/tutorials/quickstart/"
                   className="btn btn-primary text-lg px-8 py-4"
                 >
-                  pip install empathy-framework
+                  pip install attune-ai
                 </Link>
               </div>
             </div>

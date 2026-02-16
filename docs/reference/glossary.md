@@ -127,7 +127,7 @@ Persistent storage for validated patterns that survive across sessions. Patterns
 A development mode where Redis is simulated in-memory. Useful for quick experiments but doesn't support multi-agent coordination or persistence.
 
 ```python
-os.environ["EMPATHY_REDIS_MOCK"] = "true"
+os.environ["ATTUNE_REDIS_MOCK"] = "true"
 ```
 
 ---

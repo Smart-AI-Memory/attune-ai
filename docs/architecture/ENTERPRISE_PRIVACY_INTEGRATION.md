@@ -304,16 +304,16 @@ result = await llm.interact(
 
 ```bash
 # Privacy tier
-EMPATHY_PRIVACY_TIER=hybrid  # fully_local, hybrid, full_integration
+ATTUNE_PRIVACY_TIER=hybrid  # fully_local, hybrid, full_integration
 
 # API Configuration
 ANTHROPIC_API_KEY=sk-ant-...  # Enterprise API key
-EMPATHY_ZERO_DATA_RETENTION=true
+ATTUNE_ZERO_DATA_RETENTION=true
 
 # Memory & Storage
-EMPATHY_MEMORY_BACKEND=local_only
+ATTUNE_MEMORY_BACKEND=local_only
 MEMDOCS_STORAGE_PATH=./memdocs_private/
-EMPATHY_AUDIT_LOG_PATH=./audit/privacy.log
+ATTUNE_AUDIT_LOG_PATH=./audit/privacy.log
 
 # Claude Memory Integration (Tier 3 only)
 CLAUDE_MEMORY_ENABLED=false
@@ -321,9 +321,9 @@ CLAUDE_MEMORY_FILE=./.claude/CLAUDE.md
 SYNC_PATTERNS_TO_CLAUDE=false
 
 # Scrubbing
-EMPATHY_SCRUB_PII=true
-EMPATHY_SCRUB_SECRETS=true
-EMPATHY_MAX_CONTEXT_SIZE=50000
+ATTUNE_SCRUB_PII=true
+ATTUNE_SCRUB_SECRETS=true
+ATTUNE_MAX_CONTEXT_SIZE=50000
 ```
 
 ---

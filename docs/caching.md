@@ -260,7 +260,7 @@ workflow = CodeReviewWorkflow(enable_cache=False)
 
 # Or disable globally via environment variable
 import os
-os.environ["EMPATHY_DISABLE_CACHE"] = "1"
+os.environ["ATTUNE_DISABLE_CACHE"] = "1"
 ```
 
 ## Cache Management
@@ -269,22 +269,22 @@ os.environ["EMPATHY_DISABLE_CACHE"] = "1"
 
 ```bash
 # View cache statistics
-empathy cache stats
+attune cache stats
 
 # Clear all cached responses
-empathy cache clear
+attune cache clear
 
 # Clear expired entries only
-empathy cache evict
+attune cache evict
 
 # Show cache size
-empathy cache size
+attune cache size
 
 # Disable future prompts
-empathy cache disable-prompts
+attune cache disable-prompts
 
 # Re-enable prompts and reset configuration
-empathy cache enable-prompts
+attune cache enable-prompts
 ```
 
 ### Programmatic Management
@@ -515,10 +515,10 @@ if result.cost_report.cache_hit_rate < 30:
 
 ```bash
 # After major codebase refactoring
-empathy cache clear
+attune cache clear
 
 # Or evict expired entries regularly
-empathy cache evict
+attune cache evict
 ```
 
 ## Performance Benchmarks
@@ -577,10 +577,10 @@ Disable interactive prompts in CI:
 
 ```bash
 # Option 1: Environment variable
-export EMPATHY_DISABLE_CACHE_PROMPT=1
+export ATTUNE_DISABLE_CACHE_PROMPT=1
 
 # Option 2: Disable via CLI
-empathy cache disable-prompts
+attune cache disable-prompts
 ```
 
 Or in code:

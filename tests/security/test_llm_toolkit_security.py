@@ -8,8 +8,8 @@ Coverage target: 80%+
 
 import pytest
 
-from attune_llm.security.pii_scrubber import PIIDetection, PIIScrubber
-from attune_llm.security.secrets_detector import (
+from attune.memory.security.pii_scrubber import PIIDetection, PIIScrubber
+from attune.memory.security.secrets_detector import (
     SecretDetection,
     SecretsDetector,
     SecretType,

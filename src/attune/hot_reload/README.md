@@ -41,7 +41,7 @@ Add to `backend/api/wizard_api.py`:
 ```python
 from hot_reload.integration import HotReloadIntegration
 
-app = FastAPI(title="Empathy Wizard API")
+app = FastAPI(title="Attune Wizard API")
 
 # Create hot-reload integration
 hot_reload = HotReloadIntegration(app, register_wizard)
@@ -138,7 +138,7 @@ File Change → Watcher → Reloader → Register → Notify Clients
 
 - `wizards/` - Healthcare wizards
 - `coach_wizards/` - Coach wizards
-- `empathy_software_plugin/wizards/` - AI wizards
+- `attune_software_plugin/wizards/` - AI wizards
 - `attune_llm/wizards/` - Domain wizards
 
 ### Custom Watch Directories

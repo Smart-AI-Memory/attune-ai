@@ -9,7 +9,7 @@ from attune.hooks.scripts.pre_compact import (
     generate_compaction_summary,
     run_pre_compact,
 )
-from attune_llm.state import CollaborationState, PatternType, UserPattern
+from attune.llm.state import CollaborationState, PatternType, UserPattern
 
 
 class TestRunPreCompact:

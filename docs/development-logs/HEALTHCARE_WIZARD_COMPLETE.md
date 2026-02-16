@@ -301,7 +301,7 @@ else:
 **Security:**
 - [x] Enable security in EmpathyLLM (`enable_security=True`)
 - [x] Configure audit logging directory
-- [x] Set encryption master key (`EMPATHY_MASTER_KEY`)
+- [x] Set encryption master key (`ATTUNE_MASTER_KEY`)
 - [x] Enable comprehensive PHI detection patterns
 - [x] Configure 90-day minimum retention
 

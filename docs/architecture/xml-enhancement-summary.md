@@ -506,16 +506,16 @@ async def _review(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, i
 
 ```bash
 # Test security-audit with crew
-empathy workflow run security-audit --input '{"path":"./src"}'
+attune workflow run security-audit --input '{"path":"./src"}'
 
 # Test code-review with crew
-empathy workflow run code-review --input '{"diff":"git diff", "files":["file.py"]}'
+attune workflow run code-review --input '{"diff":"git diff", "files":["file.py"]}'
 
 # Test refactor-plan with crew
-empathy workflow run refactor-plan --input '{"path":"./src"}'
+attune workflow run refactor-plan --input '{"path":"./src"}'
 
 # Test test-gen with XML (NEW)
-empathy workflow run test-gen --input '{"path":"./src"}'
+attune workflow run test-gen --input '{"path":"./src"}'
 ```
 
 ### Validation Checklist

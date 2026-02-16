@@ -235,7 +235,7 @@ async function handleBookPurchase(
   session: Stripe.Checkout.Session
 ): Promise<void> {
   // Generate license key
-  const licenseKey = generateLicenseKey('EMPATHY');
+  const licenseKey = generateLicenseKey('ATTUNE');
   const licenseExpiration = calculateLicenseExpiration(1); // 1 year
 
   // Create license record
@@ -243,7 +243,7 @@ async function handleBookPurchase(
     customerId: customer.id,
     purchaseId: purchase.id,
     licenseKey,
-    product: 'empathy-framework-book',
+    product: 'attune-ai-book',
     expiresAt: licenseExpiration,
   });
 
@@ -291,7 +291,7 @@ async function handleLicensePurchase(
   session: Stripe.Checkout.Session
 ): Promise<void> {
   // Generate license key
-  const licenseKey = generateLicenseKey('EMPATHY');
+  const licenseKey = generateLicenseKey('ATTUNE');
   const licenseExpiration = calculateLicenseExpiration(1); // 1 year
 
   // Create license record
@@ -299,7 +299,7 @@ async function handleLicensePurchase(
     customerId: customer.id,
     purchaseId: purchase.id,
     licenseKey,
-    product: 'empathy-framework-commercial',
+    product: 'attune-ai-commercial',
     expiresAt: licenseExpiration,
   });
 
@@ -311,7 +311,7 @@ async function handleLicensePurchase(
       to: customer.email,
       customerName: customer.name ?? session.customer_details?.name ?? undefined,
       licenseKey,
-      productName: 'Empathy Framework Commercial License',
+      productName: 'Attune AI Commercial License',
       expiresAt: licenseExpiration,
       amountPaid: session.amount_total!,
     });
@@ -362,7 +362,7 @@ async function handleEmailOnlyFulfillment(
 
   if (productInfo.type === 'book' && productInfo.includesLicense) {
     // Generate temporary license key (not persisted)
-    const licenseKey = generateLicenseKey('EMPATHY');
+    const licenseKey = generateLicenseKey('ATTUNE');
     const downloadToken = generateDownloadToken();
     const expiration = calculateLicenseExpiration(1);
 
@@ -377,7 +377,7 @@ async function handleEmailOnlyFulfillment(
 
     console.log('Book email sent (no DB persistence)');
   } else if (productInfo.type === 'license') {
-    const licenseKey = generateLicenseKey('EMPATHY');
+    const licenseKey = generateLicenseKey('ATTUNE');
     const expiration = calculateLicenseExpiration(1);
 
     await sendLicenseEmail({

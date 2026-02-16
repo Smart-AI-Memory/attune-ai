@@ -69,7 +69,7 @@ from attune.memory import UnifiedMemory, MemoryConfig
 
 # Auto-detect from environment variables
 memory = UnifiedMemory(user_id="agent@company.com")
-# Checks: REDIS_URL, EMPATHY_ENV, EMPATHY_STORAGE_DIR
+# Checks: REDIS_URL, ATTUNE_ENV, ATTUNE_STORAGE_DIR
 ```
 
 ### Manual Configuration
@@ -100,12 +100,12 @@ memory = UnifiedMemory(user_id="agent@company.com", config=prod_config)
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `EMPATHY_ENV` | Environment tier | `development`, `staging`, `production` |
+| `ATTUNE_ENV` | Environment tier | `development`, `staging`, `production` |
 | `REDIS_URL` | Redis connection | `redis://localhost:6379` |
-| `EMPATHY_REDIS_MOCK` | Force mock mode | `true` |
-| `EMPATHY_STORAGE_DIR` | Long-term storage | `./patterns` |
-| `EMPATHY_ENCRYPTION` | Enable encryption | `true` |
-| `EMPATHY_CLAUDE_MEMORY` | Load Claude memory | `true` |
+| `ATTUNE_REDIS_MOCK` | Force mock mode | `true` |
+| `ATTUNE_STORAGE_DIR` | Long-term storage | `./patterns` |
+| `ATTUNE_ENCRYPTION` | Enable encryption | `true` |
+| `ATTUNE_CLAUDE_MEMORY` | Load Claude memory | `true` |
 
 ---
 

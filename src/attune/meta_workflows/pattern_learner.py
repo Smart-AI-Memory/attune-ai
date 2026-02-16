@@ -56,7 +56,7 @@ class PatternLearner:
                    If provided, insights will be stored in both files and memory
         """
         if executions_dir is None:
-            executions_dir = str(Path.home() / ".empathy" / "meta_workflows" / "executions")
+            executions_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
         self.executions_dir = Path(executions_dir)
         self.memory = memory
 

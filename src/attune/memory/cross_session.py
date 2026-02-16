@@ -162,14 +162,16 @@ class CrossSessionCoordinator:
             ValueError: If memory is in mock mode (Redis required)
             ImportError: If Redis package is not installed
         """
-        # Verify Redis is available (not just checking mock mode)
-        MemoryFeatures.require_redis("Cross-session coordination")
+        # Verify Redis is available — degrade gracefully in mock mode
+        self._degraded = False
+        if memory.use_mock or not MemoryFeatures.check_redis():
+            import logging
 
-        if memory.use_mock:
-            raise ValueError(
-                "Cross-session communication requires Redis. "
-                "Mock mode does not support cross-session features."
+            logging.getLogger(__name__).warning(
+                "Cross-session coordination running in degraded mode (no Redis). "
+                "Cross-process agent coordination and distributed features are unavailable."
             )
+            self._degraded = True
 
         self._memory = memory
         self._session_type = session_type

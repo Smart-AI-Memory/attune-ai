@@ -238,6 +238,33 @@ class TestConfigFromEnv:
             del os.environ["EMPATHY_PERSISTENCE_ENABLED"]
 
 
+class TestAttuneEnvPrefix:
+    """Test ATTUNE_ prefix env vars for EmpathyConfig."""
+
+    def test_attune_from_env_basic(self):
+        """Test ATTUNE_ prefix works in from_env."""
+        os.environ["ATTUNE_USER_ID"] = "attune_user"
+        os.environ["ATTUNE_TARGET_LEVEL"] = "5"
+        try:
+            config = EmpathyConfig.from_env()
+            assert config.user_id == "attune_user"
+            assert config.target_level == 5
+        finally:
+            del os.environ["ATTUNE_USER_ID"]
+            del os.environ["ATTUNE_TARGET_LEVEL"]
+
+    def test_attune_takes_precedence(self):
+        """Test ATTUNE_ wins over EMPATHY_ in from_env."""
+        os.environ["ATTUNE_USER_ID"] = "attune_user"
+        os.environ["EMPATHY_USER_ID"] = "empathy_user"
+        try:
+            config = EmpathyConfig.from_env()
+            assert config.user_id == "attune_user"
+        finally:
+            del os.environ["ATTUNE_USER_ID"]
+            del os.environ["EMPATHY_USER_ID"]
+
+
 class TestLoadConfig:
     """Test load_config helper function"""
 
@@ -560,7 +587,7 @@ class TestConfigAdvancedFeatures:
 
         repr_str = repr(config)
 
-        assert "EmpathyConfig" in repr_str
+        assert "AttuneConfig" in repr_str or "EmpathyConfig" in repr_str
         assert "test_user" in repr_str
         assert "4" in repr_str
         assert "0.85" in repr_str

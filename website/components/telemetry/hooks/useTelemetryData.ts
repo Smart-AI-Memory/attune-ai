@@ -4,8 +4,9 @@
  * Fetches and manages telemetry data from JSONL files.
  *
  * **Features:**
- * - Load LLM call records from `.empathy/llm_calls.jsonl`
- * - Load workflow run records from `.empathy/workflow_runs.jsonl`
+ * - Load LLM call records from `.attune/llm_calls.jsonl`
+ * - Load workflow run records from `.attune/workflow_runs.jsonl`
+ *
  * - Auto-refresh every 60 seconds
  * - Filter by date range, workflow name, provider
  * - Calculate aggregated metrics
@@ -13,10 +14,10 @@
  * **Implementation Status:** Sprint 1 (Week 1)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface LLMCallRecord {
   callId: string;
@@ -43,7 +44,7 @@ export interface LLMCallRecord {
   success: boolean;
   errorType: string | null;
   errorMessage: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface WorkflowRunRecord {
@@ -175,7 +176,7 @@ export function useTelemetryData(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchTelemetry = async () => {
+  const fetchTelemetry = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -206,12 +207,12 @@ export function useTelemetryData(
     } finally {
       setLoading(false);
     }
-  };
+  }, [workflowName, since, limit]);
 
   // Initial fetch
   useEffect(() => {
     fetchTelemetry();
-  }, [workflowName, since, limit]);
+  }, [fetchTelemetry]);
 
   // Auto-refresh
   useEffect(() => {
@@ -222,7 +223,7 @@ export function useTelemetryData(
     }, refreshInterval);
 
     return () => clearInterval(intervalId);
-  }, [refreshInterval, workflowName, since, limit]);
+  }, [refreshInterval, fetchTelemetry]);
 
   return {
     data,

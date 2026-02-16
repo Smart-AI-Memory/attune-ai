@@ -29,13 +29,13 @@ Use the `empathy` CLI to run pre-built workflows without writing Python.
 
 ```bash
 # Run workflows
-empathy workflow run security-audit --path ./src
-empathy workflow run bug-predict --path ./src
-empathy workflow run release-prep --path .
+attune workflow run security-audit --path ./src
+attune workflow run bug-predict --path ./src
+attune workflow run release-prep --path .
 
 # Track costs
-empathy telemetry show
-empathy telemetry savings --days 30
+attune telemetry show
+attune telemetry savings --days 30
 ```
 
 ### Next Steps

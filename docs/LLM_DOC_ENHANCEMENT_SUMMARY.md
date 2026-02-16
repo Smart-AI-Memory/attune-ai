@@ -817,9 +817,9 @@ Created comprehensive guide: `docs/AUTH_STRATEGY_GUIDE.md` (320+ lines)
    - Log auth mode in telemetry
 
 2. **CLI Commands:**
-   - `empathy auth setup` - Run interactive configuration
-   - `empathy auth status` - Show current strategy
-   - `empathy auth reset` - Clear configuration
+   - `attune auth setup` - Run interactive configuration
+   - `attune auth status` - Show current strategy
+   - `attune auth reset` - Clear configuration
 
 3. **Telemetry Tracking:**
    - Track auth mode usage (subscription vs API)

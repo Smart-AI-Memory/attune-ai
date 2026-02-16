@@ -125,11 +125,11 @@ recommendations = learner.get_smart_recommendations(
 
 **Commands Implemented**:
 
-#### 1. `empathy meta-workflow list-templates`
+#### 1. `attune meta-workflow list-templates`
 Lists all available workflow templates with metadata.
 
 ```bash
-$ empathy meta-workflow list-templates
+$ attune meta-workflow list-templates
 
 Available Templates (1):
 
@@ -144,18 +144,18 @@ Available Templates (1):
 ╰──────────────────────────────────────────────────────────╯
 ```
 
-#### 2. `empathy meta-workflow inspect <template_id>`
+#### 2. `attune meta-workflow inspect <template_id>`
 Shows detailed template information including form questions and agent rules.
 
 ```bash
-$ empathy meta-workflow inspect python_package_publish --show-rules
+$ attune meta-workflow inspect python_package_publish --show-rules
 ```
 
-#### 3. `empathy meta-workflow run <template_id>`
+#### 3. `attune meta-workflow run <template_id>`
 Executes a meta-workflow with interactive form questions.
 
 ```bash
-$ empathy meta-workflow run python_package_publish --use-memory --mock
+$ attune meta-workflow run python_package_publish --use-memory --mock
 
 Executing workflow...
   ✓ python_package_publish-20260117-052959
@@ -169,11 +169,11 @@ Executing workflow...
 - `--use-memory` - Enable memory integration
 - `--user-id` - Custom user ID for memory
 
-#### 4. `empathy meta-workflow analytics [template_id]`
+#### 4. `attune meta-workflow analytics [template_id]`
 Shows pattern learning insights and recommendations.
 
 ```bash
-$ empathy meta-workflow analytics python_package_publish
+$ attune meta-workflow analytics python_package_publish
 
 Meta-Workflow Analytics Report
 Template: python_package_publish
@@ -193,11 +193,11 @@ Tier Performance:
 - `--min-confidence` - Filter insights by confidence threshold
 - `--use-memory` - Use memory-enhanced analytics
 
-#### 5. `empathy meta-workflow list-runs`
+#### 5. `attune meta-workflow list-runs`
 Lists execution history.
 
 ```bash
-$ empathy meta-workflow list-runs --limit 5
+$ attune meta-workflow list-runs --limit 5
 
 ┏━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━┳━━━━━━━┳━━━━━━━━━━┓
 ┃ Run ID     ┃ Template ┃Status ┃  Cost ┃ Duration ┃
@@ -206,11 +206,11 @@ $ empathy meta-workflow list-runs --limit 5
 └────────────┴──────────┴───────┴───────┴──────────┘
 ```
 
-#### 6. `empathy meta-workflow show <run_id>`
+#### 6. `attune meta-workflow show <run_id>`
 Shows detailed execution report.
 
 ```bash
-$ empathy meta-workflow show python_package_publish-20260117-052959
+$ attune meta-workflow show python_package_publish-20260117-052959
 
 Execution Report: python_package_publish-20260117-052959
 
@@ -230,11 +230,11 @@ Agents Executed:
 **Features**:
 - `--format text|json` - Output format
 
-#### 7. `empathy meta-workflow cleanup`
+#### 7. `attune meta-workflow cleanup`
 Cleans up old execution results.
 
 ```bash
-$ empathy meta-workflow cleanup --older-than 30 --dry-run
+$ attune meta-workflow cleanup --older-than 30 --dry-run
 
 Executions to delete: (2)
 
@@ -270,7 +270,7 @@ except ImportError as e:
 
 **Access**:
 ```bash
-$ empathy meta-workflow --help
+$ attune meta-workflow --help
 
 Meta-workflow system for dynamic agent team generation
 
@@ -449,7 +449,7 @@ learner = PatternLearner(memory=memory)
 
 ### 2. With Main Empathy CLI
 ```bash
-empathy meta-workflow <command>
+attune meta-workflow <command>
 ```
 
 ### 3. With Template Registry

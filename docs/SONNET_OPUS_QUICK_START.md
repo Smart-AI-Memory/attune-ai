@@ -138,13 +138,13 @@ All existing workflows automatically use Sonnet 4.5:
 
 ```bash
 # Code review (should use Sonnet)
-empathy workflow run code-review --input '{"file":"src/models/registry.py"}'
+attune workflow run code-review --input '{"file":"src/models/registry.py"}'
 
 # Test generation (should use Sonnet)
-empathy workflow run test-gen --input '{"target":"src/utils.py"}'
+attune workflow run test-gen --input '{"target":"src/utils.py"}'
 
 # Complex refactoring (may use Opus)
-empathy workflow run refactor-plan --input '{"target":"src/models/", "complexity":"high"}'
+attune workflow run refactor-plan --input '{"target":"src/models/", "complexity":"high"}'
 
 # Check which model was used
 python -m attune.telemetry.cli show --limit 5
@@ -188,11 +188,11 @@ python -m attune.telemetry.cli show --limit 5
 ```bash
 # Test simple tasks (should all use Sonnet)
 for file in src/**/*.py; do
-    empathy workflow run code-review --input "{\"file\":\"$file\"}"
+    attune workflow run code-review --input "{\"file\":\"$file\"}"
 done
 
 # Test complex tasks (may trigger Opus)
-empathy workflow run refactor-plan --input '{
+attune workflow run refactor-plan --input '{
     "target": "src/models/",
     "goals": ["Extract interfaces", "Add DI", "Backwards compatible"]
 }'
@@ -227,7 +227,7 @@ print(f'Found {len(calls)} calls')
 "
 
 # Run a test workflow
-empathy workflow run code-review --input '{"file":"src/models/registry.py"}'
+attune workflow run code-review --input '{"file":"src/models/registry.py"}'
 
 # Check again
 python -m attune.telemetry.cli sonnet-opus-analysis

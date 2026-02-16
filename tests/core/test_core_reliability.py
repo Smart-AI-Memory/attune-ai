@@ -278,7 +278,7 @@ class TestHealthCheckCrewStructure:
 
     def test_health_category_enum(self):
         """Test HealthCategory enum values."""
-        from attune_llm.agent_factory.crews.health_check import HealthCategory
+        from attune.agent_factory.crews.health_check import HealthCategory
 
         assert HealthCategory.LINT.value == "lint"
         assert HealthCategory.TYPES.value == "types"
@@ -287,7 +287,7 @@ class TestHealthCheckCrewStructure:
 
     def test_issue_severity_enum(self):
         """Test IssueSeverity enum values."""
-        from attune_llm.agent_factory.crews.health_check import IssueSeverity
+        from attune.agent_factory.crews.health_check import IssueSeverity
 
         assert IssueSeverity.CRITICAL.value == "critical"
         assert IssueSeverity.HIGH.value == "high"
@@ -297,7 +297,7 @@ class TestHealthCheckCrewStructure:
 
     def test_health_issue_dataclass(self):
         """Test HealthIssue dataclass structure."""
-        from attune_llm.agent_factory.crews.health_check import (
+        from attune.agent_factory.crews.health_check import (
             HealthCategory,
             HealthIssue,
             IssueSeverity,
@@ -322,7 +322,7 @@ class TestHealthCheckCrewStructure:
 
     def test_health_score_calculation(self):
         """Test health score calculation with category caps."""
-        from attune_llm.agent_factory.crews.health_check import (
+        from attune.agent_factory.crews.health_check import (
             HealthCategory,
             HealthCheckCrew,
             HealthIssue,
@@ -368,7 +368,7 @@ class TestImports:
 
     def test_crew_imports(self):
         """Test crew imports work."""
-        from attune_llm.agent_factory.crews import (
+        from attune.agent_factory.crews import (
             CodeReviewCrew,
             HealthCheckCrew,
             SecurityAuditCrew,

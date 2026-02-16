@@ -333,7 +333,7 @@ Blockers: None
 
 ### Day 4: Alert CLI
 
-- [ ] **T2.12** Add `empathy alerts` CLI command group
+- [ ] **T2.12** Add `attune alerts` CLI command group
   - Create CLI parser for alerts subcommand
   - Add to main CLI entry point
   - **Estimate:** 1 hour
@@ -422,7 +422,7 @@ Blockers: None
 - [ ] Alert engine evaluates rules correctly
 - [ ] Webhook successfully delivers to Slack
 - [ ] Email alerts send (if SMTP configured)
-- [ ] CLI commands work: `empathy alerts watch`, `test`, `list`
+- [ ] CLI commands work: `attune alerts watch`, `test`, `list`
 - [ ] Documentation covers all alert types
 - [ ] Sample configurations work out-of-the-box
 

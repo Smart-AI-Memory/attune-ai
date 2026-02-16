@@ -120,16 +120,16 @@ The **Release Prep** workflow runs 4 validation agents in parallel:
 
 ```bash
 # Basic usage
-empathy orchestrate release-prep
+attune orchestrate release-prep
 
 # With custom quality gates
-empathy orchestrate release-prep \
+attune orchestrate release-prep \
     --min-coverage 90 \
     --min-quality 8 \
     --max-critical 0
 
 # JSON output for CI/CD
-empathy orchestrate release-prep --json > report.json
+attune orchestrate release-prep --json > report.json
 ```
 
 **What happens:**
@@ -169,13 +169,13 @@ The **Test Coverage Boost** workflow improves test coverage in 3 sequential stag
 
 ```bash
 # Basic usage
-empathy orchestrate test-coverage
+attune orchestrate test-coverage
 
 # Set target coverage
-empathy orchestrate test-coverage --target 90
+attune orchestrate test-coverage --target 90
 
 # Specify project root
-empathy orchestrate test-coverage \
+attune orchestrate test-coverage \
     --project-root ./my-project \
     --target 85
 ```
@@ -220,16 +220,16 @@ The **Health Check** workflow provides adaptive health assessment with 3 modes:
 
 ```bash
 # Quick daily check (3 agents in parallel)
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 
 # Comprehensive weekly (5 agents)
-empathy orchestrate health-check --mode weekly
+attune orchestrate health-check --mode weekly
 
 # Pre-release deep dive (6 agents)
-empathy orchestrate health-check --mode release
+attune orchestrate health-check --mode release
 
 # JSON output for dashboards
-empathy orchestrate health-check --mode daily --json
+attune orchestrate health-check --mode daily --json
 ```
 
 **What happens:**
@@ -923,8 +923,8 @@ The meta-orchestration system is designed to work with agents from *any* domain.
 - [API Documentation](../ORCHESTRATION_API.md) - All classes and methods
 - [Examples](../../examples/orchestration/) - Working code samples
 - [Architecture](../META_ORCHESTRATION_ARCHITECTURE.md) - Deep dive into design
-- Healthcare Wizards - HIPAA compliance and clinical workflows (see `empathy wizard --help`)
-- Code Analysis Tools - Static analysis and SARIF reports (see `empathy inspect --help`)
+- Healthcare Wizards - HIPAA compliance and clinical workflows (see `attune wizard --help`)
+- Code Analysis Tools - Static analysis and SARIF reports (see `attune inspect --help`)
 
 ---
 

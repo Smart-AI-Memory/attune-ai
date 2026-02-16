@@ -93,7 +93,7 @@ export default function DistributedMemoryDemo() {
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Empathy
+            Attune AI
           </Link>
           <div className="flex gap-6">
             <Link href="/book" className="text-sm hover:text-[var(--primary)]">Book</Link>
@@ -368,8 +368,8 @@ export default function DistributedMemoryDemo() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6" style={{ color: '#0F172A' }}>Implementation</h2>
             <pre className="bg-[var(--foreground)] text-[var(--background)] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os import (
-    EmpathyOS,
+{`from attune import (
+    AttuneOS,
     PatternLibrary,
     ConflictResolver,
     AgentMonitor,
@@ -381,13 +381,13 @@ resolver = ConflictResolver()
 monitor = AgentMonitor(pattern_library=library)
 
 # 2. Create agent team with shared library
-code_reviewer = EmpathyOS(
+code_reviewer = AttuneOS(
     user_id="code_reviewer",
     target_level=4,
     shared_library=library
 )
 
-test_generator = EmpathyOS(
+test_generator = AttuneOS(
     user_id="test_generator",
     target_level=3,
     shared_library=library

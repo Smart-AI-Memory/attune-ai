@@ -24,7 +24,7 @@ DEFAULT_REMINDER_INTERVAL = 25  # Interval between reminders
 
 def get_compaction_state_file() -> Path:
     """Get the compaction state file path."""
-    return Path.home() / ".empathy" / "compaction_state.json"
+    return Path.home() / ".attune" / "compaction_state.json"
 
 
 def load_compaction_state() -> dict[str, Any]:

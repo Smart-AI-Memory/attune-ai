@@ -94,7 +94,7 @@ pip install attune-ai[developer]>=3.12.0
 **Run release readiness validation with 4 parallel agents:**
 
 ```bash
-empathy orchestrate release-prep
+attune orchestrate release-prep
 ```
 
 This executes:
@@ -136,7 +136,7 @@ AGENTS EXECUTED (4)
 **Boost test coverage to 90% using sequential workflow:**
 
 ```bash
-empathy orchestrate test-coverage --target 90
+attune orchestrate test-coverage --target 90
 ```
 
 This executes:
@@ -148,12 +148,12 @@ This executes:
 
 ## CLI Reference
 
-### `empathy orchestrate`
+### `attune orchestrate`
 
 Run meta-orchestration workflows from the command line.
 
 ```bash
-empathy orchestrate <workflow> [options]
+attune orchestrate <workflow> [options]
 ```
 
 ---
@@ -162,7 +162,7 @@ empathy orchestrate <workflow> [options]
 
 **Command:**
 ```bash
-empathy orchestrate release-prep [options]
+attune orchestrate release-prep [options]
 ```
 
 **Description:**
@@ -182,17 +182,17 @@ Validates release readiness by running 4 parallel validation agents with quality
 
 ```bash
 # Basic usage (current directory, default gates)
-empathy orchestrate release-prep
+attune orchestrate release-prep
 
 # Custom path with strict quality gates
-empathy orchestrate release-prep \
+attune orchestrate release-prep \
   --path ./my-project \
   --min-coverage 90 \
   --min-quality 8.5 \
   --max-critical 0
 
 # JSON output for CI integration
-empathy orchestrate release-prep --json > report.json
+attune orchestrate release-prep --json > report.json
 ```
 
 **Exit Codes:**
@@ -205,7 +205,7 @@ empathy orchestrate release-prep --json > report.json
 
 **Command:**
 ```bash
-empathy orchestrate test-coverage [options]
+attune orchestrate test-coverage [options]
 ```
 
 **Description:**
@@ -223,15 +223,15 @@ Sequentially analyzes gaps, generates tests, and validates coverage improvement.
 
 ```bash
 # Boost to 90% coverage
-empathy orchestrate test-coverage --target 90
+attune orchestrate test-coverage --target 90
 
 # Specify project root
-empathy orchestrate test-coverage \
+attune orchestrate test-coverage \
   --target 85 \
   --project-root ./src
 
 # Provide current coverage hint
-empathy orchestrate test-coverage \
+attune orchestrate test-coverage \
   --target 90 \
   --current-coverage 75
 ```
@@ -1234,7 +1234,7 @@ best = store.get_best_for_task("release_prep")
 
 **Report bugs:**
 ```bash
-empathy orchestrate release-prep --json > debug.json
+attune orchestrate release-prep --json > debug.json
 
 # Then attach debug.json to your issue
 ```
@@ -1245,8 +1245,8 @@ empathy orchestrate release-prep --json > debug.json
 
 1. **Try the built-in workflows:**
    ```bash
-   empathy orchestrate release-prep
-   empathy orchestrate test-coverage --target 90
+   attune orchestrate release-prep
+   attune orchestrate test-coverage --target 90
    ```
 
 2. **Read the API documentation:** [ORCHESTRATION_API.md](ORCHESTRATION_API.md)

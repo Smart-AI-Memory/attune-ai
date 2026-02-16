@@ -49,7 +49,9 @@ class CodeHealthAdapter:
 
         try:
             # Import here to handle optional dependency
-            from attune_llm.code_health import HealthCheckRunner
+            from attune.workflows.orchestrated_health_check import (
+                OrchestratedHealthCheckWorkflow as HealthCheckRunner,
+            )
 
             runner = HealthCheckRunner(
                 project_root=self.project_root,

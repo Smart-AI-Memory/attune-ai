@@ -335,13 +335,13 @@ Agent starts at cheap tier
 
 ```bash
 # Run feature overview on any module
-empathy meta-workflow run feature-overview
+attune meta-workflow run feature-overview
 
 # List all available templates
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 
 # View execution history
-empathy meta-workflow list-runs
+attune meta-workflow list-runs
 ```
 
 ### Programmatic

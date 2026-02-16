@@ -13,38 +13,38 @@ description: Meta-Workflow CLI Command Reference API reference: **Version:** 4.2
 ## Quick Reference
 
 ```bash
-empathy meta-workflow <command> [options]
+attune meta-workflow <command> [options]
 ```
 
 ### Template Management
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `list-templates` | List all available workflow templates | `empathy meta-workflow list-templates` |
-| `inspect` | Inspect a specific template in detail | `empathy meta-workflow inspect <template_id>` |
+| `list-templates` | List all available workflow templates | `attune meta-workflow list-templates` |
+| `inspect` | Inspect a specific template in detail | `attune meta-workflow inspect <template_id>` |
 
 ### Workflow Execution
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `run` | Execute a meta-workflow from template | `empathy meta-workflow run <template_id>` |
-| `list-runs` | List historical executions | `empathy meta-workflow list-runs` |
-| `show` | Show detailed execution report | `empathy meta-workflow show <run_id>` |
-| `cleanup` | Clean up old execution results | `empathy meta-workflow cleanup` |
+| `run` | Execute a meta-workflow from template | `attune meta-workflow run <template_id>` |
+| `list-runs` | List historical executions | `attune meta-workflow list-runs` |
+| `show` | Show detailed execution report | `attune meta-workflow show <run_id>` |
+| `cleanup` | Clean up old execution results | `attune meta-workflow cleanup` |
 
 ### Analytics & Learning
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `analytics` | Show pattern learning insights | `empathy meta-workflow analytics [template_id]` |
-| `search-memory` | Search memory for patterns | `empathy meta-workflow search-memory <query>` |
+| `analytics` | Show pattern learning insights | `attune meta-workflow analytics [template_id]` |
+| `search-memory` | Search memory for patterns | `attune meta-workflow search-memory <query>` |
 
 ### Session Context
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `session-stats` | Show session context statistics | `empathy meta-workflow session-stats` |
-| `suggest-defaults` | Get suggested defaults based on history | `empathy meta-workflow suggest-defaults <template_id>` |
+| `session-stats` | Show session context statistics | `attune meta-workflow session-stats` |
+| `suggest-defaults` | Get suggested defaults based on history | `attune meta-workflow suggest-defaults <template_id>` |
 
 ---
 
@@ -56,7 +56,7 @@ empathy meta-workflow <command> [options]
 
 **Usage:**
 ```bash
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 ```
 
 **Output:**
@@ -82,16 +82,16 @@ Available Templates (5):
 
 **Usage:**
 ```bash
-empathy meta-workflow inspect <template_id>
+attune meta-workflow inspect <template_id>
 ```
 
 **Examples:**
 ```bash
 # Inspect test creation workflow
-empathy meta-workflow inspect test_creation_management_workflow
+attune meta-workflow inspect test_creation_management_workflow
 
 # Inspect security audit workflow
-empathy meta-workflow inspect security_audit_workflow
+attune meta-workflow inspect security_audit_workflow
 ```
 
 **Output:**
@@ -125,7 +125,7 @@ Summary:
 
 **Usage:**
 ```bash
-empathy meta-workflow run <template_id> [OPTIONS]
+attune meta-workflow run <template_id> [OPTIONS]
 ```
 
 **Options:**
@@ -136,13 +136,13 @@ empathy meta-workflow run <template_id> [OPTIONS]
 **Examples:**
 ```bash
 # Run test creation workflow (mock mode)
-empathy meta-workflow run test_creation_management_workflow
+attune meta-workflow run test_creation_management_workflow
 
 # Run with real LLM integration (when implemented)
-empathy meta-workflow run test_creation_management_workflow --real
+attune meta-workflow run test_creation_management_workflow --real
 
 # Run with memory integration
-empathy meta-workflow run test_creation_management_workflow -m --user-id "user@example.com"
+attune meta-workflow run test_creation_management_workflow -m --user-id "user@example.com"
 ```
 
 **Interactive Flow:**
@@ -161,7 +161,7 @@ empathy meta-workflow run test_creation_management_workflow -m --user-id "user@e
 
 **Usage:**
 ```bash
-empathy meta-workflow list-runs [OPTIONS]
+attune meta-workflow list-runs [OPTIONS]
 ```
 
 **Options:**
@@ -171,13 +171,13 @@ empathy meta-workflow list-runs [OPTIONS]
 **Examples:**
 ```bash
 # List all recent runs
-empathy meta-workflow list-runs
+attune meta-workflow list-runs
 
 # List runs for specific template
-empathy meta-workflow list-runs --template-id test_creation_management_workflow
+attune meta-workflow list-runs --template-id test_creation_management_workflow
 
 # List last 50 runs
-empathy meta-workflow list-runs --limit 50
+attune meta-workflow list-runs --limit 50
 ```
 
 **Output:**
@@ -201,12 +201,12 @@ Recent Execution History (3 runs):
 
 **Usage:**
 ```bash
-empathy meta-workflow show <run_id>
+attune meta-workflow show <run_id>
 ```
 
 **Examples:**
 ```bash
-empathy meta-workflow show test_creation_management_workflow-20260117-070612
+attune meta-workflow show test_creation_management_workflow-20260117-070612
 ```
 
 **Output:**
@@ -243,7 +243,7 @@ Form Responses:
 
 **Usage:**
 ```bash
-empathy meta-workflow cleanup [OPTIONS]
+attune meta-workflow cleanup [OPTIONS]
 ```
 
 **Options:**
@@ -253,13 +253,13 @@ empathy meta-workflow cleanup [OPTIONS]
 **Examples:**
 ```bash
 # Clean up runs older than 30 days
-empathy meta-workflow cleanup
+attune meta-workflow cleanup
 
 # Preview what would be deleted
-empathy meta-workflow cleanup --dry-run
+attune meta-workflow cleanup --dry-run
 
 # Clean up runs older than 7 days
-empathy meta-workflow cleanup --older-than 7
+attune meta-workflow cleanup --older-than 7
 ```
 
 **Output:**
@@ -286,7 +286,7 @@ Delete 2 execution(s)? [y/N]:
 
 **Usage:**
 ```bash
-empathy meta-workflow analytics [template_id] [OPTIONS]
+attune meta-workflow analytics [template_id] [OPTIONS]
 ```
 
 **Options:**
@@ -296,16 +296,16 @@ empathy meta-workflow analytics [template_id] [OPTIONS]
 **Examples:**
 ```bash
 # Show analytics for all templates
-empathy meta-workflow analytics
+attune meta-workflow analytics
 
 # Show analytics for specific template
-empathy meta-workflow analytics test_creation_management_workflow
+attune meta-workflow analytics test_creation_management_workflow
 
 # Use memory-enhanced analytics
-empathy meta-workflow analytics -m
+attune meta-workflow analytics -m
 
 # Set confidence threshold
-empathy meta-workflow analytics --min-confidence 0.7
+attune meta-workflow analytics --min-confidence 0.7
 ```
 
 **Output:**
@@ -346,7 +346,7 @@ empathy meta-workflow analytics --min-confidence 0.7
 
 **Usage:**
 ```bash
-empathy meta-workflow search-memory <query> [OPTIONS]
+attune meta-workflow search-memory <query> [OPTIONS]
 ```
 
 **Options:**
@@ -357,16 +357,16 @@ empathy meta-workflow search-memory <query> [OPTIONS]
 **Examples:**
 ```bash
 # Search for successful workflows
-empathy meta-workflow search-memory "successful workflow"
+attune meta-workflow search-memory "successful workflow"
 
 # Search for test-related patterns
-empathy meta-workflow search-memory "test coverage" --type meta_workflow_execution
+attune meta-workflow search-memory "test coverage" --type meta_workflow_execution
 
 # Search with custom limit
-empathy meta-workflow search-memory "error" --limit 20
+attune meta-workflow search-memory "error" --limit 20
 
 # Search with specific user ID
-empathy meta-workflow search-memory "refactoring" -u "user@example.com"
+attune meta-workflow search-memory "refactoring" -u "user@example.com"
 ```
 
 **Output:**
@@ -406,7 +406,7 @@ Found 3 matching pattern(s):
 
 **Usage:**
 ```bash
-empathy meta-workflow session-stats [OPTIONS]
+attune meta-workflow session-stats [OPTIONS]
 ```
 
 **Options:**
@@ -416,13 +416,13 @@ empathy meta-workflow session-stats [OPTIONS]
 **Examples:**
 ```bash
 # Show stats for current session
-empathy meta-workflow session-stats
+attune meta-workflow session-stats
 
 # Show stats for specific session
-empathy meta-workflow session-stats --session-id sess_abc123
+attune meta-workflow session-stats --session-id sess_abc123
 
 # Show stats for specific user
-empathy meta-workflow session-stats -u "user@example.com"
+attune meta-workflow session-stats -u "user@example.com"
 ```
 
 **Output:**
@@ -458,7 +458,7 @@ Templates Used:
 
 **Usage:**
 ```bash
-empathy meta-workflow suggest-defaults <template_id> [OPTIONS]
+attune meta-workflow suggest-defaults <template_id> [OPTIONS]
 ```
 
 **Options:**
@@ -468,13 +468,13 @@ empathy meta-workflow suggest-defaults <template_id> [OPTIONS]
 **Examples:**
 ```bash
 # Get suggestions for test creation workflow
-empathy meta-workflow suggest-defaults test_creation_management_workflow
+attune meta-workflow suggest-defaults test_creation_management_workflow
 
 # Get suggestions with specific session
-empathy meta-workflow suggest-defaults python_package_publish --session-id sess_abc123
+attune meta-workflow suggest-defaults python_package_publish --session-id sess_abc123
 
 # Get suggestions for specific user
-empathy meta-workflow suggest-defaults code_refactoring_workflow -u "user@example.com"
+attune meta-workflow suggest-defaults code_refactoring_workflow -u "user@example.com"
 ```
 
 **Output:**
@@ -495,7 +495,7 @@ Found 8 suggested default(s):
 └─────────────────────────────────────────┴────────────────────────┘
 
 Use these defaults by running:
-  empathy meta-workflow run test_creation_management_workflow --use-defaults
+  attune meta-workflow run test_creation_management_workflow --use-defaults
 ```
 
 **How It Works:**
@@ -516,46 +516,46 @@ Use these defaults by running:
 ### 1. Quick Workflow Execution
 ```bash
 # Find template you want
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 
 # Inspect to see questions
-empathy meta-workflow inspect <template_id>
+attune meta-workflow inspect <template_id>
 
 # Run the workflow
-empathy meta-workflow run <template_id>
+attune meta-workflow run <template_id>
 ```
 
 ### 2. Using Suggested Defaults
 ```bash
 # First run (answer all questions)
-empathy meta-workflow run test_creation_management_workflow
+attune meta-workflow run test_creation_management_workflow
 
 # Next time (get suggestions first)
-empathy meta-workflow suggest-defaults test_creation_management_workflow
+attune meta-workflow suggest-defaults test_creation_management_workflow
 
 # Then run with suggested values pre-filled
-empathy meta-workflow run test_creation_management_workflow --use-defaults
+attune meta-workflow run test_creation_management_workflow --use-defaults
 ```
 
 ### 3. Memory Search for Debugging
 ```bash
 # Find failed executions
-empathy meta-workflow search-memory "error" --type meta_workflow_execution
+attune meta-workflow search-memory "error" --type meta_workflow_execution
 
 # Find expensive runs
-empathy meta-workflow search-memory "cost" --limit 20
+attune meta-workflow search-memory "cost" --limit 20
 
 # Find specific workflow outcomes
-empathy meta-workflow search-memory "test coverage 80%"
+attune meta-workflow search-memory "test coverage 80%"
 ```
 
 ### 4. Analytics-Driven Optimization
 ```bash
 # Check overall performance
-empathy meta-workflow analytics
+attune meta-workflow analytics
 
 # Focus on specific template
-empathy meta-workflow analytics test_creation_management_workflow -m
+attune meta-workflow analytics test_creation_management_workflow -m
 
 # Use insights to optimize tier strategies in templates
 ```
@@ -563,13 +563,13 @@ empathy meta-workflow analytics test_creation_management_workflow -m
 ### 5. Cleanup Old Data
 ```bash
 # Preview before deleting
-empathy meta-workflow cleanup --dry-run
+attune meta-workflow cleanup --dry-run
 
 # Clean up monthly
-empathy meta-workflow cleanup --older-than 30
+attune meta-workflow cleanup --older-than 30
 
 # Aggressive cleanup for testing
-empathy meta-workflow cleanup --older-than 7
+attune meta-workflow cleanup --older-than 7
 ```
 
 ---
@@ -578,13 +578,13 @@ empathy meta-workflow cleanup --older-than 7
 
 ```bash
 # Set default user ID
-export EMPATHY_USER_ID="user@example.com"
+export ATTUNE_USER_ID="user@example.com"
 
 # Set default memory directory
-export EMPATHY_MEMORY_DIR="$HOME/.empathy/memory"
+export ATTUNE_MEMORY_DIR="$HOME/.empathy/memory"
 
 # Set default template directory
-export EMPATHY_TEMPLATE_DIR="$HOME/.empathy/meta_workflows/templates"
+export ATTUNE_TEMPLATE_DIR="$HOME/.empathy/meta_workflows/templates"
 ```
 
 ---
@@ -615,7 +615,7 @@ pip install attune-ai[memory]
 ls ~/.empathy/meta_workflows/templates/
 
 # Or use project-local templates
-export EMPATHY_TEMPLATE_DIR="./empathy/meta_workflows/templates"
+export ATTUNE_TEMPLATE_DIR="./empathy/meta_workflows/templates"
 ```
 
 ---

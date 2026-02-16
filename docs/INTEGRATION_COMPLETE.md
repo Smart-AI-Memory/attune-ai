@@ -147,18 +147,18 @@ print(f"Reasoning: {result.reasoning}")
 
 **Commands Added**:
 
-#### `empathy tier recommend`
+#### `attune tier recommend`
 Get intelligent tier recommendation for a bug/task.
 
 ```bash
 # Basic usage
-empathy tier recommend "integration test failure with module import"
+attune tier recommend "integration test failure with module import"
 
 # With files
-empathy tier recommend "type error in cache module" --files "src/cache.py,tests/test_cache.py"
+attune tier recommend "type error in cache module" --files "src/cache.py,tests/test_cache.py"
 
 # With complexity hint
-empathy tier recommend "complex race condition" --complexity 9
+attune tier recommend "complex race condition" --complexity 9
 ```
 
 **Example Output**:
@@ -182,11 +182,11 @@ empathy tier recommend "complex race condition" --complexity 9
 ============================================================
 ```
 
-#### `empathy tier stats`
+#### `attune tier stats`
 Show tier pattern learning statistics.
 
 ```bash
-empathy tier stats
+attune tier stats
 ```
 
 **Example Output**:
@@ -268,10 +268,10 @@ else:
 
 ```bash
 # Get recommendation before starting work
-empathy tier recommend "bug description"
+attune tier recommend "bug description"
 
 # Check learning progress
-empathy tier stats
+attune tier stats
 
 # Run full analysis
 python scripts/analyze_tier_patterns.py
@@ -332,8 +332,8 @@ Coverage: 100% of tier analysis logic
 ### Integration Tests
 ```
 CLI Commands: 2/2 working
-- empathy tier recommend ✅
-- empathy tier stats ✅
+- attune tier recommend ✅
+- attune tier stats ✅
 
 API Methods: 5/5 working
 - recommend() ✅
@@ -359,7 +359,7 @@ Jobs: 2
 ### Example 1: Get Tier Recommendation
 
 ```bash
-$ empathy tier recommend "type annotation missing in function"
+$ attune tier recommend "type annotation missing in function"
 
 ============================================================
   TIER RECOMMENDATION
@@ -523,7 +523,7 @@ Average cost per bug: $0.03
 **Issue**: No patterns found
 ```
 Solution: Patterns are collected automatically as you use cascading
-workflows. Run a few workflows first, then check `empathy tier stats`.
+workflows. Run a few workflows first, then check `attune tier stats`.
 ```
 
 **Issue**: Low confidence recommendations
@@ -543,7 +543,7 @@ Solution: Workflow triggers on pattern file changes. Either:
 ### Getting Help
 
 1. Check documentation: `docs/philosophy/`
-2. Run help command: `empathy tier --help`
+2. Run help command: `attune tier --help`
 3. View examples: `docs/INTEGRATION_COMPLETE.md`
 4. Open GitHub issue with `[tier-recommendation]` label
 

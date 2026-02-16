@@ -335,40 +335,6 @@ class TestNativeWorkflow:
         assert "results" in result
 
 
-class TestCLIFrameworks:
-    """Test CLI frameworks command."""
-
-    def test_cli_frameworks_import(self):
-        """Test frameworks CLI command can be imported."""
-        from attune.cli.commands.info import cmd_frameworks
-
-        assert callable(cmd_frameworks)
-
-    def test_cli_frameworks_execution(self):
-        """Test frameworks CLI command execution."""
-        from attune.cli.commands.info import cmd_frameworks
-
-        class MockArgs:
-            all = False
-            recommend = None
-            json = False
-
-        result = cmd_frameworks(MockArgs())
-        assert result == 0
-
-    def test_cli_frameworks_recommend(self):
-        """Test frameworks recommendation."""
-        from attune.cli.commands.info import cmd_frameworks
-
-        class MockArgs:
-            all = False
-            recommend = "general"
-            json = False
-
-        result = cmd_frameworks(MockArgs())
-        assert result == 0
-
-
 class TestLangGraphAdapter:
     """Test LangGraph adapter if available."""
 

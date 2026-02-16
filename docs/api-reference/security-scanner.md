@@ -461,13 +461,13 @@ final_findings = other_findings + filtered_cmd
 
 ```bash
 # Enable debug logging
-export EMPATHY_DEBUG=1
+export ATTUNE_DEBUG=1
 
 # Disable Phase 3 AST filtering (fallback to Phase 2)
-export EMPATHY_DISABLE_PHASE3=1
+export ATTUNE_DISABLE_PHASE3=1
 
 # Custom scanner patterns file
-export EMPATHY_SCANNER_PATTERNS=/path/to/patterns.json
+export ATTUNE_SCANNER_PATTERNS=/path/to/patterns.json
 ```
 
 ### Configuration File

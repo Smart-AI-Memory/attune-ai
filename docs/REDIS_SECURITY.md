@@ -82,7 +82,7 @@ REDIS_SSL_CA_CERTS=/path/to/ca.crt
 REDIS_URL=rediss://user:password@host:port/db
 
 # Mock mode (for testing without Redis)
-EMPATHY_REDIS_MOCK=true
+ATTUNE_REDIS_MOCK=true
 ```
 
 ---

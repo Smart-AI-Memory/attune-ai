@@ -383,7 +383,7 @@ async def develop_with_cascading(task: Task, plan: Plan) -> Result:
     </check>
 
     <check id="health" priority="medium" blocking="false">
-      <command>empathy health</command>
+      <command>attune health</command>
       <pass_criteria>Score ≥ 70/100</pass_criteria>
       <on_failure>
         <feedback_for_retry>Health score regression details</feedback_for_retry>

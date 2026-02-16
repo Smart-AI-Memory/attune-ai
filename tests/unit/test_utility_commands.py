@@ -442,18 +442,18 @@ class TestCmdValidate:
         args = self._make_args()
 
         env_patch = {"ANTHROPIC_API_KEY": "sk-test"}
-        mock_registry = {"sec-audit": MagicMock(), "code-review": MagicMock(), "perf": MagicMock()}
+        mock_workflows = {"sec-audit": MagicMock(), "code-review": MagicMock(), "perf": MagicMock()}
 
         with patch.dict("os.environ", env_patch, clear=False):
             with patch(
-                "attune.workflows.WORKFLOW_REGISTRY",
-                mock_registry,
+                "attune.workflows.discover_workflows",
+                return_value=mock_workflows,
             ):
                 result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "3 workflows registered" in captured.out
+        assert "3 workflows available" in captured.out
 
 
 # ---------------------------------------------------------------------------

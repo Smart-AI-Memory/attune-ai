@@ -488,6 +488,8 @@ Risk Score: {input_data.get("overall_risk_score", 0):.2f}"""
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import BUG_PREDICT_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="senior software engineer specializing in bug prevention",
                 goal="Analyze bug-prone patterns and generate actionable recommendations",
@@ -505,6 +507,7 @@ Risk Score: {input_data.get("overall_risk_score", 0):.2f}"""
                 ],
                 input_type="bug_patterns",
                 input_payload=input_payload,
+                examples=BUG_PREDICT_EXAMPLES,
                 extra={
                     "risk_score": input_data.get("overall_risk_score", 0),
                     "pattern_count": len(issues_summary),

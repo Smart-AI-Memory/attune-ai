@@ -5,7 +5,7 @@ import { generateMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateMetadata({
   title: 'Privacy Policy',
-  description: 'Privacy policy for Smart AI Memory and the Empathy Framework.',
+  description: 'Privacy policy for Smart AI Memory and Attune AI.',
   url: 'https://smartaimemory.com/privacy',
 });
 
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
             <div className="max-w-4xl mx-auto prose prose-lg">
               <h2>1. Introduction</h2>
               <p>
-                Smart AI Memory (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates smartaimemory.com and the Empathy Framework.
+                Smart AI Memory (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates smartaimemory.com and Attune AI.
                 This Privacy Policy explains how we collect, use, disclose, and safeguard your information when
                 you visit our website or use our products.
               </p>
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
 
               <h2>5. Open Source Framework</h2>
               <p>
-                The Empathy Framework is source-available software under the Fair Source License.
+                Attune AI is open-source software under the Apache 2.0 License.
                 When you use the framework locally:
               </p>
               <ul>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
 
               <h3>6.1 LLM Providers</h3>
               <p>
-                The Empathy Framework supports multiple LLM providers (Anthropic, OpenAI, Google, etc.).
+                Attune AI supports multiple LLM providers (Anthropic, OpenAI, Google, etc.).
                 You are responsible for understanding and complying with their respective privacy policies
                 and terms of service.
               </p>

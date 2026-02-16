@@ -62,7 +62,7 @@ class HybridRouter:
                 Default: .attune/routing_preferences.yaml
         """
         self.preferences_path = Path(
-            preferences_path or Path.home() / ".empathy" / "routing_preferences.yaml"
+            preferences_path or Path.home() / ".attune" / "routing_preferences.yaml"
         )
         self.smart_router = SmartRouter()
         self.preferences: dict[str, RoutingPreference] = {}

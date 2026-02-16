@@ -555,9 +555,9 @@ for event in streamer.consume_events(event_types=["agent_error"]):
    - Advanced analytics and reporting
 
 4. **CLI Integration**
-   - `empathy telemetry events --follow` - Live event tail
-   - `empathy telemetry events --type heartbeat --count 100` - Historical query
-   - `empathy telemetry events --stream-info` - Stream metadata
+   - `attune telemetry events --follow` - Live event tail
+   - `attune telemetry events --type heartbeat --count 100` - Historical query
+   - `attune telemetry events --stream-info` - Stream metadata
 
 ---
 

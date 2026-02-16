@@ -12,7 +12,7 @@ description: CLI Testing Results - v4.2.0: **Date:** 2026-01-17 **Status:** ✅ 
 ## Templates Validated
 
 ### 1. List Templates ✅
-**Command:** `empathy meta-workflow list-templates`
+**Command:** `attune meta-workflow list-templates`
 
 **Result:** Successfully shows all 4 templates:
 - ✅ code_refactoring_workflow (8 questions, 8 agents)
@@ -29,7 +29,7 @@ description: CLI Testing Results - v4.2.0: **Date:** 2026-01-17 **Status:** ✅ 
 ---
 
 ### 2. Inspect Template ✅
-**Command:** `empathy meta-workflow inspect code_refactoring_workflow`
+**Command:** `attune meta-workflow inspect code_refactoring_workflow`
 
 **Result:** Successfully displays:
 - Template name and description
@@ -43,7 +43,7 @@ description: CLI Testing Results - v4.2.0: **Date:** 2026-01-17 **Status:** ✅ 
 ---
 
 ### 3. List Runs ✅
-**Command:** `empathy meta-workflow list-runs`
+**Command:** `attune meta-workflow list-runs`
 
 **Result:** Successfully shows execution history:
 - 3 historical runs displayed
@@ -53,7 +53,7 @@ description: CLI Testing Results - v4.2.0: **Date:** 2026-01-17 **Status:** ✅ 
 ---
 
 ### 4. Analytics ✅
-**Command:** `empathy meta-workflow analytics python_package_publish`
+**Command:** `attune meta-workflow analytics python_package_publish`
 
 **Result:** Successfully generates analytics:
 - Summary stats (3 runs, 100% success, $1.80 total cost)
@@ -167,7 +167,7 @@ All templates now conform to required JSON structure:
 
 1. **Interactive Workflow Test** (optional):
    ```bash
-   empathy meta-workflow run code_refactoring_workflow
+   attune meta-workflow run code_refactoring_workflow
    # Answer interactive questions
    # Verify agent execution
    ```

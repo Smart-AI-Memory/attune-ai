@@ -493,6 +493,41 @@ class TestInitLoggingFromEnv:
             assert LoggingConfig._include_context is True
 
 
+class TestAttuneEnvPrefix:
+    """Test that ATTUNE_ prefix env vars work and take precedence."""
+
+    def test_attune_log_level(self):
+        """Test ATTUNE_LOG_LEVEL sets log level."""
+        with patch.dict(os.environ, {"ATTUNE_LOG_LEVEL": "DEBUG"}):
+            init_logging_from_env()
+            assert LoggingConfig._level == logging.DEBUG
+
+    def test_attune_prefix_takes_precedence(self):
+        """Test ATTUNE_ wins when both ATTUNE_ and EMPATHY_ are set."""
+        env = {
+            "ATTUNE_LOG_LEVEL": "ERROR",
+            "EMPATHY_LOG_LEVEL": "DEBUG",
+        }
+        with patch.dict(os.environ, env):
+            init_logging_from_env()
+            assert LoggingConfig._level == logging.ERROR
+
+    def test_attune_all_settings(self, temp_dir):
+        """Test all ATTUNE_ env vars work."""
+        env_settings = {
+            "ATTUNE_LOG_LEVEL": "WARNING",
+            "ATTUNE_LOG_DIR": temp_dir,
+            "ATTUNE_LOG_COLOR": "false",
+            "ATTUNE_LOG_CONTEXT": "true",
+        }
+        with patch.dict(os.environ, env_settings):
+            init_logging_from_env()
+            assert LoggingConfig._level == logging.WARNING
+            assert LoggingConfig._log_dir == temp_dir
+            assert LoggingConfig._use_color is False
+            assert LoggingConfig._include_context is True
+
+
 class TestIntegration:
     """Integration tests for logging configuration"""
 

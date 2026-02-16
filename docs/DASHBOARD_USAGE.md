@@ -12,13 +12,13 @@ description: How to Start the Dashboard: **Multiple ways to start the Agent Coor
 
 ```bash
 # Default (localhost:8000)
-empathy dashboard start
+attune dashboard start
 
 # Custom host/port
-empathy dashboard start --host 0.0.0.0 --port 8080
+attune dashboard start --host 0.0.0.0 --port 8080
 
 # Get help
-empathy dashboard start --help
+attune dashboard start --help
 ```
 
 **When to use:** Quick start, production deployments, CI/CD
@@ -119,7 +119,7 @@ cd /path/to/attune-ai
 python scripts/populate_redis_direct.py
 
 # Terminal 2: Start dashboard
-empathy dashboard start
+attune dashboard start
 
 # Open browser to http://localhost:8000
 ```
@@ -128,10 +128,10 @@ empathy dashboard start
 
 ```bash
 # Bind to all interfaces on port 8080
-empathy dashboard start --host 0.0.0.0 --port 8080
+attune dashboard start --host 0.0.0.0 --port 8080
 
 # Or with nohup for background
-nohup empathy dashboard start --host 0.0.0.0 --port 8080 > dashboard.log 2>&1 &
+nohup attune dashboard start --host 0.0.0.0 --port 8080 > dashboard.log 2>&1 &
 ```
 
 ### Example 3: Development with Auto-Reload
@@ -193,25 +193,25 @@ docker run -p 8000:8000 empathy-dashboard
 
 ```bash
 # Localhost only (secure, default)
-empathy dashboard start --host 127.0.0.1
+attune dashboard start --host 127.0.0.1
 
 # All interfaces (accessible from network)
-empathy dashboard start --host 0.0.0.0
+attune dashboard start --host 0.0.0.0
 
 # Specific IP
-empathy dashboard start --host 192.168.1.100
+attune dashboard start --host 192.168.1.100
 ```
 
 ### Port Options
 
 ```bash
 # Default port
-empathy dashboard start --port 8000
+attune dashboard start --port 8000
 
 # Alternative ports
-empathy dashboard start --port 8080
-empathy dashboard start --port 3000
-empathy dashboard start --port 80  # Requires sudo
+attune dashboard start --port 8080
+attune dashboard start --port 3000
+attune dashboard start --port 80  # Requires sudo
 ```
 
 ---
@@ -262,7 +262,7 @@ docker stop <container-id>
 lsof -i :8000
 
 # Kill it or use different port
-empathy dashboard start --port 8080
+attune dashboard start --port 8080
 ```
 
 ### Dashboard Shows No Data
@@ -284,7 +284,7 @@ python scripts/populate_redis_direct.py
 redis-server
 
 # Or via empathy CLI
-empathy memory start
+attune memory start
 ```
 
 ### Permission Denied (Port 80)
@@ -294,10 +294,10 @@ empathy memory start
 **Solution:**
 ```bash
 # Use port > 1024 (doesn't require sudo)
-empathy dashboard start --port 8080
+attune dashboard start --port 8080
 
 # Or use sudo (not recommended)
-sudo empathy dashboard start --port 80
+sudo attune dashboard start --port 80
 ```
 
 ---
@@ -315,7 +315,7 @@ sudo empathy dashboard start --port 80
 
 | Method | Command | When to Use |
 |--------|---------|-------------|
-| **CLI** | `empathy dashboard start` | Production, recommended |
+| **CLI** | `attune dashboard start` | Production, recommended |
 | **Script** | `./scripts/start_dashboard.sh` | Development, testing |
 | **Python** | `run_standalone_dashboard()` | Integration, custom apps |
 | **Module** | `python -m attune.dashboard.standalone_server` | Direct execution |

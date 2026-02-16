@@ -388,13 +388,13 @@ Parallel release validation with 4 agents:
 
 **Health Check:**
 ```bash
-empathy workflow run orchestrated-health-check
+attune workflow run orchestrated-health-check
 # Document: Does it work? Is output useful? Better than v3.x?
 ```
 
 **Release Prep:**
 ```bash
-empathy workflow run orchestrated-release-prep
+attune workflow run orchestrated-release-prep
 # Document: Does it work? Is output useful? Better than legacy?
 ```
 

@@ -1145,7 +1145,7 @@ class ApprovalGate:
 
 ```bash
 # User lists pending approvals
-empathy approvals list
+attune approvals list
 
 # Output:
 # Pending Approvals:
@@ -1160,10 +1160,10 @@ empathy approvals list
 #    ID: approval:xyz789:ghi012
 
 # User approves
-empathy approvals respond approval:abc123:def456 --approve --reason "Tests look good"
+attune approvals respond approval:abc123:def456 --approve --reason "Tests look good"
 
 # User denies
-empathy approvals respond approval:xyz789:ghi012 --deny --reason "Need more tests"
+attune approvals respond approval:xyz789:ghi012 --deny --reason "Need more tests"
 ```
 
 ### Usage in Workflow

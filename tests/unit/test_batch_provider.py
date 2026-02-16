@@ -21,7 +21,7 @@ class TestAnthropicBatchProvider:
         mock_anthropic.Anthropic.return_value = mock_client
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            from attune_llm.providers import AnthropicBatchProvider
+            from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
 
             provider = AnthropicBatchProvider(api_key="test_key")
             provider.client = mock_client
@@ -211,7 +211,7 @@ class TestBatchRequestFormatConversion:
         mock_anthropic.Anthropic.return_value = mock_client
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            from attune_llm.providers import AnthropicBatchProvider
+            from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
 
             provider = AnthropicBatchProvider(api_key="test_key")
             provider.client = mock_client
@@ -242,7 +242,7 @@ class TestBatchRequestFormatConversion:
         mock_anthropic.Anthropic.return_value = mock_client
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            from attune_llm.providers import AnthropicBatchProvider
+            from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
 
             provider = AnthropicBatchProvider(api_key="test_key")
             provider.client = mock_client

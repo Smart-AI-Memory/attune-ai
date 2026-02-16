@@ -234,14 +234,16 @@ def cmd_validate(args: Namespace) -> int:
 
     if keys_found == 0:
         errors.append(
-            "No API keys found. Set at least one: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY"
+            "No API keys found. Set at least one: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY\n"
+            "   Run: python -m attune.models.auth_cli setup"
         )
 
-    # Check workflows directory
+    # Check workflows
     try:
-        from attune.workflows import WORKFLOW_REGISTRY
+        from attune.workflows import discover_workflows
 
-        print(f"  ✅ {len(WORKFLOW_REGISTRY)} workflows registered")
+        workflows = discover_workflows()
+        print(f"  ✅ {len(workflows)} workflows available")
     except ImportError as e:
         warnings.append(f"Could not load workflows: {e}")
 

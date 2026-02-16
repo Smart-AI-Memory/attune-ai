@@ -100,6 +100,22 @@ class TestGetRedisConfig:
             config = get_redis_config()
             assert config.use_mock is True
 
+    def test_mock_mode_from_attune_env(self):
+        """Test mock mode detection from ATTUNE_REDIS_MOCK."""
+        with patch.dict(os.environ, {"ATTUNE_REDIS_MOCK": "true"}, clear=False):
+            config = get_redis_config()
+            assert config.use_mock is True
+
+    def test_attune_redis_mock_takes_precedence(self):
+        """Test ATTUNE_REDIS_MOCK wins over EMPATHY_REDIS_MOCK."""
+        env = {
+            "ATTUNE_REDIS_MOCK": "true",
+            "EMPATHY_REDIS_MOCK": "false",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            config = get_redis_config()
+            assert config.use_mock is True
+
     def test_redis_url_from_env(self):
         """Test configuration from REDIS_URL"""
         with patch.dict(

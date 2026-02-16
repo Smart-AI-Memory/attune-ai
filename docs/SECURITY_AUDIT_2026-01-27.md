@@ -199,15 +199,15 @@ protobuf       5.29.5     ⚠️ (no fix available)
 
 Added three new telemetry commands for monitoring adaptive routing performance:
 
-#### 1. `empathy telemetry routing-stats`
+#### 1. `attune telemetry routing-stats`
 Shows adaptive routing statistics for workflows.
 
 ```bash
 # Show stats for specific workflow
-empathy telemetry routing-stats --workflow code-review --days 7
+attune telemetry routing-stats --workflow code-review --days 7
 
 # Show overall statistics
-empathy telemetry routing-stats --days 30
+attune telemetry routing-stats --days 30
 ```
 
 **Output Includes:**
@@ -217,15 +217,15 @@ empathy telemetry routing-stats --days 30
 
 ---
 
-#### 2. `empathy telemetry routing-check`
+#### 2. `attune telemetry routing-check`
 Check for tier upgrade recommendations.
 
 ```bash
 # Check specific workflow
-empathy telemetry routing-check --workflow code-review
+attune telemetry routing-check --workflow code-review
 
 # Check all workflows
-empathy telemetry routing-check --all
+attune telemetry routing-check --all
 ```
 
 **Detects:**
@@ -234,15 +234,15 @@ empathy telemetry routing-check --all
 
 ---
 
-#### 3. `empathy telemetry models`
+#### 3. `attune telemetry models`
 Show model performance by provider.
 
 ```bash
 # Show all models
-empathy telemetry models --days 7
+attune telemetry models --days 7
 
 # Filter by provider
-empathy telemetry models --provider anthropic --days 30
+attune telemetry models --provider anthropic --days 30
 ```
 
 **Displays:**
@@ -330,9 +330,9 @@ pip list | grep -E "aiohttp|authlib|filelock|urllib3|virtualenv|weasyprint|wheel
 pytest tests/test_model_registry.py tests/test_model_router.py tests/test_workflow_base.py -v
 
 # Test new CLI commands
-empathy telemetry routing-stats --help
-empathy telemetry routing-check --help
-empathy telemetry models --help
+attune telemetry routing-stats --help
+attune telemetry routing-check --help
+attune telemetry models --help
 ```
 
 ---

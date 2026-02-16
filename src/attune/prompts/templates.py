@@ -104,6 +104,9 @@ class XmlPromptTemplate:
         # Build extra context XML if present
         extra_xml = self._render_extra(context.extra)
 
+        # Build examples XML if present (one-shot learning)
+        examples_xml = self._render_examples(context.examples)
+
         # Build input section with CDATA for safety
         input_content = self._escape_cdata(context.input_payload)
 
@@ -115,7 +118,7 @@ class XmlPromptTemplate:
   </instructions>
   <constraints>
 {constraints_xml}
-  </constraints>{extra_xml}
+  </constraints>{extra_xml}{examples_xml}
   <input type="{context.input_type}">
     <![CDATA[
 {input_content}
@@ -161,6 +164,31 @@ class XmlPromptTemplate:
                 escaped_value = self._escape_xml(str(value))
                 lines.append(f"    <{escaped_key}>{escaped_value}</{escaped_key}>")
         lines.append("  </context>")
+
+        return "\n".join(lines)
+
+    def _render_examples(self, examples: list[dict[str, str]]) -> str:
+        """Render one-shot examples as XML.
+
+        Args:
+            examples: List of {"input": "...", "output": "..."} dicts.
+
+        Returns:
+            XML string with examples, or empty string if none.
+
+        """
+        if not examples:
+            return ""
+
+        lines = ["\n  <examples>"]
+        for i, example in enumerate(examples, 1):
+            sample_input = self._escape_cdata(example.get("input", ""))
+            expected_output = self._escape_cdata(example.get("output", ""))
+            lines.append(f'    <example number="{i}">')
+            lines.append(f"      <sample_input><![CDATA[{sample_input}]]></sample_input>")
+            lines.append(f"      <expected_output><![CDATA[{expected_output}]]></expected_output>")
+            lines.append("    </example>")
+        lines.append("  </examples>")
 
         return "\n".join(lines)
 

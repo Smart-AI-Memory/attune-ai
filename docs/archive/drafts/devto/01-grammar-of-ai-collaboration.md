@@ -232,13 +232,13 @@ Clear execution plans. Visible decisions. Understand why agents were chosen.
 pip install attune-ai
 
 # Dynamic orchestration
-empathy orchestrate "prepare for release"
+attune orchestrate "prepare for release"
 
 # Specific task with context
-empathy orchestrate "boost test coverage" --context '{"module": "auth"}'
+attune orchestrate "boost test coverage" --context '{"module": "auth"}'
 
 # See what patterns have been learned
-empathy patterns report
+attune patterns report
 ```
 
 ## What's Next

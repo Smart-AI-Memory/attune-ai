@@ -1,6 +1,6 @@
-"""Example: EmpathyLLM with Phase 3 Security Integration
+"""Example: LLMExecutor with Phase 3 Security Integration
 
-Demonstrates how to use EmpathyLLM with security controls:
+Demonstrates how to use LLMExecutor with security controls:
 - PII Scrubbing: Automatic detection and redaction
 - Secrets Detection: Block requests with API keys/passwords
 - Audit Logging: SOC2/HIPAA/GDPR compliant logging
@@ -13,8 +13,8 @@ import asyncio
 import os
 from pathlib import Path
 
-from attune_llm.core import EmpathyLLM
-from attune_llm.security import SecurityError
+from attune.models import LLMExecutor
+from attune.memory import SecurityError
 
 
 async def example_1_basic_security():
@@ -24,7 +24,7 @@ async def example_1_basic_security():
     print("=" * 60)
 
     # Initialize with security enabled
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=3,
@@ -61,7 +61,7 @@ async def example_2_secrets_blocking():
     print("Example 2: Secrets Detection & Blocking")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=2,
@@ -94,7 +94,7 @@ async def example_3_log_without_blocking():
     print("Example 3: Log Secrets Without Blocking")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=2,
@@ -129,7 +129,7 @@ async def example_4_all_empathy_levels():
     print("Example 4: Security Across All Empathy Levels")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=5,
@@ -180,7 +180,7 @@ async def example_5_custom_configuration():
         "enable_console_logging": True,  # Enable console logging for debugging
     }
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=3,
@@ -216,7 +216,7 @@ async def example_6_backward_compatibility():
     print("=" * 60)
 
     # Initialize WITHOUT security (default behavior)
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=2,
@@ -259,7 +259,7 @@ async def example_7_audit_log_inspection():
     # Create the directory if it doesn't exist
     Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY", "test-key"),
         target_level=1,
@@ -318,7 +318,7 @@ async def example_7_audit_log_inspection():
 async def main():
     """Run all examples"""
     print("\n" + "=" * 60)
-    print("EmpathyLLM Phase 3 Security Integration Examples")
+    print("LLMExecutor Phase 3 Security Integration Examples")
     print("=" * 60)
     print("\nThese examples demonstrate security features:")
     print("  - PII Scrubbing (email, phone, SSN, etc.)")
@@ -349,8 +349,8 @@ async def main():
     print("=" * 60)
     print("\nNext steps:")
     print("  1. Check audit logs at: ./logs/example_security/audit.jsonl")
-    print("  2. Review test file: tests/test_empathy_llm_security.py")
-    print("  3. Read docs: empathy_llm_toolkit/core.py docstrings")
+    print("  2. Review test file: tests/test_security.py")
+    print("  3. Read docs: attune/models/executor.py docstrings")
 
 
 if __name__ == "__main__":

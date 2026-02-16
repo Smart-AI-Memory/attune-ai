@@ -11,9 +11,9 @@ This guide helps you choose the right workflow pattern for your use case. The At
 **Default: Crew** - Unless you have a specific reason to choose otherwise.
 
 ```bash
-empathy workflow new my-workflow           # Crew (default, recommended)
-empathy workflow new my-workflow --base    # Base pattern
-empathy workflow new my-workflow --compose # Composition pattern
+attune workflow new my-workflow           # Crew (default, recommended)
+attune workflow new my-workflow --base    # Base pattern
+attune workflow new my-workflow --compose # Composition pattern
 ```
 
 ---
@@ -171,7 +171,7 @@ Override per-workflow:
 
 ```bash
 # Use base pattern even though project defaults to crew
-empathy workflow new cost-sensitive-task --base
+attune workflow new cost-sensitive-task --base
 ```
 
 ---

@@ -1,6 +1,6 @@
 """Example: Using Attune AI with Different LLMs
 
-This shows how to use the EmpathyLLM wrapper with multiple providers
+This shows how to use the LLMExecutor wrapper with multiple providers
 without needing to create custom wizards.
 
 The framework automatically handles:
@@ -13,7 +13,7 @@ The framework automatically handles:
 import asyncio
 import os
 
-from attune_llm.core import EmpathyLLM
+from attune.models import LLMExecutor
 
 
 async def example_claude_usage():
@@ -23,7 +23,7 @@ async def example_claude_usage():
     print("=" * 60)
 
     # Initialize with Claude
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         target_level=4,  # Level 4 Anticipatory
         api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -61,7 +61,7 @@ async def example_openai_usage():
     print("EXAMPLE 2: OpenAI GPT-4 - Level 3 Proactive")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="openai",
         target_level=3,  # Level 3 Proactive
         api_key=os.getenv("OPENAI_API_KEY"),
@@ -84,7 +84,7 @@ async def example_local_model_usage():
     print("EXAMPLE 3: Local Model (Ollama) - Level 2 Guided")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="local",
         target_level=2,  # Level 2 Guided
         model="llama2",
@@ -109,17 +109,19 @@ async def example_switching_providers():
     print("=" * 60)
 
     # Use Claude for complex reasoning
-    claude_llm = EmpathyLLM(
+    claude_llm = LLMExecutor(
         provider="anthropic",
         target_level=4,
         api_key=os.getenv("ANTHROPIC_API_KEY"),
     )
 
     # Use GPT-4 for fast responses
-    _openai_llm = EmpathyLLM(provider="openai", target_level=3, api_key=os.getenv("OPENAI_API_KEY"))
+    _openai_llm = LLMExecutor(
+        provider="openai", target_level=3, api_key=os.getenv("OPENAI_API_KEY")
+    )
 
     # Use local model for sensitive data
-    _local_llm = EmpathyLLM(provider="local", target_level=2, model="llama2")
+    _local_llm = LLMExecutor(provider="local", target_level=2, model="llama2")
 
     print("\nProviders initialized:")
     print("  ✓ Claude - for complex Level 4 anticipatory tasks")
@@ -147,7 +149,7 @@ async def example_pro_tier_features():
     print("EXAMPLE 5: Pro Tier Features (Powered by Claude)")
     print("=" * 60)
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         target_level=4,
         api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -205,7 +207,7 @@ async def main():
 To run these examples:
 
 1. Install the framework:
-   pip install empathy-framework
+   pip install attune-ai
 
 2. Set API keys (as needed):
    export ANTHROPIC_API_KEY="your-key"

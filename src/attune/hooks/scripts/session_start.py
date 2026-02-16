@@ -19,17 +19,17 @@ logger = logging.getLogger(__name__)
 
 def get_sessions_dir() -> Path:
     """Get the sessions directory path."""
-    return Path.home() / ".empathy" / "sessions"
+    return Path.home() / ".attune" / "sessions"
 
 
 def get_patterns_dir() -> Path:
     """Get the patterns directory path."""
-    return Path.home() / ".empathy" / "patterns"
+    return Path.home() / ".attune" / "patterns"
 
 
 def get_learned_skills_dir() -> Path:
     """Get the learned skills directory path."""
-    return Path.home() / ".empathy" / "skills" / "learned"
+    return Path.home() / ".attune" / "skills" / "learned"
 
 
 def find_recent_files(

@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune_llm.security.audit_logger import AuditEvent, AuditLogger, SecurityViolation
+from attune.memory.security.audit_logger import AuditEvent, AuditLogger, SecurityViolation
 
 
 class TestAuditEventExtended:
@@ -665,7 +665,7 @@ class TestAuditLoggerViolationHandling:
 
     def test_critical_violation_immediate_alert(self, logger):
         """Test CRITICAL severity triggers immediate alert"""
-        with patch("attune_llm.security.audit_logger.logger.warning") as mock_warning:
+        with patch("attune.memory.security.audit_logger.logger.warning") as mock_warning:
             logger._handle_security_violation(
                 user_id="test@example.com",
                 violation_type="critical_issue",

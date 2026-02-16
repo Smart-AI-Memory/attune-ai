@@ -368,7 +368,7 @@ class AnthropicProvider(BaseLLMProvider):
             Estimated token count
         """
         try:
-            from attune.llm.utils.tokens import count_tokens
+            from attune.utils.tokens import count_tokens
 
             return count_tokens(text, model=self.model, use_api=False)
         except ImportError:

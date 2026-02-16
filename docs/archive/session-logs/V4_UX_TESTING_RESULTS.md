@@ -151,7 +151,7 @@ AGENTS EXECUTED (1)
 **Test Command:**
 ```bash
 # Via VSCode button OR:
-empathy workflow run test-coverage-boost
+attune workflow run test-coverage-boost
 ```
 
 **Tested:** ✅ YES (from previous session)

@@ -18,8 +18,8 @@ class TestSecurityFinding:
 
     def test_finding_creation(self):
         """Test creating a security finding."""
-        from attune_llm.agent_factory.crews import SecurityFinding
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         finding = SecurityFinding(
             title="SQL Injection in user input",
@@ -42,8 +42,8 @@ class TestSecurityFinding:
 
     def test_finding_to_dict(self):
         """Test converting finding to dictionary."""
-        from attune_llm.agent_factory.crews import SecurityFinding
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         finding = SecurityFinding(
             title="XSS Vulnerability",
@@ -61,8 +61,8 @@ class TestSecurityFinding:
 
     def test_finding_defaults(self):
         """Test finding default values."""
-        from attune_llm.agent_factory.crews import SecurityFinding
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         finding = SecurityFinding(
             title="Test",
@@ -83,8 +83,8 @@ class TestSecurityReport:
 
     def test_report_creation(self):
         """Test creating a security report."""
-        from attune_llm.agent_factory.crews import SecurityFinding, SecurityReport
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding, SecurityReport
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         findings = [
             SecurityFinding(
@@ -121,8 +121,8 @@ class TestSecurityReport:
 
     def test_report_risk_score(self):
         """Test risk score calculation."""
-        from attune_llm.agent_factory.crews import SecurityFinding, SecurityReport
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding, SecurityReport
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         # Empty report = 0 risk
         empty_report = SecurityReport(target="./src", findings=[])
@@ -152,8 +152,8 @@ class TestSecurityReport:
 
     def test_report_findings_by_category(self):
         """Test grouping findings by category."""
-        from attune_llm.agent_factory.crews import SecurityFinding, SecurityReport
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding, SecurityReport
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         findings = [
             SecurityFinding(
@@ -184,8 +184,8 @@ class TestSecurityReport:
 
     def test_report_to_dict(self):
         """Test converting report to dictionary."""
-        from attune_llm.agent_factory.crews import SecurityFinding, SecurityReport
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityFinding, SecurityReport
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         findings = [
             SecurityFinding(
@@ -217,7 +217,7 @@ class TestSecurityAuditConfig:
 
     def test_default_config(self):
         """Test default configuration values."""
-        from attune_llm.agent_factory.crews import SecurityAuditConfig
+        from attune.agent_factory.crews import SecurityAuditConfig
 
         config = SecurityAuditConfig()
 
@@ -231,7 +231,7 @@ class TestSecurityAuditConfig:
 
     def test_custom_config(self):
         """Test custom configuration."""
-        from attune_llm.agent_factory.crews import SecurityAuditConfig
+        from attune.agent_factory.crews import SecurityAuditConfig
 
         config = SecurityAuditConfig(
             provider="openai",
@@ -251,7 +251,7 @@ class TestSecurityAuditCrew:
 
     def test_crew_creation_with_config(self):
         """Test creating crew with config object."""
-        from attune_llm.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
 
         config = SecurityAuditConfig(
             api_key="test-key",
@@ -266,7 +266,7 @@ class TestSecurityAuditCrew:
 
     def test_crew_creation_with_kwargs(self):
         """Test creating crew with keyword arguments."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         crew = SecurityAuditCrew(
             api_key="test-key",
@@ -281,7 +281,7 @@ class TestSecurityAuditCrew:
     @pytest.mark.asyncio
     async def test_crew_initialization(self):
         """Test lazy initialization of crew agents."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         with tempfile.TemporaryDirectory() as tmpdir:
             crew = SecurityAuditCrew(
@@ -308,7 +308,7 @@ class TestSecurityAuditCrew:
     @pytest.mark.asyncio
     async def test_crew_agent_stats(self):
         """Test getting agent statistics."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         with tempfile.TemporaryDirectory() as tmpdir:
             crew = SecurityAuditCrew(
@@ -328,7 +328,7 @@ class TestSecurityAuditCrewParsing:
 
     def test_generate_summary_no_findings(self):
         """Test summary generation with no findings."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         crew = SecurityAuditCrew()
         summary = crew._generate_summary([])
@@ -337,8 +337,8 @@ class TestSecurityAuditCrewParsing:
 
     def test_generate_summary_with_findings(self):
         """Test summary generation with findings."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew, SecurityFinding
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityAuditCrew, SecurityFinding
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         crew = SecurityAuditCrew()
 
@@ -371,7 +371,7 @@ class TestSecurityAuditCrewParsing:
 
     def test_parse_text_findings(self):
         """Test parsing findings from text output."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         crew = SecurityAuditCrew()
 
@@ -389,8 +389,8 @@ class TestSecurityAuditCrewParsing:
 
     def test_dict_to_finding(self):
         """Test converting dictionary to finding."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory, Severity
+        from attune.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews.security_audit import FindingCategory, Severity
 
         crew = SecurityAuditCrew()
 
@@ -417,7 +417,7 @@ class TestSecurityAuditCrewWorkflow:
 
     def test_build_audit_task_standard(self):
         """Test building audit task description."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         crew = SecurityAuditCrew(scan_depth="standard")
 
@@ -430,7 +430,7 @@ class TestSecurityAuditCrewWorkflow:
 
     def test_build_audit_task_with_context(self):
         """Test building audit task with context."""
-        from attune_llm.agent_factory.crews import SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditCrew
 
         crew = SecurityAuditCrew(scan_depth="thorough")
 
@@ -449,7 +449,7 @@ class TestSecurityAuditCrewWorkflow:
         """Test audit execution with mocked workflow."""
         from unittest.mock import AsyncMock, MagicMock
 
-        from attune_llm.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
+        from attune.agent_factory.crews import SecurityAuditConfig, SecurityAuditCrew
 
         config = SecurityAuditConfig(
             memory_graph_enabled=False,
@@ -498,7 +498,7 @@ class TestSeverityEnum:
 
     def test_severity_values(self):
         """Test severity enum values."""
-        from attune_llm.agent_factory.crews.security_audit import Severity
+        from attune.agent_factory.crews.security_audit import Severity
 
         assert Severity.CRITICAL.value == "critical"
         assert Severity.HIGH.value == "high"
@@ -512,7 +512,7 @@ class TestFindingCategoryEnum:
 
     def test_category_values(self):
         """Test finding category enum values."""
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory
+        from attune.agent_factory.crews.security_audit import FindingCategory
 
         assert FindingCategory.INJECTION.value == "injection"
         assert FindingCategory.XSS.value == "cross_site_scripting"
@@ -521,7 +521,7 @@ class TestFindingCategoryEnum:
 
     def test_all_owasp_categories(self):
         """Test all OWASP Top 10 categories are represented."""
-        from attune_llm.agent_factory.crews.security_audit import FindingCategory
+        from attune.agent_factory.crews.security_audit import FindingCategory
 
         # Should have at least 10 categories (OWASP Top 10 + OTHER)
         assert len(FindingCategory) >= 10
@@ -532,7 +532,7 @@ class TestCrewExports:
 
     def test_public_exports(self):
         """Test public exports from crews module."""
-        from attune_llm.agent_factory.crews import (
+        from attune.agent_factory.crews import (
             SecurityAuditConfig,
             SecurityAuditCrew,
             SecurityFinding,

@@ -972,7 +972,7 @@ class WizardHotReloader:
 2. Risk-driven test coverage (prioritize high-risk paths)
 3. Templates for unit, integration, and E2E tests
 4. Fixture generation for common wizard patterns
-5. CLI command: `empathy wizard generate-tests <wizard_id>`
+5. CLI command: `attune wizard generate-tests <wizard_id>`
 
 **Files to Create:**
 - `test_generator/__init__.py`
@@ -1122,7 +1122,7 @@ class Test{{ wizard_class }}:
 - [ ] Risk analysis identifies critical paths
 - [ ] Generated tests achieve 80%+ coverage
 - [ ] Templates support customization
-- [ ] CLI command works: `empathy wizard generate-tests <wizard_id>`
+- [ ] CLI command works: `attune wizard generate-tests <wizard_id>`
 
 ---
 
@@ -1131,7 +1131,7 @@ class Test{{ wizard_class }}:
 **Goal:** CLI tool to scaffold new wizards using proven methodologies
 
 **Deliverables:**
-1. CLI command: `empathy wizard create <name> --methodology <method>`
+1. CLI command: `attune wizard create <name> --methodology <method>`
 2. 5 methodology templates (TDD-First, Pattern-Compose, Prototype-Refine, Risk-Driven, Empathy-Centered)
 3. Interactive wizard creation flow
 4. File generation for wizard, tests, docs

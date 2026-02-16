@@ -12,7 +12,7 @@ The configuration system provides flexible options for customizing Attune AI beh
 
 - **Direct instantiation**: Pass parameters to `EmpathyConfig()` or `EmpathyOS()`
 - **YAML/JSON files**: Load from `empathy.config.yml` or `empathy.config.json`
-- **Environment variables**: Use `EMPATHY_*` prefixed variables
+- **Environment variables**: Use `ATTUNE_*` prefixed variables (`EMPATHY_*` also accepted for backward compatibility)
 - **Validation**: Automatic validation on load with helpful error messages
 
 ## Quick Start
@@ -65,9 +65,9 @@ empathy = EmpathyOS.from_config(config)
 ### Environment Variables
 
 ```bash
-export EMPATHY_USER_ID="user_123"
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.75
+export ATTUNE_USER_ID="user_123"
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 ```
 
 ```python
@@ -344,31 +344,31 @@ config = EmpathyConfig(
 
 ## Environment Variable Reference
 
-All configuration options can be set via environment variables with the `EMPATHY_` prefix:
+All configuration options can be set via environment variables with the `ATTUNE_` prefix (`EMPATHY_` prefix is also accepted for backward compatibility):
 
 ```bash
 # Core settings
-export EMPATHY_USER_ID="user_123"
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.75
+export ATTUNE_USER_ID="user_123"
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 
 # Trust settings
-export EMPATHY_TRUST_BUILDING_RATE=0.05
-export EMPATHY_TRUST_EROSION_RATE=0.10
+export ATTUNE_TRUST_BUILDING_RATE=0.05
+export ATTUNE_TRUST_EROSION_RATE=0.10
 
 # Persistence settings
-export EMPATHY_PERSISTENCE_ENABLED=true
-export EMPATHY_PERSISTENCE_BACKEND=sqlite
-export EMPATHY_PERSISTENCE_PATH=.empathy
+export ATTUNE_PERSISTENCE_ENABLED=true
+export ATTUNE_PERSISTENCE_BACKEND=sqlite
+export ATTUNE_PERSISTENCE_PATH=.empathy
 
 # Metrics settings
-export EMPATHY_METRICS_ENABLED=true
-export EMPATHY_METRICS_PATH=.empathy/metrics.db
+export ATTUNE_METRICS_ENABLED=true
+export ATTUNE_METRICS_PATH=.empathy/metrics.db
 
 # Pattern library settings
-export EMPATHY_PATTERN_LIBRARY_ENABLED=true
-export EMPATHY_PATTERN_SHARING=false
-export EMPATHY_PATTERN_CONFIDENCE_THRESHOLD=0.70
+export ATTUNE_PATTERN_LIBRARY_ENABLED=true
+export ATTUNE_PATTERN_SHARING=false
+export ATTUNE_PATTERN_CONFIDENCE_THRESHOLD=0.70
 ```
 
 ## See Also

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def get_sessions_dir() -> Path:
     """Get the sessions directory path."""
-    return Path.home() / ".empathy" / "sessions"
+    return Path.home() / ".attune" / "sessions"
 
 
 def save_session_state(

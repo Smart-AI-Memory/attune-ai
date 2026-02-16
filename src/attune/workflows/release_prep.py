@@ -630,6 +630,8 @@ Warnings: {json.dumps(warnings, indent=2)}"""
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import RELEASE_PREP_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="release manager assessing release readiness",
                 goal="Provide a comprehensive release readiness assessment",
@@ -648,6 +650,7 @@ Warnings: {json.dumps(warnings, indent=2)}"""
                 ],
                 input_type="release_checks",
                 input_payload=input_payload,
+                examples=RELEASE_PREP_EXAMPLES,
                 extra={
                     "blocker_count": len(blockers),
                     "warning_count": len(warnings),

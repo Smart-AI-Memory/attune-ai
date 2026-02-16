@@ -2,7 +2,7 @@
  * Cost Tracking API Route
  *
  * Returns recent API requests with cost savings data from the
- * Empathy Framework cost tracker.
+ * Attune AI cost tracker.
  */
 
 export const dynamic = 'force-dynamic';
@@ -43,11 +43,11 @@ export async function GET(request: Request): Promise<Response> {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const days = parseInt(searchParams.get('days') || '7', 10);
 
-    // Try to find .empathy/costs.json in the project root
+    // Try to find .attune/costs.json in the project root
     const possiblePaths = [
-      path.join(process.cwd(), '..', '.empathy', 'costs.json'),
-      path.join(process.cwd(), '.empathy', 'costs.json'),
-      path.join(process.env.HOME || '', 'empathy_11_6_2025', 'Empathy-framework', '.empathy', 'costs.json'),
+      path.join(process.cwd(), '..', '.attune', 'costs.json'),
+      path.join(process.cwd(), '.attune', 'costs.json'),
+      path.join(process.env.HOME || '', '.attune', 'costs.json'),
     ];
 
     let costsData: CostData | null = null;

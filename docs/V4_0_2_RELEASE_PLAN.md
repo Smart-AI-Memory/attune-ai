@@ -38,7 +38,7 @@ python -m pytest tests/ -k health_check_crew -v
 python -m pytest tests/ -k release_prep_crew -v
 
 # 3. Does TestCoverageBoostCrew work standalone via CLI?
-empathy workflow run test-coverage-boost --input '{"path":"./src"}'
+attune workflow run test-coverage-boost --input '{"path":"./src"}'
 ```
 
 **Decision Criteria:**
@@ -73,7 +73,7 @@ empathy workflow run test-coverage-boost --input '{"path":"./src"}'
 **Testing Checklist:**
 - [ ] All existing tests pass: `pytest tests/ -v`
 - [ ] No regressions in performance: `pytest benchmarks/ --benchmark-only`
-- [ ] Manual smoke test: `empathy morning`, `empathy workflow run health-check`
+- [ ] Manual smoke test: `attune morning`, `attune workflow run health-check`
 - [ ] VS Code extension still works (basic functionality only)
 
 **Documentation Updates:**
@@ -104,7 +104,7 @@ git cherry-pick <commit-hash-for-health-check-crew>
 
 # 4. Test immediately after cherry-pick
 pytest tests/ -v
-empathy workflow run health-check --input '{"path":"."}'
+attune workflow run health-check --input '{"path":"."}'
 ```
 
 **If Nothing Works:** Skip this entirely. v4.0.2 will be bug fixes only. That's fine!
@@ -125,8 +125,8 @@ pytest benchmarks/ --benchmark-only
 python -m venv /tmp/test_venv
 source /tmp/test_venv/bin/activate
 pip install .
-empathy --help
-empathy workflow list
+attune --help
+attune workflow list
 deactivate
 ```
 

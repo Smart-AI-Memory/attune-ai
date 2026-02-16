@@ -560,7 +560,7 @@ export class CodeReviewPanelProvider implements vscode.WebviewViewProvider {
    - File: code_review.py
    - Add `_extract_findings_from_response()` helper
    - Start with SecurityAuditCrew findings (already structured)
-   - Test with: `empathy workflow run code-review --target src/auth`
+   - Test with: `attune workflow run code-review --target src/auth`
 
 3. **Implement `empathy.goToLocation` command** (1 hour)
    - File: extension.ts

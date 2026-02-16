@@ -55,7 +55,7 @@ coordinator.stop_heartbeat(final_status="completed")
 
 ```bash
 # View all active agents
-empathy telemetry agents
+attune telemetry agents
 
 # Example output:
 # 🤖 Active Agents
@@ -205,7 +205,7 @@ print(f"Received {len(signals)} checkpoint signals")
 
 ```bash
 # View pending signals for an agent
-empathy telemetry signals --agent my-agent-123
+attune telemetry signals --agent my-agent-123
 
 # Example output:
 # 📡 Coordination Signals for my-agent-123
@@ -413,10 +413,10 @@ Both patterns require Redis for storage:
 redis-server
 
 # Or use empathy command
-empathy memory start
+attune memory start
 
 # Verify Redis is running
-empathy memory status
+attune memory status
 ```
 
 **Memory Usage:**
@@ -477,7 +477,7 @@ AGENT HEARTBEAT TRACKING DEMONSTRATION
 
 ```bash
 # View all active agents
-empathy telemetry agents
+attune telemetry agents
 
 # No arguments needed - shows all tracked agents
 ```
@@ -486,10 +486,10 @@ empathy telemetry agents
 
 ```bash
 # View signals for a specific agent
-empathy telemetry signals --agent my-agent-123
+attune telemetry signals --agent my-agent-123
 
 # Shorter alias
-empathy telemetry signals -a my-agent-123
+attune telemetry signals -a my-agent-123
 ```
 
 ---

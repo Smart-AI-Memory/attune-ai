@@ -259,14 +259,14 @@ else:
 ## Next Steps (Optional Enhancements)
 
 ### Phase 4: Integration with Main CLI (Future)
-- Add `empathy auth` subcommand to main CLI router
-- Shorter command: `empathy auth setup` instead of `python -m attune.models.auth_cli setup`
+- Add `attune auth` subcommand to main CLI router
+- Shorter command: `attune auth setup` instead of `python -m attune.models.auth_cli setup`
 
 ### Phase 5: Additional Commands (Future)
 ```bash
-empathy auth validate    # Validate current configuration
-empathy auth optimize    # Suggest threshold adjustments based on usage
-empathy auth stats       # Show auth mode usage statistics
+attune auth validate    # Validate current configuration
+attune auth optimize    # Suggest threshold adjustments based on usage
+attune auth stats       # Show auth mode usage statistics
 ```
 
 ---

@@ -172,7 +172,7 @@ class TestEmpathyConfigDefaults:
         assert "bob" in r
         assert "target_level=2" in r
         assert "0.5" in r
-        assert r.startswith("EmpathyConfig(")
+        assert r.startswith("AttuneConfig(") or r.startswith("EmpathyConfig(")
 
 
 # ---------------------------------------------------------------------------

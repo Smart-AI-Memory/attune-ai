@@ -610,7 +610,7 @@ class SemanticGoalMatcher:
         """
         # Default storage path
         if storage_path is None:
-            storage_path = Path.home() / ".empathy" / "socratic" / "embeddings.json"
+            storage_path = Path.home() / ".attune" / "socratic" / "embeddings.json"
 
         # Create embedding provider
         if provider == "anthropic":

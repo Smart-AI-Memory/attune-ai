@@ -45,13 +45,13 @@ Initialize a new project with an interactive configuration wizard:
 
 ```bash
 # Interactive setup wizard (recommended)
-empathy init
+attune init
 
 # Non-interactive with defaults
-empathy init --non-interactive
+attune init --non-interactive
 
 # Overwrite existing config
-empathy init --force
+attune init --force
 ```
 
 The wizard guides you through:
@@ -255,10 +255,10 @@ Mark investigating bug patterns as resolved with root cause and fix:
 
 ```bash
 # List all investigating bugs
-empathy patterns resolve
+attune patterns resolve
 
 # Resolve a specific bug
-empathy patterns resolve bug_20251212_3c5b9951 \
+attune patterns resolve bug_20251212_3c5b9951 \
   --root-cause "Missing null check on API response" \
   --fix "Added optional chaining operator" \
   --fix-code "data?.items ?? []" \
@@ -280,19 +280,19 @@ Review code against historical bug patterns:
 
 ```bash
 # Review recent changes
-empathy review
+attune review
 
 # Review staged changes only
-empathy review --staged
+attune review --staged
 
 # Review specific files
-empathy review src/api.py src/utils.py
+attune review src/api.py src/utils.py
 
 # Set minimum severity threshold
-empathy review --severity warning
+attune review --severity warning
 
 # Output as JSON
-empathy review --json
+attune review --json
 ```
 
 Output:
@@ -323,19 +323,19 @@ Get a prioritized status report of your project when you return after a break:
 
 ```bash
 # Show status (only if enough time has passed since last interaction)
-empathy status
+attune status
 
 # Force show status regardless of inactivity
-empathy status --force
+attune status --force
 
 # Show all items (no limit)
-empathy status --full
+attune status --full
 
 # Output as JSON
-empathy status --json
+attune status --json
 
 # Select an item to get its action prompt
-empathy status --select 1
+attune status --select 1
 ```
 
 Output:
@@ -375,7 +375,7 @@ Items are prioritized by severity:
 Select an item number to get its full action prompt:
 
 ```bash
-empathy status --force --select 1
+attune status --force --select 1
 ```
 
 Output:
@@ -384,7 +384,7 @@ Action prompt for selection 1:
 
 Continue investigating bug bug_20251212_97c0f72f:
 TypeError: Cannot read property 'map' of undefined.
-Use: empathy patterns resolve bug_20251212_97c0f72f --root-cause '<cause>' --fix '<fix>'
+Use: attune patterns resolve bug_20251212_97c0f72f --root-cause '<cause>' --fix '<fix>'
 ```
 
 #### Configuration
@@ -392,7 +392,7 @@ Use: empathy patterns resolve bug_20251212_97c0f72f --root-cause '<cause>' --fix
 Set inactivity threshold (default: 60 minutes):
 
 ```bash
-empathy status --inactivity 30  # Show after 30 min of inactivity
+attune status --inactivity 30  # Show after 30 min of inactivity
 ```
 
 ---
@@ -404,7 +404,7 @@ empathy status --inactivity 30  # Show after 30 min of inactivity
 Run fast health checks (lint, format, types):
 
 ```bash
-empathy health
+attune health
 ```
 
 Output:
@@ -423,7 +423,7 @@ Output:
 Run all health checks including tests, security, and dependencies:
 
 ```bash
-empathy health --deep
+attune health --deep
 ```
 
 #### Specific Check
@@ -431,12 +431,12 @@ empathy health --deep
 Run only a specific category of health checks:
 
 ```bash
-empathy health --check lint
-empathy health --check format
-empathy health --check types
-empathy health --check tests
-empathy health --check security
-empathy health --check deps
+attune health --check lint
+attune health --check format
+attune health --check types
+attune health --check tests
+attune health --check security
+attune health --check deps
 ```
 
 #### Auto-Fix Issues
@@ -444,42 +444,42 @@ empathy health --check deps
 Preview what would be fixed:
 
 ```bash
-empathy health --fix --dry-run
+attune health --fix --dry-run
 ```
 
 Apply safe fixes automatically:
 
 ```bash
-empathy health --fix
+attune health --fix
 ```
 
 Fix specific category:
 
 ```bash
-empathy health --fix --check lint
+attune health --fix --check lint
 ```
 
 Interactive mode (prompt for non-safe fixes):
 
 ```bash
-empathy health --fix --interactive
+attune health --fix --interactive
 ```
 
 #### Detail Levels
 
 Summary view (default):
 ```bash
-empathy health
+attune health
 ```
 
 Details view (shows individual issues):
 ```bash
-empathy health --details
+attune health --details
 ```
 
 Full report:
 ```bash
-empathy health --full
+attune health --full
 ```
 
 #### Health Trends
@@ -487,7 +487,7 @@ empathy health --full
 View health trends over time:
 
 ```bash
-empathy health --trends 30  # Last 30 days
+attune health --trends 30  # Last 30 days
 ```
 
 Output:
@@ -512,7 +512,7 @@ Recent scores:
 Get machine-readable output:
 
 ```bash
-empathy health --json
+attune health --json
 ```
 
 ---
@@ -551,10 +551,10 @@ attune-ai state list
 attune-ai init --format yaml --output prod-config.yml
 
 # 2. Set production values via environment variables
-export EMPATHY_USER_ID=prod_system
-export EMPATHY_TARGET_LEVEL=5
-export EMPATHY_PERSISTENCE_BACKEND=sqlite
-export EMPATHY_METRICS_ENABLED=true
+export ATTUNE_USER_ID=prod_system
+export ATTUNE_TARGET_LEVEL=5
+export ATTUNE_PERSISTENCE_BACKEND=sqlite
+export ATTUNE_METRICS_ENABLED=true
 
 # 3. Validate combined config (file + env)
 attune-ai validate prod-config.yml
@@ -643,15 +643,15 @@ leverage_point_analysis: true
 
 ### Environment Variables
 
-All configuration fields can be set via environment variables with the `EMPATHY_` prefix:
+All configuration fields can be set via environment variables with the `ATTUNE_` prefix (`EMPATHY_` prefix is also accepted for backward compatibility):
 
 ```bash
-export EMPATHY_USER_ID=alice
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.8
-export EMPATHY_PERSISTENCE_ENABLED=true
-export EMPATHY_PERSISTENCE_BACKEND=sqlite
-export EMPATHY_METRICS_ENABLED=true
+export ATTUNE_USER_ID=alice
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.8
+export ATTUNE_PERSISTENCE_ENABLED=true
+export ATTUNE_PERSISTENCE_BACKEND=sqlite
+export ATTUNE_METRICS_ENABLED=true
 ```
 
 Boolean values can be: `true`, `false`, `1`, `0`, `yes`, `no`
@@ -660,44 +660,44 @@ Boolean values can be: `true`, `false`, `1`, `0`, `yes`, `no`
 
 ### Code Inspection Pipeline (New in v2.2.9)
 
-The `empathy-inspect` command provides a unified code inspection pipeline that combines multiple static analysis tools with cross-tool intelligence and pattern learning.
+The `attune-inspect` command provides a unified code inspection pipeline that combines multiple static analysis tools with cross-tool intelligence and pattern learning.
 
 #### Basic Usage
 
 ```bash
 # Inspect current directory
-empathy-inspect .
+attune-inspect .
 
 # Inspect specific path
-empathy-inspect ./src
+attune-inspect ./src
 
 # Quick mode (skip slow checks)
-empathy-inspect . --quick
+attune-inspect . --quick
 
 # Verbose output
-empathy-inspect . --verbose
+attune-inspect . --verbose
 ```
 
 #### Output Formats
 
 ```bash
 # Terminal output (default)
-empathy-inspect .
+attune-inspect .
 
 # JSON output
-empathy-inspect . --format json
+attune-inspect . --format json
 
 # Markdown report
-empathy-inspect . --format markdown
+attune-inspect . --format markdown
 
 # SARIF for GitHub Actions
-empathy-inspect . --format sarif
+attune-inspect . --format sarif
 
 # HTML dashboard
-empathy-inspect . --format html
+attune-inspect . --format html
 
 # Save report to file
-empathy-inspect . --format html --output report.html
+attune-inspect . --format html --output report.html
 ```
 
 **SARIF Integration (GitHub Actions example):**
@@ -707,7 +707,7 @@ SARIF is an industry standard supported by GitHub, GitLab, Azure DevOps, Bitbuck
 ```yaml
 # .github/workflows/code-quality.yml
 - name: Run Empathy Inspect
-  run: empathy-inspect . --format sarif --output results.sarif
+  run: attune-inspect . --format sarif --output results.sarif
 
 - name: Upload SARIF
   uses: github/codeql-action/upload-sarif@v2
@@ -719,23 +719,23 @@ SARIF is an industry standard supported by GitHub, GitLab, Azure DevOps, Bitbuck
 
 ```bash
 # Inspect all files (default)
-empathy-inspect .
+attune-inspect .
 
 # Only staged git changes
-empathy-inspect . --staged
+attune-inspect . --staged
 
 # Only changed files vs HEAD
-empathy-inspect . --changed
+attune-inspect . --changed
 
 # Exclude patterns
-empathy-inspect . --exclude "**/*.test.py" --exclude "**/migrations/*"
+attune-inspect . --exclude "**/*.test.py" --exclude "**/migrations/*"
 ```
 
 #### Auto-Fix
 
 ```bash
 # Auto-fix safe issues (formatting, imports)
-empathy-inspect . --fix
+attune-inspect . --fix
 ```
 
 #### Baseline & Suppression System
@@ -744,16 +744,16 @@ Manage false positives and known issues without cluttering your codebase:
 
 ```bash
 # Initialize baseline file
-empathy-inspect . --baseline-init
+attune-inspect . --baseline-init
 
 # Run inspection (baseline filtering enabled by default)
-empathy-inspect .
+attune-inspect .
 
 # Show all findings including suppressed
-empathy-inspect . --no-baseline
+attune-inspect . --no-baseline
 
 # Clean up expired suppressions
-empathy-inspect . --baseline-cleanup
+attune-inspect . --baseline-cleanup
 ```
 
 **Inline Suppressions:**
@@ -804,20 +804,20 @@ result = calculate()
 
 ```bash
 # Run Phase 1 tools in parallel (default)
-empathy-inspect .
+attune-inspect .
 
 # Disable parallel execution
-empathy-inspect . --no-parallel
+attune-inspect . --no-parallel
 ```
 
 #### Pattern Learning
 
 ```bash
 # Enable pattern learning (default)
-empathy-inspect .
+attune-inspect .
 
 # Disable pattern learning
-empathy-inspect . --no-learning
+attune-inspect . --no-learning
 ```
 
 #### Example Output
@@ -847,7 +847,7 @@ empathy-inspect . --no-learning
 
   RECOMMENDATIONS:
     1. [HIGH] Address 1 high-severity findings
-    2. [LOW] Auto-fix 5 issues with `empathy-inspect --fix`
+    2. [LOW] Auto-fix 5 issues with `attune-inspect --fix`
 
 ============================================================
   Duration: 2341ms
@@ -895,13 +895,13 @@ Predict bugs by analyzing code against learned patterns:
 
 ```bash
 # Scan current directory
-empathy workflow run bug-predict
+attune workflow run bug-predict
 
 # Scan specific path
-empathy workflow run bug-predict --input '{"path":"./src"}'
+attune workflow run bug-predict --input '{"path":"./src"}'
 
 # JSON output for CI/CD
-empathy workflow run bug-predict --json
+attune workflow run bug-predict --json
 ```
 
 #### Understanding Scanner Results
@@ -964,16 +964,16 @@ Sync learned patterns to Claude Code's native rules directory:
 
 ```bash
 # One-time sync
-empathy-sync-claude
+attune-sync-claude
 
 # Watch for changes and auto-sync
-empathy-sync-claude --watch
+attune-sync-claude --watch
 
 # Preview without writing
-empathy-sync-claude --dry-run
+attune-sync-claude --dry-run
 
 # Verbose output
-empathy-sync-claude --verbose
+attune-sync-claude --verbose
 ```
 
 **Output structure:**
@@ -996,53 +996,53 @@ Claude Code automatically loads these rules at session start, giving it access t
 
 ```bash
 # Code Health
-empathy health                    # Quick health check
-empathy health --deep             # Comprehensive analysis
-empathy health --fix              # Auto-fix safe issues
-empathy health --check lint       # Run specific check
+attune health                    # Quick health check
+attune health --deep             # Comprehensive analysis
+attune health --fix              # Auto-fix safe issues
+attune health --check lint       # Run specific check
 
 # Code Review
-empathy review                    # Review recent changes
-empathy review --staged           # Staged changes only
+attune review                    # Review recent changes
+attune review --staged           # Staged changes only
 
 # Code Inspection
-empathy-inspect .                 # Inspect current directory
-empathy-inspect . --fix           # Auto-fix formatting/imports
-empathy-inspect . --format sarif  # SARIF for GitHub Actions
-empathy-inspect . --format html   # HTML dashboard
+attune-inspect .                 # Inspect current directory
+attune-inspect . --fix           # Auto-fix formatting/imports
+attune-inspect . --format sarif  # SARIF for GitHub Actions
+attune-inspect . --format html   # HTML dashboard
 ```
 
 ### Memory & Patterns
 
 ```bash
 # Memory Control Panel
-empathy-memory serve              # Start Redis + API (recommended)
-empathy-memory status             # Show memory status
-empathy-memory patterns           # List stored patterns
+attune-memory serve              # Start Redis + API (recommended)
+attune-memory status             # Show memory status
+attune-memory patterns           # List stored patterns
 
 # Pattern Management
-empathy patterns list             # List patterns
-empathy patterns resolve <id>     # Mark bug as resolved
+attune patterns list             # List patterns
+attune patterns resolve <id>     # Mark bug as resolved
 
 # Claude Code Sync
-empathy-sync-claude               # Sync to .claude/rules/attune/
-empathy-sync-claude --watch       # Auto-sync on changes
+attune-sync-claude               # Sync to .claude/rules/attune/
+attune-sync-claude --watch       # Auto-sync on changes
 ```
 
 ### Quick Workflows
 
 ```bash
 # Morning check
-empathy health --deep && empathy status
+attune health --deep && attune status
 
 # Before commit
-empathy review --staged && empathy-inspect . --staged --quick
+attune review --staged && attune-inspect . --staged --quick
 
 # Fix everything
-empathy health --fix && empathy-inspect . --fix
+attune health --fix && attune-inspect . --fix
 
 # Sync to Claude Code
-empathy-sync-claude --verbose
+attune-sync-claude --verbose
 ```
 
 ### CI/CD Integration
@@ -1050,7 +1050,7 @@ empathy-sync-claude --verbose
 **GitHub Actions (SARIF):**
 ```yaml
 - name: Run Empathy Inspect
-  run: empathy-inspect . --format sarif -o results.sarif
+  run: attune-inspect . --format sarif -o results.sarif
 
 - name: Upload SARIF
   uses: github/codeql-action/upload-sarif@v2
@@ -1065,7 +1065,7 @@ repos:
     hooks:
       - id: empathy-review
         name: Pattern-based review
-        entry: empathy review --staged --severity error
+        entry: attune review --staged --severity error
         language: system
         pass_filenames: false
 ```
@@ -1074,8 +1074,8 @@ repos:
 
 ```bash
 ANTHROPIC_API_KEY=sk-...          # Claude API key
-EMPATHY_CONFIG=./config.yaml      # Custom config path
-EMPATHY_LOG_LEVEL=DEBUG           # Logging level
+ATTUNE_CONFIG=./config.yaml       # Custom config path
+ATTUNE_LOG_LEVEL=DEBUG            # Logging level
 REDIS_URL=redis://localhost:6379  # Redis connection
 ```
 
@@ -1086,11 +1086,11 @@ REDIS_URL=redis://localhost:6379  # Redis connection
 For more information on any command:
 
 ```bash
-empathy --help
-empathy <command> --help
-empathy-inspect --help
-empathy-memory --help
-empathy-sync-claude --help
+attune --help
+attune <command> --help
+attune-inspect --help
+attune-memory --help
+attune-sync-claude --help
 ```
 
 For bugs and feature requests, visit:

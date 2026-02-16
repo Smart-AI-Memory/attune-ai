@@ -183,7 +183,7 @@ telemetry.track_workflow_completion(result)
 **Privacy:**
 - User IDs are SHA256 hashed
 - No prompts, responses, or PII stored
-- Local-only storage (~/.empathy/telemetry/)
+- Local-only storage (~/.attune/telemetry/)
 
 ### 4. CLI Tools
 

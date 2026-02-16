@@ -237,9 +237,9 @@ patterns = os.search_patterns(query)      # Search
 ```python
 # Auto-select based on environment
 def get_storage_backend():
-    if os.getenv("EMPATHY_STORAGE_URL"):
+    if os.getenv("ATTUNE_STORAGE_URL"):
         # Remote database (enterprise)
-        return RemoteStorageBackend(os.getenv("EMPATHY_STORAGE_URL"))
+        return RemoteStorageBackend(os.getenv("ATTUNE_STORAGE_URL"))
     elif Path("~/.empathy/patterns.db").exists():
         # SQLite (individual developer)
         return SQLiteBackend()

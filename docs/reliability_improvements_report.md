@@ -63,7 +63,7 @@ This is a solid base; the main risks now are around **configuration**, **timeout
      - If malformed YAML/JSON: surface a specific `ConfigError` with filename and pointer.
    - Recommendation:
      - Introduce a small “config health check”:
-       - At framework startup or CLI command `empathy workflows doctor`, run:
+       - At framework startup or CLI command `attune workflows doctor`, run:
          - Load `WorkflowConfig` for each workflow.
          - Validate that providers in config exist in `MODEL_REGISTRY`.
          - Validate `workflow_xml_configs` entries map to known templates.
@@ -130,7 +130,7 @@ You have a strong design in `docs/design/MULTI_MODEL_ARCHITECTURE_SPEC.md` and t
 
 1. **Scheduled registry validation and warnings**
 
-   - Add a CLI command `empathy models validate` that:
+   - Add a CLI command `attune models validate` that:
      - Verifies all `MODEL_REGISTRY` entries:
        - Have strictly positive and reasonable cost values.
        - Use existing provider/tier keys.
@@ -209,8 +209,8 @@ Telemetry is crucial to reliability: without good observability, it’s hard to 
        - Move old records from hot → warm → cold → archive.
        - Compress files after `compress_after_days`.
    - Provide a CLI:
-     - `empathy telemetry cleanup --dry-run`
-     - `empathy telemetry cleanup --apply`.
+     - `attune telemetry cleanup --dry-run`
+     - `attune telemetry cleanup --apply`.
    - Optionally:
      - Surface basic telemetry health in the dashboard (e.g., “Telemetry storage healthy / nearing quota / in error”).
 
@@ -374,7 +374,7 @@ To make reliability improvements stick:
 
    - Tests to ensure:
      - Every provider/tier in `MODEL_REGISTRY` has a matching entry in `TASK_TIER_MAP` or is otherwise documented.
-     - CLI `empathy models registry` returns consistent structures that the dashboard expects.
+     - CLI `attune models registry` returns consistent structures that the dashboard expects.
 
 3. **Add VS Code extension smoke test / QA checklist**
 

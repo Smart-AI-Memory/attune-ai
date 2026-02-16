@@ -7,7 +7,7 @@ interface GitHubStarsBadgeProps {
 }
 
 export default function GitHubStarsBadge({
-  repo = 'Smart-AI-Memory/empathy-framework'
+  repo = 'Smart-AI-Memory/attune-ai'
 }: GitHubStarsBadgeProps) {
   const [stars, setStars] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);

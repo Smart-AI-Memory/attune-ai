@@ -214,6 +214,26 @@ class TestFromEnvCoverage:
 
 
 @pytest.mark.unit
+class TestAttuneEnvPrefix:
+    """Test ATTUNE_ prefix env vars for XML config."""
+
+    def test_attune_xml_enabled(self, monkeypatch):
+        """Test ATTUNE_XML_ENABLED env var works."""
+        monkeypatch.setenv("ATTUNE_XML_ENABLED", "false")
+
+        config = EmpathyXMLConfig.from_env()
+        assert config.xml.use_xml_structure is False
+
+    def test_attune_prefix_takes_precedence(self, monkeypatch):
+        """Test ATTUNE_ wins over EMPATHY_ for XML config."""
+        monkeypatch.setenv("ATTUNE_OPTIMIZATION_LEVEL", "aggressive")
+        monkeypatch.setenv("EMPATHY_OPTIMIZATION_LEVEL", "light")
+
+        config = EmpathyXMLConfig.from_env()
+        assert config.optimization.compression_level == "aggressive"
+
+
+@pytest.mark.unit
 class TestSaveToFileEdgeCases:
     """Test edge cases in save_to_file method."""
 

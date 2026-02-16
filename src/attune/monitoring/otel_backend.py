@@ -4,14 +4,14 @@ Exports telemetry data to OTEL-compatible collectors (SigNoz, Datadog, New Relic
 
 **Features:**
 - Auto-detection of OTEL collector (localhost:4317)
-- Environment variable configuration (EMPATHY_OTEL_ENDPOINT)
+- Environment variable configuration (ATTUNE_OTEL_ENDPOINT)
 - Semantic conventions for LLM traces
 - Batch export with retry logic
 - Graceful fallback if collector unavailable
 
 **Setup:**
 ```bash
-export EMPATHY_OTEL_ENDPOINT=http://localhost:4317
+export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
 pip install empathy-framework[otel]
 ```
 
@@ -19,7 +19,6 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import os
 import socket
 
 from attune.models.telemetry import LLMCallRecord, WorkflowRunRecord
@@ -87,7 +86,9 @@ class OTELBackend:
             OTEL collector endpoint URL
         """
         # Check environment variable
-        endpoint = os.getenv("EMPATHY_OTEL_ENDPOINT")
+        from attune.config.env_compat import get_attune_env
+
+        endpoint = get_attune_env("OTEL_ENDPOINT")
         if endpoint:
             return endpoint
 

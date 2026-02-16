@@ -102,18 +102,20 @@ class MemoryConfig:
     def from_environment(cls) -> "MemoryConfig":
         """Create configuration from environment variables.
 
-        Environment Variables:
-            EMPATHY_ENV: Environment (development/staging/production)
-            EMPATHY_FILE_SESSION: Enable file-based session (true/false, default: true)
-            EMPATHY_FILE_SESSION_DIR: Directory for file-based storage
+        Environment Variables (ATTUNE_ prefix preferred, EMPATHY_ also accepted):
+            ATTUNE_ENV: Environment (development/staging/production)
+            ATTUNE_FILE_SESSION: Enable file-based session (true/false, default: true)
+            ATTUNE_FILE_SESSION_DIR: Directory for file-based storage
             REDIS_URL: Redis connection URL
-            EMPATHY_REDIS_MOCK: Use mock Redis (true/false)
-            EMPATHY_REDIS_AUTO_START: Auto-start Redis (true/false, default: false)
-            EMPATHY_REDIS_REQUIRED: Fail without Redis (true/false, default: false)
-            EMPATHY_STORAGE_DIR: Long-term storage directory
-            EMPATHY_ENCRYPTION: Enable encryption (true/false)
+            ATTUNE_REDIS_MOCK: Use mock Redis (true/false)
+            ATTUNE_REDIS_AUTO_START: Auto-start Redis (true/false, default: false)
+            ATTUNE_REDIS_REQUIRED: Fail without Redis (true/false, default: false)
+            ATTUNE_STORAGE_DIR: Long-term storage directory
+            ATTUNE_ENCRYPTION: Enable encryption (true/false)
         """
-        env_str = os.getenv("EMPATHY_ENV", "development").lower()
+        from attune.config.env_compat import get_attune_env
+
+        env_str = (get_attune_env("ENV", "development") or "development").lower()
         environment = (
             Environment(env_str)
             if env_str in [e.value for e in Environment]
@@ -123,23 +125,29 @@ class MemoryConfig:
         return cls(
             environment=environment,
             # File-first settings (always available)
-            file_session_enabled=os.getenv("ATTUNE_FILE_SESSION", "true").lower() == "true",
-            file_session_dir=os.getenv("ATTUNE_FILE_SESSION_DIR", ".attune"),
+            file_session_enabled=(get_attune_env("FILE_SESSION", "true") or "true").lower()
+            == "true",
+            file_session_dir=get_attune_env("FILE_SESSION_DIR", ".attune") or ".attune",
             # Redis settings (optional)
             redis_url=os.getenv("REDIS_URL"),
-            redis_host=os.getenv("EMPATHY_REDIS_HOST", "localhost"),
-            redis_port=int(os.getenv("EMPATHY_REDIS_PORT", "6379")),
-            redis_mock=os.getenv("EMPATHY_REDIS_MOCK", "").lower() == "true",
-            redis_auto_start=os.getenv("EMPATHY_REDIS_AUTO_START", "false").lower() == "true",
-            redis_required=os.getenv("EMPATHY_REDIS_REQUIRED", "false").lower() == "true",
-            # Long-term storage
-            storage_dir=os.getenv("EMPATHY_STORAGE_DIR", "./memdocs_storage"),
-            encryption_enabled=os.getenv("EMPATHY_ENCRYPTION", "true").lower() == "true",
-            claude_memory_enabled=os.getenv("EMPATHY_CLAUDE_MEMORY", "true").lower() == "true",
-            # Compact state
-            auto_generate_compact_state=os.getenv("EMPATHY_AUTO_COMPACT_STATE", "true").lower()
+            redis_host=get_attune_env("REDIS_HOST", "localhost") or "localhost",
+            redis_port=int(get_attune_env("REDIS_PORT", "6379") or "6379"),
+            redis_mock=(get_attune_env("REDIS_MOCK", "") or "").lower() == "true",
+            redis_auto_start=(get_attune_env("REDIS_AUTO_START", "false") or "false").lower()
             == "true",
-            compact_state_path=os.getenv("EMPATHY_COMPACT_STATE_PATH", ".claude/compact-state.md"),
+            redis_required=(get_attune_env("REDIS_REQUIRED", "false") or "false").lower() == "true",
+            # Long-term storage
+            storage_dir=get_attune_env("STORAGE_DIR", "./memdocs_storage") or "./memdocs_storage",
+            encryption_enabled=(get_attune_env("ENCRYPTION", "true") or "true").lower() == "true",
+            claude_memory_enabled=(get_attune_env("CLAUDE_MEMORY", "true") or "true").lower()
+            == "true",
+            # Compact state
+            auto_generate_compact_state=(
+                get_attune_env("AUTO_COMPACT_STATE", "true") or "true"
+            ).lower()
+            == "true",
+            compact_state_path=get_attune_env("COMPACT_STATE_PATH", ".claude/compact-state.md")
+            or ".claude/compact-state.md",
         )
 
 

@@ -380,6 +380,8 @@ Severity Summary:
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import DEPENDENCY_CHECK_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="security engineer specializing in dependency management",
                 goal="Generate a comprehensive dependency security report with remediation steps",
@@ -397,6 +399,7 @@ Severity Summary:
                 ],
                 input_type="dependency_vulnerabilities",
                 input_payload=input_payload,
+                examples=DEPENDENCY_CHECK_EXAMPLES,
                 extra={
                     "risk_score": risk_score,
                     "risk_level": risk_level,

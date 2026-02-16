@@ -38,12 +38,12 @@ const docsItems = [
   },
   {
     label: 'README',
-    href: 'https://github.com/Smart-AI-Memory/empathy-framework#readme',
+    href: 'https://github.com/Smart-AI-Memory/attune-ai#readme',
     description: 'Project overview on GitHub',
   },
   {
     label: 'Changelog',
-    href: 'https://github.com/Smart-AI-Memory/empathy-framework/blob/main/CHANGELOG.md',
+    href: 'https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md',
     description: 'Version history and updates',
   },
 ];
@@ -208,11 +208,11 @@ export default function Navigation() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com/Smart-AI-Memory/empathy-framework"
+              href="https://github.com/Smart-AI-Memory/attune-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
-              aria-label="View Empathy on GitHub"
+              aria-label="View Attune AI on GitHub"
               title="View on GitHub"
             >
               <svg

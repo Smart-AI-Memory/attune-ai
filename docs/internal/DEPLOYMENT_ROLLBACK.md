@@ -216,10 +216,10 @@ After fixing the issue that caused the rollback:
 2. **Docker Testing**
    ```bash
    # Build Docker image locally
-   docker build -t empathy-test .
+   docker build -t attune-test .
 
    # Run container
-   docker run -p 3000:3000 empathy-test
+   docker run -p 3000:3000 attune-test
 
    # Test at localhost:3000
    ```
@@ -253,7 +253,7 @@ Keep a record of rollbacks for pattern analysis:
 To minimize need for rollbacks:
 
 1. **Pre-deployment Checks**
-   - Run `empathy health` before pushing
+   - Run `attune health` before pushing
    - Check Docker build locally
    - Review code review report
    - Verify all tests pass

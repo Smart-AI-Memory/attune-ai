@@ -95,7 +95,7 @@ For quick experiments without Redis:
 
 ```python
 import os
-os.environ["EMPATHY_REDIS_MOCK"] = "true"
+os.environ["ATTUNE_REDIS_MOCK"] = "true"
 
 from attune import EmpathyOS
 empathy = EmpathyOS(user_id="test")  # Uses in-memory mock
@@ -200,11 +200,11 @@ def check_redis():
         print("[OK] Redis connected")
         return True
     except Exception as e:
-        if os.getenv("EMPATHY_REDIS_MOCK") == "true":
+        if os.getenv("ATTUNE_REDIS_MOCK") == "true":
             print("[OK] Redis mock mode enabled")
             return True
         print(f"[WARN] Redis not available: {e}")
-        print("       Set EMPATHY_REDIS_MOCK=true to use mock mode")
+        print("       Set ATTUNE_REDIS_MOCK=true to use mock mode")
         return False
 
 def check_api_keys():

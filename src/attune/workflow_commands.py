@@ -44,7 +44,7 @@ def _load_patterns(patterns_dir: str = "./patterns") -> dict[str, list]:
     return patterns
 
 
-def _load_stats(empathy_dir: str = ".empathy") -> dict[str, Any]:
+def _load_stats(empathy_dir: str = ".attune") -> dict[str, Any]:
     """Load usage statistics."""
     stats_file = Path(empathy_dir) / "stats.json"
     if stats_file.exists():
@@ -58,7 +58,7 @@ def _load_stats(empathy_dir: str = ".empathy") -> dict[str, Any]:
     return {"commands": {}, "last_session": None, "patterns_learned": 0}
 
 
-def _save_stats(stats: dict, empathy_dir: str = ".empathy") -> None:
+def _save_stats(stats: dict, empathy_dir: str = ".attune") -> None:
     """Save usage statistics."""
     stats_dir = Path(empathy_dir)
     stats_dir.mkdir(parents=True, exist_ok=True)
@@ -440,22 +440,11 @@ def ship_workflow(
     # 5. Sync to Claude (optional)
     if not skip_sync:
         print("5. Syncing patterns to Claude Code...")
-        # Import here to avoid circular imports
-        try:
-            from pathlib import Path
-
-            from attune_llm.cli.sync_claude import sync_patterns
-
-            result = sync_patterns(project_root=Path(), verbose=False)
-            synced_count = len(result.get("synced", []))
-            if synced_count > 0:
-                print(f"   PASS - {synced_count} patterns synced")
-            else:
-                print("   SKIP - No patterns to sync")
-        except ImportError:
+        success, output = _run_command("attune sync-claude", capture=True)
+        if success:
+            print("   PASS - Patterns synced")
+        else:
             print("   SKIP - sync-claude not available")
-        except Exception as e:
-            print(f"   SKIP - {e}")
     else:
         print("5. Skipping Claude sync (--skip-sync)")
 

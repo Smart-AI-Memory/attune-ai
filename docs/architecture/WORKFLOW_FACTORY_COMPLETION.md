@@ -43,7 +43,7 @@ Successfully built a complete Workflow Factory system that enables creating work
 - **Files:** `workflow_scaffolding/` (5 files)
 
 ### Phase 5: CLI Integration ✅
-- Integrated with empathy CLI (`empathy workflow create`)
+- Integrated with empathy CLI (`attune workflow create`)
 - Added 3 new commands to workflow_app
 - Updated cheatsheet
 - **Modified:** `src/attune/cli_unified.py`
@@ -134,29 +134,29 @@ Successfully built a complete Workflow Factory system that enables creating work
 
 ```bash
 # Simple workflow
-empathy workflow create my-workflow
+attune workflow create my-workflow
 
 # Code analysis workflow
-empathy workflow create bug-scanner \
+attune workflow create bug-scanner \
   --patterns multi-stage,code-scanner,conditional-tier \
   --description "Scan code for bugs"
 
 # Multi-agent workflow
-empathy workflow create security-crew \
+attune workflow create security-crew \
   --patterns crew-based,result-dataclass
 ```
 
 ### List Patterns
 
 ```bash
-empathy workflow list-patterns
+attune workflow list-patterns
 ```
 
 ### Get Recommendations
 
 ```bash
-empathy workflow recommend code-analysis
-empathy workflow recommend multi-agent
+attune workflow recommend code-analysis
+attune workflow recommend multi-agent
 ```
 
 ---
@@ -204,7 +204,7 @@ empathy workflow recommend multi-agent
 ```
 User Request
      ↓
-CLI Parser (empathy workflow create)
+CLI Parser (attune workflow create)
      ↓
 WorkflowGenerator
      ↓
@@ -313,7 +313,7 @@ ALL TESTS PASSED ✓
 4. **Testing**
    - Integration with test generator
    - Risk-based test prioritization
-   - `empathy workflow generate-tests` command
+   - `attune workflow generate-tests` command
 
 ---
 
@@ -385,17 +385,17 @@ ALL TESTS PASSED ✓
 
 1. **Try it out:**
    ```bash
-   empathy workflow create my-first-workflow --patterns multi-stage
+   attune workflow create my-first-workflow --patterns multi-stage
    ```
 
 2. **Review patterns:**
    ```bash
-   empathy workflow list-patterns
+   attune workflow list-patterns
    ```
 
 3. **Get recommendations:**
    ```bash
-   empathy workflow recommend code-analysis
+   attune workflow recommend code-analysis
    ```
 
 4. **Read the quickstart:**

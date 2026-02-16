@@ -172,10 +172,10 @@ TOTAL: 58/64 tests passing (91% pass rate)
 All progressive commands verified working:
 
 ```bash
-✅ empathy progressive list       # Shows workflow results
-✅ empathy progressive show <id>  # Detailed reports
-✅ empathy progressive analytics  # Cost savings analytics
-✅ empathy progressive cleanup    # Retention policy cleanup
+✅ attune progressive list       # Shows workflow results
+✅ attune progressive show <id>  # Detailed reports
+✅ attune progressive analytics  # Cost savings analytics
+✅ attune progressive cleanup    # Retention policy cleanup
 ```
 
 Demo data created for testing at: `.empathy/progressive_runs/demo-test-20260117/`

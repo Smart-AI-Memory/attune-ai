@@ -239,7 +239,7 @@ After implementing the Attune AI in March 2025, they achieved SOC 2 compliance i
 **Daily Workflow**:
 
 1. **Development** ([How it's used during coding])
-   - Example: "Developers run `empathy analyze --level 4` before committing code"
+   - Example: "Developers run `attune analyze --level 4` before committing code"
    - Example: "VS Code extension shows predictions inline"
 
 2. **Code Review** ([How it's used in PR process])

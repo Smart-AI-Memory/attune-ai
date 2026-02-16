@@ -95,7 +95,7 @@ def _ask_batch(self, questions: list[dict[str, Any]], template_id: str) -> dict[
 📊 Summary: Created 145 tests, 82% coverage, 0 failures
 📁 Results: .empathy/meta_workflows/executions/test_...-20260117-070612/
 
-View details: empathy meta-workflow show-run <run_id> --verbose
+View details: attune meta-workflow show-run <run_id> --verbose
 ```
 
 #### Option B: Progress Bars
@@ -130,7 +130,7 @@ Estimated: 10s remaining
 
 **Current Experience:**
 ```bash
-$ empathy meta-workflow run test_creation_management_workflow
+$ attune meta-workflow run test_creation_management_workflow
 # ... nothing happens for 30 seconds ...
 # ... then dumps all output at once
 ```
@@ -158,7 +158,7 @@ with Progress(
 
 #### Streaming Output
 ```bash
-$ empathy meta-workflow run test_creation_management_workflow --stream
+$ attune meta-workflow run test_creation_management_workflow --stream
 
 🚀 Starting Test Creation Workflow...
 
@@ -218,7 +218,7 @@ $ empathy meta-workflow run test_creation_management_workflow --stream
 
 #### Option B: Enhanced CLI with Rich Library
 ```bash
-$ empathy meta-workflow dashboard
+$ attune meta-workflow dashboard
 
 # Opens interactive TUI with:
 # - Template browser

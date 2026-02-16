@@ -321,10 +321,14 @@ class CodeReviewWorkflow(BaseWorkflow):
 
         Args:
             xml_config: Optional XML prompt configuration dict.
+                Defaults to XML disabled — benchmarks on Claude 4.x show
+                +56% cost overhead with no quality improvement for code review.
 
         Returns:
             WorkflowContext with prompt and parsing services.
         """
+        if xml_config is None:
+            xml_config = {"enabled": False}
         return WorkflowContext(
             prompt=PromptService("code-review", xml_config=xml_config),
             parsing=ParsingService(xml_config=xml_config),
@@ -1442,6 +1446,8 @@ Code:
 
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
+            from attune.prompts.examples import CODE_REVIEW_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="senior software architect",
                 goal="Perform comprehensive code review with architectural assessment",
@@ -1461,6 +1467,7 @@ Code:
                 ],
                 input_type="code",
                 input_payload=input_payload,
+                examples=CODE_REVIEW_EXAMPLES,
             )
             system = None
         else:

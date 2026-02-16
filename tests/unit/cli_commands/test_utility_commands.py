@@ -591,16 +591,17 @@ class TestCmdValidate:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
-        mock_registry = {"wf1": {}, "wf2": {}, "wf3": {}, "wf4": {}, "wf5": {}}
+        mock_workflows = {"wf1": {}, "wf2": {}, "wf3": {}, "wf4": {}, "wf5": {}}
+        mock_module = MagicMock(discover_workflows=MagicMock(return_value=mock_workflows))
         with patch.dict(
             "sys.modules",
-            {"attune.workflows": MagicMock(WORKFLOW_REGISTRY=mock_registry)},
+            {"attune.workflows": mock_module},
         ):
             result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "5 workflows registered" in captured.out
+        assert "5 workflows available" in captured.out
 
     def test_workflow_import_error_shows_warning(
         self,

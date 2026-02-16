@@ -142,7 +142,7 @@ Each line is a JSON object representing one LLM call:
 
 ## CLI Commands Design
 
-### 1. `empathy telemetry show`
+### 1. `attune telemetry show`
 
 **Purpose**: Show recent usage overview
 
@@ -174,7 +174,7 @@ Period: Last 7 days (Jan 1-7, 2026)
 💾 Data stored locally at: ~/.empathy/telemetry/usage.jsonl
 ```
 
-### 2. `empathy telemetry savings`
+### 2. `attune telemetry savings`
 
 **Purpose**: Calculate actual savings vs baseline
 
@@ -206,10 +206,10 @@ Period: Last 30 days
 
   TOTAL SAVINGS:        95.7%  ($12.40 saved)
 
-🔍 See detailed analysis: empathy telemetry compare
+🔍 See detailed analysis: attune telemetry compare
 ```
 
-### 3. `empathy telemetry compare`
+### 3. `attune telemetry compare`
 
 **Purpose**: Compare different time periods
 
@@ -235,7 +235,7 @@ Top Cost Reduction: Increased CHEAP tier usage (+9pp)
 Recommendation: Cache is working well - keep it enabled!
 ```
 
-### 4. `empathy telemetry reset`
+### 4. `attune telemetry reset`
 
 **Purpose**: Clear all telemetry data
 
@@ -253,20 +253,20 @@ Proceed? [y/N]: y
 📊 New tracking starts now
 ```
 
-### 5. `empathy telemetry export`
+### 5. `attune telemetry export`
 
 **Purpose**: Export data for external analysis
 
 **Output**:
 ```bash
 # Export to CSV
-empathy telemetry export --format csv --output usage.csv
+attune telemetry export --format csv --output usage.csv
 
 # Export to JSON (pretty)
-empathy telemetry export --format json --output usage.json
+attune telemetry export --format json --output usage.json
 
 # Export date range
-empathy telemetry export --from 2026-01-01 --to 2026-01-31
+attune telemetry export --from 2026-01-01 --to 2026-01-31
 ```
 
 ---
@@ -505,14 +505,14 @@ class UsageTracker:
 - [ ] Test with manual workflow execution
 
 ### Phase 2: CLI Commands (Tomorrow Afternoon)
-- [ ] `empathy telemetry show` - basic stats
-- [ ] `empathy telemetry savings` - savings calculation
-- [ ] `empathy telemetry reset` - clear data
+- [ ] `attune telemetry show` - basic stats
+- [ ] `attune telemetry savings` - savings calculation
+- [ ] `attune telemetry reset` - clear data
 - [ ] Rich formatting with tables/charts
 
 ### Phase 3: Advanced Features (Later This Week)
-- [ ] `empathy telemetry compare` - period comparison
-- [ ] `empathy telemetry export` - CSV/JSON export
+- [ ] `attune telemetry compare` - period comparison
+- [ ] `attune telemetry export` - CSV/JSON export
 - [ ] Automatic rotation testing
 - [ ] Privacy audit
 

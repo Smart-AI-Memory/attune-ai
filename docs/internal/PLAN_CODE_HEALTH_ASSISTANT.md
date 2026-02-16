@@ -77,16 +77,16 @@ class HealthCheckRunner:
 
 ```bash
 # Quick health check (fast checks only)
-empathy health
+attune health
 
 # Deep health check (all checks)
-empathy health --deep
+attune health --deep
 
 # Specific check
-empathy health --check lint
+attune health --check lint
 
 # Auto-fix what's fixable
-empathy health --fix
+attune health --fix
 ```
 
 ---
@@ -116,7 +116,7 @@ empathy health --fix
    src/api/client.py:52    F841 unused variable 'data'
    src/utils/helpers.py:12 W503 line break before operator
 
-   → empathy health --fix lint
+   → attune health --fix lint
 
 🟡 Coverage Below Target
    Target: 80%  Current: 78%
@@ -124,7 +124,7 @@ empathy health --fix
    - src/api/client.py (65%)
    - src/utils/helpers.py (71%)
 
-   → empathy health --suggest-tests
+   → attune health --suggest-tests
 ```
 
 **Level 3: Full Report (--full)**
@@ -206,16 +206,16 @@ class AutoFixer:
 
 ```bash
 # Preview what would be fixed
-empathy health --fix --dry-run
+attune health --fix --dry-run
 
 # Fix only safe issues
-empathy health --fix --safe-only
+attune health --fix --safe-only
 
 # Fix specific category
-empathy health --fix lint
+attune health --fix lint
 
 # Fix with prompts
-empathy health --fix --interactive
+attune health --fix --interactive
 ```
 
 ---
@@ -240,7 +240,7 @@ empathy health --fix --interactive
 - Test coverage increased from 75% to 78%
 
 ### When Writing Code
-- Run `empathy health --fix` before committing
+- Run `attune health --fix` before committing
 - This project uses black for formatting, ruff for linting
 - Target test coverage: 80%
 ```
@@ -430,7 +430,7 @@ Options:
 ### Scenario 3: Deep Health Check
 
 ```bash
-$ empathy health --deep
+$ attune health --deep
 
 Running comprehensive health check...
 

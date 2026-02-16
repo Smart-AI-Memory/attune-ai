@@ -13,7 +13,6 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
-import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -257,29 +256,35 @@ class EmpathyXMLConfig:
     def from_env(cls) -> "EmpathyXMLConfig":
         """Load configuration from environment variables.
 
-        Environment variables:
-            EMPATHY_XML_ENABLED: Enable XML prompts (default: true)
-            EMPATHY_VALIDATION_ENABLED: Enable schema validation (default: false)
-            EMPATHY_METRICS_ENABLED: Enable metrics tracking (default: true)
-            EMPATHY_OPTIMIZATION_LEVEL: Compression level (default: moderate)
-            EMPATHY_ADAPTIVE_ENABLED: Enable adaptive prompts (default: true)
+        Environment variables (ATTUNE_ prefix preferred, EMPATHY_ also accepted):
+            ATTUNE_XML_ENABLED: Enable XML prompts (default: true)
+            ATTUNE_VALIDATION_ENABLED: Enable schema validation (default: false)
+            ATTUNE_METRICS_ENABLED: Enable metrics tracking (default: true)
+            ATTUNE_OPTIMIZATION_LEVEL: Compression level (default: moderate)
+            ATTUNE_ADAPTIVE_ENABLED: Enable adaptive prompts (default: true)
 
         Returns:
             EmpathyXMLConfig with settings from environment variables
         """
+        from attune.config.env_compat import get_attune_env
+
         return cls(
             xml=XMLConfig(
-                use_xml_structure=os.getenv("EMPATHY_XML_ENABLED", "true").lower() == "true",
-                validate_schemas=os.getenv("EMPATHY_VALIDATION_ENABLED", "false").lower() == "true",
+                use_xml_structure=(get_attune_env("XML_ENABLED", "true") or "true").lower()
+                == "true",
+                validate_schemas=(get_attune_env("VALIDATION_ENABLED", "false") or "false").lower()
+                == "true",
             ),
             optimization=OptimizationConfig(
-                compression_level=os.getenv("EMPATHY_OPTIMIZATION_LEVEL", "moderate"),
+                compression_level=get_attune_env("OPTIMIZATION_LEVEL", "moderate") or "moderate",
             ),
             adaptive=AdaptiveConfig(
-                enable_adaptation=os.getenv("EMPATHY_ADAPTIVE_ENABLED", "true").lower() == "true",
+                enable_adaptation=(get_attune_env("ADAPTIVE_ENABLED", "true") or "true").lower()
+                == "true",
             ),
             metrics=MetricsConfig(
-                enable_tracking=os.getenv("EMPATHY_METRICS_ENABLED", "true").lower() == "true",
+                enable_tracking=(get_attune_env("METRICS_ENABLED", "true") or "true").lower()
+                == "true",
             ),
         )
 

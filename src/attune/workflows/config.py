@@ -8,7 +8,7 @@ Provides flexible configuration for workflow model selection:
 
 Configuration priority (highest to lowest):
 1. Constructor arguments
-2. Environment variables (EMPATHY_WORKFLOW_PROVIDER, etc.)
+2. Environment variables (ATTUNE_WORKFLOW_PROVIDER, etc.)
 3. Config file (.attune/workflows.yaml)
 4. Built-in defaults
 
@@ -20,7 +20,6 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -293,20 +292,21 @@ class WorkflowConfig:
         if config.get("pricing_overrides") is None:
             config["pricing_overrides"] = {}
 
-        # EMPATHY_WORKFLOW_PROVIDER - default provider
-        env_provider = os.environ.get("EMPATHY_WORKFLOW_PROVIDER")
+        from attune.config.env_compat import get_attune_env, iter_attune_env_prefix
+
+        # ATTUNE_WORKFLOW_PROVIDER (or EMPATHY_WORKFLOW_PROVIDER) - default provider
+        env_provider = get_attune_env("WORKFLOW_PROVIDER")
         if env_provider:
             config["default_provider"] = env_provider.lower()
 
-        # EMPATHY_WORKFLOW_<NAME>_PROVIDER - per-workflow provider
-        for key, value in os.environ.items():
-            if key.startswith("EMPATHY_WORKFLOW_") and key.endswith("_PROVIDER"):
-                workflow_name = key[17:-9].lower().replace("_", "-")
-                config["workflow_providers"][workflow_name] = value.lower()
+        # ATTUNE_WORKFLOW_<NAME>_PROVIDER - per-workflow provider
+        for middle, value in iter_attune_env_prefix("WORKFLOW_", "_PROVIDER"):
+            workflow_name = middle.lower().replace("_", "-")
+            config["workflow_providers"][workflow_name] = value.lower()
 
-        # EMPATHY_MODEL_<TIER> - tier model overrides
+        # ATTUNE_MODEL_<TIER> (or EMPATHY_MODEL_<TIER>) - tier model overrides
         for tier in ["CHEAP", "CAPABLE", "PREMIUM"]:
-            env_model = os.environ.get(f"EMPATHY_MODEL_{tier}")
+            env_model = get_attune_env(f"MODEL_{tier}")
             if env_model:
                 if "env" not in config["custom_models"]:
                     config["custom_models"]["env"] = {}
@@ -360,6 +360,8 @@ class WorkflowConfig:
     def is_xml_enabled_for_workflow(self, workflow_name: str) -> bool:
         """Check if XML prompts are enabled for a workflow.
 
+        Defaults to True — XML prompts are enabled unless explicitly disabled.
+
         Args:
             workflow_name: The workflow name.
 
@@ -368,7 +370,7 @@ class WorkflowConfig:
 
         """
         config = self.get_xml_config_for_workflow(workflow_name)
-        return bool(config.get("enabled", False))
+        return bool(config.get("enabled", True))
 
     # ==========================================================================
     # Compliance and Feature Flag Methods
@@ -615,20 +617,24 @@ pricing_overrides:
 
 # Global defaults for all workflows
 xml_prompt_defaults:
-  enabled: false          # Set to true to enable XML prompts globally
+  enabled: true           # XML prompts enabled by default (cost-neutral on Claude 4.x)
   schema_version: "1.0"   # XML schema version
   enforce_response_xml: false  # Require XML in responses
   fallback_on_parse_error: true  # Fall back to raw text if XML fails
 
 # Per-workflow XML configuration (overrides defaults)
+# Benchmark results (Claude 4.x, Feb 2026):
+#   security-audit: ENABLE XML (+30% quality, +15% cost) — best ROI
+#   code-review:    DISABLE XML (+56% cost, no quality gain)
+#   perf-audit:     DISABLE XML (+30% cost, no quality gain)
 workflow_xml_configs:
   security-audit:
     enabled: true
     enforce_response_xml: true
     template_name: "security-audit"
   code-review:
-    enabled: true
-    enforce_response_xml: true
+    enabled: false              # Benchmark: +56% cost, no quality improvement
+    enforce_response_xml: false
     template_name: "code-review"
   research:
     enabled: true
@@ -639,8 +645,8 @@ workflow_xml_configs:
         enforce_response_xml: true
         template_name: "bug-analysis"
     perf-audit:
-        enabled: true
-        enforce_response_xml: true
+        enabled: false          # Benchmark: +30% cost, no quality improvement
+        enforce_response_xml: false
         template_name: "perf-audit"
     test-gen:
         enabled: true

@@ -61,7 +61,7 @@ class CollaborationManager:
             storage_path: Path to persist collaboration data
         """
         if storage_path is None:
-            storage_path = Path.home() / ".empathy" / "socratic" / "collaboration"
+            storage_path = Path.home() / ".attune" / "socratic" / "collaboration"
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
 

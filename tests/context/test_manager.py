@@ -6,7 +6,7 @@ from datetime import datetime
 
 from attune.context.compaction import CompactState
 from attune.context.manager import ContextManager
-from attune_llm.state import CollaborationState, PatternType, UserPattern
+from attune.llm.state import CollaborationState, PatternType, UserPattern
 
 
 class TestContextManager:

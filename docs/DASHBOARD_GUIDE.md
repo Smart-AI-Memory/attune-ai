@@ -55,7 +55,7 @@ The dashboard also requires:
 
 ```bash
 # Option 1: Using empathy CLI
-empathy memory start
+attune memory start
 
 # Option 2: Direct Redis
 redis-server
@@ -391,7 +391,7 @@ coordinator.report(status="running", progress=0.5, current_task="Testing")
 redis-server
 
 # Or via empathy CLI
-empathy memory start
+attune memory start
 ```
 
 #### "Connection Failed" error

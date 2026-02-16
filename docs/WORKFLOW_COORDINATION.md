@@ -405,7 +405,7 @@ When `enable_heartbeat_tracking=True`, BaseWorkflow automatically:
 
 ```bash
 # CLI: View all active agents
-empathy telemetry agents
+attune telemetry agents
 
 # Output:
 # 🤖 Active Agents
@@ -450,10 +450,10 @@ Both heartbeat tracking and coordination require Redis:
 redis-server
 
 # Or use Empathy command
-empathy memory start
+attune memory start
 
 # Verify Redis is running
-empathy memory status
+attune memory status
 ```
 
 ### TTL Configuration
@@ -761,10 +761,10 @@ workflow = MyWorkflow(enable_heartbeat_tracking=True, enable_coordination=True)
 **A:** Use the CLI commands:
 ```bash
 # View active workflows
-empathy telemetry agents
+attune telemetry agents
 
 # View pending signals for a workflow
-empathy telemetry signals --agent my-workflow-abc12345
+attune telemetry signals --agent my-workflow-abc12345
 ```
 
 Or build a custom dashboard using the Python API from `HeartbeatCoordinator` and `CoordinationSignals`.

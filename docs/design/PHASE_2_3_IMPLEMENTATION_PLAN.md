@@ -362,10 +362,10 @@ Use `context.metadata` for step-specific policies (already supported in Phase 2.
 
 ### 3.3 CLI Commands for Telemetry
 
-- `empathy models registry`
-- `empathy models tasks`
-- `empathy telemetry workflows`
-- `empathy telemetry costs`
+- `attune models registry`
+- `attune models tasks`
+- `attune telemetry workflows`
+- `attune telemetry costs`
 
 ---
 

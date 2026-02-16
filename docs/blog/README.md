@@ -44,8 +44,8 @@ With persistent memory:
 pip install attune-ai
 
 # Check your code health (new in v2.2)
-empathy health
-empathy health --fix        # Auto-fix safe issues
+attune health
+attune health --fix        # Auto-fix safe issues
 
 # Run the full repo test (validates all features)
 python examples/full_repo_test.py

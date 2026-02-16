@@ -1,11 +1,11 @@
 /**
  * JSONL Telemetry Parser
  *
- * Parses telemetry data from `.empathy/*.jsonl` files.
+ * Parses telemetry data from `.attune/*.jsonl` files.
  *
  * **Files:**
- * - `.empathy/llm_calls.jsonl` - LLM API call records
- * - `.empathy/workflow_runs.jsonl` - Workflow run records
+ * - `.attune/llm_calls.jsonl` - LLM API call records
+ * - `.attune/workflow_runs.jsonl` - Workflow run records
  *
  * **Features:**
  * - Read and parse JSONL files line-by-line
@@ -17,7 +17,7 @@
  * **Implementation Status:** Sprint 1 (Week 1)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
 import fs from 'fs';
@@ -149,14 +149,14 @@ export function parseWorkflowRuns(
 }
 
 /**
- * Load telemetry data from .empathy directory
+ * Load telemetry data from .attune directory
  *
- * @param empathyDir Path to .empathy directory (default: ./.empathy)
+ * @param empathyDir Path to .attune directory (default: ./.attune)
  * @param options Parse options
  * @returns Complete telemetry statistics
  */
 export function loadTelemetryData(
-  empathyDir: string = '.empathy',
+  empathyDir: string = '.attune',
   options: ParseOptions = {}
 ): TelemetryStats {
   const callsFile = path.join(empathyDir, 'llm_calls.jsonl');
@@ -293,7 +293,7 @@ function calculateStats(
 /**
  * Watch telemetry files for changes
  *
- * @param empathyDir Path to .empathy directory
+ * @param empathyDir Path to .attune directory
  * @param onChange Callback when files change
  * @returns Cleanup function to stop watching
  */

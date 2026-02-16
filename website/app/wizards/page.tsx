@@ -198,19 +198,19 @@ export default function WizardsPage() {
                 </div>
                 <pre className="p-6 overflow-x-auto text-sm">
                   <code className="text-gray-300">{`# Run security audit on your codebase
-empathy workflow run security-audit --input '{"path": "./src"}'
+attune workflow run security-audit --input '{"path": "./src"}'
 
 # Generate tests for a module
-empathy workflow run test-gen --input '{"path": "./src/auth"}'
+attune workflow run test-gen --input '{"path": "./src/auth"}'
 
 # Review code with auto-chaining
-empathy workflow run code-review --input '{"path": "./src/api.py"}'
+attune workflow run code-review --input '{"path": "./src/api.py"}'
 
 # Check dependencies for vulnerabilities
-empathy workflow run dependency-check
+attune workflow run dependency-check
 
 # Pre-release quality gate
-empathy workflow run release-prep
+attune workflow run release-prep
 `}</code>
                 </pre>
               </div>

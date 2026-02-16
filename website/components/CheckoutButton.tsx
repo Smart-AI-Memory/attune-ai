@@ -2,7 +2,7 @@
 
 /**
  * @deprecated This component is deprecated as of January 28, 2026.
- * Empathy Framework is now fully open source under Apache 2.0.
+ * Attune AI is now fully open source under Apache 2.0.
  * No payments or license purchases are required.
  * This component is kept for historical purposes only.
  */

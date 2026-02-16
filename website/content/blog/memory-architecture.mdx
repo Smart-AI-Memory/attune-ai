@@ -29,7 +29,7 @@ Neither option works for serious production use.
 
 ## A Different Philosophy
 
-When we built Empathy, we started with a simple principle:
+When we built Attune AI, we started with a simple principle:
 
 > **Your data should belong to you. Your AI should remember what you choose, where you choose, for as long as you choose.**
 
@@ -39,11 +39,11 @@ So we built something different.
 
 ## Tiered Memory Architecture
 
-Empathy uses a three-tier memory system, each optimized for different use cases:
+Attune AI uses a three-tier memory system, each optimized for different use cases:
 
 ### Long-Term Memory
 
-**What it is:** Git-based persistent storage for patterns, decisions, and context that should survive across sessions, projects, and even team members. This functionality is built directly into the Empathy Framework.
+**What it is:** Git-based persistent storage for patterns, decisions, and context that should survive across sessions, projects, and even team members. This functionality is built directly into Attune AI.
 
 **Where it lives:** Your repository. Your infrastructure. Version-controlled alongside your code.
 
@@ -61,7 +61,7 @@ Empathy uses a three-tier memory system, each optimized for different use cases:
 - Cross-session context ("Remember we're targeting Python 3.10+")
 
 ```python
-from empathy_os.memory import LongTermMemory
+from attune.memory import LongTermMemory
 
 # Store a pattern - you control where it lives
 memory = LongTermMemory(storage_path="./project-memory")
@@ -91,7 +91,7 @@ memory.store(
 - Pattern staging ("This looks important—save to long-term?")
 
 ```python
-from empathy_os import RedisMemory
+from attune import RedisMemory
 
 # Short-term memory with automatic expiration
 memory = RedisMemory(host="localhost", ttl=3600)  # 1 hour
@@ -194,10 +194,10 @@ clean_text, detections = scrubber.scrub(
 
 ## Getting Started
 
-Install Empathy with memory support:
+Install Attune AI with memory support:
 
 ```bash
-pip install empathy-framework[full]
+pip install attune-ai[full]
 ```
 
 Set up Redis for short-term memory:
@@ -212,7 +212,7 @@ docker run -d -p 6379:6379 redis:alpine
 Configure in your project:
 
 ```python
-from empathy_os import EmpathyOS
+from attune import EmpathyOS
 
 os = EmpathyOS(
     redis_url="redis://localhost:6379",
@@ -232,10 +232,10 @@ We believe the current "cloud-first, privacy-later" approach to AI memory is a d
 4. **Meet compliance requirements** out of the box
 5. **Scale from solo developer to enterprise** without architectural changes
 
-That's what we're building with Empathy.
+That's what we're building with Attune AI.
 
 ---
 
-*Want to learn more? Check out our [documentation](/docs) or join the discussion on [GitHub](https://github.com/Smart-AI-Memory/empathy/discussions).*
+*Want to learn more? Check out our [documentation](/docs) or join the discussion on [GitHub](https://github.com/Smart-AI-Memory/attune-ai/discussions).*
 
-*Building something with Empathy's memory system? We'd love to hear about it—[get in touch](/contact).*
+*Building something with Attune AI's memory system? We'd love to hear about it—[get in touch](/contact).*

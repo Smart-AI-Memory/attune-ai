@@ -14,7 +14,7 @@
  * **Implementation Status:** Sprint 1 (Week 1)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
 'use client';

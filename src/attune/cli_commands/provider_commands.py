@@ -38,6 +38,7 @@ def cmd_provider_show(args: Namespace) -> int:
         else:
             print("\n  ⚠️  No API keys detected")
             print("  Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY")
+            print("  Run: python -m attune.models.auth_cli setup")
 
         print("-" * 60)
         return 0

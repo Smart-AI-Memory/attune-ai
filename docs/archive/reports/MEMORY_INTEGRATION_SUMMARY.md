@@ -238,10 +238,10 @@ recommendations = learner.get_smart_recommendations(
 
 ### Immediate (Day 4 - CLI Implementation)
 1. Implement `cli_meta_workflows.py` with commands:
-   - `empathy meta-workflow run <template_id>`
-   - `empathy meta-workflow analytics [template_id]`
-   - `empathy meta-workflow search "<query>"`
-   - `empathy meta-workflow list-runs`
+   - `attune meta-workflow run <template_id>`
+   - `attune meta-workflow analytics [template_id]`
+   - `attune meta-workflow search "<query>"`
+   - `attune meta-workflow list-runs`
 
 2. Add memory-enhanced CLI features:
    - `--use-memory` flag to enable memory integration

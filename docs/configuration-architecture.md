@@ -163,8 +163,8 @@ telemetry:
    - Running workflows → `WorkflowConfig`
 
 2. **Environment variables** follow different prefixes:
-   - `EMPATHY_*` → EmpathyConfig (e.g., `EMPATHY_USER_ID`)
-   - `EMPATHY_WORKFLOW_*` → WorkflowConfig (e.g., `EMPATHY_WORKFLOW_PROVIDER`)
+   - `ATTUNE_*` → EmpathyConfig (e.g., `ATTUNE_USER_ID`)
+   - `ATTUNE_WORKFLOW_*` → WorkflowConfig (e.g., `ATTUNE_WORKFLOW_PROVIDER`)
 
 3. **Don't duplicate fields** between config classes. Each class owns its domain.
 

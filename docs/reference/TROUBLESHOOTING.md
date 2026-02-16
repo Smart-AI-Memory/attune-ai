@@ -869,9 +869,9 @@ config = load_config("/absolute/path/to/empathy.config.yml")
 
 **3. Use environment variables instead:**
 ```bash
-export EMPATHY_USER_ID=alice
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.75
+export ATTUNE_USER_ID=alice
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 ```
 
 ```python

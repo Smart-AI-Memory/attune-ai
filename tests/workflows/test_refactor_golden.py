@@ -102,7 +102,7 @@ class TestGoldenScenarioValidation:
     @pytest.mark.parametrize("scenario", get_golden_scenarios())
     def test_primary_category_is_valid(self, scenario: str):
         """Test that primary_category is a valid RefactoringCategory."""
-        from attune_llm.agent_factory.crews.refactoring import RefactoringCategory
+        from attune.agent_factory.crews.refactoring import RefactoringCategory
 
         _, expected = load_golden_scenario(scenario)
         primary = expected["primary_category"]
@@ -123,7 +123,7 @@ class TestRefactoringCrewGoldenAnalysis:
     @pytest.mark.parametrize("scenario", get_golden_scenarios())
     def test_scenario_analysis_structure(self, scenario: str):
         """Test that analysis produces expected structure for each scenario."""
-        from attune_llm.agent_factory.crews import RefactoringConfig, RefactoringCrew
+        from attune.agent_factory.crews import RefactoringConfig, RefactoringCrew
 
         input_code, expected = load_golden_scenario(scenario)
 
@@ -144,7 +144,7 @@ class TestRefactoringCrewGoldenAnalysis:
     @pytest.mark.parametrize("scenario", get_golden_scenarios())
     async def test_scenario_with_mocked_findings(self, scenario: str):
         """Test scenario with mocked analyzer response matching expected."""
-        from attune_llm.agent_factory.crews import RefactoringConfig, RefactoringCrew
+        from attune.agent_factory.crews import RefactoringConfig, RefactoringCrew
 
         input_code, expected = load_golden_scenario(scenario)
 
@@ -208,8 +208,8 @@ class TestGoldenFileRecording:
 
     def test_can_record_session(self):
         """Test that sessions can be recorded for later replay."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             RefactoringCategory,
             Severity,
         )
@@ -243,7 +243,7 @@ class TestGoldenFileRecording:
 
     def test_can_replay_session(self):
         """Test that recorded sessions can be replayed."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews import RefactoringFinding
 
         # Load a "recording"
         recording = {
@@ -295,7 +295,7 @@ class TestExpectedPatternMatching:
             assert "category" in pattern, f"Pattern missing 'category' in {scenario}"
 
             # Verify category is valid
-            from attune_llm.agent_factory.crews.refactoring import RefactoringCategory
+            from attune.agent_factory.crews.refactoring import RefactoringCategory
 
             valid_categories = [c.value for c in RefactoringCategory]
             assert (

@@ -188,7 +188,7 @@ class TestWorkflowInitializationEdgeCases:
             project_root=str(tmp_path),
         )
 
-        expected_dir = tmp_path / ".empathy" / "health_tracking"
+        expected_dir = tmp_path / ".attune" / "health_tracking"
         assert expected_dir.exists()
         assert workflow.tracking_dir == expected_dir
 
@@ -542,7 +542,7 @@ class TestFileOperations:
         workflow._save_health_json(report)
 
         # Verify file was created
-        health_file = tmp_path / ".empathy" / "health.json"
+        health_file = tmp_path / ".attune" / "health.json"
         assert health_file.exists()
 
         # Verify content
@@ -572,8 +572,8 @@ class TestFileOperations:
             agents_executed=3,
         )
 
-        # Make .empathy directory read-only
-        empathy_dir = tmp_path / ".empathy"
+        # Make .attune directory read-only
+        empathy_dir = tmp_path / ".attune"
         empathy_dir.mkdir(exist_ok=True)
         empathy_dir.chmod(0o444)
 
@@ -607,7 +607,7 @@ class TestFileOperations:
 
         workflow._save_health_json(report)
 
-        health_file = tmp_path / ".empathy" / "health.json"
+        health_file = tmp_path / ".attune" / "health.json"
         with health_file.open("r") as f:
             data = json.load(f)
 
@@ -636,7 +636,7 @@ class TestFileOperations:
 
         workflow._save_health_json(report)
 
-        health_file = tmp_path / ".empathy" / "health.json"
+        health_file = tmp_path / ".attune" / "health.json"
         with health_file.open("r") as f:
             data = json.load(f)
 

@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune_llm.claude_memory import (
+from attune.memory.claude_memory import (
     ClaudeMemoryConfig,
     ClaudeMemoryLoader,
     create_default_project_memory,
@@ -267,7 +267,7 @@ def test_dont_overwrite_existing(sample_claude_memory):
 @pytest.mark.asyncio
 async def test_integration_with_empathy_llm(sample_claude_memory, mock_anthropic):
     """Test integration of Claude memory with EmpathyLLM"""
-    from attune_llm import EmpathyLLM
+    from attune.llm.core import EmpathyLLM
 
     config = ClaudeMemoryConfig(enabled=True, load_user=False, load_enterprise=False)
 
@@ -289,7 +289,7 @@ async def test_integration_with_empathy_llm(sample_claude_memory, mock_anthropic
 @pytest.mark.asyncio
 async def test_reload_memory(sample_claude_memory, mock_anthropic):
     """Test reloading memory after changes"""
-    from attune_llm import EmpathyLLM
+    from attune.llm.core import EmpathyLLM
 
     config = ClaudeMemoryConfig(enabled=True, load_user=False, load_enterprise=False)
 

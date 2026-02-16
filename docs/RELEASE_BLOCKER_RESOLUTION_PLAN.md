@@ -306,7 +306,7 @@ bandit -r src/ --severity-level medium
 # Should show: 0 HIGH, 0 MEDIUM issues
 
 # Run release-prep
-empathy workflow run release-prep
+attune workflow run release-prep
 # Should show reduced/accurate error counts
 ```
 
@@ -419,7 +419,7 @@ pytest tests/integration/test_workflows.py -v
 ### Integration Tests
 ```bash
 # Test release-prep workflow
-empathy workflow run release-prep
+attune workflow run release-prep
 
 # Verify security scan
 bandit -r src/ --severity-level medium --format json

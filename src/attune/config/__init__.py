@@ -1,7 +1,7 @@
 """Configuration management for Attune AI.
 
 This package provides:
-1. Original EmpathyConfig (backward compatible)
+1. AttuneConfig (with EmpathyConfig backward-compatible alias)
 2. XML enhancement configurations (new)
 
 Copyright 2026 Smart-AI-Memory
@@ -27,11 +27,13 @@ spec = importlib.util.spec_from_file_location("attune_config_legacy", config_py_
 if spec and spec.loader:
     legacy_config = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(legacy_config)
-    EmpathyConfig = legacy_config.EmpathyConfig
+    AttuneConfig = legacy_config.AttuneConfig
+    EmpathyConfig = legacy_config.EmpathyConfig  # backward-compat alias
     load_config = legacy_config.load_config
     _validate_file_path = legacy_config._validate_file_path
 else:
     # Fallback if import fails
+    AttuneConfig = None
     EmpathyConfig = None
     load_config = None
     _validate_file_path = None
@@ -63,7 +65,8 @@ from attune.config.xml_config import (  # noqa: E402
 )
 
 __all__ = [
-    # Original config (backward compatible)
+    # Original config
+    "AttuneConfig",
     "EmpathyConfig",
     "load_config",
     "YAML_AVAILABLE",

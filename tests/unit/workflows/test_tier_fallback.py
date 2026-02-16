@@ -132,8 +132,28 @@ async def test_tier_fallback_all_tiers_exhausted():
 
 
 @pytest.mark.asyncio
-async def test_tier_fallback_disabled_by_default():
-    """Test tier fallback is opt-in (disabled by default)."""
+async def test_tier_fallback_enabled_by_default():
+    """Test tier fallback is enabled by default."""
+    workflow = MockTierFallbackWorkflow()  # No explicit enable_tier_fallback
+
+    # All stages succeed at CHEAP tier
+    workflow._validation_results = {
+        "stage1_cheap": (True, None),
+        "stage2_cheap": (True, None),
+    }
+
+    result = await workflow.execute()
+
+    # Should use tier fallback (starts at CHEAP)
+    assert result.success
+    assert len(workflow._tier_progression) == 2  # Tracking active
+    assert workflow._tier_progression[0] == ("stage1", "cheap", True)
+    assert workflow._tier_progression[1] == ("stage2", "cheap", True)
+
+
+@pytest.mark.asyncio
+async def test_tier_fallback_can_be_disabled():
+    """Test tier fallback can be explicitly disabled."""
     workflow = MockTierFallbackWorkflow(enable_tier_fallback=False)
 
     result = await workflow.execute()

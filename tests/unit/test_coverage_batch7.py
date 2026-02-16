@@ -1910,29 +1910,23 @@ class TestCheckCrewAvailable:
     """Tests for _check_crew_available function."""
 
     def test_crew_not_available(self) -> None:
-        """Test returns False when attune_llm is not importable."""
+        """Test returns False when attune.agent_factory.crews is not importable."""
         from attune.workflows.security_adapters import _check_crew_available
 
-        with patch.dict("sys.modules", {"attune_llm": None}):
-            # The import will fail since attune_llm is likely not installed
+        with patch.dict("sys.modules", {"attune.agent_factory.crews": None}):
             result = _check_crew_available()
-            # Likely False in test environment
             assert isinstance(result, bool)
 
     def test_crew_available_mock(self) -> None:
         """Test returns True when module is importable."""
         from attune.workflows.security_adapters import _check_crew_available
 
-        mock_module = MagicMock()
         mock_crews = MagicMock()
-        mock_module.agent_factory.crews = mock_crews
 
         with patch.dict(
             "sys.modules",
             {
-                "attune_llm": mock_module,
-                "attune_llm.agent_factory": mock_module.agent_factory,
-                "attune_llm.agent_factory.crews": mock_crews,
+                "attune.agent_factory.crews": mock_crews,
             },
         ):
             result = _check_crew_available()
@@ -2509,10 +2503,18 @@ class TestPromptMixinXMLConfig:
         result = wf._get_xml_config()
         assert result == {"enabled": True}
 
-    def test_is_xml_enabled_false(self) -> None:
-        """Test _is_xml_enabled returns False when not configured."""
+    def test_is_xml_enabled_default_true(self) -> None:
+        """Test _is_xml_enabled returns True by default (no config)."""
         cls = _make_prompt_mixin_test_class()
         wf = cls()
+        assert wf._is_xml_enabled() is True
+
+    def test_is_xml_enabled_explicitly_disabled(self) -> None:
+        """Test _is_xml_enabled returns False when explicitly disabled."""
+        cls = _make_prompt_mixin_test_class()
+        wf = cls()
+        wf._config = MagicMock()
+        wf._config.get_xml_config_for_workflow.return_value = {"enabled": False}
         assert wf._is_xml_enabled() is False
 
     def test_is_xml_enabled_true(self) -> None:
@@ -2570,10 +2572,13 @@ class TestPromptMixinRenderXmlPrompt:
     """Tests for PromptMixin._render_xml_prompt method."""
 
     def test_render_xml_prompt_disabled_falls_back_to_plain(self) -> None:
-        """Test _render_xml_prompt falls back to plain when XML disabled."""
+        """Test _render_xml_prompt falls back to plain when XML explicitly disabled."""
         cls = _make_prompt_mixin_test_class()
         wf = cls()
-        wf._config = None  # No config = XML disabled
+        wf._config = MagicMock()
+        wf._config.get_xml_config_for_workflow.return_value = {
+            "enabled": False,
+        }
 
         result = wf._render_xml_prompt(
             role="analyst",

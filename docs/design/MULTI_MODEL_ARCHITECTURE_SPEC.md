@@ -612,20 +612,20 @@ class EmpathyLLM:
 
 ```bash
 # Registry inspection
-empathy models registry --provider anthropic
-empathy models registry --format json
+attune models registry --provider anthropic
+attune models registry --format json
 
 # Task mapping
-empathy models tasks --tier capable
-empathy models tasks --task generate_code
+attune models tasks --tier capable
+attune models tasks --task generate_code
 
 # Cost estimation
-empathy models costs --task generate_code --input-tokens 1000 --output-tokens 500
+attune models costs --task generate_code --input-tokens 1000 --output-tokens 500
 
 # Telemetry
-empathy telemetry workflows --top 10
-empathy telemetry providers --failures
-empathy telemetry costs --by-task
+attune telemetry workflows --top 10
+attune telemetry providers --failures
+attune telemetry costs --by-task
 ```
 
 ---

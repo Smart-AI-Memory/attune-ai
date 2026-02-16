@@ -2,11 +2,11 @@ import crypto from 'crypto';
 
 /**
  * @deprecated This module is deprecated as of January 28, 2026.
- * Empathy Framework is now fully open source under Apache 2.0.
+ * Attune AI is now fully open source under Apache 2.0.
  * No license keys are required. This code is kept for historical purposes only.
  */
 
-// License key format: EMPATHY-XXXX-XXXX-XXXX-XXXX
+// License key format: ATTUNE-XXXX-XXXX-XXXX-XXXX
 // Where X is alphanumeric (excluding confusing chars like 0/O, 1/I/l)
 const CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -19,7 +19,7 @@ function generateSegment(length: number): string {
   return segment;
 }
 
-export function generateLicenseKey(prefix: string = 'EMPATHY'): string {
+export function generateLicenseKey(prefix: string = 'ATTUNE'): string {
   const segments = [
     prefix,
     generateSegment(4),
@@ -58,7 +58,7 @@ export function getProductTypeFromPriceId(priceId: string): {
   if (priceId === 'price_1Sbf3xAbABKRT84gGn7yaivw' || priceId.includes('BOOK')) {
     return {
       type: 'book',
-      name: 'The Empathy Book + License',
+      name: 'The Attune AI Book + License',
       includesLicense: true, // Book includes 1-year license
     };
   }
@@ -67,7 +67,7 @@ export function getProductTypeFromPriceId(priceId: string): {
   if (priceId === 'price_1SbfCjAbABKRT84gSh7BoLAl' || priceId.includes('LICENSE')) {
     return {
       type: 'license',
-      name: 'Empathy Commercial License',
+      name: 'Attune AI Commercial License',
       includesLicense: true,
     };
   }

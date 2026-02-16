@@ -489,7 +489,7 @@ class ExperimentManager:
             storage_path: Path to persist experiments
         """
         if storage_path is None:
-            storage_path = Path.home() / ".empathy" / "socratic" / "experiments.json"
+            storage_path = Path.home() / ".attune" / "socratic" / "experiments.json"
         self.storage_path = Path(storage_path)
         self._experiments: dict[str, Experiment] = {}
         self._allocators: dict[str, TrafficAllocator] = {}

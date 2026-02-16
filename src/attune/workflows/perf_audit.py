@@ -168,10 +168,14 @@ class PerformanceAuditWorkflow(BaseWorkflow):
 
         Args:
             xml_config: Optional XML prompt configuration dict.
+                Defaults to XML disabled — benchmarks on Claude 4.x show
+                +30% cost overhead with no quality improvement for perf audit.
 
         Returns:
             WorkflowContext with prompt and parsing services.
         """
+        if xml_config is None:
+            xml_config = {"enabled": False}
         return WorkflowContext(
             prompt=PromptService("perf-audit", xml_config=xml_config),
             parsing=ParsingService(xml_config=xml_config),
@@ -479,6 +483,8 @@ Top Issues:
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import PERF_AUDIT_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="performance engineer specializing in optimization",
                 goal="Generate comprehensive optimization recommendations for performance issues",
@@ -496,6 +502,7 @@ Top Issues:
                 ],
                 input_type="performance_hotspots",
                 input_payload=input_payload,
+                examples=PERF_AUDIT_EXAMPLES,
                 extra={
                     "perf_score": hotspot_result.get("perf_score", 0),
                     "hotspot_count": len(hotspots),

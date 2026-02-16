@@ -43,7 +43,7 @@ class DependencyManager:
             config_path: Path to config file (default: ~/.attune/config.yml).
 
         """
-        self.config_path = config_path or Path.home() / ".empathy" / "config.yml"
+        self.config_path = config_path or Path.home() / ".attune" / "config.yml"
         self.config = self._load_config()
 
     def _load_config(self) -> dict:

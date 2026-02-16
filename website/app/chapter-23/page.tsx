@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'Chapter 23: Distributed Memory Networks | SmartAI Memory',
-  description: 'Learn how multiple AI agents can share memory and coordinate workflows through distributed memory networks. Free sample chapter from the Empathy Framework book.',
+  description: 'Learn how multiple AI agents can share memory and coordinate workflows through distributed memory networks. Free sample chapter from the Attune AI book.',
 };
 
 export default function Chapter23Page() {
@@ -69,7 +69,7 @@ export default function Chapter23Page() {
               {/* Multi-Agent Architecture */}
               <h2 style={{ color: '#0F172A' }}>Multi-Agent Architecture</h2>
               <p>
-                The Empathy Framework supports specialized agents that each focus on specific domains
+                Attune AI supports specialized agents that each focus on specific domains
                 while accessing a common knowledge base:
               </p>
               <ul>
@@ -106,7 +106,7 @@ export default function Chapter23Page() {
               {/* Code Example */}
               <h2 style={{ color: '#0F172A' }}>Implementation Example</h2>
               <pre className="bg-[#0F172A] text-[#E2E8F0] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os import PatternLibrary, AgentTeam
+{`from attune import PatternLibrary, AgentTeam
 
 # Initialize shared pattern library
 library = PatternLibrary(storage="redis://localhost")

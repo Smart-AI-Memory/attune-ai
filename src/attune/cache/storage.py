@@ -49,7 +49,7 @@ class CacheStorage:
             auto_save: Automatically save to disk on put (default: True).
 
         """
-        self.cache_dir = cache_dir or Path.home() / ".empathy" / "cache"
+        self.cache_dir = cache_dir or Path.home() / ".attune" / "cache"
         self.cache_file = self.cache_dir / "responses.json"
         self.max_disk_mb = max_disk_mb
         self.auto_save = auto_save

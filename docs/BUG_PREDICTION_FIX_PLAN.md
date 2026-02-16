@@ -235,7 +235,7 @@ These files have `broad_exception` patterns but are properly documented:
 ### Phase 2: Validation (Day 1)
 
 1. Run test suite: `pytest tests/`
-2. Re-run bug prediction: `empathy workflow run bug-predict`
+2. Re-run bug prediction: `attune workflow run bug-predict`
 3. Verify risk score drops below 50%
 
 ### Phase 3: Documentation (Day 2)
@@ -263,7 +263,7 @@ These files have `broad_exception` patterns but are properly documented:
 
 # Phase 2: Validate
 pytest tests/unit/
-empathy workflow run bug-predict
+attune workflow run bug-predict
 
 # Phase 3: Commit
 git add -A

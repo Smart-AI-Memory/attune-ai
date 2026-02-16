@@ -15,9 +15,9 @@ description: One Command to Rule Them All: The Code Health Assistant: **Date:** 
 We got tired of running 5 different tools to check our code. So we built one command that runs them all—with auto-fix:
 
 ```bash
-empathy health              # Quick check: lint, format, types
-empathy health --deep       # Full check: + tests, security, deps
-empathy health --fix        # Auto-fix safe issues
+attune health              # Quick check: lint, format, types
+attune health --deep       # Full check: + tests, security, deps
+attune health --fix        # Auto-fix safe issues
 ```
 
 Result: **One health score** (0-100) you can track over time, with trend analysis and hotspot detection.
@@ -48,7 +48,7 @@ Most developers run one or two checks, not all six. Technical debt accumulates s
 ## The Solution
 
 ```bash
-empathy health
+attune health
 ```
 
 Output:
@@ -111,7 +111,7 @@ Gets a score of ~87/100 (lint warnings have low weight).
 Quick checks are fast (seconds), but sometimes you need everything:
 
 ```bash
-empathy health --deep
+attune health --deep
 ```
 
 This runs:
@@ -127,7 +127,7 @@ Takes longer, but gives you the complete picture.
 ## Auto-Fix: The --fix Flag
 
 ```bash
-empathy health --fix
+attune health --fix
 ```
 
 Output:
@@ -138,7 +138,7 @@ Fixed 3 issues:
   ✓ src/api/client.py: Removed unused import
   ✓ src/utils/helpers.py: Fixed line length (2 lines)
 
-Run 'empathy health' to verify fixes.
+Run 'attune health' to verify fixes.
 ```
 
 ### What Gets Fixed Automatically
@@ -155,7 +155,7 @@ Run 'empathy health' to verify fixes.
 - Potential behavior changes
 
 ```bash
-empathy health --fix --interactive
+attune health --fix --interactive
 ```
 
 ---
@@ -165,7 +165,7 @@ empathy health --fix --interactive
 This is where memory shines.
 
 ```bash
-empathy health --trends 30
+attune health --trends 30
 ```
 
 Output:
@@ -216,7 +216,7 @@ These are your high-leverage targets. Fix the hotspots, improve the trend.
 
 ## Real-World Example
 
-We ran `empathy health --deep` on the Attune AI itself:
+We ran `attune health --deep` on the Attune AI itself:
 
 ```
 📊 Code Health: Good (89/100)
@@ -290,7 +290,7 @@ Add to your GitHub Actions:
 - name: Health Check
   run: |
     pip install attune-ai
-    empathy health --deep --json > health.json
+    attune health --deep --json > health.json
 
 - name: Upload Health Report
   uses: actions/upload-artifact@v3
@@ -304,7 +304,7 @@ Fail the build if health drops below threshold:
 ```yaml
 - name: Health Gate
   run: |
-    empathy health --deep
+    attune health --deep
     if [ $? -ne 0 ]; then
       echo "Health check failed!"
       exit 1
@@ -318,7 +318,7 @@ Fail the build if health drops below threshold:
 | Workflow | Before | After |
 |----------|--------|-------|
 | Check code | 6 commands, 6 outputs | 1 command, 1 score |
-| Fix issues | Manual, per-tool | `empathy health --fix` |
+| Fix issues | Manual, per-tool | `attune health --fix` |
 | Track trends | Not tracked | Built-in with --trends |
 | Find hotspots | Manual analysis | Automatic detection |
 | CI/CD | Multiple steps | Single health gate |
@@ -331,16 +331,16 @@ Fail the build if health drops below threshold:
 pip install attune-ai
 
 # Quick check
-empathy health
+attune health
 
 # Full analysis
-empathy health --deep
+attune health --deep
 
 # Auto-fix safe issues
-empathy health --fix
+attune health --fix
 
 # See trends
-empathy health --trends 30
+attune health --trends 30
 ```
 
 ---

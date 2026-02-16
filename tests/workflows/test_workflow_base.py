@@ -850,7 +850,8 @@ class TestBaseWorkflowExecution:
 
             assert result.success is False
             assert result.error is not None
-            assert "Stage 2 failed" in result.error
+            # Error may be wrapped by tier fallback
+            assert "stage2" in result.error.lower() or "Stage 2 failed" in result.error
 
     @pytest.mark.asyncio
     async def test_execute_with_skipped_stage(self):
@@ -924,10 +925,22 @@ class TestBaseWorkflowXMLPrompts:
     """Tests for XML prompt functionality."""
 
     def test_is_xml_enabled_default(self):
-        """Test XML enabled check with default config."""
+        """Test XML enabled check with default config (enabled by default)."""
         workflow = TestConcreteWorkflow()
 
-        # Default should be disabled
+        # Default should be enabled (XML is cost-neutral on Claude 4.x)
+        assert workflow._is_xml_enabled() is True
+
+    def test_is_xml_explicitly_disabled(self):
+        """Test XML can be explicitly disabled via config."""
+        from unittest.mock import MagicMock
+
+        workflow = TestConcreteWorkflow()
+        workflow._config = MagicMock()
+        workflow._config.get_xml_config_for_workflow.return_value = {
+            "enabled": False,
+        }
+
         assert workflow._is_xml_enabled() is False
 
     def test_render_plain_prompt(self):

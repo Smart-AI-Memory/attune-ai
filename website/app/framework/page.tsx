@@ -9,7 +9,7 @@ export default function FrameworkPage() {
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Empathy
+            Attune AI
           </Link>
           <div className="flex gap-6">
             <Link href="/docs" className="text-sm hover:text-[var(--primary)]">Docs</Link>
@@ -49,7 +49,7 @@ export default function FrameworkPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 className="btn btn-primary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -61,7 +61,7 @@ export default function FrameworkPage() {
               </Link>
             </div>
             <p className="mt-6 text-sm text-[var(--muted)]">
-              Fair Source License 0.9 • Free for Students & Small Teams • Community Driven
+              Apache 2.0 License • Free for Students & Small Teams • Community Driven
             </p>
           </div>
         </div>
@@ -171,14 +171,14 @@ export default function FrameworkPage() {
               <div>
                 <h3 className="text-2xl font-bold mb-4">Installation</h3>
                 <pre className="bg-[var(--foreground)] text-[var(--background)] p-4 rounded-lg overflow-x-auto">
-                  <code>pip install empathy-framework</code>
+                  <code>pip install attune-ai</code>
                 </pre>
               </div>
 
               <div>
                 <h3 className="text-2xl font-bold mb-4">Socratic Agent Creation</h3>
                 <pre className="bg-[var(--foreground)] text-[var(--background)] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os.socratic import SocraticWorkflowBuilder
+{`from attune.socratic import SocraticWorkflowBuilder
 
 # Describe your goal - the framework guides you through questions
 builder = SocraticWorkflowBuilder()
@@ -244,7 +244,7 @@ if builder.is_ready_to_generate(session):
               </div>
 
               <div>
-                <h3 className="text-2xl font-bold mb-4">Orchestration System <span className="text-sm font-normal text-purple-500">v4.6.5</span></h3>
+                <h3 className="text-2xl font-bold mb-4">Orchestration System <span className="text-sm font-normal text-purple-500">v2.9.0</span></h3>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <span className="text-purple-500 font-mono text-sm mt-1">SmartRouter</span>
@@ -289,12 +289,12 @@ if builder.is_ready_to_generate(session):
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-bold mb-6">Join the Community</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-12">
-              Empathy is Fair Source licensed and welcomes contributions from developers worldwide.
+              Attune AI is Apache 2.0 licensed and welcomes contributions from developers worldwide.
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 className="p-6 border-2 border-[var(--border)] rounded-lg hover:border-[var(--primary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -309,7 +309,7 @@ if builder.is_ready_to_generate(session):
               </a>
 
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework/discussions"
+                href="https://github.com/Smart-AI-Memory/attune-ai/discussions"
                 className="p-6 border-2 border-[var(--border)] rounded-lg hover:border-[var(--primary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -332,7 +332,7 @@ if builder.is_ready_to_generate(session):
                 </div>
                 <h3 className="text-lg font-bold mb-2">Read the Docs</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Learn to build with Empathy Framework
+                  Learn to build with Attune AI
                 </p>
               </Link>
             </div>

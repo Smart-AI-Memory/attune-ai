@@ -515,7 +515,20 @@ class TestIsXmlEnabledProxy:
         mock_config.return_value.get_xml_config_for_workflow.return_value = {}
 
         wf = DummyWorkflow()
-        # Default mixin returns False (no XML config)
+        # Default mixin returns True (XML enabled by default on Claude 4.x)
+        assert wf._is_xml_enabled() is True
+
+    @patch("attune.workflows.base.CostTracker")
+    @patch("attune.workflows.config.WorkflowConfig.load")
+    def test_is_xml_disabled_when_explicitly_set(self, mock_config, mock_tracker):
+        """Test _is_xml_enabled returns False when explicitly disabled."""
+        mock_config.return_value = MagicMock()
+        mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
+        mock_config.return_value.get_xml_config_for_workflow.return_value = {
+            "enabled": False,
+        }
+
+        wf = DummyWorkflow()
         assert wf._is_xml_enabled() is False
 
 

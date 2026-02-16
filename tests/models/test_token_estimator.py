@@ -91,17 +91,14 @@ def calculate_total(items: list[dict]) -> float:
         assert tokens > 0
 
     def test_heuristic_fallback(self):
-        """Test heuristic fallback when tiktoken and attune_llm are unavailable."""
+        """Test heuristic fallback when tiktoken and attune.utils are unavailable."""
         text = "Test text for heuristic"
 
         with patch("attune.models.token_estimator.TIKTOKEN_AVAILABLE", False):
-            # Block both attune_llm and attune.utils imports to force heuristic fallback
+            # Block attune.utils imports to force heuristic fallback
             with patch.dict(
                 "sys.modules",
                 {
-                    "attune_llm": None,
-                    "attune_llm.utils": None,
-                    "attune_llm.utils.tokens": None,
                     "attune.utils": None,
                     "attune.utils.tokens": None,
                 },

@@ -154,10 +154,10 @@ If the button still doesn't work, you can run Coverage Boost from the command li
 
 ```bash
 # With default target (80%)
-empathy workflow run test-coverage-boost
+attune workflow run test-coverage-boost
 
 # With custom target
-empathy workflow run test-coverage-boost --input '{"target_coverage": 85}'
+attune workflow run test-coverage-boost --input '{"target_coverage": 85}'
 
 # From Python
 python -m attune.cli workflow run test-coverage-boost --input '{"target_coverage": 85}'

@@ -211,6 +211,10 @@ class TestPromptService:
     def test_init_default(self):
         svc = self._make_service()
         assert svc._workflow_name == "test-workflow"
+        assert svc.xml_enabled is True
+
+    def test_xml_explicitly_disabled(self):
+        svc = self._make_service({"enabled": False})
         assert svc.xml_enabled is False
 
     def test_xml_enabled_true(self):

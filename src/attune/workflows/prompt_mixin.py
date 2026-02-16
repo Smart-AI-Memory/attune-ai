@@ -138,9 +138,14 @@ class PromptMixin:
         return self._config.get_xml_config_for_workflow(self.name)
 
     def _is_xml_enabled(self) -> bool:
-        """Check if XML prompts are enabled for this workflow."""
+        """Check if XML prompts are enabled for this workflow.
+
+        Defaults to True — XML prompts are enabled unless explicitly disabled
+        via workflow config. Benchmarks on Claude 4.x show XML is cost-neutral
+        with better structured parsing.
+        """
         config = self._get_xml_config()
-        return bool(config.get("enabled", False))
+        return bool(config.get("enabled", True))
 
     def _render_xml_prompt(
         self,
@@ -150,6 +155,7 @@ class PromptMixin:
         constraints: list[str],
         input_type: str,
         input_payload: str,
+        examples: list[dict[str, str]] | None = None,
         extra: dict[str, Any] | None = None,
     ) -> str:
         """Render a prompt using XML template if enabled.
@@ -161,6 +167,7 @@ class PromptMixin:
             constraints: Rules and guidelines.
             input_type: Type of input ("code", "diff", "document").
             input_payload: The content to process.
+            examples: One-shot input/output pairs for few-shot learning.
             extra: Additional context data.
 
         Returns:
@@ -171,8 +178,8 @@ class PromptMixin:
 
         config = self._get_xml_config()
 
-        if not config.get("enabled", False):
-            # Fall back to plain text
+        if not config.get("enabled", True):
+            # Fall back to plain text (XML explicitly disabled)
             return self._render_plain_prompt(
                 role,
                 goal,
@@ -191,6 +198,7 @@ class PromptMixin:
             input_type=input_type,
             input_payload=input_payload,
             extra=extra or {},
+            examples=examples or [],
         )
 
         # Get template

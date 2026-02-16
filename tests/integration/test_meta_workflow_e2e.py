@@ -387,13 +387,11 @@ class TestCLIIntegration:
             pytest.fail(f"CLI module not available: {e}")
 
     def test_cli_integrated_with_main_cli(self):
-        """Test that meta-workflow CLI is integrated with main empathy CLI."""
+        """Test that CLI minimal entry point is available."""
         try:
-            from attune.cli_unified import app
+            from attune.cli_minimal import main
 
-            # Check if meta-workflow subcommand exists
-            # This is a simple check - full CLI testing would require running actual commands
-            assert app is not None
+            assert main is not None
 
         except Exception as e:
             pytest.fail(f"Failed to import main CLI: {e}")

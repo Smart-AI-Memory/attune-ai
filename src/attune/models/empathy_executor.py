@@ -125,7 +125,7 @@ class EmpathyLLMExecutor:
             try:
                 import os
 
-                from attune_llm import EmpathyLLM
+                from attune.llm.core import EmpathyLLM
 
                 # Get API key for this provider from environment
                 api_key_map = {
@@ -156,7 +156,7 @@ class EmpathyLLMExecutor:
         """Lazy initialization of EmpathyLLM."""
         if self._llm is None:
             try:
-                from attune_llm import EmpathyLLM
+                from attune.llm.core import EmpathyLLM
 
                 kwargs = {
                     "provider": self._provider,

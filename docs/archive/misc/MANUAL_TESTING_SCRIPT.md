@@ -468,7 +468,7 @@ API Provider:   [ ] Anthropic  [ ] OpenAI  [ ] None (fallback mode)
 - [ ] Morning workflow runs
 - [ ] Ship workflow runs
 - [ ] Fix-all workflow runs
-- [ ] Status command works (`empathy status`)
+- [ ] Status command works (`attune status`)
 - [ ] Memory panel loads (if not beta-gated)
 
 **Notes:** _______________________________________________

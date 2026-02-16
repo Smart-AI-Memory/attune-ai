@@ -280,8 +280,8 @@ async for message in coordinator.subscribe("findings"):
 |----------|-------------|
 | `REDIS_URL` | Redis connection URL |
 | `RAILWAY_REDIS_URL` | Railway-hosted Redis |
-| `EMPATHY_ENCRYPTION_KEY` | Encryption key for SENSITIVE |
-| `EMPATHY_COMPLIANCE_MODE` | "standard" or "hipaa" |
+| `ATTUNE_ENCRYPTION_KEY` | Encryption key for SENSITIVE |
+| `ATTUNE_COMPLIANCE_MODE` | "standard" or "hipaa" |
 
 ### Memory Control Panel
 

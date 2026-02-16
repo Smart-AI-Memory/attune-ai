@@ -340,13 +340,13 @@ Attune AI v4.2.0 includes 5 comprehensive, production-ready workflow templates d
 
 ```bash
 # List available templates
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 
 # Inspect a template
-empathy meta-workflow inspect test_creation_management_workflow
+attune meta-workflow inspect test_creation_management_workflow
 
 # Run a workflow (interactive)
-empathy meta-workflow run test_creation_management_workflow
+attune meta-workflow run test_creation_management_workflow
 ```
 
 ### Programmatic Usage
@@ -415,7 +415,7 @@ Templates are JSON files with the following structure:
 
 ```bash
 # Validate your template
-empathy meta-workflow validate-template my_template.json
+attune meta-workflow validate-template my_template.json
 ```
 
 ### Best Practices
@@ -474,10 +474,10 @@ Use `python_package_publish` template with automated quality checks, version bum
 ## FAQ
 
 **Q: Can I customize existing templates?**
-A: Yes! Export a template with `empathy meta-workflow export-template <id>`, modify the JSON, and load it as a custom template.
+A: Yes! Export a template with `attune meta-workflow export-template <id>`, modify the JSON, and load it as a custom template.
 
 **Q: How do I add my own template?**
-A: Create a JSON file in `.empathy/meta_workflows/templates/` following the template schema, then validate with `empathy meta-workflow validate-template`.
+A: Create a JSON file in `.empathy/meta_workflows/templates/` following the template schema, then validate with `attune meta-workflow validate-template`.
 
 **Q: What happens if an agent fails?**
 A: The workflow continues with other agents. Failed agents are reported in the execution summary.

@@ -414,42 +414,33 @@ class TestPRReviewWorkflow:
 class TestWorkflowRegistry:
     """Test workflow registration."""
 
-    def test_crew_review_registered(self):
-        """Test pro-review is registered in workflow registry.
+    def test_code_review_registered(self):
+        """Test code-review is registered in workflow registry.
 
-        Note: WORKFLOW_REGISTRY is lazily populated, so we use get_workflow()
-        which triggers initialization.
+        Note: pro-review and pr-review are migration aliases for code-review.
         """
-        from attune.workflows import CodeReviewPipeline, get_workflow, list_workflows
+        from attune.workflows import CodeReviewWorkflow, get_workflow, list_workflows
 
-        # list_workflows triggers registry initialization
         workflows = list_workflows()
         workflow_names = {w["name"] for w in workflows}
 
-        assert "pro-review" in workflow_names
-        assert get_workflow("pro-review") == CodeReviewPipeline
+        assert "code-review" in workflow_names
+        assert get_workflow("code-review") == CodeReviewWorkflow
 
-    def test_pr_review_registered(self):
-        """Test pr-review is registered in workflow registry.
+    def test_migration_aliases_exist(self):
+        """Test pro-review and pr-review are registered as migration aliases."""
+        from attune.workflows.migration import WORKFLOW_ALIASES
 
-        Note: WORKFLOW_REGISTRY is lazily populated, so we use get_workflow()
-        which triggers initialization.
-        """
-        from attune.workflows import PRReviewWorkflow, get_workflow, list_workflows
-
-        # list_workflows triggers registry initialization
-        workflows = list_workflows()
-        workflow_names = {w["name"] for w in workflows}
-
-        assert "pr-review" in workflow_names
-        assert get_workflow("pr-review") == PRReviewWorkflow
+        assert "pro-review" in WORKFLOW_ALIASES
+        assert WORKFLOW_ALIASES["pro-review"][0] == "code-review"
+        assert "pr-review" in WORKFLOW_ALIASES
+        assert WORKFLOW_ALIASES["pr-review"][0] == "code-review"
 
     def test_get_workflow(self):
         """Test get_workflow function."""
-        from attune.workflows import CodeReviewPipeline, PRReviewWorkflow, get_workflow
+        from attune.workflows import CodeReviewWorkflow, get_workflow
 
-        assert get_workflow("pro-review") == CodeReviewPipeline
-        assert get_workflow("pr-review") == PRReviewWorkflow
+        assert get_workflow("code-review") == CodeReviewWorkflow
 
 
 # ============================================================================

@@ -263,7 +263,7 @@ class TestAnthropicProviderIntegration:
     )
     def test_provider_estimate_tokens(self):
         """Test AnthropicProvider.estimate_tokens() uses accurate counting."""
-        from attune_llm.providers import AnthropicProvider
+        from attune.llm.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
@@ -280,7 +280,7 @@ class TestAnthropicProviderIntegration:
     )
     def test_provider_calculate_actual_cost(self):
         """Test AnthropicProvider.calculate_actual_cost()."""
-        from attune_llm.providers import AnthropicProvider
+        from attune.llm.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
