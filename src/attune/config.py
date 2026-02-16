@@ -284,8 +284,9 @@ class AttuneConfig:
 
         data: dict[str, Any] = {}
 
-        # Check both ATTUNE_ and EMPATHY_ prefixes (ATTUNE_ wins)
-        for check_prefix in ("ATTUNE_", prefix):
+        # Check ATTUNE_ first, then EMPATHY_ as fallback (ATTUNE_ wins)
+        prefixes = dict.fromkeys([prefix, "ATTUNE_", "EMPATHY_"])
+        for check_prefix in prefixes:
             for key, value in os.environ.items():
                 if not key.startswith(check_prefix):
                     continue
