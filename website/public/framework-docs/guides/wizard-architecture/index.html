@@ -12,13 +12,13 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/guides/preface/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/guides/wizard-architecture/">
       
       
-        <link rel="prev" href="../how-to-read-this-book/">
+        <link rel="prev" href="../wizards-getting-started/">
       
       
-        <link rel="next" href="../foreword/">
+        <link rel="next" href="../wizard-custom-development/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Preface - Attune AI</title>
+        <title>Architecture - Attune AI</title>
       
     
     
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#description-preface-why-empathy-exists-step-by-step-tutorial-with-examples-best-practices-and-common-patterns-learn-by-doing-with-hands-on-examples" class="md-skip">
+        <a href="#wizard-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Preface
+              Architecture
             
           </span>
         </div>
@@ -348,10 +348,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../reference/" class="md-tabs__link">
           
   
@@ -387,12 +389,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../../get-the-book/" class="md-tabs__link">
           
   
@@ -2519,28 +2519,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -2558,7 +2561,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2610,10 +2613,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2622,7 +2628,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_2" >
         
           
-          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
             
   
   
@@ -2728,10 +2734,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2740,7 +2749,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_3" >
         
           
-          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
             
   
   
@@ -3033,28 +3042,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
         
           
+          
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_4" >
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="">
             
   
   
@@ -3072,7 +3084,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3115,10 +3127,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../wizard-architecture/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3134,6 +3173,386 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#system-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basewizard-basepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseWizard (base.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wizardstep-basepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardStep (base.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steptype-enum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StepType Enum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wizardsession-sessionpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardSession (session.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wizardresult-basepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardResult (base.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Dispatch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-question-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. QUESTION Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-llm_call-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. LLM_CALL Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-task_decompose-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. TASK_DECOMPOSE Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-preview-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. PREVIEW Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-confirm-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. CONFIRM Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wizardinternalworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardInternalWorkflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-delegation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow Delegation Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workflow Delegation Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-securitywizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: SecurityWizard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lazy-instantiation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lazy Instantiation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-ways-to-create-wizards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Ways to Create Wizards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two Ways to Create Wizards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-python-based-basewizard-subclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Python-Based (BaseWizard subclass)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-yaml-based-configdrivenwizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. YAML-Based (ConfigDrivenWizard)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registry-and-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registry and Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#taskdecomposer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TaskDecomposer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TaskDecomposer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XML Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-tier-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Tier Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3188,10 +3607,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -3200,7 +3622,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_5" >
         
           
-          <label class="md-nav__link" for="__nav_7_5" id="__nav_7_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7_5" id="__nav_7_5_label" tabindex="">
             
   
   
@@ -3415,31 +3837,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -3457,7 +3876,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3556,35 +3975,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Preface
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../preface/" class="md-nav__link">
         
   
   
@@ -3600,85 +3994,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description-preface-why-empathy-exists-step-by-step-tutorial-with-examples-best-practices-and-common-patterns-learn-by-doing-with-hands-on-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        description: Preface: Why Empathy Exists: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#preface-why-empathy-exists" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Preface: Why Empathy Exists
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Preface: Why Empathy Exists">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-origin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Origin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-this-framework-is" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What This Framework Is
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-the-reader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For the Reader
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3736,6 +4051,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3744,10 +4061,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description-preface-why-empathy-exists-step-by-step-tutorial-with-examples-best-practices-and-common-patterns-learn-by-doing-with-hands-on-examples" class="md-nav__link">
+  <a href="#system-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        description: Preface: Why Empathy Exists: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
+        System Overview
       
     </span>
   </a>
@@ -3755,22 +4072,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#preface-why-empathy-exists" class="md-nav__link">
+  <a href="#core-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Preface: Why Empathy Exists
+        Core Components
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Preface: Why Empathy Exists">
+    <nav class="md-nav" aria-label="Core Components">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-origin" class="md-nav__link">
+  <a href="#basewizard-basepy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Origin
+        BaseWizard (base.py)
       
     </span>
   </a>
@@ -3778,10 +4095,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-this-framework-is" class="md-nav__link">
+  <a href="#wizardstep-basepy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What This Framework Is
+        WizardStep (base.py)
       
     </span>
   </a>
@@ -3789,10 +4106,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-the-reader" class="md-nav__link">
+  <a href="#steptype-enum" class="md-nav__link">
     <span class="md-ellipsis">
       
-        For the Reader
+        StepType Enum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wizardsession-sessionpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardSession (session.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wizardresult-basepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardResult (base.py)
       
     </span>
   </a>
@@ -3801,6 +4140,283 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Dispatch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-question-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. QUESTION Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-llm_call-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. LLM_CALL Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-task_decompose-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. TASK_DECOMPOSE Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-preview-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. PREVIEW Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-confirm-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. CONFIRM Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wizardinternalworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WizardInternalWorkflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-delegation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow Delegation Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workflow Delegation Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-securitywizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: SecurityWizard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lazy-instantiation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lazy Instantiation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-ways-to-create-wizards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Ways to Create Wizards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two Ways to Create Wizards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-python-based-basewizard-subclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Python-Based (BaseWizard subclass)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-yaml-based-configdrivenwizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. YAML-Based (ConfigDrivenWizard)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registry-and-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registry and Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#taskdecomposer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TaskDecomposer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TaskDecomposer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XML Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-tier-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Tier Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
   
 </li>
       
@@ -3824,44 +4440,384 @@
   
 
 
+<h1 id="wizard-architecture">Wizard Architecture<a class="headerlink" href="#wizard-architecture" title="Permanent link">&para;</a></h1>
+<p>How the wizard system works internally: components, step lifecycle, session state, and workflow delegation.</p>
 <hr />
-<h2 id="description-preface-why-empathy-exists-step-by-step-tutorial-with-examples-best-practices-and-common-patterns-learn-by-doing-with-hands-on-examples">description: Preface: Why Empathy Exists: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.<a class="headerlink" href="#description-preface-why-empathy-exists-step-by-step-tutorial-with-examples-best-practices-and-common-patterns-learn-by-doing-with-hands-on-examples" title="Permanent link">&para;</a></h2>
-<h1 id="preface-why-empathy-exists">Preface: Why Empathy Exists<a class="headerlink" href="#preface-why-empathy-exists" title="Permanent link">&para;</a></h1>
-<p><em>By Patrick Roebuck</em></p>
+<h2 id="system-overview">System Overview<a class="headerlink" href="#system-overview" title="Permanent link">&para;</a></h2>
+<p>The wizard system provides guided, multi-step AI workflows. Users interact with wizards through questions, and the system orchestrates LLM calls, task decomposition, and previews behind a consistent interface.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                    BaseWizard                        │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  │ WizardStep│  │ WizardStep│  │    WizardStep    │  │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │ QUESTION  │→ │ LLM_CALL │→ │ TASK_DECOMPOSE   │→ ...
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  └──────────┘  └────┬─────┘  └────────┬──────────┘  │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                     │                  │             │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│              ┌──────▼──────┐   ┌───────▼──────────┐  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│              │ Internal    │   │  TaskDecomposer  │  │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│              │ Workflow    │   │  (XML parsing)   │  │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│              │ (LLM bridge)│   └──────────────────┘  │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│              └─────────────┘                         │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│                                                      │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  ┌──────────────────────┐                            │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │    WizardSession     │  ← state shared across     │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  │  (collected_data,    │    all steps                │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  │   step_results,      │                            │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  │   tasks, cost)       │                            │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  └──────────────────────┘                            │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└─────────────────────────────────────────────────────┘
+</code></pre></div>
 <hr />
-<h2 id="the-origin">The Origin<a class="headerlink" href="#the-origin" title="Permanent link">&para;</a></h2>
-<p>I started building AI assistants because I believed they could be far better than what existed. Not just more capable—more thoughtful. More anticipatory. More aligned with what people actually need.</p>
-<p>After building a healthcare AI system with a team, I had an unexpected break from work. During that time, I had the opportunity to think deeply about fundamental questions:</p>
+<h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
+<h3 id="basewizard-basepy">BaseWizard (<code>base.py</code>)<a class="headerlink" href="#basewizard-basepy" title="Permanent link">&para;</a></h3>
+<p>Abstract base class that all wizards extend. Defines:</p>
 <ul>
-<li>What should AI actually do for people?</li>
-<li>Who should own the knowledge AI helps create?</li>
-<li>How should trust be built between humans and AI systems?</li>
-<li>What would "anticipation" really mean if we took it seriously?</li>
+<li><strong><code>config</code></strong> — <code>WizardConfig</code> with wizard_id, name, description, domain, cost estimates</li>
+<li><strong><code>steps</code></strong> — Ordered list of <code>WizardStep</code> definitions</li>
+<li><strong><code>run()</code></strong> — Main entry point that iterates steps and dispatches each one</li>
+<li><strong><code>build_prompt_context()</code></strong> — Abstract: subclasses build <code>PromptContext</code> for LLM steps</li>
+<li><strong><code>process_step_result()</code></strong> — Abstract: subclasses store/transform LLM results</li>
 </ul>
-<p>That thinking time was valuable. The answers became this framework.</p>
-<h2 id="what-this-framework-is">What This Framework Is<a class="headerlink" href="#what-this-framework-is" title="Permanent link">&para;</a></h2>
-<p>Empathy is better than I'd hoped for, but it remains true to my original goal: making positive change. Making a difference.</p>
-<p>The values documented in this book—data sovereignty, trust as earned, anticipation over reaction—these aren't marketing decisions. They came from having time to think about what actually matters.</p>
-<p>Having built healthcare AI, and having been on the receiving end of healthcare, I've seen both sides. That perspective shapes everything here.</p>
-<h2 id="for-the-reader">For the Reader<a class="headerlink" href="#for-the-reader" title="Permanent link">&para;</a></h2>
-<p>If you're reading this book, you're probably building something with AI. You have choices about how to build it:</p>
+<h3 id="wizardstep-basepy">WizardStep (<code>base.py</code>)<a class="headerlink" href="#wizardstep-basepy" title="Permanent link">&para;</a></h3>
+<p>Each step has:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>Unique step identifier</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>step_type</code></td>
+<td><code>StepType</code></td>
+<td>Determines execution handler</td>
+</tr>
+<tr>
+<td><code>tier</code></td>
+<td><code>str</code></td>
+<td>Model tier: <code>"cheap"</code>, <code>"capable"</code>, <code>"premium"</code></td>
+</tr>
+<tr>
+<td><code>questions</code></td>
+<td><code>list[FormQuestion]</code></td>
+<td>For QUESTION steps only</td>
+</tr>
+<tr>
+<td><code>condition</code></td>
+<td><code>Callable</code></td>
+<td>Skip this step if returns <code>False</code></td>
+</tr>
+<tr>
+<td><code>prompt_template</code></td>
+<td><code>str</code></td>
+<td>XML template name for LLM steps</td>
+</tr>
+<tr>
+<td><code>prompt_context_template</code></td>
+<td><code>dict</code></td>
+<td>Declarative prompt context (YAML wizards)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="steptype-enum">StepType Enum<a class="headerlink" href="#steptype-enum" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>QUESTION       → Collect user input via AskUserQuestion
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>LLM_CALL       → Call an LLM with XML-enhanced prompt
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>TASK_DECOMPOSE → Break work into structured XML &lt;task&gt; specs
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>PREVIEW        → Show results for review
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>CONFIRM        → Final yes/no gate
+</code></pre></div>
+<h3 id="wizardsession-sessionpy">WizardSession (<code>session.py</code>)<a class="headerlink" href="#wizardsession-sessionpy" title="Permanent link">&para;</a></h3>
+<p>Mutable state container shared across all steps in a single run.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>WizardSession
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── wizard_id          # Which wizard owns this session
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── run_id             # Unique run ID (UUID)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├── initial_context    # Read-only context from run() caller
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>├── collected_data     # User answers from QUESTION steps
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>├── step_results       # LLM/decompose outputs keyed by step ID
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── tasks              # Decomposed XML tasks
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── steps_completed    # Ordered list of completed step IDs
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>├── steps_skipped      # Steps skipped due to conditions
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>├── generated_output   # Final preview text
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── total_cost         # Accumulated LLM cost (USD)
+</code></pre></div>
+<p><strong>Layered lookup:</strong> <code>session.get(key)</code> checks <code>collected_data</code> first, then falls back to <code>initial_context</code>. This lets QUESTION steps override initial values.</p>
+<h3 id="wizardresult-basepy">WizardResult (<code>base.py</code>)<a class="headerlink" href="#wizardresult-basepy" title="Permanent link">&para;</a></h3>
+<p>Returned by <code>run()</code>. Contains everything needed by the caller:</p>
 <ul>
-<li>You can build systems where users own their data, or systems where you own their data</li>
-<li>You can build trust gradually through demonstrated reliability, or assume trust you haven't earned</li>
-<li>You can anticipate problems and prevent them, or react to problems after they occur</li>
+<li><code>success</code> — Whether the wizard completed</li>
+<li><code>steps_completed</code> — Which steps ran</li>
+<li><code>collected_data</code> — All user inputs</li>
+<li><code>generated_output</code> — Preview text or analysis</li>
+<li><code>tasks</code> — Decomposed task list</li>
+<li><code>total_cost</code> / <code>total_duration_ms</code> — Usage metrics</li>
+<li><code>error</code> — Error message if <code>success</code> is <code>False</code></li>
 </ul>
-<p>Empathy makes the first choice in each case. Not because it's easier—it isn't—but because it's right.</p>
-<p>I hope what we've built here helps you build things that matter.</p>
 <hr />
-<p><em>Patrick Roebuck</em>
-<em>December 2025</em></p>
+<h2 id="step-lifecycle">Step Lifecycle<a class="headerlink" href="#step-lifecycle" title="Permanent link">&para;</a></h2>
+<h3 id="1-dispatch">1. Dispatch<a class="headerlink" href="#1-dispatch" title="Permanent link">&para;</a></h3>
+<p><code>BaseWizard.run()</code> iterates through <code>self.steps</code> in order. For each step:</p>
+<ol>
+<li>Check the step's <code>condition</code> callable (if any). If it returns <code>False</code>, skip via <code>session.skip_step()</code>.</li>
+<li>Call <code>_dispatch_step()</code>, which routes to the handler by <code>step_type</code>.</li>
+</ol>
+<h3 id="2-question-steps">2. QUESTION Steps<a class="headerlink" href="#2-question-steps" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>User ──AskUserQuestion──→ FormEngine ──responses──→ Session.set()
+</code></pre></div>
+<ul>
+<li>Creates a <code>FormSchema</code> from the step's <code>questions</code> list</li>
+<li>Passes it to <code>SocraticFormEngine.ask_questions()</code></li>
+<li>Stores each response key-value pair in the session</li>
+<li>When no callback is provided, uses question defaults</li>
+</ul>
+<h3 id="3-llm_call-steps">3. LLM_CALL Steps<a class="headerlink" href="#3-llm_call-steps" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Session ──build_prompt_context()──→ PromptContext
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                                      │
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>         WizardInternalWorkflow._render_xml_prompt()
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                                      │
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>         WizardInternalWorkflow._call_llm(prompt, tier)
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>                                      │
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>         WizardInternalWorkflow._parse_xml_response()
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>                                      │
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>                                 process_step_result()
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>                                      │
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>                              Session.complete_step()
+</code></pre></div>
+<ul>
+<li>Subclass provides <code>PromptContext</code> via <code>build_prompt_context()</code></li>
+<li>Internal workflow renders XML prompt, calls LLM, parses response</li>
+<li>Subclass processes result via <code>process_step_result()</code></li>
+<li><strong>Workflow delegation</strong> (see below) can override this entire flow</li>
+</ul>
+<h3 id="4-task_decompose-steps">4. TASK_DECOMPOSE Steps<a class="headerlink" href="#4-task_decompose-steps" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Instantiates <code>TaskDecomposer</code> with the internal workflow</li>
+<li>Calls <code>decompose()</code> with problem description and constraints from <code>build_prompt_context()</code></li>
+<li>LLM produces XML <code>&lt;task&gt;</code> blocks; regex parser extracts <code>DecomposedTask</code> objects</li>
+<li>Task dicts stored in <code>session.tasks</code></li>
+</ul>
+<h3 id="5-preview-steps">5. PREVIEW Steps<a class="headerlink" href="#5-preview-steps" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Formats session state (inputs, analysis, tasks) into markdown</li>
+<li>Stores as <code>session.generated_output</code></li>
+<li>In interactive mode, the CLI or Claude Code displays this to the user</li>
+</ul>
+<h3 id="6-confirm-steps">6. CONFIRM Steps<a class="headerlink" href="#6-confirm-steps" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Presents a yes/no question via the form engine</li>
+<li>If declined, raises <code>_WizardAbort</code> to stop the flow gracefully</li>
+<li>The run still returns a <code>WizardResult</code> with all data collected so far</li>
+</ul>
+<h3 id="conditional-steps">Conditional Steps<a class="headerlink" href="#conditional-steps" title="Permanent link">&para;</a></h3>
+<p>Steps can have a <code>condition</code> function:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_findings</span><span class="p">(</span><span class="n">session</span><span class="p">:</span> <span class="n">WizardSession</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">scan_result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">step_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scan&quot;</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="n">scan_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;findings&quot;</span><span class="p">,</span> <span class="p">[])</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;severity&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">WizardStep</span><span class="p">(</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;generate_fixes&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">LLM_CALL</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">condition</span><span class="o">=</span><span class="n">_has_findings</span><span class="p">,</span>  <span class="c1"># Only runs if high/critical findings exist</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
+</code></pre></div>
 <hr />
-<div class="admonition note">
-<p class="admonition-title">A Note on This Book</p>
-<p>The Attune AI was developed through collaboration between Patrick Roebuck and Claude (Anthropic). The short-term memory system, multi-agent coordination layer, and philosophical foundations were built together in working sessions.</p>
-<p>What made this collaboration different? Claude worked as a team member—a valued collaborator—rather than a brilliant but unreliable tool. Earlier AI assistants, for all their capabilities, suffered from a frustrating forgetfulness: great in many ways, but the lack of continuity meant constantly starting over. I knew better was within reach. This framework is part of that answer.</p>
-<p>Don't miss Claude's foreword that follows. It offers something rare: an AI reflecting honestly on its own limitations and what genuine collaboration requires.</p>
-</div>
+<h2 id="wizardinternalworkflow">WizardInternalWorkflow<a class="headerlink" href="#wizardinternalworkflow" title="Permanent link">&para;</a></h2>
+<p>Wizards don't call LLMs directly. They use <code>WizardInternalWorkflow</code>, a thin <code>BaseWorkflow</code> subclass that provides access to all 12 workflow mixins:</p>
+<ul>
+<li>LLM calls (<code>_call_llm</code>)</li>
+<li>XML prompt rendering (<code>_render_xml_prompt</code>)</li>
+<li>Response parsing (<code>_parse_xml_response</code>)</li>
+<li>Caching, telemetry, and cost tracking</li>
+</ul>
+<p>This is a <strong>composition bridge</strong>, not a real multi-stage workflow. Its <code>run_stage()</code> raises <code>NotImplementedError</code> because wizards call mixin methods directly.</p>
+<hr />
+<h2 id="workflow-delegation-pattern">Workflow Delegation Pattern<a class="headerlink" href="#workflow-delegation-pattern" title="Permanent link">&para;</a></h2>
+<p>Built-in wizards can delegate LLM steps to specialized workflow engines for deeper analysis. This is the key architectural pattern for production wizards.</p>
+<h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>BaseWizard._run_llm_step(step)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>         │
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>         ▼
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>BuiltinWizard._run_llm_step(step)    ← Override
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>         │
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    ┌────┴─────────────────────┐
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    │ step.id == &quot;analyze&quot;?     │
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    │                           │
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    │ YES → _run_analysis_via_  │
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    │       workflow()          │
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    │   ┌──────────────────┐    │
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    │   │ WorkflowEngine   │    │
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    │   │ stage1 → stage2  │    │
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    │   │ → stage3 → ...   │    │
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    │   └──────────────────┘    │
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    │                           │
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    │ NO or EXCEPTION →         │
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    │   super()._run_llm_step() │
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    │   (fallback to basic LLM) │
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    └──────────────────────────┘
+</code></pre></div>
+<h3 id="example-securitywizard">Example: SecurityWizard<a class="headerlink" href="#example-securitywizard" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_llm_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="k">if</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;scan&quot;</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_scan_via_workflow</span><span class="p">()</span>  <span class="c1"># 3-stage pipeline</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>            <span class="k">return</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Workflow scan failed, falling back to LLM&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_run_llm_step</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>  <span class="c1"># Graceful fallback</span>
+</code></pre></div>
+<p>The <code>_run_scan_via_workflow()</code> method chains multiple workflow stages:</p>
+<ol>
+<li><strong>Triage</strong> (CHEAP) — Quick pattern scan</li>
+<li><strong>Analyze</strong> (CAPABLE) — Deep analysis</li>
+<li><strong>Assess</strong> (CAPABLE) — Risk scoring</li>
+</ol>
+<p>Each stage's output feeds into the next. The combined result is stored in the session.</p>
+<h3 id="lazy-instantiation">Lazy Instantiation<a class="headerlink" href="#lazy-instantiation" title="Permanent link">&para;</a></h3>
+<p>Workflows are created lazily and cached:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_or_create_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="o">=</span> <span class="n">SecurityAuditWorkflow</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Graceful degradation</span>
+</code></pre></div>
+<p>This ensures wizards work even when optional workflow dependencies aren't installed.</p>
+<hr />
+<h2 id="two-ways-to-create-wizards">Two Ways to Create Wizards<a class="headerlink" href="#two-ways-to-create-wizards" title="Permanent link">&para;</a></h2>
+<h3 id="1-python-based-basewizard-subclass">1. Python-Based (BaseWizard subclass)<a class="headerlink" href="#1-python-based-basewizard-subclass" title="Permanent link">&para;</a></h3>
+<p>For complex wizards with custom logic, workflow delegation, or conditional steps.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>class MyWizard(BaseWizard):
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    config = WizardConfig(...)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    steps = [WizardStep(...), ...]
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    def build_prompt_context(self, step) → PromptContext
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    def process_step_result(self, step, result) → None
+</code></pre></div>
+<p>All 5 built-in wizards use this approach. See <a href="../wizard-custom-development/">Custom Wizard Development</a>.</p>
+<h3 id="2-yaml-based-configdrivenwizard">2. YAML-Based (ConfigDrivenWizard)<a class="headerlink" href="#2-yaml-based-configdrivenwizard" title="Permanent link">&para;</a></h3>
+<p>For simpler wizards that don't need Python. Loaded from <code>.attune/wizards/*.yaml</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>schema_version: &quot;1.0&quot;
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>wizard_id: &quot;my-wizard&quot;
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>name: &quot;My Wizard&quot;
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>steps:
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  - id: &quot;gather&quot;
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    step_type: &quot;question&quot;
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    questions: [...]
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>  - id: &quot;analyze&quot;
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    step_type: &quot;llm_call&quot;
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    prompt_context:
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>      role: &quot;specialist&quot;
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>      goal: &quot;Analyze {session.target}&quot;
+</code></pre></div>
+<p>Session variable interpolation (<code>{session.xxx}</code>) replaces placeholders with values from earlier question steps. See <a href="../wizards-getting-started/">Getting Started</a>.</p>
+<hr />
+<h2 id="registry-and-discovery">Registry and Discovery<a class="headerlink" href="#registry-and-discovery" title="Permanent link">&para;</a></h2>
+<p>The wizard registry (<code>registry.py</code>) finds wizards through a 3-tier search:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>1. In-memory registry     ← Programmatic registration
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Entry points           ← pip-installed packages (empathy.wizards group)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>3. Built-in loading       ← src/attune/wizards/builtin/
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>4. Custom YAML loading    ← .attune/wizards/*.yaml
+</code></pre></div>
+<p>Each tier only runs once per process (guarded by flags). The registry supports:</p>
+<ul>
+<li><code>register_wizard(id, class)</code> — Manual registration</li>
+<li><code>get_wizard(id)</code> — Lookup with auto-discovery</li>
+<li><code>list_wizards()</code> — All registered wizard configs</li>
+<li><code>save_custom_wizard(data)</code> — Save YAML and register</li>
+<li><code>delete_custom_wizard(id)</code> — Remove YAML (built-ins protected)</li>
+</ul>
+<hr />
+<h2 id="taskdecomposer">TaskDecomposer<a class="headerlink" href="#taskdecomposer" title="Permanent link">&para;</a></h2>
+<p>The XML task decomposition engine (<code>decomposer.py</code>) breaks complex problems into structured sub-tasks.</p>
+<h3 id="input">Input<a class="headerlink" href="#input" title="Permanent link">&para;</a></h3>
+<p>Problem description + codebase context + constraints from <code>build_prompt_context()</code>.</p>
+<h3 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h3>
+<p>List of <code>DecomposedTask</code> objects:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>DecomposedTask
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>├── task_id           # &quot;1&quot;, &quot;2&quot;, etc.
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>├── name              # &quot;fix-type-coercion&quot;
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>├── objective          # What this task accomplishes
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>├── files_to_create    # [{path, description}]
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>├── files_to_modify    # [{path, description}]
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>├── validation_checks  # How to verify correctness
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>├── risks              # [{severity, description}]
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>└── dependencies       # Task IDs that must complete first
+</code></pre></div>
+<h3 id="xml-schema">XML Schema<a class="headerlink" href="#xml-schema" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">&lt;tasks&gt;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;short-name&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">&lt;objective&gt;</span>What<span class="w"> </span>this<span class="w"> </span>task<span class="w"> </span>accomplishes<span class="nt">&lt;/objective&gt;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">&lt;files-to-create&gt;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/new.py&quot;</span><span class="nt">&gt;</span>Description<span class="nt">&lt;/file&gt;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">&lt;/files-to-create&gt;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">&lt;files-to-modify&gt;</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/existing.py&quot;</span><span class="nt">&gt;</span>What<span class="w"> </span>changes<span class="nt">&lt;/file&gt;</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="nt">&lt;/files-to-modify&gt;</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nt">&lt;validation&gt;</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">      </span><span class="nt">&lt;check&gt;</span>How<span class="w"> </span>to<span class="w"> </span>verify<span class="w"> </span>correctness<span class="nt">&lt;/check&gt;</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nt">&lt;/validation&gt;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="nt">&lt;risks&gt;</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">      </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">&quot;medium&quot;</span><span class="nt">&gt;</span>Description<span class="w"> </span>and<span class="w"> </span>mitigation<span class="nt">&lt;/risk&gt;</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">    </span><span class="nt">&lt;/risks&gt;</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">    </span><span class="nt">&lt;dependencies&gt;</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">      </span><span class="nt">&lt;dep&gt;</span>task-id<span class="nt">&lt;/dep&gt;</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="nt">&lt;/dependencies&gt;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span><span class="nt">&lt;/task&gt;</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="nt">&lt;/tasks&gt;</span>
+</code></pre></div>
+<p>The parser uses regex extraction for robustness — LLM responses may include markdown fences or extra text around the XML.</p>
+<hr />
+<h2 id="model-tier-strategy">Model Tier Strategy<a class="headerlink" href="#model-tier-strategy" title="Permanent link">&para;</a></h2>
+<p>Wizards use tiered model selection to balance cost and quality:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Use For</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cheap</code></td>
+<td>Quick scans, classification, triage</td>
+<td>Pattern matching, file listing</td>
+</tr>
+<tr>
+<td><code>capable</code></td>
+<td>Analysis, code review, planning</td>
+<td>Security analysis, refactoring</td>
+</tr>
+<tr>
+<td><code>premium</code></td>
+<td>Complex reasoning, architecture</td>
+<td>Remediation plans, roadmaps</td>
+</tr>
+</tbody>
+</table>
+<p>Multi-stage workflows typically start with <code>cheap</code> tiers for broad scanning and escalate to <code>premium</code> for the final synthesis step.</p>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../wizards-getting-started/">Getting Started</a> — Run your first wizard in under 10 minutes</li>
+<li><a href="../wizard-custom-development/">Custom Wizard Development</a> — Build Python wizards with workflow delegation</li>
+<li><a href="../../reference/software-wizards/">Software Wizards</a> — Full reference for all 16 software wizards</li>
+<li><a href="../../reference/wizards/">Industry Wizards</a> — Domain-specific wizards (Healthcare, Finance, Legal, etc.)</li>
+</ul>
 
 
 

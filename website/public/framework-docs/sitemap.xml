@@ -2,1878 +2,270 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://smartaimemory.com/framework-docs/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ADAPTIVE_ROUTING_ANTHROPIC_NATIVE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ADAPTIVE_ROUTING_INTEGRATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AGENT_COORDINATION_ARCHITECTURE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AGENT_TRACKING_AND_COORDINATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ANTHROPIC_ONLY_ARCHITECTURE_BRAINSTORM/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ANTHROPIC_OPTIMIZATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ARCHITECTURAL_GAPS_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ARCHITECTURE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AUTH_CLI_IMPLEMENTATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AUTH_INTEGRATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AUTH_STRATEGY_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/AUTH_WORKFLOW_INTEGRATIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/BATCH_API_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/BLOG_CLAUDE_OPTIMIZATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/BLOG_POST_OUTLINES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/BLOG_PROJECT_INDEX/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/BUG_PREDICTION_FIX_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CACHING_STRATEGY_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLAUDE_CODE_INTEGRATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLAUDE_NATIVE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLI_REFACTORING_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLI_REFACTORING_FINAL_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLI_REFACTORING_PROGRESS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CLI_REFACTORING_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/CODING_STANDARDS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/COST_SAVINGS_BREAKDOWN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/COVERAGE_85_SPRINT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/COVERAGE_REPORT_2026-01-20/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/CRITICAL_TEST_GAPS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DASHBOARD_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DASHBOARD_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DASHBOARD_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DASHBOARD_USAGE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DATA_STRUCTURE_OPTIMIZATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DEPENDABOT_PRs_REVIEW/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DEVELOPER_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/DOCUMENTATION_UPDATE_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/EXCEPTION_HANDLING_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/FAQ_DISTRIBUTION_STRATEGY/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/FEATURES/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/FEATURE_OVERVIEW_PROJECT_INDEX/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/FOREWORD_BY_CLAUDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/GENERATOR_MIGRATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/GENERATOR_OPTIMIZATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/IMPLEMENTATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/INTEGRATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ISSUE_25_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/LLM_DOC_ENHANCEMENT_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/LLM_ENHANCEMENTS_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/LLM_WORKFLOW_ENHANCEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/META_ORCHESTRATION_ARCHITECTURE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/META_WORKFLOWS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/OOP_REFACTORING_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ORCHESTRATION_API/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/ORCHESTRATION_USER_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PATTERN4_EVENT_STREAMING_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PATTERN5_APPROVAL_GATES_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PATTERN6_FEEDBACK_LOOP_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PERFORMANCE_OPTIMIZATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PERFORMANCE_OPTIMIZATION_ROADMAP/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/PROFILING_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/QUICK_START/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REDIS_OPTIMIZATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REDIS_SECURITY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REDIS_SETUP/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_COMPLETION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_PLAN_REMAINING_6/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_PLAN_TOP10/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_SESSION_2026_01_30/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/REFACTORING_SESSION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/RELEASE_BLOCKER_RESOLUTION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SCANNER_OPTIMIZATIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SECURITY_AUDIT_2026-01-27/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/SECURITY/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/SECURITY_REVIEW/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SESSION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SESSION_SUMMARY_2026-01-26/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SESSION_SUMMARY_2026-01-30/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SETUP_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SKILLS_REFERENCE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SONNET_OPUS_FALLBACK_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SONNET_OPUS_QUICK_START/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/SQLITE_HISTORY_MIGRATION_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TESTING_COVERAGE_SETUP/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TESTING_IMPROVEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TESTING_ONBOARDING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TESTING_PATTERNS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TESTING_WORKFLOW_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TEST_COVERAGE_IMPROVEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TEST_CREATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TEST_IMPROVEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TEST_MAINTENANCE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/TierFallbackHelper_QuickStart/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/USER_API_DOCUMENTATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/V4_0_2_RELEASE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/V4_FEATURES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/WORKFLOW_COORDINATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/WORKFLOW_INTEGRATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/WORKFLOW_INVENTORY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/WORKFLOW_TEMPLATES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/WORKFLOW_TESTING_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/about-the-author/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/book-cover/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/caching/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/cli-reference/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/commands/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/comparison/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/configuration-architecture/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/context-management/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/continuous-learning/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/contributing/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/dashboard-costs-by-tier/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/experimental_assessment/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/feature-overview-meta-workflows/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/get-the-book/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/governance/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/hooks/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/keyboard-shortcuts/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/known-issues/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/markdown-agents/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/migration-guide/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/quickstart/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/reliability_improvements_report/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/testing-guide/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/testing-strategy/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorial_sonnet_opus_strategy/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/adr/001-workflow-engine-architecture/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/adr/002-baseworkflow-refactoring-strategy/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/config/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/core/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/empathy-os/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/llm-toolkit/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/memory/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/meta-orchestration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/multi-agent/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/pattern-library/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/persistence/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/security-scanner/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/software-wizards/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/wizards/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/api-reference/workflows/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/ANTHROPIC_PATTERNS_INTEGRATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/ANTHROPIC_PATTERNS_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/DOCUMENTATION_PATTERNS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/ENTERPRISE_PRIVACY_INTEGRATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/OPTION_A_IMPLEMENTATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/PHASE_1_COMPLETION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/PLUGIN_SYSTEM_README/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/SECURE_MEMORY_ARCHITECTURE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/STRIPE_INTEGRATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/WIZARD_FACTORY_COMPLETION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/WIZARD_FACTORY_DISCOVERY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/WORKFLOW_FACTORY_COMPLETION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/WORKFLOW_FACTORY_PATTERN_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/anthropic-agent-patterns/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/extending-composition-patterns/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/interactive-agent-creation/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/xml-enhancement-summary/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/architecture/xml-migration-status/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/BLOG_PUBLISHING_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-advanced-grammar/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-building-agent-teams/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-code-inspection-pipeline/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-dynamic-agent-creation/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-grammar-of-ai-collaboration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/blog-memory-architecture/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/devto/01-grammar-of-ai-collaboration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/devto/02-dynamic-agent-creation/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/devto/03-building-agent-teams/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/drafts/devto/04-advanced-grammar/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/AGENT_FACTORY_DESIGN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/BLOG_POST_v3.6.0/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/Based%20on%20this%20orchestrated-health-check%20/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/COVERAGE_BOOST_BUTTON_FIX/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/DOCS_BUTTONS_FIX/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/DOC_WORKFLOWS_COMPARISON/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/FEATURE_ACCESSIBILITY_AUDIT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/INSTALL_FIXED_EXTENSION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/MANUAL_TESTING_SCRIPT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/MARKETING_PLAN_v3.6.0/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/META_WORKFLOW_SECURITY_REVIEW/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/QUICK_START_ANTHROPIC_OPTIMIZATIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/README-TESTING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/REMAINING_FEATURES_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/SOCIAL_MEDIA_POSTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/SUMMARY_ORCHESTRATED_HEALTH_CHECK_TESTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/UX_ENHANCEMENT_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/UX_IMPLEMENTATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/UX_IMPROVEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/UX_PLAN_REVIEW/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/XML_ENHANCEMENT_SPEC/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/XML_ENHANCEMENT_SPEC_RAW/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/XML_WORKFLOW_MIGRATION_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/misc/test_gen_workflow_analysis/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/plans/CLI_MINIMAL_REFACTOR_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/COMPREHENSIVE_RELEASE_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/FINAL_RELEASE_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/LAUNCH_CHECKLIST/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/PRE_RELEASE_CHECKLIST/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/PRE_RELEASE_CHECKLIST_v4.2.0/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/QA_PUBLISH_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/RELEASE_NOTES_3.6.0/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/RELEASE_NOTES_4.0.2/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/RELEASE_NOTES_4.0.3/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/RELEASE_READY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/release-notes/RELEASE_TEST_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/ANTHROPIC_OPTIMIZATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/CACHING_BENCHMARK_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/CACHING_IMPLEMENTATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/COVERAGE_IMPROVEMENT_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/COVERAGE_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/CREWAI_XML_ENHANCEMENT_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/DOCUMENTATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/FINAL_TEST_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/IMPLEMENTATION_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/INTEGRATION_TEST_SUCCESS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/KEYBOARD_SHORTCUTS_TEST_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/MEMORY_INTEGRATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/QUICK_WINS_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/SCAFFOLDING_CLI_TEST_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/SEMANTIC_CACHE_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TELEMETRY_CLI_TEST_COVERAGE_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_COVERAGE_REPORT_ORCHESTRATED_HEALTH_CHECK/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_CREATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_GAP_ANALYSIS_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_GENERATION_FINAL_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_RESULTS_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TEST_VALIDATION_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/TIER_FALLBACK_HELPER_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/USAGE_TRACKER_TEST_ENHANCEMENT_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/XML_ENHANCEMENT_EXECUTIVE_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/reports/XML_ENHANCEMENT_IMPLEMENTATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/DAY_2_COMPLETION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/DAY_4_COMPLETION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/DAY_5_COMPLETION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/FINAL_SESSION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/MORNING_STATUS_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/OPTIONS_1_2_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/OPTION_C_COMPLETION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/PHASE1_QUALITY_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/PHASE3_COMPLETION_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/PHASE4_COMPLETION_REPORT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/PHASE_1_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/SPRINT_2_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/SPRINT_3_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4.2.0_COMPLETE_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4.2.0_RELEASE_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4_EXPERIMENTAL_UX_AUDIT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4_FEATURE_SHOWCASE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4_IMPLEMENTATION_SUCCESS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/archive/session-logs/V4_UX_TESTING_RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/01-we-tested-memory-on-our-own-codebase/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/02-bug-correlation-deep-dive/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/03-tech-debt-trajectory-deep-dive/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/04-security-learning-deep-dive/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/05-code-health-assistant-deep-dive/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/06-building-ai-memory-with-redis/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/07-cutting-claude-costs-with-intelligent-fallback/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/08-grammar-of-ai-collaboration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/09-dynamic-agent-creation/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/blog/10-building-agent-teams/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/blog/11-advanced-grammar/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/PUBLISHING_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/announcing-attune-ai/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/blog/interactive-agent-creation-tutorial/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/perf-audit-case-study/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/reddit/followup_01_bug_correlation/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/reddit/followup_02_tech_debt/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/reddit/followup_03_security/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/reddit/r_programming_main_post/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/reddit/r_python_main_post/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/AUTHENTIC_STORY_BUILDER/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/HUMANIZATION_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/hackernews_submission/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/linkedin_announcement/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/linkedin_claude_costs/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/reddit_claude_costs/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/reddit_claude_costs_tutorial/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/twitter_claude_costs/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog/social/twitter_thread/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/blog-posts/01-the-journey-begins/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/caching/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/caching/ADAPTIVE_WORKFLOWS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/caching/CONFIGURATION_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/caching/QUICK_REFERENCE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/conversations/ai-consciousness-dialogue-2025-12-28/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/conversations/social-post-ai-consciousness/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/cost-analysis/COST_SAVINGS_BY_ROLE_AND_PROVIDER/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/cost-analysis/TIER_ROUTING_SENSITIVITY_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/design/MULTI_MODEL_ARCHITECTURE_SPEC/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/design/PHASE_2_3_IMPLEMENTATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development/EMPATHY_GUIDELINES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/16_WIZARDS_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/EXAMPLES_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/EXECUTION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/HEALTHCARE_WIZARD_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PARALLELIZATION_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PHASE2_AUDIT_LOGGER_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PHASE2_COMPLETE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PHASE3_PROJECT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PHASE3_SECURITY_INTEGRATION_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/PLANNING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/TEST_COVERAGE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/WEEK2_EXECUTION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/development-logs/performance_profile_baseline/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/adaptive-learning-system/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/generated-plan-release-prep/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/multi-agent-team-coordination/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/sbar-clinical-handoff/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/simple-chatbot/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/examples/webhook-event-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/ATTUNE_AI_NON_TECHNICAL_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/ATTUNE_PHILOSOPHY/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/COMPARISON/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/HOW_CLAUDE_LEARNS/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/MEMDOCS_ATTUNE_INTEGRATION/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/TEACHING_AI_YOUR_PHILOSOPHY/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/USING_ATTUNE_WITH_LLMS/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/adaptive-learning/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/explanation/multi-agent-philosophy/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/features/v2.3-memory-enhancement/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095400/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095446/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095530/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095553/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095614/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095625/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_095707/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_100033/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_100303/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_100735/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_100941/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_101708/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_102047/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_102200/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_102256/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_104912/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_104939/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_104953/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260129_105026/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260204_124855/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260204_124856/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/generated/api_reference_20260204_124857/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/choose-your-path/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/first-steps/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/installation/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/mcp-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/getting-started/redis-setup/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/DISTRIBUTION_POLICY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/MCP_PUBLISH_INSTRUCTIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/MKDOCS_TUTORIAL/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/PUBLISHING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/RELEASE_PREPARATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/WORKFLOW_PATTERNS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/claude-memory-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/five-levels-of-empathy/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/guides/foreword/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/guides/how-to-read-this-book/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/multi-model-workflows/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/pattern-catalog/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/guides/preface/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/signoz-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/guides/wizard-architecture/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/teaching-ai-your-standards/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/guides/wizard-custom-development/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/trust-circuit-breaker/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/guides/xml-enhanced-prompts/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/guides/wizards-getting-started/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/agent-factory/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/auto-chaining/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/hipaa-compliance/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/memory-graph/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/how-to/multi-agent-coordination/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/practical-patterns/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/prerequisites/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/resilience-patterns/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/security-architecture/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/short-term-memory-implementation/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/smart-router/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/unified-memory-system/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/webhook-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/implementation/AGENT_SDK_EVALUATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/implementation/ANTHROPIC_COMPLIANCE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/implementation/MCP_SDK_MIGRATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/implementation/REFACTORING_PLAN_PHASE2/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/implementation/TASK_PROMPTS/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/integration/claude-code-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/AGENT_IMPROVEMENT_RECOMMENDATIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/AI_DEVELOPMENT_WIZARDS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/ANTHROPIC_PARTNERSHIP_PROPOSAL/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/BOOK_PRODUCTION_PIPELINE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/CASE_STUDY_TEMPLATE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/CLAUDE_MEMORY_STRATEGY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/CODE_REVIEW_REPORT_DEC_15_2025/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/CONTRIBUTING_TESTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/COVERAGE_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/DEPLOYMENT_ROLLBACK/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/DOCUMENTATION_PIPELINE_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/GOVERNANCE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/MEMDOCS_MERGER_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/OPENSSF_APPLICATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/OPENSSF_APPLICATION_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/OPENSSF_BADGE_PREPARATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_ADVANCED_DEBUGGING_WIZARD/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_CLINICAL_PROTOCOL_MONITORING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_CODE_HEALTH_ASSISTANT/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_NEXT_IMPLEMENTATIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_SESSION_STATUS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PLAN_SOFTWARE_PLUGIN_COMPLETION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/POWERED_BY_CLAUDE_TIERS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PUBLISHING/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/PUBLISH_INSTRUCTIONS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/RESULTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/REVIEW_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/TESTING_STRATEGY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/THIRD_PARTY_BADGES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/internal/WIZARD_AGENT_IMPROVEMENT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/marketing/x-posts/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/philosophy/CASCADING_TIER_SYSTEM/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/philosophy/ENHANCED_PATTERN_TRACKING_DEMO/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/philosophy/XML_ENHANCED_AGENT_COMMUNICATION/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/CASE_STUDIES/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/COMPETITIVE_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/EXECUTIVE_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/HEALTHCARE_ONE_PAGER/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/TECHNICAL_BRIEF/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/pitch/VC_PITCH_DECK/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/plans/USER_CENTRIC_IMPROVEMENTS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/quickstart/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/refactoring/SHORT_TERM_ANALYSIS/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/refactoring/WORKFLOW_CONSOLIDATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/API_REFERENCE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/reference/CLI_CHEATSHEET/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/reference/CLI_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/FAQ/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/SHORT_TERM_MEMORY/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/TROUBLESHOOTING/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/USER_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/reference/cli-reference/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/config/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/configuration/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/core/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/empathy-os/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/glossary/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/llm-toolkit/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/multi-agent/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/pattern-library/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/persistence/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/software-wizards/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/wizards/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
-         <loc>https://smartaimemory.com/framework-docs/specs/HYBRID_CACHING_IMPLEMENTATION_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/specs/MONITORING_SPRINT_PLAN/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/specs/MONITORING_SUMMARY/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/specs/MONITORING_SYSTEM_SPEC/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/specs/TELEMETRY_DESIGN/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <loc>https://smartaimemory.com/framework-docs/research/xml-enhanced-claude-code-synthesis/</loc>
+         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/tutorials/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/META_ORCHESTRATION_TUTORIAL/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/QUICKSTART_GUIDE/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/campaign-metrics-tracking/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/installation/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/quickstart/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/examples/adaptive-learning-system/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/examples/multi-agent-team-coordination/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/examples/sbar-clinical-handoff/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/examples/simple-chatbot/</loc>
-         <lastmod>2026-02-11</lastmod>
-    </url>
-    <url>
-         <loc>https://smartaimemory.com/framework-docs/tutorials/examples/webhook-event-integration/</loc>
-         <lastmod>2026-02-11</lastmod>
+         <lastmod>2026-02-16</lastmod>
     </url>
 </urlset>
