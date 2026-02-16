@@ -35,7 +35,7 @@ pip install attune-ai[developer]
 | --- | --- | --- | --- | --- |
 | **Ready-to-use workflows** | 15 built-in | Build from scratch | None | PR review only |
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
-| **Cost in Claude Code** | $0 (skill-based) | API costs | API costs | SaaS pricing |
+| **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
 | **MCP integration** | 18 native tools | No | No | No |
 
@@ -77,7 +77,8 @@ Clean, maintainable codebase built for extensibility:
 
 ### Intelligent Cost Optimization
 
-- **$0 in Claude Code** - Workflows run as skills through Claude's Task tool
+- **$0 for most Claude Code tasks** - Standard workflows run as skills through Claude's Task tool at no extra cost
+- **API costs for large contexts** - Tasks requiring extended context (>200K tokens) or programmatic/CI usage route through the Anthropic API
 - **Smart Tier Routing** - Automatically selects the right model for each task
 - **Authentication Strategy** - Routes between subscription and API based on codebase size
 
@@ -194,15 +195,21 @@ Workflows are organized into hubs for easy discovery:
 
 ## Cost Optimization
 
-### Skills = $0 (Claude Code)
+### Skills in Claude Code
 
-When using Claude Code, workflows run as skills through the Task tool - **no API costs**:
+Most workflows run as skills through the Task tool using your
+Claude subscription — no additional API costs:
 
 ```bash
-/dev           # $0 - uses your Claude subscription
-/testing       # $0
-/release       # $0
+/dev           # Uses your Claude subscription
+/testing       # Uses your Claude subscription
+/release       # Uses your Claude subscription
 ```
+
+**When API costs apply:** Tasks that exceed your subscription's
+context window (e.g., large codebases >2000 LOC), or
+programmatic/CI usage, route through the Anthropic API.
+The auth strategy automatically handles this routing.
 
 ### API Mode (CI/CD, Automation)
 
