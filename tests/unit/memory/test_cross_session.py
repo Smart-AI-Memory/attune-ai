@@ -110,14 +110,14 @@ class TestSessionInfo:
 class TestCrossSessionCoordinatorMockMode:
     """Tests that verify mock mode raises appropriate errors."""
 
-    def test_raises_on_mock_mode(self):
-        """Should raise error when Redis is not available or memory is in mock mode."""
+    def test_degrades_on_mock_mode(self):
+        """Should degrade gracefully when Redis is not available or memory is in mock mode."""
         memory = RedisShortTermMemory(use_mock=True)
 
-        # Phase 3D: require_redis() guard fires first (ImportError),
-        # before the mock mode check (ValueError). Both prevent usage without Redis.
-        with pytest.raises((ImportError, ValueError)):
-            CrossSessionCoordinator(memory=memory)
+        # Phase 2.5: CrossSessionCoordinator no longer raises on mock mode,
+        # it enters degraded mode instead with a warning.
+        coordinator = CrossSessionCoordinator(memory=memory)
+        assert coordinator._degraded is True
 
 
 @pytest.mark.skip(reason="Redis mocking API changed - test needs refactoring")
