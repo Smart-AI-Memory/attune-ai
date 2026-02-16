@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from attune_llm.security.audit_logger import AuditEvent, AuditLogger, SecurityViolation
+from attune.memory.security.audit_logger import AuditEvent, AuditLogger, SecurityViolation
 
 
 class TestAuditEvent:

@@ -384,7 +384,7 @@ class TestIntegrationWithClaudeMemory:
             load_project=True,
         )
 
-        from attune_llm.claude_memory import ClaudeMemoryLoader
+        from attune.memory.claude_memory import ClaudeMemoryLoader
 
         loader = ClaudeMemoryLoader(config)
         memory = loader.load_all_memory(str(tmp_path))

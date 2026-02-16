@@ -18,8 +18,8 @@ class TestRefactoringFinding:
 
     def test_finding_creation(self):
         """Test creating a refactoring finding."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -49,8 +49,8 @@ class TestRefactoringFinding:
 
     def test_finding_to_dict(self):
         """Test converting finding to dictionary."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -83,8 +83,8 @@ class TestRefactoringFinding:
 
     def test_finding_from_dict(self):
         """Test creating finding from dictionary."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -113,8 +113,8 @@ class TestRefactoringFinding:
 
     def test_finding_defaults(self):
         """Test finding default values."""
-        from attune_llm.agent_factory.crews import RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -144,7 +144,7 @@ class TestCodeCheckpoint:
 
     def test_checkpoint_creation(self):
         """Test creating a checkpoint."""
-        from attune_llm.agent_factory.crews import CodeCheckpoint
+        from attune.agent_factory.crews import CodeCheckpoint
 
         checkpoint = CodeCheckpoint(
             id="cp-001",
@@ -161,7 +161,7 @@ class TestCodeCheckpoint:
 
     def test_checkpoint_to_dict(self):
         """Test converting checkpoint to dictionary."""
-        from attune_llm.agent_factory.crews import CodeCheckpoint
+        from attune.agent_factory.crews import CodeCheckpoint
 
         checkpoint = CodeCheckpoint(
             id="cp-002",
@@ -179,7 +179,7 @@ class TestCodeCheckpoint:
 
     def test_checkpoint_from_dict(self):
         """Test creating checkpoint from dictionary."""
-        from attune_llm.agent_factory.crews import CodeCheckpoint
+        from attune.agent_factory.crews import CodeCheckpoint
 
         data = {
             "id": "cp-003",
@@ -200,8 +200,8 @@ class TestRefactoringReport:
 
     def test_report_creation(self):
         """Test creating a refactoring report."""
-        from attune_llm.agent_factory.crews import RefactoringFinding, RefactoringReport
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding, RefactoringReport
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -247,8 +247,8 @@ class TestRefactoringReport:
 
     def test_report_findings_by_category(self):
         """Test grouping findings by category."""
-        from attune_llm.agent_factory.crews import RefactoringFinding, RefactoringReport
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding, RefactoringReport
+        from attune.agent_factory.crews.refactoring import (
             RefactoringCategory,
             Severity,
         )
@@ -294,8 +294,8 @@ class TestRefactoringReport:
 
     def test_report_total_lines_affected(self):
         """Test calculating total lines affected."""
-        from attune_llm.agent_factory.crews import RefactoringFinding, RefactoringReport
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding, RefactoringReport
+        from attune.agent_factory.crews.refactoring import (
             RefactoringCategory,
             Severity,
         )
@@ -329,8 +329,8 @@ class TestRefactoringReport:
 
     def test_report_to_dict(self):
         """Test converting report to dictionary."""
-        from attune_llm.agent_factory.crews import RefactoringFinding, RefactoringReport
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringFinding, RefactoringReport
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -371,7 +371,7 @@ class TestUserProfile:
 
     def test_profile_creation(self):
         """Test creating a user profile."""
-        from attune_llm.agent_factory.crews import UserProfile
+        from attune.agent_factory.crews import UserProfile
 
         profile = UserProfile(user_id="test-user")
 
@@ -382,8 +382,8 @@ class TestUserProfile:
 
     def test_profile_category_score(self):
         """Test calculating category preference score."""
-        from attune_llm.agent_factory.crews import UserProfile
-        from attune_llm.agent_factory.crews.refactoring import RefactoringCategory
+        from attune.agent_factory.crews import UserProfile
+        from attune.agent_factory.crews.refactoring import RefactoringCategory
 
         profile = UserProfile(
             accepted_categories={"extract_method": 8, "rename": 4},
@@ -404,7 +404,7 @@ class TestUserProfile:
 
     def test_profile_to_dict(self):
         """Test converting profile to dictionary."""
-        from attune_llm.agent_factory.crews import UserProfile
+        from attune.agent_factory.crews import UserProfile
 
         profile = UserProfile(
             user_id="test-user",
@@ -420,7 +420,7 @@ class TestUserProfile:
 
     def test_profile_from_dict(self):
         """Test creating profile from dictionary."""
-        from attune_llm.agent_factory.crews import UserProfile
+        from attune.agent_factory.crews import UserProfile
 
         data = {
             "user_id": "loaded-user",
@@ -444,7 +444,7 @@ class TestRefactoringConfig:
 
     def test_default_config(self):
         """Test default configuration values."""
-        from attune_llm.agent_factory.crews import RefactoringConfig
+        from attune.agent_factory.crews import RefactoringConfig
 
         config = RefactoringConfig()
 
@@ -458,7 +458,7 @@ class TestRefactoringConfig:
 
     def test_custom_config(self):
         """Test custom configuration."""
-        from attune_llm.agent_factory.crews import RefactoringConfig
+        from attune.agent_factory.crews import RefactoringConfig
 
         config = RefactoringConfig(
             provider="openai",
@@ -478,7 +478,7 @@ class TestRefactoringCrew:
 
     def test_crew_creation_with_config(self):
         """Test creating crew with config object."""
-        from attune_llm.agent_factory.crews import RefactoringConfig, RefactoringCrew
+        from attune.agent_factory.crews import RefactoringConfig, RefactoringCrew
 
         config = RefactoringConfig(
             api_key="test-key",
@@ -493,7 +493,7 @@ class TestRefactoringCrew:
 
     def test_crew_creation_with_kwargs(self):
         """Test creating crew with keyword arguments."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         crew = RefactoringCrew(
             api_key="test-key",
@@ -508,7 +508,7 @@ class TestRefactoringCrew:
     @pytest.mark.asyncio
     async def test_crew_initialization(self):
         """Test lazy initialization of crew agents."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         with tempfile.TemporaryDirectory() as tmpdir:
             crew = RefactoringCrew(
@@ -536,7 +536,7 @@ class TestRefactoringCrewCheckpoints:
 
     def test_create_checkpoint(self):
         """Test creating a checkpoint."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         crew = RefactoringCrew(memory_graph_enabled=False)
 
@@ -554,7 +554,7 @@ class TestRefactoringCrewCheckpoints:
 
     def test_rollback(self):
         """Test rollback returns original content."""
-        from attune_llm.agent_factory.crews import CodeCheckpoint, RefactoringCrew
+        from attune.agent_factory.crews import CodeCheckpoint, RefactoringCrew
 
         crew = RefactoringCrew(memory_graph_enabled=False)
 
@@ -576,7 +576,7 @@ class TestRefactoringCrewUserProfile:
 
     def test_load_missing_profile(self):
         """Test loading when profile doesn't exist."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         with tempfile.TemporaryDirectory() as tmpdir:
             crew = RefactoringCrew(
@@ -591,7 +591,7 @@ class TestRefactoringCrewUserProfile:
 
     def test_save_and_load_profile(self):
         """Test saving and loading user profile."""
-        from attune_llm.agent_factory.crews import RefactoringCrew, UserProfile
+        from attune.agent_factory.crews import RefactoringCrew, UserProfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             profile_path = str(Path(tmpdir) / "profile.json")
@@ -618,12 +618,12 @@ class TestRefactoringCrewUserProfile:
 
     def test_record_decision(self):
         """Test recording user decisions."""
-        from attune_llm.agent_factory.crews import (
+        from attune.agent_factory.crews import (
             RefactoringCrew,
             RefactoringFinding,
             UserProfile,
         )
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews.refactoring import (
             RefactoringCategory,
             Severity,
         )
@@ -665,7 +665,7 @@ class TestRefactoringCrewParsing:
 
     def test_generate_summary_no_findings(self):
         """Test summary generation with no findings."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         crew = RefactoringCrew(memory_graph_enabled=False)
         summary = crew._generate_summary([])
@@ -674,8 +674,8 @@ class TestRefactoringCrewParsing:
 
     def test_generate_summary_with_findings(self):
         """Test summary generation with findings."""
-        from attune_llm.agent_factory.crews import RefactoringCrew, RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringCrew, RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -727,12 +727,12 @@ class TestRefactoringCrewParsing:
 
     def test_apply_user_preferences(self):
         """Test applying user preferences to prioritize findings."""
-        from attune_llm.agent_factory.crews import (
+        from attune.agent_factory.crews import (
             RefactoringCrew,
             RefactoringFinding,
             UserProfile,
         )
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews.refactoring import (
             Impact,
             RefactoringCategory,
             Severity,
@@ -782,7 +782,7 @@ class TestRefactoringCrewWorkflow:
 
     def test_build_analysis_task(self):
         """Test building analysis task description."""
-        from attune_llm.agent_factory.crews import RefactoringCrew
+        from attune.agent_factory.crews import RefactoringCrew
 
         crew = RefactoringCrew(depth="standard", memory_graph_enabled=False)
 
@@ -798,8 +798,8 @@ class TestRefactoringCrewWorkflow:
 
     def test_build_refactor_task(self):
         """Test building refactor task description."""
-        from attune_llm.agent_factory.crews import RefactoringCrew, RefactoringFinding
-        from attune_llm.agent_factory.crews.refactoring import (
+        from attune.agent_factory.crews import RefactoringCrew, RefactoringFinding
+        from attune.agent_factory.crews.refactoring import (
             RefactoringCategory,
             Severity,
         )
@@ -831,7 +831,7 @@ class TestRefactoringCrewWorkflow:
         """Test analyze execution with mocked agents."""
         from unittest.mock import AsyncMock, MagicMock
 
-        from attune_llm.agent_factory.crews import RefactoringConfig, RefactoringCrew
+        from attune.agent_factory.crews import RefactoringConfig, RefactoringCrew
 
         config = RefactoringConfig(
             memory_graph_enabled=False,
@@ -883,7 +883,7 @@ class TestRefactoringCategoryEnum:
 
     def test_category_values(self):
         """Test refactoring category enum values."""
-        from attune_llm.agent_factory.crews.refactoring import RefactoringCategory
+        from attune.agent_factory.crews.refactoring import RefactoringCategory
 
         assert RefactoringCategory.EXTRACT_METHOD.value == "extract_method"
         assert RefactoringCategory.RENAME.value == "rename"
@@ -892,7 +892,7 @@ class TestRefactoringCategoryEnum:
 
     def test_all_categories_present(self):
         """Test all expected categories are present."""
-        from attune_llm.agent_factory.crews.refactoring import RefactoringCategory
+        from attune.agent_factory.crews.refactoring import RefactoringCategory
 
         # Should have at least these core categories
         expected = [
@@ -913,7 +913,7 @@ class TestCrewExports:
 
     def test_public_exports(self):
         """Test public exports from crews module."""
-        from attune_llm.agent_factory.crews import (
+        from attune.agent_factory.crews import (
             CodeCheckpoint,
             RefactoringCategory,
             RefactoringConfig,

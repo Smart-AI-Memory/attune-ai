@@ -96,9 +96,9 @@ def measure_time(func):
 
 # Import security modules
 try:
-    from attune.claude_memory import ClaudeMemoryConfig
-    from attune.security import (
+    from attune.memory import (
         AuditLogger,
+        ClaudeMemoryConfig,
         PIIScrubber,
         SecretsDetector,
         SecureMemDocsIntegration,

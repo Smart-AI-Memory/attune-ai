@@ -246,7 +246,7 @@ class ExecutionMixin:
         except Exception as e:
             # INTENTIONAL: Workflow orchestration - catch all errors to report failure gracefully
             logger.exception(f"Unexpected error in workflow execution: {type(e).__name__}")
-            error = f"Workflow execution failed: {type(e).__name__}"
+            error = f"Workflow execution failed: {type(e).__name__}: {e}"
             if self._progress_tracker:
                 self._progress_tracker.fail_workflow(error)
 

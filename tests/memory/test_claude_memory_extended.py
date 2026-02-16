@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune_llm.claude_memory import (
+from attune.memory.claude_memory import (
     ClaudeMemoryConfig,
     ClaudeMemoryLoader,
     MemoryFile,
@@ -951,4 +951,4 @@ More content
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=attune_llm.claude_memory"])
+    pytest.main([__file__, "-v", "--cov=attune.memory.claude_memory"])

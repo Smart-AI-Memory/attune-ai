@@ -449,7 +449,7 @@ AI Agent implementation for {{project_name}}
 """
 
 from attune import EmpathyOS, load_config
-from attune_llm import EmpathyLLM
+from attune.llm.core import EmpathyLLM
 import os
 
 

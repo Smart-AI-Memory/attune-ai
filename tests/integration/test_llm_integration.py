@@ -24,8 +24,8 @@ load_dotenv()
 # Add paths for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from attune_llm.core import EmpathyLLM  # noqa: E402
-from attune_llm.providers import AnthropicProvider  # noqa: E402
+from attune.llm.core import EmpathyLLM  # noqa: E402
+from attune.llm.providers.anthropic import AnthropicProvider  # noqa: E402
 
 try:
     import anthropic

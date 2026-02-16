@@ -587,7 +587,7 @@ class TestConfigAdvancedFeatures:
 
         repr_str = repr(config)
 
-        assert "EmpathyConfig" in repr_str
+        assert "AttuneConfig" in repr_str or "EmpathyConfig" in repr_str
         assert "test_user" in repr_str
         assert "4" in repr_str
         assert "0.85" in repr_str

@@ -8,7 +8,7 @@ from attune.learning.evaluator import (
     SessionMetrics,
     SessionQuality,
 )
-from attune_llm.state import CollaborationState
+from attune.llm.state import CollaborationState
 
 
 class TestSessionMetrics:

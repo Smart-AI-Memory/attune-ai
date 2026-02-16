@@ -315,7 +315,7 @@ class TestEmpathyLLMMemoryManagement:
     def test_init_with_claude_memory(self, mock_loader_class, mock_provider_class):
         """Test initialization with Claude memory enabled."""
         from attune.llm.core import EmpathyLLM
-        from attune_llm.claude_memory import ClaudeMemoryConfig
+        from attune.memory.claude_memory import ClaudeMemoryConfig
 
         mock_provider_class.return_value = MagicMock()
         mock_loader = MagicMock()
@@ -333,7 +333,7 @@ class TestEmpathyLLMMemoryManagement:
     def test_reload_memory(self, mock_loader_class, mock_provider_class):
         """Test reloading memory."""
         from attune.llm.core import EmpathyLLM
-        from attune_llm.claude_memory import ClaudeMemoryConfig
+        from attune.memory.claude_memory import ClaudeMemoryConfig
 
         mock_provider_class.return_value = MagicMock()
         mock_loader = MagicMock()

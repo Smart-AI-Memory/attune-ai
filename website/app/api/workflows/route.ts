@@ -74,8 +74,8 @@ const AVAILABLE_WORKFLOWS = [
 
 async function loadWorkflowHistory(): Promise<WorkflowRun[]> {
   try {
-    // Try to read from the project root's .empathy directory
-    const historyPath = path.join(process.cwd(), '..', '.empathy', 'workflow_runs.json');
+    // Try to read from the project root's .attune directory
+    const historyPath = path.join(process.cwd(), '..', '.attune', 'workflow_runs.json');
     const data = await fs.readFile(historyPath, 'utf-8');
     return JSON.parse(data);
   } catch {

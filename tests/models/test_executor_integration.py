@@ -439,7 +439,8 @@ class TestEndToEndWorkflowExecutor:
             async def run_stage(self, stage_name, tier, input_data):
                 return {}, 0, 0
 
-        workflow = TestWorkflow(provider="anthropic")
+        # enable_tier_fallback=False uses ResilientExecutor wrapper
+        workflow = TestWorkflow(provider="anthropic", enable_tier_fallback=False)
 
         # Get the default executor
         executor = workflow._get_executor()

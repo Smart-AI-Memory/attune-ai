@@ -1910,29 +1910,23 @@ class TestCheckCrewAvailable:
     """Tests for _check_crew_available function."""
 
     def test_crew_not_available(self) -> None:
-        """Test returns False when attune_llm is not importable."""
+        """Test returns False when attune.agent_factory.crews is not importable."""
         from attune.workflows.security_adapters import _check_crew_available
 
-        with patch.dict("sys.modules", {"attune_llm": None}):
-            # The import will fail since attune_llm is likely not installed
+        with patch.dict("sys.modules", {"attune.agent_factory.crews": None}):
             result = _check_crew_available()
-            # Likely False in test environment
             assert isinstance(result, bool)
 
     def test_crew_available_mock(self) -> None:
         """Test returns True when module is importable."""
         from attune.workflows.security_adapters import _check_crew_available
 
-        mock_module = MagicMock()
         mock_crews = MagicMock()
-        mock_module.agent_factory.crews = mock_crews
 
         with patch.dict(
             "sys.modules",
             {
-                "attune_llm": mock_module,
-                "attune_llm.agent_factory": mock_module.agent_factory,
-                "attune_llm.agent_factory.crews": mock_crews,
+                "attune.agent_factory.crews": mock_crews,
             },
         ):
             result = _check_crew_available()

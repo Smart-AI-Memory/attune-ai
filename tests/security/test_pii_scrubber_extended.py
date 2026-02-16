@@ -16,7 +16,7 @@ import re
 
 import pytest
 
-from attune_llm.security.pii_scrubber import PIIScrubber
+from attune.memory.security.pii_scrubber import PIIScrubber
 
 
 class TestCustomPatternManagement:

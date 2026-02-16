@@ -440,22 +440,11 @@ def ship_workflow(
     # 5. Sync to Claude (optional)
     if not skip_sync:
         print("5. Syncing patterns to Claude Code...")
-        # Import here to avoid circular imports
-        try:
-            from pathlib import Path
-
-            from attune_llm.cli.sync_claude import sync_patterns
-
-            result = sync_patterns(project_root=Path(), verbose=False)
-            synced_count = len(result.get("synced", []))
-            if synced_count > 0:
-                print(f"   PASS - {synced_count} patterns synced")
-            else:
-                print("   SKIP - No patterns to sync")
-        except ImportError:
+        success, output = _run_command("attune sync-claude", capture=True)
+        if success:
+            print("   PASS - Patterns synced")
+        else:
             print("   SKIP - sync-claude not available")
-        except Exception as e:
-            print(f"   SKIP - {e}")
     else:
         print("5. Skipping Claude sync (--skip-sync)")
 

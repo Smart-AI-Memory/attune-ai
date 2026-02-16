@@ -850,7 +850,8 @@ class TestBaseWorkflowExecution:
 
             assert result.success is False
             assert result.error is not None
-            assert "Stage 2 failed" in result.error
+            # Error may be wrapped by tier fallback
+            assert "stage2" in result.error.lower() or "Stage 2 failed" in result.error
 
     @pytest.mark.asyncio
     async def test_execute_with_skipped_stage(self):

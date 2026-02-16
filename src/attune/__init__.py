@@ -71,7 +71,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # Type hints for IDE support (not evaluated at runtime)
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
-    from .config import EmpathyConfig, load_config
+    from .config import AttuneConfig, EmpathyConfig, load_config
     from .coordination import (
         AgentCoordinator,
         AgentTask,
@@ -152,6 +152,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AgentMonitor": (".agent_monitoring", "AgentMonitor"),
     "TeamMetrics": (".agent_monitoring", "TeamMetrics"),
     # config
+    "AttuneConfig": (".config", "AttuneConfig"),
     "EmpathyConfig": (".config", "EmpathyConfig"),
     "load_config": (".config", "load_config"),
     # coordination
@@ -287,6 +288,7 @@ __all__ = [
     "ConflictResolver",
     "EmergenceDetector",
     # Configuration
+    "AttuneConfig",
     "EmpathyConfig",
     # Exceptions
     "EmpathyFrameworkError",

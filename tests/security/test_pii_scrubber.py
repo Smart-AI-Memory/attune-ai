@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0
 
 import pytest
 
-from attune_llm.security.pii_scrubber import PIIDetection, PIIPattern, PIIScrubber
+from attune.memory.security.pii_scrubber import PIIDetection, PIIPattern, PIIScrubber
 
 
 class TestPIIDetection:

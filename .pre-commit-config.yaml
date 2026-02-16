@@ -103,15 +103,6 @@ repos:
   # Note: Import sorting handled by ruff's "I" rules (isort plugin)
   # Removed standalone isort to avoid conflicts with ruff
 
-  # Markdown linting - auto-fix on staged .md files
-  - repo: local
-    hooks:
-      - id: mdlint
-        name: mdlint
-        entry: python -m mdlint --fix
-        language: python
-        types: [markdown]
-
   # Pattern summary auto-regeneration
   # Regenerates patterns_summary.md when pattern JSON files change
   - repo: local

@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune_llm.claude_memory import (
+from attune.memory.claude_memory import (
     ClaudeMemoryConfig,
     ClaudeMemoryLoader,
     MemoryFile,

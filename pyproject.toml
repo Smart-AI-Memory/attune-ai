@@ -352,7 +352,7 @@ software = "attune_software.plugin:SoftwarePlugin"
 software = "attune_software.plugin:SoftwarePlugin"
 
 # Workflow plugin entry points for auto-discovery
-[project.entry-points."empathy.workflows"]
+[project.entry-points."attune.workflows"]
 code-review = "attune.workflows.code_review:CodeReviewWorkflow"
 doc-gen = "attune.workflows.document_gen:DocumentGenerationWorkflow"
 bug-predict = "attune.workflows.bug_predict:BugPredictionWorkflow"
@@ -374,7 +374,7 @@ pro-review = "attune.workflows.code_review_pipeline:CodeReviewPipeline"
 pr-review = "attune.workflows.pr_review:PRReviewWorkflow"
 
 # Wizard entry points for auto-discovery
-[project.entry-points."empathy.wizards"]
+[project.entry-points."attune.wizards"]
 debug = "attune.wizards.builtin.debug_wizard:DebugWizard"
 test-gen = "attune.wizards.builtin.test_gen_wizard:TestGenWizard"
 refactor = "attune.wizards.builtin.refactor_wizard:RefactorWizard"

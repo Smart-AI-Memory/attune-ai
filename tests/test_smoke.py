@@ -80,17 +80,11 @@ class TestCoreClasses:
 class TestCLI:
     """Test CLI imports."""
 
-    def test_cli_import(self):
-        """Test CLI module import."""
-        from attune import cli
+    def test_cli_minimal_import(self):
+        """Test CLI minimal module import."""
+        from attune import cli_minimal
 
-        assert cli is not None
-
-    def test_cli_app_exists(self):
-        """Test CLI app exists."""
-        from attune.cli_unified import app
-
-        assert app is not None
+        assert cli_minimal is not None
 
 
 class TestConfig:

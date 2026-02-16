@@ -7,7 +7,7 @@ from attune.learning.extractor import (
     PatternCategory,
     PatternExtractor,
 )
-from attune_llm.state import CollaborationState
+from attune.llm.state import CollaborationState
 
 
 class TestExtractedPattern:

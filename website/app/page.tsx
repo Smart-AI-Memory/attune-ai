@@ -3,7 +3,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
-import { FEATURES, FEATURE_COUNTS } from '@/lib/features';
+import { FEATURES } from '@/lib/features';
 
 // Map canonical features to homepage display with links
 const featureLinks: Record<string, string> = {

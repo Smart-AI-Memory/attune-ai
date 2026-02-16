@@ -169,6 +169,16 @@ class MemoryFeatures:
         )
 
     @staticmethod
+    def check_redis() -> bool:
+        """Check if Redis is available without raising.
+
+        Returns:
+            True if Redis is available, False otherwise.
+        """
+        info = MemoryFeatures.get_feature_status("short_term")
+        return info.status == FeatureStatus.AVAILABLE
+
+    @staticmethod
     def require_redis(feature_name: str) -> None:
         """Raise exception if Redis is not available.
 
