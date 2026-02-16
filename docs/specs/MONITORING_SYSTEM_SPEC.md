@@ -18,11 +18,11 @@ Build a **zero-config monitoring system** for LLM usage with progressive enhance
 
 ### Default Features (Developer Install - Zero Config)
 1. **JSONL Telemetry** - Automatic logging to `.empathy/` (already implemented)
-2. **CLI Dashboard** - View stats with `empathy telemetry` (already implemented)
+2. **CLI Dashboard** - View stats with `attune telemetry` (already implemented)
 3. **VSCode Panel** - Real-time visualization (new, automatic)
 
 ### Enterprise Features (Explicit Opt-in)
-4. **Alert System** - Threshold-based alerting via `empathy alerts init` (opt-in)
+4. **Alert System** - Threshold-based alerting via `attune alerts init` (opt-in)
 5. **OpenTelemetry** - Export to SigNoz/Datadog via env vars (opt-in)
 
 **Key Design Principles:**
@@ -40,12 +40,12 @@ Build a **zero-config monitoring system** for LLM usage with progressive enhance
 
 ```bash
 pip install attune-ai
-empathy workflow run code-review
+attune workflow run code-review
 ```
 
 **What works automatically:**
 - ✅ Telemetry logged to `.empathy/llm_calls.jsonl` and `.empathy/workflow_runs.jsonl`
-- ✅ CLI dashboard: `empathy telemetry` (shows cost, calls, success rate)
+- ✅ CLI dashboard: `attune telemetry` (shows cost, calls, success rate)
 - ✅ VSCode panel appears automatically (if using VSCode extension)
 - ✅ Charts, activity feed, click-through to source files
 
@@ -63,7 +63,7 @@ empathy workflow run code-review
 
 #### Enable Alerts
 ```bash
-empathy alerts init  # Interactive 3-question wizard
+attune alerts init  # Interactive 3-question wizard
 ```
 
 **What happens:**
@@ -77,7 +77,7 @@ empathy alerts init  # Interactive 3-question wizard
 
 #### Enable OTEL Export
 ```bash
-export EMPATHY_OTEL_ENDPOINT=http://localhost:4317
+export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
 pip install attune-ai[otel]
 ```
 
@@ -427,16 +427,16 @@ class AlertEngine:
 
 ```bash
 # Watch for alerts (runs in background)
-empathy alerts watch
+attune alerts watch
 
 # Test alert configuration
-empathy alerts test --rule high_daily_cost
+attune alerts test --rule high_daily_cost
 
 # List configured alerts
-empathy alerts list
+attune alerts list
 
 # Trigger alert manually
-empathy alerts trigger --rule high_daily_cost --test
+attune alerts trigger --rule high_daily_cost --test
 ```
 
 ---
@@ -768,11 +768,11 @@ backends:
    - [ ] Implement cooldown mechanism (prevent spam)
 
 2. **Alert CLI Wizard** (1.5 days)
-   - [ ] Create `empathy alerts init` interactive wizard
+   - [ ] Create `attune alerts init` interactive wizard
    - [ ] Ask 3 questions: metric, threshold, webhook URL
    - [ ] Generate alert configuration automatically
    - [ ] Start background watcher (systemd/launchd templates)
-   - [ ] Add `empathy alerts list`, `test`, `stop` commands
+   - [ ] Add `attune alerts list`, `test`, `stop` commands
 
 3. **Alert Actions** (1 day)
    - [ ] Implement webhook action (POST JSON to any URL)
@@ -810,7 +810,7 @@ backends:
 
 **Sprint Review:**
 - Demo: Zero-config default experience (Tier 1)
-- Demo: Opt-in to alerts with `empathy alerts init` (Tier 2)
+- Demo: Opt-in to alerts with `attune alerts init` (Tier 2)
 - Demo: Opt-in to OTEL with env vars (Tier 2)
 - Production readiness checklist
 
@@ -916,7 +916,7 @@ tests/monitoring/
 - [ ] Cost charts render with sample data
 - [ ] Alert engine evaluates rules correctly
 - [ ] Webhook successfully delivers to Slack
-- [ ] CLI commands work: `empathy alerts watch`
+- [ ] CLI commands work: `attune alerts watch`
 
 ### Sprint 3
 - [ ] OTEL spans visible in SigNoz dashboard

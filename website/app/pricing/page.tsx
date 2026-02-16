@@ -46,7 +46,7 @@ export default function PricingPage() {
                 Apache License 2.0 — Free for everyone. Build whatever you want.
               </p>
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary text-lg px-8 py-4 inline-block"
@@ -251,7 +251,7 @@ export default function PricingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://github.com/Smart-AI-Memory/empathy-framework"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary text-lg px-8 py-4"

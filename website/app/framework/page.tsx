@@ -49,7 +49,7 @@ export default function FrameworkPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 className="btn btn-primary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -171,14 +171,14 @@ export default function FrameworkPage() {
               <div>
                 <h3 className="text-2xl font-bold mb-4">Installation</h3>
                 <pre className="bg-[var(--foreground)] text-[var(--background)] p-4 rounded-lg overflow-x-auto">
-                  <code>pip install empathy-framework</code>
+                  <code>pip install attune-ai</code>
                 </pre>
               </div>
 
               <div>
                 <h3 className="text-2xl font-bold mb-4">Socratic Agent Creation</h3>
                 <pre className="bg-[var(--foreground)] text-[var(--background)] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os.socratic import SocraticWorkflowBuilder
+{`from attune.socratic import SocraticWorkflowBuilder
 
 # Describe your goal - the framework guides you through questions
 builder = SocraticWorkflowBuilder()
@@ -294,7 +294,7 @@ if builder.is_ready_to_generate(session):
 
             <div className="grid md:grid-cols-3 gap-6">
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 className="p-6 border-2 border-[var(--border)] rounded-lg hover:border-[var(--primary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -309,7 +309,7 @@ if builder.is_ready_to_generate(session):
               </a>
 
               <a
-                href="https://github.com/Smart-AI-Memory/empathy-framework/discussions"
+                href="https://github.com/Smart-AI-Memory/attune-ai/discussions"
                 className="p-6 border-2 border-[var(--border)] rounded-lg hover:border-[var(--primary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"

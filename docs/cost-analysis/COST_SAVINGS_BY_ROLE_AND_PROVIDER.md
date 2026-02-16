@@ -260,7 +260,7 @@ Then show personalized savings estimates.
 ### Future Work (v3.8.1+)
 
 1. Implement tier usage tracking in telemetry
-2. Add `empathy telemetry savings` command to show user's actual savings
+2. Add `attune telemetry savings` command to show user's actual savings
 3. Collect multi-developer benchmarks (3 devs × 3 provider configs × 1 week)
 4. Add role detection based on tier usage patterns
 

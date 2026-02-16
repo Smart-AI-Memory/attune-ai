@@ -1,4 +1,4 @@
-"""Empathy LLM Toolkit - Demonstration
+"""Attune AI Toolkit - Demonstration
 
 Shows progression from Level 1 to Level 4 empathy with an LLM.
 
@@ -14,7 +14,8 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from attune_llm import EmpathyLLM, PatternType, UserPattern
+from attune.models import LLMExecutor
+from attune.llm.state import PatternType, UserPattern
 
 
 async def demo_level_progression():
@@ -23,11 +24,11 @@ async def demo_level_progression():
     Shows how LLM behavior changes as trust builds and patterns emerge.
     """
     print("=" * 80)
-    print("Empathy LLM Toolkit - Level Progression Demo")
+    print("Attune AI Toolkit - Level Progression Demo")
     print("=" * 80)
 
     # Initialize (requires API key in environment or pass directly)
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         target_level=4,  # Target: Anticipatory
         api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -149,10 +150,10 @@ async def demo_forced_levels():
     Shows how the same question gets different treatment at each level.
     """
     print("\n" + "=" * 80)
-    print("Empathy LLM Toolkit - Forced Level Comparison Demo")
+    print("Attune AI Toolkit - Forced Level Comparison Demo")
     print("=" * 80)
 
-    llm = EmpathyLLM(provider="anthropic", target_level=4, api_key=os.getenv("ANTHROPIC_API_KEY"))
+    llm = LLMExecutor(provider="anthropic", target_level=4, api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     user_input = "How should I structure my Python project?"
 
@@ -180,7 +181,7 @@ async def demo_healthcare_use_case():
     print("Healthcare Use Case - Clinical Documentation")
     print("=" * 80)
 
-    llm = EmpathyLLM(provider="anthropic", target_level=4, api_key=os.getenv("ANTHROPIC_API_KEY"))
+    llm = LLMExecutor(provider="anthropic", target_level=4, api_key=os.getenv("ANTHROPIC_API_KEY"))
 
     clinician_id = "clinician_dr_smith"
 
@@ -243,7 +244,7 @@ async def demo_healthcare_use_case():
 
 async def main():
     """Run all demos"""
-    print("\nEmpathy LLM Toolkit Demonstrations\n")
+    print("\nAttune AI Toolkit Demonstrations\n")
 
     # Check for API key
     if not os.getenv("ANTHROPIC_API_KEY"):
@@ -270,6 +271,6 @@ async def main():
 
 if __name__ == "__main__":
     # Import EmpathyLevel for demo
-    from attune_llm.levels import EmpathyLevel
+    from attune.llm.levels import EmpathyLevel
 
     asyncio.run(main())

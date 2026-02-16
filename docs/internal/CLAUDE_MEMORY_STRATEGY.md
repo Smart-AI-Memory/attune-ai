@@ -97,10 +97,10 @@ PII handling, secrets management, access controls.
 
 ```bash
 # Step 1: Learn patterns from git history
-empathy learn --analyze 50
+attune learn --analyze 50
 
 # Step 2: Sync to Claude Code rules
-empathy sync-claude
+attune sync-claude
 ```
 
 ### What Gets Learned
@@ -227,14 +227,14 @@ Priority 4: General project context
 **Pre-commit hook:**
 ```bash
 # .git/hooks/pre-commit
-empathy ship --skip-sync
+attune ship --skip-sync
 ```
 
 **Post-commit hook:**
 ```bash
 # .git/hooks/post-commit
-empathy learn --analyze 1
-empathy sync-claude
+attune learn --analyze 1
+attune sync-claude
 ```
 
 **CI/CD integration:**
@@ -242,8 +242,8 @@ empathy sync-claude
 # .github/workflows/patterns.yml
 - name: Learn from merged PR
   run: |
-    empathy learn --analyze 10
-    empathy sync-claude
+    attune learn --analyze 10
+    attune sync-claude
 ```
 
 ---
@@ -299,13 +299,13 @@ Not: logger.error(f"Error: {e}")
 
 ```bash
 # View current patterns
-empathy inspect patterns
+attune inspect patterns
 
 # Remove stale patterns (interactive)
-empathy patterns prune --older-than 180
+attune patterns prune --older-than 180
 
 # Regenerate pattern summary
-empathy learn --regenerate-summary
+attune learn --regenerate-summary
 ```
 
 ---
@@ -344,12 +344,12 @@ When reviewing CLAUDE.md changes:
 - Ensure no syntax errors in markdown
 
 **Patterns not being applied:**
-- Run `empathy sync-claude` after learning
+- Run `attune sync-claude` after learning
 - Check `.claude/rules/attune/` directory exists
 - Verify patterns are in correct format
 
 **Memory seems stale:**
-- Run `empathy learn --analyze 20` to refresh
+- Run `attune learn --analyze 20` to refresh
 - Update CLAUDE.md with recent changes
 - Clear and regenerate pattern files
 
@@ -366,7 +366,7 @@ ls -la patterns/
 ls -la .claude/rules/attune/
 
 # Test pattern learning
-empathy learn --analyze 5 --verbose
+attune learn --analyze 5 --verbose
 ```
 
 ---
@@ -377,11 +377,11 @@ empathy learn --analyze 5 --verbose
 
 | Command | Purpose |
 |---------|---------|
-| `empathy learn --analyze N` | Learn from last N commits |
-| `empathy sync-claude` | Sync patterns to Claude rules |
-| `empathy inspect patterns` | View learned patterns |
-| `empathy ship` | Pre-commit validation + sync |
-| `empathy morning` | Start-of-day briefing |
+| `attune learn --analyze N` | Learn from last N commits |
+| `attune sync-claude` | Sync patterns to Claude rules |
+| `attune inspect patterns` | View learned patterns |
+| `attune ship` | Pre-commit validation + sync |
+| `attune morning` | Start-of-day briefing |
 
 ### File Locations
 
@@ -408,9 +408,9 @@ Effective Claude memory management follows these principles:
 
 1. **Keep project CLAUDE.md current** - It's your primary communication channel with Claude across sessions
 
-2. **Learn from history** - Use `empathy learn` to capture patterns from your git history
+2. **Learn from history** - Use `attune learn` to capture patterns from your git history
 
-3. **Sync regularly** - Run `empathy sync-claude` to make patterns available to Claude
+3. **Sync regularly** - Run `attune sync-claude` to make patterns available to Claude
 
 4. **Classify appropriately** - Use PUBLIC/INTERNAL/SENSITIVE based on data sensitivity
 

@@ -139,7 +139,7 @@ elif category.name == "Documentation":
     recommendations.append(
         f"📚 Complete documentation (currently {category.score:.1f}%)"
     )
-    recommendations.append("   → Run: empathy workflow run doc-gen --path .")
+    recommendations.append("   → Run: attune workflow run doc-gen --path .")
 ```
 
 **Impact:** Low - This is cosmetic recommendation text that doesn't affect functionality.
@@ -400,7 +400,7 @@ def test_generate_recommendations_documentation_failure(self):
     recommendations = workflow._generate_recommendations(category_scores)
 
     assert any("documentation" in rec.lower() for rec in recommendations)
-    assert any("empathy workflow run doc-gen" in rec for rec in recommendations)
+    assert any("attune workflow run doc-gen" in rec for rec in recommendations)
 ```
 
 ### 2. Exception Branch Coverage (Line 823)

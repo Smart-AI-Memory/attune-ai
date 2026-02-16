@@ -262,7 +262,7 @@ CATEGORY BREAKDOWN
 💡 RECOMMENDATIONS (2)
 ----------------------------------------------------------------------
   • 🧪 Increase test coverage to 80%+ (currently 6.5%)
-  •    → Run: empathy orchestrate test-coverage --target 80
+  •    → Run: attune orchestrate test-coverage --target 80
 ======================================================================
 ```
 

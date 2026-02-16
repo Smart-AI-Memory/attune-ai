@@ -264,7 +264,7 @@ agent = factory.create_agent(
 )
 
 # Costs are tracked in .empathy/costs.json
-# View with: empathy costs
+# View with: attune costs
 ```
 
 ### Pattern Learning

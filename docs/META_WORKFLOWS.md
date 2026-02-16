@@ -57,10 +57,10 @@ pip install attune-ai[developer]
 
 ```bash
 # List available templates
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 
 # Run the Python package publishing workflow
-empathy meta-workflow run python_package_publish
+attune meta-workflow run python_package_publish
 ```
 
 You'll be prompted with interactive questions like:
@@ -91,10 +91,10 @@ After execution, the system will:
 
 ```bash
 # View execution results
-empathy meta-workflow show-run <run_id>
+attune meta-workflow show-run <run_id>
 
 # View analytics
-empathy meta-workflow analytics python_package_publish
+attune meta-workflow analytics python_package_publish
 ```
 
 ---
@@ -184,7 +184,7 @@ Every meta-workflow follows 5 stages:
 ### List Templates
 
 ```bash
-empathy meta-workflow list-templates
+attune meta-workflow list-templates
 ```
 
 **Output:**
@@ -197,17 +197,17 @@ Available Meta-Workflow Templates:
    Comprehensive workflow for publishing Python packages to PyPI
    Questions: 8 | Agent Rules: 8
 
-Use: empathy meta-workflow run <template_id>
+Use: attune meta-workflow run <template_id>
 ```
 
 ### Run Workflow
 
 ```bash
 # Interactive mode (will prompt for responses)
-empathy meta-workflow run python_package_publish
+attune meta-workflow run python_package_publish
 
 # Programmatic mode (provide responses file)
-empathy meta-workflow run python_package_publish --responses responses.json
+attune meta-workflow run python_package_publish --responses responses.json
 ```
 
 **Example responses.json:**
@@ -231,7 +231,7 @@ empathy meta-workflow run python_package_publish --responses responses.json
 
 ```bash
 # Show detailed execution report
-empathy meta-workflow show-run <run_id>
+attune meta-workflow show-run <run_id>
 ```
 
 **Output:**
@@ -268,23 +268,23 @@ Form Responses:
 
 ```bash
 # All executions
-empathy meta-workflow list-runs
+attune meta-workflow list-runs
 
 # Filter by template
-empathy meta-workflow list-runs --template-id python_package_publish
+attune meta-workflow list-runs --template-id python_package_publish
 
 # Last N runs
-empathy meta-workflow list-runs --limit 10
+attune meta-workflow list-runs --limit 10
 ```
 
 ### View Analytics
 
 ```bash
 # All templates
-empathy meta-workflow analytics
+attune meta-workflow analytics
 
 # Specific template
-empathy meta-workflow analytics python_package_publish
+attune meta-workflow analytics python_package_publish
 ```
 
 **Output:**
@@ -334,13 +334,13 @@ Recommendations:
 ### Export Template
 
 ```bash
-empathy meta-workflow export-template python_package_publish > my_template.json
+attune meta-workflow export-template python_package_publish > my_template.json
 ```
 
 ### Validate Template
 
 ```bash
-empathy meta-workflow validate-template my_template.json
+attune meta-workflow validate-template my_template.json
 ```
 
 **Output:**
@@ -876,7 +876,7 @@ print(f"Responses: {response.responses}")
 
 ```bash
 # Run workflow multiple times with different configs
-empathy meta-workflow run python_package_publish
+attune meta-workflow run python_package_publish
 ```
 
 Pattern learning requires 3+ executions for meaningful insights.

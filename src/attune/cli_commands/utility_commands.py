@@ -234,7 +234,8 @@ def cmd_validate(args: Namespace) -> int:
 
     if keys_found == 0:
         errors.append(
-            "No API keys found. Set at least one: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY"
+            "No API keys found. Set at least one: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY\n"
+            "   Run: python -m attune.models.auth_cli setup"
         )
 
     # Check workflows

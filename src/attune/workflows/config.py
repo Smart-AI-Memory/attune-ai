@@ -8,7 +8,7 @@ Provides flexible configuration for workflow model selection:
 
 Configuration priority (highest to lowest):
 1. Constructor arguments
-2. Environment variables (EMPATHY_WORKFLOW_PROVIDER, etc.)
+2. Environment variables (ATTUNE_WORKFLOW_PROVIDER, etc.)
 3. Config file (.attune/workflows.yaml)
 4. Built-in defaults
 
@@ -20,7 +20,6 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -293,20 +292,21 @@ class WorkflowConfig:
         if config.get("pricing_overrides") is None:
             config["pricing_overrides"] = {}
 
-        # EMPATHY_WORKFLOW_PROVIDER - default provider
-        env_provider = os.environ.get("EMPATHY_WORKFLOW_PROVIDER")
+        from attune.config.env_compat import get_attune_env, iter_attune_env_prefix
+
+        # ATTUNE_WORKFLOW_PROVIDER (or EMPATHY_WORKFLOW_PROVIDER) - default provider
+        env_provider = get_attune_env("WORKFLOW_PROVIDER")
         if env_provider:
             config["default_provider"] = env_provider.lower()
 
-        # EMPATHY_WORKFLOW_<NAME>_PROVIDER - per-workflow provider
-        for key, value in os.environ.items():
-            if key.startswith("EMPATHY_WORKFLOW_") and key.endswith("_PROVIDER"):
-                workflow_name = key[17:-9].lower().replace("_", "-")
-                config["workflow_providers"][workflow_name] = value.lower()
+        # ATTUNE_WORKFLOW_<NAME>_PROVIDER - per-workflow provider
+        for middle, value in iter_attune_env_prefix("WORKFLOW_", "_PROVIDER"):
+            workflow_name = middle.lower().replace("_", "-")
+            config["workflow_providers"][workflow_name] = value.lower()
 
-        # EMPATHY_MODEL_<TIER> - tier model overrides
+        # ATTUNE_MODEL_<TIER> (or EMPATHY_MODEL_<TIER>) - tier model overrides
         for tier in ["CHEAP", "CAPABLE", "PREMIUM"]:
-            env_model = os.environ.get(f"EMPATHY_MODEL_{tier}")
+            env_model = get_attune_env(f"MODEL_{tier}")
             if env_model:
                 if "env" not in config["custom_models"]:
                     config["custom_models"]["env"] = {}

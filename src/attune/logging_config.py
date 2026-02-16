@@ -12,7 +12,6 @@ Licensed under the Apache License, Version 2.0
 
 import logging
 import logging.handlers
-import os
 import sys
 from pathlib import Path
 
@@ -246,12 +245,14 @@ def get_logger(name: str) -> logging.Logger:
 # Initialize with environment variable support
 def init_logging_from_env() -> None:
     """Initialize logging configuration from environment variables."""
-    log_level_str = os.getenv("EMPATHY_LOG_LEVEL", "INFO").upper()
+    from attune.config.env_compat import get_attune_env
+
+    log_level_str = (get_attune_env("LOG_LEVEL", "INFO") or "INFO").upper()
     log_level = getattr(logging, log_level_str, logging.INFO)
 
-    log_dir = os.getenv("EMPATHY_LOG_DIR")
-    use_color = os.getenv("EMPATHY_LOG_COLOR", "true").lower() == "true"
-    include_context = os.getenv("EMPATHY_LOG_CONTEXT", "false").lower() == "true"
+    log_dir = get_attune_env("LOG_DIR")
+    use_color = (get_attune_env("LOG_COLOR", "true") or "true").lower() == "true"
+    include_context = (get_attune_env("LOG_CONTEXT", "false") or "false").lower() == "true"
 
     LoggingConfig.configure(
         level=log_level,

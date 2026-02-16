@@ -2,6 +2,8 @@
 description: Attune AI for Healthcare: ## HIPAA-Ready AI Development Tools --- ## The Opportunity **Claude for Healthcare launched January 2026** — Anthropic is inve
 ---
 
+> **Note:** Healthcare CDS is a planned future extension not included in current Attune AI releases. This document describes a design concept.
+
 # Attune AI for Healthcare
 ## HIPAA-Ready AI Development Tools
 
@@ -81,7 +83,7 @@ safe_prompt = scrubber.scrub("""
 
 ### 1. HIPAA Security Scan
 ```bash
-empathy workflow run security-scan --hipaa-mode
+attune workflow run security-scan --hipaa-mode
 ```
 - OWASP Top 10 + healthcare-specific checks
 - PHI exposure detection
@@ -89,7 +91,7 @@ empathy workflow run security-scan --hipaa-mode
 
 ### 2. Clinical Code Review
 ```bash
-empathy workflow run code-review --compliance=hipaa
+attune workflow run code-review --compliance=hipaa
 ```
 - PHI handling verification
 - Audit logging completeness
@@ -97,7 +99,7 @@ empathy workflow run code-review --compliance=hipaa
 
 ### 3. Compliance Documentation
 ```bash
-empathy workflow run doc-gen --template=hipaa-controls
+attune workflow run doc-gen --template=hipaa-controls
 ```
 - Auto-generate control documentation
 - Map code to safeguard requirements
@@ -192,7 +194,7 @@ empathy = EmpathyOS(
 
 ### 3. Run Compliance Scan
 ```bash
-empathy workflow run security-scan --hipaa-mode --output compliance-report.json
+attune workflow run security-scan --hipaa-mode --output compliance-report.json
 ```
 
 ---

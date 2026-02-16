@@ -79,7 +79,7 @@ When `enable_heartbeat_tracking=True`:
 
 **Monitoring:**
 ```bash
-empathy telemetry agents  # View active workflows
+attune telemetry agents  # View active workflows
 ```
 
 ### Coordination API
@@ -258,10 +258,10 @@ class OrchestratorWorkflow(BaseWorkflow):
 redis-server
 
 # Or use Empathy command
-empathy memory start
+attune memory start
 
 # Verify
-empathy memory status
+attune memory status
 ```
 
 ### TTL Configuration

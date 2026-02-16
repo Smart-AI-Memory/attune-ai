@@ -28,7 +28,7 @@ This document demonstrates all v4.0.0 Meta-Orchestration features running on the
 
 **Command:**
 ```bash
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 ```
 
 **Results:**
@@ -73,7 +73,7 @@ CATEGORY BREAKDOWN
 💡 RECOMMENDATIONS (2)
 ----------------------------------------------------------------------
   • 🧪 Increase test coverage to 80%+ (currently 54.3%)
-  •    → Run: empathy orchestrate test-coverage --target 80
+  •    → Run: attune orchestrate test-coverage --target 80
 ```
 
 **Analysis:**
@@ -91,7 +91,7 @@ CATEGORY BREAKDOWN
 
 **Command:**
 ```bash
-empathy orchestrate health-check --mode weekly
+attune orchestrate health-check --mode weekly
 ```
 
 **Results:**
@@ -152,7 +152,7 @@ CATEGORY BREAKDOWN
 
 **Command:**
 ```bash
-empathy orchestrate health-check --mode release
+attune orchestrate health-check --mode release
 ```
 
 **Results:**
@@ -198,7 +198,7 @@ Trend: Improving (+3.6 from 84.6)
 
 **Command:**
 ```bash
-empathy orchestrate release-prep --path .
+attune orchestrate release-prep --path .
 ```
 
 **Results:**
@@ -285,7 +285,7 @@ AGENTS EXECUTED (4)
 
 **Behavior:**
 ```bash
-$ empathy orchestrate health-check --mode daily
+$ attune orchestrate health-check --mode daily
 Duration: 0.43s
 
 # Coverage.json cache used (less than 1 hour old)
@@ -306,7 +306,7 @@ Duration: 0.43s
 
 **Behavior:**
 ```bash
-$ empathy orchestrate health-check --mode daily
+$ attune orchestrate health-check --mode daily
 
 INCREMENTAL SCAN: 2 changed files
   • src/attune/orchestration/real_tools.py
@@ -329,7 +329,7 @@ Duration: 0.43s
 
 **Command:**
 ```bash
-$ rm coverage.json && empathy orchestrate health-check --mode daily
+$ rm coverage.json && attune orchestrate health-check --mode daily
 ```
 
 **Behavior:**

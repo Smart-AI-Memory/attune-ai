@@ -59,7 +59,7 @@ class MultiBackend:
 
     **Auto-Configuration:**
     - JSONL backend is always enabled (default)
-    - OTEL backend is enabled if EMPATHY_OTEL_ENDPOINT is set
+    - OTEL backend is enabled if ATTUNE_OTEL_ENDPOINT is set
 
     Example:
         >>> backend = MultiBackend.from_config()
@@ -82,7 +82,7 @@ class MultiBackend:
 
         Auto-detects available backends:
         1. JSONL backend (always enabled)
-        2. OTEL backend (if EMPATHY_OTEL_ENDPOINT is set or collector detected)
+        2. OTEL backend (if ATTUNE_OTEL_ENDPOINT is set or collector detected)
 
         Args:
             storage_dir: Directory for JSONL storage (default: .empathy)

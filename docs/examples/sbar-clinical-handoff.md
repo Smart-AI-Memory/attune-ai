@@ -295,7 +295,7 @@ empathy = HIPAACompliantEmpathy(
 
     # Encryption for patterns containing PHI
     encryption_enabled=True,
-    encryption_key=os.getenv("EMPATHY_ENCRYPTION_KEY"),
+    encryption_key=os.getenv("ATTUNE_ENCRYPTION_KEY"),
 
     # Data retention (HIPAA requires 6 years)
     retention_days=2190,  # 6 years

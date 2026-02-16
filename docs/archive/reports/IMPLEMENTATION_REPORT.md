@@ -60,11 +60,11 @@ Tracked data per call:
 
 Five new commands with rich console output:
 
-1. **`empathy telemetry show`** - View recent LLM calls
-2. **`empathy telemetry savings`** - Calculate cost savings
-3. **`empathy telemetry compare`** - Compare time periods
-4. **`empathy telemetry reset`** - Clear all data
-5. **`empathy telemetry export`** - Export to JSON/CSV
+1. **`attune telemetry show`** - View recent LLM calls
+2. **`attune telemetry savings`** - Calculate cost savings
+3. **`attune telemetry compare`** - Compare time periods
+4. **`attune telemetry reset`** - Clear all data
+5. **`attune telemetry export`** - Export to JSON/CSV
 
 **File**: `src/attune/cli.py`
 
@@ -125,7 +125,7 @@ CHANGELOG.md                       # Added v3.9.0 release notes
 ### 1. View Recent Usage
 
 ```bash
-$ empathy telemetry show
+$ attune telemetry show
 ```
 
 **Output** (with rich tables):
@@ -148,7 +148,7 @@ Data location: /Users/you/.empathy/telemetry
 ### 2. Calculate Savings
 
 ```bash
-$ empathy telemetry savings --days 30
+$ attune telemetry savings --days 30
 ```
 
 **Output**:
@@ -177,7 +177,7 @@ $ empathy telemetry savings --days 30
 ### 3. Compare Time Periods
 
 ```bash
-$ empathy telemetry compare --period1 7 --period2 30
+$ attune telemetry compare --period1 7 --period2 30
 ```
 
 **Output**:
@@ -197,19 +197,19 @@ Telemetry Comparison
 
 ```bash
 # Export to JSON
-$ empathy telemetry export --format json --output usage.json
+$ attune telemetry export --format json --output usage.json
 
 # Export to CSV for Excel/Sheets
-$ empathy telemetry export --format csv --output usage.csv
+$ attune telemetry export --format csv --output usage.csv
 
 # Export last 7 days only
-$ empathy telemetry export --format json --days 7 --output recent.json
+$ attune telemetry export --format json --days 7 --output recent.json
 ```
 
 ### 5. Reset Data
 
 ```bash
-$ empathy telemetry reset --confirm
+$ attune telemetry reset --confirm
 Deleted 245 telemetry entries.
 New tracking starts now.
 ```
@@ -235,7 +235,7 @@ New tracking starts now.
 - **Location**: `~/.empathy/telemetry/usage.jsonl` (local machine only)
 - **Format**: JSON Lines (one entry per line)
 - **Transmission**: NEVER sent to external servers
-- **User Control**: `empathy telemetry reset --confirm` to delete all data
+- **User Control**: `attune telemetry reset --confirm` to delete all data
 
 ## JSON Lines Schema v1.0
 
@@ -383,7 +383,7 @@ result = await workflow.execute(files=["auth.py"])
 Then view your savings:
 
 ```bash
-empathy telemetry savings --days 7
+attune telemetry savings --days 7
 ```
 
 ## Success Criteria

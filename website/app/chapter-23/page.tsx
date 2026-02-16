@@ -106,7 +106,7 @@ export default function Chapter23Page() {
               {/* Code Example */}
               <h2 style={{ color: '#0F172A' }}>Implementation Example</h2>
               <pre className="bg-[#0F172A] text-[#E2E8F0] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os import PatternLibrary, AgentTeam
+{`from attune import PatternLibrary, AgentTeam
 
 # Initialize shared pattern library
 library = PatternLibrary(storage="redis://localhost")

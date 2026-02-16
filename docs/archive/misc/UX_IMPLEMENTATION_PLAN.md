@@ -65,7 +65,7 @@ This plan delivers interactive workflow experiences through three focused initia
 **Starting Point:** Use existing `security_findings` from SecurityAuditCrew (already structured) to prove the UX pattern works before adding full LLM parsing.
 
 **Success Criteria:**
-- `empathy workflow run code-review --target src/auth` returns JSON with `findings` array
+- `attune workflow run code-review --target src/auth` returns JSON with `findings` array
 - Each finding has: `file`, `line`, `severity`, `category`, `message`
 - Workspace-relative paths resolve correctly
 
@@ -524,7 +524,7 @@ Use VSCode's native Settings Contribution instead of custom webview:
 - [ ] **Phase 1A: Backend** (6-8 hours)
   - [ ] Add `_extract_findings_from_response()` to base.py
   - [ ] Modify code_review.py `_scan()` to return structured findings
-  - [ ] Test with: `empathy workflow run code-review --target src/`
+  - [ ] Test with: `attune workflow run code-review --target src/`
 
 - [ ] **Phase 1B: Frontend** (6-8 hours)
   - [ ] Create CodeReviewPanelProvider.ts

@@ -12,7 +12,7 @@ Environment Variables:
     REDIS_PORT: Redis port (default: 6379)
     REDIS_PASSWORD: Redis password (used in cloud mode, ignored in local mode)
     REDIS_DB: Redis database number (default: 0)
-    EMPATHY_REDIS_MOCK: Set to "true" to use mock mode
+    ATTUNE_REDIS_MOCK: Set to "true" to use mock mode (EMPATHY_REDIS_MOCK also accepted)
 
     # SSL/TLS (for managed Redis services)
     REDIS_SSL: Set to "true" to enable SSL
@@ -170,7 +170,9 @@ def get_redis_config() -> RedisConfig:
 
     """
     # Check for mock mode
-    if os.getenv("EMPATHY_REDIS_MOCK", "").lower() == "true":
+    from attune.config.env_compat import get_attune_env
+
+    if (get_attune_env("REDIS_MOCK", "") or "").lower() == "true":
         return RedisConfig(use_mock=True)
 
     # Check for full URL (Railway, Heroku, managed services)

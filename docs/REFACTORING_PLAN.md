@@ -267,7 +267,7 @@
       <module name="__init__.py">Re-exports EmpathyOS and key classes</module>
       <module name="response.py">InteractionResponse</module>
       <module name="state.py">CollaborationState</module>
-      <module name="empathy_os.py">EmpathyOS main orchestrator</module>
+      <module name="attune.py">EmpathyOS main orchestrator</module>
     </modules>
     <facade>src/attune/core.py → from .core import *</facade>
   </target-structure>
@@ -286,7 +286,7 @@
         <task>Create core/ directory structure</task>
         <task>Extract InteractionResponse to response.py</task>
         <task>Extract CollaborationState to state.py</task>
-        <task>Keep EmpathyOS in empathy_os.py</task>
+        <task>Keep EmpathyOS in attune.py</task>
         <task>Run tests</task>
       </tasks>
     </phase>

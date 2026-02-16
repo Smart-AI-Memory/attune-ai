@@ -308,13 +308,13 @@ class BaseWorkflow:
 ### 2. **Add CLI Commands**
 ```bash
 # Show routing stats for Anthropic models
-empathy telemetry routing-stats --workflow code-review
+attune telemetry routing-stats --workflow code-review
 
 # Check tier upgrade recommendations
-empathy telemetry routing-check --all
+attune telemetry routing-check --all
 
 # Show model performance comparison
-empathy telemetry models --provider anthropic
+attune telemetry models --provider anthropic
 ```
 
 ### 3. **Add Comprehensive Tests**

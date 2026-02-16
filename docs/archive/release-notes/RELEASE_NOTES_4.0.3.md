@@ -156,7 +156,7 @@ python -c "from attune import __version__; print(__version__)"
 # Should print: 4.0.3
 
 # Test health check
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 ```
 
 ---

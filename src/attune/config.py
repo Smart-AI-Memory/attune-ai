@@ -255,15 +255,15 @@ class EmpathyConfig:
 
     @classmethod
     def from_env(cls, prefix: str = "EMPATHY_") -> "EmpathyConfig":
-        """Load configuration from environment variables
+        """Load configuration from environment variables.
 
-        Environment variables should be prefixed with EMPATHY_
-        and match config field names in uppercase.
+        Environment variables can be prefixed with ATTUNE_ (preferred)
+        or EMPATHY_ (deprecated, still accepted). ATTUNE_ takes precedence.
 
         Example:
-            EMPATHY_USER_ID=alice
-            EMPATHY_TARGET_LEVEL=4
-            EMPATHY_CONFIDENCE_THRESHOLD=0.8
+            ATTUNE_USER_ID=alice
+            ATTUNE_TARGET_LEVEL=4
+            ATTUNE_CONFIDENCE_THRESHOLD=0.8
 
         Args:
             prefix: Environment variable prefix (default: "EMPATHY_")
@@ -272,7 +272,7 @@ class EmpathyConfig:
             EmpathyConfig instance
 
         Example:
-            >>> os.environ["EMPATHY_USER_ID"] = "alice"
+            >>> os.environ["ATTUNE_USER_ID"] = "alice"
             >>> config = EmpathyConfig.from_env()
             >>> print(config.user_id)  # "alice"
 
@@ -284,14 +284,20 @@ class EmpathyConfig:
 
         data: dict[str, Any] = {}
 
-        # Get all environment variables with prefix
-        for key, value in os.environ.items():
-            if key.startswith(prefix):
-                # Convert EMPATHY_USER_ID -> user_id
-                field_name = key[len(prefix) :].lower()
+        # Check both ATTUNE_ and EMPATHY_ prefixes (ATTUNE_ wins)
+        for check_prefix in ("ATTUNE_", prefix):
+            for key, value in os.environ.items():
+                if not key.startswith(check_prefix):
+                    continue
 
-                # Skip unknown fields (e.g., EMPATHY_MASTER_KEY for encryption)
+                field_name = key[len(check_prefix) :].lower()
+
+                # Skip unknown fields
                 if field_name not in valid_fields:
+                    continue
+
+                # Skip if ATTUNE_ already set this field
+                if field_name in data:
                     continue
 
                 # Type conversion based on field name

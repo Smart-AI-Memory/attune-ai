@@ -15,7 +15,7 @@ quick reference materials for when you need to look something up.
 
 - :material-console: **[CLI Guide](CLI_GUIDE.md)**
 
-    Complete guide to the `empathy` command
+    Complete guide to the `attune` command
 
 - :material-lightning-bolt: **[CLI Cheatsheet](CLI_CHEATSHEET.md)**
 

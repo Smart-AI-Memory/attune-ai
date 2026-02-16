@@ -43,15 +43,15 @@ A **zero-config monitoring system** with progressive enhancement:
 
 ```bash
 pip install attune-ai
-empathy workflow run code-review
+attune workflow run code-review
 # ✅ Telemetry works automatically
-# ✅ View with: empathy telemetry
+# ✅ View with: attune telemetry
 # ✅ VSCode panel appears if using VSCode
 ```
 
 **What's included:**
 - JSONL telemetry (logged to `.empathy/`)
-- CLI dashboard (`empathy telemetry`)
+- CLI dashboard (`attune telemetry`)
 - VSCode panel (charts, activity feed, export)
 
 **What's NOT included:**
@@ -69,7 +69,7 @@ empathy workflow run code-review
 #### Feature 1: Alerts
 
 ```bash
-empathy alerts init  # 3-question wizard
+attune alerts init  # 3-question wizard
 ```
 
 **What happens:**
@@ -86,7 +86,7 @@ empathy alerts init  # 3-question wizard
 #### Feature 2: OTEL Export
 
 ```bash
-export EMPATHY_OTEL_ENDPOINT=http://localhost:4317
+export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
 pip install attune-ai[otel]
 ```
 
@@ -159,12 +159,12 @@ pip install attune-ai[otel]
 | Feature | Tier 1 (Default) | Tier 2 (Enterprise) |
 |---------|------------------|---------------------|
 | **JSONL telemetry** | ✅ Automatic | ✅ Automatic |
-| **CLI dashboard** | ✅ `empathy telemetry` | ✅ `empathy telemetry` |
+| **CLI dashboard** | ✅ `attune telemetry` | ✅ `attune telemetry` |
 | **VSCode panel** | ✅ Automatic | ✅ Automatic |
 | **Cost charts** | ✅ Built-in | ✅ Built-in |
 | **Activity feed** | ✅ Built-in | ✅ Built-in |
 | **Export to CSV** | ✅ Built-in | ✅ Built-in |
-| **Alerts** | ❌ Not included | ✅ Via `empathy alerts init` |
+| **Alerts** | ❌ Not included | ✅ Via `attune alerts init` |
 | **OTEL export** | ❌ Not included | ✅ Via env vars |
 | **Webhook notifications** | ❌ Not included | ✅ With alerts |
 | **SigNoz/Datadog** | ❌ Not included | ✅ With OTEL |
@@ -180,13 +180,13 @@ pip install attune-ai[otel]
 **Day 1:**
 ```bash
 pip install attune-ai
-empathy workflow run code-review
+attune workflow run code-review
 ```
 ✅ Telemetry works automatically
 
 **Day 2:**
 ```bash
-empathy telemetry
+attune telemetry
 ```
 ✅ See cost, usage, success rate
 
@@ -206,7 +206,7 @@ empathy telemetry
 
 **Week 2:** Enable alerts
 ```bash
-empathy alerts init
+attune alerts init
 # What metric? daily_cost
 # Threshold? 10
 # Webhook? https://hooks.slack.com/...
@@ -215,7 +215,7 @@ empathy alerts init
 
 **Week 3:** Enable OTEL
 ```bash
-export EMPATHY_OTEL_ENDPOINT=http://localhost:4317
+export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
 pip install attune-ai[otel]
 ```
 ✅ Data flowing to SigNoz
@@ -276,7 +276,7 @@ Workflow Execution → MultiBackend → JSONL Store → VSCode/CLI
 
 | Old Concept | New Concept |
 |-------------|-------------|
-| `.empathy/alerts.yaml` | `empathy alerts init` wizard |
+| `.empathy/alerts.yaml` | `attune alerts init` wizard |
 | `.empathy/monitoring.yaml` | Environment variables |
 | Manual backend selection | Auto-enabled based on config |
 | Start alert watcher manually | Auto-starts after wizard |
@@ -290,19 +290,19 @@ Workflow Execution → MultiBackend → JSONL Store → VSCode/CLI
 **A:** No. `pip install attune-ai` and it works.
 
 ### Q: How do I see my telemetry?
-**A:** Open VSCode extension or run `empathy telemetry`
+**A:** Open VSCode extension or run `attune telemetry`
 
 ### Q: How do I enable alerts?
-**A:** Run `empathy alerts init` and answer 3 questions
+**A:** Run `attune alerts init` and answer 3 questions
 
 ### Q: How do I enable OTEL?
-**A:** Set `EMPATHY_OTEL_ENDPOINT` and install `[otel]` extra
+**A:** Set `ATTUNE_OTEL_ENDPOINT` and install `[otel]` extra
 
 ### Q: Do I need YAML files?
 **A:** No. Use CLI wizard for alerts, env vars for OTEL
 
 ### Q: Will alerts run by default?
-**A:** No. Only if you run `empathy alerts init`
+**A:** No. Only if you run `attune alerts init`
 
 ### Q: Will OTEL export by default?
 **A:** No. Only if you set env vars and install `[otel]`

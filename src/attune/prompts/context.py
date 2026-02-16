@@ -27,6 +27,8 @@ class PromptContext:
         input_type: Type of input content ("code", "diff", "document", "question").
         input_payload: The actual content to analyze or process.
         extra: Additional context-specific data.
+        examples: One-shot input/output pairs for few-shot learning.
+            Each dict has "input" and "output" keys.
 
     """
 
@@ -37,6 +39,7 @@ class PromptContext:
     input_type: str = "code"
     input_payload: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
+    examples: list[dict[str, str]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate context after initialization."""
@@ -51,6 +54,7 @@ class PromptContext:
         code: str,
         findings_summary: str = "",
         risk_level: str = "",
+        examples: list[dict[str, str]] | None = None,
         **extra: Any,
     ) -> PromptContext:
         """Create a context for security audit workflows.
@@ -59,9 +63,15 @@ class PromptContext:
             code: The code to audit.
             findings_summary: Summary of detected findings.
             risk_level: Current risk assessment level.
+            examples: One-shot examples. Defaults to SECURITY_AUDIT_EXAMPLES.
             **extra: Additional context data.
 
         """
+        if examples is None:
+            from attune.prompts.examples import SECURITY_AUDIT_EXAMPLES
+
+            examples = SECURITY_AUDIT_EXAMPLES
+
         return cls(
             role="application security engineer",
             goal="Identify security vulnerabilities and provide remediation guidance",
@@ -84,6 +94,7 @@ class PromptContext:
                 "risk_level": risk_level,
                 **extra,
             },
+            examples=examples,
         )
 
     @classmethod
@@ -92,6 +103,7 @@ class PromptContext:
         code_or_diff: str,
         input_type: str = "code",
         context: str = "",
+        examples: list[dict[str, str]] | None = None,
         **extra: Any,
     ) -> PromptContext:
         """Create a context for code review workflows.
@@ -100,9 +112,15 @@ class PromptContext:
             code_or_diff: The code or diff to review.
             input_type: Either "code" or "diff".
             context: Additional context about the change.
+            examples: One-shot examples. Defaults to CODE_REVIEW_EXAMPLES.
             **extra: Additional context data.
 
         """
+        if examples is None:
+            from attune.prompts.examples import CODE_REVIEW_EXAMPLES
+
+            examples = CODE_REVIEW_EXAMPLES
+
         return cls(
             role="senior staff engineer performing code review",
             goal="Review code quality, identify issues, and suggest improvements",
@@ -125,6 +143,7 @@ class PromptContext:
                 "context": context,
                 **extra,
             },
+            examples=examples,
         )
 
     @classmethod
@@ -132,6 +151,7 @@ class PromptContext:
         cls,
         code: str,
         context: str = "",
+        examples: list[dict[str, str]] | None = None,
         **extra: Any,
     ) -> PromptContext:
         """Create a context for performance audit workflows.
@@ -139,9 +159,15 @@ class PromptContext:
         Args:
             code: The code to audit for performance issues.
             context: Additional context about the codebase or performance goals.
+            examples: One-shot examples. Defaults to PERF_AUDIT_EXAMPLES.
             **extra: Additional context data.
 
         """
+        if examples is None:
+            from attune.prompts.examples import PERF_AUDIT_EXAMPLES
+
+            examples = PERF_AUDIT_EXAMPLES
+
         return cls(
             role="senior performance engineer",
             goal="Identify performance bottlenecks and optimization opportunities",
@@ -164,6 +190,7 @@ class PromptContext:
                 "context": context,
                 **extra,
             },
+            examples=examples,
         )
 
     @classmethod
@@ -213,4 +240,5 @@ class PromptContext:
             input_type=self.input_type,
             input_payload=self.input_payload,
             extra=new_extra,
+            examples=self.examples.copy(),
         )

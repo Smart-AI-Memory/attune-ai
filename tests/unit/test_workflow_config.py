@@ -151,6 +151,40 @@ workflow_providers:
                 assert config.custom_models["env"]["cheap"] == "gpt-4o-mini"
                 assert config.custom_models["env"]["capable"] == "claude-sonnet-4"
 
+    def test_load_with_attune_env_overrides(self):
+        """Test that ATTUNE_ environment variables work."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "workflows.json"
+            config_path.write_text(json.dumps({"default_provider": "anthropic"}))
+
+            with patch.dict(os.environ, {"ATTUNE_WORKFLOW_PROVIDER": "openai"}):
+                config = WorkflowConfig.load(config_path)
+                assert config.default_provider == "openai"
+
+    def test_attune_env_takes_precedence_over_empathy(self):
+        """Test ATTUNE_ wins when both prefixes are set."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "workflows.json"
+            config_path.write_text(json.dumps({}))
+
+            env = {
+                "ATTUNE_WORKFLOW_PROVIDER": "anthropic",
+                "EMPATHY_WORKFLOW_PROVIDER": "openai",
+            }
+            with patch.dict(os.environ, env):
+                config = WorkflowConfig.load(config_path)
+                assert config.default_provider == "anthropic"
+
+    def test_attune_model_tier_env(self):
+        """Test ATTUNE_MODEL_* env vars work."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "workflows.json"
+            config_path.write_text(json.dumps({}))
+
+            with patch.dict(os.environ, {"ATTUNE_MODEL_CHEAP": "gpt-4o-mini"}):
+                config = WorkflowConfig.load(config_path)
+                assert config.custom_models["env"]["cheap"] == "gpt-4o-mini"
+
     def test_load_from_empathy_config_yaml(self):
         """Test loading from attune.config.yaml format."""
         with tempfile.TemporaryDirectory() as tmpdir:

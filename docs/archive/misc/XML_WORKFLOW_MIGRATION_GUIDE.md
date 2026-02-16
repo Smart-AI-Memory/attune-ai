@@ -149,9 +149,9 @@ Enable XML prompts in `.empathy/config.json`:
 Or via environment variables:
 
 ```bash
-export EMPATHY_XML_ENABLED=true
-export EMPATHY_METRICS_ENABLED=true
-export EMPATHY_OPTIMIZATION_LEVEL=moderate
+export ATTUNE_XML_ENABLED=true
+export ATTUNE_METRICS_ENABLED=true
+export ATTUNE_OPTIMIZATION_LEVEL=moderate
 ```
 
 ## Migration Checklist

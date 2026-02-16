@@ -64,7 +64,7 @@ description: XML Enhancement Implementation Summary: **Date:** January 5, 2026 *
 
 **Features:**
 - Load from JSON file (`.empathy/config.json`)
-- Load from environment variables (`EMPATHY_*`)
+- Load from environment variables (`ATTUNE_*`)
 - Global config singleton (`get_config`/`set_config`)
 - Backward compatible with original `EmpathyConfig`
 

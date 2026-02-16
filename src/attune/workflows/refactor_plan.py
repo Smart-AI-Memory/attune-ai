@@ -453,6 +453,8 @@ Hotspot Files: {json.dumps([h.get("file") for h in analysis.get("hotspots", [])[
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import REFACTOR_PLAN_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="software architect specializing in technical debt management",
                 goal="Generate a prioritized refactoring roadmap to reduce technical debt",
@@ -470,6 +472,7 @@ Hotspot Files: {json.dumps([h.get("file") for h in analysis.get("hotspots", [])[
                 ],
                 input_type="tech_debt_analysis",
                 input_payload=input_payload,
+                examples=REFACTOR_PLAN_EXAMPLES,
                 extra={
                     "total_debt": input_data.get("total_debt", 0),
                     "trajectory": analysis.get("trajectory", "unknown"),

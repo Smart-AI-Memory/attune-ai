@@ -459,7 +459,7 @@ def process_data(data: dict) -> dict:
 
 ### Real Pattern from Bug Prediction
 
-**From:** `empathy workflow run bug-predict`
+**From:** `attune workflow run bug-predict`
 
 ```json
 {

@@ -44,16 +44,16 @@ print(f"Answer: {result.final_output}")
 
 ```bash
 # List available workflows
-empathy workflow list
+attune workflow list
 
 # Describe a workflow's stages
-empathy workflow describe research
+attune workflow describe research
 
 # Run a workflow
-empathy workflow run research --input '{"sources": ["doc1.md"], "question": "Summarize"}'
+attune workflow run research --input '{"sources": ["doc1.md"], "question": "Summarize"}'
 
 # Get JSON output
-empathy workflow run code-review --input '{"diff": "..."}' --json
+attune workflow run code-review --input '{"diff": "..."}' --json
 ```
 
 ## Built-in Workflows
@@ -186,7 +186,7 @@ print(f"Total session cost: ${report['total_cost']:.4f}")
 View workflow costs in the CLI:
 
 ```bash
-empathy costs --days 7
+attune costs --days 7
 ```
 
 ## Workflow Results
@@ -249,10 +249,10 @@ Monitor your workflow costs:
 
 ```bash
 # View cost breakdown by workflow
-empathy costs --days 30
+attune costs --days 30
 
 # Compare workflows
-empathy workflow run research --input '...' --json | jq .cost_report
+attune workflow run research --input '...' --json | jq .cost_report
 ```
 
 ## See Also

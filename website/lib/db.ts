@@ -59,7 +59,7 @@ export async function initializeDatabase(): Promise<void> {
       customer_id INTEGER REFERENCES customers(id),
       purchase_id INTEGER REFERENCES purchases(id),
       license_key VARCHAR(255) UNIQUE NOT NULL,
-      product VARCHAR(100) NOT NULL, -- 'empathy-framework', 'book-access'
+      product VARCHAR(100) NOT NULL, -- 'attune-ai', 'book-access'
       status VARCHAR(50) DEFAULT 'active', -- 'active', 'expired', 'revoked'
       activated_at TIMESTAMP WITH TIME ZONE,
       expires_at TIMESTAMP WITH TIME ZONE,

@@ -96,7 +96,7 @@ export default function Home() {
                   className="btn btn-primary text-lg px-8 py-4"
                   aria-label="Get started with the framework"
                 >
-                  pip install empathy-framework
+                  pip install attune-ai
                 </Link>
                 <Link
                   href="/workflows"
@@ -216,7 +216,7 @@ export default function Home() {
                   Read the Docs
                 </Link>
                 <a
-                  href="https://github.com/Smart-AI-Memory/empathy-framework"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-outline text-lg px-8 py-4"

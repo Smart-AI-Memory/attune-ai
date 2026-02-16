@@ -228,7 +228,7 @@ export default function ContributePage() {
                     Help others discover the framework
                   </p>
                   <a
-                    href="https://github.com/Smart-AI-Memory/empathy-framework"
+                    href="https://github.com/Smart-AI-Memory/attune-ai"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-outline btn-sm"
@@ -243,7 +243,7 @@ export default function ContributePage() {
                     Help improve quality by reporting bugs
                   </p>
                   <a
-                    href="https://github.com/Smart-AI-Memory/empathy-framework/issues"
+                    href="https://github.com/Smart-AI-Memory/attune-ai/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-outline btn-sm"

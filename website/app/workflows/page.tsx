@@ -208,7 +208,7 @@ export default function WorkflowsPage() {
                   Get Started
                 </Link>
                 <a
-                  href="https://github.com/Smart-AI-Memory/empathy-framework"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)]"
@@ -323,7 +323,7 @@ export default function WorkflowsPage() {
                   href="/framework-docs/tutorials/quickstart/"
                   className="btn btn-primary text-lg px-8 py-4"
                 >
-                  pip install empathy-framework
+                  pip install attune-ai
                 </Link>
               </div>
             </div>

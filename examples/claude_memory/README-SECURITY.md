@@ -36,8 +36,8 @@ cp examples/claude_memory/project-CLAUDE.md ./.claude/CLAUDE.md
 
 ```python
 import os
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.models import LLMExecutor
+from attune.claude_memory import ClaudeMemoryConfig
 
 # Load security policies from all levels
 config = ClaudeMemoryConfig(
@@ -48,7 +48,7 @@ config = ClaudeMemoryConfig(
 )
 
 # Initialize LLM with memory
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="anthropic",
     api_key=os.getenv("ANTHROPIC_API_KEY"),
     claude_memory_config=config,
@@ -233,12 +233,12 @@ cat /var/log/empathy/audit.jsonl | jq 'select(.status == "blocked")'
 ### Basic Memory Loading
 
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.models import LLMExecutor
+from attune.claude_memory import ClaudeMemoryConfig
 
 # Simple configuration
 config = ClaudeMemoryConfig(enabled=True)
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="anthropic",
     api_key="your-key",
     claude_memory_config=config,
@@ -267,7 +267,7 @@ config = ClaudeMemoryConfig(
     load_project=True      # Project conventions
 )
 
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="anthropic",
     api_key="your-key",
     claude_memory_config=config,
@@ -333,8 +333,8 @@ print(retrieved["metadata"]["classification"])  # "SENSITIVE"
 Complete HIPAA-compliant workflow:
 
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.models import LLMExecutor
+from attune.claude_memory import ClaudeMemoryConfig
 from secure_memdocs import SecureMemDocsIntegration
 import os
 
@@ -344,7 +344,7 @@ config = ClaudeMemoryConfig(
     load_enterprise=True,  # /etc/claude/CLAUDE.md with HIPAA rules
 )
 
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="anthropic",
     api_key=os.getenv("ANTHROPIC_API_KEY"),
     claude_memory_config=config,
@@ -399,8 +399,8 @@ export OLLAMA_HOST=http://localhost:11434
 
 ```python
 import os
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.models import LLMExecutor
+from attune.claude_memory import ClaudeMemoryConfig
 
 # Verify air-gapped mode
 assert os.getenv("EMPATHY_AIR_GAPPED") == "true"
@@ -413,7 +413,7 @@ config = ClaudeMemoryConfig(
 )
 
 # Use local model (Ollama)
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="local",  # No external API calls
     model="llama2",
     endpoint="http://localhost:11434",
@@ -458,7 +458,7 @@ pytest -k "secrets" -v      # Secrets detection tests
 pytest -k "classification" -v  # Classification tests
 
 # Full test suite with coverage
-pytest --cov=attune_llm --cov=secure_memdocs --cov-report=html
+pytest --cov=attune --cov=secure_memdocs --cov-report=html
 ```
 
 ### Manual Security Validation
@@ -466,7 +466,7 @@ pytest --cov=attune_llm --cov=secure_memdocs --cov-report=html
 ```python
 # Test script: test_manual_security.py
 from secure_memdocs import SecureMemDocsIntegration
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.claude_memory import ClaudeMemoryConfig
 
 config = ClaudeMemoryConfig(enabled=True)
 integration = SecureMemDocsIntegration(config)
@@ -588,7 +588,7 @@ class SecureEmpathyFramework:
         )
 
         # Layer 2: LLM with memory integration
-        self.llm = EmpathyLLM(
+        self.llm = LLMExecutor(
             provider="anthropic",
             claude_memory_config=self.memory_config
         )

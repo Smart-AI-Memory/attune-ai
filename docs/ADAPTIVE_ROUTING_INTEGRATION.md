@@ -294,13 +294,13 @@ pytest tests/test_adaptive_routing.py -v
 **Commands to add:**
 ```bash
 # Show routing statistics
-empathy telemetry routing-stats --workflow code-review --days 7
+attune telemetry routing-stats --workflow code-review --days 7
 
 # Show tier upgrade recommendations
-empathy telemetry routing-check --workflow code-review
+attune telemetry routing-check --workflow code-review
 
 # Show all workflows with upgrade recommendations
-empathy telemetry routing-check --all
+attune telemetry routing-check --all
 ```
 
 **Files to create:**

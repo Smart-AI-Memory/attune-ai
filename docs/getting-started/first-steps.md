@@ -16,10 +16,10 @@ Let's run a **security audit** on some code. This workflow scans for vulnerabili
 
 ```bash
 # Scan your source directory
-empathy workflow run security-audit --path ./src
+attune workflow run security-audit --path ./src
 
 # Or scan current directory
-empathy workflow run security-audit --path .
+attune workflow run security-audit --path .
 ```
 
 **Example output:**
@@ -73,18 +73,18 @@ Attune AI includes 10+ built-in workflows:
 
 | Workflow | Command | What It Does |
 |----------|---------|--------------|
-| Security Audit | `empathy workflow run security-audit` | Find vulnerabilities |
-| Bug Prediction | `empathy workflow run bug-predict` | Predict likely bugs |
-| Test Coverage | `empathy workflow run test-coverage` | Generate missing tests |
-| Release Prep | `empathy workflow run release-prep` | Pre-release checklist |
-| Dependency Check | `empathy workflow run dependency-check` | Find outdated deps |
+| Security Audit | `attune workflow run security-audit` | Find vulnerabilities |
+| Bug Prediction | `attune workflow run bug-predict` | Predict likely bugs |
+| Test Coverage | `attune workflow run test-coverage` | Generate missing tests |
+| Release Prep | `attune workflow run release-prep` | Pre-release checklist |
+| Dependency Check | `attune workflow run dependency-check` | Find outdated deps |
 
 ```bash
 # List all available workflows
-empathy workflow list
+attune workflow list
 
 # Get help for a specific workflow
-empathy workflow run security-audit --help
+attune workflow run security-audit --help
 ```
 
 ---
@@ -104,10 +104,10 @@ Every workflow returns:
 
 ```bash
 # See your usage
-empathy telemetry show
+attune telemetry show
 
 # See cost breakdown
-empathy telemetry savings --days 7
+attune telemetry savings --days 7
 ```
 
 All telemetry data stays local in `~/.empathy/telemetry/`.
@@ -147,14 +147,14 @@ Now that you've run a workflow, it's time to [Choose Your Path](choose-your-path
 
 ```bash
 # Run workflows
-empathy workflow run <name> --path <path>
-empathy workflow list
+attune workflow run <name> --path <path>
+attune workflow list
 
 # Check status
-empathy telemetry show
-empathy telemetry savings
+attune telemetry show
+attune telemetry savings
 
 # Get help
-empathy --help
-empathy workflow --help
+attune --help
+attune workflow --help
 ```

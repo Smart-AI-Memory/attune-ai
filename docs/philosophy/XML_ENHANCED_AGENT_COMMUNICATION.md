@@ -101,7 +101,7 @@ Run all tests and verify they pass before reporting complete.
     <verification>
       - Run: python -m pytest tests/unit/telemetry/ -v
       - Run: python -m pytest tests/integration/test_telemetry_integration.py -v
-      - Run: empathy workflow run health-check
+      - Run: attune workflow run health-check
       - Document test results with evidence (output, coverage)
     </verification>
   </requirements>
@@ -206,7 +206,7 @@ The system is ready for release.
     </integration_tests>
 
     <health_check>
-      <command>empathy workflow run health-check</command>
+      <command>attune workflow run health-check</command>
       <result>Score: 73/100 (no regression)</result>
     </health_check>
   </test_results>

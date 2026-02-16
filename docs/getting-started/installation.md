@@ -116,7 +116,7 @@ Redis enables multi-agent coordination and session persistence. Skip this for no
 === "Docker"
 
     ```bash
-    docker run -d -p 6379:6379 --name empathy-redis redis:alpine
+    docker run -d -p 6379:6379 --name attune-redis redis:alpine
     ```
 
 === "Skip for Now"

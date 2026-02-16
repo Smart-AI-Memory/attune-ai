@@ -64,6 +64,22 @@ class TestOTELBackendInitialization:
 
             assert backend.endpoint == "http://env:4317"
 
+    def test_attune_otel_endpoint_env(self):
+        """Test that ATTUNE_OTEL_ENDPOINT env var is used."""
+        with patch.dict(os.environ, {"ATTUNE_OTEL_ENDPOINT": "http://attune:4317"}):
+            backend = OTELBackend()
+            assert backend.endpoint == "http://attune:4317"
+
+    def test_attune_otel_endpoint_takes_precedence(self):
+        """Test ATTUNE_ wins when both ATTUNE_ and EMPATHY_ are set."""
+        env = {
+            "ATTUNE_OTEL_ENDPOINT": "http://attune:4317",
+            "EMPATHY_OTEL_ENDPOINT": "http://empathy:4317",
+        }
+        with patch.dict(os.environ, env):
+            backend = OTELBackend()
+            assert backend.endpoint == "http://attune:4317"
+
     @pytest.mark.xfail(
         reason="Test assumes OTEL not installed but it may be present in the environment",
         strict=False,

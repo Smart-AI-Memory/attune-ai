@@ -196,7 +196,7 @@ export default function DebugWizardPage() {
                 Install Guide
               </Link>
               <a
-                href="https://github.com/smart-ai-memory/empathy-framework"
+                href="https://github.com/smart-ai-memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg font-semibold"

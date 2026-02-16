@@ -71,7 +71,7 @@ Create a JSON file with your batch requests:
 ### 2. Submit the Batch
 
 ```bash
-empathy batch submit batch_requests.json
+attune batch submit batch_requests.json
 ```
 
 **Output:**
@@ -82,15 +82,15 @@ empathy batch submit batch_requests.json
 ✅ Batch submitted successfully!
    Batch ID: msgbatch_abc123xyz789
 
-Monitor status with: empathy batch status msgbatch_abc123xyz789
-Retrieve results with: empathy batch results msgbatch_abc123xyz789 output.json
-Or wait for completion: empathy batch wait msgbatch_abc123xyz789 output.json --poll-interval 300
+Monitor status with: attune batch status msgbatch_abc123xyz789
+Retrieve results with: attune batch results msgbatch_abc123xyz789 output.json
+Or wait for completion: attune batch wait msgbatch_abc123xyz789 output.json --poll-interval 300
 ```
 
 ### 3. Monitor Batch Status
 
 ```bash
-empathy batch status msgbatch_abc123xyz789
+attune batch status msgbatch_abc123xyz789
 ```
 
 **Output:**
@@ -116,7 +116,7 @@ empathy batch status msgbatch_abc123xyz789
 
 **Option A: Wait for completion (recommended)**
 ```bash
-empathy batch wait msgbatch_abc123xyz789 results.json --poll-interval 300
+attune batch wait msgbatch_abc123xyz789 results.json --poll-interval 300
 ```
 
 This polls every 5 minutes (300 seconds) until completion, then automatically downloads results.
@@ -124,10 +124,10 @@ This polls every 5 minutes (300 seconds) until completion, then automatically do
 **Option B: Manually check and retrieve**
 ```bash
 # Check if batch is done
-empathy batch status msgbatch_abc123xyz789
+attune batch status msgbatch_abc123xyz789
 
 # Once processing_status is "ended", retrieve results
-empathy batch results msgbatch_abc123xyz789 results.json
+attune batch results msgbatch_abc123xyz789 results.json
 ```
 
 **Output:**
@@ -164,7 +164,7 @@ The workflow includes pre-defined prompt templates for common tasks:
 ### Submit Batch
 
 ```bash
-empathy batch submit <input_file>
+attune batch submit <input_file>
 ```
 
 **Arguments:**
@@ -172,7 +172,7 @@ empathy batch submit <input_file>
 
 **Example:**
 ```bash
-empathy batch submit requests.json
+attune batch submit requests.json
 ```
 
 ---
@@ -180,7 +180,7 @@ empathy batch submit requests.json
 ### Check Status
 
 ```bash
-empathy batch status <batch_id> [--json]
+attune batch status <batch_id> [--json]
 ```
 
 **Arguments:**
@@ -189,7 +189,7 @@ empathy batch status <batch_id> [--json]
 
 **Example:**
 ```bash
-empathy batch status msgbatch_abc123 --json
+attune batch status msgbatch_abc123 --json
 ```
 
 ---
@@ -197,7 +197,7 @@ empathy batch status msgbatch_abc123 --json
 ### Retrieve Results
 
 ```bash
-empathy batch results <batch_id> <output_file>
+attune batch results <batch_id> <output_file>
 ```
 
 **Arguments:**
@@ -209,7 +209,7 @@ empathy batch results <batch_id> <output_file>
 
 **Example:**
 ```bash
-empathy batch results msgbatch_abc123 results.json
+attune batch results msgbatch_abc123 results.json
 ```
 
 ---
@@ -217,7 +217,7 @@ empathy batch results msgbatch_abc123 results.json
 ### Wait for Completion
 
 ```bash
-empathy batch wait <batch_id> <output_file> [--poll-interval SECONDS] [--timeout SECONDS]
+attune batch wait <batch_id> <output_file> [--poll-interval SECONDS] [--timeout SECONDS]
 ```
 
 **Arguments:**
@@ -229,10 +229,10 @@ empathy batch wait <batch_id> <output_file> [--poll-interval SECONDS] [--timeout
 **Example:**
 ```bash
 # Check every 5 minutes (default)
-empathy batch wait msgbatch_abc123 results.json
+attune batch wait msgbatch_abc123 results.json
 
 # Check every 10 minutes, timeout after 12 hours
-empathy batch wait msgbatch_abc123 results.json --poll-interval 600 --timeout 43200
+attune batch wait msgbatch_abc123 results.json --poll-interval 600 --timeout 43200
 ```
 
 ---

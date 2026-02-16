@@ -260,16 +260,16 @@ strategy = configure_auth_interactive()
 
 ```bash
 # Run interactive setup
-empathy auth setup
+attune auth setup
 
 # Show current strategy
-empathy auth status
+attune auth status
 
 # Reset configuration
-empathy auth reset
+attune auth reset
 
 # Test recommendation for a file
-empathy auth recommend src/my_module.py
+attune auth recommend src/my_module.py
 ```
 
 ### Phase 4: Telemetry Analytics

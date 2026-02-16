@@ -1446,6 +1446,8 @@ Code:
 
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
+            from attune.prompts.examples import CODE_REVIEW_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="senior software architect",
                 goal="Perform comprehensive code review with architectural assessment",
@@ -1465,6 +1467,7 @@ Code:
                 ],
                 input_type="code",
                 input_payload=input_payload,
+                examples=CODE_REVIEW_EXAMPLES,
             )
             system = None
         else:

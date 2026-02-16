@@ -368,7 +368,7 @@ export default function DistributedMemoryDemo() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6" style={{ color: '#0F172A' }}>Implementation</h2>
             <pre className="bg-[var(--foreground)] text-[var(--background)] p-6 rounded-lg overflow-x-auto text-sm">
-{`from empathy_os import (
+{`from attune import (
     EmpathyOS,
     PatternLibrary,
     ConflictResolver,

@@ -226,8 +226,8 @@ config = WorkflowConfig(
 | Variable | Description |
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | API key for Claude models |
-| `EMPATHY_DEFAULT_TIER` | Default tier (cheap/capable/premium) |
-| `EMPATHY_COST_OPTIMIZATION` | Enable cost optimization (true/false) |
+| `ATTUNE_DEFAULT_TIER` | Default tier (cheap/capable/premium) |
+| `ATTUNE_COST_OPTIMIZATION` | Enable cost optimization (true/false) |
 
 ---
 
@@ -237,13 +237,13 @@ Run workflows from the command line:
 
 ```bash
 # List available workflows
-empathy workflow list
+attune workflow list
 
 # Run a workflow
-empathy workflow run security-audit --path ./src
+attune workflow run security-audit --path ./src
 
 # JSON output for CI/CD
-empathy workflow run bug-predict --path ./src --json
+attune workflow run bug-predict --path ./src --json
 ```
 
 ---

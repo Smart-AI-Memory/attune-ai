@@ -38,13 +38,13 @@ Runs real analysis tools to assess your codebase's health across multiple dimens
 **Command Line:**
 ```bash
 # Daily check (3 agents: Security, Coverage, Quality)
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 
 # Weekly check (5 agents: adds Performance, Documentation)
-empathy orchestrate health-check --mode weekly
+attune orchestrate health-check --mode weekly
 
 # Release check (6 agents: comprehensive validation)
-empathy orchestrate health-check --mode release
+attune orchestrate health-check --mode release
 ```
 
 **VSCode Extension:**
@@ -82,7 +82,7 @@ CATEGORY BREAKDOWN
 💡 RECOMMENDATIONS (2)
 ----------------------------------------------------------------------
   • 🧪 Increase test coverage to 80%+ (currently 54.3%)
-  •    → Run: empathy orchestrate test-coverage --target 80
+  •    → Run: attune orchestrate test-coverage --target 80
 ```
 
 ### Grading Scale
@@ -118,7 +118,7 @@ Validates your codebase against quality gates before releasing:
 **Command Line:**
 ```bash
 # Check if project is ready for release
-empathy orchestrate release-prep --path .
+attune orchestrate release-prep --path .
 
 # Example output shows which gates pass/fail
 ```
@@ -250,7 +250,7 @@ orchestration:
 **Solution:** Generate coverage data first:
 ```bash
 pytest tests/ --cov=src --cov-report=json
-empathy orchestrate release-prep --path .
+attune orchestrate release-prep --path .
 ```
 
 **Why:** The workflow uses existing coverage data to avoid re-running tests every time.
@@ -326,7 +326,7 @@ The `test-coverage-boost` workflow is **disabled** in v4.0.0:
 
 **Alternative:** Use direct test generation:
 ```bash
-empathy workflow run test-gen --path src/your_module.py
+attune workflow run test-gen --path src/your_module.py
 ```
 
 ---
@@ -338,7 +338,7 @@ empathy workflow run test-gen --path src/your_module.py
 Add to your development routine:
 ```bash
 # Start of day: check codebase health
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 ```
 
 ### 2. Run Release Prep Before Releases
@@ -346,7 +346,7 @@ empathy orchestrate health-check --mode daily
 Before creating a release:
 ```bash
 # Validate quality gates
-empathy orchestrate release-prep --path .
+attune orchestrate release-prep --path .
 
 # If all gates pass, proceed with release
 git tag v1.0.0
@@ -438,7 +438,7 @@ A: Disabled due to poor quality (0% pass rate). Being redesigned.
 pip install attune-ai --upgrade
 
 # Run your first health check
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 ```
 
 **Questions?** Open an issue at [GitHub Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)

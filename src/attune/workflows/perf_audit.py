@@ -483,6 +483,8 @@ Top Issues:
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
             # Use XML-enhanced prompt
+            from attune.prompts.examples import PERF_AUDIT_EXAMPLES
+
             user_message = self._render_xml_prompt(
                 role="performance engineer specializing in optimization",
                 goal="Generate comprehensive optimization recommendations for performance issues",
@@ -500,6 +502,7 @@ Top Issues:
                 ],
                 input_type="performance_hotspots",
                 input_payload=input_payload,
+                examples=PERF_AUDIT_EXAMPLES,
                 extra={
                     "perf_score": hotspot_result.get("perf_score", 0),
                     "hotspot_count": len(hotspots),

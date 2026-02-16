@@ -15,7 +15,7 @@ interface GitHubStatsProps {
   compact?: boolean;
 }
 
-export default function GitHubStats({ repo = 'Smart-AI-Memory/empathy-framework', compact = false }: GitHubStatsProps) {
+export default function GitHubStats({ repo = 'Smart-AI-Memory/attune-ai', compact = false }: GitHubStatsProps) {
   const [stats, setStats] = useState<GitHubStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

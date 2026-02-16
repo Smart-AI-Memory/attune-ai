@@ -59,6 +59,8 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from attune.resilience.retry import RetryConfig, retry_with_backoff
+
 if TYPE_CHECKING:
     from .data_classes import WorkflowResult
 
@@ -515,11 +517,19 @@ class ExecutionMixin:
             # Record stage start in state store (Phase 4)
             self._state_record_stage_start(stage_name)
 
-            # Run the stage
-            output, input_tokens, output_tokens = await self.run_stage(
-                stage_name,
-                tier,
-                current_data,
+            # Run the stage with retry for transient failures
+            async def _run_this_stage(_stage=stage_name, _tier=tier, _data=current_data):
+                return await self.run_stage(_stage, _tier, _data)
+
+            _retry_cfg = RetryConfig(
+                max_attempts=2,
+                initial_delay=1.0,
+                backoff_factor=2.0,
+                retryable_exceptions=(TimeoutError, ConnectionError, RuntimeError),
+            )
+            output, input_tokens, output_tokens = await retry_with_backoff(
+                _run_this_stage,
+                config=_retry_cfg,
             )
 
             stage_end = datetime.now()

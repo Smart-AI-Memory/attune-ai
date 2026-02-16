@@ -87,10 +87,10 @@ cost = estimate_cost(input_tokens=1000, output_tokens=500)
 **Usage:**
 ```bash
 # Health check with real tools
-empathy orchestrate health-check --mode daily
+attune orchestrate health-check --mode daily
 
 # Release prep with quality gates
-empathy orchestrate release-prep --min-coverage 80
+attune orchestrate release-prep --min-coverage 80
 ```
 
 **Documentation:**
@@ -208,7 +208,7 @@ python scripts/verify_anthropic_optimizations.py
 
 2. **Run Health Check:**
    ```bash
-   empathy orchestrate health-check --mode daily
+   attune orchestrate health-check --mode daily
    ```
 
 3. **Try Batch Processing:**

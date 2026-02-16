@@ -8,7 +8,6 @@ Licensed under the Apache License, Version 2.0
 
 import hashlib
 import hmac
-import os
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -83,10 +82,13 @@ class APIKeyAuth:
 
         Args:
             api_key: The API key to require. If None, reads from
-                     EMPATHY_MEMORY_API_KEY env var. If still None, auth is disabled.
+                     ATTUNE_MEMORY_API_KEY env var (EMPATHY_MEMORY_API_KEY also accepted).
+                     If still None, auth is disabled.
 
         """
-        self.api_key = api_key or os.environ.get("EMPATHY_MEMORY_API_KEY")
+        from attune.config.env_compat import get_attune_env
+
+        self.api_key = api_key or get_attune_env("MEMORY_API_KEY")
         self.enabled = bool(self.api_key)
         self._key_hash: bytes | None = None
         self._salt = b"empathy-api-key-auth-salt"

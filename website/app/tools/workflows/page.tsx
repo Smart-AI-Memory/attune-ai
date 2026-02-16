@@ -108,7 +108,7 @@ export default function WorkflowsPage() {
               <Link href="/docs" className="text-sm text-gray-500 hover:text-gray-700">
                 Documentation
               </Link>
-              <Link href="https://github.com/Smart-AI-Memory/empathy-framework" className="text-sm text-gray-500 hover:text-gray-700">
+              <Link href="https://github.com/Smart-AI-Memory/attune-ai" className="text-sm text-gray-500 hover:text-gray-700">
                 GitHub
               </Link>
             </div>

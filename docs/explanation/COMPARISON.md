@@ -554,13 +554,13 @@ curl -u token: https://sonarqube.example.com/api/qualitygates/show > sonar_rules
 pip install attune-ai[full]
 
 # 3. Import rules (Attune AI auto-maps SonarQube rules)
-empathy import-rules --from sonarqube --file sonar_rules.json
+attune import-rules --from sonarqube --file sonar_rules.json
 
 # 4. Run initial analysis
-empathy analyze --path ./src --output report.json
+attune analyze --path ./src --output report.json
 
 # 5. Compare results
-empathy compare --sonarqube sonar_rules.json --empathy report.json
+attune compare --sonarqube sonar_rules.json --empathy report.json
 ```
 
 ### From CodeClimate
@@ -572,7 +572,7 @@ codeclimate engines:list > cc_engines.json
 pip install attune-ai[full]
 
 # 3. Run parallel analysis (compare results)
-codeclimate analyze && empathy analyze --path ./src
+codeclimate analyze && attune analyze --path ./src
 
 # 4. Evaluate coverage (Attune AI typically finds 30% more issues)
 ```
@@ -587,7 +587,7 @@ codeclimate analyze && empathy analyze --path ./src
 pip install attune-ai[full]
 
 # Run pre-commit analysis
-empathy analyze --path ./src --level 4  # Anticipatory mode
+attune analyze --path ./src --level 4  # Anticipatory mode
 ```
 
 ---
@@ -669,10 +669,10 @@ The Attune AI represents a **paradigm shift** from reactive code analysis to **a
 pip install attune-ai[full]
 
 # Run your first analysis
-empathy analyze --path ./src --level 4
+attune analyze --path ./src --level 4
 
 # See anticipatory predictions
-empathy predict --path ./src --timeframe 90-days
+attune predict --path ./src --timeframe 90-days
 ```
 
 **Learn more**:

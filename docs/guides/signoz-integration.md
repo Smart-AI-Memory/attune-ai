@@ -114,19 +114,19 @@ open http://localhost:3301
 Set the OTEL endpoint:
 
 ```bash
-export EMPATHY_OTEL_ENDPOINT=http://localhost:4317
+export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
 ```
 
 For SigNoz Cloud:
 
 ```bash
-export EMPATHY_OTEL_ENDPOINT=https://ingest.signoz.io:443
+export ATTUNE_OTEL_ENDPOINT=https://ingest.signoz.io:443
 export OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=YOUR_TOKEN_HERE"
 ```
 
 ### Option B: Auto-Detection
 
-If you don't set `EMPATHY_OTEL_ENDPOINT`, the framework automatically detects:
+If you don't set `ATTUNE_OTEL_ENDPOINT`, the framework automatically detects:
 1. `localhost:4317` (default OTEL gRPC port)
 2. Falls back to JSONL-only if no collector is found
 
@@ -313,7 +313,7 @@ The Attune AI uses custom semantic conventions for LLM telemetry:
 
 3. Check environment variable:
    ```bash
-   echo $EMPATHY_OTEL_ENDPOINT
+   echo $ATTUNE_OTEL_ENDPOINT
    ```
 
 4. Enable debug logging:
@@ -392,7 +392,7 @@ sampler = TraceIdRatioBased(0.1)
 For SigNoz Cloud, always use HTTPS and set the ingestion key:
 
 ```bash
-export EMPATHY_OTEL_ENDPOINT=https://ingest.signoz.io:443
+export ATTUNE_OTEL_ENDPOINT=https://ingest.signoz.io:443
 export OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=YOUR_SECRET_TOKEN"
 ```
 

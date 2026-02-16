@@ -394,14 +394,14 @@ def test_cache_health():
 
 ```bash
 # Disable pattern caching for debugging
-export EMPATHY_DISABLE_PATTERN_CACHE=1
+export ATTUNE_DISABLE_PATTERN_CACHE=1
 
 # Adjust cache sizes
-export EMPATHY_AST_CACHE_SIZE=3000
-export EMPATHY_PATTERN_CACHE_SIZE=2000
+export ATTUNE_AST_CACHE_SIZE=3000
+export ATTUNE_PATTERN_CACHE_SIZE=2000
 
 # TTL configuration
-export EMPATHY_WORKFLOW_CACHE_TTL=1800
+export ATTUNE_WORKFLOW_CACHE_TTL=1800
 ```
 
 ### YAML Configuration

@@ -46,9 +46,9 @@ empathy = EmpathyOS.from_config(config)
 ### 3. Environment Variables
 
 ```bash
-export EMPATHY_USER_ID="user_123"
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.75
+export ATTUNE_USER_ID="user_123"
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 ```
 
 ## Configuration Options

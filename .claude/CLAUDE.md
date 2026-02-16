@@ -34,6 +34,38 @@ Use `/hub-name` to access organized workflows:
 
 ---
 
+## Markdown Linting
+
+This project includes `mdlint`, a custom Markdown linter. All `.md` files must pass linting.
+
+### Rules to follow when writing or editing Markdown files
+
+- Start every `.md` file with a single `#` (h1) heading
+- Heading levels must increment by one (don't skip from `#` to `###`)
+- Put a single space after `#` in headings (not `#Heading` or `#  Heading`)
+- Surround headings with blank lines (one above and one below)
+- Surround fenced code blocks (```) with blank lines
+- Surround lists with blank lines
+- Use `-` (dash) for unordered list markers, not `*` or `+`
+- No trailing whitespace on lines
+- No hard tabs — use spaces
+- No multiple consecutive blank lines
+- End files with a single trailing newline
+- Keep lines under 80 characters (except tables and URLs)
+- Do not manually pad or align table cells with extra spaces — tables are exempt from trailing space rules
+
+### Auto-fix
+
+Run `python -m mdlint --fix <file>` to auto-fix most formatting issues. Do this after editing any `.md` file rather than manually reformatting.
+
+### Checking
+
+Run `python -m mdlint <file>` to check for violations without fixing.
+
+A pre-commit hook runs `mdlint --fix` automatically on staged `.md` files.
+
+---
+
 ## Critical Rules
 
 - NEVER use eval() or exec()

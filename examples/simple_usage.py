@@ -8,7 +8,7 @@ and the framework automatically handles empathy levels.
 import asyncio
 import os
 
-from attune_llm.core import EmpathyLLM
+from attune.models import LLMExecutor
 
 
 async def simple_example():
@@ -21,7 +21,7 @@ async def simple_example():
     - Predicts future needs (Level 4)
     """
     # Create an instance (uses Claude by default)
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",  # or "openai", "local"
         target_level=4,  # How smart you want it to be
         api_key=os.getenv("ANTHROPIC_API_KEY"),

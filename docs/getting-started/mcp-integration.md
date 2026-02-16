@@ -268,7 +268,7 @@ pip install attune-ai[developer]
 |----------|----------------|
 | Development in VSCode | **MCP (Claude Code)** - Natural language, automatic discovery |
 | Interactive exploration | **MCP (Claude Desktop)** - Conversational, guided workflows |
-| CI/CD pipelines | **CLI** - `empathy workflow run security-audit` |
+| CI/CD pipelines | **CLI** - `attune workflow run security-audit` |
 | Custom integrations | **Python API** - Full programmatic control |
 
 ---

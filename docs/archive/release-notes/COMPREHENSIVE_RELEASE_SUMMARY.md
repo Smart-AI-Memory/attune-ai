@@ -47,7 +47,7 @@ description: Comprehensive Release Summary - Attune AI v3.7.0: **Date**: 2026-01
 | **Dependencies** | ✅ PASS | All required packages install automatically |
 | **Clean Install** | ✅ PASS | Package installs and works in fresh virtualenv |
 | **Core Imports** | ✅ PASS | BaseWorkflow, BugPredictionWorkflow, HealthcareWizard all import |
-| **CLI Commands** | ✅ PASS | `empathy workflow list` works, shows all workflows |
+| **CLI Commands** | ✅ PASS | `attune workflow list` works, shows all workflows |
 | **XML Wizards** | ✅ PASS | Healthcare, CustomerSupport, Technology wizards have XML methods |
 | **CrewAI Integration** | ✅ PASS | SecurityAudit, CodeReview, Refactoring, HealthCheck crews import |
 | **Developer Tools** | ✅ PASS | scaffolding, workflow_scaffolding, test_generator, hot_reload |

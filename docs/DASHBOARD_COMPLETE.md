@@ -408,7 +408,7 @@ python scripts/populate_redis_direct.py
 redis-server
 
 # Or via empathy CLI
-empathy memory start
+attune memory start
 
 # Check Redis is running
 redis-cli ping  # Should return "PONG"

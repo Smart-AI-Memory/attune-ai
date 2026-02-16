@@ -78,7 +78,7 @@ The Project Index integrates with other Attune AI features:
 
 **Test Coverage Workflow:**
 ```bash
-empathy workflow run test-coverage-boost
+attune workflow run test-coverage-boost
 ```
 This reads the index, identifies high-impact stale files, and generates targeted tests.
 
@@ -87,8 +87,8 @@ This reads the index, identifies high-impact stale files, and generates targeted
 # .github/workflows/staleness-check.yml
 - name: Check for stale files
   run: |
-    empathy index scan
-    empathy index report --stale --fail-if-stale > 5
+    attune index scan
+    attune index report --stale --fail-if-stale > 5
 ```
 
 **VSCode Dashboard:**
@@ -115,11 +115,11 @@ Every `FileRecord` captures 30+ attributes:
 pip install attune-ai
 
 # Initialize in your project
-empathy init
+attune init
 
 # Scan and view the index
-empathy index scan
-empathy index report --stale
+attune index scan
+attune index report --stale
 ```
 
 ## The Takeaway
@@ -130,7 +130,7 @@ Stop hoping your tests catch everything. Start *knowing* what needs attention.
 
 ---
 
-**Try it:** `pip install attune-ai` and run `empathy index scan` in your project.
+**Try it:** `pip install attune-ai` and run `attune index scan` in your project.
 
 **Learn more:** [github.com/Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 

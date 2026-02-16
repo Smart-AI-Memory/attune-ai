@@ -30,10 +30,10 @@ redis-cli ping
 
 ```bash
 # Start Redis container
-docker run -d -p 6379:6379 --name empathy-redis redis:alpine
+docker run -d -p 6379:6379 --name attune-redis redis:alpine
 
 # Verify
-docker exec empathy-redis redis-cli ping
+docker exec attune-redis redis-cli ping
 # Should return: PONG
 ```
 
@@ -139,7 +139,7 @@ Error: Connection refused to localhost:6379
 ```bash
 brew services start redis
 # or
-docker start empathy-redis
+docker start attune-redis
 ```
 
 ### Railway Internal URL Errors

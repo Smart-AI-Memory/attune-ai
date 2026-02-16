@@ -890,13 +890,13 @@ Load configuration from environment variables.
 **Example:**
 
 ```bash
-export EMPATHY_USER_ID=alice
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.8
+export ATTUNE_USER_ID=alice
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.8
 ```
 
 ```python
-config = EmpathyConfig.from_env()
+config = EmpathyConfig.from_env()  # Checks ATTUNE_* first, falls back to EMPATHY_*
 ```
 
 ##### `from_file()`
@@ -1520,30 +1520,30 @@ if __name__ == "__main__":
 
 ## Environment Variables
 
-All configuration can be set via environment variables:
+All configuration can be set via environment variables (use `ATTUNE_` prefix; `EMPATHY_` prefix is also accepted for backward compatibility):
 
 ```bash
 # Core settings
-export EMPATHY_USER_ID=alice
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.8
+export ATTUNE_USER_ID=alice
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.8
 
 # LLM providers
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY=sk-...
 
 # Persistence
-export EMPATHY_PERSISTENCE_ENABLED=true
-export EMPATHY_PERSISTENCE_BACKEND=sqlite
-export EMPATHY_PERSISTENCE_PATH=./empathy_data
+export ATTUNE_PERSISTENCE_ENABLED=true
+export ATTUNE_PERSISTENCE_BACKEND=sqlite
+export ATTUNE_PERSISTENCE_PATH=./empathy_data
 
 # Metrics
-export EMPATHY_METRICS_ENABLED=true
-export EMPATHY_METRICS_PATH=./metrics.db
+export ATTUNE_METRICS_ENABLED=true
+export ATTUNE_METRICS_PATH=./metrics.db
 
 # Pattern library
-export EMPATHY_PATTERN_LIBRARY_ENABLED=true
-export EMPATHY_PATTERN_SHARING=true
+export ATTUNE_PATTERN_LIBRARY_ENABLED=true
+export ATTUNE_PATTERN_SHARING=true
 ```
 
 ---

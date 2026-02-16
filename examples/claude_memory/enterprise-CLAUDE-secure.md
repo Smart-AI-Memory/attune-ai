@@ -132,8 +132,8 @@ else:
 
 **Every LLM call must:**
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.models import LLMExecutor
+from attune.claude_memory import ClaudeMemoryConfig
 
 # 1. Load enterprise security policies
 config = ClaudeMemoryConfig(
@@ -144,7 +144,7 @@ config = ClaudeMemoryConfig(
 )
 
 # 2. Initialize with memory
-llm = EmpathyLLM(
+llm = LLMExecutor(
     provider="anthropic",
     api_key=os.getenv("ANTHROPIC_API_KEY"),
     claude_memory_config=config,

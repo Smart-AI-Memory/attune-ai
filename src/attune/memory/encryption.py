@@ -60,16 +60,18 @@ class EncryptionManager:
     def _load_or_generate_key(self) -> bytes:
         """Load master key from environment or generate new one.
 
-        Production: Set EMPATHY_MASTER_KEY environment variable
+        Production: Set ATTUNE_MASTER_KEY environment variable (EMPATHY_MASTER_KEY also accepted)
         Development: Generates ephemeral key (warning logged)
         """
+        from attune.config.env_compat import get_attune_env
+
         # Check environment variable first
-        if env_key := os.getenv("EMPATHY_MASTER_KEY"):
+        if env_key := get_attune_env("MASTER_KEY"):
             try:
                 return base64.b64decode(env_key)
             except (binascii.Error, ValueError) as e:
                 logger.error("invalid_master_key_in_env", error=str(e))
-                raise ValueError("Invalid EMPATHY_MASTER_KEY format") from e
+                raise ValueError("Invalid ATTUNE_MASTER_KEY format") from e
 
         # Check key file
         key_file = Path.home() / ".attune" / "master.key"

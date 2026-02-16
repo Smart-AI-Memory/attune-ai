@@ -95,8 +95,6 @@ Workflows guide you through discovery instead of requiring upfront configuration
 
 Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 18 MCP tools, and 3 skills (memory-and-context, workflow-orchestration, refactor-plan). See the `plugin/` directory.
 
-For healthcare developers, the healthcare-cds plugin adds 9 clinical MCP tools and the `/care` command. See `attune-healthcare-fork/attune-healthcare-plugin/`.
-
 ---
 
 ## Quick Start
@@ -330,7 +328,7 @@ export REDIS_URL="redis://localhost:6379"  # Optional: for memory features
 - Path traversal protection on all file operations (`_validate_file_path()` on 22 write operations)
 - JWT authentication with rate limiting
 - PII scrubbing in telemetry
-- HIPAA/GDPR compliance options
+- GDPR compliance options
 - Automated security scanning (517 findings remediated to 0 across codebase)
 
 ```bash

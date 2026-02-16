@@ -23,52 +23,52 @@ description: Feature Accessibility Audit: **Date:** 2026-01-01 **Purpose:** Ensu
 | Feature | UI Entry Point | CLI Entry Point | Status | Priority |
 |---------|----------------|-----------------|--------|----------|
 | **Core Workflows** |
-| Morning Briefing | ✅ Dashboard → Quick Actions | ✅ `empathy morning` | COMPLETE | - |
-| Pre-Ship Check | ✅ Dashboard → Quick Actions | ✅ `empathy ship` | COMPLETE | - |
-| Fix All Issues | ✅ Dashboard → Quick Actions | ✅ `empathy fix-all` | COMPLETE | - |
-| Learn Patterns | ✅ Dashboard → Quick Actions | ✅ `empathy learn` | COMPLETE | - |
-| Run Tests | ✅ Dashboard → Quick Actions | ✅ `empathy ship --tests-only` | COMPLETE | - |
+| Morning Briefing | ✅ Dashboard → Quick Actions | ✅ `attune morning` | COMPLETE | - |
+| Pre-Ship Check | ✅ Dashboard → Quick Actions | ✅ `attune ship` | COMPLETE | - |
+| Fix All Issues | ✅ Dashboard → Quick Actions | ✅ `attune fix-all` | COMPLETE | - |
+| Learn Patterns | ✅ Dashboard → Quick Actions | ✅ `attune learn` | COMPLETE | - |
+| Run Tests | ✅ Dashboard → Quick Actions | ✅ `attune ship --tests-only` | COMPLETE | - |
 | **Code Review & Analysis** |
-| Code Review (File) | ❌ **MISSING** | ✅ `empathy workflow run code-review` | NEEDS UI | HIGH |
-| Pro Review (Crew) | ✅ Dashboard → Workflows | ✅ `empathy workflow run pro-review` | COMPLETE | - |
-| PR Review | ✅ Dashboard → Workflows | ✅ `empathy workflow run pr-review` | COMPLETE | - |
+| Code Review (File) | ❌ **MISSING** | ✅ `attune workflow run code-review` | NEEDS UI | HIGH |
+| Pro Review (Crew) | ✅ Dashboard → Workflows | ✅ `attune workflow run pro-review` | COMPLETE | - |
+| PR Review | ✅ Dashboard → Workflows | ✅ `attune workflow run pr-review` | COMPLETE | - |
 | **Quality & Testing** |
-| Bug Prediction | ✅ Dashboard → Workflows | ✅ `empathy workflow run bug-predict` | COMPLETE | - |
-| Security Audit | ✅ Dashboard → Workflows | ✅ `empathy workflow run security-audit` | COMPLETE | - |
-| Performance Audit | ✅ Dashboard → Workflows | ✅ `empathy workflow run perf-audit` | COMPLETE | - |
-| Health Check (Crew) | ✅ Dashboard → Workflows | ✅ `empathy workflow run health-check` | COMPLETE | - |
-| Test Generation | ✅ Dashboard → Workflows | ✅ `empathy workflow run test-gen` | COMPLETE | - |
-| Dependency Check | ✅ Dashboard → Workflows | ✅ `empathy workflow run dependency-check` | COMPLETE | - |
+| Bug Prediction | ✅ Dashboard → Workflows | ✅ `attune workflow run bug-predict` | COMPLETE | - |
+| Security Audit | ✅ Dashboard → Workflows | ✅ `attune workflow run security-audit` | COMPLETE | - |
+| Performance Audit | ✅ Dashboard → Workflows | ✅ `attune workflow run perf-audit` | COMPLETE | - |
+| Health Check (Crew) | ✅ Dashboard → Workflows | ✅ `attune workflow run health-check` | COMPLETE | - |
+| Test Generation | ✅ Dashboard → Workflows | ✅ `attune workflow run test-gen` | COMPLETE | - |
+| Dependency Check | ✅ Dashboard → Workflows | ✅ `attune workflow run dependency-check` | COMPLETE | - |
 | **Refactoring & Planning** |
-| Refactor Plan | ✅ Dashboard → Workflows | ✅ `empathy workflow run refactor-plan` | COMPLETE | - |
+| Refactor Plan | ✅ Dashboard → Workflows | ✅ `attune workflow run refactor-plan` | COMPLETE | - |
 | **Documentation** |
-| Documentation Orchestrator | ✅ Dashboard → Workflows | ✅ `empathy workflow run doc-orchestrator` | COMPLETE | - |
-| Document Generation | ❌ **MISSING** | ✅ `empathy workflow run doc-gen` | NEEDS UI | MEDIUM |
-| Manage Documentation (Crew) | ❌ **MISSING** | ✅ `empathy workflow run manage-docs` | NEEDS UI | LOW |
+| Documentation Orchestrator | ✅ Dashboard → Workflows | ✅ `attune workflow run doc-orchestrator` | COMPLETE | - |
+| Document Generation | ❌ **MISSING** | ✅ `attune workflow run doc-gen` | NEEDS UI | MEDIUM |
+| Manage Documentation (Crew) | ❌ **MISSING** | ✅ `attune workflow run manage-docs` | NEEDS UI | LOW |
 | **Release & Security** |
-| Release Preparation | ❌ **MISSING** | ✅ `empathy workflow run release-prep` | NEEDS UI | MEDIUM |
-| Secure Release Pipeline | ❌ **MISSING** | ✅ `empathy workflow run secure-release` | NEEDS UI | MEDIUM |
+| Release Preparation | ❌ **MISSING** | ✅ `attune workflow run release-prep` | NEEDS UI | MEDIUM |
+| Secure Release Pipeline | ❌ **MISSING** | ✅ `attune workflow run secure-release` | NEEDS UI | MEDIUM |
 | **Developer Tools** |
-| Keyboard Shortcuts Generator | ❌ **MISSING** | ✅ `empathy workflow run keyboard-shortcuts` | NEEDS UI | LOW |
+| Keyboard Shortcuts Generator | ❌ **MISSING** | ✅ `attune workflow run keyboard-shortcuts` | NEEDS UI | LOW |
 | Socratic Workflow Designer | ✅ Cmd Palette: `empathy.socraticRefinement` | ❌ **MISSING** | NEEDS CLI | LOW |
 | **Health Operations** |
-| Deep Health Scan | ✅ Dashboard → Health Actions | ✅ `empathy health --deep` | COMPLETE | - |
-| Auto Fix | ✅ Dashboard → Health Actions | ✅ `empathy fix-all` | COMPLETE | - |
-| Quick Security Scan | ✅ Dashboard → Health Actions | ✅ `empathy health --security` | COMPLETE | - |
+| Deep Health Scan | ✅ Dashboard → Health Actions | ✅ `attune health --deep` | COMPLETE | - |
+| Auto Fix | ✅ Dashboard → Health Actions | ✅ `attune fix-all` | COMPLETE | - |
+| Quick Security Scan | ✅ Dashboard → Health Actions | ✅ `attune health --security` | COMPLETE | - |
 | **Context Menu Actions** |
-| Review This File | ✅ File Explorer: Right-click | ✅ `empathy review [file]` | COMPLETE | - |
-| Scan Folder for Bugs | ✅ File Explorer: Right-click | ✅ `empathy workflow run bug-predict --input '{"path":"folder"}'` | COMPLETE | - |
-| Generate Tests for File | ✅ File Explorer: Right-click | ✅ `empathy workflow run test-gen --input '{"target":"file"}'` | COMPLETE | - |
-| Security Audit Folder | ✅ File Explorer: Right-click | ✅ `empathy workflow run security-audit --input '{"target":"folder"}'` | COMPLETE | - |
+| Review This File | ✅ File Explorer: Right-click | ✅ `attune review [file]` | COMPLETE | - |
+| Scan Folder for Bugs | ✅ File Explorer: Right-click | ✅ `attune workflow run bug-predict --input '{"path":"folder"}'` | COMPLETE | - |
+| Generate Tests for File | ✅ File Explorer: Right-click | ✅ `attune workflow run test-gen --input '{"target":"file"}'` | COMPLETE | - |
+| Security Audit Folder | ✅ File Explorer: Right-click | ✅ `attune workflow run security-audit --input '{"target":"folder"}'` | COMPLETE | - |
 | **Setup & Configuration** |
-| Initialize Project | ✅ Cmd: `empathy.initializeProject` | ✅ `empathy init` | COMPLETE | - |
-| Sync to Claude Code | ✅ Cmd: `empathy.syncClaude` | ✅ `empathy sync-claude` | COMPLETE | - |
-| Setup Wizard | ✅ Dashboard → Quick Actions | ✅ `empathy wizard` | COMPLETE | - |
+| Initialize Project | ✅ Cmd: `empathy.initializeProject` | ✅ `attune init` | COMPLETE | - |
+| Sync to Claude Code | ✅ Cmd: `empathy.syncClaude` | ✅ `attune sync-claude` | COMPLETE | - |
+| Setup Wizard | ✅ Dashboard → Quick Actions | ✅ `attune wizard` | COMPLETE | - |
 | Keyboard Layout Setup | ✅ Cmd: `empathy.applyKeyboardLayout` | ❌ **MISSING** | NEEDS CLI | LOW |
 | **Monitoring & Insights** |
-| View API Costs | ✅ Dashboard → Costs Tab | ✅ `empathy costs` | COMPLETE | - |
-| Show Status | ✅ Cmd: `empathy.status` | ✅ `empathy status` | COMPLETE | - |
-| Open Web Dashboard | ✅ Dashboard → Button | ✅ `empathy dashboard` | COMPLETE | - |
+| View API Costs | ✅ Dashboard → Costs Tab | ✅ `attune costs` | COMPLETE | - |
+| Show Status | ✅ Cmd: `empathy.status` | ✅ `attune status` | COMPLETE | - |
+| Open Web Dashboard | ✅ Dashboard → Button | ✅ `attune dashboard` | COMPLETE | - |
 | **Panels** |
 | Dashboard Panel | ✅ Sidebar: Empathy Explorer | ✅ (via workflows) | COMPLETE | - |
 | Code Review Panel | ✅ Sidebar: Empathy Explorer | ✅ (via workflow results) | COMPLETE | - |
@@ -84,7 +84,7 @@ description: Feature Accessibility Audit: **Date:** 2026-01-01 **Purpose:** Ensu
 
 #### 1. Code Review (File-Level)
 - **Workflow ID:** `code-review`
-- **CLI:** ✅ `empathy workflow run code-review --input '{"target":"file.py"}'`
+- **CLI:** ✅ `attune workflow run code-review --input '{"target":"file.py"}'`
 - **UI Status:** ❌ **NO BUTTON IN DASHBOARD**
 - **Backend:** ✅ Full implementation with finding extraction
 - **Panel:** ✅ CodeReviewPanelProvider exists with interactive UI
@@ -114,19 +114,19 @@ description: Feature Accessibility Audit: **Date:** 2026-01-01 **Purpose:** Ensu
 ### 🟡 MEDIUM PRIORITY - Missing UI Entry Points
 
 #### 3. Document Generation (`doc-gen`)
-- **CLI:** ✅ `empathy workflow run doc-gen`
+- **CLI:** ✅ `attune workflow run doc-gen`
 - **UI Status:** ❌ No button
 - **Impact:** Users must use CLI or `doc-orchestrator` instead
 - **Fix:** Add to Workflows section
 
 #### 4. Release Preparation (`release-prep`)
-- **CLI:** ✅ `empathy workflow run release-prep`
+- **CLI:** ✅ `attune workflow run release-prep`
 - **UI Status:** ❌ No button
 - **Impact:** Pre-release checklist workflow hidden
 - **Fix:** Add to Workflows section
 
 #### 5. Secure Release Pipeline (`secure-release`)
-- **CLI:** ✅ `empathy workflow run secure-release`
+- **CLI:** ✅ `attune workflow run secure-release`
 - **UI Status:** ❌ No button
 - **Impact:** Multi-stage security pipeline not discoverable
 - **Fix:** Add to Workflows section (advanced section?)
@@ -141,7 +141,7 @@ description: Feature Accessibility Audit: **Date:** 2026-01-01 **Purpose:** Ensu
 - **Impact:** Low - similar functionality available via `doc-orchestrator`
 
 #### 7. Keyboard Shortcuts Generator
-- **CLI:** ✅ `empathy workflow run keyboard-shortcuts`
+- **CLI:** ✅ `attune workflow run keyboard-shortcuts`
 - **UI Status:** ❌ No button
 - **Impact:** Low - niche developer tool
 
@@ -338,7 +338,7 @@ After implementing fixes, verify:
 - [ ] Selecting file runs workflow
 - [ ] Results appear in CodeReviewPanel
 - [ ] Findings are clickable and navigate to file:line
-- [ ] CLI command still works: `empathy workflow run code-review`
+- [ ] CLI command still works: `attune workflow run code-review`
 - [ ] Keyboard shortcut works: `Ctrl+Shift+E R`
 - [ ] Context menu "Review This File" still works
 - [ ] All other workflow buttons still functional

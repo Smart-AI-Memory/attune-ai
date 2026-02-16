@@ -438,7 +438,7 @@ Code review finds: bare except:
 #### Enable it
 
 ```bash
-empathy workflow run health-check --use-recommended-tier
+attune workflow run health-check --use-recommended-tier
 ```
 
 **Expected savings:** 30-50% on average workflow execution
@@ -491,7 +491,7 @@ empathy workflow run health-check --use-recommended-tier
 #### Track your actual savings
 
 ```bash
-empathy telemetry savings --days 30
+attune telemetry savings --days 30
 ```
 
 **See detailed breakdown:** TIER_FALLBACK_TEST_REPORT.md
@@ -535,7 +535,7 @@ def validate_output(self, stage_output: dict) -> tuple[bool, str | None]:
 #### 1. Change the starting threshold
 
 ```bash
-empathy workflow run health-check --use-recommended-tier --health-score-threshold 90
+attune workflow run health-check --use-recommended-tier --health-score-threshold 90
 ```
 
 #### 2. Use Python API for full control

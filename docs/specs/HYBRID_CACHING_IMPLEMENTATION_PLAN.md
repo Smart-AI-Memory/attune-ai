@@ -237,7 +237,7 @@ class CacheStorage:
 pip install attune-ai
 
 # First workflow run
-empathy workflow run code-review
+attune workflow run code-review
 
 # Output:
 ⚡ Smart Caching Available
@@ -602,7 +602,7 @@ full = [
 - ✅ <100ms cache lookup overhead
 - ✅ Zero breaking changes (all existing tests pass)
 - ✅ User can install with `pip install attune-ai[cache]`
-- ✅ User can add cache later with `empathy install cache`
+- ✅ User can add cache later with `attune install cache`
 - ✅ Cost report shows savings accurately
 - ✅ Works offline after initial model download
 - ✅ 100% test coverage on cache module

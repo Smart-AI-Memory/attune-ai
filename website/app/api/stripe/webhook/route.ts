@@ -243,7 +243,7 @@ async function handleBookPurchase(
     customerId: customer.id,
     purchaseId: purchase.id,
     licenseKey,
-    product: 'empathy-framework-book',
+    product: 'attune-ai-book',
     expiresAt: licenseExpiration,
   });
 
@@ -299,7 +299,7 @@ async function handleLicensePurchase(
     customerId: customer.id,
     purchaseId: purchase.id,
     licenseKey,
-    product: 'empathy-framework-commercial',
+    product: 'attune-ai-commercial',
     expiresAt: licenseExpiration,
   });
 

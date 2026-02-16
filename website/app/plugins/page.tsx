@@ -27,7 +27,7 @@ export default function PluginsPage() {
             <p className="text-2xl mb-8 opacity-90">
               Production-ready Level 4 Anticipatory AI for Software Development and Healthcare
             </p>
-            <a href="https://github.com/Smart-AI-Memory/empathy-framework" target="_blank" rel="noopener noreferrer" className="btn bg-white text-[var(--primary)] hover:bg-gray-100">
+            <a href="https://github.com/Smart-AI-Memory/attune-ai" target="_blank" rel="noopener noreferrer" className="btn bg-white text-[var(--primary)] hover:bg-gray-100">
               View on GitHub
             </a>
           </div>
@@ -307,7 +307,7 @@ export default function PluginsPage() {
               Free for small teams. Fair pricing for everyone else.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://github.com/Smart-AI-Memory/empathy-framework" target="_blank" rel="noopener noreferrer" className="btn bg-white text-[var(--primary)] hover:bg-gray-100 text-lg px-8 py-4">
+              <a href="https://github.com/Smart-AI-Memory/attune-ai" target="_blank" rel="noopener noreferrer" className="btn bg-white text-[var(--primary)] hover:bg-gray-100 text-lg px-8 py-4">
                 Get Started Free
               </a>
               <Link href="/pricing" className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)] text-lg px-8 py-4">

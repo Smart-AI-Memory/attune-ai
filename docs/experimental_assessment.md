@@ -34,7 +34,7 @@ description: Experimental Branch Assessment (v4.0.0): **Branch:** `experimental/
 
 **CLI Test:**
 ```bash
-empathy workflow run health-check --path .
+attune workflow run health-check --path .
 ```
 
 **Result:** ✅ **SUCCESS**
@@ -62,7 +62,7 @@ empathy workflow run health-check --path .
 
 **CLI Test:**
 ```bash
-empathy workflow run release-prep --path .
+attune workflow run release-prep --path .
 ```
 
 **Result:** ✅ **SUCCESS**
@@ -98,7 +98,7 @@ empathy workflow run release-prep --path .
 
 **CLI Test:**
 ```bash
-empathy workflow run test-coverage-boost --path ./src
+attune workflow run test-coverage-boost --path ./src
 ```
 
 **Result:** ✅ **SUCCESS**
@@ -260,10 +260,10 @@ git diff main..experimental/v4.0-meta-orchestration -- vscode-extension/
 
 4. Test CLI integration:
    ```bash
-   empathy workflow list  # Should show 3 new crews
-   empathy workflow run health-check --path .
-   empathy workflow run release-prep --path .
-   empathy workflow run test-coverage-boost --path ./src
+   attune workflow list  # Should show 3 new crews
+   attune workflow run health-check --path .
+   attune workflow run release-prep --path .
+   attune workflow run test-coverage-boost --path ./src
    ```
 
 **Day 3 (Wednesday Jan 15): Testing & Validation (4 hours)**

@@ -23,7 +23,7 @@ Transform Attune AI from **static workflows** to **dynamic, composable agent orc
 
 ### Current State (v3.11.0)
 ```
-User runs: empathy workflow run health-check
+User runs: attune workflow run health-check
 
 → Executes pre-defined workflow
 → Fixed agent composition
@@ -33,7 +33,7 @@ User runs: empathy workflow run health-check
 
 ### Target State (v3.12.0)
 ```
-User runs: empathy orchestrate "prepare for release"
+User runs: attune orchestrate "prepare for release"
 
 → Meta-orchestrator analyzes task
 → Dynamically composes agent team
@@ -525,7 +525,7 @@ classifier(CHEAP) → route(simple|moderate|complex) → specialist(appropriate_
 **Deliverable**: Production-ready workflows
 
 ### Phase 5: CLI & UX (Week 5)
-- [ ] `empathy orchestrate` command
+- [ ] `attune orchestrate` command
 - [ ] Progress visualization
 - [ ] Result aggregation UI
 - [ ] Configuration management

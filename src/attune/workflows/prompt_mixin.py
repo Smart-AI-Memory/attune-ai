@@ -155,6 +155,7 @@ class PromptMixin:
         constraints: list[str],
         input_type: str,
         input_payload: str,
+        examples: list[dict[str, str]] | None = None,
         extra: dict[str, Any] | None = None,
     ) -> str:
         """Render a prompt using XML template if enabled.
@@ -166,6 +167,7 @@ class PromptMixin:
             constraints: Rules and guidelines.
             input_type: Type of input ("code", "diff", "document").
             input_payload: The content to process.
+            examples: One-shot input/output pairs for few-shot learning.
             extra: Additional context data.
 
         Returns:
@@ -196,6 +198,7 @@ class PromptMixin:
             input_type=input_type,
             input_payload=input_payload,
             extra=extra or {},
+            examples=examples or [],
         )
 
         # Get template

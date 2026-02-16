@@ -22,8 +22,8 @@ Usage:
 import asyncio
 import os
 
-from attune_llm import EmpathyLLM
-from attune_llm.wizards import (
+from attune.models import LLMExecutor
+from attune.wizards import (
     AccountingWizard,
     CustomerSupportWizard,
     EducationWizard,
@@ -73,7 +73,7 @@ async def demo_1_healthcare():
     """Demo 1: Healthcare Wizard - HIPAA-Compliant Clinical Assistant"""
     print_section("1. HEALTHCARE WIZARD", "HIPAA §164.312 - Clinical Decision Support")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,  # HIPAA requirement
@@ -102,7 +102,7 @@ async def demo_2_finance():
     """Demo 2: Finance Wizard - SOX/PCI-DSS Compliant Banking"""
     print_section("2. FINANCE WIZARD", "SOX §802, PCI-DSS v4.0 - Financial Analysis")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -133,7 +133,7 @@ async def demo_3_legal():
     """Demo 3: Legal Wizard - Attorney-Client Privilege"""
     print_section("3. LEGAL WIZARD", "Fed. Rules 502 - Legal Research")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -161,7 +161,7 @@ async def demo_4_education():
     """Demo 4: Education Wizard - FERPA-Compliant Academic"""
     print_section("4. EDUCATION WIZARD", "FERPA 20 U.S.C. § 1232g - Academic Support")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -190,7 +190,7 @@ async def demo_5_customer_support():
     """Demo 5: Customer Support Wizard - Level 4 Anticipatory"""
     print_section("5. CUSTOMER SUPPORT WIZARD", "Privacy-Compliant Help Desk")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -221,7 +221,7 @@ async def demo_6_hr():
     """Demo 6: HR Wizard - Employee Privacy Compliant"""
     print_section("6. HR WIZARD", "EEOC - Recruiting & Retention")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -249,7 +249,7 @@ async def demo_7_sales():
     """Demo 7: Sales Wizard - CRM Privacy Compliant"""
     print_section("7. SALES WIZARD", "CAN-SPAM, GDPR - Sales Forecasting")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -284,7 +284,7 @@ async def demo_8_real_estate():
     """Demo 8: Real Estate Wizard - Property Data Privacy"""
     print_section("8. REAL ESTATE WIZARD", "Fair Housing Act - Market Analysis")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -317,7 +317,7 @@ async def demo_9_insurance():
     """Demo 9: Insurance Wizard - Policy Data Privacy"""
     print_section("9. INSURANCE WIZARD", "State Regulations - Claims Processing")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -349,7 +349,7 @@ async def demo_10_accounting():
     """Demo 10: Accounting Wizard - SOX/IRS Compliant"""
     print_section("10. ACCOUNTING WIZARD", "SOX §802, IRS - Tax Compliance")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -380,7 +380,7 @@ async def demo_11_research():
     """Demo 11: Research Wizard - IRB-Compliant Academic Research"""
     print_section("11. RESEARCH WIZARD", "IRB 45 CFR 46 - Research Protocol")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -411,7 +411,7 @@ async def demo_12_government():
     """Demo 12: Government Wizard - FISMA-Compliant Public Sector"""
     print_section("12. GOVERNMENT WIZARD", "FISMA, Privacy Act - Policy Analysis")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -443,7 +443,7 @@ async def demo_13_retail():
     """Demo 13: Retail Wizard - PCI-DSS E-commerce"""
     print_section("13. RETAIL WIZARD", "PCI-DSS v4.0 - Demand Forecasting")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -477,7 +477,7 @@ async def demo_14_manufacturing():
     """Demo 14: Manufacturing Wizard - Production Data Privacy"""
     print_section("14. MANUFACTURING WIZARD", "ISO Standards - Quality Control")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -510,7 +510,7 @@ async def demo_15_logistics():
     """Demo 15: Logistics Wizard - Shipment Data Privacy"""
     print_section("15. LOGISTICS WIZARD", "Transportation Security - Route Optimization")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -544,7 +544,7 @@ async def demo_16_technology():
     """Demo 16: Technology Wizard - SOC2/ISO 27001 Compliant"""
     print_section("16. TECHNOLOGY WIZARD", "SOC2, ISO 27001 - DevOps Security")
 
-    llm = EmpathyLLM(
+    llm = LLMExecutor(
         provider="anthropic",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         enable_security=True,
@@ -576,7 +576,7 @@ async def demo_16_technology():
 
 async def main():
     """Run all domain wizard demos"""
-    print_section("EMPATHY FRAMEWORK", "16 Domain-Specific AI Wizards Demo")
+    print_section("ATTUNE AI FRAMEWORK", "16 Domain-Specific AI Wizards Demo")
 
     # Check for API key
     if not os.getenv("ANTHROPIC_API_KEY"):

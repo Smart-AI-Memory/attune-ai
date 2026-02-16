@@ -61,7 +61,7 @@ Empathy uses a three-tier memory system, each optimized for different use cases:
 - Cross-session context ("Remember we're targeting Python 3.10+")
 
 ```python
-from empathy_os.memory import LongTermMemory
+from attune.memory import LongTermMemory
 
 # Store a pattern - you control where it lives
 memory = LongTermMemory(storage_path="./project-memory")
@@ -91,7 +91,7 @@ memory.store(
 - Pattern staging ("This looks important—save to long-term?")
 
 ```python
-from empathy_os import RedisMemory
+from attune import RedisMemory
 
 # Short-term memory with automatic expiration
 memory = RedisMemory(host="localhost", ttl=3600)  # 1 hour
@@ -197,7 +197,7 @@ clean_text, detections = scrubber.scrub(
 Install Empathy with memory support:
 
 ```bash
-pip install empathy-framework[full]
+pip install attune-ai[full]
 ```
 
 Set up Redis for short-term memory:
@@ -212,7 +212,7 @@ docker run -d -p 6379:6379 redis:alpine
 Configure in your project:
 
 ```python
-from empathy_os import EmpathyOS
+from attune import EmpathyOS
 
 os = EmpathyOS(
     redis_url="redis://localhost:6379",

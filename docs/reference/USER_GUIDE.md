@@ -1316,39 +1316,39 @@ The framework supports three configuration methods with precedence:
 
 ```bash
 # Core settings
-export EMPATHY_USER_ID=alice
-export EMPATHY_TARGET_LEVEL=4
-export EMPATHY_CONFIDENCE_THRESHOLD=0.75
+export ATTUNE_USER_ID=alice
+export ATTUNE_TARGET_LEVEL=4
+export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 
 # LLM provider
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY=sk-...
 
 # Persistence
-export EMPATHY_PERSISTENCE_ENABLED=true
-export EMPATHY_PERSISTENCE_BACKEND=sqlite
-export EMPATHY_PERSISTENCE_PATH=./empathy_data
+export ATTUNE_PERSISTENCE_ENABLED=true
+export ATTUNE_PERSISTENCE_BACKEND=sqlite
+export ATTUNE_PERSISTENCE_PATH=./empathy_data
 
 # State management
-export EMPATHY_STATE_PERSISTENCE=true
-export EMPATHY_STATE_PATH=./empathy_state
+export ATTUNE_STATE_PERSISTENCE=true
+export ATTUNE_STATE_PATH=./empathy_state
 
 # Metrics
-export EMPATHY_METRICS_ENABLED=true
-export EMPATHY_METRICS_PATH=./metrics.db
+export ATTUNE_METRICS_ENABLED=true
+export ATTUNE_METRICS_PATH=./metrics.db
 
 # Pattern library
-export EMPATHY_PATTERN_LIBRARY_ENABLED=true
-export EMPATHY_PATTERN_SHARING=true
-export EMPATHY_PATTERN_CONFIDENCE_THRESHOLD=0.3
+export ATTUNE_PATTERN_LIBRARY_ENABLED=true
+export ATTUNE_PATTERN_SHARING=true
+export ATTUNE_PATTERN_CONFIDENCE_THRESHOLD=0.3
 
 # Logging
-export EMPATHY_LOG_LEVEL=INFO
-export EMPATHY_STRUCTURED_LOGGING=true
+export ATTUNE_LOG_LEVEL=INFO
+export ATTUNE_STRUCTURED_LOGGING=true
 
 # Advanced
-export EMPATHY_ASYNC_ENABLED=true
-export EMPATHY_FEEDBACK_LOOP_MONITORING=true
+export ATTUNE_ASYNC_ENABLED=true
+export ATTUNE_FEEDBACK_LOOP_MONITORING=true
 ```
 
 ### YAML Configuration
@@ -1457,7 +1457,7 @@ config.to_yaml("my_config.yml")
 from attune.config import load_config
 
 # Loads in this order (highest to lowest priority):
-# 1. Environment variables (EMPATHY_*)
+# 1. Environment variables (ATTUNE_* or EMPATHY_*)
 # 2. empathy.config.yml (if exists)
 # 3. Built-in defaults
 

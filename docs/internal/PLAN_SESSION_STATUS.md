@@ -16,7 +16,7 @@ A proactive briefing system that greets developers when they return to an Empath
 
 - **Time-based**: First interaction after ≥60 minutes of inactivity (configurable)
 - **Day-based**: First interaction of a new calendar day
-- **Manual**: `empathy status` command
+- **Manual**: `attune status` command
 - **Scope**: Only projects with Attune AI patterns directory
 
 ## Priority System (Weighted)
@@ -135,7 +135,7 @@ class SessionStatusCollector:
 - [x] Empty state, many items, mixed severity
 
 ### Phase 4: CLI Command
-`empathy status [--full] [--json]`
+`attune status [--full] [--json]`
 
 **Tests**:
 - [x] CLI integration tests

@@ -71,7 +71,7 @@ By removing multi-provider support, we can:
 - Users informed of upcoming changes
 
 **What you should do:**
-1. Run `empathy version` to check you're on v4.8.0+
+1. Run `attune version` to check you're on v4.8.0+
 2. If you see deprecation warnings, start planning migration
 3. Test your workflows with Anthropic provider
 4. Report any issues or blockers
@@ -221,13 +221,13 @@ workflow = (
 
 ```bash
 # Run your workflows with Anthropic provider
-empathy workflow run test-gen --input '{"file":"src/main.py"}'
+attune workflow run test-gen --input '{"file":"src/main.py"}'
 
 # Check for deprecation warnings
-empathy workflow run my-workflow 2>&1 | grep DEPRECATION
+attune workflow run my-workflow 2>&1 | grep DEPRECATION
 
 # Verify API key is working
-empathy provider show
+attune provider show
 ```
 
 ### Step 6: Update Dependencies (if needed)
@@ -406,7 +406,7 @@ If you encounter migration problems:
    - Current configuration
    - Error messages
    - What you've tried
-   - Framework version (`empathy version`)
+   - Framework version (`attune version`)
 
 ### Community Support
 

@@ -588,7 +588,7 @@ cat > batch_input.json <<EOF
 EOF
 
 # Submit batch job
-empathy batch \
+attune batch \
   --task-type analyze_logs \
   --input-file batch_input.json \
   --output-file results.json \
@@ -1076,7 +1076,7 @@ def workflow_run(
     """Run a workflow with optional thinking mode.
 
     Example:
-        empathy workflow run code-review --enable-thinking --input '{"file": "foo.py"}'
+        attune workflow run code-review --enable-thinking --input '{"file": "foo.py"}'
     """
     # ... existing code ...
 
@@ -1769,7 +1769,7 @@ def image_analyze(
     """Analyze an image using Claude Vision.
 
     Example:
-        empathy image-analyze screenshot.png --prompt "What error is shown?"
+        attune image-analyze screenshot.png --prompt "What error is shown?"
     """
     from attune.workflows.image_analysis import ImageAnalysisWorkflow
 
@@ -1797,7 +1797,7 @@ def image_ocr(
     """Extract text from image (OCR).
 
     Example:
-        empathy image-ocr document.png --output-file text.txt
+        attune image-ocr document.png --output-file text.txt
     """
     from attune.workflows.image_analysis import ImageAnalysisWorkflow
 
@@ -1827,7 +1827,7 @@ def image_debug(
     """Debug an error from a screenshot.
 
     Example:
-        empathy image-debug error_screenshot.png
+        attune image-debug error_screenshot.png
     """
     from attune.workflows.image_analysis import ImageAnalysisWorkflow
     from rich.panel import Panel
@@ -2070,7 +2070,7 @@ def chat_stream(
     """Interactive chat with streaming responses.
 
     Example:
-        empathy chat-stream "Explain async programming in Python"
+        attune chat-stream "Explain async programming in Python"
     """
     from attune_llm.providers import AnthropicProvider
     from rich.live import Live

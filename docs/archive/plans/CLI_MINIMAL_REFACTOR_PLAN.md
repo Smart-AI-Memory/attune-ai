@@ -17,22 +17,22 @@ description: CLI Minimal Refactor Plan: **Goal:** Reduce CLI from ~4,000 lines t
 
 ```python
 # Core automation commands (~300 lines)
-empathy workflow list              # List available workflows
-empathy workflow run <name>        # Execute workflow (CI/CD)
-empathy workflow info <name>       # Show workflow details
+attune workflow list              # List available workflows
+attune workflow run <name>        # Execute workflow (CI/CD)
+attune workflow info <name>       # Show workflow details
 
 # Telemetry commands (~100 lines)
-empathy telemetry show             # Display usage summary
-empathy telemetry savings          # Show cost savings
-empathy telemetry export           # Export to CSV/JSON
+attune telemetry show             # Display usage summary
+attune telemetry savings          # Show cost savings
+attune telemetry export           # Export to CSV/JSON
 
 # Provider configuration (~50 lines)
-empathy provider show              # Current provider config
-empathy provider set <name>        # Set provider (anthropic, openai, hybrid)
+attune provider show              # Current provider config
+attune provider set <name>        # Set provider (anthropic, openai, hybrid)
 
 # Utility commands (~50 lines)
-empathy validate                   # Validate configuration
-empathy version                    # Show version
+attune validate                   # Validate configuration
+attune version                    # Show version
 ```
 
 ### File Structure
@@ -101,7 +101,7 @@ import warnings
 
 def cmd_review(args):
     warnings.warn(
-        "empathy review is deprecated. Use '/dev' skill in Claude Code instead.",
+        "attune review is deprecated. Use '/dev' skill in Claude Code instead.",
         DeprecationWarning
     )
     # ... existing code for backward compat
@@ -198,9 +198,9 @@ empathy-legacy = "attune.cli:main"  # Keep for migration
 
 ## Success Criteria
 
-- [ ] `empathy workflow run X` works for CI/CD
-- [ ] `empathy telemetry` works for reporting
-- [ ] `empathy provider` works for setup
+- [ ] `attune workflow run X` works for CI/CD
+- [ ] `attune telemetry` works for reporting
+- [ ] `attune provider` works for setup
 - [ ] Old commands show deprecation warnings
 - [ ] Documentation updated
 - [ ] Tests pass

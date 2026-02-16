@@ -159,7 +159,7 @@ class BaseWorkflow(
         cache: BaseCache | None = None,
         enable_cache: bool = True,
         enable_tier_tracking: bool = True,
-        enable_tier_fallback: bool = False,
+        enable_tier_fallback: bool = True,
         routing_strategy: TierRoutingStrategy | None = None,
         enable_rich_progress: bool = False,
         enable_adaptive_routing: bool = False,
@@ -189,7 +189,7 @@ class BaseWorkflow(
             enable_cache: Whether to enable caching (default True).
             enable_tier_tracking: Whether to enable automatic tier tracking (default True).
             enable_tier_fallback: Whether to enable intelligent tier fallback
-                     (CHEAP → CAPABLE → PREMIUM). Opt-in feature (default False).
+                     (CHEAP → CAPABLE → PREMIUM). Enabled by default. Set to False to disable.
             routing_strategy: Optional TierRoutingStrategy for dynamic tier selection.
                      When provided, overrides static tier_map for stage tier decisions.
                      Strategies: CostOptimizedRouting, PerformanceOptimizedRouting,
@@ -567,6 +567,7 @@ class BaseWorkflow(
         constraints: list[str],
         input_type: str,
         input_payload: str,
+        examples: list[dict[str, str]] | None = None,
         extra: dict[str, Any] | None = None,
     ) -> str:
         """Render XML prompt -- delegates to PromptService when ctx is provided."""
@@ -587,6 +588,7 @@ class BaseWorkflow(
             constraints,
             input_type,
             input_payload,
+            examples,
             extra,
         )
 

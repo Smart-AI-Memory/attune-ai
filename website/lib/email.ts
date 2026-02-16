@@ -86,7 +86,7 @@ export async function sendLicenseEmail(data: {
 
       <h3>Getting Started</h3>
       <ol>
-        <li>Install Empathy: <code>pip install empathy-framework</code></li>
+        <li>Install Attune: <code>pip install attune-ai</code></li>
         <li>Set your license key as an environment variable: <code>EMPATHY_LICENSE_KEY=${data.licenseKey}</code></li>
         <li>Check out our <a href="https://smartaimemory.com/docs">documentation</a> to get started</li>
       </ol>

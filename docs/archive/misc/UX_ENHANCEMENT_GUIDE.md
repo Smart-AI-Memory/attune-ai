@@ -213,7 +213,7 @@ This document outlines the technical implementation plan for the proposed user e
 
 **Implementation Steps:**
 
-1. **Define a Custom Command URI:** The button will trigger a custom VS Code URI scheme. Example: `vscode://Smart-AI-Memory.attune-ai/runCommand?command=empathy workflow run test-gen`.
+1. **Define a Custom Command URI:** The button will trigger a custom VS Code URI scheme. Example: `vscode://Smart-AI-Memory.attune-ai/runCommand?command=attune workflow run test-gen`.
 
 2. **Register a URI Handler in the Extension:** In `vscode-extension/src/extension.ts`, register a `UriHandler` that listens for this custom URI.
 

@@ -281,7 +281,7 @@ export default function WorkflowDashboard() {
           <p className="text-gray-500">
             No workflow runs yet. Run a workflow using the CLI:
             <code className="ml-2 bg-gray-100 px-2 py-1 rounded text-sm">
-              empathy workflow run research
+              attune workflow run research
             </code>
           </p>
         )}
@@ -291,10 +291,10 @@ export default function WorkflowDashboard() {
       <div className="bg-gray-50 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">CLI Commands</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <CommandCard cmd="empathy workflow list" desc="List all workflows" />
-          <CommandCard cmd="empathy workflow run research" desc="Run research workflow" />
-          <CommandCard cmd="empathy workflow run code-review" desc="Run code review" />
-          <CommandCard cmd="empathy workflow describe research --provider hybrid" desc="View workflow details" />
+          <CommandCard cmd="attune workflow list" desc="List all workflows" />
+          <CommandCard cmd="attune workflow run research" desc="Run research workflow" />
+          <CommandCard cmd="attune workflow run code-review" desc="Run code review" />
+          <CommandCard cmd="attune workflow describe research --provider hybrid" desc="View workflow details" />
         </div>
       </div>
     </div>
