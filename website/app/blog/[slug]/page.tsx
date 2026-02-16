@@ -4,8 +4,9 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { getPostBySlug, getAllPosts } from '@/lib/blog';
-import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { getPostBySlug, getAllPosts, getRelatedPosts } from '@/lib/blog';
+import { generateMetadata as generateSEOMetadata, generateStructuredData } from '@/lib/metadata';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -51,22 +52,36 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const articleSchema = generateStructuredData('article', {
+    title: post.title,
+    description: post.excerpt,
+    image: post.coverImage,
+    author: post.author,
+    publishedTime: post.date,
+  });
+
+  const relatedPosts = getRelatedPosts(post.slug, post.tags);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         <article className="py-20">
           <div className="container">
             <div className="max-w-4xl mx-auto">
+              <Breadcrumbs
+                items={[
+                  { name: 'Blog', href: '/blog' },
+                  { name: post.title, href: `/blog/${post.slug}` },
+                ]}
+              />
+
               {/* Header */}
               <header className="mb-12">
-                <Link
-                  href="/blog"
-                  className="text-[var(--primary)] hover:underline mb-6 inline-block"
-                >
-                  ← Back to Blog
-                </Link>
-
                 <h1 className="text-5xl font-bold mb-6">{post.title}</h1>
 
                 <div className="flex flex-wrap items-center gap-4 text-[var(--muted)] mb-6">
@@ -119,6 +134,39 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </ReactMarkdown>
               </div>
 
+              {/* Related Posts */}
+              {relatedPosts.length > 0 && (
+                <section className="mt-12 pt-12 border-t border-[var(--border)]">
+                  <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {relatedPosts.map((related) => (
+                      <Link
+                        key={related.slug}
+                        href={`/blog/${related.slug}`}
+                        className="group block p-4 rounded-lg border border-[var(--border)] hover:border-[var(--primary)] transition-colors"
+                      >
+                        <h3 className="font-bold mb-2 group-hover:text-[var(--primary)] transition-colors">
+                          {related.title}
+                        </h3>
+                        <p className="text-sm text-[var(--muted)] line-clamp-2">
+                          {related.excerpt}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {related.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 bg-[var(--border)] rounded text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {/* Footer */}
               <footer className="mt-12 pt-12 border-t border-[var(--border)]">
                 <div className="flex justify-between items-center">
@@ -126,7 +174,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     href="/blog"
                     className="btn btn-outline"
                   >
-                    ← Back to Blog
+                    &larr; Back to Blog
                   </Link>
                   <Link
                     href="/contact"

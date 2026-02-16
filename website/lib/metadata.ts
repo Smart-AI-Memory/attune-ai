@@ -119,6 +119,15 @@ export function generateMetadata(config?: SEOConfig): Metadata {
   };
 }
 
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+interface BreadcrumbData {
+  items: BreadcrumbItem[];
+}
+
 interface ProductData {
   name?: string;
   description?: string;
@@ -141,9 +150,10 @@ interface FAQData {
   questions?: Array<{ question: string; answer: string }>;
 }
 
-type StructuredData = ProductData | ArticleData | FAQData | undefined;
+type StructuredData = ProductData | ArticleData | FAQData | BreadcrumbData | undefined;
+type StructuredDataType = 'organization' | 'product' | 'article' | 'faq' | 'website' | 'breadcrumb';
 
-export function generateStructuredData(type: 'organization' | 'product' | 'article' | 'faq', data?: StructuredData) {
+export function generateStructuredData(type: StructuredDataType, data?: StructuredData) {
   switch (type) {
     case 'organization':
       return {
@@ -195,15 +205,20 @@ export function generateStructuredData(type: 'organization' | 'product' | 'artic
 
     case 'article': {
       const articleData = data as ArticleData | undefined;
+      const authorName = articleData?.author || 'Smart AI Memory';
+      const isOrg = authorName === 'Smart AI Memory' || authorName === 'Smart AI Memory Team';
+      const imageUrl = articleData?.image
+        ? (articleData.image.startsWith('http') ? articleData.image : `${defaultMetadata.url}${articleData.image}`)
+        : `${defaultMetadata.url}${defaultMetadata.image}`;
       return {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: articleData?.title,
         description: articleData?.description,
-        image: articleData?.image || defaultMetadata.image,
+        image: imageUrl,
         author: {
-          '@type': 'Organization',
-          name: articleData?.author || 'Smart AI Memory',
+          '@type': isOrg ? 'Organization' : 'Person',
+          name: authorName,
         },
         publisher: {
           '@type': 'Organization',
@@ -215,6 +230,36 @@ export function generateStructuredData(type: 'organization' | 'product' | 'artic
         },
         datePublished: articleData?.publishedTime,
         dateModified: articleData?.modifiedTime || articleData?.publishedTime,
+      };
+    }
+
+    case 'website':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: defaultMetadata.siteName,
+        url: defaultMetadata.url,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${defaultMetadata.url}/docs?q={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      };
+
+    case 'breadcrumb': {
+      const breadcrumbData = data as BreadcrumbData | undefined;
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: (breadcrumbData?.items || []).map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
       };
     }
 

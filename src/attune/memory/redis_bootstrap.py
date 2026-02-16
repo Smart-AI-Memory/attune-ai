@@ -70,7 +70,8 @@ def _check_redis_running(host: str = "localhost", port: int = 6379) -> bool:
 
         client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
         return client.ping()
-    except Exception:
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: Redis connectivity check — any failure means not available
         return False
 
 
@@ -92,7 +93,8 @@ def _run_silent(cmd: list[str], timeout: int = 5) -> tuple[bool, str]:
         return result.returncode == 0, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
         return False, "timeout"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Subprocess helper — any failure returns (False, error_msg)
         return False, str(e)
 
 
@@ -222,7 +224,8 @@ def _start_via_direct(port: int = 6379) -> bool:
                 logger.info("redis_started_directly")
                 time.sleep(1)
                 return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Direct start is best-effort — fall through to next method
         logger.debug("direct_start_failed", error=str(e))
 
     return False
@@ -240,7 +243,8 @@ def _start_via_windows_service() -> bool:
             logger.info("redis_started_via_windows_service")
             time.sleep(1)
             return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Windows service start is best-effort — fall through to next method
         logger.debug("windows_service_start_failed", error=str(e))
 
     return False
@@ -296,7 +300,8 @@ def _start_via_scoop() -> bool:
             if process.poll() is None:
                 logger.info("redis_started_via_scoop")
                 return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Scoop start is best-effort — fall through to next method
             logger.debug("scoop_start_failed", error=str(e))
 
     return False
@@ -330,7 +335,8 @@ def _start_via_wsl() -> bool:
             logger.info("redis_started_via_wsl")
             time.sleep(1)
             return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: WSL start is best-effort — fall through to next method
         logger.debug("wsl_start_failed", error=str(e))
 
     return False
@@ -427,7 +433,8 @@ def ensure_redis(
                     if verbose:
                         print(f"✓ Redis started via {method.value}")
                     return status
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Each start method is best-effort — try next method on failure
             logger.debug(f"{method.value}_failed", error=str(e))
             continue
 

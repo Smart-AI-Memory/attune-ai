@@ -64,7 +64,7 @@ export default function Home() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
         <section className="relative overflow-hidden py-20 sm:py-28" aria-label="Hero">
           <div className="absolute inset-0" aria-hidden="true">

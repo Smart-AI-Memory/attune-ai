@@ -20,8 +20,9 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.9.0
+## What's New in v2.9.1
 
+- **API Cost Clarity** - Clarified when API costs apply vs free subscription usage across documentation and CLI output.
 - **XML Prompt Benchmark Suite** - A/B testing harness (`benchmarks/xml_vs_plain/`) that measures XML vs plain text prompt quality on Claude 4.x with 5 automated metrics. Real API results: 100% parse success, +68% quality score.
 - **Data-Driven XML Configuration** - Per-workflow XML settings based on 30-call benchmark on Sonnet 4.5. Security-audit uses XML (+30% quality, +15% cost). Code-review and perf-audit use plain text (lower cost, same quality).
 - **XML Enabled by Default** - All 10 XML templates and 5 wizards now use structured XML prompts unless explicitly disabled. Enables machine-parseable output for dashboards and automation.

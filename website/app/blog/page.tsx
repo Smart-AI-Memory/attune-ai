@@ -18,7 +18,7 @@ export default function BlogPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
         <section className="py-20 gradient-primary text-white">
           <div className="container">

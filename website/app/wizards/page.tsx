@@ -1,6 +1,22 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateSEOMetadata({
+  title: '10 Smart Wizards',
+  description: 'Specialized AI agents for security audits, code review, bug prediction, performance analysis, test generation, and more.',
+  url: 'https://smartaimemory.com/wizards',
+  keywords: [
+    'AI wizards',
+    'security audit AI',
+    'code review automation',
+    'bug prediction',
+    'test generation',
+    'AI developer tools',
+  ],
+});
 
 const wizards = [
   {
@@ -101,7 +117,7 @@ export default function WizardsPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         {/* Hero */}
         <section className="py-16 sm:py-20 bg-gradient-to-b from-[var(--border)] to-transparent">
           <div className="container">

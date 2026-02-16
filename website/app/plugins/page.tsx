@@ -1,9 +1,17 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateSEOMetadata({
+  title: 'Plugins',
+  description: 'Production-ready Level 4 Anticipatory AI plugins for software development and healthcare. 10 smart wizards included.',
+  url: 'https://smartaimemory.com/plugins',
+});
 
 export default function PluginsPage() {
   return (
-    <div className="min-h-screen">
+    <div id="main-content" className="min-h-screen">
       {/* Header */}
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
