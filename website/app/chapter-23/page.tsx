@@ -11,7 +11,7 @@ export default function Chapter23Page() {
   return (
     <>
       <Navigation />
-      <main className="pt-20">
+      <main id="main-content" className="pt-20">
         {/* Hero */}
         <section className="py-12 gradient-primary text-white">
           <div className="container">

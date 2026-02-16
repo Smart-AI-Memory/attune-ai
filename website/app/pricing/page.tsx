@@ -16,7 +16,7 @@ export default function PricingPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
         <section className="py-20 gradient-primary text-white relative overflow-hidden">
           <div className="absolute inset-0" aria-hidden="true">

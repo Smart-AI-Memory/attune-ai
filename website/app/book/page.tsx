@@ -1,13 +1,21 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
+import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateSEOMetadata({
+  title: 'The Attune AI Book',
+  description: 'Multi-Agent Coordination with Persistent and Short-Term Memory. A comprehensive guide to building AI systems that learn, adapt, and collaborate.',
+  url: 'https://smartaimemory.com/book',
+});
 
 // Gumroad product URL for pay-what-you-want book
 const GUMROAD_BOOK_URL = 'https://roebucksmith.gumroad.com/l/empathy-book';
 
 export default function BookPage() {
   return (
-    <div className="min-h-screen">
+    <div id="main-content" className="min-h-screen">
       {/* Header */}
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">

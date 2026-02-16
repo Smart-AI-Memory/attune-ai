@@ -1,10 +1,25 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
+import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateSEOMetadata({
+  title: 'Framework',
+  description: 'Power tools for Claude Code: enhanced workflows, Socratic agent creation, and intelligent orchestration for VS Code power users.',
+  url: 'https://smartaimemory.com/framework',
+  keywords: [
+    'Claude Code tools',
+    'AI developer workflows',
+    'Socratic agent builder',
+    'VS Code AI extension',
+    'AI orchestration framework',
+  ],
+});
 
 export default function FrameworkPage() {
   return (
-    <div className="min-h-screen">
+    <div id="main-content" className="min-h-screen">
       {/* Header */}
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
@@ -35,7 +50,7 @@ export default function FrameworkPage() {
             <div className="flex justify-center mb-6">
               <Image
                 src="/images/icons/square-terminal.svg"
-                alt=""
+                alt="Terminal icon"
                 width={56}
                 height={56}
                 className="opacity-70"
@@ -74,7 +89,7 @@ export default function FrameworkPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="bg-[var(--background)] p-6 rounded-lg">
               <div className="mb-4">
-                <Image src="/images/icons/heart-handshake.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/heart-handshake.svg" alt="Empathy system icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">5-Level Empathy System</h3>
               <p className="text-[var(--text-secondary)]">
@@ -84,7 +99,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg border-2 border-[var(--primary)] border-opacity-50">
               <div className="mb-4">
-                <Image src="/images/icons/file-terminal.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/file-terminal.svg" alt="Code health icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Code Health Assistant</h3>
               <p className="text-[var(--text-secondary)]">
@@ -94,7 +109,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg border-2 border-[var(--primary)] border-opacity-50">
               <div className="mb-4">
-                <Image src="/images/icons/briefcase.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/briefcase.svg" alt="Model routing icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Smart Model Routing</h3>
               <p className="text-[var(--text-secondary)]">
@@ -112,7 +127,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg">
               <div className="mb-4">
-                <Image src="/images/icons/square-terminal.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/square-terminal.svg" alt="Plugin architecture icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Plugin Architecture</h3>
               <p className="text-[var(--text-secondary)]">
@@ -122,7 +137,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg">
               <div className="mb-4">
-                <Image src="/images/icons/file-terminal.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/file-terminal.svg" alt="Pattern recognition icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Pattern Recognition</h3>
               <p className="text-[var(--text-secondary)]">
@@ -132,7 +147,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg">
               <div className="mb-4">
-                <Image src="/images/icons/briefcase.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/briefcase.svg" alt="Trajectory prediction icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Trajectory Prediction</h3>
               <p className="text-[var(--text-secondary)]">
@@ -150,7 +165,7 @@ export default function FrameworkPage() {
 
             <div className="bg-[var(--background)] p-6 rounded-lg">
               <div className="mb-4">
-                <Image src="/images/icons/briefcase-medical.svg" alt="" width={32} height={32} className="opacity-70" />
+                <Image src="/images/icons/briefcase-medical.svg" alt="Enterprise security icon" width={32} height={32} className="opacity-70" />
               </div>
               <h3 className="text-xl font-bold mb-3">Enterprise Security</h3>
               <p className="text-[var(--text-secondary)]">
@@ -300,7 +315,7 @@ if builder.is_ready_to_generate(session):
                 rel="noopener noreferrer"
               >
                 <div className="mb-3">
-                  <Image src="/images/icons/file-terminal.svg" alt="" width={32} height={32} className="opacity-70" />
+                  <Image src="/images/icons/file-terminal.svg" alt="GitHub icon" width={32} height={32} className="opacity-70" />
                 </div>
                 <h3 className="text-lg font-bold mb-2">Contribute on GitHub</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
@@ -315,7 +330,7 @@ if builder.is_ready_to_generate(session):
                 rel="noopener noreferrer"
               >
                 <div className="mb-3">
-                  <Image src="/images/icons/heart-handshake.svg" alt="" width={32} height={32} className="opacity-70" />
+                  <Image src="/images/icons/heart-handshake.svg" alt="Discussions icon" width={32} height={32} className="opacity-70" />
                 </div>
                 <h3 className="text-lg font-bold mb-2">Join Discussions</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
@@ -328,7 +343,7 @@ if builder.is_ready_to_generate(session):
                 className="p-6 border-2 border-[var(--border)] rounded-lg hover:border-[var(--primary)] transition-colors"
               >
                 <div className="mb-3">
-                  <Image src="/images/icons/briefcase.svg" alt="" width={32} height={32} className="opacity-70" />
+                  <Image src="/images/icons/briefcase.svg" alt="Documentation icon" width={32} height={32} className="opacity-70" />
                 </div>
                 <h3 className="text-lg font-bold mb-2">Read the Docs</h3>
                 <p className="text-sm text-[var(--text-secondary)]">

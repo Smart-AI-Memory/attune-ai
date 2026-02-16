@@ -103,6 +103,24 @@ export function getPostBySlug(slug: string): BlogPost | null {
   }
 }
 
+export function getRelatedPosts(
+  currentSlug: string,
+  tags: string[],
+  limit: number = 3
+): BlogPostMetadata[] {
+  const allPosts = getAllPosts();
+  return allPosts
+    .filter((post) => post.slug !== currentSlug)
+    .map((post) => ({
+      post,
+      score: post.tags.filter((t) => tags.includes(t)).length,
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ post }) => post);
+}
+
 export function getPostsByTag(tag: string): BlogPostMetadata[] {
   const allPosts = getAllPosts();
   return allPosts.filter((post) => post.tags.includes(tag));

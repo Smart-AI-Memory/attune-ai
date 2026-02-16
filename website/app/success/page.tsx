@@ -14,7 +14,7 @@ export default function SuccessPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16">
+      <main id="main-content" className="min-h-screen pt-16">
         <section className="py-20">
           <div className="container">
             <div className="max-w-2xl mx-auto text-center">

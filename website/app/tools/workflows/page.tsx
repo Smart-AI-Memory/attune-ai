@@ -93,7 +93,7 @@ export default function WorkflowsPage() {
       </div>
 
       {/* Dashboard */}
-      <main className="max-w-6xl mx-auto px-4 py-8 -mt-4">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 py-8 -mt-4">
         <WorkflowDashboard />
       </main>
 
