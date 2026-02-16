@@ -6,6 +6,7 @@
  * **Features:**
  * - Load LLM call records from `.attune/llm_calls.jsonl`
  * - Load workflow run records from `.attune/workflow_runs.jsonl`
+ *
  * - Auto-refresh every 60 seconds
  * - Filter by date range, workflow name, provider
  * - Calculate aggregated metrics
@@ -13,7 +14,7 @@
  * **Implementation Status:** Sprint 1 (Week 1)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
 import { useCallback, useEffect, useState } from 'react';

@@ -8,7 +8,7 @@ import { getPricingSummary } from '@/lib/features';
 
 export const metadata: Metadata = generateMetadata({
   title: 'Open Source - Apache 2.0',
-  description: 'Empathy Framework is now fully open source under Apache 2.0. Free for everyone, commercial use included.',
+  description: 'Attune AI is now fully open source under Apache 2.0. Free for everyone, commercial use included.',
   url: 'https://smartaimemory.com/pricing',
 });
 
@@ -70,7 +70,7 @@ export default function PricingPage() {
                   <div className="text-4xl mb-4">🎉</div>
                   <h3 className="text-2xl font-bold mb-4">No Cost, Ever</h3>
                   <p className="text-[var(--text-secondary)]">
-                    Use Empathy Framework completely free in personal projects, startups, or large enterprises.
+                    Use Attune AI completely free in personal projects, startups, or large enterprises.
                     No hidden fees, no usage limits, no license keys.
                   </p>
                 </div>
@@ -79,7 +79,7 @@ export default function PricingPage() {
                   <div className="text-4xl mb-4">🔓</div>
                   <h3 className="text-2xl font-bold mb-4">Commercial Friendly</h3>
                   <p className="text-[var(--text-secondary)]">
-                    Build and sell commercial products using Empathy Framework. Apache 2.0 is approved by most
+                    Build and sell commercial products using Attune AI. Apache 2.0 is approved by most
                     legal teams and includes patent protection.
                   </p>
                 </div>
@@ -172,7 +172,7 @@ export default function PricingPage() {
                   Open source doesn&apos;t mean no business model. We&apos;ll monetize through:
                 </p>
                 <ul className="space-y-2 text-[var(--text-secondary)]">
-                  <li>• <strong>Managed hosting</strong> - Empathy Cloud for teams</li>
+                  <li>• <strong>Managed hosting</strong> - Attune Cloud for teams</li>
                   <li>• <strong>Enterprise features</strong> - SSO, audit logs, team management</li>
                   <li>• <strong>Support contracts</strong> - SLAs and priority assistance</li>
                   <li>• <strong>Consulting services</strong> - Help teams implement AI workflows</li>
@@ -186,7 +186,7 @@ export default function PricingPage() {
                 <h3 className="text-xl font-bold mb-3">Community First</h3>
                 <p className="text-[var(--text-secondary)]">
                   The best developer tools are built by communities, not companies. By going open source, we&apos;re
-                  inviting the world to help shape Empathy Framework&apos;s future. Your feedback, contributions, and
+                  inviting the world to help shape Attune AI&apos;s future. Your feedback, contributions, and
                   support are what will make this project successful.
                 </p>
               </div>
@@ -207,7 +207,7 @@ export default function PricingPage() {
               </p>
               <div className="grid md:grid-cols-2 gap-6 text-left mb-12">
                 <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold mb-2">Empathy Cloud</h3>
+                  <h3 className="font-bold mb-2">Attune Cloud</h3>
                   <p className="text-sm text-[var(--text-secondary)]">
                     Managed hosting with automatic updates, monitoring, and team collaboration features.
                   </p>

@@ -12,7 +12,7 @@ export default function BookPage() {
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Empathy
+            Attune AI
           </Link>
           <div className="flex gap-6">
             <Link href="/framework" className="text-sm hover:text-[var(--primary)]">Framework</Link>
@@ -45,7 +45,7 @@ export default function BookPage() {
               />
             </div>
             <h1 className="text-5xl font-bold mb-6">
-              Empathy
+              Attune AI
             </h1>
             <p className="text-2xl mb-4 opacity-90">
               Multi-Agent Coordination with Persistent and Short-Term Memory
@@ -66,7 +66,7 @@ export default function BookPage() {
               <div className="w-full max-w-md aspect-[3/4] gradient-accent rounded-lg shadow-2xl mb-8 flex items-center justify-center">
                 <div className="text-center text-white p-8">
                   <div className="text-6xl mb-4">📖</div>
-                  <h2 className="text-3xl font-bold mb-2">Empathy</h2>
+                  <h2 className="text-3xl font-bold mb-2">Attune AI</h2>
                   <p className="text-lg opacity-90">Multi-Agent Coordination with Persistent and Short-Term Memory</p>
                   <p className="text-sm mt-4 opacity-75">By Patrick Roebuck</p>
                 </div>
@@ -347,7 +347,7 @@ export default function BookPage() {
               <div className="border-b border-[var(--border)] pb-6">
                 <h3 className="text-xl font-bold mb-3">Do I need the book to use the framework?</h3>
                 <p className="text-[var(--text-secondary)]">
-                  No. Empathy is open source and documented online. The book provides deeper
+                  No. Attune AI is open source and documented online. The book provides deeper
                   coverage of the philosophy, implementation details, and patterns that aren&apos;t in the docs.
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default function BookPage() {
                 <h3 className="text-xl font-bold mb-3">Who is the book for?</h3>
                 <p className="text-[var(--text-secondary)]">
                   The book is for students, academics, solo developers, and small teams (≤5 employees) who
-                  already have free commercial use rights under Fair Source 0.9. You can use the framework
+                  already have free commercial use rights under Apache 2.0. You can use the framework
                   and learn from the book at no additional licensing cost.
                 </p>
               </div>
@@ -372,9 +372,8 @@ export default function BookPage() {
               <div className="border-b border-[var(--border)] pb-6">
                 <h3 className="text-xl font-bold mb-3">Is the Core Framework free?</h3>
                 <p className="text-[var(--text-secondary)]">
-                  Empathy uses Fair Source License 0.9. It&apos;s free for students, educators, and
-                  companies with 5 or fewer employees. Commercial licensing is required
-                  for companies with 6+ employees—contact us for pricing.
+                  Attune AI uses the Apache 2.0 License. It&apos;s free for students, educators, and
+                  companies of any size. See the license for details.
                 </p>
               </div>
 

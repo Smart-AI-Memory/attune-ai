@@ -212,7 +212,7 @@ export default function Navigation() {
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
-              aria-label="View Empathy on GitHub"
+              aria-label="View Attune AI on GitHub"
               title="View on GitHub"
             >
               <svg

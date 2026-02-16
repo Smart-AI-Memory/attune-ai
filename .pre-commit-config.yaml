@@ -46,14 +46,14 @@ repos:
   #     - id: mypy
   #       additional_dependencies: [types-pyyaml, types-requests]
   #       args: ['--ignore-missing-imports', '--no-strict-optional']
-  #       files: ^(src|attune_software|attune_llm|coach_wizards)/
+  #       files: ^(src|attune_software)/
 
   # Bandit - Security linter
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.6
     hooks:
       - id: bandit
-        args: ['-c', '.bandit', '-r', 'src/', 'attune_software/', 'attune_llm/', 'coach_wizards/', '--severity-level', 'medium', '--confidence-level', 'medium']
+        args: ['-c', '.bandit', '-r', 'src/', 'attune_software/', '--severity-level', 'medium', '--confidence-level', 'medium']
         pass_filenames: false
 
   # Detect-secrets - Prevent secrets from being committed
@@ -74,7 +74,6 @@ repos:
             website/|
             src/|
             attune_software/|
-            attune_llm/|
             memdocs_storage/|
             demo_security_complete\.py$|
             test_memory_integration\.py$|
@@ -129,7 +128,7 @@ repos:
       # Detects hardcoded paths, missing encoding, asyncio issues
       - id: platform-compat
         name: Cross-Platform Compatibility Check
-        entry: python scripts/check_platform_compat.py src/ attune_llm/ attune_software/ coach_wizards/
+        entry: python scripts/check_platform_compat.py src/ attune_software/
         language: python
         pass_filenames: false
         stages: [manual]  # Run manually with: pre-commit run platform-compat

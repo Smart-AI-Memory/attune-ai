@@ -58,7 +58,7 @@ ${recommendation}
 ═══════════════════════════════════════════════════════
 
 Report Type: SBAR (Situation, Background, Assessment, Recommendation)
-Framework: Empathy Framework v1.8.0-beta
+Framework: Attune AI v2.9.0
 Compliance: HIPAA-ready (PHI should be de-identified before LLM processing)
 
 This report follows standardized clinical communication protocols for

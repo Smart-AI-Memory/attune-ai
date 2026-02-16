@@ -9,7 +9,7 @@ export default function FrameworkPage() {
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Empathy
+            Attune AI
           </Link>
           <div className="flex gap-6">
             <Link href="/docs" className="text-sm hover:text-[var(--primary)]">Docs</Link>
@@ -61,7 +61,7 @@ export default function FrameworkPage() {
               </Link>
             </div>
             <p className="mt-6 text-sm text-[var(--muted)]">
-              Fair Source License 0.9 • Free for Students & Small Teams • Community Driven
+              Apache 2.0 License • Free for Students & Small Teams • Community Driven
             </p>
           </div>
         </div>
@@ -244,7 +244,7 @@ if builder.is_ready_to_generate(session):
               </div>
 
               <div>
-                <h3 className="text-2xl font-bold mb-4">Orchestration System <span className="text-sm font-normal text-purple-500">v4.6.5</span></h3>
+                <h3 className="text-2xl font-bold mb-4">Orchestration System <span className="text-sm font-normal text-purple-500">v2.9.0</span></h3>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <span className="text-purple-500 font-mono text-sm mt-1">SmartRouter</span>
@@ -289,7 +289,7 @@ if builder.is_ready_to_generate(session):
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-bold mb-6">Join the Community</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-12">
-              Empathy is Fair Source licensed and welcomes contributions from developers worldwide.
+              Attune AI is Apache 2.0 licensed and welcomes contributions from developers worldwide.
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -332,7 +332,7 @@ if builder.is_ready_to_generate(session):
                 </div>
                 <h3 className="text-lg font-bold mb-2">Read the Docs</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Learn to build with Empathy Framework
+                  Learn to build with Attune AI
                 </p>
               </Link>
             </div>

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import DebugWizard from '@/components/debug-wizard/DebugWizard';
 
 export const metadata: Metadata = {
-  title: 'Memory-Enhanced Debugging Wizard | Empathy Framework',
+  title: 'Memory-Enhanced Debugging Wizard | Attune AI',
   description:
     'AI debugging assistant that remembers past bugs and their fixes. Correlate current errors with historical patterns for faster resolution.',
   keywords: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     'pattern matching',
   ],
   openGraph: {
-    title: 'Memory-Enhanced Debugging Wizard | Empathy Framework',
+    title: 'Memory-Enhanced Debugging Wizard | Attune AI',
     description:
       'AI that remembers past bugs. Find fixes faster with historical pattern correlation.',
     type: 'website',
@@ -34,7 +34,7 @@ export default function DebugWizardPage() {
               <Link href="/" className="flex items-center gap-3 hover:opacity-80">
                 <span className="text-2xl">D</span>
                 <div>
-                  <h1 className="text-xl font-bold">Empathy Framework</h1>
+                  <h1 className="text-xl font-bold">Attune AI</h1>
                   <p className="text-white/80 text-sm">Memory-Enhanced Debugging</p>
                 </div>
               </Link>
@@ -215,7 +215,7 @@ export default function DebugWizardPage() {
             <div className="text-sm text-gray-600">
               Part of the{' '}
               <Link href="/" className="text-purple-600 hover:text-purple-800">
-                Empathy Framework
+                Attune AI
               </Link>
               {' '}- Five-level AI collaboration with persistent memory
             </div>

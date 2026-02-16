@@ -10,7 +10,7 @@
  * **Implementation:** Sprint 2 (Week 2)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
 'use client';

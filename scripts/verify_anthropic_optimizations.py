@@ -74,7 +74,7 @@ def test_track_2_cache_stats():
         tracker = UsageTracker.get_instance()
         stats = tracker.get_cache_stats(days=7)
 
-        print(f"✓ get_cache_stats() works")
+        print("✓ get_cache_stats() works")
         print(f"  Hit rate: {stats['hit_rate']:.1%}")
         print(f"  Total requests: {stats['total_requests']}")
         print(f"  Savings: ${stats['savings']:.2f}")
@@ -92,7 +92,7 @@ def test_track_2_cache_stats():
         for field in required_fields:
             assert field in stats, f"Missing field: {field}"
 
-        print(f"✓ All required fields present")
+        print("✓ All required fields present")
 
         print("\n✅ Track 2 (Cache Stats): PASS")
         return True
@@ -113,20 +113,14 @@ def test_track_1_batch_api():
 
     try:
         # Test provider import
-        from attune_llm.providers import AnthropicBatchProvider
 
-        print(f"✓ AnthropicBatchProvider imported")
+        print("✓ AnthropicBatchProvider imported")
 
         # Test workflow import
-        from attune.workflows.batch_processing import (
-            BatchProcessingWorkflow,
-            BatchRequest,
-            BatchResult,
-        )
 
-        print(f"✓ BatchProcessingWorkflow imported")
-        print(f"✓ BatchRequest dataclass available")
-        print(f"✓ BatchResult dataclass available")
+        print("✓ BatchProcessingWorkflow imported")
+        print("✓ BatchRequest dataclass available")
+        print("✓ BatchResult dataclass available")
 
         # Test task classification
         from attune.models.tasks import BATCH_ELIGIBLE_TASKS, REALTIME_REQUIRED_TASKS
@@ -135,7 +129,7 @@ def test_track_1_batch_api():
         print(f"✓ REALTIME_REQUIRED_TASKS defined ({len(REALTIME_REQUIRED_TASKS)} tasks)")
 
         # Show sample tasks
-        print(f"\n  Sample batch-eligible tasks:")
+        print("\n  Sample batch-eligible tasks:")
         for task in list(BATCH_ELIGIBLE_TASKS)[:5]:
             print(f"    - {task}")
 

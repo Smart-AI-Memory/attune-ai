@@ -1,7 +1,7 @@
 /**
  * Telemetry API Route
  *
- * Serves telemetry data from `.empathy/*.jsonl` files.
+ * Serves telemetry data from `.attune/*.jsonl` files.
  *
  * **Endpoints:**
  * - GET /api/telemetry - Get aggregated telemetry statistics
@@ -12,7 +12,7 @@
  * **Implementation Status:** Sprint 1 (Week 1)
  *
  * Copyright 2025 Smart-AI-Memory
- * Licensed under Fair Source License 0.9
+ * Licensed under Apache 2.0
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
     const since = sinceParam ? new Date(sinceParam) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : 1000;
 
-    // Determine .empathy directory path
+    // Determine .attune directory path
     // In production, this should be configurable via environment variable
-    const empathyDir = process.env.EMPATHY_DIR || path.join(process.cwd(), '..', '.empathy');
+    const attuneDir = process.env.ATTUNE_DIR || path.join(process.cwd(), '..', '.attune');
 
     // Load telemetry data
-    const stats = loadTelemetryData(empathyDir, {
+    const stats = loadTelemetryData(attuneDir, {
       since,
       workflowName: workflowName || undefined,
       provider: provider || undefined,

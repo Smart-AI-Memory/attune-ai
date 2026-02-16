@@ -3,7 +3,7 @@ import Link from 'next/link';
 import WorkflowDashboard from '@/components/workflows/WorkflowDashboard';
 
 export const metadata: Metadata = {
-  title: 'Multi-Model Workflow Dashboard | Empathy Framework',
+  title: 'Multi-Model Workflow Dashboard | Attune AI',
   description:
     'Monitor and analyze cost-optimized multi-model workflows. Track savings from 3-tier model routing with Haiku, Sonnet, and Opus.',
   keywords: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     'GPT',
   ],
   openGraph: {
-    title: 'Multi-Model Workflow Dashboard | Empathy Framework',
+    title: 'Multi-Model Workflow Dashboard | Attune AI',
     description:
       'Track cost savings from intelligent model routing. Optimize AI spend with 3-tier workflows.',
     type: 'website',
@@ -35,7 +35,7 @@ export default function WorkflowsPage() {
               <Link href="/" className="flex items-center gap-3 hover:opacity-80">
                 <span className="text-2xl font-bold">W</span>
                 <div>
-                  <h1 className="text-xl font-bold">Empathy Framework</h1>
+                  <h1 className="text-xl font-bold">Attune AI</h1>
                   <p className="text-white/80 text-sm">Multi-Model Workflows</p>
                 </div>
               </Link>
@@ -102,7 +102,7 @@ export default function WorkflowsPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-500">
-              Empathy Framework - Cost-optimized AI workflows
+              Attune AI - Cost-optimized AI workflows
             </p>
             <div className="flex gap-6">
               <Link href="/docs" className="text-sm text-gray-500 hover:text-gray-700">

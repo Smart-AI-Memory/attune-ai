@@ -254,7 +254,7 @@ class AttuneConfig:
         return cls(**filtered_data)
 
     @classmethod
-    def from_env(cls, prefix: str = "EMPATHY_") -> "AttuneConfig":
+    def from_env(cls, prefix: str = "ATTUNE_") -> "AttuneConfig":
         """Load configuration from environment variables.
 
         Environment variables can be prefixed with ATTUNE_ (preferred)
@@ -266,7 +266,7 @@ class AttuneConfig:
             ATTUNE_CONFIDENCE_THRESHOLD=0.8
 
         Args:
-            prefix: Environment variable prefix (default: "EMPATHY_")
+            prefix: Environment variable prefix (default: "ATTUNE_")
 
         Returns:
             AttuneConfig instance

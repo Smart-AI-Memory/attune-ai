@@ -8,7 +8,7 @@ export default function PluginsPage() {
       <nav className="border-b border-[var(--border)] py-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Empathy
+            Attune AI
           </Link>
           <div className="flex gap-6">
             <Link href="/framework" className="text-sm hover:text-[var(--primary)]">Framework</Link>
@@ -242,7 +242,7 @@ export default function PluginsPage() {
 
             <div className="space-y-6">
               <div className="bg-[var(--border)] bg-opacity-30 p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-3">Fair Source License</h3>
+                <h3 className="text-xl font-bold mb-3">Apache 2.0 License</h3>
                 <ul className="space-y-2 text-[var(--text-secondary)]">
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--success)]">✓</span>

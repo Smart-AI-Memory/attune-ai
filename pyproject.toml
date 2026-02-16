@@ -364,7 +364,7 @@ refactor-plan = "attune.workflows.refactor_plan:RefactorPlanWorkflow"
 dependency-check = "attune.workflows.dependency_check:DependencyCheckWorkflow"
 # v5.2 Agent team (replaces CrewAI-based crew)
 release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
-health-check = "attune.workflows.health_check_crew:HealthCheckCrew"
+# health-check: removed in v2.9.0 (module deleted, use release-prep workflow instead)
 test-coverage-boost = "attune.workflows.test_coverage_boost_crew:TestCoverageBoostCrew"
 # Legacy entry points removed - handled by migration system
 # (release-prep-legacy → release-prep, health-check-legacy → health-check)
@@ -460,7 +460,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["services", "attune_llm", "attune_software", "attune", "coach_wizards"]
+known-first-party = ["attune", "attune_software"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports in __init__.py
@@ -471,7 +471,7 @@ known-first-party = ["services", "attune_llm", "attune_software", "attune", "coa
 "backend/**/*.py" = ["BLE001", "E402"]  # Backend files need broad exception handling
 "*_wizard.py" = ["BLE001"]  # Wizard files need broad exception handling
 "*_agent.py" = ["BLE001"]  # Agent files need broad exception handling
-"attune_llm/**/*.py" = ["BLE001", "E402"]  # Shim modules: deprecation warning before re-export
+# attune_llm removed in v2.9.0
 "src/attune/**/*.py" = ["BLE001"]  # Core framework needs broad exception handling
 "*_adapter.py" = ["BLE001"]  # Adapter files need broad exception handling
 "*_crew.py" = ["BLE001"]  # Crew files need broad exception handling
@@ -552,15 +552,13 @@ norecursedirs = [
 addopts = [
     "--verbose",
     "--cov=attune",
-    "--cov=attune_llm",
     "--cov=attune_software",
     "--cov-report=html",
     "--cov-report=term-missing",
     "--cov-report=xml",
     "--cov-fail-under=80",
     "--asyncio-mode=auto",
-    "--ignore=tests/test_base_wizard_exceptions.py",  # Missing wizards_consolidated module
-    "--ignore=tests/test_wizard_api_integration.py",  # Missing wizards_consolidated module
+    # Stale ignores removed in v2.9.0 (test files deleted)
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -578,7 +576,7 @@ filterwarnings = [
 
 # Coverage configuration
 [tool.coverage.run]
-source = ["attune", "attune_llm", "attune_software"]
+source = ["attune", "attune_software"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -593,17 +591,9 @@ omit = [
     "*/agent_factory/memory_integration.py",  # Optional integration module
     "*/agent_factory/resilient.py",  # Optional resilience module
     "*/*_example.py",  # Example files
-    "*/cli/sync_claude.py",  # CLI tool, tested via integration
     # Utility modules with low criticality
     "*/utils/tokens.py",  # Token utilities
-    "*/security/audit_logger.py",  # Optional audit logging
-    "*/security/secure_memdocs.py",  # Optional secure memory
-    # Pattern modules (optional pattern analysis)
-    "*/pattern_confidence.py",
-    "*/pattern_resolver.py",
-    "*/pattern_summary.py",
-    "*/git_pattern_extractor.py",
-    "*/code_health.py",  # Optional code health analysis
+    "*/memory/security/audit_logger.py",  # Optional audit logging
     # Wizard examples (not core functionality)
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
@@ -626,32 +616,7 @@ omit = [
     # Scaffolding CLI (tested via integration)
     "*/scaffolding/cli.py",  # Scaffolding CLI
     "*/scaffolding/__main__.py",  # Scaffolding entry point
-    # Dev tooling
-    "*/cli/commands/profiling.py",  # Dev profiling tool
-    # CLI subcommands (interactive terminal, tested via integration)
-    "*/cli/commands/inspect.py",  # Interactive inspection CLI
-    "*/cli/commands/status.py",  # Status display CLI
-    "*/cli/commands/help.py",  # Help display CLI
-    "*/cli/commands/setup.py",  # Interactive setup CLI
-    "*/cli/commands/patterns.py",  # Pattern display CLI
-    "*/cli/commands/orchestrate.py",  # Orchestration CLI
-    "*/cli/commands/metrics.py",  # Metrics display CLI
-    "*/cli/commands/sync.py",  # Sync CLI
-    "*/cli/commands/tier.py",  # Tier management CLI
-    "*/cli/commands/provider.py",  # Provider management CLI
-    "*/cli/__init__.py",  # CLI entry point
-    "*/cli/__main__.py",  # CLI main entry
-    "*/cli/parsers/__init__.py",  # Parser wiring
-    "*/cli/parsers/help.py",  # Help parser
-    "*/cli/parsers/info.py",  # Info parser
-    "*/cli/parsers/inspect.py",  # Inspect parser
-    "*/cli/parsers/orchestrate.py",  # Orchestrate parser
-    "*/cli/parsers/patterns.py",  # Patterns parser
-    "*/cli/parsers/routing.py",  # Routing parser
-    "*/cli/parsers/setup.py",  # Setup parser
-    "*/cli/parsers/status.py",  # Status parser
-    "*/cli/parsers/tier.py",  # Tier parser
-    "*/cli_unified.py",  # Unified CLI entry point
+    # Deleted in v2.9.0: cli/, cli_unified.py, security/, pattern modules
     # Socratic interactive modules (require user interaction / external LLM)
     "*/socratic/cli.py",  # Interactive Socratic CLI
     "*/socratic/collaboration.py",  # Requires external collaboration service

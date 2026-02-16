@@ -219,7 +219,7 @@ export const TIER_DISPLAY: Record<AccessTier, TierDisplayInfo> = {
   [AccessTier.LOCAL]: {
     name: 'Local Installation',
     description: 'Install locally for unlimited features',
-    price: 'Free (Fair Source)',
+    price: 'Free (Open Source)',
     features: [
       'Unlimited files & folders',
       'Unlimited analyses',

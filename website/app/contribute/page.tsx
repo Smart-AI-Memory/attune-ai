@@ -6,8 +6,8 @@ import { generateMetadata } from '@/lib/metadata';
 import CheckoutButton from '@/components/CheckoutButton';
 
 export const metadata: Metadata = generateMetadata({
-  title: 'Support Empathy Development',
-  description: 'Support the ongoing development of Empathy. Every contribution helps make anticipatory AI accessible to everyone.',
+  title: 'Support Attune AI Development',
+  description: 'Support the ongoing development of Attune AI. Every contribution helps make anticipatory AI accessible to everyone.',
   url: 'https://smartaimemory.com/contribute',
 });
 
@@ -27,7 +27,7 @@ export default function ContributePage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-6">
-                Support Empathy Development
+                Support Attune AI Development
               </h1>
               <p className="text-2xl mb-8 opacity-90">
                 Help us build the future of anticipatory AI. Every contribution makes a difference.

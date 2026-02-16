@@ -75,7 +75,7 @@ class SecureMemDocsIntegration:
     - Access control enforcement
 
     Example:
-        >>> from attune_llm.claude_memory import ClaudeMemoryConfig
+        >>> from attune.memory import ClaudeMemoryConfig
         >>> config = ClaudeMemoryConfig(enabled=True, load_enterprise=True)
         >>> integration = SecureMemDocsIntegration(config)
         >>>
