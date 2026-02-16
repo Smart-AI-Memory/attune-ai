@@ -7707,11 +7707,11 @@
 </code></pre></div>
 <p>Load configuration from environment variables.</p>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_USER_ID</span><span class="o">=</span>alice
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_TARGET_LEVEL</span><span class="o">=</span><span class="m">4</span>
-<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.8
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span>alice
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_TARGET_LEVEL</span><span class="o">=</span><span class="m">4</span>
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.8
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">EmpathyConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">EmpathyConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>  <span class="c1"># Checks ATTUNE_* first, falls back to EMPATHY_*</span>
 </code></pre></div>
 <h5 id="from_file"><code>from_file()</code><a class="headerlink" href="#from_file" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a><span class="nd">@classmethod</span>
@@ -8197,28 +8197,28 @@
 </code></pre></div>
 <hr />
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
-<p>All configuration can be set via environment variables:</p>
+<p>All configuration can be set via environment variables (use <code>ATTUNE_</code> prefix; <code>EMPATHY_</code> prefix is also accepted for backward compatibility):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a><span class="c1"># Core settings</span>
-<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_USER_ID</span><span class="o">=</span>alice
-<a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_TARGET_LEVEL</span><span class="o">=</span><span class="m">4</span>
-<a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.8
+<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span>alice
+<a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_TARGET_LEVEL</span><span class="o">=</span><span class="m">4</span>
+<a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.8
 <a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>
 <a id="__codelineno-75-6" name="__codelineno-75-6" href="#__codelineno-75-6"></a><span class="c1"># LLM providers</span>
 <a id="__codelineno-75-7" name="__codelineno-75-7" href="#__codelineno-75-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-...
 <a id="__codelineno-75-8" name="__codelineno-75-8" href="#__codelineno-75-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
 <a id="__codelineno-75-9" name="__codelineno-75-9" href="#__codelineno-75-9"></a>
 <a id="__codelineno-75-10" name="__codelineno-75-10" href="#__codelineno-75-10"></a><span class="c1"># Persistence</span>
-<a id="__codelineno-75-11" name="__codelineno-75-11" href="#__codelineno-75-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_PERSISTENCE_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-75-12" name="__codelineno-75-12" href="#__codelineno-75-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_PERSISTENCE_BACKEND</span><span class="o">=</span>sqlite
-<a id="__codelineno-75-13" name="__codelineno-75-13" href="#__codelineno-75-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_PERSISTENCE_PATH</span><span class="o">=</span>./empathy_data
+<a id="__codelineno-75-11" name="__codelineno-75-11" href="#__codelineno-75-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-75-12" name="__codelineno-75-12" href="#__codelineno-75-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_BACKEND</span><span class="o">=</span>sqlite
+<a id="__codelineno-75-13" name="__codelineno-75-13" href="#__codelineno-75-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_PATH</span><span class="o">=</span>./empathy_data
 <a id="__codelineno-75-14" name="__codelineno-75-14" href="#__codelineno-75-14"></a>
 <a id="__codelineno-75-15" name="__codelineno-75-15" href="#__codelineno-75-15"></a><span class="c1"># Metrics</span>
-<a id="__codelineno-75-16" name="__codelineno-75-16" href="#__codelineno-75-16"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_METRICS_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-75-17" name="__codelineno-75-17" href="#__codelineno-75-17"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_METRICS_PATH</span><span class="o">=</span>./metrics.db
+<a id="__codelineno-75-16" name="__codelineno-75-16" href="#__codelineno-75-16"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-75-17" name="__codelineno-75-17" href="#__codelineno-75-17"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_PATH</span><span class="o">=</span>./metrics.db
 <a id="__codelineno-75-18" name="__codelineno-75-18" href="#__codelineno-75-18"></a>
 <a id="__codelineno-75-19" name="__codelineno-75-19" href="#__codelineno-75-19"></a><span class="c1"># Pattern library</span>
-<a id="__codelineno-75-20" name="__codelineno-75-20" href="#__codelineno-75-20"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_PATTERN_LIBRARY_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-75-21" name="__codelineno-75-21" href="#__codelineno-75-21"></a><span class="nb">export</span><span class="w"> </span><span class="nv">EMPATHY_PATTERN_SHARING</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-75-20" name="__codelineno-75-20" href="#__codelineno-75-20"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_LIBRARY_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-75-21" name="__codelineno-75-21" href="#__codelineno-75-21"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_SHARING</span><span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <hr />
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>

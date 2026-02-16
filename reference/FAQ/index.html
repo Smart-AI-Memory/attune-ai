@@ -7170,7 +7170,7 @@
 <li>Track savings and learn from patterns</li>
 </ol>
 <h4 id="enable-it">Enable it<a class="headerlink" href="#enable-it" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>health-check<span class="w"> </span>--use-recommended-tier
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>health-check<span class="w"> </span>--use-recommended-tier
 </code></pre></div>
 <p><strong>Expected savings:</strong> 30-50% on average workflow execution</p>
 <p><strong>Learn more:</strong> CHANGELOG.md v3.10.0</p>
@@ -7211,7 +7211,7 @@
 <li>May not be worth the latency cost</li>
 </ul>
 <h4 id="track-your-actual-savings">Track your actual savings<a class="headerlink" href="#track-your-actual-savings" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>empathy<span class="w"> </span>telemetry<span class="w"> </span>savings<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>attune<span class="w"> </span>telemetry<span class="w"> </span>savings<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span>
 </code></pre></div>
 <p><strong>See detailed breakdown:</strong> TIER_FALLBACK_TEST_REPORT.md</p>
 <hr />
@@ -7241,7 +7241,7 @@
 <h3 id="can-i-customize-the-tier-fallback-behavior">Can I customize the tier fallback behavior?<a class="headerlink" href="#can-i-customize-the-tier-fallback-behavior" title="Permanent link">&para;</a></h3>
 <h4 id="customization-options">Customization options<a class="headerlink" href="#customization-options" title="Permanent link">&para;</a></h4>
 <h4 id="1-change-the-starting-threshold">1. Change the starting threshold<a class="headerlink" href="#1-change-the-starting-threshold" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>health-check<span class="w"> </span>--use-recommended-tier<span class="w"> </span>--health-score-threshold<span class="w"> </span><span class="m">90</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>health-check<span class="w"> </span>--use-recommended-tier<span class="w"> </span>--health-score-threshold<span class="w"> </span><span class="m">90</span>
 </code></pre></div>
 <h4 id="2-use-python-api-for-full-control">2. Use Python API for full control<a class="headerlink" href="#2-use-python-api-for-full-control" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_workflow</span>

@@ -3959,10 +3959,10 @@
 <p>Let's run a <strong>security audit</strong> on some code. This workflow scans for vulnerabilities and provides actionable recommendations.</p>
 <h3 id="option-1-cli-fastest">Option 1: CLI (Fastest)<a class="headerlink" href="#option-1-cli-fastest" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Scan your source directory</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>./src
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>./src
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Or scan current directory</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>.
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>.
 </code></pre></div>
 <p><strong>Example output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Security Audit Results
@@ -4016,36 +4016,36 @@
 <tbody>
 <tr>
 <td>Security Audit</td>
-<td><code>empathy workflow run security-audit</code></td>
+<td><code>attune workflow run security-audit</code></td>
 <td>Find vulnerabilities</td>
 </tr>
 <tr>
 <td>Bug Prediction</td>
-<td><code>empathy workflow run bug-predict</code></td>
+<td><code>attune workflow run bug-predict</code></td>
 <td>Predict likely bugs</td>
 </tr>
 <tr>
 <td>Test Coverage</td>
-<td><code>empathy workflow run test-coverage</code></td>
+<td><code>attune workflow run test-coverage</code></td>
 <td>Generate missing tests</td>
 </tr>
 <tr>
 <td>Release Prep</td>
-<td><code>empathy workflow run release-prep</code></td>
+<td><code>attune workflow run release-prep</code></td>
 <td>Pre-release checklist</td>
 </tr>
 <tr>
 <td>Dependency Check</td>
-<td><code>empathy workflow run dependency-check</code></td>
+<td><code>attune workflow run dependency-check</code></td>
 <td>Find outdated deps</td>
 </tr>
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># List all available workflows</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>list
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Get help for a specific workflow</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--help
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--help
 </code></pre></div>
 <hr />
 <h2 id="understanding-the-output">Understanding the Output<a class="headerlink" href="#understanding-the-output" title="Permanent link">&para;</a></h2>
@@ -4078,10 +4078,10 @@
 </table>
 <h3 id="cost-tracking">Cost Tracking<a class="headerlink" href="#cost-tracking" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># See your usage</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>empathy<span class="w"> </span>telemetry<span class="w"> </span>show
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>attune<span class="w"> </span>telemetry<span class="w"> </span>show
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># See cost breakdown</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>empathy<span class="w"> </span>telemetry<span class="w"> </span>savings<span class="w"> </span>--days<span class="w"> </span><span class="m">7</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>attune<span class="w"> </span>telemetry<span class="w"> </span>savings<span class="w"> </span>--days<span class="w"> </span><span class="m">7</span>
 </code></pre></div>
 <p>All telemetry data stays local in <code>~/.empathy/telemetry/</code>.</p>
 <hr />
@@ -4109,16 +4109,16 @@
 <hr />
 <h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Run workflows</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--path<span class="w"> </span>&lt;path&gt;
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>list
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--path<span class="w"> </span>&lt;path&gt;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Check status</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>empathy<span class="w"> </span>telemetry<span class="w"> </span>show
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>empathy<span class="w"> </span>telemetry<span class="w"> </span>savings
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>attune<span class="w"> </span>telemetry<span class="w"> </span>show
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>attune<span class="w"> </span>telemetry<span class="w"> </span>savings
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Get help</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>empathy<span class="w"> </span>--help
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>empathy<span class="w"> </span>workflow<span class="w"> </span>--help
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>attune<span class="w"> </span>--help
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>attune<span class="w"> </span>workflow<span class="w"> </span>--help
 </code></pre></div>
 
 
