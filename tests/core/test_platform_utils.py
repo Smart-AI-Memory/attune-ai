@@ -88,7 +88,7 @@ class TestDefaultDirectoriesWindows:
     def test_log_dir_windows(self, mock_macos, mock_windows):
         """Test log directory on Windows uses APPDATA."""
         log_dir = get_default_log_dir()
-        assert "attune" in str(log_dir)
+        assert "empathy" in str(log_dir)
         assert "logs" in str(log_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=True)
@@ -97,7 +97,7 @@ class TestDefaultDirectoriesWindows:
     def test_data_dir_windows(self, mock_macos, mock_windows):
         """Test data directory on Windows uses APPDATA."""
         data_dir = get_default_data_dir()
-        assert "attune" in str(data_dir)
+        assert "empathy" in str(data_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=True)
     @patch("attune.platform_utils.is_macos", return_value=False)
@@ -105,7 +105,7 @@ class TestDefaultDirectoriesWindows:
     def test_config_dir_windows(self, mock_macos, mock_windows):
         """Test config directory on Windows uses APPDATA."""
         config_dir = get_default_config_dir()
-        assert "attune" in str(config_dir)
+        assert "empathy" in str(config_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=True)
     @patch("attune.platform_utils.is_macos", return_value=False)
@@ -119,7 +119,7 @@ class TestDefaultDirectoriesWindows:
     def test_cache_dir_windows(self, mock_macos, mock_windows):
         """Test cache directory on Windows uses LOCALAPPDATA."""
         cache_dir = get_default_cache_dir()
-        assert "attune" in str(cache_dir)
+        assert "empathy" in str(cache_dir)
         assert "cache" in str(cache_dir)
 
 
@@ -133,7 +133,7 @@ class TestDefaultDirectoriesMacOS:
         log_dir = get_default_log_dir()
         assert "Library" in str(log_dir)
         assert "Logs" in str(log_dir)
-        assert "attune" in str(log_dir)
+        assert "empathy" in str(log_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
     @patch("attune.platform_utils.is_macos", return_value=True)
@@ -142,7 +142,7 @@ class TestDefaultDirectoriesMacOS:
         data_dir = get_default_data_dir()
         assert "Library" in str(data_dir)
         assert "Application Support" in str(data_dir)
-        assert "attune" in str(data_dir)
+        assert "empathy" in str(data_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
     @patch("attune.platform_utils.is_macos", return_value=True)
@@ -151,7 +151,7 @@ class TestDefaultDirectoriesMacOS:
         config_dir = get_default_config_dir()
         assert "Library" in str(config_dir)
         assert "Preferences" in str(config_dir)
-        assert "attune" in str(config_dir)
+        assert "empathy" in str(config_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
     @patch("attune.platform_utils.is_macos", return_value=True)
@@ -160,7 +160,7 @@ class TestDefaultDirectoriesMacOS:
         cache_dir = get_default_cache_dir()
         assert "Library" in str(cache_dir)
         assert "Caches" in str(cache_dir)
-        assert "attune" in str(cache_dir)
+        assert "empathy" in str(cache_dir)
 
 
 class TestDefaultDirectoriesLinux:
@@ -173,7 +173,7 @@ class TestDefaultDirectoriesLinux:
     def test_log_dir_linux_fallback(self, mock_exists, mock_access, mock_macos, mock_windows):
         """Test log directory on Linux falls back to user directory."""
         log_dir = get_default_log_dir()
-        assert "attune" in str(log_dir)
+        assert "empathy" in str(log_dir)
         assert "logs" in str(log_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
@@ -182,7 +182,7 @@ class TestDefaultDirectoriesLinux:
     def test_data_dir_linux_xdg(self, mock_macos, mock_windows):
         """Test data directory on Linux uses XDG_DATA_HOME."""
         data_dir = get_default_data_dir()
-        assert "attune" in str(data_dir)
+        assert "empathy" in str(data_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
     @patch("attune.platform_utils.is_macos", return_value=False)
@@ -190,7 +190,7 @@ class TestDefaultDirectoriesLinux:
     def test_config_dir_linux_xdg(self, mock_macos, mock_windows):
         """Test config directory on Linux uses XDG_CONFIG_HOME."""
         config_dir = get_default_config_dir()
-        assert "attune" in str(config_dir)
+        assert "empathy" in str(config_dir)
 
     @patch("attune.platform_utils.is_windows", return_value=False)
     @patch("attune.platform_utils.is_macos", return_value=False)
@@ -198,7 +198,7 @@ class TestDefaultDirectoriesLinux:
     def test_cache_dir_linux_xdg(self, mock_macos, mock_windows):
         """Test cache directory on Linux uses XDG_CACHE_HOME."""
         cache_dir = get_default_cache_dir()
-        assert "attune" in str(cache_dir)
+        assert "empathy" in str(cache_dir)
 
 
 class TestAsyncioPolicy:
@@ -452,9 +452,9 @@ class TestIntegration:
         assert isinstance(get_default_cache_dir(), Path)
         assert isinstance(get_temp_dir(), Path)
 
-    def test_directory_paths_contain_attune(self):
-        """Test directory paths contain 'attune' folder."""
-        assert "attune" in str(get_default_log_dir())
-        assert "attune" in str(get_default_data_dir())
-        assert "attune" in str(get_default_config_dir())
-        assert "attune" in str(get_default_cache_dir())
+    def test_directory_paths_contain_empathy(self):
+        """Test directory paths contain 'empathy' folder."""
+        assert "empathy" in str(get_default_log_dir())
+        assert "empathy" in str(get_default_data_dir())
+        assert "empathy" in str(get_default_config_dir())
+        assert "empathy" in str(get_default_cache_dir())
