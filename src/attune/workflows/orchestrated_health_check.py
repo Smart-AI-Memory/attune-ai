@@ -304,7 +304,7 @@ class OrchestratedHealthCheckWorkflow:
         self.orchestrator = MetaOrchestrator()
 
         # Tracking directory
-        self.tracking_dir = self.project_root / ".empathy" / "health_tracking"
+        self.tracking_dir = self.project_root / ".attune" / "health_tracking"
         self.tracking_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
@@ -749,7 +749,7 @@ class OrchestratedHealthCheckWorkflow:
         Args:
             report: Health check report to save
         """
-        health_file = self.project_root / ".empathy" / "health.json"
+        health_file = self.project_root / ".attune" / "health.json"
 
         try:
             # Ensure .empathy directory exists

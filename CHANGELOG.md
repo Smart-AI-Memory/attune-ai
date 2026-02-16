@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-02-16
+
+### Added
+
+- **XML vs Plain Text Benchmark Suite** (`benchmarks/xml_vs_plain/`): A/B testing harness that compares XML and plain text prompt formats across workflows. Includes mock and real API modes, 5-metric quality evaluator (parsing, completeness, precision, actionability, consistency), and markdown report generator. Quick mode: 30 calls ~$0.87, full mode: 360 calls.
+- **`PromptContext.for_perf_audit()` factory method**: New convenience constructor for performance audit prompt contexts, matching existing `for_security_audit()` and `for_code_review()` patterns.
+- **Benchmark-driven XML configuration**: Per-workflow XML prompt settings based on real Claude 4.x benchmark data (30 API calls on Sonnet 4.5).
+
+### Changed
+
+- **XML prompts enabled by default**: `PromptMixin`, `PromptService`, and `WorkflowConfig` now default to `enabled: True`. XML prompts provide 100% parse success rate and +68% overall quality score at ~27% cost overhead. Individual workflows can opt out.
+- **Per-workflow XML overrides based on benchmark data**:
+  - `security-audit`: XML enabled (+30% quality, +15% cost — best ROI)
+  - `code-review`: XML disabled (+56% cost, no quality improvement)
+  - `perf-audit`: XML disabled (+30% cost, no quality improvement)
+- **Branding cleanup**: Completed `.empathy` → `.attune` rename across codebase, CLI output, and test assertions.
+
+### Fixed
+
+- **Import order in `auth_strategy.py`**: Moved `_validate_file_path` import above `logger` initialization to fix ruff E402.
+- **Test updates for XML default change**: Updated 5 test files to reflect XML-enabled-by-default behavior while preserving explicit-disable test coverage.
+
 ## [2.8.1] - 2026-02-15
 
 ### Documentation

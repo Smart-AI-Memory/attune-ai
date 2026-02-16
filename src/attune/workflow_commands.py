@@ -44,7 +44,7 @@ def _load_patterns(patterns_dir: str = "./patterns") -> dict[str, list]:
     return patterns
 
 
-def _load_stats(empathy_dir: str = ".empathy") -> dict[str, Any]:
+def _load_stats(empathy_dir: str = ".attune") -> dict[str, Any]:
     """Load usage statistics."""
     stats_file = Path(empathy_dir) / "stats.json"
     if stats_file.exists():
@@ -58,7 +58,7 @@ def _load_stats(empathy_dir: str = ".empathy") -> dict[str, Any]:
     return {"commands": {}, "last_session": None, "patterns_learned": 0}
 
 
-def _save_stats(stats: dict, empathy_dir: str = ".empathy") -> None:
+def _save_stats(stats: dict, empathy_dir: str = ".attune") -> None:
     """Save usage statistics."""
     stats_dir = Path(empathy_dir)
     stats_dir.mkdir(parents=True, exist_ok=True)

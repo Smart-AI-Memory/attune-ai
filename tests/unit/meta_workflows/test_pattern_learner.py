@@ -25,7 +25,7 @@ class TestPatternLearnerInitialization:
         """Test initialization with default directory."""
         learner = PatternLearner()
 
-        expected_dir = Path.home() / ".empathy" / "meta_workflows" / "executions"
+        expected_dir = Path.home() / ".attune" / "meta_workflows" / "executions"
         assert learner.executions_dir == expected_dir
         assert learner.memory is None
 

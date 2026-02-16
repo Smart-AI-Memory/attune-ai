@@ -260,7 +260,7 @@ def print_effective_config(provider: str = "anthropic") -> None:
 def print_telemetry_summary(
     days: int = 7,
     format: str = "table",
-    storage_dir: str = ".empathy",
+    storage_dir: str = ".attune",
 ) -> None:
     """Print telemetry summary.
 
@@ -312,7 +312,7 @@ def print_telemetry_summary(
 def print_telemetry_costs(
     days: int = 30,
     format: str = "table",
-    storage_dir: str = ".empathy",
+    storage_dir: str = ".attune",
 ) -> None:
     """Print cost savings report.
 
@@ -356,7 +356,7 @@ def print_telemetry_costs(
 def print_telemetry_providers(
     days: int = 30,
     format: str = "table",
-    storage_dir: str = ".empathy",
+    storage_dir: str = ".attune",
 ) -> None:
     """Print provider usage summary.
 
@@ -393,7 +393,7 @@ def print_telemetry_providers(
 def print_telemetry_fallbacks(
     days: int = 30,
     format: str = "table",
-    storage_dir: str = ".empathy",
+    storage_dir: str = ".attune",
 ) -> None:
     """Print fallback statistics.
 
@@ -579,7 +579,7 @@ Examples:
     tel_parser.add_argument("--costs", action="store_true", help="Show cost savings report")
     tel_parser.add_argument("--providers", action="store_true", help="Show provider usage")
     tel_parser.add_argument("--fallbacks", action="store_true", help="Show fallback statistics")
-    tel_parser.add_argument("--storage-dir", default=".empathy", help="Telemetry storage directory")
+    tel_parser.add_argument("--storage-dir", default=".attune", help="Telemetry storage directory")
     tel_parser.add_argument("--format", "-f", choices=["table", "json"], default="table")
 
     # Provider command

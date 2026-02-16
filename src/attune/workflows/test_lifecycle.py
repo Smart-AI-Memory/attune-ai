@@ -86,7 +86,7 @@ class TestLifecycleManager:
 
         # Queue persistence
         self._queue_file = (
-            Path(queue_file) if queue_file else self.project_root / ".empathy" / "test_queue.json"
+            Path(queue_file) if queue_file else self.project_root / ".attune" / "test_queue.json"
         )
 
         # Callbacks

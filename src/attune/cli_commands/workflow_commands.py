@@ -123,12 +123,7 @@ def cmd_workflow_run(args: Namespace) -> int:
         if args.json:
             print(json.dumps(result, indent=2, default=str))
         else:
-            if isinstance(result, dict):
-                print("\n✅ Workflow completed\n")
-                for key, value in result.items():
-                    print(f"  {key}: {value}")
-            else:
-                print(f"\n✅ Result: {result}")
+            _print_workflow_result(result)
 
         return 0
 
@@ -137,3 +132,54 @@ def cmd_workflow_run(args: Namespace) -> int:
         logger.exception(f"Workflow failed: {e}")
         print(f"\n❌ Workflow failed: {e}")
         return 1
+
+
+def _print_workflow_result(result: object) -> None:
+    """Print a workflow result in a human-readable format.
+
+    Handles WorkflowResult dataclass objects by extracting the formatted
+    report and cost summary. Falls back to dict iteration or repr for
+    other result types.
+
+    Args:
+        result: Workflow execution result (WorkflowResult, dict, or other)
+    """
+    from attune.workflows.data_classes import WorkflowResult
+
+    if isinstance(result, WorkflowResult):
+        # Print formatted report if available in final_output
+        if isinstance(result.final_output, dict):
+            report = result.final_output.get("formatted_report")
+            if report:
+                print(f"\n{report}")
+            else:
+                # No formatted report — show key fields from final_output
+                print("\n✅ Workflow completed\n")
+                for key, value in result.final_output.items():
+                    if not isinstance(value, dict | list):
+                        print(f"  {key}: {value}")
+        elif result.final_output is not None:
+            print("\n✅ Workflow completed\n")
+            print(f"  {result.final_output}")
+        else:
+            print("\n✅ Workflow completed (no output)")
+
+        # Print cost and duration summary
+        cr = result.cost_report
+        print(f"\n{'─' * 60}")
+        print(f"  Cost: ${cr.total_cost:.4f}", end="")
+        if cr.savings_percent > 0:
+            print(f"  (saved {cr.savings_percent:.0f}% vs premium)")
+        else:
+            print()
+        print(f"  Duration: {result.total_duration_ms / 1000:.1f}s")
+        if not result.success:
+            print(f"  Error: {result.error}")
+        print()
+
+    elif isinstance(result, dict):
+        print("\n✅ Workflow completed\n")
+        for key, value in result.items():
+            print(f"  {key}: {value}")
+    else:
+        print(f"\n✅ Result: {result}")

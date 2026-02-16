@@ -12,6 +12,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -19,8 +20,10 @@ from typing import Any
 
 from attune.config import _validate_file_path
 
+logger = logging.getLogger(__name__)
+
 # Configuration file location
-AUTH_STRATEGY_FILE = Path.home() / ".empathy" / "auth_strategy.json"
+AUTH_STRATEGY_FILE = Path.home() / ".attune" / "auth_strategy.json"
 
 
 class SubscriptionTier(str, Enum):
@@ -383,17 +386,27 @@ def configure_auth_interactive(module_lines: int = 1000) -> AuthStrategy:
 def get_auth_strategy() -> AuthStrategy:
     """Get the global authentication strategy.
 
-    If setup not completed, prompts for interactive configuration.
+    If setup not completed and running interactively, prompts for configuration.
+    In non-interactive contexts (workflows, CI/CD, piped input), returns a
+    sensible default strategy without prompting.
 
     Returns:
         AuthStrategy instance
     """
+    import sys
+
     strategy = AuthStrategy.load()
 
     # First-time setup required
     if not strategy.setup_completed:
-        print("\n⚠️  First-time authentication setup required")
-        return configure_auth_interactive()
+        # Only prompt interactively when stdin is a TTY
+        if sys.stdin.isatty():
+            print("\n⚠️  First-time authentication setup required")
+            return configure_auth_interactive()
+
+        # Non-interactive: return default strategy silently
+        logger.info("Auth strategy not configured; using defaults (non-interactive context)")
+        return strategy
 
     return strategy
 

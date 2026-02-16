@@ -2509,10 +2509,18 @@ class TestPromptMixinXMLConfig:
         result = wf._get_xml_config()
         assert result == {"enabled": True}
 
-    def test_is_xml_enabled_false(self) -> None:
-        """Test _is_xml_enabled returns False when not configured."""
+    def test_is_xml_enabled_default_true(self) -> None:
+        """Test _is_xml_enabled returns True by default (no config)."""
         cls = _make_prompt_mixin_test_class()
         wf = cls()
+        assert wf._is_xml_enabled() is True
+
+    def test_is_xml_enabled_explicitly_disabled(self) -> None:
+        """Test _is_xml_enabled returns False when explicitly disabled."""
+        cls = _make_prompt_mixin_test_class()
+        wf = cls()
+        wf._config = MagicMock()
+        wf._config.get_xml_config_for_workflow.return_value = {"enabled": False}
         assert wf._is_xml_enabled() is False
 
     def test_is_xml_enabled_true(self) -> None:
@@ -2570,10 +2578,13 @@ class TestPromptMixinRenderXmlPrompt:
     """Tests for PromptMixin._render_xml_prompt method."""
 
     def test_render_xml_prompt_disabled_falls_back_to_plain(self) -> None:
-        """Test _render_xml_prompt falls back to plain when XML disabled."""
+        """Test _render_xml_prompt falls back to plain when XML explicitly disabled."""
         cls = _make_prompt_mixin_test_class()
         wf = cls()
-        wf._config = None  # No config = XML disabled
+        wf._config = MagicMock()
+        wf._config.get_xml_config_for_workflow.return_value = {
+            "enabled": False,
+        }
 
         result = wf._render_xml_prompt(
             role="analyst",

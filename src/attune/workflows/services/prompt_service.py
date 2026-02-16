@@ -48,8 +48,12 @@ class PromptService:
 
     @property
     def xml_enabled(self) -> bool:
-        """Whether XML prompts are enabled."""
-        return bool(self._xml_config.get("enabled", False))
+        """Whether XML prompts are enabled.
+
+        Defaults to True — XML prompts produce better structured output
+        at cost-neutral token overhead on Claude 4.x models.
+        """
+        return bool(self._xml_config.get("enabled", True))
 
     @property
     def xml_config(self) -> dict[str, Any]:

@@ -128,6 +128,45 @@ class PromptContext:
         )
 
     @classmethod
+    def for_perf_audit(
+        cls,
+        code: str,
+        context: str = "",
+        **extra: Any,
+    ) -> PromptContext:
+        """Create a context for performance audit workflows.
+
+        Args:
+            code: The code to audit for performance issues.
+            context: Additional context about the codebase or performance goals.
+            **extra: Additional context data.
+
+        """
+        return cls(
+            role="senior performance engineer",
+            goal="Identify performance bottlenecks and optimization opportunities",
+            instructions=[
+                "Analyze code for performance bottlenecks",
+                "Identify algorithmic complexity issues (O(n^2), etc.)",
+                "Check for memory inefficiencies and resource leaks",
+                "Look for blocking operations in async code",
+                "Suggest concrete optimizations with expected impact",
+            ],
+            constraints=[
+                "Be specific about time and space complexity",
+                "Prioritize by expected impact",
+                "Include before/after code examples",
+                "Rate each finding: critical, high, medium, low",
+            ],
+            input_type="code",
+            input_payload=code,
+            extra={
+                "context": context,
+                **extra,
+            },
+        )
+
+    @classmethod
     def for_research(
         cls,
         question: str,

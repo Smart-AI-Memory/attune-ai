@@ -79,7 +79,7 @@ class TestTemplateRegistryInit:
         with patch.object(Path, "mkdir"):
             registry = TemplateRegistry()
 
-        assert ".empathy" in str(registry.storage_dir)
+        assert ".attune" in str(registry.storage_dir)
         assert "templates" in str(registry.storage_dir)
 
 

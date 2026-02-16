@@ -138,9 +138,14 @@ class PromptMixin:
         return self._config.get_xml_config_for_workflow(self.name)
 
     def _is_xml_enabled(self) -> bool:
-        """Check if XML prompts are enabled for this workflow."""
+        """Check if XML prompts are enabled for this workflow.
+
+        Defaults to True — XML prompts are enabled unless explicitly disabled
+        via workflow config. Benchmarks on Claude 4.x show XML is cost-neutral
+        with better structured parsing.
+        """
         config = self._get_xml_config()
-        return bool(config.get("enabled", False))
+        return bool(config.get("enabled", True))
 
     def _render_xml_prompt(
         self,
@@ -171,8 +176,8 @@ class PromptMixin:
 
         config = self._get_xml_config()
 
-        if not config.get("enabled", False):
-            # Fall back to plain text
+        if not config.get("enabled", True):
+            # Fall back to plain text (XML explicitly disabled)
             return self._render_plain_prompt(
                 role,
                 goal,

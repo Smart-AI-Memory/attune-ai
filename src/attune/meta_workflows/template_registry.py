@@ -56,7 +56,7 @@ class TemplateRegistry:
             ValueError: If storage_dir is invalid
         """
         if storage_dir is None:
-            storage_dir = str(Path.home() / ".empathy" / "meta_workflows" / "templates")
+            storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "templates")
 
         # Validate and create storage directory
         self.storage_dir = Path(_validate_file_path(storage_dir))

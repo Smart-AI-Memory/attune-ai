@@ -41,7 +41,7 @@ context:
 
 # Directories to create
 INIT_DIRECTORIES = [
-    ".empathy",
+    ".attune",
     ".attune/compact_states",
     ".attune/learned_skills",
     ".attune/sessions",
@@ -75,7 +75,7 @@ def is_initialized(project_root: Path) -> bool:
     Returns:
         True if .empathy directory exists with config
     """
-    empathy_dir = project_root / ".empathy"
+    empathy_dir = project_root / ".attune"
     config_file = project_root / "attune.config.yaml"
 
     return empathy_dir.exists() or config_file.exists()
@@ -137,7 +137,7 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
             logger.error("Failed to create config file: %s", e)
 
     # Create .gitignore entries file
-    gitignore_additions = project_root / ".empathy" / ".gitignore_additions"
+    gitignore_additions = project_root / ".attune" / ".gitignore_additions"
     try:
         gitignore_content = """# Add these to your .gitignore:
 .attune/compact_states/

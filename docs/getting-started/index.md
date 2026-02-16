@@ -34,7 +34,7 @@ pip install attune-ai[developer]
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Run a workflow
-empathy workflow run security-audit --path ./src
+attune workflow run security-audit --path ./src
 ```
 
 Then come back here to understand what you just did!

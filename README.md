@@ -8,7 +8,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-14910%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-14915%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -20,13 +20,12 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.8.1
+## What's New in v2.9.0
 
-- **Guided Wizard System** - New `BaseWizard` framework with step types (QUESTION, LLM_CALL, TASK_DECOMPOSE, PREVIEW), session management, and workflow delegation. Includes `SecurityWizard` for multi-stage security audits.
-- **Socratic Discovery: CREATE Intent** - `/attune` now routes "scaffold", "generate", and "create" requests through a new `CREATE` intent category.
-- **Security Wizard Hardening** - Replaced `assert` statements with explicit `RuntimeError` raises, removed unused captures, eliminated redundant wrappers.
-- **14,910 Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
-- **Wizard Documentation** - Getting started, architecture, and custom development guides for the wizard system.
+- **XML Prompt Benchmark Suite** - A/B testing harness (`benchmarks/xml_vs_plain/`) that measures XML vs plain text prompt quality on Claude 4.x with 5 automated metrics. Real API results: 100% parse success, +68% quality score.
+- **Data-Driven XML Configuration** - Per-workflow XML settings based on 30-call benchmark on Sonnet 4.5. Security-audit uses XML (+30% quality, +15% cost). Code-review and perf-audit use plain text (lower cost, same quality).
+- **XML Enabled by Default** - All 10 XML templates and 5 wizards now use structured XML prompts unless explicitly disabled. Enables machine-parseable output for dashboards and automation.
+- **14,915 Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
 
 ---
 
@@ -74,7 +73,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - No file exceeds 1,000 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **14,910+ Unit Tests** - Security, unit, integration, and behavioral test coverage at 83% coverage
+- **14,915+ Unit Tests** - Security, unit, integration, and behavioral test coverage at 83% coverage
 
 ### Intelligent Cost Optimization
 

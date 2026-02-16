@@ -82,7 +82,7 @@ CHEATSHEET_CONTENT = """\
   empathy memory          Memory system status
   empathy memory start    Start Redis"""
 
-TIER_CONFIG_PATH = Path(".empathy") / "tier_config.json"
+TIER_CONFIG_PATH = Path(".attune") / "tier_config.json"
 
 
 # =============================================================================

@@ -168,10 +168,14 @@ class PerformanceAuditWorkflow(BaseWorkflow):
 
         Args:
             xml_config: Optional XML prompt configuration dict.
+                Defaults to XML disabled — benchmarks on Claude 4.x show
+                +30% cost overhead with no quality improvement for perf audit.
 
         Returns:
             WorkflowContext with prompt and parsing services.
         """
+        if xml_config is None:
+            xml_config = {"enabled": False}
         return WorkflowContext(
             prompt=PromptService("perf-audit", xml_config=xml_config),
             parsing=ParsingService(xml_config=xml_config),

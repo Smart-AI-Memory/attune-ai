@@ -47,7 +47,7 @@ claude_sync:
 # Persistence
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 """,
             ".claude/CLAUDE.md": """# {{project_name}} - Claude Code Rules
@@ -100,7 +100,7 @@ claude_sync:
 
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 
 inspection:
@@ -251,7 +251,7 @@ claude_sync:
 
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 
 health:
@@ -431,7 +431,7 @@ claude_sync:
 
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 
 # Agent-specific settings

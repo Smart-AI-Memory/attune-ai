@@ -360,6 +360,8 @@ class WorkflowConfig:
     def is_xml_enabled_for_workflow(self, workflow_name: str) -> bool:
         """Check if XML prompts are enabled for a workflow.
 
+        Defaults to True — XML prompts are enabled unless explicitly disabled.
+
         Args:
             workflow_name: The workflow name.
 
@@ -368,7 +370,7 @@ class WorkflowConfig:
 
         """
         config = self.get_xml_config_for_workflow(workflow_name)
-        return bool(config.get("enabled", False))
+        return bool(config.get("enabled", True))
 
     # ==========================================================================
     # Compliance and Feature Flag Methods
@@ -615,20 +617,24 @@ pricing_overrides:
 
 # Global defaults for all workflows
 xml_prompt_defaults:
-  enabled: false          # Set to true to enable XML prompts globally
+  enabled: true           # XML prompts enabled by default (cost-neutral on Claude 4.x)
   schema_version: "1.0"   # XML schema version
   enforce_response_xml: false  # Require XML in responses
   fallback_on_parse_error: true  # Fall back to raw text if XML fails
 
 # Per-workflow XML configuration (overrides defaults)
+# Benchmark results (Claude 4.x, Feb 2026):
+#   security-audit: ENABLE XML (+30% quality, +15% cost) — best ROI
+#   code-review:    DISABLE XML (+56% cost, no quality gain)
+#   perf-audit:     DISABLE XML (+30% cost, no quality gain)
 workflow_xml_configs:
   security-audit:
     enabled: true
     enforce_response_xml: true
     template_name: "security-audit"
   code-review:
-    enabled: true
-    enforce_response_xml: true
+    enabled: false              # Benchmark: +56% cost, no quality improvement
+    enforce_response_xml: false
     template_name: "code-review"
   research:
     enabled: true
@@ -639,8 +645,8 @@ workflow_xml_configs:
         enforce_response_xml: true
         template_name: "bug-analysis"
     perf-audit:
-        enabled: true
-        enforce_response_xml: true
+        enabled: false          # Benchmark: +30% cost, no quality improvement
+        enforce_response_xml: false
         template_name: "perf-audit"
     test-gen:
         enabled: true

@@ -68,7 +68,7 @@ class ProviderConfig:
         env_paths = [
             Path.cwd() / ".env",
             Path.home() / ".env",
-            Path.home() / ".empathy" / ".env",
+            Path.home() / ".attune" / ".env",
         ]
 
         for env_path in env_paths:
@@ -149,7 +149,7 @@ class ProviderConfig:
     def save(self, path: Path | None = None) -> None:
         """Save configuration to file."""
         if path is None:
-            path = Path.home() / ".empathy" / "provider_config.json"
+            path = Path.home() / ".attune" / "provider_config.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         validated_path = _validate_file_path(str(path))  # type: ignore[misc]
         with open(validated_path, "w") as f:
@@ -159,7 +159,7 @@ class ProviderConfig:
     def load(cls, path: Path | None = None) -> ProviderConfig:
         """Load configuration from file, or auto-detect if not found."""
         if path is None:
-            path = Path.home() / ".empathy" / "provider_config.json"
+            path = Path.home() / ".attune" / "provider_config.json"
 
         if path.exists():
             try:

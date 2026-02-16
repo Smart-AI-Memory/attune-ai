@@ -24,7 +24,7 @@ try:
         Path.cwd() / ".env",  # Current working directory
         Path(__file__).parent.parent.parent.parent / ".env",  # Project root
         Path.home() / ".env",  # Home directory
-        Path.home() / ".empathy" / ".env",  # Empathy config directory
+        Path.home() / ".attune" / ".env",  # Attune config directory
     ]
 
     for _env_path in _env_paths:
@@ -119,7 +119,7 @@ class MetaWorkflow:
 
         # Set up storage
         if storage_dir is None:
-            storage_dir = str(Path.home() / ".empathy" / "meta_workflows" / "executions")
+            storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
@@ -939,7 +939,7 @@ def load_execution_result(run_id: str, storage_dir: str | None = None) -> MetaWo
         ValueError: If result file is invalid
     """
     if storage_dir is None:
-        storage_dir = str(Path.home() / ".empathy" / "meta_workflows" / "executions")
+        storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
 
     result_file = Path(storage_dir) / run_id / "result.json"
 
@@ -965,7 +965,7 @@ def list_execution_results(storage_dir: str | None = None) -> list[str]:
         List of run IDs (sorted by timestamp, newest first)
     """
     if storage_dir is None:
-        storage_dir = str(Path.home() / ".empathy" / "meta_workflows" / "executions")
+        storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
 
     storage_path = Path(storage_dir)
 

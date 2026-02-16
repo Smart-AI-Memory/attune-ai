@@ -77,7 +77,7 @@ class MultiBackend:
         self._failed_backends: set[int] = set()
 
     @classmethod
-    def from_config(cls, storage_dir: str = ".empathy") -> "MultiBackend":
+    def from_config(cls, storage_dir: str = ".attune") -> "MultiBackend":
         """Create multi-backend from configuration.
 
         Auto-detects available backends:
@@ -238,7 +238,7 @@ class MultiBackend:
 _global_backend: MultiBackend | None = None
 
 
-def get_multi_backend(storage_dir: str = ".empathy") -> MultiBackend:
+def get_multi_backend(storage_dir: str = ".attune") -> MultiBackend:
     """Get or create the global multi-backend instance.
 
     This is the recommended way to get a multi-backend instance.

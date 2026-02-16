@@ -115,10 +115,14 @@ class SecurityAuditWorkflow(SecurityFilterMixin, BaseWorkflow):
 
         Args:
             xml_config: Optional XML prompt configuration dict.
+                Defaults to XML enabled — benchmarks on Claude 4.x show
+                +30% quality, +15% cost. Best ROI of all workflows.
 
         Returns:
             WorkflowContext with prompt and parsing services.
         """
+        if xml_config is None:
+            xml_config = {"enabled": True, "enforce_response_xml": True}
         return WorkflowContext(
             prompt=PromptService("security-audit", xml_config=xml_config),
             parsing=ParsingService(xml_config=xml_config),

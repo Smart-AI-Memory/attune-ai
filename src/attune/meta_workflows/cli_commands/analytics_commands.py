@@ -417,7 +417,7 @@ def cleanup_executions(
         deleted = 0
         for run_id, _, _ in to_delete:
             try:
-                run_dir = Path.home() / ".empathy" / "meta_workflows" / "executions" / run_id
+                run_dir = Path.home() / ".attune" / "meta_workflows" / "executions" / run_id
                 if run_dir.exists():
                     shutil.rmtree(run_dir)
                     deleted += 1
