@@ -54,7 +54,7 @@ local = EmpathyLLM(
 
 ### EmpathyLLM
 
-::: attune_llm.core.EmpathyLLM
+::: attune.llm.core.EmpathyLLM
     options:
       show_root_heading: false
       show_source: false
