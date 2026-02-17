@@ -2,7 +2,7 @@
 title: "Building Agent Teams with the Anthropic SDK"
 date: "2026-02-16"
 author: "Patrick Roebuck"
-excerpt: "A step-by-step tutorial for creating coordinated agent teams using Attune AI's Anthropic SDK integration. From your first agent to a full team with quality gates — guided by Socratic discovery every step of the way."
+excerpt: "Build a coordinated agent team without config files. Attune's Socratic discovery guides you — just answer the questions."
 tags: ["tutorial", "anthropic-sdk", "multi-agent", "agent-teams", "socratic-discovery"]
 published: true
 ---
@@ -13,563 +13,91 @@ published: true
 
 ---
 
-Part 1 of the **Hands-On SDK** series.
+Most agent frameworks demand upfront configuration. Attune guides you through decisions instead. We call this **Socratic discovery**.
 
-Most agent frameworks ask you to configure everything upfront: roles, prompts, model tiers, coordination strategies, quality thresholds. Before you've even run your first agent, you're drowning in YAML and boilerplate.
+## Step 1: Start with `/attune`
 
-Attune takes a different approach. You describe what you want to accomplish, and the framework guides you through the decisions that matter — one question at a time. We call this **Socratic discovery**.
-
-In this tutorial, you'll go from zero to a fully coordinated 3-agent code review team. Along the way, you'll learn how Attune's `SDKAgent`, `SDKAgentTeam`, and interactive orchestrator work together to make multi-agent coordination feel effortless.
-
-**What we'll build:**
+Type `/attune` in Claude Code. The framework asks what you need:
 
 ```
-┌────────────────────────────────────────────────────┐
-│            Code Review Team (Parallel)              │
-│                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Security  │  │  Code    │  │ Documentation    │  │
-│  │ Auditor   │  │ Reviewer │  │ Checker          │  │
-│  └─────┬────┘  └─────┬────┘  └────────┬─────────┘  │
-│        │             │                │             │
-│        └─────────────┼────────────────┘             │
-│                      ↓                              │
-│             Quality Gate Check                       │
-│        (security ≥ 80, coverage ≥ 80)               │
-└────────────────────────────────────────────────────┘
+? What are you trying to accomplish?
+  ○ Fix or improve something
+  ○ Build or create something
+  ○ Test or validate something
+  ○ Review or analyze something  ← you pick
 ```
 
-## Prerequisites
+No commands to memorize. Just answer.
 
-Install the developer extras:
-
-```bash
-pip install attune-ai[developer]
-```
-
-Set up your Anthropic API key:
-
-```bash
-python -m attune.models.auth_cli setup
-```
-
-This stores your key securely. You'll need a valid Anthropic API key — the framework uses it to call Claude models through the standard Messages API.
-
-**Cost tiers** you should know about:
-
-| Tier | Model | Input Cost | Output Cost | When Used |
-|------|-------|-----------|-------------|-----------|
-| CHEAP | Haiku | $0.80/M tokens | $4.00/M tokens | First attempt (default) |
-| CAPABLE | Sonnet | $3.00/M tokens | $15.00/M tokens | Escalation on failure |
-| PREMIUM | Opus | $15.00/M tokens | $75.00/M tokens | Final escalation |
-
-Every agent starts at the CHEAP tier. If the response isn't adequate, the framework automatically escalates. You never pay for Opus unless Haiku and Sonnet couldn't handle the task.
-
-## Your First Agent
-
-Let's create a single agent and run it:
-
-```python
-import asyncio
-from attune.agents.sdk import SDKAgent, SDKExecutionMode
-
-# Create a security auditor agent
-auditor = SDKAgent(
-    role="Security Auditor",
-    system_prompt=(
-        "You are a security expert. Analyze the provided code "
-        "for vulnerabilities. Return a JSON object with keys: "
-        "'score' (0-100), 'issues' (list of findings), and "
-        "'summary' (one-line assessment)."
-    ),
-    mode=SDKExecutionMode.TOOLS_ONLY,
-)
-
-# Run it
-result = auditor.process({
-    "code": "app.get('/user/:id', (req, res) => { "
-            "db.query('SELECT * FROM users WHERE id=' + req.params.id) })",
-    "language": "javascript",
-    "focus": "sql_injection",
-})
-
-print(f"Success:   {result.success}")
-print(f"Tier used: {result.tier_used}")
-print(f"Cost:      ${result.cost:.4f}")
-print(f"Score:     {result.score}")
-print(f"Escalated: {result.escalated}")
-print(f"Findings:  {result.findings}")
-```
-
-**What's happening under the hood:**
+## Step 2: Scope Your Work
 
 ```
-┌──────────────────────────────────────────────┐
-│              Tier Escalation                  │
-│                                              │
-│  1. Try CHEAP (Haiku)                        │
-│     ├─ Success? → Return result              │
-│     └─ Failure? ↓                            │
-│                                              │
-│  2. Try CAPABLE (Sonnet)                     │
-│     ├─ Success? → Return result              │
-│     └─ Failure? ↓                            │
-│                                              │
-│  3. Try PREMIUM (Opus)                       │
-│     └─ Return result (final attempt)         │
-└──────────────────────────────────────────────┘
+? Which area should we focus on?
+  ○ Specific files
+  ○ Recent changes
+  ○ Full project  ← you pick
+
+? What kind of review?
+  ○ Security audit
+  ○ Code quality
+  ○ All of the above  ← you pick
 ```
 
-The `SDKAgentResult` gives you everything you need:
+The `MetaOrchestrator` scores its confidence. Clear tasks (>80%) run automatically. Vague requests trigger more questions.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `success` | `bool` | Did the agent produce a usable result? |
-| `tier_used` | `str` | Which model tier was actually used |
-| `cost` | `float` | Total LLM cost in USD |
-| `score` | `float` | Quality score (0-100) from the agent's findings |
-| `escalated` | `bool` | Did the agent need to escalate beyond CHEAP? |
-| `findings` | `dict` | Structured output from the agent |
-| `execution_time_ms` | `float` | How long it took |
-| `sdk_used` | `bool` | Whether the Agent SDK or Messages API was used |
-
-A single agent is useful, but the real power comes from teams.
-
-## Meet Socratic Discovery
-
-Before we build a team manually, let's see how Attune guides you through it interactively. This is the framework's core design principle — and the feature that makes it different from every other agent framework.
-
-When you type `/attune` in Claude Code, instead of jumping to execution, the framework asks you questions:
-
-```
-┌─────────────────────────────────────────────────┐
-│  /attune                                         │
-│                                                  │
-│  ? What are you trying to accomplish?            │
-│                                                  │
-│    ○ Fix or improve something                    │
-│    ○ Build or create something                   │
-│    ○ Test or validate something                  │
-│    ○ Review or analyze something  ← you pick     │
-│                                                  │
-│  ? Which area should we focus on?                │
-│                                                  │
-│    ○ Specific files                              │
-│    ○ Recent changes                              │
-│    ○ Full project  ← you pick                    │
-│                                                  │
-│  ? What kind of review?                          │
-│                                                  │
-│    ○ Security audit                              │
-│    ○ Code quality                                │
-│    ○ Performance                                 │
-│    ○ All of the above  ← you pick               │
-│                                                  │
-│  ✓ Running review with 3 agents...               │
-└─────────────────────────────────────────────────┘
-```
-
-**Why does this matter?**
-
-1. **No memorizing commands.** You don't need to know that `attune workflow run code-review --input '{"path":"./src"}'` exists.
-2. **Scoped execution.** Instead of reviewing the entire repo, you narrow to what matters.
-3. **Guided decisions.** The framework only asks when choices matter — high-confidence tasks run automatically.
-
-### The Confidence System
-
-Behind the scenes, the `MetaOrchestrator` scores its confidence in the automatic selection:
-
-```python
-from attune.orchestration import MetaOrchestrator
-
-orchestrator = MetaOrchestrator()
-plan = orchestrator.analyze_and_compose_interactive(
-    task="Review my authentication module for security issues",
-    context={"path": "./src/auth/"},
-)
-```
-
-The orchestrator analyzes your task and calculates a confidence score:
-
-| Factor | Effect on Confidence |
-|--------|---------------------|
-| Clear domain (e.g., "security") | +30% (stays high) |
-| Generic domain (e.g., "improve") | -30% (drops) |
-| Simple task | Stays high |
-| Complex task | -15% |
-| Many agents needed (>5) | -20% |
-| Anthropic-optimized pattern match | +10% |
-
-**If confidence ≥ 80%** — the framework proceeds automatically. No questions needed.
-
-**If confidence < 80%** — you get an `AskUserQuestion` prompt:
+## Step 3: The Framework Proposes a Team
 
 ```
 ? How would you like to create the agent team?
-
   ○ Use recommended: parallel (Recommended)
     3 agents: Security Expert, Code Reviewer,
-    Documentation Checker. Confidence: 72%
-
+    Documentation Checker. Confidence: 85%
   ○ Customize team composition
-    Choose specific agents and pattern manually
-
-  ○ Show all 10 patterns
-    Learn about patterns and select one
+  ○ Show all patterns
 ```
 
-This is the `AskUserQuestion` tool in action — the same tool Claude Code uses for interactive prompts. Attune integrates with it natively, so guided discovery feels like a natural conversation.
+Accept or customize. Customization gives you a multi-select agent picker and pattern selector — still guided.
 
-## Building a Team
+## Step 4: Agents Run with Cost Control
 
-Now let's build that 3-agent team in code:
-
-```python
-import asyncio
-from attune.agents.sdk import (
-    SDKAgent,
-    SDKAgentTeam,
-    QualityGate,
-    SDKExecutionMode,
-)
-
-# --- Agent 1: Security Auditor ---
-security = SDKAgent(
-    role="Security Auditor",
-    system_prompt=(
-        "You are a security expert. Analyze code for "
-        "vulnerabilities including injection, XSS, auth "
-        "bypasses, and insecure patterns. Return JSON with: "
-        "'score' (0-100), 'issues' (list), 'severity_counts' "
-        "(dict with high/medium/low counts)."
-    ),
-    mode=SDKExecutionMode.TOOLS_ONLY,
-)
-
-# --- Agent 2: Code Reviewer ---
-reviewer = SDKAgent(
-    role="Code Reviewer",
-    system_prompt=(
-        "You are a senior code reviewer. Evaluate code quality, "
-        "readability, maintainability, and adherence to best "
-        "practices. Return JSON with: 'score' (0-100), "
-        "'issues' (list), 'suggestions' (list of improvements)."
-    ),
-    mode=SDKExecutionMode.TOOLS_ONLY,
-)
-
-# --- Agent 3: Documentation Checker ---
-docs = SDKAgent(
-    role="Documentation Checker",
-    system_prompt=(
-        "You are a documentation specialist. Check for missing "
-        "docstrings, incomplete API documentation, and unclear "
-        "comments. Return JSON with: 'score' (0-100), "
-        "'missing_docs' (list), 'coverage_pct' (float)."
-    ),
-    mode=SDKExecutionMode.TOOLS_ONLY,
-)
-
-# --- Quality Gates ---
-gates = [
-    QualityGate(
-        name="min_security_score",
-        agent_role="Security Auditor",
-        metric="score",
-        threshold=80.0,
-        required=True,  # Team fails if security is low
-    ),
-    QualityGate(
-        name="min_quality_score",
-        agent_role="Code Reviewer",
-        metric="score",
-        threshold=70.0,
-        required=True,
-    ),
-    QualityGate(
-        name="min_doc_coverage",
-        agent_role="Documentation Checker",
-        metric="coverage_pct",
-        threshold=60.0,
-        required=False,  # Advisory — doesn't block
-    ),
-]
-
-# --- Create the Team ---
-team = SDKAgentTeam(
-    team_name="Code Review Team",
-    agents=[security, reviewer, docs],
-    quality_gates=gates,
-    parallel=True,  # All 3 agents run simultaneously
-)
-```
-
-That's it. Three agents, three quality gates, one team. The `parallel=True` flag means all agents run concurrently via `asyncio.gather` — you get the combined results in roughly the time of the slowest agent.
-
-## Quality Gates in Action
-
-Quality gates are named thresholds that check agent results automatically. Each gate specifies:
-
-- **`agent_role`** — which agent's result to check
-- **`metric`** — the key in `findings` to evaluate
-- **`threshold`** — minimum acceptable value
-- **`required`** — if `True`, gate failure fails the entire team
-
-Here's how gates evaluate:
+Every agent starts on the cheapest tier (Haiku). If it can't handle the task, it escalates to Sonnet, then Opus. You only pay for what you need.
 
 ```
-Agent Results:
-  Security Auditor  → score: 92  ✓ (≥ 80)
-  Code Reviewer     → score: 85  ✓ (≥ 70)
-  Doc Checker       → coverage_pct: 45  ✗ (< 60, but not required)
+✓ Running review with 3 agents...
 
-Team Result: SUCCESS (all required gates passed)
-```
-
-If the security score had been 65:
-
-```
-Agent Results:
-  Security Auditor  → score: 65  ✗ (< 80, REQUIRED)
-  Code Reviewer     → score: 85  ✓ (≥ 70)
-  Doc Checker       → coverage_pct: 78  ✓ (≥ 60)
-
-Team Result: FAILED (required gate "min_security_score" failed)
-```
-
-**Common quality gates by workflow:**
-
-| Workflow | Gate | Threshold | Required? |
-|----------|------|-----------|-----------|
-| Release prep | Security score | ≥ 90 | Yes |
-| Release prep | Test coverage | ≥ 80% | Yes |
-| Code review | Quality score | ≥ 70 | Yes |
-| Code review | Doc coverage | ≥ 60% | No |
-| Bug prediction | High-severity count | = 0 | Yes |
-| Performance audit | P95 latency | < 200ms | No |
-
-## Interactive Team Building
-
-You don't have to build teams in code. The `MetaOrchestrator` can analyze a natural language description and compose a team for you — asking questions along the way:
-
-```python
-from attune.orchestration import MetaOrchestrator
-
-orchestrator = MetaOrchestrator()
-
-# Describe your task in plain English
-plan = orchestrator.analyze_and_compose_interactive(
-    task="Prepare for v3.0 release with security and quality checks",
-    context={"version": "3.0.0", "path": "./src/"},
-)
-
-print(f"Strategy:  {plan.strategy}")
-print(f"Agents:    {[a.role for a in plan.agents]}")
-print(f"Est. cost: ${plan.estimated_cost:.2f}")
-```
-
-For a clear task like "release prep," the confidence is high (>80%) and it proceeds automatically. But try something more ambiguous:
-
-```python
-plan = orchestrator.analyze_and_compose_interactive(
-    task="Improve the codebase",
-    context={},
-)
-```
-
-Now the confidence drops — "improve" is generic. The orchestrator prompts you:
-
-```
-? How would you like to create the agent team?
-
-  ○ Use recommended: parallel (Recommended)
-    5 agents: Analyzer, Reviewer, Security Expert,
-    Performance Auditor, Documentation Checker.
-    Confidence: 56%
-
-  ○ Customize team composition
-
-  ○ Show all 10 patterns
-```
-
-If you choose **"Customize team composition"**, you get a multi-select agent picker:
-
-```
-? Which agents should be included in the team?
-
-  ☑ Security Expert
-  ☑ Code Reviewer
-  ☐ Performance Auditor
-  ☐ Documentation Checker
-  ☑ Test Analyzer
-```
-
-Then a pattern selector:
-
-```
-? Which composition pattern should be used?
-
-  ○ parallel (Recommended)
-    Execute agents simultaneously (A ‖ B ‖ C)
-
-  ○ sequential
-    Execute agents one after another (A → B → C)
-
-  ○ tool_enhanced
-    Single agent with comprehensive tool access
-```
-
-Every choice is an `AskUserQuestion` call. If you're running inside Claude Code, these render as the familiar interactive prompts. If you're running from a terminal script, they fall back to CLI input. If neither is available, the framework uses sensible defaults and logs what it chose.
-
-## Choosing Composition Patterns
-
-The team we built uses **parallel** execution, but Attune supports 6 core patterns:
-
-```
-Sequential:   A → B → C
-              Each agent sees the previous agent's output.
-              Use when: steps depend on each other.
-
-Parallel:     A ‖ B ‖ C
-              All agents run simultaneously.
-              Use when: agents are independent.
-
-Debate:       A ⇄ B → Synthesis
-              Agents critique each other's work.
-              Use when: you need multiple perspectives.
-
-Teaching:     Junior → Expert
-              Cheap model drafts, expensive model validates.
-              Use when: optimizing cost with quality checks.
-
-Refinement:   Draft → Review → Polish
-              Iterative improvement through tiers.
-              Use when: highest quality matters.
-
-Adaptive:     Classifier → Specialist
-              Routes to the right expert based on input.
-              Use when: task type varies.
-```
-
-**How to choose:**
-
-| Your Situation | Best Pattern |
-|----------------|-------------|
-| Independent checks (security + quality + docs) | Parallel |
-| Pipeline where step N needs step N-1 | Sequential |
-| Need to balance cost and quality | Teaching |
-| Need the best possible output | Refinement |
-| Multiple valid approaches to evaluate | Debate |
-| Mixed task types from users | Adaptive |
-
-For a deeper dive into all 10 patterns (including the advanced Conditional, Tool-Enhanced, Prompt-Cached, and Delegation patterns), see the [Grammar of AI Collaboration](/blog/grammar-of-ai-collaboration) series.
-
-## Running Your Team
-
-Let's execute the team and inspect the results:
-
-```python
-async def main():
-    result = await team.execute({
-        "code": open("src/auth/login.py").read(),
-        "language": "python",
-        "project": "attune-ai",
-    })
-
-    # Overall result
-    print(f"Team: {result.team_name}")
-    print(f"Success: {result.success}")
-    print(f"Total cost: ${result.total_cost:.4f}")
-    print(f"Time: {result.execution_time_ms:.0f}ms")
-
-    # Quality gates
-    print("\nQuality Gates:")
-    for gate, passed in result.quality_gate_results.items():
-        status = "✓ PASS" if passed else "✗ FAIL"
-        print(f"  {gate}: {status}")
-
-    # Per-agent details
-    print("\nAgent Results:")
-    for agent_result in result.agent_results:
-        print(f"\n  {agent_result.role}:")
-        print(f"    Tier: {agent_result.tier_used}")
-        print(f"    Cost: ${agent_result.cost:.4f}")
-        print(f"    Score: {agent_result.score}")
-        print(f"    Escalated: {agent_result.escalated}")
-
-asyncio.run(main())
-```
-
-**Sample output:**
-
-```
-Team: Code Review Team
-Success: True
-Total cost: $0.0087
-Time: 3421ms
+  Security Auditor:  score 92  (cheap, $0.003)
+  Code Reviewer:     score 85  (cheap, $0.003)
+  Doc Checker:       score 45  (cheap, $0.003)
 
 Quality Gates:
-  min_security_score: ✓ PASS
-  min_quality_score: ✓ PASS
-  min_doc_coverage: ✗ FAIL
+  security_score (≥80): ✓ PASS
+  quality_score  (≥70): ✓ PASS
+  doc_coverage   (≥60): ✗ FAIL (advisory)
 
-Agent Results:
-
-  Security Auditor:
-    Tier: cheap
-    Cost: $0.0031
-    Score: 92.0
-    Escalated: False
-
-  Code Reviewer:
-    Tier: cheap
-    Cost: $0.0028
-    Score: 85.0
-    Escalated: False
-
-  Documentation Checker:
-    Tier: cheap
-    Cost: $0.0028
-    Score: 45.0
-    Escalated: False
+Team Result: SUCCESS — total $0.009
 ```
 
-All three agents ran in parallel on the CHEAP tier (Haiku) for under a cent. The documentation gate failed but it's advisory (`required=False`), so the team still succeeds. If you needed stricter enforcement, flip that gate to `required=True`.
+Required gates block on failure. Advisory gates report but don't block.
 
-**Cost breakdown by tier** (what you'd pay at scale):
+## What Just Happened?
 
-| Scenario | Agents | Tier | Approx. Cost |
-|----------|--------|------|-------------|
-| Simple review (3 agents) | 3 | CHEAP | ~$0.01 |
-| Complex audit (3 agents, 1 escalation) | 3 | Mixed | ~$0.05 |
-| Full release prep (5 agents) | 5 | CHEAP | ~$0.02 |
-| Deep security analysis | 1 | PREMIUM | ~$0.15 |
+Three questions in, you have a parallel agent team with quality enforcement — no boilerplate, no config. The Socratic approach means:
 
-## What's Next
+- **Beginners** get guided through every decision
+- **Experts** get automatic execution when confidence is high
+- **Everyone** gets scoped, cost-efficient runs
 
-This is Part 1 of the **Hands-On SDK** series. You've learned:
-
-- How to create and run a single `SDKAgent` with tier escalation
-- How Socratic discovery guides you through team composition
-- How to build an `SDKAgentTeam` with parallel execution
-- How quality gates enforce standards automatically
-- How the `MetaOrchestrator` builds teams from natural language
-
-**Coming in Part 2:** We'll explore `DynamicTeam` strategies — two-phase execution, delegation chains, and Redis-based coordination for distributed agent teams.
-
-**Coming in Part 3:** Dashboard monitoring, real-time event streaming, and human approval gates for production deployments.
+Go deeper with `SDKAgent` and `SDKAgentTeam` in code, or explore all 10 composition patterns in the [Grammar of AI Collaboration](/blog/grammar-of-ai-collaboration) series.
 
 ---
-
-**Ready to try it?**
 
 ```bash
 pip install attune-ai[developer]
 python -m attune.models.auth_cli setup
 ```
 
-Then type `/attune` in Claude Code and let the questions guide you.
+Type `/attune` and let the questions guide you.
 
 ---
 
-*[Attune AI](https://github.com/Smart-AI-Memory/attune-ai) is an open-source framework for AI-powered developer workflows. Star us on GitHub if you find this useful.*
+*[Attune AI](https://github.com/Smart-AI-Memory/attune-ai) is open-source. Star us on GitHub.*

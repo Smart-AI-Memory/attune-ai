@@ -6,13 +6,12 @@ import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Framework',
-  description: 'Power tools for Claude Code: enhanced workflows, Socratic agent creation, and intelligent orchestration for VS Code power users.',
+  description: 'Power tools for Claude Code: enhanced workflows, Socratic agent creation, and intelligent orchestration.',
   url: 'https://smartaimemory.com/framework',
   keywords: [
     'Claude Code tools',
     'AI developer workflows',
     'Socratic agent builder',
-    'VS Code AI extension',
     'AI orchestration framework',
   ],
 });
@@ -60,7 +59,7 @@ export default function FrameworkPage() {
               Power Tools for <span className="text-gradient">Claude Code</span>
             </h1>
             <p className="text-2xl text-[var(--text-secondary)] mb-8">
-              Enhanced workflows, Socratic agent creation, and intelligent orchestration for VS Code power users
+              Enhanced workflows, Socratic agent creation, and intelligent orchestration for Claude Code
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a

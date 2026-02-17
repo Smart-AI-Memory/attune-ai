@@ -93,22 +93,6 @@ export const FEATURES: Feature[] = [
     pricingDescription: 'Persistent memory system',
   },
   {
-    id: 'dashboard',
-    name: 'VSCode Dashboard',
-    icon: '🎛️',
-    benefitDescription: 'Real-time health scores, cost tracking, and workflow monitoring at a glance.',
-    technicalDescription: 'Integrated VSCode extension with health metrics, cost analytics, and quick actions.',
-    pricingDescription: 'VSCode dashboard',
-  },
-  {
-    id: 'multi-provider',
-    name: 'Multi-Provider Support',
-    icon: '🔌',
-    benefitDescription: 'Works with Anthropic, OpenAI, Gemini, and Ollama. Use your preferred provider.',
-    technicalDescription: 'Core workflows support multiple LLM providers. Agent/team creation optimized for Claude Code.',
-    pricingDescription: 'Multi-LLM support',
-  },
-  {
     id: 'security',
     name: 'Enterprise Security',
     icon: '🔒',

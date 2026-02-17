@@ -270,44 +270,6 @@ export default function WorkflowsPage() {
           </div>
         </section>
 
-        {/* VSCode Integration */}
-        <section className="py-20 bg-[var(--border)] bg-opacity-30">
-          <div className="container">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-6">
-                All Workflows in Your VSCode Dashboard
-              </h2>
-              <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Access all 14 workflows from the Attune AI Dashboard panel in VSCode.
-                Input files, folders, or custom prompts—get results without leaving your editor.
-              </p>
-              <div className="grid sm:grid-cols-3 gap-6">
-                <div className="bg-[var(--background)] p-6 rounded-xl">
-                  <div className="text-3xl mb-3">🎛️</div>
-                  <h3 className="font-bold mb-2">One Dashboard</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    All workflows accessible from a single panel
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] p-6 rounded-xl">
-                  <div className="text-3xl mb-3">📁</div>
-                  <h3 className="font-bold mb-2">File Picker</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Select files and folders directly from your workspace
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] p-6 rounded-xl">
-                  <div className="text-3xl mb-3">📊</div>
-                  <h3 className="font-bold mb-2">Cost Tracking</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Real-time cost monitoring for every workflow run
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* CTA */}
         <section className="py-20">
           <div className="container">
