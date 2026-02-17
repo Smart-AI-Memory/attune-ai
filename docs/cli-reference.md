@@ -1,5 +1,5 @@
 ---
-description: Meta-Workflow CLI Command Reference API reference: **Version:** 4.2.0 **Last Updated:** 2026-01-17 **Total Commands:** 10 --- ## Quick Reference empath
+description: "Meta-Workflow CLI Command Reference"
 ---
 
 # Meta-Workflow CLI Command Reference
