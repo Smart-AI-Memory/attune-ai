@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-02-17
+
+### Added
+
+- **Redis Auto-Detection** - Redis is now automatically detected and enabled when available. No more manual `REDIS_ENABLED=true` env var required. When Redis is not installed, users get a one-time interactive prompt with platform-specific install instructions (brew on macOS, apt on Linux, Docker fallback).
+- **`RedisAutoDetector` class** (`src/attune/memory/redis_auto_detect.py`): Full detection flow with module-level caching (30s TTL), Python package check, server ping (0.5s timeout), and user preference persistence in `~/.attune/config.yml`.
+- **27 new tests** for Redis auto-detection covering detection flow, caching/TTL, TTY detection, preference persistence, platform-specific commands, prompt UX, and backward compatibility.
+
+### Changed
+
+- **`redis_auto_start` default flipped to `True`** in `UnifiedMemory` config. Redis is now started automatically when available instead of requiring opt-in.
+- **`REDIS_ENABLED` env var behavior**: When unset (the common case), auto-detection runs. When explicitly set to `true` or `false`, the explicit value takes precedence for backward compatibility.
+- **`redis_bootstrap.ensure_redis()`**: Now offers interactive install prompt when all start methods fail in TTY mode.
+
+### Fixed
+
+- **Version sync**: Aligned `pyproject.toml`, `__init__.py`, and documentation versions.
+
 ## [2.9.0] - 2026-02-16
 
 ### Added

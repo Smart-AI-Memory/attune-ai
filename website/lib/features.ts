@@ -107,7 +107,7 @@ export const FEATURES: Feature[] = [
     benefitDescription: 'Agents compose themselves. Describe a goal, get an optimized multi-agent team.',
     technicalDescription: 'MetaOrchestrator analyzes tasks and automatically selects composition patterns and agent configurations.',
     pricingDescription: 'Auto-composing agent teams',
-    version: 'v2.9.0',
+    version: 'v2.10.0',
   },
 ];
 

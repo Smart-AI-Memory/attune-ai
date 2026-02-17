@@ -20,13 +20,13 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.9.1
+## What's New in v2.10.0
 
-- **API Cost Clarity** - Clarified when API costs apply vs free subscription usage across documentation and CLI output.
-- **XML Prompt Benchmark Suite** - A/B testing harness (`benchmarks/xml_vs_plain/`) that measures XML vs plain text prompt quality on Claude 4.x with 5 automated metrics. Real API results: 100% parse success, +68% quality score.
-- **Data-Driven XML Configuration** - Per-workflow XML settings based on 30-call benchmark on Sonnet 4.5. Security-audit uses XML (+30% quality, +15% cost). Code-review and perf-audit use plain text (lower cost, same quality).
-- **XML Enabled by Default** - All 10 XML templates and 5 wizards now use structured XML prompts unless explicitly disabled. Enables machine-parseable output for dashboards and automation.
-- **14,915 Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
+- **Redis Auto-Detection** - Redis is now automatically detected and enabled when available. No more manual `REDIS_ENABLED=true` setup. When Redis is not installed, you get a one-time prompt with platform-specific install instructions.
+- **Zero-Config Memory** - Just install Redis and Attune uses it. Unset the env var and auto-detection handles everything. Existing `REDIS_ENABLED` settings are still respected for backward compatibility.
+- **Interactive Install Prompts** - Platform-aware prompts offer `brew install redis` on macOS, `apt install` on Linux, or Docker fallback. Choose to install, skip, or permanently dismiss.
+- **CI/CD Safe** - Non-interactive environments (CI pipelines, scripts) silently fall back to in-memory storage with no prompts.
+- **14,940+ Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
 
 ---
 
@@ -148,10 +148,11 @@ attune telemetry show
 
 ### Optional Features
 
-**Redis-enhanced memory** (for multi-session coordination, real-time events):
+**Redis-enhanced memory** (auto-detected when installed):
 
 ```bash
 pip install 'attune-ai[memory]'
+# Redis is automatically detected and enabled — no env vars needed
 ```
 
 **All features** (includes memory, dashboard, agents):
