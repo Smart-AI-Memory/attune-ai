@@ -21,6 +21,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -438,7 +439,28 @@ def ensure_redis(
             logger.debug(f"{method.value}_failed", error=str(e))
             continue
 
-    # All methods failed - build platform-specific message
+    # All methods failed — offer interactive install if in a TTY
+    if sys.stdin.isatty():
+        try:
+            from attune.memory.redis_auto_detect import RedisAutoDetector
+
+            detector = RedisAutoDetector()
+            if detector.should_prompt():
+                if detector.prompt_install():
+                    # Retry after install
+                    if _check_redis_running(host, port):
+                        return RedisStatus(
+                            available=True,
+                            method=RedisStartMethod.DIRECT,
+                            host=host,
+                            port=port,
+                            message="Redis installed and started via user prompt",
+                        )
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Install prompt is best-effort — fall through to mock
+            logger.debug("redis_install_prompt_failed", error=str(e))
+
+    # Build platform-specific fallback message
     if IS_WINDOWS:
         install_instructions = (
             "Could not start Redis. For full functionality, install Redis:\n"

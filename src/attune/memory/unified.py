@@ -77,7 +77,7 @@ class MemoryConfig:
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_mock: bool = False
-    redis_auto_start: bool = False  # Changed to False - file-first by default
+    redis_auto_start: bool = True  # Auto-detect and start Redis if available
     redis_required: bool = False  # If True, fail without Redis
     default_ttl_seconds: int = 3600  # 1 hour
 
@@ -133,7 +133,7 @@ class MemoryConfig:
             redis_host=get_attune_env("REDIS_HOST", "localhost") or "localhost",
             redis_port=int(get_attune_env("REDIS_PORT", "6379") or "6379"),
             redis_mock=(get_attune_env("REDIS_MOCK", "") or "").lower() == "true",
-            redis_auto_start=(get_attune_env("REDIS_AUTO_START", "false") or "false").lower()
+            redis_auto_start=(get_attune_env("REDIS_AUTO_START", "true") or "true").lower()
             == "true",
             redis_required=(get_attune_env("REDIS_REQUIRED", "false") or "false").lower() == "true",
             # Long-term storage
