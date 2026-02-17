@@ -125,20 +125,29 @@ class BaseOperations:
         if config is not None:
             self._config = config
         else:
-            # Check environment variable for Redis enablement (default: disabled)
-            redis_enabled = os.getenv("REDIS_ENABLED", "false").lower() in (
-                "true",
-                "1",
-                "yes",
-            )
+            # Check for explicit REDIS_ENABLED env var (backward compatible)
+            redis_explicit = os.getenv("REDIS_ENABLED")
+            if redis_explicit is not None:
+                # User explicitly set REDIS_ENABLED — respect it
+                redis_enabled = redis_explicit.lower() in ("true", "1", "yes")
+                if not redis_enabled and not use_mock:
+                    use_mock = True
+                    logger.info(
+                        "redis_disabled_via_env",
+                        message="Redis explicitly disabled via REDIS_ENABLED env var",
+                    )
+            elif not use_mock:
+                # Auto-detect Redis availability
+                from attune.memory.redis_auto_detect import RedisAutoDetector
 
-            # If Redis is not enabled via env var, force mock mode
-            if not redis_enabled and not use_mock:
-                use_mock = True
-                logger.info(
-                    "redis_disabled_via_env",
-                    message="Redis not enabled in environment, using mock mode",
-                )
+                detector = RedisAutoDetector()
+                result = detector.detect()
+                if not result.available:
+                    use_mock = True
+                    logger.info(
+                        "redis_auto_detect_unavailable",
+                        message=f"Redis not available: {result.reason}",
+                    )
 
             if use_mock:
                 self._config = RedisConfig(use_mock=True)
