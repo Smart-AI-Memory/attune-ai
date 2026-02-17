@@ -40,7 +40,7 @@ pip install attune-ai[developer]
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
 | **MCP integration** | 18 native tools | No | No | No |
 
-Attune is a **workflow operating system for Claude** — it sits above coding agents and below general orchestration frameworks, providing production-ready developer workflows with intelligent cost routing. [Full comparison](docs/comparison.md)
+Attune is a **workflow operating system for Claude** — it sits above coding agents and below general orchestration frameworks, providing production-ready developer workflows with intelligent cost routing. [Full comparison](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/comparison.md)
 
 ---
 
@@ -167,7 +167,7 @@ pip install 'attune-ai[all]'
 attune features
 ```
 
-See [Feature Availability Guide](docs/FEATURES.md) for detailed information about core vs optional features.
+See [Feature Availability Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/FEATURES.md) for detailed information about core vs optional features.
 
 ---
 
@@ -345,25 +345,25 @@ export REDIS_URL="redis://localhost:6379"  # Optional: for memory features
 attune workflow run security-audit --path ./src
 ```
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability reporting.
 
 ---
 
 ## Documentation
 
-- [Quick Start Guide](docs/quickstart.md)
-- [CLI Reference](docs/cli-reference.md)
-- [Authentication Strategy Guide](docs/AUTH_STRATEGY_GUIDE.md)
-- [Orchestration API Reference](docs/ORCHESTRATION_API.md)
-- [Workflow Coordination Guide](docs/WORKFLOW_COORDINATION.md)
-- [Architecture Overview](docs/ARCHITECTURE.md)
+- [Quick Start Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/quickstart.md)
+- [CLI Reference](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/cli-reference.md)
+- [Authentication Strategy Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/AUTH_STRATEGY_GUIDE.md)
+- [Orchestration API Reference](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/ORCHESTRATION_API.md)
+- [Workflow Coordination Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/WORKFLOW_COORDINATION.md)
+- [Architecture Overview](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/ARCHITECTURE.md)
 - [Full Documentation](https://smartaimemory.com/framework-docs/)
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -381,7 +381,7 @@ Special thanks to:
 - **[LangChain](https://github.com/langchain-ai/langchain)** - Agent framework powering our orchestration
 - **[FastAPI](https://github.com/tiangolo/fastapi)** - Modern Python web framework
 
-[View Full Acknowledgements →](ACKNOWLEDGEMENTS.md)
+[View Full Acknowledgements →](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGEMENTS.md)
 
 ---
 
