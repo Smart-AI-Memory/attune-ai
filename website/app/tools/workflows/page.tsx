@@ -1,11 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import WorkflowDashboard from '@/components/workflows/WorkflowDashboard';
 
 export const metadata: Metadata = {
-  title: 'Multi-Model Workflow Dashboard | Attune AI',
+  title: 'Multi-Model Workflows | Attune AI',
   description:
-    'Monitor and analyze cost-optimized multi-model workflows. Track savings from 3-tier model routing with Haiku, Sonnet, and Opus.',
+    'Cost-optimized multi-model workflows with 3-tier model routing using Haiku, Sonnet, and Opus.',
   keywords: [
     'multi-model',
     'workflow',
@@ -14,10 +13,9 @@ export const metadata: Metadata = {
     'model tiers',
     'AI costs',
     'Claude',
-    'GPT',
   ],
   openGraph: {
-    title: 'Multi-Model Workflow Dashboard | Attune AI',
+    title: 'Multi-Model Workflows | Attune AI',
     description:
       'Track cost savings from intelligent model routing. Optimize AI spend with 3-tier workflows.',
     type: 'website',
@@ -44,11 +42,8 @@ export default function WorkflowsPage() {
               <Link href="/docs" className="text-white/80 hover:text-white text-sm">
                 Docs
               </Link>
-              <Link href="/tools/debug-wizard" className="text-white/80 hover:text-white text-sm">
-                Debug Wizard
-              </Link>
               <Link
-                href="/docs/installation"
+                href="/framework-docs/tutorials/quickstart/"
                 className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium"
               >
                 Get Started
@@ -62,39 +57,51 @@ export default function WorkflowsPage() {
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white pb-12 pt-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-3xl font-bold">Workflow Dashboard</h2>
-            <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full">
-              v3.1.0
-            </span>
+            <h2 className="text-3xl font-bold">Multi-Model Workflows</h2>
           </div>
           <p className="text-white/80 max-w-2xl">
-            Monitor your multi-model workflows with Smart Router intelligence. Track cost savings from intelligent 3-tier
-            routing and auto-chaining wizard workflows.
+            Cost-optimized workflows with intelligent 3-tier model routing.
+            Every task starts on the cheapest tier and escalates only when needed.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <div className="bg-white/10 rounded-lg px-4 py-2">
               <span className="text-sm text-white/60">Cheap Tier</span>
-              <p className="font-semibold">Haiku / GPT-4o-mini</p>
+              <p className="font-semibold">Haiku</p>
             </div>
             <div className="bg-white/10 rounded-lg px-4 py-2">
               <span className="text-sm text-white/60">Capable Tier</span>
-              <p className="font-semibold">Sonnet / GPT-4o</p>
+              <p className="font-semibold">Sonnet</p>
             </div>
             <div className="bg-white/10 rounded-lg px-4 py-2">
               <span className="text-sm text-white/60">Premium Tier</span>
-              <p className="font-semibold">Opus 4.5 / GPT-5.2</p>
-            </div>
-            <div className="bg-white/20 rounded-lg px-4 py-2 border border-white/30">
-              <span className="text-sm text-white/60">NEW: Smart Router</span>
-              <p className="font-semibold">Auto-dispatch + Chaining</p>
+              <p className="font-semibold">Opus</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Dashboard */}
-      <main id="main-content" className="max-w-6xl mx-auto px-4 py-8 -mt-4">
-        <WorkflowDashboard />
+      {/* Content */}
+      <main id="main-content" className="max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center">
+          <p className="text-lg text-gray-600 mb-8">
+            Run workflows from Claude Code using the <code className="bg-gray-100 px-2 py-1 rounded">/attune</code> command
+            or the CLI with <code className="bg-gray-100 px-2 py-1 rounded">attune workflow run</code>.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/workflows"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Browse Workflows
+            </Link>
+            <Link
+              href="/framework-docs/tutorials/quickstart/"
+              className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:border-gray-400 transition-colors"
+            >
+              Quick Start Guide
+            </Link>
+          </div>
+        </div>
       </main>
 
       {/* Footer */}

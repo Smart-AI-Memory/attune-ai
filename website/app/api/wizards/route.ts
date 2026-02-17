@@ -1,6 +1,6 @@
 /**
- * Wizards API Route - List all available wizard dashboards
- * Points to external dashboards with working wizards
+ * Wizards API Route - List all available wizard collections
+ * Points to external wizard portals
  */
 
 export const dynamic = 'force-dynamic';

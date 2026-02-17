@@ -1,7 +1,7 @@
 /**
- * Telemetry Panel - Main VSCode Webview Component
+ * Telemetry Panel - LLM Usage Component
  *
- * Displays LLM usage telemetry in a webview tab within the main editor area.
+ * Displays LLM usage telemetry data.
  *
  * **Features:**
  * - Overview stats (total cost, calls, success rate)
@@ -12,10 +12,7 @@
  * - Auto-refresh (60-second polling)
  *
  * **Access:**
- * - Status bar button: 📊 Telemetry
- * - Command palette: "Empathy: Open Telemetry Dashboard"
- *
- * **Implementation Status:** Sprint 1 (Week 1) - Foundation
+ * - CLI: `attune telemetry`
  *
  * Copyright 2025 Smart-AI-Memory
  * Licensed under Apache 2.0

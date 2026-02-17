@@ -13,8 +13,6 @@ const featureLinks: Record<string, string> = {
   'wizards': '/wizards',
   'model-routing': '/framework-docs/',
   'memory': '/framework-docs/',
-  'dashboard': '/framework-docs/',
-  'multi-provider': '/framework-docs/',
   'security': '/framework-docs/',
 };
 
@@ -23,9 +21,7 @@ const homepageFeatureIds = [
   'socratic-builder',
   'workflows',
   'agent-templates',
-  'dashboard',
   'memory',
-  'multi-provider',
   'security',
   'wizards',
 ];
@@ -87,7 +83,7 @@ export default function Home() {
                 <span className="text-gradient">Claude Code</span>
               </h1>
               <p className="text-xl text-[var(--text-secondary)] mb-8 max-w-3xl mx-auto">
-                Enhanced workflows and intelligent orchestration for VS Code power users.
+                Enhanced workflows and intelligent orchestration for Claude Code.
                 Create custom agents through guided Socratic questions—no boilerplate, just describe what you need.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
