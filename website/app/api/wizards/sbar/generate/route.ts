@@ -58,7 +58,7 @@ ${recommendation}
 ═══════════════════════════════════════════════════════
 
 Report Type: SBAR (Situation, Background, Assessment, Recommendation)
-Framework: Attune AI v2.9.0
+Framework: Attune AI v2.10.0
 Compliance: HIPAA-ready (PHI should be de-identified before LLM processing)
 
 This report follows standardized clinical communication protocols for
