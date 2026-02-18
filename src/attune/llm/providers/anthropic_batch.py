@@ -23,7 +23,7 @@ class AnthropicBatchProvider:
         >>> requests = [
         ...     {
         ...         "custom_id": "task_1",
-        ...         "model": "claude-sonnet-4-6",
+        ...         "model": "claude-sonnet-4-5",
         ...         "messages": [{"role": "user", "content": "Analyze X"}],
         ...         "max_tokens": 1024
         ...     }
@@ -90,11 +90,11 @@ class AnthropicBatchProvider:
 
         # Validate and convert old format to new format if needed
         formatted_requests = []
-        for idx, req in enumerate(requests):
+        for req in requests:
             if "params" not in req:
                 # Old format: convert to new format with params wrapper
                 formatted_req = {
-                    "custom_id": req.get("custom_id", f"req_{idx}"),
+                    "custom_id": req.get("custom_id", f"req_{id(req)}"),
                     "params": {
                         "model": req.get("model", "claude-sonnet-4-6"),
                         "messages": req.get("messages", []),
@@ -115,16 +115,8 @@ class AnthropicBatchProvider:
             self._batch_jobs[batch.id] = batch
             logger.info(f"Created batch {batch.id} with {len(formatted_requests)} requests")
             return batch.id
-        except (ValueError, TypeError) as e:
-            logger.error(f"Invalid batch request format: {e}")
-            raise ValueError(f"Invalid batch request: {e}") from e
-        except ImportError as e:
-            logger.error(f"Anthropic SDK not properly installed: {e}")
-            raise
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Catch Anthropic SDK errors (APIError, AuthenticationError, etc.)
-            # without importing specific exception types that may not be available
-            logger.exception(f"Failed to create batch: {e}")
+        except Exception as e:
+            logger.error(f"Failed to create batch: {e}")
             raise RuntimeError(f"Batch creation failed: {e}") from e
 
     def get_batch_status(self, batch_id: str) -> Any:
@@ -150,9 +142,8 @@ class AnthropicBatchProvider:
             batch = self.client.messages.batches.retrieve(batch_id)
             self._batch_jobs[batch_id] = batch
             return batch
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Catch Anthropic SDK errors without importing specific types
-            logger.exception(f"Failed to get batch status for {batch_id}: {e}")
+        except Exception as e:
+            logger.error(f"Failed to get batch status for {batch_id}: {e}")
             raise RuntimeError(f"Failed to get batch status: {e}") from e
 
     def get_batch_results(self, batch_id: str) -> list[dict[str, Any]]:
@@ -190,19 +181,11 @@ class AnthropicBatchProvider:
 
         try:
             # Use correct Message Batches API endpoint
-            # results() returns an iterator of MessageBatchIndividualResponse objects
-            # Convert to dicts at the boundary for clean downstream processing
+            # results() returns an iterator, convert to list
             results_iterator = self.client.messages.batches.results(batch_id)
-            results = []
-            for result in results_iterator:
-                if hasattr(result, "model_dump"):
-                    results.append(result.model_dump())
-                else:
-                    results.append(result)
-            return results
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Catch Anthropic SDK errors without importing specific types
-            logger.exception(f"Failed to get batch results for {batch_id}: {e}")
+            return list(results_iterator)
+        except Exception as e:
+            logger.error(f"Failed to get batch results for {batch_id}: {e}")
             raise RuntimeError(f"Failed to get batch results: {e}") from e
 
     async def wait_for_batch(

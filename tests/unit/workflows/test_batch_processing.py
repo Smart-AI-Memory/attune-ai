@@ -331,7 +331,7 @@ class TestBatchProcessingCostSavings:
                 # Mock model responses
                 mock_cheap = MagicMock(id="claude-haiku-4-5-20251001")
                 mock_capable = MagicMock(id="claude-sonnet-4-6")
-                mock_premium = MagicMock(id="claude-opus-4-6")
+                mock_premium = MagicMock(id="claude-opus-4-20250514")
 
                 def get_model_side_effect(provider, tier):
                     if tier == "cheap":
