@@ -88,7 +88,7 @@ class TestModelRegistryInitialization:
 
         # Should have cache entries for all Anthropic models
         assert "claude-haiku-4-5-20251001" in registry._model_id_cache
-        assert "claude-sonnet-4-5-20250929" in registry._model_id_cache
+        assert "claude-sonnet-4-6" in registry._model_id_cache
         assert "claude-opus-4-6" in registry._model_id_cache
 
 
@@ -111,10 +111,10 @@ class TestGetModelById:
         """Test retrieving Sonnet model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+        model = registry.get_model_by_id("claude-sonnet-4-6")
 
         assert model is not None
-        assert model.id == "claude-sonnet-4-5-20250929"
+        assert model.id == "claude-sonnet-4-6"
         assert model.provider == "anthropic"
         assert model.tier == "capable"
 
@@ -142,10 +142,10 @@ class TestGetModelById:
         registry = ModelRegistry()
 
         # First call
-        model1 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+        model1 = registry.get_model_by_id("claude-sonnet-4-6")
 
         # Second call should return same object from cache
-        model2 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+        model2 = registry.get_model_by_id("claude-sonnet-4-6")
 
         assert model1 is model2  # Same object reference
 
@@ -384,7 +384,7 @@ class TestGetPricingForModel:
         """Test getting pricing for Sonnet model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-sonnet-4-5-20250929")
+        pricing = registry.get_pricing_for_model("claude-sonnet-4-6")
 
         assert pricing is not None
         assert pricing["input"] == 3.00
@@ -397,8 +397,8 @@ class TestGetPricingForModel:
         pricing = registry.get_pricing_for_model("claude-opus-4-6")
 
         assert pricing is not None
-        assert pricing["input"] == 15.00
-        assert pricing["output"] == 75.00
+        assert pricing["input"] == 5.00
+        assert pricing["output"] == 25.00
 
     def test_get_pricing_for_nonexistent_model(self):
         """Test that non-existent model returns None."""
@@ -433,10 +433,10 @@ class TestRegistryPerformance:
 
         # Multiple calls should all hit cache
         for _ in range(100):
-            model = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+            model = registry.get_model_by_id("claude-sonnet-4-6")
             assert model is not None
 
         # All calls should return same object reference (cache hit)
-        model1 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
-        model2 = registry.get_model_by_id("claude-sonnet-4-5-20250929")
+        model1 = registry.get_model_by_id("claude-sonnet-4-6")
+        model2 = registry.get_model_by_id("claude-sonnet-4-6")
         assert model1 is model2

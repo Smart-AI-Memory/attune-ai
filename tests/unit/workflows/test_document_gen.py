@@ -142,9 +142,9 @@ class TestCostEstimationAndTracking:
         workflow.cost_warning_threshold = 0.8
 
         # Track enough cost to reach warning threshold ($0.80+) but stay under limit ($1.00)
-        # PREMIUM tier: $0.015 input + $0.075 output per 1000 tokens
-        # For 10000 input + 9000 output: (10*0.015) + (9*0.075) = $0.825 (within range)
-        cost, should_stop = workflow._track_cost(ModelTier.PREMIUM, 10000, 9000)
+        # PREMIUM tier: $0.005 input + $0.025 output per 1000 tokens
+        # For 30000 input + 27000 output: (30*0.005) + (27*0.025) = $0.825 (within range)
+        cost, should_stop = workflow._track_cost(ModelTier.PREMIUM, 30000, 27000)
         assert workflow._cost_warning_issued
         assert not should_stop
 
