@@ -1,0 +1,86 @@
+---
+name: release-prep
+description: "Pre-release preparation — health checks, security audit, changelog validation, version bumps"
+triggers:
+  - release
+  - publish
+  - ship
+  - deploy
+  - version
+  - changelog
+  - pre-release
+---
+
+## Socratic Scoping
+
+Before running, ask:
+
+1. **Version**: "What version are you releasing? Or
+   should I check the current version and suggest?"
+2. **Scope**: "Full release prep or a specific check?"
+   - Full: All 4 agents (security, testing, docs,
+     versioning)
+   - Specific: Single check (e.g., just changelog)
+
+## Execution
+
+Call the `release_prep` MCP tool:
+
+```
+release_prep(path="<project root>")
+```
+
+This orchestrates a 4-agent team:
+
+- **Security Agent** — runs security_audit, flags
+  vulnerabilities that block release
+- **Testing Agent** — checks test coverage, runs
+  test_generation for gaps
+- **Docs Agent** — validates changelog, README, and
+  documentation freshness
+- **Version Agent** — checks version bumps, dependency
+  compatibility, semver compliance
+
+## Output Format
+
+```markdown
+## Release Readiness Report
+
+**Verdict:** READY / NOT READY
+**Version:** X.Y.Z → A.B.C
+**Date:** YYYY-MM-DD
+
+### Agent Reports
+
+#### Security
+- Status: PASS / FAIL
+- Issues: [list if any]
+
+#### Testing
+- Coverage: X%
+- Missing tests: [list if any]
+
+#### Documentation
+- Changelog: UP TO DATE / NEEDS UPDATE
+- README: CURRENT / STALE
+
+#### Versioning
+- Semver: VALID / INVALID
+- Breaking changes: YES / NO
+- Dependencies: ALL COMPATIBLE / [list conflicts]
+
+### Blockers
+| Blocker | Agent | Severity |
+|---------|-------|----------|
+
+### Recommendations
+1. [Ordered list of actions before release]
+```
+
+## Follow-Up
+
+After presenting results, offer:
+
+- "Want me to fix the blockers?"
+- "Should I update the changelog?"
+- "Ready to tag and publish?"

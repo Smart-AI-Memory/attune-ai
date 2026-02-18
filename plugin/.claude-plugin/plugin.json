@@ -1,7 +1,7 @@
 {
   "name": "attune-ai",
-  "version": "2.7.0",
-  "description": "AI-powered memory, empathy, and agent orchestration framework for developers",
+  "version": "2.10.4",
+  "description": "AI-powered developer workflows for Claude Code — security audits, code reviews, test generation, cost optimization, and multi-agent orchestration with Socratic discovery",
   "author": {
     "name": "Smart AI Memory",
     "email": "patrick.roebuck@smartaimemory.com"
@@ -9,5 +9,5 @@
   "homepage": "https://smartaimemory.com",
   "repository": "https://github.com/Smart-AI-Memory/attune-ai",
   "license": "Apache-2.0",
-  "keywords": ["memory", "empathy", "agents", "orchestration", "tier-routing", "anthropic"]
+  "keywords": ["workflows", "security", "code-review", "testing", "cost-optimization", "agents", "orchestration", "memory", "claude-code"]
 }
