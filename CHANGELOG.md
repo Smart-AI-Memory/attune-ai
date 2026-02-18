@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.10.3] - 2026-02-18
-
-### Fixed
-
-- **Test assertions** - Aligned `redis_auto_start` test expectations with actual default (`True`)
-- **Batch processing** - Security, exception handling, and stale reference fixes from code review
-
 ## [2.10.2] - 2026-02-18
 
 ### Changed
