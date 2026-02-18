@@ -12,6 +12,7 @@ Targets uncovered lines from initial run (77.78%):
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -46,6 +47,7 @@ class TestValidateFilePath:
         with pytest.raises(ValueError, match="Cannot write to system directory"):
             _validate_file_path("/etc/attune.json")
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="/usr/bin is Unix-only")
     def test_system_directory_usr_bin_raises(self):
         with pytest.raises(ValueError, match="Cannot write to system directory"):
             _validate_file_path("/usr/bin/attune")
