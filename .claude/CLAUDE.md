@@ -1,4 +1,4 @@
-# Attune AI Framework v2.10.2
+# Attune AI Framework v2.10.3
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -114,4 +114,4 @@ src/attune/
 
 ---
 
-**Version:** 2.10.2 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 2.10.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
