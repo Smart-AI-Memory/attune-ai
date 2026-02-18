@@ -29,7 +29,8 @@ import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+
+from .base import CrewBase
 
 logger = logging.getLogger(__name__)
 
@@ -422,41 +423,11 @@ XML_PROMPT_TEMPLATES = {
 }
 
 
-class HealthCheckCrew:
+class HealthCheckCrew(CrewBase):
     """Multi-agent crew for project health diagnosis and fixing.
 
-    The crew consists of 5 specialized agents using XML-enhanced prompts:
-
-    1. **Health Lead** (Coordinator)
-       - Orchestrates the health check team
-       - Synthesizes findings from all agents
-       - Prioritizes fixes by impact
-       - Calculates health score
-       - Model: Premium tier
-
-    2. **Lint Fixer** (Analyst)
-       - Runs ruff for lint checking
-       - Identifies auto-fixable issues
-       - Generates patches for manual fixes
-       - Model: Capable tier
-
-    3. **Type Resolver** (Analyst)
-       - Runs mypy for type checking
-       - Suggests type annotations
-       - Generates type stubs
-       - Model: Capable tier
-
-    4. **Test Doctor** (Analyst)
-       - Runs pytest for test checking
-       - Diagnoses test failures
-       - Distinguishes test bugs from code bugs
-       - Model: Capable tier
-
-    5. **Dep Auditor** (Analyst)
-       - Checks for vulnerabilities
-       - Identifies outdated packages
-       - Suggests safe update paths
-       - Model: Capable tier
+    Uses 5 specialized agents (Health Lead, Lint Fixer, Type Resolver,
+    Test Doctor, Dep Auditor) with XML-enhanced prompts.
 
     Example:
         crew = HealthCheckCrew(api_key="...")
@@ -471,76 +442,8 @@ class HealthCheckCrew:
 
     """
 
-    def __init__(self, config: HealthCheckConfig | None = None, **kwargs: Any):
-        """Initialize the Health Check Crew.
-
-        Args:
-            config: HealthCheckConfig or pass individual params as kwargs
-            **kwargs: Individual config parameters (api_key, provider, etc.)
-
-        """
-        if config:
-            self.config = config
-        else:
-            self.config = HealthCheckConfig(**kwargs)
-
-        self._factory: Any = None
-        self._agents: dict[str, Any] = {}
-        self._workflow: Any = None
-        self._graph: Any = None
-        self._initialized = False
-
-    def _render_xml_prompt(self, template_key: str) -> str:
-        """Render XML prompt template with config values."""
-        template = XML_PROMPT_TEMPLATES.get(template_key, "")
-        return template.format(schema_version=self.config.xml_schema_version)
-
-    def _get_system_prompt(self, agent_key: str, fallback: str) -> str:
-        """Get system prompt - XML if enabled, fallback otherwise."""
-        if self.config.xml_prompts_enabled:
-            return self._render_xml_prompt(agent_key)
-        return fallback
-
-    async def _initialize(self) -> None:
-        """Lazy initialization of agents and workflow."""
-        if self._initialized:
-            return
-
-        from attune.agent_factory import AgentFactory, Framework
-
-        # Check if CrewAI is available
-        try:
-            from attune.agent_factory.adapters.crewai_adapter import _check_crewai
-
-            use_crewai = _check_crewai()
-        except ImportError:
-            use_crewai = False
-
-        # Use CrewAI if available, otherwise fall back to Native
-        framework = Framework.CREWAI if use_crewai else Framework.NATIVE
-
-        self._factory = AgentFactory(
-            framework=framework,
-            provider=self.config.provider,
-            api_key=self.config.api_key,
-        )
-
-        # Initialize Memory Graph if enabled
-        if self.config.memory_graph_enabled:
-            try:
-                from attune.memory import MemoryGraph
-
-                self._graph = MemoryGraph(path=self.config.memory_graph_path)
-            except ImportError:
-                logger.warning("Memory Graph not available, continuing without it")
-
-        # Create the 5 specialized agents
-        await self._create_agents()
-
-        # Create hierarchical workflow
-        await self._create_workflow()
-
-        self._initialized = True
+    config_class = HealthCheckConfig
+    XML_PROMPT_TEMPLATES = XML_PROMPT_TEMPLATES
 
     async def _create_agents(self) -> None:
         """Create the 5 specialized health check agents with XML prompts."""
@@ -1229,34 +1132,3 @@ Consider patterns from past fixes.
             total_deduction += min(deduction, cap)
 
         return max(0.0, 100.0 - total_deduction)
-
-    @property
-    def agents(self) -> dict[str, Any]:
-        """Get the crew's agents."""
-        return self._agents
-
-    @property
-    def is_initialized(self) -> bool:
-        """Check if crew is initialized."""
-        return self._initialized
-
-    async def get_agent_stats(self) -> dict:
-        """Get statistics about crew agents."""
-        await self._initialize()
-
-        agents_dict: dict = {}
-        stats: dict = {
-            "agent_count": len(self._agents),
-            "agents": agents_dict,
-            "framework": self._factory.framework.value if self._factory else "unknown",
-            "memory_graph_enabled": self.config.memory_graph_enabled,
-            "xml_prompts_enabled": self.config.xml_prompts_enabled,
-        }
-
-        for name, agent in self._agents.items():
-            agents_dict[name] = {
-                "role": agent.config.role if hasattr(agent, "config") else "unknown",
-                "model_tier": getattr(agent.config, "model_tier", "unknown"),
-            }
-
-        return stats

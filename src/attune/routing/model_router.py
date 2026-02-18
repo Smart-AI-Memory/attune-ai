@@ -180,7 +180,7 @@ class ModelRouter:
             >>> router.route("summarize")
             'claude-haiku-4-5-20251001'
             >>> router.route("fix_bug")
-            'claude-sonnet-4-5-20250929'
+            'claude-sonnet-4-6'
             >>> router.route("coordinate")
             'claude-opus-4-6'
 

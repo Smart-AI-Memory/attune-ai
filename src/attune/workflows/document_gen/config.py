@@ -14,7 +14,7 @@ from ..step_config import WorkflowStepConfig
 TOKEN_COSTS = {
     ModelTier.CHEAP: {"input": 0.00025, "output": 0.00125},  # Haiku
     ModelTier.CAPABLE: {"input": 0.003, "output": 0.015},  # Sonnet
-    ModelTier.PREMIUM: {"input": 0.015, "output": 0.075},  # Opus
+    ModelTier.PREMIUM: {"input": 0.005, "output": 0.025},  # Opus
 }
 
 # Define step configurations for executor-based execution
