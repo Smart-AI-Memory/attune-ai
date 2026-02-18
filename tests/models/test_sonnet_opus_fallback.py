@@ -191,8 +191,8 @@ class TestSonnetOpusAnalytics:
         # Simulated data
         sonnet_input_cost = 3.00 / 1_000_000
         sonnet_output_cost = 15.00 / 1_000_000
-        opus_input_cost = 15.00 / 1_000_000
-        opus_output_cost = 75.00 / 1_000_000
+        opus_input_cost = 5.00 / 1_000_000
+        opus_output_cost = 25.00 / 1_000_000
 
         # Scenario: 100K input, 10K output tokens all on Sonnet
         input_tokens = 100_000
@@ -205,9 +205,9 @@ class TestSonnetOpusAnalytics:
 
         # Verify calculations
         assert actual_cost == pytest.approx(0.45, abs=0.01)  # $0.30 + $0.15
-        assert always_opus_cost == pytest.approx(2.25, abs=0.01)  # $1.50 + $0.75
-        assert savings == pytest.approx(1.80, abs=0.01)
-        assert savings_percent == pytest.approx(80.0, abs=0.1)
+        assert always_opus_cost == pytest.approx(0.75, abs=0.01)  # $0.50 + $0.25
+        assert savings == pytest.approx(0.30, abs=0.01)
+        assert savings_percent == pytest.approx(40.0, abs=0.1)
 
 
 # Integration test scenarios

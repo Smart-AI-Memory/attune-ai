@@ -145,7 +145,7 @@ class TestXMLSpecGeneration:
         client = mock_anthropic(api_key=api_key)
 
         response = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             max_tokens=16000,
             temperature=0,
             system="test system prompt",

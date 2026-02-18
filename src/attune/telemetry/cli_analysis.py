@@ -24,7 +24,7 @@ except ImportError:
 
 
 def cmd_sonnet_opus_analysis(args: Any) -> int:
-    """Show Sonnet 4.5 -> Opus 4.5 fallback analysis and cost savings.
+    """Show Sonnet 4.6 -> Opus 4.6 fallback analysis and cost savings.
 
     Args:
         args: Parsed command-line arguments (days)
@@ -54,7 +54,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
         # Fallback Performance Panel
         perf_text = Text()
         perf_text.append(f"Total Anthropic Calls: {stats['total_calls']}\n")
-        perf_text.append(f"Sonnet 4.5 Attempts: {stats['sonnet_attempts']}\n")
+        perf_text.append(f"Sonnet 4.6 Attempts: {stats['sonnet_attempts']}\n")
         perf_text.append(
             f"Sonnet Success Rate: {stats['success_rate_sonnet']:.1f}%\n",
             style="green bold",
@@ -68,7 +68,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
         console.print(
             Panel(
                 perf_text,
-                title=f"Sonnet 4.5 -> Opus 4.5 Fallback Performance (last {days} days)",
+                title=f"Sonnet 4.6 -> Opus 4.6 Fallback Performance (last {days} days)",
                 border_style="cyan",
             )
         )
@@ -92,7 +92,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
             rec_text = Text()
             rec_text.append("Excellent Performance!\n", style="green bold")
             rec_text.append(
-                f"Sonnet 4.5 handles {100 - stats['fallback_rate']:.1f}% of tasks successfully.\n"
+                f"Sonnet 4.6 handles {100 - stats['fallback_rate']:.1f}% of tasks successfully.\n"
             )
             rec_text.append(
                 f"You're saving ${stats['savings']:.2f} compared to always using Opus.\n"
@@ -114,11 +114,11 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
             console.print(Panel(rec_text, title="Recommendation", border_style="red"))
     else:
         # Plain text fallback
-        print(f"\nSonnet 4.5 -> Opus 4.5 Fallback Analysis (last {days} days)")
+        print(f"\nSonnet 4.6 -> Opus 4.6 Fallback Analysis (last {days} days)")
         print("=" * 60)
         print("\nFallback Performance:")
         print(f"  Total Anthropic Calls: {stats['total_calls']}")
-        print(f"  Sonnet 4.5 Attempts: {stats['sonnet_attempts']}")
+        print(f"  Sonnet 4.6 Attempts: {stats['sonnet_attempts']}")
         print(f"  Sonnet Success Rate: {stats['success_rate_sonnet']:.1f}%")
         print(f"  Opus Fallbacks: {stats['opus_fallbacks']}")
         print(f"  Fallback Rate: {stats['fallback_rate']:.1f}%")

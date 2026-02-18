@@ -180,7 +180,7 @@ class TestModelRegistry:
 
         premium = MODEL_REGISTRY["anthropic"]["premium"]
         assert "opus" in premium.id.lower()
-        assert premium.input_cost_per_million == 15.00
+        assert premium.input_cost_per_million == 5.00
 
 
 class TestHelperFunctions:
@@ -249,8 +249,8 @@ class TestTierPricing:
         assert TIER_PRICING["capable"]["input"] == 3.00
         assert TIER_PRICING["capable"]["output"] == 15.00
 
-        assert TIER_PRICING["premium"]["input"] == 15.00
-        assert TIER_PRICING["premium"]["output"] == 75.00
+        assert TIER_PRICING["premium"]["input"] == 5.00
+        assert TIER_PRICING["premium"]["output"] == 25.00
 
     def test_tier_pricing_matches_anthropic_models(self):
         """Verify tier pricing matches Anthropic model pricing."""

@@ -522,13 +522,13 @@ class TestCostTrackingAccuracy:
 
         # Sonnet (capable): $3.00/M input
         sonnet_req = tracker.log_request(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="generate_code",
         )
 
-        # Opus (premium): $15.00/M input
+        # Opus (premium): $5.00/M input
         opus_req = tracker.log_request(
             model="claude-opus-4-6",
             input_tokens=1_000_000,
@@ -550,14 +550,14 @@ class TestCostTrackingAccuracy:
         # Simulate fallback: tried Haiku, fell back to Sonnet
         # Cost should reflect Sonnet usage, not Haiku
         request = tracker.log_request(
-            model="claude-sonnet-4-5-20250929",  # Fell back to this
+            model="claude-sonnet-4-6",  # Fell back to this
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
         )
 
         # Should use Sonnet pricing, not Haiku pricing
-        sonnet_pricing = MODEL_PRICING["claude-sonnet-4-5-20250929"]
+        sonnet_pricing = MODEL_PRICING["claude-sonnet-4-6"]
         expected_cost = (1000 / 1_000_000) * sonnet_pricing["input"] + (
             500 / 1_000_000
         ) * sonnet_pricing["output"]
@@ -627,7 +627,7 @@ class TestCostTrackingAccuracy:
             tier="cheap",
         )
         tracker.log_request(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             input_tokens=1000,
             output_tokens=500,
             task_type="generate_code",
@@ -865,7 +865,7 @@ class TestRoutingAndCostIntegration:
 
         # Log cost (would be done by executor)
         tracker.log_request(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             input_tokens=1000,
             output_tokens=500,
             task_type="generate_code",
@@ -887,7 +887,7 @@ class TestRoutingAndCostIntegration:
         # Simulate: tried cheap, fell back to capable
         # Log the actual model used (capable)
         request = tracker.log_request(
-            model="claude-sonnet-4-5-20250929",  # Fell back to capable
+            model="claude-sonnet-4-6",  # Fell back to capable
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",  # Originally cheap task

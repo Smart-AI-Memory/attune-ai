@@ -58,7 +58,7 @@ class TaskType(Enum):
     SUGGEST_FIX = "suggest_fix"
 
     # =========================================================================
-    # PREMIUM TIER TASKS (~$15.00/M input)
+    # PREMIUM TIER TASKS (~$5.00/M input)
     # Highest capability for complex reasoning
     # =========================================================================
     COORDINATE = "coordinate"

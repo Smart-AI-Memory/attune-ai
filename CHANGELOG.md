@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.2] - 2026-02-18
+
+### Changed
+
+- **Model registry** - Updated capable tier from Sonnet 4.5 to Sonnet 4.6 (`claude-sonnet-4-6`)
+- **Opus 4.6 pricing** - Revised to $5/$25 per M tokens (input/output)
+- **Crew modules** - Refactored to shared base class, reducing duplication
+- **MCP server** - Extracted tool definitions to separate module
+- **Code review workflow** - Cleaned up redundant code (-600 lines)
+
+### Fixed
+
+- **Test alignment** - All tests updated for new model IDs and pricing
+
 ## [2.10.1] - 2026-02-17
 
 ### Fixed
