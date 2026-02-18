@@ -133,7 +133,7 @@ class MemoryConfig:
             redis_host=get_attune_env("REDIS_HOST", "localhost") or "localhost",
             redis_port=int(get_attune_env("REDIS_PORT", "6379") or "6379"),
             redis_mock=(get_attune_env("REDIS_MOCK", "") or "").lower() == "true",
-            redis_auto_start=(get_attune_env("REDIS_AUTO_START", "true") or "true").lower()
+            redis_auto_start=(get_attune_env("REDIS_AUTO_START", "false") or "true").lower()
             == "true",
             redis_required=(get_attune_env("REDIS_REQUIRED", "false") or "false").lower() == "true",
             # Long-term storage
