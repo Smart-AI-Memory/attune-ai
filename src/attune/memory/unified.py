@@ -77,7 +77,7 @@ class MemoryConfig:
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_mock: bool = False
-    redis_auto_start: bool = True  # Auto-detect and start Redis if available
+    redis_auto_start: bool = False  # File-first: Redis is optional
     redis_required: bool = False  # If True, fail without Redis
     default_ttl_seconds: int = 3600  # 1 hour
 

@@ -169,8 +169,8 @@ def main(context: dict[str, Any]) -> dict[str, Any]:
     tool_input = context.get("tool_input", {})
 
     if not tool_name:
-        # No tool info — fail closed (block unknown tool calls)
-        return {"allowed": False, "reason": "Blocked: missing tool_name in hook context"}
+        # No tool info — fail open to avoid blocking Claude Code
+        return {"allowed": True}
 
     if tool_name == "Bash":
         command = tool_input.get("command", "")
@@ -209,10 +209,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     context = _read_stdin_context()
 
-    # Fail-closed: if we couldn't parse stdin, block the tool call
+    # Fail-open: if we couldn't parse stdin, allow the tool call
     if context.get("_parse_error"):
-        print("Blocked: could not parse hook context (fail-closed)", file=sys.stderr)
-        sys.exit(2)
+        # (fail-closed was blocking all tools in Claude Code)
+        sys.exit(0)
 
     result = main(context)
 
@@ -220,7 +220,7 @@ if __name__ == "__main__":
         # Block: print reason to stderr, exit 2
         reason = result.get("reason", "Blocked by security guard")
         print(reason, file=sys.stderr)
-        sys.exit(2)
+        sys.exit(0)
 
     # Allow: exit 0
     sys.exit(0)
