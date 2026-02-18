@@ -20,7 +20,7 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.10.0
+## What's New in v2.10.2
 
 - **Redis Auto-Detection** - Redis is now automatically detected and enabled when available. No more manual `REDIS_ENABLED=true` setup. When Redis is not installed, you get a one-time prompt with platform-specific install instructions.
 - **Zero-Config Memory** - Just install Redis and Attune uses it. Unset the env var and auto-detection handles everything. Existing `REDIS_ENABLED` settings are still respected for backward compatibility.
