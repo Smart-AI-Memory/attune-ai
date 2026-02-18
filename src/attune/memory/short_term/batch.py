@@ -68,7 +68,9 @@ class BatchOperations:
         {'analysis': {'score': 95}, 'summary': {'text': '...'}}
     """
 
-    PREFIX_WORKING = "empathy:working:"
+    PREFIX_WORKING = (
+        "empathy:working:"  # TODO: migrate to "attune:working:" across all short_term modules
+    )
 
     def __init__(self, base: BaseOperations) -> None:
         """Initialize batch operations.

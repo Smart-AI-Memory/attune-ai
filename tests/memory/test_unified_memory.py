@@ -44,7 +44,7 @@ class TestMemoryConfig:
         assert config.redis_host == "localhost"
         assert config.redis_port == 6379
         assert config.redis_mock is False
-        assert config.redis_auto_start is False  # File-first: Redis is optional
+        assert config.redis_auto_start is True  # Auto-detect and start Redis if available
         assert config.encryption_enabled is True
         assert config.claude_memory_enabled is True
         # File-first architecture fields

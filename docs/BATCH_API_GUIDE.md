@@ -309,7 +309,7 @@ workflow.save_results_to_file(results, "output.json")
 For more control, use `AnthropicBatchProvider` directly:
 
 ```python
-from attune_llm.providers import AnthropicBatchProvider
+from attune.llm.providers import AnthropicBatchProvider
 
 provider = AnthropicBatchProvider(api_key="your-api-key")
 
