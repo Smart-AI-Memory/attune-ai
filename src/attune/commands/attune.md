@@ -95,6 +95,15 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | [Run Agent Team](src/attune/commands/agent.md) `/agent run` | Execute a multi-agent collaboration |
 | [Release Prep](src/attune/commands/agent.md) `/agent release-prep` | Run the release readiness agent team (4 agents) |
 
+### Batch Processing — [/batch](src/attune/commands/batch.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Submit Batch](src/attune/commands/batch.md) `/batch submit` | Create and submit batch requests (50% cost savings) |
+| [Check Status](src/attune/commands/batch.md) `/batch status <id>` | Check processing status of a submitted batch |
+| [Get Results](src/attune/commands/batch.md) `/batch results <id>` | Download results from a completed batch |
+| [Batch Info](src/attune/commands/batch.md) `/batch info` | Pricing, limits, and best practices |
+
 ### Deep Review — [/deep-review](src/attune/commands/deep-review.md)
 
 | Command | Description |
@@ -177,6 +186,8 @@ When the user types a shortcut, **use AskUserQuestion to scope before executing*
 | `/attune wizard` | "What do you need? Run, create, list, or edit a wizard?" | Invoke `/wizard` hub |
 | `/attune create` | "What do you want to create? A wizard, agent, agent team, or docs?" | Route to `/wizard create`, `/agent create`, or `/docs generate` |
 | `/attune agent` | "What do you need? Create, list, or run an agent?" | Invoke `/agent` hub |
+| `/attune batch` | "What would you like to do? Submit, check status, or get results?" | Invoke `/batch` hub |
+| `/attune bulk` | Same as `/attune batch` | Invoke `/batch` hub |
 
 ### Natural Language Routing (SCOPE THEN EXECUTE)
 
@@ -193,6 +204,7 @@ When the user provides natural language, **use AskUserQuestion to scope**, then 
 | "bugs", "predict bugs" | `uv run attune workflow run bug-predict` |
 | "release", "ship", "publish" | `uv run attune workflow run release-prep` |
 | "create", "build", "new wizard", "new agent" | Route to `/wizard create` or `/agent create` |
+| "batch", "bulk", "50% discount", "cost savings" | Invoke `/batch` hub |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.
 
@@ -211,6 +223,12 @@ uv run attune workflow run release-prep
 uv run pytest
 uv run pytest --cov=src --cov-report=term-missing
 uv run pytest -k "test_name"
+
+# Batch API (50% cost savings)
+uv run attune batch submit requests.json
+uv run attune batch status <batch_id>
+uv run attune batch results <batch_id> output.json
+uv run attune batch wait <batch_id> output.json
 
 # Telemetry
 uv run attune telemetry show

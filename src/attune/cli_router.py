@@ -125,6 +125,12 @@ class HybridRouter:
             # Agent dashboard commands
             "dashboard": ("workflows", "python examples/dashboard_demo.py"),
             "agent-dashboard": ("workflows", "python examples/dashboard_demo.py"),
+            # Batch API processing (50% cost savings)
+            "batch": ("batch", ""),
+            "batch-submit": ("batch", "submit"),
+            "batch-status": ("batch", "status"),
+            "batch-results": ("batch", "results"),
+            "bulk-process": ("batch", "submit"),
             # Batch test generation (enhanced)
             "batch-tests": ("testing", "generate --batch"),
             "bulk-tests": ("testing", "generate --batch"),

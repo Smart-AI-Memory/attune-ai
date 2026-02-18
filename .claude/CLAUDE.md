@@ -31,6 +31,7 @@ Use `/hub-name` to access organized workflows:
 | `/docs` | generate, readme, changelog, explain | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
 | `/agent` | create, list, run, release-prep | Agent management |
+| `/batch` | submit, status, results, wait | Batch API (50% savings) |
 
 ---
 

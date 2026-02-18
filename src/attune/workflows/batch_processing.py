@@ -123,7 +123,7 @@ class BatchProcessingWorkflow:
                     "params": {
                         "model": model.id,
                         "messages": self._format_messages(req),
-                        "max_tokens": 4096,
+                        "max_tokens": 12000,
                     },
                 }
             )

@@ -9,6 +9,12 @@ Automation commands:
     attune workflow run <name>        Execute a workflow
     attune workflow info <name>       Show workflow details
 
+Batch commands (50% cost savings):
+    attune batch submit <file>        Submit batch requests from JSON file
+    attune batch status <batch_id>    Check batch processing status
+    attune batch results <id> <file>  Download completed batch results
+    attune batch wait <id> <file>     Poll until batch completes
+
 Monitoring commands:
     attune dashboard start            Start agent coordination dashboard
                                       (opens web UI at http://localhost:8000)
@@ -45,6 +51,12 @@ import argparse
 import logging
 import sys
 
+from attune.cli_commands.batch_commands import (  # noqa: F401
+    cmd_batch_results,
+    cmd_batch_status,
+    cmd_batch_submit,
+    cmd_batch_wait,
+)
 from attune.cli_commands.provider_commands import (  # noqa: F401
     cmd_provider_set,
     cmd_provider_show,
@@ -226,6 +238,45 @@ Documentation: https://smartaimemory.com/framework-docs/
         "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
     )
 
+    # --- Batch commands ---
+    batch_parser = subparsers.add_parser("batch", help="Batch API processing (50%% cost savings)")
+    batch_sub = batch_parser.add_subparsers(dest="batch_command")
+
+    # batch submit
+    submit_parser = batch_sub.add_parser("submit", help="Submit batch requests from JSON file")
+    submit_parser.add_argument("input_file", help="Path to JSON file with batch requests")
+
+    # batch status
+    batch_status_parser = batch_sub.add_parser("status", help="Check batch processing status")
+    batch_status_parser.add_argument("batch_id", help="Batch identifier (e.g., msgbatch_abc123)")
+    batch_status_parser.add_argument(
+        "--json", "-j", action="store_true", help="Output raw JSON status"
+    )
+
+    # batch results
+    results_parser = batch_sub.add_parser("results", help="Download completed batch results")
+    results_parser.add_argument("batch_id", help="Batch identifier")
+    results_parser.add_argument("output_file", help="Path to save results JSON")
+
+    # batch wait
+    wait_parser = batch_sub.add_parser(
+        "wait", help="Poll until batch completes, then download results"
+    )
+    wait_parser.add_argument("batch_id", help="Batch identifier")
+    wait_parser.add_argument("output_file", help="Path to save results JSON")
+    wait_parser.add_argument(
+        "--poll-interval",
+        type=int,
+        default=300,
+        help="Seconds between status checks (default: 300)",
+    )
+    wait_parser.add_argument(
+        "--timeout",
+        type=int,
+        default=86400,
+        help="Maximum wait time in seconds (default: 86400 = 24 hours)",
+    )
+
     # --- Setup command ---
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
@@ -298,6 +349,19 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_dashboard_start(args)
         else:
             print("Usage: attune dashboard start [--host HOST] [--port PORT]")
+            return 1
+
+    elif args.command == "batch":
+        if args.batch_command == "submit":
+            return cmd_batch_submit(args)
+        elif args.batch_command == "status":
+            return cmd_batch_status(args)
+        elif args.batch_command == "results":
+            return cmd_batch_results(args)
+        elif args.batch_command == "wait":
+            return cmd_batch_wait(args)
+        else:
+            print("Usage: attune batch {submit|status|results|wait}")
             return 1
 
     elif args.command == "setup":
