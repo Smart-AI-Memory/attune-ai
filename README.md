@@ -20,11 +20,12 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v2.10.4
+## What's New in v2.10.2
 
-- **Batch API CLI** - Full `attune batch` command set for the Anthropic Message Batches API — submit, check status, download results, and poll-to-completion. Processes up to 10,000 requests within 24 hours at **50% of standard pricing**.
-- **Redis Auto-Detection** - Redis is now automatically detected and enabled when available. No more manual `REDIS_ENABLED=true` setup.
-- **Zero-Config Memory** - Just install Redis and Attune uses it. Existing `REDIS_ENABLED` settings are still respected for backward compatibility.
+- **Redis Auto-Detection** - Redis is now automatically detected and enabled when available. No more manual `REDIS_ENABLED=true` setup. When Redis is not installed, you get a one-time prompt with platform-specific install instructions.
+- **Zero-Config Memory** - Just install Redis and Attune uses it. Unset the env var and auto-detection handles everything. Existing `REDIS_ENABLED` settings are still respected for backward compatibility.
+- **Interactive Install Prompts** - Platform-aware prompts offer `brew install redis` on macOS, `apt install` on Linux, or Docker fallback. Choose to install, skip, or permanently dismiss.
+- **CI/CD Safe** - Non-interactive environments (CI pipelines, scripts) silently fall back to in-memory storage with no prompts.
 - **14,940+ Tests Passing** - 83% coverage across security, unit, integration, and behavioral tests.
 
 ---
@@ -143,12 +144,6 @@ attune workflow run release-prep           # 4-agent release readiness check
 attune workflow run security-audit --path ./src
 attune workflow run test-gen --path ./src
 attune telemetry show
-
-# Batch API — 50% cost savings for bulk workloads
-attune batch submit requests.json              # Submit a batch
-attune batch status msgbatch_abc123            # Check status
-attune batch results msgbatch_abc123 out.json  # Download results
-attune batch wait msgbatch_abc123 out.json     # Poll until done
 ```
 
 ### Optional Features
@@ -189,7 +184,6 @@ Workflows are organized into hubs for easy discovery:
 | **Workflows**     | `/workflows`  | Automated analysis (security, bugs, perf)    |
 | **Plan**          | `/plan`       | Planning, TDD, code review, refactoring      |
 | **Agent**         | `/agent`      | Create and manage custom agents              |
-| **Batch**         | `/batch`      | Bulk API processing at 50% cost savings      |
 
 **Natural Language Routing:**
 
