@@ -119,7 +119,6 @@ class TestAnthropicProvider:
                 with pytest.raises(ImportError, match="anthropic package required"):
                     AnthropicProvider(api_key="sk-test")
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     def test_init_success(self, mock_anthropic_class):
         """Test successful initialization."""
@@ -144,7 +143,6 @@ class TestAnthropicProvider:
 
         assert provider.batch_provider is not None
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     @pytest.mark.asyncio
     async def test_generate_basic(self, mock_anthropic_class):
@@ -170,7 +168,6 @@ class TestAnthropicProvider:
         assert result.tokens_used == 15
         assert result.metadata["provider"] == "anthropic"
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     @pytest.mark.asyncio
     async def test_generate_with_system_prompt_caching(self, mock_anthropic_class):
@@ -206,7 +203,6 @@ class TestAnthropicProvider:
         # Verify cache metrics in metadata
         assert result.metadata["cache_creation_tokens"] == 80
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     @pytest.mark.asyncio
     async def test_generate_with_thinking(self, mock_anthropic_class):
@@ -241,7 +237,6 @@ class TestAnthropicProvider:
         assert result.metadata["thinking"] == "Let me think..."
         assert result.content == "Final answer"
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     def test_get_model_info_known_model(self, mock_anthropic_class):
         """Test getting model info for known model."""
@@ -255,7 +250,6 @@ class TestAnthropicProvider:
         assert info["max_tokens"] == 200000
         assert info["supports_prompt_caching"] is True
 
-    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
     def test_get_model_info_unknown_model(self, mock_anthropic_class):
         """Test getting model info for unknown model."""
@@ -283,7 +277,6 @@ class TestAnthropicBatchProvider:
         with pytest.raises(ValueError, match="API key is required"):
             AnthropicBatchProvider(api_key=None)
 
-    @patch("anthropic.Anthropic")
     def test_create_batch_empty_requests(self, mock_anthropic_class):
         """Test creating batch with empty requests."""
         provider = AnthropicBatchProvider(api_key="sk-test")
@@ -291,7 +284,6 @@ class TestAnthropicBatchProvider:
         with pytest.raises(ValueError, match="cannot be empty"):
             provider.create_batch([])
 
-    @patch("anthropic.Anthropic")
     def test_create_batch_success(self, mock_anthropic_class):
         """Test successful batch creation."""
         mock_batch = MagicMock()
@@ -316,7 +308,6 @@ class TestAnthropicBatchProvider:
 
         assert batch_id == "batch_123"
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_status(self, mock_anthropic_class):
         """Test getting batch status."""
         mock_batch = MagicMock()
@@ -332,7 +323,6 @@ class TestAnthropicBatchProvider:
 
         assert status.processing_status == "in_progress"
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_results_not_completed(self, mock_anthropic_class):
         """Test getting results when batch not completed."""
         mock_batch = MagicMock()
@@ -347,7 +337,6 @@ class TestAnthropicBatchProvider:
         with pytest.raises(ValueError, match="not ended"):
             provider.get_batch_results("batch_123")
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_results_success(self, mock_anthropic_class):
         """Test getting results from completed batch."""
         mock_batch = MagicMock()
