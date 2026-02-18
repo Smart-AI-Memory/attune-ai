@@ -75,7 +75,7 @@ class AnthropicBatchProvider:
             ...     {
             ...         "custom_id": "task_1",
             ...         "params": {
-            ...             "model": "claude-sonnet-4-6",
+            ...             "model": "claude-sonnet-4-5-20250929",
             ...             "messages": [{"role": "user", "content": "Test"}],
             ...             "max_tokens": 1024
             ...         }
@@ -96,7 +96,7 @@ class AnthropicBatchProvider:
                 formatted_req = {
                     "custom_id": req.get("custom_id", f"req_{id(req)}"),
                     "params": {
-                        "model": req.get("model", "claude-sonnet-4-6"),
+                        "model": req.get("model", "claude-sonnet-4-5-20250929"),
                         "messages": req.get("messages", []),
                         "max_tokens": req.get("max_tokens", 4096),
                     },

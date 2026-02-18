@@ -138,7 +138,7 @@ Task 14 (Coverage target) ── standalone
     <note>
       Current Claude model IDs (as of Feb 2026):
       - Opus 4.6:  claude-opus-4-6
-      - Sonnet 4.6: claude-sonnet-4-6
+      - Sonnet 4.5: claude-sonnet-4-5-20250929
       - Haiku 4.5:  claude-haiku-4-5-20251001
       All models in the 4.5/4.6 family support vision.
     </note>
@@ -185,7 +185,7 @@ Task 14 (Coverage target) ── standalone
                 supports_tools=True,
             ),
             "capable": ModelInfo(
-                id="claude-sonnet-4-6",
+                id="claude-sonnet-4-5-20250929",
                 provider="anthropic",
                 tier="capable",
                 input_cost_per_million=3.00,
@@ -207,7 +207,7 @@ Task 14 (Coverage target) ── standalone
       </change>
       <change location="line 128 comment">
         BEFORE: # Intelligent fallback: Sonnet 4.5 → Opus 4.5 (5x cost increase for complex tasks)
-        AFTER:  # Intelligent fallback: Sonnet 4.6 → Opus 4.6 (~1.7x cost increase for complex tasks)
+        AFTER:  # Intelligent fallback: Sonnet 4.5 → Opus 4.6 (~1.7x cost increase for complex tasks)
       </change>
     </file>
   </files-to-modify>
@@ -262,7 +262,7 @@ Task 14 (Coverage target) ── standalone
         AFTER:
         TIER_PRICING: dict[str, dict[str, float]] = {
             "cheap": {"input": 1.00, "output": 5.00},  # Haiku 4.5 pricing
-            "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.6 pricing
+            "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.5 pricing
             "premium": {"input": 5.00, "output": 25.00},  # Opus 4.6 pricing
         }
       </change>
@@ -696,7 +696,7 @@ Task 14 (Coverage target) ── standalone
       }
     </existing-code>
     <note>
-      With models like claude-opus-4-6 and claude-sonnet-4-6, hardcoding
+      With models like claude-opus-4-6 and claude-sonnet-4-5, hardcoding
       "claude-3" is wrong and will confuse cost tracking and analytics.
     </note>
   </context>
@@ -1195,7 +1195,7 @@ Task 14 (Coverage target) ── standalone
         AFTER:
         if cache_read > 0:
             # Cache reads cost 90% less than regular input tokens
-            input_cost_per_token = 3.00 / 1_000_000  # Default Sonnet 4.6 rate
+            input_cost_per_token = 3.00 / 1_000_000  # Default Sonnet 4.5 rate
             savings_per_token = input_cost_per_token * 0.9
       </change>
     </file>

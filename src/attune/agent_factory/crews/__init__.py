@@ -8,7 +8,6 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from attune.agent_factory.crews.base import CrewBase
 from attune.agent_factory.crews.code_review import (
     CodeReviewConfig,
     CodeReviewCrew,
@@ -42,8 +41,6 @@ from attune.agent_factory.crews.security_audit import (
 __all__ = [
     "CodeCheckpoint",
     "CodeReviewConfig",
-    # Base
-    "CrewBase",
     # Code Review Crew
     "CodeReviewCrew",
     "CodeReviewReport",

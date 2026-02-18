@@ -663,18 +663,18 @@ DEFAULT_FALLBACK_POLICY = FallbackPolicy(
     max_retries=2,
 )
 
-# Intelligent Sonnet 4.6 → Opus 4.6 fallback policy
-# Tries Sonnet 4.6 first, then upgrades to Opus 4.6 if needed
+# Intelligent Sonnet 4.5 → Opus 4.5 fallback policy
+# Tries Sonnet 4.5 first, then upgrades to Opus 4.5 if needed
 # Tracks cost savings when Sonnet succeeds (saves 80% vs always using Opus)
 SONNET_TO_OPUS_FALLBACK = FallbackPolicy(
     primary_provider="anthropic",
-    primary_tier="capable",  # Sonnet 4.6
+    primary_tier="capable",  # Sonnet 4.5
     strategy=FallbackStrategy.CUSTOM,
     custom_chain=[
         FallbackStep(
             provider="anthropic",
-            tier="premium",  # Opus 4.6
-            description="Upgraded to Opus 4.6 for complex reasoning",
+            tier="premium",  # Opus 4.5
+            description="Upgraded to Opus 4.5 for complex reasoning",
         ),
     ],
     max_retries=1,  # Only retry once before upgrading to Opus

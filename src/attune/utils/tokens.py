@@ -94,7 +94,9 @@ def _count_tokens_heuristic(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def count_tokens(text: str, model: str = "claude-sonnet-4-6", use_api: bool = False) -> int:
+def count_tokens(
+    text: str, model: str = "claude-sonnet-4-5-20250929", use_api: bool = False
+) -> int:
     """Count tokens using best available method.
 
     By default, uses tiktoken for fast local estimation (~98% accurate).
@@ -149,7 +151,7 @@ def count_tokens(text: str, model: str = "claude-sonnet-4-6", use_api: bool = Fa
 def count_message_tokens(
     messages: list[dict[str, str]],
     system_prompt: str | None = None,
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-4-5-20250929",
     use_api: bool = False,
 ) -> dict[str, int]:
     """Count tokens in a conversation.
@@ -231,7 +233,9 @@ def count_message_tokens(
     return counts
 
 
-def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-6") -> float:
+def estimate_cost(
+    input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-5-20250929"
+) -> float:
     """Estimate cost in USD based on token counts.
 
     Args:
@@ -243,7 +247,7 @@ def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-so
         Estimated cost in USD
 
     Example:
-        >>> estimate_cost(1000, 500, "claude-sonnet-4-6")
+        >>> estimate_cost(1000, 500, "claude-sonnet-4-5")
         0.0105  # $3/M input + $15/M output
 
     Raises:
@@ -264,7 +268,7 @@ def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-so
         return input_cost + output_cost
     except ImportError:
         # Fallback if registry not available
-        # Use default Sonnet 4.6 pricing
+        # Use default Sonnet 4.5 pricing
         input_cost = (input_tokens / 1_000_000) * 3.00
         output_cost = (output_tokens / 1_000_000) * 15.00
         return input_cost + output_cost
@@ -275,7 +279,7 @@ def calculate_cost_with_cache(
     output_tokens: int,
     cache_creation_tokens: int,
     cache_read_tokens: int,
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-4-5-20250929",
 ) -> dict[str, Any]:
     """Calculate cost including Anthropic prompt caching.
 
@@ -299,7 +303,7 @@ def calculate_cost_with_cache(
         - "savings": Amount saved by cache reads
 
     Example:
-        >>> calculate_cost_with_cache(1000, 500, 5000, 10000, "claude-sonnet-4-6")
+        >>> calculate_cost_with_cache(1000, 500, 5000, 10000, "claude-sonnet-4-5")
         {
             "base_cost": 0.0105,
             "cache_write_cost": 0.01875,  # 5000 tokens * $3.75/M
@@ -320,7 +324,7 @@ def calculate_cost_with_cache(
         input_price_per_million = pricing["input"]
         output_price_per_million = pricing["output"]
     except (ImportError, ValueError):
-        # Fallback to default Sonnet 4.6 pricing
+        # Fallback to default Sonnet 4.5 pricing
         input_price_per_million = 3.00
         output_price_per_million = 15.00
 
