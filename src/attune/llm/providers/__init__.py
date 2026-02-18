@@ -1,6 +1,8 @@
 """LLM Provider Adapters
 
-Unified interface for different LLM providers (OpenAI, Anthropic, local models).
+Claude-native provider interface (Anthropic only as of v5.0.0).
+OpenAI, Gemini, and Local providers are retained for backward
+compatibility but are not actively maintained.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0

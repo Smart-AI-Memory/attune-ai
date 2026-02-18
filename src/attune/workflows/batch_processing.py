@@ -250,14 +250,22 @@ class BatchProcessingWorkflow:
         return [{"role": "user", "content": content}]
 
     @classmethod
-    def from_json_file(cls, file_path: str) -> "BatchProcessingWorkflow":
-        """Create workflow from JSON input file.
+    def from_json_file(
+        cls, file_path: str, api_key: str | None = None
+    ) -> tuple["BatchProcessingWorkflow", list[BatchRequest]]:
+        """Create workflow and load requests from JSON input file.
 
         Args:
             file_path: Path to JSON file with batch requests
+            api_key: Anthropic API key (optional, uses env var)
 
         Returns:
-            BatchProcessingWorkflow instance
+            Tuple of (workflow instance, loaded requests)
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            json.JSONDecodeError: If file is not valid JSON
+            ValueError: If file format is invalid
 
         Input file format:
             [
@@ -270,7 +278,9 @@ class BatchProcessingWorkflow:
                 ...
             ]
         """
-        return cls()
+        workflow = cls(api_key=api_key)
+        requests = workflow.load_requests_from_file(file_path)
+        return workflow, requests
 
     def load_requests_from_file(self, file_path: str) -> list[BatchRequest]:
         """Load batch requests from JSON file.
@@ -286,11 +296,11 @@ class BatchProcessingWorkflow:
             json.JSONDecodeError: If file is not valid JSON
             ValueError: If file format is invalid
         """
-        path = Path(file_path)
-        if not path.exists():
+        validated_path = _validate_file_path(file_path)
+        if not validated_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        with open(path) as f:
+        with open(validated_path) as f:
             data = json.load(f)
 
         if not isinstance(data, list):
