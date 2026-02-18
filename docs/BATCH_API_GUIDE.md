@@ -318,7 +318,7 @@ requests = [
     {
         "custom_id": "task_1",
         "params": {
-            "model": "claude-sonnet-4-5-20250929",
+            "model": "claude-sonnet-4-6",
             "messages": [{"role": "user", "content": "Analyze this log..."}],
             "max_tokens": 4096,
         },
@@ -373,7 +373,7 @@ Results are returned as a list of result objects:
           "input_tokens": 150,
           "output_tokens": 75
         },
-        "model": "claude-sonnet-4-5-20250929",
+        "model": "claude-sonnet-4-6",
         "stop_reason": "end_turn"
       }
     }
@@ -408,8 +408,8 @@ Results are returned as a list of result objects:
 | Tier | Model | Input Tokens | Output Tokens | Standard Cost | Batch Cost | Savings |
 |------|-------|--------------|---------------|---------------|------------|---------|
 | Cheap | Haiku | 500 | 200 | $0.125 + $0.250 = $0.375 | $0.188 | 50% ($0.188) |
-| Capable | Sonnet 4.5 | 500 | 200 | $1.50 + $3.00 = $4.50 | $2.25 | 50% ($2.25) |
-| Premium | Opus 4.0 | 500 | 200 | $7.50 + $15.00 = $22.50 | $11.25 | 50% ($11.25) |
+| Capable | Sonnet 4.6 | 500 | 200 | $1.50 + $3.00 = $4.50 | $2.25 | 50% ($2.25) |
+| Premium | Opus 4.6 | 500 | 200 | $2.50 + $5.00 = $7.50 | $3.75 | 50% ($3.75) |
 
 **Total savings for 1,000 requests on capable tier: $2,250**
 
@@ -495,7 +495,7 @@ for result in results:
     if result["result"]["type"] == "succeeded":
         usage = result["result"]["message"]["usage"]
         log_request(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             input_tokens=usage["input_tokens"],
             output_tokens=usage["output_tokens"],
             task_type="batch_processing",
