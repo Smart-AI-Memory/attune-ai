@@ -273,7 +273,10 @@ class TestMemoryToolsWithMock:
         """Test memory_store handles ImportError gracefully."""
         server._memory = None  # Force lazy init
 
-        with patch.object(server, "_get_memory", side_effect=ImportError("No memory module")):
+        with patch(
+            "attune.mcp.handlers.memory_handlers.get_memory",
+            side_effect=ImportError("No memory module"),
+        ):
             result = await server.call_tool("memory_store", {"key": "k", "value": "v"})
         assert result["success"] is False
         assert "error" in result

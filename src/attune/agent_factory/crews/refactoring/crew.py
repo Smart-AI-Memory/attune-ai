@@ -29,389 +29,29 @@ Licensed under the Apache License, Version 2.0
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
-
-from .base import CrewBase
+from ..base import CrewBase
+from .checkpoints import create_checkpoint, rollback
+from .config import XML_PROMPT_TEMPLATES
+from .types import (
+    CodeCheckpoint,
+    Impact,
+    RefactoringCategory,
+    RefactoringConfig,
+    RefactoringFinding,
+    RefactoringReport,
+    Severity,
+    UserProfile,
+)
+from .user_profiles import (
+    apply_user_preferences,
+    load_user_profile,
+    record_decision,
+    save_user_profile,
+)
 
 logger = logging.getLogger(__name__)
-
-
-# =============================================================================
-# Enums
-# =============================================================================
-
-
-class RefactoringCategory(Enum):
-    """Categories of refactoring opportunities."""
-
-    EXTRACT_METHOD = "extract_method"
-    EXTRACT_VARIABLE = "extract_variable"
-    RENAME = "rename"
-    SIMPLIFY = "simplify"
-    REMOVE_DUPLICATION = "remove_duplication"
-    RESTRUCTURE = "restructure"
-    DEAD_CODE = "dead_code"
-    TYPE_SAFETY = "type_safety"
-    INLINE = "inline"
-    CONSOLIDATE_CONDITIONAL = "consolidate_conditional"
-    OTHER = "other"
-
-
-class Severity(Enum):
-    """Severity levels for refactoring findings."""
-
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
-
-
-class Impact(Enum):
-    """Estimated impact of applying a refactoring."""
-
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-# =============================================================================
-# Data Classes
-# =============================================================================
-
-
-@dataclass
-class RefactoringFinding:
-    """A single refactoring opportunity identified by the analyzer."""
-
-    id: str
-    title: str
-    description: str
-    category: RefactoringCategory
-    severity: Severity
-    file_path: str
-    start_line: int
-    end_line: int
-    before_code: str = ""
-    after_code: str | None = None
-    confidence: float = 1.0
-    estimated_impact: Impact = Impact.MEDIUM
-    rationale: str = ""
-    metadata: dict = field(default_factory=dict)
-
-    def to_dict(self) -> dict:
-        """Convert finding to dictionary for serialization."""
-        return {
-            "id": self.id,
-            "title": self.title,
-            "description": self.description,
-            "category": self.category.value,
-            "severity": self.severity.value,
-            "file_path": self.file_path,
-            "start_line": self.start_line,
-            "end_line": self.end_line,
-            "before_code": self.before_code,
-            "after_code": self.after_code,
-            "confidence": self.confidence,
-            "estimated_impact": self.estimated_impact.value,
-            "rationale": self.rationale,
-            "metadata": self.metadata,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "RefactoringFinding":
-        """Create finding from dictionary."""
-        return cls(
-            id=data.get("id", str(uuid.uuid4())),
-            title=data.get("title", "Untitled"),
-            description=data.get("description", ""),
-            category=RefactoringCategory(data.get("category", "other")),
-            severity=Severity(data.get("severity", "medium")),
-            file_path=data.get("file_path", ""),
-            start_line=data.get("start_line", 0),
-            end_line=data.get("end_line", 0),
-            before_code=data.get("before_code", ""),
-            after_code=data.get("after_code"),
-            confidence=data.get("confidence", 1.0),
-            estimated_impact=Impact(data.get("estimated_impact", "medium")),
-            rationale=data.get("rationale", ""),
-            metadata=data.get("metadata", {}),
-        )
-
-
-@dataclass
-class CodeCheckpoint:
-    """Checkpoint for rollback capability."""
-
-    id: str
-    file_path: str
-    original_content: str
-    timestamp: str
-    finding_id: str
-
-    def to_dict(self) -> dict:
-        """Convert checkpoint to dictionary."""
-        return {
-            "id": self.id,
-            "file_path": self.file_path,
-            "original_content": self.original_content,
-            "timestamp": self.timestamp,
-            "finding_id": self.finding_id,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "CodeCheckpoint":
-        """Create checkpoint from dictionary."""
-        return cls(
-            id=data["id"],
-            file_path=data["file_path"],
-            original_content=data["original_content"],
-            timestamp=data["timestamp"],
-            finding_id=data["finding_id"],
-        )
-
-
-@dataclass
-class RefactoringReport:
-    """Complete refactoring analysis report."""
-
-    target: str
-    findings: list[RefactoringFinding]
-    summary: str = ""
-    duration_seconds: float = 0.0
-    agents_used: list[str] = field(default_factory=list)
-    checkpoints: list[CodeCheckpoint] = field(default_factory=list)
-    memory_graph_hits: int = 0
-    metadata: dict = field(default_factory=dict)
-
-    @property
-    def high_impact_findings(self) -> list[RefactoringFinding]:
-        """Get high impact findings."""
-        return [f for f in self.findings if f.estimated_impact == Impact.HIGH]
-
-    @property
-    def findings_by_category(self) -> dict[str, list[RefactoringFinding]]:
-        """Group findings by category."""
-        result: dict[str, list[RefactoringFinding]] = {}
-        for finding in self.findings:
-            cat = finding.category.value
-            if cat not in result:
-                result[cat] = []
-            result[cat].append(finding)
-        return result
-
-    @property
-    def total_lines_affected(self) -> int:
-        """Calculate total lines that would be affected."""
-        return sum(f.end_line - f.start_line + 1 for f in self.findings)
-
-    def to_dict(self) -> dict:
-        """Convert report to dictionary."""
-        return {
-            "target": self.target,
-            "findings": [f.to_dict() for f in self.findings],
-            "summary": self.summary,
-            "duration_seconds": self.duration_seconds,
-            "agents_used": self.agents_used,
-            "checkpoints": [c.to_dict() for c in self.checkpoints],
-            "memory_graph_hits": self.memory_graph_hits,
-            "high_impact_count": len(self.high_impact_findings),
-            "total_lines_affected": self.total_lines_affected,
-            "metadata": self.metadata,
-        }
-
-
-@dataclass
-class UserProfile:
-    """User preferences learned over time."""
-
-    user_id: str = "default"
-    updated_at: str = ""
-    accepted_categories: dict[str, int] = field(default_factory=dict)
-    rejected_categories: dict[str, int] = field(default_factory=dict)
-    preferred_complexity: str = "medium"
-    history: list[dict] = field(default_factory=list)
-
-    def get_category_score(self, category: RefactoringCategory) -> float:
-        """Get score for a category based on user history (higher = more preferred)."""
-        cat = category.value
-        accepted = self.accepted_categories.get(cat, 0)
-        rejected = self.rejected_categories.get(cat, 0)
-        total = accepted + rejected
-        if total == 0:
-            return 0.5  # Neutral
-        return accepted / total
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "user_id": self.user_id,
-            "updated_at": self.updated_at,
-            "preferences": {
-                "accepted_categories": self.accepted_categories,
-                "rejected_categories": self.rejected_categories,
-                "preferred_complexity": self.preferred_complexity,
-            },
-            "history": self.history,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "UserProfile":
-        """Create from dictionary."""
-        prefs = data.get("preferences", {})
-        return cls(
-            user_id=data.get("user_id", "default"),
-            updated_at=data.get("updated_at", ""),
-            accepted_categories=prefs.get("accepted_categories", {}),
-            rejected_categories=prefs.get("rejected_categories", {}),
-            preferred_complexity=prefs.get("preferred_complexity", "medium"),
-            history=data.get("history", []),
-        )
-
-
-@dataclass
-class RefactoringConfig:
-    """Configuration for the refactoring crew."""
-
-    # API Configuration
-    provider: str = "anthropic"
-    api_key: str | None = None
-
-    # Analysis Configuration
-    depth: str = "standard"  # "quick", "standard", "thorough"
-    focus_areas: list[str] = field(
-        default_factory=lambda: [
-            "extract_method",
-            "simplify",
-            "remove_duplication",
-            "rename",
-            "dead_code",
-        ],
-    )
-
-    # Memory Graph
-    memory_graph_enabled: bool = True
-    memory_graph_path: str = "patterns/refactoring_memory.json"
-
-    # User Profile
-    user_profile_enabled: bool = True
-    user_profile_path: str = ".attune/refactor_profile.json"
-
-    # Agent Tiers (cost optimization)
-    analyzer_tier: str = "capable"  # GPT-4o / Claude Sonnet
-    writer_tier: str = "capable"
-
-    # Resilience
-    resilience_enabled: bool = True
-    timeout_seconds: float = 300.0
-
-    # XML Prompts
-    xml_prompts_enabled: bool = True
-    xml_schema_version: str = "1.0"
-
-
-# =============================================================================
-# XML Prompt Templates
-# =============================================================================
-
-XML_PROMPT_TEMPLATES = {
-    "refactor_analyzer": """<agent role="refactor_analyzer" version="{schema_version}">
-  <identity>
-    <role>Refactoring Analyst</role>
-    <expertise>Code analysis, refactoring patterns, code smells detection</expertise>
-  </identity>
-
-  <goal>
-    Analyze code to identify refactoring opportunities that improve maintainability,
-    readability, and performance. Prioritize by impact and confidence.
-  </goal>
-
-  <instructions>
-    <step>Analyze the code structure, complexity, and patterns</step>
-    <step>Identify code smells: long methods, duplication, poor naming, dead code</step>
-    <step>Detect opportunities for extraction, simplification, or restructuring</step>
-    <step>Assess the impact and risk of each potential refactoring</step>
-    <step>Prioritize findings by impact (high > medium > low) and confidence</step>
-    <step>Provide clear rationale for each recommendation</step>
-  </instructions>
-
-  <constraints>
-    <rule>Focus on actionable refactorings, not style preferences</rule>
-    <rule>Consider the broader codebase context when suggesting changes</rule>
-    <rule>Prioritize safety - prefer low-risk refactorings over high-risk ones</rule>
-    <rule>Include exact line numbers for each finding</rule>
-    <rule>Provide the before_code snippet for context</rule>
-  </constraints>
-
-  <refactoring_patterns>
-    <pattern name="extract_method">Long or complex code blocks that can be extracted</pattern>
-    <pattern name="extract_variable">Complex expressions that deserve a named variable</pattern>
-    <pattern name="rename">Unclear or misleading names for variables, functions, or classes</pattern>
-    <pattern name="simplify">Overly complex conditionals or logic that can be simplified</pattern>
-    <pattern name="remove_duplication">Repeated code blocks that should be consolidated</pattern>
-    <pattern name="dead_code">Unused variables, functions, or imports</pattern>
-    <pattern name="inline">Over-abstracted code that should be inlined</pattern>
-    <pattern name="consolidate_conditional">Multiple conditionals that can be merged</pattern>
-  </refactoring_patterns>
-
-  <output_format>
-    Return a JSON array of findings, each with:
-    - id: unique identifier
-    - title: brief description
-    - description: detailed explanation
-    - category: one of the refactoring patterns
-    - severity: critical/high/medium/low/info
-    - file_path: path to the file
-    - start_line: starting line number
-    - end_line: ending line number
-    - before_code: the current code snippet
-    - confidence: 0.0 to 1.0
-    - estimated_impact: high/medium/low
-    - rationale: why this refactoring is recommended
-  </output_format>
-</agent>""",
-    "refactor_writer": """<agent role="refactor_writer" version="{schema_version}">
-  <identity>
-    <role>Refactoring Engineer</role>
-    <expertise>Code transformation, refactoring implementation, clean code</expertise>
-  </identity>
-
-  <goal>
-    Generate the refactored code for a specific finding. Produce clean, correct,
-    and idiomatic code that addresses the identified issue.
-  </goal>
-
-  <instructions>
-    <step>Understand the original code and the refactoring goal</step>
-    <step>Apply the appropriate refactoring pattern</step>
-    <step>Ensure the refactored code is syntactically correct</step>
-    <step>Maintain the original functionality - no behavior changes</step>
-    <step>Follow the project's coding style and conventions</step>
-    <step>Return the complete refactored code snippet</step>
-  </instructions>
-
-  <constraints>
-    <rule>The refactored code MUST be syntactically valid</rule>
-    <rule>Preserve all functionality - this is refactoring, not feature changes</rule>
-    <rule>Match the indentation and style of surrounding code</rule>
-    <rule>Include any necessary imports or helper functions</rule>
-    <rule>Keep the refactoring minimal - only change what's needed</rule>
-  </constraints>
-
-  <output_format>
-    Return a JSON object with:
-    - after_code: the complete refactored code snippet
-    - explanation: brief explanation of changes made
-    - imports_needed: list of any new imports required (if any)
-  </output_format>
-</agent>""",
-}
 
 
 # =============================================================================
@@ -455,7 +95,7 @@ class RefactoringCrew(CrewBase):
             return
         await super()._initialize()
         if self.config.user_profile_enabled:
-            self._user_profile = self._load_user_profile()
+            self._user_profile = load_user_profile(self.config.user_profile_path)
 
     async def _create_workflow(self) -> None:
         """No workflow needed — agents invoked directly."""
@@ -593,7 +233,7 @@ Return the refactored code as after_code."""
 
             # Apply user preferences for prioritization
             if self._user_profile:
-                findings = self._apply_user_preferences(findings)
+                findings = apply_user_preferences(findings, self._user_profile)
 
         except KeyError as e:
             # Agent not initialized or missing in agents dict
@@ -731,14 +371,7 @@ Return the refactored code as after_code."""
             CodeCheckpoint that can be used for rollback
 
         """
-        checkpoint = CodeCheckpoint(
-            id=str(uuid.uuid4()),
-            file_path=file_path,
-            original_content=content,
-            timestamp=datetime.now().isoformat(),
-            finding_id=finding_id,
-        )
-        return checkpoint
+        return create_checkpoint(file_path, content, finding_id)
 
     def rollback(self, checkpoint: CodeCheckpoint) -> str:
         """Get the original content from a checkpoint.
@@ -750,7 +383,7 @@ Return the refactored code as after_code."""
             The original file content
 
         """
-        return checkpoint.original_content
+        return rollback(checkpoint)
 
     # =========================================================================
     # User Profile Management
@@ -758,49 +391,13 @@ Return the refactored code as after_code."""
 
     def _load_user_profile(self) -> UserProfile:
         """Load user profile from disk."""
-        profile_path = Path(self.config.user_profile_path)
-        if profile_path.exists():
-            try:
-                with open(profile_path) as f:
-                    data = json.load(f)
-                return UserProfile.from_dict(data)
-            except (OSError, PermissionError) as e:
-                # File system errors reading profile
-                logger.warning(f"Failed to load user profile (file system error): {e}")
-            except json.JSONDecodeError as e:
-                # Invalid JSON in profile file
-                logger.warning(f"Failed to load user profile (invalid JSON): {e}")
-            except (KeyError, ValueError, TypeError) as e:
-                # Profile data validation errors
-                logger.warning(f"Failed to load user profile (data error): {e}")
-            except Exception:
-                # INTENTIONAL: User profile is optional - start with default
-                logger.exception("Unexpected error loading user profile")
-        return UserProfile()
+        return load_user_profile(self.config.user_profile_path)
 
     def save_user_profile(self) -> None:
         """Save user profile to disk."""
         if not self._user_profile:
             return
-
-        profile_path = Path(self.config.user_profile_path)
-        profile_path.parent.mkdir(parents=True, exist_ok=True)
-
-        self._user_profile.updated_at = datetime.now().isoformat()
-
-        try:
-            validated_path = _validate_file_path(str(profile_path))
-            with open(validated_path, "w") as f:
-                json.dump(self._user_profile.to_dict(), f, indent=2)
-        except (OSError, PermissionError) as e:
-            # File system errors writing profile
-            logger.warning(f"Failed to save user profile (file system error): {e}")
-        except (TypeError, ValueError) as e:
-            # JSON serialization errors
-            logger.warning(f"Failed to save user profile (serialization error): {e}")
-        except Exception:
-            # INTENTIONAL: User profile save is optional - don't crash on failure
-            logger.exception("Unexpected error saving user profile")
+        save_user_profile(self._user_profile, self.config.user_profile_path)
 
     def record_decision(self, finding: RefactoringFinding, accepted: bool) -> None:
         """Record user decision for learning.
@@ -812,34 +409,7 @@ Return the refactored code as after_code."""
         """
         if not self._user_profile:
             return
-
-        cat = finding.category.value
-
-        if accepted:
-            self._user_profile.accepted_categories[cat] = (
-                self._user_profile.accepted_categories.get(cat, 0) + 1
-            )
-        else:
-            self._user_profile.rejected_categories[cat] = (
-                self._user_profile.rejected_categories.get(cat, 0) + 1
-            )
-
-        # Add to history
-        self._user_profile.history.append(
-            {
-                "session_id": str(uuid.uuid4())[:8],
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "file": finding.file_path,
-                "category": cat,
-                "accepted": accepted,
-            },
-        )
-
-        # Keep history bounded
-        if len(self._user_profile.history) > 100:
-            self._user_profile.history = self._user_profile.history[-100:]
-
-        self.save_user_profile()
+        record_decision(self._user_profile, finding, accepted, self.config.user_profile_path)
 
     # =========================================================================
     # Private Helper Methods
@@ -998,22 +568,7 @@ The refactored code MUST be syntactically valid and preserve all functionality.
         """Apply user preferences to prioritize findings."""
         if not self._user_profile:
             return findings
-
-        user_profile = self._user_profile  # Capture for closure with non-None type
-
-        def score(finding: RefactoringFinding) -> float:
-            # Base score from impact
-            impact_scores = {Impact.HIGH: 3.0, Impact.MEDIUM: 2.0, Impact.LOW: 1.0}
-            base = impact_scores.get(finding.estimated_impact, 2.0)
-
-            # Adjust by user preference
-            pref = user_profile.get_category_score(finding.category)
-            adjusted = base * (0.5 + pref)  # Range: 0.5x to 1.5x
-
-            # Adjust by confidence
-            return adjusted * finding.confidence
-
-        return sorted(findings, key=score, reverse=True)
+        return apply_user_preferences(findings, self._user_profile)
 
     def _generate_summary(self, findings: list[RefactoringFinding]) -> str:
         """Generate summary of analysis."""
