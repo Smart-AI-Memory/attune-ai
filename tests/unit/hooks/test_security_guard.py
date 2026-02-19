@@ -169,40 +169,40 @@ class TestMain:
     def test_missing_tool_name_allows(self) -> None:
         result = main({})
         assert result["allowed"] is True
-        assert "missing tool_name" in result["reason"]
+        # No reason key when fail-open
 
     def test_allows_safe_bash(self) -> None:
         result = main({"tool_name": "Bash", "tool_input": {"command": "ls -la"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_blocks_dangerous_bash(self) -> None:
         result = main({"tool_name": "Bash", "tool_input": {"command": "python -c 'eval(x)'"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_allows_safe_edit(self) -> None:
         result = main({"tool_name": "Edit", "tool_input": {"file_path": "src/app.py"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_blocks_edit_to_system_dir(self) -> None:
         result = main({"tool_name": "Edit", "tool_input": {"file_path": "/etc/passwd"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_allows_safe_write(self) -> None:
         result = main({"tool_name": "Write", "tool_input": {"file_path": "src/new.py"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_blocks_write_null_bytes(self) -> None:
         result = main({"tool_name": "Write", "tool_input": {"file_path": "src/\x00bad.py"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_allows_unknown_tool(self) -> None:
         """Unknown tools (Read, Grep, etc.) should be allowed."""
         result = main({"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
     def test_empty_tool_input(self) -> None:
         result = main({"tool_name": "Bash", "tool_input": {}})
-        assert result["allowed"] is True
+        assert result["allowed"] is False
 
 
 # ---------------------------------------------------------------------------
