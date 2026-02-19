@@ -232,6 +232,35 @@ INTENT_PATTERNS = {
         ],
         "weight": 1.0,
     },
+    "brainstorm": {
+        "keywords": [
+            "brainstorm",
+            "think through",
+            "figure out",
+            "ideate",
+            "explore idea",
+            "new idea",
+            "not sure how",
+            "think about",
+            "work through",
+            "talk through",
+            "help me think",
+            "plan approach",
+            "what if",
+        ],
+        "phrases": [
+            r"(help me )?(think|figure) (through|out|about)",
+            r"(let's|let me|I want to) brainstorm",
+            r"(not sure|unsure) (how|what|where) to",
+            r"(explore|consider|think about) (an? )?(idea|approach|option)",
+            r"what if (we|I)",
+            r"how should (I|we) (tackle|approach|handle|think about)",
+            r"(need to|want to) (think|plan|figure)",
+            r"I have an idea",
+            r"(help me )?(work|talk) (through|out)",
+        ],
+        "weight": 1.0,
+    },
 }
 
 

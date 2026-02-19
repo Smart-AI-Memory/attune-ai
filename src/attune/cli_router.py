@@ -84,32 +84,20 @@ class HybridRouter:
             "generate-tests": ("testing", "gen"),
             "test-gen": ("testing", "gen"),
             "benchmark": ("testing", "benchmark"),
-            # Learning commands → /learning skill
-            "evaluate": ("learning", "evaluate"),
-            "patterns": ("learning", "patterns"),
-            "improve": ("learning", "improve"),
             # Workflow commands → /workflows skill
             "security": ("workflows", "run security-audit"),
             "security-audit": ("workflows", "run security-audit"),
             "bug-predict": ("workflows", "run bug-predict"),
             "bugs": ("workflows", "run bug-predict"),
-            "perf-workflow": ("workflows", "run perf-audit"),
-            # Context commands → /context skill
-            "status": ("context", "status"),
-            "memory": ("context", "memory"),
-            "state": ("context", "state"),
+            "perf-workflow": ("dev", "perf-audit"),
             # Doc commands → /docs skill
             "explain": ("docs", "explain"),
             "document": ("docs", "generate"),
             "overview": ("docs", "overview"),
-            "docs-seo": ("workflows", "run seo-optimization --mode audit"),
             # SEO commands → /workflows skill
             "seo": ("workflows", "run seo-optimization --mode audit"),
             "seo-audit": ("workflows", "run seo-optimization --mode audit"),
             "seo-optimize": ("workflows", "run seo-optimization --mode fix"),
-            "optimize-seo": ("workflows", "run seo-optimization --mode suggest"),
-            "meta-tags": ("workflows", "run seo-optimization --mode audit"),
-            "check-seo": ("workflows", "run seo-optimization --mode audit"),
             # Plan commands → /plan skill
             "plan": ("plan", ""),
             "tdd": ("plan", "tdd"),
@@ -125,12 +113,6 @@ class HybridRouter:
             # Agent dashboard commands
             "dashboard": ("workflows", "python examples/dashboard_demo.py"),
             "agent-dashboard": ("workflows", "python examples/dashboard_demo.py"),
-            # Batch API processing (50% cost savings)
-            "batch": ("batch", ""),
-            "batch-submit": ("batch", "submit"),
-            "batch-status": ("batch", "status"),
-            "batch-results": ("batch", "results"),
-            "bulk-process": ("batch", "submit"),
             # Batch test generation (enhanced)
             "batch-tests": ("testing", "generate --batch"),
             "bulk-tests": ("testing", "generate --batch"),
@@ -147,6 +129,21 @@ class HybridRouter:
             "wizard-run": ("wizard", "run"),
             "create-wizard": ("wizard", "create"),
             "new-wizard": ("wizard", "create"),
+            # Batch API commands → /batch skill
+            "batch": ("batch", ""),
+            "batch-submit": ("batch", "submit"),
+            "submit-batch": ("batch", "submit"),
+            "batch-status": ("batch", "status"),
+            "batch-results": ("batch", "results"),
+            "batch-wait": ("batch", "wait"),
+            "bulk-process": ("batch", "submit"),
+            "batch-api": ("batch", ""),
+            # Brainstorm commands → /brainstorm skill
+            "brainstorm": ("brainstorm", ""),
+            "think": ("brainstorm", ""),
+            "ideate": ("brainstorm", ""),
+            "think-through": ("brainstorm", ""),
+            "figure-out": ("brainstorm", ""),
             # Agent commands → /agent skill
             "agent": ("agent", ""),
             "agent-create": ("agent", "create"),
@@ -163,15 +160,15 @@ class HybridRouter:
         self._hub_descriptions = {
             "dev": "Development tools (commits, reviews, refactoring)",
             "testing": "Test generation and coverage analysis",
-            "learning": "Session evaluation and pattern learning",
             "workflows": "AI-powered workflows (security, bugs, performance)",
-            "context": "Memory and state management",
             "docs": "Documentation generation",
             "plan": "Development planning and architecture",
             "release": "Release preparation and publishing",
             "wizard": "Guided multi-step wizards with XML task decomposition",
             "agent": "Create and manage custom AI agents and teams",
+            "batch": "Batch API processing (50% cost savings)",
             "utilities": "Utility tools (profiling, dependencies)",
+            "brainstorm": "Guided brainstorming with structured discovery and plan output",
         }
 
         self._load_preferences()
