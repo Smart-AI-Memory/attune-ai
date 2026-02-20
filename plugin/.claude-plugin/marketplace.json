@@ -6,9 +6,9 @@
   "plugins": [
     {
       "name": "attune-ai",
-      "description": "Security audits, code reviews, test generation, cost optimization, and multi-agent orchestration with Socratic discovery — 18 MCP tools, 6 skills, and guided workflow routing via /attune",
+      "description": "Security audits, code reviews, test generation, cost optimization, and multi-agent orchestration with Socratic discovery — 18 MCP tools, 7 skills, and guided workflow routing via /attune",
       "source": ".",
-      "version": "2.10.4",
+      "version": "3.0.0",
       "category": "developer-tools",
       "tags": [
         "workflows",

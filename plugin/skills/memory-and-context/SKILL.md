@@ -222,7 +222,7 @@ By default, attune-ai uses in-memory storage. All features described in this ski
 **Upgrade:**
 
 ```bash
-pip install attune-ai[redis]
+pip install attune-ai[memory]
 ```
 
 Zero configuration needed -- connects to `localhost:6379` by default. For custom configuration, set the `ATTUNE_REDIS_URL` environment variable:

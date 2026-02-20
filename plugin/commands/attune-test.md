@@ -5,7 +5,7 @@ argument-hint: "<path to generate tests for>"
 category: workflows
 aliases: [atest]
 tags: [test, generate, coverage, tdd]
-version: "2.10.4"
+version: "3.0.0"
 ---
 
 # attune-test

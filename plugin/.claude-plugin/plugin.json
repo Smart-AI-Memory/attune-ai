@@ -1,6 +1,6 @@
 {
   "name": "attune-ai",
-  "version": "2.10.4",
+  "version": "3.0.0",
   "description": "AI-powered developer workflows for Claude Code — security audits, code reviews, test generation, cost optimization, and multi-agent orchestration with Socratic discovery",
   "author": {
     "name": "Smart AI Memory",

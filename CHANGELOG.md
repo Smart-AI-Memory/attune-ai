@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-02-20
+
+### Added
+
+- **Claude Code Plugin** - First-class plugin with 18 MCP
+  tools, 7 skills, 4 commands, and Socratic discovery via
+  `/attune`. Marketplace-ready with `plugin.json` and
+  `marketplace.json` manifests.
+- **Brainstorm skill** (`/brainstorm`) - Guided
+  brainstorming with four-phase discovery (Context,
+  Problem, Goals, End State) and structured plan output.
+- **Plugin commands** - `/attune-review`, `/attune-test`,
+  `/attune-security` for direct workflow access without
+  Socratic routing.
+
+### Changed
+
+- **Major codebase refactoring** - Split 48 large files
+  (700-1,500+ lines each) into ~165 focused modules across
+  6 refactoring waves. All public APIs preserved via
+  re-exports with no breaking changes for consumers.
+- **CI timeout** - Increased test timeout to 25 minutes to
+  accommodate Windows runners (previously 15 minutes,
+  causing cancellations at 96% completion).
+- **Batch processing** - Security hardening, exception
+  handling improvements, and stale reference cleanup.
+
+### Fixed
+
+- **Windows CI stability** - Resolved timeout cancellations
+  on Windows runners across Python 3.10-3.12.
+- **Python 3.13 compatibility** - Fixed compatibility
+  issues across the test suite.
+- **Order-dependent test flake** - Fixed mock caching issue
+  in `test_security_audit_workflow` where `sys.modules`
+  caching caused test-order-dependent failures.
+- **Merge conflict resolution** - Resolved conflicts in 5
+  files after rebasing refactoring branch onto main.
+- **MRO-aware test mocking** - Fixed `__bases__[0]` mock
+  target after mixin refactoring changed class hierarchy.
+
+### Removed
+
+- **Deprecated workflows** - Deleted 1,800+ lines of
+  deprecated workflow code and dead routes.
+- **Dead code** - Removed unused `TOOL_HANDLERS` dict from
+  MCP tool definitions.
+
 ## [2.10.1] - 2026-02-17
 
 ### Fixed

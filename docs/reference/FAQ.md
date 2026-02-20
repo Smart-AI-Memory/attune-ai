@@ -1,11 +1,11 @@
 ---
-description: Frequently Asked Questions API reference: **Last Updated:** January 9, 2026 **Version:** 3.10.0 --- ## Table of Contents 1. [Getting Started](
+description: Frequently Asked Questions
 ---
 
 # Frequently Asked Questions
 
-**Last Updated:** January 9, 2026
-**Version:** 3.10.0
+**Last Updated:** February 20, 2026
+**Version:** 3.0.0
 
 ---
 
@@ -33,15 +33,15 @@ Attune AI is an open-source Python framework that gives AI assistants persistent
 
 - 🧠 **Persistent Memory**: Pattern library that survives sessions (git-based + optional Redis)
 - 🤝 **Multi-Agent Coordination**: AI teams that share context and validate each other
-- 🔮 **Anticipatory Intelligence**: Predicts bugs 30-90 days out based on learned patterns
+- 🔮 **Anticipatory Intelligence**: Predicts potential bugs based on learned patterns
 - 🛡️ **Enterprise-Ready**: Local-first, HIPAA-compliant options, comprehensive security
-- 💰 **Cost Optimization**: Smart tier routing saves 80-96% on LLM costs
+- 💰 **Cost Optimization**: Smart tier routing saves 34-86% on LLM costs
 
 #### Quick start
 
 ```bash
 pip install attune-ai
-empathy-memory serve
+attune setup
 ```
 
 **Learn more:** [Getting Started Guide](../getting-started/index.md)
@@ -139,7 +139,7 @@ Yes! Our production standards file is available:
 - Pre-commit hook configurations
 - Real code examples from production
 
-**Size:** 1,170 lines with real patterns
+**Size:** ~1,170 lines with real patterns
 
 **How to use:** Adapt for your team's needs, your language, your patterns
 
@@ -425,7 +425,7 @@ Code review finds: bare except:
 
 ### What is intelligent tier fallback?
 
-**NEW in v3.10.0:** Automatic cost optimization that tries cheaper tiers first and only upgrades when quality gates fail.
+Automatic cost optimization that tries cheaper tiers first and only upgrades when quality gates fail.
 
 #### How it works
 
@@ -979,4 +979,4 @@ git push
 
 **Contributing:** Found an error or have a question not covered here? [Open an issue](https://github.com/Smart-AI-Memory/attune-ai/issues) or [start a discussion](https://github.com/Smart-AI-Memory/attune-ai/discussions).
 
-**Last Updated:** January 7, 2026
+**Last Updated:** February 20, 2026
