@@ -247,11 +247,11 @@ class TestTokenCountDataclass:
 
     def test_token_count_creation(self):
         """Test creating TokenCount instance."""
-        tc = TokenCount(tokens=100, method="tiktoken", model="claude-sonnet-4-6")
+        tc = TokenCount(tokens=100, method="tiktoken", model="claude-sonnet-4-5-20250929")
 
         assert tc.tokens == 100
         assert tc.method == "tiktoken"
-        assert tc.model == "claude-sonnet-4-6"
+        assert tc.model == "claude-sonnet-4-5-20250929"
 
 
 class TestAnthropicProviderIntegration:

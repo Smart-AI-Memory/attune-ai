@@ -537,28 +537,17 @@ class TestRealTestGenerator:
             mock_anthropic_class.assert_called_once_with(api_key="test-key-123")
 
     def test_init_with_missing_anthropic_package_disables_llm(self, tmp_path):
-        """Test that missing anthropic package disables LLM."""
-        # Temporarily remove anthropic from sys.modules if it exists
-        import sys
+        """Test that missing anthropic package disables LLM.
 
-        anthropic_backup = sys.modules.pop("anthropic", None)
+        Uses sys.modules patch (setting to None triggers ImportError)
+        instead of __import__ mock to avoid Python 3.13 ExceptionGroup.
+        """
+        with patch.dict("sys.modules", {"anthropic": None}):
+            generator = RealTestGenerator(
+                project_root=str(tmp_path), api_key="test-key", use_llm=True
+            )
 
-        try:
-            # Mock import to raise ImportError
-            def mock_import(name, *args, **kwargs):
-                if name == "anthropic":
-                    raise ImportError("No module named 'anthropic'")
-                return __import__(name, *args, **kwargs)
-
-            with patch("builtins.__import__", side_effect=mock_import):
-                generator = RealTestGenerator(
-                    project_root=str(tmp_path), api_key="test-key", use_llm=True
-                )
-
-            assert generator.use_llm is False  # Should fallback
-        finally:
-            if anthropic_backup:
-                sys.modules["anthropic"] = anthropic_backup
+        assert generator.use_llm is False  # Should fallback
 
     def test_generate_basic_test_template(self, tmp_path):
         """Test basic template generation (no LLM)."""

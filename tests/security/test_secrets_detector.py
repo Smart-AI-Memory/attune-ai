@@ -416,7 +416,7 @@ class TestSecretsDetectorIntegration:
 
         def main():
             response = client.messages.create(
-                model="claude-sonnet-4-6",
+                model="claude-sonnet-4-5-20250929",
                 messages=[{"role": "user", "content": "Hello"}]
             )
             print(response.content)

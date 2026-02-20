@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /workspace && python attune_llm/hooks/scripts/session_start.py",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_start.py",
             "timeout": 10,
             "statusMessage": "Loading session context..."
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /workspace && python attune_llm/hooks/scripts/session_end.py",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
             "timeout": 10,
             "statusMessage": "Saving session state..."
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /workspace && python attune_llm/hooks/scripts/security_guard.py",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Security check..."
           }
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /workspace && python attune_llm/hooks/scripts/security_guard.py",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Path validation..."
           }
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /workspace && python attune_llm/hooks/scripts/telemetry_hook.py",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/telemetry_hook.py",
             "timeout": 3,
             "statusMessage": "Recording telemetry..."
           }

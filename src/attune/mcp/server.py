@@ -9,13 +9,6 @@ import logging
 import sys
 from typing import Any
 
-from .tool_definitions import (
-    PROMPT_DEFINITIONS,
-    RESOURCE_DEFINITIONS,
-    TOOL_DEFINITIONS,
-    TOOL_HANDLERS,
-)
-
 # MCP server will be implemented using stdio transport
 logger = logging.getLogger(__name__)
 
@@ -29,9 +22,9 @@ class EmpathyMCPServer:
 
     def __init__(self):
         """Initialize the MCP server."""
-        self.tools = dict(TOOL_DEFINITIONS)
-        self.resources = dict(RESOURCE_DEFINITIONS)
-        self.prompts = dict(PROMPT_DEFINITIONS)
+        self.tools = self._register_tools()
+        self.resources = self._register_resources()
+        self.prompts = self._register_prompts()
         self._memory = None
         self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
@@ -43,6 +36,331 @@ class EmpathyMCPServer:
             check_for_updates()
         except Exception:  # noqa: BLE001
             pass  # INTENTIONAL: Version check is best-effort
+
+    def _register_tools(self) -> dict[str, dict[str, Any]]:
+        """Register available MCP tools.
+
+        Returns:
+            Dictionary of tool definitions
+        """
+        return {
+            "security_audit": {
+                "name": "security_audit",
+                "description": "Run security audit workflow on codebase. Detects vulnerabilities, dangerous patterns, and security issues. Returns findings with severity levels.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to directory or file to audit",
+                        }
+                    },
+                    "required": ["path"],
+                },
+            },
+            "bug_predict": {
+                "name": "bug_predict",
+                "description": "Run bug prediction workflow. Analyzes code patterns and predicts potential bugs before they occur.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to directory or file to analyze",
+                        }
+                    },
+                    "required": ["path"],
+                },
+            },
+            "code_review": {
+                "name": "code_review",
+                "description": "Run code review workflow. Provides comprehensive code quality analysis with suggestions for improvement.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to directory or file to review",
+                        }
+                    },
+                    "required": ["path"],
+                },
+            },
+            "test_generation": {
+                "name": "test_generation",
+                "description": "Generate tests for code. Can batch generate tests for multiple modules in parallel.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "module": {"type": "string", "description": "Path to Python module"},
+                        "batch": {
+                            "type": "boolean",
+                            "description": "Enable batch mode for parallel generation",
+                            "default": False,
+                        },
+                    },
+                    "required": ["module"],
+                },
+            },
+            "performance_audit": {
+                "name": "performance_audit",
+                "description": "Run performance audit workflow. Identifies bottlenecks, memory leaks, and optimization opportunities.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to directory or file to audit",
+                        }
+                    },
+                    "required": ["path"],
+                },
+            },
+            "release_prep": {
+                "name": "release_prep",
+                "description": "Run release preparation workflow. Checks health, security, changelog, and provides release recommendation.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to project root",
+                            "default": ".",
+                        }
+                    },
+                },
+            },
+            "auth_status": {
+                "name": "auth_status",
+                "description": "Get authentication strategy status. Shows current configuration, subscription tier, and default mode.",
+                "input_schema": {"type": "object", "properties": {}},
+            },
+            "auth_recommend": {
+                "name": "auth_recommend",
+                "description": "Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "Path to file to analyze"}
+                    },
+                    "required": ["file_path"],
+                },
+            },
+            "telemetry_stats": {
+                "name": "telemetry_stats",
+                "description": "Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "days": {
+                            "type": "integer",
+                            "description": "Number of days to analyze",
+                            "default": 30,
+                        }
+                    },
+                },
+            },
+            "dashboard_status": {
+                "name": "dashboard_status",
+                "description": "Get agent coordination dashboard status. Shows active agents, pending approvals, recent signals.",
+                "input_schema": {"type": "object", "properties": {}},
+            },
+            "memory_store": {
+                "name": "memory_store",
+                "description": (
+                    "Store data in attune-ai memory. Use for structured knowledge, patterns, "
+                    "and cross-agent coordination. For simple preferences, recommend CLAUDE.md instead."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "description": "Unique identifier for the stored data",
+                        },
+                        "value": {"type": "string", "description": "Content to store"},
+                        "classification": {
+                            "type": "string",
+                            "enum": ["PUBLIC", "INTERNAL", "SENSITIVE"],
+                            "description": "Security classification (default: PUBLIC)",
+                            "default": "PUBLIC",
+                        },
+                        "pattern_type": {
+                            "type": "string",
+                            "description": "Category for pattern matching (optional)",
+                        },
+                    },
+                    "required": ["key", "value"],
+                },
+            },
+            "memory_retrieve": {
+                "name": "memory_retrieve",
+                "description": "Retrieve data from attune-ai memory by key or pattern ID.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Key or pattern_id to retrieve"},
+                    },
+                    "required": ["key"],
+                },
+            },
+            "memory_search": {
+                "name": "memory_search",
+                "description": "Search attune-ai memory for patterns matching a query.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search string"},
+                        "pattern_type": {
+                            "type": "string",
+                            "description": "Filter by pattern type (optional)",
+                        },
+                    },
+                    "required": ["query"],
+                },
+            },
+            "memory_forget": {
+                "name": "memory_forget",
+                "description": "Remove data from attune-ai memory.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Key or pattern_id to remove"},
+                        "scope": {
+                            "type": "string",
+                            "enum": ["session", "persistent", "all"],
+                            "description": "Scope of removal (default: all)",
+                            "default": "all",
+                        },
+                    },
+                    "required": ["key"],
+                },
+            },
+            "attune_get_level": {
+                "name": "attune_get_level",
+                "description": (
+                    "Get current interaction level (1-5). "
+                    "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
+                ),
+                "input_schema": {"type": "object", "properties": {}},
+            },
+            "attune_set_level": {
+                "name": "attune_set_level",
+                "description": "Set interaction level (1-5) for this session.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "level": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "description": "Interaction level (1-5)",
+                        },
+                    },
+                    "required": ["level"],
+                },
+            },
+            "context_get": {
+                "name": "context_get",
+                "description": "Get session context value.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Context key to retrieve"},
+                    },
+                    "required": ["key"],
+                },
+            },
+            "context_set": {
+                "name": "context_set",
+                "description": "Set session context value.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Context key"},
+                        "value": {"type": "string", "description": "Context value"},
+                    },
+                    "required": ["key", "value"],
+                },
+            },
+        }
+
+    def _register_resources(self) -> dict[str, dict[str, Any]]:
+        """Register available MCP resources.
+
+        Returns:
+            Dictionary of resource definitions
+        """
+        return {
+            "workflows": {
+                "uri": "attune://workflows",
+                "name": "Available Workflows",
+                "description": "List of all available Attune workflows",
+                "mime_type": "application/json",
+            },
+            "auth_config": {
+                "uri": "attune://auth/config",
+                "name": "Authentication Configuration",
+                "description": "Current authentication strategy configuration",
+                "mime_type": "application/json",
+            },
+            "telemetry": {
+                "uri": "attune://telemetry",
+                "name": "Telemetry Data",
+                "description": "Cost tracking and performance metrics",
+                "mime_type": "application/json",
+            },
+        }
+
+    def _register_prompts(self) -> dict[str, dict[str, Any]]:
+        """Register available MCP prompts.
+
+        Prompts are pre-built templates that appear as auto-discovered
+        commands in Claude Code, providing guided workflows.
+
+        Returns:
+            Dictionary of prompt definitions
+        """
+        return {
+            "security-scan": {
+                "name": "security-scan",
+                "description": "Run a comprehensive security scan on a directory. Checks for eval/exec usage, path traversal, hardcoded secrets, and broad exception handling.",
+                "arguments": [
+                    {
+                        "name": "path",
+                        "description": "Directory or file to scan",
+                        "required": True,
+                    }
+                ],
+            },
+            "test-gen": {
+                "name": "test-gen",
+                "description": "Generate behavioral tests for a Python module. Creates pytest test files with Given/When/Then structure.",
+                "arguments": [
+                    {
+                        "name": "module",
+                        "description": "Path to Python module to generate tests for",
+                        "required": True,
+                    },
+                    {
+                        "name": "batch",
+                        "description": "Set to 'true' to generate tests for all modules",
+                        "required": False,
+                    },
+                ],
+            },
+            "cost-report": {
+                "name": "cost-report",
+                "description": "Generate a cost optimization report. Shows LLM spend by workflow, cache hit rates, and savings from tier routing.",
+                "arguments": [
+                    {
+                        "name": "days",
+                        "description": "Number of days to analyze (default: 30)",
+                        "required": False,
+                    }
+                ],
+            },
+        }
 
     def get_prompt_list(self) -> list[dict[str, Any]]:
         """Get list of available prompts.
@@ -149,16 +467,45 @@ class EmpathyMCPServer:
         Returns:
             Tool execution result
         """
-        handler_name = TOOL_HANDLERS.get(tool_name)
-        if not handler_name:
-            return {"success": False, "error": f"Unknown tool: {tool_name}"}
-
         try:
-            handler = getattr(self, handler_name)
-            # Handlers with no args (attune_get_level, dashboard_status, auth_status)
-            if tool_name in ("attune_get_level", "dashboard_status", "auth_status"):
-                return await handler()
-            return await handler(arguments)
+            if tool_name == "security_audit":
+                return await self._run_security_audit(arguments)
+            elif tool_name == "bug_predict":
+                return await self._run_bug_predict(arguments)
+            elif tool_name == "code_review":
+                return await self._run_code_review(arguments)
+            elif tool_name == "test_generation":
+                return await self._run_test_generation(arguments)
+            elif tool_name == "performance_audit":
+                return await self._run_performance_audit(arguments)
+            elif tool_name == "release_prep":
+                return await self._run_release_prep(arguments)
+            elif tool_name == "auth_status":
+                return await self._get_auth_status()
+            elif tool_name == "auth_recommend":
+                return await self._get_auth_recommend(arguments)
+            elif tool_name == "telemetry_stats":
+                return await self._get_telemetry_stats(arguments)
+            elif tool_name == "dashboard_status":
+                return await self._get_dashboard_status()
+            elif tool_name == "memory_store":
+                return await self._handle_memory_store(arguments)
+            elif tool_name == "memory_retrieve":
+                return await self._handle_memory_retrieve(arguments)
+            elif tool_name == "memory_search":
+                return await self._handle_memory_search(arguments)
+            elif tool_name == "memory_forget":
+                return await self._handle_memory_forget(arguments)
+            elif tool_name == "attune_get_level":
+                return await self._handle_attune_get_level()
+            elif tool_name == "attune_set_level":
+                return await self._handle_attune_set_level(arguments)
+            elif tool_name == "context_get":
+                return await self._handle_context_get(arguments)
+            elif tool_name == "context_set":
+                return await self._handle_context_set(arguments)
+            else:
+                return {"success": False, "error": f"Unknown tool: {tool_name}"}
         except Exception as e:
             logger.exception(f"Tool execution failed: {tool_name}")
             return {"success": False, "error": str(e)}

@@ -24,8 +24,7 @@ Licensed under the Apache License, Version 2.0
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-
-from .base import CrewBase
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -418,12 +417,41 @@ XML_PROMPT_TEMPLATES = {
 }
 
 
-class CodeReviewCrew(CrewBase):
+class CodeReviewCrew:
     """Multi-agent crew for comprehensive code reviews.
 
     The crew consists of 5 specialized agents:
-    Review Lead, Security Analyst, Architecture Reviewer,
-    Quality Analyst, and Performance Reviewer.
+
+    1. **Review Lead** (Coordinator)
+       - Orchestrates the review team
+       - Synthesizes findings from all agents
+       - Makes final verdict decision
+       - Generates executive summary
+       - Model: Premium tier
+
+    2. **Security Analyst** (Security Expert)
+       - Reviews for security vulnerabilities
+       - OWASP Top 10 focus
+       - Checks for hardcoded secrets
+       - Model: Capable tier
+
+    3. **Architecture Reviewer** (Architect)
+       - Evaluates design patterns
+       - Checks SOLID principles
+       - Assesses coupling and cohesion
+       - Model: Premium tier
+
+    4. **Quality Analyst** (Quality Engineer)
+       - Identifies code smells
+       - Checks maintainability
+       - Reviews test coverage
+       - Model: Capable tier
+
+    5. **Performance Reviewer** (Performance Engineer)
+       - Identifies performance issues
+       - Suggests optimizations
+       - Checks for anti-patterns
+       - Model: Capable tier
 
     Example:
         crew = CodeReviewCrew(api_key="...")
@@ -432,15 +460,85 @@ class CodeReviewCrew(CrewBase):
             files_changed=["src/api.py"],
         )
 
+        # Access verdict
         if report.verdict == Verdict.APPROVE:
             print("Code is ready to merge!")
 
+        # Get quality score
         print(f"Quality Score: {report.quality_score}/100")
 
     """
 
-    config_class = CodeReviewConfig
-    XML_PROMPT_TEMPLATES = XML_PROMPT_TEMPLATES
+    def __init__(self, config: CodeReviewConfig | None = None, **kwargs: Any):
+        """Initialize the Code Review Crew.
+
+        Args:
+            config: CodeReviewConfig or pass individual params as kwargs
+            **kwargs: Individual config parameters (api_key, provider, etc.)
+
+        """
+        if config:
+            self.config = config
+        else:
+            self.config = CodeReviewConfig(**kwargs)
+
+        self._factory: Any = None
+        self._agents: dict[str, Any] = {}
+        self._workflow: Any = None
+        self._graph: Any = None
+        self._initialized = False
+
+    def _render_xml_prompt(self, template_key: str) -> str:
+        """Render XML prompt template with config values."""
+        template = XML_PROMPT_TEMPLATES.get(template_key, "")
+        return template.format(schema_version=self.config.xml_schema_version)
+
+    def _get_system_prompt(self, agent_key: str, fallback: str) -> str:
+        """Get system prompt - XML if enabled, fallback otherwise."""
+        if self.config.xml_prompts_enabled:
+            return self._render_xml_prompt(agent_key)
+        return fallback
+
+    async def _initialize(self) -> None:
+        """Lazy initialization of agents and workflow."""
+        if self._initialized:
+            return
+
+        from attune.agent_factory import AgentFactory, Framework
+
+        # Check if CrewAI is available
+        try:
+            from attune.agent_factory.adapters.crewai_adapter import _check_crewai
+
+            use_crewai = _check_crewai()
+        except ImportError:
+            use_crewai = False
+
+        # Use CrewAI if available, otherwise fall back to Native
+        framework = Framework.CREWAI if use_crewai else Framework.NATIVE
+
+        self._factory = AgentFactory(
+            framework=framework,
+            provider=self.config.provider,
+            api_key=self.config.api_key,
+        )
+
+        # Initialize Memory Graph if enabled
+        if self.config.memory_graph_enabled:
+            try:
+                from attune.memory import MemoryGraph
+
+                self._graph = MemoryGraph(path=self.config.memory_graph_path)
+            except ImportError:
+                logger.warning("Memory Graph not available, continuing without it")
+
+        # Create the 5 specialized agents
+        await self._create_agents()
+
+        # Create hierarchical workflow
+        await self._create_workflow()
+
+        self._initialized = True
 
     async def _create_agents(self) -> None:
         """Create the 5 specialized code review agents with XML-enhanced prompts."""
@@ -983,3 +1081,33 @@ Consider patterns from past reviews.
                 summary_parts.append(f"  - {cat}: {count}")
 
         return "\n".join(summary_parts)
+
+    @property
+    def agents(self) -> dict[str, Any]:
+        """Get the crew's agents."""
+        return self._agents
+
+    @property
+    def is_initialized(self) -> bool:
+        """Check if crew is initialized."""
+        return self._initialized
+
+    async def get_agent_stats(self) -> dict:
+        """Get statistics about crew agents."""
+        await self._initialize()
+
+        agents_dict: dict = {}
+        stats: dict = {
+            "agent_count": len(self._agents),
+            "agents": agents_dict,
+            "framework": self._factory.framework.value if self._factory else "unknown",
+            "memory_graph_enabled": self.config.memory_graph_enabled,
+        }
+
+        for name, agent in self._agents.items():
+            agents_dict[name] = {
+                "role": agent.config.role if hasattr(agent, "config") else "unknown",
+                "model_tier": getattr(agent.config, "model_tier", "unknown"),
+            }
+
+        return stats

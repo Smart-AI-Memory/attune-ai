@@ -43,35 +43,55 @@ def _redis_running() -> bool:
 class TestRedisFallbackBehavior:
     """Test that RedisShortTermMemory gracefully falls back to mock when Redis unavailable."""
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_falls_back_to_mock_on_connection_failure(self, mock_check):
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_falls_back_to_mock_on_connection_failure(self, mock_redis_cls):
         """Test graceful fallback to mock storage when Redis connection fails."""
-        # Facade auto-detects Redis unavailable and falls back to mock
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        # Mock Redis connection failure
+        mock_redis_cls.side_effect = redis.ConnectionError("Connection refused")
 
-        assert memory.use_mock is True
-        assert memory.ping() is True
+        # Should raise exception after retries exhausted
+        with pytest.raises(redis.ConnectionError):
+            _ = RedisShortTermMemory(host="localhost", port=6379)
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_falls_back_to_mock_on_auth_failure(self, mock_check):
+        # Verify it attempted to connect
+        assert mock_redis_cls.called
+
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_falls_back_to_mock_on_auth_failure(self, mock_redis_cls):
         """Test graceful fallback when Redis authentication fails."""
-        # Facade auto-detects Redis unavailable and falls back to mock
-        memory = RedisShortTermMemory(host="localhost", port=6379, password="wrong")
+        mock_client = Mock()
+        mock_client.ping.side_effect = redis.AuthenticationError("Invalid password")
+        mock_redis_cls.return_value = mock_client
 
-        assert memory.use_mock is True
-        assert memory.ping() is True
+        # Should fail after retries
+        with pytest.raises(redis.AuthenticationError):
+            _ = RedisShortTermMemory(host="localhost", port=6379, password="wrong")
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_falls_back_to_mock_when_redis_unavailable(self, mock_check):
-        """Test that facade falls back to mock when Redis is unavailable."""
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_retries_connection_with_exponential_backoff(self, mock_redis_cls):
+        """Test that connection retries use exponential backoff."""
+        mock_client = Mock()
+        call_count = 0
+
+        def ping_with_retry():
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise redis.ConnectionError("Connection refused")
+            return True  # Success on 3rd attempt
+
+        mock_client.ping = ping_with_retry
+        mock_redis_cls.return_value = mock_client
+
+        # Should succeed after retries
         memory = RedisShortTermMemory(host="localhost", port=6379)
-        creds = AgentCredentials("test_agent", AccessTier.CONTRIBUTOR)
 
-        # Should be in mock mode and fully functional
-        assert memory.use_mock is True
-        memory.stash("test_key", {"data": "value"}, creds, ttl=TTLStrategy.WORKING_RESULTS)
-        result = memory.retrieve("test_key", creds)
-        assert result == {"data": "value"}
+        # Verify it retried 3 times
+        assert call_count == 3
+        assert memory._metrics.retries_total >= 2  # At least 2 retries before success
 
     @patch("attune.memory.short_term.base.REDIS_AVAILABLE", False)
     def test_uses_mock_when_redis_not_installed(self):
@@ -218,14 +238,27 @@ class TestConnectionRecovery:
         # Should have recovered and ping should work
         assert memory.ping() is True
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_mock_fallback_metrics_are_zeroed(self, mock_check):
-        """Test that metrics start at zero when falling back to mock."""
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_tracks_retry_metrics(self, mock_redis_cls):
+        """Test that retry attempts are tracked in metrics."""
+        mock_client = Mock()
+        attempt = 0
+
+        def ping_with_retries():
+            nonlocal attempt
+            attempt += 1
+            if attempt < 2:
+                raise redis.ConnectionError("Connection refused")
+            return True
+
+        mock_client.ping = ping_with_retries
+        mock_redis_cls.return_value = mock_client
+
         memory = RedisShortTermMemory(host="localhost", port=6379)
 
-        # No retries occur when facade falls back to mock immediately
-        assert memory._metrics.retries_total == 0
-        assert memory._metrics.operations_total == 0
+        # Check metrics
+        assert memory._metrics.retries_total >= 1  # At least one retry occurred
 
 
 class TestErrorHandlingEdgeCases:
@@ -257,14 +290,15 @@ class TestErrorHandlingEdgeCases:
         with pytest.raises(redis.ResponseError):
             memory.stash("key", {"data": "value"}, creds, ttl=TTLStrategy.WORKING_RESULTS)
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_handles_max_clients_exceeded(self, mock_check):
-        """Test handling when Redis max clients exceeded — falls back to mock."""
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_handles_max_clients_exceeded(self, mock_redis_cls):
+        """Test handling when Redis max clients exceeded."""
+        mock_redis_cls.side_effect = redis.ConnectionError("max number of clients reached")
 
-        # Facade detects Redis unavailable and falls back to mock
-        assert memory.use_mock is True
-        assert memory.ping() is True
+        # Should raise after retries exhausted
+        with pytest.raises(redis.ConnectionError):
+            _ = RedisShortTermMemory(host="localhost", port=6379)
 
 
 class TestConfigurationValidation:
@@ -322,14 +356,27 @@ class TestConfigurationValidation:
 class TestMetricsTracking:
     """Test that metrics are properly tracked during fallback scenarios."""
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=False)
-    def test_mock_fallback_has_zero_retries(self, mock_check):
-        """Test that mock fallback path does not record retries."""
+    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.redis.Redis")
+    def test_tracks_retries_in_metrics(self, mock_redis_cls):
+        """Test that retry attempts increment metrics counter."""
+        mock_client = Mock()
+        call_count = 0
+
+        def ping_with_retries():
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise redis.TimeoutError("Timeout")
+            return True
+
+        mock_client.ping = ping_with_retries
+        mock_redis_cls.return_value = mock_client
+
         memory = RedisShortTermMemory(host="localhost", port=6379)
 
-        # Facade falls back to mock immediately — no retries
-        assert memory._metrics.retries_total == 0
-        assert memory.use_mock is True
+        # Verify retries were tracked
+        assert memory._metrics.retries_total == 2  # 2 failures before success
 
     def test_mock_storage_provides_stats(self):
         """Test that mock storage provides stats."""

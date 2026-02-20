@@ -166,10 +166,10 @@ class TestValidateFilePath:
 class TestMain:
     """Tests for main() hook entry point."""
 
-    def test_missing_tool_name_blocks(self) -> None:
+    def test_missing_tool_name_allows(self) -> None:
         result = main({})
-        assert result["allowed"] is False
-        assert "missing tool_name" in result["reason"]
+        assert result["allowed"] is True
+        # No reason key when fail-open
 
     def test_allows_safe_bash(self) -> None:
         result = main({"tool_name": "Bash", "tool_input": {"command": "ls -la"}})

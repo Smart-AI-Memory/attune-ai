@@ -1,4 +1,4 @@
-# Attune AI Framework v2.10.3
+# Attune AI Framework v2.10.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -31,7 +31,6 @@ Use `/hub-name` to access organized workflows:
 | `/docs` | generate, readme, changelog, explain | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
 | `/agent` | create, list, run, release-prep | Agent management |
-| `/batch` | submit, status, results, wait | Batch API (50% savings) |
 
 ---
 
@@ -115,4 +114,4 @@ src/attune/
 
 ---
 
-**Version:** 2.10.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 2.10.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)

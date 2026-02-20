@@ -33,7 +33,7 @@ class TestAnthropicBatchProvider:
             {
                 "custom_id": "task_1",
                 "params": {
-                    "model": "claude-sonnet-4-6",
+                    "model": "claude-sonnet-4-5-20250929",
                     "messages": [{"role": "user", "content": "Hello"}],
                     "max_tokens": 1024,
                 },
@@ -59,7 +59,7 @@ class TestAnthropicBatchProvider:
         requests = [
             {
                 "custom_id": "task_1",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5-20250929",
                 "messages": [{"role": "user", "content": "Hello"}],
                 "max_tokens": 1024,
             }
@@ -80,7 +80,7 @@ class TestAnthropicBatchProvider:
 
         # Check that params wrapper was added
         assert "params" in converted_requests[0]
-        assert converted_requests[0]["params"]["model"] == "claude-sonnet-4-6"
+        assert converted_requests[0]["params"]["model"] == "claude-sonnet-4-5-20250929"
 
     def test_create_batch_empty_raises_error(self, provider):
         """Test that empty requests list raises ValueError."""
@@ -134,7 +134,7 @@ class TestAnthropicBatchProvider:
                     "message": {
                         "content": [{"type": "text", "text": "Hello, world!"}],
                         "usage": {"input_tokens": 10, "output_tokens": 5},
-                        "model": "claude-sonnet-4-6",
+                        "model": "claude-sonnet-4-5-20250929",
                         "stop_reason": "end_turn",
                     },
                 },
@@ -218,7 +218,7 @@ class TestBatchRequestFormatConversion:
 
             old_format = {
                 "custom_id": "my_unique_id",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5-20250929",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 2048,
             }
@@ -232,7 +232,7 @@ class TestBatchRequestFormatConversion:
             converted = call_args[1]["requests"][0]
 
             assert converted["custom_id"] == "my_unique_id"
-            assert converted["params"]["model"] == "claude-sonnet-4-6"
+            assert converted["params"]["model"] == "claude-sonnet-4-5-20250929"
             assert converted["params"]["max_tokens"] == 2048
 
     def test_conversion_handles_optional_params(self):
@@ -249,7 +249,7 @@ class TestBatchRequestFormatConversion:
 
             old_format = {
                 "custom_id": "test_id",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5-20250929",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 1024,
                 "temperature": 0.8,

@@ -73,7 +73,7 @@ class TestSDKAgentTeamExecution:
         assert result.team_name == "Parallel Team"
         assert len(result.agent_results) == 3
         assert result.success is True
-        assert result.execution_time_ms > 0
+        assert result.execution_time_ms >= 0
 
     @pytest.mark.asyncio
     async def test_sequential_execution(self) -> None:

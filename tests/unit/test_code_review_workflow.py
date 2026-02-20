@@ -2208,7 +2208,7 @@ class TestDeepStageHelpers:
 
     def test_gather_file_snippets_reads_context_lines(self, tmp_path):
         """Test _gather_file_snippets reads surrounding lines."""
-        from attune.workflows.code_review_analysis_mixin import _gather_file_snippets
+        from attune.workflows.code_review import _gather_file_snippets
 
         test_file = tmp_path / "sample.py"
         test_file.write_text("line1\nline2\nline3\nline4\nline5\nline6\nline7\n")
@@ -2224,7 +2224,7 @@ class TestDeepStageHelpers:
 
     def test_gather_file_snippets_missing_file_skipped(self):
         """Test _gather_file_snippets skips nonexistent files."""
-        from attune.workflows.code_review_analysis_mixin import _gather_file_snippets
+        from attune.workflows.code_review import _gather_file_snippets
 
         findings = [{"file": "/nonexistent/file.py", "line": 10}]
         snippets = _gather_file_snippets(findings)
@@ -2232,7 +2232,7 @@ class TestDeepStageHelpers:
 
     def test_format_findings_for_prompt_structure(self):
         """Test _format_findings_for_prompt produces indexed output."""
-        from attune.workflows.code_review_analysis_mixin import _format_findings_for_prompt
+        from attune.workflows.code_review import _format_findings_for_prompt
 
         findings = [
             {
@@ -2258,7 +2258,7 @@ class TestDeepStageHelpers:
 
     def test_parse_deep_enrichment_valid_json(self):
         """Test _parse_deep_enrichment parses valid JSON response."""
-        from attune.workflows.code_review_analysis_mixin import _parse_deep_enrichment
+        from attune.workflows.code_review import _parse_deep_enrichment
 
         originals = [
             {"type": "bare_except", "severity": "high", "file": "a.py", "line": 10},
@@ -2275,7 +2275,7 @@ class TestDeepStageHelpers:
 
     def test_parse_deep_enrichment_malformed_json_returns_originals(self):
         """Test _parse_deep_enrichment handles malformed JSON gracefully."""
-        from attune.workflows.code_review_analysis_mixin import _parse_deep_enrichment
+        from attune.workflows.code_review import _parse_deep_enrichment
 
         originals = [
             {"type": "bare_except", "severity": "high", "file": "a.py", "line": 10},
@@ -2291,7 +2291,7 @@ class TestDeepStageHelpers:
 
     def test_recount_by_key_excludes_false_positives(self):
         """Test _recount_by_key excludes false positives from counts."""
-        from attune.workflows.code_review_analysis_mixin import _recount_by_key
+        from attune.workflows.code_review import _recount_by_key
 
         findings = [
             {"severity": "high", "false_positive": False},
