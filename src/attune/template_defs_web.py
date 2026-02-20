@@ -24,9 +24,9 @@ model_routing:
   enabled: true
   provider: "anthropic"
   models:
-    cheap: "claude-3-haiku-20240307"
-    capable: "claude-sonnet-4-20250514"
-    premium: "claude-opus-4-20250514"
+    cheap: "claude-haiku-4-5-20251001"
+    capable: "claude-sonnet-4-6"
+    premium: "claude-opus-4-6"
 
 claude_sync:
   enabled: true
@@ -195,9 +195,9 @@ model_routing:
   enabled: true
   provider: "anthropic"
   models:
-    cheap: "claude-3-haiku-20240307"
-    capable: "claude-sonnet-4-20250514"
-    premium: "claude-opus-4-20250514"
+    cheap: "claude-haiku-4-5-20251001"
+    capable: "claude-sonnet-4-6"
+    premium: "claude-opus-4-6"
   task_overrides:
     summarize: "cheap"
     classify: "cheap"

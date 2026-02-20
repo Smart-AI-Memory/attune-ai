@@ -144,9 +144,9 @@ class UnifiedAgentConfig(BaseModel):
         # Model mapping by provider and tier
         models = {
             Provider.ANTHROPIC: {
-                ModelTier.CHEAP: "claude-3-haiku-20240307",
-                ModelTier.CAPABLE: "claude-sonnet-4-20250514",
-                ModelTier.PREMIUM: "claude-opus-4-20250514",
+                ModelTier.CHEAP: "claude-haiku-4-5-20251001",
+                ModelTier.CAPABLE: "claude-sonnet-4-6",
+                ModelTier.PREMIUM: "claude-opus-4-6",
             },
             Provider.OPENAI: {
                 ModelTier.CHEAP: "gpt-4o-mini",
@@ -162,7 +162,7 @@ class UnifiedAgentConfig(BaseModel):
 
         return models.get(self.provider, {}).get(
             self.model_tier,
-            "claude-sonnet-4-20250514",  # Fallback
+            "claude-sonnet-4-6",  # Fallback
         )
 
     def for_book_production(self) -> "BookProductionConfig":

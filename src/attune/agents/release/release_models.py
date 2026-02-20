@@ -46,8 +46,8 @@ except ImportError:
 
 MODEL_CONFIG = {
     "cheap": "claude-3-5-haiku-latest",
-    "capable": "claude-sonnet-4-20250514",
-    "premium": "claude-opus-4-20250514",
+    "capable": "claude-sonnet-4-6",
+    "premium": "claude-opus-4-6",
 }
 
 # LLM mode: "real" uses API calls, "simulated" uses rule-based analysis

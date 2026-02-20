@@ -344,9 +344,9 @@ class TestProgressiveWorkflowModelSelection:
         capable = workflow._get_model_for_tier(Tier.CAPABLE)
         premium = workflow._get_model_for_tier(Tier.PREMIUM)
 
-        assert cheap in ["gpt-4o-mini", "claude-3-haiku"]
-        assert capable in ["claude-3-5-sonnet", "gpt-4o"]
-        assert premium in ["claude-opus-4", "o1"]
+        assert cheap in ["gpt-4o-mini", "claude-haiku-4-5-20251001"]
+        assert capable in ["claude-sonnet-4-6", "gpt-4o"]
+        assert premium in ["claude-opus-4-6", "o1"]
 
 
 class TestEscalationEdgeCases:

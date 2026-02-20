@@ -31,9 +31,9 @@ class RoutingConfig:
     """
 
     default_tier: Literal["cheap", "capable", "premium"] = "capable"
-    cheap_model: str = "claude-3-haiku-20240307"
-    capable_model: str = "claude-3-5-sonnet-20241022"
-    premium_model: str = "claude-3-opus-20240229"
+    cheap_model: str = "claude-haiku-4-5-20251001"
+    capable_model: str = "claude-sonnet-4-6"
+    premium_model: str = "claude-opus-4-6"
     auto_tier_selection: bool = True
     cost_optimization: bool = True
     max_tokens_cheap: int = 4096
@@ -65,9 +65,9 @@ class RoutingConfig:
         """Create from dictionary."""
         return cls(
             default_tier=data.get("default_tier", "capable"),
-            cheap_model=data.get("cheap_model", "claude-3-haiku-20240307"),
-            capable_model=data.get("capable_model", "claude-3-5-sonnet-20241022"),
-            premium_model=data.get("premium_model", "claude-3-opus-20240229"),
+            cheap_model=data.get("cheap_model", "claude-haiku-4-5-20251001"),
+            capable_model=data.get("capable_model", "claude-sonnet-4-6"),
+            premium_model=data.get("premium_model", "claude-opus-4-6"),
             auto_tier_selection=data.get("auto_tier_selection", True),
             cost_optimization=data.get("cost_optimization", True),
             max_tokens_cheap=data.get("max_tokens_cheap", 4096),
