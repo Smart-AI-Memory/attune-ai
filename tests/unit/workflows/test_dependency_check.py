@@ -683,6 +683,15 @@ class TestAssessStage:
 class TestReportStage:
     """Tests for _report stage method."""
 
+    @pytest.fixture(autouse=True)
+    def _mock_llm(self, dependency_check_workflow):
+        """Mock LLM calls to prevent real API requests during tests."""
+
+        async def fake_call_llm(*args, **kwargs):
+            return ("Mock dependency security report analysis.", 100, 50)
+
+        dependency_check_workflow._call_llm = fake_call_llm
+
     @pytest.mark.asyncio
     async def test_calculates_risk_score(self, dependency_check_workflow):
         """Test risk score calculation based on severity."""

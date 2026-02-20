@@ -65,6 +65,10 @@ from ._strategies.core_strategies import (
     SequentialStrategy,
     TeachingStrategy,
 )
+from ._strategies.data_classes import (  # noqa: F401 - re-exported
+    AgentResult,
+    StrategyResult,
+)
 
 # Import from submodule for modular organization
 from ._strategies.nesting import (

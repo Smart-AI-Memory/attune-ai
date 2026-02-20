@@ -275,8 +275,8 @@ class TestCodeSecurity:
         found_secrets = []
 
         for py_file in src_path.rglob("*.py"):
-            # Skip security detector files that contain test patterns
-            if "secrets_detector.py" in str(py_file):
+            # Skip security detector files that contain pattern definitions
+            if "secrets_detector" in str(py_file) or "secrets_types" in str(py_file):
                 continue
 
             content = py_file.read_text(encoding="utf-8")

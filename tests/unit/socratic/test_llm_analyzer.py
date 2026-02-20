@@ -862,7 +862,10 @@ class TestCallLlm:
         mock_response.content = '{"test": true}'
         mock_executor.run.return_value = mock_response
 
-        with patch.object(analyzer, "_get_executor", new_callable=AsyncMock) as mock_get:
+        with (
+            patch.object(analyzer, "_get_client", return_value=None),
+            patch.object(analyzer, "_get_executor", new_callable=AsyncMock) as mock_get,
+        ):
             mock_get.return_value = mock_executor
 
             result = await analyzer._call_llm("prompt", "system")
@@ -875,7 +878,10 @@ class TestCallLlm:
         mock_executor = AsyncMock()
         mock_executor.run.return_value = "string response"
 
-        with patch.object(analyzer, "_get_executor", new_callable=AsyncMock) as mock_get:
+        with (
+            patch.object(analyzer, "_get_client", return_value=None),
+            patch.object(analyzer, "_get_executor", new_callable=AsyncMock) as mock_get,
+        ):
             mock_get.return_value = mock_executor
 
             result = await analyzer._call_llm("prompt", "system")
