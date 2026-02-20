@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.workflows.base import ModelTier
+from attune.workflows.base import BaseWorkflow, ModelTier
 from attune.workflows.code_review import CodeReviewWorkflow
 
 
@@ -245,7 +245,7 @@ class TestCodeReviewWorkflowIntegration:
 
             # Mock base workflow execute
             with patch.object(
-                workflow.__class__.__bases__[0],
+                BaseWorkflow,
                 "execute",
                 new_callable=AsyncMock,
             ) as mock_execute:
