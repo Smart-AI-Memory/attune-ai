@@ -424,7 +424,7 @@ class TestCreateProgressTracker:
 
 class TestRichProgressReporterUnavailable:
     def test_raises_runtime_error_when_rich_unavailable(self):
-        with patch("attune.workflows.progress.RICH_AVAILABLE", False):
+        with patch("attune.workflows.progress_reporters.RICH_AVAILABLE", False):
             with pytest.raises(RuntimeError, match="Rich"):
                 RichProgressReporter("wf", ["a", "b"])
 
@@ -435,16 +435,16 @@ class TestRichProgressReporterUnavailable:
 
 # Rich class targets that need MagicMock() instances (callables that return mocks)
 _RICH_CLASS_TARGETS = [
-    "attune.workflows.progress.Console",
-    "attune.workflows.progress.Live",
-    "attune.workflows.progress.Progress",
-    "attune.workflows.progress.Panel",
-    "attune.workflows.progress.Table",
-    "attune.workflows.progress.Text",
-    "attune.workflows.progress.Group",
-    "attune.workflows.progress.SpinnerColumn",
-    "attune.workflows.progress.TextColumn",
-    "attune.workflows.progress.BarColumn",
+    "attune.workflows.progress_reporters.Console",
+    "attune.workflows.progress_reporters.Live",
+    "attune.workflows.progress_reporters.Progress",
+    "attune.workflows.progress_reporters.Panel",
+    "attune.workflows.progress_reporters.Table",
+    "attune.workflows.progress_reporters.Text",
+    "attune.workflows.progress_reporters.Group",
+    "attune.workflows.progress_reporters.SpinnerColumn",
+    "attune.workflows.progress_reporters.TextColumn",
+    "attune.workflows.progress_reporters.BarColumn",
 ]
 
 
@@ -465,7 +465,7 @@ def _rich_ctx():
     from contextlib import ExitStack
 
     stack = ExitStack()
-    stack.enter_context(patch("attune.workflows.progress.RICH_AVAILABLE", True))
+    stack.enter_context(patch("attune.workflows.progress_reporters.RICH_AVAILABLE", True))
     for target in _RICH_CLASS_TARGETS:
         stack.enter_context(patch(target))  # creates a MagicMock() instance
     return stack
@@ -519,9 +519,9 @@ class TestRichProgressReporterAvailable:
         with _rich_ctx():
             r = RichProgressReporter("wf", ["a"])
             with (
-                patch("attune.workflows.progress.RICH_AVAILABLE", False),
-                patch("attune.workflows.progress.Progress", None),
-                patch("attune.workflows.progress.Live", None),
+                patch("attune.workflows.progress_reporters.RICH_AVAILABLE", False),
+                patch("attune.workflows.progress_reporters.Progress", None),
+                patch("attune.workflows.progress_reporters.Live", None),
             ):
                 r.start()  # must not raise — returns early
 
@@ -602,9 +602,9 @@ class TestRichProgressReporterAvailable:
         with _rich_ctx():
             r = RichProgressReporter("wf", ["a"])
             with (
-                patch("attune.workflows.progress.RICH_AVAILABLE", False),
-                patch("attune.workflows.progress.Panel", None),
-                patch("attune.workflows.progress.Table", None),
+                patch("attune.workflows.progress_reporters.RICH_AVAILABLE", False),
+                patch("attune.workflows.progress_reporters.Panel", None),
+                patch("attune.workflows.progress_reporters.Table", None),
             ):
                 with pytest.raises(RuntimeError):
                     r._create_display()

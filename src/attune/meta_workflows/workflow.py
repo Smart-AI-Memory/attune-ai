@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING
 from attune.config import _validate_file_path
 from attune.meta_workflows.agent_creator import DynamicAgentCreator
 from attune.meta_workflows.form_engine import SocraticFormEngine
-from attune.meta_workflows.llm_execution import execute_agents_real
+from attune.meta_workflows.llm_execution import evaluate_success_criteria, execute_agents_real
 from attune.meta_workflows.models import (
     AgentExecutionResult,
     AgentSpec,
@@ -53,6 +53,7 @@ from attune.meta_workflows.models import (
     MetaWorkflowTemplate,
     TierStrategy,
 )
+from attune.meta_workflows.prompt_builder import build_agent_prompt, get_generic_instructions
 from attune.meta_workflows.report_generator import generate_report
 from attune.meta_workflows.template_registry import TemplateRegistry
 
@@ -384,6 +385,46 @@ class MetaWorkflow:
             Markdown-formatted report
         """
         return generate_report(result, self.template)
+
+    def _get_generic_instructions(self, role: str) -> str:
+        """Generate generic instructions based on agent role.
+
+        Delegates to prompt_builder.get_generic_instructions().
+
+        Args:
+            role: Agent role name
+
+        Returns:
+            Generic instructions appropriate for the role
+        """
+        return get_generic_instructions(role)
+
+    def _build_agent_prompt(self, agent: AgentSpec) -> str:
+        """Build prompt for agent from specification.
+
+        Delegates to prompt_builder.build_agent_prompt().
+
+        Args:
+            agent: Agent specification
+
+        Returns:
+            Formatted prompt string
+        """
+        return build_agent_prompt(agent)
+
+    def _evaluate_success_criteria(self, result: AgentExecutionResult, agent: AgentSpec) -> bool:
+        """Evaluate if agent result meets success criteria.
+
+        Delegates to llm_execution.evaluate_success_criteria().
+
+        Args:
+            result: Agent execution result
+            agent: Agent specification with success criteria
+
+        Returns:
+            True if success criteria met, False otherwise
+        """
+        return evaluate_success_criteria(result, agent)
 
 
 # =============================================================================

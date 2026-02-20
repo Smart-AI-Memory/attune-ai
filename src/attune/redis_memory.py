@@ -34,7 +34,7 @@ from .redis_memory_models import (  # noqa: F401 - re-exported
     TTLStrategy,
 )
 from .redis_memory_patterns import PatternStagingMixin
-from .redis_memory_storage import RedisStorageBase
+from .redis_memory_storage import REDIS_AVAILABLE, RedisStorageBase  # noqa: F401 - re-exported
 
 
 class RedisShortTermMemory(
@@ -68,6 +68,7 @@ __all__ = [
     "AccessTier",
     "AgentCredentials",
     "ConflictContext",
+    "REDIS_AVAILABLE",
     "RedisShortTermMemory",
     "StagedPattern",
     "TTLStrategy",
