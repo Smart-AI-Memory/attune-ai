@@ -272,6 +272,12 @@ class TestAnthropicProvider:
 class TestAnthropicBatchProvider:
     """Tests for AnthropicBatchProvider class."""
 
+    @pytest.fixture()
+    def mock_anthropic_class(self):
+        """Patch anthropic.Anthropic for batch provider tests."""
+        with patch("anthropic.Anthropic") as mock_cls:
+            yield mock_cls
+
     def test_init_requires_api_key(self):
         """Test that API key is required."""
         with pytest.raises(ValueError, match="API key is required"):
