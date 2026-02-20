@@ -141,7 +141,7 @@ class AdaptiveModelRouter:
         # Fallback to known models if registry lookup fails
         fallbacks = {
             "cheap": "claude-haiku-4-5-20251001",
-            "capable": "claude-sonnet-4-6",
+            "capable": "claude-sonnet-4-5-20250929",
             "premium": "claude-opus-4-6",
         }
         return fallbacks.get(tier_lower, "claude-haiku-4-5-20251001")

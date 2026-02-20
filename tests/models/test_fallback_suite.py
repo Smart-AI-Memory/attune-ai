@@ -180,7 +180,7 @@ class FallbackTestSuite:
                 if actual_model == "sonnet":
                     cost = (input_tokens * 0.003 / 1000) + (output_tokens * 0.015 / 1000)
                 else:
-                    cost = (input_tokens * 0.005 / 1000) + (output_tokens * 0.025 / 1000)
+                    cost = (input_tokens * 0.015 / 1000) + (output_tokens * 0.075 / 1000)
 
             # Check if response indicates success (handle different response formats)
             success = True

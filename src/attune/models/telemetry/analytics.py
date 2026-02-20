@@ -183,10 +183,10 @@ class TelemetryAnalytics:
         self,
         since: datetime | None = None,
     ) -> dict[str, Any]:
-        """Analyze Sonnet 4.6 → Opus 4.6 fallback performance and cost savings.
+        """Analyze Sonnet 4.5 → Opus 4.5 fallback performance and cost savings.
 
         Tracks:
-        - How often Sonnet 4.6 succeeds vs needs Opus fallback
+        - How often Sonnet 4.5 succeeds vs needs Opus fallback
         - Cost savings from using Sonnet instead of always using Opus
         - Success rates by model
 
@@ -202,7 +202,8 @@ class TelemetryAnalytics:
         anthropic_calls = [
             c
             for c in calls
-            if c.provider == "anthropic" and c.model_id in ["claude-sonnet-4-6", "claude-opus-4-6"]
+            if c.provider == "anthropic"
+            and c.model_id in ["claude-sonnet-4-5-20250929", "claude-opus-4-6"]
         ]
 
         if not anthropic_calls:
@@ -222,7 +223,7 @@ class TelemetryAnalytics:
         total = len(anthropic_calls)
 
         # Count Sonnet attempts and successes
-        sonnet_calls = [c for c in anthropic_calls if c.model_id == "claude-sonnet-4-6"]
+        sonnet_calls = [c for c in anthropic_calls if c.model_id == "claude-sonnet-4-5-20250929"]
         sonnet_successes = sum(1 for c in sonnet_calls if c.success)
 
         # Count Opus fallbacks (calls with fallback_used and ended up on Opus)
@@ -234,8 +235,8 @@ class TelemetryAnalytics:
         actual_cost = sum(c.estimated_cost for c in anthropic_calls)
 
         # Calculate what it would cost if everything used Opus
-        opus_input_cost = 5.00 / 1_000_000  # per token
-        opus_output_cost = 25.00 / 1_000_000  # per token
+        opus_input_cost = 15.00 / 1_000_000  # per token
+        opus_output_cost = 75.00 / 1_000_000  # per token
         always_opus_cost = sum(
             (c.input_tokens * opus_input_cost) + (c.output_tokens * opus_output_cost)
             for c in anthropic_calls

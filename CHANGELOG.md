@@ -7,46 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.10.4] - 2026-02-18
-
-### Added
-
-- **Batch API CLI** - New `attune batch` command group for the Anthropic
-  Message Batches API: `submit`, `status`, `results`, and `wait`.
-  Processes up to 10,000 requests within 24 hours at 50% of standard
-  API pricing. See `docs/BATCH_API_GUIDE.md` and
-  `src/attune/commands/batch.md`.
-
-### Fixed
-
-- **CLI help crash** - `attune` (no args) and `attune --help` raised
-  `TypeError: %c requires int or char`. The batch subparser help string
-  `"Batch API processing (50% cost savings)"` contained `50%` followed
-  by a space then `c`, which Python's `%` formatter interpreted as the
-  `%c` (character) conversion specifier. Escaped to `50%%` so argparse
-  renders it as `50%` in help output.
-
-## [2.10.3] - 2026-02-18
-
-### Fixed
-
-- **Test assertions** - Aligned `redis_auto_start` test expectations with actual default (`True`)
-- **Batch processing** - Security, exception handling, and stale reference fixes from code review
-
-## [2.10.2] - 2026-02-18
-
-### Changed
-
-- **Model registry** - Updated capable tier from Sonnet 4.5 to Sonnet 4.6 (`claude-sonnet-4-6`)
-- **Opus 4.6 pricing** - Revised to $5/$25 per M tokens (input/output)
-- **Crew modules** - Refactored to shared base class, reducing duplication
-- **MCP server** - Extracted tool definitions to separate module
-- **Code review workflow** - Cleaned up redundant code (-600 lines)
-
-### Fixed
-
-- **Test alignment** - All tests updated for new model IDs and pricing
-
 ## [2.10.1] - 2026-02-17
 
 ### Fixed

@@ -31,7 +31,6 @@ import logging
 import uuid
 from typing import Any
 
-from ..base import CrewBase
 from .checkpoints import create_checkpoint, rollback
 from .config import XML_PROMPT_TEMPLATES
 from .types import (
@@ -59,26 +58,40 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class RefactoringCrew(CrewBase):
+class RefactoringCrew:
     """2-agent crew for interactive code refactoring.
 
-    Uses RefactorAnalyzer and RefactorWriter agents with checkpoint/rollback,
-    user profile learning, and Memory Graph integration.
+    The crew consists of:
+
+    1. **RefactorAnalyzer** (Analysis Agent)
+       - Analyzes code for refactoring opportunities
+       - Identifies code smells and improvement areas
+       - Prioritizes by impact and confidence
+       - Model: Capable tier (cost-effective)
+
+    2. **RefactorWriter** (Generation Agent)
+       - Generates concrete refactored code
+       - Produces before/after diffs
+       - Ensures syntactic correctness
+       - Model: Capable tier
+
+    Features:
+    - Checkpoint/rollback for safe refactoring
+    - User profile learning for personalized recommendations
+    - Memory Graph integration for cross-session learning
 
     Example:
         crew = RefactoringCrew(api_key="...")
         report = await crew.analyze(code="...", file_path="api.py")
 
         for finding in report.findings:
+            # Generate refactored code on demand
             finding = await crew.generate_refactor(finding, full_code)
             print(f"After: {finding.after_code}")
 
     """
 
-    config_class = RefactoringConfig
-    XML_PROMPT_TEMPLATES = XML_PROMPT_TEMPLATES
-
-    def __init__(self, config: RefactoringConfig | None = None, **kwargs: Any) -> None:
+    def __init__(self, config: RefactoringConfig | None = None, **kwargs: Any):
         """Initialize the Refactoring Crew.
 
         Args:
@@ -86,20 +99,70 @@ class RefactoringCrew(CrewBase):
             **kwargs: Individual config parameters (api_key, provider, etc.)
 
         """
-        super().__init__(config=config, **kwargs)
+        if config:
+            self.config = config
+        else:
+            self.config = RefactoringConfig(**kwargs)
+
+        self._factory: Any = None
+        self._agents: dict[str, Any] = {}
+        self._workflow: Any = None
+        self._graph: Any = None
         self._user_profile: UserProfile | None = None
+        self._initialized = False
+
+    def _render_xml_prompt(self, template_key: str) -> str:
+        """Render XML prompt template with config values."""
+        template = XML_PROMPT_TEMPLATES.get(template_key, "")
+        return template.format(schema_version=self.config.xml_schema_version)
+
+    def _get_system_prompt(self, agent_key: str, fallback: str) -> str:
+        """Get system prompt - XML if enabled, fallback otherwise."""
+        if self.config.xml_prompts_enabled:
+            return self._render_xml_prompt(agent_key)
+        return fallback
 
     async def _initialize(self) -> None:
-        """Lazy initialization with user profile loading."""
+        """Lazy initialization of agents and workflow."""
         if self._initialized:
             return
-        await super()._initialize()
+
+        from attune.agent_factory import AgentFactory, Framework
+
+        # Check if CrewAI is available
+        try:
+            from attune.agent_factory.adapters.crewai_adapter import _check_crewai
+
+            use_crewai = _check_crewai()
+        except ImportError:
+            use_crewai = False
+
+        # Use CrewAI if available, otherwise fall back to Native
+        framework = Framework.CREWAI if use_crewai else Framework.NATIVE
+
+        self._factory = AgentFactory(
+            framework=framework,
+            provider=self.config.provider,
+            api_key=self.config.api_key,
+        )
+
+        # Initialize Memory Graph if enabled
+        if self.config.memory_graph_enabled:
+            try:
+                from attune.memory import MemoryGraph
+
+                self._graph = MemoryGraph(path=self.config.memory_graph_path)
+            except ImportError:
+                logger.warning("Memory Graph not available, continuing without it")
+
+        # Load user profile if enabled
         if self.config.user_profile_enabled:
             self._user_profile = load_user_profile(self.config.user_profile_path)
 
-    async def _create_workflow(self) -> None:
-        """No workflow needed — agents invoked directly."""
-        pass
+        # Create the 2 specialized agents
+        await self._create_agents()
+
+        self._initialized = True
 
     async def _create_agents(self) -> None:
         """Create the 2 specialized refactoring agents."""
@@ -603,6 +666,20 @@ The refactored code MUST be syntactically valid and preserve all functionality.
                 parts.append(f"  - {cat}: {count}")
 
         return "\n".join(parts)
+
+    # =========================================================================
+    # Properties
+    # =========================================================================
+
+    @property
+    def agents(self) -> dict[str, Any]:
+        """Get the crew's agents."""
+        return self._agents
+
+    @property
+    def is_initialized(self) -> bool:
+        """Check if crew is initialized."""
+        return self._initialized
 
     @property
     def user_profile(self) -> UserProfile | None:

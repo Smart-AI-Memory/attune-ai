@@ -18,7 +18,7 @@ This plan outlines optimizations to fully leverage Anthropic's capabilities in t
 
 **Current State:**
 - ✅ Anthropic is default provider
-- ✅ Latest Claude models (Sonnet 4.6, Opus 4.6, Haiku 4.5)
+- ✅ Latest Claude models (Sonnet 4.5, Opus 4.5, Haiku 3.5)
 - ✅ Official Anthropic SDK integrated
 - ✅ Task-based tier routing
 
@@ -106,7 +106,7 @@ class AnthropicBatchProvider:
         Example:
             >>> requests = [
             ...     {
-            ...         "model": "claude-sonnet-4-6",
+            ...         "model": "claude-sonnet-4-5",
             ...         "messages": [{"role": "user", "content": "Analyze X"}],
             ...         "max_tokens": 1024
             ...     }
@@ -518,7 +518,7 @@ class TestBatchProvider:
 
         requests = [
             {
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 1024
             }
@@ -665,7 +665,7 @@ class AnthropicProvider:
 def complete(
     self,
     messages: List[Dict[str, str]],
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-4-5",
     system_prompt: str | None = None,
     **kwargs
 ) -> Dict[str, Any]:
@@ -797,7 +797,7 @@ class TokenUsage:
         Assumptions:
         - Cache reads: 90% discount vs full price
         - Cache writes: 25% markup vs full price
-        - Using Sonnet 4.6 pricing ($3/M input tokens)
+        - Using Sonnet 4.5 pricing ($3/M input tokens)
         """
         # Cost without caching
         full_price_per_token = 3.0 / 1_000_000
@@ -895,7 +895,7 @@ Extended Thinking (announced Dec 2024):
 - **Extended reasoning** before generating response
 - **Up to 1M thinking tokens** (not billed to user)
 - **Better performance** on complex logical/analytical tasks
-- **Available on:** Sonnet 4.6 and Opus 4.6
+- **Available on:** Sonnet 4.5 and Opus 4.5
 - **Use cases:** Mathematical reasoning, code architecture, complex analysis
 
 ### Implementation Steps
@@ -906,10 +906,10 @@ Extended Thinking (announced Dec 2024):
 
 **Update model definitions:**
 ```python
-# Capable tier - Sonnet 4.6 with thinking support
+# Capable tier - Sonnet 4.5 with thinking support
 ModelInfo(
     provider="anthropic",
-    id="claude-sonnet-4-6",
+    id="claude-sonnet-4-5-20250929",
     tier="capable",
     input_price=3.00,
     output_price=15.00,
@@ -920,13 +920,13 @@ ModelInfo(
     thinking_enabled_by_default=False,  # NEW: Only for premium tasks
 ),
 
-# Premium tier - Opus 4.6 with thinking support
+# Premium tier - Opus 4.5 with thinking support
 ModelInfo(
     provider="anthropic",
-    id="claude-opus-4-6",
+    id="claude-opus-4-5-20251101",
     tier="premium",
-    input_price=5.00,
-    output_price=25.00,
+    input_price=15.00,
+    output_price=75.00,
     max_tokens=8192,
     supports_tools=True,
     supports_vision=True,
@@ -944,7 +944,7 @@ ModelInfo(
 def complete(
     self,
     messages: List[Dict[str, str]],
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-4-5",
     system_prompt: str | None = None,
     enable_thinking: bool | None = None,  # NEW
     **kwargs
@@ -1156,7 +1156,7 @@ _client = Anthropic()
 
 def count_tokens(
     text: str,
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-sonnet-4-5"
 ) -> int:
     """Count tokens using Anthropic's tokenizer.
 
@@ -1179,7 +1179,7 @@ def count_tokens(
 def count_message_tokens(
     messages: List[Dict[str, str]],
     system_prompt: str | None = None,
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-sonnet-4-5"
 ) -> Dict[str, int]:
     """Count tokens in a conversation.
 
@@ -1220,7 +1220,7 @@ def count_message_tokens(
 def estimate_cost(
     input_tokens: int,
     output_tokens: int,
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-sonnet-4-5"
 ) -> float:
     """Estimate cost in USD.
 
@@ -1233,7 +1233,7 @@ def estimate_cost(
         Estimated cost in USD
 
     Example:
-        >>> estimate_cost(1000, 500, "claude-sonnet-4-6")
+        >>> estimate_cost(1000, 500, "claude-sonnet-4-5")
         0.0105  # $3/M input + $15/M output
     """
     from attune.models import get_model_by_id
@@ -1263,7 +1263,7 @@ class AnthropicProvider:
         self,
         messages: List[Dict[str, str]],
         system_prompt: str | None = None,
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, int]:
         """Estimate tokens BEFORE making API call.
 
@@ -1289,7 +1289,7 @@ class AnthropicProvider:
         usage = response.get("usage", {})
         input_tokens = usage.get("input_tokens", 0)
         output_tokens = usage.get("output_tokens", 0)
-        model = response.get("model", "claude-sonnet-4-6")
+        model = response.get("model", "claude-sonnet-4-5")
 
         # Include cache tokens if present
         cache_creation = usage.get("cache_creation_input_tokens", 0)
@@ -1333,7 +1333,7 @@ class BaseWorkflow:
         self,
         messages: List[Dict[str, str]],
         system_prompt: str | None = None,
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ):
         """Validate request size before API call.
 
@@ -1413,7 +1413,7 @@ class UsageTracker:
 Create workflows that leverage Claude's vision capabilities for image analysis, OCR, and visual debugging.
 
 ### Background
-Claude Vision (Sonnet 4.6, Opus 4.6):
+Claude Vision (Sonnet 4.5, Opus 4.5):
 - **Multi-modal understanding** (text + images)
 - **OCR capabilities** (extract text from images)
 - **Visual reasoning** (understand charts, diagrams, UI)
@@ -1437,7 +1437,7 @@ class AnthropicProvider:
     def complete_with_images(
         self,
         messages: List[Dict[str, Any]],  # Now supports image content
-        model: str = "claude-sonnet-4-6",
+        model: str = "claude-sonnet-4-5",
         system_prompt: str | None = None,
         **kwargs
     ) -> Dict[str, Any]:
@@ -1567,7 +1567,7 @@ class ImageAnalysisWorkflow(BaseWorkflow):
         self,
         image_path: str,
         prompt: str = "Describe this image in detail.",
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, Any]:
         """Analyze a single image.
 
@@ -1624,7 +1624,7 @@ class ImageAnalysisWorkflow(BaseWorkflow):
     def extract_text_ocr(
         self,
         image_path: str,
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, Any]:
         """Extract text from image (OCR).
 
@@ -1648,7 +1648,7 @@ class ImageAnalysisWorkflow(BaseWorkflow):
     def analyze_diagram(
         self,
         image_path: str,
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, Any]:
         """Analyze a technical diagram or chart.
 
@@ -1674,7 +1674,7 @@ class ImageAnalysisWorkflow(BaseWorkflow):
     def debug_from_screenshot(
         self,
         screenshot_path: str,
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, Any]:
         """Debug an error from a screenshot.
 
@@ -1702,7 +1702,7 @@ class ImageAnalysisWorkflow(BaseWorkflow):
         image1_path: str,
         image2_path: str,
         prompt: str = "What are the differences between these two images?",
-        model: str = "claude-sonnet-4-6"
+        model: str = "claude-sonnet-4-5"
     ) -> Dict[str, Any]:
         """Compare two images.
 
@@ -1764,7 +1764,7 @@ def image_analyze(
         "Describe this image in detail.",
         help="Analysis prompt"
     ),
-    model: str = typer.Option("claude-sonnet-4-6", help="Vision model"),
+    model: str = typer.Option("claude-sonnet-4-5", help="Vision model"),
 ):
     """Analyze an image using Claude Vision.
 
@@ -1962,7 +1962,7 @@ class AnthropicProvider:
     def complete_streaming(
         self,
         messages: List[Dict[str, str]],
-        model: str = "claude-sonnet-4-6",
+        model: str = "claude-sonnet-4-5",
         system_prompt: str | None = None,
         **kwargs
     ) -> Iterator[Dict[str, Any]]:
@@ -2065,7 +2065,7 @@ class BaseWorkflow:
 @app.command()
 def chat_stream(
     message: str = typer.Argument(..., help="Your message"),
-    model: str = typer.Option("claude-sonnet-4-6", help="Model to use"),
+    model: str = typer.Option("claude-sonnet-4-5", help="Model to use"),
 ):
     """Interactive chat with streaming responses.
 
@@ -2131,7 +2131,7 @@ ModelInfo(
 # Capable tier - Moderate limit
 ModelInfo(
     provider="anthropic",
-    id="claude-sonnet-4-6",
+    id="claude-sonnet-4-5-20250929",
     tier="capable",
     max_tokens=4096,  # Reduced from 8192
     # ...
@@ -2140,7 +2140,7 @@ ModelInfo(
 # Premium tier - Higher limit
 ModelInfo(
     provider="anthropic",
-    id="claude-opus-4-6",
+    id="claude-opus-4-5-20251101",
     tier="premium",
     max_tokens=8192,  # Keep at 8192
     # ...

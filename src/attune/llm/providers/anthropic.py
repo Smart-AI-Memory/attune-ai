@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AnthropicProvider(BaseLLMProvider):
     """Anthropic (Claude) provider with enhanced features.
 
-    Supports Claude 4.6 family models with advanced capabilities:
+    Supports Claude 4.5/4.6 family models with advanced capabilities:
     - Extended context windows (200K tokens)
     - Prompt caching for faster repeated queries
     - Extended thinking for complex reasoning
@@ -26,7 +26,7 @@ class AnthropicProvider(BaseLLMProvider):
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-6",
+        model: str = "claude-sonnet-4-5-20250929",
         use_prompt_caching: bool = True,  # Default to True for 20-30% cost savings
         use_thinking: bool = False,
         thinking_budget: int = 10000,
@@ -319,13 +319,13 @@ class AnthropicProvider(BaseLLMProvider):
         model_info = {
             "claude-opus-4-6": {
                 "max_tokens": 200000,
-                "cost_per_1m_input": 5.00,
-                "cost_per_1m_output": 25.00,
+                "cost_per_1m_input": 15.00,
+                "cost_per_1m_output": 75.00,
                 "supports_prompt_caching": True,
                 "supports_thinking": True,
                 "ideal_for": "Complex reasoning, large codebases",
             },
-            "claude-sonnet-4-6": {
+            "claude-sonnet-4-5-20250929": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 3.00,
                 "cost_per_1m_output": 15.00,

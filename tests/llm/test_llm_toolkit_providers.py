@@ -132,8 +132,9 @@ class TestAnthropicProvider:
         assert provider.use_prompt_caching is True
         assert provider.api_key == "sk-test"
 
+    @patch("anthropic.Anthropic")
     @patch("anthropic.AsyncAnthropic")
-    def test_init_with_batch(self, mock_anthropic_class):
+    def test_init_with_batch(self, mock_async_class, mock_sync_class):
         """Test initialization with batch provider."""
         provider = AnthropicProvider(
             api_key="sk-test",
@@ -271,12 +272,17 @@ class TestAnthropicProvider:
 class TestAnthropicBatchProvider:
     """Tests for AnthropicBatchProvider class."""
 
+    @pytest.fixture()
+    def mock_anthropic_class(self):
+        """Patch anthropic.Anthropic for batch provider tests."""
+        with patch("anthropic.Anthropic") as mock_cls:
+            yield mock_cls
+
     def test_init_requires_api_key(self):
         """Test that API key is required."""
         with pytest.raises(ValueError, match="API key is required"):
             AnthropicBatchProvider(api_key=None)
 
-    @patch("anthropic.Anthropic")
     def test_create_batch_empty_requests(self, mock_anthropic_class):
         """Test creating batch with empty requests."""
         provider = AnthropicBatchProvider(api_key="sk-test")
@@ -284,7 +290,6 @@ class TestAnthropicBatchProvider:
         with pytest.raises(ValueError, match="cannot be empty"):
             provider.create_batch([])
 
-    @patch("anthropic.Anthropic")
     def test_create_batch_success(self, mock_anthropic_class):
         """Test successful batch creation."""
         mock_batch = MagicMock()
@@ -299,7 +304,7 @@ class TestAnthropicBatchProvider:
         requests = [
             {
                 "custom_id": "task_1",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5-20250929",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 100,
             }
@@ -309,7 +314,6 @@ class TestAnthropicBatchProvider:
 
         assert batch_id == "batch_123"
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_status(self, mock_anthropic_class):
         """Test getting batch status."""
         mock_batch = MagicMock()
@@ -325,7 +329,6 @@ class TestAnthropicBatchProvider:
 
         assert status.processing_status == "in_progress"
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_results_not_completed(self, mock_anthropic_class):
         """Test getting results when batch not completed."""
         mock_batch = MagicMock()
@@ -340,7 +343,6 @@ class TestAnthropicBatchProvider:
         with pytest.raises(ValueError, match="not ended"):
             provider.get_batch_results("batch_123")
 
-    @patch("anthropic.Anthropic")
     def test_get_batch_results_success(self, mock_anthropic_class):
         """Test getting results from completed batch."""
         mock_batch = MagicMock()

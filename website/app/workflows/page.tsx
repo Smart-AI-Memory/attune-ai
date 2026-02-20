@@ -6,7 +6,7 @@ import { generateMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateMetadata({
   title: 'Workflows',
-  description: '15 integrated AI workflows including 4 meta-workflows with agent composition for research, debugging, code review, refactoring, release prep, batch processing, and more.',
+  description: '14 integrated AI workflows including 4 meta-workflows with agent composition for research, debugging, code review, refactoring, release prep, and more.',
   url: 'https://smartaimemory.com/workflows',
 });
 
@@ -183,18 +183,6 @@ const workflows = [
     useCases: ['API documentation', 'README maintenance', 'Release notes'],
     isMetaWorkflow: true,
   },
-  {
-    name: 'Batch API Processing',
-    icon: '📦',
-    description: 'Submit bulk requests to the Anthropic Message Batches API at 50% of standard pricing. Up to 10,000 requests processed within 24 hours.',
-    benefits: [
-      '50% cost savings vs standard API',
-      'Up to 10,000 requests per batch',
-      'Async polling and auto-download',
-      'JSON status and results output',
-    ],
-    useCases: ['Bulk code analysis', 'Overnight test generation', 'Cost-sensitive CI workloads'],
-  },
 ];
 
 export default function WorkflowsPage() {
@@ -207,10 +195,10 @@ export default function WorkflowsPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-6">
-                15 Integrated Workflows
+                14 Integrated Workflows
               </h1>
               <p className="text-2xl mb-8 opacity-90">
-                Production-ready AI workflows including 4 meta-workflows with automatic agent composition—research, build, test, deploy, maintain, and bulk batch processing at 50% cost savings.
+                Production-ready AI workflows including 4 meta-workflows with automatic agent composition—research, build, test, deploy, and maintain.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
@@ -290,7 +278,7 @@ export default function WorkflowsPage() {
                 Ready to Supercharge Your Development?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Install Attune AI and start using all 15 workflows today.
+                Install Attune AI and start using all 14 workflows today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

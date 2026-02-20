@@ -25,6 +25,10 @@ from .step_config import WorkflowStepConfig
 
 logger = logging.getLogger(__name__)
 
+# Quality check thresholds
+MAX_FILE_LINES = 500
+CHARS_PER_TOKEN_ESTIMATE = 4
+
 # Define step configurations for executor-based execution
 CODE_REVIEW_STEPS = {
     "architect_review": WorkflowStepConfig(
