@@ -58,13 +58,15 @@ if TYPE_CHECKING:
     from .pr_review import PRReviewResult, PRReviewWorkflow
     from .refactor_plan import RefactorPlanWorkflow
     from .release_prep import ReleasePreparationWorkflow
-    from .release_prep_crew import ReleasePreparationCrew, ReleasePreparationCrewResult
+
+    # release_prep_crew removed (deprecated, use agents.release)
     from .research_synthesis import ResearchSynthesisWorkflow
     from .secure_release import SecureReleasePipeline, SecureReleaseResult
     from .security_audit import SecurityAuditWorkflow
     from .seo_optimization import SEOOptimizationWorkflow
     from .step_config import WorkflowStepConfig
-    from .test_coverage_boost_crew import TestCoverageBoostCrew, TestCoverageBoostCrewResult
+
+    # test_coverage_boost_crew removed (deprecated, use test-gen-parallel)
     from .test_gen import TestGenerationWorkflow
     from .test_gen_parallel import ParallelTestGenerationWorkflow
     from .xml_enhanced_crew import XMLAgent, XMLTask
@@ -131,15 +133,13 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "PRReviewResult": (".pr_review", "PRReviewResult"),
     "RefactorPlanWorkflow": (".refactor_plan", "RefactorPlanWorkflow"),
     "ReleasePreparationWorkflow": (".release_prep", "ReleasePreparationWorkflow"),
-    "ReleasePreparationCrew": (".release_prep_crew", "ReleasePreparationCrew"),
-    "ReleasePreparationCrewResult": (".release_prep_crew", "ReleasePreparationCrewResult"),
+    # ReleasePreparationCrew removed (deprecated, use ReleasePrepTeamWorkflow)
     "ResearchSynthesisWorkflow": (".research_synthesis", "ResearchSynthesisWorkflow"),
     "SecureReleasePipeline": (".secure_release", "SecureReleasePipeline"),
     "SecureReleaseResult": (".secure_release", "SecureReleaseResult"),
     "SecurityAuditWorkflow": (".security_audit", "SecurityAuditWorkflow"),
     "SEOOptimizationWorkflow": (".seo_optimization", "SEOOptimizationWorkflow"),
-    "TestCoverageBoostCrew": (".test_coverage_boost_crew", "TestCoverageBoostCrew"),
-    "TestCoverageBoostCrewResult": (".test_coverage_boost_crew", "TestCoverageBoostCrewResult"),
+    # TestCoverageBoostCrew removed (deprecated, use ParallelTestGenerationWorkflow)
     "TestGenerationWorkflow": (".test_gen", "TestGenerationWorkflow"),
     "ParallelTestGenerationWorkflow": (".test_gen_parallel", "ParallelTestGenerationWorkflow"),
     # Additional workflows (restored to registry)

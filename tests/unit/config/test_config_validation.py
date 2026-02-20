@@ -275,6 +275,20 @@ class TestRoutingValidation:
         errors = validator.validate_section(routing, "routing")
         assert errors == []
 
+    def test_routing_config_model_defaults(self):
+        """Test that RoutingConfig defaults use current model IDs."""
+        routing = RoutingConfig()
+        assert routing.cheap_model == "claude-haiku-4-5-20251001"
+        assert routing.capable_model == "claude-sonnet-4-6"
+        assert routing.premium_model == "claude-opus-4-6"
+
+    def test_routing_config_from_empty_dict(self):
+        """Test that from_dict with empty dict uses current defaults."""
+        routing = RoutingConfig.from_dict({})
+        assert routing.cheap_model == "claude-haiku-4-5-20251001"
+        assert routing.capable_model == "claude-sonnet-4-6"
+        assert routing.premium_model == "claude-opus-4-6"
+
 
 class TestWorkflowsValidation:
     """Tests for workflows section validation rules."""

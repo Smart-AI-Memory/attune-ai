@@ -125,7 +125,7 @@ class TestDynamicTeamParallel:
 
         result = await team.execute({"data": "test"})
 
-        assert result.execution_time_ms > 0
+        assert result.execution_time_ms >= 0  # Can be 0.0 on Windows CI
 
 
 # ---------------------------------------------------------------------------

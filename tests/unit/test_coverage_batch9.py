@@ -1986,7 +1986,7 @@ class TestMetaWorkflow:
         generic_instr = wf._get_generic_instructions("Custom Agent")
         assert "Custom Agent" in generic_instr
 
-    @patch("attune.meta_workflows.workflow.get_template")
+    @patch("attune.meta_workflows.prompt_builder.get_template")
     def test_build_agent_prompt_with_template(
         self,
         mock_get_template: MagicMock,
@@ -2016,7 +2016,7 @@ class TestMetaWorkflow:
         assert "all issues found" in prompt
         assert "grep" in prompt
 
-    @patch("attune.meta_workflows.workflow.get_template")
+    @patch("attune.meta_workflows.prompt_builder.get_template")
     def test_build_agent_prompt_template_not_found(
         self,
         mock_get_template: MagicMock,

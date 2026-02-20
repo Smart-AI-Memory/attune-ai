@@ -317,7 +317,7 @@ class TestHealthStage:
         mock_result.stdout = "All checks passed"
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, in_tok, out_tok = await workflow._health({"path": "."}, ModelTier.CHEAP)
 
         health = result["health"]
@@ -347,7 +347,7 @@ class TestHealthStage:
                 result.stderr = ""
             return result
 
-        with patch("attune.workflows.release_prep.subprocess.run", side_effect=fake_run):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", side_effect=fake_run):
             result, _, _ = await workflow._health({"path": "."}, ModelTier.CHEAP)
 
         health = result["health"]
@@ -364,7 +364,7 @@ class TestHealthStage:
         def fake_run(*args, **kwargs):
             raise subprocess.TimeoutExpired(cmd="ruff", timeout=60)
 
-        with patch("attune.workflows.release_prep.subprocess.run", side_effect=fake_run):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", side_effect=fake_run):
             result, _, _ = await workflow._health({"path": "."}, ModelTier.CHEAP)
 
         health = result["health"]
@@ -381,7 +381,7 @@ class TestHealthStage:
         def fake_run(*args, **kwargs):
             raise FileNotFoundError("ruff not found")
 
-        with patch("attune.workflows.release_prep.subprocess.run", side_effect=fake_run):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", side_effect=fake_run):
             result, _, _ = await workflow._health({"path": "."}, ModelTier.CHEAP)
 
         health = result["health"]
@@ -392,7 +392,7 @@ class TestHealthStage:
     async def test_health_preserves_input_data(self, workflow):
         """Test that health stage merges result with input data."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._health(
                 {"path": ".", "extra_key": "extra_value"},
                 ModelTier.CHEAP,
@@ -406,7 +406,7 @@ class TestHealthStage:
         """Test health stage defaults to '.' if no path given."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
         with patch(
-            "attune.workflows.release_prep.subprocess.run", return_value=mock_result
+            "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
         ) as mock_run:
             await workflow._health({}, ModelTier.CHEAP)
 
@@ -436,7 +436,9 @@ class TestHealthStage:
             py_file.write_text("x = 1\ny = 2\n")
 
             with (
-                patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result),
+                patch(
+                    "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+                ),
                 patch("attune.models.get_auth_strategy", return_value=mock_strategy),
                 patch("attune.models.count_lines_of_code", return_value=10),
                 patch("attune.models.get_module_size_category", return_value="small"),
@@ -453,7 +455,7 @@ class TestHealthStage:
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
 
         with (
-            patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result),
+            patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result),
             patch(
                 "attune.models.get_auth_strategy",
                 side_effect=RuntimeError("auth unavailable"),
@@ -487,7 +489,9 @@ class TestHealthStage:
             py_file.write_text("x = 1\n")
 
             with (
-                patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result),
+                patch(
+                    "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+                ),
                 patch("attune.models.get_auth_strategy", return_value=mock_strategy),
                 patch("attune.models.count_lines_of_code", return_value=500),
                 patch("attune.models.get_module_size_category", return_value="medium"),
@@ -514,7 +518,7 @@ class TestSecurityStage:
         mock_result.stdout = json.dumps({"results": []})
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
 
         security = result["security"]
@@ -543,7 +547,7 @@ class TestSecurityStage:
         mock_result.stdout = json.dumps(findings)
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
 
         security = result["security"]
@@ -571,7 +575,7 @@ class TestSecurityStage:
         mock_result.stdout = json.dumps(findings)
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
 
         security = result["security"]
@@ -587,7 +591,7 @@ class TestSecurityStage:
         mock_result.stdout = "not valid json{"
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
 
         security = result["security"]
@@ -598,7 +602,7 @@ class TestSecurityStage:
     async def test_security_bandit_timeout(self, workflow):
         """Test security stage when bandit times out."""
         with patch(
-            "attune.workflows.release_prep.subprocess.run",
+            "attune.workflows.release_prep_stages.subprocess.run",
             side_effect=subprocess.TimeoutExpired(cmd="bandit", timeout=120),
         ):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
@@ -628,7 +632,7 @@ class TestSecurityStage:
         mock_result.stdout = json.dumps(findings)
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._security({"path": "."}, ModelTier.CAPABLE)
 
         security = result["security"]
@@ -662,7 +666,7 @@ class TestChangelogStage:
         mock_result.stdout = git_output
         mock_result.stderr = ""
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._changelog({"path": "."}, ModelTier.CAPABLE)
 
         changelog = result["changelog"]
@@ -680,7 +684,7 @@ class TestChangelogStage:
         """Test changelog with no commits."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._changelog({"path": "."}, ModelTier.CAPABLE)
 
         changelog = result["changelog"]
@@ -693,7 +697,7 @@ class TestChangelogStage:
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
 
         with patch(
-            "attune.workflows.release_prep.subprocess.run", return_value=mock_result
+            "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
         ) as mock_run:
             await workflow._changelog(
                 {"path": "/project", "since": "2 weeks ago"},
@@ -707,7 +711,7 @@ class TestChangelogStage:
     async def test_changelog_git_timeout(self, workflow):
         """Test changelog handles git timeout gracefully."""
         with patch(
-            "attune.workflows.release_prep.subprocess.run",
+            "attune.workflows.release_prep_stages.subprocess.run",
             side_effect=subprocess.TimeoutExpired(cmd="git", timeout=30),
         ):
             result, _, _ = await workflow._changelog({"path": "."}, ModelTier.CAPABLE)
@@ -721,7 +725,7 @@ class TestChangelogStage:
         git_output = "\nabc1234 feat: add feature\n\ndef5678 fix: bug fix\n\n"
         mock_result = MagicMock(returncode=0, stdout=git_output, stderr="")
 
-        with patch("attune.workflows.release_prep.subprocess.run", return_value=mock_result):
+        with patch("attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result):
             result, _, _ = await workflow._changelog({"path": "."}, ModelTier.CAPABLE)
 
         assert result["changelog"]["total_commits"] == 2

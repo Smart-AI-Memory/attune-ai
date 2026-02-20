@@ -1,0 +1,178 @@
+"""Security auditor agent for Release Preparation Agent Team.
+
+Runs bandit on the codebase and classifies vulnerabilities by severity.
+Supports LLM-enhanced classification when an API key is available.
+
+Copyright 2026 Smart-AI-Memory
+Licensed under Apache 2.0
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from typing import Any
+from uuid import uuid4
+
+from attune.agents.state.store import AgentStateStore
+
+from .base_agent import ReleaseAgent, _run_command
+from .release_models import (
+    LLM_MODE,
+    Tier,
+)
+from .release_parsing import _parse_response
+
+logger = logging.getLogger(__name__)
+
+
+class SecurityAuditorAgent(ReleaseAgent):
+    """Analyzes bandit output and classifies vulnerabilities by severity.
+
+    Rule-based: Runs bandit on the codebase, parses results.
+    LLM-enhanced: Sends results to LLM for nuanced classification.
+    """
+
+    SYSTEM_PROMPT = (
+        "You are a security auditor. Analyze the bandit scan results and "
+        "classify vulnerabilities. Respond in JSON:\n"
+        '{"critical_issues": N, "high_issues": N, "medium_issues": N, '
+        '"low_issues": N, "score": 0-100, "confidence": 0.0-1.0, '
+        '"top_findings": [{"file": "...", "issue": "...", '
+        '"severity": "..."}]}'
+    )
+
+    def __init__(
+        self,
+        redis_client: Any | None = None,
+        state_store: AgentStateStore | None = None,
+    ) -> None:
+        super().__init__(
+            agent_id=f"security-auditor-{uuid4().hex[:8]}",
+            role="Security Auditor",
+            redis_client=redis_client,
+            state_store=state_store,
+        )
+
+    def _execute_tier(self, codebase_path: str, tier: Tier) -> tuple[bool, dict[str, Any]]:
+        """Run security analysis."""
+        try:
+            # Run bandit
+            returncode, stdout, stderr = _run_command(
+                [
+                    "uv",
+                    "run",
+                    "bandit",
+                    "-r",
+                    "src/",
+                    "-f",
+                    "json",
+                    "--severity-level",
+                    "medium",
+                ],
+                cwd=codebase_path,
+            )
+
+            # Parse bandit JSON output
+            findings = self._parse_bandit_output(stdout, returncode)
+
+            # If LLM available, enhance with classification
+            if self.llm_client and LLM_MODE == "real":
+                prompt = f"Analyze these bandit results:\n{stdout[:3000]}"
+                response_text, _meta = self._call_llm(prompt, self.SYSTEM_PROMPT, tier)
+                if response_text:
+                    llm_findings = _parse_response(response_text)
+                    if "parse_error" not in llm_findings:
+                        findings.update(llm_findings)
+
+            findings["mode"] = "llm" if self.llm_client else "rule_based"
+            findings["tier"] = tier.value
+
+            # Success = no critical issues
+            critical = findings.get("critical_issues", 0)
+            return critical == 0, findings
+
+        except Exception as e:
+            logger.error(f"Security audit failed: {e}")
+            return False, {"error": str(e), "critical_issues": -1}
+
+    def _parse_bandit_output(self, stdout: str, returncode: int) -> dict[str, Any]:
+        """Parse bandit JSON output into structured findings.
+
+        Args:
+            stdout: Bandit stdout (JSON format)
+            returncode: Bandit exit code
+
+        Returns:
+            Dict with classified findings
+        """
+        if returncode == -1:
+            # bandit not installed -- report as unknown
+            return {
+                "critical_issues": 0,
+                "high_issues": 0,
+                "medium_issues": 0,
+                "low_issues": 0,
+                "score": 50.0,
+                "confidence": 0.3,
+                "note": "bandit not available",
+            }
+
+        try:
+            data = json.loads(stdout)
+        except json.JSONDecodeError:
+            return {
+                "critical_issues": 0,
+                "high_issues": 0,
+                "medium_issues": 0,
+                "low_issues": 0,
+                "score": 50.0,
+                "confidence": 0.5,
+                "note": "Could not parse bandit output",
+            }
+
+        results = data.get("results", [])
+        severity_counts = {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "LOW": 0,
+        }
+
+        for result in results:
+            sev = result.get("issue_severity", "LOW").upper()
+            if sev in severity_counts:
+                severity_counts[sev] += 1
+
+        total = sum(severity_counts.values())
+        # Score: 100 if no issues, decreasing with severity
+        score = max(
+            0.0,
+            100.0
+            - severity_counts["CRITICAL"] * 30
+            - severity_counts["HIGH"] * 15
+            - severity_counts["MEDIUM"] * 5
+            - severity_counts["LOW"] * 1,
+        )
+
+        top_findings = []
+        for r in results[:5]:
+            top_findings.append(
+                {
+                    "file": r.get("filename", "unknown"),
+                    "line": r.get("line_number", 0),
+                    "issue": r.get("issue_text", ""),
+                    "severity": r.get("issue_severity", "LOW"),
+                }
+            )
+
+        return {
+            "critical_issues": (severity_counts["CRITICAL"] + severity_counts["HIGH"]),
+            "high_issues": severity_counts["HIGH"],
+            "medium_issues": severity_counts["MEDIUM"],
+            "low_issues": severity_counts["LOW"],
+            "total_findings": total,
+            "score": score,
+            "confidence": 0.9,
+            "top_findings": top_findings,
+        }

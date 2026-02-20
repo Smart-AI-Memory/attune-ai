@@ -1,0 +1,18 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 2%
+    patch:
+      default:
+        target: 50%
+        threshold: 5%
+
+ignore:
+  - "docs/**"
+  - "website/**"
+  - "examples/**"
+  - ".claude/**"
+  - "benchmarks/**"
+  - "scripts/**"

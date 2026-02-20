@@ -293,13 +293,13 @@ class BaseAdapter(ABC):
             # Fallback defaults
             defaults = {
                 "anthropic": {
-                    "cheap": "claude-3-haiku-20240307",
-                    "capable": "claude-sonnet-4-20250514",
-                    "premium": "claude-opus-4-20250514",
+                    "cheap": "claude-haiku-4-5-20251001",
+                    "capable": "claude-sonnet-4-6",
+                    "premium": "claude-opus-4-6",
                 },
                 "openai": {"cheap": "gpt-4o-mini", "capable": "gpt-4o", "premium": "o1"},
             }
             return defaults.get(provider, defaults["anthropic"]).get(
                 tier,
-                "claude-sonnet-4-20250514",
+                "claude-sonnet-4-6",
             )

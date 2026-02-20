@@ -1,0 +1,303 @@
+"""Base release agent with progressive tier escalation.
+
+Provides the ReleaseAgent base class and the _run_command helper used
+by all specialized release agents.
+
+Copyright 2026 Smart-AI-Memory
+Licensed under Apache 2.0
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import subprocess
+import time
+from typing import Any
+
+from attune.agents.state.store import AgentStateStore
+
+from .release_models import (
+    ANTHROPIC_AVAILABLE,
+    LLM_MODE,
+    MODEL_CONFIG,
+    ReleaseAgentResult,
+    Tier,
+    anthropic,
+)
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Command Runner
+# =============================================================================
+
+
+def _run_command(cmd: list[str], cwd: str = ".") -> tuple[int, str, str]:
+    """Run a shell command safely and return (returncode, stdout, stderr).
+
+    Args:
+        cmd: Command and arguments as list
+        cwd: Working directory
+
+    Returns:
+        Tuple of (return_code, stdout, stderr)
+    """
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=cwd,
+        )
+        return result.returncode, result.stdout, result.stderr
+    except FileNotFoundError:
+        return -1, "", f"Command not found: {cmd[0]}"
+    except subprocess.TimeoutExpired:
+        return -2, "", f"Command timed out: {' '.join(cmd)}"
+
+
+# =============================================================================
+# Base Agent with Progressive Tier Escalation
+# =============================================================================
+
+
+class ReleaseAgent:
+    """Base agent with CHEAP -> CAPABLE -> PREMIUM escalation.
+
+    Features:
+        - Progressive tier escalation on failure
+        - Optional Redis heartbeats (no-op when unavailable)
+        - Real Anthropic API calls with rule-based fallback
+        - Multi-strategy response parsing (never returns None)
+
+    Args:
+        agent_id: Unique identifier for this agent instance
+        role: Human-readable role name
+        redis_client: Optional Redis connection for coordination
+    """
+
+    def __init__(
+        self,
+        agent_id: str,
+        role: str,
+        redis_client: Any | None = None,
+        state_store: AgentStateStore | None = None,
+    ) -> None:
+        self.agent_id = agent_id
+        self.role = role
+        self.redis = redis_client
+        self.state_store = state_store
+        self.current_tier = Tier.CHEAP
+        self.llm_client: Any | None = None
+        self.total_cost = 0.0
+        self.total_tokens = 0
+
+        # Initialize LLM client if available and in real mode
+        if ANTHROPIC_AVAILABLE and LLM_MODE == "real":
+            api_key = os.getenv("ANTHROPIC_API_KEY")
+            if api_key:
+                self.llm_client = anthropic.Anthropic(api_key=api_key)
+                logger.info(f"Agent {agent_id}: LLM client initialized")
+            else:
+                logger.info(f"Agent {agent_id}: No API key, using rule-based mode")
+
+    def _register_heartbeat(self, status: str = "running", task: str = "") -> None:
+        """Register agent liveness in Redis (no-op if unavailable)."""
+        if self.redis is None:
+            return
+        try:
+            key = f"release:agent:heartbeat:{self.agent_id}"
+            self.redis.hset(
+                key,
+                mapping={
+                    "agent_id": self.agent_id,
+                    "role": self.role,
+                    "status": status,
+                    "current_task": task,
+                    "tier": self.current_tier.value,
+                    "last_beat": time.time(),
+                },
+            )
+            self.redis.expire(key, 60)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Redis is optional, don't fail on connection issues
+            logger.debug(f"Heartbeat failed (non-fatal): {e}")
+
+    def _signal_completion(self, result: dict[str, Any]) -> None:
+        """Signal task completion via Redis (no-op if unavailable)."""
+        if self.redis is None:
+            return
+        try:
+            signal = {
+                "agent_id": self.agent_id,
+                "role": self.role,
+                "result_summary": {
+                    k: v for k, v in result.items() if isinstance(v, str | int | float | bool)
+                },
+                "tier_used": self.current_tier.value,
+                "timestamp": time.time(),
+            }
+            self.redis.publish(
+                f"release:signals:{self.agent_id}",
+                json.dumps(signal),
+            )
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Redis is optional
+            logger.debug(f"Signal failed (non-fatal): {e}")
+
+    def _call_llm(self, prompt: str, system: str, tier: Tier) -> tuple[str, dict[str, Any]]:
+        """Call LLM with tier-appropriate model.
+
+        Args:
+            prompt: User prompt
+            system: System prompt
+            tier: Model tier to use
+
+        Returns:
+            Tuple of (response_text, metadata)
+        """
+        if not self.llm_client:
+            return "", {"model": "rule_based", "cost": 0.0}
+
+        model = MODEL_CONFIG[tier.value]
+
+        try:
+            response = self.llm_client.messages.create(
+                model=model,
+                max_tokens=1024,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            input_tokens = response.usage.input_tokens
+            output_tokens = response.usage.output_tokens
+
+            pricing = {
+                "cheap": {"input": 0.80, "output": 4.00},
+                "capable": {"input": 3.00, "output": 15.00},
+                "premium": {"input": 15.00, "output": 75.00},
+            }
+            tier_pricing = pricing[tier.value]
+            cost = (
+                input_tokens * tier_pricing["input"] / 1_000_000
+                + output_tokens * tier_pricing["output"] / 1_000_000
+            )
+
+            self.total_cost += cost
+            self.total_tokens += input_tokens + output_tokens
+
+            response_text = ""
+            if response.content:
+                first_block = response.content[0]
+                if hasattr(first_block, "text"):
+                    response_text = first_block.text  # type: ignore[union-attr]
+
+            return response_text, {
+                "model": model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost": cost,
+            }
+
+        except Exception as e:
+            logger.error(f"LLM call failed for {self.role}: {e}")
+            return "", {"model": "fallback", "cost": 0.0, "error": str(e)}
+
+    def process(self, codebase_path: str = ".") -> ReleaseAgentResult:
+        """Process with progressive tier escalation.
+
+        Args:
+            codebase_path: Path to the codebase to analyze
+
+        Returns:
+            ReleaseAgentResult with findings and score
+        """
+        start = time.time()
+        escalated = False
+
+        # Record execution start in persistent state
+        exec_id: str | None = None
+        if self.state_store is not None:
+            exec_id = self.state_store.record_start(
+                self.agent_id,
+                self.role,
+                input_summary=codebase_path,
+            )
+
+        # Try CHEAP first
+        self.current_tier = Tier.CHEAP
+        self._register_heartbeat(status="running", task="Analyzing")
+
+        success, findings = self._execute_tier(codebase_path, Tier.CHEAP)
+
+        # Escalate to CAPABLE if needed
+        if not success:
+            escalated = True
+            self.current_tier = Tier.CAPABLE
+            self._register_heartbeat(status="escalating", task="Retrying")
+            success, findings = self._execute_tier(codebase_path, Tier.CAPABLE)
+
+        # Escalate to PREMIUM if still failing
+        if not success:
+            self.current_tier = Tier.PREMIUM
+            self._register_heartbeat(status="escalating", task="Premium retry")
+            success, findings = self._execute_tier(codebase_path, Tier.PREMIUM)
+
+        execution_time = (time.time() - start) * 1000
+
+        # Signal completion
+        self._signal_completion(findings)
+        self._register_heartbeat(status="idle", task="")
+
+        # Record completion in persistent state
+        if self.state_store is not None and exec_id is not None:
+            if success:
+                self.state_store.record_completion(
+                    self.agent_id,
+                    exec_id,
+                    success=success,
+                    findings=findings,
+                    score=findings.get("score", 0.0),
+                    cost=self.total_cost,
+                    execution_time_ms=execution_time,
+                    tier_used=self.current_tier.value,
+                    confidence=findings.get("confidence", 0.8),
+                )
+            else:
+                self.state_store.record_failure(
+                    self.agent_id,
+                    exec_id,
+                    error=findings.get(
+                        "error",
+                        "Execution failed after tier escalation",
+                    ),
+                )
+
+        return ReleaseAgentResult(
+            agent_id=self.agent_id,
+            agent_role=self.role,
+            success=success,
+            tier_used=self.current_tier,
+            findings=findings,
+            score=findings.get("score", 0.0),
+            confidence=findings.get("confidence", 0.8 if success else 0.3),
+            cost=self.total_cost,
+            execution_time_ms=execution_time,
+            escalated=escalated,
+        )
+
+    def _execute_tier(self, codebase_path: str, tier: Tier) -> tuple[bool, dict[str, Any]]:
+        """Execute at specific tier. Override in subclasses.
+
+        Args:
+            codebase_path: Path to codebase
+            tier: Current tier
+
+        Returns:
+            Tuple of (success, findings_dict)
+        """
+        raise NotImplementedError

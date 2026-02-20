@@ -81,7 +81,6 @@ class TestRegistryConsolidation:
             "OrchestratedReleasePrepWorkflow",
             "AutonomousTestGenerator",
             "ProgressiveTestGenWorkflow",
-            "TestCoverageBoostCrew",
         ]
         for cls_name in preserved_classes:
             assert (

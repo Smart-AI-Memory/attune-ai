@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from attune.agents_md.registry import AgentRegistry
-from attune.config.agent_config import ModelTier, UnifiedAgentConfig
+from attune.config.agent_config import ModelTier, Provider, UnifiedAgentConfig
 
 
 class TestAgentRegistry:
@@ -241,3 +241,32 @@ Updated.
         assert instance1 is instance2
 
         AgentRegistry.reset_instance()
+
+
+class TestUnifiedAgentConfigModelIds:
+    """Tests for model ID resolution with current model defaults."""
+
+    def test_anthropic_model_defaults(self):
+        """Test Anthropic model IDs for each tier."""
+        for tier, expected in [
+            (ModelTier.CHEAP, "claude-haiku-4-5-20251001"),
+            (ModelTier.CAPABLE, "claude-sonnet-4-6"),
+            (ModelTier.PREMIUM, "claude-opus-4-6"),
+        ]:
+            config = UnifiedAgentConfig(name="test", provider=Provider.ANTHROPIC, model_tier=tier)
+            assert config.get_model_id() == expected
+
+    def test_model_override_takes_precedence(self):
+        """Test that model_override bypasses tier resolution."""
+        config = UnifiedAgentConfig(
+            name="test",
+            model_tier=ModelTier.CHEAP,
+            model_override="custom-model-v1",
+        )
+        assert config.get_model_id() == "custom-model-v1"
+
+    def test_fallback_for_unknown_provider(self):
+        """Test fallback model for unrecognized provider/tier."""
+        config = UnifiedAgentConfig(name="test")
+        # Default provider is anthropic/capable
+        assert config.get_model_id() == "claude-sonnet-4-6"

@@ -1628,8 +1628,8 @@ class TestPatternLearnerMemoryIntegration:
         # File-based search should have been attempted
         assert isinstance(results, list)
 
-    @patch("attune.meta_workflows.pattern_learner.load_execution_result")
-    @patch("attune.meta_workflows.pattern_learner.list_execution_results")
+    @patch("attune.meta_workflows.pattern_memory.load_execution_result")
+    @patch("attune.meta_workflows.pattern_memory.list_execution_results")
     def test_search_with_memory(self, mock_list: MagicMock, mock_load: MagicMock) -> None:
         """Test search via memory with results."""
         from attune.meta_workflows.pattern_learner import PatternLearner

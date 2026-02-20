@@ -30,6 +30,7 @@ Use `/hub-name` to access organized workflows:
 | `/plan` | feature, tdd, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
+| `/brainstorm` | discover, plan, export | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
 
 ---

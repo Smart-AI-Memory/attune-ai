@@ -8,7 +8,7 @@ Coordinates the complete meta-workflow execution:
 5. Result aggregation and storage (files + optional memory)
 
 Created: 2026-01-17
-Updated: 2026-01-18 (v4.3.0 - Real LLM execution with Anthropic client)
+Updated: 2026-02-19 (refactored into focused modules)
 Purpose: Core orchestration for meta-workflows
 """
 
@@ -39,11 +39,12 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from attune.config import _validate_file_path
 from attune.meta_workflows.agent_creator import DynamicAgentCreator
 from attune.meta_workflows.form_engine import SocraticFormEngine
+from attune.meta_workflows.llm_execution import evaluate_success_criteria, execute_agents_real
 from attune.meta_workflows.models import (
     AgentExecutionResult,
     AgentSpec,
@@ -52,10 +53,9 @@ from attune.meta_workflows.models import (
     MetaWorkflowTemplate,
     TierStrategy,
 )
+from attune.meta_workflows.prompt_builder import build_agent_prompt, get_generic_instructions
+from attune.meta_workflows.report_generator import generate_report
 from attune.meta_workflows.template_registry import TemplateRegistry
-from attune.orchestration.agent_templates import get_template
-from attune.routing.model_router import ModelRouter, ModelTier
-from attune.telemetry.usage_tracker import UsageTracker
 
 if TYPE_CHECKING:
     from attune.meta_workflows.pattern_learner import PatternLearner
@@ -180,7 +180,7 @@ class MetaWorkflow:
             if mock_execution:
                 agent_results = self._execute_agents_mock(agents)
             else:
-                agent_results = self._execute_agents_real(agents)
+                agent_results = execute_agents_real(agents)
 
             # Stage 4: Aggregate results
             logger.info("Stage 4: Aggregating results")
@@ -298,465 +298,6 @@ class MetaWorkflow:
 
         return results
 
-    def _execute_agents_real(self, agents: list[AgentSpec]) -> list[AgentExecutionResult]:
-        """Execute agents with real LLM calls and progressive tier escalation.
-
-        Implements progressive tier escalation strategy:
-        - CHEAP_ONLY: Always uses cheap tier
-        - PROGRESSIVE: cheap → capable → premium (escalates on failure)
-        - CAPABLE_FIRST: capable → premium (skips cheap tier)
-
-        Each LLM call is tracked via UsageTracker for cost analysis.
-
-        Args:
-            agents: List of agent specs to execute
-
-        Returns:
-            List of agent execution results with actual LLM costs
-
-        Raises:
-            RuntimeError: If agent execution encounters fatal error
-        """
-        results = []
-        router = ModelRouter()
-        tracker = UsageTracker.get_instance()
-
-        for agent in agents:
-            logger.info(f"Executing agent: {agent.role} ({agent.tier_strategy.value})")
-
-            try:
-                result = self._execute_single_agent_with_escalation(agent, router, tracker)
-                results.append(result)
-
-                logger.info(
-                    f"Agent {agent.role} completed: "
-                    f"tier={result.tier_used}, cost=${result.cost:.4f}, "
-                    f"success={result.success}"
-                )
-
-            except Exception as e:
-                logger.error(f"Agent {agent.role} failed with error: {e}")
-
-                # Create error result
-                error_result = AgentExecutionResult(
-                    agent_id=agent.agent_id,
-                    role=agent.role,
-                    success=False,
-                    cost=0.0,
-                    duration=0.0,
-                    tier_used="error",
-                    output={"error": str(e)},
-                    error=str(e),
-                )
-                results.append(error_result)
-
-        return results
-
-    def _execute_single_agent_with_escalation(
-        self,
-        agent: AgentSpec,
-        router: ModelRouter,
-        tracker: UsageTracker,
-    ) -> AgentExecutionResult:
-        """Execute single agent with progressive tier escalation.
-
-        Args:
-            agent: Agent specification
-            router: Model router for tier selection
-            tracker: Usage tracker for telemetry
-
-        Returns:
-            AgentExecutionResult with actual LLM execution data
-        """
-        start_time = time.time()
-
-        # Determine tier sequence based on strategy
-        if agent.tier_strategy == TierStrategy.CHEAP_ONLY:
-            tiers = [ModelTier.CHEAP]
-        elif agent.tier_strategy == TierStrategy.PROGRESSIVE:
-            tiers = [ModelTier.CHEAP, ModelTier.CAPABLE, ModelTier.PREMIUM]
-        elif agent.tier_strategy == TierStrategy.CAPABLE_FIRST:
-            tiers = [ModelTier.CAPABLE, ModelTier.PREMIUM]
-        else:
-            # Fallback to capable
-            logger.warning(f"Unknown tier strategy: {agent.tier_strategy}, using CAPABLE")
-            tiers = [ModelTier.CAPABLE]
-
-        # Try each tier in sequence
-        result = None
-        total_cost = 0.0
-
-        for tier in tiers:
-            logger.debug(f"Attempting tier: {tier.value}")
-
-            # Execute at this tier
-            tier_result = self._execute_at_tier(agent, tier, router, tracker)
-            total_cost += tier_result.cost
-
-            # Check if successful
-            if self._evaluate_success_criteria(tier_result, agent):
-                # Success - return result
-                tier_result.cost = total_cost  # Update with cumulative cost
-                tier_result.duration = time.time() - start_time
-                return tier_result
-
-            # Failed - try next tier
-            logger.debug(f"Tier {tier.value} did not meet success criteria, attempting escalation")
-            result = tier_result
-
-        # All tiers exhausted - return final result (failed)
-        if result:
-            result.cost = total_cost
-            result.duration = time.time() - start_time
-            logger.warning(f"Agent {agent.role} failed at all tiers (cost: ${total_cost:.4f})")
-            return result
-
-        # Should never reach here
-        raise RuntimeError(f"No tiers attempted for agent {agent.role}")
-
-    def _execute_at_tier(
-        self,
-        agent: AgentSpec,
-        tier: ModelTier,
-        router: ModelRouter,
-        tracker: UsageTracker,
-    ) -> AgentExecutionResult:
-        """Execute agent at specific tier.
-
-        Args:
-            agent: Agent specification
-            tier: Model tier to use
-            router: Model router
-            tracker: Usage tracker
-
-        Returns:
-            AgentExecutionResult from this tier
-        """
-        start_time = time.time()
-
-        # Get model config for tier (access MODELS dict directly)
-        provider = router._default_provider
-        model_config = router.MODELS[provider][tier.value]
-
-        # Build prompt from agent spec
-        prompt = self._build_agent_prompt(agent)
-
-        # Execute LLM call
-        # v4.3.0: Real LLM execution with Anthropic client
-        # Falls back to simulation if API key not available
-
-        try:
-            # Execute real LLM call (with simulation fallback)
-            response = self._execute_llm_call(prompt, model_config, tier)
-
-            # Track telemetry
-            duration_ms = int((time.time() - start_time) * 1000)
-            tracker.track_llm_call(
-                workflow="meta-workflow",
-                stage=agent.role,
-                tier=tier.value,
-                model=model_config.model_id,
-                provider=router._default_provider,
-                cost=response["cost"],
-                tokens=response["tokens"],
-                cache_hit=False,
-                cache_type=None,
-                duration_ms=duration_ms,
-                user_id=None,
-            )
-
-            # Create result
-            result = AgentExecutionResult(
-                agent_id=agent.agent_id,
-                role=agent.role,
-                success=response["success"],
-                cost=response["cost"],
-                duration=time.time() - start_time,
-                tier_used=tier.value,
-                output=response["output"],
-            )
-
-            return result
-
-        except Exception as e:
-            logger.error(f"LLM execution failed at tier {tier.value}: {e}")
-
-            # Return error result
-            return AgentExecutionResult(
-                agent_id=agent.agent_id,
-                role=agent.role,
-                success=False,
-                cost=0.0,
-                duration=time.time() - start_time,
-                tier_used=tier.value,
-                output={"error": str(e)},
-                error=str(e),
-            )
-
-    def _get_generic_instructions(self, role: str) -> str:
-        """Generate generic instructions based on agent role.
-
-        Args:
-            role: Agent role name
-
-        Returns:
-            Generic instructions appropriate for the role
-        """
-        # Map common role keywords to instructions
-        role_lower = role.lower()
-
-        if "analyst" in role_lower or "analyze" in role_lower:
-            return (
-                "You are an expert analyst. Your job is to thoroughly analyze "
-                "the provided information, identify key patterns, issues, and "
-                "opportunities. Provide detailed findings with specific evidence "
-                "and actionable recommendations."
-            )
-        elif "reviewer" in role_lower or "review" in role_lower:
-            return (
-                "You are a careful reviewer. Your job is to review the provided "
-                "content for quality, accuracy, completeness, and adherence to "
-                "best practices. Identify any issues, gaps, or areas for improvement "
-                "and provide specific feedback."
-            )
-        elif "generator" in role_lower or "create" in role_lower or "writer" in role_lower:
-            return (
-                "You are a skilled content generator. Your job is to create "
-                "high-quality content based on the provided requirements and context. "
-                "Ensure your output is well-structured, accurate, and follows "
-                "established conventions."
-            )
-        elif "validator" in role_lower or "verify" in role_lower:
-            return (
-                "You are a thorough validator. Your job is to verify the provided "
-                "content meets all requirements and standards. Check for correctness, "
-                "completeness, and consistency. Report any issues found."
-            )
-        elif "synthesizer" in role_lower or "combine" in role_lower:
-            return (
-                "You are an expert synthesizer. Your job is to combine multiple "
-                "inputs into a cohesive, well-organized output. Identify common "
-                "themes, resolve conflicts, and produce a unified result that "
-                "captures the key insights from all sources."
-            )
-        elif "test" in role_lower:
-            return (
-                "You are a testing specialist. Your job is to analyze code and "
-                "create comprehensive test cases that cover edge cases, error "
-                "conditions, and normal operation. Ensure tests are well-documented "
-                "and maintainable."
-            )
-        elif "doc" in role_lower:
-            return (
-                "You are a documentation specialist. Your job is to analyze content "
-                "and create or improve documentation that is clear, accurate, and "
-                "helpful. Follow documentation best practices and maintain consistency."
-            )
-        else:
-            return (
-                f"You are a {role} agent. Complete your assigned task thoroughly "
-                "and provide clear, well-structured output. Follow best practices "
-                "and provide actionable results."
-            )
-
-    def _build_agent_prompt(self, agent: AgentSpec) -> str:
-        """Build prompt for agent from specification.
-
-        Args:
-            agent: Agent specification
-
-        Returns:
-            Formatted prompt string
-        """
-        # Load base template
-        base_template = get_template(agent.base_template)
-        if base_template is not None:
-            instructions = base_template.default_instructions
-        else:
-            # Fallback if template not found - use role-based generic prompt
-            logger.warning(f"Template {agent.base_template} not found, using generic prompt")
-            instructions = self._get_generic_instructions(agent.role)
-
-        # Build prompt
-        prompt_parts = [
-            f"Role: {agent.role}",
-            f"\nInstructions:\n{instructions}",
-        ]
-
-        # Add config if present
-        if agent.config:
-            prompt_parts.append(f"\nConfiguration:\n{json.dumps(agent.config, indent=2)}")
-
-        # Add success criteria if present
-        if agent.success_criteria:
-            prompt_parts.append(
-                f"\nSuccess Criteria:\n{json.dumps(agent.success_criteria, indent=2)}"
-            )
-
-        # Add tools if present
-        if agent.tools:
-            prompt_parts.append(f"\nAvailable Tools: {', '.join(agent.tools)}")
-
-        return "\n".join(prompt_parts)
-
-    def _execute_llm_call(self, prompt: str, model_config: Any, tier: ModelTier) -> dict[str, Any]:
-        """Execute real LLM call via Anthropic or other providers.
-
-        Uses the Anthropic client for Claude models, with fallback to
-        other providers via the model configuration.
-
-        Args:
-            prompt: Prompt to send to LLM
-            model_config: Model configuration from router
-            tier: Model tier being used
-
-        Returns:
-            Dict with cost, tokens, success, and output
-
-        Raises:
-            RuntimeError: If LLM call fails after retries
-        """
-        import os
-
-        # Try to use Anthropic client
-        try:
-            from anthropic import Anthropic
-
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
-            if not api_key:
-                raise ValueError(
-                    "ANTHROPIC_API_KEY not found. Set it in environment or .env file "
-                    "(checked: ./env, ~/.env, ~/.attune/.env)"
-                )
-
-            client = Anthropic(api_key=api_key)
-
-            # Execute the LLM call
-            response = client.messages.create(
-                model=model_config.model_id,
-                max_tokens=2048,
-                messages=[{"role": "user", "content": prompt}],
-            )
-
-            # Extract response data
-            output_text = response.content[0].text if response.content else ""
-            prompt_tokens = response.usage.input_tokens
-            completion_tokens = response.usage.output_tokens
-
-            # Calculate cost
-            cost = (prompt_tokens / 1000) * model_config.cost_per_1k_input + (
-                completion_tokens / 1000
-            ) * model_config.cost_per_1k_output
-
-            return {
-                "cost": cost,
-                "tokens": {
-                    "input": prompt_tokens,
-                    "output": completion_tokens,
-                    "total": prompt_tokens + completion_tokens,
-                },
-                "success": True,
-                "output": {
-                    "message": output_text,
-                    "model": model_config.model_id,
-                    "tier": tier.value,
-                    "success": True,
-                },
-            }
-
-        except ImportError:
-            logger.warning("Anthropic client not available, using simulation")
-            return self._simulate_llm_call(prompt, model_config, tier)
-
-        except Exception as e:
-            logger.error(f"LLM call failed: {e}")
-            # Return failure result
-            return {
-                "cost": 0.0,
-                "tokens": {"input": 0, "output": 0, "total": 0},
-                "success": False,
-                "output": {
-                    "error": str(e),
-                    "model": model_config.model_id,
-                    "tier": tier.value,
-                    "success": False,
-                },
-            }
-
-    def _simulate_llm_call(self, prompt: str, model_config: Any, tier: ModelTier) -> dict[str, Any]:
-        """Simulate LLM call with realistic cost/token estimates.
-
-        Used as fallback when real LLM execution is not available
-        (e.g., no API key, testing mode, etc.)
-
-        Args:
-            prompt: Prompt to send to LLM
-            model_config: Model configuration
-            tier: Model tier
-
-        Returns:
-            Dict with cost, tokens, success, and output
-        """
-        import os
-
-        # Estimate tokens (rough: ~4 chars per token)
-        prompt_tokens = len(prompt) // 4
-        completion_tokens = 500  # Assume moderate response
-
-        # Calculate cost
-        cost = (prompt_tokens / 1000) * model_config.cost_per_1k_input + (
-            completion_tokens / 1000
-        ) * model_config.cost_per_1k_output
-
-        # Simulate success rate based on tier
-        # cheap: 80%, capable: 95%, premium: 99%
-        if tier == ModelTier.CHEAP:
-            success = int.from_bytes(os.urandom(4), "big") / (2**32) < 0.80
-        elif tier == ModelTier.CAPABLE:
-            success = int.from_bytes(os.urandom(4), "big") / (2**32) < 0.95
-        else:  # PREMIUM
-            success = int.from_bytes(os.urandom(4), "big") / (2**32) < 0.99
-
-        return {
-            "cost": cost,
-            "tokens": {
-                "input": prompt_tokens,
-                "output": completion_tokens,
-                "total": prompt_tokens + completion_tokens,
-            },
-            "success": success,
-            "output": {
-                "message": f"Simulated response at {tier.value} tier",
-                "model": model_config.model_id,
-                "tier": tier.value,
-                "success": success,
-            },
-        }
-
-    def _evaluate_success_criteria(self, result: AgentExecutionResult, agent: AgentSpec) -> bool:
-        """Evaluate if agent result meets success criteria.
-
-        Args:
-            result: Agent execution result
-            agent: Agent specification with success criteria
-
-        Returns:
-            True if success criteria met, False otherwise
-        """
-        # Basic success check
-        if not result.success:
-            return False
-
-        # If no criteria specified, basic success is enough
-        if not agent.success_criteria:
-            return True
-
-        # success_criteria is a list of descriptive strings (e.g., ["code reviewed", "tests pass"])
-        # These are informational criteria - if result.success is True, we consider the criteria met
-        # The criteria serve as documentation of what success means for this agent
-        logger.debug(f"Agent succeeded with criteria: {agent.success_criteria}")
-        return True
-
     def _save_execution(self, result: MetaWorkflowResult) -> Path:
         """Save execution results to disk.
 
@@ -835,88 +376,55 @@ class MetaWorkflow:
     def _generate_report(self, result: MetaWorkflowResult) -> str:
         """Generate human-readable report.
 
+        Delegates to report_generator module.
+
         Args:
             result: Execution result
 
         Returns:
             Markdown-formatted report
         """
-        lines = []
+        return generate_report(result, self.template)
 
-        lines.append("# Meta-Workflow Execution Report")
-        lines.append("")
-        lines.append(f"**Run ID**: {result.run_id}")
-        lines.append(f"**Template**: {self.template.name}")
-        lines.append(f"**Timestamp**: {result.timestamp}")
-        lines.append(f"**Success**: {'✅ Yes' if result.success else '❌ No'}")
-        if result.error:
-            lines.append(f"**Error**: {result.error}")
-        lines.append("")
+    def _get_generic_instructions(self, role: str) -> str:
+        """Generate generic instructions based on agent role.
 
-        lines.append("## Summary")
-        lines.append("")
-        lines.append(f"- **Agents Created**: {len(result.agents_created)}")
-        lines.append(f"- **Agents Executed**: {len(result.agent_results)}")
-        lines.append(f"- **Total Cost**: ${result.total_cost:.2f}")
-        lines.append(f"- **Total Duration**: {result.total_duration:.1f}s")
-        lines.append("")
+        Delegates to prompt_builder.get_generic_instructions().
 
-        lines.append("## Form Responses")
-        lines.append("")
-        for key, value in result.form_responses.responses.items():
-            lines.append(f"- **{key}**: {value}")
-        lines.append("")
+        Args:
+            role: Agent role name
 
-        lines.append("## Agents Created")
-        lines.append("")
-        for i, agent in enumerate(result.agents_created, 1):
-            lines.append(f"### {i}. {agent.role}")
-            lines.append("")
-            lines.append(f"- **Agent ID**: {agent.agent_id}")
-            lines.append(f"- **Base Template**: {agent.base_template}")
-            lines.append(f"- **Tier Strategy**: {agent.tier_strategy.value}")
-            lines.append(f"- **Tools**: {', '.join(agent.tools) if agent.tools else 'None'}")
-            if agent.config:
-                lines.append(f"- **Config**: {json.dumps(agent.config)}")
-            if agent.success_criteria:
-                lines.append("- **Success Criteria**:")
-                for criterion in agent.success_criteria:
-                    lines.append(f"  - {criterion}")
-            lines.append("")
+        Returns:
+            Generic instructions appropriate for the role
+        """
+        return get_generic_instructions(role)
 
-        lines.append("## Execution Results")
-        lines.append("")
-        for i, agent_result in enumerate(result.agent_results, 1):
-            lines.append(f"### {i}. {agent_result.role}")
-            lines.append("")
-            lines.append(f"- **Status**: {'✅ Success' if agent_result.success else '❌ Failed'}")
-            lines.append(f"- **Tier Used**: {agent_result.tier_used}")
-            lines.append(f"- **Cost**: ${agent_result.cost:.2f}")
-            lines.append(f"- **Duration**: {agent_result.duration:.1f}s")
-            if agent_result.error:
-                lines.append(f"- **Error**: {agent_result.error}")
-            lines.append("")
+    def _build_agent_prompt(self, agent: AgentSpec) -> str:
+        """Build prompt for agent from specification.
 
-        lines.append("## Cost Breakdown")
-        lines.append("")
+        Delegates to prompt_builder.build_agent_prompt().
 
-        # Group by tier
-        tier_costs = {}
-        for agent_result in result.agent_results:
-            tier = agent_result.tier_used
-            if tier not in tier_costs:
-                tier_costs[tier] = 0.0
-            tier_costs[tier] += agent_result.cost
+        Args:
+            agent: Agent specification
 
-        for tier, cost in sorted(tier_costs.items()):
-            lines.append(f"- **{tier}**: ${cost:.2f}")
+        Returns:
+            Formatted prompt string
+        """
+        return build_agent_prompt(agent)
 
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-        lines.append("*Generated by Attune AI Meta-Workflow System*")
+    def _evaluate_success_criteria(self, result: AgentExecutionResult, agent: AgentSpec) -> bool:
+        """Evaluate if agent result meets success criteria.
 
-        return "\n".join(lines)
+        Delegates to llm_execution.evaluate_success_criteria().
+
+        Args:
+            result: Agent execution result
+            agent: Agent specification with success criteria
+
+        Returns:
+            True if success criteria met, False otherwise
+        """
+        return evaluate_success_criteria(result, agent)
 
 
 # =============================================================================

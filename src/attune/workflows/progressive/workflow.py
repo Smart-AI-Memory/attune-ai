@@ -48,8 +48,8 @@ def _load_model_config() -> dict[str, str]:
     # Default models
     defaults = {
         "cheap": "gpt-4o-mini",
-        "capable": "claude-3-5-sonnet",
-        "premium": "claude-opus-4",
+        "capable": "claude-sonnet-4-6",
+        "premium": "claude-opus-4-6",
     }
 
     # Try to load from unified config
@@ -691,4 +691,4 @@ class ProgressiveWorkflow:
         """
         model_config = _load_model_config()
         tier_key = tier.value.lower()  # "cheap", "capable", "premium"
-        return model_config.get(tier_key, "claude-3-5-sonnet")
+        return model_config.get(tier_key, "claude-sonnet-4-6")
