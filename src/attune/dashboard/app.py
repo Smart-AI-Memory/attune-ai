@@ -8,6 +8,8 @@ Web dashboard for monitoring all 6 Agent Coordination patterns:
 5. Human Approval Gates
 6. Agent-to-LLM Feedback Loop
 
+Models live in dashboard_models.py; WebSocket management in connections.py.
+
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
@@ -17,12 +19,10 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from attune.telemetry import (
     ApprovalGate,
@@ -30,6 +30,14 @@ from attune.telemetry import (
     EventStreamer,
     FeedbackLoop,
     HeartbeatCoordinator,
+)
+
+from .connections import ConnectionManager
+from .dashboard_models import (  # noqa: F401 - re-exported
+    AgentStatus,
+    ApprovalRequestSummary,
+    QualityMetrics,
+    SignalSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,53 +52,6 @@ app = FastAPI(
 # Mount static files
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-
-# ============================================================================
-# Models
-# ============================================================================
-
-
-class AgentStatus(BaseModel):
-    """Agent status summary."""
-
-    agent_id: str
-    status: str
-    last_seen: str
-    progress: float
-    current_task: str
-
-
-class SignalSummary(BaseModel):
-    """Coordination signal summary."""
-
-    signal_type: str
-    source_agent: str
-    target_agent: str
-    timestamp: str
-    payload: dict[str, Any]
-
-
-class ApprovalRequestSummary(BaseModel):
-    """Approval request summary."""
-
-    request_id: str
-    approval_type: str
-    agent_id: str
-    context: dict[str, Any]
-    timestamp: str
-    timeout_seconds: float
-
-
-class QualityMetrics(BaseModel):
-    """Quality feedback metrics."""
-
-    workflow_name: str
-    stage_name: str
-    tier: str
-    avg_quality: float
-    sample_count: int
-    trend: float
 
 
 # ============================================================================
@@ -441,29 +402,6 @@ async def get_system_health():
 # ============================================================================
 # WebSocket for Real-Time Updates
 # ============================================================================
-
-
-class ConnectionManager:
-    """Manage WebSocket connections."""
-
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: Clients disconnect frequently, best-effort broadcast
-                logger.debug("Failed to send to WebSocket client", exc_info=True)
-
 
 manager = ConnectionManager()
 

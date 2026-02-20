@@ -3,6 +3,8 @@
 Uses LLM calls to provide sophisticated goal understanding, ambiguity detection,
 and intelligent question generation.
 
+Data types live in llm_analyzer_types.py; prompts in llm_analyzer_prompts.py.
+
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
@@ -12,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from .forms import FieldOption, FieldType, FieldValidation, Form, FormField
@@ -21,57 +23,14 @@ from .llm_analyzer_prompts import (  # noqa: F401 - re-exported
     GOAL_ANALYSIS_PROMPT,
     QUESTION_REFINEMENT_PROMPT,
 )
+from .llm_analyzer_types import (  # noqa: F401 - re-exported
+    LLMAgentRecommendation,
+    LLMAnalysisResult,
+    LLMQuestionResult,
+)
 from .session import SocraticSession
 
 logger = logging.getLogger(__name__)
-
-
-# =============================================================================
-# LLM ANALYZER
-# =============================================================================
-
-
-@dataclass
-class LLMAnalysisResult:
-    """Result from LLM goal analysis."""
-
-    intent: str
-    domain: str
-    confidence: float
-    ambiguities: list[str]
-    assumptions: list[str]
-    constraints: list[str]
-    keywords: list[str]
-    suggested_agents: list[str]
-    suggested_questions: list[dict[str, Any]]
-    raw_response: str = ""
-    secondary_domains: list[str] = field(default_factory=list)
-    detected_requirements: list[str] = field(default_factory=list)
-
-    @property
-    def primary_domain(self) -> str:
-        """Alias for domain (for MCP server compatibility)."""
-        return self.domain
-
-
-@dataclass
-class LLMQuestionResult:
-    """Result from LLM question generation."""
-
-    questions: list[dict[str, Any]]
-    confidence_after_answers: float
-    ready_to_generate: bool
-    reasoning: str
-
-
-@dataclass
-class LLMAgentRecommendation:
-    """Result from LLM agent recommendation."""
-
-    agents: list[dict[str, Any]]
-    workflow_stages: list[dict[str, Any]]
-    estimated_cost_tier: str
-    estimated_duration: str
 
 
 class LLMGoalAnalyzer:
