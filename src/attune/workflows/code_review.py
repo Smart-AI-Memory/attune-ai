@@ -13,6 +13,12 @@ import logging
 from typing import Any
 
 from .base import BaseWorkflow, ModelTier
+from .code_review_analysis_helpers import (  # noqa: F401
+    _format_findings_for_prompt,
+    _gather_file_snippets,
+    _parse_deep_enrichment,
+    _recount_by_key,
+)
 from .code_review_analysis_mixin import CodeReviewAnalysisMixin
 from .code_review_architect import ArchitectMixin
 from .code_review_classify import ClassifyMixin

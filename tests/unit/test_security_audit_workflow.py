@@ -982,18 +982,20 @@ class TestGetCrewAudit:
         mock_crew_cls.return_value = mock_crew_instance
         mock_config_cls = MagicMock()
 
+        # Inject mock module so the lazy import inside _get_crew_audit
+        # picks up the mock instead of the real (cached) class.
+        mock_crews_module = MagicMock()
+        mock_crews_module.SecurityAuditCrew = mock_crew_cls
+        mock_crews_module.SecurityAuditConfig = mock_config_cls
+
         with (
             patch(
                 "attune.workflows.security_adapters._check_crew_available",
                 return_value=True,
             ),
-            patch(
-                "attune.agent_factory.crews.SecurityAuditConfig",
-                mock_config_cls,
-            ),
-            patch(
-                "attune.agent_factory.crews.SecurityAuditCrew",
-                mock_crew_cls,
+            patch.dict(
+                "sys.modules",
+                {"attune.agent_factory.crews": mock_crews_module},
             ),
         ):
             result = _run(_get_crew_audit("/some/path"))
