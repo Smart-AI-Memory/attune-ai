@@ -17,24 +17,19 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
-import re
-from dataclasses import dataclass
 from typing import Any
 
-from .forms import (
-    FieldOption,
-    FieldType,
-    FieldValidation,
-    Form,
-    FormField,
-    create_additional_context_field,
-    create_automation_level_field,
-    create_goal_text_field,
-    create_language_field,
-    create_quality_focus_field,
-    create_team_size_field,
+from .domain import (
+    DOMAIN_PATTERNS,
+    DomainPattern,
+    detect_domain,
+    extract_keywords,
+    identify_ambiguities,
+    identify_assumptions,
 )
+from .forms import Form, create_goal_text_field
 from .generator import AgentGenerator, GeneratedWorkflow
+from .questions import generate_followup_questions, generate_initial_questions
 from .session import GoalAnalysis, SessionState, SocraticSession
 from .success import (
     MetricType,
@@ -45,376 +40,22 @@ from .success import (
     test_generation_criteria,
 )
 
-logger = logging.getLogger(__name__)
-
-
-# =============================================================================
-# DOMAIN DETECTION
-# =============================================================================
-
-
-@dataclass
-class DomainPattern:
-    """Pattern for detecting user intent domain."""
-
-    domain: str
-    keywords: list[str]
-    phrases: list[str]
-    weight: float = 1.0
-
-
-DOMAIN_PATTERNS = [
-    DomainPattern(
-        domain="code_review",
-        keywords=["review", "pr", "pull request", "merge", "diff", "changes"],
-        phrases=["code review", "review code", "check my code", "review my"],
-        weight=1.0,
-    ),
-    DomainPattern(
-        domain="security",
-        keywords=["security", "vulnerability", "secure", "exploit", "attack", "owasp"],
-        phrases=["security audit", "find vulnerabilities", "security check", "penetration"],
-        weight=1.2,
-    ),
-    DomainPattern(
-        domain="testing",
-        keywords=["test", "coverage", "unit test", "integration", "pytest", "jest"],
-        phrases=["write tests", "generate tests", "test coverage", "increase coverage"],
-        weight=1.0,
-    ),
-    DomainPattern(
-        domain="documentation",
-        keywords=["document", "docstring", "readme", "api docs", "comment"],
-        phrases=["write documentation", "generate docs", "add docstrings"],
-        weight=0.9,
-    ),
-    DomainPattern(
-        domain="performance",
-        keywords=["performance", "optimize", "speed", "slow", "memory", "efficient"],
-        phrases=["improve performance", "optimize code", "make faster", "reduce memory"],
-        weight=1.0,
-    ),
-    DomainPattern(
-        domain="refactoring",
-        keywords=["refactor", "clean", "restructure", "simplify", "modular"],
-        phrases=["refactor code", "clean up", "improve structure"],
-        weight=0.9,
-    ),
+# Re-export domain symbols for backward compatibility.
+# External code (tests, llm_analyzer, etc.) imports these from
+# attune.socratic.engine, so they must remain available here.
+__all__ = [
+    "DomainPattern",
+    "DOMAIN_PATTERNS",
+    "detect_domain",
+    "extract_keywords",
+    "identify_ambiguities",
+    "identify_assumptions",
+    "generate_initial_questions",
+    "generate_followup_questions",
+    "SocraticWorkflowBuilder",
 ]
 
-
-def detect_domain(goal: str) -> tuple[str, float]:
-    """Detect the domain from goal text.
-
-    Returns:
-        Tuple of (domain, confidence)
-    """
-    goal_lower = goal.lower()
-    scores: dict[str, float] = {}
-
-    for pattern in DOMAIN_PATTERNS:
-        score = 0.0
-
-        # Check keywords
-        for keyword in pattern.keywords:
-            if keyword in goal_lower:
-                score += 1.0 * pattern.weight
-
-        # Check phrases (higher weight)
-        for phrase in pattern.phrases:
-            if phrase in goal_lower:
-                score += 2.0 * pattern.weight
-
-        if score > 0:
-            scores[pattern.domain] = score
-
-    if not scores:
-        return "general", 0.5
-
-    best_domain = max(scores, key=lambda k: scores[k])
-    max_score = scores[best_domain]
-
-    # Normalize confidence (cap at 1.0)
-    confidence = min(max_score / 5.0, 1.0)
-
-    return best_domain, confidence
-
-
-def extract_keywords(goal: str) -> list[str]:
-    """Extract important keywords from goal."""
-    # Remove common words
-    stop_words = {
-        "i",
-        "want",
-        "to",
-        "the",
-        "a",
-        "an",
-        "my",
-        "our",
-        "for",
-        "with",
-        "that",
-        "this",
-        "is",
-        "are",
-        "be",
-        "will",
-        "would",
-        "could",
-        "should",
-        "can",
-        "help",
-        "me",
-        "us",
-        "please",
-        "need",
-        "like",
-    }
-
-    # Extract words
-    words = re.findall(r"\b\w+\b", goal.lower())
-    keywords = [w for w in words if w not in stop_words and len(w) > 2]
-
-    # Return unique keywords preserving order
-    return list(dict.fromkeys(keywords))
-
-
-def identify_ambiguities(goal: str, domain: str) -> list[str]:
-    """Identify ambiguities in the goal that need clarification."""
-    ambiguities = []
-
-    # Check for missing specifics
-    if not any(
-        lang in goal.lower()
-        for lang in ["python", "javascript", "typescript", "java", "go", "rust"]
-    ):
-        ambiguities.append("Programming language not specified")
-
-    # Check for vague scope
-    vague_terms = ["some", "various", "different", "several", "multiple"]
-    for term in vague_terms:
-        if term in goal.lower():
-            ambiguities.append(f"Vague scope indicator: '{term}'")
-            break
-
-    # Domain-specific ambiguities
-    if domain == "code_review":
-        if "security" not in goal.lower() and "style" not in goal.lower():
-            ambiguities.append("Review focus areas not specified")
-
-    if domain == "testing":
-        if "unit" not in goal.lower() and "integration" not in goal.lower():
-            ambiguities.append("Test type not specified")
-
-    return ambiguities
-
-
-def identify_assumptions(goal: str, domain: str) -> list[str]:
-    """Identify assumptions we're making from the goal."""
-    assumptions = []
-
-    # Common assumptions
-    if domain == "code_review":
-        assumptions.append("Assuming code is version-controlled (git)")
-        assumptions.append("Assuming PR/diff-based review workflow")
-
-    if domain == "testing":
-        assumptions.append("Assuming existing test framework in project")
-
-    if domain == "security":
-        assumptions.append("Assuming standard web application security model")
-
-    return assumptions
-
-
-# =============================================================================
-# QUESTION GENERATION
-# =============================================================================
-
-
-def generate_initial_questions(
-    goal_analysis: GoalAnalysis,
-    session: SocraticSession,
-) -> Form:
-    """Generate the first round of questions based on goal analysis."""
-    fields: list[FormField] = []
-
-    # Always ask about languages if not detected
-    if "Programming language not specified" in goal_analysis.ambiguities:
-        fields.append(create_language_field(required=True))
-
-    # Ask about quality focus
-    fields.append(create_quality_focus_field(required=True))
-
-    # Domain-specific questions
-    if goal_analysis.domain == "code_review":
-        fields.append(
-            FormField(
-                id="review_scope",
-                field_type=FieldType.SINGLE_SELECT,
-                label="What scope of review do you need?",
-                options=[
-                    FieldOption(
-                        "pr",
-                        "Pull Request/Diff",
-                        description="Review specific changes",
-                        recommended=True,
-                    ),
-                    FieldOption("file", "Single File", description="Deep review of one file"),
-                    FieldOption(
-                        "directory", "Directory/Module", description="Review entire module"
-                    ),
-                    FieldOption(
-                        "project", "Full Project", description="Comprehensive codebase review"
-                    ),
-                ],
-                validation=FieldValidation(required=True),
-                category="scope",
-            )
-        )
-
-    if goal_analysis.domain == "security":
-        fields.append(
-            FormField(
-                id="security_focus",
-                field_type=FieldType.MULTI_SELECT,
-                label="What security aspects are most important?",
-                options=[
-                    FieldOption("owasp", "OWASP Top 10", description="Common web vulnerabilities"),
-                    FieldOption("injection", "Injection Attacks", description="SQL, command, XSS"),
-                    FieldOption(
-                        "auth", "Authentication/Authorization", description="Access control issues"
-                    ),
-                    FieldOption(
-                        "crypto", "Cryptography", description="Encryption, hashing, secrets"
-                    ),
-                    FieldOption("deps", "Dependencies", description="Vulnerable dependencies"),
-                ],
-                validation=FieldValidation(required=True),
-                category="security",
-            )
-        )
-
-    if goal_analysis.domain == "testing":
-        fields.append(
-            FormField(
-                id="test_type",
-                field_type=FieldType.MULTI_SELECT,
-                label="What types of tests do you need?",
-                options=[
-                    FieldOption(
-                        "unit",
-                        "Unit Tests",
-                        description="Test individual functions",
-                        recommended=True,
-                    ),
-                    FieldOption(
-                        "integration",
-                        "Integration Tests",
-                        description="Test component interactions",
-                    ),
-                    FieldOption("e2e", "End-to-End Tests", description="Test full user flows"),
-                    FieldOption("edge", "Edge Cases", description="Test boundary conditions"),
-                ],
-                validation=FieldValidation(required=True),
-                category="testing",
-            )
-        )
-
-    # Automation level (always relevant)
-    fields.append(create_automation_level_field())
-
-    # Team context (helps calibration)
-    fields.append(create_team_size_field())
-
-    # Additional context (optional)
-    fields.append(create_additional_context_field())
-
-    return Form(
-        id=f"round_{session.current_round + 1}",
-        title="Help Us Understand Your Needs",
-        description=f'Based on your goal: "{goal_analysis.raw_goal[:100]}..."',
-        fields=fields,
-        round_number=session.current_round + 1,
-        progress=0.3,
-    )
-
-
-def generate_followup_questions(
-    session: SocraticSession,
-) -> Form | None:
-    """Generate follow-up questions based on previous answers."""
-    # Check if we need more clarification
-    if session.requirements.completeness_score() >= 0.8:
-        return None  # Ready to generate
-
-    if session.current_round >= session.max_rounds:
-        return None  # Max rounds reached
-
-    fields: list[FormField] = []
-
-    # Check what's still missing
-    reqs = session.requirements
-
-    # If no must-haves, ask for priorities
-    if not reqs.must_have:
-        fields.append(
-            FormField(
-                id="priorities",
-                field_type=FieldType.TEXT_AREA,
-                label="What are your top 3 priorities for this workflow?",
-                help_text="Be as specific as possible about what success looks like.",
-                validation=FieldValidation(required=True, min_length=20),
-                category="priorities",
-            )
-        )
-
-    # If technical constraints missing
-    if not reqs.technical_constraints.get("languages"):
-        fields.append(create_language_field(required=True))
-
-    # Domain-specific follow-ups
-    if session.goal_analysis and session.goal_analysis.domain == "code_review":
-        if (
-            "review_depth" not in [r.get("id") for r in session.question_rounds[-1]["questions"]]
-            if session.question_rounds
-            else True
-        ):
-            fields.append(
-                FormField(
-                    id="review_depth",
-                    field_type=FieldType.SINGLE_SELECT,
-                    label="How thorough should the review be?",
-                    options=[
-                        FieldOption(
-                            "quick", "Quick Scan", description="Fast, surface-level review"
-                        ),
-                        FieldOption(
-                            "standard", "Standard", description="Balanced depth", recommended=True
-                        ),
-                        FieldOption("deep", "Deep Dive", description="Thorough, detailed analysis"),
-                    ],
-                    category="depth",
-                )
-            )
-
-    if not fields:
-        return None
-
-    return Form(
-        id=f"round_{session.current_round + 1}",
-        title="A Few More Questions",
-        description="Help us fine-tune your workflow.",
-        fields=fields,
-        round_number=session.current_round + 1,
-        progress=0.3 + (session.current_round * 0.2),
-    )
-
-
-# =============================================================================
-# MAIN ENGINE
-# =============================================================================
+logger = logging.getLogger(__name__)
 
 
 class SocraticWorkflowBuilder:
@@ -443,7 +84,7 @@ class SocraticWorkflowBuilder:
         ...     print(workflow.describe())
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the builder."""
         self.generator = AgentGenerator()
         self._sessions: dict[str, SocraticSession] = {}
@@ -466,7 +107,14 @@ class SocraticWorkflowBuilder:
         return session
 
     def get_session(self, session_id: str) -> SocraticSession | None:
-        """Retrieve a session by ID."""
+        """Retrieve a session by ID.
+
+        Args:
+            session_id: The session identifier
+
+        Returns:
+            The session, or None if not found
+        """
         return self._sessions.get(session_id)
 
     def set_goal(self, session: SocraticSession, goal: str) -> SocraticSession:
@@ -504,7 +152,15 @@ class SocraticWorkflowBuilder:
         return session
 
     def _extract_intent(self, goal: str, domain: str) -> str:
-        """Extract the core intent from the goal."""
+        """Extract the core intent from the goal.
+
+        Args:
+            goal: User's goal statement
+            domain: Detected domain
+
+        Returns:
+            Human-readable intent description
+        """
         intent_patterns = {
             "code_review": "Automated code review",
             "security": "Security vulnerability analysis",
@@ -517,7 +173,11 @@ class SocraticWorkflowBuilder:
         return intent_patterns.get(domain, "Code analysis")
 
     def get_initial_form(self) -> Form:
-        """Get the initial goal capture form."""
+        """Get the initial goal capture form.
+
+        Returns:
+            Form for capturing the user's goal
+        """
         return Form(
             id="initial_goal",
             title="What would you like to accomplish?",
@@ -599,7 +259,12 @@ class SocraticWorkflowBuilder:
         session: SocraticSession,
         answers: dict[str, Any],
     ) -> None:
-        """Update session requirements from answers."""
+        """Update session requirements from answers.
+
+        Args:
+            session: The current session
+            answers: Dictionary mapping field IDs to values
+        """
         reqs = session.requirements
 
         # Languages
@@ -648,7 +313,14 @@ class SocraticWorkflowBuilder:
                         reqs.must_have.append(line)
 
     def is_ready_to_generate(self, session: SocraticSession) -> bool:
-        """Check if session is ready for workflow generation."""
+        """Check if session is ready for workflow generation.
+
+        Args:
+            session: The current session
+
+        Returns:
+            True if the session is ready to generate a workflow
+        """
         return session.state == SessionState.READY_TO_GENERATE or session.can_generate()
 
     def generate_workflow(
@@ -720,7 +392,15 @@ class SocraticWorkflowBuilder:
         domain: str,
         requirements: dict[str, Any],
     ) -> str:
-        """Generate a descriptive workflow name."""
+        """Generate a descriptive workflow name.
+
+        Args:
+            domain: Detected domain
+            requirements: Workflow requirements
+
+        Returns:
+            Human-readable workflow name
+        """
         domain_names = {
             "code_review": "Code Review",
             "security": "Security Audit",
@@ -746,7 +426,15 @@ class SocraticWorkflowBuilder:
         domain: str,
         requirements: dict[str, Any],
     ) -> SuccessCriteria:
-        """Generate appropriate success criteria for the workflow."""
+        """Generate appropriate success criteria for the workflow.
+
+        Args:
+            domain: Detected domain
+            requirements: Workflow requirements
+
+        Returns:
+            SuccessCriteria for the generated workflow
+        """
         # Use predefined criteria based on domain
         if domain == "code_review":
             return code_review_criteria()
@@ -778,7 +466,14 @@ class SocraticWorkflowBuilder:
             )
 
     def get_session_summary(self, session: SocraticSession) -> dict[str, Any]:
-        """Get a summary of the session state for display."""
+        """Get a summary of the session state for display.
+
+        Args:
+            session: The current session
+
+        Returns:
+            Dictionary with session summary information
+        """
         return {
             "session_id": session.session_id,
             "state": session.state.value,
