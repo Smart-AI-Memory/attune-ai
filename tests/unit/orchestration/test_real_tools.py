@@ -14,6 +14,7 @@ Coverage target: 80%+
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -504,11 +505,16 @@ class TestRealTestGenerator:
         """Test that missing API key disables LLM mode."""
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
-        # Mock anthropic import to succeed but no key
-        with patch(
-            "builtins.__import__",
-            side_effect=lambda name, *args: (
-                __import__(name, *args) if name != "anthropic" else Mock()
+        # Mock anthropic module and prevent load_dotenv from restoring
+        # the key from .env files. Use sys.modules patch to avoid
+        # __import__ mock issues with Python 3.13 ExceptionGroup.
+        with (
+            patch.dict("sys.modules", {"anthropic": Mock()}),
+            patch(
+                "os.environ.get",
+                side_effect=lambda k, *a: (
+                    None if k == "ANTHROPIC_API_KEY" else os.environ.get(k, *a)
+                ),
             ),
         ):
             generator = RealTestGenerator(
