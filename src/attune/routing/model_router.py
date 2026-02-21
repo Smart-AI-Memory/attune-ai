@@ -2,17 +2,22 @@
 
 Routes tasks to appropriate model tiers for optimal cost/quality tradeoff:
 
-TIER 1 - CHEAP (Haiku / GPT-4o-mini / Local Ollama):
-    Cost: ~$0.25/M input, $1.25/M output
+TIER 1 - CHEAP (Haiku):
+    Cost: ~$1.00/M input, $5.00/M output
     Use for: Triage, classification, summarization, simple analysis
 
-TIER 2 - CAPABLE (Sonnet / GPT-4o):
+TIER 2 - CAPABLE (Sonnet):
     Cost: ~$3/M input, $15/M output
     Use for: Code generation, bug fixes, security review, sub-agent work
 
-TIER 3 - PREMIUM (Opus / o1):
+TIER 3 - PREMIUM (Opus):
     Cost: ~$15/M input, $75/M output
     Use for: Coordination, synthesis, architectural decisions, critical work
+
+TIER 4 - ULTRA (Opus 4.6 with 1M context) [EXPERIMENTAL]:
+    Cost: ~$10/M input, $37.50/M output (long-context pricing)
+    Use for: Whole-repo review, cross-module analysis, full-codebase refactoring
+    Requires: Anthropic usage tier 4, beta API header
 
 Cost Savings Example:
     WITHOUT routing (all Opus): $4.05 per complex task
@@ -29,7 +34,13 @@ from typing import Any
 
 # Import from unified registry
 from attune.models import MODEL_REGISTRY, ModelInfo
-from attune.models.tasks import CAPABLE_TASKS, CHEAP_TASKS, PREMIUM_TASKS, get_tier_for_task
+from attune.models.tasks import (
+    CAPABLE_TASKS,
+    CHEAP_TASKS,
+    PREMIUM_TASKS,
+    ULTRA_TASKS,
+    get_tier_for_task,
+)
 
 
 class ModelTier(Enum):
@@ -38,11 +49,13 @@ class ModelTier(Enum):
     CHEAP: Fast, low-cost models for simple tasks
     CAPABLE: Balanced models for most development work
     PREMIUM: Highest capability for complex reasoning
+    ULTRA: 1M context for whole-codebase tasks (experimental)
     """
 
     CHEAP = "cheap"
     CAPABLE = "capable"
     PREMIUM = "premium"
+    ULTRA = "ultra"
 
 
 @dataclass
@@ -87,6 +100,7 @@ class TaskRouting:
     CHEAP_TASKS = CHEAP_TASKS
     CAPABLE_TASKS = CAPABLE_TASKS
     PREMIUM_TASKS = PREMIUM_TASKS
+    ULTRA_TASKS = ULTRA_TASKS
 
     @classmethod
     def get_tier(cls, task_type: str) -> ModelTier:
@@ -268,8 +282,10 @@ class ModelRouter:
         provider = self._default_provider
         costs = {}
 
-        for tier_name in ["cheap", "capable", "premium"]:
-            config = self.MODELS[provider][tier_name]
+        for tier_name in ["cheap", "capable", "premium", "ultra"]:
+            config = self.MODELS[provider].get(tier_name)
+            if config is None:
+                continue
             input_cost = (input_tokens / 1000) * config.cost_per_1k_input
             output_cost = (output_tokens / 1000) * config.cost_per_1k_output
             costs[tier_name] = input_cost + output_cost
@@ -322,6 +338,7 @@ class ModelRouter:
             "cheap": list(TaskRouting.CHEAP_TASKS),
             "capable": list(TaskRouting.CAPABLE_TASKS),
             "premium": list(TaskRouting.PREMIUM_TASKS),
+            "ultra": list(TaskRouting.ULTRA_TASKS),
         }
 
     def calculate_savings(

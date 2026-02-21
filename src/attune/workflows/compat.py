@@ -54,6 +54,7 @@ class ModelTier(Enum):
     CHEAP = "cheap"  # Haiku/GPT-4o-mini - $0.25-1.25/M tokens
     CAPABLE = "capable"  # Sonnet/GPT-4o - $3-15/M tokens
     PREMIUM = "premium"  # Opus/o1 - $15-75/M tokens
+    ULTRA = "ultra"  # Opus 4.6 1M context - $10-37.50/M tokens (experimental)
 
     def __init__(self, value: str):
         """Initialize with deprecation warning."""

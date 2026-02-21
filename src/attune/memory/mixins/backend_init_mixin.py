@@ -126,7 +126,8 @@ class BackendInitMixin:
                             method=RedisStartMethod.MOCK,
                             message="Redis not available, using file-based storage",
                         )
-                except Exception:
+                except Exception as e:
+                    logger.debug("redis_connection_attempt_failed", error=str(e))
                     self._short_term = None
                     self._redis_status = RedisStatus(
                         available=False,

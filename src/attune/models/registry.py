@@ -23,11 +23,14 @@ class ModelTier(Enum):
     CHEAP: Fast, low-cost models for simple tasks (~$0.15-1.00/M input)
     CAPABLE: Balanced models for most development work (~$2.50-3.00/M input)
     PREMIUM: Highest capability for complex reasoning (~$15.00/M input)
+    ULTRA: 1M context window for whole-codebase tasks (~$10.00/M input)
+        Experimental — requires Anthropic tier 4 access and beta API header.
     """
 
     CHEAP = "cheap"
     CAPABLE = "capable"
     PREMIUM = "premium"
+    ULTRA = "ultra"
 
 
 class ModelProvider(Enum):
@@ -63,6 +66,8 @@ class ModelInfo:
     max_tokens: int = 4096
     supports_vision: bool = False
     supports_tools: bool = True
+    context_window: int = 200_000
+    beta_headers: dict[str, str] | None = None
 
     # Compatibility properties for toolkit (per-1k pricing)
     @property
@@ -158,6 +163,23 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_vision=True,
             supports_tools=True,
         ),
+        # -----------------------------------------------------------------
+        # ULTRA: Opus 4.6 with 1M context window (EXPERIMENTAL)
+        # Requires Anthropic usage tier 4 and beta API header.
+        # Long-context pricing applies when input > 200K tokens.
+        # -----------------------------------------------------------------
+        "ultra": ModelInfo(
+            id="claude-opus-4-6",
+            provider="anthropic",
+            tier="ultra",
+            input_cost_per_million=10.00,
+            output_cost_per_million=37.50,
+            max_tokens=128_000,
+            supports_vision=True,
+            supports_tools=True,
+            context_window=1_000_000,
+            beta_headers={"anthropic-beta": "context-1m-2025-08-07"},
+        ),
     },
 }
 
@@ -217,10 +239,14 @@ class ModelRegistry:
             ]
 
         # Cache for get_model_by_id (model_id -> ModelInfo)
+        # When multiple tiers share the same model ID (e.g., premium and ultra
+        # both use claude-opus-4-6), keep the first entry to preserve backward
+        # compatibility. Use get_model(provider, tier) for tier-specific lookup.
         self._model_id_cache: dict[str, ModelInfo] = {}
         for provider_models in self._registry.values():
             for model_info in provider_models.values():
-                self._model_id_cache[model_info.id] = model_info
+                if model_info.id not in self._model_id_cache:
+                    self._model_id_cache[model_info.id] = model_info
 
     def get_model(self, provider: str, tier: str) -> ModelInfo | None:
         """Get model info for a provider/tier combination.
@@ -465,4 +491,5 @@ TIER_PRICING: dict[str, dict[str, float]] = {
     "cheap": {"input": 1.00, "output": 5.00},  # Haiku 4.5 pricing
     "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.5 pricing
     "premium": {"input": 15.00, "output": 75.00},  # Opus 4.6 pricing
+    "ultra": {"input": 10.00, "output": 37.50},  # Opus 4.6 1M context (experimental)
 }

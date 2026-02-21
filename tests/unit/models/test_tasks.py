@@ -18,6 +18,7 @@ from attune.models.tasks import (
     REALTIME_REQUIRED_TASKS,
     TASK_INFO,
     TASK_TIER_MAP,
+    ULTRA_TASKS,
     TaskInfo,
     TaskType,
     get_all_tasks,
@@ -91,7 +92,7 @@ class TestTaskType:
 
     def test_task_count(self):
         """Test that we have expected number of tasks."""
-        total_tasks = len(CHEAP_TASKS) + len(CAPABLE_TASKS) + len(PREMIUM_TASKS)
+        total_tasks = len(CHEAP_TASKS) + len(CAPABLE_TASKS) + len(PREMIUM_TASKS) + len(ULTRA_TASKS)
         assert total_tasks == len(TaskType)
 
 

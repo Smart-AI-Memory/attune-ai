@@ -43,10 +43,11 @@ class TestModelTier:
     def test_model_tier_enum_members(self):
         """Test that all expected tiers exist"""
         tiers = list(ModelTier)
-        assert len(tiers) == 3
+        assert len(tiers) == 4
         assert ModelTier.CHEAP in tiers
         assert ModelTier.CAPABLE in tiers
         assert ModelTier.PREMIUM in tiers
+        assert ModelTier.ULTRA in tiers
 
 
 @pytest.mark.unit

@@ -154,7 +154,7 @@ class TestTaskTierMapping:
             ), f"TaskType {task_type.value} missing from TASK_TIER_MAP"
 
         # Map should only contain valid tiers
-        valid_tiers = {ModelTier.CHEAP, ModelTier.CAPABLE, ModelTier.PREMIUM}
+        valid_tiers = {ModelTier.CHEAP, ModelTier.CAPABLE, ModelTier.PREMIUM, ModelTier.ULTRA}
         for task_type, tier in TASK_TIER_MAP.items():
             assert tier in valid_tiers, f"Task {task_type} has invalid tier {tier}"
 

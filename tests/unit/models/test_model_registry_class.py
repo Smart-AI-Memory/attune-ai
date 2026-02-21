@@ -313,7 +313,7 @@ class TestListMethods:
         assert "cheap" in tiers
         assert "capable" in tiers
         assert "premium" in tiers
-        assert len(tiers) == 3
+        assert len(tiers) == 4
 
     def test_list_tiers_returns_tier_values(self):
         """Test that list_tiers returns tier enum values."""

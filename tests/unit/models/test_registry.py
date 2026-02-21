@@ -348,7 +348,8 @@ class TestRegistryHelpers:
         assert "cheap" in tiers
         assert "capable" in tiers
         assert "premium" in tiers
-        assert len(tiers) == 3
+        assert "ultra" in tiers
+        assert len(tiers) == 4
 
 
 @pytest.mark.unit

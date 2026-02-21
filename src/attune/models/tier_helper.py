@@ -27,7 +27,8 @@ class TierFallbackHelper:
     TIER_PROGRESSION = {
         "cheap": "capable",
         "capable": "premium",
-        "premium": None,
+        "premium": "ultra",
+        "ultra": None,
     }
 
     @classmethod
@@ -61,7 +62,7 @@ class TierFallbackHelper:
             True if fallback should be attempted, False otherwise
 
         Logic:
-            - Never fallback from premium tier (highest tier)
+            - Never fallback from ultra tier (highest tier)
             - Fallback for network/connection errors
               (TimeoutError, ConnectionError, OSError)
             - Don't fallback for logic errors
@@ -77,13 +78,13 @@ class TierFallbackHelper:
             ... )
             False
             >>> TierFallbackHelper.should_fallback(
-            ...     TimeoutError(), "premium"
+            ...     TimeoutError(), "ultra"
             ... )
             False
 
         """
-        # Never fallback from premium tier
-        if tier == "premium":
+        # Never fallback from ultra tier (highest tier)
+        if tier == "ultra":
             return False
 
         # Fallback for connection/network errors
