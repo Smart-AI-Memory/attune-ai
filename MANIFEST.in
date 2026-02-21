@@ -30,6 +30,7 @@ include empathy.config.example.yml
 
 # Include all YAML/JSON configs in source packages
 recursive-include src *.yml *.yaml *.json *.jinja2
+recursive-include src/attune/commands *.md
 recursive-include empathy_* *.yml *.yaml *.json
 recursive-include coach_wizards *.yml *.yaml *.json
 recursive-include wizards *.yml *.yaml *.json

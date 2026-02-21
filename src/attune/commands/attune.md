@@ -113,6 +113,32 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | [Create Wizard](src/attune/commands/wizard.md) `/wizard create` | Define a new custom guided workflow via YAML |
 | [Edit Wizard](src/attune/commands/wizard.md) `/wizard edit <id>` | Modify an existing custom wizard |
 
+### Batch API — [/batch](src/attune/commands/batch.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Submit Batch](src/attune/commands/batch.md) `/batch submit` | Queue tasks for async processing (50% savings) |
+| [Batch Status](src/attune/commands/batch.md) `/batch status <id>` | Check progress of a running batch |
+| [Batch Results](src/attune/commands/batch.md) `/batch results <id>` | Retrieve completed batch results |
+| [Wait for Batch](src/attune/commands/batch.md) `/batch wait <id>` | Block until a batch completes |
+
+### Utilities — [/utilities](src/attune/commands/utilities.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Dependency Check](src/attune/commands/utilities.md) `/utilities deps` | Audit dependencies for vulnerabilities |
+| [Research](src/attune/commands/utilities.md) `/utilities research <topic>` | Investigate and analyze a topic |
+| [Validate Config](src/attune/commands/utilities.md) `/utilities validate` | Check attune configuration and API keys |
+| [Show Features](src/attune/commands/utilities.md) `/utilities features` | List available features and status |
+
+### Brainstorm — [/brainstorm](src/attune/commands/brainstorm.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Brainstorm](src/attune/commands/brainstorm.md) `/brainstorm` | Open guided discovery conversation |
+| [Brainstorm Topic](src/attune/commands/brainstorm.md) `/brainstorm "topic"` | Start with context pre-filled |
+| [Brainstorm Plan](src/attune/commands/brainstorm.md) `/brainstorm plan` | Skip to goals and planning |
+
 ## Natural Language
 
 Just describe what you need — no need to memorize commands:
@@ -192,6 +218,10 @@ When the user provides natural language, **use AskUserQuestion to scope**, then 
 | "performance", "perf", "bottleneck" | `uv run attune workflow run perf-audit` |
 | "bugs", "predict bugs" | `uv run attune workflow run bug-predict` |
 | "release", "ship", "publish" | `uv run attune workflow run release-prep` |
+| "dependency", "deps", "outdated" | `uv run attune workflow run dependency-check` |
+| "research", "investigate", "explore" | `uv run attune workflow run research` |
+| "brainstorm", "think through" | Route to `/brainstorm` |
+| "batch", "bulk process" | Route to `/batch` |
 | "create", "build", "new wizard", "new agent" | Route to `/wizard create` or `/agent create` |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.
@@ -206,6 +236,12 @@ uv run attune workflow run bug-predict --path <target>
 uv run attune workflow run code-review --path <target>
 uv run attune workflow run test-gen --path <target>
 uv run attune workflow run release-prep
+uv run attune workflow run dependency-check
+uv run attune workflow run research --query <topic>
+
+# Batch API
+uv run attune batch submit --tasks <file>
+uv run attune batch status --id <batch_id>
 
 # Testing
 uv run pytest

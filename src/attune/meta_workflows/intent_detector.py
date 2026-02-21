@@ -26,6 +26,7 @@ class IntentMatch:
         confidence: Match confidence (0.0 to 1.0)
         matched_keywords: Keywords that triggered the match
         description: What this template does
+        cli_fallback: CLI command to run when no template exists
     """
 
     template_id: str
@@ -33,6 +34,7 @@ class IntentMatch:
     confidence: float
     matched_keywords: list[str] = field(default_factory=list)
     description: str = ""
+    cli_fallback: str = ""
 
 
 # Intent patterns for each template
@@ -203,6 +205,8 @@ INTENT_PATTERNS = {
             r"reset auth(entication)?",
         ],
         "weight": 1.0,
+        "cli_fallback": "uv run attune provider",
+        "description": "Configure authentication and API provider settings",
     },
     "agent-dashboard": {
         "keywords": [
@@ -231,6 +235,8 @@ INTENT_PATTERNS = {
             r"agent (monitoring|metrics|heartbeat)",
         ],
         "weight": 1.0,
+        "cli_fallback": "uv run attune dashboard start",
+        "description": "Start the agent coordination dashboard",
     },
     "brainstorm": {
         "keywords": [
@@ -299,13 +305,15 @@ class IntentDetector:
 
             if confidence >= threshold:
                 template = self.templates.get(template_id)
+                fallback_desc = pattern_config.get("description", "")
                 matches.append(
                     IntentMatch(
                         template_id=template_id,
                         template_name=template.name if template else template_id,
                         confidence=confidence,
                         matched_keywords=matched_keywords,
-                        description=template.description if template else "",
+                        description=template.description if template else fallback_desc,
+                        cli_fallback=pattern_config.get("cli_fallback", ""),
                     )
                 )
 
