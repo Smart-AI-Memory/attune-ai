@@ -1,17 +1,9 @@
 ---
 name: code-quality
-description: "Code review + bug prediction — find quality issues, style violations, and likely bugs"
-triggers:
-  - review
-  - quality
-  - bugs
-  - predict
-  - lint
-  - code review
-  - analyze
+description: "Code review and bug prediction — find quality issues, style violations, and likely bugs"
 ---
 
-## Socratic Scoping
+## Scoping
 
 Before running, ask:
 

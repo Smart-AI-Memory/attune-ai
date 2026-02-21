@@ -1,63 +1,23 @@
 ---
-description: Tutorials: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
+description: Step-by-step guides for building with Attune AI.
 ---
 
 # Tutorials
 
-Learning-oriented guides to help you get started with Attune AI.
-
-These tutorials take you step-by-step through building with Attune AI.
-By the end, you'll understand the core concepts and be able to build your own
-AI collaboration systems.
-
-## Getting Started
+Learn how to build cost-optimized developer workflows
+for Claude Code.
 
 <div class="grid cards" markdown>
 
-- :material-download: **[Installation](installation.md)**
+- :material-cog: **[Build a Workflow](build-a-workflow.md)**
 
-    Get Attune AI installed on your system
-
-- :material-rocket-launch: **[Quick Start](quickstart.md)**
-
-    Build your first empathetic AI in 5 minutes
-
-</div>
-
-## Example Projects
-
-Learn by example with these complete, working projects:
-
-<div class="grid cards" markdown>
-
-- :material-code-tags: **[Code Review Assistant](examples/simple-chatbot.md)**
-
-    Build an AI that reviews code with context awareness
-
-- :material-hospital: **[SBAR Clinical Handoff](examples/sbar-clinical-handoff.md)**
-
-    Create a healthcare-compliant communication system
-
-- :material-account-group: **[Multi-Agent Team](examples/multi-agent-team-coordination.md)**
-
-    Coordinate multiple AI agents working together
-
-- :material-brain: **[Adaptive Learning](examples/adaptive-learning-system.md)**
-
-    Build AI that learns from user patterns
-
-- :material-webhook: **[Webhook Integration](examples/webhook-event-integration.md)**
-
-    Connect Empathy to external systems
+    Create a multi-stage workflow with tiered Claude
+    model routing from scratch
 
 </div>
 
 ## Prerequisites
 
-Before starting, make sure you have:
-
 - Python 3.10+
-- pip or Poetry
-- An Anthropic API key (or OpenAI, Ollama)
-
-See the [Prerequisites guide](../how-to/prerequisites.md) for detailed requirements.
+- pip or uv
+- An Anthropic API key

@@ -221,6 +221,10 @@ test.json
 /aliases.sh
 /KEYBOARD_SHORTCUTS.md
 
+# Plugin eval reports (development artifacts, not distributed)
+plugin/evals/
+docs/internal/evals/
+
 # Local plugin configuration (un-ignored for Claude Code plugin distribution)
 # /plugin/
 

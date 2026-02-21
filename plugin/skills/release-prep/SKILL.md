@@ -1,17 +1,9 @@
 ---
 name: release-prep
 description: "Pre-release preparation — health checks, security audit, changelog validation, version bumps"
-triggers:
-  - release
-  - publish
-  - ship
-  - deploy
-  - version
-  - changelog
-  - pre-release
 ---
 
-## Socratic Scoping
+## Scoping
 
 Before running, ask:
 

@@ -1,11 +1,11 @@
 ---
 name: attune
-description: "AI-powered memory, empathy, and agent orchestration"
+description: "Developer workflows for Claude Code — security, reviews, tests, and more"
 argument-hint: "<what you need help with>"
 category: primary
 aliases: [a]
-tags: [navigation, discovery, socratic, memory, workflows]
-version: "5.3.0"
+tags: [navigation, workflows, security, review, testing]
+version: "3.0.0"
 question:
   header: "attune-ai"
   question: "What are you trying to accomplish?"
@@ -16,7 +16,7 @@ question:
     - label: "Manage memory"
       description: "Store, retrieve, search, or forget patterns and knowledge"
     - label: "Configure settings"
-      description: "Set empathy level, check setup, update attune-ai"
+      description: "Check setup, update attune-ai, view telemetry"
     - label: "Learn what attune-ai does"
       description: "Overview of capabilities, skills, and MCP tools"
 ---
@@ -80,11 +80,11 @@ When invoked with arguments, EXECUTE the corresponding action:
 
 ## No-Argument Behavior
 
-If no argument is provided, start with Socratic discovery:
+If no argument is provided, ask:
 
 "What are you trying to accomplish?"
 
-Based on the answer, route to the appropriate skill or MCP tool. Do not present the full list of 18 tools. Ask clarifying questions to narrow down the intent.
+Based on the answer, route to the appropriate skill or MCP tool. Ask clarifying questions to narrow down the intent.
 
 ## MCP Server Not Running
 

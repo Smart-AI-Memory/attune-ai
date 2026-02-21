@@ -11,7 +11,7 @@ version: "3.0.0"
 # attune-test
 
 Quick-access command to generate tests. Bypasses
-Socratic discovery for when you know what you want.
+the guided flow for when you know what you want.
 
 ## Execution
 

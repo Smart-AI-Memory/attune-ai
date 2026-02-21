@@ -11,7 +11,7 @@ version: "3.0.0"
 # attune-security
 
 Quick-access command to run a security audit. Bypasses
-Socratic discovery for when you know what you want.
+the guided flow for when you know what you want.
 
 ## Execution
 

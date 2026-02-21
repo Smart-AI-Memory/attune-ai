@@ -11,7 +11,7 @@ version: "3.0.0"
 # attune-review
 
 Quick-access command to run a code review. Bypasses
-Socratic discovery for when you know what you want.
+the guided flow for when you know what you want.
 
 ## Execution
 
