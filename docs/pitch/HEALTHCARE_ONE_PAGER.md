@@ -25,7 +25,7 @@ description: Attune AI for Healthcare: ## HIPAA-Ready AI Development Tools --- #
 | **Audit Requirements** | Manual logging, incomplete trails | Built-in audit logging of all AI interactions |
 | **Security Scanning** | Periodic manual reviews | Continuous OWASP scanning with healthcare rules |
 | **Compliance Documentation** | Scramble before audits | Always audit-ready with exportable logs |
-| **AI Cost Management** | Unpredictable, high costs | 80-96% reduction via smart routing |
+| **AI Cost Management** | Unpredictable, high costs | 34-86% reduction via smart routing |
 
 ---
 

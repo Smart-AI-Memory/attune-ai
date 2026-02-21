@@ -39,8 +39,8 @@ print(f"Success: {result.success}")
 ## CLI Usage
 
 ```bash
-# Run via empathy CLI
-empathy workflow run manage-docs --input '{"key": "value"}'
+# Run via attune CLI
+attune workflow run manage-docs --input '{"key": "value"}'
 
 # With options
 ```

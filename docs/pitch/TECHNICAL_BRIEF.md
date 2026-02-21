@@ -69,7 +69,7 @@ Routes requests to the optimal model based on task complexity:
 | Code generation, analysis | Sonnet | $3.00 |
 | Architecture, complex reasoning | Opus | $15.00 |
 
-**Result:** 80-96% cost reduction vs. always using premium models.
+**Result:** 34-86% cost reduction vs. always using premium models.
 
 ```python
 from attune.routing import SmartRouter

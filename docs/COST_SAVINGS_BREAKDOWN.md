@@ -15,10 +15,10 @@ description: Attune AI - Cost Savings Breakdown (Transparent Math): Analyze AI m
 |---------|---------|----------|
 | **Caching (hash-only)** | 0-43% | Real benchmark on 12 workflows |
 | **Tier Routing** | 79-95% | Based on Anthropic pricing, task distribution |
-| **Combined (caching + routing)** | 80-96% | When both features work together |
+| **Combined (caching + routing)** | 34-86% | When both features work together |
 
-**Conservative claim:** 80% savings when using tier routing + caching
-**Best case:** 96% savings for simple, repeated workflows
+**Conservative claim:** 34% savings from tier routing alone
+**Best case:** 86% savings when combining tier routing + caching
 
 Read on for the complete math.
 
@@ -296,7 +296,7 @@ workflow = CodeReviewWorkflow(cache=cache, enable_cache=True)
 | Tier routing savings | 80% | 80-89% | 95% | Use 80% (provable) |
 | Hash cache savings | 0-40% | 0-50% | 50% | Use "up to 40%" (benchmarked) |
 | Hybrid cache hit rate | 50% | 60-70% | 90% | Use "up to 70%" (pending verification) |
-| Combined savings | 80% | 85-93% | 96% | Use "80-96%" with breakdown |
+| Combined savings | 80% | 85-93% | 96% | Use "34-86%" with breakdown |
 
 ---
 
@@ -333,6 +333,6 @@ Before making ANY cost claim in marketing:
 
 ---
 
-**Bottom Line:** We can confidently claim 80% savings from tier routing (pricing math) and 80-96% combined with caching (depends on repetition). Individual results will vary based on task types and workflow patterns.
+**Bottom Line:** We can confidently claim 80% savings from tier routing (pricing math) and 34-86% combined with caching (depends on repetition). Individual results will vary based on task types and workflow patterns.
 
 **Philosophy:** Show your work. Users can verify. Trust is earned through transparency, not hand-waving.

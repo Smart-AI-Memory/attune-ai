@@ -13,7 +13,7 @@ python -m attune.models.auth_cli setup    # Configure authentication
 python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
-**CLI:** `attune <command>` (canonical) or `python -m attune.cli` (full). See `docs/reference/cli-reference.md`.
+**CLI:** `attune <command>` (canonical) or `python -m attune.cli_minimal` (full). See `docs/reference/cli-reference.md`.
 
 ---
 
@@ -32,6 +32,8 @@ Use `/hub-name` to access organized workflows:
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | discover, plan, export | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
+| `/batch` | submit, status, results, wait | Batch API processing (50% cost savings) |
+| `/wizard` | run, create, list, edit | Guided multi-step wizards |
 
 ---
 

@@ -365,7 +365,7 @@ dependency-check = "attune.workflows.dependency_check:DependencyCheckWorkflow"
 # v5.2 Agent team (replaces CrewAI-based crew)
 release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
 # health-check: removed in v2.9.0 (module deleted, use release-prep workflow instead)
-test-coverage-boost = "attune.workflows.test_coverage_boost_crew:TestCoverageBoostCrew"
+# test-coverage-boost: removed (module deleted, use test-gen workflow instead)
 # Legacy entry points removed - handled by migration system
 # (release-prep-legacy → release-prep, health-check-legacy → health-check)
 # Other workflows

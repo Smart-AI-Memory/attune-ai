@@ -139,7 +139,7 @@ You have a strong design in `docs/design/MULTI_MODEL_ARCHITECTURE_SPEC.md` and t
        - Warn if a model is deprecated (where supported).
    - Surface warnings in:
      - CLI output.
-     - A new “Models Health” widget in the Empathy Dashboard.
+     - A new “Models Health” widget in the Attune Dashboard.
 
 2. **Per-task resilience profiles**
 

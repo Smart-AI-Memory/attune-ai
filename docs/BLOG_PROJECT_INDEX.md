@@ -92,7 +92,7 @@ This reads the index, identifies high-impact stale files, and generates targeted
 ```
 
 **VSCode Dashboard:**
-The index powers the health score shown in the Empathy Dashboard, giving real-time visibility into test debt.
+The index powers the health score shown in the Attune Dashboard, giving real-time visibility into test debt.
 
 ## What Gets Tracked
 

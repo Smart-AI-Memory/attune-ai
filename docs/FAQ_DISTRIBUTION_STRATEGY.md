@@ -96,7 +96,7 @@ nav:
 **Quick answers:**
 
 - **What is this?** An open-source Python framework for AI memory and coordination
-- **Quick start?** `pip install attune-ai && empathy-memory serve`
+- **Quick start?** `pip install attune-ai && attune setup`
 - **Does it work with [Copilot/Cursor/Claude]?** Yes! [See compatibility guide](docs/FAQ.md#tool-compatibility)
 
 **More questions?** See the [comprehensive FAQ](docs/FAQ.md)
