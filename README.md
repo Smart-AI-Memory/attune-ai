@@ -1,5 +1,7 @@
 # Attune AI
 
+<!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
+
 **AI-powered developer workflows with cost optimization and intelligent routing.**
 
 The easiest way to run code review, debugging, testing, and release workflows from your terminal or Claude Code. Just type `/attune` and let Socratic discovery guide you. Smart tier routing saves 34-86% on LLM costs.
@@ -385,3 +387,5 @@ Special thanks to:
 ---
 
 **Built by [Smart AI Memory](https://smartaimemory.com)** · [Docs](https://smartaimemory.com/framework-docs/) · [Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)
+
+<!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
