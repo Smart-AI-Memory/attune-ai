@@ -3,7 +3,7 @@ name: plan
 description: Planning, TDD scaffolding, architecture, and refactoring strategies
 category: hub
 aliases: [planning, p]
-tags: [planning, tdd, architecture, strategy, refactoring]
+tags: [planning, tdd, architecture, strategy, refactoring, brainstorm]
 version: "1.0.0"
 question:
   header: "Planning Hub"
@@ -12,8 +12,8 @@ question:
   options:
     - label: "Plan a feature"
       description: "Break down a feature into implementation steps"
-    - label: "TDD scaffolding"
-      description: "Design test cases before writing code"
+    - label: "Brainstorm"
+      description: "Think through a problem with guided discovery"
     - label: "Refactoring strategy"
       description: "Plan safe incremental refactoring steps"
     - label: "Architecture review"
@@ -31,6 +31,7 @@ Planning hub — feature breakdowns, TDD scaffolding, refactoring strategies, an
 | Shortcut | Action |
 | -------- | ------ |
 | `/plan feature <description>` | Break feature into implementation tasks |
+| `/plan brainstorm` | Guided brainstorming with structured discovery |
 | `/plan tdd <module>` | Design test cases first, then plan implementation |
 | `/plan refactor <path>` | Plan incremental refactoring steps |
 | `/plan architecture` | Evaluate current architecture, propose improvements |
@@ -42,6 +43,7 @@ Describe what you need to plan:
 
 - "plan adding user authentication"
 - "break down this feature into steps"
+- "help me think through this problem"
 - "how should I refactor the config module?"
 - "design tests for the workflow engine"
 - "review the architecture of the agent system"
@@ -78,6 +80,7 @@ For planning tasks, use structured reasoning to produce thorough plans:
 | Input | Action |
 | ----- | ------ |
 | `/plan feature <desc>` | Break feature into numbered tasks with files, dependencies, and risks |
+| `/plan brainstorm` | Invoke `/brainstorm` — guided discovery through Context → Problem → Goals → End State → Plan |
 | `/plan tdd <module>` | Design test cases first, then create implementation plan |
 | `/plan refactor <path>` | Run Refactor wizard: describe goal → analyze structure → decompose steps → preview → confirm |
 | `/plan architecture` | Analyze project structure, evaluate architecture, propose improvements |
@@ -114,6 +117,7 @@ When generating plans, use this structure:
 | Pattern | Action |
 | ------- | ------ |
 | "plan", "break down", "steps" | Break into implementation tasks |
+| "brainstorm", "think through", "figure out" | Invoke `/brainstorm` guided discovery |
 | "tdd", "test first", "design tests" | TDD scaffolding |
 | "refactor", "restructure", "reorganize" | Run Refactor wizard flow |
 | "architecture", "design", "structure" | Architecture review |

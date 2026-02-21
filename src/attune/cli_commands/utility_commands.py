@@ -133,9 +133,12 @@ def cmd_setup(args: Namespace) -> int:
     if hasattr(source_dir, "__truediv__"):
         # Path-like object
         candidate = source_dir / "agents"
-        if hasattr(candidate, "exists") and candidate.exists():
-            agents_src = candidate
+        if isinstance(candidate, Path):
+            # Real Path — trust .exists()
+            if candidate.exists():
+                agents_src = candidate
         elif hasattr(candidate, "iterdir"):
+            # importlib resource — no .exists(), but iterable
             agents_src = candidate
     if agents_src is not None:
         agents_dst = target_dir / "agents"

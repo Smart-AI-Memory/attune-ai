@@ -105,14 +105,18 @@ class HybridRouter:
             "release": ("release", "prep"),
             "ship": ("release", "prep"),
             # Authentication strategy commands (CLI)
-            "auth-setup": ("workflows", "python -m attune.models.auth_cli setup"),
-            "auth-status": ("workflows", "python -m attune.models.auth_cli status"),
-            "auth-recommend": ("workflows", "python -m attune.models.auth_cli recommend"),
-            "auth-reset": ("workflows", "python -m attune.models.auth_cli reset"),
-            "auth": ("workflows", "python -m attune.models.auth_cli status"),
+            "auth-setup": ("utilities", "uv run attune provider setup"),
+            "auth-status": ("utilities", "uv run attune provider status"),
+            "auth-recommend": ("utilities", "uv run attune provider recommend"),
+            "auth-reset": ("utilities", "uv run attune provider reset"),
+            "auth": ("utilities", "uv run attune provider status"),
             # Agent dashboard commands
-            "dashboard": ("workflows", "python examples/dashboard_demo.py"),
-            "agent-dashboard": ("workflows", "python examples/dashboard_demo.py"),
+            "dashboard": ("agent", "uv run attune dashboard start"),
+            "agent-dashboard": ("agent", "uv run attune dashboard start"),
+            # Dependency and research workflows
+            "deps": ("workflows", "run dependency-check"),
+            "dependency-check": ("workflows", "run dependency-check"),
+            "research": ("workflows", "run research"),
             # Batch test generation (enhanced)
             "batch-tests": ("testing", "generate --batch"),
             "bulk-tests": ("testing", "generate --batch"),

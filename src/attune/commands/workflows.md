@@ -32,6 +32,8 @@ Automated analysis workflows — security audit, bug prediction, performance, an
 | `/workflows bugs` | Run bug prediction |
 | `/workflows perf` | Run performance audit |
 | `/workflows review <path>` | Run code review |
+| `/workflows deps` | Audit dependencies for vulnerabilities |
+| `/workflows research <topic>` | Research and analyze a topic |
 | `/workflows list` | List available workflows |
 
 ## Natural Language
@@ -42,6 +44,8 @@ Describe what you need:
 - "predict bugs in my code"
 - "what are the performance bottlenecks?"
 - "review the authentication module"
+- "check my dependencies for issues"
+- "research how this module works"
 - "what workflows are available?"
 
 ## CRITICAL: Workflow Execution Instructions
@@ -81,6 +85,9 @@ For analysis workflows, use structured reasoning before presenting results:
 | `/workflows perf` | `uv run attune workflow run perf-audit` |
 | `/workflows perf <path>` | `uv run attune workflow run perf-audit --path <path>` |
 | `/workflows review <path>` | `uv run attune workflow run code-review --path <path>` |
+| `/workflows deps` | `uv run attune workflow run dependency-check` |
+| `/workflows deps <path>` | `uv run attune workflow run dependency-check --path <path>` |
+| `/workflows research <topic>` | `uv run attune workflow run research --query <topic>` |
 | `/workflows list` | `uv run attune workflow list` |
 
 ### Natural Language Routing (EXECUTE THESE)
@@ -91,6 +98,8 @@ For analysis workflows, use structured reasoning before presenting results:
 | "bugs", "predict", "risky code" | `uv run attune workflow run bug-predict` |
 | "performance", "slow", "bottleneck" | `uv run attune workflow run perf-audit` |
 | "review", "quality" | `uv run attune workflow run code-review` |
+| "dependency", "deps", "outdated", "license" | `uv run attune workflow run dependency-check` |
+| "research", "investigate", "explore" | `uv run attune workflow run research` |
 | "list", "available", "what workflows" | `uv run attune workflow list` |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. EXECUTE the CLI command.
@@ -102,5 +111,7 @@ uv run attune workflow run security-audit --path <target>
 uv run attune workflow run perf-audit --path <target>
 uv run attune workflow run bug-predict --path <target>
 uv run attune workflow run code-review --path <target>
+uv run attune workflow run dependency-check
+uv run attune workflow run research --query <topic>
 uv run attune workflow list
 ```

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.5] - 2026-02-21
+
+### Fixed
+
+- Fix `attune setup` crash caused by missing
+  `commands/agents/` directory in built wheel
+- Fix guard logic in `utility_commands.py` that allowed
+  `iterdir()` on non-existent `Path` objects — setup now
+  skips missing directories gracefully instead of crashing
+
+### Added
+
+- Add `__init__.py` to `commands/agents/` so setuptools
+  discovers it as a package and includes `.md` files in
+  the wheel
+- Add `attune.commands.agents` to `package-data` in
+  `pyproject.toml` for explicit inclusion
+- Add `recursive-include src/attune/commands *.md` to
+  `MANIFEST.in` for source distributions
+- Add 3 new subagent definitions: `release-prep.md`,
+  `sdk-agent.md`, `state-manager.md`
+
 ## [3.0.4] - 2026-02-21
 
 ### Removed
