@@ -286,14 +286,12 @@ class TestCmdValidate:
         assert "Anthropic" in captured.out
         assert "Configuration is valid" in captured.out
 
-    def test_validate_with_openai_key(self, capsys: pytest.CaptureFixture) -> None:
-        """Test validate succeeds with OPENAI_API_KEY set."""
+    def test_validate_without_any_key(self, capsys: pytest.CaptureFixture) -> None:
+        """Test validate fails when no API key is set."""
         args = self._make_args()
 
         env_patch = {
             "ANTHROPIC_API_KEY": "",
-            "OPENAI_API_KEY": "sk-openai-test-key",
-            "GOOGLE_API_KEY": "",
         }
 
         with patch.dict("os.environ", env_patch, clear=False):
@@ -303,53 +301,9 @@ class TestCmdValidate:
             ):
                 result = cmd_validate(args)
 
-        assert result == 0
+        assert result == 1
         captured = capsys.readouterr()
-        assert "OpenAI" in captured.out
-
-    def test_validate_with_google_key(self, capsys: pytest.CaptureFixture) -> None:
-        """Test validate succeeds with GOOGLE_API_KEY set."""
-        args = self._make_args()
-
-        env_patch = {
-            "ANTHROPIC_API_KEY": "",
-            "OPENAI_API_KEY": "",
-            "GOOGLE_API_KEY": "google-test-key-abc",
-        }
-
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
-                "attune.workflows.WORKFLOW_REGISTRY",
-                {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Google" in captured.out
-
-    def test_validate_with_multiple_keys(self, capsys: pytest.CaptureFixture) -> None:
-        """Test validate reports all set API keys."""
-        args = self._make_args()
-
-        env_patch = {
-            "ANTHROPIC_API_KEY": "sk-ant-key",
-            "OPENAI_API_KEY": "sk-openai-key",
-            "GOOGLE_API_KEY": "google-key",
-        }
-
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
-                "attune.workflows.WORKFLOW_REGISTRY",
-                {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Anthropic" in captured.out
-        assert "OpenAI" in captured.out
-        assert "Google" in captured.out
+        assert "ANTHROPIC_API_KEY" in captured.out
 
     def test_validate_config_file_found(
         self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch

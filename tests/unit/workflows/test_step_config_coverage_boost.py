@@ -364,17 +364,14 @@ class TestValidateStepConfig:
         assert any("Invalid provider_hint" in err for err in errors)
 
     def test_validate_step_config_accepts_valid_provider_hints(self):
-        """Test that validation accepts all valid provider hints."""
-        valid_providers = ["anthropic", "openai", "google", "ollama", "hybrid"]
-
-        for provider in valid_providers:
-            step = WorkflowStepConfig(
-                name="test",
-                task_type="classify",
-                provider_hint=provider,
-            )
-            errors = validate_step_config(step)
-            assert errors == [], f"Provider {provider} should be valid"
+        """Test that validation accepts valid provider hints."""
+        step = WorkflowStepConfig(
+            name="test",
+            task_type="classify",
+            provider_hint="anthropic",
+        )
+        errors = validate_step_config(step)
+        assert errors == [], "Provider anthropic should be valid"
 
     def test_validate_step_config_fails_for_negative_timeout(self):
         """Test that validation fails for negative timeout_seconds."""
