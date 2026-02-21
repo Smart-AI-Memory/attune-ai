@@ -1,105 +1,102 @@
 # attune-ai
 
-AI-powered developer workflows with Socratic discovery, persistent memory, and multi-agent orchestration for Claude Code. One command -- `/attune` -- intelligently routes you to security audits, code reviews, test generation, performance analysis, and more through a guided, conversational interface.
+Developer workflow tools for Claude Code. Run security
+audits, code reviews, test generation, performance
+analysis, and release preparation through a single
+`/attune` command that routes to the right workflow
+based on what you describe.
 
-**Version:** 3.0.0 | **License:** Apache 2.0 | **Python:** 3.10+
+**Version:** 3.0.0 | **License:** Apache 2.0
 
 ## Installation
-
-Install from PyPI:
 
 ```bash
 pip install attune-ai
 ```
 
-For multi-agent coordination with Redis:
+## Usage
 
-```bash
-pip install attune-ai[memory]
-```
-
-## Quick Start
-
-After installation, use the single entry point in any Claude Code session:
+Type `/attune` in any Claude Code session. Describe
+what you need and the plugin routes you to the right
+workflow:
 
 ```text
-/attune
+/attune                    # guided — asks what you need
+/attune security           # run a security audit
+/attune review             # run a code review
+/attune tests              # generate tests
+/attune perf               # performance analysis
+/attune release            # release preparation
 ```
 
-The Socratic discovery flow will ask what you need, understand your intent, and route you to the right workflow, skill, or tool -- no need to memorize commands. First-time users are guided through authentication setup automatically.
+Each workflow uses tiered model routing — fast tasks
+run on Claude Haiku, analysis on Claude Sonnet, and
+deep reasoning on Claude Opus — so you spend tokens
+where they matter.
 
-To configure LLM authentication directly:
+## What It Does
+
+| Command | What Happens |
+|---------|--------------|
+| `/attune security` | Scans for eval/exec, path traversal, hardcoded secrets, injection risks |
+| `/attune review` | Reviews code for quality, correctness, and security issues |
+| `/attune tests` | Generates unit tests with edge cases and security coverage |
+| `/attune perf` | Identifies bottlenecks, memory issues, and optimization opportunities |
+| `/attune release` | Runs health checks, changelog validation, and dependency audits |
+| `/attune bugs` | Predicts likely bugs using pattern analysis and complexity metrics |
+
+## When to Use
+
+- You want to run multiple analysis passes before a
+  release or PR
+- You want security and quality checks without leaving
+  Claude Code
+- You want to generate tests for modules you haven't
+  covered yet
+- You want cost-optimized workflows that don't burn
+  Opus tokens on triage work
+
+## When NOT to Use
+
+- Single-file edits where Claude Code's built-in
+  capabilities are sufficient
+- Projects not written in Python (workflow analysis
+  is Python-focused)
+- Environments without `pip` or Python 3.10+
+
+## Troubleshooting
+
+### MCP server not responding
+
+The plugin requires the `attune-ai` Python package.
+Verify it's installed:
+
+```bash
+pip show attune-ai
+```
+
+If missing, install it and restart Claude Code.
+
+### Command not found for /attune
+
+Ensure the plugin is installed in your Claude Code
+plugin directory. Run `claude plugin list` to verify.
+
+### Workflows return empty results
+
+Check that you're pointing at a directory with Python
+files. Most workflows analyze `.py` files specifically.
+
+### Authentication errors
+
+Configure your Anthropic API key:
 
 ```bash
 python -m attune.models.auth_cli setup
 ```
 
-## Skills
-
-Skills are high-level capabilities exposed as slash commands within Claude Code.
-
-| Skill | Description |
-| ----- | ----------- |
-| `memory-and-context` | Store, retrieve, search, and manage persistent memory across sessions. Set and query context for long-running tasks. |
-| `workflow-orchestration` | Run automated analysis workflows: security audits, code reviews, test generation, bug prediction, performance analysis, and release preparation. |
-| `refactor-plan` | Generate structured refactoring plans with dependency analysis, risk assessment, and step-by-step execution guidance. |
-| `code-quality` | Code review and bug prediction — find quality issues, style violations, and likely bugs. |
-| `planning` | Development planning — feature design, TDD planning, refactoring strategy, architecture review. |
-| `release-prep` | Pre-release preparation — health checks, security audit, changelog validation, version bumps. |
-| `security-audit` | Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks. |
-
-## MCP Tools
-
-18 tools are available when connected via the Model Context Protocol, organized into two categories.
-
-### Workflow Tools (10)
-
-| Tool | Description |
-| ---- | ----------- |
-| `security_audit` | Scan for vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks |
-| `bug_predict` | Predict likely bugs using pattern analysis, historical data, and code complexity metrics |
-| `code_review` | Automated code review with style, correctness, and security checks |
-| `test_generation` | Generate unit tests with edge cases, parametrized inputs, and security test coverage |
-| `performance_audit` | Identify performance bottlenecks, unnecessary list copies, and optimization opportunities |
-| `release_prep` | Pre-release checklist: version bumps, changelog validation, dependency audits, and health checks |
-| `auth_status` | Check current LLM authentication configuration and provider status |
-| `auth_recommend` | Get provider recommendations based on usage patterns and cost optimization |
-| `telemetry_stats` | View cost tracking, token usage, and cache hit rate statistics |
-| `dashboard_status` | Query agent coordination dashboard state and active workflow status |
-
-### Memory, Empathy, and Context Tools (8)
-
-| Tool | Description |
-| ---- | ----------- |
-| `memory_store` | Persist key-value data across sessions with optional TTL and metadata |
-| `memory_retrieve` | Retrieve stored memory entries by key |
-| `memory_search` | Search memory entries by content, tags, or metadata |
-| `memory_forget` | Remove specific memory entries |
-| `empathy_get_level` | Get the current empathy/verbosity level for responses |
-| `empathy_set_level` | Adjust empathy/verbosity level to control response detail |
-| `context_get` | Retrieve session or task context by key |
-| `context_set` | Set session or task context for downstream tool use |
-
-## Redis Upgrade Path
-
-The default installation uses local storage for memory and single-agent operation. Adding Redis unlocks:
-
-- **Multi-agent coordination** -- Multiple Claude Code agents share state and avoid duplicated work
-- **Persistent memory across machines** -- Memory entries survive beyond a single environment
-- **Agent dashboard** -- Real-time visibility into agent teams, task queues, and workflow progress
-- **Distributed locking** -- Safe concurrent access to shared resources
-
-Upgrade with a single command:
-
-```bash
-pip install attune-ai[memory]
-```
-
-Then set the `REDIS_URL` environment variable or configure via `/attune`.
-
 ## Links
 
-- **Homepage:** [smartaimemory.com](https://smartaimemory.com)
-- **GitHub:** [github.com/Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
-- **PyPI:** [pypi.org/project/attune-ai](https://pypi.org/project/attune-ai/)
-- **Documentation:** [smartaimemory.com/docs](https://smartaimemory.com/docs)
+- [GitHub](https://github.com/Smart-AI-Memory/attune-ai)
+- [PyPI](https://pypi.org/project/attune-ai/)
+- [Documentation](https://smartaimemory.com/docs)

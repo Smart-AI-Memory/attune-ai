@@ -1,18 +1,9 @@
 ---
 name: security-audit
 description: "Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks"
-triggers:
-  - security
-  - vulnerability
-  - audit
-  - scan
-  - eval
-  - secrets
-  - injection
-  - cve
 ---
 
-## Socratic Scoping
+## Scoping
 
 Before running, ask:
 

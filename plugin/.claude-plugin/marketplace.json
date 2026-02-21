@@ -6,13 +6,13 @@
     "email": "patrick.roebuck@smartaimemory.com"
   },
   "metadata": {
-    "description": "AI-powered developer workflows for Claude Code",
+    "description": "Developer workflow tools for Claude Code — run security audits, code reviews, and test generation from /attune",
     "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "attune-ai",
-      "description": "Security audits, code reviews, test generation, cost optimization, and multi-agent orchestration with Socratic discovery — 18 MCP tools, 7 skills, and guided workflow routing via /attune",
+      "description": "Run security audits, code reviews, test generation, and release preparation through a single /attune command with cost-optimized model routing",
       "source": "./",
       "version": "3.0.0",
       "author": {
@@ -28,10 +28,8 @@
         "security",
         "code-review",
         "testing",
-        "cost-optimization",
-        "agents",
-        "orchestration",
-        "memory"
+        "release-prep",
+        "cost-optimization"
       ]
     }
   ]

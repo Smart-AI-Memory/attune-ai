@@ -183,14 +183,7 @@ nav:
   # Learning-oriented - Deeper tutorials after onboarding
   - Tutorials:
       - tutorials/index.md
-      - Multi-Agent Team: tutorials/quickstart.md
-      - Interactive Agent Creation: blog/interactive-agent-creation-tutorial.md
-      - Examples:
-          - Code Review Assistant: tutorials/examples/simple-chatbot.md
-          - SBAR Clinical Handoff: tutorials/examples/sbar-clinical-handoff.md
-          - Multi-Agent Team: tutorials/examples/multi-agent-team-coordination.md
-          - Adaptive Learning: tutorials/examples/adaptive-learning-system.md
-          - Webhook Integration: tutorials/examples/webhook-event-integration.md
+      - Build a Workflow: tutorials/build-a-workflow.md
 
   # Task-oriented
   - How-to:

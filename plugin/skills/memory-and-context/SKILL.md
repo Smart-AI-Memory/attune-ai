@@ -1,18 +1,6 @@
 ---
 name: memory-and-context
-description: "Structured knowledge management, empathy modulation, and memory operations for attune-ai"
-triggers:
-  - memory
-  - store
-  - retrieve
-  - remember
-  - forget
-  - empathy
-  - context
-  - pattern
-  - knowledge
-  - sensitive
-  - classification
+description: "Store, retrieve, search, and manage persistent memory across sessions"
 ---
 
 # Memory and Context
