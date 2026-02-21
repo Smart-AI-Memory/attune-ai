@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from attune.config import EmpathyConfig, _validate_file_path, load_config
+from attune.config import EmpathyConfig, load_config
+from attune.security.path_validation import _validate_file_path
 
 # ---------------------------------------------------------------------------
 # _validate_file_path

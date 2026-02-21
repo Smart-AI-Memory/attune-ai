@@ -33,8 +33,8 @@ from attune.orchestration.real_tools import (
     RealTestGenerator,
     RealTestValidator,
     SecurityReport,
-    _validate_file_path,
 )
+from attune.security.path_validation import _validate_file_path
 
 
 class Test_ValidateFilePath:

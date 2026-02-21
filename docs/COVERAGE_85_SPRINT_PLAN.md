@@ -575,7 +575,7 @@ class TestSecurityFeatures:
 
     def test_path_traversal_prevention(self):
         """Test all path traversal attack vectors."""
-        from attune.config import _validate_file_path
+        from attune.security.path_validation import _validate_file_path
 
         attack_vectors = [
             "../../../etc/passwd",

@@ -73,7 +73,7 @@ def save_config(user_path: str, data: dict):
 **✅ Required:**
 ```python
 # Always validate paths before file operations
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 def save_config(user_path: str, data: dict):
     validated_path = _validate_file_path(user_path)
@@ -218,7 +218,7 @@ def register_wizard(wizard_id: str, wizard_class: type):
 **Required for ALL user-controlled file paths:**
 
 ```python
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 from pathlib import Path
 
 def save_data(filepath: str, data: dict):
@@ -531,7 +531,7 @@ pre-commit install
 
 ```python
 from pathlib import Path
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 import logging
 
 logger = logging.getLogger(__name__)

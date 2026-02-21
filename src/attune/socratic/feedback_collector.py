@@ -14,7 +14,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from .blueprint import WorkflowBlueprint
 from .feedback_models import AgentPerformance, WorkflowPattern
 from .success import SuccessEvaluation

@@ -25,7 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from ..project_index import ProjectIndex
 from ..project_index.reports import ReportGenerator
 from .test_maintenance import TestAction, TestMaintenanceWorkflow, TestPlanItem, TestPriority

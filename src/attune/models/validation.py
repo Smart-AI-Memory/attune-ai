@@ -13,7 +13,7 @@ Licensed under the Apache License, Version 2.0
 from dataclasses import dataclass, field
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .registry import MODEL_REGISTRY, ModelTier
 

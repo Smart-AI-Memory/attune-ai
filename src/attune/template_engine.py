@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 from attune.template_defs_basic import MINIMAL_TEMPLATE, PYTHON_CLI_TEMPLATE
 from attune.template_defs_web import PYTHON_AGENT_TEMPLATE, PYTHON_FASTAPI_TEMPLATE
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import functools
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 # Try to import tiktoken, fall back to heuristic if not available
 try:

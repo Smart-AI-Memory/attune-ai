@@ -24,7 +24,7 @@ from typing import Any
 
 import structlog
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .long_term_types import Classification
 

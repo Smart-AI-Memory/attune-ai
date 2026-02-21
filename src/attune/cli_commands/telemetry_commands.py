@@ -113,7 +113,7 @@ def cmd_telemetry_savings(args: Namespace) -> int:
 
 def cmd_telemetry_export(args: Namespace) -> int:
     """Export telemetry data to file."""
-    from attune.config import _validate_file_path
+    from attune.security.path_validation import _validate_file_path
 
     try:
         from attune.models.telemetry import TelemetryStore

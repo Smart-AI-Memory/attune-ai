@@ -11,8 +11,8 @@ import logging
 import os
 from pathlib import Path
 
-from attune.config import _validate_file_path
 from attune.config.unified import UnifiedConfig
+from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
 

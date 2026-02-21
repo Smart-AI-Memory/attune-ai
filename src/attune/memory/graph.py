@@ -22,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .edges import REVERSE_EDGE_TYPES, Edge, EdgeType
 from .nodes import Node, NodeType

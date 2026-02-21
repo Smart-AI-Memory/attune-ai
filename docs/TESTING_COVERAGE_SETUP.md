@@ -228,7 +228,7 @@ def test_config_to_yaml_creates_valid_file(tmp_path):
 
 def test_validate_file_path_blocks_traversal():
     """Test that _validate_file_path() actually blocks attacks."""
-    from attune.config import _validate_file_path
+    from attune.security.path_validation import _validate_file_path
 
     # BEHAVIORAL: Actually call with malicious input
     with pytest.raises(ValueError, match="system directory"):

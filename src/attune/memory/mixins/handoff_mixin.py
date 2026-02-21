@@ -157,7 +157,7 @@ class HandoffAndExportMixin:
         Returns:
             Path where state was written
         """
-        from attune.config import _validate_file_path
+        from attune.security.path_validation import _validate_file_path
 
         path = path or self.config.compact_state_path
         validated_path = _validate_file_path(path)

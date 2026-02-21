@@ -11,7 +11,9 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-from attune.config import _validate_file_path  # noqa: F401 - re-exported for backward compat
+from attune.security.path_validation import (
+    _validate_file_path,  # noqa: F401 - re-exported for backward compat
+)
 
 # Analysis commands (model fallback analysis, per-file test status)
 from .cli_analysis import (  # noqa: F401

@@ -17,7 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ...config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from .allocator import TrafficAllocator
 from .models import (
     AllocationStrategy,

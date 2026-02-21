@@ -15,8 +15,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
 from attune.logging_config import get_logger
+from attune.security.path_validation import _validate_file_path
 
 logger = get_logger(__name__)
 

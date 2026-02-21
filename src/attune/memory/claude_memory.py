@@ -20,7 +20,7 @@ from pathlib import Path
 
 import structlog
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 logger = structlog.get_logger(__name__)
 

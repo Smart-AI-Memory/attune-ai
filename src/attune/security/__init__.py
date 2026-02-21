@@ -23,6 +23,7 @@ from attune.memory.security import (
     Severity,
     detect_secrets,
 )
+from attune.security.path_validation import _validate_file_path
 
 __all__ = [
     "AuditEvent",
@@ -35,5 +36,6 @@ __all__ = [
     "SecretsDetector",
     "SecurityViolation",
     "Severity",
+    "_validate_file_path",
     "detect_secrets",
 ]

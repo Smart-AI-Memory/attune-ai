@@ -32,8 +32,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
 from attune.memory.short_term import RedisShortTermMemory
+from attune.security.path_validation import _validate_file_path
 from attune.telemetry.agent_tracking import HeartbeatCoordinator
 from attune.telemetry.event_streaming import EventStreamer
 from attune.telemetry.feedback_loop import FeedbackLoop

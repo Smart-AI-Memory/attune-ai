@@ -10,7 +10,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from . import meta_workflow_app
 

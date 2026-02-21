@@ -16,7 +16,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from ...config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from .models import EmbeddedGoal, SimilarityResult
 from .providers import EmbeddingProvider, TFIDFEmbeddingProvider
 

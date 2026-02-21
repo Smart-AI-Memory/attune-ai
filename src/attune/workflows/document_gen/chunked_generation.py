@@ -28,7 +28,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from ..base import ModelTier
 from .report_formatter import format_doc_gen_report

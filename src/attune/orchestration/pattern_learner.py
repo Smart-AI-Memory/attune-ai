@@ -23,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .pattern_learner_models import (  # noqa: F401 - re-exported
     ContextSignature,

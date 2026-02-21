@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .types import Impact, RefactoringFinding, UserProfile
 
