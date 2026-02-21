@@ -23,10 +23,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-# Import pricing from unified registry
-from attune.config import _validate_file_path
 from attune.models import MODEL_REGISTRY
 from attune.models.registry import TIER_PRICING
+
+# Import pricing from unified registry
+from attune.security.path_validation import _validate_file_path
 
 
 def _build_model_pricing() -> dict[str, dict[str, float]]:

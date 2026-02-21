@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 if TYPE_CHECKING:
     from .base import BaseWizard, WizardConfig

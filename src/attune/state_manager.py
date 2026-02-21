@@ -10,7 +10,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from .config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from .core import CollaborationState
 
 

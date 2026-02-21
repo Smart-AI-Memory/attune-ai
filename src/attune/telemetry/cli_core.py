@@ -25,7 +25,7 @@ except ImportError:
     RICH_AVAILABLE = False
     Console = None  # type: ignore
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .usage_tracker import UsageTracker
 

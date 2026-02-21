@@ -92,7 +92,7 @@ class TestConfig:
 
     def test_validate_file_path(self):
         """Test path validation function exists."""
-        from attune.config import _validate_file_path
+        from attune.security.path_validation import _validate_file_path
 
         # Function exists and works
         assert _validate_file_path is not None

@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from attune.security.path_validation import _validate_file_path
 from attune.telemetry.cli import (
-    _validate_file_path,
     cmd_agent_performance,
     cmd_sonnet_opus_analysis,
     cmd_task_routing_report,

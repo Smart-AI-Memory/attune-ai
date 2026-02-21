@@ -15,8 +15,8 @@ from typing import Any
 
 import yaml
 
-from attune.config import _validate_file_path
 from attune.routing import SmartRouter
+from attune.security.path_validation import _validate_file_path
 
 
 @dataclass
@@ -100,7 +100,6 @@ class HybridRouter:
             "seo-optimize": ("workflows", "run seo-optimization --mode fix"),
             # Plan commands → /plan skill
             "plan": ("plan", ""),
-            "tdd": ("plan", "tdd"),
             # Release commands → /release skill
             "release": ("release", "prep"),
             "ship": ("release", "prep"),

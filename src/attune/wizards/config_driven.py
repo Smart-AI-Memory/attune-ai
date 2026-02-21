@@ -16,9 +16,9 @@ from typing import Any
 
 import yaml
 
-from attune.config import _validate_file_path
 from attune.meta_workflows.models import FormQuestion, QuestionType
 from attune.prompts import PromptContext
+from attune.security.path_validation import _validate_file_path
 
 from .base import BaseWizard, StepType, WizardConfig, WizardStep
 from .session import WizardSession

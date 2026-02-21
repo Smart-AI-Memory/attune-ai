@@ -23,7 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult, WorkflowStage
 from ..workflows.context import WorkflowContext
 from ..workflows.services import ParsingService, PromptService

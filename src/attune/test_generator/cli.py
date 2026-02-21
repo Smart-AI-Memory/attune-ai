@@ -15,7 +15,7 @@ import logging
 import sys
 from pathlib import Path
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .generator import TestGenerator
 from .risk_analyzer import RiskAnalyzer

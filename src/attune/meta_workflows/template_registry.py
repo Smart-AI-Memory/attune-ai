@@ -7,7 +7,6 @@ Updated: 2026-01-18 (v4.3.0 - Added built-in templates)
 Purpose: Manage reusable workflow templates
 """
 
-import importlib.util
 import logging
 from pathlib import Path
 
@@ -17,22 +16,9 @@ from attune.meta_workflows.builtin_templates import (
     list_builtin_templates,
 )
 from attune.meta_workflows.models import MetaWorkflowTemplate
+from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
-
-# Import _validate_file_path from parent config.py (not config package)
-_config_py_path = Path(__file__).parent.parent / "config.py"
-_spec = importlib.util.spec_from_file_location("_config_module", _config_py_path)
-if _spec and _spec.loader:
-    _config_module = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_config_module)
-    _validate_file_path = _config_module._validate_file_path
-else:
-    # Fallback: simple validation if import fails
-    def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
-        if not path:
-            raise ValueError("path must be non-empty")
-        return Path(path).resolve()
 
 
 class TemplateRegistry:

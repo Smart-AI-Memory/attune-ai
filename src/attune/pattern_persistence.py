@@ -11,7 +11,8 @@ import sqlite3
 from datetime import datetime
 from typing import Any
 
-from .config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
+
 from .pattern_library import Pattern, PatternLibrary
 
 

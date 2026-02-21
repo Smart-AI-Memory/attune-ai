@@ -161,7 +161,7 @@ result = ast.literal_eval(user_input)  # Safe for literals only
 **ALWAYS validate file paths** - Prevents path traversal (CWE-22)
 
 ```python
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 # ✅ REQUIRED
 validated_path = _validate_file_path(user_provided_path)

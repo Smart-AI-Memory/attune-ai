@@ -77,7 +77,7 @@ def cmd_workflow_run(args: Namespace) -> int:
     """Execute a workflow."""
     import asyncio
 
-    from attune.config import _validate_file_path
+    from attune.security.path_validation import _validate_file_path
     from attune.workflows import discover_workflows
 
     workflows = discover_workflows()

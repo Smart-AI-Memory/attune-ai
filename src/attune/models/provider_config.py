@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .registry import MODEL_REGISTRY, ModelInfo, ModelTier
 

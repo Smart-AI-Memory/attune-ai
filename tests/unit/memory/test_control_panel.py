@@ -34,12 +34,12 @@ from attune.memory.control_panel import (
     RateLimiter,
     _validate_agent_id,
     _validate_classification,
-    _validate_file_path,
     _validate_pattern_id,
     print_health,
     print_stats,
     print_status,
 )
+from attune.security.path_validation import _validate_file_path
 
 # =============================================================================
 # Test Security Validation Functions

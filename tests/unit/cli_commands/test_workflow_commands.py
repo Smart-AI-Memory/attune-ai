@@ -408,7 +408,7 @@ class TestCmdWorkflowRunInputParsing:
 class TestCmdWorkflowRunPathValidation:
     """Tests for path validation in cmd_workflow_run."""
 
-    @patch("attune.config._validate_file_path")
+    @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_valid_path_is_validated_and_passed(
         self, mock_discover, mock_validate, capsys, tmp_path
@@ -436,7 +436,7 @@ class TestCmdWorkflowRunPathValidation:
         mock_validate.assert_called_once_with(str(valid_path))
         assert call_kwargs["path"] == str(valid_path)
 
-    @patch("attune.config._validate_file_path")
+    @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_path_traversal_rejected(self, mock_discover, mock_validate, capsys):
         """Test that path traversal is caught and returns 1."""
@@ -453,7 +453,7 @@ class TestCmdWorkflowRunPathValidation:
         assert "Invalid path" in captured.out
         assert "Cannot write to system directory" in captured.out
 
-    @patch("attune.config._validate_file_path")
+    @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_null_byte_path_rejected(self, mock_discover, mock_validate, capsys):
         """Test that null bytes in path are rejected."""
@@ -469,7 +469,7 @@ class TestCmdWorkflowRunPathValidation:
         captured = capsys.readouterr()
         assert "Invalid path" in captured.out
 
-    @patch("attune.config._validate_file_path")
+    @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_system_directory_path_rejected(self, mock_discover, mock_validate, capsys):
         """Test that system directory paths are rejected."""
@@ -790,7 +790,7 @@ class TestCmdWorkflowRunExceptionHandling:
 class TestCmdWorkflowRunCombinedInputs:
     """Tests for combining JSON input with path and target."""
 
-    @patch("attune.config._validate_file_path")
+    @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_json_input_plus_path_and_target(
         self, mock_discover, mock_validate, capsys, tmp_path

@@ -25,7 +25,7 @@ from attune.config import (
     OptimizationConfig,
     XMLConfig,
 )
-from attune.config.xml_config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 
 @pytest.mark.unit

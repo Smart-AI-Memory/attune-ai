@@ -11,7 +11,7 @@ import json
 import logging
 from pathlib import Path
 
-from attune.config import _validate_file_path
+from attune.security.path_validation import _validate_file_path
 
 from .health_check_models import HealthCheckReport
 

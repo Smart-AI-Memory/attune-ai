@@ -21,6 +21,9 @@ try:
 except ImportError:
     YAML_AVAILABLE = False
 
+# Import security utility from canonical location
+from attune.security.path_validation import _validate_file_path  # noqa: E402
+
 # Load the original config.py module directly
 config_py_path = Path(__file__).parent.parent / "config.py"
 spec = importlib.util.spec_from_file_location("attune_config_legacy", config_py_path)
@@ -30,13 +33,11 @@ if spec and spec.loader:
     AttuneConfig = legacy_config.AttuneConfig
     EmpathyConfig = legacy_config.EmpathyConfig  # backward-compat alias
     load_config = legacy_config.load_config
-    _validate_file_path = legacy_config._validate_file_path
 else:
     # Fallback if import fails
     AttuneConfig = None
     EmpathyConfig = None
     load_config = None
-    _validate_file_path = None
 
 # Import XML enhancement configs
 # Import agent configuration models
