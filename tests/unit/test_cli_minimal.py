@@ -106,9 +106,9 @@ class TestCreateParser:
         assert args.provider_command == "show"
 
     def test_provider_set(self, parser: argparse.ArgumentParser) -> None:
-        args = parser.parse_args(["provider", "set", "openai"])
+        args = parser.parse_args(["provider", "set", "anthropic"])
         assert args.provider_command == "set"
-        assert args.name == "openai"
+        assert args.name == "anthropic"
 
     def test_dashboard_start(self, parser: argparse.ArgumentParser) -> None:
         args = parser.parse_args(["dashboard", "start", "--host", "0.0.0.0", "--port", "9090"])

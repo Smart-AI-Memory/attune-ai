@@ -191,11 +191,11 @@ class TestEmpathyLLMExecutorHybridMode:
         assert "premium" in config
 
     def test_hybrid_mode_provider_detection(self, hybrid_executor):
-        """Test that _get_provider_for_model detects providers correctly."""
-        assert hybrid_executor._get_provider_for_model("gpt-4o-mini") == "openai"
+        """Test that _get_provider_for_model returns anthropic (Claude-native)."""
+        # Claude-native architecture: all models route to anthropic
         assert hybrid_executor._get_provider_for_model("claude-sonnet-4") == "anthropic"
-        assert hybrid_executor._get_provider_for_model("gemini-pro") == "google"
-        assert hybrid_executor._get_provider_for_model("llama3:8b") == "ollama"
+        assert hybrid_executor._get_provider_for_model("claude-haiku-4") == "anthropic"
+        assert hybrid_executor._get_provider_for_model("claude-opus-4") == "anthropic"
 
 
 class TestEmpathyLLMExecutorCostTracking:

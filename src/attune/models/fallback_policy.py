@@ -57,7 +57,7 @@ class FallbackPolicy:
         ...     strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
         ... )
         >>> chain = policy.get_fallback_chain()
-        >>> # Returns: [("openai", "capable"), ("ollama", "capable")]
+        >>> # Returns: [("anthropic", "premium")]
 
     """
 

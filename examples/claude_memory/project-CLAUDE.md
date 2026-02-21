@@ -15,7 +15,7 @@ This is the Attune AI - a five-level AI collaboration system with anticipatory e
 
 ## Architecture
 - Framework: Python async/await architecture
-- LLM Integration: Anthropic (Claude), OpenAI, Local (Ollama)
+- LLM Integration: Anthropic (Claude)
 - Memory: MemDocs for pattern storage
 - Extensions: VSCode and JetBrains IDE integrations
 

@@ -242,9 +242,9 @@ pip install 'attune-ai[all]'
 | `memory` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[memory]'` |
 | `dashboard` | Agent dashboard (FastAPI + Uvicorn) | `pip install 'attune-ai[dashboard]'` |
 | `socratic` | Socratic workflow discovery | `pip install 'attune-ai[socratic]'` |
-| `crewai` | CrewAI integration | `pip install 'attune-ai[crewai]'` |
-| `llm` | All LLM providers (Anthropic, OpenAI, Google) | `pip install 'attune-ai[llm]'` |
-| `agents` | LangChain agent support | `pip install 'attune-ai[agents]'` |
+| `crewai` | CrewAI integration (legacy) | `pip install 'attune-ai[crewai]'` |
+| `llm` | Anthropic LLM provider | `pip install 'attune-ai[llm]'` |
+| `agents` | Agent orchestration support | `pip install 'attune-ai[agents]'` |
 | `all` | Everything | `pip install 'attune-ai[all]'` |
 
 ---

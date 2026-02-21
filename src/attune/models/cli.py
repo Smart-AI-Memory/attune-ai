@@ -458,7 +458,7 @@ def print_provider_config(format: str = "table") -> None:
         print(f"  Mode: {config.mode.value}")
         print(f"  Primary provider: {config.primary_provider}")
         print(f"  Cost optimization: {config.cost_optimization}")
-        print(f"  Prefer local (Ollama): {config.prefer_local}")
+        print(f"  Prefer local: {config.prefer_local}")
 
         print("\n[Available Providers]")
         if config.available_providers:
@@ -492,7 +492,7 @@ def configure_provider(
     """Configure provider settings.
 
     Args:
-        provider: Provider to set (anthropic, openai, google, ollama, hybrid)
+        provider: Provider to set (anthropic)
         mode: Mode to set (single, hybrid)
         interactive: Whether to run interactive configuration
 
@@ -533,7 +533,7 @@ Examples:
   %(prog)s tasks                        Show task-to-tier mappings
   %(prog)s costs --input 50000          Estimate costs for 50k input tokens
   %(prog)s validate config.yaml         Validate a config file
-  %(prog)s effective --provider openai  Show effective config for OpenAI
+  %(prog)s effective --provider anthropic  Show effective config
   %(prog)s telemetry                    Show telemetry summary
   %(prog)s telemetry --costs            Show cost savings report
   %(prog)s telemetry --providers        Show provider usage
@@ -588,7 +588,7 @@ Examples:
         "--set",
         "-s",
         dest="provider_set",
-        help="Set provider (anthropic, openai, google, ollama, hybrid)",
+        help="Set provider (anthropic)",
     )
     prov_parser.add_argument(
         "--mode",

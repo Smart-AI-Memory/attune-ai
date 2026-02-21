@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "3.0.2"
+version = "3.0.3"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -79,16 +79,10 @@ memory = [
     "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support
 ]
 
-# LLM providers (user chooses which they need)
+# LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
-openai = ["openai>=1.12.0,<3.0.0"]
-# Note: google-generativeai is deprecated but still works; google-genai requires
-# tenacity>=9.1.2 (now compatible with langchain>=0.3.0). Ready to migrate.
-google = ["google-generativeai>=0.3.0,<1.0.0"]
 llm = [
     "anthropic>=0.40.0",
-    "openai>=1.12.0,<3.0.0",
-    "google-generativeai>=0.3.0,<1.0.0",
 ]
 
 # MemDocs integration for long-term memory
@@ -202,10 +196,8 @@ dev = [
 
 # Individual developers - lightweight, software development focused
 developer = [
-    # LLM providers
+    # LLM provider (Claude-native)
     "anthropic>=0.40.0",
-    "openai>=1.12.0,<3.0.0",
-    "google-generativeai>=0.3.0,<1.0.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
@@ -226,8 +218,6 @@ developer = [
 enterprise = [
     # Everything in developer
     "anthropic>=0.40.0",
-    "openai>=1.12.0,<3.0.0",
-    "google-generativeai>=0.3.0,<1.0.0",
     "memdocs>=1.0.0",
     "langchain>=1.0.0,<2.0.0",
     "langchain-core>=1.2.5,<2.0.0",
@@ -251,10 +241,8 @@ enterprise = [
 
 # Alias for backwards compatibility (maps to developer)
 full = [
-    # LLM providers
+    # LLM provider (Claude-native)
     "anthropic>=0.40.0",
-    "openai>=1.12.0,<3.0.0",
-    "google-generativeai>=0.3.0,<1.0.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
@@ -271,10 +259,8 @@ full = [
 
 # Everything including development tools
 all = [
-    # LLM providers
+    # LLM provider (Claude-native)
     "anthropic>=0.40.0",
-    "openai>=1.12.0,<3.0.0",
-    "google-generativeai>=0.3.0,<1.0.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)

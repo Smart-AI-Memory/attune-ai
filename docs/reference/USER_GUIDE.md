@@ -90,10 +90,10 @@ In this context, empathy is not about feelings - it's about:
 │         │                                                     │
 │  ┌──────▼────────────────────────────────────────┐          │
 │  │         LLM Provider Layer                    │          │
-│  │  ┌──────────┐  ┌────────┐  ┌──────────┐     │          │
-│  │  │Anthropic │  │ OpenAI │  │  Local   │     │          │
-│  │  │ (Claude) │  │ (GPT)  │  │ (Ollama) │     │          │
-│  │  └──────────┘  └────────┘  └──────────┘     │          │
+│  │  ┌──────────────────────────────────────┐     │          │
+│  │  │  Anthropic (Claude)                 │     │          │
+│  │  │  Haiku · Sonnet · Opus              │     │          │
+│  │  └──────────────────────────────────────┘     │          │
 │  └───────────────────────────────────────────────┘          │
 │         │                                                     │
 │  ┌──────▼────────────────────────────────────────┐          │
@@ -131,7 +131,7 @@ In this context, empathy is not about feelings - it's about:
 2. **State Retrieval** → Load collaboration state for user
 3. **Level Determination** → Calculate appropriate empathy level based on trust
 4. **Context Building** → Gather conversation history, patterns, project context
-5. **LLM Invocation** → Call provider (Anthropic, OpenAI, or local)
+5. **LLM Invocation** → Call Anthropic Claude API
 6. **Response Processing** → Extract content, metadata, thinking (if enabled)
 7. **State Update** → Record interaction, update trust, detect patterns
 8. **Response Delivery** → Return enriched response to user
@@ -140,7 +140,7 @@ In this context, empathy is not about feelings - it's about:
 
 1. **Progressive Enhancement**: Start simple (Level 1), earn advanced features (Levels 2-5)
 2. **Trust-Based Progression**: Higher levels require building trust through successful interactions
-3. **Provider Agnostic**: Works with any LLM (Claude, GPT-4, local models)
+3. **Claude-Native**: Built exclusively for Anthropic Claude
 4. **Domain Pluggable**: Software, healthcare, or custom domains
 5. **Privacy First**: All data stays local, no tracking or telemetry
 6. **Cost Optimized**: Prompt caching, smart token management
@@ -609,7 +609,7 @@ Level 5 applies Donella Meadows' leverage points:
 ### Prerequisites
 
 - **Python 3.10+**
-- **API Key** for Anthropic (Claude) or OpenAI (GPT)
+- **API Key** for Anthropic (Claude)
 - **pip** package manager
 - **Git** (optional, for source installation)
 
@@ -1322,7 +1322,6 @@ export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 
 # LLM provider
 export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
 
 # Persistence
 export ATTUNE_PERSISTENCE_ENABLED=true

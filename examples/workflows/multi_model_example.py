@@ -65,7 +65,7 @@ def demo_model_registry():
     print("\n\nCost comparison for 100k input / 20k output tokens:")
     print("-" * 50)
 
-    for provider in ["anthropic", "openai", "ollama"]:
+    for provider in ["anthropic"]:
         model = get_model(provider, "capable")
         if model:
             input_cost = (100000 / 1_000_000) * model.input_cost_per_million

@@ -518,8 +518,8 @@ class TestCmdValidate:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "attune.config.yml").write_text("version: 1")
 
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
         with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
@@ -541,9 +541,9 @@ class TestCmdValidate:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "attune.config.yaml").write_text("version: 1")
 
-        monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
         with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
             result = cmd_validate(args)
@@ -565,8 +565,8 @@ class TestCmdValidate:
         (tmp_path / "attune.config.json").write_text("{}")
 
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
-        monkeypatch.setenv("GOOGLE_API_KEY", "goog-test")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
         with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
             result = cmd_validate(args)
@@ -574,8 +574,6 @@ class TestCmdValidate:
         assert result == 0
         captured = capsys.readouterr()
         assert "Anthropic (Claude) API key set" in captured.out
-        assert "OpenAI (GPT) API key set" in captured.out
-        assert "Google (Gemini) API key set" in captured.out
 
     def test_workflow_registry_count_displayed(
         self,

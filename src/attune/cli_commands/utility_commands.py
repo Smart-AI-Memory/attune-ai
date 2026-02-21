@@ -222,8 +222,6 @@ def cmd_validate(args: Namespace) -> int:
     # Check for API keys (helper returns bool to avoid logging sensitive values)
     api_keys = {
         "ANTHROPIC_API_KEY": "Anthropic (Claude)",
-        "OPENAI_API_KEY": "OpenAI (GPT)",
-        "GOOGLE_API_KEY": "Google (Gemini)",
     }
 
     keys_found = 0
@@ -234,7 +232,7 @@ def cmd_validate(args: Namespace) -> int:
 
     if keys_found == 0:
         errors.append(
-            "No API keys found. Set at least one: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY\n"
+            "No API keys found. Set ANTHROPIC_API_KEY\n"
             "   Run: python -m attune.models.auth_cli setup"
         )
 

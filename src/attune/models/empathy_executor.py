@@ -52,7 +52,7 @@ class EmpathyLLMExecutor:
 
         Args:
             empathy_llm: Optional pre-configured EmpathyLLM instance.
-            provider: LLM provider (anthropic, openai, google, ollama, hybrid).
+            provider: LLM provider (anthropic).
             api_key: Optional API key for the provider.
             telemetry_store: Optional telemetry store for recording calls.
             **llm_kwargs: Additional arguments for EmpathyLLM.
@@ -92,13 +92,7 @@ class EmpathyLLMExecutor:
             or "opus" in model_lower
         ):
             return "anthropic"
-        if "gpt" in model_lower or "o1" in model_lower:
-            return "openai"
-        if "gemini" in model_lower:
-            return "google"
-        if "llama" in model_lower or "mixtral" in model_lower or ":" in model_id:
-            return "ollama"
-        # Default to anthropic
+        # Claude-native architecture (v5.0.0+): all models are Anthropic
         return "anthropic"
 
     def _get_llm_for_tier(self, tier: str) -> tuple[Any, str, str]:
@@ -130,9 +124,6 @@ class EmpathyLLMExecutor:
                 # Get API key for this provider from environment
                 api_key_map = {
                     "anthropic": os.getenv("ANTHROPIC_API_KEY"),
-                    "openai": os.getenv("OPENAI_API_KEY"),
-                    "google": os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"),
-                    "ollama": None,  # Ollama doesn't need API key
                 }
                 api_key = api_key_map.get(actual_provider)
 

@@ -48,9 +48,9 @@ description: Attune AI — Technical Brief: **For:** Technical due diligence, en
 │                          │                                       │
 │  ┌───────────────────────┼───────────────────────────────────┐  │
 │  │                 LLM Providers                              │  │
-│  │  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────────────┐   │  │
-│  │  │ Claude │  │ OpenAI │  │ Gemini │  │ Ollama (Local) │   │  │
-│  │  └────────┘  └────────┘  └────────┘  └────────────────┘   │  │
+│  │  ┌──────────────────────────────────────────────────────┐   │  │
+│  │  │  Anthropic Claude (Haiku · Sonnet · Opus)          │   │  │
+│  │  └──────────────────────────────────────────────────────┘   │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -238,7 +238,7 @@ server.expose_tools([
 | Language | Python 3.8+ |
 | Async | asyncio, aiohttp |
 | Memory | Redis, SQLite (MemDocs) |
-| LLM SDKs | anthropic, openai, google-generativeai |
+| LLM SDKs | anthropic |
 | Testing | pytest, 125+ tests |
 | CLI | Click |
 | Packaging | Poetry, PyPI |

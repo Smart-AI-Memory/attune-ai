@@ -204,8 +204,6 @@ class TestCmdProviderShow:
 
         captured = capsys.readouterr().out
         assert "ANTHROPIC_API_KEY" in captured
-        assert "OPENAI_API_KEY" in captured
-        assert "GOOGLE_API_KEY" in captured
 
     # -- Error paths ---------------------------------------------------------
 

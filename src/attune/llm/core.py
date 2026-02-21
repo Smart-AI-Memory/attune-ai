@@ -115,7 +115,7 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         """Initialize EmpathyLLM.
 
         Args:
-            provider: "anthropic", "openai", or "local"
+            provider: "anthropic"
             target_level: Target empathy level (1-5)
             api_key: API key for provider (if needed)
             model: Specific model to use (overrides routing if set)
@@ -223,8 +223,6 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
 
         Falls back to environment variables if api_key not provided:
         - ANTHROPIC_API_KEY for Anthropic
-        - OPENAI_API_KEY for OpenAI
-        - GOOGLE_API_KEY or GEMINI_API_KEY for Google/Gemini
         """
         import os
 
@@ -232,10 +230,6 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         if api_key is None:
             if provider == "anthropic":
                 api_key = os.getenv("ANTHROPIC_API_KEY")
-            elif provider == "openai":
-                api_key = os.getenv("OPENAI_API_KEY")
-            elif provider in ("google", "gemini"):
-                api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
         if provider == "anthropic":
             return AnthropicProvider(

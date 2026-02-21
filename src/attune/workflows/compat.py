@@ -88,11 +88,12 @@ class ModelProvider(Enum):
     """
 
     ANTHROPIC = "anthropic"
-    OPENAI = "openai"
-    GOOGLE = "google"  # Google Gemini models
-    OLLAMA = "ollama"
-    HYBRID = "hybrid"  # Mix of best models from different providers
-    CUSTOM = "custom"  # User-defined custom models
+    # Legacy values kept for backward compatibility during migration
+    OPENAI = "openai"  # Deprecated: use ANTHROPIC
+    GOOGLE = "google"  # Deprecated: use ANTHROPIC
+    OLLAMA = "ollama"  # Deprecated: use ANTHROPIC
+    HYBRID = "hybrid"  # Deprecated: use ANTHROPIC
+    CUSTOM = "custom"  # Deprecated: use ANTHROPIC
 
     def to_unified(self) -> UnifiedModelProvider:
         """Convert to unified ModelProvider from attune.models.
@@ -117,12 +118,9 @@ def _build_provider_models() -> dict[ModelProvider, dict[ModelTier, str]]:
     result: dict[ModelProvider, dict[ModelTier, str]] = {}
 
     # Map string provider names to ModelProvider enum
+    # Claude-native architecture (v5.0.0+): only Anthropic is active
     provider_map = {
         "anthropic": ModelProvider.ANTHROPIC,
-        "openai": ModelProvider.OPENAI,
-        "google": ModelProvider.GOOGLE,
-        "ollama": ModelProvider.OLLAMA,
-        "hybrid": ModelProvider.HYBRID,
     }
 
     # Map string tier names to ModelTier enum
