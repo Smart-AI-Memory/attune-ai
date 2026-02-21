@@ -18,9 +18,13 @@ class TestTierProgression:
         """Test capable tier progresses to premium."""
         assert TierFallbackHelper.get_next_tier("capable") == "premium"
 
-    def test_premium_has_no_next(self):
-        """Test premium tier is the highest tier."""
-        assert TierFallbackHelper.get_next_tier("premium") is None
+    def test_premium_progresses_to_ultra(self):
+        """Test premium tier progresses to ultra."""
+        assert TierFallbackHelper.get_next_tier("premium") == "ultra"
+
+    def test_ultra_has_no_next(self):
+        """Test ultra tier is the highest tier."""
+        assert TierFallbackHelper.get_next_tier("ultra") is None
 
     def test_unknown_tier_returns_none(self):
         """Test unknown tier returns None."""
@@ -54,11 +58,42 @@ class TestShouldFallback:
         """Test TypeError does not trigger fallback (logic error)."""
         assert TierFallbackHelper.should_fallback(TypeError(), "cheap") is False
 
-    def test_premium_never_falls_back(self):
-        """Test premium tier never falls back (highest tier)."""
-        assert TierFallbackHelper.should_fallback(TimeoutError(), "premium") is False
-        assert TierFallbackHelper.should_fallback(ConnectionError(), "premium") is False
-        assert TierFallbackHelper.should_fallback(OSError(), "premium") is False
+    def test_premium_falls_back_on_network_errors(self):
+        """Test premium tier falls back on network errors (to ultra)."""
+        assert TierFallbackHelper.should_fallback(TimeoutError(), "premium") is True
+        assert TierFallbackHelper.should_fallback(ConnectionError(), "premium") is True
+        assert TierFallbackHelper.should_fallback(OSError(), "premium") is True
+
+    def test_premium_does_not_fall_back_on_logic_errors(self):
+        """Test premium tier does not fall back on logic errors."""
+        assert TierFallbackHelper.should_fallback(ValueError(), "premium") is False
+
+    def test_ultra_falls_back_on_network_errors(self):
+        """Test ultra tier falls back on network errors (to premium)."""
+        assert TierFallbackHelper.should_fallback(TimeoutError(), "ultra") is True
+        assert TierFallbackHelper.should_fallback(ConnectionError(), "ultra") is True
+
+    def test_ultra_falls_back_on_api_errors(self):
+        """Test ultra tier falls back on Anthropic API errors."""
+        from unittest.mock import MagicMock
+
+        import anthropic
+
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_response.headers = {}
+        mock_response.request = MagicMock()
+
+        error = anthropic.APIStatusError(
+            message="beta access required",
+            response=mock_response,
+            body=None,
+        )
+        assert TierFallbackHelper.should_fallback(error, "ultra") is True
+
+    def test_ultra_does_not_fall_back_on_logic_errors(self):
+        """Test ultra tier does not fall back on logic errors."""
+        assert TierFallbackHelper.should_fallback(ValueError(), "ultra") is False
 
 
 class TestEdgeCases:
@@ -125,4 +160,5 @@ class TestIntegrationWithFallbackPolicy:
         # Verify TierFallbackHelper tier names match those used by FallbackPolicy
         assert TierFallbackHelper.get_next_tier("cheap") == "capable"
         assert TierFallbackHelper.get_next_tier("capable") == "premium"
-        assert TierFallbackHelper.get_next_tier("premium") is None
+        assert TierFallbackHelper.get_next_tier("premium") == "ultra"
+        assert TierFallbackHelper.get_next_tier("ultra") is None

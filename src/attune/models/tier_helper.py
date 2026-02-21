@@ -62,8 +62,9 @@ class TierFallbackHelper:
             True if fallback should be attempted, False otherwise
 
         Logic:
-            - Never fallback from ultra tier (highest tier)
-            - Fallback for network/connection errors
+            - Ultra tier falls back to premium on API errors
+              (beta access denied, feature not available)
+            - Other tiers fallback on network/connection errors
               (TimeoutError, ConnectionError, OSError)
             - Don't fallback for logic errors
               (ValueError, TypeError, etc.)
@@ -77,16 +78,22 @@ class TierFallbackHelper:
             ...     ValueError(), "cheap"
             ... )
             False
-            >>> TierFallbackHelper.should_fallback(
-            ...     TimeoutError(), "ultra"
-            ... )
-            False
 
         """
-        # Never fallback from ultra tier (highest tier)
+        # Ultra tier: fallback to premium on API/network errors
         if tier == "ultra":
-            return False
+            # Check for Anthropic API errors (beta access denied, etc.)
+            try:
+                import anthropic
 
-        # Fallback for connection/network errors
+                if isinstance(error, anthropic.APIStatusError | anthropic.APIConnectionError):
+                    return True
+            except ImportError:
+                pass
+            # Also fallback on standard network errors
+            fallback_errors = (TimeoutError, ConnectionError, OSError)
+            return isinstance(error, fallback_errors)
+
+        # Other tiers: fallback for connection/network errors
         fallback_errors = (TimeoutError, ConnectionError, OSError)
         return isinstance(error, fallback_errors)
