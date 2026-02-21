@@ -46,7 +46,7 @@ def test_adaptive_config_defaults():
     assert config.enable_adaptation is True
     assert "simple" in config.model_tier_mapping
     assert "moderate" in config.model_tier_mapping
-    assert config.model_tier_mapping["simple"] == "gpt-3.5-turbo"
+    assert config.model_tier_mapping["simple"] == "claude-haiku-4-5-20251001"
     assert config.complexity_thresholds["simple_tokens"] == 100
 
 

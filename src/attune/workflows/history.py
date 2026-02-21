@@ -162,7 +162,7 @@ class WorkflowHistoryStore:
         Args:
             run_id: Unique identifier for this run
             workflow_name: Name of the workflow
-            provider: Provider used (anthropic, openai, google)
+            provider: Provider used (anthropic)
             result: WorkflowResult object with execution details
 
         Raises:

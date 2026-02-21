@@ -20,9 +20,9 @@ model_routing:
 
   # Model assignments per tier
   models:
-    cheap: "claude-3-haiku-20240307"      # Summaries, classification, triage
-    capable: "claude-sonnet-4-20250514"   # Code gen, bug fixes, reviews
-    premium: "claude-opus-4-20250514"     # Architecture, synthesis, coordination
+    cheap: "claude-haiku-4-5-20251001"     # Summaries, classification, triage
+    capable: "claude-sonnet-4-6"          # Code gen, bug fixes, reviews
+    premium: "claude-opus-4-6"            # Architecture, synthesis, coordination
 
   # Task-to-tier mapping overrides (optional)
   task_overrides:

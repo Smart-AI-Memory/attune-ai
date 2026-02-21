@@ -4,7 +4,7 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 
 # Attune AI - Architecture Overview
 
-**Version:** 5.0.0
+**Version:** 3.0.4
 **Last Updated:** February 10, 2026
 **Status:** Living Document
 

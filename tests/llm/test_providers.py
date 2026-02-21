@@ -4,8 +4,6 @@ Tests cover:
 - LLMResponse dataclass
 - BaseLLMProvider abstract class and methods
 - AnthropicProvider initialization and validation
-- OpenAIProvider initialization and validation
-- LocalProvider initialization and validation
 - Provider factory patterns
 """
 
@@ -17,8 +15,6 @@ from attune.llm.providers import (
     AnthropicProvider,
     BaseLLMProvider,
     LLMResponse,
-    LocalProvider,
-    OpenAIProvider,
 )
 
 
@@ -250,158 +246,23 @@ class TestAnthropicProvider:
             assert info["supports_prompt_caching"] is True
 
 
-class TestOpenAIProvider:
-    """Test OpenAI provider initialization and validation"""
-
-    def test_openai_provider_requires_api_key(self):
-        """Test that OpenAIProvider requires API key"""
-        with pytest.raises(ValueError, match="API key is required"):
-            OpenAIProvider(api_key=None)
-
-    def test_openai_provider_requires_non_empty_api_key(self):
-        """Test that OpenAIProvider requires non-empty API key"""
-        with pytest.raises(ValueError, match="API key is required"):
-            OpenAIProvider(api_key="   ")
-
-    def test_openai_provider_missing_package(self):
-        """Test error when openai package not installed"""
-        with patch("builtins.__import__", side_effect=ImportError):
-            with pytest.raises(ImportError, match="openai package required"):
-                OpenAIProvider(api_key="test-key")
-
-    def test_openai_provider_initialization_success(self):
-        """Test successful OpenAIProvider initialization"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key", model="gpt-4")
-
-            assert provider.api_key == "test-key"
-            assert provider.model == "gpt-4"
-
-    def test_openai_provider_default_model(self):
-        """Test OpenAIProvider default model"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key")
-
-            assert provider.model == "gpt-4-turbo-preview"
-
-    def test_openai_get_model_info_gpt4(self):
-        """Test get_model_info for GPT-4"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key", model="gpt-4")
-
-            info = provider.get_model_info()
-
-            assert info["max_tokens"] == 8192
-            assert info["cost_per_1m_input"] == 30.00
-            assert info["cost_per_1m_output"] == 60.00
-
-    def test_openai_get_model_info_gpt35_turbo(self):
-        """Test get_model_info for GPT-3.5 Turbo"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key", model="gpt-3.5-turbo")
-
-            info = provider.get_model_info()
-
-            assert info["max_tokens"] == 16385
-            assert info["cost_per_1m_input"] == 0.50
-
-    def test_openai_get_model_info_unknown_model(self):
-        """Test get_model_info for unknown model returns defaults"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key", model="unknown-model")
-
-            info = provider.get_model_info()
-
-            assert info["max_tokens"] == 128000
-
-
-class TestLocalProvider:
-    """Test Local provider initialization"""
-
-    def test_local_provider_default_initialization(self):
-        """Test LocalProvider with default values"""
-        provider = LocalProvider()
-
-        assert provider.endpoint == "http://localhost:11434"
-        assert provider.model == "llama2"
-        assert provider.api_key is None
-
-    def test_local_provider_custom_endpoint(self):
-        """Test LocalProvider with custom endpoint"""
-        provider = LocalProvider(endpoint="http://custom:8080", model="mistral")
-
-        assert provider.endpoint == "http://custom:8080"
-        assert provider.model == "mistral"
-
-    def test_local_provider_get_model_info(self):
-        """Test get_model_info for local provider"""
-        provider = LocalProvider(endpoint="http://localhost:11434")
-
-        info = provider.get_model_info()
-
-        assert info["max_tokens"] == 4096
-        assert info["cost_per_1m_input"] == 0.0
-        assert info["cost_per_1m_output"] == 0.0
-        assert info["endpoint"] == "http://localhost:11434"
-
-    def test_local_provider_with_kwargs(self):
-        """Test LocalProvider accepts additional kwargs"""
-        provider = LocalProvider(custom_param="value", another="param")
-
-        assert provider.config["custom_param"] == "value"
-        assert provider.config["another"] == "param"
-
-
 class TestProviderComparison:
-    """Test comparing different providers"""
+    """Test provider class hierarchy"""
 
-    def test_all_providers_implement_base_interface(self):
-        """Test that all providers implement required abstract methods"""
-        # This test verifies the class hierarchy is correct
+    def test_anthropic_implements_base_interface(self):
+        """Test that AnthropicProvider implements required abstract methods."""
         assert issubclass(AnthropicProvider, BaseLLMProvider)
-        assert issubclass(OpenAIProvider, BaseLLMProvider)
-        assert issubclass(LocalProvider, BaseLLMProvider)
 
-    def test_all_providers_have_get_model_info(self):
-        """Test all providers implement get_model_info"""
+    def test_anthropic_has_get_model_info(self):
+        """Test AnthropicProvider implements get_model_info."""
         mock_anthropic = MagicMock()
-        mock_openai = MagicMock()
         mock_anthropic.AsyncAnthropic.return_value = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = MagicMock()
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic, "openai": mock_openai}):
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             anthropic = AnthropicProvider(api_key="key1")
-            openai = OpenAIProvider(api_key="key2")
-            local = LocalProvider()
 
             assert hasattr(anthropic, "get_model_info")
-            assert hasattr(openai, "get_model_info")
-            assert hasattr(local, "get_model_info")
-
-            # All should return dicts
             assert isinstance(anthropic.get_model_info(), dict)
-            assert isinstance(openai.get_model_info(), dict)
-            assert isinstance(local.get_model_info(), dict)
 
 
 class TestAnthropicProviderGenerate:
@@ -744,166 +605,6 @@ class TestAnthropicProviderGenerate:
 
             assert result.content == "Analysis complete"
             assert result.tokens_used == 1500
-
-
-class TestOpenAIProviderGenerate:
-    """Test OpenAI provider generate method"""
-
-    @pytest.mark.asyncio
-    async def test_openai_generate_basic(self):
-        """Test basic OpenAI generate call"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        # Mock response
-        mock_response = MagicMock()
-        mock_response.model = "gpt-4"
-        mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 100
-        mock_response.usage.completion_tokens = 50
-        mock_response.usage.total_tokens = 150
-
-        mock_choice = MagicMock()
-        mock_choice.message.content = "OpenAI response"
-        mock_choice.finish_reason = "stop"
-        mock_response.choices = [mock_choice]
-
-        # Mock async create method
-        async def mock_create(*args, **kwargs):
-            return mock_response
-
-        mock_client.chat.completions.create = mock_create
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key")
-
-            messages = [{"role": "user", "content": "Hello"}]
-            result = await provider.generate(messages)
-
-            assert result.content == "OpenAI response"
-            assert result.model == "gpt-4"
-            assert result.tokens_used == 150
-            assert result.finish_reason == "stop"
-            assert result.metadata["provider"] == "openai"
-
-    @pytest.mark.asyncio
-    async def test_openai_generate_with_system_prompt(self):
-        """Test OpenAI generate with system prompt"""
-        mock_openai = MagicMock()
-        mock_client = MagicMock()
-        mock_openai.AsyncOpenAI.return_value = mock_client
-
-        mock_response = MagicMock()
-        mock_response.model = "gpt-4"
-        mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 150
-        mock_response.usage.completion_tokens = 75
-        mock_response.usage.total_tokens = 225
-
-        mock_choice = MagicMock()
-        mock_choice.message.content = "System-aware response"
-        mock_choice.finish_reason = "stop"
-        mock_response.choices = [mock_choice]
-
-        async def mock_create(*args, **kwargs):
-            # Verify system prompt was added
-            assert kwargs["messages"][0]["role"] == "system"
-            assert kwargs["messages"][0]["content"] == "You are helpful"
-            return mock_response
-
-        mock_client.chat.completions.create = mock_create
-
-        with patch.dict("sys.modules", {"openai": mock_openai}):
-            provider = OpenAIProvider(api_key="test-key")
-
-            messages = [{"role": "user", "content": "Hello"}]
-            result = await provider.generate(messages, system_prompt="You are helpful")
-
-            assert result.content == "System-aware response"
-
-
-class AsyncContextManagerMock:
-    """Helper class for mocking async context managers"""
-
-    def __init__(self, return_value):
-        self._return_value = return_value
-
-    async def __aenter__(self):
-        return self._return_value
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return None
-
-
-class TestLocalProviderGenerate:
-    """Test Local provider generate method"""
-
-    @pytest.mark.asyncio
-    async def test_local_provider_generate_basic(self):
-        """Test basic Local provider generate call"""
-        pytest.importorskip("aiohttp")  # Skip if aiohttp not installed
-
-        provider = LocalProvider(endpoint="http://localhost:11434", model="llama2")
-
-        messages = [{"role": "user", "content": "Hello"}]
-
-        # Mock aiohttp response
-        mock_response_data = {
-            "message": {"content": "Local response"},
-            "eval_count": 50,
-            "prompt_eval_count": 100,
-        }
-
-        mock_resp = MagicMock()
-        mock_resp.json = AsyncMock(return_value=mock_response_data)
-
-        mock_session = MagicMock()
-        mock_session.post = MagicMock(return_value=AsyncContextManagerMock(mock_resp))
-
-        with patch("aiohttp.ClientSession") as mock_client:
-            mock_client.return_value = AsyncContextManagerMock(mock_session)
-            result = await provider.generate(messages)
-
-            assert result.content == "Local response"
-            assert result.model == "llama2"
-            assert result.tokens_used == 150
-            assert result.finish_reason == "stop"
-            assert result.metadata["provider"] == "local"
-
-    @pytest.mark.asyncio
-    async def test_local_provider_generate_with_system_prompt(self):
-        """Test Local provider generate with system prompt"""
-        pytest.importorskip("aiohttp")  # Skip if aiohttp not installed
-
-        provider = LocalProvider(endpoint="http://localhost:11434", model="llama2")
-
-        messages = [{"role": "user", "content": "Hello"}]
-
-        mock_response_data = {
-            "message": {"content": "System-aware local response"},
-            "eval_count": 50,
-            "prompt_eval_count": 100,
-        }
-
-        mock_resp = MagicMock()
-        mock_resp.json = AsyncMock(return_value=mock_response_data)
-
-        mock_session = MagicMock()
-
-        def mock_post(*args, **kwargs):
-            # Verify system prompt in payload
-            assert "system" in kwargs["json"]
-            assert kwargs["json"]["system"] == "You are helpful"
-            return AsyncContextManagerMock(mock_resp)
-
-        mock_session.post = mock_post
-
-        with patch("aiohttp.ClientSession") as mock_client:
-            mock_client.return_value = AsyncContextManagerMock(mock_session)
-            result = await provider.generate(messages, system_prompt="You are helpful")
-
-            assert result.content == "System-aware local response"
 
 
 if __name__ == "__main__":

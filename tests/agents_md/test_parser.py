@@ -94,22 +94,15 @@ Test.
             assert config.model_tier == expected_tier, f"Failed for {model_name}"
 
     def test_parse_providers(self, parser):
-        """Test parsing different providers."""
-        test_cases = [
-            ("anthropic", Provider.ANTHROPIC),
-            ("openai", Provider.OPENAI),
-            ("local", Provider.LOCAL),
-        ]
-
-        for provider_name, expected_provider in test_cases:
-            content = f"""---
+        """Test parsing Anthropic provider."""
+        content = """---
 name: test
-provider: {provider_name}
+provider: anthropic
 ---
 Test.
 """
-            config = parser.parse_content(content)
-            assert config.provider == expected_provider
+        config = parser.parse_content(content)
+        assert config.provider == Provider.ANTHROPIC
 
     def test_parse_tools_as_list(self, parser):
         """Test parsing tools as YAML list."""

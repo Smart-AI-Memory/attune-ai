@@ -30,9 +30,6 @@ from .levels import EmpathyLevel
 from .providers import (
     AnthropicProvider,
     BaseLLMProvider,
-    GeminiProvider,
-    LocalProvider,
-    OpenAIProvider,
 )
 from .security import SecurityMixin
 from .state import CollaborationState, UserPattern
@@ -235,16 +232,6 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
             return AnthropicProvider(
                 api_key=api_key,
                 model=model or "claude-sonnet-4-6",
-                **kwargs,
-            )
-        if provider == "openai":
-            return OpenAIProvider(api_key=api_key, model=model or "gpt-4-turbo-preview", **kwargs)
-        if provider in ("google", "gemini"):
-            return GeminiProvider(api_key=api_key, model=model or "gemini-1.5-pro", **kwargs)
-        if provider == "local":
-            return LocalProvider(
-                endpoint=kwargs.get("endpoint", "http://localhost:11434"),
-                model=model or "llama2",
                 **kwargs,
             )
         raise ValueError(f"Unknown provider: {provider}")

@@ -25,7 +25,7 @@ Utility commands:
     attune telemetry signals          Show coordination signals for an agent
 
     attune provider show              Show current provider config
-    attune provider set <name>        Set provider (anthropic, openai, hybrid)
+    attune provider set <name>        Set provider (anthropic)
 
     attune validate                   Validate configuration
     attune version                    Show version

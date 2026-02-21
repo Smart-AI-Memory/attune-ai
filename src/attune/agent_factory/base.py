@@ -297,7 +297,6 @@ class BaseAdapter(ABC):
                     "capable": "claude-sonnet-4-6",
                     "premium": "claude-opus-4-6",
                 },
-                "openai": {"cheap": "gpt-4o-mini", "capable": "gpt-4o", "premium": "o1"},
             }
             return defaults.get(provider, defaults["anthropic"]).get(
                 tier,

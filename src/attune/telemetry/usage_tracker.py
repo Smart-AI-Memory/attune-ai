@@ -102,7 +102,7 @@ class UsageTracker:
             stage: Stage name (e.g., "analysis"), optional
             tier: Model tier (CHEAP, CAPABLE, PREMIUM)
             model: Model ID (e.g., "claude-sonnet-4.5")
-            provider: Provider name (anthropic, openai, etc.)
+            provider: Provider name (anthropic)
             cost: Cost in USD
             tokens: Dict with "input" and "output" keys
             cache_hit: Whether this was a local cache hit

@@ -53,24 +53,6 @@ def test_empathy_llm_initialization_anthropic():
         mock_anthropic.assert_called_once()
 
 
-def test_empathy_llm_initialization_openai():
-    """Test EmpathyLLM initialization with OpenAI provider"""
-    with patch("attune.llm.core.OpenAIProvider") as mock_openai:
-        llm = EmpathyLLM(provider="openai", target_level=4, api_key="test-key")
-
-        assert llm.target_level == 4
-        mock_openai.assert_called_once()
-
-
-def test_empathy_llm_initialization_local():
-    """Test EmpathyLLM initialization with local provider"""
-    with patch("attune.llm.core.LocalProvider") as mock_local:
-        llm = EmpathyLLM(provider="local", target_level=2, model="llama2")
-
-        assert llm.target_level == 2
-        mock_local.assert_called_once()
-
-
 def test_empathy_llm_initialization_invalid_provider():
     """Test initialization with invalid provider raises ValueError"""
     with pytest.raises(ValueError, match="Unknown provider"):

@@ -22,12 +22,15 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.0.0
+## What's New in v3.0.4
 
-- **Major Codebase Refactoring** - Split 48 large files (700-1,500+ lines) into ~165 focused modules. All public APIs preserved via re-exports — no breaking changes for consumers.
-- **Claude Code Plugin** - First-class plugin with 18 MCP tools, 7 skills, and Socratic discovery via `/attune`. Install from the marketplace or configure locally.
-- **CI Stability** - Fixed Windows CI timeouts, Python 3.13 compatibility, and order-dependent test flakes. 11,000+ tests passing across Ubuntu, macOS, and Windows.
-- **Deprecated Code Removed** - Deleted 1,800+ lines of deprecated workflows and dead routes for a cleaner, more maintainable codebase.
+- **Updated Model IDs** - Registry and examples now use
+  current model IDs (`claude-haiku-4-5-20251001`,
+  `claude-sonnet-4-6`, `claude-opus-4-6`).
+- **Plugin v3.0.4** - Marketplace and plugin metadata
+  synced with package version.
+- **Version Consistency** - Fixed stale v5.0.0 planning
+  references across docs and source.
 
 ---
 

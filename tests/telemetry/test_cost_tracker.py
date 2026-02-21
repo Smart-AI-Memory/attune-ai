@@ -383,9 +383,9 @@ class TestModelPricing:
         assert "premium" in MODEL_PRICING
 
     def test_model_pricing_has_legacy_models(self):
-        """Test that MODEL_PRICING includes legacy models."""
+        """Test that MODEL_PRICING includes legacy Claude models."""
         assert "claude-3-haiku-20240307" in MODEL_PRICING
-        assert "gpt-4-turbo" in MODEL_PRICING
+        assert "claude-3-5-sonnet-20241022" in MODEL_PRICING
 
     def test_baseline_model_defined(self):
         """Test that BASELINE_MODEL is defined and valid."""

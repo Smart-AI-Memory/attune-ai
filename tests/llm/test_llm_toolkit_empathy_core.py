@@ -88,54 +88,6 @@ class TestEmpathyLLMProviderCreation:
         mock_provider_class.assert_called_once()
         assert llm.provider == mock_provider
 
-    @patch("attune.llm.core.OpenAIProvider")
-    def test_create_openai_provider(self, mock_provider_class):
-        """Test creating OpenAI provider."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_provider = MagicMock()
-        mock_provider_class.return_value = mock_provider
-
-        EmpathyLLM(provider="openai", api_key="test-key")
-
-        mock_provider_class.assert_called_once()
-
-    @patch("attune.llm.core.GeminiProvider")
-    def test_create_gemini_provider(self, mock_provider_class):
-        """Test creating Gemini provider."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_provider = MagicMock()
-        mock_provider_class.return_value = mock_provider
-
-        EmpathyLLM(provider="gemini", api_key="test-key")
-
-        mock_provider_class.assert_called_once()
-
-    @patch("attune.llm.core.GeminiProvider")
-    def test_create_google_provider_alias(self, mock_provider_class):
-        """Test creating Google provider (alias for Gemini)."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_provider = MagicMock()
-        mock_provider_class.return_value = mock_provider
-
-        EmpathyLLM(provider="google", api_key="test-key")
-
-        mock_provider_class.assert_called_once()
-
-    @patch("attune.llm.core.LocalProvider")
-    def test_create_local_provider(self, mock_provider_class):
-        """Test creating local provider."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_provider = MagicMock()
-        mock_provider_class.return_value = mock_provider
-
-        EmpathyLLM(provider="local")
-
-        mock_provider_class.assert_called_once()
-
     @patch("attune.llm.core.AnthropicProvider")
     def test_create_unknown_provider_raises(self, mock_provider_class):
         """Test that unknown provider raises ValueError."""
@@ -894,57 +846,6 @@ class TestLevelMethods:
 # =============================================================================
 # Provider Environment Variable Tests
 # =============================================================================
-
-
-class TestProviderEnvVariables:
-    """Tests for provider API key environment variable fallback."""
-
-    @patch("attune.llm.core.OpenAIProvider")
-    @patch.dict("os.environ", {"OPENAI_API_KEY": "env-openai-key"})
-    def test_openai_key_from_environment(self, mock_openai_class):
-        """Test OpenAI provider uses env var when key not provided."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_openai_class.return_value = MagicMock()
-
-        EmpathyLLM(api_key=None, provider="openai")
-
-        # Verify OpenAI provider was created with env key
-        mock_openai_class.assert_called_once()
-        call_kwargs = mock_openai_class.call_args[1]
-        assert call_kwargs["api_key"] == "env-openai-key"
-
-    @patch("attune.llm.core.GeminiProvider")
-    @patch.dict("os.environ", {"GOOGLE_API_KEY": "env-google-key"})
-    def test_gemini_key_from_environment(self, mock_gemini_class):
-        """Test Gemini provider uses GOOGLE_API_KEY env var."""
-        from attune.llm.core import EmpathyLLM
-
-        mock_gemini_class.return_value = MagicMock()
-
-        EmpathyLLM(api_key=None, provider="gemini")
-
-        mock_gemini_class.assert_called_once()
-        call_kwargs = mock_gemini_class.call_args[1]
-        assert call_kwargs["api_key"] == "env-google-key"
-
-    @patch("attune.llm.core.GeminiProvider")
-    @patch.dict("os.environ", {"GEMINI_API_KEY": "env-gemini-key"}, clear=False)
-    def test_gemini_key_from_gemini_env(self, mock_gemini_class):
-        """Test Gemini provider falls back to GEMINI_API_KEY."""
-        import os
-
-        from attune.llm.core import EmpathyLLM
-
-        # Clear GOOGLE_API_KEY if exists to test fallback
-        if "GOOGLE_API_KEY" in os.environ:
-            del os.environ["GOOGLE_API_KEY"]
-
-        mock_gemini_class.return_value = MagicMock()
-
-        EmpathyLLM(api_key=None, provider="google")
-
-        mock_gemini_class.assert_called_once()
 
 
 # =============================================================================
