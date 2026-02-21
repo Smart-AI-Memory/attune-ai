@@ -909,7 +909,7 @@ Extended Thinking (announced Dec 2024):
 # Capable tier - Sonnet 4.5 with thinking support
 ModelInfo(
     provider="anthropic",
-    id="claude-sonnet-4-5-20250929",
+    id="claude-sonnet-4-6",
     tier="capable",
     input_price=3.00,
     output_price=15.00,
@@ -2131,7 +2131,7 @@ ModelInfo(
 # Capable tier - Moderate limit
 ModelInfo(
     provider="anthropic",
-    id="claude-sonnet-4-5-20250929",
+    id="claude-sonnet-4-6",
     tier="capable",
     max_tokens=4096,  # Reduced from 8192
     # ...

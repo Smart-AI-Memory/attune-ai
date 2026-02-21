@@ -138,7 +138,7 @@ Task 14 (Coverage target) ── standalone
     <note>
       Current Claude model IDs (as of Feb 2026):
       - Opus 4.6:  claude-opus-4-6
-      - Sonnet 4.5: claude-sonnet-4-5-20250929
+      - Sonnet 4.5: claude-sonnet-4-6
       - Haiku 4.5:  claude-haiku-4-5-20251001
       All models in the 4.5/4.6 family support vision.
     </note>
@@ -185,7 +185,7 @@ Task 14 (Coverage target) ── standalone
                 supports_tools=True,
             ),
             "capable": ModelInfo(
-                id="claude-sonnet-4-5-20250929",
+                id="claude-sonnet-4-6",
                 provider="anthropic",
                 tier="capable",
                 input_cost_per_million=3.00,
