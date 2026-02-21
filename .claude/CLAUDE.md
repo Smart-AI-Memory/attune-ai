@@ -1,4 +1,4 @@
-# Attune AI Framework v2.10.0
+# Attune AI Framework v3.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -13,7 +13,7 @@ python -m attune.models.auth_cli setup    # Configure authentication
 python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
-**CLI:** `attune <command>` (canonical) or `python -m attune.cli` (full). See `docs/reference/cli-reference.md`.
+**CLI:** `attune <command>` (canonical) or `python -m attune.cli_minimal` (full). See `docs/reference/cli-reference.md`.
 
 ---
 
@@ -32,6 +32,8 @@ Use `/hub-name` to access organized workflows:
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | discover, plan, export | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
+| `/batch` | submit, status, results, wait | Batch API processing (50% cost savings) |
+| `/wizard` | run, create, list, edit | Guided multi-step wizards |
 
 ---
 
@@ -115,4 +117,4 @@ src/attune/
 
 ---
 
-**Version:** 2.10.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)

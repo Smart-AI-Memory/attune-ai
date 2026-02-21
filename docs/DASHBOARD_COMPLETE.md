@@ -34,7 +34,7 @@ python scripts/populate_redis_direct.py
 
 **Output:**
 ```
-🚀 Starting Empathy Dashboard (Standalone)...
+🚀 Starting Attune Dashboard (Standalone)...
 📊 Dashboard will be available at: http://localhost:8000
 ```
 
@@ -296,7 +296,7 @@ CMD ["python", "-c", "from attune.dashboard import run_standalone_dashboard; run
 
 ```ini
 [Unit]
-Description=Empathy Dashboard
+Description=Attune Dashboard
 After=network.target redis.service
 
 [Service]

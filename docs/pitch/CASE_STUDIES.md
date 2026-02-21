@@ -182,7 +182,7 @@ Time savings + AI savings - License cost
 
 ## Key Value Drivers
 
-### 1. Cost Reduction (80-96%)
+### 1. Cost Reduction (34-86%)
 Smart model routing ensures you're not paying premium prices for simple tasks.
 
 **Example:**
@@ -212,9 +212,9 @@ Built-in audit trails and security scanning reduce compliance burden.
 
 ## Competitive Advantage Summary
 
-| Capability | Empathy | Generic AI Tools |
+| Capability | Attune | Generic AI Tools |
 |------------|---------|------------------|
-| Cost optimization | 80-96% savings | Pay full price |
+| Cost optimization | 34-86% savings | Pay full price |
 | Persistent memory | Yes (dual-tier) | Session-only |
 | Bug prediction | Proactive | Reactive only |
 | HIPAA-ready | Built-in | DIY integration |

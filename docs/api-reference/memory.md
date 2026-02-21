@@ -287,13 +287,13 @@ async for message in coordinator.subscribe("findings"):
 
 ```bash
 # Start memory control panel
-empathy-memory serve
+attune memory serve
 
 # Check status
-empathy-memory status
+attune memory status
 
 # List patterns
-empathy-memory patterns
+attune memory patterns
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 AI-powered developer workflows with Socratic discovery, persistent memory, and multi-agent orchestration for Claude Code. One command -- `/attune` -- intelligently routes you to security audits, code reviews, test generation, performance analysis, and more through a guided, conversational interface.
 
-**Version:** 2.10.4 | **License:** Apache 2.0 | **Python:** 3.10+
+**Version:** 3.0.0 | **License:** Apache 2.0 | **Python:** 3.10+
 
 ## Installation
 
@@ -15,7 +15,7 @@ pip install attune-ai
 For multi-agent coordination with Redis:
 
 ```bash
-pip install attune-ai[redis]
+pip install attune-ai[memory]
 ```
 
 ## Quick Start
@@ -43,6 +43,10 @@ Skills are high-level capabilities exposed as slash commands within Claude Code.
 | `memory-and-context` | Store, retrieve, search, and manage persistent memory across sessions. Set and query context for long-running tasks. |
 | `workflow-orchestration` | Run automated analysis workflows: security audits, code reviews, test generation, bug prediction, performance analysis, and release preparation. |
 | `refactor-plan` | Generate structured refactoring plans with dependency analysis, risk assessment, and step-by-step execution guidance. |
+| `code-quality` | Code review and bug prediction — find quality issues, style violations, and likely bugs. |
+| `planning` | Development planning — feature design, TDD planning, refactoring strategy, architecture review. |
+| `release-prep` | Pre-release preparation — health checks, security audit, changelog validation, version bumps. |
+| `security-audit` | Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks. |
 
 ## MCP Tools
 
@@ -88,7 +92,7 @@ The default installation uses local storage for memory and single-agent operatio
 Upgrade with a single command:
 
 ```bash
-pip install attune-ai[redis]
+pip install attune-ai[memory]
 ```
 
 Then set the `REDIS_URL` environment variable or configure via `/attune`.

@@ -48,7 +48,7 @@ attune orchestrate health-check --mode release
 ```
 
 **VSCode Extension:**
-1. Open Empathy Dashboard (sidebar)
+1. Open Attune Dashboard (sidebar)
 2. Scroll to "META-ORCHESTRATION (v4.0)" section
 3. Click "Health Check" button
 4. Results open in dedicated panel
@@ -124,7 +124,7 @@ attune orchestrate release-prep --path .
 ```
 
 **VSCode Extension:**
-1. Open Empathy Dashboard
+1. Open Attune Dashboard
 2. Click "Release Prep" button in v4.0 section
 3. Review quality gates in dedicated panel
 

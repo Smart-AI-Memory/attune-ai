@@ -176,13 +176,13 @@ RUN pip install redis
 
 EXPOSE 8000
 
-CMD ["empathy", "dashboard", "start", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["attune", "dashboard", "start", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ```bash
 # Build and run
-docker build -t empathy-dashboard .
-docker run -p 8000:8000 empathy-dashboard
+docker build -t attune-dashboard .
+docker run -p 8000:8000 attune-dashboard
 ```
 
 ---
@@ -283,7 +283,7 @@ python scripts/populate_redis_direct.py
 # Start Redis
 redis-server
 
-# Or via empathy CLI
+# Or via attune CLI
 attune memory start
 ```
 

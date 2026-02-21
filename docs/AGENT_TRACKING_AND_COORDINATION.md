@@ -412,7 +412,7 @@ Both patterns require Redis for storage:
 # Start Redis
 redis-server
 
-# Or use empathy command
+# Or use attune command
 attune memory start
 
 # Verify Redis is running
@@ -599,12 +599,12 @@ Heartbeat and coordination components automatically publish to streams when enab
 # Enable streaming in HeartbeatCoordinator
 coordinator = HeartbeatCoordinator(enable_streaming=True)
 coordinator.start_heartbeat(agent_id="my-agent")
-# → Automatically publishes to empathy:events:agent_heartbeat stream
+# → Automatically publishes to attune:events:agent_heartbeat stream
 
 # Enable streaming in CoordinationSignals
 signals = CoordinationSignals(agent_id="orchestrator", enable_streaming=True)
 signals.signal(signal_type="task_complete", target_agent="worker")
-# → Automatically publishes to empathy:events:coordination_signal stream
+# → Automatically publishes to attune:events:coordination_signal stream
 ```
 
 ### Event Types
@@ -618,7 +618,7 @@ signals.signal(signal_type="task_complete", target_agent="worker")
 
 ### Stream Architecture
 
-**Stream Naming:** `empathy:events:{event_type}`
+**Stream Naming:** `attune:events:{event_type}`
 
 **Features:**
 

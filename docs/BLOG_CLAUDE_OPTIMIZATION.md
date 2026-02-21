@@ -89,7 +89,7 @@ Type these directly in Claude Code:
 
 ### VSCode Dashboard
 
-Every button in the Empathy Dashboard now shows its slash command. Click "Debug" and see `/debug`. I built this so you learn the shortcuts as you work.
+Every button in the Attune Dashboard now shows its slash command. Click "Debug" and see `/debug`. I built this so you learn the shortcuts as you work.
 
 ### Automatic Pattern Learning
 

@@ -10,11 +10,7 @@ AI-powered refactoring analysis and roadmap generation.
 ## Quick Start
 
 ```bash
-# CLI
 attune workflow run refactor-plan --path ./src
-
-# Legacy alias
-empathy workflow run refactor-plan --path ./src
 ```
 
 ## Usage

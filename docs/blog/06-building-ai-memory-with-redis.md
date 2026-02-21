@@ -286,13 +286,13 @@ We're exploring additional Redis capabilities:
 pip install attune-ai
 
 # Start memory server (auto-starts Redis)
-empathy-memory serve
+pip install 'attune-ai[memory]'
 
 # Check status
-empathy-memory status
+attune memory status
 ```
 
-The full source is available: [github.com/Smart-AI-Memory/empathy](https://github.com/Smart-AI-Memory/empathy)
+The full source is available: [github.com/Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 ---
 

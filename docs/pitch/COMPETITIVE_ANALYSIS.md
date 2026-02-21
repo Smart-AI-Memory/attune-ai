@@ -23,13 +23,13 @@ The AI developer tools market includes several categories:
 
 ## Competitive Matrix
 
-| Capability | Empathy | GitHub Copilot | LangChain | Cursor | CrewAI |
+| Capability | Attune | GitHub Copilot | LangChain | Cursor | CrewAI |
 |------------|---------|----------------|-----------|--------|--------|
 | **Anticipatory Intelligence** | Yes (5 levels) | No | No | No | No |
 | **Persistent Memory** | Dual-tier | Limited | Manual | Session | Manual |
 | **Multi-Agent Orchestration** | 6 patterns | No | Manual | No | Yes |
 | **Smart Model Routing** | Automatic | No | Manual | Limited | No |
-| **Cost Optimization** | 80-96% | N/A | Manual | Limited | N/A |
+| **Cost Optimization** | 34-86% | N/A | Manual | Limited | N/A |
 | **Security Scanning** | Built-in | No | No | No | No |
 | **HIPAA-Ready** | Yes | No | DIY | No | No |
 | **Audit Logging** | Built-in | No | Manual | No | No |
@@ -47,12 +47,12 @@ The AI developer tools market includes several categories:
 | **Model** | OpenAI (fixed) | Multi-model (Claude, GPT, Gemini, Ollama) |
 | **Approach** | Reactive autocomplete | Anticipatory intelligence |
 | **Memory** | Session-based | Persistent across sessions |
-| **Cost control** | Fixed subscription | Pay-per-use with 80-96% optimization |
+| **Cost control** | Fixed subscription | Pay-per-use with 34-86% optimization |
 | **Security** | Code suggestions only | Built-in scanning + PII scrubbing |
 | **Customization** | Limited | Full wizard/workflow customization |
 | **Enterprise compliance** | Basic | HIPAA/SOC2 ready |
 
-**When to choose Empathy:**
+**When to choose Attune:**
 - Need multi-model flexibility
 - Require persistent memory across sessions
 - Enterprise compliance requirements
@@ -78,7 +78,7 @@ The AI developer tools market includes several categories:
 | **Model routing** | Manual | Automatic optimization |
 | **Production-ready** | Framework only | Complete platform |
 
-**When to choose Empathy:**
+**When to choose Attune:**
 - Want production-ready workflows out of the box
 - Need built-in security and compliance
 - Prefer guided configuration over coding
@@ -102,9 +102,9 @@ The AI developer tools market includes several categories:
 | **Security** | No | Built-in scanning |
 | **Compliance** | No | HIPAA/SOC2 ready |
 | **Model choice** | Limited | Full flexibility |
-| **Cost control** | Subscription | Smart routing (80-96% savings) |
+| **Cost control** | Subscription | Smart routing (34-86% savings) |
 
-**When to choose Empathy:**
+**When to choose Attune:**
 - Need IDE-agnostic solution
 - Require persistent memory
 - Enterprise compliance needs
@@ -129,7 +129,7 @@ The AI developer tools market includes several categories:
 | **Model routing** | Manual | Automatic optimization |
 | **Production features** | Limited | Comprehensive |
 
-**When to choose Empathy:**
+**When to choose Attune:**
 - Need guided agent creation (Socratic builder)
 - Require built-in security/compliance
 - Want cost optimization included
@@ -147,14 +147,14 @@ The AI developer tools market includes several categories:
 | Aspect | Enterprise Platforms | Attune AI |
 |--------|---------------------|-------------------|
 | **Deployment** | Cloud-locked | Anywhere (cloud, on-prem, local) |
-| **Cost** | Pay-per-token (full price) | 80-96% optimized routing |
+| **Cost** | Pay-per-token (full price) | 34-86% optimized routing |
 | **Lock-in** | High | None (Apache 2.0) |
 | **Security** | Platform-provided | Application-level + platform |
 | **Customization** | Limited | Full source access |
 | **Compliance** | Platform-certified | Application-certified |
 | **Setup complexity** | High | pip install |
 
-**When to choose Empathy:**
+**When to choose Attune:**
 - Want to avoid cloud lock-in
 - Need cost optimization beyond platform pricing
 - Require application-level security controls
@@ -171,15 +171,15 @@ The AI developer tools market includes several categories:
 
 ### 1. Anticipatory Intelligence (No Direct Competitor)
 
-Empathy's 5-level maturity model is unique in the market:
+Attune's 5-level maturity model is unique in the market:
 
 | Level | Capability | Competitors |
 |-------|------------|-------------|
 | 1 | Reactive | All tools |
 | 2 | Guided | Some tools |
 | 3 | Proactive | Rare |
-| 4 | **Anticipatory** | **Empathy only** |
-| 5 | Transformative | **Empathy only** |
+| 4 | **Anticipatory** | **Attune only** |
+| 5 | Transformative | **Attune only** |
 
 No competitor offers AI that predicts problems before they occur.
 
@@ -201,7 +201,7 @@ Competitors require manual model selection or pay premium prices for all tasks.
 | Redis (Short-term) | Agent coordination | Manual in most |
 | MemDocs (Long-term) | Pattern learning | Not available |
 
-Empathy remembers your codebase patterns and decisions across sessions.
+Attune remembers your codebase patterns and decisions across sessions.
 
 ### 4. Claude-Native Optimization
 
@@ -213,7 +213,7 @@ Built specifically for the Claude ecosystem:
 
 ### 5. Enterprise Compliance Built-In
 
-| Feature | Empathy | Competitors |
+| Feature | Attune | Competitors |
 |---------|---------|-------------|
 | PII scrubbing | Automatic | DIY |
 | Audit logging | Built-in | Manual |
@@ -229,7 +229,7 @@ Built specifically for the Claude ecosystem:
                     │         Enterprise Compliance           │
                     │                  HIGH                    │
                     │                                         │
-                    │    AWS Bedrock    ★ EMPATHY            │
+                    │    AWS Bedrock    ★ ATTUNE            │
                     │    Azure AI                             │
                     │                                         │
                     ├─────────────────────────────────────────┤
@@ -244,7 +244,7 @@ Level               │                                         │
                               Cost Optimization →
 ```
 
-**Empathy's unique position:** High compliance + High intelligence + Cost optimization
+**Attune's unique position:** High compliance + High intelligence + Cost optimization
 
 ---
 
@@ -275,30 +275,30 @@ Level               │                                         │
 ## Addressing Competitive Threats
 
 ### Threat: GitHub adds anticipatory features
-**Response:** Empathy's model-agnostic approach and enterprise compliance provide differentiation. GitHub is locked to OpenAI.
+**Response:** Attune's model-agnostic approach and enterprise compliance provide differentiation. GitHub is locked to OpenAI.
 
 ### Threat: LangChain adds production features
-**Response:** Empathy's integrated approach vs. LangChain's framework approach. Different value propositions.
+**Response:** Attune's integrated approach vs. LangChain's framework approach. Different value propositions.
 
 ### Threat: Anthropic releases native tools
-**Response:** Partner opportunity. Empathy complements (development tools) vs. competes (runtime inference).
+**Response:** Partner opportunity. Attune complements (development tools) vs. competes (runtime inference).
 
 ### Threat: Enterprise platforms reduce costs
-**Response:** Empathy's routing still provides optimization. Platform-agnostic positioning.
+**Response:** Attune's routing still provides optimization. Platform-agnostic positioning.
 
 ---
 
 ## Sales Positioning Summary
 
-**Against Copilot:** "Copilot suggests code. Empathy predicts problems."
+**Against Copilot:** "Copilot suggests code. Attune predicts problems."
 
-**Against LangChain:** "LangChain is a framework. Empathy is a platform."
+**Against LangChain:** "LangChain is a framework. Attune is a platform."
 
-**Against Cursor:** "Cursor is an IDE. Empathy works everywhere."
+**Against Cursor:** "Cursor is an IDE. Attune works everywhere."
 
-**Against CrewAI:** "CrewAI orchestrates agents. Empathy creates and optimizes them."
+**Against CrewAI:** "CrewAI orchestrates agents. Attune creates and optimizes them."
 
-**Against Enterprise Platforms:** "They charge full price. We save 80-96%."
+**Against Enterprise Platforms:** "They charge full price. We save 34-86%."
 
 ---
 

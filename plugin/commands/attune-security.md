@@ -5,7 +5,7 @@ argument-hint: "<path to scan>"
 category: workflows
 aliases: [asec]
 tags: [security, audit, vulnerability, scan]
-version: "2.10.4"
+version: "3.0.0"
 ---
 
 # attune-security

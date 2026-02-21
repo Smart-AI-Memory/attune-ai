@@ -38,7 +38,7 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 
 | Metric | Value |
 |--------|-------|
-| **Cost Reduction** | 80-96% via intelligent model routing |
+| **Cost Reduction** | 34-86% via intelligent model routing |
 | **Smart Wizards** | 10 (security, testing, docs, performance...) |
 | **Integrated Workflows** | 14 (including 4 meta-workflows) |
 | **Agent Templates** | 7 with 6 composition patterns |

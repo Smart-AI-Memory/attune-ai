@@ -3,13 +3,15 @@ name: docs
 description: Documentation generation and explanation
 category: primary
 aliases: [doc]
-tags: [documentation, readme, changelog, explain]
-version: "1.0.0"
+tags: [documentation, readme, changelog, explain, audit]
+version: "1.1.0"
 question:
   header: "Docs action"
   question: "What documentation task do you need?"
   multiSelect: false
   options:
+    - label: "Audit accuracy"
+      description: "Verify doc claims match the codebase"
     - label: "Explain code"
       description: "Understand how code works"
     - label: "Generate docs"
@@ -22,12 +24,13 @@ question:
 
 # docs
 
-Documentation generation and code explanation.
+Documentation generation, explanation, and accuracy auditing.
 
 ## Routes
 
 | Subcommand | Action |
 | ---------- | ------ |
+| `audit` | Verify documentation accuracy |
 | `explain` | Explain how code works |
 | `generate` | Generate documentation |
 | `readme` | Update README |
@@ -38,6 +41,7 @@ Documentation generation and code explanation.
 
 ```bash
 /docs                   # Ask what to do
+/docs audit             # Verify doc accuracy
 /docs explain           # Explain code
 /docs generate          # Generate documentation
 /docs readme            # Update README
@@ -45,6 +49,139 @@ Documentation generation and code explanation.
 ```
 
 ## Behavior
+
+### audit
+
+Cross-reference documentation claims against the actual
+codebase. Run all checks below and report a summary table
+with pass/fail per check and file:line references for any
+mismatches.
+
+#### 1. Test count
+
+Run:
+
+```bash
+pytest --collect-only -q 2>/dev/null | tail -1
+```
+
+Compare the collected/passing count against:
+
+- The static badge in README.md (the number in the
+  `img.shields.io/badge/tests-` URL)
+- Any "X+ tests" claims in README body text
+- Any test counts in CHANGELOG.md (current release only)
+
+Flag if the README count exceeds the actual count by
+more than 5%.
+
+#### 2. Workflow count
+
+Count entries under `[project.entry-points."attune.workflows"]`
+in `pyproject.toml`. Compare against any "N built-in" claims
+in README.md. Flag mismatches.
+
+#### 3. Skill count
+
+Count directories in `plugin/skills/` (each directory with
+a `SKILL.md` is one skill). Compare against:
+
+- README.md (any "N skills" claims)
+- CHANGELOG.md (current release section)
+- `.claude-plugin/marketplace.json`
+- `plugin/.claude-plugin/marketplace.json`
+
+Flag mismatches.
+
+#### 4. MCP tool count
+
+Count `@server.tool()` decorators or tool registrations in
+`src/attune/mcp/server.py`. Compare against any "N tools" or
+"N MCP tools" claims in README.md and plugin/README.md.
+Flag mismatches.
+
+#### 5. File line limits
+
+If README.md claims a maximum file size (e.g., "no file
+exceeds X lines"), verify by running:
+
+```bash
+find src/attune -name "*.py" -exec wc -l {} + \
+  | sort -rn | head -5
+```
+
+Flag any files that exceed the claimed limit.
+
+#### 6. Install extras
+
+Grep README.md and plugin/README.md for `attune-ai[` to
+find all referenced extras. Verify each extra name exists
+in `pyproject.toml` under `[project.optional-dependencies]`.
+Flag any extras that are referenced in docs but do not exist
+in pyproject.toml (e.g., `[redis]` when the actual extra is
+`[memory]`).
+
+#### 7. Stale command references
+
+Grep all `*.md` files for these removed/legacy patterns:
+
+- `empathy-memory` (removed in v2.6.2)
+- `empathy workflow` (renamed to `attune workflow`)
+- `empathy` as a CLI prefix (e.g., `empathy workflow`)
+
+Report file:line for each occurrence. Exclude CHANGELOG
+entries that document historical changes (those are
+intentionally referencing old names).
+
+#### 8. Version consistency
+
+Compare the version string across:
+
+- `pyproject.toml` (`version = "X.Y.Z"`)
+- `src/attune/__init__.py` (`__version__`)
+- `CHANGELOG.md` (latest `## [X.Y.Z]` heading)
+- `plugin/.claude-plugin/plugin.json`
+- `.claude-plugin/marketplace.json`
+- `plugin/.claude-plugin/marketplace.json`
+
+Flag any that do not match.
+
+#### 9. Cross-doc number consistency
+
+Check that the same metric uses the same number everywhere:
+
+- Cost savings percentages (README vs FAQ vs pitch docs)
+- Test counts (README badge vs README body vs CHANGELOG)
+- Skill counts (README vs CHANGELOG vs marketplace.json)
+- Tool counts (README vs plugin README)
+
+Flag any contradictions.
+
+#### 10. Documentation links
+
+For each markdown link in README.md that points to a local
+file (not a URL), verify the target file exists. Report
+broken links.
+
+#### Output format
+
+Present results as:
+
+```markdown
+## Doc Audit Results
+
+| # | Check | Status | Details |
+|---|-------|--------|---------|
+| 1 | Test count | PASS/FAIL | ... |
+| 2 | Workflow count | PASS/FAIL | ... |
+...
+
+### Issues Found
+
+- [README.md:76](README.md#L76): claims "14,000+ tests"
+  but actual count is 11,016
+...
+```
 
 ### explain
 

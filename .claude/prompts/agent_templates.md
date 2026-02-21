@@ -227,10 +227,10 @@ Use when: Building new functionality with acceptance criteria
       Run code-review workflow → creates entries in telemetry.jsonl
     </criteria>
     <criteria id="2">
-      CLI command "empathy telemetry show" displays usage statistics
+      CLI command "attune telemetry show" displays usage statistics
     </criteria>
     <criteria id="3">
-      CLI command "empathy telemetry savings" calculates tier routing savings
+      CLI command "attune telemetry savings" calculates tier routing savings
     </criteria>
     <criteria id="4">
       Concurrent workflows don't corrupt JSON Lines file (thread-safety test)
@@ -261,7 +261,7 @@ Use when: Building new functionality with acceptance criteria
   <verification>
     <command>python -m pytest tests/unit/telemetry/ -v</command>
     <command>python -m pytest tests/integration/test_telemetry_integration.py -v</command>
-    <command>empathy telemetry show</command>
+    <command>attune telemetry show</command>
     <expected_result>
       - 14/14 unit tests pass
       - 6/6 integration tests pass

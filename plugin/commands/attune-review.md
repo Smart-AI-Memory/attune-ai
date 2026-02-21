@@ -5,7 +5,7 @@ argument-hint: "<path to review>"
 category: workflows
 aliases: [arev]
 tags: [review, quality, code-review, analyze]
-version: "2.10.4"
+version: "3.0.0"
 ---
 
 # attune-review

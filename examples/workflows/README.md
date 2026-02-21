@@ -70,13 +70,13 @@ class MyWorkflow(BaseWorkflow):
 
 ```bash
 # List workflows
-empathy workflow list
+attune workflow list
 
 # Describe a workflow
-empathy workflow describe research
+attune workflow describe research
 
 # Run a workflow
-empathy workflow run research --input '{"sources": ["doc.md"]}'
+attune workflow run research --input '{"sources": ["doc.md"]}'
 ```
 
 ## See Also

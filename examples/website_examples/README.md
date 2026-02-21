@@ -134,7 +134,7 @@ result = await wizard.analyze({
 ### Optional Redis (Team Coordination)
 
 ```bash
-empathy-memory serve  # Auto-starts Redis
+pip install 'attune-ai[memory]'  # Redis auto-detected
 ```
 
 - Real-time multi-agent coordination
@@ -154,8 +154,8 @@ pip install attune-ai
 ## Links
 
 - **Full Demo:** `python ../persistent_memory_showcase.py`
-- **Documentation:** https://github.com/Smart-AI-Memory/empathy/tree/main/docs
-- **GitHub:** https://github.com/Smart-AI-Memory/empathy
+- **Documentation:** [docs](https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs)
+- **GitHub:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 ---
 

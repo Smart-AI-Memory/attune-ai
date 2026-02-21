@@ -546,11 +546,11 @@ __all__ = [
     # CrewAI-based multi-agent workflows (v4.0.0)
     # Removed deprecated: "HealthCheckCrew" (use OrchestratedHealthCheckWorkflow)
     # Removed deprecated: "HealthCheckCrewResult"
-    "ReleasePreparationCrew",
-    "ReleasePreparationCrewResult",
-    "TestCoverageBoostCrew",
-    "TestCoverageBoostCrewResult",
-    # Removed deprecated: "TestCoverageBoostWorkflow" (use TestCoverageBoostCrew)
+    # Removed deprecated: "ReleasePreparationCrew" (use ReleasePrepTeamWorkflow)
+    # Removed deprecated: "ReleasePreparationCrewResult"
+    # Removed deprecated: "TestCoverageBoostCrew" (use ParallelTestGenerationWorkflow)
+    # Removed deprecated: "TestCoverageBoostCrewResult"
+    # Removed deprecated: "TestCoverageBoostWorkflow"
     # Removed deprecated: "CoverageBoostResult"
     # Experimental: Meta-orchestration
     "OrchestratedHealthCheckWorkflow",

@@ -6,7 +6,7 @@ description: Connect Attune AI to Claude Code via MCP. Enable AI workflows, agen
 
 Connect Attune AI workflows directly to Claude Code or Claude Desktop using the Model Context Protocol.
 
-**New in v5.1.1:** Empathy MCP server exposes all production workflows as native tools - security audits, test generation, performance analysis, and more.
+**New in v5.1.1:** Attune MCP server exposes all production workflows as native tools - security audits, test generation, performance analysis, and more.
 
 ---
 
@@ -37,7 +37,7 @@ The MCP server is automatically configured via `.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "empathy": {
+    "attune": {
       "command": "python",
       "args": ["-m", "attune.mcp.server"],
       "env": {
@@ -72,7 +72,7 @@ Add to your Claude Desktop config file:
 ```json
 {
     "mcpServers": {
-        "empathy": {
+        "attune": {
             "command": "python",
             "args": ["-m", "attune.mcp.server"],
             "env": {
@@ -88,9 +88,9 @@ Then restart Claude Desktop.
 
 ---
 
-## Available Tools (10)
+## Available Tools (18)
 
-The Empathy MCP server exposes all production workflows as tools:
+The Attune MCP server exposes all production workflows as tools:
 
 ### Workflow Tools
 
@@ -116,9 +116,9 @@ The Empathy MCP server exposes all production workflows as tools:
 
 | Resource URI | Description |
 |--------------|-------------|
-| `empathy://workflows` | List of all available workflows |
-| `empathy://auth/config` | Current authentication strategy configuration |
-| `empathy://telemetry` | Cost tracking and performance metrics |
+| `attune://workflows` | List of all available workflows |
+| `attune://auth/config` | Current authentication strategy configuration |
+| `attune://telemetry` | Cost tracking and performance metrics |
 
 ---
 
@@ -158,7 +158,7 @@ Direct tool invocation or natural language:
 
 > **You:** Check for security vulnerabilities in my API code
 
-> **Claude:** I'll run a security audit using the empathy security_audit tool.
+> **Claude:** I'll run a security audit using the attune security_audit tool.
 >
 > *[Invokes security_audit(path="src/api/")]*
 >
@@ -195,7 +195,7 @@ cat .claude/MCP_TEST_RESULTS.md
 
 ## Verification Hooks (v5.1.1+)
 
-Empathy automatically validates outputs via Claude Code hooks:
+Attune automatically validates outputs via Claude Code hooks:
 
 **Python File Validation:**
 - Syntax checking after file writes
@@ -233,7 +233,7 @@ echo $PYTHONPATH
 
 1. **Verify `.claude/mcp.json` exists** in project root
 2. **Restart Claude Code** completely
-3. **Check Claude Code status bar** for "empathy" server
+3. **Check Claude Code status bar** for "attune" server
 4. **Review logs** in Claude Code output panel
 
 ### Tools Not Available in Claude Desktop
@@ -295,4 +295,4 @@ The MCP server works with any MCP-compatible client:
 
 ## Legacy: Socratic MCP Server
 
-**Note:** The Socratic workflow builder MCP server (`attune.socratic.mcp_server`) is deprecated in v5.1.1+. Use the production Empathy MCP server (`attune.mcp.server`) instead, which exposes all workflows directly.
+**Note:** The Socratic workflow builder MCP server (`attune.socratic.mcp_server`) is deprecated in v5.1.1+. Use the production Attune MCP server (`attune.mcp.server`) instead, which exposes all workflows directly.

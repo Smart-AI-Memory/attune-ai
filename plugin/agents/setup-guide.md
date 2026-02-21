@@ -42,7 +42,7 @@ Detect-and-adapt agent that checks for attune-ai prerequisites and guides setup.
    - Offer the install command:
 
      ```bash
-     pip install attune-ai[redis]
+     pip install attune-ai[memory]
      ```
 
    - NEVER block on this step. Always allow the user to proceed without Redis. Redis is only required for healthcare-cds, not for the attune-ai plugin.
@@ -82,12 +82,12 @@ Detect-and-adapt agent that checks for attune-ai prerequisites and guides setup.
 
 After all detection steps complete, output a summary table showing the state of each component:
 
-| Component  | Status                | Action                                                                |
-|------------|-----------------------|-----------------------------------------------------------------------|
-| attune-ai  | vX.Y.Z installed      | None needed                                                           |
-| Redis      | Not detected          | Optional -- run `pip install attune-ai[redis]` for multi-agent support |
-| MCP Server | Healthy (18 tools)    | None needed                                                           |
-| Updates    | Up to date            | None needed                                                           |
+| Component | Status | Action |
+| --------- | ------ | ------ |
+| attune-ai | vX.Y.Z installed | None needed |
+| Redis | Not detected | Optional -- run `pip install attune-ai[memory]` for multi-agent support |
+| MCP Server | Healthy (18 tools) | None needed |
+| Updates | Up to date | None needed |
 
 Adapt each row to reflect actual detection results. For example, if attune-ai is missing, the Status column should read "Not installed" and the Action column should read "Run `pip install attune-ai`".
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "2.10.1"
+version = "3.0.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -365,7 +365,7 @@ dependency-check = "attune.workflows.dependency_check:DependencyCheckWorkflow"
 # v5.2 Agent team (replaces CrewAI-based crew)
 release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
 # health-check: removed in v2.9.0 (module deleted, use release-prep workflow instead)
-test-coverage-boost = "attune.workflows.test_coverage_boost_crew:TestCoverageBoostCrew"
+# test-coverage-boost: removed (module deleted, use test-gen workflow instead)
 # Legacy entry points removed - handled by migration system
 # (release-prep-legacy → release-prep, health-check-legacy → health-check)
 # Other workflows

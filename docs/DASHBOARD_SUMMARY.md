@@ -173,7 +173,7 @@ src/attune/dashboard/
 
 **Data Source:**
 - Redis 5.0+ (optional - graceful degradation)
-- Empathy telemetry modules
+- Attune telemetry modules
 
 ### Dependencies
 
@@ -240,7 +240,7 @@ python -m attune.dashboard.simple_server
 #### Production with Systemd
 ```ini
 [Unit]
-Description=Empathy Dashboard
+Description=Attune Dashboard
 After=network.target redis.service
 
 [Service]

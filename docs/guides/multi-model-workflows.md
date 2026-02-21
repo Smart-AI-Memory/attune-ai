@@ -20,7 +20,7 @@ Multi-model workflows enable you to build sophisticated AI pipelines that automa
 
 ### Typical Savings
 
-Most workflows achieve **80-96% cost reduction** compared to using premium models for everything.
+Most workflows achieve **34-86% cost reduction** compared to using premium models for everything.
 
 ## Quick Start
 
