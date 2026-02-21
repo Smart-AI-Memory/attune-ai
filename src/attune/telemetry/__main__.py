@@ -12,9 +12,12 @@ Licensed under the Apache License, Version 2.0
 import argparse
 import sys
 
+from attune._deprecation import _emit_cli_deprecation
+
 
 def main() -> int:
     """Telemetry CLI entry point."""
+    _emit_cli_deprecation("attune.telemetry", "attune telemetry <command>")
     parser = argparse.ArgumentParser(
         description="Attune AI Telemetry - Usage and cost tracking",
         formatter_class=argparse.RawDescriptionHelpFormatter,
