@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-02-20
+
+### Fixed
+
+- Add MCP Registry ownership marker to README
+- Fix plugin/core version mismatch (2.0.0 to 3.0.1)
+- Remove stale healthcare-cds references from setup guide
+
 ## [3.0.0] - 2026-02-20
 
 ### Added

@@ -45,7 +45,7 @@ Detect-and-adapt agent that checks for attune-ai prerequisites and guides setup.
      pip install attune-ai[memory]
      ```
 
-   - NEVER block on this step. Always allow the user to proceed without Redis. Redis is only required for healthcare-cds, not for the attune-ai plugin.
+   - NEVER block on this step. Always allow the user to proceed without Redis.
 
 3. **Verify MCP server health**
 
@@ -111,4 +111,4 @@ Adapt each row to reflect actual detection results. For example, if attune-ai is
 
 ## Key Principle
 
-Guide the user. Do not block them. Redis is OPTIONAL for the attune-ai plugin (required only for healthcare-cds). Every detection step either succeeds and reports status, or fails gracefully and explains the next action. No step should leave the user stuck without a clear path forward.
+Guide the user. Do not block them. Redis is OPTIONAL. Every detection step either succeeds and reports status, or fails gracefully and explains the next action. No step should leave the user stuck without a clear path forward.
