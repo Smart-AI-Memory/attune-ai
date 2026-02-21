@@ -185,14 +185,9 @@ class TestTierFallbackHelperUltra:
         """Test ultra is the highest tier (no progression)."""
         assert TierFallbackHelper.get_next_tier("ultra") is None
 
-    def test_ultra_falls_back_on_network_errors(self):
-        """Test that ultra falls back to premium on network errors."""
-        assert TierFallbackHelper.should_fallback(TimeoutError(), "ultra") is True
-        assert TierFallbackHelper.should_fallback(ConnectionError(), "ultra") is True
-
-    def test_ultra_does_not_fallback_on_logic_errors(self):
-        """Test that ultra does not fall back on logic errors."""
-        assert TierFallbackHelper.should_fallback(ValueError(), "ultra") is False
+    def test_should_not_fallback_from_ultra(self):
+        """Test that fallback is blocked from ultra tier."""
+        assert TierFallbackHelper.should_fallback(TimeoutError(), "ultra") is False
 
     def test_should_fallback_from_premium(self):
         """Test that fallback is allowed from premium (to ultra)."""
@@ -288,7 +283,7 @@ class TestWorkflowRoutingUltra:
     """Test workflow routing strategies escalate to ultra for large context."""
 
     def test_cost_optimized_escalates_to_ultra(self):
-        """Test CostOptimizedRouting routes to ULTRA for >200K when enabled."""
+        """Test CostOptimizedRouting routes to ULTRA for >200K input."""
         from attune.workflows.routing import CostOptimizedRouting, RoutingContext
 
         strategy = CostOptimizedRouting()
@@ -298,26 +293,9 @@ class TestWorkflowRoutingUltra:
             complexity="complex",
             budget_remaining=100.0,
             latency_sensitivity="low",
-            ultra_enabled=True,
         )
         tier = strategy.route(context)
         assert tier.value == "ultra"
-
-    def test_cost_optimized_falls_back_to_premium_without_ultra(self):
-        """Test CostOptimizedRouting falls back to PREMIUM when ultra disabled."""
-        from attune.workflows.routing import CostOptimizedRouting, RoutingContext
-
-        strategy = CostOptimizedRouting()
-        context = RoutingContext(
-            task_type="review",
-            input_size=250_000,
-            complexity="complex",
-            budget_remaining=100.0,
-            latency_sensitivity="low",
-            ultra_enabled=False,
-        )
-        tier = strategy.route(context)
-        assert tier.value == "premium"
 
     def test_cost_optimized_stays_premium_under_200k(self):
         """Test CostOptimizedRouting stays at PREMIUM under 200K."""
@@ -335,7 +313,7 @@ class TestWorkflowRoutingUltra:
         assert tier.value == "premium"
 
     def test_performance_optimized_escalates_to_ultra(self):
-        """Test PerformanceOptimizedRouting routes to ULTRA for >200K when enabled."""
+        """Test PerformanceOptimizedRouting routes to ULTRA for >200K input."""
         from attune.workflows.routing import (
             PerformanceOptimizedRouting,
             RoutingContext,
@@ -348,32 +326,12 @@ class TestWorkflowRoutingUltra:
             complexity="moderate",
             budget_remaining=100.0,
             latency_sensitivity="high",
-            ultra_enabled=True,
         )
         tier = strategy.route(context)
         assert tier.value == "ultra"
-
-    def test_performance_optimized_falls_back_to_premium_without_ultra(self):
-        """Test PerformanceOptimizedRouting falls back to PREMIUM when ultra disabled."""
-        from attune.workflows.routing import (
-            PerformanceOptimizedRouting,
-            RoutingContext,
-        )
-
-        strategy = PerformanceOptimizedRouting()
-        context = RoutingContext(
-            task_type="review",
-            input_size=300_000,
-            complexity="moderate",
-            budget_remaining=100.0,
-            latency_sensitivity="high",
-            ultra_enabled=False,
-        )
-        tier = strategy.route(context)
-        assert tier.value == "premium"
 
     def test_balanced_escalates_to_ultra(self):
-        """Test BalancedRouting routes to ULTRA for >200K when enabled."""
+        """Test BalancedRouting routes to ULTRA for >200K input."""
         from attune.workflows.routing import BalancedRouting, RoutingContext
 
         strategy = BalancedRouting(total_budget=100.0)
@@ -383,42 +341,9 @@ class TestWorkflowRoutingUltra:
             complexity="complex",
             budget_remaining=80.0,
             latency_sensitivity="low",
-            ultra_enabled=True,
         )
         tier = strategy.route(context)
         assert tier.value == "ultra"
-
-    def test_balanced_falls_back_to_premium_without_ultra(self):
-        """Test BalancedRouting falls back to PREMIUM when ultra disabled."""
-        from attune.workflows.routing import BalancedRouting, RoutingContext
-
-        strategy = BalancedRouting(total_budget=100.0)
-        context = RoutingContext(
-            task_type="review",
-            input_size=500_000,
-            complexity="complex",
-            budget_remaining=80.0,
-            latency_sensitivity="low",
-            ultra_enabled=False,
-        )
-        tier = strategy.route(context)
-        assert tier.value == "premium"
-
-    def test_ultra_enabled_defaults_to_false(self):
-        """Test RoutingContext defaults ultra_enabled to False (safe default)."""
-        from attune.workflows.routing import CostOptimizedRouting, RoutingContext
-
-        strategy = CostOptimizedRouting()
-        context = RoutingContext(
-            task_type="review",
-            input_size=250_000,
-            complexity="complex",
-            budget_remaining=100.0,
-            latency_sensitivity="low",
-        )
-        # Default ultra_enabled=False should route to premium, not ultra
-        tier = strategy.route(context)
-        assert tier.value == "premium"
 
 
 @pytest.mark.unit

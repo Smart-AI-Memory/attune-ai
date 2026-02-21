@@ -75,9 +75,6 @@ class TierRoutingMixin:
             else:
                 latency_sensitivity = "low"
 
-            # Check if ultra tier is enabled via config
-            ultra_enabled = getattr(self, "_ultra_enabled", False)
-
             # Create routing context
             context = RoutingContext(
                 task_type=f"{self.name}:{stage_name}",
@@ -85,7 +82,6 @@ class TierRoutingMixin:
                 complexity=complexity,
                 budget_remaining=budget_remaining,
                 latency_sensitivity=latency_sensitivity,
-                ultra_enabled=ultra_enabled,
             )
 
             # Delegate to routing strategy

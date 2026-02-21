@@ -41,14 +41,12 @@ class TierService:
         tier_map: dict[str, Any],
         routing_strategy: Any = None,
         enable_adaptive: bool = False,
-        ultra_enabled: bool = False,
     ) -> None:
         self._workflow_name = workflow_name
         self._stages = stages
         self._tier_map = tier_map
         self._routing_strategy = routing_strategy
         self._enable_adaptive = enable_adaptive
-        self._ultra_enabled = ultra_enabled
         self._adaptive_router: Any = None
 
     def get_tier(
@@ -125,7 +123,6 @@ class TierService:
             complexity=complexity,
             budget_remaining=budget_remaining,
             latency_sensitivity=latency_sensitivity,
-            ultra_enabled=self._ultra_enabled,
         )
 
         return self._routing_strategy.route(context)

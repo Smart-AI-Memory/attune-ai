@@ -706,8 +706,7 @@ class TierFallbackHelper:
     TIER_PROGRESSION = {
         "cheap": "capable",
         "capable": "premium",
-        "premium": "ultra",
-        "ultra": None,
+        "premium": None,
     }
 
     @classmethod
@@ -715,7 +714,7 @@ class TierFallbackHelper:
         """Get next tier in fallback chain.
 
         Args:
-            current_tier: Current tier name (cheap, capable, premium, ultra)
+            current_tier: Current tier name (cheap, capable, premium)
 
         Returns:
             Next tier name, or None if at highest tier
@@ -724,8 +723,6 @@ class TierFallbackHelper:
             >>> TierFallbackHelper.get_next_tier("cheap")
             'capable'
             >>> TierFallbackHelper.get_next_tier("premium")
-            'ultra'
-            >>> TierFallbackHelper.get_next_tier("ultra")
             None
 
         """
@@ -743,32 +740,23 @@ class TierFallbackHelper:
             True if fallback should be attempted, False otherwise
 
         Logic:
-            - Ultra tier falls back to premium on API errors
-              (beta access denied, feature not available)
-            - Other tiers fallback on network/connection errors
-              (TimeoutError, ConnectionError, OSError)
-            - Don't fallback for logic errors
-              (ValueError, TypeError, etc.)
+            - Never fallback from premium tier (highest tier)
+            - Fallback for network/connection errors (TimeoutError, ConnectionError, OSError)
+            - Don't fallback for logic errors (ValueError, TypeError, etc.)
 
         Example:
             >>> TierFallbackHelper.should_fallback(TimeoutError(), "cheap")
             True
             >>> TierFallbackHelper.should_fallback(ValueError(), "cheap")
             False
+            >>> TierFallbackHelper.should_fallback(TimeoutError(), "premium")
+            False
 
         """
-        # Ultra tier: fallback to premium on API/network errors
-        if tier == "ultra":
-            try:
-                import anthropic
+        # Never fallback from premium tier
+        if tier == "premium":
+            return False
 
-                if isinstance(error, anthropic.APIStatusError | anthropic.APIConnectionError):
-                    return True
-            except ImportError:
-                pass
-            fallback_errors = (TimeoutError, ConnectionError, OSError)
-            return isinstance(error, fallback_errors)
-
-        # Other tiers: fallback for connection/network errors only
+        # Fallback for connection/network errors
         fallback_errors = (TimeoutError, ConnectionError, OSError)
         return isinstance(error, fallback_errors)

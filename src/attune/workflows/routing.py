@@ -27,7 +27,6 @@ class RoutingContext:
         complexity: Task complexity (simple, moderate, complex)
         budget_remaining: Remaining budget in USD
         latency_sensitivity: Latency requirements (low, medium, high)
-        ultra_enabled: Whether the ultra tier is available (requires beta access)
     """
 
     task_type: str
@@ -35,7 +34,6 @@ class RoutingContext:
     complexity: str  # "simple" | "moderate" | "complex"
     budget_remaining: float
     latency_sensitivity: str  # "low" | "medium" | "high"
-    ultra_enabled: bool = False
 
 
 class TierRoutingStrategy(ABC):
@@ -77,8 +75,7 @@ class CostOptimizedRouting(TierRoutingStrategy):
     """Route to cheapest tier that can handle the task.
 
     Default strategy. Prioritizes cost savings over speed.
-    Escalates to ULTRA when input exceeds 200K tokens and ultra_enabled is True.
-    Falls back to PREMIUM when ultra is not available.
+    Auto-escalates to ULTRA when input exceeds 200K tokens.
 
     Example:
         >>> strategy = CostOptimizedRouting()
@@ -89,11 +86,9 @@ class CostOptimizedRouting(TierRoutingStrategy):
         """Route based on task complexity, preferring cheaper tiers."""
         from attune.workflows.base import ModelTier
 
-        # Context size requires 1M window — use ultra if enabled
+        # Context size requires 1M window — must use ultra
         if context.input_size > 200_000:
-            if context.ultra_enabled:
-                return ModelTier.ULTRA
-            return ModelTier.PREMIUM
+            return ModelTier.ULTRA
 
         if context.complexity == "simple":
             return ModelTier.CHEAP
@@ -112,8 +107,7 @@ class PerformanceOptimizedRouting(TierRoutingStrategy):
     """Route to fastest tier regardless of cost.
 
     Use for latency-sensitive workflows like interactive tools.
-    Escalates to ULTRA when input exceeds 200K tokens and ultra_enabled is True.
-    Falls back to PREMIUM when ultra is not available.
+    Auto-escalates to ULTRA when input exceeds 200K tokens.
 
     Example:
         >>> strategy = PerformanceOptimizedRouting()
@@ -124,11 +118,9 @@ class PerformanceOptimizedRouting(TierRoutingStrategy):
         """Route based on latency requirements."""
         from attune.workflows.base import ModelTier
 
-        # Context size requires 1M window — use ultra if enabled
+        # Context size requires 1M window — must use ultra
         if context.input_size > 200_000:
-            if context.ultra_enabled:
-                return ModelTier.ULTRA
-            return ModelTier.PREMIUM
+            return ModelTier.ULTRA
 
         if context.latency_sensitivity == "high":
             return ModelTier.PREMIUM
@@ -166,11 +158,9 @@ class BalancedRouting(TierRoutingStrategy):
         """Route based on budget ratio and complexity."""
         from attune.workflows.base import ModelTier
 
-        # Context size requires 1M window — use ultra if enabled
+        # Context size requires 1M window — must use ultra
         if context.input_size > 200_000:
-            if context.ultra_enabled:
-                return ModelTier.ULTRA
-            return ModelTier.PREMIUM
+            return ModelTier.ULTRA
 
         budget_ratio = context.budget_remaining / self.total_budget
 
