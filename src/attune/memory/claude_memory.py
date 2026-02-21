@@ -360,7 +360,7 @@ def create_default_project_memory(project_root: str, framework: str = "empathy")
 
     Args:
         project_root: Project root directory
-        framework: Framework name (e.g., "empathy", "langchain")
+        framework: Framework name (e.g., "empathy", "attune")
 
     Example:
         create_default_project_memory("/path/to/project")

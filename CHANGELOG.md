@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.4] - 2026-02-21
+
+### Removed
+
+- Delete dead provider files: `openai.py`, `gemini.py`,
+  `local.py` from `src/attune/llm/providers/`
+- Remove competitor provider imports from LLM package
+  `__init__.py` and `core.py`
+- Remove `gpt-4-turbo` from legacy cost tracker pricing
+- Remove competitor model defaults from `xml_config.py`
+  and `agent_factory/base.py`
+
+### Changed
+
+- Update stale model IDs in example config to current
+  Claude 4.5/4.6 family
+- Fix internal version references from `v5.0.0` to actual
+  version (`v3.0.0` / `v3.0.4`)
+- Bump plugin version from 3.0.1 to 3.0.4 across all
+  plugin manifests
+- Clean remaining competitor references from docstrings
+  in 12+ source files
+- Add `mcp-publisher` binary to `.gitignore`
+
+### Fixed
+
+- Remove competitor test classes (`TestOpenAIProvider`,
+  `TestGeminiProvider`, `TestLocalProvider`) from test
+  suite
+
 ## [3.0.3] - 2026-02-21
 
 ### Changed

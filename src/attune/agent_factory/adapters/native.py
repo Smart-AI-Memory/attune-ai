@@ -175,14 +175,12 @@ class NativeAdapter(BaseAdapter):
         """Initialize native adapter.
 
         Args:
-            provider: LLM provider (anthropic, openai, local)
+            provider: LLM provider (anthropic)
             api_key: API key (uses env var if not provided)
 
         """
         self.provider = provider
-        self.api_key = api_key or os.getenv(
-            "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY",
-        )
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self._llm: Any = None  # EmpathyLLM instance or None
 
     @property

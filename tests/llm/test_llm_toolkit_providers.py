@@ -1,28 +1,20 @@
-"""Tests for empathy_llm_toolkit providers module.
+"""Tests for LLM provider classes (Claude-native).
 
-Comprehensive test coverage for LLM provider classes.
+Comprehensive test coverage for Anthropic provider classes.
 
 Created: 2026-01-20
 Coverage target: 80%+
 """
 
-import importlib.util
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-# Check for optional dependencies
-_openai_available = importlib.util.find_spec("openai") is not None
-_aiohttp_available = importlib.util.find_spec("aiohttp") is not None
 
 from attune.llm.providers import (  # noqa: E402
     AnthropicBatchProvider,
     AnthropicProvider,
     BaseLLMProvider,
-    GeminiProvider,
     LLMResponse,
-    LocalProvider,
-    OpenAIProvider,
 )
 
 # =============================================================================
@@ -364,294 +356,6 @@ class TestAnthropicBatchProvider:
 
 
 # =============================================================================
-# OpenAIProvider Tests
-# =============================================================================
-
-
-@pytest.mark.skipif(
-    not _openai_available,
-    reason="openai not installed (optional dependency)",
-)
-class TestOpenAIProvider:
-    """Tests for OpenAIProvider class."""
-
-    def test_init_requires_api_key(self):
-        """Test that API key is required."""
-        with pytest.raises(ValueError, match="API key is required"):
-            OpenAIProvider(api_key=None)
-
-    def test_init_requires_openai_package(self):
-        """Test handling when openai package not installed."""
-        with patch.dict("sys.modules", {"openai": None}):
-            with patch("builtins.__import__", side_effect=ImportError("No module")):
-                with pytest.raises(ImportError, match="openai package required"):
-                    OpenAIProvider(api_key="sk-test")
-
-    @patch("openai.AsyncOpenAI")
-    def test_init_success(self, mock_openai_class):
-        """Test successful initialization."""
-        provider = OpenAIProvider(
-            api_key="sk-test",
-            model="gpt-4",
-        )
-
-        assert provider.model == "gpt-4"
-        assert provider.api_key == "sk-test"
-
-    @patch("openai.AsyncOpenAI")
-    @pytest.mark.asyncio
-    async def test_generate(self, mock_openai_class):
-        """Test generation with OpenAI."""
-        mock_choice = MagicMock()
-        mock_choice.message.content = "Hello from GPT!"
-        mock_choice.finish_reason = "stop"
-
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
-        mock_response.model = "gpt-4"
-        mock_response.usage = MagicMock(
-            total_tokens=50,
-            prompt_tokens=20,
-            completion_tokens=30,
-        )
-
-        mock_client = MagicMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-        mock_openai_class.return_value = mock_client
-
-        provider = OpenAIProvider(api_key="sk-test")
-
-        result = await provider.generate(
-            messages=[{"role": "user", "content": "Hi"}],
-        )
-
-        assert result.content == "Hello from GPT!"
-        assert result.tokens_used == 50
-        assert result.metadata["provider"] == "openai"
-
-    @patch("openai.AsyncOpenAI")
-    @pytest.mark.asyncio
-    async def test_generate_with_system_prompt(self, mock_openai_class):
-        """Test generation with system prompt."""
-        mock_choice = MagicMock()
-        mock_choice.message.content = "Response"
-        mock_choice.finish_reason = "stop"
-
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
-        mock_response.model = "gpt-4"
-        mock_response.usage = MagicMock(total_tokens=30, prompt_tokens=20, completion_tokens=10)
-
-        mock_client = MagicMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-        mock_openai_class.return_value = mock_client
-
-        provider = OpenAIProvider(api_key="sk-test")
-
-        await provider.generate(
-            messages=[{"role": "user", "content": "Hi"}],
-            system_prompt="Be helpful",
-        )
-
-        # Verify system message was prepended
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
-        assert call_kwargs["messages"][0]["role"] == "system"
-        assert call_kwargs["messages"][0]["content"] == "Be helpful"
-
-    @patch("openai.AsyncOpenAI")
-    def test_get_model_info_known(self, mock_openai_class):
-        """Test getting model info for known model."""
-        provider = OpenAIProvider(api_key="sk-test", model="gpt-4")
-
-        info = provider.get_model_info()
-
-        assert info["max_tokens"] == 8192
-
-    @patch("openai.AsyncOpenAI")
-    def test_get_model_info_unknown(self, mock_openai_class):
-        """Test getting model info for unknown model."""
-        provider = OpenAIProvider(api_key="sk-test", model="gpt-unknown")
-
-        info = provider.get_model_info()
-
-        # Should return default
-        assert "max_tokens" in info
-
-
-# =============================================================================
-# GeminiProvider Tests
-# =============================================================================
-
-
-class TestGeminiProvider:
-    """Tests for GeminiProvider class."""
-
-    def test_init_requires_api_key(self):
-        """Test that API key is required."""
-        with pytest.raises(ValueError, match="API key is required"):
-            GeminiProvider(api_key=None)
-
-    def test_init_requires_google_package(self):
-        """Test handling when google-generativeai package not installed."""
-
-        # Create mock that raises ImportError
-        def mock_import(name, *args, **kwargs):
-            if "google" in name:
-                raise ImportError("No module named 'google.generativeai'")
-            return original_import(name, *args, **kwargs)
-
-        import builtins
-
-        original_import = builtins.__import__
-
-        with patch.object(builtins, "__import__", side_effect=mock_import):
-            with pytest.raises(ImportError, match="google-generativeai package required"):
-                # Need to reimport the module to trigger the import error
-                import importlib
-
-                import attune.llm.providers as providers_mod
-
-                importlib.reload(providers_mod)
-                providers_mod.GeminiProvider(api_key="test-key")
-
-    def test_init_success(self):
-        """Test successful initialization with mocked genai."""
-        mock_genai = MagicMock()
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
-            # Need to reimport to use mocked module
-            from attune.llm.providers import GeminiProvider as GP
-
-            provider = GP.__new__(GP)
-            provider.api_key = "test-key"
-            provider.model = "gemini-1.5-pro"
-            provider.config = {}
-            provider.genai = mock_genai
-            provider.client = mock_model
-
-            assert provider.model == "gemini-1.5-pro"
-
-    def test_get_tier_cheap(self):
-        """Test tier detection for cheap models."""
-        # Create provider without full init
-        provider = object.__new__(GeminiProvider)
-        provider.model = "gemini-2.0-flash-exp"
-
-        assert provider._get_tier() == "cheap"
-
-    def test_get_tier_premium(self):
-        """Test tier detection for premium models."""
-        provider = object.__new__(GeminiProvider)
-        provider.model = "gemini-2.5-pro"
-
-        assert provider._get_tier() == "premium"
-
-    def test_get_tier_capable(self):
-        """Test tier detection for capable models."""
-        provider = object.__new__(GeminiProvider)
-        provider.model = "gemini-1.5-pro"
-
-        assert provider._get_tier() == "capable"
-
-    def test_get_model_info_known(self):
-        """Test getting model info for known model."""
-        provider = object.__new__(GeminiProvider)
-        provider.model = "gemini-1.5-pro"
-
-        info = provider.get_model_info()
-
-        assert info["max_tokens"] == 2000000
-        assert info["supports_vision"] is True
-
-    def test_get_model_info_unknown(self):
-        """Test getting model info for unknown model."""
-        provider = object.__new__(GeminiProvider)
-        provider.model = "gemini-unknown"
-
-        info = provider.get_model_info()
-
-        # Should return default
-        assert "max_tokens" in info
-
-
-# =============================================================================
-# LocalProvider Tests
-# =============================================================================
-
-
-@pytest.mark.skipif(
-    not _aiohttp_available,
-    reason="aiohttp not installed (optional dependency)",
-)
-class TestLocalProvider:
-    """Tests for LocalProvider class."""
-
-    def test_init_defaults(self):
-        """Test initialization with defaults."""
-        provider = LocalProvider()
-
-        assert provider.endpoint == "http://localhost:11434"
-        assert provider.model == "llama2"
-        assert provider.api_key is None
-
-    def test_init_custom(self):
-        """Test initialization with custom values."""
-        provider = LocalProvider(
-            endpoint="http://localhost:8080",
-            model="codellama",
-        )
-
-        assert provider.endpoint == "http://localhost:8080"
-        assert provider.model == "codellama"
-
-    @pytest.mark.asyncio
-    async def test_generate(self):
-        """Test generation with local model."""
-        provider = LocalProvider()
-
-        mock_response = MagicMock()
-        mock_response.json = AsyncMock(
-            return_value={
-                "message": {"content": "Hello from local!"},
-                "eval_count": 30,
-                "prompt_eval_count": 10,
-            }
-        )
-
-        mock_session = MagicMock()
-        mock_session.post = MagicMock(
-            return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_response),
-                __aexit__=AsyncMock(),
-            )
-        )
-
-        with patch("aiohttp.ClientSession") as mock_client_session:
-            mock_client_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_client_session.return_value.__aexit__ = AsyncMock()
-
-            result = await provider.generate(
-                messages=[{"role": "user", "content": "Hi"}],
-            )
-
-            assert result.content == "Hello from local!"
-            assert result.tokens_used == 40
-            assert result.metadata["provider"] == "local"
-
-    def test_get_model_info(self):
-        """Test getting model info for local provider."""
-        provider = LocalProvider()
-
-        info = provider.get_model_info()
-
-        assert info["max_tokens"] == 4096
-        assert info["cost_per_1m_input"] == 0.0  # Free
-        assert info["endpoint"] == "http://localhost:11434"
-
-
-# =============================================================================
 # Integration Tests
 # =============================================================================
 
@@ -659,24 +363,14 @@ class TestLocalProvider:
 class TestProviderSelection:
     """Tests for provider selection patterns."""
 
-    def test_all_providers_have_required_methods(self):
-        """Verify all providers implement required abstract methods."""
-        providers = [
-            # Can't instantiate without mocking, but can check class methods
-            AnthropicProvider,
-            OpenAIProvider,
-            GeminiProvider,
-            LocalProvider,
-        ]
+    def test_anthropic_has_required_methods(self):
+        """Verify AnthropicProvider implements required abstract methods."""
+        assert hasattr(AnthropicProvider, "generate")
+        assert hasattr(AnthropicProvider, "get_model_info")
+        assert hasattr(AnthropicProvider, "estimate_tokens")
 
-        for provider_class in providers:
-            assert hasattr(provider_class, "generate")
-            assert hasattr(provider_class, "get_model_info")
-            assert hasattr(provider_class, "estimate_tokens")
-
-    def test_llm_response_is_compatible_across_providers(self):
-        """Verify all responses use the same LLMResponse format."""
-        # Create sample response
+    def test_llm_response_is_compatible(self):
+        """Verify LLMResponse format works correctly."""
         response = LLMResponse(
             content="Test",
             model="any-model",
@@ -685,7 +379,6 @@ class TestProviderSelection:
             metadata={"provider": "test"},
         )
 
-        # All fields should be accessible
         assert response.content == "Test"
         assert response.model == "any-model"
         assert response.tokens_used == 100

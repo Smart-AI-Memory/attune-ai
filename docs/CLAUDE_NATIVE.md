@@ -1,10 +1,10 @@
 ---
-description: Claude-Native Architecture Migration Guide: **Version:** v5.0.0 **Status:** Complete (Claude-Native) **Completed:** January 26, 2026 --- ## Overview Empathy Fra
+description: Claude-Native Architecture Migration Guide: **Version:** v3.0.4 **Status:** Complete (Claude-Native) **Completed:** January 26, 2026 --- ## Overview Empathy Fra
 ---
 
 # Claude-Native Architecture Migration Guide
 
-**Version:** v5.0.0
+**Version:** v3.0.4
 **Status:** Complete (Claude-Native)
 **Completed:** January 26, 2026
 

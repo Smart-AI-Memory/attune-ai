@@ -125,10 +125,10 @@ class AdaptiveConfig:
     enable_adaptation: bool = True
     model_tier_mapping: dict[str, str] = field(
         default_factory=lambda: {
-            "simple": "gpt-3.5-turbo",
-            "moderate": "gpt-4",
-            "complex": "gpt-4",
-            "very_complex": "gpt-4-turbo-preview",
+            "simple": "claude-haiku-4-5-20251001",
+            "moderate": "claude-sonnet-4-6",
+            "complex": "claude-sonnet-4-6",
+            "very_complex": "claude-opus-4-6",
         }
     )
     complexity_thresholds: dict[str, int] = field(

@@ -55,8 +55,7 @@ class AuditLogMethodsMixin:
             user_id: User or service account making the
                 request
             empathy_level: Empathy level (1-5) used
-            provider: LLM provider
-                (anthropic, openai, local)
+            provider: LLM provider (anthropic)
             model: Specific model used
             memory_sources: Which memory sources were loaded
                 (enterprise, user, project)

@@ -259,3 +259,6 @@ workflow_scaffolding/
 
 # PhysioNet / clinical data (large binary datasets, not for VCS)
 data/
+
+# Compiled binaries (MCP publisher, etc.)
+mcp-publisher

@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 class ModelTier(Enum):
     """DEPRECATED: Model tier for cost optimization.
 
-    This enum is deprecated and will be removed in v5.0.
+    This enum is deprecated and will be removed in v4.0.
     Use attune.models.ModelTier instead.
 
     Migration:
@@ -51,16 +51,16 @@ class ModelTier(Enum):
         - Simplifies imports and reduces duplication
     """
 
-    CHEAP = "cheap"  # Haiku/GPT-4o-mini - $0.25-1.25/M tokens
-    CAPABLE = "capable"  # Sonnet/GPT-4o - $3-15/M tokens
-    PREMIUM = "premium"  # Opus/o1 - $15-75/M tokens
+    CHEAP = "cheap"  # Haiku - $1.00/M input, $5.00/M output
+    CAPABLE = "capable"  # Sonnet - $3.00/M input, $15.00/M output
+    PREMIUM = "premium"  # Opus - $15.00/M input, $75.00/M output
 
     def __init__(self, value: str):
         """Initialize with deprecation warning."""
         # Only warn once per process, not per instance
         if not hasattr(self.__class__, "_deprecation_warned"):
             warnings.warn(
-                "workflows.base.ModelTier is deprecated and will be removed in v5.0. "
+                "workflows.base.ModelTier is deprecated and will be removed in v4.0. "
                 "Use attune.models.ModelTier instead. "
                 "Update imports: from attune.models import ModelTier",
                 DeprecationWarning,
@@ -76,7 +76,7 @@ class ModelTier(Enum):
 class ModelProvider(Enum):
     """DEPRECATED: Supported model providers.
 
-    This enum is deprecated and will be removed in v5.0.
+    This enum is deprecated and will be removed in v4.0.
     Use attune.models.ModelProvider instead.
 
     Migration:
@@ -98,9 +98,9 @@ class ModelProvider(Enum):
     def to_unified(self) -> UnifiedModelProvider:
         """Convert to unified ModelProvider from attune.models.
 
-        As of v5.0.0, framework is Claude-native. All providers map to ANTHROPIC.
+        As of v4.0.0, framework is Claude-native. All providers map to ANTHROPIC.
         """
-        # v5.0.0: Framework is Claude-native, only ANTHROPIC supported
+        # v4.0.0: Framework is Claude-native, only ANTHROPIC supported
         return UnifiedModelProvider.ANTHROPIC
 
 
@@ -118,7 +118,7 @@ def _build_provider_models() -> dict[ModelProvider, dict[ModelTier, str]]:
     result: dict[ModelProvider, dict[ModelTier, str]] = {}
 
     # Map string provider names to ModelProvider enum
-    # Claude-native architecture (v5.0.0+): only Anthropic is active
+    # Claude-native architecture (v4.0.0+): only Anthropic is active
     provider_map = {
         "anthropic": ModelProvider.ANTHROPIC,
     }

@@ -57,8 +57,6 @@ class MarkdownAgentParser:
     # Mapping from string provider names to Provider
     PROVIDER_MAP = {
         "anthropic": Provider.ANTHROPIC,
-        "openai": Provider.OPENAI,
-        "local": Provider.LOCAL,
     }
 
     def __init__(self):

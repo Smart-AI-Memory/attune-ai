@@ -31,7 +31,7 @@ class ModelTier(Enum):
 
 
 class ModelProvider(Enum):
-    """Supported model provider (Claude-native architecture as of v5.0.0)."""
+    """Supported model provider (Claude-native architecture as of v3.0.0)."""
 
     ANTHROPIC = "anthropic"
 
@@ -226,7 +226,7 @@ class ModelRegistry:
         """Get model info for a provider/tier combination.
 
         Args:
-            provider: Provider name (anthropic only as of v5.0.0)
+            provider: Provider name (anthropic only as of v3.0.0)
             tier: Tier level (cheap, capable, premium)
 
         Returns:
@@ -245,7 +245,7 @@ class ModelRegistry:
         if provider.lower() != "anthropic":
             raise ValueError(
                 f"Provider '{provider}' is not supported. "
-                f"Attune AI is now Claude-native (v5.0.0). "
+                f"Attune AI is now Claude-native (v3.0.0). "
                 f"Only 'anthropic' provider is available. "
                 f"See docs/CLAUDE_NATIVE.md for migration guide."
             )
@@ -278,7 +278,7 @@ class ModelRegistry:
         return self._model_id_cache.get(model_id)
 
     def get_models_by_tier(self, tier: str) -> list[ModelInfo]:
-        """Get all models in a specific tier (Anthropic-only as of v5.0.0).
+        """Get all models in a specific tier (Anthropic-only as of v3.0.0).
 
         Uses O(1) cache lookup for fast performance.
 
@@ -305,7 +305,7 @@ class ModelRegistry:
         return self._tier_cache.get(tier.lower(), [])
 
     def list_providers(self) -> list[str]:
-        """Get list of all provider names (Anthropic-only as of v5.0.0).
+        """Get list of all provider names (Anthropic-only as of v3.0.0).
 
         Returns:
             List of provider names (['anthropic'])
@@ -335,7 +335,7 @@ class ModelRegistry:
         return [tier.value for tier in ModelTier]
 
     def get_all_models(self) -> dict[str, dict[str, ModelInfo]]:
-        """Get the complete model registry (Anthropic-only as of v5.0.0).
+        """Get the complete model registry (Anthropic-only as of v3.0.0).
 
         Returns:
             Full registry dict (provider -> tier -> ModelInfo)
@@ -393,7 +393,7 @@ def get_model(provider: str, tier: str) -> ModelInfo | None:
     """Get model info for a provider/tier combination.
 
     Args:
-        provider: Provider name (anthropic only as of v5.0.0)
+        provider: Provider name (anthropic only as of v3.0.0)
         tier: Tier level (cheap, capable, premium)
 
     Returns:
