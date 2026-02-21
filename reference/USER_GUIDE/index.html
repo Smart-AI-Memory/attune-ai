@@ -5954,10 +5954,10 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│         │                                                     │
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  ┌──────▼────────────────────────────────────────┐          │
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  │         LLM Provider Layer                    │          │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  │  ┌──────────┐  ┌────────┐  ┌──────────┐     │          │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │  │Anthropic │  │ OpenAI │  │  Local   │     │          │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  │  │ (Claude) │  │ (GPT)  │  │ (Ollama) │     │          │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │  └──────────┘  └────────┘  └──────────┘     │          │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  │  ┌──────────────────────────────────────┐     │          │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │  │  Anthropic (Claude)                 │     │          │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  │  │  Haiku · Sonnet · Opus              │     │          │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │  └──────────────────────────────────────┘     │          │
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  └───────────────────────────────────────────────┘          │
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│         │                                                     │
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  ┌──────▼────────────────────────────────────────┐          │
@@ -5994,7 +5994,7 @@
 <li><strong>State Retrieval</strong> → Load collaboration state for user</li>
 <li><strong>Level Determination</strong> → Calculate appropriate empathy level based on trust</li>
 <li><strong>Context Building</strong> → Gather conversation history, patterns, project context</li>
-<li><strong>LLM Invocation</strong> → Call provider (Anthropic, OpenAI, or local)</li>
+<li><strong>LLM Invocation</strong> → Call Anthropic Claude API</li>
 <li><strong>Response Processing</strong> → Extract content, metadata, thinking (if enabled)</li>
 <li><strong>State Update</strong> → Record interaction, update trust, detect patterns</li>
 <li><strong>Response Delivery</strong> → Return enriched response to user</li>
@@ -6003,7 +6003,7 @@
 <ol>
 <li><strong>Progressive Enhancement</strong>: Start simple (Level 1), earn advanced features (Levels 2-5)</li>
 <li><strong>Trust-Based Progression</strong>: Higher levels require building trust through successful interactions</li>
-<li><strong>Provider Agnostic</strong>: Works with any LLM (Claude, GPT-4, local models)</li>
+<li><strong>Claude-Native</strong>: Built exclusively for Anthropic Claude</li>
 <li><strong>Domain Pluggable</strong>: Software, healthcare, or custom domains</li>
 <li><strong>Privacy First</strong>: All data stays local, no tracking or telemetry</li>
 <li><strong>Cost Optimized</strong>: Prompt caching, smart token management</li>
@@ -6403,7 +6403,7 @@
 <h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Python 3.10+</strong></li>
-<li><strong>API Key</strong> for Anthropic (Claude) or OpenAI (GPT)</li>
+<li><strong>API Key</strong> for Anthropic (Claude)</li>
 <li><strong>pip</strong> package manager</li>
 <li><strong>Git</strong> (optional, for source installation)</li>
 </ul>
@@ -6969,33 +6969,32 @@ Python, JavaScript, TypeScript, Java, Go, Rust</p>
 <a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>
 <a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="c1"># LLM provider</span>
 <a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-...
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>
-<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="c1"># Persistence</span>
-<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_BACKEND</span><span class="o">=</span>sqlite
-<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_PATH</span><span class="o">=</span>./empathy_data
-<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a>
-<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="c1"># State management</span>
-<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STATE_PERSISTENCE</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STATE_PATH</span><span class="o">=</span>./empathy_state
-<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a>
-<a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a><span class="c1"># Metrics</span>
-<a id="__codelineno-28-20" name="__codelineno-28-20" href="#__codelineno-28-20"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-21" name="__codelineno-28-21" href="#__codelineno-28-21"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_PATH</span><span class="o">=</span>./metrics.db
-<a id="__codelineno-28-22" name="__codelineno-28-22" href="#__codelineno-28-22"></a>
-<a id="__codelineno-28-23" name="__codelineno-28-23" href="#__codelineno-28-23"></a><span class="c1"># Pattern library</span>
-<a id="__codelineno-28-24" name="__codelineno-28-24" href="#__codelineno-28-24"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_LIBRARY_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-25" name="__codelineno-28-25" href="#__codelineno-28-25"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_SHARING</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-26" name="__codelineno-28-26" href="#__codelineno-28-26"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.3
-<a id="__codelineno-28-27" name="__codelineno-28-27" href="#__codelineno-28-27"></a>
-<a id="__codelineno-28-28" name="__codelineno-28-28" href="#__codelineno-28-28"></a><span class="c1"># Logging</span>
-<a id="__codelineno-28-29" name="__codelineno-28-29" href="#__codelineno-28-29"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_LOG_LEVEL</span><span class="o">=</span>INFO
-<a id="__codelineno-28-30" name="__codelineno-28-30" href="#__codelineno-28-30"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STRUCTURED_LOGGING</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-31" name="__codelineno-28-31" href="#__codelineno-28-31"></a>
-<a id="__codelineno-28-32" name="__codelineno-28-32" href="#__codelineno-28-32"></a><span class="c1"># Advanced</span>
-<a id="__codelineno-28-33" name="__codelineno-28-33" href="#__codelineno-28-33"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_ASYNC_ENABLED</span><span class="o">=</span><span class="nb">true</span>
-<a id="__codelineno-28-34" name="__codelineno-28-34" href="#__codelineno-28-34"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_FEEDBACK_LOOP_MONITORING</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="c1"># Persistence</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_BACKEND</span><span class="o">=</span>sqlite
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PERSISTENCE_PATH</span><span class="o">=</span>./empathy_data
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="c1"># State management</span>
+<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STATE_PERSISTENCE</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STATE_PATH</span><span class="o">=</span>./empathy_state
+<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a>
+<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a><span class="c1"># Metrics</span>
+<a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-20" name="__codelineno-28-20" href="#__codelineno-28-20"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_METRICS_PATH</span><span class="o">=</span>./metrics.db
+<a id="__codelineno-28-21" name="__codelineno-28-21" href="#__codelineno-28-21"></a>
+<a id="__codelineno-28-22" name="__codelineno-28-22" href="#__codelineno-28-22"></a><span class="c1"># Pattern library</span>
+<a id="__codelineno-28-23" name="__codelineno-28-23" href="#__codelineno-28-23"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_LIBRARY_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-24" name="__codelineno-28-24" href="#__codelineno-28-24"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_SHARING</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-25" name="__codelineno-28-25" href="#__codelineno-28-25"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_PATTERN_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.3
+<a id="__codelineno-28-26" name="__codelineno-28-26" href="#__codelineno-28-26"></a>
+<a id="__codelineno-28-27" name="__codelineno-28-27" href="#__codelineno-28-27"></a><span class="c1"># Logging</span>
+<a id="__codelineno-28-28" name="__codelineno-28-28" href="#__codelineno-28-28"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_LOG_LEVEL</span><span class="o">=</span>INFO
+<a id="__codelineno-28-29" name="__codelineno-28-29" href="#__codelineno-28-29"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_STRUCTURED_LOGGING</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-30" name="__codelineno-28-30" href="#__codelineno-28-30"></a>
+<a id="__codelineno-28-31" name="__codelineno-28-31" href="#__codelineno-28-31"></a><span class="c1"># Advanced</span>
+<a id="__codelineno-28-32" name="__codelineno-28-32" href="#__codelineno-28-32"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_ASYNC_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-28-33" name="__codelineno-28-33" href="#__codelineno-28-33"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_FEEDBACK_LOOP_MONITORING</span><span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <h3 id="yaml-configuration">YAML Configuration<a class="headerlink" href="#yaml-configuration" title="Permanent link">&para;</a></h3>
 <p><strong>File:</strong> <code>empathy.config.yml</code></p>

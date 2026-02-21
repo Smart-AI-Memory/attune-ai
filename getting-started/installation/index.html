@@ -3856,16 +3856,9 @@
 </code></pre></div>
 <hr />
 <h2 id="step-2-configure-an-llm-provider">Step 2: Configure an LLM Provider<a class="headerlink" href="#step-2-configure-an-llm-provider" title="Permanent link">&para;</a></h2>
-<p>You need at least one LLM provider. Anthropic (Claude) is recommended.</p>
+<p>Attune AI uses Anthropic Claude as its LLM provider.</p>
 <h3 id="option-a-environment-variable-quick">Option A: Environment Variable (Quick)<a class="headerlink" href="#option-a-environment-variable-quick" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Anthropic (recommended)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Or OpenAI</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-...&quot;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Or Google</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GOOGLE_API_KEY</span><span class="o">=</span><span class="s2">&quot;...&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
 </code></pre></div>
 <h3 id="option-b-env-file-persistent">Option B: .env File (Persistent)<a class="headerlink" href="#option-b-env-file-persistent" title="Permanent link">&para;</a></h3>
 <p>Create a <code>.env</code> file in your project root:</p>
