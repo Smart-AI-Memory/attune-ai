@@ -27,7 +27,7 @@ Use `/hub-name` to access organized workflows:
 | `/dev` | debug, review, commit, pr, refactor, quality | Developer tools |
 | `/testing` | run, coverage, generate, tdd | Test runner and generation |
 | `/workflows` | security, bugs, perf, review, list | Automated analysis |
-| `/plan` | feature, tdd, refactor, architecture | Planning and strategy |
+| `/plan` | feature, brainstorm, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | discover, plan, export | Guided brainstorming and ideation |

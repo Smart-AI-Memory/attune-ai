@@ -458,9 +458,9 @@ class TestKeywordMappings:
         assert result is not None
         assert result["skill"] == "plan"
 
-        result = router._infer_command("tdd")
+        result = router._infer_command("brainstorm")
         assert result is not None
-        assert result["skill"] == "plan"
+        assert result["skill"] == "brainstorm"
 
 
 @pytest.mark.unit

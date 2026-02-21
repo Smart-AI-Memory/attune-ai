@@ -63,7 +63,7 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | Command | Description |
 | ------- | ----------- |
 | [Plan Feature](src/attune/commands/plan.md) `/plan feature` | Break down a feature into tasks, files, deps, and risks |
-| [TDD Scaffolding](src/attune/commands/plan.md) `/plan tdd` | Design test cases first, then plan implementation |
+| [Brainstorm](src/attune/commands/plan.md) `/plan brainstorm` | Brainstorm ideas with structured discovery and export |
 | [Refactoring Strategy](src/attune/commands/plan.md) `/plan refactor` | Plan safe incremental refactoring steps |
 | [Architecture Review](src/attune/commands/plan.md) `/plan architecture` | Evaluate architecture, propose improvements |
 
