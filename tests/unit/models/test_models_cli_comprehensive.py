@@ -889,7 +889,7 @@ class TestRealModelData:
             if task_list:
                 task = task_list[0]
                 tier = get_tier_for_task(task)
-                assert tier.value in ["cheap", "capable", "premium", "ultra"]
+                assert tier.value in ["cheap", "capable", "premium"]
 
 
 @pytest.mark.unit

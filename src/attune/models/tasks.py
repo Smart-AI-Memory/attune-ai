@@ -70,16 +70,6 @@ class TaskType(Enum):
     MULTI_STEP_PLANNING = "multi_step_planning"
     CRITICAL_DECISION = "critical_decision"
 
-    # =========================================================================
-    # ULTRA TIER TASKS (~$10.00/M input, 1M context window)
-    # Experimental: requires Anthropic tier 4 access and beta API header.
-    # For tasks that need the full codebase in a single context window.
-    # =========================================================================
-    WHOLE_REPO_REVIEW = "whole_repo_review"
-    CROSS_MODULE_ANALYSIS = "cross_module_analysis"
-    FULL_CODEBASE_REFACTOR = "full_codebase_refactor"
-    DEEP_CONTEXT_REASONING = "deep_context_reasoning"
-
 
 @dataclass(frozen=True)
 class TaskInfo:
@@ -139,22 +129,11 @@ PREMIUM_TASKS: frozenset[str] = frozenset(
     ],
 )
 
-# Ultra tier tasks (experimental — 1M context window)
-ULTRA_TASKS: frozenset[str] = frozenset(
-    [
-        TaskType.WHOLE_REPO_REVIEW.value,
-        TaskType.CROSS_MODULE_ANALYSIS.value,
-        TaskType.FULL_CODEBASE_REFACTOR.value,
-        TaskType.DEEP_CONTEXT_REASONING.value,
-    ],
-)
-
 # Complete mapping for lookup
 TASK_TIER_MAP: dict[str, ModelTier] = {
     **dict.fromkeys(CHEAP_TASKS, ModelTier.CHEAP),
     **dict.fromkeys(CAPABLE_TASKS, ModelTier.CAPABLE),
     **dict.fromkeys(PREMIUM_TASKS, ModelTier.PREMIUM),
-    **dict.fromkeys(ULTRA_TASKS, ModelTier.ULTRA),
 }
 
 # =============================================================================
@@ -282,8 +261,6 @@ def get_tasks_for_tier(tier: ModelTier) -> list[str]:
         return list(CAPABLE_TASKS)
     if tier == ModelTier.PREMIUM:
         return list(PREMIUM_TASKS)
-    if tier == ModelTier.ULTRA:
-        return list(ULTRA_TASKS)
     return []
 
 
@@ -298,7 +275,6 @@ def get_all_tasks() -> dict[str, list[str]]:
         "cheap": list(CHEAP_TASKS),
         "capable": list(CAPABLE_TASKS),
         "premium": list(PREMIUM_TASKS),
-        "ultra": list(ULTRA_TASKS),
     }
 
 
@@ -379,26 +355,5 @@ TASK_INFO: dict[TaskType, TaskInfo] = {
         TaskType.COMPLEX_REASONING,
         ModelTier.PREMIUM,
         "Handle complex multi-step reasoning",
-    ),
-    # Ultra tasks (experimental — 1M context)
-    TaskType.WHOLE_REPO_REVIEW: TaskInfo(
-        TaskType.WHOLE_REPO_REVIEW,
-        ModelTier.ULTRA,
-        "Review entire repository in a single context window",
-    ),
-    TaskType.CROSS_MODULE_ANALYSIS: TaskInfo(
-        TaskType.CROSS_MODULE_ANALYSIS,
-        ModelTier.ULTRA,
-        "Analyze dependencies and interactions across modules",
-    ),
-    TaskType.FULL_CODEBASE_REFACTOR: TaskInfo(
-        TaskType.FULL_CODEBASE_REFACTOR,
-        ModelTier.ULTRA,
-        "Plan refactoring across the full codebase",
-    ),
-    TaskType.DEEP_CONTEXT_REASONING: TaskInfo(
-        TaskType.DEEP_CONTEXT_REASONING,
-        ModelTier.ULTRA,
-        "Reason over large context exceeding 200K tokens",
     ),
 }

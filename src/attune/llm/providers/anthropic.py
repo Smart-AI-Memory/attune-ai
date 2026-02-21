@@ -120,11 +120,6 @@ class AnthropicProvider(BaseLLMProvider):
                 "budget_tokens": self.thinking_budget,
             }
 
-        # Inject beta headers for experimental features (e.g., 1M context)
-        beta_headers = kwargs.pop("beta_headers", None)
-        if beta_headers:
-            api_kwargs["extra_headers"] = beta_headers
-
         # Add any additional kwargs
         api_kwargs.update(kwargs)
 
@@ -305,11 +300,6 @@ class AnthropicProvider(BaseLLMProvider):
             ]
         elif system_prompt:
             api_kwargs["system"] = system_prompt
-
-        # Inject beta headers for experimental features (e.g., 1M context)
-        beta_headers = kwargs.pop("beta_headers", None)
-        if beta_headers:
-            api_kwargs["extra_headers"] = beta_headers
 
         api_kwargs.update(kwargs)
 
