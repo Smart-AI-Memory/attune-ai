@@ -227,8 +227,11 @@ class TestRoutingConfigUltra:
         assert "ultra_enabled" in d
         assert "ultra_beta_header" in d
 
-    def test_ultra_from_dict(self):
-        """Test ultra fields are deserialized."""
+    def test_ultra_from_dict_without_env_var(self):
+        """Test ultra_enabled is forced False without env var."""
+        import os
+
+        os.environ.pop("ATTUNE_ULTRA_EXPERIMENTAL", None)
         data = {
             "ultra_model": "claude-opus-4-6",
             "max_tokens_ultra": 128_000,
@@ -236,8 +239,45 @@ class TestRoutingConfigUltra:
             "ultra_beta_header": "context-1m-2025-08-07",
         }
         config = RoutingConfig.from_dict(data)
-        assert config.ultra_enabled is True
+        # Env var gate forces it off
+        assert config.ultra_enabled is False
         assert config.max_tokens_ultra == 128_000
+
+    def test_ultra_from_dict_with_env_var(self):
+        """Test ultra_enabled stays True with env var set."""
+        import os
+
+        os.environ["ATTUNE_ULTRA_EXPERIMENTAL"] = "1"
+        try:
+            data = {
+                "ultra_model": "claude-opus-4-6",
+                "max_tokens_ultra": 128_000,
+                "ultra_enabled": True,
+                "ultra_beta_header": "context-1m-2025-08-07",
+            }
+            config = RoutingConfig.from_dict(data)
+            assert config.ultra_enabled is True
+        finally:
+            del os.environ["ATTUNE_ULTRA_EXPERIMENTAL"]
+
+    def test_ultra_env_var_gate_blocks_config_flag(self):
+        """Test that ultra_enabled=True is blocked without env var."""
+        import os
+
+        os.environ.pop("ATTUNE_ULTRA_EXPERIMENTAL", None)
+        config = RoutingConfig(ultra_enabled=True)
+        assert config.ultra_enabled is False
+
+    def test_ultra_env_var_gate_allows_with_flag(self):
+        """Test that ultra_enabled=True works with env var."""
+        import os
+
+        os.environ["ATTUNE_ULTRA_EXPERIMENTAL"] = "1"
+        try:
+            config = RoutingConfig(ultra_enabled=True)
+            assert config.ultra_enabled is True
+        finally:
+            del os.environ["ATTUNE_ULTRA_EXPERIMENTAL"]
 
     def test_default_tier_accepts_ultra(self):
         """Test default_tier can be set to ultra."""

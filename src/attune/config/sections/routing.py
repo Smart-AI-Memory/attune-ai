@@ -4,8 +4,12 @@ Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import logging
+import os
 from dataclasses import dataclass
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,7 +31,8 @@ class RoutingConfig:
         max_tokens_capable: Max output tokens for capable tier.
         max_tokens_premium: Max output tokens for premium tier.
         max_tokens_ultra: Max output tokens for ultra tier.
-        ultra_enabled: Enable ultra tier (experimental, requires tier 4 access).
+        ultra_enabled: Enable ultra tier (EXPERIMENTAL, requires beta access
+            and ATTUNE_ULTRA_EXPERIMENTAL=1 environment variable).
         ultra_beta_header: Anthropic beta header value for 1M context.
         temperature_default: Default temperature for completions.
         retry_on_rate_limit: Retry requests on rate limit errors.
@@ -50,6 +55,26 @@ class RoutingConfig:
     temperature_default: float = 0.7
     retry_on_rate_limit: bool = True
     max_retries: int = 3
+
+    def __post_init__(self) -> None:
+        """Enforce experimental gate for ultra tier."""
+        if self.ultra_enabled:
+            env_flag = os.environ.get("ATTUNE_ULTRA_EXPERIMENTAL", "")
+            if env_flag != "1":
+                logger.warning(
+                    "ultra_enabled=True in config but "
+                    "ATTUNE_ULTRA_EXPERIMENTAL=1 not set. "
+                    "Ultra tier disabled. The 1M context API "
+                    "is experimental and requires opt-in via "
+                    "environment variable."
+                )
+                self.ultra_enabled = False
+            else:
+                logger.warning(
+                    "Ultra tier ENABLED (experimental). "
+                    "Using Anthropic 1M context beta API. "
+                    "This feature may change without notice."
+                )
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
