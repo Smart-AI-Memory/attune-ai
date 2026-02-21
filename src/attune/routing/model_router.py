@@ -1,17 +1,17 @@
 """Smart Model Router for Attune AI
 
-Routes tasks to appropriate model tiers for optimal cost/quality tradeoff:
+Routes tasks to appropriate Claude model tiers for optimal cost/quality tradeoff:
 
-TIER 1 - CHEAP (Haiku / GPT-4o-mini / Local Ollama):
-    Cost: ~$0.25/M input, $1.25/M output
+TIER 1 - CHEAP (Haiku):
+    Cost: ~$1.00/M input, $5.00/M output
     Use for: Triage, classification, summarization, simple analysis
 
-TIER 2 - CAPABLE (Sonnet / GPT-4o):
-    Cost: ~$3/M input, $15/M output
+TIER 2 - CAPABLE (Sonnet):
+    Cost: ~$3.00/M input, $15.00/M output
     Use for: Code generation, bug fixes, security review, sub-agent work
 
-TIER 3 - PREMIUM (Opus / o1):
-    Cost: ~$15/M input, $75/M output
+TIER 3 - PREMIUM (Opus):
+    Cost: ~$15.00/M input, $75.00/M output
     Use for: Coordination, synthesis, architectural decisions, critical work
 
 Cost Savings Example:
@@ -109,7 +109,7 @@ class ModelRouter:
     """Smart model router for cost-optimized task execution.
 
     Routes tasks to appropriate model tiers based on complexity and
-    cost requirements. Supports Anthropic, OpenAI, and Ollama providers.
+    cost requirements. Claude-native architecture (Anthropic only).
 
     Model configurations are sourced from the unified registry at
     attune.models.MODEL_REGISTRY.
@@ -152,7 +152,7 @@ class ModelRouter:
         """Initialize the model router.
 
         Args:
-            default_provider: Default provider (anthropic, openai, ollama, hybrid)
+            default_provider: Default provider (anthropic)
             custom_routing: Custom task type to tier mappings
 
         """

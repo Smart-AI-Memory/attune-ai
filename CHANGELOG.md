@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.3] - 2026-02-21
+
+### Changed
+
+- Remove all references to non-Anthropic providers (OpenAI,
+  Google Gemini, Ollama) from README, documentation, examples,
+  and source code docstrings to align with Claude-native
+  architecture
+- Update test badge to reflect actual test count (14000+)
+
 ## [3.0.2] - 2026-02-21
 
 ### Changed

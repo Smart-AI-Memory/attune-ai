@@ -29,8 +29,6 @@ class Provider(str, Enum):
     """LLM provider options."""
 
     ANTHROPIC = "anthropic"
-    OPENAI = "openai"
-    LOCAL = "local"
 
 
 class WorkflowMode(str, Enum):
@@ -147,16 +145,6 @@ class UnifiedAgentConfig(BaseModel):
                 ModelTier.CHEAP: "claude-haiku-4-5-20251001",
                 ModelTier.CAPABLE: "claude-sonnet-4-6",
                 ModelTier.PREMIUM: "claude-opus-4-6",
-            },
-            Provider.OPENAI: {
-                ModelTier.CHEAP: "gpt-4o-mini",
-                ModelTier.CAPABLE: "gpt-4o",
-                ModelTier.PREMIUM: "gpt-4o",
-            },
-            Provider.LOCAL: {
-                ModelTier.CHEAP: "llama3.2:3b",
-                ModelTier.CAPABLE: "llama3.1:8b",
-                ModelTier.PREMIUM: "llama3.1:70b",
             },
         }
 

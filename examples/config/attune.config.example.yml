@@ -16,7 +16,7 @@ confidence_threshold: 0.75  # 0.0-1.0
 # Smart model routing for cost optimization
 model_routing:
   enabled: true
-  provider: "anthropic"  # anthropic, openai, ollama
+  provider: "anthropic"
 
   # Model assignments per tier
   models:

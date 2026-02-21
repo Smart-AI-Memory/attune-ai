@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-11000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-14000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -295,7 +295,7 @@ python -m attune.models.auth_cli recommend src/module.py
 # Base install (CLI + workflows)
 pip install attune-ai
 
-# Full developer experience (multi-LLM, agents, memory)
+# Full developer experience (agents, memory, dashboard)
 pip install attune-ai[developer]
 
 # With semantic caching (70% cost reduction)
@@ -311,12 +311,12 @@ cd attune-ai && pip install -e .[dev]
 
 **What's in each option:**
 
-| Option         | What You Get                                   |
-| -------------- | ---------------------------------------------- |
-| Base           | CLI, workflows, Anthropic SDK                  |
-| `[developer]`  | + OpenAI, Google AI, LangChain agents, memory  |
-| `[cache]`      | + Semantic similarity caching                  |
-| `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry       |
+| Option         | What You Get                                    |
+| -------------- | ----------------------------------------------- |
+| Base           | CLI, workflows, Anthropic SDK                   |
+| `[developer]`  | + Multi-agent orchestration, memory, dashboard  |
+| `[cache]`      | + Semantic similarity caching                   |
+| `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry        |
 
 ---
 
@@ -379,7 +379,7 @@ See [CONTRIBUTING.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CON
 Special thanks to:
 
 - **[Anthropic](https://www.anthropic.com/)** - For Claude AI and the Model Context Protocol
-- **[LangChain](https://github.com/langchain-ai/langchain)** - Agent framework powering our orchestration
+- **[LangChain](https://github.com/langchain-ai/langchain)** - Agent framework foundations
 - **[FastAPI](https://github.com/tiangolo/fastapi)** - Modern Python web framework
 
 [View Full Acknowledgements →](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGEMENTS.md)

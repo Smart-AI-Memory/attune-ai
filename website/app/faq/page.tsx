@@ -60,7 +60,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'Which LLM providers are supported?',
-        answer: 'Core workflows support multiple LLM providers including Anthropic Claude, OpenAI GPT-4, Google Gemini, and local models via Ollama. Agent and team creation features (dynamic composition, SDK integration) work with the optional Anthropic Agent SDK for enhanced capabilities.',
+        answer: 'Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This enables prompt caching, extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.',
       },
       {
         question: 'What are agent templates?',

@@ -188,7 +188,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     models_parser.add_argument(
         "--provider",
         "-p",
-        choices=["anthropic", "openai", "google"],
+        choices=["anthropic"],
         help="Filter by provider",
     )
     models_parser.add_argument(
@@ -211,7 +211,7 @@ Documentation: https://smartaimemory.com/framework-docs/
 
     # provider set
     set_parser = provider_sub.add_parser("set", help="Set provider")
-    set_parser.add_argument("name", choices=["anthropic", "openai", "hybrid"], help="Provider name")
+    set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
 
     # --- Dashboard commands ---
     dashboard_parser = subparsers.add_parser("dashboard", help="Agent coordination dashboard")

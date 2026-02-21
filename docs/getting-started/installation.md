@@ -54,19 +54,12 @@ python -c "import attune; print(f'Attune AI v{attune.__version__}')"
 
 ## Step 2: Configure an LLM Provider
 
-You need at least one LLM provider. Anthropic (Claude) is recommended.
+Attune AI uses Anthropic Claude as its LLM provider.
 
 ### Option A: Environment Variable (Quick)
 
 ```bash
-# Anthropic (recommended)
 export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Or OpenAI
-export OPENAI_API_KEY="sk-..."
-
-# Or Google
-export GOOGLE_API_KEY="..."
 ```
 
 ### Option B: .env File (Persistent)

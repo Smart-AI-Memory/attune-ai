@@ -22,7 +22,7 @@ async def simple_example():
     """
     # Create an instance (uses Claude by default)
     llm = LLMExecutor(
-        provider="anthropic",  # or "openai", "local"
+        provider="anthropic",
         target_level=4,  # How smart you want it to be
         api_key=os.getenv("ANTHROPIC_API_KEY"),
     )

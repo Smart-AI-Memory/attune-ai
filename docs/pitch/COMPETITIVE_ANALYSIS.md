@@ -44,7 +44,7 @@ The AI developer tools market includes several categories:
 
 | Aspect | GitHub Copilot | Attune AI |
 |--------|----------------|-------------------|
-| **Model** | OpenAI (fixed) | Multi-model (Claude, GPT, Gemini, Ollama) |
+| **Model** | OpenAI (fixed) | Claude-native (Haiku, Sonnet, Opus) |
 | **Approach** | Reactive autocomplete | Anticipatory intelligence |
 | **Memory** | Session-based | Persistent across sessions |
 | **Cost control** | Fixed subscription | Pay-per-use with 34-86% optimization |
@@ -275,7 +275,7 @@ Level               │                                         │
 ## Addressing Competitive Threats
 
 ### Threat: GitHub adds anticipatory features
-**Response:** Attune's model-agnostic approach and enterprise compliance provide differentiation. GitHub is locked to OpenAI.
+**Response:** Attune's Claude-native architecture and enterprise compliance provide differentiation. GitHub is locked to OpenAI.
 
 ### Threat: LangChain adds production features
 **Response:** Attune's integrated approach vs. LangChain's framework approach. Different value propositions.

@@ -54,7 +54,7 @@ class WorkflowStepConfig:
 
     # Optional routing hints (override task-based routing)
     tier_hint: str | None = None  # "cheap" | "capable" | "premium"
-    provider_hint: str | None = None  # "anthropic" | "openai" | "ollama"
+    provider_hint: str | None = None  # "anthropic"
 
     # Optional resilience configuration
     fallback_policy: FallbackPolicy | None = None
@@ -181,13 +181,7 @@ def validate_step_config(step: WorkflowStepConfig) -> list[str]:
     if step.tier_hint and step.tier_hint not in ("cheap", "capable", "premium"):
         errors.append(f"Invalid tier_hint: {step.tier_hint}")
 
-    if step.provider_hint and step.provider_hint not in (
-        "anthropic",
-        "openai",
-        "google",
-        "ollama",
-        "hybrid",
-    ):
+    if step.provider_hint and step.provider_hint not in ("anthropic",):
         errors.append(f"Invalid provider_hint: {step.provider_hint}")
 
     if step.timeout_seconds is not None and step.timeout_seconds <= 0:
