@@ -318,7 +318,7 @@ requests = [
     {
         "custom_id": "task_1",
         "params": {
-            "model": "claude-sonnet-4-5-20250929",
+            "model": "claude-sonnet-4-6",
             "messages": [{"role": "user", "content": "Analyze this log..."}],
             "max_tokens": 4096,
         },
@@ -373,7 +373,7 @@ Results are returned as a list of result objects:
           "input_tokens": 150,
           "output_tokens": 75
         },
-        "model": "claude-sonnet-4-5-20250929",
+        "model": "claude-sonnet-4-6",
         "stop_reason": "end_turn"
       }
     }
@@ -495,7 +495,7 @@ for result in results:
     if result["result"]["type"] == "succeeded":
         usage = result["result"]["message"]["usage"]
         log_request(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-6",
             input_tokens=usage["input_tokens"],
             output_tokens=usage["output_tokens"],
             task_type="batch_processing",

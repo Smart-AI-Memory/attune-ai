@@ -202,8 +202,7 @@ class TelemetryAnalytics:
         anthropic_calls = [
             c
             for c in calls
-            if c.provider == "anthropic"
-            and c.model_id in ["claude-sonnet-4-5-20250929", "claude-opus-4-6"]
+            if c.provider == "anthropic" and c.model_id in ["claude-sonnet-4-6", "claude-opus-4-6"]
         ]
 
         if not anthropic_calls:
@@ -223,7 +222,7 @@ class TelemetryAnalytics:
         total = len(anthropic_calls)
 
         # Count Sonnet attempts and successes
-        sonnet_calls = [c for c in anthropic_calls if c.model_id == "claude-sonnet-4-5-20250929"]
+        sonnet_calls = [c for c in anthropic_calls if c.model_id == "claude-sonnet-4-6"]
         sonnet_successes = sum(1 for c in sonnet_calls if c.success)
 
         # Count Opus fallbacks (calls with fallback_used and ended up on Opus)

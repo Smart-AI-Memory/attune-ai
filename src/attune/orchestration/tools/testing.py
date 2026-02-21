@@ -342,7 +342,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
         try:
             # Try Sonnet models only (Capable tier) - do NOT downgrade
             models_to_try = [
-                "claude-sonnet-4-5-20250929",  # Sonnet 4.5 (January 2025 - latest)
+                "claude-sonnet-4-6",  # Sonnet 4.5 (January 2025 - latest)
                 "claude-3-5-sonnet-20241022",  # 3.5 Sonnet Oct 2024
                 "claude-3-5-sonnet-20240620",  # 3.5 Sonnet Jun 2024
             ]

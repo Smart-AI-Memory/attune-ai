@@ -240,7 +240,7 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         if provider == "anthropic":
             return AnthropicProvider(
                 api_key=api_key,
-                model=model or "claude-sonnet-4-5-20250929",
+                model=model or "claude-sonnet-4-6",
                 **kwargs,
             )
         if provider == "openai":

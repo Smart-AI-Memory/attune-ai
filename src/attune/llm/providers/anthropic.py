@@ -26,7 +26,7 @@ class AnthropicProvider(BaseLLMProvider):
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-5-20250929",
+        model: str = "claude-sonnet-4-6",
         use_prompt_caching: bool = True,  # Default to True for 20-30% cost savings
         use_thinking: bool = False,
         thinking_budget: int = 10000,
@@ -325,7 +325,7 @@ class AnthropicProvider(BaseLLMProvider):
                 "supports_thinking": True,
                 "ideal_for": "Complex reasoning, large codebases",
             },
-            "claude-sonnet-4-5-20250929": {
+            "claude-sonnet-4-6": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 3.00,
                 "cost_per_1m_output": 15.00,

@@ -217,7 +217,7 @@ class TestAnthropicProvider:
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             provider = AnthropicProvider(api_key="test-key")
 
-            assert provider.model == "claude-sonnet-4-5-20250929"
+            assert provider.model == "claude-sonnet-4-6"
 
     def test_anthropic_get_model_info_opus(self):
         """Test get_model_info for Claude Opus"""

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2] - 2026-02-21
+
+### Changed
+
+- Update capable tier model from Claude Sonnet 4.5
+  (`claude-sonnet-4-5-20250929`) to Claude Sonnet 4.6
+  (`claude-sonnet-4-6`) across registry, providers,
+  routing, tests, and docs. Same pricing ($3/$15 per 1M
+  tokens).
+
 ## [3.0.1] - 2026-02-20
 
 ### Fixed
