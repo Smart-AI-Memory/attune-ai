@@ -22,18 +22,18 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.1.0
+## What's New in v3.1.1
 
-- **Config Decoupling** — Extracted `_validate_file_path()`
-  into `security/path_validation.py`, eliminating 5
-  duplicate implementations and reducing config module
-  coupling from 59 dependents to 0.
-- **CLI Consolidation** — Alternative `python -m` entry
-  points now emit deprecation warnings directing users to
-  the canonical `attune` CLI.
-- **`/plan brainstorm`** — New planning command for guided
-  brainstorming and ideation, replacing TDD scaffolding
-  (TDD remains in `/testing tdd`).
+- **Documentation audit** — Full audit of all commands,
+  docs, and rules. Fixed 31 findings including dead-end
+  CLI routes, stale file paths, and phantom hub routes.
+- **Plan-to-dev handoff** — `/plan` commands save
+  structured plans and offer seamless transition to
+  `/dev` execution. Cross-session plan resumption.
+- **New commands** — `/utilities` (auth management)
+  and `/help` (workflow navigation).
+- **Test fixes** — Fixed 6 Redis fallback tests that
+  were patching at wrong module paths.
 
 ---
 
