@@ -84,6 +84,32 @@ Then run:
 uv run attune workflow run perf-audit --path <target>
 ```
 
+### run code-review
+
+Use `AskUserQuestion` to scope:
+
+- Which path or files to review?
+- Focus area: quality, security, performance,
+  or all?
+
+Then run:
+
+```bash
+uv run attune workflow run code-review --path <target>
+```
+
+### run seo-optimization
+
+Use `AskUserQuestion` to scope:
+
+- Which path or URL to analyze?
+
+Then run:
+
+```bash
+uv run attune workflow run seo-optimization --path <target>
+```
+
 ### list
 
 Run:

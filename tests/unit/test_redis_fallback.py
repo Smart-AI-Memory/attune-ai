@@ -29,6 +29,19 @@ from attune.memory.short_term import (  # noqa: E402
     TTLStrategy,
 )
 
+# Common patches needed to bypass auto-detection layers.
+# The facade checks MemoryFeatures.check_redis() and base.py
+# checks REDIS_AVAILABLE and may run RedisAutoDetector.
+# These patches ensure tests reach the actual retry logic.
+_PATCH_REDIS_AVAILABLE = patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+_PATCH_FEATURES = patch(
+    "attune.memory.features.MemoryFeatures.check_redis",
+    return_value=True,
+)
+_PATCH_AUTO_DETECT = patch(
+    "attune.memory.short_term.base.RedisAutoDetector",
+)
+
 
 def _redis_running() -> bool:
     """Check if Redis is actually running on localhost."""
@@ -43,9 +56,10 @@ def _redis_running() -> bool:
 class TestRedisFallbackBehavior:
     """Test that RedisShortTermMemory gracefully falls back to mock when Redis unavailable."""
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_falls_back_to_mock_on_connection_failure(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_falls_back_to_mock_on_connection_failure(self, mock_redis_cls, _mock_feat):
         """Test graceful fallback to mock storage when Redis connection fails."""
         # Mock Redis connection failure
         mock_redis_cls.side_effect = redis.ConnectionError("Connection refused")
@@ -57,21 +71,23 @@ class TestRedisFallbackBehavior:
         # Verify it attempted to connect
         assert mock_redis_cls.called
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_falls_back_to_mock_on_auth_failure(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_falls_back_to_mock_on_auth_failure(self, mock_redis_cls, _mock_feat):
         """Test graceful fallback when Redis authentication fails."""
         mock_client = Mock()
         mock_client.ping.side_effect = redis.AuthenticationError("Invalid password")
         mock_redis_cls.return_value = mock_client
 
-        # Should fail after retries
+        # Auth errors are not retried (not ConnectionError/TimeoutError)
         with pytest.raises(redis.AuthenticationError):
             _ = RedisShortTermMemory(host="localhost", port=6379, password="wrong")
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_retries_connection_with_exponential_backoff(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_retries_connection_with_exponential_backoff(self, mock_redis_cls, _mock_feat):
         """Test that connection retries use exponential backoff."""
         mock_client = Mock()
         call_count = 0
@@ -238,9 +254,10 @@ class TestConnectionRecovery:
         # Should have recovered and ping should work
         assert memory.ping() is True
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_tracks_retry_metrics(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_tracks_retry_metrics(self, mock_redis_cls, _mock_feat):
         """Test that retry attempts are tracked in metrics."""
         mock_client = Mock()
         attempt = 0
@@ -290,9 +307,10 @@ class TestErrorHandlingEdgeCases:
         with pytest.raises(redis.ResponseError):
             memory.stash("key", {"data": "value"}, creds, ttl=TTLStrategy.WORKING_RESULTS)
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_handles_max_clients_exceeded(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_handles_max_clients_exceeded(self, mock_redis_cls, _mock_feat):
         """Test handling when Redis max clients exceeded."""
         mock_redis_cls.side_effect = redis.ConnectionError("max number of clients reached")
 
@@ -356,9 +374,10 @@ class TestConfigurationValidation:
 class TestMetricsTracking:
     """Test that metrics are properly tracked during fallback scenarios."""
 
-    @patch("attune.memory.short_term.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.redis.Redis")
-    def test_tracks_retries_in_metrics(self, mock_redis_cls):
+    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
+    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
+    @patch("attune.memory.short_term.base.redis.Redis")
+    def test_tracks_retries_in_metrics(self, mock_redis_cls, _mock_feat):
         """Test that retry attempts increment metrics counter."""
         mock_client = Mock()
         call_count = 0

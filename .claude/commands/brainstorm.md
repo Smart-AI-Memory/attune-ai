@@ -27,6 +27,19 @@ plans.
 
 **One conversation. Clear outcome.**
 
+## Routes
+
+| Shortcut | Behavior |
+| -------- | -------- |
+| `/brainstorm` | Full open discovery |
+| `/brainstorm "topic"` | Start with context pre-filled |
+| `/brainstorm plan` | Skip to goals/planning |
+
+Note: Brainstorm is conversational — not routed like
+other commands. There are no `###` behavior sections.
+The phases (Context, Problem, Goals, End State) flow
+naturally through the conversation.
+
 ## How It Works
 
 Type `/brainstorm` and I'll think through the problem with

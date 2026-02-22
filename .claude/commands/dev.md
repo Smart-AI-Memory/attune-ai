@@ -49,6 +49,47 @@ Developer tools for daily coding workflows.
 
 ## Behavior
 
+### Plan Detection (all routes)
+
+Before starting scoping questions for any route,
+check for saved plans from `/plan`:
+
+1. Use `Glob` to check `.claude/plans/{route}-*.md`
+   for the current route (e.g., `refactor-*.md`
+   for `/dev refactor`)
+2. If matching plans exist, use `Read` to check
+   their **Status** field (skip `completed` plans)
+3. If no pending plans match, proceed normally
+   with the scoping flow below
+4. If multiple pending plans match, show a list
+   and let the user choose which one
+5. If a pending/in-progress plan is found, use
+   `AskUserQuestion` with these options:
+
+- **"Yes, use this plan"**: Read the plan file.
+  Update its **Status** to `in-progress`. Use
+  the plan's **Scope** and **Approach** sections
+  to drive execution. Do NOT re-ask scoping
+  questions.
+- **"No, start fresh"**: Proceed with the normal
+  `AskUserQuestion` scoping flow below.
+
+Example prompt:
+
+```yaml
+question: "I found a saved plan:
+  {plan-title} ({date}). Pick up where you
+  left off?"
+header: "Plan"
+options:
+  - label: "Yes, use this plan"
+    description: "Skip scoping — execute based
+      on the saved plan"
+  - label: "No, start fresh"
+    description: "Ignore the plan and scope
+      from scratch"
+```
+
 ### review
 
 Use `AskUserQuestion` to scope:
@@ -109,4 +150,16 @@ Then run:
 
 ```bash
 uv run attune workflow run perf-audit --path <target>
+```
+
+### quality
+
+Use `AskUserQuestion` to scope:
+
+- Which path to analyze?
+
+Then run:
+
+```bash
+uv run attune workflow run bug-predict --path <target>
 ```

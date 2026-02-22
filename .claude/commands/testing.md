@@ -98,3 +98,30 @@ Guide the user through TDD:
 4. Implement the code
 5. Run the test again (should pass)
 6. Refactor if needed
+
+### benchmark
+
+Use `AskUserQuestion` to scope:
+
+- Full benchmark suite, specific module, or function?
+- Compare against a baseline?
+
+Then run:
+
+```bash
+uv run pytest benchmarks/ --benchmark-only
+```
+
+### generate --batch
+
+Use `AskUserQuestion` to scope:
+
+- Which directory or module?
+- Test type? (unit, integration, or both)
+- Any exclusions?
+
+Then run:
+
+```bash
+uv run attune workflow run test-gen --path <target> --batch
+```

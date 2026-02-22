@@ -4,7 +4,7 @@ description: Exception Handling Best Practices: Step-by-step tutorial with examp
 
 # Exception Handling Best Practices
 
-**Version:** 3.9.0
+**Version:** 3.9.0 (doc revision, not framework version)
 **Purpose:** This guide establishes exception handling patterns for the Attune AI to ensure errors are properly caught, logged, and handled.
 
 **Enforcement:** The `BLE` (Blind Exception) linting rule is enabled in `pyproject.toml` to prevent bare `except:` clauses.
