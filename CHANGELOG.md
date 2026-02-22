@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-02-22
+
+### Fixed
+
+- **Cache error noise** — Silenced noisy ERROR log when
+  sentence-transformers is not installed. Changed to
+  DEBUG level since the fallback to hash-only cache is
+  handled gracefully.
+- **Stale package references** — Replaced all
+  `empathy-framework[cache]` references with
+  `attune-ai[cache]` in cache module and error messages.
+- **Cache pre-check** — `create_cache()` now verifies
+  sentence-transformers is importable before attempting
+  to instantiate HybridCache, avoiding unnecessary
+  exception/fallback path.
+
+### Changed
+
+- **`[developer]` extra** — Now includes cache
+  dependencies (sentence-transformers, torch, numpy)
+  so hybrid caching works out of the box for developers.
+
+### Refactored
+
+- **Dead code removal** — Deleted 3 stale monolithic
+  crew files (3,393 lines) that were revert artifacts
+  with zero imports.
+- **Complex function splitting** — Split 3 functions
+  over 200 lines into focused helpers:
+  `_execute_tier_fallback` (200→40 lines),
+  `format_test_gen_report` (289→55 lines),
+  `estimate_workflow_cost` (221→45 lines).
+
 ## [3.1.1] - 2026-02-22
 
 ### Fixed
