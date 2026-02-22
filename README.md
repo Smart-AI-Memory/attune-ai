@@ -25,8 +25,7 @@ pip install attune-ai[developer]
 ## What's New in v3.1.1
 
 - **Documentation audit** — Full audit of all commands,
-  docs, and rules. Fixed 31 findings including dead-end
-  CLI routes, stale file paths, and phantom hub routes.
+  docs, and rules.
 - **Plan-to-dev handoff** — `/plan` commands save
   structured plans and offer seamless transition to
   `/dev` execution. Cross-session plan resumption.
