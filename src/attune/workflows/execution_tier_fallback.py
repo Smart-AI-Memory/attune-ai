@@ -46,20 +46,7 @@ class TierFallbackExecutionMixin:
             should_skip, skip_reason = self.should_skip_stage(stage_name, current_data)
 
             if should_skip:
-                tier = self.get_tier_for_stage(stage_name)
-                stage = WorkflowStage(
-                    name=stage_name,
-                    tier=tier,
-                    description=f"Stage: {stage_name}",
-                    skipped=True,
-                    skip_reason=skip_reason,
-                )
-                self._stages_run.append(stage)
-
-                # Report skip to progress tracker
-                if self._progress_tracker:
-                    self._progress_tracker.skip_stage(stage_name, skip_reason or "")
-
+                self._handle_stage_skip(stage_name, skip_reason, WorkflowStage)
                 continue
 
             # Record stage start in state store (Phase 4)
@@ -67,152 +54,61 @@ class TierFallbackExecutionMixin:
 
             # Try each tier in fallback chain
             stage_succeeded = False
-            tier_index = 0
 
-            for tier in tier_chain:
+            for tier_index, tier in enumerate(tier_chain):
                 stage_start = datetime.now()
-
-                # Report stage start to progress tracker with current tier
                 model_id = self.get_model_for_tier(tier)
-                if self._progress_tracker:
-                    # On first attempt, start stage. On retry, update tier.
-                    if tier_index == 0:
-                        self._progress_tracker.start_stage(stage_name, tier.value, model_id)
-                    else:
-                        # Show tier upgrade (e.g., CHEAP -> CAPABLE)
-                        prev_tier = tier_chain[tier_index - 1].value
-                        self._progress_tracker.update_tier(
-                            stage_name, tier.value, f"{prev_tier}_failed"
-                        )
 
-                # Update heartbeat at stage start (Pattern 1)
-                if heartbeat_coordinator:
-                    try:
-                        stage_index = self.stages.index(stage_name)
-                        progress = stage_index / len(self.stages)
-                        heartbeat_coordinator.beat(
-                            status="running",
-                            progress=progress,
-                            current_task=f"Running stage: {stage_name} ({tier.value})",
-                        )
-                    except Exception as e:
-                        logger.debug(f"Heartbeat update failed: {e}")
+                self._report_stage_progress(stage_name, tier, tier_index, tier_chain, model_id)
+                self._update_heartbeat(heartbeat_coordinator, stage_name, tier, offset=0)
 
                 try:
-                    # Run the stage at current tier
                     output, input_tokens, output_tokens = await self.run_stage(
-                        stage_name,
-                        tier,
-                        current_data,
+                        stage_name, tier, current_data
                     )
 
-                    stage_end = datetime.now()
-                    duration_ms = int((stage_end - stage_start).total_seconds() * 1000)
+                    duration_ms = int((datetime.now() - stage_start).total_seconds() * 1000)
                     cost = self._calculate_cost(tier, input_tokens, output_tokens)
-
-                    # Create stage output dict for validation
                     stage_output = output if isinstance(output, dict) else {"result": output}
 
-                    # Validate output quality
                     is_valid, failure_reason = self.validate_output(stage_output)
 
                     if is_valid:
-                        # Success - record stage and move to next
-                        stage = WorkflowStage(
-                            name=stage_name,
-                            tier=tier,
-                            description=f"Stage: {stage_name}",
-                            input_tokens=input_tokens,
-                            output_tokens=output_tokens,
-                            cost=cost,
-                            result=output,
-                            duration_ms=duration_ms,
+                        self._record_stage_success(
+                            stage_name,
+                            tier,
+                            model_id,
+                            WorkflowStage,
+                            input_tokens,
+                            output_tokens,
+                            cost,
+                            output,
+                            duration_ms,
+                            heartbeat_coordinator,
                         )
-                        self._stages_run.append(stage)
-
-                        # Report stage completion to progress tracker
-                        if self._progress_tracker:
-                            self._progress_tracker.complete_stage(
-                                stage_name,
-                                cost=cost,
-                                tokens_in=input_tokens,
-                                tokens_out=output_tokens,
-                            )
-
-                        # Update heartbeat after stage completion (Pattern 1)
-                        if heartbeat_coordinator:
-                            try:
-                                stage_index = self.stages.index(stage_name) + 1
-                                progress = stage_index / len(self.stages)
-                                heartbeat_coordinator.beat(
-                                    status="running",
-                                    progress=progress,
-                                    current_task=f"Completed stage: {stage_name}",
-                                )
-                            except Exception as e:
-                                logger.debug(f"Heartbeat update failed: {e}")
-
-                        # Log to cost tracker
-                        self.cost_tracker.log_request(
-                            model=model_id,
-                            input_tokens=input_tokens,
-                            output_tokens=output_tokens,
-                            task_type=f"workflow:{self.name}:{stage_name}",
-                        )
-
-                        # Track telemetry for this stage
-                        self._track_telemetry(
-                            stage=stage_name,
-                            tier=tier,
-                            model=model_id,
-                            cost=cost,
-                            tokens={"input": input_tokens, "output": output_tokens},
-                            cache_hit=False,
-                            cache_type=None,
-                            duration_ms=duration_ms,
-                        )
-
-                        # Record successful tier usage
-                        self._tier_progression.append((stage_name, tier.value, True))
-                        stage_succeeded = True
-
-                        # Record stage completion in state store (Phase 4)
-                        self._state_record_stage_complete(stage_name, cost, duration_ms, tier.value)
-
-                        # Pass output to next stage
                         current_data = stage_output
-                        break  # Success - move to next stage
+                        stage_succeeded = True
+                        break
 
-                    else:
-                        # Quality gate failed - try next tier
-                        self._tier_progression.append((stage_name, tier.value, False))
-                        logger.info(
-                            f"Stage {stage_name} failed quality validation with {tier.value}: "
-                            f"{failure_reason}"
-                        )
-
-                        # Check if more tiers available
-                        if tier_index < len(tier_chain) - 1:
-                            logger.info("Retrying with higher tier...")
-                        else:
-                            logger.error(f"All tiers exhausted for {stage_name}")
-
-                except Exception as e:
-                    # Exception during stage execution - try next tier
-                    self._tier_progression.append((stage_name, tier.value, False))
-                    logger.warning(
-                        f"Stage {stage_name} error with {tier.value}: {type(e).__name__}: {e}"
+                    self._log_tier_failure(
+                        stage_name,
+                        tier,
+                        tier_index,
+                        tier_chain,
+                        reason=failure_reason,
+                        level="info",
                     )
 
-                    # Check if more tiers available
-                    if tier_index < len(tier_chain) - 1:
-                        logger.info("Retrying with higher tier...")
-                    else:
-                        logger.error(f"All tiers exhausted for {stage_name}")
+                except Exception as e:
+                    self._log_tier_failure(
+                        stage_name,
+                        tier,
+                        tier_index,
+                        tier_chain,
+                        reason=f"{type(e).__name__}: {e}",
+                        level="warning",
+                    )
 
-                tier_index += 1
-
-            # Check if stage succeeded with any tier
             if not stage_succeeded:
                 error_msg = f"Stage {stage_name} failed with all tiers: CHEAP, CAPABLE, PREMIUM"
                 if self._progress_tracker:
@@ -220,3 +116,151 @@ class TierFallbackExecutionMixin:
                 raise ValueError(error_msg)
 
         return current_data
+
+    def _handle_stage_skip(
+        self, stage_name: str, skip_reason: str | None, WorkflowStage: Any
+    ) -> None:
+        """Record a skipped stage and notify progress tracker."""
+        tier = self.get_tier_for_stage(stage_name)
+        stage = WorkflowStage(
+            name=stage_name,
+            tier=tier,
+            description=f"Stage: {stage_name}",
+            skipped=True,
+            skip_reason=skip_reason,
+        )
+        self._stages_run.append(stage)
+
+        if self._progress_tracker:
+            self._progress_tracker.skip_stage(stage_name, skip_reason or "")
+
+    def _report_stage_progress(
+        self,
+        stage_name: str,
+        tier: Any,
+        tier_index: int,
+        tier_chain: list,
+        model_id: str,
+    ) -> None:
+        """Report stage start or tier upgrade to progress tracker."""
+        if not self._progress_tracker:
+            return
+
+        if tier_index == 0:
+            self._progress_tracker.start_stage(stage_name, tier.value, model_id)
+        else:
+            prev_tier = tier_chain[tier_index - 1].value
+            self._progress_tracker.update_tier(stage_name, tier.value, f"{prev_tier}_failed")
+
+    def _update_heartbeat(
+        self,
+        heartbeat_coordinator: Any,
+        stage_name: str,
+        tier: Any,
+        offset: int = 0,
+    ) -> None:
+        """Send a heartbeat update with current stage progress.
+
+        Args:
+            heartbeat_coordinator: Coordinator instance or None
+            stage_name: Current stage name
+            tier: Current tier being attempted
+            offset: 0 for stage start, 1 for stage completion
+
+        """
+        if not heartbeat_coordinator:
+            return
+
+        try:
+            stage_index = self.stages.index(stage_name) + offset
+            progress = stage_index / len(self.stages)
+            task_label = "Completed" if offset else "Running"
+            heartbeat_coordinator.beat(
+                status="running",
+                progress=progress,
+                current_task=f"{task_label} stage: {stage_name}"
+                + (f" ({tier.value})" if not offset else ""),
+            )
+        except Exception as e:
+            logger.debug(f"Heartbeat update failed: {e}")
+
+    def _record_stage_success(
+        self,
+        stage_name: str,
+        tier: Any,
+        model_id: str,
+        WorkflowStage: Any,
+        input_tokens: int,
+        output_tokens: int,
+        cost: float,
+        output: Any,
+        duration_ms: int,
+        heartbeat_coordinator: Any,
+    ) -> None:
+        """Record all bookkeeping for a successful stage execution."""
+        stage = WorkflowStage(
+            name=stage_name,
+            tier=tier,
+            description=f"Stage: {stage_name}",
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
+            result=output,
+            duration_ms=duration_ms,
+        )
+        self._stages_run.append(stage)
+
+        if self._progress_tracker:
+            self._progress_tracker.complete_stage(
+                stage_name,
+                cost=cost,
+                tokens_in=input_tokens,
+                tokens_out=output_tokens,
+            )
+
+        self._update_heartbeat(heartbeat_coordinator, stage_name, tier, offset=1)
+
+        self.cost_tracker.log_request(
+            model=model_id,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            task_type=f"workflow:{self.name}:{stage_name}",
+        )
+
+        self._track_telemetry(
+            stage=stage_name,
+            tier=tier,
+            model=model_id,
+            cost=cost,
+            tokens={"input": input_tokens, "output": output_tokens},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=duration_ms,
+        )
+
+        self._tier_progression.append((stage_name, tier.value, True))
+        self._state_record_stage_complete(stage_name, cost, duration_ms, tier.value)
+
+    def _log_tier_failure(
+        self,
+        stage_name: str,
+        tier: Any,
+        tier_index: int,
+        tier_chain: list,
+        reason: str,
+        level: str = "info",
+    ) -> None:
+        """Log a tier failure and record it in progression history."""
+        self._tier_progression.append((stage_name, tier.value, False))
+
+        log_fn = getattr(logger, level, logger.info)
+        log_fn(
+            f"Stage {stage_name} failed "
+            f"{'quality validation ' if level == 'info' else ''}"
+            f"with {tier.value}: {reason}"
+        )
+
+        if tier_index < len(tier_chain) - 1:
+            logger.info("Retrying with higher tier...")
+        else:
+            logger.error(f"All tiers exhausted for {stage_name}")

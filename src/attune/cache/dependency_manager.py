@@ -143,7 +143,7 @@ class DependencyManager:
         else:
             print()
             print("  ℹ Using hash-only cache (30% savings)")
-            print("  ℹ To enable later: empathy install cache")
+            print("  ℹ To enable later: pip install attune-ai[cache]")
             print()
             print("=" * 60)
             print()
@@ -204,7 +204,7 @@ class DependencyManager:
         except subprocess.CalledProcessError as e:
             print()
             print(f"  ✗ Installation failed: {e}")
-            print("  ℹ You can try manually: pip install empathy-framework[cache]")
+            print("  ℹ You can try manually: pip install attune-ai[cache]")
             print()
             print("=" * 60)
             print()

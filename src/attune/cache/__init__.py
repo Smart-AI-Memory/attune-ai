@@ -73,21 +73,30 @@ def create_cache(
         if not HYBRID_AVAILABLE:
             raise ImportError(
                 "HybridCache requires sentence-transformers. "
-                "Install with: pip install empathy-framework[cache]"
+                "Install with: pip install attune-ai[cache]"
             )
         logger.info("Using hybrid cache (explicit)")
         return HybridCache(**kwargs)
 
     # Auto-detect (default)
     if HYBRID_AVAILABLE:
-        logger.info("Using hybrid cache (auto-detected)")
-        return HybridCache(**kwargs)
-    else:
-        logger.info(
-            "Using hash-only cache (sentence-transformers not available). "
-            "For 70% cost savings, install with: pip install empathy-framework[cache]"
-        )
-        return HashOnlyCache(**kwargs)
+        try:
+            import sentence_transformers  # noqa: F401
+
+            logger.info("Using hybrid cache (auto-detected)")
+            return HybridCache(**kwargs)
+        except ImportError:
+            logger.info(
+                "Using hash-only cache (sentence-transformers not installed). "
+                "For 70% cost savings, install with: pip install attune-ai[cache]"
+            )
+            return HashOnlyCache(**kwargs)
+
+    logger.info(
+        "Using hash-only cache (numpy not available). "
+        "For 70% cost savings, install with: pip install attune-ai[cache]"
+    )
+    return HashOnlyCache(**kwargs)
 
 
 def auto_setup_cache() -> None:

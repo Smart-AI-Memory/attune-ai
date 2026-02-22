@@ -86,6 +86,184 @@ def estimate_tokens(text: str, model_id: str = "claude-sonnet-4-6") -> int:
         return max(1, int(len(text) * TOKENS_PER_CHAR_HEURISTIC))
 
 
+# Workflow stage configurations by workflow name
+# Based on actual workflow implementations
+WORKFLOW_STAGES: dict[str, list[dict[str, str]]] = {
+    "security-audit": [
+        {"name": "identify_vulnerabilities", "tier": "capable"},
+        {"name": "analyze_risk", "tier": "capable"},
+        {"name": "generate_report", "tier": "cheap"},
+    ],
+    "code-review": [
+        {"name": "analyze_code", "tier": "capable"},
+        {"name": "generate_feedback", "tier": "capable"},
+        {"name": "summarize", "tier": "cheap"},
+    ],
+    "test-gen": [
+        {"name": "analyze_code", "tier": "capable"},
+        {"name": "generate_tests", "tier": "capable"},
+        {"name": "review_tests", "tier": "cheap"},
+    ],
+    "doc-gen": [
+        {"name": "analyze_structure", "tier": "cheap"},
+        {"name": "generate_documentation", "tier": "capable"},
+    ],
+    "bug-predict": [
+        {"name": "analyze_patterns", "tier": "capable"},
+        {"name": "predict_risks", "tier": "capable"},
+    ],
+    "refactor-plan": [
+        {"name": "identify_issues", "tier": "capable"},
+        {"name": "plan_refactoring", "tier": "capable"},
+        {"name": "review_plan", "tier": "cheap"},
+    ],
+    "perf-audit": [
+        {"name": "analyze_performance", "tier": "capable"},
+        {"name": "identify_bottlenecks", "tier": "capable"},
+        {"name": "generate_recommendations", "tier": "cheap"},
+    ],
+    "health-check": [
+        {"name": "scan_codebase", "tier": "cheap"},
+        {"name": "analyze_health", "tier": "capable"},
+        {"name": "generate_report", "tier": "cheap"},
+    ],
+    "pr-review": [
+        {"name": "analyze_diff", "tier": "capable"},
+        {"name": "check_quality", "tier": "capable"},
+        {"name": "generate_review", "tier": "capable"},
+    ],
+    "pro-review": [
+        {"name": "deep_analysis", "tier": "premium"},
+        {"name": "generate_insights", "tier": "capable"},
+    ],
+}
+
+# Output multipliers by stage type keyword
+OUTPUT_MULTIPLIERS: dict[str, float] = {
+    "identify": 0.3,
+    "analyze": 0.8,
+    "generate": 2.0,
+    "review": 0.5,
+    "summarize": 0.3,
+    "fix": 1.5,
+    "test": 1.5,
+    "document": 1.0,
+}
+
+# Default stage config for unknown workflows
+_DEFAULT_STAGES = [
+    {"name": "analyze", "tier": "capable"},
+    {"name": "generate", "tier": "capable"},
+    {"name": "review", "tier": "cheap"},
+]
+
+
+def _estimate_file_tokens(target_path: str) -> int:
+    """Estimate additional tokens from a file or directory.
+
+    Args:
+        target_path: Path to a file or directory
+
+    Returns:
+        Estimated additional token count
+
+    """
+    import os
+
+    try:
+        validated_target = _validate_file_path(target_path)
+
+        if os.path.isfile(validated_target):
+            with open(validated_target, encoding="utf-8", errors="ignore") as f:
+                return estimate_tokens(f.read())
+
+        if os.path.isdir(validated_target):
+            total_chars = 0
+            for root, _, files in os.walk(validated_target):
+                for file in files[:50]:  # Limit to first 50 files
+                    if file.endswith((".py", ".js", ".ts", ".tsx", ".jsx")):
+                        try:
+                            filepath = os.path.join(root, file)
+                            validated_filepath = _validate_file_path(filepath)
+                            with open(validated_filepath, encoding="utf-8", errors="ignore") as f:
+                                total_chars += len(f.read())
+                        except (ValueError, OSError):
+                            pass
+            return int(total_chars * TOKENS_PER_CHAR_HEURISTIC)
+    except (ValueError, OSError):
+        pass
+
+    return 0
+
+
+def _calculate_stage_costs(
+    stages_config: list[dict[str, str]],
+    input_tokens: int,
+    provider: str,
+) -> tuple[list[dict[str, Any]], float, float]:
+    """Calculate cost estimates for each workflow stage.
+
+    Returns:
+        Tuple of (stage_estimates, total_min, total_max)
+
+    """
+    from .registry import get_model
+
+    estimates = []
+    total_min = 0.0
+    total_max = 0.0
+
+    for stage in stages_config:
+        stage_name = stage.get("name", "unknown")
+        tier = stage.get("tier", "capable")
+
+        try:
+            model_info = get_model(provider, tier)
+        except Exception:
+            model_info = get_model(provider, "capable")
+
+        if model_info is None:
+            continue
+
+        # Estimate output tokens based on stage type
+        multiplier = 1.0
+        for stage_type, mult in OUTPUT_MULTIPLIERS.items():
+            if stage_type in stage_name.lower():
+                multiplier = mult
+                break
+
+        est_output = int(input_tokens * multiplier)
+
+        cost = (input_tokens / 1_000_000) * model_info.input_cost_per_million + (
+            est_output / 1_000_000
+        ) * model_info.output_cost_per_million
+
+        estimates.append(
+            {
+                "stage": stage_name,
+                "tier": tier,
+                "model": model_info.id,
+                "estimated_input_tokens": input_tokens,
+                "estimated_output_tokens": est_output,
+                "estimated_cost": round(cost, 6),
+            },
+        )
+
+        total_min += cost * 0.8
+        total_max += cost * 1.2
+
+    return estimates, total_min, total_max
+
+
+def _determine_risk_level(total_max: float) -> str:
+    """Classify cost risk based on maximum estimated cost."""
+    if total_max > 1.0:
+        return "high"
+    if total_max > 0.10:
+        return "medium"
+    return "low"
+
+
 def estimate_workflow_cost(
     workflow_name: str,
     input_text: str,
@@ -120,7 +298,7 @@ def estimate_workflow_cost(
         ValueError: If workflow_name or provider is empty
 
     """
-    from .registry import get_model, get_supported_providers
+    from .registry import get_supported_providers
 
     # Pattern 1: String ID validation
     if not workflow_name or not workflow_name.strip():
@@ -128,173 +306,16 @@ def estimate_workflow_cost(
     if not provider or not provider.strip():
         raise ValueError("provider cannot be empty")
 
-    # Validate provider
     if provider not in get_supported_providers():
-        provider = "anthropic"  # Default fallback
+        provider = "anthropic"
 
-    # Workflow stage configurations by workflow name
-    # Based on actual workflow implementations
-    WORKFLOW_STAGES = {
-        "security-audit": [
-            {"name": "identify_vulnerabilities", "tier": "capable"},
-            {"name": "analyze_risk", "tier": "capable"},
-            {"name": "generate_report", "tier": "cheap"},
-        ],
-        "code-review": [
-            {"name": "analyze_code", "tier": "capable"},
-            {"name": "generate_feedback", "tier": "capable"},
-            {"name": "summarize", "tier": "cheap"},
-        ],
-        "test-gen": [
-            {"name": "analyze_code", "tier": "capable"},
-            {"name": "generate_tests", "tier": "capable"},
-            {"name": "review_tests", "tier": "cheap"},
-        ],
-        "doc-gen": [
-            {"name": "analyze_structure", "tier": "cheap"},
-            {"name": "generate_documentation", "tier": "capable"},
-        ],
-        "bug-predict": [
-            {"name": "analyze_patterns", "tier": "capable"},
-            {"name": "predict_risks", "tier": "capable"},
-        ],
-        "refactor-plan": [
-            {"name": "identify_issues", "tier": "capable"},
-            {"name": "plan_refactoring", "tier": "capable"},
-            {"name": "review_plan", "tier": "cheap"},
-        ],
-        "perf-audit": [
-            {"name": "analyze_performance", "tier": "capable"},
-            {"name": "identify_bottlenecks", "tier": "capable"},
-            {"name": "generate_recommendations", "tier": "cheap"},
-        ],
-        "health-check": [
-            {"name": "scan_codebase", "tier": "cheap"},
-            {"name": "analyze_health", "tier": "capable"},
-            {"name": "generate_report", "tier": "cheap"},
-        ],
-        "pr-review": [
-            {"name": "analyze_diff", "tier": "capable"},
-            {"name": "check_quality", "tier": "capable"},
-            {"name": "generate_review", "tier": "capable"},
-        ],
-        "pro-review": [
-            {"name": "deep_analysis", "tier": "premium"},
-            {"name": "generate_insights", "tier": "capable"},
-        ],
-    }
-
-    # Get stage configuration for this workflow
-    stages_config = WORKFLOW_STAGES.get(
-        workflow_name,
-        [
-            {"name": "analyze", "tier": "capable"},
-            {"name": "generate", "tier": "capable"},
-            {"name": "review", "tier": "cheap"},
-        ],
-    )
-
-    # Estimate input tokens
+    stages_config = WORKFLOW_STAGES.get(workflow_name, _DEFAULT_STAGES)
     input_tokens = estimate_tokens(input_text)
 
-    # If we have a target path, estimate additional content
     if target_path:
-        try:
-            import os
+        input_tokens += _estimate_file_tokens(target_path)
 
-            # Validate path to prevent path traversal attacks
-            validated_target = _validate_file_path(target_path)
-
-            if os.path.isfile(validated_target):
-                with open(validated_target, encoding="utf-8", errors="ignore") as f:
-                    file_content = f.read()
-                input_tokens += estimate_tokens(file_content)
-            elif os.path.isdir(validated_target):
-                # Estimate based on directory size (rough heuristic)
-                total_chars = 0
-                for root, _, files in os.walk(validated_target):
-                    for file in files[:50]:  # Limit to first 50 files
-                        if file.endswith((".py", ".js", ".ts", ".tsx", ".jsx")):
-                            try:
-                                filepath = os.path.join(root, file)
-                                validated_filepath = _validate_file_path(filepath)
-                                with open(
-                                    validated_filepath, encoding="utf-8", errors="ignore"
-                                ) as f:
-                                    total_chars += len(f.read())
-                            except (ValueError, OSError):
-                                pass
-                input_tokens += int(total_chars * TOKENS_PER_CHAR_HEURISTIC)
-        except (ValueError, OSError):
-            pass  # Keep original estimate
-
-    # Output multipliers by stage type
-    output_multipliers = {
-        "identify": 0.3,
-        "analyze": 0.8,
-        "generate": 2.0,
-        "review": 0.5,
-        "summarize": 0.3,
-        "fix": 1.5,
-        "test": 1.5,
-        "document": 1.0,
-    }
-
-    estimates = []
-    total_min = 0.0
-    total_max = 0.0
-
-    for stage in stages_config:
-        stage_name = stage.get("name", "unknown")
-        tier = stage.get("tier", "capable")
-
-        # Get model for this tier
-        try:
-            model_info = get_model(provider, tier)
-        except Exception:
-            # Fallback to capable tier
-            model_info = get_model(provider, "capable")
-
-        if model_info is None:
-            # Skip stage if no model available
-            continue
-
-        # Estimate output tokens based on stage type
-        multiplier = 1.0
-        for stage_type, mult in output_multipliers.items():
-            if stage_type in stage_name.lower():
-                multiplier = mult
-                break
-
-        est_output = int(input_tokens * multiplier)
-
-        # Calculate cost
-        cost = (input_tokens / 1_000_000) * model_info.input_cost_per_million + (
-            est_output / 1_000_000
-        ) * model_info.output_cost_per_million
-
-        estimates.append(
-            {
-                "stage": stage_name,
-                "tier": tier,
-                "model": model_info.id,
-                "estimated_input_tokens": input_tokens,
-                "estimated_output_tokens": est_output,
-                "estimated_cost": round(cost, 6),
-            },
-        )
-
-        # Accumulate with variance (80% - 120%)
-        total_min += cost * 0.8
-        total_max += cost * 1.2
-
-    # Determine risk level
-    if total_max > 1.0:
-        risk = "high"
-    elif total_max > 0.10:
-        risk = "medium"
-    else:
-        risk = "low"
+    estimates, total_min, total_max = _calculate_stage_costs(stages_config, input_tokens, provider)
 
     return {
         "workflow": workflow_name,
@@ -304,7 +325,7 @@ def estimate_workflow_cost(
         "total_min": round(total_min, 4),
         "total_max": round(total_max, 4),
         "display": f"${total_min:.3f} - ${total_max:.3f}",
-        "risk": risk,
+        "risk": _determine_risk_level(total_max),
         "tiktoken_available": TIKTOKEN_AVAILABLE,
     }
 
