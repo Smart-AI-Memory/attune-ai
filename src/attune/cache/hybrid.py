@@ -133,9 +133,9 @@ class HybridCache(BaseCache):
             logger.info(f"Sentence transformer loaded successfully on {self.device}")
 
         except ImportError as e:
-            logger.error(
-                f"Failed to load sentence-transformers: {e}. "
-                "Install with: pip install empathy-framework[cache]"
+            logger.debug(
+                f"sentence-transformers not available: {e}. "
+                "Install with: pip install attune-ai[cache]"
             )
             raise
         except Exception as e:
@@ -258,7 +258,7 @@ class HybridCache(BaseCache):
         if self._model is None:
             raise RuntimeError(
                 f"Sentence transformer model '{self.model_name}' not loaded. "
-                "Install required dependencies with: pip install empathy-framework[cache] "
+                "Install required dependencies with: pip install attune-ai[cache] "
                 "or pip install sentence-transformers torch"
             )
 

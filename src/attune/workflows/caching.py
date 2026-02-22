@@ -116,7 +116,7 @@ class CachingMixin:
         except ImportError as e:
             # Hybrid cache dependencies not available, fall back to hash-only
             logger.info(
-                f"Using hash-only cache (install empathy-framework[cache] for semantic caching): {e}"
+                f"Using hash-only cache (install attune-ai[cache] for semantic caching): {e}"
             )
             self._cache = create_cache(cache_type="hash")
         except (OSError, PermissionError) as e:

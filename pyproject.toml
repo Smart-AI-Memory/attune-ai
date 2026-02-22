@@ -212,6 +212,10 @@ developer = [
     "pyyaml>=6.0,<7.0",
     # Memory subsystem (Redis server 8.4+ recommended)
     "redis>=5.0.0,<8.0.0",
+    # Hybrid caching for 70% cost reduction
+    "sentence-transformers>=2.0.0,<6.0.0",
+    "torch>=2.0.0,<3.0.0",
+    "numpy>=1.24.0,<3.0.0",
 ]
 
 # Teams/enterprises - backend + authentication + compliance (excludes healthcare)
