@@ -1,4 +1,4 @@
-# Attune AI Framework v3.0.0
+# Attune AI Framework v3.1.1
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -24,16 +24,18 @@ Use `/hub-name` to access organized workflows:
 | Hub | Key Routes | Description |
 | --- | ---------- | ----------- |
 | `/attune` | Socratic discovery | Natural language routing to all workflows |
-| `/dev` | debug, review, commit, pr, refactor, quality | Developer tools |
-| `/testing` | run, coverage, generate, tdd | Test runner and generation |
+| `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
+| `/testing` | run, coverage, generate, tdd, benchmark | Test runner and generation |
 | `/workflows` | security, bugs, perf, review, list | Automated analysis |
-| `/plan` | feature, brainstorm, refactor, architecture | Planning and strategy |
-| `/docs` | generate, readme, changelog, explain | Documentation |
+| `/plan` | feature, tdd, refactor, architecture | Planning and strategy |
+| `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
-| `/brainstorm` | discover, plan, export | Guided brainstorming and ideation |
+| `/brainstorm` | "topic", plan | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
 | `/batch` | submit, status, results, wait | Batch API processing (50% cost savings) |
 | `/wizard` | run, create, list, edit | Guided multi-step wizards |
+| `/utilities` | auth-setup, auth-status, auth-reset | Auth and provider management |
+| `/help` | (navigation) | Help navigating workflows |
 
 ---
 
@@ -117,4 +119,4 @@ src/attune/
 
 ---
 
-**Version:** 3.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.1.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)

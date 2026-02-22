@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-02-22
+
+### Fixed
+
+- **Documentation audit** — Full audit of all docs, commands,
+  and rules. Fixed 31 findings: stale file paths, missing
+  behavior sections, wrong version numbers, phantom routes,
+  and dead-end CLI router mappings.
+- **Redis fallback tests** — Fixed 6 failing tests in
+  `test_redis_fallback.py` by patching at correct module
+  paths (`base.py` instead of `short_term`). Tests now
+  properly bypass auto-detection layers to reach retry logic.
+- **CLAUDE.md hub table** — Corrected routes for `/plan`,
+  `/dev`, `/testing`, `/docs`, and `/brainstorm` hubs.
+  Version updated from v3.0.0 to match framework version.
+- **Coding standards references** — Updated `_validate_file_path()`
+  location, CLI file reference, and security test file paths
+  in `coding-standards-index.md`.
+
+### Added
+
+- **Plan-to-dev handoff** — `/plan` commands now save
+  structured plans to `.claude/plans/` and offer seamless
+  transition to `/dev` execution. `/dev` commands detect
+  saved plans for cross-session continuity.
+- **`/utilities` command** — New hub for auth and provider
+  management (`auth-setup`, `auth-status`, `auth-reset`).
+  Resolves CLI router dead end.
+- **`/help` command** — Navigation hub listing all available
+  command hubs. Resolves CLI router fallback dead end.
+- **Missing behavior sections** — Added `### quality` to
+  `/dev`, `### benchmark` and `### generate --batch` to
+  `/testing`, `### overview` to `/docs`, `### run code-review`
+  and `### run seo-optimization` to `/workflows`.
+- **HealthcareWizard status** — Marked as planned feature
+  in ARCHITECTURE.md (not yet implemented).
+- **Version clarification** — CODING_STANDARDS.md and
+  EXCEPTION_HANDLING_GUIDE.md now note their version numbers
+  are doc revisions, not framework versions.
+
+## [3.1.0] - 2026-02-21
+
+### Changed
+
+- **Config decoupling** — Extract `_validate_file_path()`
+  into `security/path_validation.py` module, reducing config
+  module coupling from 59 dependents to 0 for this function.
+  Remove 5 duplicate implementations across `xml_config`,
+  `workflows/config`, `control_panel_validation`,
+  `orchestration/_shared`, and `template_registry`. Migrate
+  all 63 consumer imports. Backward compatibility maintained
+  via re-exports in `config.py` and `config/__init__.py`.
+- **`/plan` hub** — Replace TDD scaffolding with brainstorm
+  command. `/plan brainstorm` routes to the `/brainstorm`
+  skill for guided discovery and ideation. TDD remains
+  available in `/testing tdd`.
+
+### Added
+
+- `src/attune/security/path_validation.py` — Canonical home
+  for `_validate_file_path()` security function (CWE-22)
+- `src/attune/_deprecation.py` — Shared deprecation warning
+  helper for alternative CLI entry points
+- CLI deprecation warnings on 5 alternative entry points:
+  `python -m attune.{telemetry,models,test_generator,
+  project_index,scaffolding}` now emit `DeprecationWarning`
+  directing users to the canonical `attune` CLI
+
+### Deprecated
+
+- `python -m attune.telemetry` — use `attune telemetry`
+- `python -m attune.models` — use `attune provider`
+- `python -m attune.test_generator` — use
+  `attune workflow run test-gen`
+- `python -m attune.project_index` — use
+  `attune workflow run`
+- `python -m attune.scaffolding` — use
+  `attune workflow run`
+- `from attune.config import _validate_file_path` — use
+  `from attune.security.path_validation import
+  _validate_file_path` (old path still works)
+
 ## [3.0.5] - 2026-02-21
 
 ### Fixed

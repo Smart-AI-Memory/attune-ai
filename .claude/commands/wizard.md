@@ -55,9 +55,14 @@ for complex workflows.
 
 ### run
 
+Handles all built-in wizards (`debug`, `test-gen`,
+`refactor`, `security`, `release-prep`). When invoked
+with a specific wizard (e.g., `/wizard run debug`),
+skip the wizard selection question.
+
 Use `AskUserQuestion` to scope:
 
-- Which wizard to run?
+- Which wizard to run? (if not specified)
 - What target files or path?
 
 Then execute the wizard step-by-step, using

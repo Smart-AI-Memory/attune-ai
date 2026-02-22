@@ -218,3 +218,16 @@ git log --oneline --since="last tag"
 
 Format as a markdown changelog grouped by type
 (features, fixes, refactoring).
+
+### overview
+
+Use `AskUserQuestion` to scope:
+
+- Which scope? (full project, specific module,
+  or subsystem)
+- What audience? (new contributor, external user,
+  or architecture review)
+
+Then read the project structure and generate a
+high-level overview covering purpose, key modules,
+and how they connect.

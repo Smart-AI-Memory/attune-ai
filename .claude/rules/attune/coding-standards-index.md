@@ -82,13 +82,17 @@ def save_config(user_path: str, data: dict):
 - `config\x00.json` - Null byte injection
 - `/etc/cron.d/backdoor` - System directory write
 
-**Files Secured (v3.9.0):**
+**Key Files Secured (v3.9.0, non-exhaustive):**
 1. `src/attune/config.py` - Configuration exports
 2. `src/attune/workflows/config.py` - Workflow saves
 3. `src/attune/config/xml_config.py` - XML exports
 4. `src/attune/telemetry/cli.py` - CSV/JSON exports
-5. `src/attune/cli.py` - Pattern exports
-6. `src/attune/memory/control_panel.py` - Memory operations
+5. `src/attune/cli_minimal.py` - Pattern exports
+6. `src/attune/memory/control_panel.py` - Memory ops
+
+`_validate_file_path` is used in 77+ files across
+the codebase. This list highlights the original
+high-risk targets.
 
 **See:** [File Path Validation Implementation](#file-path-validation-implementation) below
 
@@ -247,7 +251,7 @@ except IOError as e:
 
 ### The _validate_file_path() Function
 
-**Location:** `src/attune/config.py:29-68`
+**Location:** `src/attune/security/path_validation.py:15-88`
 
 ```python
 def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
@@ -1150,13 +1154,13 @@ pre-commit run <hook-id>               # Run specific hook
 ### Exception Handling Examples
 
 - `src/attune/workflows/base.py` - Workflow execution with proper error handling
-- `src/attune/cli.py` - CLI with specific exception handling
+- `src/attune/cli_minimal.py` - CLI with specific exception handling
 
 ### Security Test Examples
 
 - `tests/unit/test_config_path_security.py` - Path traversal prevention tests
-- `tests/unit/test_workflow_config_security.py` - Workflow security tests
-- `tests/unit/test_telemetry_cli_security.py` - Telemetry security tests
+- `tests/unit/security/test_path_traversal.py` - Path traversal prevention tests
+- `tests/unit/test_security_validation.py` - Security validation tests
 
 ---
 

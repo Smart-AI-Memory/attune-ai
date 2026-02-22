@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-14000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-14500%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -22,15 +22,18 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.0.4
+## What's New in v3.1.0
 
-- **Updated Model IDs** - Registry and examples now use
-  current model IDs (`claude-haiku-4-5-20251001`,
-  `claude-sonnet-4-6`, `claude-opus-4-6`).
-- **Plugin v3.0.4** - Marketplace and plugin metadata
-  synced with package version.
-- **Version Consistency** - Fixed stale v5.0.0 planning
-  references across docs and source.
+- **Config Decoupling** — Extracted `_validate_file_path()`
+  into `security/path_validation.py`, eliminating 5
+  duplicate implementations and reducing config module
+  coupling from 59 dependents to 0.
+- **CLI Consolidation** — Alternative `python -m` entry
+  points now emit deprecation warnings directing users to
+  the canonical `attune` CLI.
+- **`/plan brainstorm`** — New planning command for guided
+  brainstorming and ideation, replacing TDD scaffolding
+  (TDD remains in `/testing tdd`).
 
 ---
 
@@ -186,7 +189,7 @@ Workflows are organized into hubs for easy discovery:
 | **Documentation** | `/docs`       | Generate and manage documentation            |
 | **Release**       | `/release`    | Release prep, security scan, publishing      |
 | **Workflows**     | `/workflows`  | Automated analysis (security, bugs, perf)    |
-| **Plan**          | `/plan`       | Planning, TDD, code review, refactoring      |
+| **Plan**          | `/plan`       | Feature planning, brainstorm, refactoring    |
 | **Agent**         | `/agent`      | Create and manage custom agents              |
 
 **Natural Language Routing:**
@@ -338,7 +341,7 @@ export REDIS_URL="redis://localhost:6379"  # Optional: for memory features
 
 ## Security
 
-- Path traversal protection on all file operations (`_validate_file_path()` across 77 modules)
+- Path traversal protection on all file operations (`_validate_file_path()` — single source in `security/path_validation.py`)
 - JWT authentication with rate limiting
 - PII scrubbing in telemetry
 - GDPR compliance options
