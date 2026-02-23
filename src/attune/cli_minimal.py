@@ -9,6 +9,15 @@ Automation commands:
     attune workflow run <name>        Execute a workflow
     attune workflow info <name>       Show workflow details
 
+Cost tracking:
+    attune costs                      Show cost report (last 7 days)
+    attune costs --days 30            Show cost report for 30 days
+    attune costs --json               Output cost data as JSON
+    attune costs --workflow NAME      Filter by workflow
+    attune costs today                Show today's costs
+    attune costs export -o FILE       Export costs to file
+    attune costs reset --confirm      Clear all cost data
+
 Monitoring commands:
     attune dashboard start            Start agent coordination dashboard
                                       (opens web UI at http://localhost:8000)
@@ -45,6 +54,12 @@ import argparse
 import logging
 import sys
 
+from attune.cli_commands.cost_commands import (  # noqa: F401
+    cmd_costs,
+    cmd_costs_export,
+    cmd_costs_reset,
+    cmd_costs_today,
+)
 from attune.cli_commands.memory_commands import (  # noqa: F401
     cmd_forget,
     cmd_lessons,
@@ -254,6 +269,33 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Show only global lessons",
     )
 
+    # --- Cost tracking commands ---
+    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
+    costs_parser.add_argument(
+        "--days", "-d", type=int, default=7, help="Number of days (default: 7)"
+    )
+    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
+
+    costs_sub = costs_parser.add_subparsers(dest="costs_command")
+
+    # costs today
+    costs_sub.add_parser("today", help="Show today's costs")
+
+    # costs export
+    costs_export = costs_sub.add_parser("export", help="Export cost data")
+    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
+    costs_export.add_argument(
+        "--format", "-f", choices=["csv", "json"], default="json", help="Output format"
+    )
+    costs_export.add_argument(
+        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+    )
+
+    # costs reset
+    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
+    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
+
     # --- Setup command ---
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
@@ -336,6 +378,17 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "lessons":
         return cmd_lessons(args)
+
+    elif args.command == "costs":
+        if getattr(args, "costs_command", None) == "today":
+            return cmd_costs_today(args)
+        elif getattr(args, "costs_command", None) == "export":
+            return cmd_costs_export(args)
+        elif getattr(args, "costs_command", None) == "reset":
+            return cmd_costs_reset(args)
+        else:
+            # Default: show cost report
+            return cmd_costs(args)
 
     elif args.command == "setup":
         return cmd_setup(args)
