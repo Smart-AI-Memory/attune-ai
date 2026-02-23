@@ -256,6 +256,7 @@ class VerificationMixin:
 
             current_output = getattr(workflow_result, "final_output", None) or ""
             workflow_name = getattr(self, "name", "unknown")
+            context_chars = getattr(self._verification_config, "correction_context_chars", 8000)
 
             system_prompt = (
                 f"You are correcting output from the '{workflow_name}' workflow. "
@@ -271,7 +272,7 @@ class VerificationMixin:
                 f"Command: `{verification_result.command}`\n\n"
                 f"```\n{error_output}```\n\n"
                 f"## Current Workflow Output\n\n"
-                f"```\n{current_output[:8000]}```\n\n"
+                f"```\n{current_output[:context_chars]}```\n\n"
                 f"Please provide the corrected output."
             )
 
