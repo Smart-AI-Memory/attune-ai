@@ -107,7 +107,7 @@ export const FEATURES: Feature[] = [
     benefitDescription: 'Agents compose themselves. Describe a goal, get an optimized multi-agent team.',
     technicalDescription: 'MetaOrchestrator analyzes tasks and automatically selects composition patterns and agent configurations.',
     pricingDescription: 'Auto-composing agent teams',
-    version: 'v3.1.2',
+    version: 'v3.3.0',
   },
   {
     id: 'prompt-caching',
@@ -126,7 +126,7 @@ export const FEATURES: Feature[] = [
     technicalDescription: 'HybridCache with sentence-transformers computes embeddings for semantic similarity matching (95%+ cosine threshold). Hash-only fallback when ML deps unavailable.',
     pricingDescription: 'Semantic caching via sentence-transformers',
     isNew: true,
-    version: 'v3.1.2',
+    version: 'v3.3.0',
   },
 ];
 

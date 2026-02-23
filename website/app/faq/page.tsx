@@ -114,7 +114,7 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'Is the framework production-ready?',
-        answer: 'Yes! The framework is v3.1.2 Production/Stable with 14,800+ comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
+        answer: 'Yes! The framework is v3.3.0 Production/Stable with 14,800+ comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
       },
     ],
   },
