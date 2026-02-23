@@ -1,112 +1,234 @@
 ---
-description: "The Three Stages of a Great AI Workflow: cut costs with Haiku, simplify with Sonnet, polish with Opus. Build your own in four files."
+description: "Build your first AI workflow with Attune — from pip install to running a cost-optimized Claude workflow in under 5 minutes, then build your own in four files."
 ---
 
-# The Three Stages of a Great AI Workflow
+# Build Your First AI Workflow with Attune
 
 **Date:** February 2026
 **Author:** Patrick Roebuck
-**Tags:** Workflows, Claude, Cost Optimization, Tutorial
+**Tags:** Tutorial, Getting Started, Workflows, Claude
 
 ---
 
 ## TL;DR
 
-Every good AI workflow has three layers: **cut costs**
-(route cheap tasks to Haiku), **simplify the work**
-(let the framework handle orchestration), and **polish
-the output** (spend Opus tokens where quality matters).
-This maps directly to Claude's three model tiers — and
-to the four-file pattern every Attune workflow uses.
-Build your own in ~15 minutes.
+Install Attune AI, run a built-in workflow on your
+codebase in 2 minutes, then build your own custom
+workflow in four files. Each workflow automatically
+routes tasks to the right Claude model — Haiku for
+cheap work, Sonnet for balanced tasks, Opus for
+premium quality — saving 58%+ vs running everything
+on Opus.
 
 ---
 
-## The Problem: One Model for Everything
+## Part 1: Get Running (2 Minutes)
 
-Most developers start with a single Claude API call.
-It works. Then they add another. Then five more. Before
-long, they're spending $20/month on Opus calls for tasks
-that Haiku could handle in 200 milliseconds.
+### Install
 
-We noticed this pattern in our own work, so we built
-Attune AI around a simple idea: **every good AI workflow
-has three layers.** Not coincidentally, those layers map
-to the three tiers of Claude models — and to the three
-things developers actually care about.
-
----
-
-## Stage 1: Cut the Cost
-
-The first thing you notice when you start routing tasks
-to the right model is how much money you were wasting.
-
-Claude Haiku 4.5 costs $0.80 per million input tokens.
-Claude Opus 4.6 costs $15.00. That's nearly **19x more
-expensive** — and for tasks like generating an outline,
-extracting metadata, or triaging inputs, Haiku does the
-job in a fraction of the time.
-
-In Attune, every workflow declares a `tier_map` that
-assigns a Claude model to each stage:
-
-```python
-tier_map = {
-    "outline": ModelTier.CHEAP,     # Haiku
-    "write":   ModelTier.CAPABLE,   # Sonnet
-    "polish":  ModelTier.PREMIUM,   # Opus
-}
+```bash
+pip install attune-ai
 ```
 
-A 10,000-token documentation job costs roughly **$0.38
-with tier routing** vs **$0.90 on Opus alone** — a 58%
-reduction. Add Anthropic's automatic prompt caching
-(cached tokens cost 10% of standard price) and the
-savings compound further.
+### Set your API key
 
-**The lesson:** Don't pay premium prices for commodity
-work. Route cheap tasks to cheap models. Save your
-budget for the stages that actually need it.
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+```
+
+### Run your first workflow
+
+Pick one and try it on your own codebase:
+
+```bash
+# Security audit
+attune workflow run security-audit --path ./src
+
+# Code review
+attune workflow run code-review --path ./src
+
+# Bug prediction
+attune workflow run bug-predict --path ./src
+```
+
+That's it. Each workflow runs multiple stages,
+automatically routing cheap tasks to Haiku and
+quality-critical tasks to Opus. You'll see the cost
+savings in the output.
+
+### See what's available
+
+```bash
+attune workflow list
+```
+
+```text
+Available workflows:
+  security-audit    Security vulnerability scanner
+  bug-predict       Bug prediction and risk analysis
+  perf-audit        Performance bottleneck detection
+  code-review       Code quality analysis
+  test-gen          Test case generation
+  release-prep      Pre-release quality gates
+```
+
+### Use natural language (in Claude Code)
+
+If you use Claude Code, just type `/attune` and describe
+what you need:
+
+- "find security vulnerabilities in my auth code"
+- "generate tests for src/models/"
+- "review my last commit"
+
+Attune asks clarifying questions, then runs the right
+workflow.
 
 ---
 
-## Stage 2: Simplify the Work
+## Part 2: Build Your Own Workflow (15 Minutes)
 
-Cost savings get your attention. Ease of use is what
-keeps you building.
+Every Attune workflow follows the same four-file
+pattern. Let's build a documentation generator.
 
-The hardest part of any multi-model workflow isn't the
-API call — it's the orchestration. Which model handles
-which step? How does output flow between stages? What
-happens when a stage fails?
+### File 1: The Workflow Class
 
-Attune handles this with a single method: `run_stage()`.
-You implement it once, and the execution engine handles
-sequencing, tier resolution, and error recovery:
+Create `src/attune/workflows/doc_gen/workflow.py`:
 
 ```python
+from attune.workflows.base import BaseWorkflow, ModelTier
+
+
 class DocumentGenerationWorkflow(BaseWorkflow):
     name = "doc-gen"
+    description = "Cost-optimized documentation generation"
     stages = ["outline", "write", "polish"]
     tier_map = {
-        "outline": ModelTier.CHEAP,
-        "write": ModelTier.CAPABLE,
-        "polish": ModelTier.PREMIUM,
+        "outline": ModelTier.CHEAP,     # Haiku
+        "write": ModelTier.CAPABLE,     # Sonnet
+        "polish": ModelTier.PREMIUM,    # Opus
     }
 
-    async def run_stage(self, stage_name, tier, input_data):
+    async def run_stage(
+        self, stage_name, tier, input_data
+    ):
         if stage_name == "outline":
             return await self._outline(input_data, tier)
         if stage_name == "write":
             return await self._write(input_data, tier)
         if stage_name == "polish":
             return await self._polish(input_data, tier)
+        raise ValueError(f"Unknown stage: {stage_name}")
+
+    async def _outline(self, input_data, tier):
+        """Generate a doc outline with Haiku."""
+        prompt = (
+            "Create a documentation outline for: "
+            f"{input_data['path']}"
+        )
+        return await self.call_llm(prompt, tier=tier)
+
+    async def _write(self, input_data, tier):
+        """Expand outline into full sections."""
+        prompt = (
+            "Write documentation from this outline:\n"
+            f"{input_data['outline']}"
+        )
+        return await self.call_llm(prompt, tier=tier)
+
+    async def _polish(self, input_data, tier):
+        """Final quality pass with Opus."""
+        prompt = (
+            "Polish this documentation for clarity "
+            f"and completeness:\n{input_data['draft']}"
+        )
+        return await self.call_llm(prompt, tier=tier)
 ```
 
-That's the entire workflow. No orchestration library.
-No DAG configuration. No YAML pipeline definitions.
-One class, one method, and the framework runs it:
+Three things to understand:
+
+- **`stages`** — runs in sequence. Each stage's output
+  becomes the next stage's input.
+- **`tier_map`** — assigns a Claude model to each
+  stage. `CHEAP` = Haiku ($0.80/M tokens),
+  `CAPABLE` = Sonnet ($3/M), `PREMIUM` = Opus ($15/M).
+- **`run_stage()`** — the only method you implement.
+
+This workflow costs roughly **$0.38 per run** vs
+**$0.90 on Opus alone** — a 58% reduction. With
+Anthropic's automatic prompt caching (cached tokens
+cost 10% of standard price), savings compound further.
+
+### File 2: Skill Definition (Natural Language)
+
+Create `plugin/skills/docs/SKILL.md`
+(`mkdir -p plugin/skills/docs`):
+
+```yaml
+---
+name: documentation
+description: "Generate, explain, or audit documentation"
+triggers:
+  - docs
+  - documentation
+  - readme
+  - changelog
+  - explain
+---
+```
+
+```markdown
+## Socratic Scoping
+
+Before running, ask:
+
+1. "What kind of docs? API reference, README,
+   changelog, or guide?"
+2. "Which path should I document?"
+3. "Who's reading — developers, end users, or both?"
+
+## Follow-Up
+
+- "Want me to export this to a file?"
+- "Should I refine a specific section?"
+```
+
+The `triggers` array connects natural language to your
+workflow. When someone types "generate docs for
+src/models", the router matches on "docs" and activates
+this skill.
+
+### File 3: Command Shortcut
+
+Create `plugin/commands/attune-docs.md`
+(`mkdir -p plugin/commands`):
+
+```yaml
+---
+name: attune-docs
+description: "Generate documentation for a path"
+argument-hint: "<path>"
+category: workflows
+aliases: [adoc]
+tags: [docs, documentation, generate]
+---
+```
+
+Now users have two paths to the same workflow:
+
+- `/attune` + "generate docs" — guided questions first
+- `/attune-docs src/` — direct execution
+
+### File 4: Register It
+
+Add one line to `pyproject.toml`:
+
+```toml
+[project.entry-points."attune.workflows"]
+doc-gen = "attune.workflows.document_gen:DocumentGenerationWorkflow"
+```
+
+### Run it
 
 ```bash
 attune workflow run doc-gen --path src/attune/models/
@@ -121,106 +243,36 @@ Running doc-gen workflow...
 Cost: $0.38 (saved 58% vs premium-only baseline)
 ```
 
-**The lesson:** Good tooling makes the right thing the
-easy thing. When tier routing is baked into the
-framework, you don't have to think about it — you just
-define your stages and the costs take care of themselves.
-
 ---
 
-## Stage 3: Polish the Output
+## What's Next
 
-Here's where Opus earns its price.
+You've installed Attune, run a built-in workflow, and
+built your own in four files. From here:
 
-The first two stages are about efficiency: spend less,
-build faster. The third stage is about quality — and
-it's the one that separates a useful tool from a great
-one.
+- Browse built-in workflows: `attune workflow list`
+- Chain workflows: lint, then test, then docs, then
+  commit
+- Use `/batch` for 50% additional savings on
+  non-interactive runs
+- Read the
+  [full tutorial](../tutorials/build-a-workflow.md)
+  for deeper patterns
 
-In a documentation workflow, the polish stage rewrites
-for clarity, fixes inconsistencies, and ensures the
-output reads like it was written by a human who cares.
-In a security audit, it's the stage that catches the
-subtle vulnerability the cheaper models missed. In a
-code review, it's the nuanced feedback about
-architecture that goes beyond "add a docstring here."
-
-You don't need Opus for everything. But when you need
-it, nothing else will do.
-
-The tier system makes this tradeoff explicit:
-
-```python
-# Fast and cheap: Haiku handles the scaffolding
-"scan":    ModelTier.CHEAP
-
-# Balanced: Sonnet does the heavy lifting
-"analyze": ModelTier.CAPABLE
-
-# Premium: Opus delivers the final judgment
-"report":  ModelTier.PREMIUM
-```
-
-**The lesson:** Spend your premium tokens where they
-have the most impact. One stage of Opus polish on top
-of two stages of efficient work produces better output
-than three stages of Opus alone — because the final
-pass has cleaner input to work with.
-
----
-
-## The Pattern Behind the Pattern
-
-If the structure of this post felt familiar, that's
-because it follows the same three-stage pattern we've
-been describing:
-
-1. **Hook** (fast and cheap) — Cost savings grabbed
-   your attention
-2. **Substance** (balanced) — Ease of use gave you
-   something to work with
-3. **Polish** (premium) — Quality of output made you
-   want to try it
-
-That's not an accident. The best workflows — whether
-they're generating documentation, reviewing code, or
-writing blog posts — follow this shape. Start broad and
-cheap, narrow with capable work, finish with premium
-quality.
-
-Every Attune workflow is built from four files:
-
-1. **A workflow class** — stages, tiers, and one method
-2. **A skill definition** — natural language triggers
-   for Socratic discovery
-3. **A command shortcut** — direct access for power
-   users
-4. **An entry point** — one line in `pyproject.toml`
-
-If you want to build your own, the
-[Build a Workflow](../tutorials/build-a-workflow.md)
-tutorial walks through each layer. The whole thing
-takes about 15 minutes.
-
----
-
-## Try It
+Every built-in workflow follows the same four-file
+pattern you just learned. Browse the
+[source](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows)
+for real-world examples.
 
 ```bash
 pip install attune-ai
 attune workflow list
-attune workflow run security-audit --path ./src
 ```
-
-Browse the source, build a workflow, and see what three
-stages can do.
 
 ---
 
-**About the Author**
+Patrick Roebuck is the creator of
+[Attune AI](https://github.com/Smart-AI-Memory/attune-ai),
+an open-source workflow framework for Claude Code.
 
-Patrick Roebuck is the creator of Attune AI, an
-open-source workflow framework for Claude Code.
-
-**Framework Version:** 3.1.2
-**Published:** February 23, 2026
+Version 3.1.2 | February 23, 2026
