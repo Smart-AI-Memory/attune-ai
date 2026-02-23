@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to instantiate HybridCache, avoiding unnecessary
   exception/fallback path.
 
+### Removed
+
+- **TDD scaffolding** — Removed TDD-First methodology
+  from scaffolding, command routes (`/testing tdd`,
+  `/plan tdd`), CLI options, and all documentation.
+  Pattern-Compose remains as the sole methodology.
+
 ### Changed
 
 - **`[developer]` extra** — Now includes cache
