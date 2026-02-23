@@ -60,7 +60,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'Which LLM providers are supported?',
-        answer: 'Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This enables prompt caching, extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.',
+        answer: 'Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This enables automatic prompt caching (up to 90% cost savings on cached tokens), extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.',
       },
       {
         question: 'What are agent templates?',
@@ -68,7 +68,15 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'How is the framework tested?',
-        answer: 'Attune AI has 7,400+ comprehensive tests covering unit tests, integration tests, and cross-platform compatibility. Core modules are rigorously tested for security, agent state persistence, dynamic team orchestration, workflow coordination, and meta-workflow functionality.',
+        answer: 'Attune AI has 14,800+ comprehensive tests covering unit tests, integration tests, and cross-platform compatibility. Core modules are rigorously tested for security, agent state persistence, dynamic team orchestration, workflow coordination, and meta-workflow functionality.',
+      },
+      {
+        question: 'How does prompt caching save money?',
+        answer: 'Attune AI leverages Anthropic\'s automatic prompt caching out of the box — no configuration required. Cached input tokens cost just 10% of the standard price, delivering up to 90% cost savings and up to 85% faster responses. The framework\'s Claude-native architecture is designed around caching: system prompts, tool definitions, and conversation history are automatically cached and reused across requests.',
+      },
+      {
+        question: 'What is semantic caching?',
+        answer: 'On top of Anthropic\'s API-level caching, Attune AI includes an optional HybridCache powered by sentence-transformers. It detects semantically similar prompts (95%+ cosine similarity) and reuses cached responses, avoiding redundant API calls entirely. Hash-only caching achieves ~30% hit rate; with semantic matching enabled, measured hit rates reach ~57% on workflows like security audits. Install with pip install attune-ai[developer] to enable it automatically.',
       },
       {
         question: 'What platforms are supported?',
@@ -106,7 +114,7 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'Is the framework production-ready?',
-        answer: 'Yes! The framework is v2.5.0 Production/Stable with 7,400+ comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
+        answer: 'Yes! The framework is v3.1.2 Production/Stable with 14,800+ comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
       },
     ],
   },

@@ -117,7 +117,7 @@ export default function PricingPage() {
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Intelligent caching (85% hit rates)</span>
+                    <span className="text-sm">Semantic caching — avoids redundant API calls (~57% hit rate)</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>
@@ -125,7 +125,7 @@ export default function PricingPage() {
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Claude-native features (prompt caching, 200K context)</span>
+                    <span className="text-sm">Anthropic auto-caching (up to 90% API token savings, zero config)</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>

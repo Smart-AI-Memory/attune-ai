@@ -14,15 +14,17 @@ const featureLinks: Record<string, string> = {
   'model-routing': '/framework-docs/',
   'memory': '/framework-docs/',
   'security': '/framework-docs/',
+  'prompt-caching': '/faq#how-does-prompt-caching-save-money',
+  'semantic-caching': '/faq#what-is-semantic-caching',
 };
 
 // Select and order features for homepage
 const homepageFeatureIds = [
   'socratic-builder',
+  'prompt-caching',
   'workflows',
   'agent-templates',
-  'memory',
-  'security',
+  'semantic-caching',
   'wizards',
 ];
 
@@ -74,7 +76,7 @@ export default function Home() {
                 <TestsBadge />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--border)] text-sm font-medium">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  v2.10.0 Stable
+                  v3.1.2 Stable
                 </span>
               </div>
 
