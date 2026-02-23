@@ -1,7 +1,8 @@
 """Tests for quick-memory lessons manager.
 
 Tests for LessonsManager: add, remove, list, format for prompt,
-token budget, file creation, merge logic, and path validation.
+token budget, file creation, merge logic, path validation, and
+CLAUDE.md bridge.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -12,10 +13,23 @@ from __future__ import annotations
 import pytest
 
 from attune.memory.lessons import (
+    _CLAUDE_MD_END,
+    _CLAUDE_MD_START,
     DEFAULT_MAX_TOKENS,
     LessonsManager,
     _estimate_tokens,
 )
+
+
+def _make_manager(tmp_path, **kwargs):
+    """Helper to create a LessonsManager with isolated paths."""
+    return LessonsManager(
+        project_path=kwargs.get("project_path", tmp_path / ".attune" / "lessons.md"),
+        global_path=kwargs.get("global_path", tmp_path / "global" / "lessons.md"),
+        sync_to_claude_md=kwargs.get("sync_to_claude_md", False),
+        claude_md_path=kwargs.get("claude_md_path", tmp_path / ".claude" / "CLAUDE.md"),
+    )
+
 
 # ---------------------------------------------------------------------------
 # Token estimation
@@ -50,10 +64,7 @@ class TestAddLesson:
     def test_add_creates_project_file(self, tmp_path) -> None:
         """Adding a lesson creates the project lessons file."""
         project_file = tmp_path / ".attune" / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
 
         result = manager.add_lesson("Always run tests before commit")
 
@@ -66,10 +77,7 @@ class TestAddLesson:
     def test_add_global_lesson(self, tmp_path) -> None:
         """Adding with global_=True writes to global file."""
         global_file = tmp_path / "global" / "lessons.md"
-        manager = LessonsManager(
-            project_path=tmp_path / ".attune" / "lessons.md",
-            global_path=global_file,
-        )
+        manager = _make_manager(tmp_path, global_path=global_file)
 
         result = manager.add_lesson("Use type hints everywhere", global_=True)
 
@@ -81,10 +89,7 @@ class TestAddLesson:
     def test_add_appends_to_existing(self, tmp_path) -> None:
         """Adding multiple lessons appends to the file."""
         project_file = tmp_path / ".attune" / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
 
         manager.add_lesson("First lesson")
         manager.add_lesson("Second lesson")
@@ -95,20 +100,14 @@ class TestAddLesson:
 
     def test_add_empty_text_raises(self, tmp_path) -> None:
         """Empty lesson text raises ValueError."""
-        manager = LessonsManager(
-            project_path=tmp_path / "lessons.md",
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path)
 
         with pytest.raises(ValueError, match="cannot be empty"):
             manager.add_lesson("")
 
     def test_add_whitespace_only_raises(self, tmp_path) -> None:
         """Whitespace-only lesson text raises ValueError."""
-        manager = LessonsManager(
-            project_path=tmp_path / "lessons.md",
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path)
 
         with pytest.raises(ValueError, match="cannot be empty"):
             manager.add_lesson("   ")
@@ -116,15 +115,11 @@ class TestAddLesson:
     def test_add_includes_date(self, tmp_path) -> None:
         """Lesson entry includes date in **YYYY-MM-DD** format."""
         project_file = tmp_path / ".attune" / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
 
         manager.add_lesson("Test lesson")
 
         content = project_file.read_text()
-        # Check for date pattern: **YYYY-MM-DD**
         import re
 
         assert re.search(r"\*\*\d{4}-\d{2}-\d{2}\*\*", content)
@@ -132,14 +127,10 @@ class TestAddLesson:
     def test_add_warns_on_high_token_count(self, tmp_path) -> None:
         """Warning included when token count exceeds threshold."""
         project_file = tmp_path / ".attune" / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
 
         # Fill file with enough text to exceed warning threshold
         project_file.parent.mkdir(parents=True, exist_ok=True)
-        # ~2600 tokens worth of content (2000 words * 1.3)
         big_content = "# Attune Lessons\n\n"
         big_content += "- **2026-01-01** " + " ".join(["word"] * 2000) + "\n"
         project_file.write_text(big_content)
@@ -161,10 +152,7 @@ class TestRemoveLesson:
     def _create_lessons(self, tmp_path):
         """Helper to create a manager with some lessons."""
         project_file = tmp_path / ".attune" / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
         manager.add_lesson("First lesson about tests")
         manager.add_lesson("Second lesson about security")
         manager.add_lesson("Third lesson about docs")
@@ -228,7 +216,8 @@ class TestGetLessons:
 
     def test_no_lessons_returns_empty(self, tmp_path) -> None:
         """No lessons files returns empty list."""
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=tmp_path / "nonexistent" / "lessons.md",
             global_path=tmp_path / "also_nonexistent" / "lessons.md",
         )
@@ -238,10 +227,7 @@ class TestGetLessons:
     def test_project_lessons_returned(self, tmp_path) -> None:
         """Project lessons are returned with source='project'."""
         project_file = tmp_path / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global" / "lessons.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
         manager.add_lesson("Project lesson")
 
         lessons = manager.get_lessons()
@@ -254,7 +240,8 @@ class TestGetLessons:
     def test_global_lessons_returned(self, tmp_path) -> None:
         """Global lessons returned with source='global'."""
         global_file = tmp_path / "global" / "lessons.md"
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=tmp_path / "nonexistent" / "lessons.md",
             global_path=global_file,
         )
@@ -269,7 +256,8 @@ class TestGetLessons:
         """Project lessons listed first, then global."""
         project_file = tmp_path / "project" / "lessons.md"
         global_file = tmp_path / "global" / "lessons.md"
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=project_file,
             global_path=global_file,
         )
@@ -288,7 +276,8 @@ class TestGetLessons:
         """Global lesson matching project lesson is deduplicated."""
         project_file = tmp_path / "project" / "lessons.md"
         global_file = tmp_path / "global" / "lessons.md"
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=project_file,
             global_path=global_file,
         )
@@ -304,7 +293,8 @@ class TestGetLessons:
         """global_only=True only returns global lessons."""
         project_file = tmp_path / "project" / "lessons.md"
         global_file = tmp_path / "global" / "lessons.md"
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=project_file,
             global_path=global_file,
         )
@@ -327,7 +317,8 @@ class TestFormatForPrompt:
 
     def test_no_lessons_returns_none(self, tmp_path) -> None:
         """No lessons returns None."""
-        manager = LessonsManager(
+        manager = _make_manager(
+            tmp_path,
             project_path=tmp_path / "nonexistent.md",
             global_path=tmp_path / "also_nonexistent.md",
         )
@@ -337,10 +328,7 @@ class TestFormatForPrompt:
     def test_formats_lessons(self, tmp_path) -> None:
         """Lessons formatted as bullet points."""
         project_file = tmp_path / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
         manager.add_lesson("Use pytest for testing")
         manager.add_lesson("Check edge cases")
 
@@ -353,12 +341,8 @@ class TestFormatForPrompt:
     def test_respects_token_budget(self, tmp_path) -> None:
         """Output is capped at max_tokens."""
         project_file = tmp_path / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
 
-        # Add many lessons to exceed budget
         for i in range(200):
             manager.add_lesson(f"Lesson number {i} with enough words to consume tokens quickly")
 
@@ -371,10 +355,7 @@ class TestFormatForPrompt:
     def test_under_budget_returns_all(self, tmp_path) -> None:
         """When under budget, all lessons are returned."""
         project_file = tmp_path / "lessons.md"
-        manager = LessonsManager(
-            project_path=project_file,
-            global_path=tmp_path / "global.md",
-        )
+        manager = _make_manager(tmp_path, project_path=project_file)
         manager.add_lesson("Short lesson one")
         manager.add_lesson("Short lesson two")
 
@@ -395,23 +376,291 @@ class TestPathValidationSecurity:
 
     def test_null_bytes_rejected(self, tmp_path) -> None:
         """Null bytes in path are rejected."""
-        # The path validation happens inside add_lesson when
-        # _validate_file_path is called
         evil_path = tmp_path / "evil\x00.md"
-        evil_manager = LessonsManager(
-            project_path=evil_path,
-            global_path=tmp_path / "global.md",
-        )
+        evil_manager = _make_manager(tmp_path, project_path=evil_path)
         with pytest.raises(ValueError, match="null bytes"):
             evil_manager.add_lesson("test")
 
-    def test_system_directory_rejected(self) -> None:
+    def test_system_directory_rejected(self, tmp_path) -> None:
         """System directory paths are rejected."""
         from pathlib import Path
 
         manager = LessonsManager(
             project_path=Path("/etc/lessons.md"),
             global_path=Path("/tmp/global.md"),
+            sync_to_claude_md=False,
+            claude_md_path=tmp_path / ".claude" / "CLAUDE.md",
         )
         with pytest.raises(ValueError, match="system directory"):
             manager.add_lesson("test")
+
+
+# ---------------------------------------------------------------------------
+# CLAUDE.md Bridge - Sync
+# ---------------------------------------------------------------------------
+
+
+class TestClaudeMdSync:
+    """Tests for _sync_lesson_to_claude_md()."""
+
+    def test_sync_creates_markers_in_claude_md(self, tmp_path) -> None:
+        """First sync adds markers and lesson to CLAUDE.md."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text("# Project Memory\n\nExisting content.\n")
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        manager.add_lesson("Always run tests")
+
+        content = claude_md.read_text()
+        assert _CLAUDE_MD_START in content
+        assert _CLAUDE_MD_END in content
+        assert "Always run tests" in content
+        assert "## Lessons Learned" in content
+        # Existing content preserved
+        assert "Existing content." in content
+
+    def test_sync_appends_within_markers(self, tmp_path) -> None:
+        """Second sync adds inside existing markers."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"## Lessons Learned\n\n"
+            f"- **2026-01-01** First lesson\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        manager.add_lesson("Second lesson")
+
+        content = claude_md.read_text()
+        assert "First lesson" in content
+        assert "Second lesson" in content
+        # Markers still present exactly once
+        assert content.count(_CLAUDE_MD_START) == 1
+        assert content.count(_CLAUDE_MD_END) == 1
+
+    def test_sync_skips_if_no_claude_md(self, tmp_path) -> None:
+        """No error when CLAUDE.md doesn't exist."""
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=tmp_path / "nonexistent" / "CLAUDE.md",
+        )
+
+        # Should not raise
+        result = manager.add_lesson("Test lesson")
+        assert "Lesson saved" in result
+
+    def test_sync_disabled(self, tmp_path) -> None:
+        """sync_to_claude_md=False skips CLAUDE.md sync."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        original = "# Project Memory\n\nOriginal content.\n"
+        claude_md.write_text(original)
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=False,
+            claude_md_path=claude_md,
+        )
+        manager.add_lesson("Should not appear in CLAUDE.md")
+
+        # CLAUDE.md should be unchanged
+        assert claude_md.read_text() == original
+
+
+# ---------------------------------------------------------------------------
+# CLAUDE.md Bridge - Parse
+# ---------------------------------------------------------------------------
+
+
+class TestClaudeMdParse:
+    """Tests for _parse_claude_md_lessons()."""
+
+    def test_parse_claude_md_lessons(self, tmp_path) -> None:
+        """Reads lessons between markers."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"## Lessons Learned\n\n"
+            f"- **2026-02-20** First lesson\n"
+            f"- **2026-02-21** Second lesson\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        parsed = manager._parse_claude_md_lessons()
+
+        assert len(parsed) == 2
+        assert parsed[0] == ("2026-02-20", "First lesson")
+        assert parsed[1] == ("2026-02-21", "Second lesson")
+
+    def test_parse_ignores_content_outside_markers(self, tmp_path) -> None:
+        """Only parses between markers."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"- **2026-01-01** Outside marker lesson\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"- **2026-02-20** Inside marker lesson\n"
+            f"{_CLAUDE_MD_END}\n"
+            f"- **2026-03-01** After marker lesson\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        parsed = manager._parse_claude_md_lessons()
+
+        assert len(parsed) == 1
+        assert parsed[0][1] == "Inside marker lesson"
+
+    def test_parse_returns_empty_when_no_markers(self, tmp_path) -> None:
+        """Returns empty list when no markers found."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text("# Project\n\nNo lessons section here.\n")
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        assert manager._parse_claude_md_lessons() == []
+
+    def test_parse_returns_empty_when_file_missing(self, tmp_path) -> None:
+        """Returns empty list when CLAUDE.md doesn't exist."""
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=tmp_path / "nonexistent" / "CLAUDE.md",
+        )
+        assert manager._parse_claude_md_lessons() == []
+
+
+# ---------------------------------------------------------------------------
+# CLAUDE.md Bridge - Integration (get_lessons merges)
+# ---------------------------------------------------------------------------
+
+
+class TestClaudeMdIntegration:
+    """Tests for CLAUDE.md bridge integration with get_lessons()."""
+
+    def test_get_lessons_includes_claude_md(self, tmp_path) -> None:
+        """Unified list includes source='claude_md'."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"- **2026-02-20** Claude MD only lesson\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+
+        lessons = manager.get_lessons()
+
+        assert len(lessons) == 1
+        assert lessons[0]["text"] == "Claude MD only lesson"
+        assert lessons[0]["source"] == "claude_md"
+
+    def test_claude_md_deduplication(self, tmp_path) -> None:
+        """Same lesson in project and CLAUDE.md appears once."""
+        project_file = tmp_path / ".attune" / "lessons.md"
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create CLAUDE.md with a lesson
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"- **2026-02-20** Shared lesson\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            project_path=project_file,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+        # Add same lesson to project
+        manager.add_lesson("Shared lesson")
+
+        lessons = manager.get_lessons()
+
+        # Should appear once from project, deduplicated from claude_md
+        matching = [lesson for lesson in lessons if lesson["text"] == "Shared lesson"]
+        assert len(matching) == 1
+        assert matching[0]["source"] == "project"
+
+    def test_manually_added_claude_md_lesson_picked_up(self, tmp_path) -> None:
+        """Hand-written lessons between markers are read."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+
+        # Manually write a lesson (not via attune remember)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"## Lessons Learned\n\n"
+            f"- **2026-02-15** Hand-written by developer\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+
+        lessons = manager.get_lessons()
+
+        assert len(lessons) == 1
+        assert lessons[0]["text"] == "Hand-written by developer"
+        assert lessons[0]["source"] == "claude_md"
+
+    def test_bridge_disabled_does_not_read_claude_md(self, tmp_path) -> None:
+        """When sync disabled, CLAUDE.md lessons not included."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"- **2026-02-20** Should not appear\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=False,
+            claude_md_path=claude_md,
+        )
+
+        lessons = manager.get_lessons()
+        assert len(lessons) == 0

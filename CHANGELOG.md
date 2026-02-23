@@ -5,6 +5,45 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-02-23
+
+### Added
+
+- **Verification feedback loop** — When verification fails,
+  errors (stdout/stderr) are fed back to the LLM for
+  self-correction before re-verifying. Implements Boris
+  Cherny's "verify AND self-correct" principle for 2-3x
+  quality improvement. Opt-in via `correction_enabled: true`
+  in verification config. Tracks correction cost separately
+  in workflow metadata.
+- **Lessons-to-CLAUDE.md bridge** — `attune remember` now
+  syncs lessons to `.claude/CLAUDE.md` in a managed section
+  delimited by `<!-- attune-lessons-start -->` /
+  `<!-- attune-lessons-end -->` markers. Claude Code users
+  see Attune lessons natively. Reading is bidirectional:
+  manually-added lessons in CLAUDE.md between markers are
+  picked up by `attune lessons`. Deduplication across all
+  three sources (project, global, CLAUDE.md).
+- **VerificationConfig.correction_enabled** — New opt-in
+  field (default `false`) to enable LLM self-correction
+  on verification failure.
+- **VerificationConfig.max_corrections** — Maximum number
+  of LLM correction attempts (default 2).
+- **VerificationResult.correction_attempt** — Tracks which
+  correction pass produced the result (0 = no correction).
+- **VerificationResult.correction_cost** — Total cost of
+  correction LLM calls.
+- **LessonsManager.sync_to_claude_md** — Constructor param
+  to enable/disable CLAUDE.md bridge (default `true`).
+- **LessonsManager.claude_md_path** — Constructor param to
+  override CLAUDE.md file path.
+
+### Changed
+
+- **_run_verification_loop** converted from sync to async
+  to support `await _call_llm()` for correction requests.
+  Call site in `execution_mixin.py` updated to `await`.
+
 ## [3.2.0] - 2026-02-23
 
 ### Added

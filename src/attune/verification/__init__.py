@@ -28,6 +28,8 @@ class VerificationResult:
         attempt: Which attempt this was (1-based).
         max_retries: Total retries configured.
         error: Error message if verification itself failed to run.
+        correction_attempt: Which correction pass produced this result (0 = no correction).
+        correction_cost: Cumulative cost of LLM correction calls.
 
     """
 
@@ -41,6 +43,8 @@ class VerificationResult:
     attempt: int
     max_retries: int
     error: str | None = None
+    correction_attempt: int = 0
+    correction_cost: float = 0.0
 
 
 __all__ = ["VerificationResult"]

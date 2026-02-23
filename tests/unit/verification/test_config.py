@@ -18,6 +18,8 @@ class TestVerificationConfigDefaults:
         assert config.timeout_seconds == 300
         assert config.fail_open is False
         assert config.working_directory is None
+        assert config.correction_enabled is False
+        assert config.max_corrections == 2
 
     def test_from_dict_empty(self) -> None:
         """Test from_dict with empty dict uses defaults."""
@@ -123,3 +125,43 @@ class TestVerificationConfigLoadForWorkflow:
         )
         assert result is not None
         assert result.strategy == "auto"
+
+
+class TestVerificationConfigCorrection:
+    """Test correction-related config fields."""
+
+    def test_correction_enabled_from_dict(self) -> None:
+        """Test correction_enabled is parsed from dict."""
+        config = VerificationConfig.from_dict(
+            {
+                "correction_enabled": True,
+                "max_corrections": 3,
+            }
+        )
+        assert config.correction_enabled is True
+        assert config.max_corrections == 3
+
+    def test_correction_defaults_from_dict(self) -> None:
+        """Test correction fields default when not in dict."""
+        config = VerificationConfig.from_dict({})
+        assert config.correction_enabled is False
+        assert config.max_corrections == 2
+
+    def test_correction_per_workflow_override(self) -> None:
+        """Test per-workflow override of correction settings."""
+        result = VerificationConfig.load_for_workflow(
+            "code-review",
+            {
+                "enabled": True,
+                "correction_enabled": False,
+                "workflows": {
+                    "code-review": {
+                        "correction_enabled": True,
+                        "max_corrections": 1,
+                    },
+                },
+            },
+        )
+        assert result is not None
+        assert result.correction_enabled is True
+        assert result.max_corrections == 1

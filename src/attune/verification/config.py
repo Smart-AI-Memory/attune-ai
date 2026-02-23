@@ -28,6 +28,9 @@ class VerificationConfig:
         timeout_seconds: Per-verification timeout.
         fail_open: If True, failed verification does not fail the workflow.
         working_directory: Override cwd for the verification command.
+        correction_enabled: If True, feed verification errors back to
+            the LLM for self-correction before retrying.
+        max_corrections: Max LLM correction attempts per verification loop.
 
     """
 
@@ -38,6 +41,8 @@ class VerificationConfig:
     timeout_seconds: int = 300
     fail_open: bool = False
     working_directory: str | None = None
+    correction_enabled: bool = False
+    max_corrections: int = 2
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VerificationConfig:
@@ -58,6 +63,8 @@ class VerificationConfig:
             timeout_seconds=data.get("timeout_seconds", 300),
             fail_open=data.get("fail_open", False),
             working_directory=data.get("working_directory"),
+            correction_enabled=data.get("correction_enabled", False),
+            max_corrections=data.get("max_corrections", 2),
         )
 
     @classmethod
