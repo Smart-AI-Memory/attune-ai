@@ -37,10 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Documentation when lessons are available.
 - **Acknowledgments** — Added recognition of Boris Cherny
   (creator of Claude Code) and Affaan Mustafa
-  (everything-claude-code). Their work served as major
-  quality benchmarks for Attune, and in several cases
-  taught valuable lessons that led to significant
-  changes in approach.
+  (10+ months of battle-tested Claude Code configs).
+  Both bodies of work significantly influenced
+  Attune's design and taught lessons that changed
+  our approach in meaningful ways.
 
 ## [3.1.2] - 2026-02-22
 

@@ -68,24 +68,31 @@ approaches agentic workflows:
   document. Attune adopted this pattern directly for
   project-level instructions.
 
-Boris's work became a major quality benchmark for Attune.
-His detailed posts about plan-first execution, verification
-loops, and parallel agent sessions were standards we
-measured our own work against — and in several cases, his
-approach taught us valuable lessons that led to significant
-changes in how Attune handles workflows. The patterns he
-describes (plan-then-execute, verification loops,
-multi-agent orchestration, living project instructions) are
-powerful but non-obvious, and studying how the creator of
-Claude Code applies them in practice sharpened Attune's
-implementation in meaningful ways.
+Boris created Claude Code and then generously shared how
+he actually uses it — the hard-won, non-obvious workflow
+patterns that only come from building something and living
+with it. His detailed posts about plan-first execution,
+verification loops, and parallel agent sessions represent
+months of real-world refinement. Studying that work
+significantly influenced Attune's design, and in several
+cases taught us lessons that led to meaningful changes in
+our approach.
 
-One of Attune AI's goals is to make these best practices
-accessible to a wider audience. Without a framework to
-codify them, each team would have to discover and implement
-them independently. Attune packages these proven workflows
-into reusable, structured tools so that any developer can
-benefit from them out of the box.
+Similarly, Affaan's 10+ months of battle-tested Claude
+Code configurations represent a depth of practical
+experience that can't be shortcut. The patterns we learned
+from his hook system, markdown agent format, and context
+compaction strategies shaped core parts of Attune's
+architecture.
+
+One of Attune AI's goals is to make the kind of best
+practices that Boris and Affaan discovered through months
+of independent work accessible to a wider audience.
+Without a framework to codify them, each team would have
+to discover and implement them on their own. Attune
+packages these proven workflows into reusable, structured
+tools so that any developer can benefit from them out of
+the box.
 
 #### Links
 
