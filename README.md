@@ -30,10 +30,7 @@ pip install attune-ai[developer]
 - **Dead code cleanup** — Removed 3,393 lines of stale
   duplicate crew files and split 3 complex functions
   (700+ lines) into focused helpers.
-- **TDD feature removed** — Removed TDD scaffolding
-  methodology. Pattern-Compose is the sole methodology.
-- **Package refs fixed** — All stale `empathy-framework`
-  references updated to `attune-ai`.
+
 
 ---
 
