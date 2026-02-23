@@ -126,6 +126,14 @@ class WorkflowConfig:
     # Audit logging level - "standard", "enhanced", or "hipaa"
     audit_level: str = "standard"
 
+    # ==========================================================================
+    # Verification Configuration
+    # ==========================================================================
+
+    # Post-execution verification settings (dict passed to VerificationConfig)
+    # See attune.verification.config for schema details.
+    verification: dict[str, Any] | None = None
+
     @classmethod
     def load(cls, config_path: str | Path | None = None) -> "WorkflowConfig":
         """Load workflow configuration from file and environment.
@@ -178,6 +186,8 @@ class WorkflowConfig:
             disabled_workflows=config_data.get("disabled_workflows", []),
             pii_scrubbing_enabled=config_data.get("pii_scrubbing_enabled"),
             audit_level=config_data.get("audit_level", "standard"),
+            # Verification configuration
+            verification=config_data.get("verification"),
         )
 
     @staticmethod
@@ -191,6 +201,10 @@ class WorkflowConfig:
             data = yaml.safe_load(content)
         else:
             data = json.loads(content)
+
+        # Handle empty files (all comments or blank YAML)
+        if data is None:
+            data = {}
 
         result: dict[str, Any] = {}
 
@@ -392,6 +406,8 @@ class WorkflowConfig:
             "disabled_workflows": self.disabled_workflows,
             "pii_scrubbing_enabled": self.pii_scrubbing_enabled,
             "audit_level": self.audit_level,
+            # Verification configuration
+            "verification": self.verification,
         }
 
         validated_path.parent.mkdir(parents=True, exist_ok=True)

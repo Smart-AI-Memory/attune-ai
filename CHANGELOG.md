@@ -5,7 +5,42 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.2.0] - 2026-02-23
+
+### Added
+
+- **Cost tracking CLI** — New `attune cost` commands for
+  monitoring API spend, viewing savings by tier, and
+  exporting cost reports (CSV/JSON).
+- **Quick-memory lessons** — New `attune remember`,
+  `attune forget`, and `attune lessons` commands for
+  managing lessons learned across sessions. Lessons are
+  stored as markdown in `.attune/lessons.md` (project) or
+  `~/.attune/lessons.md` (global) and auto-injected into
+  every workflow prompt. Token-budgeted at 3,000 tokens
+  with oldest-first truncation. Supports `--global` flag
+  for cross-project lessons.
+- **Post-execution verification loops** — New
+  `verification` module with built-in strategies
+  (`run-tests`, `lint-check`, `type-check`, `build`,
+  `custom-command`) that run real tools after workflow
+  execution. Configurable via `verification:` section in
+  workflow config with retry support, timeouts, and
+  fail-open mode. Default strategies auto-mapped per
+  workflow type.
+- **VerificationMixin** — Added to `BaseWorkflow` MRO so
+  all workflows gain optional verification. Results
+  attached to `workflow_result.metadata["verification"]`.
+- **Lessons prompt injection** —
+  `PromptMixin._build_cached_system_prompt()` now includes
+  a `# Lessons Learned` section between Guidelines and
+  Documentation when lessons are available.
+- **Acknowledgments** — Added recognition of Boris Cherny
+  (creator of Claude Code) and Affaan Mustafa
+  (10+ months of battle-tested Claude Code configs).
+  Both bodies of work significantly influenced
+  Attune's design and taught lessons that changed
+  our approach in meaningful ways.
 
 ## [3.1.2] - 2026-02-22
 

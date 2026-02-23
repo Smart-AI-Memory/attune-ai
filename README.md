@@ -22,14 +22,20 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.1.2
+## What's New in v3.2.0
 
+- **Cost tracking CLI** — New `attune cost` commands for
+  monitoring API spend, viewing savings, and exporting
+  cost reports.
+- **Acknowledgments** — Added recognition of Boris Cherny
+  (creator of Claude Code) and Affaan Mustafa
+  (10+ months of battle-tested Claude Code configs).
+  Both bodies of work significantly influenced
+  Attune's design and taught lessons that changed
+  our approach in meaningful ways.
 - **Hybrid caching enabled** — `[developer]` extra now
   includes sentence-transformers for 70% cache hit rate
-  out of the box. Silenced noisy error when not installed.
-- **Dead code cleanup** — Removed 3,393 lines of stale
-  duplicate crew files and split 3 complex functions
-  (700+ lines) into focused helpers.
+  out of the box.
 
 
 ---
@@ -378,11 +384,13 @@ See [CONTRIBUTING.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CON
 
 Special thanks to:
 
-- **[Anthropic](https://www.anthropic.com/)** - For Claude AI and the Model Context Protocol
-- **[LangChain](https://github.com/langchain-ai/langchain)** - Agent framework foundations
-- **[FastAPI](https://github.com/tiangolo/fastapi)** - Modern Python web framework
+- **[Anthropic](https://www.anthropic.com/)** — For Claude AI, the Model Context Protocol, and the documentation that shaped our workflow patterns
+- **[Boris Cherny](https://x.com/bcherny)** — Creator of Claude Code, whose candid workflow posts validated and refined Attune's approach to plan-first execution, verification loops, and multi-agent orchestration
+- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations that inspired our hook system and markdown agent format
+- **[LangChain](https://github.com/langchain-ai/langchain)** — Agent framework foundations
+- **[FastAPI](https://github.com/tiangolo/fastapi)** — Modern Python web framework
 
-[View Full Acknowledgements →](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGEMENTS.md)
+[View Full Acknowledgements →](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
 
 ---
 

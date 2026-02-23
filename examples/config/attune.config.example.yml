@@ -146,6 +146,33 @@ patterns:
     sensitive: "./patterns/sensitive"  # Encrypted
 
 # =============================================================================
+# VERIFICATION (NEW in v3.2)
+# =============================================================================
+
+# Post-execution verification runs real tools after workflow
+# completion to close the feedback loop.
+verification:
+  enabled: true
+  strategy: auto            # auto = per-workflow default lookup
+  max_retries: 2            # Retry failed verification (0 = no retry)
+  timeout_seconds: 300      # Per-attempt timeout
+  fail_open: false          # true = failed verification won't fail workflow
+
+  # Per-workflow overrides (optional)
+  workflows:
+    code-review:
+      strategy: lint-check
+    test-gen:
+      strategy: run-tests
+      max_retries: 3
+    release-prep:
+      strategy: build
+      fail_open: true       # Don't block release on build failure
+    security-audit:
+      strategy: custom-command
+      command: "bandit -r src/ --severity-level medium"
+
+# =============================================================================
 # LOGGING
 # =============================================================================
 

@@ -43,6 +43,9 @@ from attune.models import (
     TelemetryBackend,
 )
 
+# Import verification mixin for post-execution verification loops
+from attune.verification.mixin import VerificationMixin
+
 # Re-export CachedResponse for backward compatibility (moved to caching.py in Phase 1)
 # Import mixins (extracted for maintainability)
 from .caching import (
@@ -121,6 +124,7 @@ class BaseWorkflow(
     TelemetryMixin,
     ResponseParsingMixin,
     CostTrackingMixin,
+    VerificationMixin,
     ABC,
 ):
     """Base class for multi-model workflows.
@@ -294,6 +298,9 @@ class BaseWorkflow(
 
         # Load config if not provided
         self._config = config or WorkflowConfig.load()
+
+        # Initialize verification loop (uses VerificationMixin)
+        self._init_verification()
 
         # Determine provider (priority: arg > config > default)
         if provider is None:

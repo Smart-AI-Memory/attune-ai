@@ -17,10 +17,13 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
+
+logger = logging.getLogger(__name__)
 
 
 class PromptMixin:
@@ -97,12 +100,18 @@ class PromptMixin:
             for i, guideline in enumerate(guidelines, 1):
                 parts.append(f"{i}. {guideline}")
 
-        # 3. Documentation (static - good caching candidate)
+        # 3. Lessons learned (project + global)
+        lessons_text = self._get_project_lessons()
+        if lessons_text:
+            parts.append("\n# Lessons Learned\n")
+            parts.append(lessons_text)
+
+        # 4. Documentation (static - good caching candidate)
         if documentation:
             parts.append("\n# Reference Documentation\n")
             parts.append(documentation)
 
-        # 4. Examples (static - excellent for few-shot learning)
+        # 5. Examples (static - excellent for few-shot learning)
         if examples:
             parts.append("\n# Examples\n")
             for i, example in enumerate(examples, 1):
@@ -121,6 +130,24 @@ class PromptMixin:
         )
 
         return "\n".join(parts)
+
+    def _get_project_lessons(self) -> str | None:
+        """Load lessons from project and global lessons files.
+
+        Returns:
+            Formatted lessons text for prompt injection, or None if
+            no lessons exist.
+
+        """
+        try:
+            from attune.memory.lessons import LessonsManager
+
+            manager = LessonsManager()
+            return manager.format_for_prompt()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Lessons are optional; never break a workflow
+            logger.debug("Could not load lessons for prompt injection")
+            return None
 
     # =========================================================================
     # XML Prompt Integration (Phase 4)

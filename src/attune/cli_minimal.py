@@ -9,6 +9,15 @@ Automation commands:
     attune workflow run <name>        Execute a workflow
     attune workflow info <name>       Show workflow details
 
+Cost tracking:
+    attune costs                      Show cost report (last 7 days)
+    attune costs --days 30            Show cost report for 30 days
+    attune costs --json               Output cost data as JSON
+    attune costs --workflow NAME      Filter by workflow
+    attune costs today                Show today's costs
+    attune costs export -o FILE       Export costs to file
+    attune costs reset --confirm      Clear all cost data
+
 Monitoring commands:
     attune dashboard start            Start agent coordination dashboard
                                       (opens web UI at http://localhost:8000)
@@ -45,6 +54,17 @@ import argparse
 import logging
 import sys
 
+from attune.cli_commands.cost_commands import (  # noqa: F401
+    cmd_costs,
+    cmd_costs_export,
+    cmd_costs_reset,
+    cmd_costs_today,
+)
+from attune.cli_commands.memory_commands import (  # noqa: F401
+    cmd_forget,
+    cmd_lessons,
+    cmd_remember,
+)
 from attune.cli_commands.provider_commands import (  # noqa: F401
     cmd_provider_set,
     cmd_provider_show,
@@ -226,6 +246,56 @@ Documentation: https://smartaimemory.com/framework-docs/
         "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
     )
 
+    # --- Memory commands (quick lessons) ---
+    remember_parser = subparsers.add_parser(
+        "remember", help='Save a lesson: attune remember "lesson text"'
+    )
+    remember_parser.add_argument("lesson_text", help="Lesson to remember")
+    remember_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Save to global ~/.attune/lessons.md instead of project",
+    )
+
+    forget_parser = subparsers.add_parser("forget", help="Remove a lesson by number or keyword")
+    forget_parser.add_argument("identifier", help="Line number or keyword to match")
+
+    lessons_parser = subparsers.add_parser("lessons", help="List current lessons")
+    lessons_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Show only global lessons",
+    )
+
+    # --- Cost tracking commands ---
+    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
+    costs_parser.add_argument(
+        "--days", "-d", type=int, default=7, help="Number of days (default: 7)"
+    )
+    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
+
+    costs_sub = costs_parser.add_subparsers(dest="costs_command")
+
+    # costs today
+    costs_sub.add_parser("today", help="Show today's costs")
+
+    # costs export
+    costs_export = costs_sub.add_parser("export", help="Export cost data")
+    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
+    costs_export.add_argument(
+        "--format", "-f", choices=["csv", "json"], default="json", help="Output format"
+    )
+    costs_export.add_argument(
+        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+    )
+
+    # costs reset
+    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
+    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
+
     # --- Setup command ---
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
@@ -299,6 +369,26 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("Usage: attune dashboard start [--host HOST] [--port PORT]")
             return 1
+
+    elif args.command == "remember":
+        return cmd_remember(args)
+
+    elif args.command == "forget":
+        return cmd_forget(args)
+
+    elif args.command == "lessons":
+        return cmd_lessons(args)
+
+    elif args.command == "costs":
+        if getattr(args, "costs_command", None) == "today":
+            return cmd_costs_today(args)
+        elif getattr(args, "costs_command", None) == "export":
+            return cmd_costs_export(args)
+        elif getattr(args, "costs_command", None) == "reset":
+            return cmd_costs_reset(args)
+        else:
+            # Default: show cost report
+            return cmd_costs(args)
 
     elif args.command == "setup":
         return cmd_setup(args)
