@@ -68,25 +68,20 @@ approaches agentic workflows:
   document. Attune adopted this pattern directly for
   project-level instructions.
 
-In truth, many of these patterns were already part of
-Attune's workflow before we encountered Boris's posts —
-we had arrived at similar practices independently by
-following
-[Anthropic's own documentation](https://docs.anthropic.com)
-and best-practice guides for building with Claude. When
-Boris shared his workflow publicly, it served less as a
-revelation and more as a validation: seeing the creator of
-Claude Code converge on the same patterns we were already
-using gave us confidence that we were on the right track.
-His posts also offered refinements and practical details
-that sharpened our implementation.
+Boris's work became a major quality benchmark for Attune.
+His detailed posts about plan-first execution, verification
+loops, and parallel agent sessions were standards we
+measured our own work against — and in several cases, his
+approach taught us valuable lessons that led to significant
+changes in how Attune handles workflows. The patterns he
+describes (plan-then-execute, verification loops,
+multi-agent orchestration, living project instructions) are
+powerful but non-obvious, and studying how the creator of
+Claude Code applies them in practice sharpened Attune's
+implementation in meaningful ways.
 
 One of Attune AI's goals is to make these best practices
-accessible to a wider audience. The patterns Boris
-describes — and that Anthropic's documentation
-recommends — (plan-then-execute, verification loops,
-multi-agent orchestration, living project instructions)
-are powerful but non-obvious, and without a framework to
+accessible to a wider audience. Without a framework to
 codify them, each team would have to discover and implement
 them independently. Attune packages these proven workflows
 into reusable, structured tools so that any developer can

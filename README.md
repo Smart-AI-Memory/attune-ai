@@ -29,10 +29,10 @@ pip install attune-ai[developer]
   cost reports.
 - **Acknowledgments** — Added recognition of Boris Cherny
   (creator of Claude Code) and Affaan Mustafa
-  (everything-claude-code). Attune was in development
-  for months before discovering their work; their
-  shared practices validated the approach and sharpened
-  specific details.
+  (everything-claude-code). Their work served as major
+  quality benchmarks for Attune, and in several cases
+  taught valuable lessons that led to significant
+  changes in approach.
 - **Hybrid caching enabled** — `[developer]` extra now
   includes sentence-transformers for 70% cache hit rate
   out of the box.
