@@ -3,7 +3,7 @@
 
 # Site Information
 site_name: Attune AI
-site_description: Production-ready Level 4 Anticipatory Intelligence for AI-human collaboration. Build AI systems that predict problems before they happen.
+site_description: AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.
 site_author: Patrick Roebuck
 site_url: https://smartaimemory.com/framework-docs/
 
@@ -358,9 +358,9 @@ extra:
     - property: og:type
       content: website
     - property: og:title
-      content: Attune AI - Level 4 Anticipatory AI
+      content: Attune AI - Developer Workflows for Claude
     - property: og:description
-      content: Build AI systems that predict problems before they happen. Production-ready framework for AI-human collaboration.
+      content: AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.
     - property: og:image
       content: https://smartaimemory.com/assets/images/empathy-brain-logo.png
     - property: og:url
@@ -368,10 +368,10 @@ extra:
     - name: twitter:card
       content: summary_large_image
     - name: twitter:title
-      content: Attune AI - Level 4 Anticipatory AI
+      content: Attune AI - Developer Workflows for Claude
     - name: twitter:description
-      content: Build AI systems that predict problems before they happen.
+      content: AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.
     - name: twitter:image
       content: https://smartaimemory.com/assets/images/empathy-brain-logo.png
     - name: keywords
-      content: AI framework, anticipatory AI, machine learning, multi-agent systems, healthcare AI, HIPAA compliant, Python AI library
+      content: AI framework, Claude Code, Anthropic, multi-agent orchestration, developer workflows, prompt caching, Python AI library, cost optimization

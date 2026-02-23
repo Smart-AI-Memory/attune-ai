@@ -107,7 +107,26 @@ export const FEATURES: Feature[] = [
     benefitDescription: 'Agents compose themselves. Describe a goal, get an optimized multi-agent team.',
     technicalDescription: 'MetaOrchestrator analyzes tasks and automatically selects composition patterns and agent configurations.',
     pricingDescription: 'Auto-composing agent teams',
-    version: 'v2.10.0',
+    version: 'v3.1.2',
+  },
+  {
+    id: 'prompt-caching',
+    name: 'Automatic Prompt Caching',
+    icon: '⚡',
+    benefitDescription: 'Up to 90% cost savings on API tokens via Anthropic auto-caching. Zero configuration required.',
+    technicalDescription: 'Claude-native architecture designed around prompt caching. System prompts, tool definitions, and conversation history are automatically cached and reused.',
+    pricingDescription: 'Automatic prompt caching (90% savings)',
+    isNew: true,
+  },
+  {
+    id: 'semantic-caching',
+    name: 'Semantic Caching',
+    icon: '🧲',
+    benefitDescription: 'Detects similar prompts and reuses cached responses, avoiding redundant API calls entirely. ~57% hit rate measured.',
+    technicalDescription: 'HybridCache with sentence-transformers computes embeddings for semantic similarity matching (95%+ cosine threshold). Hash-only fallback when ML deps unavailable.',
+    pricingDescription: 'Semantic caching via sentence-transformers',
+    isNew: true,
+    version: 'v3.1.2',
   },
 ];
 
