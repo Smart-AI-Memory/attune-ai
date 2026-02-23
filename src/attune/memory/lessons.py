@@ -34,6 +34,10 @@ WARN_TOKEN_THRESHOLD = 2500
 # Lesson line pattern: - **YYYY-MM-DD** lesson text
 _LESSON_PATTERN = re.compile(r"^- \*\*(\d{4}-\d{2}-\d{2})\*\* (.+)$")
 
+# Marker comments for managed section in CLAUDE.md
+_CLAUDE_MD_START = "<!-- attune-lessons-start -->"
+_CLAUDE_MD_END = "<!-- attune-lessons-end -->"
+
 
 def _estimate_tokens(text: str) -> int:
     """Rough token estimate for text.
@@ -71,6 +75,16 @@ def _get_global_lessons_path() -> Path:
     return Path.home() / ".attune" / "lessons.md"
 
 
+def _get_claude_md_path() -> Path:
+    """Get the default CLAUDE.md file path.
+
+    Returns:
+        Path to .claude/CLAUDE.md in the current directory.
+
+    """
+    return Path(".claude/CLAUDE.md")
+
+
 class LessonsManager:
     """Manages lessons learned from previous sessions.
 
@@ -78,11 +92,15 @@ class LessonsManager:
     ``- **YYYY-MM-DD** lesson text``
 
     Supports project-local and global lessons files with
-    automatic merging (project takes precedence).
+    automatic merging (project takes precedence). Optionally
+    bridges with .claude/CLAUDE.md for Claude Code native
+    integration.
 
     Args:
         project_path: Override for project lessons file path.
         global_path: Override for global lessons file path.
+        sync_to_claude_md: If True, sync lessons to CLAUDE.md.
+        claude_md_path: Override for CLAUDE.md file path.
 
     """
 
@@ -90,9 +108,13 @@ class LessonsManager:
         self,
         project_path: Path | None = None,
         global_path: Path | None = None,
+        sync_to_claude_md: bool = True,
+        claude_md_path: Path | None = None,
     ) -> None:
         self._project_path = project_path or _get_project_lessons_path()
         self._global_path = global_path or _get_global_lessons_path()
+        self._sync_to_claude_md = sync_to_claude_md
+        self._claude_md_path = claude_md_path or _get_claude_md_path()
 
     def add_lesson(self, text: str, global_: bool = False) -> str:
         """Add a lesson to the lessons file.
@@ -129,6 +151,10 @@ class LessonsManager:
                 content += "\n"
             content += lesson_line
             validated_path.write_text(content)
+
+        # Sync to CLAUDE.md if enabled (project lessons only)
+        if not global_ and self._sync_to_claude_md:
+            self._sync_lesson_to_claude_md(lesson_line)
 
         scope = "global" if global_ else "project"
         token_count = self._check_token_budget(target)
@@ -208,6 +234,22 @@ class LessonsManager:
             )
             number += 1
 
+        # Merge lessons from CLAUDE.md (if bridge is enabled)
+        if self._sync_to_claude_md:
+            for date, text in self._parse_claude_md_lessons():
+                # Deduplicate against project and global
+                if any(lesson["text"] == text for lesson in lessons):
+                    continue
+                lessons.append(
+                    {
+                        "number": number,
+                        "date": date,
+                        "text": text,
+                        "source": "claude_md",
+                    }
+                )
+                number += 1
+
         return lessons
 
     def format_for_prompt(
@@ -280,6 +322,90 @@ class LessonsManager:
                 results.append((match.group(1), match.group(2)))
 
         return results
+
+    def _sync_lesson_to_claude_md(self, lesson_line: str) -> None:
+        """Sync a lesson line to the CLAUDE.md managed section.
+
+        Appends the lesson inside ``<!-- attune-lessons-start -->`` /
+        ``<!-- attune-lessons-end -->`` markers. If markers don't exist,
+        appends the full section at the end of the file.
+
+        Silently skips if CLAUDE.md doesn't exist. Never crashes.
+
+        Args:
+            lesson_line: The formatted lesson line (with newline).
+
+        """
+        try:
+            claude_md = self._claude_md_path
+            if not claude_md.exists():
+                logger.debug("CLAUDE.md not found at %s, skipping sync", claude_md)
+                return
+
+            validated_path = _validate_file_path(str(claude_md))
+            content = validated_path.read_text()
+
+            if _CLAUDE_MD_START in content and _CLAUDE_MD_END in content:
+                # Insert lesson before end marker
+                content = content.replace(
+                    _CLAUDE_MD_END,
+                    lesson_line + _CLAUDE_MD_END,
+                )
+            else:
+                # Append new section at end of file
+                section = (
+                    f"\n{_CLAUDE_MD_START}\n"
+                    f"## Lessons Learned\n\n"
+                    f"{lesson_line}"
+                    f"{_CLAUDE_MD_END}\n"
+                )
+                if not content.endswith("\n"):
+                    content += "\n"
+                content += section
+
+            validated_path.write_text(content)
+            logger.debug("Lesson synced to CLAUDE.md")
+
+        except Exception as e:
+            # INTENTIONAL: CLAUDE.md sync is best-effort, never crash
+            logger.debug("CLAUDE.md sync failed: %s", e)
+
+    def _parse_claude_md_lessons(self) -> list[tuple[str, str]]:
+        """Parse lessons from the managed section of CLAUDE.md.
+
+        Only reads content between the attune marker comments.
+
+        Returns:
+            List of (date, text) tuples. Empty if file missing
+            or no markers found.
+
+        """
+        try:
+            claude_md = self._claude_md_path
+            if not claude_md.exists():
+                return []
+
+            content = claude_md.read_text()
+
+            # Find content between markers
+            start_idx = content.find(_CLAUDE_MD_START)
+            end_idx = content.find(_CLAUDE_MD_END)
+            if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                return []
+
+            section = content[start_idx + len(_CLAUDE_MD_START) : end_idx]
+
+            results: list[tuple[str, str]] = []
+            for line in section.splitlines():
+                match = _LESSON_PATTERN.match(line.strip())
+                if match:
+                    results.append((match.group(1), match.group(2)))
+
+            return results
+
+        except OSError as e:
+            logger.debug("Cannot read CLAUDE.md: %s", e)
+            return []
 
     def _remove_by_line_number(self, line_num: int) -> str:
         """Remove a lesson by its displayed line number.

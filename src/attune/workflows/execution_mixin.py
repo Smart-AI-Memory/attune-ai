@@ -276,6 +276,6 @@ class ExecutionMixin(
 
         # Run verification loop after successful execution (VerificationMixin)
         if error is None:
-            result, _verification_result = self._run_verification_loop(result, kwargs)
+            result, _verification_result = await self._run_verification_loop(result, kwargs)
 
         return result
