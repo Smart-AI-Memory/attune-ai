@@ -27,7 +27,7 @@ on Opus.
 ### Install
 
 ```bash
-pip install attune-ai
+pip install attune-ai[developer]
 ```
 
 ### Set your API key
