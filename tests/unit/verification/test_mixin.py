@@ -304,7 +304,7 @@ class TestVerificationCorrectionLoop:
 
     @pytest.mark.asyncio
     @patch("attune.verification.mixin.run_verification")
-    async def test_correction_disabled_by_default(self, mock_run) -> None:
+    async def test_correction_disabled_skips_llm(self, mock_run) -> None:
         """Test correction does not fire when correction_enabled=False."""
         mock_run.return_value = VerificationResult(
             passed=False,

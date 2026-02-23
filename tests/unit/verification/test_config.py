@@ -18,8 +18,9 @@ class TestVerificationConfigDefaults:
         assert config.timeout_seconds == 300
         assert config.fail_open is False
         assert config.working_directory is None
-        assert config.correction_enabled is False
+        assert config.correction_enabled is True
         assert config.max_corrections == 2
+        assert config.correction_context_chars == 8000
 
     def test_from_dict_empty(self) -> None:
         """Test from_dict with empty dict uses defaults."""
@@ -27,6 +28,8 @@ class TestVerificationConfigDefaults:
         assert config.enabled is True
         assert config.strategy == "auto"
         assert config.max_retries == 2
+        assert config.correction_enabled is True
+        assert config.correction_context_chars == 8000
 
     def test_from_dict_custom_values(self) -> None:
         """Test from_dict with custom values."""
@@ -144,8 +147,18 @@ class TestVerificationConfigCorrection:
     def test_correction_defaults_from_dict(self) -> None:
         """Test correction fields default when not in dict."""
         config = VerificationConfig.from_dict({})
-        assert config.correction_enabled is False
+        assert config.correction_enabled is True
         assert config.max_corrections == 2
+        assert config.correction_context_chars == 8000
+
+    def test_correction_context_chars_from_dict(self) -> None:
+        """Test correction_context_chars is parsed from dict."""
+        config = VerificationConfig.from_dict(
+            {
+                "correction_context_chars": 16000,
+            }
+        )
+        assert config.correction_context_chars == 16000
 
     def test_correction_per_workflow_override(self) -> None:
         """Test per-workflow override of correction settings."""
