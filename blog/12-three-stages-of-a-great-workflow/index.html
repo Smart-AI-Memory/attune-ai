@@ -6,19 +6,15 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
+        <meta name="description" content="Type /attune in Claude Code, answer two questions, and run a cost-optimized security audit in under a minute. Then build your own workflow in four files.">
       
       
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/tutorials/build-a-workflow/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/blog/12-three-stages-of-a-great-workflow/">
       
       
-        <link rel="prev" href="../">
-      
-      
-        <link rel="next" href="../../how-to/">
       
       
         
@@ -29,7 +25,7 @@
     
     
       
-        <title>Build a Workflow - Attune AI</title>
+        <title>Build Your First AI Workflow with Attune and Claude Code - Attune AI</title>
       
     
     
@@ -85,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#build-a-workflow-from-scratch" class="md-skip">
+        <a href="#build-your-first-ai-workflow-with-attune-and-claude-code" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Build a Workflow
+              Build Your First AI Workflow with Attune and Claude Code
             
           </span>
         </div>
@@ -268,13 +264,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
           
   
   
@@ -709,31 +703,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -751,7 +742,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -769,7 +760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../tutorials/" class="md-nav__link">
         
   
   
@@ -794,37 +785,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Build a Workflow
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
         
   
   
@@ -840,137 +804,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-youll-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What You'll Build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-define-the-workflow-class" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 1: Define the Workflow Class
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 1: Define the Workflow Class">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-tiers-matter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why tiers matter
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-create-a-skill-definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 2: Create a Skill Definition
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-add-a-command-shortcut" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 3: Add a Command Shortcut
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-register-the-entry-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4: Register the Entry Point
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-build-your-own" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 5: Build Your Own
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 5: Build Your Own">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ideas-to-try" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ideas to try
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recap" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recap
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3570,10 +3403,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-youll-build" class="md-nav__link">
+  <a href="#tldr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What You'll Build
+        TL;DR
       
     </span>
   </a>
@@ -3581,22 +3414,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-define-the-workflow-class" class="md-nav__link">
+  <a href="#part-1-install-and-run-under-2-minutes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1: Define the Workflow Class
+        Part 1: Install and Run (Under 2 Minutes)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Step 1: Define the Workflow Class">
+    <nav class="md-nav" aria-label="Part 1: Install and Run (Under 2 Minutes)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-tiers-matter" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why tiers matter
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#your-first-workflow-the-socratic-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your first workflow — the Socratic way
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-the-questions-when-you-know-what-you-want" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skip the questions when you know what you want
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's available
       
     </span>
   </a>
@@ -3609,10 +3475,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-create-a-skill-definition" class="md-nav__link">
+  <a href="#part-2-whats-happening-under-the-hood" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Create a Skill Definition
+        Part 2: What's Happening Under the Hood
       
     </span>
   </a>
@@ -3620,44 +3486,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-add-a-command-shortcut" class="md-nav__link">
+  <a href="#part-3-build-your-own-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3: Add a Command Shortcut
+        Part 3: Build Your Own Workflow
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-register-the-entry-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4: Register the Entry Point
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-build-your-own" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 5: Build Your Own
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 5: Build Your Own">
+    <nav class="md-nav" aria-label="Part 3: Build Your Own Workflow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ideas-to-try" class="md-nav__link">
+  <a href="#file-1-workflow-class" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ideas to try
+        File 1: Workflow class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-2-skill-definition-for-attune-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File 2: Skill definition (for /attune discovery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-3-command-shortcut-for-direct-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File 3: Command shortcut (for direct access)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-4-register-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File 4: Register it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run it
       
     </span>
   </a>
@@ -3670,10 +3558,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recap" class="md-nav__link">
+  <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recap
+        What's Next
       
     </span>
   </a>
@@ -3700,318 +3588,329 @@
   
 
 
-<h1 id="build-a-workflow-from-scratch">Build a Workflow from Scratch<a class="headerlink" href="#build-a-workflow-from-scratch" title="Permanent link">&para;</a></h1>
-<p>Every Attune workflow follows the same pattern: a Python
-class with staged execution, a skill file for discovery,
-and an entry point for registration. This tutorial walks
-through each layer using our documentation generator as
-the running example.</p>
-<p>By the end you'll know how to build, register, and run
-your own cost-optimized workflow.</p>
-<h2 id="what-youll-build">What You'll Build<a class="headerlink" href="#what-youll-build" title="Permanent link">&para;</a></h2>
-<p>A three-stage documentation workflow that:</p>
-<ol>
-<li><strong>Outlines</strong> with Claude Haiku (cheap, fast)</li>
-<li><strong>Writes</strong> with Claude Sonnet (balanced)</li>
-<li><strong>Polishes</strong> with Claude Opus (highest quality)</li>
-</ol>
-<p>Four files make it work:</p>
+<h1 id="build-your-first-ai-workflow-with-attune-and-claude-code">Build Your First AI Workflow with Attune and Claude Code<a class="headerlink" href="#build-your-first-ai-workflow-with-attune-and-claude-code" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> February 2026
+<strong>Author:</strong> Patrick Roebuck
+<strong>Tags:</strong> Tutorial, Getting Started, Claude Code, Workflows</p>
+<hr />
+<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h2>
+<p>Install Attune AI, type <code>/attune</code> in Claude Code, and
+describe what you need. Attune asks scoping questions,
+picks the right workflow, and runs it with automatic
+cost optimization across Claude's three model tiers.
+12 workflows ship out of the box. Build your own in
+four files.</p>
+<hr />
+<h2 id="part-1-install-and-run-under-2-minutes">Part 1: Install and Run (Under 2 Minutes)<a class="headerlink" href="#part-1-install-and-run-under-2-minutes" title="Permanent link">&para;</a></h2>
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
+<p>Three commands:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="o">[</span>developer<span class="o">]</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key-here&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>attune<span class="w"> </span>setup
+</code></pre></div>
+<p>The <code>attune setup</code> wizard walks you through
+configuration in 6 stages. Want to skip it? Use a
+preset:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>setup<span class="w"> </span>--preset<span class="w"> </span>code-review
+</code></pre></div>
+<h3 id="your-first-workflow-the-socratic-way">Your first workflow — the Socratic way<a class="headerlink" href="#your-first-workflow-the-socratic-way" title="Permanent link">&para;</a></h3>
+<p>Open Claude Code in your project and type:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/attune
+</code></pre></div>
+<p>Attune doesn't dump a menu. It asks what you're trying
+to accomplish:</p>
+<blockquote>
+<p><strong>What are you trying to accomplish?</strong></p>
+<ul>
+<li><strong>Fix or improve code</strong> — Debug, review, refactor</li>
+<li><strong>Validate my work</strong> — Tests, coverage, security</li>
+<li><strong>Ship my changes</strong> — Plan, release, publish</li>
+<li><strong>Create or extend</strong> — Wizards, agents, docs</li>
+</ul>
+</blockquote>
+<p>Pick "Validate my work." Attune narrows it down:</p>
+<blockquote>
+<p><strong>Which validation?</strong></p>
+<ul>
+<li><code>/testing run</code> — Run test suite</li>
+<li><code>/testing coverage</code> — Coverage report</li>
+<li><code>/workflows security</code> — Security scan</li>
+<li><code>/workflows perf</code> — Performance detection</li>
+</ul>
+</blockquote>
+<p>Pick "Security." One more question:</p>
+<blockquote>
+<p><strong>What target?</strong> <code>src/</code>, a specific module, or full
+project?</p>
+</blockquote>
+<p>You type <code>src/attune/models/</code>. Attune runs the security
+audit — scanning for eval, path traversal, injection
+risks — and reports back with findings, severity levels,
+and cost savings.</p>
+<p>That's the core experience: <strong>describe your goal,
+answer scoping questions, get results.</strong> No commands
+to memorize.</p>
+<h3 id="skip-the-questions-when-you-know-what-you-want">Skip the questions when you know what you want<a class="headerlink" href="#skip-the-questions-when-you-know-what-you-want" title="Permanent link">&para;</a></h3>
+<p>Once you're familiar with the workflows, go direct:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/attune security src/attune/models/
+</code></pre></div>
+<p>Or from the CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>src/attune/models/
+</code></pre></div>
+<p>Both run the same workflow. The Socratic path is for
+discovery; the direct path is for speed.</p>
+<h3 id="whats-available">What's available<a class="headerlink" href="#whats-available" title="Permanent link">&para;</a></h3>
+<p>Attune ships with 12 workflows:</p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Purpose</th>
+<th>Workflow</th>
+<th>What it does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>src/attune/workflows/doc_gen/workflow.py</code></td>
-<td>Workflow class</td>
+<td><code>security-audit</code></td>
+<td>OWASP vulnerability scan with risk scoring</td>
 </tr>
 <tr>
-<td><code>plugin/skills/docs/SKILL.md</code></td>
-<td>Socratic discovery</td>
+<td><code>code-review</code></td>
+<td>Tiered analysis with architectural review</td>
 </tr>
 <tr>
-<td><code>plugin/commands/attune-docs.md</code></td>
-<td>Quick-access command</td>
+<td><code>bug-predict</code></td>
+<td>Predicts likely bugs from code patterns</td>
 </tr>
 <tr>
-<td><code>pyproject.toml</code></td>
-<td>Entry point registration</td>
+<td><code>perf-audit</code></td>
+<td>Bottlenecks and optimization opportunities</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td>Tests targeting low-coverage areas</td>
+</tr>
+<tr>
+<td><code>doc-gen</code></td>
+<td>Documentation via outline/write/polish</td>
+</tr>
+<tr>
+<td><code>refactor-plan</code></td>
+<td>Prioritizes tech debt by impact</td>
+</tr>
+<tr>
+<td><code>dependency-check</code></td>
+<td>Vulnerability and license auditing</td>
+</tr>
+<tr>
+<td><code>release-prep</code></td>
+<td>Pre-release quality gate</td>
+</tr>
+<tr>
+<td><code>secure-release</code></td>
+<td>Security pipeline for release approval</td>
+</tr>
+<tr>
+<td><code>pro-review</code></td>
+<td>Composite multi-pass review</td>
+</tr>
+<tr>
+<td><code>pr-review</code></td>
+<td>PR-level quality and security analysis</td>
 </tr>
 </tbody>
 </table>
-<h2 id="step-1-define-the-workflow-class">Step 1: Define the Workflow Class<a class="headerlink" href="#step-1-define-the-workflow-class" title="Permanent link">&para;</a></h2>
-<p>Every workflow extends <code>BaseWorkflow</code> and declares three
-things: <code>stages</code>, <code>tier_map</code>, and <code>run_stage()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseWorkflow</span><span class="p">,</span> <span class="n">ModelTier</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">DocumentGenerationWorkflow</span><span class="p">(</span><span class="n">BaseWorkflow</span><span class="p">):</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;doc-gen&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Cost-optimized documentation generation&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;outline&quot;</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">,</span> <span class="s2">&quot;polish&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">tier_map</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="s2">&quot;outline&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CHEAP</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">&quot;write&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CAPABLE</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s2">&quot;polish&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">PREMIUM</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="p">}</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_name</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">input_data</span><span class="p">):</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;outline&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;write&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;polish&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polish</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown stage: </span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_outline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a doc outline with Haiku (fast, cheap).&quot;&quot;&quot;</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Create a documentation outline for: </span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand the outline into full sections with Sonnet.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Write documentation from this outline:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;outline&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_polish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Final quality pass with Opus.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Polish this documentation for clarity and completeness:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;draft&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
-</code></pre></div>
-<p>Three concepts to understand:</p>
-<ul>
-<li><strong><code>stages</code></strong> is an ordered list. The execution engine
-  runs them in sequence, passing each stage's output to
-  the next.</li>
-<li><strong><code>tier_map</code></strong> assigns a Claude model to each stage.
-  <code>CHEAP</code> routes to Claude Haiku, <code>CAPABLE</code> to Claude
-  Sonnet, and <code>PREMIUM</code> to Claude Opus.</li>
-<li><strong><code>run_stage()</code></strong> is the only method you implement.
-  It receives the stage name, the resolved tier, and
-  the input data from the previous stage.</li>
-</ul>
-<h3 id="why-tiers-matter">Why tiers matter<a class="headerlink" href="#why-tiers-matter" title="Permanent link">&para;</a></h3>
-<p>Without tier routing, every stage runs on Claude Opus.
-With it, you spend Opus tokens only where quality
-demands it:</p>
-<table>
-<thead>
-<tr>
-<th>Stage</th>
-<th>Tier</th>
-<th>Claude Model</th>
-<th>Input $/1M</th>
-<th>Output $/1M</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>outline</td>
-<td>CHEAP</td>
-<td>Claude Haiku 4.5</td>
-<td>$0.80</td>
-<td>$4.00</td>
-</tr>
-<tr>
-<td>write</td>
-<td>CAPABLE</td>
-<td>Claude Sonnet 4.6</td>
-<td>$3.00</td>
-<td>$15.00</td>
-</tr>
-<tr>
-<td>polish</td>
-<td>PREMIUM</td>
-<td>Claude Opus 4.6</td>
-<td>$15.00</td>
-<td>$75.00</td>
-</tr>
-</tbody>
-</table>
-<p>A 10,000-token doc generation job costs roughly <strong>$0.38
-with tier routing</strong> vs <strong>$0.90 on Claude Opus alone</strong> —
-a 58% reduction. Add Anthropic's automatic prompt caching
-(cached tokens cost 10% of standard price) and savings
-compound further. Scale that across hundreds of workflow
-runs and the numbers add up fast.</p>
-<h2 id="step-2-create-a-skill-definition">Step 2: Create a Skill Definition<a class="headerlink" href="#step-2-create-a-skill-definition" title="Permanent link">&para;</a></h2>
-<p>Skills give your workflow Socratic discovery -- instead
-of memorizing CLI flags, users describe what they need
-and the skill asks clarifying questions.</p>
-<p>Create <code>plugin/skills/docs/SKILL.md</code> (create the
-directories if they don't exist yet —
-<code>mkdir -p plugin/skills/docs</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nn">---</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate,</span><span class="nv"> </span><span class="s">explain,</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">audit</span><span class="nv"> </span><span class="s">documentation&quot;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">triggers</span><span class="p">:</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">readme</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">changelog</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">api reference</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">explain</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nn">---</span>
-</code></pre></div>
-<p>Below the frontmatter, define the interaction flow:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gu">## Socratic Scoping</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Before running, ask:
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">1.</span> <span class="gs">**Type**</span>: &quot;What kind of docs? API reference, README,
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>   changelog, or a general guide?&quot;
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">2.</span> <span class="gs">**Scope**</span>: &quot;Which path should I document?&quot;
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">3.</span> <span class="gs">**Audience**</span>: &quot;Who&#39;s reading -- developers, end users,
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>   or both?&quot;
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="gu">## Execution</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>Call the <span class="sb">`document_generation`</span> MCP tool with the scoped
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>parameters:
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>document_generation(path=&quot;&lt;path&gt;&quot;, doc_type=&quot;&lt;type&gt;&quot;)
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="gu">## Output Format</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>Present a summary followed by the generated content:
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="gs">**Generated:**</span> &lt;doc_type&gt; | <span class="gs">**Sections:**</span> N | <span class="gs">**Tokens:**</span> X
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="gu">## Follow-Up</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>After presenting results, offer:
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="k">-</span><span class="w"> </span>&quot;Want me to export this to a file?&quot;
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="k">-</span><span class="w"> </span>&quot;Should I refine a specific section?&quot;
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="k">-</span><span class="w"> </span>&quot;Want a changelog based on recent commits?&quot;
-</code></pre></div>
-<p>The <code>triggers</code> array is what connects natural language
-to your skill. When a user types "generate docs for
-src/models", the router matches on "docs" and activates
-this skill.</p>
-<blockquote>
-<p><strong>Pattern reference:</strong>
-<a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/skills/security-audit/SKILL.md">plugin/skills/security-audit/SKILL.md</a></p>
-</blockquote>
-<h2 id="step-3-add-a-command-shortcut">Step 3: Add a Command Shortcut<a class="headerlink" href="#step-3-add-a-command-shortcut" title="Permanent link">&para;</a></h2>
-<p>Commands bypass Socratic discovery for users who know
-exactly what they want. Create
-<code>plugin/commands/attune-docs.md</code>
-(<code>mkdir -p plugin/commands</code> if needed):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nn">---</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attune-docs</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">path&quot;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nt">argument-hint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;path&gt;&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workflows</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">aliases</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">adoc</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">docs</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">documentation</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">generate</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.0.0&quot;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nn">---</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gh"># attune-docs</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Quick-access command for documentation generation.
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Bypasses Socratic discovery when you know the target.
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="gu">## Execution</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">1.</span> If a path argument is provided, use it. Otherwise
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>   ask: &quot;Which path should I document?&quot;
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="k">2.</span> Call the <span class="sb">`document_generation`</span> MCP tool with the path.
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="k">3.</span> Present results using the format from the docs skill.
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="gu">## Examples</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>/attune-docs src/attune/models/
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>/attune-docs src/attune/workflows/
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>/attune-docs .
-</code></pre></div>
-<p>Now users have two paths to the same workflow:</p>
-<ul>
-<li><code>/attune</code> + "generate docs" -- guided discovery</li>
-<li><code>/attune-docs src/</code> -- direct execution</li>
-</ul>
-<blockquote>
-<p><strong>Pattern reference:</strong>
-<a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/commands/attune-security.md">plugin/commands/attune-security.md</a></p>
-</blockquote>
-<h2 id="step-4-register-the-entry-point">Step 4: Register the Entry Point<a class="headerlink" href="#step-4-register-the-entry-point" title="Permanent link">&para;</a></h2>
-<p>Add your workflow to <code>pyproject.toml</code> so the CLI can
-discover it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[project.entry-points.</span><span class="s2">&quot;attune.workflows&quot;</span><span class="k">]</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">doc-gen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;attune.workflows.document_gen:DocumentGenerationWorkflow&quot;</span>
-</code></pre></div>
-<p>Verify it's registered:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list
-</code></pre></div>
-<p>You should see your workflow in the output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Available workflows:
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  security-audit    Security vulnerability scanner
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  bug-predict       Bug prediction and risk analysis
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  perf-audit        Performance bottleneck detection
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  code-review       Code quality analysis
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  doc-gen           Cost-optimized documentation generation  ← yours
-</code></pre></div>
-<p>Run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>doc-gen<span class="w"> </span>--path<span class="w"> </span>src/attune/models/
-</code></pre></div>
-<p>Expected output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Running doc-gen workflow...
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  Stage 1/3: outline (Haiku 4.5)  ✓  0.8s
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  Stage 2/3: write (Sonnet 4.6)   ✓  3.2s
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  Stage 3/3: polish (Opus 4.6)    ✓  5.1s
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>Cost: $0.38 (saved 58% vs premium-only baseline)
-</code></pre></div>
-<p>The CLI loads your class, instantiates it, calls
-<code>execute()</code>, and formats the result — including cost
-savings vs a premium-only baseline.</p>
-<h2 id="step-5-build-your-own">Step 5: Build Your Own<a class="headerlink" href="#step-5-build-your-own" title="Permanent link">&para;</a></h2>
-<p>You now know every layer of the system. To build your
-own workflow:</p>
+<p>All accessible through <code>/attune</code> + natural language,
+or directly by name.</p>
+<hr />
+<h2 id="part-2-whats-happening-under-the-hood">Part 2: What's Happening Under the Hood<a class="headerlink" href="#part-2-whats-happening-under-the-hood" title="Permanent link">&para;</a></h2>
+<p>Every workflow runs in stages, and each stage is routed
+to a different Claude model based on what the task
+needs.</p>
+<p>Take the <code>doc-gen</code> workflow. It runs three stages:</p>
 <ol>
-<li><strong>Pick your stages.</strong> What are the distinct steps?
-   A code reviewer might use <code>scan</code>, <code>analyze</code>, <code>report</code>.</li>
-<li><strong>Assign tiers.</strong> Which stages need Claude Opus
-   (PREMIUM) vs Claude Haiku speed (CHEAP)?</li>
-<li><strong>Implement <code>run_stage()</code>.</strong> Each stage receives the
-   previous stage's output.</li>
-<li><strong>Add a SKILL.md.</strong> Define triggers and Socratic
-   questions.</li>
-<li><strong>Register in pyproject.toml.</strong> One line.</li>
+<li><strong>Outline</strong> — Claude Haiku (fast, $0.80/M tokens)</li>
+<li><strong>Write</strong> — Claude Sonnet (balanced, $3/M tokens)</li>
+<li><strong>Polish</strong> — Claude Opus (premium, $15/M tokens)</li>
 </ol>
-<p>Browse existing workflows for inspiration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list
+<p>The result: <strong>$0.38 per run vs $0.90 on Opus alone —
+a 58% cost reduction.</strong> Add Anthropic's automatic
+prompt caching (cached tokens cost 10% of standard
+price) and savings compound further.</p>
+<p>Here's the actual workflow class:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseWorkflow</span><span class="p">,</span> <span class="n">ModelTier</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">DocumentGenerationWorkflow</span><span class="p">(</span><span class="n">BaseWorkflow</span><span class="p">):</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;doc-gen&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Cost-optimized documentation generation&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">stages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;outline&quot;</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">,</span> <span class="s2">&quot;polish&quot;</span><span class="p">]</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">tier_map</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="s2">&quot;outline&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CHEAP</span><span class="p">,</span>     <span class="c1"># Haiku</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="s2">&quot;write&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CAPABLE</span><span class="p">,</span>     <span class="c1"># Sonnet</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="s2">&quot;polish&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">PREMIUM</span><span class="p">,</span>    <span class="c1"># Opus</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="p">}</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_stage</span><span class="p">(</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">stage_name</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">input_data</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="p">):</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;outline&quot;</span><span class="p">:</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;write&quot;</span><span class="p">:</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;polish&quot;</span><span class="p">:</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polish</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown stage: </span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_outline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a doc outline with Haiku.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>            <span class="s2">&quot;Create a documentation outline for: &quot;</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>        <span class="p">)</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand outline into full sections.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>            <span class="s2">&quot;Write documentation from this outline:</span><span class="se">\n</span><span class="s2">&quot;</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;outline&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>        <span class="p">)</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_polish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Final quality pass with Opus.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>            <span class="s2">&quot;Polish this documentation for clarity &quot;</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>            <span class="sa">f</span><span class="s2">&quot;and completeness:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;draft&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>        <span class="p">)</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="ideas-to-try">Ideas to try<a class="headerlink" href="#ideas-to-try" title="Permanent link">&para;</a></h3>
+<p>Three things to understand:</p>
 <ul>
+<li><strong><code>stages</code></strong> — runs in sequence. Each stage's output
+  becomes the next stage's input.</li>
+<li><strong><code>tier_map</code></strong> — assigns a Claude model to each
+  stage. <code>CHEAP</code> = Haiku, <code>CAPABLE</code> = Sonnet,
+  <code>PREMIUM</code> = Opus.</li>
+<li><strong><code>run_stage()</code></strong> — the only method you implement.
+  The framework handles sequencing, tier resolution,
+  and cost tracking.</li>
+</ul>
+<p>Every built-in workflow follows this same pattern.</p>
+<hr />
+<h2 id="part-3-build-your-own-workflow">Part 3: Build Your Own Workflow<a class="headerlink" href="#part-3-build-your-own-workflow" title="Permanent link">&para;</a></h2>
+<p>You've run workflows and seen the code. Now let's
+build one. Every Attune workflow is four files.</p>
+<h3 id="file-1-workflow-class">File 1: Workflow class<a class="headerlink" href="#file-1-workflow-class" title="Permanent link">&para;</a></h3>
+<p>The code above — your stages, tier assignments, and
+<code>run_stage()</code> implementation. Create it at
+<code>src/attune/workflows/doc_gen/workflow.py</code>.</p>
+<h3 id="file-2-skill-definition-for-attune-discovery">File 2: Skill definition (for <code>/attune</code> discovery)<a class="headerlink" href="#file-2-skill-definition-for-attune-discovery" title="Permanent link">&para;</a></h3>
+<p>This is what makes your workflow discoverable through
+natural language — the Socratic flow you experienced
+in Part 1. Create <code>plugin/skills/docs/SKILL.md</code>
+(<code>mkdir -p plugin/skills/docs</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nn">---</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate,</span><span class="nv"> </span><span class="s">explain,</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">audit</span><span class="nv"> </span><span class="s">documentation&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nt">triggers</span><span class="p">:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">readme</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">changelog</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">explain</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nn">---</span>
+</code></pre></div>
+<p>The <code>triggers</code> array connects natural language to your
+workflow. When someone types <code>/attune</code> and says
+"generate docs for src/models", the router matches on
+"docs" and activates this skill.</p>
+<p>Below the frontmatter, define the scoping questions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gu">## Socratic Scoping</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Before running, ask:
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">1.</span> &quot;What kind of docs? API reference, README,
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>   changelog, or guide?&quot;
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="k">2.</span> &quot;Which path should I document?&quot;
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="k">3.</span> &quot;Who&#39;s reading — developers, end users, or both?&quot;
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="gu">## Follow-Up</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="k">-</span><span class="w"> </span>&quot;Want me to export this to a file?&quot;
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="k">-</span><span class="w"> </span>&quot;Should I refine a specific section?&quot;
+</code></pre></div>
+<h3 id="file-3-command-shortcut-for-direct-access">File 3: Command shortcut (for direct access)<a class="headerlink" href="#file-3-command-shortcut-for-direct-access" title="Permanent link">&para;</a></h3>
+<p>Create <code>plugin/commands/attune-docs.md</code>
+(<code>mkdir -p plugin/commands</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nn">---</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attune-docs</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">path&quot;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nt">argument-hint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;path&gt;&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workflows</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nt">aliases</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">adoc</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">docs</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">documentation</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">generate</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="nn">---</span>
+</code></pre></div>
+<p>Now your workflow has two entry points:</p>
+<ul>
+<li><code>/attune</code> + "generate docs" — guided discovery</li>
+<li><code>/attune-docs src/</code> — direct execution</li>
+</ul>
+<h3 id="file-4-register-it">File 4: Register it<a class="headerlink" href="#file-4-register-it" title="Permanent link">&para;</a></h3>
+<p>One line in <code>pyproject.toml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[project.entry-points.</span><span class="s2">&quot;attune.workflows&quot;</span><span class="k">]</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">doc-gen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;attune.workflows.document_gen:DocumentGenerationWorkflow&quot;</span>
+</code></pre></div>
+<h3 id="run-it">Run it<a class="headerlink" href="#run-it" title="Permanent link">&para;</a></h3>
+<p>In Claude Code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>/attune generate docs for src/attune/models/
+</code></pre></div>
+<p>Or from the CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>doc-gen<span class="w"> </span>--path<span class="w"> </span>src/attune/models/
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Running doc-gen workflow...
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Stage 1/3: outline (Haiku 4.5)  ✓  0.8s
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  Stage 2/3: write (Sonnet 4.6)   ✓  3.2s
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  Stage 3/3: polish (Opus 4.6)    ✓  5.1s
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>Cost: $0.38 (saved 58% vs premium-only baseline)
+</code></pre></div>
+<hr />
+<h2 id="whats-next">What's Next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
+<p>You've installed Attune, run built-in workflows through
+Claude Code's Socratic interface, and built your own in
+four files. From here:</p>
+<ul>
+<li>Type <code>/attune</code> and explore more workflows</li>
 <li>Chain workflows: lint, then test, then docs, then
   commit</li>
-<li>Use <code>/batch</code> for 50% savings on non-interactive runs</li>
-<li>Add custom mixins for shared logic across workflows</li>
+<li>Use <code>/batch</code> for 50% additional savings on
+  non-interactive runs</li>
+<li>Read the
+  <a href="../../tutorials/build-a-workflow/">full tutorial</a>
+  for deeper patterns</li>
+<li>Browse the
+  <a href="https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows">source</a>
+  to see how built-in workflows work</li>
 </ul>
-<h2 id="recap">Recap<a class="headerlink" href="#recap" title="Permanent link">&para;</a></h2>
-<p>You built a complete workflow in four files:</p>
-<ol>
-<li><strong>Workflow class</strong> — staged execution with tier routing</li>
-<li><strong>Skill definition</strong> — Socratic discovery via triggers</li>
-<li><strong>Command shortcut</strong> — direct access for power users</li>
-<li><strong>Entry point</strong> — one line in <code>pyproject.toml</code></li>
-</ol>
-<p>Every built-in Attune workflow follows this same pattern.
-Browse the source for <code>security-audit</code>, <code>code-review</code>, or
-<code>perf-audit</code> to see real-world variations — then build
-your own.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="o">[</span>developer<span class="o">]</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>attune<span class="w"> </span>setup
+</code></pre></div>
+<hr />
+<p>Patrick Roebuck is the creator of
+<a href="https://github.com/Smart-AI-Memory/attune-ai">Attune AI</a>,
+an open-source workflow framework for Claude Code.</p>
+<p>Version 3.1.2 | February 23, 2026</p>
 
 
 
 
 
 
+
+  
+  
 
 
 
