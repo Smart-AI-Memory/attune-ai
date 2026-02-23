@@ -179,7 +179,7 @@ def cmd_setup(args: Namespace) -> int:
     print("   /dev              - Developer tools (debug, commit, PR)")
     print("   /testing          - Run tests, coverage, test generation")
     print("   /workflows        - Security audit, bug prediction, perf")
-    print("   /plan             - Planning, TDD, architecture review")
+    print("   /plan             - Planning, architecture review")
     print("   /docs             - Documentation generation")
     print("   /release          - Release preparation and publishing")
     print("   /agent            - Custom agent management")

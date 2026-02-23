@@ -3,7 +3,7 @@ name: plan
 description: Development planning and architecture
 category: primary
 aliases: [p]
-tags: [planning, architecture, tdd, feature, strategy]
+tags: [planning, architecture, feature, strategy]
 version: "1.0.0"
 question:
   header: "Planning"
@@ -12,8 +12,6 @@ question:
   options:
     - label: "Feature implementation"
       description: "Plan a new feature end-to-end"
-    - label: "TDD plan"
-      description: "Plan test-driven development approach"
     - label: "Refactoring plan"
       description: "Plan a refactoring effort"
     - label: "Architecture review"
@@ -29,7 +27,6 @@ Development planning and architecture design.
 | Subcommand | Action |
 | ---------- | ------ |
 | `feature` | Plan a new feature |
-| `tdd` | Plan TDD approach |
 | `refactor` | Plan refactoring |
 | `architecture` | Architecture review |
 
@@ -38,7 +35,6 @@ Development planning and architecture design.
 ```bash
 /plan                   # Ask what to plan
 /plan feature           # Plan a feature
-/plan tdd               # Plan TDD approach
 /plan refactor          # Plan refactoring
 /plan architecture      # Architecture review
 ```
@@ -62,21 +58,6 @@ Use `AskUserQuestion` to understand:
 
 Then use `EnterPlanMode` to design the implementation
 plan. After approval, follow Post-Plan Handoff.
-
-### tdd
-
-Use `AskUserQuestion` to understand:
-
-- What behavior to implement?
-- What should the tests verify?
-
-Then plan the TDD cycle:
-
-1. Write failing tests
-2. Implement minimum code to pass
-3. Refactor
-
-After approval, follow Post-Plan Handoff.
 
 ### refactor
 
@@ -118,7 +99,6 @@ Examples:
 
 - `refactor-auth-module-2026-02-22.md`
 - `feature-dark-mode-2026-02-22.md`
-- `tdd-payment-flow-2026-02-22.md`
 
 Ensure `.claude/plans/` directory exists before
 writing.
@@ -151,7 +131,6 @@ options:
 | Plan Route | Execute Via |
 | ---------- | ----------- |
 | `/plan feature` | `/dev` (implement directly) |
-| `/plan tdd` | `/testing tdd` |
 | `/plan refactor` | `/dev refactor` |
 | `/plan architecture` | (analysis only — no auto-execute) |
 
@@ -188,7 +167,7 @@ All saved plans MUST use this format:
 ## Scope
 
 - **Files:** {list of target files/directories}
-- **Type:** {refactor | feature | tdd | architecture}
+- **Type:** {refactor | feature | architecture}
 
 ## Approach
 

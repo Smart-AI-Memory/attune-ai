@@ -49,7 +49,7 @@ Attune AI organizes workflows into intuitive command hubs:
 - **`/dev`** — Developer tools: debugging, commits, PRs, code review
 - **`/testing`** — Test running, coverage analysis, batch test generation
 - **`/workflows`** — Automated analysis: security audits, bug prediction, performance
-- **`/plan`** — Planning, TDD strategies, refactoring approaches
+- **`/plan`** — Planning, refactoring strategies, architecture review
 - **`/docs`** — Documentation generation and management
 - **`/release`** — Release prep, security scanning, publishing
 

@@ -1,4 +1,4 @@
-# Attune AI Framework v3.1.1
+# Attune AI Framework v3.1.2
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -25,9 +25,9 @@ Use `/hub-name` to access organized workflows:
 | --- | ---------- | ----------- |
 | `/attune` | Socratic discovery | Natural language routing to all workflows |
 | `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
-| `/testing` | run, coverage, generate, tdd, benchmark | Test runner and generation |
+| `/testing` | run, coverage, generate, benchmark | Test runner and generation |
 | `/workflows` | security, bugs, perf, review, list | Automated analysis |
-| `/plan` | feature, tdd, refactor, architecture | Planning and strategy |
+| `/plan` | feature, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | "topic", plan | Guided brainstorming and ideation |

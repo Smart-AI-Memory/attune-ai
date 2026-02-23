@@ -28,7 +28,7 @@ Completed major reorganization of both CLI commands and Claude Code slash comman
    - `/release` - release-prep, publish, security-scan
    - `/testing` - test, coverage, maintenance, benchmark
    - `/utilities` - init, deps, profile
-   - `/workflow` - plan, tdd, review, refactor
+   - `/workflow` - plan, review, refactor
 
 **Files modified:**
 - `src/attune/cli_unified.py` - refactored helpers, constants

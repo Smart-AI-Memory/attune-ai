@@ -64,7 +64,6 @@ Type `/attune` and I'll guide you through questions to find the right workflow.
 
 - Run test suites
 - Generate new tests
-- TDD workflow
 
 **Coverage:**
 

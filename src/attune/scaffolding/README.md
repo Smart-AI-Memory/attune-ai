@@ -93,42 +93,6 @@ python -m scaffolding create soap_note --domain healthcare --methodology pattern
 # - attune_llm/wizards/soap_note_README.md
 ```
 
-### TDD-First
-
-**Best for:** Experienced developers who prefer test-driven development
-
-**Workflow:**
-1. Generates comprehensive tests FIRST
-2. Generates minimal wizard skeleton
-3. User implements to make tests pass
-4. Iterative red-green-refactor cycle
-
-**Pros:**
-- ✅ Tests drive design
-- ✅ 100% coverage from start
-- ✅ Prevents scope creep
-- ✅ Great for complex logic
-
-**Cons:**
-- ⚠️ Slower (requires implementation time)
-- ⚠️ Assumes TDD experience
-
-**Example:**
-```bash
-python -m scaffolding create debugging --methodology tdd --domain software
-
-# Generated files (tests first!):
-# - tests/unit/wizards/test_debugging_wizard.py (comprehensive tests)
-# - coach_wizards/debugging_wizard.py (minimal skeleton)
-# - tests/unit/wizards/fixtures_debugging.py
-
-# Next steps:
-# 1. Run tests (they should fail): pytest tests/unit/wizards/test_debugging_wizard.py
-# 2. Implement wizard methods to make tests pass
-# 3. Refactor for quality
-# 4. Repeat until all tests pass
-```
-
 ---
 
 ## Commands
@@ -145,7 +109,7 @@ python -m scaffolding create <name> [OPTIONS]
 **Options:**
 - `--domain, -d` - Domain (e.g., healthcare, finance, legal)
 - `--type, -t` - Wizard type (choices: domain, coach, ai; default: domain)
-- `--methodology, -m` - Methodology (choices: pattern, tdd; default: pattern)
+- `--methodology, -m` - Methodology (choices: pattern; default: pattern)
 - `--patterns, -p` - Comma-separated pattern IDs (manual selection)
 - `--interactive, -i` - Interactive pattern selection
 
@@ -154,9 +118,6 @@ python -m scaffolding create <name> [OPTIONS]
 ```bash
 # Basic usage (recommended patterns automatically selected)
 python -m scaffolding create patient_intake --domain healthcare
-
-# TDD methodology
-python -m scaffolding create my_wizard --methodology tdd --domain finance
 
 # Interactive pattern selection
 python -m scaffolding create my_wizard --interactive --domain legal
@@ -292,27 +253,6 @@ async def analyze_code(request: AnalysisRequest) -> AnalysisResult:
 async def apply_fix(request: FixRequest) -> FixResult:
     # Apply fix with user approval
     # Returns modified_code
-```
-
-### Example 3: TDD Approach for Custom Wizard
-
-```bash
-python -m scaffolding create invoice_processor --methodology tdd --domain finance
-
-# Step 1: Generated tests (these will fail initially)
-# tests/unit/wizards/test_invoice_processor_wizard.py
-
-# Step 2: Implement to make tests pass
-# wizards/invoice_processor_wizard.py
-
-# Step 3: Run tests iteratively
-pytest tests/unit/wizards/test_invoice_processor_wizard.py
-
-# Tests include:
-# - CRITICAL (Priority 1): Approval workflow, step validation
-# - HIGH (Priority 2): Risk assessment
-# - MEDIUM (Priority 3): Validation points
-# - LOW (Priority 4): Success path
 ```
 
 ---
@@ -474,8 +414,7 @@ scaffolding/
 ├── README.md                # This file
 ├── methodologies/
 │   ├── __init__.py
-│   ├── pattern_compose.py   # Pattern-Compose methodology (RECOMMENDED)
-│   └── tdd_first.py         # TDD-First methodology
+│   └── pattern_compose.py   # Pattern-Compose methodology (RECOMMENDED)
 └── templates/
     ├── linear_flow_wizard.py.jinja2  # Linear flow template
     ├── coach_wizard.py.jinja2        # Coach wizard template
@@ -550,7 +489,6 @@ scaffolding/
 ## Performance
 
 - **Pattern-Compose:** ~10 minutes (12x faster than manual)
-- **TDD-First:** ~30 minutes (4x faster than manual)
 - **Manual wizard creation:** ~2 hours
 
 ---
@@ -558,7 +496,7 @@ scaffolding/
 ## FAQ
 
 **Q: Which methodology should I use?**
-A: Pattern-Compose for 95% of wizards. TDD-First if you're experienced with TDD and have complex logic.
+A: Pattern-Compose for 95% of wizards. It leverages proven patterns from 78 existing wizards.
 
 **Q: Can I modify generated code?**
 A: Absolutely! Generated code is a starting point. Customize as needed.
