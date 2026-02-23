@@ -22,17 +22,18 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.1.1
+## What's New in v3.1.2
 
-- **Documentation audit** — Full audit of all commands,
-  docs, and rules.
-- **Plan-to-dev handoff** — `/plan` commands save
-  structured plans and offer seamless transition to
-  `/dev` execution. Cross-session plan resumption.
-- **New commands** — `/utilities` (auth management)
-  and `/help` (workflow navigation).
-- **Test fixes** — Fixed 6 Redis fallback tests that
-  were patching at wrong module paths.
+- **Hybrid caching enabled** — `[developer]` extra now
+  includes sentence-transformers for 70% cache hit rate
+  out of the box. Silenced noisy error when not installed.
+- **Dead code cleanup** — Removed 3,393 lines of stale
+  duplicate crew files and split 3 complex functions
+  (700+ lines) into focused helpers.
+- **TDD feature removed** — Removed TDD scaffolding
+  methodology. Pattern-Compose is the sole methodology.
+- **Package refs fixed** — All stale `empathy-framework`
+  references updated to `attune-ai`.
 
 ---
 
@@ -300,11 +301,8 @@ python -m attune.models.auth_cli recommend src/module.py
 # Base install (CLI + workflows)
 pip install attune-ai
 
-# Full developer experience (agents, memory, dashboard)
+# Full developer experience (agents, memory, dashboard, caching)
 pip install attune-ai[developer]
-
-# With semantic caching (70% cost reduction)
-pip install attune-ai[cache]
 
 # Enterprise (auth, rate limiting, telemetry)
 pip install attune-ai[enterprise]
@@ -319,8 +317,7 @@ cd attune-ai && pip install -e .[dev]
 | Option         | What You Get                                    |
 | -------------- | ----------------------------------------------- |
 | Base           | CLI, workflows, Anthropic SDK                   |
-| `[developer]`  | + Multi-agent orchestration, memory, dashboard  |
-| `[cache]`      | + Semantic similarity caching                   |
+| `[developer]`  | + Agents, memory, dashboard, semantic caching   |
 | `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry        |
 
 ---
