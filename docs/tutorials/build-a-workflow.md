@@ -53,6 +53,21 @@ class DocumentGenerationWorkflow(BaseWorkflow):
         if stage_name == "polish":
             return await self._polish(input_data, tier)
         raise ValueError(f"Unknown stage: {stage_name}")
+
+    async def _outline(self, input_data, tier):
+        """Generate a doc outline with Haiku (fast, cheap)."""
+        prompt = f"Create a documentation outline for: {input_data['path']}"
+        return await self.call_llm(prompt, tier=tier)
+
+    async def _write(self, input_data, tier):
+        """Expand the outline into full sections with Sonnet."""
+        prompt = f"Write documentation from this outline:\n{input_data['outline']}"
+        return await self.call_llm(prompt, tier=tier)
+
+    async def _polish(self, input_data, tier):
+        """Final quality pass with Opus."""
+        prompt = f"Polish this documentation for clarity and completeness:\n{input_data['draft']}"
+        return await self.call_llm(prompt, tier=tier)
 ```
 
 Three concepts to understand:
@@ -75,14 +90,16 @@ demands it:
 
 | Stage | Tier | Claude Model | Input $/1M | Output $/1M |
 |-------|------|--------------|------------|-------------|
-| outline | CHEAP | Claude Haiku | $0.80 | $4.00 |
-| write | CAPABLE | Claude Sonnet | $3.00 | $15.00 |
-| polish | PREMIUM | Claude Opus | $15.00 | $75.00 |
+| outline | CHEAP | Claude Haiku 4.5 | $0.80 | $4.00 |
+| write | CAPABLE | Claude Sonnet 4.6 | $3.00 | $15.00 |
+| polish | PREMIUM | Claude Opus 4.6 | $15.00 | $75.00 |
 
 A 10,000-token doc generation job costs roughly **$0.38
-with tier routing** vs **$0.90 on Claude Opus alone** --
-a 58% reduction. Scale that across hundreds of workflow
-runs and the savings add up fast.
+with tier routing** vs **$0.90 on Claude Opus alone** —
+a 58% reduction. Add Anthropic's automatic prompt caching
+(cached tokens cost 10% of standard price) and savings
+compound further. Scale that across hundreds of workflow
+runs and the numbers add up fast.
 
 ## Step 2: Create a Skill Definition
 
@@ -90,7 +107,9 @@ Skills give your workflow Socratic discovery -- instead
 of memorizing CLI flags, users describe what they need
 and the skill asks clarifying questions.
 
-Create `plugin/skills/docs/SKILL.md`:
+Create `plugin/skills/docs/SKILL.md` (create the
+directories if they don't exist yet —
+`mkdir -p plugin/skills/docs`):
 
 ```yaml
 ---
@@ -153,7 +172,8 @@ this skill.
 
 Commands bypass Socratic discovery for users who know
 exactly what they want. Create
-`plugin/commands/attune-docs.md`:
+`plugin/commands/attune-docs.md`
+(`mkdir -p plugin/commands` if needed):
 
 ```yaml
 ---
@@ -211,14 +231,36 @@ Verify it's registered:
 attune workflow list
 ```
 
-You should see `doc-gen` in the output. Run it:
+You should see your workflow in the output:
+
+```text
+Available workflows:
+  security-audit    Security vulnerability scanner
+  bug-predict       Bug prediction and risk analysis
+  perf-audit        Performance bottleneck detection
+  code-review       Code quality analysis
+  doc-gen           Cost-optimized documentation generation  ← yours
+```
+
+Run it:
 
 ```bash
 attune workflow run doc-gen --path src/attune/models/
 ```
 
+Expected output:
+
+```text
+Running doc-gen workflow...
+  Stage 1/3: outline (Haiku 4.5)  ✓  0.8s
+  Stage 2/3: write (Sonnet 4.6)   ✓  3.2s
+  Stage 3/3: polish (Opus 4.6)    ✓  5.1s
+
+Cost: $0.38 (saved 58% vs premium-only baseline)
+```
+
 The CLI loads your class, instantiates it, calls
-`execute()`, and formats the result -- including cost
+`execute()`, and formats the result — including cost
 savings vs a premium-only baseline.
 
 ## Step 5: Build Your Own
@@ -248,3 +290,17 @@ attune workflow list
   commit
 - Use `/batch` for 50% savings on non-interactive runs
 - Add custom mixins for shared logic across workflows
+
+## Recap
+
+You built a complete workflow in four files:
+
+1. **Workflow class** — staged execution with tier routing
+2. **Skill definition** — Socratic discovery via triggers
+3. **Command shortcut** — direct access for power users
+4. **Entry point** — one line in `pyproject.toml`
+
+Every built-in Attune workflow follows this same pattern.
+Browse the source for `security-audit`, `code-review`, or
+`perf-audit` to see real-world variations — then build
+your own.
