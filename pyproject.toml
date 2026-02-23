@@ -69,9 +69,8 @@ dependencies = [
     "anthropic>=0.40.0,<1.0.0",  # Core LLM provider (direct SDK usage)
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
 ]
-# NOTE: CrewAI and LangChain moved to optional dependencies in v4.4.0
-# The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly,
-# not the actual CrewAI library. Install with: pip install attune-ai[crewai]
+# NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
+# The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
 # Memory subsystem (requires Redis server 8.4+ recommended)
@@ -100,14 +99,10 @@ agents = [
     "marshmallow>=4.1.2,<5.0.0",  # Security: GHSA-428g-f7cq-pgp5
 ]
 
-# CrewAI for role-based multi-agent systems (DEPRECATED in v4.4.0)
+# CrewAI removed in v3.1.3 (was deprecated in v4.4.0)
 # The meta-workflow system provides equivalent functionality using Anthropic SDK directly.
 # See docs/CREWAI_MIGRATION.md for migration guide.
-crewai = [
-    "crewai>=0.1.0,<1.0.0",
-    "langchain>=0.1.0,<2.0.0",
-    "langchain-core>=1.2.6,<2.0.0",
-]
+# TODO: Clean up crewai_adapter.py and doc references
 
 # Hybrid caching for 70% cost reduction (v3.8.0+)
 # Includes semantic similarity matching with sentence-transformers
