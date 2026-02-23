@@ -25,6 +25,11 @@ attune telemetry export -o <file>       # Export to CSV/JSON
 attune provider show                    # Show current provider
 attune provider set <name>              # Set provider (anthropic)
 
+# Memory (Lessons Learned)
+attune remember "lesson text"           # Save a lesson
+attune forget <number-or-keyword>       # Remove a lesson
+attune lessons                          # List all lessons
+
 # Utilities
 attune validate                         # Validate configuration
 attune version                          # Show version
@@ -253,6 +258,91 @@ attune provider set anthropic
 
 ---
 
+## Memory Commands
+
+### `attune remember <text>`
+
+Save a lesson learned for future workflow prompts.
+
+```bash
+# Save a project-local lesson
+attune remember "Always run ruff before committing"
+
+# Save a global lesson (applies to all projects)
+attune remember --global "Prefer heapq.nlargest over sorted()[:N]"
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `text` | Yes | Lesson text to save |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--global` | Save to global lessons (`~/.attune/lessons.md`) |
+
+Lessons are stored as markdown in `.attune/lessons.md` (project)
+or `~/.attune/lessons.md` (global) and automatically injected
+into all workflow prompts. Token budget: 3,000 tokens max
+(oldest lessons dropped first when over budget).
+
+---
+
+### `attune forget <identifier>`
+
+Remove a lesson by line number or keyword.
+
+```bash
+# Remove by line number (from `attune lessons` output)
+attune forget 3
+
+# Remove by keyword match (first match removed)
+attune forget "heapq"
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `identifier` | Yes | Line number or keyword |
+
+---
+
+### `attune lessons`
+
+List all current lessons with line numbers.
+
+```bash
+# Show all lessons (project + global)
+attune lessons
+
+# Show only global lessons
+attune lessons --global
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--global` | Show only global lessons |
+
+**Output:**
+
+```
+Attune Lessons
+==================================================
+    1. [2026-02-23] Always run ruff before committing [project]
+    2. [2026-02-20] Use _validate_file_path for writes [global]
+
+2 lesson(s) total.
+Remove with: attune forget <number> or attune forget <keyword>
+```
+
+---
+
 ## Utility Commands
 
 ### `attune validate`
@@ -309,6 +399,80 @@ These options work with any command:
 |--------|-------|-------------|
 | `--verbose` | `-v` | Enable debug logging |
 | `--help` | `-h` | Show help for command |
+
+---
+
+## Verification Configuration
+
+Workflows support optional post-execution verification that
+runs real tools (pytest, ruff, mypy, etc.) to verify output.
+Configure via the `verification:` section in your workflow
+config.
+
+### Example Configuration
+
+```yaml
+# In your workflow config (e.g. empathy.config.yml)
+verification:
+  enabled: true
+  strategy: auto          # auto, run-tests, lint-check,
+                          # type-check, build, custom-command,
+                          # or none
+  max_retries: 2          # Retry failed verification (default: 2)
+  timeout_seconds: 300    # Per-attempt timeout (default: 300)
+  fail_open: false        # If true, failed verification does
+                          # not fail the workflow
+
+  # Per-workflow overrides
+  workflows:
+    code-review:
+      strategy: lint-check
+    test-gen:
+      strategy: run-tests
+      max_retries: 3
+    release-prep:
+      strategy: build
+      fail_open: true
+    security-audit:
+      strategy: custom-command
+      command: "bandit -r src/ --severity-level medium"
+```
+
+### Built-in Strategies
+
+| Strategy | Command | Default for |
+|----------|---------|-------------|
+| `run-tests` | `pytest tests/ -x --tb=short -q` | test-gen, refactor-plan |
+| `lint-check` | `ruff check src/ --no-fix` | code-review, bug-predict, perf-audit, security-audit |
+| `type-check` | `mypy src/ --ignore-missing-imports` | (manual) |
+| `build` | `python -m build --no-isolation` | release-prep, secure-release |
+| `custom-command` | (user-provided) | (manual) |
+| `none` | (skipped) | doc-gen, research-synthesis |
+
+### Auto Strategy
+
+When `strategy: auto` is set (the default), the verification
+module looks up the workflow name in the defaults table above.
+If no default is mapped, verification is skipped.
+
+### Verification Result
+
+After verification runs, results are attached to
+`workflow_result.metadata["verification"]`:
+
+```json
+{
+  "passed": true,
+  "strategy": "run-tests",
+  "command": "pytest tests/ -x --tb=short -q",
+  "attempts": 1,
+  "duration_ms": 4230,
+  "exit_code": 0
+}
+```
+
+If verification fails and `fail_open` is `false` (the default),
+the workflow is marked as failed with `error_type: "verification"`.
 
 ---
 

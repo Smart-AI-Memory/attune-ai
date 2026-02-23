@@ -264,7 +264,7 @@ class ExecutionMixin(
             if self._progress_tracker:
                 self._progress_tracker.fail_workflow(error)
 
-        return self._finalize_execution(
+        result = self._finalize_execution(
             kwargs=kwargs,
             started_at=started_at,
             error=error,
@@ -273,3 +273,9 @@ class ExecutionMixin(
             WorkflowResult=WorkflowResult,
             _save_workflow_run=_save_workflow_run,
         )
+
+        # Run verification loop after successful execution (VerificationMixin)
+        if error is None:
+            result, _verification_result = self._run_verification_loop(result, kwargs)
+
+        return result

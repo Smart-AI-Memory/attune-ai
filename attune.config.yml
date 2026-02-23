@@ -42,6 +42,16 @@ bug_predict:
     - cleanup              # Teardown/cleanup code
     - optional             # Optional feature detection
 
+# Verification settings (post-workflow tool verification)
+# Enable to run real tools (pytest, ruff, mypy) after workflows.
+# See examples/config/attune.config.example.yml for full options.
+# verification:
+#   enabled: true
+#   strategy: auto
+#   max_retries: 2
+#   timeout_seconds: 300
+#   fail_open: false
+
 # Progressive escalation settings
 progressive_escalation:
   # Enable/disable progressive escalation (opt-in by default)

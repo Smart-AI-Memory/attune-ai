@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Quick-memory lessons** — New `attune remember`, `attune forget`,
+  and `attune lessons` commands for managing lessons learned across
+  sessions. Lessons are stored as markdown in `.attune/lessons.md`
+  (project) or `~/.attune/lessons.md` (global) and auto-injected
+  into every workflow prompt. Token-budgeted at 3,000 tokens with
+  oldest-first truncation. Supports `--global` flag for cross-project
+  lessons.
+- **Post-execution verification loops** — New `verification` module
+  with built-in strategies (`run-tests`, `lint-check`, `type-check`,
+  `build`, `custom-command`) that run real tools after workflow
+  execution. Configurable via `verification:` section in workflow
+  config with retry support, timeouts, and fail-open mode.
+  Default strategies auto-mapped per workflow type.
+- **VerificationMixin** — Added to `BaseWorkflow` MRO so all
+  workflows gain optional verification. Results attached to
+  `workflow_result.metadata["verification"]`.
+- **Lessons prompt injection** — `PromptMixin._build_cached_system_prompt()`
+  now includes a `# Lessons Learned` section between Guidelines
+  and Documentation when lessons are available.
+
 ## [3.1.2] - 2026-02-22
 
 ### Fixed

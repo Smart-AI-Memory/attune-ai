@@ -45,6 +45,11 @@ import argparse
 import logging
 import sys
 
+from attune.cli_commands.memory_commands import (  # noqa: F401
+    cmd_forget,
+    cmd_lessons,
+    cmd_remember,
+)
 from attune.cli_commands.provider_commands import (  # noqa: F401
     cmd_provider_set,
     cmd_provider_show,
@@ -226,6 +231,29 @@ Documentation: https://smartaimemory.com/framework-docs/
         "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
     )
 
+    # --- Memory commands (quick lessons) ---
+    remember_parser = subparsers.add_parser(
+        "remember", help='Save a lesson: attune remember "lesson text"'
+    )
+    remember_parser.add_argument("lesson_text", help="Lesson to remember")
+    remember_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Save to global ~/.attune/lessons.md instead of project",
+    )
+
+    forget_parser = subparsers.add_parser("forget", help="Remove a lesson by number or keyword")
+    forget_parser.add_argument("identifier", help="Line number or keyword to match")
+
+    lessons_parser = subparsers.add_parser("lessons", help="List current lessons")
+    lessons_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Show only global lessons",
+    )
+
     # --- Setup command ---
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
@@ -299,6 +327,15 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("Usage: attune dashboard start [--host HOST] [--port PORT]")
             return 1
+
+    elif args.command == "remember":
+        return cmd_remember(args)
+
+    elif args.command == "forget":
+        return cmd_forget(args)
+
+    elif args.command == "lessons":
+        return cmd_lessons(args)
 
     elif args.command == "setup":
         return cmd_setup(args)
