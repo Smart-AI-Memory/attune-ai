@@ -138,7 +138,7 @@ When invoked with arguments, EXECUTE the corresponding action:
 |-----|------------|
 | `/testing` | `run` -> pytest, `coverage` -> pytest --cov, `generate` -> test-gen workflow |
 | `/workflows` | `security` -> security-audit, `bugs` -> bug-predict, `perf` -> perf-audit |
-| `/plan` | `tdd` -> TDD scaffolding, `review` -> code-review-pipeline, `refactor` -> refactor-plan |
+| `/plan` | `feature` -> feature breakdown, `review` -> code-review-pipeline, `refactor` -> refactor-plan |
 | `/docs` | `generate` -> doc-gen, `manage` -> manage-documentation, `readme` -> README generation |
 | `/release` | `prep` -> release-prep-crew, `security` -> secure-release, `health` -> health-check-crew |
 | `/agent` | `create` -> agent creator, `list` -> show agents |

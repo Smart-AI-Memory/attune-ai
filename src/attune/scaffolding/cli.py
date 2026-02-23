@@ -2,7 +2,6 @@
 
 Usage:
     python -m scaffolding create my_workflow --domain healthcare
-    python -m scaffolding create my_workflow --methodology tdd --domain finance
     python -m scaffolding create my_workflow --interactive
 
 Copyright 2025 Smart AI Memory, LLC
@@ -44,7 +43,6 @@ def cmd_create(args):
     from patterns import get_pattern_registry
 
     from .methodologies.pattern_compose import PatternCompose
-    from .methodologies.tdd_first import TDDFirst
 
     # Get pattern recommendations
     registry = get_pattern_registry()
@@ -93,14 +91,6 @@ def cmd_create(args):
             domain=domain,
             workflow_type=workflow_type,
             selected_patterns=selected_patterns,
-        )
-    elif methodology == "tdd":
-        method = TDDFirst()
-        result = method.create_workflow(
-            name=workflow_name,
-            domain=domain,
-            workflow_type=workflow_type,
-            pattern_ids=selected_patterns,
         )
     else:
         print(f"Unknown methodology: {methodology}")
@@ -170,9 +160,6 @@ Examples:
   # Create healthcare workflow (recommended approach)
   %(prog)s create patient_intake --domain healthcare
 
-  # Create with TDD methodology
-  %(prog)s create my_workflow --methodology tdd --domain finance
-
   # Interactive pattern selection
   %(prog)s create my_workflow --interactive --domain legal
 
@@ -203,7 +190,7 @@ Examples:
     create_parser.add_argument(
         "--methodology",
         "-m",
-        choices=["pattern", "tdd"],
+        choices=["pattern"],
         help="Methodology (default: pattern)",
     )
     create_parser.add_argument(

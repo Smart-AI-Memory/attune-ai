@@ -16,8 +16,6 @@ question:
       description: "Run tests with coverage report"
     - label: "Generate tests"
       description: "Auto-generate behavioral tests for a module"
-    - label: "TDD workflow"
-      description: "Test-driven development: write test first, then implement"
 ---
 
 # testing
@@ -32,7 +30,6 @@ Test runner, coverage analysis, and test generation hub.
 | `/testing run <path>` | Run tests at specific path |
 | `/testing coverage` | Run tests with coverage report |
 | `/testing generate <module>` | Generate behavioral tests for module |
-| `/testing tdd` | Start TDD workflow |
 
 ## Natural Language
 
@@ -41,7 +38,6 @@ Describe what you need:
 - "run the tests"
 - "check coverage for the config module"
 - "generate tests for src/attune/workflows/base.py"
-- "I want to do TDD for this feature"
 - "what's my test coverage?"
 
 ## CRITICAL: Workflow Execution Instructions
@@ -70,7 +66,6 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | `/testing coverage <target>` | `uv run pytest --cov=<target> --cov-report=term-missing` |
 | `/testing generate <module>` | Run Test-Gen wizard: select target → analyze coverage gaps → decompose test tasks → preview → confirm |
 | `/testing generate batch` | Run Test-Gen wizard in batch mode for multiple modules |
-| `/testing tdd` | Guide TDD cycle: write failing test, implement, refactor |
 
 ### Natural Language Routing (EXECUTE THESE)
 
@@ -79,7 +74,6 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | "run tests", "pytest", "test suite" | `uv run pytest -v` |
 | "coverage", "how much is covered" | `uv run pytest --cov=src --cov-report=term-missing` |
 | "generate tests", "write tests for" | Run Test-Gen wizard flow |
-| "tdd", "test first", "red green refactor" | Guide TDD workflow |
 | "failing", "broken test", "why does this fail" | Debug the failing test |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. EXECUTE the command.

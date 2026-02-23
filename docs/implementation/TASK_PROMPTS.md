@@ -104,8 +104,6 @@ Each prompt is self-contained and can be given to Claude Code to execute.
               description: "Run tests with coverage report"
             - label: "Generate tests"
               description: "Auto-generate behavioral tests for a module"
-            - label: "TDD workflow"
-              description: "Test-driven development: write test first, then implement"
       </frontmatter>
       <routing-table>
         /testing run              → uv run pytest -v
@@ -114,13 +112,11 @@ Each prompt is self-contained and can be given to Claude Code to execute.
         /testing coverage &lt;tgt&gt;  → uv run pytest --cov=&lt;tgt&gt; --cov-report=term-missing
         /testing generate &lt;mod&gt;  → uv run attune workflow run test-gen-behavioral --path &lt;mod&gt;
         /testing generate batch   → uv run attune workflow run test-gen-behavioral --batch
-        /testing tdd              → Guide TDD cycle: write failing test → implement → refactor
       </routing-table>
       <natural-language-routing>
         "run tests", "pytest", "test suite"      → pytest execution
         "coverage", "how much is covered"        → pytest --cov
         "generate tests", "write tests for"      → test-gen-behavioral workflow
-        "tdd", "test first", "red green refactor" → TDD guidance
       </natural-language-routing>
     </file>
 
@@ -167,10 +163,10 @@ Each prompt is self-contained and can be given to Claude Code to execute.
     <file path="src/attune/commands/plan.md">
       <frontmatter>
         name: plan
-        description: Planning, TDD scaffolding, architecture, and refactoring strategies
+        description: Planning, architecture, and refactoring strategies
         category: hub
         aliases: [planning, p]
-        tags: [planning, tdd, architecture, strategy, refactoring]
+        tags: [planning, architecture, strategy, refactoring]
         version: "1.0.0"
         question:
           header: "Planning Hub"
@@ -178,8 +174,6 @@ Each prompt is self-contained and can be given to Claude Code to execute.
           options:
             - label: "Plan a feature"
               description: "Break down a feature into implementation steps"
-            - label: "TDD scaffolding"
-              description: "Design test cases before writing code"
             - label: "Refactoring strategy"
               description: "Plan safe incremental refactoring steps"
             - label: "Architecture review"
@@ -193,7 +187,6 @@ Each prompt is self-contained and can be given to Claude Code to execute.
       </instructions>
       <routing-table>
         /plan feature &lt;desc&gt;   → Break feature into tasks with files, deps, risks
-        /plan tdd &lt;module&gt;     → Design test cases first, then implementation plan
         /plan refactor &lt;path&gt;  → Analyze code, plan incremental refactoring steps
         /plan architecture     → Evaluate current architecture, propose improvements
         /plan review &lt;path&gt;    → uv run attune workflow run code-review --path &lt;path&gt;
@@ -642,9 +635,9 @@ Each prompt is self-contained and can be given to Claude Code to execute.
       |-----|------------|
       | /attune   | Socratic discovery, natural language routing to all workflows |
       | /dev      | debug, review, commit, pr, refactor, quality |
-      | /testing  | run, coverage, generate, tdd |
+      | /testing  | run, coverage, generate |
       | /workflows| security, bugs, perf, review, list |
-      | /plan     | feature, tdd, refactor, architecture |
+      | /plan     | feature, refactor, architecture |
       | /docs     | generate, readme, changelog, explain |
       | /release  | prep, security, health, publish |
       | /agent    | create, list, run, cds |

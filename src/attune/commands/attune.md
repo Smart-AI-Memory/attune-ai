@@ -46,7 +46,6 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | [Run Tests](src/attune/commands/testing.md) `/testing run` | Execute pytest test suite |
 | [Coverage](src/attune/commands/testing.md) `/testing coverage` | Run tests with coverage report and gap analysis |
 | [Generate Tests](src/attune/commands/testing.md) `/testing generate` | Auto-generate behavioral tests for a module |
-| [TDD](src/attune/commands/testing.md) `/testing tdd` | Test-driven development: write test first, then implement |
 
 ### Analysis Workflows — [/workflows](src/attune/commands/workflows.md)
 

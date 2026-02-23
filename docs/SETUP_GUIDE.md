@@ -127,7 +127,7 @@ Presets are pre-configured settings optimized for specific workflows. Use `--pre
 
 ### `test-gen`
 
-**Best for:** Test-driven development and automated test generation.
+**Best for:** Automated test generation.
 
 | Setting | Value |
 |---------|-------|
@@ -185,7 +185,7 @@ Choose your primary use case or start with a preset.
 
 Select your primary use case:
   1. code-review  - Code review and quality analysis
-  2. test-gen     - Test generation and TDD workflows
+  2. test-gen     - Test generation workflows
   3. documentation - Documentation generation
   4. full-stack   - Full development workflow
   5. custom       - Configure everything manually

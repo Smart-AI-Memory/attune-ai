@@ -21,7 +21,7 @@ hubs and how to access them:
 | `/attune` | Socratic discovery — guides you to the right workflow | `/attune` |
 | `/dev` | Debug, review, commit, PR, refactor | `/dev` |
 | `/testing` | Run tests, coverage, generate tests | `/testing` |
-| `/plan` | Plan features, TDD, refactoring, architecture | `/plan` |
+| `/plan` | Plan features, refactoring, architecture | `/plan` |
 | `/workflows` | Security audit, bug predict, perf audit | `/workflows` |
 | `/docs` | Generate docs, README, changelog | `/docs` |
 | `/release` | Release prep, security scan, publish | `/release` |

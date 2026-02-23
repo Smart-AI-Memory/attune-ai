@@ -3,7 +3,7 @@ name: testing
 description: Test runner, generation, and coverage analysis
 category: primary
 aliases: [test, t]
-tags: [testing, coverage, tdd, test-gen]
+tags: [testing, coverage, test-gen]
 version: "1.0.0"
 question:
   header: "Test action"
@@ -16,8 +16,6 @@ question:
       description: "Analyze test coverage and find gaps"
     - label: "Generate tests"
       description: "Create new tests for existing code"
-    - label: "TDD workflow"
-      description: "Write tests first, then implement"
 ---
 
 # testing
@@ -32,7 +30,6 @@ Test runner, generation, and coverage analysis.
 | `coverage` | Coverage analysis |
 | `gen` | Generate tests |
 | `generate` | Generate tests |
-| `tdd` | TDD workflow |
 | `benchmark` | Run benchmarks |
 | `generate --batch` | Batch test generation |
 
@@ -43,7 +40,6 @@ Test runner, generation, and coverage analysis.
 /testing run            # Run tests
 /testing coverage       # Coverage report
 /testing gen            # Generate tests
-/testing tdd            # TDD workflow
 ```
 
 ## Behavior
@@ -87,17 +83,6 @@ Then run:
 ```bash
 uv run attune workflow run test-gen --path <target>
 ```
-
-### tdd
-
-Guide the user through TDD:
-
-1. Ask what feature or fix they want to implement
-2. Help write the test first
-3. Run the test (should fail)
-4. Implement the code
-5. Run the test again (should pass)
-6. Refactor if needed
 
 ### benchmark
 
