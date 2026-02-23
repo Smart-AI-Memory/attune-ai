@@ -1,86 +1,124 @@
 ---
-title: "Build Your First AI Workflow with Attune"
+title: "Build Your First AI Workflow with Attune and Claude Code"
 date: "2026-02-23"
 author: "Patrick Roebuck"
-excerpt: "Go from pip install to running your first cost-optimized Claude workflow in under 5 minutes. Then build your own in four files."
-tags: ["tutorial", "getting-started", "workflows", "claude", "anthropic", "python"]
+excerpt: "Type /attune in Claude Code, answer two questions, and run a cost-optimized security audit in under a minute. Then build your own workflow in four files."
+tags: ["tutorial", "getting-started", "workflows", "claude-code", "anthropic", "python"]
 published: true
 ---
 
-# Build Your First AI Workflow with Attune
+# Build Your First AI Workflow with Attune and Claude Code
 
-Attune AI is an open-source framework that gives you pre-built developer workflows for Claude — security audits, code reviews, test generation, and more — all from your terminal. Each workflow automatically routes tasks to the right Claude model so you're not paying Opus prices for Haiku-level work.
+Attune AI adds 12 developer workflows to Claude Code — security audits, code reviews, test generation, and more. You access them by typing `/attune` and describing what you need. Attune asks a few scoping questions, picks the right workflow, and runs it with automatic cost optimization.
 
-This tutorial gets you from zero to running in under 5 minutes, then shows you how to build your own workflow in four files.
+This tutorial shows you the experience from first install to first workflow run, then how to build your own.
 
 ---
 
-## Part 1: Get Running (2 Minutes)
+## Part 1: Install and Run (Under 2 Minutes)
 
-### Install
+### Setup
+
+Three commands:
 
 ```bash
 pip install attune-ai[developer]
-```
-
-### Set your API key
-
-```bash
 export ANTHROPIC_API_KEY="your-key-here"
+attune setup
 ```
 
-### Run your first workflow
-
-Pick one and try it on your own codebase:
+The `attune setup` wizard walks you through configuration in 6 stages. Want to skip it? Use a preset:
 
 ```bash
-# Security audit — scans for eval, path traversal, injection risks
-attune workflow run security-audit --path ./src
-
-# Code review — quality, style, and best practice analysis
-attune workflow run code-review --path ./src
-
-# Bug prediction — finds patterns likely to produce bugs
-attune workflow run bug-predict --path ./src
+attune setup --preset code-review
 ```
 
-That's it. Each workflow runs multiple stages, automatically routing cheap tasks to Haiku and quality-critical tasks to Opus. You'll see the cost savings in the output.
+### Your first workflow — the Socratic way
 
-### See what's available
+Open Claude Code in your project and type:
+
+```
+/attune
+```
+
+Attune doesn't dump a menu. It asks what you're trying to accomplish:
+
+> **What are you trying to accomplish?**
+>
+> - **Fix or improve code** — Debug, review, refactor, commit
+> - **Validate my work** — Tests, coverage, security, performance
+> - **Ship my changes** — Plan features, prepare release, publish
+> - **Create or extend** — Wizards, agents, docs
+
+Pick "Validate my work." Attune narrows it down:
+
+> **Which validation?**
+>
+> - `/testing run` — Run test suite
+> - `/testing coverage` — Coverage report and gap analysis
+> - `/workflows security` — Security vulnerability scan
+> - `/workflows perf` — Performance bottleneck detection
+
+Pick "Security." One more question:
+
+> **What target?** `src/`, a specific module, or full project?
+
+You type `src/attune/models/`. Attune runs the security audit — scanning for eval, path traversal, injection risks — and reports back with findings, severity levels, and cost savings.
+
+That's the core experience: **describe your goal, answer scoping questions, get results.** No commands to memorize.
+
+### Skip the questions when you know what you want
+
+Once you're familiar with the workflows, go direct:
+
+```
+/attune security src/attune/models/
+```
+
+Or from the CLI:
 
 ```bash
-attune workflow list
+attune workflow run security-audit --path src/attune/models/
 ```
 
-```text
-Available workflows:
-  security-audit    Security vulnerability scanner
-  bug-predict       Bug prediction and risk analysis
-  perf-audit        Performance bottleneck detection
-  code-review       Code quality analysis
-  test-gen          Test case generation
-  release-prep      Pre-release quality gates
-```
+Both run the same workflow. The Socratic path is for discovery; the direct path is for speed.
 
-### Use natural language (in Claude Code)
+### What's available
 
-If you use Claude Code, you don't need to memorize commands. Just type `/attune` and describe what you need:
+Attune ships with 12 workflows:
 
-- "find security vulnerabilities in my auth code"
-- "generate tests for src/models/"
-- "review my last commit"
+| Workflow | What it does |
+|----------|-------------|
+| `security-audit` | OWASP-focused vulnerability scan with risk scoring |
+| `code-review` | Tiered analysis with security and architectural review |
+| `bug-predict` | Predicts likely bugs from code patterns |
+| `perf-audit` | Finds bottlenecks and optimization opportunities |
+| `test-gen` | Generates tests targeting low-coverage areas |
+| `doc-gen` | Documentation through outline/write/polish stages |
+| `refactor-plan` | Prioritizes tech debt by impact |
+| `dependency-check` | Audits dependencies for vulnerabilities and licensing |
+| `release-prep` | Pre-release quality gate with health checks |
+| `secure-release` | Comprehensive security pipeline for release approval |
+| `pro-review` | Composite review combining multiple analysis passes |
+| `pr-review` | PR-level review combining quality and security |
 
-Attune asks clarifying questions, then runs the right workflow.
+All accessible through `/attune` + natural language, or directly by name.
 
 ---
 
-## Part 2: Build Your Own Workflow (15 Minutes)
+## Part 2: What's Happening Under the Hood
 
-Every Attune workflow follows the same four-file pattern. Let's build a documentation generator as an example.
+Every workflow runs in stages, and each stage is routed to a different Claude model based on what the task needs.
 
-### File 1: The Workflow Class
+Take the `doc-gen` workflow. It runs three stages:
 
-Create `src/attune/workflows/doc_gen/workflow.py`:
+1. **Outline** → Claude Haiku (fast, $0.80/M tokens)
+2. **Write** → Claude Sonnet (balanced, $3/M tokens)
+3. **Polish** → Claude Opus (premium, $15/M tokens)
+
+The result: **$0.38 per run vs $0.90 on Opus alone — a 58% cost reduction.** Add Anthropic's automatic prompt caching (cached tokens cost 10% of standard price) and savings compound further.
+
+Here's the actual workflow class:
 
 ```python
 from attune.workflows.base import BaseWorkflow, ModelTier
@@ -91,9 +129,9 @@ class DocumentGenerationWorkflow(BaseWorkflow):
     description = "Cost-optimized documentation generation"
     stages = ["outline", "write", "polish"]
     tier_map = {
-        "outline": ModelTier.CHEAP,     # Haiku — fast, cheap
-        "write": ModelTier.CAPABLE,     # Sonnet — balanced
-        "polish": ModelTier.PREMIUM,    # Opus — highest quality
+        "outline": ModelTier.CHEAP,     # Haiku
+        "write": ModelTier.CAPABLE,     # Sonnet
+        "polish": ModelTier.PREMIUM,    # Opus
     }
 
     async def run_stage(self, stage_name, tier, input_data):
@@ -124,14 +162,24 @@ class DocumentGenerationWorkflow(BaseWorkflow):
 Three things to understand:
 
 - **`stages`** — runs in sequence. Each stage's output becomes the next stage's input.
-- **`tier_map`** — assigns a Claude model to each stage. `CHEAP` = Haiku ($0.80/M tokens), `CAPABLE` = Sonnet ($3/M), `PREMIUM` = Opus ($15/M).
-- **`run_stage()`** — the only method you implement.
+- **`tier_map`** — assigns a Claude model to each stage. `CHEAP` = Haiku, `CAPABLE` = Sonnet, `PREMIUM` = Opus.
+- **`run_stage()`** — the only method you implement. The framework handles sequencing, tier resolution, and cost tracking.
 
-This workflow costs roughly **$0.38 per run** vs **$0.90 on Opus alone** — a 58% reduction. With Anthropic's automatic prompt caching (cached tokens cost 10% of standard price), savings compound further.
+Every built-in workflow follows this same pattern. You can read the source for any of them to understand how they work — then build your own.
 
-### File 2: Skill Definition (Natural Language)
+---
 
-Create `plugin/skills/docs/SKILL.md` (`mkdir -p plugin/skills/docs`):
+## Part 3: Build Your Own Workflow
+
+You've run workflows and seen the code. Now let's build one. Every Attune workflow is four files.
+
+### File 1: Workflow class
+
+This is the code above — your stages, tier assignments, and `run_stage()` implementation. Create it at `src/attune/workflows/doc_gen/workflow.py`.
+
+### File 2: Skill definition (for `/attune` discovery)
+
+This is what makes your workflow discoverable through natural language. Create `plugin/skills/docs/SKILL.md` (`mkdir -p plugin/skills/docs`):
 
 ```yaml
 ---
@@ -146,6 +194,10 @@ triggers:
 ---
 ```
 
+The `triggers` array connects natural language to your workflow. When someone types `/attune` and says "generate docs for src/models", the router matches on "docs" and activates this skill.
+
+Below the frontmatter, define the Socratic scoping questions — the same guided flow you experienced in Part 1:
+
 ```markdown
 ## Socratic Scoping
 
@@ -155,19 +207,13 @@ Before running, ask:
 2. "Which path should I document?"
 3. "Who's reading — developers, end users, or both?"
 
-## Execution
-
-Call the workflow with the scoped parameters.
-
 ## Follow-Up
 
 - "Want me to export this to a file?"
 - "Should I refine a specific section?"
 ```
 
-The `triggers` array is what connects natural language to your workflow. When someone types "generate docs for src/models", the router matches on "docs" and activates this skill.
-
-### File 3: Command Shortcut
+### File 3: Command shortcut (for direct access)
 
 Create `plugin/commands/attune-docs.md` (`mkdir -p plugin/commands`):
 
@@ -182,14 +228,14 @@ tags: [docs, documentation, generate]
 ---
 ```
 
-Now users have two paths to the same workflow:
+Now your workflow has two entry points:
 
-- `/attune` + "generate docs" — guided questions first
-- `/attune-docs src/` — direct execution
+- `/attune` + "generate docs" — guided Socratic discovery
+- `/attune-docs src/` — direct execution, no questions
 
-### File 4: Register It
+### File 4: Register it
 
-Add one line to `pyproject.toml`:
+One line in `pyproject.toml`:
 
 ```toml
 [project.entry-points."attune.workflows"]
@@ -197,6 +243,14 @@ doc-gen = "attune.workflows.document_gen:DocumentGenerationWorkflow"
 ```
 
 ### Run it
+
+In Claude Code:
+
+```
+/attune generate docs for src/attune/models/
+```
+
+Or from the CLI:
 
 ```bash
 attune workflow run doc-gen --path src/attune/models/
@@ -215,18 +269,17 @@ Cost: $0.38 (saved 58% vs premium-only baseline)
 
 ## What's Next
 
-You've installed Attune, run a built-in workflow, and built your own in four files. From here:
+You've installed Attune, run built-in workflows through Claude Code's Socratic interface, and built your own in four files. From here:
 
-- **Browse built-in workflows** — `attune workflow list`
+- **Explore more workflows** — type `/attune` and describe what you need
 - **Chain workflows** — lint, then test, then docs, then commit
 - **Use `/batch`** for 50% additional savings on non-interactive runs
 - **Read the [full tutorial](https://smartaimemory.com/framework-docs/tutorials/build-a-workflow/)** for deeper patterns
-
-Every built-in workflow follows the same four-file pattern you just learned. Browse the [source](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows) for real-world examples.
+- **Browse the [source](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows)** to see how built-in workflows work
 
 ```bash
-pip install attune-ai
-attune workflow list
+pip install attune-ai[developer]
+attune setup
 ```
 
 ---
