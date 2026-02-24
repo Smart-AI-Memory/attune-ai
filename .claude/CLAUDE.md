@@ -1,4 +1,4 @@
-# Attune AI Framework v3.3.0
+# Attune AI Framework v3.4.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -58,6 +58,24 @@ All `.md` files should follow these rules:
 - Keep lines under 80 characters (except tables and URLs)
 - Do not manually pad or align table cells with extra
   spaces — tables are exempt from trailing space rules
+
+---
+
+## Code Simplification
+
+After writing or modifying code, review it for unnecessary
+complexity. Claude tends to over-engineer — too many
+abstractions, unnecessary classes, premature optimization,
+over-configurable interfaces. Counteract this by:
+
+- Flattening deeply nested conditionals (use early returns)
+- Inlining trivial helper functions used only once
+- Removing dead code paths and unused parameters
+- Preferring stdlib over custom abstractions
+- Reducing class hierarchies when a function suffices
+
+Simpler is better. Three clear lines beat one clever
+abstraction.
 
 ---
 
