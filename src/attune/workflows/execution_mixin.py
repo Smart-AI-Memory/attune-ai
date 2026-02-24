@@ -68,7 +68,7 @@ from .execution_standard import StandardExecutionMixin
 from .execution_tier_fallback import TierFallbackExecutionMixin
 
 if TYPE_CHECKING:
-    from .data_classes import WorkflowResult
+    from .data_classes import WorkflowResult, WorkflowStage
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +88,9 @@ class ExecutionMixin(
     name: str
     description: str
     stages: list[str]
+    _enable_tier_tracking: bool
+    _enable_heartbeat_tracking: bool
+    _agent_id: str | None
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the full workflow.
@@ -176,17 +179,16 @@ class ExecutionMixin(
                     },
                 )
                 logger.debug(
-                    "heartbeat_started",
-                    workflow=self.name,
-                    agent_id=self._agent_id,
-                    message="Agent heartbeat tracking started",
+                    "heartbeat_started: workflow=%s agent_id=%s",
+                    self.name,
+                    self._agent_id,
                 )
             except Exception as e:
                 logger.warning("Failed to start heartbeat tracking: %s", e)
                 self._enable_heartbeat_tracking = False
 
         started_at = datetime.now()
-        self._stages_run = []
+        self._stages_run: list[WorkflowStage] = []
         current_data = kwargs
         error = None
 
@@ -264,7 +266,7 @@ class ExecutionMixin(
             if self._progress_tracker:
                 self._progress_tracker.fail_workflow(error)
 
-        result = self._finalize_execution(
+        result: WorkflowResult = self._finalize_execution(
             kwargs=kwargs,
             started_at=started_at,
             error=error,
@@ -282,5 +284,14 @@ class ExecutionMixin(
         # Run verification loop after successful execution (VerificationMixin)
         if error is None:
             result, _verification_result = await self._run_verification_loop(result, kwargs)
+
+        # Generate project-aware guidance suggestions (v3.5)
+        try:
+            from .suggestions import generate_suggestions
+
+            result.suggestions = generate_suggestions(self.name, result)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Suggestions are optional — never crash workflow
+            logger.debug("Suggestion generation skipped: %s", e)
 
         return result
