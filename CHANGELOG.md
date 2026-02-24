@@ -5,6 +5,45 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-02-24
+
+### Added
+
+- **Project-Aware Guidance Engine** — After any workflow
+  completes, Attune analyzes project context and surfaces
+  2-3 prioritized, specific next-step suggestions grounded
+  in real findings (not generic menus). Three signal
+  sources: workflow transition registry with keyword
+  analysis, project index health signals (coverage gaps,
+  stale tests, untested files), and workflow history
+  pattern detection.
+- **`NextAction` dataclass** — Standard format for
+  suggestions with priority (high/medium/low), confidence
+  (0.0-1.0), workflow target, description, and reasoning.
+  Added `suggestions: list[NextAction]` field to
+  `WorkflowResult`.
+- **Suggestion persistence** — Cross-session state tracks
+  shown suggestions with timestamps and 24-hour dismiss
+  window to avoid repeating recently-shown suggestions.
+  Stored in `.attune/suggestion_state.json`.
+- **Workflow transition registry** — Static workflow-to-
+  workflow mappings with keyword-based conditions. Covers
+  12 workflows with contextual templates that explain
+  *why* each suggestion is relevant.
+- **Socratic bridge for suggestions** — Top suggestions
+  presented via `AskUserQuestion` with descriptive options
+  showing evidence. Selected suggestion seeds the next
+  workflow's Socratic discovery.
+
+### Changed
+
+- **`WorkflowResult` extended** — Added optional
+  `suggestions` field for carrying `NextAction` items
+  through the pipeline.
+- **`_finalize_execution()` integration** — Suggestion
+  engine hooks into workflow completion path to generate
+  guidance after every run.
+
 ## [3.4.1] - 2026-02-24
 
 ### Fixed

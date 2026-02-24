@@ -70,6 +70,7 @@ from .cost_mixin import CostTrackingMixin
 # Import data classes (extracted for maintainability)
 from .data_classes import (
     CostReport,  # noqa: F401 - re-exported
+    NextAction,  # noqa: F401 - re-exported
     StageQualityMetrics,  # noqa: F401 - re-exported
     WorkflowResult,  # noqa: F401 - re-exported
     WorkflowStage,  # noqa: F401 - re-exported
@@ -291,7 +292,7 @@ class BaseWorkflow(
         # Agent tracking and coordination (Pattern 1 & 2 from AGENT_COORDINATION_ARCHITECTURE)
         self._enable_heartbeat_tracking = enable_heartbeat_tracking
         self._enable_coordination = enable_coordination
-        self._agent_id = agent_id  # Will be set during execute() if None
+        self._agent_id: str | None = agent_id  # Will be set during execute() if None
         self._heartbeat_coordinator = None  # Lazy initialization on first use
         self._coordination_signals = None  # Lazy initialization on first use
 

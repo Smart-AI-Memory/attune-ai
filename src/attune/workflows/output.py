@@ -27,10 +27,10 @@ try:
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
-    Console = None  # type: ignore
-    Panel = None  # type: ignore
-    Table = None  # type: ignore
-    Text = None  # type: ignore
+    Console = None  # type: ignore[misc,assignment]
+    Panel = None  # type: ignore[misc,assignment]
+    Table = None  # type: ignore[misc,assignment]
+    Text = None  # type: ignore[misc,assignment]
 
 if TYPE_CHECKING:
     from rich.console import Console as ConsoleType
@@ -360,6 +360,7 @@ def format_workflow_result(
     score: int | None = None,
     recommendations: str = "",
     metadata: dict[str, Any] | None = None,
+    suggestions: list | None = None,
 ) -> WorkflowReport:
     """Create a standardized workflow report.
 
@@ -370,6 +371,7 @@ def format_workflow_result(
         score: Overall score (0-100)
         recommendations: Recommendations text
         metadata: Additional metadata
+        suggestions: List of NextAction for project-aware guidance
 
     Returns:
         WorkflowReport instance
@@ -396,6 +398,14 @@ def format_workflow_result(
 
     if recommendations:
         report.add_section("Recommendations", recommendations)
+
+    # Project-aware guidance (v3.5)
+    if suggestions:
+        from .suggestions import format_suggestions_markdown
+
+        guidance_text = format_suggestions_markdown(suggestions)
+        if guidance_text:
+            report.add_section("What's Next", guidance_text, style="success")
 
     return report
 
