@@ -406,7 +406,6 @@ line-length = 100
 target-version = "py310"
 fix = true  # Auto-fix safe issues
 exclude = [
-    "tests/unit/wizards/",  # Generated wizard tests with syntax issues
     "website/",  # Next.js website - separate linting
     "docs/archive/",  # Archived code
     "examples/",  # Example code
