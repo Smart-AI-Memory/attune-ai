@@ -50,6 +50,17 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/format_on_save.py",
+            "timeout": 10,
+            "statusMessage": "Auto-formatting..."
+          }
+        ]
+      },
+      {
         "matcher": "Bash|Edit|Write",
         "hooks": [
           {
