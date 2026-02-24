@@ -92,6 +92,8 @@ class RefactorPlanWorkflow(BaseWorkflow):
             **kwargs: Additional arguments passed to BaseWorkflow
 
         """
+        # Opt in to post-simplification by default for refactoring
+        kwargs.setdefault("enable_post_simplification", True)
         super().__init__(**kwargs)
         self.patterns_dir = patterns_dir
         self.min_debt_for_premium = min_debt_for_premium

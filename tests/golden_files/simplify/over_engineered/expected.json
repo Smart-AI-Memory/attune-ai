@@ -1,0 +1,18 @@
+{
+    "scenario": "over_engineered",
+    "min_findings": 2,
+    "max_findings": 8,
+    "primary_category": "simplify",
+    "expected_patterns": [
+        {
+            "category": "simplify",
+            "title_contains": ["simplify", "flatten", "inline", "nested"],
+            "min_confidence": 0.7
+        },
+        {
+            "category": "dead_code",
+            "title_contains": ["unused", "dead", "remove"],
+            "min_confidence": 0.6
+        }
+    ]
+}

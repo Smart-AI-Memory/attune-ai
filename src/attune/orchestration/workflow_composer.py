@@ -96,6 +96,67 @@ class WorkflowComposer:
             phases=phases or [],
         )
 
+    def compose_with_simplification(
+        self,
+        team_name: str,
+        workflow_class: type,
+        workflow_kwargs: dict[str, Any] | None = None,
+        simplify_kwargs: dict[str, Any] | None = None,
+        quality_gates: dict[str, Any] | None = None,
+    ) -> DynamicTeam:
+        """Compose a workflow with a trailing simplification step.
+
+        Convenience method that chains any code-generating workflow
+        with ``SimplifyCodeWorkflow`` in sequential order. This
+        implements the Boris Cherny pattern::
+
+            generate/refactor → simplify → verify
+
+        Args:
+            team_name: Human-readable name for the composed team.
+            workflow_class: The primary workflow class (e.g.,
+                ``RefactorPlanWorkflow``).
+            workflow_kwargs: Kwargs for the primary workflow constructor.
+            simplify_kwargs: Kwargs for ``SimplifyCodeWorkflow``
+                constructor. Defaults to ``{"min_complexity": 5}``.
+            quality_gates: Optional quality gate specs.
+
+        Returns:
+            Runnable ``DynamicTeam`` with sequential strategy.
+
+        Example::
+
+            composer = WorkflowComposer()
+            team = composer.compose_with_simplification(
+                team_name="refactor-and-simplify",
+                workflow_class=RefactorPlanWorkflow,
+                workflow_kwargs={"path": "src/"},
+            )
+            result = await team.execute({"target": "src/"})
+
+        """
+        from attune.workflows.simplify_code import SimplifyCodeWorkflow
+
+        workflows = [
+            {
+                "workflow": workflow_class,
+                "kwargs": workflow_kwargs or {},
+                "role": "Primary Workflow",
+            },
+            {
+                "workflow": SimplifyCodeWorkflow,
+                "kwargs": simplify_kwargs or {"min_complexity": 5},
+                "role": "Code Simplifier",
+            },
+        ]
+
+        return self.compose(
+            team_name=team_name,
+            workflows=workflows,
+            strategy="sequential",
+            quality_gates=quality_gates,
+        )
+
     def _build_adapter(self, spec: dict[str, Any]) -> WorkflowAgentAdapter:
         """Build a ``WorkflowAgentAdapter`` from a workflow spec.
 

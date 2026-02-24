@@ -1,0 +1,312 @@
+"""Tests for the PostSimplificationMixin integration."""
+
+from __future__ import annotations
+
+import textwrap
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from attune.workflows.post_simplification_mixin import (
+    CODE_GENERATING_WORKFLOWS,
+    PostSimplificationMixin,
+)
+
+
+class TestPostSimplificationMixinInit:
+    """Test mixin initialization."""
+
+    def test_default_disabled(self) -> None:
+        """Test post-simplification is disabled by default."""
+        mixin = PostSimplificationMixin()
+        assert mixin._enable_post_simplification is False
+
+    def test_init_enables(self) -> None:
+        """Test _init_post_simplification sets flags."""
+        mixin = PostSimplificationMixin()
+        mixin._init_post_simplification(
+            enable_post_simplification=True,
+            simplification_min_complexity=8,
+        )
+        assert mixin._enable_post_simplification is True
+        assert mixin._simplification_min_complexity == 8
+
+    def test_init_default_complexity(self) -> None:
+        """Test default min_complexity is 5."""
+        mixin = PostSimplificationMixin()
+        mixin._init_post_simplification(enable_post_simplification=True)
+        assert mixin._simplification_min_complexity == 5
+
+
+class TestCodeGeneratingWorkflowsConstant:
+    """Test the CODE_GENERATING_WORKFLOWS constant."""
+
+    def test_contains_expected_workflows(self) -> None:
+        """Test CODE_GENERATING_WORKFLOWS has expected entries."""
+        assert "refactor-plan" in CODE_GENERATING_WORKFLOWS
+        assert "test-gen" in CODE_GENERATING_WORKFLOWS
+
+    def test_is_frozenset(self) -> None:
+        """Test CODE_GENERATING_WORKFLOWS is immutable."""
+        assert isinstance(CODE_GENERATING_WORKFLOWS, frozenset)
+
+
+class TestRunPostSimplification:
+    """Test the _run_post_simplification method."""
+
+    @pytest.mark.asyncio
+    async def test_noop_when_disabled(self) -> None:
+        """Test returns result unchanged when disabled."""
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = False
+
+        mock_result = MagicMock()
+        returned = await mixin._run_post_simplification(mock_result, {})
+        assert returned is mock_result
+
+    @pytest.mark.asyncio
+    async def test_noop_when_result_failed(self) -> None:
+        """Test returns result unchanged when execution failed."""
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = False
+        returned = await mixin._run_post_simplification(mock_result, {})
+        assert returned is mock_result
+
+    @pytest.mark.asyncio
+    async def test_noop_when_no_path(self) -> None:
+        """Test returns result unchanged when no path in kwargs."""
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        returned = await mixin._run_post_simplification(mock_result, {})
+        assert returned is mock_result
+
+    @pytest.mark.asyncio
+    async def test_scans_when_enabled(self, tmp_path: Path) -> None:
+        """Test runs scan when enabled with valid path."""
+        # Create a complex Python file
+        code = textwrap.dedent(
+            """\
+            def complex_func(x, y, z):
+                if x > 0:
+                    if y > 0:
+                        if z > 0:
+                            for i in range(x):
+                                if i % 2 == 0:
+                                    try:
+                                        return i
+                                    except ValueError:
+                                        pass
+                return None
+        """
+        )
+        (tmp_path / "complex.py").write_text(code)
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+        mixin._simplification_min_complexity = 3
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        returned = await mixin._run_post_simplification(
+            mock_result,
+            {"path": str(tmp_path)},
+        )
+
+        assert returned is mock_result
+        assert mixin._simplification_result is not None
+        assert mixin._simplification_result["hotspots_found"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_attaches_metadata_to_final_output(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Test attaches simplification metadata to result."""
+        code = textwrap.dedent(
+            """\
+            def nested(a, b, c, d, e):
+                if a:
+                    if b:
+                        if c:
+                            if d:
+                                if e:
+                                    return 1
+                return 0
+        """
+        )
+        (tmp_path / "nested.py").write_text(code)
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+        mixin._simplification_min_complexity = 3
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {"existing_key": "value"}
+
+        await mixin._run_post_simplification(
+            mock_result,
+            {"path": str(tmp_path)},
+        )
+
+        assert "_simplification" in mock_result.final_output
+
+    @pytest.mark.asyncio
+    async def test_no_hotspots_for_simple_code(self, tmp_path: Path) -> None:
+        """Test no hotspots found for simple code."""
+        (tmp_path / "simple.py").write_text("def f():\n    return 1\n")
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+        mixin._simplification_min_complexity = 5
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        await mixin._run_post_simplification(
+            mock_result,
+            {"path": str(tmp_path)},
+        )
+
+        assert mixin._simplification_result is not None
+        assert mixin._simplification_result["hotspots_found"] == 0
+
+    @pytest.mark.asyncio
+    async def test_handles_import_error_gracefully(self) -> None:
+        """Test graceful degradation when SimplifyCodeWorkflow unavailable."""
+        import builtins
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+
+        original_import = builtins.__import__
+
+        def mock_import(name: str, *args: object, **kwargs: object) -> object:
+            if "simplify_code" in name:
+                raise ImportError("not available")
+            return original_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=mock_import):
+            # Should not raise
+            returned = await mixin._run_post_simplification(
+                mock_result,
+                {"path": "/some/path"},
+            )
+            assert returned is mock_result
+
+
+class TestRefactorPlanOptIn:
+    """Test that RefactorPlanWorkflow opts in to simplification."""
+
+    def test_refactor_plan_enables_simplification(self) -> None:
+        """Test RefactorPlanWorkflow sets enable_post_simplification."""
+        from attune.workflows.refactor_plan import RefactorPlanWorkflow
+
+        wf = RefactorPlanWorkflow()
+        assert wf._enable_post_simplification is True
+
+    def test_refactor_plan_can_disable_simplification(self) -> None:
+        """Test RefactorPlanWorkflow simplification can be disabled."""
+        from attune.workflows.refactor_plan import RefactorPlanWorkflow
+
+        wf = RefactorPlanWorkflow(enable_post_simplification=False)
+        assert wf._enable_post_simplification is False
+
+
+class TestTestGenOptIn:
+    """Test that TestGenerationWorkflow opts in to simplification."""
+
+    def test_test_gen_enables_simplification(self) -> None:
+        """Test TestGenerationWorkflow sets enable_post_simplification."""
+        from attune.workflows.test_gen.workflow import TestGenerationWorkflow
+
+        wf = TestGenerationWorkflow()
+        assert wf._enable_post_simplification is True
+
+    def test_test_gen_can_disable_simplification(self) -> None:
+        """Test TestGenerationWorkflow simplification can be disabled."""
+        from attune.workflows.test_gen.workflow import TestGenerationWorkflow
+
+        wf = TestGenerationWorkflow(enable_post_simplification=False)
+        assert wf._enable_post_simplification is False
+
+
+class TestBaseWorkflowIntegration:
+    """Test BaseWorkflow integration with PostSimplificationMixin."""
+
+    def test_base_workflow_default_disabled(self) -> None:
+        """Test BaseWorkflow has post-simplification disabled by default."""
+        from attune.workflows.simplify_code import SimplifyCodeWorkflow
+
+        wf = SimplifyCodeWorkflow()
+        assert wf._enable_post_simplification is False
+
+    def test_base_workflow_can_enable(self) -> None:
+        """Test BaseWorkflow can enable post-simplification."""
+        from attune.workflows.simplify_code import SimplifyCodeWorkflow
+
+        wf = SimplifyCodeWorkflow(enable_post_simplification=True)
+        assert wf._enable_post_simplification is True
+
+
+class TestWorkflowComposerSimplification:
+    """Test WorkflowComposer.compose_with_simplification."""
+
+    def test_compose_creates_sequential_team(self) -> None:
+        """Test compose_with_simplification returns sequential team."""
+        from attune.orchestration.workflow_composer import WorkflowComposer
+        from attune.workflows.refactor_plan import RefactorPlanWorkflow
+
+        composer = WorkflowComposer()
+        team = composer.compose_with_simplification(
+            team_name="refactor-and-simplify",
+            workflow_class=RefactorPlanWorkflow,
+            workflow_kwargs={"patterns_dir": "./patterns"},
+        )
+
+        assert team.team_name == "refactor-and-simplify"
+        assert team.strategy == "sequential"
+        assert len(team.agents) == 2
+
+    def test_compose_has_simplifier_agent(self) -> None:
+        """Test composed team includes SimplifyCodeWorkflow."""
+        from attune.orchestration.workflow_composer import WorkflowComposer
+        from attune.workflows.refactor_plan import RefactorPlanWorkflow
+
+        composer = WorkflowComposer()
+        team = composer.compose_with_simplification(
+            team_name="test-team",
+            workflow_class=RefactorPlanWorkflow,
+        )
+
+        roles = [a.role for a in team.agents]
+        assert "Primary Workflow" in roles
+        assert "Code Simplifier" in roles
+
+    def test_compose_passes_simplify_kwargs(self) -> None:
+        """Test custom simplify_kwargs are passed through."""
+        from attune.orchestration.workflow_composer import WorkflowComposer
+        from attune.workflows.refactor_plan import RefactorPlanWorkflow
+
+        composer = WorkflowComposer()
+        team = composer.compose_with_simplification(
+            team_name="custom-simplify",
+            workflow_class=RefactorPlanWorkflow,
+            simplify_kwargs={"min_complexity": 10, "max_files": 5},
+        )
+
+        # Team should have 2 agents (primary + simplifier)
+        assert len(team.agents) == 2

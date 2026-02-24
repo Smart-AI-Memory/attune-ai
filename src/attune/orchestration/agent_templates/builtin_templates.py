@@ -394,7 +394,40 @@ _SYNTHESIZER = AgentTemplate(
     ),
 )
 
-# Template 13: Generic Agent
+# Template 13: Code Simplifier
+_CODE_SIMPLIFIER = AgentTemplate(
+    id="code_simplifier",
+    role="Code Simplification Specialist",
+    capabilities=[
+        "complexity_analysis",
+        "simplification",
+        "dead_code_removal",
+    ],
+    tier_preference="CAPABLE",
+    tools=["ast_parser", "code_metrics"],
+    default_instructions=(
+        "You are a code simplification specialist. "
+        "Your job is to reduce unnecessary complexity:\n"
+        "1. Flatten deeply nested conditionals\n"
+        "2. Inline trivial helper functions\n"
+        "3. Remove dead code paths\n"
+        "4. Replace complex patterns with simpler stdlib alternatives\n"
+        "5. Reduce unnecessary abstraction layers\n"
+        "Preserve all behavior. Simpler is better."
+    ),
+    quality_gates={
+        "min_simplification_score": 5,
+        "max_complexity_increase": 0,
+    },
+    resource_requirements=ResourceRequirements(
+        min_tokens=2000,
+        max_tokens=15000,
+        timeout_seconds=600,
+        memory_mb=1024,
+    ),
+)
+
+# Template 14: Generic Agent
 _GENERIC_AGENT = AgentTemplate(
     id="generic_agent",
     role="General Purpose Agent",
@@ -440,6 +473,7 @@ def _register_all_builtin_templates() -> None:
         _REPORT_GENERATOR,
         _DOCUMENTATION_ANALYST,
         _SYNTHESIZER,
+        _CODE_SIMPLIFIER,
         _GENERIC_AGENT,
     ]
     for template in templates:
