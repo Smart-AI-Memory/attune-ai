@@ -20,6 +20,7 @@ DEFAULT_VERIFICATION_STRATEGIES: dict[str, str] = {
     "test-gen": "run-tests",
     "test-gen-parallel": "run-tests",
     "refactor-plan": "run-tests",
+    "simplify-code": "run-tests",
     # Release workflows -> build
     "release-prep": "build",
     "secure-release": "build",

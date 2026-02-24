@@ -274,6 +274,11 @@ class ExecutionMixin(
             _save_workflow_run=_save_workflow_run,
         )
 
+        # Run post-simplification scan after successful execution (PostSimplificationMixin)
+        # Pipeline: execute stages → simplify → verify → self-correct → re-verify
+        if error is None:
+            result = await self._run_post_simplification(result, kwargs)
+
         # Run verification loop after successful execution (VerificationMixin)
         if error is None:
             result, _verification_result = await self._run_verification_loop(result, kwargs)

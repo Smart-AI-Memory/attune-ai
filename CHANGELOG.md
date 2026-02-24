@@ -5,6 +5,50 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-02-23
+
+### Added
+
+- **Code Simplifier Workflow** — New `simplify-code`
+  workflow that reduces unnecessary complexity in code.
+  Inspired by Boris Cherny's observation that Claude
+  tends to over-engineer. 4-stage pipeline: AST
+  complexity scan, crew-based simplification analysis,
+  code generation with before/after diffs, and
+  conditional review. Reuses `RefactoringCrew` with
+  simplification-focused configuration.
+- **`code_simplifier` agent template** — New built-in
+  template (#13) for use in dynamic teams. Capabilities:
+  complexity analysis, simplification, dead code removal.
+- **CLI routing for simplify** — `simplify` and
+  `simplify-code` keywords route to the workflow via
+  `/workflows run simplify-code`.
+- **Verification mapping** — `simplify-code` workflow
+  auto-verified with `run-tests` strategy, integrating
+  with the v3.3.1 correction feedback loop.
+- **Golden file test fixture** — Over-engineered code
+  sample with deeply nested conditionals, unnecessary
+  abstractions, dead code, and trivial helpers for
+  testing simplification detection.
+- **Post-simplification mixin** — New
+  `PostSimplificationMixin` that hooks into `execute()`
+  between stage completion and verification. Pipeline:
+  execute stages → simplify → verify → self-correct.
+  Code-generating workflows opt in to automatic
+  simplification of Claude-generated output.
+- **Workflow opt-in** — `RefactorPlanWorkflow` and
+  `TestGenerationWorkflow` now opt in to
+  post-simplification by default. Pass
+  `enable_post_simplification=False` to disable.
+- **WorkflowComposer.compose_with_simplification()** —
+  New convenience method for explicit sequential
+  chaining of any workflow with the code simplifier.
+- **50 new tests** — Full coverage of scan stage,
+  complexity calculation, crew delegation, LLM fallback,
+  conditional stage skipping, before/after generation,
+  post-simplification integration, workflow opt-in, and
+  composer chaining.
+
 ## [3.3.1] - 2026-02-23
 
 ### Changed

@@ -64,6 +64,7 @@ if TYPE_CHECKING:
     from .secure_release import SecureReleasePipeline, SecureReleaseResult
     from .security_audit import SecurityAuditWorkflow
     from .seo_optimization import SEOOptimizationWorkflow
+    from .simplify_code import SimplifyCodeWorkflow
     from .step_config import WorkflowStepConfig
 
     # test_coverage_boost_crew removed (deprecated, use test-gen-parallel)
@@ -139,6 +140,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "SecureReleaseResult": (".secure_release", "SecureReleaseResult"),
     "SecurityAuditWorkflow": (".security_audit", "SecurityAuditWorkflow"),
     "SEOOptimizationWorkflow": (".seo_optimization", "SEOOptimizationWorkflow"),
+    "SimplifyCodeWorkflow": (".simplify_code", "SimplifyCodeWorkflow"),
     # TestCoverageBoostCrew removed (deprecated, use ParallelTestGenerationWorkflow)
     "TestGenerationWorkflow": (".test_gen", "TestGenerationWorkflow"),
     "ParallelTestGenerationWorkflow": (".test_gen_parallel", "ParallelTestGenerationWorkflow"),
@@ -236,6 +238,8 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "refactor-plan": "RefactorPlanWorkflow",
     # Operational workflows
     "dependency-check": "DependencyCheckWorkflow",
+    # Simplification workflow (v3.4)
+    "simplify-code": "SimplifyCodeWorkflow",
     # Composite security pipeline (v3.0)
     "secure-release": "SecureReleasePipeline",
     # Keyboard Conductor (v3.6)
@@ -520,6 +524,7 @@ __all__ = [
     "SecureReleaseResult",
     "SecurityAuditWorkflow",
     "SEOOptimizationWorkflow",
+    "SimplifyCodeWorkflow",
     "TestGenerationWorkflow",
     "ParallelTestGenerationWorkflow",
     # Configuration

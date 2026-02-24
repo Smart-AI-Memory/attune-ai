@@ -90,6 +90,7 @@ from .multi_agent_mixin import MultiAgentStageMixin
 
 # Import parsing mixin (extracted for maintainability)
 from .parsing_mixin import ResponseParsingMixin
+from .post_simplification_mixin import PostSimplificationMixin
 
 # Import progress tracking
 from .progress import (
@@ -124,6 +125,7 @@ class BaseWorkflow(
     TelemetryMixin,
     ResponseParsingMixin,
     CostTrackingMixin,
+    PostSimplificationMixin,
     VerificationMixin,
     ABC,
 ):
@@ -176,6 +178,8 @@ class BaseWorkflow(
         state_store: AgentStateStore | None = None,
         multi_agent_configs: dict[str, dict[str, Any]] | None = None,
         ctx: WorkflowContext | None = None,
+        enable_post_simplification: bool = False,
+        simplification_min_complexity: int = 5,
     ):
         """Initialize workflow with optional cost tracker, provider, and config.
 
@@ -235,6 +239,14 @@ class BaseWorkflow(
                      When provided, proxy methods delegate to ctx services instead
                      of mixin implementations. When None (default), all behavior
                      comes from mixins as before. See ``workflows/context.py``.
+            enable_post_simplification: Whether to run the code simplifier
+                     after stage execution but before verification (default False).
+                     When enabled, scans output for complexity hotspots and
+                     attaches simplification metadata. Implements Boris Cherny's
+                     recommendation: simplify Claude-generated code before verifying.
+            simplification_min_complexity: Minimum cyclomatic complexity threshold
+                     for functions to be flagged by the post-simplification scan
+                     (default 5).
 
         """
         from .config import WorkflowConfig
@@ -301,6 +313,12 @@ class BaseWorkflow(
 
         # Initialize verification loop (uses VerificationMixin)
         self._init_verification()
+
+        # Initialize post-simplification (uses PostSimplificationMixin)
+        self._init_post_simplification(
+            enable_post_simplification=enable_post_simplification,
+            simplification_min_complexity=simplification_min_complexity,
+        )
 
         # Determine provider (priority: arg > config > default)
         if provider is None:

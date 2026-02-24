@@ -61,6 +61,8 @@ class TestGenerationWorkflow(BaseWorkflow):
             **kwargs: Additional arguments passed to BaseWorkflow
 
         """
+        # Opt in to post-simplification by default for test generation
+        kwargs.setdefault("enable_post_simplification", True)
         super().__init__(**kwargs)
         self.patterns_dir = patterns_dir
         self.min_tests_for_review = min_tests_for_review

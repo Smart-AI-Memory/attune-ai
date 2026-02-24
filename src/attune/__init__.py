@@ -55,7 +55,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-__version__ = "3.3.1"
+__version__ = "3.4.0"
 __author__ = "Patrick Roebuck"
 __email__ = "patrick.roebuck@smartaimemory.com"
 
