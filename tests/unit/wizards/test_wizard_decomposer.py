@@ -9,12 +9,11 @@ Tests cover:
 Created: 2026-02-15
 """
 
-import pytest
-
 from unittest.mock import AsyncMock, MagicMock
 
-from attune.wizards.decomposer import DecomposedTask, TaskDecomposer
+import pytest
 
+from attune.wizards.decomposer import DecomposedTask, TaskDecomposer
 
 # =========================================================================
 # DecomposedTask
@@ -387,7 +386,7 @@ class TestTaskDecomposerDecompose:
         mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
         decomposer = TaskDecomposer(workflow=mock_workflow)
 
-        tasks = await decomposer.decompose(
+        await decomposer.decompose(
             problem_description="Do something",
             codebase_context="",
         )

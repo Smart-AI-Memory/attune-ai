@@ -9,19 +9,16 @@ Covers:
 Created: 2026-02-15
 """
 
-import pytest
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from attune.wizards.base import BaseWizard, StepType, WizardConfig, WizardStep
-from attune.wizards.session import WizardSession
-from attune.prompts import PromptContext
-from attune.workflows.compat import ModelTier
+import pytest
 
-from attune.wizards.builtin.security_wizard import SecurityWizard
+from attune.prompts import PromptContext
+from attune.wizards.base import BaseWizard, StepType, WizardConfig, WizardStep
 from attune.wizards.builtin.refactor_wizard import RefactorWizard
 from attune.wizards.builtin.release_prep_wizard import ReleasePrepWizard, _wants_changelog
-
+from attune.wizards.builtin.security_wizard import SecurityWizard
+from attune.wizards.session import WizardSession
 
 # =========================================================================
 # _wants_changelog helper

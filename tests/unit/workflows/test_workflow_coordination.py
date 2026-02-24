@@ -239,3 +239,194 @@ class TestWorkflowBothFeaturesEnabled:
         # Both features should remain enabled
         assert workflow._enable_heartbeat_tracking is True
         assert workflow._enable_coordination is True
+
+
+@pytest.fixture
+def simple_workflow():
+    """Create a SimpleWorkflow instance for testing."""
+    return SimpleWorkflow(
+        enable_heartbeat_tracking=True,
+        enable_coordination=True,
+        enable_adaptive_routing=True,
+        agent_id="test-agent",
+    )
+
+
+class TestGetHeartbeatCoordinator:
+    """Tests for CoordinationMixin._get_heartbeat_coordinator()."""
+
+    def test_disabled_returns_none(self, simple_workflow):
+        """Test returns None when heartbeat tracking is disabled."""
+        simple_workflow._enable_heartbeat_tracking = False
+        assert simple_workflow._get_heartbeat_coordinator() is None
+
+    def test_successful_init(self, simple_workflow):
+        """Test successful heartbeat coordinator initialization."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_heartbeat_tracking = True
+        simple_workflow._heartbeat_coordinator = None
+        mock_hb = MagicMock()
+        with patch(
+            "attune.workflows.coordination_mixin.HeartbeatCoordinator",
+            create=True,
+        ) as mock_cls:
+            # Patch the import inside the method
+            with patch.dict(
+                "sys.modules",
+                {"attune.telemetry": MagicMock(HeartbeatCoordinator=mock_cls)},
+            ):
+                mock_cls.return_value = mock_hb
+                result = simple_workflow._get_heartbeat_coordinator()
+                assert result is mock_hb
+
+    def test_import_error_disables_feature(self, simple_workflow):
+        """Test ImportError disables heartbeat tracking."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_heartbeat_tracking = True
+        simple_workflow._heartbeat_coordinator = None
+
+        mock_module = MagicMock(spec=[])  # Empty spec = no attributes
+        with (
+            patch.dict("sys.modules", {"attune.telemetry": mock_module}),
+            patch("attune.workflows.coordination_mixin.logger"),
+        ):
+            simple_workflow._get_heartbeat_coordinator()
+        assert simple_workflow._enable_heartbeat_tracking is False
+
+    def test_init_exception_disables_feature(self, simple_workflow):
+        """Test generic Exception during init disables heartbeat tracking."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_heartbeat_tracking = True
+        simple_workflow._heartbeat_coordinator = None
+
+        mock_module = MagicMock()
+        mock_module.HeartbeatCoordinator.side_effect = RuntimeError("Redis unavailable")
+        with (
+            patch.dict("sys.modules", {"attune.telemetry": mock_module}),
+            patch("attune.workflows.coordination_mixin.logger"),
+        ):
+            result = simple_workflow._get_heartbeat_coordinator()
+        assert simple_workflow._enable_heartbeat_tracking is False
+        assert result is None
+
+
+class TestGetCoordinationSignals:
+    """Tests for CoordinationMixin._get_coordination_signals()."""
+
+    def test_disabled_returns_none(self, simple_workflow):
+        """Test returns None when coordination is disabled."""
+        simple_workflow._enable_coordination = False
+        assert simple_workflow._get_coordination_signals() is None
+
+    def test_successful_init(self, simple_workflow):
+        """Test successful coordination signals initialization."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_coordination = True
+        simple_workflow._coordination_signals = None
+        mock_cs = MagicMock()
+        mock_module = MagicMock()
+        mock_module.CoordinationSignals.return_value = mock_cs
+        with patch.dict("sys.modules", {"attune.telemetry": mock_module}):
+            result = simple_workflow._get_coordination_signals()
+            assert result is mock_cs
+
+    def test_import_error_disables_feature(self, simple_workflow):
+        """Test ImportError disables coordination."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_coordination = True
+        simple_workflow._coordination_signals = None
+        mock_module = MagicMock(spec=[])  # Empty spec = no attributes
+        with (
+            patch.dict("sys.modules", {"attune.telemetry": mock_module}),
+            patch("attune.workflows.coordination_mixin.logger"),
+        ):
+            simple_workflow._get_coordination_signals()
+        assert simple_workflow._enable_coordination is False
+
+    def test_init_exception_disables_feature(self, simple_workflow):
+        """Test generic Exception during init disables coordination."""
+        from unittest.mock import MagicMock, patch
+
+        simple_workflow._enable_coordination = True
+        simple_workflow._coordination_signals = None
+        mock_module = MagicMock()
+        mock_module.CoordinationSignals.side_effect = RuntimeError("Redis down")
+        with (
+            patch.dict("sys.modules", {"attune.telemetry": mock_module}),
+            patch("attune.workflows.coordination_mixin.logger"),
+        ):
+            result = simple_workflow._get_coordination_signals()
+        assert simple_workflow._enable_coordination is False
+        assert result is None
+
+
+class TestCheckAdaptiveTierUpgrade:
+    """Tests for CoordinationMixin._check_adaptive_tier_upgrade()."""
+
+    def test_no_router_returns_current_tier(self, simple_workflow):
+        """Test returns current tier when no router is available."""
+        from attune.workflows.compat import ModelTier
+
+        simple_workflow._enable_adaptive_routing = False
+        result = simple_workflow._check_adaptive_tier_upgrade("analyze", ModelTier.CHEAP)
+        assert result == ModelTier.CHEAP
+
+    def test_no_upgrade_returns_current_tier(self, simple_workflow):
+        """Test returns current tier when router says no upgrade needed."""
+        from unittest.mock import MagicMock
+
+        from attune.workflows.compat import ModelTier
+
+        mock_router = MagicMock()
+        mock_router.recommend_tier_upgrade.return_value = (False, "No upgrade needed")
+        simple_workflow._enable_adaptive_routing = True
+        simple_workflow._adaptive_router = mock_router
+        result = simple_workflow._check_adaptive_tier_upgrade("analyze", ModelTier.CHEAP)
+        assert result == ModelTier.CHEAP
+
+    def test_upgrade_cheap_to_capable(self, simple_workflow):
+        """Test upgrade from CHEAP to CAPABLE when recommended."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows.compat import ModelTier
+
+        mock_router = MagicMock()
+        mock_router.recommend_tier_upgrade.return_value = (True, "High failure rate")
+        simple_workflow._enable_adaptive_routing = True
+        simple_workflow._adaptive_router = mock_router
+        with patch("attune.workflows.coordination_mixin.logger"):
+            result = simple_workflow._check_adaptive_tier_upgrade("analyze", ModelTier.CHEAP)
+        assert result == ModelTier.CAPABLE
+
+    def test_upgrade_capable_to_premium(self, simple_workflow):
+        """Test upgrade from CAPABLE to PREMIUM when recommended."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows.compat import ModelTier
+
+        mock_router = MagicMock()
+        mock_router.recommend_tier_upgrade.return_value = (True, "High failure rate")
+        simple_workflow._enable_adaptive_routing = True
+        simple_workflow._adaptive_router = mock_router
+        with patch("attune.workflows.coordination_mixin.logger"):
+            result = simple_workflow._check_adaptive_tier_upgrade("analyze", ModelTier.CAPABLE)
+        assert result == ModelTier.PREMIUM
+
+    def test_premium_stays_premium(self, simple_workflow):
+        """Test PREMIUM tier stays at PREMIUM even with upgrade recommendation."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows.compat import ModelTier
+
+        mock_router = MagicMock()
+        mock_router.recommend_tier_upgrade.return_value = (True, "High failure rate")
+        simple_workflow._enable_adaptive_routing = True
+        simple_workflow._adaptive_router = mock_router
+        with patch("attune.workflows.coordination_mixin.logger"):
+            result = simple_workflow._check_adaptive_tier_upgrade("analyze", ModelTier.PREMIUM)
+        assert result == ModelTier.PREMIUM

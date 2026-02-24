@@ -11,20 +11,14 @@ Tests cover:
 Created: 2026-02-15
 """
 
-import pytest
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
 from attune.wizards.base import StepType, WizardConfig
-from attune.wizards.session import WizardSession
 from attune.wizards.builtin import BUILTIN_WIZARDS
 from attune.wizards.builtin.debug_wizard import DebugWizard
-from attune.wizards.builtin.security_wizard import SecurityWizard, _has_findings
 from attune.wizards.builtin.refactor_wizard import RefactorWizard
 from attune.wizards.builtin.release_prep_wizard import ReleasePrepWizard
+from attune.wizards.builtin.security_wizard import SecurityWizard, _has_findings
 from attune.wizards.builtin.test_gen_wizard import TestGenWizard
-from attune.meta_workflows.models import FormResponse
-
+from attune.wizards.session import WizardSession
 
 # =========================================================================
 # BUILTIN_WIZARDS dict
