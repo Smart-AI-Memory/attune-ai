@@ -240,7 +240,8 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                                         "loc": loc,
                                     }
                                 )
-                except (SyntaxError, OSError):
+                except (SyntaxError, OSError) as e:
+                    logger.debug("Skipped %s: %s", file_path, e)
                     continue
 
         # Rank by complexity (top N)

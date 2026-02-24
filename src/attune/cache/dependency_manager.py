@@ -70,8 +70,10 @@ class DependencyManager:
             validated_path = _validate_file_path(str(self.config_path))
             with open(validated_path, "w") as f:
                 yaml.safe_dump(self.config, f, default_flow_style=False)
-        except (yaml.YAMLError, OSError, ValueError) as e:
-            logger.error(f"Failed to save config: {e}")
+        except ValueError as e:
+            logger.error("Invalid config path: %s", e)
+        except (yaml.YAMLError, OSError) as e:
+            logger.error("Failed to save config: %s", e)
 
     def is_cache_installed(self) -> bool:
         """Check if cache dependencies are installed.

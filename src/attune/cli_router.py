@@ -207,7 +207,8 @@ class HybridRouter:
                     usage_count=pref_data.get("usage_count", 0),
                     confidence=pref_data.get("confidence", 1.0),
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Routing preferences are optional, never fail init
             print(f"Warning: Could not load routing preferences: {e}")
 
     def _save_preferences(self) -> None:
