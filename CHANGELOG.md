@@ -5,6 +5,39 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.1] - 2026-02-24
+
+### Fixed
+
+- **Verification runner return type** — Fixed
+  `run_verification()` return type annotation from
+  `dict[str, Any]` to `VerificationResult`. Renamed
+  misleading `_MAX_OUTPUT_BYTES` constant to
+  `_MAX_OUTPUT_CHARS` (output is string-based).
+- **Verification mixin return type** — Fixed
+  `_resolve_strategy_instance()` return type from `Any`
+  to `VerificationStrategy | None` with expanded
+  docstring.
+- **Logger f-string formatting** — Converted f-string
+  logger calls to %-formatting in `execution_mixin.py`
+  and `hybrid.py` (prevents unnecessary string
+  interpolation when log level is disabled).
+- **Path validation in format hook** — Added
+  `_validate_file_path()` call in `format_on_save.py`
+  before passing paths to subprocess.
+- **Cost commands type hints** — Replaced `object` type
+  hints with proper `CostTracker` and `Path` types,
+  removed `# type: ignore` comments.
+- **Dependency manager exception split** — Split broad
+  `(yaml.YAMLError, OSError, ValueError)` handler into
+  separate handlers with appropriate log messages.
+- **Simplify code silent skip** — Added debug logging
+  before `continue` on `SyntaxError`/`OSError` in file
+  scanning loop.
+- **BLE001 justifications** — Added `# noqa: BLE001` +
+  `# INTENTIONAL:` comments to 5 justified broad
+  exception handlers in `hybrid.py` and `cli_router.py`.
+
 ## [3.4.0] - 2026-02-23
 
 ### Added
