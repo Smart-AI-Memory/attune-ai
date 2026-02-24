@@ -461,6 +461,11 @@ class LessonsManager:
     def _remove_from_file(self, lesson: dict[str, Any]) -> str:
         """Remove a specific lesson from its source file.
 
+        For project/global lessons, removes from the corresponding
+        markdown file. For claude_md lessons, removes from the
+        managed section in CLAUDE.md. Also syncs removal to
+        CLAUDE.md when removing project lessons.
+
         Args:
             lesson: Lesson dict with text, date, source keys.
 
@@ -468,6 +473,14 @@ class LessonsManager:
             Confirmation message.
 
         """
+        date_str = lesson["date"]
+        text = lesson["text"]
+        target_line = f"- **{date_str}** {text}"
+
+        if lesson["source"] == "claude_md":
+            self._remove_lesson_from_claude_md(target_line)
+            return f"Removed: {text}"
+
         path = self._global_path if lesson["source"] == "global" else self._project_path
         validated_path = _validate_file_path(str(path))
 
@@ -475,15 +488,54 @@ class LessonsManager:
             raise ValueError("Lessons file not found")
 
         content = validated_path.read_text()
-        date_str = lesson["date"]
-        text = lesson["text"]
-        target_line = f"- **{date_str}** {text}"
-
         new_lines = [line for line in content.splitlines() if line.strip() != target_line]
-
         validated_path.write_text("\n".join(new_lines) + "\n")
 
+        # Sync removal to CLAUDE.md for project lessons
+        if lesson["source"] == "project" and self._sync_to_claude_md:
+            self._remove_lesson_from_claude_md(target_line)
+
         return f"Removed: {text}"
+
+    def _remove_lesson_from_claude_md(self, target_line: str) -> None:
+        """Remove a lesson line from the CLAUDE.md managed section.
+
+        Silently skips if CLAUDE.md doesn't exist or has no markers.
+        Never crashes.
+
+        Args:
+            target_line: The full lesson line to remove
+                (e.g. ``- **2026-02-23** lesson text``).
+
+        """
+        try:
+            claude_md = self._claude_md_path
+            if not claude_md.exists():
+                return
+
+            validated_path = _validate_file_path(str(claude_md))
+            content = validated_path.read_text()
+
+            start_idx = content.find(_CLAUDE_MD_START)
+            end_idx = content.find(_CLAUDE_MD_END)
+            if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                return
+
+            section = content[start_idx + len(_CLAUDE_MD_START) : end_idx]
+            new_lines = [line for line in section.splitlines() if line.strip() != target_line]
+            new_section = "\n".join(new_lines)
+            if new_section and not new_section.endswith("\n"):
+                new_section += "\n"
+
+            new_content = (
+                content[: start_idx + len(_CLAUDE_MD_START)] + new_section + content[end_idx:]
+            )
+            validated_path.write_text(new_content)
+            logger.debug("Lesson removed from CLAUDE.md")
+
+        except Exception as e:
+            # INTENTIONAL: CLAUDE.md sync is best-effort, never crash
+            logger.debug("CLAUDE.md removal sync failed: %s", e)
 
     def _check_token_budget(self, path: Path) -> int:
         """Check token count of a lessons file.

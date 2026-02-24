@@ -554,3 +554,54 @@ class TestVerificationCorrectionLoop:
         updated, vr = await wf._run_verification_loop(result, {})
 
         assert "corrections" not in updated.metadata.get("verification", {})
+
+    @pytest.mark.asyncio
+    @patch("attune.verification.mixin.run_verification")
+    async def test_correction_context_chars_truncates_output(self, mock_run) -> None:
+        """Test that correction_context_chars limits output sent to LLM."""
+        fail_result = VerificationResult(
+            passed=False,
+            strategy="run-tests",
+            command="pytest",
+            exit_code=1,
+            stdout="",
+            stderr="some error",
+            duration_ms=100,
+            attempt=1,
+            max_retries=2,
+        )
+        pass_result = VerificationResult(
+            passed=True,
+            strategy="run-tests",
+            command="pytest",
+            exit_code=0,
+            stdout="ok",
+            stderr="",
+            duration_ms=100,
+            attempt=2,
+            max_retries=2,
+        )
+        mock_run.side_effect = [fail_result, pass_result]
+
+        wf = FakeWorkflowWithLLM()
+        wf._verification_config = VerificationConfig(
+            enabled=True,
+            strategy="run-tests",
+            max_retries=2,
+            correction_enabled=True,
+            max_corrections=2,
+            correction_context_chars=50,
+        )
+        # Output longer than 50 chars
+        long_output = "A" * 200
+        result = FakeWorkflowResult(final_output=long_output)
+
+        await wf._run_verification_loop(result, {})
+
+        # Verify the LLM received truncated output
+        wf._call_llm.assert_called_once()
+        call_kwargs = wf._call_llm.call_args
+        user_msg = call_kwargs.kwargs.get("user_message", "")
+        # The output in the prompt should be truncated to 50 chars
+        assert "A" * 50 in user_msg
+        assert "A" * 200 not in user_msg
