@@ -1,7 +1,8 @@
 """Tests for project-aware guidance suggestion engine.
 
 Tests the NextAction dataclass, suggestion generation,
-transition registry, and formatting utilities.
+transition registry, formatting utilities, project index signals,
+workflow history patterns, and suggestion persistence.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -9,7 +10,14 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
+from unittest.mock import patch
+
+# ============================================================================
+# FIXTURES
+# ============================================================================
+import pytest
 
 from attune.workflows.data_classes import (
     CostReport,
@@ -19,14 +27,24 @@ from attune.workflows.data_classes import (
 from attune.workflows.suggestions import (
     MAX_SUGGESTIONS,
     _extract_output_text,
+    _filter_recently_shown,
+    _suggestions_from_history,
+    _suggestions_from_project_index,
     format_suggestions_markdown,
     generate_suggestions,
+    record_suggestions_shown,
     suggestions_to_options,
 )
 
-# ============================================================================
-# FIXTURES
-# ============================================================================
+
+@pytest.fixture(autouse=True)
+def _isolate_suggestions(tmp_path, monkeypatch):
+    """Isolate all suggestion tests from real filesystem.
+
+    Changes to tmp_path so project index reads and suggestion
+    state persistence don't affect the real working directory.
+    """
+    monkeypatch.chdir(tmp_path)
 
 
 def _make_result(
@@ -364,3 +382,360 @@ class TestSuggestionsToOptions:
     def test_empty_suggestions_returns_empty(self):
         """Test empty input returns empty list."""
         assert suggestions_to_options([]) == []
+
+
+# ============================================================================
+# PROJECT INDEX SIGNALS
+# ============================================================================
+
+
+class TestProjectIndexSignals:
+    """Tests for project index-based suggestions."""
+
+    def test_low_coverage_suggests_test_gen(self, tmp_path, monkeypatch):
+        """Test low coverage triggers test-gen suggestion."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 45.0,
+                        "files_without_tests": 12,
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("code-review")
+        workflow_names = [s.workflow_name for s in suggestions]
+        assert "test-gen" in workflow_names
+
+    def test_skips_test_gen_when_already_running(self, tmp_path, monkeypatch):
+        """Test doesn't suggest test-gen if that's what just ran."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 30.0,
+                        "files_without_tests": 20,
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("test-gen")
+        workflow_names = [s.workflow_name for s in suggestions]
+        assert "test-gen" not in workflow_names
+
+    def test_stale_files_suggest_test_gen(self, tmp_path, monkeypatch):
+        """Test stale tests trigger test-gen suggestion."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 90.0,
+                        "stale_file_count": 5,
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("code-review")
+        found = [s for s in suggestions if "stale" in s.description.lower()]
+        assert len(found) > 0
+
+    def test_critical_untested_suggests_security_audit(self, tmp_path, monkeypatch):
+        """Test critical untested files trigger security-audit suggestion."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 90.0,
+                        "critical_untested_files": ["auth.py", "crypto.py"],
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("code-review")
+        workflow_names = [s.workflow_name for s in suggestions]
+        assert "security-audit" in workflow_names
+
+    def test_attention_files_suggest_code_review(self, tmp_path, monkeypatch):
+        """Test many attention-needing files trigger code-review suggestion."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 90.0,
+                        "files_needing_attention": 8,
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("security-audit")
+        workflow_names = [s.workflow_name for s in suggestions]
+        assert "code-review" in workflow_names
+
+    def test_no_index_returns_empty(self, tmp_path, monkeypatch):
+        """Test missing project index returns empty suggestions."""
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("code-review")
+        assert suggestions == []
+
+    def test_healthy_project_returns_empty(self, tmp_path, monkeypatch):
+        """Test healthy project returns no index-based suggestions."""
+        index_dir = tmp_path / ".attune"
+        index_dir.mkdir()
+        index_file = index_dir / "project_index.json"
+        index_file.write_text(
+            json.dumps(
+                {
+                    "summary": {
+                        "test_coverage_avg": 95.0,
+                        "files_without_tests": 0,
+                        "stale_file_count": 0,
+                        "critical_untested_files": [],
+                        "files_needing_attention": 0,
+                    }
+                }
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+        suggestions = _suggestions_from_project_index("code-review")
+        assert suggestions == []
+
+
+# ============================================================================
+# WORKFLOW HISTORY PATTERNS
+# ============================================================================
+
+
+class TestWorkflowHistorySignals:
+    """Tests for workflow history-based suggestions."""
+
+    def test_detects_follow_up_pattern(self):
+        """Test detecting common follow-up workflow patterns."""
+        mock_runs = [
+            {"workflow_name": "code-review", "started_at": "2026-01-01T10:00:00"},
+            {"workflow_name": "security-audit", "started_at": "2026-01-01T10:30:00"},
+            {"workflow_name": "code-review", "started_at": "2026-01-02T10:00:00"},
+            {"workflow_name": "security-audit", "started_at": "2026-01-02T10:30:00"},
+            {"workflow_name": "code-review", "started_at": "2026-01-03T10:00:00"},
+            {"workflow_name": "security-audit", "started_at": "2026-01-03T10:30:00"},
+        ]
+
+        def mock_get_store():
+            class MockStore:
+                def query_runs(self, success_only=False, limit=50):
+                    return mock_runs
+
+            return MockStore()
+
+        with patch(
+            "attune.workflows.history_utils._get_history_store",
+            mock_get_store,
+        ):
+            suggestions = _suggestions_from_history("code-review")
+            workflow_names = [s.workflow_name for s in suggestions]
+            assert "security-audit" in workflow_names
+
+    def test_ignores_single_occurrence(self):
+        """Test that single-occurrence follow-ups are not suggested."""
+        mock_runs = [
+            {"workflow_name": "code-review", "started_at": "2026-01-01T10:00:00"},
+            {"workflow_name": "security-audit", "started_at": "2026-01-01T10:30:00"},
+            {"workflow_name": "code-review", "started_at": "2026-01-02T10:00:00"},
+            {"workflow_name": "test-gen", "started_at": "2026-01-02T10:30:00"},
+        ]
+
+        def mock_get_store():
+            class MockStore:
+                def query_runs(self, success_only=False, limit=50):
+                    return mock_runs
+
+            return MockStore()
+
+        with patch(
+            "attune.workflows.history_utils._get_history_store",
+            mock_get_store,
+        ):
+            suggestions = _suggestions_from_history("code-review")
+            # Each follow-up only appears once, so none should be suggested
+            assert suggestions == []
+
+    def test_no_history_returns_empty(self):
+        """Test that no history returns empty suggestions."""
+
+        def mock_get_store():
+            return None
+
+        with patch(
+            "attune.workflows.history_utils._get_history_store",
+            mock_get_store,
+        ):
+            suggestions = _suggestions_from_history("code-review")
+            assert suggestions == []
+
+    def test_history_suggestions_have_low_priority(self):
+        """Test that history-based suggestions get low priority."""
+        mock_runs = [
+            {"workflow_name": "code-review", "started_at": f"2026-01-{i:02d}T10:00:00"}
+            for i in range(1, 6)
+        ]
+        # Interleave with test-gen follow-ups
+        interleaved = []
+        for i, run in enumerate(mock_runs):
+            interleaved.append(run)
+            interleaved.append(
+                {
+                    "workflow_name": "test-gen",
+                    "started_at": f"2026-01-{i + 1:02d}T10:30:00",
+                }
+            )
+
+        def mock_get_store():
+            class MockStore:
+                def query_runs(self, success_only=False, limit=50):
+                    return interleaved
+
+            return MockStore()
+
+        with patch(
+            "attune.workflows.history_utils._get_history_store",
+            mock_get_store,
+        ):
+            suggestions = _suggestions_from_history("code-review")
+            for s in suggestions:
+                assert s.priority == "low"
+
+
+# ============================================================================
+# SUGGESTION PERSISTENCE
+# ============================================================================
+
+
+class TestSuggestionPersistence:
+    """Tests for cross-session suggestion persistence."""
+
+    def test_record_and_filter_recent(self, tmp_path, monkeypatch):
+        """Test that recently shown suggestions are filtered out."""
+        monkeypatch.chdir(tmp_path)
+        state_dir = tmp_path / ".attune"
+        state_dir.mkdir()
+
+        suggestions = [
+            NextAction(
+                workflow_name="test-gen",
+                description="Generate tests",
+                reasoning="Coverage gap",
+            ),
+            NextAction(
+                workflow_name="security-audit",
+                description="Run audit",
+                reasoning="Found issues",
+            ),
+        ]
+
+        # Record that these were shown
+        record_suggestions_shown(suggestions)
+
+        # Verify state file exists
+        state_file = state_dir / "suggestion_state.json"
+        assert state_file.exists()
+
+        state = json.loads(state_file.read_text())
+        assert "test-gen" in state["dismissed"]
+        assert "security-audit" in state["dismissed"]
+
+        # Filter should remove recently-shown suggestions
+        filtered = _filter_recently_shown(suggestions)
+        assert len(filtered) == 0
+
+    def test_expired_suggestions_reappear(self, tmp_path, monkeypatch):
+        """Test that suggestions reappear after dismiss period expires."""
+        monkeypatch.chdir(tmp_path)
+        state_dir = tmp_path / ".attune"
+        state_dir.mkdir()
+
+        # Write state with old timestamp (25 hours ago)
+        old_time = (datetime.now() - timedelta(hours=25)).isoformat()
+        state_file = state_dir / "suggestion_state.json"
+        state_file.write_text(json.dumps({"dismissed": {"test-gen": old_time}}))
+
+        suggestions = [
+            NextAction(
+                workflow_name="test-gen",
+                description="Generate tests",
+                reasoning="Coverage gap",
+            ),
+        ]
+
+        filtered = _filter_recently_shown(suggestions)
+        assert len(filtered) == 1
+        assert filtered[0].workflow_name == "test-gen"
+
+    def test_no_state_file_passes_all(self, tmp_path, monkeypatch):
+        """Test that missing state file doesn't filter anything."""
+        monkeypatch.chdir(tmp_path)
+
+        suggestions = [
+            NextAction(
+                workflow_name="test-gen",
+                description="Generate tests",
+                reasoning="Coverage gap",
+            ),
+        ]
+
+        filtered = _filter_recently_shown(suggestions)
+        assert len(filtered) == 1
+
+    def test_record_empty_suggestions_is_noop(self, tmp_path, monkeypatch):
+        """Test that recording empty list doesn't create state file."""
+        monkeypatch.chdir(tmp_path)
+        record_suggestions_shown([])
+        state_file = tmp_path / ".attune" / "suggestion_state.json"
+        assert not state_file.exists()
+
+    def test_partial_filter(self, tmp_path, monkeypatch):
+        """Test that only recently-shown suggestions are filtered."""
+        monkeypatch.chdir(tmp_path)
+        state_dir = tmp_path / ".attune"
+        state_dir.mkdir()
+
+        # Only test-gen was recently shown
+        recent_time = datetime.now().isoformat()
+        state_file = state_dir / "suggestion_state.json"
+        state_file.write_text(json.dumps({"dismissed": {"test-gen": recent_time}}))
+
+        suggestions = [
+            NextAction(
+                workflow_name="test-gen",
+                description="Generate tests",
+                reasoning="Coverage gap",
+            ),
+            NextAction(
+                workflow_name="security-audit",
+                description="Run audit",
+                reasoning="Found issues",
+            ),
+        ]
+
+        filtered = _filter_recently_shown(suggestions)
+        assert len(filtered) == 1
+        assert filtered[0].workflow_name == "security-audit"
