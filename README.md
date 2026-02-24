@@ -11,6 +11,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
 [![Tests](https://img.shields.io/badge/tests-14800%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-82%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -22,22 +23,23 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.4.1
+## What's New in v3.5.0
 
-- **Code review fixes** — Tightened type annotations,
-  logger formatting, path validation, and exception
-  handling across verification, cost tracking, and
-  code simplification modules.
+- **Project-Aware Guidance** — After any workflow
+  completes, Attune analyzes your project context and
+  surfaces 2-3 prioritized next-step suggestions
+  grounded in real findings — not generic menus. Three
+  signal sources: workflow transitions, project index
+  health, and workflow history patterns.
+- **Suggestion Persistence** — Suggestions survive across
+  sessions with a 24-hour dismiss window to avoid
+  repetition. Stored in `.attune/suggestion_state.json`.
 - **Code Simplifier workflow** (v3.4.0) — `simplify-code`
   workflow that reduces unnecessary complexity in
-  Claude-generated code. 4-stage pipeline with automatic
-  post-simplification.
+  Claude-generated code.
 - **Verification feedback loop** (v3.3.0) — Errors fed
   back to the LLM for self-correction before
-  re-verifying. 2-3x quality improvement.
-- **Cost tracking CLI** (v3.2.0) — `attune cost` commands
-  for monitoring API spend, viewing savings, and
-  exporting cost reports.
+  re-verifying.
 
 
 ---
