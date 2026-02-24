@@ -22,19 +22,19 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.4.0
+## What's New in v3.4.1
 
-- **Code Simplifier workflow** — New `simplify-code`
+- **Code review fixes** — Tightened type annotations,
+  logger formatting, path validation, and exception
+  handling across verification, cost tracking, and
+  code simplification modules.
+- **Code Simplifier workflow** (v3.4.0) — `simplify-code`
   workflow that reduces unnecessary complexity in
   Claude-generated code. 4-stage pipeline with automatic
-  post-simplification for code-generating workflows.
-- **Verification feedback loop** (v3.3.0) — When
-  verification fails, errors are fed back to the LLM
-  for self-correction before re-verifying. 2-3x quality
-  improvement.
-- **Lessons-to-CLAUDE.md bridge** (v3.3.0) — `attune
-  remember` syncs lessons to `.claude/CLAUDE.md` so
-  Claude Code users see Attune lessons natively.
+  post-simplification.
+- **Verification feedback loop** (v3.3.0) — Errors fed
+  back to the LLM for self-correction before
+  re-verifying. 2-3x quality improvement.
 - **Cost tracking CLI** (v3.2.0) — `attune cost` commands
   for monitoring API spend, viewing savings, and
   exporting cost reports.
