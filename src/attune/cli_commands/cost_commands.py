@@ -17,6 +17,10 @@ import json
 import logging
 from argparse import Namespace
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from attune.cost_tracker import CostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +60,7 @@ def cmd_costs(args: Namespace) -> int:
 
 
 def _costs_by_workflow(
-    tracker: object,
+    tracker: CostTracker,
     days: int,
     workflow: str,
     as_json: bool,
@@ -78,9 +82,9 @@ def _costs_by_workflow(
     cutoff = (datetime.now() - timedelta(days=days)).isoformat()
 
     # Load full request history to filter by task_type
-    tracker._load_requests()  # type: ignore[attr-defined]
-    all_requests = list(tracker.data.get("requests", []))  # type: ignore[attr-defined]
-    all_requests.extend(tracker._buffer)  # type: ignore[attr-defined]
+    tracker._load_requests()
+    all_requests = list(tracker.data.get("requests", []))
+    all_requests.extend(tracker._buffer)
 
     # Filter by workflow name in task_type field
     filtered = [
@@ -193,7 +197,7 @@ def cmd_costs_export(args: Namespace) -> int:
         return 1
 
 
-def _export_json(tracker: object, days: int, path: object) -> None:
+def _export_json(tracker: CostTracker, days: int, path: Path) -> None:
     """Export cost summary as JSON.
 
     Args:
@@ -202,12 +206,12 @@ def _export_json(tracker: object, days: int, path: object) -> None:
         path: Validated Path object.
 
     """
-    summary = tracker.get_summary(days)  # type: ignore[attr-defined]
+    summary = tracker.get_summary(days)
     with open(path, "w") as f:
         json.dump(summary, f, indent=2)
 
 
-def _export_csv(tracker: object, days: int, path: object) -> None:
+def _export_csv(tracker: CostTracker, days: int, path: Path) -> None:
     """Export daily cost totals as CSV.
 
     Args:
@@ -219,7 +223,7 @@ def _export_csv(tracker: object, days: int, path: object) -> None:
     from datetime import datetime, timedelta
 
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    daily_totals = tracker.data.get("daily_totals", {})  # type: ignore[attr-defined]
+    daily_totals = tracker.data.get("daily_totals", {})
 
     with open(path, "w", newline="") as f:
         writer = csv.writer(f)

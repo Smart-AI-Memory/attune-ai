@@ -21,7 +21,7 @@ from ..verification import VerificationResult
 from ..verification.config import VerificationConfig
 from ..verification.defaults import get_default_strategy
 from ..verification.runner import run_verification
-from ..verification.strategies import get_strategy
+from ..verification.strategies import VerificationStrategy, get_strategy
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +68,16 @@ class VerificationMixin:
             logger.debug("Verification init failed: %s", e)
             self._verification_config = None
 
-    def _resolve_strategy_instance(self) -> Any:
+    def _resolve_strategy_instance(self) -> VerificationStrategy | None:
         """Resolve the verification strategy for this workflow.
 
+        Resolves the strategy name from config. If ``"auto"``, looks
+        up the default strategy for this workflow via
+        ``get_default_strategy()``. Returns ``None`` when verification
+        is disabled or the strategy is ``"none"``.
+
         Returns:
-            VerificationStrategy instance, or None if strategy is "none".
+            VerificationStrategy instance, or None if disabled.
 
         """
         if self._verification_config is None:

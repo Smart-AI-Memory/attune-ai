@@ -22,20 +22,22 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.2.0
+## What's New in v3.4.0
 
-- **Cost tracking CLI** — New `attune cost` commands for
-  monitoring API spend, viewing savings, and exporting
-  cost reports.
-- **Acknowledgments** — Added recognition of Boris Cherny
-  (creator of Claude Code) and Affaan Mustafa
-  (10+ months of battle-tested Claude Code configs).
-  Both bodies of work significantly influenced
-  Attune's design and taught lessons that changed
-  our approach in meaningful ways.
-- **Hybrid caching enabled** — `[developer]` extra now
-  includes sentence-transformers for 70% cache hit rate
-  out of the box.
+- **Code Simplifier workflow** — New `simplify-code`
+  workflow that reduces unnecessary complexity in
+  Claude-generated code. 4-stage pipeline with automatic
+  post-simplification for code-generating workflows.
+- **Verification feedback loop** (v3.3.0) — When
+  verification fails, errors are fed back to the LLM
+  for self-correction before re-verifying. 2-3x quality
+  improvement.
+- **Lessons-to-CLAUDE.md bridge** (v3.3.0) — `attune
+  remember` syncs lessons to `.claude/CLAUDE.md` so
+  Claude Code users see Attune lessons natively.
+- **Cost tracking CLI** (v3.2.0) — `attune cost` commands
+  for monitoring API spend, viewing savings, and
+  exporting cost reports.
 
 
 ---

@@ -87,11 +87,18 @@ def main() -> None:
     if not file_path or not _is_python_file(file_path):
         return
 
-    if not Path(file_path).exists():
+    try:
+        from attune.security.path_validation import _validate_file_path
+
+        validated = _validate_file_path(file_path)
+    except (ValueError, ImportError):
         return
 
-    _run_formatter(["black", "--quiet", "--line-length=100"], file_path)
-    _run_formatter(["ruff", "check", "--fix", "--quiet"], file_path)
+    if not validated.exists():
+        return
+
+    _run_formatter(["black", "--quiet", "--line-length=100"], str(validated))
+    _run_formatter(["ruff", "check", "--fix", "--quiet"], str(validated))
 
 
 if __name__ == "__main__":

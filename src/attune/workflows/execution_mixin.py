@@ -141,7 +141,7 @@ class ExecutionMixin(
             if self._telemetry_backend is not None:
                 self._telemetry_backend.log_task_routing(routing_record)
         except Exception as e:
-            logger.debug(f"Failed to log task routing: {e}")
+            logger.debug("Failed to log task routing: %s", e)
 
         # Auto tier recommendation
         if self._enable_tier_tracking:
@@ -154,7 +154,7 @@ class ExecutionMixin(
                     files_affected = [str(files_affected)]
                 self._tier_tracker.show_recommendation(files_affected)
             except Exception as e:
-                logger.debug(f"Tier tracking disabled: {e}")
+                logger.debug("Tier tracking disabled: %s", e)
                 self._enable_tier_tracking = False
 
         # Initialize agent ID for heartbeat/coordination (Pattern 1 & 2)
@@ -182,7 +182,7 @@ class ExecutionMixin(
                     message="Agent heartbeat tracking started",
                 )
             except Exception as e:
-                logger.warning(f"Failed to start heartbeat tracking: {e}")
+                logger.warning("Failed to start heartbeat tracking: %s", e)
                 self._enable_heartbeat_tracking = False
 
         started_at = datetime.now()
@@ -211,7 +211,7 @@ class ExecutionMixin(
                 self._rich_reporter.start()
             except Exception as e:
                 # Fall back to console reporter
-                logger.debug(f"Rich progress unavailable: {e}")
+                logger.debug("Rich progress unavailable: %s", e)
                 self._rich_reporter = None
                 console_reporter = ConsoleProgressReporter(verbose=False)
                 self._progress_tracker.add_callback(console_reporter.report)
@@ -259,7 +259,7 @@ class ExecutionMixin(
                 self._progress_tracker.fail_workflow(error)
         except Exception as e:
             # INTENTIONAL: Workflow orchestration - catch all errors to report failure gracefully
-            logger.exception(f"Unexpected error in workflow execution: {type(e).__name__}")
+            logger.exception("Unexpected error in workflow execution: %s", type(e).__name__)
             error = f"Workflow execution failed: {type(e).__name__}: {e}"
             if self._progress_tracker:
                 self._progress_tracker.fail_workflow(error)

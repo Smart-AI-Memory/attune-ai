@@ -15,13 +15,14 @@ import subprocess
 from datetime import datetime
 from typing import Any
 
+from . import VerificationResult
 from .config import VerificationConfig
 from .strategies import VerificationStrategy
 
 logger = logging.getLogger(__name__)
 
-# Maximum output capture size (10KB)
-_MAX_OUTPUT_BYTES = 10240
+# Maximum output capture size (10K characters)
+_MAX_OUTPUT_CHARS = 10240
 
 
 def run_verification(
@@ -30,12 +31,12 @@ def run_verification(
     workflow_name: str,
     workflow_result: Any,
     attempt: int = 1,
-) -> dict[str, Any]:
+) -> VerificationResult:
     """Execute a single verification attempt.
 
     Runs the strategy's command as a subprocess and captures the
     result. Never raises exceptions -- all errors are captured in
-    the returned dict.
+    the returned VerificationResult.
 
     Args:
         config: Verification configuration.
@@ -45,11 +46,9 @@ def run_verification(
         attempt: Which attempt this is (1-based).
 
     Returns:
-        Dict with keys matching VerificationResult fields.
+        VerificationResult with pass/fail status and captured output.
 
     """
-    from . import VerificationResult
-
     command = config.command or strategy.get_command(workflow_name, workflow_result)
     cmd_args = shlex.split(command)
 
@@ -71,8 +70,8 @@ def run_verification(
             strategy=strategy.name,
             command=command,
             exit_code=proc.returncode,
-            stdout=proc.stdout[:_MAX_OUTPUT_BYTES],
-            stderr=proc.stderr[:_MAX_OUTPUT_BYTES],
+            stdout=proc.stdout[:_MAX_OUTPUT_CHARS],
+            stderr=proc.stderr[:_MAX_OUTPUT_CHARS],
             duration_ms=duration_ms,
             attempt=attempt,
             max_retries=config.max_retries,
