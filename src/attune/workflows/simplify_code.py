@@ -61,9 +61,9 @@ class SimplifyCodeWorkflow(BaseWorkflow):
     stages = ["scan", "analyze", "simplify", "review"]
     tier_map = {
         "scan": ModelTier.CHEAP,
-        "analyze": ModelTier.CHEAP,
+        "analyze": ModelTier.CAPABLE,
         "simplify": ModelTier.CAPABLE,
-        "review": ModelTier.CAPABLE,
+        "review": ModelTier.PREMIUM,
     }
 
     def __init__(
