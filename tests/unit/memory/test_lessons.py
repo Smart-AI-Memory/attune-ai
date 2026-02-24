@@ -645,6 +645,69 @@ class TestClaudeMdIntegration:
         assert lessons[0]["text"] == "Hand-written by developer"
         assert lessons[0]["source"] == "claude_md"
 
+    def test_remove_claude_md_sourced_lesson(self, tmp_path) -> None:
+        """Remove a lesson that only exists in CLAUDE.md."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text(
+            f"# Project\n\n"
+            f"{_CLAUDE_MD_START}\n"
+            f"## Lessons Learned\n\n"
+            f"- **2026-02-20** Only in claude md\n"
+            f"{_CLAUDE_MD_END}\n"
+        )
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+
+        # Verify it appears
+        lessons = manager.get_lessons()
+        assert len(lessons) == 1
+        assert lessons[0]["source"] == "claude_md"
+
+        # Remove it
+        result = manager.remove_lesson("claude md")
+        assert "Only in claude md" in result
+
+        # Verify it's gone
+        lessons_after = manager.get_lessons()
+        assert len(lessons_after) == 0
+
+        # Verify CLAUDE.md file was updated
+        content = claude_md.read_text()
+        assert "Only in claude md" not in content
+        assert _CLAUDE_MD_START in content
+        assert _CLAUDE_MD_END in content
+
+    def test_remove_project_lesson_syncs_to_claude_md(self, tmp_path) -> None:
+        """Removing a project lesson also removes it from CLAUDE.md."""
+        claude_md = tmp_path / ".claude" / "CLAUDE.md"
+        claude_md.parent.mkdir(parents=True, exist_ok=True)
+        claude_md.write_text("# Project\n\n")
+
+        manager = _make_manager(
+            tmp_path,
+            sync_to_claude_md=True,
+            claude_md_path=claude_md,
+        )
+
+        # Add a lesson (syncs to both files)
+        manager.add_lesson("Synced lesson")
+
+        # Verify it's in CLAUDE.md
+        content = claude_md.read_text()
+        assert "Synced lesson" in content
+
+        # Remove it
+        manager.remove_lesson("Synced")
+
+        # Verify it's gone from CLAUDE.md too
+        content_after = claude_md.read_text()
+        assert "Synced lesson" not in content_after
+
     def test_bridge_disabled_does_not_read_claude_md(self, tmp_path) -> None:
         """When sync disabled, CLAUDE.md lessons not included."""
         claude_md = tmp_path / ".claude" / "CLAUDE.md"
