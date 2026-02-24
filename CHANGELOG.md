@@ -5,6 +5,30 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1] - 2026-02-23
+
+### Changed
+
+- **correction_enabled defaults to True** — Verification
+  self-correction is now enabled by default, matching
+  Boris's "verify AND self-correct" philosophy. Users can
+  still disable with `correction_enabled: false`.
+- **correction_context_chars configurable** — New
+  `correction_context_chars` field (default 8000) controls
+  how much workflow output is included in correction
+  prompts. Previously hardcoded.
+
+### Fixed
+
+- **_remove_from_file handles claude_md source** — Removing
+  a lesson sourced from CLAUDE.md no longer falls through
+  to the project file path. Dedicated
+  `_remove_lesson_from_claude_md` helper edits only the
+  marker-delimited section.
+- **Project lesson removal syncs to CLAUDE.md** — Removing
+  a project-sourced lesson now also removes it from the
+  CLAUDE.md managed section, keeping both files in sync.
+
 ## [3.3.0] - 2026-02-23
 
 ### Added
