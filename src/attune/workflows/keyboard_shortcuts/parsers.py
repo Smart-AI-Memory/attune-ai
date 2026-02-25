@@ -37,7 +37,7 @@ class VSCodeCommandParser(FeatureParser):
     def parse(self, path: Path) -> list[Feature]:
         """Extract commands from VSCode package.json."""
         try:
-            pkg = json.loads(path.read_text())
+            pkg = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return []
 
@@ -116,13 +116,13 @@ class PyProjectParser(FeatureParser):
             # Python 3.11+ has tomllib built-in
             import tomllib
 
-            data = tomllib.loads(path.read_text())
+            data = tomllib.loads(path.read_text(encoding="utf-8"))
         except ImportError:
             # Fallback for older Python
             try:
                 import tomli as tomllib
 
-                data = tomllib.loads(path.read_text())
+                data = tomllib.loads(path.read_text(encoding="utf-8"))
             except ImportError:
                 return []
             except (OSError, Exception):
@@ -173,7 +173,7 @@ class YAMLManifestParser(FeatureParser):
     def parse(self, path: Path) -> list[Feature]:
         """Extract features from custom YAML manifest."""
         try:
-            manifest = yaml.safe_load(path.read_text())
+            manifest = yaml.safe_load(path.read_text(encoding="utf-8"))
         except (yaml.YAMLError, OSError):
             return []
 
@@ -224,7 +224,7 @@ class YAMLManifestParser(FeatureParser):
     def parse_full_manifest(self, path: Path) -> FeatureManifest | None:
         """Parse complete manifest including project metadata."""
         try:
-            data = yaml.safe_load(path.read_text())
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
         except (yaml.YAMLError, OSError):
             return None
 

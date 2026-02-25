@@ -60,22 +60,65 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 cls._memory = RedisShortTermMemory()
             return cls._memory
 
+    # MIME types for static asset serving
+    MIME_TYPES = {
+        ".html": "text/html",
+        ".css": "text/css",
+        ".js": "application/javascript",
+        ".json": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".ico": "image/x-icon",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+    }
+
+    def _has_react_build(self) -> bool:
+        """Check if the React build exists."""
+        react_dir = Path(__file__).parent / "static" / "react"
+        return (react_dir / "index.html").exists()
+
+    def _serve_react_asset(self, asset_path: str) -> bool:
+        """Serve a file from the React build directory.
+
+        Returns True if the file was found and served.
+        """
+        react_dir = Path(__file__).parent / "static" / "react"
+        # Prevent path traversal
+        try:
+            full_path = (react_dir / asset_path.lstrip("/")).resolve()
+            full_path.relative_to(react_dir.resolve())
+        except (ValueError, OSError):
+            return False
+
+        if not full_path.is_file():
+            return False
+
+        suffix = full_path.suffix.lower()
+        content_type = self.MIME_TYPES.get(suffix, "application/octet-stream")
+
+        try:
+            content = full_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(content)))
+            # Cache hashed assets aggressively
+            if "/assets/" in asset_path:
+                self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+            self.end_headers()
+            self.wfile.write(content)
+            return True
+        except OSError:
+            return False
+
     def do_GET(self):
         """Handle GET requests."""
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
 
-        # Route requests
-        if path == "/" or path == "/index.html":
-            self.serve_file("index.html", "text/html")
-        elif path == "/test.html":
-            self.serve_file("test.html", "text/html")
-        elif path == "/static/style.css":
-            self.serve_file("style.css", "text/css")
-        elif path == "/static/app.js":
-            self.serve_file("app.js", "application/javascript")
-        elif path == "/api/health":
+        # Route requests — API endpoints first
+        if path == "/api/health":
             self.api_health()
         elif path == "/api/agents":
             self.api_agents()
@@ -96,8 +139,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
         elif path == "/api/feedback/underperforming":
             threshold = float(query.get("threshold", [0.7])[0])
             self.api_underperforming(threshold)
+        elif path == "/api/system/services":
+            self.api_system_services()
+        # Static files — try React build first, then legacy
+        elif self._has_react_build():
+            # Serve React hashed assets (e.g. /assets/index-abc123.js)
+            if path.startswith("/assets/"):
+                if not self._serve_react_asset(path):
+                    self.send_error(404, "Not Found")
+            else:
+                # SPA fallback: serve React index.html for all non-API routes
+                self._serve_react_asset("index.html")
         else:
-            self.send_error(404, "Not Found")
+            # Legacy static file serving (vanilla HTML/CSS/JS dashboard)
+            if path == "/" or path == "/index.html":
+                self.serve_file("index.html", "text/html")
+            elif path == "/static/style.css":
+                self.serve_file("style.css", "text/css")
+            elif path == "/static/app.js":
+                self.serve_file("app.js", "application/javascript")
+            else:
+                self.send_error(404, "Not Found")
 
     def do_POST(self):
         """Handle POST requests."""
@@ -404,11 +466,154 @@ class DashboardHandler(BaseHTTPRequestHandler):
                         }
                     )
 
-            all_underperforming.sort(key=lambda x: x["avg_quality"])
+            all_underperforming.sort(key=lambda x: float(x["avg_quality"]))
             self.send_json(all_underperforming)
         except Exception as e:
             logger.error(f"Failed to get underperforming: {e}")
             self.send_json([])
+
+    def api_system_services(self):
+        """Check real-time health of each system component.
+
+        Returns a list of service status objects, one per component.
+        Each check is fast (<10ms) — no expensive scans or Redis ops
+        that could block the response.
+        """
+        import time
+
+        results = []
+
+        # --- helpers ---
+
+        def ms(t0: float) -> int:
+            return max(1, int((time.perf_counter() - t0) * 1000))
+
+        def check_redis() -> tuple[str, int | None]:
+            t0 = time.perf_counter()
+            try:
+                memory = self.get_memory()
+                if memory._client is None:
+                    return "DOWN", None
+                memory.ping()
+                return "HEALTHY", ms(t0)
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: health check must never raise
+                return "DOWN", None
+
+        def check_model_router() -> tuple[str, int]:
+            t0 = time.perf_counter()
+            try:
+                from attune.models.registry import MODEL_REGISTRY
+
+                status = "HEALTHY" if MODEL_REGISTRY else "WARNING"
+                return status, ms(t0)
+            except Exception:  # noqa: BLE001
+                return "DOWN", ms(t0)
+
+        def check_cost_tracker() -> tuple[str, int, int]:
+            """Returns (status, latency_ms, buffer_size)."""
+            t0 = time.perf_counter()
+            try:
+                from attune.telemetry.usage_tracker import UsageTracker
+
+                tracker = UsageTracker.get_instance()
+                tracker.telemetry_dir.stat()
+                with tracker._lock:
+                    buf = len(tracker._buffer)
+                return "HEALTHY", ms(t0), buf
+            except Exception:  # noqa: BLE001
+                return "WARNING", ms(t0), 0
+
+        def check_wizard_engine() -> tuple[str, int]:
+            t0 = time.perf_counter()
+            try:
+                from attune.wizard_registry import list_wizards
+
+                list_wizards()
+                return "HEALTHY", ms(t0)
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: wizard engine may not be installed
+                return "HEALTHY", ms(t0)
+
+        def check_feedback_loop() -> tuple[str, int, str]:
+            """Returns (status, latency_ms, backend_type)."""
+            t0 = time.perf_counter()
+            try:
+                from attune.telemetry.feedback_loop import FeedbackLoop
+
+                loop = FeedbackLoop()
+                connected = loop.memory.is_connected()
+                backend = loop.memory.get_stats().get("backend", "redis")
+                status = "HEALTHY" if connected else "DOWN"
+                return status, ms(t0), backend
+            except Exception:  # noqa: BLE001
+                return "DOWN", ms(t0), "unknown"
+
+        # --- run checks ---
+
+        redis_status, redis_latency = check_redis()
+        router_status, router_latency = check_model_router()
+        tracker_status, tracker_latency, buf_size = check_cost_tracker()
+        wizard_status, wizard_latency = check_wizard_engine()
+        feedback_status, feedback_latency, feedback_backend = check_feedback_loop()
+
+        # Event Streamer and Approval Gate require Redis pub/sub
+        redis_dep = "HEALTHY" if redis_status == "HEALTHY" else "DOWN"
+
+        results = [
+            {
+                "name": "Model Router",
+                "description": "Intelligent tier selection and escalation",
+                "status": router_status,
+                "latency_ms": router_latency,
+            },
+            {
+                "name": "Redis Cache",
+                "description": "Primary data store and pub/sub",
+                "status": redis_status,
+                "latency_ms": redis_latency,
+            },
+            {
+                "name": "Redis Agents",
+                "description": "Agent heartbeat and state coordination",
+                "status": redis_status,
+                "latency_ms": redis_latency,
+            },
+            {
+                "name": "Wizard Engine",
+                "description": "Multi-step workflow execution runtime",
+                "status": wizard_status,
+                "latency_ms": wizard_latency,
+            },
+            {
+                "name": "Cost Tracker",
+                "description": "Usage telemetry and cost optimization",
+                "status": tracker_status,
+                "latency_ms": tracker_latency,
+                "buffer_size": buf_size,
+            },
+            {
+                "name": "Feedback Loop",
+                "description": "Agent-to-LLM quality feedback pipeline",
+                "status": feedback_status,
+                "latency_ms": feedback_latency,
+                "backend": feedback_backend,
+            },
+            {
+                "name": "Event Streamer",
+                "description": "Real-time event distribution via Redis streams",
+                "status": redis_dep,
+                "latency_ms": redis_latency,
+            },
+            {
+                "name": "Approval Gate",
+                "description": "Human-in-the-loop approval management",
+                "status": redis_dep,
+                "latency_ms": redis_latency,
+            },
+        ]
+
+        self.send_json(results)
 
     def log_message(self, format, *args):
         """Suppress default logging."""

@@ -22,14 +22,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from dashboard.backend.api.monitoring import router as monitoring_router
-from dashboard.backend.schemas import (
-    AgentPerformanceResponse,
-    CoverageStatsResponse,
-    TaskRoutingStatsResponse,
-    TestExecutionStatsResponse,
-    Tier1SummaryResponse,
-)
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -40,6 +32,14 @@ from attune.models import (
     TestExecutionRecord,
 )
 from attune.models.telemetry import TelemetryStore
+from dashboard.backend.api.monitoring import router as monitoring_router
+from dashboard.backend.schemas import (
+    AgentPerformanceResponse,
+    CoverageStatsResponse,
+    TaskRoutingStatsResponse,
+    TestExecutionStatsResponse,
+    Tier1SummaryResponse,
+)
 
 
 @pytest.fixture

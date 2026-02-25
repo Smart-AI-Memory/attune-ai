@@ -1,28 +1,33 @@
 ---
-description: Example: Multi-Agent Team Coordination: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
+description: "Multi-Agent Team Coordination: Task distribution,
+  shared patterns, conflict resolution, and team execution
+  using Attune's coordination and SDK agent APIs."
 ---
 
-# Example: Multi-Agent Team Coordination
+# Multi-Agent Team Coordination
 
 **Difficulty**: Advanced
 **Time**: 30 minutes
-**Empathy Level**: 4 (Anticipatory)
-**Domain**: Software Development
+**Prerequisites**: Redis running locally, `attune-ai`
+installed
 
 ---
 
 ## Overview
 
-This example demonstrates how multiple AI agents can coordinate through shared pattern libraries, detect conflicts, and learn from each other's successes.
+This tutorial shows how to coordinate multiple AI agents
+using Attune's real coordination primitives:
 
-**Use Case**: A development team with specialized AI agents (Frontend, Backend, DevOps) that need to coordinate on a microservices project.
-
-**What you'll learn**:
-- Shared pattern library across agents
-- Conflict detection (two agents modifying same resource)
-- Coordination protocols (handoffs, broadcast notifications)
-- Collective learning (agents learn from each other)
-- Team metrics dashboard
+- **AgentCoordinator** — Redis-backed task queue with
+  agent registration, claiming, and broadcasting
+- **TeamSession** — Shared context and signaling between
+  agents in a collaborative session
+- **PatternLibrary** — Shared pattern discovery so one
+  agent's learning benefits the whole team
+- **ConflictResolver** — Weighted scoring to resolve
+  conflicting pattern recommendations
+- **SDKAgentTeam** — Parallel/sequential agent execution
+  with quality gates
 
 ---
 
@@ -30,676 +35,588 @@ This example demonstrates how multiple AI agents can coordinate through shared p
 
 ```bash
 pip install attune-ai
+redis-server  # Must be running for coordination
 ```
 
 ---
 
-## Part 1: Basic Multi-Agent Setup
+## Part 1: Task Distribution with AgentCoordinator
 
-### Create Team of Agents
+The `AgentCoordinator` uses Redis to distribute tasks
+across agents. Agents register, claim pending tasks, and
+broadcast results.
 
 ```python
-from attune import EmpathyOS
-from attune.coordination import CoordinationManager
+from attune.coordination import AgentCoordinator, AgentTask
+from attune.memory import get_redis_memory
 
-# Create three specialized agents
-frontend_agent = EmpathyOS(
-    user_id="agent_frontend",
-    target_level=4,
-    persistence_enabled=True,
-    shared_library="team_patterns.db",  # Shared across team
-    role="frontend_developer",
-    expertise=["React", "TypeScript", "CSS", "UI/UX"]
+# Connect to Redis
+memory = get_redis_memory()
+
+# Create a coordinator for a code review team
+coordinator = AgentCoordinator(
+    short_term_memory=memory,
+    team_id="code_review_team",
 )
 
-backend_agent = EmpathyOS(
-    user_id="agent_backend",
-    target_level=4,
-    persistence_enabled=True,
-    shared_library="team_patterns.db",  # Same DB
-    role="backend_developer",
-    expertise=["Python", "FastAPI", "PostgreSQL", "Redis"]
+# Register three specialized agents
+coordinator.register_agent(
+    "security_agent",
+    capabilities=["security_review", "vulnerability_scan"],
+)
+coordinator.register_agent(
+    "performance_agent",
+    capabilities=["performance_review", "profiling"],
+)
+coordinator.register_agent(
+    "style_agent",
+    capabilities=["style_review", "linting"],
 )
 
-devops_agent = EmpathyOS(
-    user_id="agent_devops",
-    target_level=4,
-    persistence_enabled=True,
-    shared_library="team_patterns.db",  # Same DB
-    role="devops_engineer",
-    expertise=["Docker", "Kubernetes", "GitHub Actions", "AWS"]
-)
-
-# Create coordination manager
-coordinator = CoordinationManager(agents=[
-    frontend_agent,
-    backend_agent,
-    devops_agent
-])
-
-print(f"Team initialized: {coordinator.agent_count} agents")
-print(f"Shared pattern library: team_patterns.db")
+print(f"Active agents: {coordinator.get_active_agents()}")
+# Output: Active agents: ['security_agent',
+#   'performance_agent', 'style_agent']
 ```
 
----
-
-## Part 2: Shared Pattern Learning
-
-### Agent Learns Pattern, Others Benefit
+### Add and Claim Tasks
 
 ```python
-# Frontend agent learns a React optimization pattern
-response = frontend_agent.interact(
-    user_id="agent_frontend",
-    user_input="How do I optimize React rendering performance?",
-    context={
-        "task": "performance_optimization",
-        "framework": "React"
-    }
+# Add tasks to the queue
+coordinator.add_task(AgentTask(
+    task_id="review_auth_module",
+    task_type="security_review",
+    description="Review authentication module for vulns",
+    priority=9,
+    context={"files": ["src/auth.py", "src/tokens.py"]},
+))
+
+coordinator.add_task(AgentTask(
+    task_id="review_query_perf",
+    task_type="performance_review",
+    description="Check database query performance",
+    priority=7,
+    context={"files": ["src/db/queries.py"]},
+))
+
+# Security agent claims the highest-priority task
+task = coordinator.claim_task(
+    "security_agent",
+    task_type="security_review",
 )
 
-# Frontend agent discovers useMemo pattern
-frontend_agent.learn_pattern(
-    pattern_name="react_use_memo_optimization",
-    pattern_content={
-        "problem": "Expensive computations causing re-renders",
-        "solution": "Use React.useMemo() to memoize results",
-        "example": """
-        const expensiveValue = React.useMemo(() => {
-            return computeExpensiveValue(data);
-        }, [data]);
-        """,
-        "confidence": 0.92,
-        "success_count": 15
-    }
-)
+if task:
+    print(f"Claimed: {task.description} (priority {task.priority})")
+    # Output: Claimed: Review authentication module for
+    #   vulns (priority 9)
 
-print("✅ Frontend agent learned pattern: react_use_memo_optimization")
-
-# Later, backend agent working on a similar problem
-response = backend_agent.interact(
-    user_id="agent_backend",
-    user_input="API endpoint is slow due to repeated calculations",
-    context={
-        "task": "performance_optimization",
-        "framework": "FastAPI"
-    }
-)
-
-# Backend agent retrieves frontend's pattern and adapts it
-print(response.response)
-# Output:
-# "I found a similar optimization pattern from the frontend agent.
-#  They used memoization for expensive React computations (confidence: 92%).
-#
-#  For FastAPI, I recommend Python's @lru_cache decorator:
-#
-#  from functools import lru_cache
-#
-#  @lru_cache(maxsize=128)
-#  def expensive_computation(param):
-#      return compute_result(param)
-#
-#  This is the backend equivalent of React.useMemo(). The pattern
-#  successfully solved 15 similar issues for frontend."
-
-# Backend agent attributes learning to frontend
-print(f"Pattern source: {response.pattern_source}")
-# Output: agent_frontend (transferred)
+    # Do the work, then complete the task
+    coordinator.complete_task(
+        task.task_id,
+        result={
+            "issues_found": 2,
+            "severity": "high",
+            "details": "SQL injection in login endpoint",
+        },
+        agent_id="security_agent",
+    )
 ```
 
----
-
-## Part 3: Conflict Detection
-
-### Detect When Agents are Working on Same Resource
+### Broadcast Messages
 
 ```python
-from attune.coordination import ConflictDetector
-
-# Create conflict detector
-conflict_detector = ConflictDetector(coordinator)
-
-# Frontend agent starts working on API contract
-frontend_task = frontend_agent.start_task(
-    task_id="modify_user_api",
-    resource="api/users.ts",
-    action="add_new_field",
-    details={
-        "file": "api/users.ts",
-        "change": "Add 'profile_image' field to User type"
-    }
-)
-
-# Backend agent also modifies user API (conflict!)
-backend_task = backend_agent.start_task(
-    task_id="refactor_user_endpoint",
-    resource="api/users",  # Same resource
-    action="change_schema",
-    details={
-        "file": "api/users.py",
-        "change": "Rename 'username' to 'email' in User model"
-    }
-)
-
-# Detect conflict
-conflict = conflict_detector.check_conflict(frontend_task, backend_task)
-
-if conflict:
-    print(f"⚠️ CONFLICT DETECTED")
-    print(f"   Resource: {conflict.resource}")
-    print(f"   Agent 1: {conflict.agent1} - {conflict.action1}")
-    print(f"   Agent 2: {conflict.agent2} - {conflict.action2}")
-    print(f"   Severity: {conflict.severity}")
-    print(f"   Recommendation: {conflict.recommendation}")
-
-# Output:
-# ⚠️ CONFLICT DETECTED
-#    Resource: api/users
-#    Agent 1: agent_frontend - add_new_field
-#    Agent 2: agent_backend - change_schema
-#    Severity: HIGH
-#    Recommendation: Coordination required - both agents modifying User contract
-
-# Request coordination
-coordinator.request_coordination(
-    agents=["agent_frontend", "agent_backend"],
-    topic="user_api_contract_changes",
-    conflict=conflict
-)
-```
-
----
-
-## Part 4: Coordination Protocols
-
-### Handoff Protocol
-
-```python
-from attune.coordination import HandoffProtocol
-
-# Frontend completes UI, hands off to backend for API integration
-handoff = HandoffProtocol(
-    from_agent=frontend_agent,
-    to_agent=backend_agent,
-    task="user_profile_feature",
-    context={
-        "completed": [
-            "UI components (ProfileCard, ProfileEdit)",
-            "TypeScript types (User, Profile)",
-            "API contract defined (api/users.ts)"
-        ],
-        "pending": [
-            "Backend API implementation",
-            "Database schema migration",
-            "Authentication for profile endpoints"
-        ],
-        "blockers": [],
-        "notes": "UI expects /api/users/:id/profile endpoint"
-    }
-)
-
-# Execute handoff
-handoff.execute()
-
-print("✅ Handoff complete: Frontend → Backend")
-print(f"   Backend agent has context: {len(handoff.context['completed'])} items")
-
-# Backend agent receives handoff
-backend_response = backend_agent.interact(
-    user_id="agent_backend",
-    user_input="Continue user profile feature from frontend",
-    context={"handoff": handoff.to_dict()}
-)
-
-print(backend_response.response)
-# Output:
-# "Received handoff from frontend agent. I understand:
-#
-#  Completed by Frontend:
-#    ✅ UI components ready (ProfileCard, ProfileEdit)
-#    ✅ TypeScript types defined
-#    ✅ API contract specified: /api/users/:id/profile
-#
-#  My responsibilities:
-#    1. Implement /api/users/:id/profile endpoint (FastAPI)
-#    2. Create database migration for profile table
-#    3. Add authentication middleware for profile routes
-#
-#  I'll start with the database schema. Based on the frontend's
-#  API contract, I need these fields:
-#    - user_id (FK to users table)
-#    - profile_image (URL)
-#    - bio (text)
-#    - created_at, updated_at (timestamps)
-#
-#  Estimated completion: 2 hours"
-```
-
-### Broadcast Protocol
-
-```python
-from attune.coordination import BroadcastProtocol
-
-# DevOps agent discovers infrastructure change affecting all agents
-broadcast = BroadcastProtocol(
-    from_agent=devops_agent,
+# Broadcast an infrastructure change to all agents
+coordinator.broadcast(
     message_type="infrastructure_change",
-    severity="high",
-    content={
-        "change": "Database connection pool limit reduced",
-        "reason": "Cost optimization (RDS downscale)",
+    data={
+        "change": "Database connection pool reduced",
         "old_value": "max_connections=200",
         "new_value": "max_connections=50",
-        "impact": "Applications may experience connection timeouts",
-        "recommendation": "Implement connection pooling with max_size=10",
-        "deadline": "2025-12-01"
-    }
-)
-
-# Broadcast to all agents
-broadcast.send_to_all(coordinator)
-
-print("📢 Broadcast sent to all agents")
-
-# Each agent receives and adapts
-for agent in [frontend_agent, backend_agent]:
-    response = agent.interact(
-        user_id=agent.user_id,
-        user_input="Process infrastructure broadcast",
-        context={"broadcast": broadcast.to_dict()}
-    )
-
-    print(f"\n{agent.user_id} response:")
-    print(f"  {response.response}")
-
-# Output:
-# agent_frontend response:
-#   Acknowledged infrastructure change. As frontend agent, I'm not directly
-#   affected (no DB connections from browser). Notifying backend agent may
-#   need connection pooling updates.
-#
-# agent_backend response:
-#   ⚠️ HIGH PRIORITY: Database connection limit reduced (200 → 50).
-#   Current code creates new connection per request (FastAPI default).
-#   Action required:
-#     1. Implement SQLAlchemy connection pool (max_size=10)
-#     2. Add connection timeout handling
-#     3. Update deployment config
-#   Estimated work: 3 hours. Can complete by 2025-11-28.
-```
-
----
-
-## Part 5: Collective Learning
-
-### Agents Learn from Each Other's Successes
-
-```python
-from attune.coordination import CollectiveLearning
-
-# Track success rates across agents
-collective = CollectiveLearning(coordinator)
-
-# Backend agent successfully debugs a performance issue
-backend_agent.record_success(
-    task="debug_slow_query",
-    approach="add_database_index",
-    outcome={
-        "before": "Query time: 2.5 seconds",
-        "after": "Query time: 45ms",
-        "improvement": "98.2%"
+        "action_required": True,
     },
-    confidence=0.95,
-    pattern_name="database_index_optimization"
 )
 
-print("✅ Backend agent recorded success: database_index_optimization")
-
-# Frontend agent encounters similar issue (slow data loading)
-frontend_response = frontend_agent.interact(
-    user_id="agent_frontend",
-    user_input="User list is loading very slowly (3 seconds)",
-    context={
-        "issue_type": "performance",
-        "component": "UserListPage"
-    }
-)
-
-print(frontend_response.response)
-# Output:
-# "I notice the backend agent recently solved a similar performance issue
-#  (3 days ago, confidence: 95%). They improved query time by 98.2% using
-#  database indexes.
-#
-#  For your frontend issue, I recommend two approaches:
-#
-#  1. Backend solution (adapted from agent_backend's pattern):
-#     Ask backend to add database index on frequently queried fields
-#     Expected improvement: ~95% faster
-#
-#  2. Frontend solution (my expertise):
-#     Implement pagination + virtualized scrolling
-#     Expected improvement: ~70% faster perceived load time
-#
-#  Combining both could make user list near-instant. Would you like me to
-#  coordinate with backend agent to implement the database index?"
-
-# Collective learning metrics
-metrics = collective.get_metrics()
-print(f"\nTeam Learning Metrics:")
-print(f"  Total patterns shared: {metrics['total_patterns']}")
-print(f"  Cross-agent pattern reuse: {metrics['reuse_rate']:.1%}")
-print(f"  Most successful agent: {metrics['top_contributor']}")
-
-# Output:
-# Team Learning Metrics:
-#   Total patterns shared: 47
-#   Cross-agent pattern reuse: 68.2%
-#   Most successful agent: agent_backend (22 patterns created)
+# Aggregate results from all completed tasks
+results = coordinator.aggregate_results()
+print(f"Completed: {results['total_completed']}")
+print(f"By agent: {results['by_agent']}")
 ```
 
 ---
 
-## Part 6: Team Metrics Dashboard
+## Part 2: Shared Context with TeamSession
 
-### Monitor Team Performance
+A `TeamSession` gives agents a shared workspace. Agents
+join a session, share data with `share()`, read it with
+`get()`, and communicate via `signal()`.
 
 ```python
-from attune.coordination import TeamDashboard
+from attune.coordination import TeamSession
+from attune.memory import get_redis_memory
 
-# Create team dashboard
-dashboard = TeamDashboard(coordinator)
+memory = get_redis_memory()
 
-# Get comprehensive metrics
-report = dashboard.generate_report(days=7)
+# Create a session for reviewing PR #42
+session = TeamSession(
+    short_term_memory=memory,
+    session_id="pr_review_42",
+    purpose="Review PR #42: Add user profile images",
+)
 
-print(report.to_markdown())
+# Agents join the session
+session.add_agent("security_agent")
+session.add_agent("performance_agent")
+
+# Security agent shares its analysis scope
+session.share("analysis_scope", {
+    "files": ["src/upload.py", "src/images.py"],
+    "lines_of_code": 340,
+    "risk_areas": ["file upload validation", "path handling"],
+})
+
+# Performance agent reads the shared scope
+scope = session.get("analysis_scope")
+print(f"Reviewing {scope['lines_of_code']} lines")
+print(f"Risk areas: {scope['risk_areas']}")
+# Output:
+# Reviewing 340 lines
+# Risk areas: ['file upload validation', 'path handling']
 ```
 
-**Output**:
-```markdown
-# Team Coordination Report
-## Period: Last 7 days
+### Signaling Between Agents
 
-### Agent Activity
-| Agent          | Tasks Completed | Patterns Created | Patterns Reused | Success Rate |
-|----------------|-----------------|------------------|-----------------|--------------|
-| agent_frontend | 23              | 12               | 18              | 89%          |
-| agent_backend  | 31              | 22               | 15              | 94%          |
-| agent_devops   | 18              | 13               | 8               | 87%          |
+```python
+# Security agent signals a finding
+session.signal(
+    signal_type="finding",
+    data={
+        "agent": "security_agent",
+        "severity": "high",
+        "file": "src/upload.py",
+        "line": 42,
+        "issue": "No file type validation on upload",
+    },
+)
 
-### Coordination Events
-- **Handoffs**: 8 successful (frontend → backend: 5, backend → devops: 3)
-- **Conflicts Detected**: 3
-- **Conflicts Resolved**: 3 (100% resolution rate)
-- **Broadcasts**: 2 (infrastructure changes)
-
-### Pattern Library
-- **Total Patterns**: 47 (↑ 12 from last week)
-- **Most Reused Pattern**: `api_error_handling` (18 uses)
-- **Highest Confidence**: `database_index_optimization` (95%)
-- **Pattern Reuse Rate**: 68.2% (high collaboration)
-
-### Top Successes
-1. **database_index_optimization** (agent_backend)
-   - 98.2% query performance improvement
-   - Reused by: agent_frontend (adapted for UI caching)
-
-2. **react_use_memo_optimization** (agent_frontend)
-   - 75% reduction in re-renders
-   - Reused by: agent_backend (adapted for Python caching)
-
-3. **kubernetes_autoscaling** (agent_devops)
-   - 40% cost reduction, 99.9% uptime
-   - Reused by: agent_backend (informed API capacity planning)
-
-### Recommendations
-⚡ **High collaboration**: 68.2% pattern reuse indicates good teamwork
-⚠️ **agent_devops** has lowest pattern reuse (8 uses vs 15-18 for others)
-   → Consider cross-training: Share DevOps patterns with dev agents
+# Performance agent checks for signals
+signals = session.get_signals(signal_type="finding")
+for s in signals:
+    data = s.get("data", {})
+    print(f"[{data.get('agent')}] {data.get('issue')}")
+# Output:
+# [security_agent] No file type validation on upload
 ```
 
 ---
 
-## Part 7: Real-World Scenario
+## Part 3: Shared Pattern Library
 
-### Complete Development Workflow
+The `PatternLibrary` lets agents contribute reusable
+patterns and query for relevant ones. One agent's discovery
+benefits the entire team.
+
+```python
+from attune.pattern_library import Pattern, PatternLibrary
+
+library = PatternLibrary()
+
+# Security agent contributes a pattern it discovered
+library.contribute_pattern(
+    "security_agent",
+    Pattern(
+        id="validate_upload_type",
+        agent_id="security_agent",
+        pattern_type="security",
+        name="Validate file upload MIME type",
+        description=(
+            "Always validate MIME type and extension on "
+            "file uploads. Reject executable types."
+        ),
+        confidence=0.92,
+        tags=["security", "file-upload", "validation"],
+        context={"domain": "web", "risk": "high"},
+    ),
+)
+
+# Performance agent contributes a different pattern
+library.contribute_pattern(
+    "performance_agent",
+    Pattern(
+        id="batch_image_processing",
+        agent_id="performance_agent",
+        pattern_type="performance",
+        name="Batch image processing with pipeline",
+        description=(
+            "Process uploaded images in batches using "
+            "Redis pipeline instead of one-at-a-time."
+        ),
+        confidence=0.88,
+        tags=["performance", "redis", "batch"],
+        context={"domain": "web", "bottleneck": "io"},
+    ),
+)
+
+print(f"Library stats: {library.get_library_stats()}")
+# Output:
+# Library stats: {
+#   'total_patterns': 2,
+#   'total_agents': 2,
+#   'total_usage': 0,
+#   'average_confidence': 0.9,
+#   ...
+# }
+```
+
+### Query Patterns by Context
+
+```python
+# A new agent queries the library for relevant patterns
+context = {
+    "domain": "web",
+    "task_type": "file_upload",
+    "tags": ["security", "validation"],
+}
+
+matches = library.query_patterns(
+    "style_agent",
+    context,
+    min_confidence=0.8,
+)
+
+for match in matches:
+    p = match.pattern
+    print(
+        f"  {p.name} (confidence: {p.confidence:.0%}, "
+        f"relevance: {match.relevance_score:.0%})"
+    )
+    print(f"    From: {p.agent_id}")
+    print(f"    Why: {match.matching_factors}")
+
+# Output:
+#   Validate file upload MIME type (confidence: 92%,
+#     relevance: 70%)
+#     From: security_agent
+#     Why: ['1 context matches', '1 tag matches']
+```
+
+### Record Outcomes and Link Patterns
+
+```python
+# Record that using the pattern was successful
+library.record_pattern_outcome("validate_upload_type", success=True)
+
+# Link related patterns so agents discover both
+library.link_patterns(
+    "validate_upload_type",
+    "batch_image_processing",
+)
+
+# Get related patterns
+related = library.get_related_patterns("validate_upload_type")
+print(f"Related: {[p.name for p in related]}")
+# Output: Related: ['Batch image processing with pipeline']
+```
+
+---
+
+## Part 4: Conflict Resolution
+
+When two agents recommend conflicting approaches, the
+`ConflictResolver` uses weighted scoring across confidence,
+success rate, recency, context match, and team priorities.
+
+```python
+from attune.coordination import (
+    ConflictResolver,
+    ResolutionStrategy,
+    TeamPriorities,
+)
+from attune.pattern_library import Pattern
+
+# Configure team priorities
+priorities = TeamPriorities(
+    security_weight=0.4,
+    readability_weight=0.3,
+    performance_weight=0.2,
+    maintainability_weight=0.1,
+)
+
+resolver = ConflictResolver(
+    default_strategy=ResolutionStrategy.WEIGHTED_SCORE,
+    team_priorities=priorities,
+)
+
+# Two agents disagree on approach
+security_pattern = Pattern(
+    id="strict_validation",
+    agent_id="security_agent",
+    pattern_type="security",
+    name="Strict input validation with allowlist",
+    description="Validate all inputs against an allowlist",
+    confidence=0.90,
+    tags=["security", "validation"],
+)
+
+perf_pattern = Pattern(
+    id="lazy_validation",
+    agent_id="performance_agent",
+    pattern_type="performance",
+    name="Lazy validation on hot path",
+    description="Defer validation to reduce latency",
+    confidence=0.75,
+    tags=["performance", "optimization"],
+)
+
+# Resolve the conflict
+result = resolver.resolve_patterns(
+    patterns=[security_pattern, perf_pattern],
+    context={"team_priority": "security"},
+)
+
+print(f"Winner: {result.winning_pattern.name}")
+print(f"Strategy: {result.strategy_used.value}")
+print(f"Confidence: {result.confidence:.0%}")
+print(f"Reasoning: {result.reasoning}")
+# Output:
+# Winner: Strict input validation with allowlist
+# Strategy: weighted_score
+# Confidence: 72%
+# Reasoning: Selected 'Strict input validation with
+#   allowlist' based on weighted scoring (top factors:
+#   confidence: 90%, team_alignment: 80%). Preferred
+#   over: Lazy validation on hot path
+```
+
+### Resolution Statistics
+
+```python
+stats = resolver.get_resolution_stats()
+print(f"Total resolutions: {stats['total_resolutions']}")
+print(f"Strategies used: {stats['strategies_used']}")
+print(f"Avg confidence: {stats['average_confidence']:.0%}")
+```
+
+---
+
+## Part 5: Team Execution with SDKAgentTeam
+
+`SDKAgentTeam` runs multiple `SDKAgent` instances in
+parallel (or sequentially) and evaluates quality gates on
+their results.
 
 ```python
 import asyncio
-from attune import EmpathyOS
-from attune.coordination import CoordinationManager, WorkflowOrchestrator
+from attune.agents.sdk import SDKAgent, SDKAgentTeam
+from attune.agents.sdk.sdk_team import QualityGate
 
-async def microservice_development_workflow():
-    """
-    Simulate a real development workflow:
-    Feature request → Frontend → Backend → DevOps → Deployment
-    """
+# Create specialized agents with system prompts
+security_agent = SDKAgent(
+    agent_id="security-reviewer",
+    role="Security Reviewer",
+    system_prompt=(
+        "You are a security code reviewer. Analyze code "
+        "for vulnerabilities. Return JSON with 'score' "
+        "(0-100) and 'findings' dict."
+    ),
+)
 
-    # Initialize team
-    coordinator = CoordinationManager(agents=[
-        frontend_agent,
-        backend_agent,
-        devops_agent
-    ])
+perf_agent = SDKAgent(
+    agent_id="perf-reviewer",
+    role="Performance Reviewer",
+    system_prompt=(
+        "You are a performance reviewer. Identify "
+        "bottlenecks and inefficiencies. Return JSON "
+        "with 'score' (0-100) and 'findings' dict."
+    ),
+)
 
-    orchestrator = WorkflowOrchestrator(coordinator)
+# Build a team with quality gates
+team = SDKAgentTeam(
+    team_name="Code Review Team",
+    agents=[security_agent, perf_agent],
+    quality_gates=[
+        QualityGate(
+            name="min_security_score",
+            agent_role="Security Reviewer",
+            metric="score",
+            threshold=70.0,
+            required=True,
+        ),
+        QualityGate(
+            name="min_perf_score",
+            agent_role="Performance Reviewer",
+            metric="score",
+            threshold=60.0,
+            required=False,  # Advisory, not blocking
+        ),
+    ],
+    parallel=True,  # Run agents concurrently
+)
 
-    # Feature request: Add user profile images
-    feature = {
-        "name": "user_profile_images",
-        "requirements": [
-            "Users can upload profile images",
-            "Images stored in S3",
-            "Thumbnails generated automatically",
-            "Display on profile page"
-        ]
-    }
 
-    print(f"🚀 Starting workflow: {feature['name']}")
+async def run_review():
+    result = await team.execute({
+        "files": ["src/auth.py"],
+        "diff": "def login(user, password): ...",
+    })
 
-    # Step 1: Frontend agent designs UI
-    print("\n📱 Frontend Agent: Designing UI...")
-    frontend_task = await orchestrator.assign_task(
-        agent=frontend_agent,
-        task="design_profile_image_ui",
-        context=feature
-    )
+    print(f"Team: {result.team_name}")
+    print(f"Success: {result.success}")
+    print(f"Total cost: ${result.total_cost:.4f}")
+    print(f"Time: {result.execution_time_ms:.0f}ms")
 
-    frontend_result = await frontend_task.execute()
-    print(f"  ✅ {frontend_result.summary}")
-    # Output: Created ProfileImageUpload component + API contract
+    for gate, passed in result.quality_gate_results.items():
+        status = "PASS" if passed else "FAIL"
+        print(f"  Gate '{gate}': {status}")
 
-    # Step 2: Backend agent implements API
-    print("\n🔧 Backend Agent: Implementing API...")
-    backend_task = await orchestrator.assign_task(
-        agent=backend_agent,
-        task="implement_image_upload_api",
-        context={
-            **feature,
-            "frontend_contract": frontend_result.api_contract
-        }
-    )
+    for agent_result in result.agent_results:
+        print(
+            f"\n  [{agent_result.role}] "
+            f"score={agent_result.score}, "
+            f"tier={agent_result.tier_used}, "
+            f"escalated={agent_result.escalated}"
+        )
 
-    backend_result = await backend_task.execute()
-    print(f"  ✅ {backend_result.summary}")
-    # Output: Implemented /api/users/:id/image endpoint + S3 integration
 
-    # Step 3: Conflict detection
-    # Backend agent also modified user model (same resource as frontend)
-    conflict = orchestrator.detect_conflicts()
-    if conflict:
-        print(f"\n⚠️  Conflict detected: {conflict.resource}")
-        resolution = await orchestrator.resolve_conflict(conflict)
-        print(f"  ✅ Resolved: {resolution.solution}")
-
-    # Step 4: DevOps agent sets up infrastructure
-    print("\n☁️  DevOps Agent: Setting up infrastructure...")
-    devops_task = await orchestrator.assign_task(
-        agent=devops_agent,
-        task="setup_s3_bucket_and_cdn",
-        context={
-            **feature,
-            "backend_requirements": backend_result.infrastructure_needs
-        }
-    )
-
-    devops_result = await devops_task.execute()
-    print(f"  ✅ {devops_result.summary}")
-    # Output: Created S3 bucket, CloudFront CDN, IAM policies
-
-    # Step 5: Pattern sharing
-    print("\n🧠 Collective Learning...")
-    patterns_learned = orchestrator.extract_patterns([
-        frontend_result,
-        backend_result,
-        devops_result
-    ])
-
-    for pattern in patterns_learned:
-        print(f"  📚 New pattern: {pattern.name} (confidence: {pattern.confidence:.0%})")
-        # Output:
-        # 📚 New pattern: s3_image_upload (confidence: 89%)
-        # 📚 New pattern: frontend_image_preview (confidence: 92%)
-        # 📚 New pattern: cloudfront_cdn_setup (confidence: 87%)
-
-    # Step 6: Final coordination
-    print("\n🎯 Final Coordination...")
-    await orchestrator.broadcast_all(
-        message_type="feature_complete",
-        content={
-            "feature": feature['name'],
-            "status": "ready_for_deployment",
-            "endpoints": backend_result.endpoints,
-            "frontend_routes": frontend_result.routes,
-            "infrastructure": devops_result.resources
-        }
-    )
-
-    # Generate team metrics
-    print("\n📊 Team Performance:")
-    metrics = orchestrator.get_metrics()
-    print(f"  Total time: {metrics['total_time_minutes']} minutes")
-    print(f"  Tasks completed: {metrics['tasks_completed']}")
-    print(f"  Conflicts: {metrics['conflicts_detected']} (all resolved)")
-    print(f"  Patterns learned: {len(patterns_learned)}")
-    print(f"  Team efficiency: {metrics['efficiency_score']:.1%}")
-
-    return {
-        "feature": feature['name'],
-        "status": "complete",
-        "patterns_learned": patterns_learned,
-        "metrics": metrics
-    }
-
-# Run workflow
-result = asyncio.run(microservice_development_workflow())
-
-print(f"\n✨ Feature '{result['feature']}' complete!")
-print(f"   Team learned {len(result['patterns_learned'])} new patterns")
+asyncio.run(run_review())
 ```
+
+Each `SDKAgent` uses progressive tier escalation: it
+starts on the CHEAP tier and automatically escalates to
+CAPABLE, then PREMIUM if the cheaper tier fails.
 
 ---
 
-## Part 8: Advanced Coordination Features
+## Part 6: Putting It All Together
 
-### Dependency Graph
+Here's a complete workflow combining all the primitives:
 
-Track task dependencies across agents.
+1. **Coordinator** distributes review tasks
+2. **TeamSession** shares context between agents
+3. **SDKAgentTeam** runs agents in parallel
+4. **PatternLibrary** captures what agents learn
+5. **ConflictResolver** resolves disagreements
 
 ```python
-from attune.coordination import DependencyGraph
+import asyncio
+from attune.coordination import (
+    AgentCoordinator,
+    AgentTask,
+    ConflictResolver,
+    TeamSession,
+)
+from attune.agents.sdk import SDKAgent, SDKAgentTeam
+from attune.memory import get_redis_memory
+from attune.pattern_library import Pattern, PatternLibrary
 
-graph = DependencyGraph(coordinator)
+async def coordinated_review(files: list[str]):
+    """Run a coordinated multi-agent code review."""
+    memory = get_redis_memory()
 
-# Define task dependencies
-graph.add_task("frontend_ui", agent=frontend_agent)
-graph.add_task("backend_api", agent=backend_agent, depends_on=["frontend_ui"])
-graph.add_task("database_migration", agent=backend_agent, depends_on=["frontend_ui"])
-graph.add_task("devops_deploy", agent=devops_agent, depends_on=["backend_api", "database_migration"])
+    # 1. Set up coordination
+    coordinator = AgentCoordinator(memory, team_id="review")
+    session = TeamSession(memory, session_id="review_pr99")
+    library = PatternLibrary()
+    resolver = ConflictResolver()
 
-# Visualize
-print(graph.to_mermaid())
-```
+    # 2. Share review scope
+    session.share("scope", {"files": files})
 
-**Output (Mermaid diagram)**:
-```mermaid
-graph TD
-    A[frontend_ui<br/>agent_frontend] --> B[backend_api<br/>agent_backend]
-    A --> C[database_migration<br/>agent_backend]
-    B --> D[devops_deploy<br/>agent_devops]
-    C --> D
-```
+    # 3. Run agents in parallel
+    team = SDKAgentTeam(
+        team_name="PR Review",
+        agents=[
+            SDKAgent(
+                role="Security Reviewer",
+                system_prompt="Review for security issues.",
+            ),
+            SDKAgent(
+                role="Performance Reviewer",
+                system_prompt="Review for performance.",
+            ),
+        ],
+        parallel=True,
+    )
 
-### Auto-Execute in Dependency Order
+    result = await team.execute({"files": files})
 
-```python
-# Execute tasks in correct order
-results = await graph.execute_all()
+    # 4. Capture patterns from findings
+    for agent_result in result.agent_results:
+        if agent_result.success and agent_result.findings:
+            library.contribute_pattern(
+                agent_result.agent_id,
+                Pattern(
+                    id=f"review_{agent_result.agent_id}",
+                    agent_id=agent_result.agent_id,
+                    pattern_type=agent_result.role.lower(),
+                    name=f"Finding from {agent_result.role}",
+                    description=str(agent_result.findings),
+                    confidence=agent_result.confidence,
+                ),
+            )
 
-for task_name, result in results.items():
-    print(f"✅ {task_name}: {result.status} ({result.duration}s)")
+    # 5. Signal completion
+    session.signal("review_complete", {
+        "success": result.success,
+        "cost": result.total_cost,
+        "agents": len(result.agent_results),
+    })
 
-# Output:
-# ✅ frontend_ui: completed (45s)
-# ✅ backend_api: completed (120s)
-# ✅ database_migration: completed (30s)
-# ✅ devops_deploy: completed (90s)
+    # 6. Broadcast results
+    coordinator.broadcast("review_done", {
+        "files": files,
+        "passed": result.success,
+    })
+
+    return result
+
+result = asyncio.run(coordinated_review(["src/auth.py"]))
+print(f"Review {'passed' if result.success else 'failed'}")
+print(f"Cost: ${result.total_cost:.4f}")
 ```
 
 ---
 
-## Performance Impact
+## API Quick Reference
 
-**Before Multi-Agent Coordination**:
-- Each developer works in silo
-- Frequent conflicts discovered late (during code review)
-- Knowledge not shared (same mistakes repeated)
-- Manual handoffs (Slack messages, meetings)
-- Average feature completion: 8-10 days
-
-**After Multi-Agent Coordination**:
-- Agents share patterns immediately
-- Conflicts detected early (before code written)
-- Collective learning (68% pattern reuse)
-- Automated handoffs (instant context transfer)
-- Average feature completion: 4-5 days
-
-**Productivity Gain**: **~80% faster feature delivery**
-
----
-
-## Next Steps
-
-**Enhance team coordination**:
-1. **Add more agents**: QA agent, Security agent, Design agent
-2. **Cross-team coordination**: Multiple teams sharing global pattern library
-3. **Metrics dashboards**: Real-time team performance tracking
-4. **Auto-resolution**: AI-powered conflict resolution
-5. **Integration**: Connect to GitHub, JIRA, Slack for real-world coordination
-
-**Related examples**:
-- [Adaptive Learning System](adaptive-learning-system.md) - Dynamic thresholds
-- [Webhook Integration](webhook-event-integration.md) - External system integration
-- [Code Review Assistant](simple-chatbot.md) - Level 4 code reviews
+| Class | Import | Key Methods |
+| ----- | ------ | ----------- |
+| `AgentCoordinator` | `attune.coordination` | `add_task()`, `claim_task()`, `complete_task()`, `broadcast()`, `register_agent()` |
+| `TeamSession` | `attune.coordination` | `add_agent()`, `share()`, `get()`, `signal()`, `get_signals()` |
+| `PatternLibrary` | `attune.pattern_library` | `contribute_pattern()`, `query_patterns()`, `link_patterns()`, `get_library_stats()` |
+| `ConflictResolver` | `attune.coordination` | `resolve_patterns()`, `get_resolution_stats()` |
+| `SDKAgent` | `attune.agents.sdk` | `process()` |
+| `SDKAgentTeam` | `attune.agents.sdk` | `execute()` |
 
 ---
 
 ## Troubleshooting
 
-**"Shared library conflict"**
-- Use write-ahead logging: `persistence_backend="sqlite_wal"`
-- Enable locking: `shared_library_locking=True`
+### "Connection refused" errors
 
-**Patterns not shared across agents**
-- Verify all agents use same `shared_library` path
-- Check file permissions on shared DB
+Redis must be running. Start it with:
 
-**Conflicts not detected**
-- Lower sensitivity: `conflict_sensitivity="medium"` (default: "high")
-- Review resource naming: Use consistent resource identifiers
+```bash
+redis-server
+```
+
+### Agent claims return None
+
+No pending tasks match the requested `task_type`. Check
+that tasks were added with the correct type.
+
+### SDKAgent returns empty results
+
+Set `ANTHROPIC_API_KEY` in your environment. Without it,
+agents fall back to rule-based responses.
 
 ---
 
-**Questions?** See [Multi-Agent Coordination Guide](../guides/multi-agent-coordination.md)
+## Next Steps
+
+- [Agent Coordination Demo](../../../examples/agent_coordination_demo.py) —
+  Working demo of CoordinationSignals
+- [Orchestration](../../../src/attune/orchestration/) —
+  DynamicTeam and MetaOrchestrator for automatic team
+  composition
+- [Agent State](../../../src/attune/agents/state/) —
+  Persistent state and recovery for long-running agents

@@ -262,3 +262,10 @@ data/
 
 # Compiled binaries (MCP publisher, etc.)
 mcp-publisher
+
+# React dashboard build output (generated from dashboard/)
+src/attune/dashboard/static/react/
+
+# Dashboard frontend dev dependencies
+dashboard/node_modules/
+dashboard/dist/

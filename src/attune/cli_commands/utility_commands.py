@@ -19,36 +19,93 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _build_react_dashboard() -> bool:
+    """Build the React dashboard into the Python static directory.
+
+    Returns True if build succeeded or React build already exists.
+    """
+    import shutil
+    import subprocess
+
+    dashboard_dir = Path(__file__).parent.parent.parent.parent / "dashboard"
+    react_out = Path(__file__).parent.parent / "dashboard" / "static" / "react"
+
+    # Already built — skip
+    if (react_out / "index.html").exists():
+        return True
+
+    # No dashboard source — can't build
+    if not (dashboard_dir / "package.json").exists():
+        return False
+
+    npm = shutil.which("npm")
+    if not npm:
+        logger.warning("npm not found — cannot build React dashboard")
+        return False
+
+    print("Building React dashboard...")
+    try:
+        # Install deps if needed
+        if not (dashboard_dir / "node_modules").exists():
+            subprocess.run(
+                [npm, "install"],
+                cwd=str(dashboard_dir),
+                check=True,
+                capture_output=True,
+            )
+        # Build
+        subprocess.run(
+            [npm, "run", "build"],
+            cwd=str(dashboard_dir),
+            check=True,
+            capture_output=True,
+        )
+        print("React dashboard built successfully")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Dashboard build failed: {e.stderr.decode() if e.stderr else e}")
+        return False
+
+
 def cmd_dashboard_start(args: Namespace) -> int:
     """Start the agent coordination dashboard."""
-    try:
-        from attune.dashboard import run_standalone_dashboard
+    import webbrowser
 
-        # Get host and port from args
+    try:
+        from attune.dashboard import run_simple_dashboard
+
         host = args.host
         port = args.port
+        url = f"http://{host}:{port}"
 
-        print("\n🚀 Starting Agent Coordination Dashboard...")
-        print(f"📊 Dashboard will be available at: http://{host}:{port}\n")
-        print("💡 Make sure Redis is populated with test data:")
-        print("   python scripts/populate_redis_direct.py\n")
-        print("Press Ctrl+C to stop\n")
+        # Build React UI if --build flag or first run
+        react_index = Path(__file__).parent.parent / "dashboard" / "static" / "react" / "index.html"
+        if getattr(args, "build", False) or not react_index.exists():
+            _build_react_dashboard()
 
-        # Start dashboard
-        run_standalone_dashboard(host=host, port=port)
+        ui_type = "React" if react_index.exists() else "legacy"
+        print(f"\n  Agent Coordination Dashboard ({ui_type})")
+        print(f"  {url}\n")
+
+        # Auto-open browser after a short delay
+        import threading
+
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+
+        run_simple_dashboard(host=host, port=port)
         return 0
 
     except KeyboardInterrupt:
-        print("\n\n🛑 Dashboard stopped")
+        print("\n  Dashboard stopped")
         return 0
     except ImportError as e:
-        print(f"❌ Dashboard not available: {e}")
-        print("   Install dashboard dependencies: pip install redis")
+        print(f"Dashboard not available: {e}")
+        print("  Install dashboard dependencies: pip install redis")
         return 1
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Dashboard error: {e}")
-        print(f"❌ Error starting dashboard: {e}")
+        print(f"Error starting dashboard: {e}")
         return 1
 
 

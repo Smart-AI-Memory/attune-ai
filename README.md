@@ -10,8 +10,8 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-14800%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-82%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-15125%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -23,23 +23,23 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.5.0
+## What's New in v3.6.0
 
-- **Project-Aware Guidance** — After any workflow
-  completes, Attune analyzes your project context and
-  surfaces 2-3 prioritized next-step suggestions
-  grounded in real findings — not generic menus. Three
-  signal sources: workflow transitions, project index
-  health, and workflow history patterns.
-- **Suggestion Persistence** — Suggestions survive across
-  sessions with a 24-hour dismiss window to avoid
-  repetition. Stored in `.attune/suggestion_state.json`.
-- **Code Simplifier workflow** (v3.4.0) — `simplify-code`
-  workflow that reduces unnecessary complexity in
-  Claude-generated code.
-- **Verification feedback loop** (v3.3.0) — Errors fed
-  back to the LLM for self-correction before
-  re-verifying.
+- **attune-redis plugin** — Redis memory is now a
+  standalone package (`pip install attune-redis`),
+  fully decoupled from core. Ships with 5 MCP tools and
+  a v4.0.0 migration guide.
+- **React dashboard** — Standalone Vite + React +
+  TypeScript dashboard with live APIs, dark-themed UI,
+  and panels for model routing, system health, and
+  agent maturity.
+- **FeedbackLoop in-memory fallback** — Works out of the
+  box without Redis via a pluggable `MemoryBackend`
+  protocol with `_InMemoryStore` fallback.
+- **Project-Aware Guidance** (v3.5.0) — Surfaces 2-3
+  prioritized next-step suggestions after every workflow,
+  grounded in real findings. Persists across sessions
+  with a 24-hour dismiss window.
 
 
 ---
@@ -272,12 +272,21 @@ Real-time monitoring with 6 coordination patterns:
 - Demo mode with test data generation
 
 ```bash
-# Launch dashboard (requires Redis 7.x or 8.x)
-python examples/dashboard_demo.py
+# Launch dashboard (works without Redis)
+attune dashboard start
 # Open http://localhost:8000
+
+# For development with hot reload
+cd dashboard && npm run dev
+# Open http://localhost:5173
 ```
 
-**Redis 8.4 Support:** Full compatibility with RediSearch, RedisJSON, RedisTimeSeries, RedisBloom, and VectorSet modules.
+**Redis optional:** Core dashboard features (quality
+feedback, model routing, system health) work without
+Redis. Real-time pub/sub features (event streaming,
+approval gates) activate automatically when Redis is
+available. Full Redis 8.4 support: RediSearch,
+RedisJSON, RedisTimeSeries, RedisBloom, VectorSet.
 
 ---
 

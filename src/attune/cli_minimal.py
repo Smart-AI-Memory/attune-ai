@@ -245,6 +245,9 @@ Documentation: https://smartaimemory.com/framework-docs/
     start_parser.add_argument(
         "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
     )
+    start_parser.add_argument(
+        "--build", action="store_true", help="Force rebuild the React dashboard UI"
+    )
 
     # --- Memory commands (quick lessons) ---
     remember_parser = subparsers.add_parser(
