@@ -507,13 +507,14 @@ class TestSingletonPattern:
 class TestPermissionErrors:
     """Test handling of permission errors."""
 
-    def test_directory_creation_permission_error(self):
+    def test_directory_creation_permission_error(self, tmp_path):
         """Test that permission errors during directory creation are handled gracefully."""
-        # Try to create telemetry in a restricted directory
+        # Use a nonexistent subdirectory so no real I/O happens after mkdir fails
+        restricted = tmp_path / "no_perms" / ".empathy"
         with patch("pathlib.Path.mkdir", side_effect=PermissionError("Access denied")):
-            tracker = UsageTracker(telemetry_dir=Path("/root/.empathy"))
+            tracker = UsageTracker(telemetry_dir=restricted)
             # Should not raise, just log
-            assert tracker.telemetry_dir == Path("/root/.empathy")
+            assert tracker.telemetry_dir == restricted
 
     def test_track_call_with_permission_error(self, tracker, temp_dir):
         """Test that permission errors during write are handled gracefully."""
