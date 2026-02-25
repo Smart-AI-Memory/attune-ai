@@ -143,4 +143,34 @@ src/attune/
 
 ## Lessons Learned
 
+- **Windows CI encoding**: Always use `encoding="utf-8"` on
+  `Path.read_text()` calls. Windows defaults to `cp1252` which
+  fails on any file containing non-ASCII bytes.
+
+- **Test mocks must match imports**: When a function changes its
+  import (e.g. `run_standalone_dashboard` → `run_simple_dashboard`),
+  all test mocks must be updated to match or side effects are silently
+  ignored and assertions fail.
+
+- **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
+  fixtures — CI runners often execute as root, making the path
+  accessible and triggering real I/O instead of the mocked error.
+  Use `tmp_path` instead.
+
+- **Stop hooks inject stderr, not stdout**: Claude Code's Stop hook
+  with exit code 2 surfaces the hook's **stderr** as the feedback
+  message. Use `print(..., file=sys.stderr)` — `print()` writes to
+  stdout which is silently discarded.
+
+- **Stop hook ordering matters**: When multiple Stop hook groups are
+  configured, run state-saving hooks (exit 0) first and blocking
+  hooks (exit 2) last. A trailing exit-0 hook may override a
+  preceding exit-2 block.
+
+- **Stop hooks loop without a sentinel**: Exit code 2 blocks one
+  stop attempt but the next attempt triggers the hook again,
+  creating an infinite loop. Use a TTL sentinel file
+  (`~/.attune/lessons_reminded`) to fire the reminder only once
+  per session.
+
 <!-- attune-lessons-end -->

@@ -35,7 +35,9 @@ pip install attune-ai[developer]
   agent maturity.
 - **FeedbackLoop in-memory fallback** — Works out of the
   box without Redis via a pluggable `MemoryBackend`
-  protocol with `_InMemoryStore` fallback.
+  protocol with `_InMemoryStore` fallback. Enables
+  quality-based model tier recommendations and
+  underperforming stage detection.
 - **Project-Aware Guidance** (v3.5.0) — Surfaces 2-3
   prioritized next-step suggestions after every workflow,
   grounded in real findings. Persists across sessions
