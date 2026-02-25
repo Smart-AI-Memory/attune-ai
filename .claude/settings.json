@@ -12,18 +12,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
-            "timeout": 10,
-            "statusMessage": "Saving session state..."
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

@@ -77,6 +77,10 @@ dependencies = [
 memory = [
     "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support
 ]
+redis = [
+    "agent-memory-client>=0.14.0",
+    "redis>=5.0.0,<8.0.0",
+]
 
 # LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
@@ -331,6 +335,7 @@ Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md
 # Plugin entry points for auto-discovery
 [project.entry-points."attune.plugins"]
 software = "attune_software.plugin:SoftwarePlugin"
+redis = "attune_redis.plugin:RedisPlugin"
 
 # Backward-compat alias (removed in v3.0.0)
 [project.entry-points."empathy_framework.plugins"]
@@ -365,6 +370,11 @@ test-gen = "attune.wizards.builtin.test_gen_wizard:TestGenWizard"
 refactor = "attune.wizards.builtin.refactor_wizard:RefactorWizard"
 security = "attune.wizards.builtin.security_wizard:SecurityWizard"
 release-prep = "attune.wizards.builtin.release_prep_wizard:ReleasePrepWizard"
+
+# Memory backend plugin entry points
+[project.entry-points."attune.memory_backends"]
+file = "attune.memory.file_session:FileSessionMemory"
+redis = "attune_redis.memory:AMSMemoryBackend"
 
 [tool.setuptools]
 # Automatic package discovery
