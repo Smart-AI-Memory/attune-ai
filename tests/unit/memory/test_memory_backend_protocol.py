@@ -203,6 +203,8 @@ class TestAMSMemoryBackendProtocol:
 
         # Import here to handle optional dependency
         try:
+            import agent_memory_client  # noqa: F401
+
             from attune_redis.config import RedisPluginConfig
             from attune_redis.memory import AMSMemoryBackend
             from attune_redis.tests.conftest import (
@@ -212,7 +214,7 @@ class TestAMSMemoryBackendProtocol:
                 FakeWorkingMemoryResponse,
             )
         except ImportError:
-            pytest.skip("attune-redis plugin not available")
+            pytest.skip("attune-redis plugin or agent-memory-client not available")
 
         config = RedisPluginConfig(
             ams_base_url="http://localhost:9999",
