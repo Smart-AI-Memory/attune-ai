@@ -9,11 +9,17 @@ AI-powered developer workflows with cost optimization and multi-agent orchestrat
 ## Quick Start
 
 ```bash
-python -m attune.models.auth_cli setup    # Configure authentication
+pip install attune-ai                     # Install (zero-config, ready to use)
 python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
-**CLI:** `attune <command>` (canonical) or `python -m attune.cli_minimal` (full). See `docs/reference/cli-reference.md`.
+Works out of the box: subscription-first routing with automatic
+API fallback for large modules when `ANTHROPIC_API_KEY` is set.
+Run `python -m attune.models.auth_cli setup` to customize.
+
+**CLI:** `attune <command>` (canonical) or
+`python -m attune.cli_minimal` (full).
+See `docs/reference/cli-reference.md`.
 
 ---
 
