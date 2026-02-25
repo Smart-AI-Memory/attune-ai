@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -75,17 +75,17 @@ def redis_config() -> RedisPluginConfig:
 
 
 @pytest.fixture()
-def mock_ams_client() -> MagicMock:
-    """Create a mocked MemoryAPIClient."""
-    client = MagicMock()
+def mock_ams_client() -> AsyncMock:
+    """Create a mocked MemoryAPIClient with async methods."""
+    client = AsyncMock()
 
     # Working memory data store (simulates AMS)
     _data: dict[str, Any] = {}
 
-    def _get_working_memory(**kwargs: Any) -> FakeWorkingMemoryResponse:
+    async def _get_working_memory(**kwargs: Any) -> FakeWorkingMemoryResponse:
         return FakeWorkingMemoryResponse(data=dict(_data))
 
-    def _set_working_memory_data(
+    async def _set_working_memory_data(
         session_id: str,
         data: dict[str, Any],
         namespace: str | None = None,
@@ -98,7 +98,7 @@ def mock_ams_client() -> MagicMock:
             _data.update(data)
         return FakeWorkingMemoryResponse(data=dict(_data))
 
-    def _update_working_memory_data(
+    async def _update_working_memory_data(
         session_id: str,
         data_updates: dict[str, Any],
         namespace: str | None = None,
@@ -118,7 +118,7 @@ def mock_ams_client() -> MagicMock:
     client.list_sessions.return_value = FakeSessionListResponse()
     client.close.return_value = None
     client.search_long_term_memory.return_value = FakeMemoryRecordResults()
-    client.promote_working_memories_to_long_term.return_value = MagicMock()
+    client.promote_working_memories_to_long_term.return_value = AsyncMock()
 
     # Expose _data for test assertions
     client._test_data = _data

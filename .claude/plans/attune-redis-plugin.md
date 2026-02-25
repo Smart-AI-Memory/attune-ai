@@ -179,7 +179,21 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
       in v5.0, replaced with hardcoded TTL)
 - [x] All tests passing (10591 passed, 0 failed)
 
-## Next Steps (Phase 3 cont.)
+## Phase 4 Checklist (Async/Sync + Integration)
+
+- [x] Add `_run_sync()` async-to-sync wrapper in
+      `attune_redis/memory.py`
+- [x] Wrap all 10 SDK calls with `_run_sync()`
+- [x] Switch `attune_redis/tests/conftest.py` to
+      `AsyncMock` with async side_effects
+- [x] Fix protocol compliance tests to use `AsyncMock`
+      (import moved inside fixture)
+- [x] Add integration test suite (14 tests, auto-skip
+      when AMS unavailable)
+- [x] All tests passing (56 passed, 14 skipped,
+      3 xfail)
+
+## Next Steps (Phase 4 cont.)
 
 - [ ] Redis-specific developer workflows (cache
       strategy, key schema, perf debugging)

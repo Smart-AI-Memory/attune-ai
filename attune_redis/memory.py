@@ -14,6 +14,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
 import logging
 from typing import Any
@@ -21,6 +22,32 @@ from typing import Any
 from .config import RedisPluginConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _run_sync(coro: Any) -> Any:
+    """Run an async coroutine synchronously.
+
+    Handles the case where we're already inside a running
+    event loop (e.g. Jupyter, async web server) by using a
+    thread pool executor.
+
+    Args:
+        coro: Awaitable coroutine to run.
+
+    Returns:
+        The coroutine's return value.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    return asyncio.run(coro)
 
 
 class AMSMemoryBackend:
@@ -89,11 +116,13 @@ class AMSMemoryBackend:
         """
         session_id = agent_id or self._session_id
         try:
-            self._client.set_working_memory_data(
-                session_id=session_id,
-                data={key: value},
-                namespace=self._namespace,
-                preserve_existing=True,
+            _run_sync(
+                self._client.set_working_memory_data(
+                    session_id=session_id,
+                    data={key: value},
+                    namespace=self._namespace,
+                    preserve_existing=True,
+                )
             )
             return True
         except Exception as e:  # noqa: BLE001
@@ -117,9 +146,11 @@ class AMSMemoryBackend:
         """
         session_id = agent_id or self._session_id
         try:
-            response = self._client.get_working_memory(
-                session_id=session_id,
-                namespace=self._namespace,
+            response = _run_sync(
+                self._client.get_working_memory(
+                    session_id=session_id,
+                    namespace=self._namespace,
+                )
             )
             if response.data is None:
                 return None
@@ -142,19 +173,23 @@ class AMSMemoryBackend:
             True if deleted, False if not found.
         """
         try:
-            response = self._client.get_working_memory(
-                session_id=self._session_id,
-                namespace=self._namespace,
+            response = _run_sync(
+                self._client.get_working_memory(
+                    session_id=self._session_id,
+                    namespace=self._namespace,
+                )
             )
             data = response.data or {}
             if key not in data:
                 return False
             del data[key]
-            self._client.update_working_memory_data(
-                session_id=self._session_id,
-                data_updates=data,
-                namespace=self._namespace,
-                merge_strategy="replace",
+            _run_sync(
+                self._client.update_working_memory_data(
+                    session_id=self._session_id,
+                    data_updates=data,
+                    namespace=self._namespace,
+                    merge_strategy="replace",
+                )
             )
             return True
         except Exception as e:  # noqa: BLE001
@@ -172,9 +207,11 @@ class AMSMemoryBackend:
             List of matching key names.
         """
         try:
-            response = self._client.get_working_memory(
-                session_id=self._session_id,
-                namespace=self._namespace,
+            response = _run_sync(
+                self._client.get_working_memory(
+                    session_id=self._session_id,
+                    namespace=self._namespace,
+                )
             )
             data = response.data or {}
             if pattern == "*":
@@ -192,7 +229,7 @@ class AMSMemoryBackend:
             True if health check succeeds.
         """
         try:
-            self._client.health_check()
+            _run_sync(self._client.health_check())
             return True
         except Exception:  # noqa: BLE001
             # INTENTIONAL: Health check is best-effort
@@ -213,10 +250,12 @@ class AMSMemoryBackend:
             "connected": False,
         }
         try:
-            self._client.health_check()
+            _run_sync(self._client.health_check())
             stats["connected"] = True
-            sessions = self._client.list_sessions(
-                namespace=self._namespace,
+            sessions = _run_sync(
+                self._client.list_sessions(
+                    namespace=self._namespace,
+                )
             )
             stats["session_count"] = len(sessions.sessions)
         except Exception as e:  # noqa: BLE001
@@ -228,7 +267,7 @@ class AMSMemoryBackend:
         """Close the AMS client and release resources."""
         if not self._closed:
             try:
-                self._client.close()
+                _run_sync(self._client.close())
             except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Cleanup is best-effort
                 logger.error("close_failed: %s", e)
@@ -273,11 +312,13 @@ class AMSMemoryBackend:
             List of memory records as dicts.
         """
         try:
-            results = self._client.search_long_term_memory(
-                text=query,
-                namespace={"eq": self._namespace},
-                limit=limit,
-                **filters,
+            results = _run_sync(
+                self._client.search_long_term_memory(
+                    text=query,
+                    namespace={"eq": self._namespace},
+                    limit=limit,
+                    **filters,
+                )
             )
             return [
                 {
@@ -307,9 +348,11 @@ class AMSMemoryBackend:
         """
         sid = session_id or self._session_id
         try:
-            self._client.promote_working_memories_to_long_term(
-                session_id=sid,
-                namespace=self._namespace,
+            _run_sync(
+                self._client.promote_working_memories_to_long_term(
+                    session_id=sid,
+                    namespace=self._namespace,
+                )
             )
             return True
         except Exception as e:  # noqa: BLE001

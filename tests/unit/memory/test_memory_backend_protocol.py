@@ -6,7 +6,7 @@ and AMSMemoryBackend satisfy the MemoryBackend protocol.
 
 import time
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -199,12 +199,15 @@ class TestAMSMemoryBackendProtocol:
     @pytest.fixture()
     def backend(self):
         """Create AMSMemoryBackend with mocked client."""
+        from unittest.mock import AsyncMock
+
         # Import here to handle optional dependency
         try:
             from attune_redis.config import RedisPluginConfig
             from attune_redis.memory import AMSMemoryBackend
             from attune_redis.tests.conftest import (
                 FakeHealthCheckResponse,
+                FakeMemoryRecordResults,
                 FakeSessionListResponse,
                 FakeWorkingMemoryResponse,
             )
@@ -219,12 +222,12 @@ class TestAMSMemoryBackendProtocol:
 
         _data: dict[str, Any] = {}
 
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
 
-        def _get_wm(**kw):
+        async def _get_wm(**kw):
             return FakeWorkingMemoryResponse(data=dict(_data))
 
-        def _set_wm(session_id, data, namespace=None, preserve_existing=True):
+        async def _set_wm(session_id, data, namespace=None, preserve_existing=True):
             if preserve_existing:
                 _data.update(data)
             else:
@@ -232,7 +235,7 @@ class TestAMSMemoryBackendProtocol:
                 _data.update(data)
             return FakeWorkingMemoryResponse(data=dict(_data))
 
-        def _update_wm(session_id, data_updates, namespace=None, merge_strategy="merge"):
+        async def _update_wm(session_id, data_updates, namespace=None, merge_strategy="merge"):
             if merge_strategy == "replace":
                 _data.clear()
                 _data.update(data_updates)
@@ -246,6 +249,8 @@ class TestAMSMemoryBackendProtocol:
         mock_client.health_check.return_value = FakeHealthCheckResponse()
         mock_client.list_sessions.return_value = FakeSessionListResponse()
         mock_client.close.return_value = None
+        mock_client.search_long_term_memory.return_value = FakeMemoryRecordResults()
+        mock_client.promote_working_memories_to_long_term.return_value = None
 
         with patch("agent_memory_client.MemoryAPIClient", return_value=mock_client):
             b = AMSMemoryBackend(config=config)
