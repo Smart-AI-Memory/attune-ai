@@ -74,7 +74,7 @@ class AgentCoordinator:
             conflict_resolver: Optional ConflictResolver for pattern conflicts
 
         """
-        from ..redis_memory import AccessTier, AgentCredentials
+        from ..memory.types import AccessTier, AgentCredentials
 
         self.memory = short_term_memory
         self.team_id = team_id

@@ -28,6 +28,7 @@ class EmpathyMCPServer:
         self._memory = None
         self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
+        self._plugin_handlers: dict[str, Any] = {}
 
         # Check for updates (non-blocking, cached per session)
         try:
@@ -36,6 +37,39 @@ class EmpathyMCPServer:
             check_for_updates()
         except Exception:  # noqa: BLE001
             pass  # INTENTIONAL: Version check is best-effort
+
+        # Register MCP tools from plugins
+        self._register_plugin_tools()
+
+    def _register_plugin_tools(self) -> None:
+        """Discover and register MCP tools from plugins.
+
+        Iterates over installed plugins and calls
+        ``register_mcp_tools()`` on each, allowing plugins
+        to add tool definitions and handler functions.
+        """
+        try:
+            from attune.plugins.registry import get_global_registry
+
+            registry = get_global_registry()
+            registry.auto_discover()
+            for name in registry.list_plugins():
+                plugin = registry.get_plugin(name)
+                if plugin and hasattr(plugin, "register_mcp_tools"):
+                    try:
+                        plugin.register_mcp_tools(self)
+                    except Exception as e:  # noqa: BLE001
+                        # INTENTIONAL: Plugin MCP registration is best-effort
+                        logger.warning(
+                            "Plugin '%s' MCP registration failed: %s",
+                            name,
+                            e,
+                        )
+        except ImportError:
+            pass  # Plugin registry not available
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Plugin discovery is best-effort
+            logger.debug("Plugin tool registration skipped: %s", e)
 
     def _register_tools(self) -> dict[str, dict[str, Any]]:
         """Register available MCP tools.
@@ -504,6 +538,9 @@ class EmpathyMCPServer:
                 return await self._handle_context_get(arguments)
             elif tool_name == "context_set":
                 return await self._handle_context_set(arguments)
+            elif tool_name in self._plugin_handlers:
+                handler = self._plugin_handlers[tool_name]
+                return await handler(self, arguments)
             else:
                 return {"success": False, "error": f"Unknown tool: {tool_name}"}
         except Exception as e:

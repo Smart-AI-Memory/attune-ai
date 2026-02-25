@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attune-redis"
+version = "0.1.0"
+description = "Redis Agent Memory Server plugin for Attune AI"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Patrick Roebuck", email = "admin@smartaimemory.com" },
+]
+maintainers = [
+    { name = "Smart AI Memory, LLC", email = "admin@smartaimemory.com" },
+]
+keywords = [
+    "ai",
+    "redis",
+    "agent-memory",
+    "attune",
+    "llm",
+    "memory-backend",
+    "semantic-search",
+    "mcp",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "attune-ai>=3.5.0",
+    "agent-memory-client>=0.14.0",
+    "redis>=5.0.0,<8.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.12",
+]
+
+[project.entry-points."attune.plugins"]
+redis = "attune_redis.plugin:RedisPlugin"
+
+[project.entry-points."attune.memory_backends"]
+redis = "attune_redis.memory:AMSMemoryBackend"
+
+[project.urls]
+Homepage = "https://github.com/Smart-AI-Memory/attune-ai"
+Documentation = "https://github.com/Smart-AI-Memory/attune-ai/tree/main/attune_redis"
+Repository = "https://github.com/Smart-AI-Memory/attune-ai"
+Issues = "https://github.com/Smart-AI-Memory/attune-ai/issues"
+Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["attune_redis"]
+
+[tool.setuptools.package-dir]
+attune_redis = "."
+
+[tool.setuptools.package-data]
+attune_redis = ["py.typed"]

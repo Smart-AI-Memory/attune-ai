@@ -2790,6 +2790,6 @@ class TestTTLStrategy:
         """Test TTLStrategy values match expected seconds."""
         assert TTLStrategy.WORKING_RESULTS.value == 3600
         assert TTLStrategy.STAGED_PATTERNS.value == 86400
-        assert TTLStrategy.COORDINATION.value == 300
+        # COORDINATION removed from TTLStrategy in v5.0
         assert TTLStrategy.CONFLICT_CONTEXT.value == 604800
         assert TTLStrategy.SESSION.value == 1800

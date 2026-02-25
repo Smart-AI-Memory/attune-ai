@@ -15,11 +15,7 @@ import structlog
 if TYPE_CHECKING:
     from ..file_session import FileSessionMemory
     from ..redis_bootstrap import RedisStatus
-    from ..short_term import (
-        AccessTier,
-        AgentCredentials,
-        RedisShortTermMemory,
-    )
+    from ..types import AccessTier, AgentCredentials
 
 logger = structlog.get_logger(__name__)
 
@@ -31,14 +27,14 @@ class ShortTermOperationsMixin:
     user_id: str
     access_tier: "AccessTier"
     _file_session: "FileSessionMemory | None"
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
     _redis_status: "RedisStatus | None"
     config: Any  # MemoryConfig
 
     @property
     def credentials(self) -> "AgentCredentials":
         """Get agent credentials for short-term memory operations."""
-        from ..short_term import AgentCredentials
+        from ..types import AgentCredentials
 
         return AgentCredentials(agent_id=self.user_id, tier=self.access_tier)
 
@@ -61,7 +57,7 @@ class ShortTermOperationsMixin:
             True if stored successfully
 
         """
-        from ..short_term import TTLStrategy
+        from ..types import TTLStrategy
 
         ttl = ttl_seconds or self.config.default_ttl_seconds
 
@@ -141,7 +137,7 @@ class ShortTermOperationsMixin:
             Staged pattern ID or None if failed
 
         """
-        from ..short_term import StagedPattern
+        from ..types import StagedPattern
 
         if not self._short_term:
             logger.warning("short_term_memory_unavailable")

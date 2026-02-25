@@ -24,12 +24,12 @@ def server():
 
 
 class TestToolRegistration:
-    """Verify all 18 tools are registered."""
+    """Verify all 23 tools are registered (18 core + 5 redis plugin)."""
 
-    def test_tools_list_returns_18(self, server: EmpathyMCPServer):
-        """Test that tools/list returns all 18 tools."""
+    def test_tools_list_returns_23(self, server: EmpathyMCPServer):
+        """Test that tools/list returns all 23 tools (18 core + 5 redis plugin)."""
         tools = server.get_tool_list()
-        assert len(tools) == 18
+        assert len(tools) == 23
 
     def test_memory_tools_registered(self, server: EmpathyMCPServer):
         """Test that all memory tools are in the tool list."""

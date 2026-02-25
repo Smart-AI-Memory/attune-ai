@@ -5,21 +5,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_start.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 10,
             "statusMessage": "Loading session context..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
-            "timeout": 10,
-            "statusMessage": "Saving session state..."
           }
         ]
       }
@@ -30,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Security check..."
           }
@@ -41,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Path validation..."
           }
@@ -54,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/format_on_save.py",
+           "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 10,
             "statusMessage": "Auto-formatting..."
           }
@@ -65,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/telemetry_hook.py",
+          "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 3,
             "statusMessage": "Recording telemetry..."
           }

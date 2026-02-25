@@ -60,17 +60,20 @@ REDIS_URL=redis://localhost:6379
 ### Verify Connection
 
 ```python
-from wizards_consolidated.redis_config import redis_health_check
+from attune import get_redis_memory
 
-result = redis_health_check()
-print(result)
-# {'status': 'healthy', 'version': '8.4.0', 'connected_clients': 1, ...}
+memory = get_redis_memory()
+print(memory.is_connected())
+# True
+
+print(memory.get_stats())
+# {'operations_total': 0, 'success_rate': 100.0, ...}
 ```
 
 Or from command line:
 
 ```bash
-python -c "from wizards_consolidated.redis_config import redis_health_check; print(redis_health_check())"
+python -c "from attune import get_redis_memory; print(get_redis_memory().is_connected())"
 ```
 
 ## Usage in Code
@@ -80,14 +83,15 @@ python -c "from wizards_consolidated.redis_config import redis_health_check; pri
 ```python
 from attune import get_redis_memory
 
-# Auto-detects REDIS_URL, falls back to localhost, then mock mode
+# Auto-detects REDIS_URL, falls back to localhost,
+# then mock mode
 memory = get_redis_memory()
 
 # Store data (expires in 1 hour by default)
-memory.set("my_key", {"data": "value"}, ttl=3600)
+memory.stash("my_key", {"data": "value"}, ttl=3600)
 
 # Retrieve data
-data = memory.get("my_key")
+data = memory.retrieve("my_key")
 ```
 
 ### With EmpathyOS
@@ -109,14 +113,19 @@ empathy.stash("analysis_results", {"files": 10, "issues": 3})
 results = empathy.retrieve("analysis_results")
 ```
 
-### Wizard Sessions
+### File-Based Fallback
+
+When Redis is not available, the framework automatically
+uses file-based session memory:
 
 ```python
-from wizards_consolidated.healthcare.sbar_wizard import SBARWizard
+from attune.memory.file_session import FileSessionMemory
 
-# Sessions automatically use Redis when available
-wizard = SBARWizard()
-session = wizard.create_session(user_id="nurse_001")
+# Works identically — same stash/retrieve interface
+memory = FileSessionMemory(user_id="developer")
+memory.stash("results", {"issues": 3})
+data = memory.retrieve("results")
+memory.close()
 ```
 
 ## Graceful Degradation
@@ -124,7 +133,7 @@ session = wizard.create_session(user_id="nurse_001")
 The framework handles Redis unavailability gracefully:
 
 - **Redis available**: Full short-term memory functionality
-- **Redis unavailable**: Falls back to in-memory storage (session-only, not shared)
+- **Redis unavailable**: Falls back to file-based session memory (persistent, not shared)
 - **Mock mode**: Set `REDIS_URL=""` to force in-memory mode for testing
 
 ## Troubleshooting
@@ -175,19 +184,20 @@ export REDIS_URL=redis://localhost:6379
 
 ```python
 # Set appropriate TTLs to prevent memory bloat
-memory.set("temp_data", data, ttl=300)  # 5 minutes
-memory.set("session_data", data, ttl=3600)  # 1 hour
-memory.set("staging_pattern", data, ttl=86400)  # 24 hours
+memory.stash("temp_data", data, ttl=300)      # 5 min
+memory.stash("session_data", data, ttl=3600)   # 1 hour
+memory.stash("staging", data, ttl=86400)       # 24 hours
 ```
 
 ### Monitoring
 
 ```python
-from wizards_consolidated.redis_config import redis_health_check
+from attune import get_redis_memory
 
-health = redis_health_check()
-print(f"Memory used: {health.get('used_memory')}")
-print(f"Connected clients: {health.get('connected_clients')}")
+memory = get_redis_memory()
+stats = memory.get_stats()
+print(f"Operations: {stats.get('operations_total')}")
+print(f"Success rate: {stats.get('success_rate')}%")
 ```
 
 ## Next Steps
