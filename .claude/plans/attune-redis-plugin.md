@@ -193,7 +193,19 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
 - [x] All tests passing (56 passed, 14 skipped,
       3 xfail)
 
-## Next Steps (Phase 4 cont.)
+## Phase 5 Checklist (MCP Tool Integration)
+
+- [x] Create `attune_redis/mcp_tools.py` with 5 tool
+      definitions and async handlers
+- [x] Add `register_mcp_tools()` to `BasePlugin` (no-op)
+- [x] Override in `RedisPlugin` to register Redis tools
+- [x] Add plugin discovery hook in `EmpathyMCPServer`
+      (`_register_plugin_tools()`)
+- [x] Add plugin handler dispatch in `call_tool()`
+- [x] Add 31 MCP tool tests (all passing)
+- [x] All 62 plugin tests passing, 14 integration skipped
+
+## Next Steps
 
 - [ ] Redis-specific developer workflows (cache
       strategy, key schema, perf debugging)

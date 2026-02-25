@@ -304,6 +304,18 @@ class BasePlugin(ABC):
         This is called once, after initialize() and register_plugin() succeed.
         """
 
+    def register_mcp_tools(self, server: Any) -> None:  # noqa: B027
+        """Register MCP tools contributed by this plugin.
+
+        Override to add plugin-specific MCP tools to the
+        server's tool registry. Called during server
+        initialization after plugins are loaded.
+
+        Args:
+            server: EmpathyMCPServer instance to register
+                tools on.
+        """
+
     def get_cli_commands(self) -> list[dict[str, str]]:
         """Return CLI commands contributed by this plugin.
 

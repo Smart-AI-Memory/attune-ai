@@ -61,6 +61,25 @@ class RedisPlugin(BasePlugin):
         """
         return {}
 
+    def register_mcp_tools(self, server: object) -> None:
+        """Register Redis-specific MCP tools.
+
+        Adds 5 tools for AMS operations (store, retrieve,
+        search, promote, health check).
+
+        Args:
+            server: EmpathyMCPServer instance.
+        """
+        try:
+            from attune_redis.mcp_tools import register_tools
+
+            register_tools(server)
+        except ImportError:
+            logger.debug("attune-redis: MCP tools not registered (missing deps)")
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: MCP registration is best-effort
+            logger.warning("attune-redis: MCP tool registration failed: %s", e)
+
     def on_activate(self) -> None:
         """Validate plugin dependencies on activation."""
         try:
