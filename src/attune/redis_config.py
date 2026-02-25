@@ -1,5 +1,7 @@
 """Redis Configuration for Attune AI (deprecated).
 
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+
 .. deprecated::
     Use ``attune_redis.config.RedisPluginConfig`` for new code.
 

@@ -34,6 +34,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import redis
 
+# DEPRECATED: Use attune_redis.config.RedisPluginConfig for new code.
+# This import will break in v4.0.0.
 from attune.redis_config import get_redis_config
 
 

@@ -1,5 +1,7 @@
 """Deprecated — use attune_redis.AMSMemoryBackend.
 
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+
 Legacy facade for RedisShortTermMemory. Kept for backward
 compatibility. New code should use the ``attune_redis``
 plugin package.

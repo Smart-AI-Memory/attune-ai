@@ -205,6 +205,15 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
 - [x] Add 31 MCP tool tests (all passing)
 - [x] All 62 plugin tests passing, 14 integration skipped
 
+## Phase 6 Checklist (Deprecation Removal Prep)
+
+- [x] Audit remaining importers (2 production, 6 test)
+- [x] Add `REMOVE IN v4.0.0` markers to all 5 deprecated
+      modules + `memory/config.py`
+- [x] Add deprecation comment to example file
+- [x] Create migration guide
+      (`docs/migration/redis-plugin-migration.md`)
+
 ## Next Steps
 
 - [ ] Redis-specific developer workflows (cache

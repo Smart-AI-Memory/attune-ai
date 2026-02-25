@@ -1,5 +1,7 @@
 """Deprecated — use attune_redis for pattern promotion.
 
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+
 Legacy pattern staging mixins kept for backward
 compatibility. New code should use
 ``attune_redis.memory.AMSMemoryBackend.promote()``.

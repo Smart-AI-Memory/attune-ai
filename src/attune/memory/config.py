@@ -1,31 +1,14 @@
-"""Redis Configuration for Attune AI
+"""Redis Configuration for Attune AI (deprecated).
 
-Handles connection to Redis from environment variables.
-Supports Railway, redis.com, local Docker, or mock mode.
-
-Environment Variables:
-    REDIS_URL: Full Redis URL (redis://user:pass@host:port)  # pragma: allowlist secret
-    REDIS_HOST: Redis host (default: localhost)
-    REDIS_PORT: Redis port (default: 6379)
-    REDIS_PASSWORD: Redis password (optional)
-    REDIS_DB: Redis database number (default: 0)
-    EMPATHY_REDIS_MOCK: Set to "true" to use mock mode
-
-Railway Auto-Detection:
-    When deployed on Railway, REDIS_URL is automatically set.
-
-Usage:
-    from attune.redis_config import get_redis_memory
-
-    # Automatically uses environment variables
-    memory = get_redis_memory()
-
-    # Or with explicit URL
-    memory = get_redis_memory(url="redis://localhost:6379")
+.. deprecated::
+    Use ``attune_redis.config.RedisPluginConfig`` for new code.
+    This module will be removed in v4.0.0.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
+
+# REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
 
 import os
 from urllib.parse import urlparse

@@ -1,5 +1,7 @@
 """Deprecated — use attune_redis for coordination.
 
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+
 Legacy coordination mixins kept for backward compatibility.
 New code should use ``attune_redis.signals.RedisSignalBus``.
 
