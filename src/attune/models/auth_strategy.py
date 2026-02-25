@@ -395,16 +395,7 @@ def get_auth_strategy() -> AuthStrategy:
     Returns:
         AuthStrategy instance
     """
-    import os
-
-    strategy = AuthStrategy.load()
-
-    # If user has an API key, enable auto mode for large-module fallback
-    if os.environ.get("ANTHROPIC_API_KEY") and strategy.default_mode == AuthMode.AUTO:
-        # Auto mode: subscription for small/medium, API for large
-        pass  # Already the default behavior
-
-    return strategy
+    return AuthStrategy.load()
 
 
 # Utility functions for module size calculation
