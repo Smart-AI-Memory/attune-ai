@@ -463,12 +463,12 @@ class AlertEngine:
         )
         if alert_id:
             cursor.execute(
-                f"{base_sql} WHERE alert_id = ? ORDER BY triggered_at DESC LIMIT ?",
+                base_sql + " WHERE alert_id = ? ORDER BY triggered_at DESC LIMIT ?",
                 (alert_id, limit),
             )
         else:
             cursor.execute(
-                f"{base_sql} ORDER BY triggered_at DESC LIMIT ?",
+                base_sql + " ORDER BY triggered_at DESC LIMIT ?",
                 (limit,),
             )
 
