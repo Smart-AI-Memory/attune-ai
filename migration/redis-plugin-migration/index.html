@@ -6,37 +6,33 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Development guidelines for Contributing to Attune AI. Level 3 anticipatory design principles, coding standards, and best practices for contributors.">
+        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
       
       
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/contributing/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/migration/redis-plugin-migration/">
       
       
-        <link rel="prev" href="../reference/SHORT_TERM_MEMORY/">
-      
-      
-        <link rel="next" href="../get-the-book/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/empathy-brain-logo.png">
+      <link rel="icon" href="../../assets/images/empathy-brain-logo.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
-        <title>Contributing - Attune AI</title>
+        <title>Redis Plugin Migration Guide - Attune AI</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -85,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing-to-attune-ai" class="md-skip">
+        <a href="#redis-plugin-migration-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -99,9 +95,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href="../.." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -118,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contributing
+              Redis Plugin Migration Guide
             
           </span>
         </div>
@@ -231,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -252,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting-started/" class="md-tabs__link">
+        <a href="../../getting-started/" class="md-tabs__link">
           
   
   
@@ -272,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../tutorials/" class="md-tabs__link">
+        <a href="../../tutorials/" class="md-tabs__link">
           
   
   
@@ -292,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../how-to/" class="md-tabs__link">
+        <a href="../../how-to/" class="md-tabs__link">
           
   
   
@@ -312,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../SECURITY/" class="md-tabs__link">
+        <a href="../../SECURITY/" class="md-tabs__link">
           
   
   
@@ -332,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../explanation/" class="md-tabs__link">
+        <a href="../../explanation/" class="md-tabs__link">
           
   
   
@@ -352,7 +348,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/" class="md-tabs__link">
+        <a href="../../reference/" class="md-tabs__link">
           
   
   
@@ -368,11 +364,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
         
   
   
@@ -393,7 +387,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../get-the-book/" class="md-tabs__link">
+        <a href="../../get-the-book/" class="md-tabs__link">
           
   
   
@@ -427,9 +421,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href="../.." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     Attune AI
@@ -456,7 +450,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -537,7 +531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -565,7 +559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/installation/" class="md-nav__link">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -593,7 +587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/first-steps/" class="md-nav__link">
+      <a href="../../getting-started/first-steps/" class="md-nav__link">
         
   
   
@@ -621,7 +615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/choose-your-path/" class="md-nav__link">
+      <a href="../../getting-started/choose-your-path/" class="md-nav__link">
         
   
   
@@ -649,7 +643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/redis-setup/" class="md-nav__link">
+      <a href="../../getting-started/redis-setup/" class="md-nav__link">
         
   
   
@@ -677,7 +671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/mcp-integration/" class="md-nav__link">
+      <a href="../../getting-started/mcp-integration/" class="md-nav__link">
         
   
   
@@ -766,7 +760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/" class="md-nav__link">
+      <a href="../../tutorials/" class="md-nav__link">
         
   
   
@@ -794,7 +788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/build-a-workflow/" class="md-nav__link">
+      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
         
   
   
@@ -883,7 +877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/" class="md-nav__link">
+      <a href="../../how-to/" class="md-nav__link">
         
   
   
@@ -965,7 +959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/unified-memory-system/" class="md-nav__link">
+      <a href="../../how-to/unified-memory-system/" class="md-nav__link">
         
   
   
@@ -993,7 +987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/short-term-memory-implementation/" class="md-nav__link">
+      <a href="../../how-to/short-term-memory-implementation/" class="md-nav__link">
         
   
   
@@ -1021,7 +1015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/memory-graph/" class="md-nav__link">
+      <a href="../../how-to/memory-graph/" class="md-nav__link">
         
   
   
@@ -1111,7 +1105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/agent-factory/" class="md-nav__link">
+      <a href="../../how-to/agent-factory/" class="md-nav__link">
         
   
   
@@ -1139,7 +1133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/smart-router/" class="md-nav__link">
+      <a href="../../how-to/smart-router/" class="md-nav__link">
         
   
   
@@ -1167,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/auto-chaining/" class="md-nav__link">
+      <a href="../../how-to/auto-chaining/" class="md-nav__link">
         
   
   
@@ -1257,7 +1251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../integration/claude-code-integration/" class="md-nav__link">
+      <a href="../../integration/claude-code-integration/" class="md-nav__link">
         
   
   
@@ -1285,7 +1279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/webhook-integration/" class="md-nav__link">
+      <a href="../../how-to/webhook-integration/" class="md-nav__link">
         
   
   
@@ -1313,7 +1307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/security-architecture/" class="md-nav__link">
+      <a href="../../how-to/security-architecture/" class="md-nav__link">
         
   
   
@@ -1341,7 +1335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/hipaa-compliance/" class="md-nav__link">
+      <a href="../../how-to/hipaa-compliance/" class="md-nav__link">
         
   
   
@@ -1431,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/practical-patterns/" class="md-nav__link">
+      <a href="../../how-to/practical-patterns/" class="md-nav__link">
         
   
   
@@ -1459,7 +1453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/resilience-patterns/" class="md-nav__link">
+      <a href="../../how-to/resilience-patterns/" class="md-nav__link">
         
   
   
@@ -1495,7 +1489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/prerequisites/" class="md-nav__link">
+      <a href="../../how-to/prerequisites/" class="md-nav__link">
         
   
   
@@ -1584,7 +1578,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../SECURITY/" class="md-nav__link">
+      <a href="../../SECURITY/" class="md-nav__link">
         
   
   
@@ -1612,7 +1606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../SECURITY_REVIEW/" class="md-nav__link">
+      <a href="../../SECURITY_REVIEW/" class="md-nav__link">
         
   
   
@@ -1694,7 +1688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../CODING_STANDARDS/" class="md-nav__link">
+      <a href="../../CODING_STANDARDS/" class="md-nav__link">
         
   
   
@@ -1722,7 +1716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
+      <a href="../../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
         
   
   
@@ -1819,7 +1813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/" class="md-nav__link">
+      <a href="../../explanation/" class="md-nav__link">
         
   
   
@@ -1901,7 +1895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/ATTUNE_PHILOSOPHY/" class="md-nav__link">
+      <a href="../../explanation/ATTUNE_PHILOSOPHY/" class="md-nav__link">
         
   
   
@@ -1929,7 +1923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/multi-agent-philosophy/" class="md-nav__link">
+      <a href="../../explanation/multi-agent-philosophy/" class="md-nav__link">
         
   
   
@@ -1957,7 +1951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/HOW_CLAUDE_LEARNS/" class="md-nav__link">
+      <a href="../../explanation/HOW_CLAUDE_LEARNS/" class="md-nav__link">
         
   
   
@@ -2047,7 +2041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/TEACHING_AI_YOUR_PHILOSOPHY/" class="md-nav__link">
+      <a href="../../explanation/TEACHING_AI_YOUR_PHILOSOPHY/" class="md-nav__link">
         
   
   
@@ -2075,7 +2069,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/adaptive-learning/" class="md-nav__link">
+      <a href="../../explanation/adaptive-learning/" class="md-nav__link">
         
   
   
@@ -2103,7 +2097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/COMPARISON/" class="md-nav__link">
+      <a href="../../explanation/COMPARISON/" class="md-nav__link">
         
   
   
@@ -2193,7 +2187,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/USING_ATTUNE_WITH_LLMS/" class="md-nav__link">
+      <a href="../../explanation/USING_ATTUNE_WITH_LLMS/" class="md-nav__link">
         
   
   
@@ -2221,7 +2215,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/MEMDOCS_ATTUNE_INTEGRATION/" class="md-nav__link">
+      <a href="../../explanation/MEMDOCS_ATTUNE_INTEGRATION/" class="md-nav__link">
         
   
   
@@ -2257,7 +2251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/ATTUNE_AI_NON_TECHNICAL_GUIDE/" class="md-nav__link">
+      <a href="../../explanation/ATTUNE_AI_NON_TECHNICAL_GUIDE/" class="md-nav__link">
         
   
   
@@ -2346,7 +2340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -2428,7 +2422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/CLI_GUIDE/" class="md-nav__link">
+      <a href="../../reference/CLI_GUIDE/" class="md-nav__link">
         
   
   
@@ -2456,7 +2450,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/CLI_CHEATSHEET/" class="md-nav__link">
+      <a href="../../reference/CLI_CHEATSHEET/" class="md-nav__link">
         
   
   
@@ -2546,7 +2540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/API_REFERENCE/" class="md-nav__link">
+      <a href="../../reference/API_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2574,7 +2568,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/empathy-os/" class="md-nav__link">
+      <a href="../../reference/empathy-os/" class="md-nav__link">
         
   
   
@@ -2602,7 +2596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/configuration/" class="md-nav__link">
+      <a href="../../reference/configuration/" class="md-nav__link">
         
   
   
@@ -2630,7 +2624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/core/" class="md-nav__link">
+      <a href="../../reference/core/" class="md-nav__link">
         
   
   
@@ -2658,7 +2652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/config/" class="md-nav__link">
+      <a href="../../reference/config/" class="md-nav__link">
         
   
   
@@ -2686,7 +2680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/pattern-library/" class="md-nav__link">
+      <a href="../../reference/pattern-library/" class="md-nav__link">
         
   
   
@@ -2714,7 +2708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/multi-agent/" class="md-nav__link">
+      <a href="../../reference/multi-agent/" class="md-nav__link">
         
   
   
@@ -2742,7 +2736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/persistence/" class="md-nav__link">
+      <a href="../../reference/persistence/" class="md-nav__link">
         
   
   
@@ -2770,7 +2764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/llm-toolkit/" class="md-nav__link">
+      <a href="../../reference/llm-toolkit/" class="md-nav__link">
         
   
   
@@ -2860,7 +2854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/wizards-getting-started/" class="md-nav__link">
+      <a href="../../guides/wizards-getting-started/" class="md-nav__link">
         
   
   
@@ -2888,7 +2882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/wizard-architecture/" class="md-nav__link">
+      <a href="../../guides/wizard-architecture/" class="md-nav__link">
         
   
   
@@ -2916,7 +2910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/wizard-custom-development/" class="md-nav__link">
+      <a href="../../guides/wizard-custom-development/" class="md-nav__link">
         
   
   
@@ -3006,7 +3000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/FAQ/" class="md-nav__link">
+      <a href="../../reference/FAQ/" class="md-nav__link">
         
   
   
@@ -3034,7 +3028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/TROUBLESHOOTING/" class="md-nav__link">
+      <a href="../../reference/TROUBLESHOOTING/" class="md-nav__link">
         
   
   
@@ -3062,7 +3056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/glossary/" class="md-nav__link">
+      <a href="../../reference/glossary/" class="md-nav__link">
         
   
   
@@ -3090,7 +3084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/USER_GUIDE/" class="md-nav__link">
+      <a href="../../reference/USER_GUIDE/" class="md-nav__link">
         
   
   
@@ -3118,7 +3112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/SHORT_TERM_MEMORY/" class="md-nav__link">
+      <a href="../../reference/SHORT_TERM_MEMORY/" class="md-nav__link">
         
   
   
@@ -3158,37 +3152,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Contributing
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
         
   
   
@@ -3204,103 +3171,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Getting Started
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development Setup
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code Style
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pull-request-guidelines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pull Request Guidelines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Questions?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3366,7 +3236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../get-the-book/" class="md-nav__link">
+      <a href="../../get-the-book/" class="md-nav__link">
         
   
   
@@ -3394,7 +3264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../book-cover/" class="md-nav__link">
+      <a href="../../book-cover/" class="md-nav__link">
         
   
   
@@ -3422,7 +3292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/how-to-read-this-book/" class="md-nav__link">
+      <a href="../../guides/how-to-read-this-book/" class="md-nav__link">
         
   
   
@@ -3450,7 +3320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/preface/" class="md-nav__link">
+      <a href="../../guides/preface/" class="md-nav__link">
         
   
   
@@ -3478,7 +3348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/foreword/" class="md-nav__link">
+      <a href="../../guides/foreword/" class="md-nav__link">
         
   
   
@@ -3533,10 +3403,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
+  <a href="#timeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Getting Started
+        Timeline
       
     </span>
   </a>
@@ -3544,10 +3414,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development-setup" class="md-nav__link">
+  <a href="#import-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Setup
+        Import Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Import Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memory-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Differences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Differences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stashretrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stash/retrieve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search (new)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promote-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promote (new)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
       
     </span>
   </a>
@@ -3555,54 +3525,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
+  <a href="#modules-being-removed-in-v400" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Style
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pull-request-guidelines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pull Request Guidelines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Questions?
+        Modules Being Removed in v4.0.0
       
     </span>
   </a>
@@ -3629,78 +3555,159 @@
   
 
 
-<h1 id="contributing-to-attune-ai">Contributing to Attune AI<a class="headerlink" href="#contributing-to-attune-ai" title="Permanent link">&para;</a></h1>
-<p>Thank you for your interest in contributing to the Attune AI!</p>
-<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Fork the repository</li>
-<li>Clone your fork: <code>git clone https://github.com/YOUR_USERNAME/empathy.git</code></li>
-<li>Create a branch: <code>git checkout -b feature/your-feature-name</code></li>
-<li>Make your changes</li>
-<li>Run tests: <code>pytest</code></li>
-<li>Commit: <code>git commit -m "feat: your feature description"</code></li>
-<li>Push: <code>git push origin feature/your-feature-name</code></li>
-<li>Create a Pull Request</li>
-</ol>
-<h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Clone repository</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Smart-AI-Memory/empathy.git
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>empathy
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Install in development mode</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Run tests</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pytest
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Run linters</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>black<span class="w"> </span>.
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>ruff<span class="w"> </span>check<span class="w"> </span>.
-</code></pre></div>
-<h2 id="code-style">Code Style<a class="headerlink" href="#code-style" title="Permanent link">&para;</a></h2>
-<p>We use:
-- <strong>Black</strong> for code formatting
-- <strong>Ruff</strong> for linting
-- <strong>Google-style</strong> docstrings</p>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<p>All new features should include tests:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Run all tests</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pytest
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Run with coverage</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>attune
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Run specific test</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pytest<span class="w"> </span>tests/test_core.py::test_specific_function
-</code></pre></div>
-<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Update documentation for any user-facing changes:
-- Add examples to <code>docs/examples/</code>
-- Update API docs if needed
-- Update CHANGELOG.md</p>
-<h2 id="pull-request-guidelines">Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permanent link">&para;</a></h2>
+<h1 id="redis-plugin-migration-guide">Redis Plugin Migration Guide<a class="headerlink" href="#redis-plugin-migration-guide" title="Permanent link">&para;</a></h1>
+<p>Migrating from legacy <code>attune.redis_*</code> modules to the
+<code>attune-redis</code> plugin.</p>
+<h2 id="timeline">Timeline<a class="headerlink" href="#timeline" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Keep PRs focused (one feature/fix per PR)</li>
-<li>Include tests</li>
-<li>Update documentation</li>
-<li>Follow commit message conventions:</li>
-<li><code>feat:</code> new feature</li>
-<li><code>fix:</code> bug fix</li>
-<li><code>docs:</code> documentation</li>
-<li><code>test:</code> tests</li>
-<li><code>refactor:</code> refactoring</li>
+<li><strong>v3.5.0</strong>: Legacy modules emit <code>DeprecationWarning</code></li>
+<li><strong>v4.0.0</strong>: Legacy modules will be removed</li>
 </ul>
-<h2 id="questions">Questions?<a class="headerlink" href="#questions" title="Permanent link">&para;</a></h2>
-<p>Open an issue or ask in <a href="https://github.com/Smart-AI-Memory/empathy/discussions">Discussions</a>!</p>
+<h2 id="import-changes">Import Changes<a class="headerlink" href="#import-changes" title="Permanent link">&para;</a></h2>
+<h3 id="memory-backend">Memory Backend<a class="headerlink" href="#memory-backend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Before (deprecated)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.redis_memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">RedisShortTermMemory</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">RedisShortTermMemory</span><span class="p">(</span><span class="n">use_mock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># After</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_redis.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AMSMemoryBackend</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_redis.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">RedisPluginConfig</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">config</span> <span class="o">=</span> <span class="n">RedisPluginConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">AMSMemoryBackend</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Before (deprecated)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.redis_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_config</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">get_redis_config</span><span class="p">()</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># After</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_redis.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">RedisPluginConfig</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">RedisPluginConfig</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h3>
+<p>Types moved to <code>attune.memory.types</code> (no plugin
+dependency needed):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Before (deprecated)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.redis_memory_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">AccessTier</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">AgentCredentials</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># After</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">AccessTier</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">AgentCredentials</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="api-differences">API Differences<a class="headerlink" href="#api-differences" title="Permanent link">&para;</a></h2>
+<h3 id="stashretrieve">stash/retrieve<a class="headerlink" href="#stashretrieve" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Before: credentials required</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">creds</span> <span class="o">=</span> <span class="n">AgentCredentials</span><span class="p">(</span><span class="s2">&quot;agent_1&quot;</span><span class="p">,</span> <span class="n">AccessTier</span><span class="o">.</span><span class="n">CONTRIBUTOR</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">creds</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">data</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">creds</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># After: simple key-value, optional session_id</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">backend</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">data</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># With session override</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">backend</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;session-1&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="search-new">Search (new)<a class="headerlink" href="#search-new" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Before: not available in RedisShortTermMemory</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># After: semantic search via AMS long-term memory</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;find user preferences&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="promote-new">Promote (new)<a class="headerlink" href="#promote-new" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Before: not available</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># After: promote working memory to long-term</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">backend</span><span class="o">.</span><span class="n">promote</span><span class="p">(</span><span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;my-session&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Before</th>
+<th>After</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REDIS_HOST</code></td>
+<td><code>AMS_BASE_URL</code></td>
+<td>AMS server URL</td>
+</tr>
+<tr>
+<td><code>REDIS_PORT</code></td>
+<td>(part of URL)</td>
+<td>Included in URL</td>
+</tr>
+<tr>
+<td><code>REDIS_PASSWORD</code></td>
+<td>(AMS auth)</td>
+<td>AMS handles auth</td>
+</tr>
+<tr>
+<td><code>REDIS_DB</code></td>
+<td><code>AMS_NAMESPACE</code></td>
+<td>Namespace isolation</td>
+</tr>
+<tr>
+<td><code>REDIS_URL</code></td>
+<td><code>REDIS_URL</code></td>
+<td>Still used for pub/sub</td>
+</tr>
+</tbody>
+</table>
+<h2 id="modules-being-removed-in-v400">Modules Being Removed in v4.0.0<a class="headerlink" href="#modules-being-removed-in-v400" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune.redis_memory</code></td>
+<td><code>attune_redis.memory</code></td>
+</tr>
+<tr>
+<td><code>attune.redis_config</code></td>
+<td><code>attune_redis.config</code></td>
+</tr>
+<tr>
+<td><code>attune.redis_memory_storage</code></td>
+<td><code>attune_redis.memory</code></td>
+</tr>
+<tr>
+<td><code>attune.redis_memory_coordination</code></td>
+<td><code>attune_redis.signals</code></td>
+</tr>
+<tr>
+<td><code>attune.redis_memory_patterns</code></td>
+<td><code>attune_redis.memory</code></td>
+</tr>
+<tr>
+<td><code>attune.redis_memory_models</code></td>
+<td><code>attune.memory.types</code></td>
+</tr>
+<tr>
+<td><code>attune.memory.config</code></td>
+<td><code>attune_redis.config</code></td>
+</tr>
+</tbody>
+</table>
 
 
 
 
 
 
-
-  
-  
 
 
 
@@ -3781,10 +3788,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/empathy-brain-logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
@@ -4234,13 +4234,12 @@ pattern = empathy.recall_pattern(result[&quot;pattern_id&quot;])
                 <code>short_term_memory</code>
             </td>
             <td>
-                  <code><span title="attune.redis_memory.RedisShortTermMemory">RedisShortTermMemory</span> | None</code>
+                  <code><span title="attune.memory.backend.MemoryBackend">MemoryBackend</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Optional RedisShortTermMemory for fast, TTL-based working
-              memory. Enables real-time multi-agent coordination, pattern
-              staging, and conflict resolution.</p>
+                <p>Optional MemoryBackend for fast, TTL-based working
+              memory. Accepts any backend (FileSessionMemory, Redis, etc.).</p>
               </div>
             </td>
             <td>
@@ -4252,7 +4251,7 @@ pattern = empathy.recall_pattern(result[&quot;pattern_id&quot;])
                 <code>access_tier</code>
             </td>
             <td>
-                  <code><span title="attune.redis_memory.AccessTier">AccessTier</span></code>
+                  <code><span title="attune.memory.types.AccessTier">AccessTier</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4261,7 +4260,7 @@ pattern = empathy.recall_pattern(result[&quot;pattern_id&quot;])
               </div>
             </td>
             <td>
-                  <code><span title="attune.redis_memory.AccessTier.CONTRIBUTOR">CONTRIBUTOR</span></code>
+                  <code><span title="attune.memory.types.AccessTier.CONTRIBUTOR">CONTRIBUTOR</span></code>
             </td>
           </tr>
           <tr class="doc-section-item">
