@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 
-from .redis_memory_models import AgentCredentials, StagedPattern, TTLStrategy
+from .memory.types import AgentCredentials, StagedPattern, TTLStrategy
 
 
 class PatternStagingMixin:

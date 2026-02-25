@@ -6,13 +6,12 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
 if TYPE_CHECKING:
     from ..file_session import FileSessionMemory
-    from ..short_term import RedisShortTermMemory
 
 logger = structlog.get_logger(__name__)
 
@@ -22,7 +21,7 @@ class LifecycleMixin:
 
     # Type hints for attributes that will be provided by UnifiedMemory
     _file_session: "FileSessionMemory | None"
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
 
     def save(self) -> None:
         """Explicitly save all memory state."""

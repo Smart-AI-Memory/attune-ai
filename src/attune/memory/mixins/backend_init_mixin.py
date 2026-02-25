@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from ..file_session import FileSessionMemory
     from ..long_term import LongTermMemory, SecureMemDocsIntegration
     from ..redis_bootstrap import RedisStatus
-    from ..short_term import RedisShortTermMemory
 
 logger = structlog.get_logger(__name__)
 
@@ -26,7 +25,7 @@ class BackendInitMixin:
     user_id: str
     config: Any  # MemoryConfig
     _file_session: "FileSessionMemory | None"
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
     _long_term: "SecureMemDocsIntegration | None"
     _simple_long_term: "LongTermMemory | None"
     _redis_status: "RedisStatus | None"
@@ -45,11 +44,18 @@ class BackendInitMixin:
         3. Falls back gracefully when Redis is unavailable
         """
         from ..claude_memory import ClaudeMemoryConfig
-        from ..config import get_redis_memory
         from ..file_session import FileSessionConfig, FileSessionMemory
         from ..long_term import LongTermMemory, SecureMemDocsIntegration
-        from ..redis_bootstrap import RedisStartMethod, RedisStatus, ensure_redis
-        from ..short_term import RedisShortTermMemory
+
+        # Redis backend is optional -- guard all Redis imports
+        try:
+            from ..config import get_redis_memory
+            from ..redis_bootstrap import RedisStartMethod, RedisStatus, ensure_redis
+            from ..short_term import RedisShortTermMemory
+
+            _HAS_REDIS_BACKEND = True
+        except ImportError:
+            _HAS_REDIS_BACKEND = False
 
         if self._initialized:
             return
@@ -72,97 +78,100 @@ class BackendInitMixin:
                 self._file_session = None
 
         # Initialize Redis short-term memory (OPTIONAL - for real-time features)
-        try:
-            if self.config.redis_mock:
-                self._short_term = RedisShortTermMemory(use_mock=True)
-                self._redis_status = RedisStatus(
-                    available=False,
-                    method=RedisStartMethod.MOCK,
-                    message="Mock mode explicitly enabled",
-                )
-            elif self.config.redis_url:
-                self._short_term = get_redis_memory(url=self.config.redis_url)
-                self._redis_status = RedisStatus(
-                    available=True,
-                    method=RedisStartMethod.ALREADY_RUNNING,
-                    message="Connected via REDIS_URL",
-                )
-            # Use auto-start if enabled
-            elif self.config.redis_auto_start:
-                self._redis_status = ensure_redis(
-                    host=self.config.redis_host,
-                    port=self.config.redis_port,
-                    auto_start=True,
-                    verbose=True,
-                )
-                if self._redis_status.available:
-                    self._short_term = RedisShortTermMemory(
-                        host=self.config.redis_host,
-                        port=self.config.redis_port,
-                        use_mock=False,
-                    )
-                else:
-                    # File session is primary, so Redis mock is not needed
-                    self._short_term = None
+        if not _HAS_REDIS_BACKEND:
+            self._short_term = None
+            self._redis_status = None
+            logger.info(
+                "redis_backend_not_installed",
+                message="Redis backend not available, using file-based storage only",
+            )
+        else:
+            try:
+                if self.config.redis_mock:
+                    self._short_term = RedisShortTermMemory(use_mock=True)
                     self._redis_status = RedisStatus(
                         available=False,
                         method=RedisStartMethod.MOCK,
-                        message="Redis unavailable, using file-based storage",
+                        message="Mock mode explicitly enabled",
                     )
-            else:
-                # Try to connect to existing Redis
-                try:
-                    self._short_term = get_redis_memory()
-                    if self._short_term.is_connected():
-                        self._redis_status = RedisStatus(
-                            available=True,
-                            method=RedisStartMethod.ALREADY_RUNNING,
-                            message="Connected to existing Redis",
+                elif self.config.redis_url:
+                    self._short_term = get_redis_memory(url=self.config.redis_url)
+                    self._redis_status = RedisStatus(
+                        available=True,
+                        method=RedisStartMethod.ALREADY_RUNNING,
+                        message="Connected via REDIS_URL",
+                    )
+                # Use auto-start if enabled
+                elif self.config.redis_auto_start:
+                    self._redis_status = ensure_redis(
+                        host=self.config.redis_host,
+                        port=self.config.redis_port,
+                        auto_start=True,
+                        verbose=True,
+                    )
+                    if self._redis_status.available:
+                        self._short_term = RedisShortTermMemory(
+                            host=self.config.redis_host,
+                            port=self.config.redis_port,
+                            use_mock=False,
                         )
                     else:
                         self._short_term = None
                         self._redis_status = RedisStatus(
                             available=False,
                             method=RedisStartMethod.MOCK,
+                            message="Redis unavailable, using file-based storage",
+                        )
+                else:
+                    # Try to connect to existing Redis
+                    try:
+                        self._short_term = get_redis_memory()
+                        if self._short_term.is_connected():
+                            self._redis_status = RedisStatus(
+                                available=True,
+                                method=RedisStartMethod.ALREADY_RUNNING,
+                                message="Connected to existing Redis",
+                            )
+                        else:
+                            self._short_term = None
+                            self._redis_status = RedisStatus(
+                                available=False,
+                                method=RedisStartMethod.MOCK,
+                                message="Redis not available, using file-based storage",
+                            )
+                    except Exception:
+                        self._short_term = None
+                        self._redis_status = RedisStatus(
+                            available=False,
+                            method=RedisStartMethod.MOCK,
                             message="Redis not available, using file-based storage",
                         )
-                except Exception:
-                    self._short_term = None
-                    self._redis_status = RedisStatus(
-                        available=False,
-                        method=RedisStartMethod.MOCK,
-                        message="Redis not available, using file-based storage",
-                    )
 
-            logger.info(
-                "short_term_memory_initialized",
-                redis_available=self._redis_status.available if self._redis_status else False,
-                file_session_available=self._file_session is not None,
-                redis_method=self._redis_status.method.value if self._redis_status else "none",
-                environment=self.config.environment.value,
-            )
-
-            # Fail if Redis is required but not available
-            if self.config.redis_required and not (
-                self._redis_status and self._redis_status.available
-            ):
-                raise RuntimeError(
-                    "Redis is required but not available. "
-                    f"Config requires Redis (redis_required=True, environment={self.config.environment.value}). "
-                    "Either: (1) Start Redis server, (2) Set REDIS_URL environment variable, "
-                    "or (3) Set redis_required=False in MemoryConfig."
+                logger.info(
+                    "short_term_memory_initialized",
+                    redis_available=self._redis_status.available if self._redis_status else False,
+                    file_session_available=self._file_session is not None,
+                    redis_method=self._redis_status.method.value if self._redis_status else "none",
+                    environment=self.config.environment.value,
                 )
 
-        except RuntimeError:
-            raise  # Re-raise required Redis error
-        except Exception as e:
-            logger.warning("redis_initialization_failed", error=str(e))
-            self._short_term = None
-            self._redis_status = RedisStatus(
-                available=False,
-                method=RedisStartMethod.MOCK,
-                message=f"Failed to initialize: {e}",
-            )
+                # Fail if Redis is required but not available
+                if self.config.redis_required and not (
+                    self._redis_status and self._redis_status.available
+                ):
+                    raise RuntimeError(
+                        "Redis is required but not available. "
+                        f"Config requires Redis (redis_required=True, environment={self.config.environment.value}). "
+                        "Either: (1) Start Redis server, (2) Set REDIS_URL environment variable, "
+                        "or (3) Set redis_required=False in MemoryConfig."
+                    )
+
+            except RuntimeError:
+                raise  # Re-raise required Redis error
+            except Exception as e:
+                logger.warning("redis_initialization_failed", error=str(e))
+                self._short_term = None
+                self._redis_status = None
 
         # Initialize long-term memory (SecureMemDocs)
         try:
@@ -217,8 +226,6 @@ class BackendInitMixin:
             True
 
         """
-        from ..redis_bootstrap import RedisStartMethod
-
         short_term_status: dict[str, Any] = {
             "available": False,
             "mock": True,
@@ -227,10 +234,18 @@ class BackendInitMixin:
         }
 
         if self._redis_status:
+            try:
+                from ..redis_bootstrap import RedisStartMethod
+
+                is_mock = (
+                    not self._redis_status.available
+                    or self._redis_status.method == RedisStartMethod.MOCK
+                )
+            except ImportError:
+                is_mock = True
             short_term_status = {
                 "available": self._redis_status.available,
-                "mock": not self._redis_status.available
-                or self._redis_status.method == RedisStartMethod.MOCK,
+                "mock": is_mock,
                 "method": self._redis_status.method.value,
                 "message": self._redis_status.message,
             }

@@ -6,7 +6,7 @@ pattern staging, signal sending/receiving, and collaboration state persistence.
 
 Expected attributes on the host class:
     user_id (str): User identifier
-    short_term_memory (RedisShortTermMemory | None): Redis memory instance
+    short_term_memory (MemoryBackend | None): Redis memory instance
     credentials (AgentCredentials): Agent credentials
     collaboration_state (CollaborationState): Collaboration state
     current_empathy_level (int): Current empathy level
@@ -22,7 +22,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..redis_memory import AgentCredentials, RedisShortTermMemory, StagedPattern
+    from ..memory.backend import MemoryBackend
+    from ..memory.types import AgentCredentials, StagedPattern
 
 
 class ShortTermMemoryMixin:
@@ -30,7 +31,7 @@ class ShortTermMemoryMixin:
 
     # Expected attributes (set by EmpathyOS.__init__)
     user_id: str
-    short_term_memory: RedisShortTermMemory | None
+    short_term_memory: MemoryBackend | None
     credentials: AgentCredentials
     collaboration_state: Any  # CollaborationState
     current_empathy_level: int

@@ -15,7 +15,7 @@ import json
 from datetime import datetime
 from typing import Any
 
-from .redis_memory_models import (
+from .memory.types import (
     AgentCredentials,
     ConflictContext,
     TTLStrategy,

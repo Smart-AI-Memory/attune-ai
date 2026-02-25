@@ -122,14 +122,38 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
    episodic)
 3. Optional: RAG example app using RedisVL
 
-## Next Steps
+## Phase 1 Checklist
+
+- [x] Define memory backend interface (`MemoryBackend`
+      protocol in `src/attune/memory/backend.py`)
+- [x] Implement file-based default backend
+      (`FileSessionMemory`)
+- [x] Register file backend via entry-point
+      (`pyproject.toml`)
+- [x] Guard Redis imports with try/except in core
+- [x] Consolidate shared types in `memory.types`
+- [x] Update `redis_memory.py` to import from
+      `memory.types` (not `redis_memory_models`)
+- [x] Convert `redis_memory_models.py` to deprecation
+      shim with DeprecationWarning
+- [x] Add MemoryBackend protocol compliance tests
+      (19 pass, 3 xfail tracking Redis gap)
+- [x] Add Redis-optional fallback tests (4 pass)
+- [x] Update `docs/getting-started/redis-setup.md`
+      (removed stale `wizards_consolidated` references)
+- [x] Add README to `_redis_holding/` with extraction
+      timeline
+- [ ] Add protocol adapter to `RedisShortTermMemory`
+      (bridges credentials API to protocol — Phase 2)
+
+## Next Steps (Phase 2)
 
 - [ ] Review Redis Agent Memory Server docs and
       `agent-memory-client` SDK
 - [ ] Complete Redis University AI learning path
-- [ ] Define the memory backend interface contract in
-      attune-ai core
 - [ ] Scaffold `attune-redis` package structure
+- [ ] Add protocol adapter methods to Redis backend
+      (delete, is_connected, close, supports_*)
 - [ ] Prototype MCP integration with mcp-redis
 
 ## Open Questions

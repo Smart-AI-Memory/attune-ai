@@ -20,7 +20,7 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
 
-from .redis_memory_models import AgentCredentials, TTLStrategy
+from .memory.types import AgentCredentials, TTLStrategy
 
 
 class RedisStorageBase:

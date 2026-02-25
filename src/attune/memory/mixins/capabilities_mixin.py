@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from ..file_session import FileSessionMemory
     from ..long_term import LongTermMemory
     from ..redis_bootstrap import RedisStatus
-    from ..short_term import RedisShortTermMemory
 
 
 class CapabilitiesMixin:
@@ -20,7 +19,7 @@ class CapabilitiesMixin:
 
     # Type hints for attributes that will be provided by UnifiedMemory
     _file_session: "FileSessionMemory | None"
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
     _long_term: Any  # SecureMemDocsIntegration
     _simple_long_term: "LongTermMemory | None"
     _redis_status: "RedisStatus | None"
@@ -57,7 +56,7 @@ class CapabilitiesMixin:
         )
 
     @property
-    def short_term(self) -> "RedisShortTermMemory":
+    def short_term(self) -> Any:
         """Get short-term memory backend for direct access (testing).
 
         Returns:

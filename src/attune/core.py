@@ -27,12 +27,18 @@ from .exceptions import ValidationError  # noqa: F401 - re-exported
 from .feedback_loops import FeedbackLoopDetector
 from .leverage_points import LeveragePoint, LeveragePointAnalyzer  # noqa: F401 - re-exported
 from .memory import Classification, UnifiedMemory  # noqa: F401 - re-exported
-from .redis_memory import (
+from .memory.backend import MemoryBackend  # noqa: F401 - re-exported
+from .memory.types import (
     AccessTier,  # noqa: F401 - re-exported
     AgentCredentials,
-    RedisShortTermMemory,  # noqa: F401 - re-exported
     StagedPattern,  # noqa: F401 - re-exported
 )
+
+# Backward compat: re-export RedisShortTermMemory for existing callers
+try:
+    from .redis_memory import RedisShortTermMemory  # noqa: F401 - re-exported
+except ImportError:
+    RedisShortTermMemory = None  # type: ignore[assignment,misc]
 
 if TYPE_CHECKING:
     from .pattern_library import PatternLibrary
@@ -180,7 +186,7 @@ class EmpathyOS(
         confidence_threshold: float = 0.75,
         logger: logging.Logger | None = None,
         shared_library: PatternLibrary | None = None,
-        short_term_memory: RedisShortTermMemory | None = None,
+        short_term_memory: MemoryBackend | None = None,
         access_tier: AccessTier = AccessTier.CONTRIBUTOR,
         persistence_enabled: bool = True,
     ):
@@ -194,9 +200,8 @@ class EmpathyOS(
             shared_library: Optional shared PatternLibrary for multi-agent collaboration.
                            When provided, enables agents to share discovered patterns,
                            supporting Level 5 (Systems Empathy) distributed memory networks.
-            short_term_memory: Optional RedisShortTermMemory for fast, TTL-based working
-                              memory. Enables real-time multi-agent coordination, pattern
-                              staging, and conflict resolution.
+            short_term_memory: Optional MemoryBackend for fast, TTL-based working
+                              memory. Accepts any backend (FileSessionMemory, Redis, etc.).
             access_tier: Access tier for this agent (Observer, Contributor, Validator, Steward).
                         Determines what operations the agent can perform on shared memory.
             persistence_enabled: Whether to enable pattern/state persistence (default: True)

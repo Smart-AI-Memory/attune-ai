@@ -73,7 +73,8 @@ from .redis_bootstrap import (
     ensure_redis,
     stop_redis,
 )
-from .short_term import AccessTier, AgentCredentials, RedisShortTermMemory
+from .short_term import RedisShortTermMemory
+from .types import AccessTier, AgentCredentials
 
 # Suppress noisy warnings in CLI mode
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
