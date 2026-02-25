@@ -10,17 +10,32 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
-    { name = "Smart AI Memory, LLC" },
+    { name = "Patrick Roebuck", email = "admin@smartaimemory.com" },
+]
+maintainers = [
+    { name = "Smart AI Memory, LLC", email = "admin@smartaimemory.com" },
+]
+keywords = [
+    "ai",
+    "redis",
+    "agent-memory",
+    "attune",
+    "llm",
+    "memory-backend",
+    "semantic-search",
+    "mcp",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 dependencies = [
     "attune-ai>=3.5.0",
@@ -44,6 +59,15 @@ redis = "attune_redis.memory:AMSMemoryBackend"
 [project.urls]
 Homepage = "https://github.com/Smart-AI-Memory/attune-ai"
 Documentation = "https://github.com/Smart-AI-Memory/attune-ai/tree/main/attune_redis"
+Repository = "https://github.com/Smart-AI-Memory/attune-ai"
+Issues = "https://github.com/Smart-AI-Memory/attune-ai/issues"
+Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md"
 
-[tool.setuptools.packages.find]
-include = ["attune_redis*"]
+[tool.setuptools]
+packages = ["attune_redis"]
+
+[tool.setuptools.package-dir]
+attune_redis = "."
+
+[tool.setuptools.package-data]
+attune_redis = ["py.typed"]
