@@ -5,6 +5,16 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.1] - 2026-02-25
+
+### Added
+
+- **Lessons Learned Stop hook** — `lessons_reminder.py`
+  fires once per session at Stop, prompts Claude to update
+  the `## Lessons Learned` section in `.claude/CLAUDE.md`,
+  then silences itself via a TTL sentinel file so it
+  doesn't loop on repeated stop attempts.
+
 ## [3.6.0] - 2026-02-25
 
 ### Added

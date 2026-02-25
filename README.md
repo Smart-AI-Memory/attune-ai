@@ -23,6 +23,13 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.1
+
+- **Lessons Learned Stop hook** — `lessons_reminder.py`
+  automatically prompts Claude to record new patterns and
+  fixes in `.claude/CLAUDE.md` at session end. Fires once
+  per session via a TTL sentinel; no looping.
+
 ## What's New in v3.6.0
 
 - **attune-redis plugin** — Redis memory is now a
