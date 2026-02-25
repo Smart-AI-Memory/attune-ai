@@ -35,7 +35,7 @@ def tracker(temp_dir):
 
 
 def test_track_llm_call_creates_file(tracker, temp_dir):
-    """Test that tracking an LLM call creates the usage file."""
+    """Test that tracking an LLM call creates the usage file after flush."""
     assert not tracker.usage_file.exists()
 
     tracker.track_llm_call(
@@ -51,6 +51,8 @@ def test_track_llm_call_creates_file(tracker, temp_dir):
         duration_ms=2340,
     )
 
+    # Entries are buffered; flush to disk before checking file existence
+    tracker.flush()
     assert tracker.usage_file.exists()
 
 
@@ -82,7 +84,9 @@ def test_track_llm_call_json_lines_format(tracker):
         duration_ms=150,
     )
 
-    # Read file and verify JSON Lines format
+    # Flush buffer to disk before reading file directly
+    tracker.flush()
+
     with open(tracker.usage_file, encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -313,11 +317,13 @@ def test_reset(tracker):
             duration_ms=100,
         )
 
+    # Flush to disk so entries are visible both in buffer checks and on disk
+    tracker.flush()
     assert tracker.usage_file.exists()
     entries_before = tracker.get_recent_entries(limit=100)
     assert len(entries_before) == 5
 
-    # Reset
+    # Reset clears buffer + disk files
     count = tracker.reset()
     assert count == 5
 
@@ -529,9 +535,10 @@ class TestPermissionErrors:
         # No exception should be raised
 
     def test_track_call_with_unexpected_error(self, tracker):
-        """Test that unexpected errors during write are handled gracefully."""
-        # Mock _write_entry to raise unexpected exception
-        with patch.object(tracker, "_write_entry", side_effect=RuntimeError("Unexpected error")):
+        """Test that unexpected errors during flush are handled gracefully."""
+        # Fill buffer to trigger a flush on next call, then mock flush to fail
+        tracker.buffer_size = 1
+        with patch.object(tracker, "flush", side_effect=RuntimeError("Unexpected error")):
             # Should not raise exception, just log
             tracker.track_llm_call(
                 workflow="test",
@@ -585,6 +592,9 @@ class TestFileRotation:
             cache_type=None,
             duration_ms=100,
         )
+
+        # Flush to disk so the file exists for size checking
+        tracker.flush()
 
         # Check file size (should be small)
         size_mb = tracker.usage_file.stat().st_size / (1024 * 1024)
@@ -773,7 +783,7 @@ class TestDataRetrieval:
 
     def test_get_recent_entries_handles_file_read_error(self, tracker):
         """Test that file read errors are handled gracefully."""
-        # Create a valid file
+        # Create a valid file (flush so the entry is on disk, not just in buffer)
         tracker.track_llm_call(
             workflow="test",
             stage="test",
@@ -786,12 +796,13 @@ class TestDataRetrieval:
             cache_type=None,
             duration_ms=100,
         )
+        tracker.flush()
 
-        # Mock open to raise error
+        # Mock open to raise error — disk reads fail, buffer is empty after flush
         with patch("builtins.open", side_effect=OSError("Read failed")):
             entries = tracker.get_recent_entries(limit=100)
 
-        # Should return empty list, not raise exception
+        # Should return empty list (disk unreadable, buffer empty), not raise exception
         assert entries == []
 
 

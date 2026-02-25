@@ -22,7 +22,12 @@ class UsageTracker:
     """Privacy-first local telemetry tracker.
 
     Tracks LLM calls to JSON Lines format with automatic rotation
-    and 90-day retention. Thread-safe with atomic writes.
+    and 90-day retention. Thread-safe with buffered writes.
+
+    Write buffering: entries are held in memory and flushed to disk in
+    batches (default: 50 entries), reducing per-call I/O overhead by ~50x.
+    A pre-aggregated daily summary file enables O(days) stats queries
+    instead of O(all-entries) full scans.
 
     All user identifiers are SHA256 hashed for privacy.
     No prompts, responses, file paths, or PII are ever tracked.
@@ -41,6 +46,7 @@ class UsageTracker:
         telemetry_dir: Path | None = None,
         retention_days: int = 90,
         max_file_size_mb: int = 10,
+        buffer_size: int = 50,
     ):
         """Initialize UsageTracker.
 
@@ -49,12 +55,23 @@ class UsageTracker:
                           Defaults to ~/.attune/telemetry/
             retention_days: Days to retain telemetry data (default: 90)
             max_file_size_mb: Max size in MB before rotation (default: 10)
+            buffer_size: Number of entries to buffer before flushing to
+                        disk (default: 50). Higher values reduce I/O at
+                        the cost of potentially losing buffered entries
+                        on unexpected process termination.
 
         """
         self.telemetry_dir = telemetry_dir or Path.home() / ".attune" / "telemetry"
         self.retention_days = retention_days
         self.max_file_size_mb = max_file_size_mb
+        self.buffer_size = buffer_size
         self.usage_file = self.telemetry_dir / "usage.jsonl"
+        self._summary_file = self.telemetry_dir / "usage_summary.json"
+
+        # In-memory write buffer — reduces disk I/O by batching writes
+        self._buffer: list[dict[str, Any]] = []
+        # Pre-aggregated daily stats keyed by "YYYY-MM-DD"
+        self._daily_summary: dict[str, dict[str, Any]] = {}
 
         # Create directory if needed (gracefully handle permission errors)
         try:
@@ -62,6 +79,9 @@ class UsageTracker:
         except (OSError, PermissionError):
             # Can't create directory - telemetry will be disabled
             logger.debug(f"Failed to create telemetry directory: {self.telemetry_dir}")
+
+        # Load or build the daily summary (enables fast get_stats() queries)
+        self._load_summary()
 
     @classmethod
     def get_instance(cls, **kwargs: Any) -> "UsageTracker":
@@ -77,6 +97,114 @@ class UsageTracker:
         if cls._instance is None:
             cls._instance = cls(**kwargs)
         return cls._instance
+
+    # =========================================================================
+    # Summary file — fast stats without full JSONL scans
+    # =========================================================================
+
+    def _load_summary(self) -> None:
+        """Load pre-aggregated daily summary from disk.
+
+        If no summary file exists (e.g. first run after upgrade), rebuilds
+        it from existing JSONL files. This is a one-time O(entries) cost;
+        subsequent loads are O(days).
+        """
+        if self._summary_file.exists():
+            try:
+                with open(self._summary_file, encoding="utf-8") as f:
+                    data = json.load(f)
+                self._daily_summary = data.get("days", {})
+                return
+            except (OSError, json.JSONDecodeError):
+                self._daily_summary = {}
+
+        # No summary file — build from existing disk data (migration path)
+        self._rebuild_summary_from_disk()
+
+    def _rebuild_summary_from_disk(self) -> None:
+        """Scan all JSONL files to build the daily summary.
+
+        Called once when no summary file exists. Result is saved to disk
+        so subsequent runs use the fast O(days) load path.
+        """
+        for file in sorted(self.telemetry_dir.glob("usage*.jsonl")):
+            try:
+                with open(file, encoding="utf-8") as f:
+                    entries = []
+                    for line in f:
+                        if not line.strip():
+                            continue
+                        try:
+                            entries.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            continue
+                    self._update_summary(entries)
+            except OSError:
+                continue
+
+        if self._daily_summary:
+            self._save_summary()
+
+    def _save_summary(self) -> None:
+        """Persist daily summary to disk atomically (best-effort)."""
+        try:
+            data = {
+                "v": "1.0",
+                "updated": datetime.utcnow().isoformat() + "Z",
+                "days": self._daily_summary,
+            }
+            tmp = self._summary_file.with_suffix(".tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, separators=(",", ":"))
+            tmp.replace(self._summary_file)
+        except OSError:
+            pass  # Best effort — stats still work via slow path
+
+    def _update_summary(self, entries: list[dict[str, Any]]) -> None:
+        """Aggregate entries into the in-memory daily summary.
+
+        Args:
+            entries: Entries to aggregate (already flushed to disk)
+
+        """
+        for entry in entries:
+            date = entry.get("ts", "")[:10]  # "YYYY-MM-DD"
+            if not date or len(date) != 10:
+                continue
+            day = self._daily_summary.setdefault(
+                date,
+                {
+                    "calls": 0,
+                    "cost": 0.0,
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "cache_hits": 0,
+                    "cache_misses": 0,
+                    "by_tier": {},
+                    "by_workflow": {},
+                    "by_provider": {},
+                },
+            )
+            cost = entry.get("cost", 0.0)
+            day["calls"] += 1
+            day["cost"] += cost
+            tokens = entry.get("tokens", {})
+            day["tokens_in"] += tokens.get("input", 0)
+            day["tokens_out"] += tokens.get("output", 0)
+            if entry.get("cache", {}).get("hit"):
+                day["cache_hits"] += 1
+            else:
+                day["cache_misses"] += 1
+            tier = entry.get("tier", "unknown")
+            day["by_tier"][tier] = day["by_tier"].get(tier, 0.0) + cost
+            wf = entry.get("workflow", "unknown")
+            day["by_workflow"][wf] = day["by_workflow"].get(wf, 0.0) + cost
+            prov = entry.get("provider", "unknown")
+            day["by_provider"][prov] = day["by_provider"].get(prov, 0.0) + cost
+
+    # =========================================================================
+    # Write path — buffered, batch I/O
+    # =========================================================================
 
     def track_llm_call(
         self,
@@ -96,6 +224,9 @@ class UsageTracker:
         prompt_cache_read_tokens: int = 0,
     ) -> None:
         """Track a single LLM call with prompt caching metrics.
+
+        Entries are buffered in memory and flushed to disk in batches
+        (see buffer_size). This eliminates per-call disk I/O overhead.
 
         Args:
             workflow: Workflow name (e.g., "code-review")
@@ -145,17 +276,58 @@ class UsageTracker:
                 "read_tokens": prompt_cache_read_tokens,
             }
 
-        # Write entry (thread-safe, atomic)
+        # Buffer entry (no disk I/O per-call)
+        should_flush = False
+        with self._lock:
+            self._buffer.append(entry)
+            should_flush = len(self._buffer) >= self.buffer_size
+
+        if should_flush:
+            try:
+                self.flush()
+                self._rotate_if_needed()
+            except OSError as e:
+                # File system errors - log but don't crash the workflow
+                logger.debug(f"Failed to flush telemetry buffer: {e}")
+            except Exception as ex:  # noqa: BLE001
+                # INTENTIONAL: Telemetry failures should never crash the workflow
+                logger.debug(f"Unexpected error flushing telemetry: {ex}")
+
+    def flush(self) -> int:
+        """Flush buffered entries to disk and update the daily summary.
+
+        Returns:
+            Number of entries written to disk. Zero if buffer was empty.
+
+        Raises:
+            OSError: If writing to disk fails. Entries are returned to the
+                    buffer so no data is lost.
+
+        """
+        with self._lock:
+            if not self._buffer:
+                return 0
+            entries = self._buffer[:]
+            self._buffer.clear()
+
         try:
-            self._write_entry(entry)
-            # Check if rotation needed
-            self._rotate_if_needed()
-        except OSError as e:
-            # File system errors - log but don't crash
-            logger.debug(f"Failed to write telemetry entry: {e}")
-        except Exception as ex:
-            # INTENTIONAL: Telemetry failures should never crash the workflow
-            logger.debug(f"Unexpected error writing telemetry entry: {ex}")
+            self.telemetry_dir.mkdir(parents=True, exist_ok=True)
+            with open(self.usage_file, "a", encoding="utf-8") as f:
+                for entry in entries:
+                    json.dump(entry, f, separators=(",", ":"))
+                    f.write("\n")
+        except OSError:
+            # Restore entries to buffer so they are not lost
+            with self._lock:
+                self._buffer = entries + self._buffer
+            raise
+
+        # Update in-memory summary and persist it (after successful disk write)
+        with self._lock:
+            self._update_summary(entries)
+            self._save_summary()
+
+        return len(entries)
 
     def _hash_user_id(self, user_id: str) -> str:
         """Hash user ID with SHA256 for privacy.
@@ -170,10 +342,15 @@ class UsageTracker:
         return hashlib.sha256(user_id.encode()).hexdigest()[:16]
 
     def _write_entry(self, entry: dict[str, Any]) -> None:
-        """Write entry to JSON Lines file atomically.
+        """Write a single entry to the JSON Lines file atomically.
 
-        Uses atomic write pattern: write to temp file, then rename.
-        This ensures no partial writes even with concurrent access.
+        This method bypasses the buffer and writes directly to disk.
+        Prefer track_llm_call() for normal usage; use this only when
+        you need guaranteed immediate persistence (e.g. tests).
+
+        Uses atomic write pattern: write to temp file, then rename or
+        append.  This ensures no partial writes even with concurrent
+        access.
 
         Args:
             entry: Dictionary entry to write
@@ -257,12 +434,16 @@ class UsageTracker:
                 # File system errors - log but continue
                 logger.debug(f"Failed to clean up telemetry file: {file.name}")
 
+    # =========================================================================
+    # Read path
+    # =========================================================================
+
     def get_recent_entries(
         self,
         limit: int = 20,
         days: int | None = None,
     ) -> list[dict[str, Any]]:
-        """Read recent telemetry entries.
+        """Read recent telemetry entries (disk + in-memory buffer).
 
         Args:
             limit: Maximum number of entries to return (default: 20)
@@ -275,7 +456,7 @@ class UsageTracker:
         entries: list[dict[str, Any]] = []
         cutoff_time = datetime.utcnow() - timedelta(days=days) if days else None
 
-        # Read all relevant files
+        # Read all relevant files from disk
         files = sorted(self.telemetry_dir.glob("usage*.jsonl"), reverse=True)
 
         for file in files:
@@ -303,6 +484,20 @@ class UsageTracker:
                 logger.debug(f"Failed to read telemetry file: {file.name}")
                 continue
 
+        # Include in-memory buffer (not yet flushed to disk)
+        with self._lock:
+            buffer_snapshot = list(self._buffer)
+
+        for entry in buffer_snapshot:
+            if cutoff_time:
+                try:
+                    ts = datetime.fromisoformat(entry["ts"].rstrip("Z"))
+                    if ts < cutoff_time:
+                        continue
+                except (KeyError, ValueError):
+                    continue
+            entries.append(entry)
+
         # Sort by timestamp (most recent first), using sequence number as
         # tiebreaker when timestamps are identical (can happen on platforms
         # with low datetime resolution, e.g. ~15ms on some Windows systems)
@@ -311,6 +506,9 @@ class UsageTracker:
 
     def get_stats(self, days: int = 30) -> dict[str, Any]:
         """Calculate telemetry statistics.
+
+        Uses the pre-aggregated daily summary for O(days) performance
+        when available. Falls back to a full JSONL scan on first run.
 
         Args:
             days: Number of days to analyze (default: 30)
@@ -329,68 +527,96 @@ class UsageTracker:
             - by_provider: Cost breakdown by provider
 
         """
-        entries = self.get_recent_entries(limit=100000, days=days)
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        cutoff_dt = datetime.utcnow() - timedelta(days=days)
 
-        if not entries:
-            return {
-                "total_calls": 0,
-                "total_cost": 0.0,
-                "total_tokens_input": 0,
-                "total_tokens_output": 0,
-                "cache_hits": 0,
-                "cache_misses": 0,
-                "cache_hit_rate": 0.0,
-                "by_tier": {},
-                "by_workflow": {},
-                "by_provider": {},
-            }
-
-        # Aggregate stats
-        total_cost = 0.0
-        total_tokens_input = 0
-        total_tokens_output = 0
-        cache_hits = 0
-        cache_misses = 0
-        by_tier: dict[str, float] = {}
-        by_workflow: dict[str, float] = {}
-        by_provider: dict[str, float] = {}
-
-        for entry in entries:
-            cost = entry.get("cost", 0.0)
-            tokens = entry.get("tokens", {})
-            cache = entry.get("cache", {})
-            tier = entry.get("tier", "unknown")
-            workflow = entry.get("workflow", "unknown")
-            provider = entry.get("provider", "unknown")
-
-            total_cost += cost
-            total_tokens_input += tokens.get("input", 0)
-            total_tokens_output += tokens.get("output", 0)
-
-            if cache.get("hit"):
-                cache_hits += 1
-            else:
-                cache_misses += 1
-
-            by_tier[tier] = by_tier.get(tier, 0.0) + cost
-            by_workflow[workflow] = by_workflow.get(workflow, 0.0) + cost
-            by_provider[provider] = by_provider.get(provider, 0.0) + cost
-
-        total_calls = len(entries)
-        cache_hit_rate = (cache_hits / total_calls * 100) if total_calls > 0 else 0.0
-
-        return {
-            "total_calls": total_calls,
-            "total_cost": round(total_cost, 2),
-            "total_tokens_input": total_tokens_input,
-            "total_tokens_output": total_tokens_output,
-            "cache_hits": cache_hits,
-            "cache_misses": cache_misses,
-            "cache_hit_rate": round(cache_hit_rate, 1),
-            "by_tier": by_tier,
-            "by_workflow": by_workflow,
-            "by_provider": by_provider,
+        result: dict[str, Any] = {
+            "total_calls": 0,
+            "total_cost": 0.0,
+            "total_tokens_input": 0,
+            "total_tokens_output": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "cache_hit_rate": 0.0,
+            "by_tier": {},
+            "by_workflow": {},
+            "by_provider": {},
         }
+
+        with self._lock:
+            summary_snapshot = dict(self._daily_summary)
+            buffer_snapshot = list(self._buffer)
+
+        if summary_snapshot:
+            # Fast path: O(days) aggregation from pre-built daily summary
+            for date, day in summary_snapshot.items():
+                if date >= cutoff_date:
+                    result["total_calls"] += day["calls"]
+                    result["total_cost"] += day["cost"]
+                    result["total_tokens_input"] += day["tokens_in"]
+                    result["total_tokens_output"] += day["tokens_out"]
+                    result["cache_hits"] += day["cache_hits"]
+                    result["cache_misses"] += day["cache_misses"]
+                    for k, v in day["by_tier"].items():
+                        result["by_tier"][k] = result["by_tier"].get(k, 0.0) + v
+                    for k, v in day["by_workflow"].items():
+                        result["by_workflow"][k] = result["by_workflow"].get(k, 0.0) + v
+                    for k, v in day["by_provider"].items():
+                        result["by_provider"][k] = result["by_provider"].get(k, 0.0) + v
+        else:
+            # Slow path: full JSONL scan (first run before summary is built)
+            disk_entries = self.get_recent_entries(limit=100000, days=days)
+            # get_recent_entries already includes buffer, skip buffer below
+            buffer_snapshot = []
+            for entry in disk_entries:
+                cost = entry.get("cost", 0.0)
+                result["total_calls"] += 1
+                result["total_cost"] += cost
+                tokens = entry.get("tokens", {})
+                result["total_tokens_input"] += tokens.get("input", 0)
+                result["total_tokens_output"] += tokens.get("output", 0)
+                if entry.get("cache", {}).get("hit"):
+                    result["cache_hits"] += 1
+                else:
+                    result["cache_misses"] += 1
+                tier = entry.get("tier", "unknown")
+                result["by_tier"][tier] = result["by_tier"].get(tier, 0.0) + cost
+                wf = entry.get("workflow", "unknown")
+                result["by_workflow"][wf] = result["by_workflow"].get(wf, 0.0) + cost
+                prov = entry.get("provider", "unknown")
+                result["by_provider"][prov] = result["by_provider"].get(prov, 0.0) + cost
+
+        # Include buffered entries not yet reflected in the summary
+        for entry in buffer_snapshot:
+            try:
+                ts = datetime.fromisoformat(entry["ts"].rstrip("Z"))
+            except (KeyError, ValueError):
+                continue
+            if ts < cutoff_dt:
+                continue
+            cost = entry.get("cost", 0.0)
+            result["total_calls"] += 1
+            result["total_cost"] += cost
+            tokens = entry.get("tokens", {})
+            result["total_tokens_input"] += tokens.get("input", 0)
+            result["total_tokens_output"] += tokens.get("output", 0)
+            if entry.get("cache", {}).get("hit"):
+                result["cache_hits"] += 1
+            else:
+                result["cache_misses"] += 1
+            tier = entry.get("tier", "unknown")
+            result["by_tier"][tier] = result["by_tier"].get(tier, 0.0) + cost
+            wf = entry.get("workflow", "unknown")
+            result["by_workflow"][wf] = result["by_workflow"].get(wf, 0.0) + cost
+            prov = entry.get("provider", "unknown")
+            result["by_provider"][prov] = result["by_provider"].get(prov, 0.0) + cost
+
+        if not result["total_calls"]:
+            return result
+
+        result["cache_hit_rate"] = round(result["cache_hits"] / result["total_calls"] * 100, 1)
+        result["total_cost"] = round(result["total_cost"], 2)
+        return result
 
     def calculate_savings(self, days: int = 30) -> dict[str, Any]:
         """Calculate actual savings vs all-PREMIUM baseline.
@@ -460,7 +686,7 @@ class UsageTracker:
         }
 
     def reset(self) -> int:
-        """Clear all telemetry data.
+        """Clear all telemetry data (buffer + disk files).
 
         Returns:
             Number of entries deleted
@@ -468,15 +694,28 @@ class UsageTracker:
         """
         count = 0
         with self._lock:
-            for file in self.telemetry_dir.glob("usage*.jsonl"):
-                try:
-                    # Count entries before deleting
-                    with open(file, encoding="utf-8") as f:
-                        count += sum(1 for line in f if line.strip())
-                    file.unlink()
-                except OSError:
-                    # File system errors - log but continue
-                    logger.debug(f"Failed to delete telemetry file: {file.name}")
+            # Count and clear the in-memory buffer first
+            count += len(self._buffer)
+            self._buffer.clear()
+            self._daily_summary.clear()
+
+        # Delete disk files
+        for file in self.telemetry_dir.glob("usage*.jsonl"):
+            try:
+                # Count entries before deleting
+                with open(file, encoding="utf-8") as f:
+                    count += sum(1 for line in f if line.strip())
+                file.unlink()
+            except OSError:
+                # File system errors - log but continue
+                logger.debug(f"Failed to delete telemetry file: {file.name}")
+
+        # Remove summary file
+        if self._summary_file.exists():
+            try:
+                self._summary_file.unlink()
+            except OSError:
+                pass
 
         return count
 
