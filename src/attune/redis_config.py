@@ -1,4 +1,7 @@
-"""Redis Configuration for Attune AI
+"""Redis Configuration for Attune AI (deprecated).
+
+.. deprecated::
+    Use ``attune_redis.config.RedisPluginConfig`` for new code.
 
 Handles connection to Redis from environment variables.
 Supports Redis Cloud, Railway, local Docker, managed Redis, or mock mode.
@@ -154,6 +157,10 @@ def _get_common_connection_kwargs() -> dict:
 def get_redis_config() -> RedisConfig:
     """Get Redis configuration from environment variables.
 
+    .. deprecated::
+        Use ``attune_redis.config.RedisPluginConfig.from_env()``
+        for the AMS-based configuration.
+
     Priority:
     1. EMPATHY_REDIS_MOCK=true -> mock mode
     2. REDIS_URL (full URL, used by Railway/Heroku/managed services)
@@ -261,6 +268,10 @@ def get_redis_memory(
     config: RedisConfig | None = None,
 ) -> RedisShortTermMemory:
     """Create a RedisShortTermMemory instance with environment-based config.
+
+    .. deprecated::
+        Use ``attune_redis.AMSMemoryBackend`` with
+        ``RedisPluginConfig.from_env()`` instead.
 
     Args:
         url: Optional explicit Redis URL (overrides env vars)

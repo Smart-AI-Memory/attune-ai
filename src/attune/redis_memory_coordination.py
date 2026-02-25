@@ -1,21 +1,28 @@
-"""Redis Memory Coordination for Attune AI
+"""Deprecated — use attune_redis for coordination.
 
-Coordination features for RedisShortTermMemory:
-- Conflict negotiation (create, get, resolve)
-- Coordination signals (send, receive)
-- Session management (create, join, get)
+Legacy coordination mixins kept for backward compatibility.
+New code should use ``attune_redis.signals.RedisSignalBus``.
 
-Copyright 2025 Smart AI Memory, LLC
+Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
 from __future__ import annotations
 
-import json
-from datetime import datetime
-from typing import Any
+import warnings
 
-from .memory.types import (
+warnings.warn(
+    "attune.redis_memory_coordination is deprecated. "
+    "Use attune_redis.signals.RedisSignalBus instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+import json  # noqa: E402
+from datetime import datetime  # noqa: E402
+from typing import Any  # noqa: E402
+
+from .memory.types import (  # noqa: E402
     AgentCredentials,
     ConflictContext,
     TTLStrategy,
@@ -185,7 +192,7 @@ class CoordinationSignalsMixin:
         return self._set(
             key,
             json.dumps(payload),
-            TTLStrategy.COORDINATION.value,
+            300,  # 5 minutes (COORDINATION TTL removed from enum in v5.0)
         )
 
     def receive_signals(

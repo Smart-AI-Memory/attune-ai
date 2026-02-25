@@ -3,7 +3,7 @@
 import pytest
 
 from attune.core import CollaborationState, EmpathyOS
-from attune.redis_memory import AccessTier
+from attune.memory.types import AccessTier
 
 
 class TestCollaborationState:

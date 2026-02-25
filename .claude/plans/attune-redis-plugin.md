@@ -146,15 +146,45 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
 - [ ] Add protocol adapter to `RedisShortTermMemory`
       (bridges credentials API to protocol — Phase 2)
 
-## Next Steps (Phase 2)
+## Phase 2 Checklist
 
-- [ ] Review Redis Agent Memory Server docs and
+- [x] Review Redis Agent Memory Server docs and
       `agent-memory-client` SDK
+- [x] Scaffold `attune_redis/` package structure
+      (plugin.py, memory.py, signals.py, config.py)
+- [x] Implement `AMSMemoryBackend` wrapping
+      `agent-memory-client` SDK
+- [x] Register plugin via entry-points
+      (`attune.plugins`, `attune.memory_backends`)
+- [x] Add 56 tests (all passing, 3 xfail)
 - [ ] Complete Redis University AI learning path
-- [ ] Scaffold `attune-redis` package structure
-- [ ] Add protocol adapter methods to Redis backend
-      (delete, is_connected, close, supports_*)
 - [ ] Prototype MCP integration with mcp-redis
+
+## Phase 3 Checklist (Legacy Cleanup)
+
+- [x] Delete `redis_memory_models.py` (zero importers)
+- [x] Delete `_redis_holding/` directory (staging copies)
+- [x] Convert `redis_memory_storage.py` to deprecation
+      shim
+- [x] Convert `redis_memory_coordination.py` to
+      deprecation shim
+- [x] Convert `redis_memory_patterns.py` to deprecation
+      shim
+- [x] Convert `redis_memory.py` to deprecation shim
+- [x] Update test imports (types from `memory.types`,
+      guard deprecated imports)
+- [x] Verify `core.py` import already guarded
+- [x] Add deprecation docstrings to `redis_config.py`
+- [x] Fix `TTLStrategy.COORDINATION` references (removed
+      in v5.0, replaced with hardcoded TTL)
+- [x] All tests passing (10591 passed, 0 failed)
+
+## Next Steps (Phase 3 cont.)
+
+- [ ] Redis-specific developer workflows (cache
+      strategy, key schema, perf debugging)
+- [ ] Package workflows as Agent Skills
+- [ ] Complete Redis University AI learning path
 
 ## Open Questions
 

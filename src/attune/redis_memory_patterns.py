@@ -1,24 +1,27 @@
-"""Redis Memory Pattern Staging for Attune AI
+"""Deprecated — use attune_redis for pattern promotion.
 
-Pattern staging workflow methods for RedisShortTermMemory:
-- stage_pattern: Stage a pattern for validation
-- get_staged_pattern: Retrieve a staged pattern
-- list_staged_patterns: List all staged patterns
-- promote_pattern: Promote staged pattern to library
-- reject_pattern: Reject a staged pattern
+Legacy pattern staging mixins kept for backward
+compatibility. New code should use
+``attune_redis.memory.AMSMemoryBackend.promote()``.
 
-Per EMPATHY_PHILOSOPHY.md: Patterns must be staged before
-being promoted to the active library.
-
-Copyright 2025 Smart AI Memory, LLC
+Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
 from __future__ import annotations
 
-import json
+import warnings
 
-from .memory.types import AgentCredentials, StagedPattern, TTLStrategy
+warnings.warn(
+    "attune.redis_memory_patterns is deprecated. "
+    "Use attune_redis.memory.AMSMemoryBackend.promote() instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+import json  # noqa: E402
+
+from .memory.types import AgentCredentials, StagedPattern, TTLStrategy  # noqa: E402
 
 
 class PatternStagingMixin:
