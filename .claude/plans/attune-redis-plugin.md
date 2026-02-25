@@ -214,12 +214,22 @@ the Linux Foundation's Agentic AI Foundation (AAIF):
 - [x] Create migration guide
       (`docs/migration/redis-plugin-migration.md`)
 
+## Phase 7 Checklist (Package Extraction)
+
+- [x] Create standalone `attune_redis/pyproject.toml`
+      with entry-points and dependencies
+- [x] Add CI workflow
+      (`.github/workflows/test-attune-redis.yml`)
+
 ## Next Steps
 
 - [ ] Redis-specific developer workflows (cache
       strategy, key schema, perf debugging)
 - [ ] Package workflows as Agent Skills
 - [ ] Complete Redis University AI learning path
+- [ ] Publish `attune-redis` to PyPI
+- [ ] Update root `pyproject.toml` redis extra to
+      depend on `attune-redis>=0.1.0`
 
 ## Open Questions
 

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attune-redis"
+version = "0.1.0"
+description = "Redis Agent Memory Server plugin for Attune AI"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Smart AI Memory, LLC" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "attune-ai>=3.5.0",
+    "agent-memory-client>=0.14.0",
+    "redis>=5.0.0,<8.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.12",
+]
+
+[project.entry-points."attune.plugins"]
+redis = "attune_redis.plugin:RedisPlugin"
+
+[project.entry-points."attune.memory_backends"]
+redis = "attune_redis.memory:AMSMemoryBackend"
+
+[project.urls]
+Homepage = "https://github.com/Smart-AI-Memory/attune-ai"
+Documentation = "https://github.com/Smart-AI-Memory/attune-ai/tree/main/attune_redis"
+
+[tool.setuptools.packages.find]
+include = ["attune_redis*"]
