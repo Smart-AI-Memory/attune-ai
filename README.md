@@ -31,8 +31,8 @@ pip install attune-ai[developer]
   a v4.0.0 migration guide.
 - **React dashboard** — Standalone Vite + React +
   TypeScript dashboard with live APIs, dark-themed UI,
-  and panels that report on model routing, system health, and agent
-  maturity.
+  and panels for model routing, system health, and
+  agent maturity.
 - **FeedbackLoop in-memory fallback** — Works out of the
   box without Redis via a pluggable `MemoryBackend`
   protocol with `_InMemoryStore` fallback.
@@ -272,12 +272,21 @@ Real-time monitoring with 6 coordination patterns:
 - Demo mode with test data generation
 
 ```bash
-# Launch dashboard (requires Redis 7.x or 8.x)
-python examples/dashboard_demo.py
+# Launch dashboard (works without Redis)
+attune dashboard start
 # Open http://localhost:8000
+
+# For development with hot reload
+cd dashboard && npm run dev
+# Open http://localhost:5173
 ```
 
-**Redis 8.4 Support:** Full compatibility with RediSearch, RedisJSON, RedisTimeSeries, RedisBloom, and VectorSet modules.
+**Redis optional:** Core dashboard features (quality
+feedback, model routing, system health) work without
+Redis. Real-time pub/sub features (event streaming,
+approval gates) activate automatically when Redis is
+available. Full Redis 8.4 support: RediSearch,
+RedisJSON, RedisTimeSeries, RedisBloom, VectorSet.
 
 ---
 

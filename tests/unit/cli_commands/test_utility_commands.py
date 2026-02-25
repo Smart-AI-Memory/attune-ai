@@ -52,23 +52,23 @@ class TestCmdDashboardStart:
                 # Patch the late import inside the function
                 mock_dashboard = MagicMock()
                 mock_run = MagicMock()
-                mock_dashboard.run_standalone_dashboard = mock_run
+                mock_dashboard.run_simple_dashboard = mock_run
 
                 with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
                     result = cmd_dashboard_start(args)
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Starting Agent Coordination Dashboard" in captured.out
+        assert "Agent Coordination Dashboard" in captured.out
         assert "0.0.0.0" in captured.out
         assert "8000" in captured.out
 
     def test_success_calls_run_with_host_and_port(self) -> None:
-        """Test that run_standalone_dashboard is called with correct host and port."""
+        """Test that run_simple_dashboard is called with correct host and port."""
         args = self._make_args(host="127.0.0.1", port=9999)
         mock_dashboard = MagicMock()
         mock_run = MagicMock()
-        mock_dashboard.run_standalone_dashboard = mock_run
+        mock_dashboard.run_simple_dashboard = mock_run
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
             result = cmd_dashboard_start(args)
@@ -80,7 +80,7 @@ class TestCmdDashboardStart:
         """Test that KeyboardInterrupt returns 0 and prints stop message."""
         args = self._make_args()
         mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard.side_effect = KeyboardInterrupt
+        mock_dashboard.run_simple_dashboard.side_effect = KeyboardInterrupt
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
             result = cmd_dashboard_start(args)
@@ -106,7 +106,7 @@ class TestCmdDashboardStart:
         """Test that a generic exception returns 1 and logs error."""
         args = self._make_args()
         mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard.side_effect = RuntimeError("connection refused")
+        mock_dashboard.run_simple_dashboard.side_effect = RuntimeError("connection refused")
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
             result = cmd_dashboard_start(args)
@@ -120,7 +120,7 @@ class TestCmdDashboardStart:
         """Test that the printed URL uses the custom host and port."""
         args = self._make_args(host="192.168.1.10", port=3000)
         mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard = MagicMock()
+        mock_dashboard.run_simple_dashboard = MagicMock()
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
             cmd_dashboard_start(args)

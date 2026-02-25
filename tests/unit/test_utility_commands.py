@@ -40,7 +40,7 @@ class TestCmdDashboardStart:
 
         mock_run = MagicMock()
         mock_module = MagicMock()
-        mock_module.run_standalone_dashboard = mock_run
+        mock_module.run_simple_dashboard = mock_run
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
             result = cmd_dashboard_start(args)
@@ -75,7 +75,7 @@ class TestCmdDashboardStart:
         args = self._make_args()
 
         mock_module = MagicMock()
-        mock_module.run_standalone_dashboard.side_effect = KeyboardInterrupt()
+        mock_module.run_simple_dashboard.side_effect = KeyboardInterrupt()
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
             result = cmd_dashboard_start(args)
@@ -89,7 +89,7 @@ class TestCmdDashboardStart:
         args = self._make_args()
 
         mock_module = MagicMock()
-        mock_module.run_standalone_dashboard.side_effect = RuntimeError("Connection refused")
+        mock_module.run_simple_dashboard.side_effect = RuntimeError("Connection refused")
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
             result = cmd_dashboard_start(args)
@@ -104,7 +104,7 @@ class TestCmdDashboardStart:
 
         mock_run = MagicMock()
         mock_module = MagicMock()
-        mock_module.run_standalone_dashboard = mock_run
+        mock_module.run_simple_dashboard = mock_run
 
         with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
             result = cmd_dashboard_start(args)
