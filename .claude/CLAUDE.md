@@ -207,4 +207,20 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   creates drift. The shared lib also enables `generateStaticParams()`
   and sitemap generation to stay in sync automatically.
 
+- **Website feature lists can diverge from the Python registry**: The
+  `/workflows` page had 14 manually-authored fictional workflows that
+  didn't match `list_workflows()`. Always verify website feature claims
+  against the live Python code before publishing.
+
+- **Wizards call workflows internally — they are not duplicates**:
+  `attune wizard run` = interactive guided UX; `attune workflow run` =
+  non-interactive multi-stage pipeline. `WizardInternalWorkflow` is the
+  bridge. The website must explain this distinction or users assume
+  overlap.
+
+- **Session hooks may be vestigial**: `session_end.py` saves near-empty
+  shells (zero tokens, no patterns detected). Verify they are wired to
+  collect meaningful data before building on top of them or advertising
+  session memory as a feature.
+
 <!-- attune-lessons-end -->
