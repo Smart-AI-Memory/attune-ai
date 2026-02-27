@@ -21,13 +21,9 @@ from attune.hooks.scripts.first_time_init import (
     initialize_project,
 )
 from attune.hooks.scripts.pre_compact import run_pre_compact
-from attune.hooks.scripts.session_end import main as session_end
-from attune.hooks.scripts.session_start import main as session_start
 from attune.hooks.scripts.suggest_compact import main as suggest_compact
 
 __all__ = [
-    "session_start",
-    "session_end",
     "suggest_compact",
     "run_pre_compact",
     "run_evaluate_session",
