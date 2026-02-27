@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.6.3] - 2026-02-27
 
+### Added
+
+- **EscalationChain** — Retry-with-feedback LLM wrapper
+  (`attune.workflows.escalation`). Runs a prompt through up
+  to N tiers, collecting structured feedback on each failure
+  and feeding it back into the next attempt. Ships with
+  `StructureValidator`, `ConfidenceValidator`, and
+  `SemanticEvaluator`; includes `escalate()` convenience
+  function for zero-config usage.
+
 ### Deprecated
 
 - **Dashboard frontend removed** — React/Vite frontend (`dashboard/`),
@@ -14,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`attune.dashboard`) is soft-deprecated with `DeprecationWarning`
   and will be removed in a future major version.
   Use `FeedbackLoop` and `UsageTracker` directly.
-
 
 ## [3.6.2] - 2026-02-27
 
