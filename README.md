@@ -23,6 +23,14 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.4
+
+- **EscalationChain** — New retry-with-feedback LLM wrapper
+  (`attune.workflows.escalation`). Runs a prompt through up to N
+  tiers, feeding structured failure feedback back into each retry.
+  Includes `StructureValidator`, `ConfidenceValidator`,
+  `SemanticEvaluator`, and an `escalate()` convenience function.
+
 ## What's New in v3.6.3
 
 - **Dashboard deprecated** — React frontend, startup scripts, and

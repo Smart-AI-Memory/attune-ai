@@ -193,4 +193,18 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `uv run ruff check --fix <paths>` manually before committing so
   the staged files are already clean when the hook runs.
 
+- **Stop hooks missing `cd` prefix inherit session cwd**: Stop hooks
+  without an explicit `cd /abs/path &&` prefix inherit whatever
+  directory Claude Code was started from — which may not be the repo
+  root. Always prefix Stop (and all) hook commands with
+  `cd /Users/patrickroebuck/attune-ai &&` to guarantee the correct
+  working directory regardless of where the session was opened.
+
+- **Next.js shared data libs prevent page duplication**: When multiple
+  pages need the same data array (e.g. wizard list), extract it to
+  `lib/<name>.ts` and import from there. Defining the same array in
+  `app/<page>/page.tsx` and a new `app/<page>/[param]/page.tsx`
+  creates drift. The shared lib also enables `generateStaticParams()`
+  and sitemap generation to stay in sync automatically.
+
 <!-- attune-lessons-end -->

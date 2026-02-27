@@ -1,0 +1,155 @@
+---
+title: "Prompt Caching with Anthropic: Save 90% on Claude API Costs"
+date: "2026-02-27"
+author: "Patrick Roebuck"
+excerpt: "Anthropic's prompt caching can reduce your Claude API costs by up to 90%. Here's how it works, when to use it, and how Attune AI enables it automatically."
+tags: ["tutorial", "prompt-caching", "cost-optimization", "claude-code", "anthropic"]
+published: true
+---
+
+Anthropic's prompt caching feature can reduce your Claude API costs by **up to 90%**. If you're calling Claude repeatedly with the same system prompt, documentation, or codebase context, you're likely paying 10–50x more than you need to.
+
+This tutorial explains how prompt caching works, when it applies, and how Attune AI enables it automatically for your workflows.
+
+## What Is Prompt Caching?
+
+Every time you call the Claude API, Anthropic processes your entire input — system prompt, context, and user message — from scratch. For large inputs (codebases, docs, long system prompts), this adds up fast.
+
+**Prompt caching** lets Anthropic store a processed version of your prompt prefix on their servers for up to 5 minutes. Subsequent requests that start with the same prefix retrieve the cached version instead of reprocessing it.
+
+**Cost impact:**
+
+- Cache write: ~25% more expensive than a standard input token
+- Cache read: ~90% cheaper than a standard input token
+- Break-even: After 2 requests with the same prefix, you're saving money
+
+## When Does Caching Apply?
+
+Caching applies when:
+
+1. Your prompt prefix exceeds **1,024 tokens** (the minimum cacheable size)
+2. Consecutive requests share the **same prefix** (system prompt + context)
+3. The cache hasn't expired (5-minute TTL on most models)
+
+Common high-value caching scenarios:
+
+- **Multi-turn conversations** with a long system prompt
+- **Code analysis** where you send the same codebase to multiple prompts
+- **Document Q&A** where the document is the prefix
+
+## How to Enable Prompt Caching in the Anthropic SDK
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
+    system=[
+        {
+            "type": "text",
+            "text": "You are an expert Python developer...",
+            "cache_control": {"type": "ephemeral"},  # Mark as cacheable
+        }
+    ],
+    messages=[
+        {"role": "user", "content": "Review this function for bugs."}
+    ],
+)
+
+print(f"Cache read tokens: {response.usage.cache_read_input_tokens}")
+print(f"Cache write tokens: {response.usage.cache_creation_input_tokens}")
+```
+
+The `cache_control: {"type": "ephemeral"}` annotation tells Anthropic to cache everything up to that point in your prompt.
+
+## Caching Multi-Turn Conversations
+
+For multi-turn conversations, cache the system prompt and update the message history:
+
+```python
+messages = []
+
+for user_input in conversation_turns:
+    messages.append({"role": "user", "content": user_input})
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=[
+            {
+                "type": "text",
+                "text": LONG_SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
+        messages=messages,
+    )
+
+    assistant_message = response.content[0].text
+    messages.append({"role": "assistant", "content": assistant_message})
+```
+
+The system prompt is cached on the first call and reused on every subsequent call in the conversation.
+
+## How Attune AI Handles This Automatically
+
+Attune AI's tier-based model routing enables prompt caching automatically for all workflows. You don't need to annotate your prompts manually.
+
+```python
+from attune.workflows import SecurityAuditWorkflow
+
+workflow = SecurityAuditWorkflow()
+# Prompt caching is applied automatically
+result = await workflow.execute({"path": "src/"})
+
+print(result.cost_savings)  # e.g., "Saved 87% vs uncached"
+```
+
+Behind the scenes, Attune AI:
+
+1. Identifies the cacheable prefix (system prompt + codebase context)
+2. Adds `cache_control` annotations automatically
+3. Tracks cache hit/miss ratios in the telemetry dashboard
+4. Routes repeated identical prompts to the cache
+
+## Measuring Your Savings
+
+Use the Attune AI telemetry CLI to see your caching stats:
+
+```bash
+attune workflow run security-audit
+# Output includes:
+# Cache hit rate: 84%
+# Tokens saved: 142,300
+# Estimated cost saved: $0.43 (this run)
+```
+
+Or check the usage tracker programmatically:
+
+```python
+from attune.telemetry import UsageTracker
+
+tracker = UsageTracker()
+stats = tracker.get_stats()
+print(f"Cache hit rate: {stats.cache_hit_rate:.1%}")
+print(f"Total saved: ${stats.total_savings:.2f}")
+```
+
+## Summary
+
+| Scenario | Without Caching | With Caching | Savings |
+|----------|----------------|--------------|---------|
+| 10-turn conversation, 5K token system prompt | $0.50 | $0.07 | 86% |
+| Codebase scan, 20K token context, 5 prompts | $2.00 | $0.22 | 89% |
+| Document Q&A, 10K token doc, 10 questions | $1.00 | $0.13 | 87% |
+
+Prompt caching is one of the highest-leverage optimizations available in the Anthropic API. If you're running any repeated Claude workflows, enable it immediately.
+
+## Further Reading
+
+- [Anthropic Prompt Caching Documentation](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+- [Attune AI Model Tier Routing](/framework-docs/guides/model-routing/)
+- [Semantic Caching for LLMs](/blog/semantic-caching-llms)

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts } from '@/lib/blog';
+import { getAllPosts, getAllTags } from '@/lib/blog';
+import { wizards } from '@/lib/wizards';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://smartaimemory.com';
@@ -66,5 +67,55 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...homepage, ...highPriority, ...standardPages, ...utilityPages, ...blogPages];
+  // Individual wizard pages
+  const wizardPages = wizards.map((w) => ({
+    url: `${baseUrl}/wizards/${w.name}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
+  // Blog tag archive pages
+  const tags = getAllTags();
+  const tagPages = tags.map((tag) => ({
+    url: `${baseUrl}/blog/tag/${tag}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.5,
+  }));
+
+  // Changelog
+  const changelogPages = [
+    {
+      url: `${baseUrl}/changelog`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    },
+  ];
+
+  // Comparison pages
+  const comparePages = [
+    '/compare',
+    '/compare/crewai-vs-attune',
+    '/compare/langgraph-vs-attune',
+    '/compare/best-ai-agent-frameworks-2026',
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
+  return [
+    ...homepage,
+    ...highPriority,
+    ...standardPages,
+    ...utilityPages,
+    ...blogPages,
+    ...wizardPages,
+    ...tagPages,
+    ...changelogPages,
+    ...comparePages,
+  ];
 }

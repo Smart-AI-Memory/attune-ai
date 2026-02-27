@@ -89,7 +89,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What are wizards?',
-        answer: 'Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context via questions, runs AI analysis, decomposes work into tasks, and previews results before acting. Attune AI ships with 5 built-in wizards: debug, test-gen, refactor, security, and release-prep.',
+        answer: 'Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context via questions, runs AI analysis, decomposes work into tasks, and previews results before acting. Attune AI ships with 10 built-in wizards: security-audit, code-review, bug-predict, perf-audit, refactor-plan, test-gen, doc-gen, dependency-check, release-prep, and research.',
       },
       {
         question: 'How do I run a wizard?',
@@ -114,7 +114,7 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'Is the framework production-ready?',
-        answer: 'Yes! The framework is v3.3.0 Production/Stable with 14,800+ comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
+        answer: 'Yes! The framework is v3.6.x Production/Stable with comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
       },
     ],
   },
@@ -147,9 +147,17 @@ const faqData: FAQCategory[] = [
 ];
 
 export const metadata: Metadata = generateMetadata({
-  title: 'FAQ',
-  description: 'Frequently asked questions about Attune AI, open source licensing, and technical details.',
+  title: 'Attune AI FAQ — Open Source Agent Framework for Claude Code',
+  description:
+    'Answers to common questions about Attune AI: installation, Claude Code integration, multi-agent orchestration, licensing, and cost optimization.',
   url: 'https://smartaimemory.com/faq',
+  keywords: [
+    'Attune AI FAQ',
+    'Claude Code agent framework',
+    'open source AI framework',
+    'AI workflow questions',
+    'multi-agent orchestration FAQ',
+  ],
 });
 
 export default function FAQPage() {

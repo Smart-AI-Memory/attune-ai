@@ -1,0 +1,190 @@
+---
+title: "Semantic Caching for LLMs: Reduce Costs Without Sacrificing Quality"
+date: "2026-02-27"
+author: "Patrick Roebuck"
+excerpt: "Semantic caching goes beyond exact-match caching by returning cached results for similar (not identical) queries. Here's how it works and how to implement it with Attune AI."
+tags: ["architecture", "caching", "llm", "performance", "cost-optimization"]
+published: true
+---
+
+Prompt caching saves money when you send the **same** prompt prefix repeatedly. But what about similar prompts? That's where **semantic caching** comes in.
+
+Semantic caching uses embedding similarity to detect when a new query is close enough to a cached one — and returns the cached result instead of making another LLM call.
+
+## How Semantic Caching Works
+
+1. **First query:** Send prompt to LLM, store the result + the prompt's embedding vector
+2. **New query:** Compute its embedding, search for semantically similar cached results
+3. **Cache hit:** If similarity score > threshold (e.g., 0.95), return the cached result
+4. **Cache miss:** If no match, call the LLM and cache the new result
+
+The magic is that "Review this Python function for bugs" and "Check this Python code for defects" are semantically similar — and would hit the same cache entry.
+
+## When Semantic Caching Is Worth It
+
+Semantic caching pays off when:
+
+- You receive many **near-duplicate queries** (common in SaaS products)
+- Your prompts are **user-generated** (wording varies but intent is the same)
+- LLM calls are **slow or expensive** (high token counts)
+- Freshness isn't critical (cached results can be slightly stale)
+
+It's overkill for:
+
+- Unique, one-off queries
+- Contexts where exact, fresh responses are required (financial data, real-time info)
+- Low-volume, non-repeating workflows
+
+## Implementing Semantic Caching
+
+### Step 1: Set Up an Embedding Model
+
+```python
+import anthropic
+import numpy as np
+
+client = anthropic.Anthropic()
+
+def embed(text: str) -> list[float]:
+    """Generate an embedding for the given text."""
+    # Use a fast, cheap embedding model
+    # In practice, use text-embedding-3-small (OpenAI) or equivalent
+    # Anthropic doesn't yet offer an embeddings API — use a third-party
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    return model.encode(text).tolist()
+```
+
+### Step 2: Build the Cache
+
+```python
+import json
+from pathlib import Path
+from dataclasses import dataclass
+
+@dataclass
+class CacheEntry:
+    prompt: str
+    embedding: list[float]
+    response: str
+
+class SemanticCache:
+    def __init__(self, cache_path: str = ".attune/semantic_cache.json", threshold: float = 0.95):
+        self.cache_path = Path(cache_path)
+        self.threshold = threshold
+        self._entries: list[CacheEntry] = self._load()
+
+    def _load(self) -> list[CacheEntry]:
+        if self.cache_path.exists():
+            data = json.loads(self.cache_path.read_text())
+            return [CacheEntry(**e) for e in data]
+        return []
+
+    def _save(self) -> None:
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        data = [{"prompt": e.prompt, "embedding": e.embedding, "response": e.response}
+                for e in self._entries]
+        self.cache_path.write_text(json.dumps(data))
+
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
+        va, vb = np.array(a), np.array(b)
+        return float(np.dot(va, vb) / (np.linalg.norm(va) * np.linalg.norm(vb)))
+
+    def get(self, prompt: str) -> str | None:
+        query_embedding = embed(prompt)
+        for entry in self._entries:
+            similarity = self._cosine_similarity(query_embedding, entry.embedding)
+            if similarity >= self.threshold:
+                return entry.response
+        return None
+
+    def set(self, prompt: str, response: str) -> None:
+        embedding = embed(prompt)
+        self._entries.append(CacheEntry(prompt=prompt, embedding=embedding, response=response))
+        self._save()
+```
+
+### Step 3: Wrap Your LLM Calls
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+cache = SemanticCache(threshold=0.95)
+
+def cached_completion(prompt: str) -> str:
+    cached = cache.get(prompt)
+    if cached:
+        print("[cache hit]")
+        return cached
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    result = response.content[0].text
+    cache.set(prompt, result)
+    return result
+```
+
+## Attune AI's Built-In Semantic Cache
+
+Attune AI ships with semantic caching enabled by default for repeated workflow queries:
+
+```python
+from attune.workflows import SecurityAuditWorkflow
+from attune.cache import SemanticCache
+
+# Attune AI automatically uses semantic caching
+workflow = SecurityAuditWorkflow(
+    cache=SemanticCache(threshold=0.93)
+)
+
+# First call: LLM call
+result1 = await workflow.execute({"path": "src/auth.py"})
+
+# Second call with similar (not identical) query: cache hit
+result2 = await workflow.execute({"path": "src/auth.py", "focus": "injection vulnerabilities"})
+print(result2.from_cache)  # True
+```
+
+## Choosing the Right Similarity Threshold
+
+| Threshold | Behavior | Best For |
+|-----------|----------|----------|
+| 0.99 | Near-identical only | Exact deduplication |
+| 0.95 | Very similar | Developer workflows (recommended) |
+| 0.90 | Broadly similar | FAQ/support bots |
+| 0.85 | Loose match | Exploration, brainstorming |
+
+A threshold that's too low causes false cache hits (wrong answers). Too high and you miss savings opportunities.
+
+## Semantic Cache + Prompt Cache: The Full Stack
+
+Used together, these two techniques compound:
+
+```
+User query → Semantic cache lookup
+  → Hit: return cached response (0 tokens, 0 cost)
+  → Miss: call LLM with prompt caching enabled
+            → Prefix cached: 90% cost reduction
+            → Full call: standard cost
+```
+
+In practice, this stack can reduce API costs by 70–95% on high-volume, repetitive workloads.
+
+## Limitations
+
+- **Freshness risk:** Cached results can go stale if the underlying codebase changes
+- **Embedding cost:** Generating embeddings has a small compute cost
+- **False positives:** Semantically similar prompts may expect different outputs
+- **Storage:** The cache grows unbounded — implement TTL or max-size eviction
+
+Attune AI's cache implementation handles TTL and size limits automatically.
+
+## Further Reading
+
+- [Prompt caching with Anthropic](/blog/prompt-caching-save-90-percent)
+- [Attune AI caching configuration](/framework-docs/guides/caching/)
+- [Claude Code workflows guide](/blog/claude-code-workflows-guide)
