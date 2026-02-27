@@ -1,6 +1,6 @@
 # Teaching Your AI to Learn From Its Own Mistakes
 
-A practical intro to Attune's FeedbackLoop — no Redis required
+**A practical intro to Attune's FeedbackLoop — no Redis required**
 
 ---
 

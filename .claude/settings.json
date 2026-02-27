@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_start.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 10,
             "statusMessage": "Loading session context..."
           }
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Security check..."
           }
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 5,
             "statusMessage": "Path validation..."
           }
@@ -60,11 +60,22 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "timeout": 10,
+            "statusMessage": "Auto-formatting..."
+          }
+        ]
+      },
+      {
         "matcher": "Bash|Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/telemetry_hook.py",
+          "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 3,
             "statusMessage": "Recording telemetry..."
           }
