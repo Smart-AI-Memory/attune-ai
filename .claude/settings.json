@@ -1,1 +1,75 @@
-{"hooks":{}}
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_start.py",
+            "timeout": 10,
+            "statusMessage": "Loading session context..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
+            "timeout": 10,
+            "statusMessage": "Saving session state..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/lessons_reminder.py",
+            "timeout": 5,
+            "statusMessage": "Checking for lessons to record..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "timeout": 5,
+            "statusMessage": "Security check..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "timeout": 5,
+            "statusMessage": "Path validation..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/telemetry_hook.py",
+            "timeout": 3,
+            "statusMessage": "Recording telemetry..."
+          }
+        ]
+      }
+    ]
+  }
+}

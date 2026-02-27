@@ -1,6 +1,6 @@
 # Teaching Your AI to Learn From Its Own Mistakes
 
-**A practical intro to Attune's FeedbackLoop — no Redis required**
+A practical intro to Attune's FeedbackLoop — no Redis required
 
 ---
 
@@ -257,6 +257,70 @@ not — without you having to hard-code any thresholds.
 
 ---
 
+## Going further: retry-with-feedback in real time
+
+`FeedbackLoop` is retrospective — it learns from history and
+tells you which tier to use next time. `EscalationChain` is its
+real-time counterpart: it retries the same call automatically,
+injecting the failure reason directly into the retry prompt, and
+only escalates to a more expensive model when retries are exhausted.
+
+```python
+from attune.workflows.escalation import escalate
+
+result = await escalate(
+    "Analyze this pull request and return JSON with "
+    "fields: summary, risk_level, suggested_reviewers.",
+    required_fields=["summary", "risk_level", "suggested_reviewers"],
+    retries=2,
+)
+
+print(result.summary())
+# ✓ claude-haiku-4-5-20251001, 1 retry(ies)
+```
+
+On the first attempt, if the model returns a response missing
+`risk_level`, the chain automatically retries — but this time
+the prompt includes a structured feedback block:
+
+```xml
+<previous_attempt_feedback>
+Your previous response had the following issues:
+- [structural] Missing required fields: risk_level
+  Suggestion: Include all required fields in your JSON response.
+Please address these issues in your response.
+</previous_attempt_feedback>
+```
+
+The model sees exactly what it got wrong. No silent retry, no
+prompt rewrite by hand — the feedback is precise and automatic.
+
+If all retries on the cheap tier fail, the chain escalates to
+Sonnet with a summary of every prior failure already in the
+prompt, so the better model starts informed rather than
+repeating the same mistakes.
+
+```python
+from attune.workflows.escalation import EscalationChain, StructureValidator
+
+chain = EscalationChain(
+    validators=[StructureValidator(["summary", "risk_level"])],
+    retries_per_model=2,
+)
+result = await chain.run("Analyze this PR...")
+
+print(result.total_retries)      # same-model retries across all tiers
+print(result.total_escalations)  # how many tier upgrades occurred
+print(result.total_cost_estimate)  # USD across all attempts
+```
+
+The full audit trail in `result.attempts` gives you per-attempt
+latency, token counts, and which validator fired — the same kind
+of signal you'd feed back into `FeedbackLoop` to build longer-term
+quality history.
+
+---
+
 ## What's next
 
 - Pair `FeedbackLoop` with `UsageTracker` for a full cost and
@@ -268,8 +332,6 @@ not — without you having to hard-code any thresholds.
 
 The full source is in `src/attune/telemetry/feedback_loop.py`
 and the test suite is in `tests/unit/telemetry/test_feedback_loop.py`.
-
----
 
 ---
 
@@ -287,3 +349,9 @@ developers. Thank you both for pointing in this direction.
 
 *Attune AI is open source under the Apache 2.0 license.*
 *GitHub: github.com/Smart-AI-Memory/attune-ai*
+
+---
+
+```text
+#Python #AI #MachineLearning #OpenSource #LLM
+```

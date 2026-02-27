@@ -1,4 +1,4 @@
-# Attune AI Framework v3.5.0
+# Attune AI Framework v3.6.1
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -128,16 +128,20 @@ src/attune/
 │   └── state/         # AgentStateStore, AgentRecoveryManager
 ├── workflows/         # AI-powered workflows with state & multi-agent mixins
 ├── models/            # Authentication strategy and LLM providers
-├── dashboard/         # Agent Coordination Dashboard (6 patterns)
+├── dashboard/         # Agent Coordination Dashboard + simple_server.py
 ├── meta_workflows/    # Intent detection and natural language routing
 ├── orchestration/     # Dynamic teams, workflow composition, pattern learning
-├── telemetry/         # Cost tracking and cache monitoring
+├── plugins/           # BasePlugin + register_mcp_tools() hook
+├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
+
+dashboard/             # Standalone React + Vite + TypeScript dashboard
+attune_redis/          # attune-redis plugin (pip install attune-redis)
 ```
 
 ---
 
-**Version:** 3.5.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.6.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -172,5 +176,10 @@ src/attune/
   creating an infinite loop. Use a TTL sentinel file
   (`~/.attune/lessons_reminded`) to fire the reminder only once
   per session.
+
+- **Claude Code plugin is platform-specific**: Skills, hooks, and
+  MCP config only work in Claude Code (CLI). They do not function
+  in Claude.ai (web). When submitting to Anthropic's marketplace,
+  scope the platform to Claude Code only — not "both platforms".
 
 <!-- attune-lessons-end -->
