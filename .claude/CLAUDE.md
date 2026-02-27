@@ -1,4 +1,4 @@
-# Attune AI Framework v3.5.0
+# Attune AI Framework v3.6.1
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -128,19 +128,70 @@ src/attune/
 │   └── state/         # AgentStateStore, AgentRecoveryManager
 ├── workflows/         # AI-powered workflows with state & multi-agent mixins
 ├── models/            # Authentication strategy and LLM providers
-├── dashboard/         # Agent Coordination Dashboard (6 patterns)
+├── dashboard/         # Agent Coordination Dashboard + simple_server.py
 ├── meta_workflows/    # Intent detection and natural language routing
 ├── orchestration/     # Dynamic teams, workflow composition, pattern learning
-├── telemetry/         # Cost tracking and cache monitoring
+├── plugins/           # BasePlugin + register_mcp_tools() hook
+├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
+
+dashboard/             # Standalone React + Vite + TypeScript dashboard
+attune_redis/          # attune-redis plugin (pip install attune-redis)
 ```
 
 ---
 
-**Version:** 3.5.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.6.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
 ## Lessons Learned
+
+- **Windows CI encoding**: Always use `encoding="utf-8"` on
+  `Path.read_text()` calls. Windows defaults to `cp1252` which
+  fails on any file containing non-ASCII bytes.
+
+- **Test mocks must match imports**: When a function changes its
+  import (e.g. `run_standalone_dashboard` → `run_simple_dashboard`),
+  all test mocks must be updated to match or side effects are silently
+  ignored and assertions fail.
+
+- **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
+  fixtures — CI runners often execute as root, making the path
+  accessible and triggering real I/O instead of the mocked error.
+  Use `tmp_path` instead.
+
+- **Stop hooks inject stderr, not stdout**: Claude Code's Stop hook
+  with exit code 2 surfaces the hook's **stderr** as the feedback
+  message. Use `print(..., file=sys.stderr)` — `print()` writes to
+  stdout which is silently discarded.
+
+- **Stop hook ordering matters**: When multiple Stop hook groups are
+  configured, run state-saving hooks (exit 0) first and blocking
+  hooks (exit 2) last. A trailing exit-0 hook may override a
+  preceding exit-2 block.
+
+- **Stop hooks loop without a sentinel**: Exit code 2 blocks one
+  stop attempt but the next attempt triggers the hook again,
+  creating an infinite loop. Use a TTL sentinel file
+  (`~/.attune/lessons_reminded`) to fire the reminder only once
+  per session.
+
+- **Claude Code plugin is platform-specific**: Skills, hooks, and
+  MCP config only work in Claude Code (CLI). They do not function
+  in Claude.ai (web). When submitting to Anthropic's marketplace,
+  scope the platform to Claude Code only — not "both platforms".
+
+- **LinkedIn paste: use ASCII markers, not Unicode arrows**: Unicode
+  characters like `▶`/`◀` used as code-block delimiters get
+  misinterpreted by LinkedIn's editor, causing content duplication
+  and markers leaking into code blocks. Use plain ASCII like
+  `--- CODE START ---` / `--- CODE END ---` instead.
+
+- **Pre-commit stash conflict with auto-fix hooks**: When black/ruff
+  auto-fix staged files and there are also unstaged changes, the
+  pre-commit stash/restore cycle conflicts with the fixes. Fix: run
+  `uv run ruff check --fix <paths>` manually before committing so
+  the staged files are already clean when the hook runs.
 
 <!-- attune-lessons-end -->

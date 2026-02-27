@@ -23,6 +23,18 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.2
+
+- **Version sync** — Aligned `pyproject.toml` and
+  `src/attune/__init__.py` to `3.6.2`.
+
+## What's New in v3.6.1
+
+- **Lessons Learned Stop hook** — `lessons_reminder.py`
+  automatically prompts Claude to record new patterns and
+  fixes in `.claude/CLAUDE.md` at session end. Fires once
+  per session via a TTL sentinel; no looping.
+
 ## What's New in v3.6.0
 
 - **attune-redis plugin** — Redis memory is now a
@@ -35,7 +47,9 @@ pip install attune-ai[developer]
   agent maturity.
 - **FeedbackLoop in-memory fallback** — Works out of the
   box without Redis via a pluggable `MemoryBackend`
-  protocol with `_InMemoryStore` fallback.
+  protocol with `_InMemoryStore` fallback. Enables
+  quality-based model tier recommendations and
+  underperforming stage detection.
 - **Project-Aware Guidance** (v3.5.0) — Surfaces 2-3
   prioritized next-step suggestions after every workflow,
   grounded in real findings. Persists across sessions

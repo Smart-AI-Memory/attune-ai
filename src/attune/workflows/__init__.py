@@ -50,6 +50,19 @@ if TYPE_CHECKING:
     from .document_gen import DocumentGenerationWorkflow
     from .document_manager import DocumentManagerWorkflow
     from .documentation_orchestrator import DocumentationOrchestrator, OrchestratorResult
+    from .escalation import (
+        AttemptResult,
+        ConfidenceValidator,
+        EscalationChain,
+        EscalationResult,
+        Evaluator,
+        FeedbackType,
+        SemanticEvaluator,
+        StructureValidator,
+        ValidationFeedback,
+        Validator,
+        escalate,
+    )
     from .keyboard_shortcuts import KeyboardShortcutWorkflow
     from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow

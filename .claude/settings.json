@@ -12,6 +12,28 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
+            "timeout": 10,
+            "statusMessage": "Saving session state..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=src python src/attune/hooks/scripts/lessons_reminder.py",
+            "timeout": 5,
+            "statusMessage": "Checking for lessons to record..."
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -42,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-           "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 10,
             "statusMessage": "Auto-formatting..."
           }
