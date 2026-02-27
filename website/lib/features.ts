@@ -86,11 +86,11 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'memory',
-    name: 'Persistent Memory System',
+    name: 'Shared Agent State (Redis)',
     icon: '🧠',
-    benefitDescription: 'Short-term Redis memory for agent coordination during workflows. Long-term MemDocs storage remembers your coding patterns, past decisions, and project context across sessions.',
-    technicalDescription: 'Two-tier memory: Redis for real-time agent coordination, MemDocs for persistent cross-session storage with semantic search.',
-    pricingDescription: 'Persistent memory system',
+    benefitDescription: 'Coordinate multiple Claude Code instances simultaneously. Shared wizard context, parallel agent execution, and cross-session telemetry — capabilities native Claude Code memory cannot provide.',
+    technicalDescription: 'attune-redis plugin provides shared state across concurrent Claude Code instances. Distinct from per-developer auto-memory: enables team coordination, parallel wizard execution, and cross-project telemetry rollups.',
+    pricingDescription: 'Redis shared agent state (optional plugin)',
   },
   {
     id: 'security',

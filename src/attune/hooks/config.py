@@ -41,8 +41,8 @@ class HookDefinition(BaseModel):
     Example:
         hook = HookDefinition(
             type=HookType.PYTHON,
-            command="attune.hooks.scripts.session_start:main",
-            description="Load previous context on session start"
+            command="attune.hooks.scripts.lessons_reminder:main",
+            description="Check for lessons to record at session end"
         )
     """
 
@@ -185,13 +185,11 @@ class HookConfig(BaseModel):
 
     Example YAML configuration:
         hooks:
-          SessionStart:
-            - matcher:
-                match_all: true
-              hooks:
+          Stop:
+            - hooks:
                 - type: python
-                  command: attune.hooks.scripts.session_start:main
-                  description: Load previous context
+                  command: attune.hooks.scripts.lessons_reminder:main
+                  description: Check for lessons to record
           PostToolUse:
             - matcher:
                 tool: Edit

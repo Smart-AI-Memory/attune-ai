@@ -1,28 +1,6 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
-            "timeout": 10,
-            "statusMessage": "Loading session context..."
-          }
-        ]
-      }
-    ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/session_end.py",
-            "timeout": 10,
-            "statusMessage": "Saving session state..."
-          }
-        ]
-      },
       {
         "hooks": [
           {
@@ -75,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-          "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
             "timeout": 3,
             "statusMessage": "Recording telemetry..."
           }
