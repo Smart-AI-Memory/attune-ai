@@ -60,6 +60,16 @@ export default async function BlogPostPage({ params }: PageProps) {
     publishedTime: post.date,
   });
 
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'Blog', url: 'https://smartaimemory.com/blog' },
+      { name: post.title, url: `https://smartaimemory.com/blog/${post.slug}` },
+    ],
+  });
+
+  const isTutorial = post.tags.includes('tutorial');
+
   const relatedPosts = getRelatedPosts(post.slug, post.tags);
 
   return (
@@ -68,6 +78,27 @@ export default async function BlogPostPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {isTutorial && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'HowTo',
+              name: post.title,
+              description: post.excerpt,
+              author: {
+                '@type': 'Person',
+                name: post.author,
+              },
+            }),
+          }}
+        />
+      )}
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         <article className="py-20">
@@ -104,12 +135,13 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
-                    <span
+                    <Link
                       key={tag}
-                      className="px-3 py-1 bg-[var(--border)] text-[var(--text-primary)] rounded-full text-sm font-semibold"
+                      href={`/blog/tag/${tag}`}
+                      className="px-3 py-1 bg-[var(--border)] text-[var(--text-primary)] rounded-full text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors"
                     >
                       {tag}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               </header>

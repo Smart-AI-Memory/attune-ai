@@ -14,26 +14,29 @@ export interface SEOConfig {
 }
 
 const defaultMetadata = {
-  siteName: 'Smart AI Memory',
-  title: 'Smart AI Memory - Building the Future of AI-Human Collaboration',
-  description: 'AI-powered developer workflows for Claude Code with cost optimization, multi-agent orchestration, and workflow automation.',
+  siteName: 'Attune AI',
+  title: 'Attune AI — AI Workflows & Agent Orchestration for Claude Code',
+  description:
+    'Open source AI developer workflows for Claude Code. Multi-agent orchestration, 14 built-in workflows, 10 code wizards, and 90% cost savings via prompt caching.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',
   keywords: [
-    'AI Framework',
-    'Anticipatory Intelligence',
-    'AI-Human Collaboration',
-    'Level 4 AI',
+    'Claude Code workflows',
+    'Claude Code plugins',
+    'Claude Code extensions',
+    'AI agent orchestration',
+    'multi-agent AI framework Python',
+    'CrewAI alternative',
+    'AI code review tool',
+    'AI workflow automation developer',
+    'prompt caching Anthropic',
+    'AI agent templates Python',
+    'how to build AI agents Claude',
+    'semantic caching LLM',
+    'multi-agent orchestration patterns',
     'Attune AI',
-    'Claude Code',
-    'AI Development',
-    'Machine Learning',
-    'Predictive AI',
-    'AI Wizards',
-    'Software Development AI',
-    'Healthcare AI',
-    'Production AI',
+    'open source AI agent framework',
   ],
 };
 
@@ -41,6 +44,7 @@ export function generateMetadata(config?: SEOConfig): Metadata {
   const title = config?.title
     ? `${config.title} | ${defaultMetadata.siteName}`
     : defaultMetadata.title;
+
 
   const description = config?.description || defaultMetadata.description;
   const image = config?.image || defaultMetadata.image;
@@ -53,11 +57,11 @@ export function generateMetadata(config?: SEOConfig): Metadata {
     description,
     keywords,
     authors: [
-      { name: 'Smart AI Memory' },
+      { name: 'Attune AI' },
       ...(config?.author ? [{ name: config.author }] : []),
     ],
-    creator: 'Smart AI Memory',
-    publisher: 'Smart AI Memory',
+    creator: 'Attune AI',
+    publisher: 'Attune AI',
     formatDetection: {
       email: false,
       address: false,
@@ -69,7 +73,7 @@ export function generateMetadata(config?: SEOConfig): Metadata {
       url,
       title,
       description,
-      siteName: defaultMetadata.siteName,
+      siteName: 'Attune AI',
       images: [
         {
           url: image,
@@ -159,7 +163,7 @@ export function generateStructuredData(type: StructuredDataType, data?: Structur
       return {
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        name: 'Smart AI Memory',
+        name: 'Attune AI',
         alternateName: 'Smart AI Memory',
         url: defaultMetadata.url,
         logo: `${defaultMetadata.url}/logo.png`,
@@ -205,8 +209,11 @@ export function generateStructuredData(type: StructuredDataType, data?: Structur
 
     case 'article': {
       const articleData = data as ArticleData | undefined;
-      const authorName = articleData?.author || 'Smart AI Memory';
-      const isOrg = authorName === 'Smart AI Memory' || authorName === 'Smart AI Memory Team';
+      const authorName = articleData?.author || 'Attune AI';
+      const isOrg =
+        authorName === 'Smart AI Memory' ||
+        authorName === 'Smart AI Memory Team' ||
+        authorName === 'Attune AI';
       const imageUrl = articleData?.image
         ? (articleData.image.startsWith('http') ? articleData.image : `${defaultMetadata.url}${articleData.image}`)
         : `${defaultMetadata.url}${defaultMetadata.image}`;
@@ -222,7 +229,7 @@ export function generateStructuredData(type: StructuredDataType, data?: Structur
         },
         publisher: {
           '@type': 'Organization',
-          name: 'Smart AI Memory',
+          name: 'Attune AI',
           logo: {
             '@type': 'ImageObject',
             url: `${defaultMetadata.url}/logo.png`,

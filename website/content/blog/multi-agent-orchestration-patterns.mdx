@@ -1,0 +1,226 @@
+---
+title: "Multi-Agent Orchestration Patterns for AI Developers"
+date: "2026-02-27"
+author: "Patrick Roebuck"
+excerpt: "Six proven multi-agent orchestration patterns with Python code examples: parallel, sequential, delegation, two-phase, quality-gated, and escalation chains."
+tags: ["architecture", "multi-agent", "orchestration", "patterns", "python"]
+published: true
+---
+
+Multi-agent systems are more powerful than single agents for complex tasks — but only if you orchestrate them correctly. The wrong pattern leads to wasted API calls, contradictory outputs, or incomplete results.
+
+This post covers six battle-tested orchestration patterns, when to use each, and how to implement them with Attune AI.
+
+## Pattern 1: Parallel Execution
+
+**When to use:** Independent tasks that don't depend on each other's output.
+
+**Example:** Run a security audit and performance audit at the same time.
+
+```python
+from attune.orchestration import ParallelWorkflowRunner
+
+runner = ParallelWorkflowRunner([
+    "security",
+    "perf-audit",
+    "dependency-check",
+])
+
+# All three run simultaneously
+results = await runner.execute({"path": "src/"})
+
+# Results are keyed by workflow name
+print(results["security"].findings)
+print(results["perf-audit"].bottlenecks)
+```
+
+**Pros:** Fastest execution — wall-clock time equals the slowest agent.
+
+**Cons:** No information sharing between agents.
+
+## Pattern 2: Sequential Pipeline
+
+**When to use:** Each agent builds on the previous agent's output.
+
+**Example:** Security scan → generate fixes → write tests for the fixes.
+
+```python
+from attune.orchestration import SequentialPipeline
+
+pipeline = SequentialPipeline([
+    "security",       # Step 1: Find vulnerabilities
+    "refactor-plan",  # Step 2: Plan fixes based on findings
+    "test-gen",       # Step 3: Generate tests for the fixes
+])
+
+result = await pipeline.execute({"path": "src/"})
+# Each step receives the previous step's output as context
+```
+
+**Pros:** Output quality improves as context accumulates.
+
+**Cons:** Slowest option — each step must complete before the next starts.
+
+## Pattern 3: Delegation
+
+**When to use:** A lead agent needs to route subtasks to specialists.
+
+**Example:** A PM agent delegates research, analysis, and writing to specialists.
+
+```python
+from attune.agents.sdk import SDKAgent, SDKAgentTeam
+
+lead = SDKAgent(
+    name="lead",
+    role="Project coordinator who breaks down tasks and delegates to specialists",
+)
+
+research = SDKAgent(name="researcher", role="Technical researcher")
+analyst = SDKAgent(name="analyst", role="Data analyst who interprets findings")
+writer = SDKAgent(name="writer", role="Technical writer who produces reports")
+
+team = SDKAgentTeam(
+    agents=[lead, research, analyst, writer],
+    strategy="delegation",
+    lead_agent="lead",
+)
+
+result = await team.execute("Produce a technical report on our API performance.")
+```
+
+**Pros:** Flexible — the lead agent adapts task distribution to the specific goal.
+
+**Cons:** Lead agent quality determines overall output quality.
+
+## Pattern 4: Two-Phase (Explore → Synthesize)
+
+**When to use:** Large, ambiguous tasks where you need to explore before deciding.
+
+**Example:** Audit a codebase, then produce a consolidated executive summary.
+
+```python
+from attune.orchestration import TwoPhaseOrchestrator
+
+# Phase 1: Multiple agents explore in parallel
+# Phase 2: A synthesis agent consolidates their findings
+orchestrator = TwoPhaseOrchestrator(
+    explorers=["security", "code-review", "perf-audit"],
+    synthesizer="research",  # Synthesis agent
+)
+
+result = await orchestrator.execute({"path": "src/"})
+print(result.summary)   # Consolidated view
+print(result.raw)       # Per-agent findings
+```
+
+**Pros:** Best of both worlds — breadth from parallel exploration, coherence from synthesis.
+
+**Cons:** Two full rounds of LLM calls — higher cost.
+
+## Pattern 5: Quality-Gated Retry
+
+**When to use:** Outputs must meet a minimum quality bar to be usable.
+
+**Example:** Generated tests must have >80% coverage before accepting.
+
+```python
+from attune.agents.sdk import SDKAgentTeam, QualityGate
+import subprocess
+
+def coverage_gate(result: str) -> bool:
+    """Run the generated tests and check coverage."""
+    # Save tests, run pytest --cov, parse output
+    coverage = run_tests_and_get_coverage(result)
+    return coverage >= 80.0
+
+team = SDKAgentTeam(
+    agents=[test_gen_agent],
+    strategy="sequential",
+    quality_gate=QualityGate(
+        check=coverage_gate,
+        max_retries=3,
+        feedback_prompt="The generated tests had {coverage}% coverage. "
+                        "Add more edge cases and error path tests.",
+    ),
+)
+
+result = await team.execute({"path": "src/auth.py"})
+```
+
+On each failure, the gate feeds structured feedback back into the agent, guiding it toward better output.
+
+**Pros:** Guaranteed minimum quality; auto-improves with feedback.
+
+**Cons:** Can be slow if retries are needed; feedback design matters.
+
+## Pattern 6: Escalation Chain
+
+**When to use:** Try a cheap model first; escalate to premium only if it fails.
+
+**Example:** Use Haiku for simple reviews, escalate to Opus for complex security findings.
+
+```python
+from attune.workflows.escalation import EscalationChain, ConfidenceValidator
+
+chain = EscalationChain(
+    tiers=["cheap", "capable", "premium"],
+    validator=ConfidenceValidator(threshold=0.85),
+    max_escalations=2,
+)
+
+result = await chain.execute(
+    prompt="Analyze this authentication module for security vulnerabilities.",
+    context={"code": open("src/auth.py").read()},
+)
+
+print(f"Tier used: {result.tier_used}")
+print(f"Escalations: {result.escalations}")
+print(result.output)
+```
+
+This is Attune AI's `EscalationChain` — added in v3.6.4.
+
+**Pros:** Optimal cost/quality tradeoff; only pays for premium when needed.
+
+**Cons:** More complex to configure; latency can spike on escalation.
+
+## Choosing the Right Pattern
+
+| Task Type | Recommended Pattern |
+|-----------|-------------------|
+| Independent parallel analysis | Parallel Execution |
+| Step-by-step pipeline | Sequential |
+| Unknown scope, complex routing | Delegation |
+| Broad exploration + summary | Two-Phase |
+| Quality-critical output | Quality-Gated Retry |
+| Cost optimization critical | Escalation Chain |
+
+## Composing Patterns
+
+Patterns can be nested. A common production setup:
+
+```
+Two-Phase (outer)
+  ├── Phase 1: Parallel (3 specialist agents)
+  └── Phase 2: Sequential (synthesis → quality gate)
+```
+
+Attune AI's `WorkflowComposer` handles this nesting:
+
+```python
+from attune.orchestration import WorkflowComposer
+
+composer = WorkflowComposer()
+result = await composer.execute({
+    "goal": "Produce a release-ready audit report",
+    "path": "src/",
+})
+# Composer selects and nests patterns automatically
+```
+
+## Further Reading
+
+- [Building Agent Teams with the Anthropic SDK](/blog/building-agent-teams-sdk)
+- [How to Build AI Agents with Claude](/blog/how-to-build-ai-agents-claude)
+- [Agent templates reference](/framework-docs/agents/templates/)
+- [EscalationChain API](/framework-docs/api/escalation-chain/)
