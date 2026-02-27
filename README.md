@@ -23,6 +23,14 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.3
+
+- **Dashboard deprecated** — React frontend, startup scripts, and
+  example scripts removed. The Python backend (`attune.dashboard`)
+  is soft-deprecated with warnings and will be removed in a future
+  major version. Use `FeedbackLoop` and `UsageTracker` directly.
+
+
 ## What's New in v3.6.2
 
 - **Version sync** — Aligned `pyproject.toml` and
@@ -41,10 +49,8 @@ pip install attune-ai[developer]
   standalone package (`pip install attune-redis`),
   fully decoupled from core. Ships with 5 MCP tools and
   a v4.0.0 migration guide.
-- **React dashboard** — Standalone Vite + React +
-  TypeScript dashboard with live APIs, dark-themed UI,
-  and panels for model routing, system health, and
-  agent maturity.
+- **React dashboard** *(deprecated in v3.6.3)* — Removed.
+  Use `FeedbackLoop` and `UsageTracker` directly.
 - **FeedbackLoop in-memory fallback** — Works out of the
   box without Redis via a pluggable `MemoryBackend`
   protocol with `_InMemoryStore` fallback. Enables

@@ -128,20 +128,19 @@ src/attune/
 │   └── state/         # AgentStateStore, AgentRecoveryManager
 ├── workflows/         # AI-powered workflows with state & multi-agent mixins
 ├── models/            # Authentication strategy and LLM providers
-├── dashboard/         # Agent Coordination Dashboard + simple_server.py
+├── dashboard/         # DEPRECATED — soft-deprecated, removal in future major
 ├── meta_workflows/    # Intent detection and natural language routing
 ├── orchestration/     # Dynamic teams, workflow composition, pattern learning
 ├── plugins/           # BasePlugin + register_mcp_tools() hook
 ├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
 
-dashboard/             # Standalone React + Vite + TypeScript dashboard
 attune_redis/          # attune-redis plugin (pip install attune-redis)
 ```
 
 ---
 
-**Version:** 3.6.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.6.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
