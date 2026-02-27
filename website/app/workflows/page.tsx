@@ -6,7 +6,7 @@ import { generateMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateMetadata({
   title: 'Workflows',
-  description: '14 integrated AI workflows including 4 meta-workflows with agent composition for research, debugging, code review, refactoring, release prep, and more.',
+  description: '12 integrated AI workflows including 4 meta-workflows with agent composition for research, debugging, code review, refactoring, release prep, and more.',
   url: 'https://smartaimemory.com/workflows',
 });
 
@@ -195,7 +195,7 @@ export default function WorkflowsPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-6">
-                14 Integrated Workflows
+                12 Integrated Workflows
               </h1>
               <p className="text-2xl mb-8 opacity-90">
                 Production-ready AI workflows including 4 meta-workflows with automatic agent composition—research, build, test, deploy, and maintain.
@@ -278,7 +278,7 @@ export default function WorkflowsPage() {
                 Ready to Supercharge Your Development?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Install Attune AI and start using all 14 workflows today.
+                Install Attune AI and start using all 12 workflows today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

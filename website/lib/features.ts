@@ -54,7 +54,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'workflows',
-    name: '14 Integrated Workflows',
+    name: '12 Integrated Workflows',
     icon: '⚡',
     benefitDescription: 'Research, code review, debugging, refactoring, test generation, documentation, security scanning, and more.',
     technicalDescription: '10 base workflows + 4 meta-workflows for release prep, test coverage, test maintenance, and documentation.',

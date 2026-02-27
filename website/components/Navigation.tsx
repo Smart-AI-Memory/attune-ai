@@ -19,7 +19,7 @@ const docsItems = [
   {
     label: 'Workflows',
     href: '/workflows',
-    description: '14 integrated AI workflows',
+    description: '12 integrated AI workflows',
   },
   {
     label: 'MkDocs',
