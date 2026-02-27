@@ -30,6 +30,7 @@ pip install attune-ai[developer]
   is soft-deprecated with warnings and will be removed in a future
   major version. Use `FeedbackLoop` and `UsageTracker` directly.
 
+
 ## What's New in v3.6.2
 
 - **Version sync** — Aligned `pyproject.toml` and

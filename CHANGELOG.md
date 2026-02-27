@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and will be removed in a future major version.
   Use `FeedbackLoop` and `UsageTracker` directly.
 
+
 ## [3.6.2] - 2026-02-27
 
 ### Fixed
