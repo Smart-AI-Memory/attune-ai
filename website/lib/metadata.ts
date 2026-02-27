@@ -17,7 +17,7 @@ const defaultMetadata = {
   siteName: 'Attune AI',
   title: 'Attune AI — AI Workflows & Agent Orchestration for Claude Code',
   description:
-    'Open source AI developer workflows for Claude Code. Multi-agent orchestration, 12 built-in workflows, 10 code wizards, and 90% cost savings via prompt caching.',
+    'Open source AI developer workflows for Claude Code. Multi-agent orchestration, 10 built-in workflows, 10 code wizards, and 90% cost savings via prompt caching.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',

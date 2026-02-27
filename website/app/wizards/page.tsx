@@ -34,9 +34,16 @@ export default function WizardsPage() {
               <h1 className="text-4xl sm:text-5xl font-bold mb-6">
                 10 Smart Wizards
               </h1>
-              <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Specialized AI agents that understand your codebase.
-                Each wizard is optimized for specific tasks with built-in best practices.
+              <p className="text-xl text-[var(--text-secondary)] mb-4">
+                Interactive guides that walk you through each step — asking questions,
+                collecting context, and showing results as you go.
+              </p>
+              <p className="text-base text-[var(--muted)] mb-8">
+                Need non-interactive CI/CD pipelines instead? See{' '}
+                <Link href="/workflows" className="underline hover:text-[var(--primary)]">
+                  Workflows
+                </Link>{' '}
+                — wizards call the same underlying engines.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link

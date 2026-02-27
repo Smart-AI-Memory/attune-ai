@@ -258,7 +258,7 @@ export default function PluginsPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--success)]">✓</span>
-                    <span>Full access to all 10 wizards and 12 workflows</span>
+                    <span>Full access to all 10 wizards and 10 workflows</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--success)]">✓</span>
