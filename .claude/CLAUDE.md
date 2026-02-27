@@ -182,4 +182,16 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   in Claude.ai (web). When submitting to Anthropic's marketplace,
   scope the platform to Claude Code only — not "both platforms".
 
+- **LinkedIn paste: use ASCII markers, not Unicode arrows**: Unicode
+  characters like `▶`/`◀` used as code-block delimiters get
+  misinterpreted by LinkedIn's editor, causing content duplication
+  and markers leaking into code blocks. Use plain ASCII like
+  `--- CODE START ---` / `--- CODE END ---` instead.
+
+- **Pre-commit stash conflict with auto-fix hooks**: When black/ruff
+  auto-fix staged files and there are also unstaged changes, the
+  pre-commit stash/restore cycle conflicts with the fixes. Fix: run
+  `uv run ruff check --fix <paths>` manually before committing so
+  the staged files are already clean when the hook runs.
+
 <!-- attune-lessons-end -->

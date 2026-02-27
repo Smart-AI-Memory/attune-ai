@@ -23,6 +23,11 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.2
+
+- **Version sync** — Aligned `pyproject.toml` and
+  `src/attune/__init__.py` to `3.6.2`.
+
 ## What's New in v3.6.1
 
 - **Lessons Learned Stop hook** — `lessons_reminder.py`
