@@ -5,7 +5,7 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.6.3] - 2026-02-27
+## [3.6.4] - 2026-02-27
 
 ### Added
 
@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `StructureValidator`, `ConfidenceValidator`, and
   `SemanticEvaluator`; includes `escalate()` convenience
   function for zero-config usage.
+
+## [3.6.3] - 2026-02-27
 
 ### Deprecated
 
