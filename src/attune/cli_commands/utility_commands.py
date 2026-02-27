@@ -68,8 +68,20 @@ def _build_react_dashboard() -> bool:
 
 
 def cmd_dashboard_start(args: Namespace) -> int:
-    """Start the agent coordination dashboard."""
+    """Start the agent coordination dashboard.
+
+    .. deprecated:: 3.6.3
+        The dashboard is deprecated. Use telemetry classes directly.
+    """
+    import warnings
     import webbrowser
+
+    warnings.warn(
+        "The 'attune dashboard' command is deprecated as of v3.6.3 and will "
+        "be removed in a future major version.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     try:
         from attune.dashboard import run_simple_dashboard

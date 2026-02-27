@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "3.6.2"
+version = "3.6.3"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -125,7 +125,7 @@ agent-sdk = [
 # NOTE: attune-software is bundled in this repo at attune_software/
 software = []
 
-# Agent Coordination Dashboard (optional, falls back to stdlib server)
+# Agent Coordination Dashboard — DEPRECATED as of v3.6.3, will be removed in a future major version
 dashboard = [
     "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
     "uvicorn>=0.20.0,<1.0.0",
@@ -420,7 +420,6 @@ exclude = [
     "website/",  # Next.js website - separate linting
     "docs/archive/",  # Archived code
     "examples/",  # Example code
-    "dashboard/",  # Dashboard code
     "deployments/",  # Deployment scripts
     ".archive/",  # Archived files
     "src/attune/workflows/new_sample_workflow1.py",  # Test workflow
@@ -471,7 +470,6 @@ known-first-party = ["attune", "attune_software"]
 "src/attune/**/*.py" = ["BLE001"]  # Core framework needs broad exception handling
 "*_adapter.py" = ["BLE001"]  # Adapter files need broad exception handling
 "*_crew.py" = ["BLE001"]  # Crew files need broad exception handling
-"dashboard/**/*.py" = ["BLE001"]  # Dashboard needs broad exception handling
 "deployments/**/*.py" = ["BLE001"]  # Deployment scripts need broad exception handling
 "docs/archive/**/*.py" = ["BLE001"]  # Archived code
 "attune_software/**/*.py" = ["BLE001"]  # Plugin needs broad exception handling
@@ -512,7 +510,6 @@ exclude = [
     "scripts/",  # Utility scripts (not production code)
     "docs/",  # Documentation scripts
     "book-indesign/",  # Book publishing scripts
-    "dashboard/",  # Dashboard (separate project)
     "archived_wizards/",  # Archived code
     "wizards_consolidated/",  # Consolidated wizards (separate)
     "coach_wizards/",  # Coach wizards (separate package)

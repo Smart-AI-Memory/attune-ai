@@ -5,6 +5,16 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.3] - 2026-02-27
+
+### Deprecated
+
+- **Dashboard frontend removed** — React/Vite frontend (`dashboard/`),
+  startup scripts, and example scripts deleted. The Python backend
+  (`attune.dashboard`) is soft-deprecated with `DeprecationWarning`
+  and will be removed in a future major version.
+  Use `FeedbackLoop` and `UsageTracker` directly.
+
 ## [3.6.2] - 2026-02-27
 
 ### Fixed

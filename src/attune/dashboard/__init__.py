@@ -1,6 +1,9 @@
-"""Agent Coordination Dashboard.
+"""Agent Coordination Dashboard — DEPRECATED.
 
-Web-based monitoring dashboard for all 6 agent coordination patterns.
+.. deprecated:: 3.6.3
+    ``attune.dashboard`` is deprecated and will be removed in a future
+    major version. The React frontend has been removed. Use the telemetry
+    classes (``FeedbackLoop``, ``UsageTracker``) directly instead.
 
 Usage (Standalone - Direct Redis Access):
     >>> from attune.dashboard import run_standalone_dashboard
@@ -26,14 +29,24 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import warnings
+
+warnings.warn(
+    "attune.dashboard is deprecated as of v3.6.3 and will be removed in a "
+    "future major version. Use telemetry classes (FeedbackLoop, UsageTracker) "
+    "directly instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # Standalone server - reads directly from Redis
 # Simple server - uses telemetry API classes
-from .simple_server import run_simple_dashboard
-from .standalone_server import run_standalone_dashboard
+from .simple_server import run_simple_dashboard  # noqa: E402
+from .standalone_server import run_standalone_dashboard  # noqa: E402
 
 # Optional FastAPI version (requires dependencies)
 try:
-    from .app import app, run_dashboard
+    from .app import app, run_dashboard  # noqa: E402
 
     __all__ = ["app", "run_dashboard", "run_simple_dashboard", "run_standalone_dashboard"]
 except ImportError:
