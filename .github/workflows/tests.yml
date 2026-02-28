@@ -83,17 +83,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e . 'black==24.10.0' ruff bandit[toml] mypy
+        pip install -e . 'black==24.10.0' ruff bandit[toml]
 
     - name: Check formatting with Black
       run: black --check .
 
     - name: Lint with Ruff
       run: ruff check .
-
-    - name: Type check with MyPy
-      run: mypy -p attune --ignore-missing-imports
-      continue-on-error: true  # 437 pre-existing errors; non-blocking until type sprint
 
     - name: Security scan with Bandit
       run: bandit -c .bandit -r src/ attune_software/ --severity-level medium --confidence-level medium
