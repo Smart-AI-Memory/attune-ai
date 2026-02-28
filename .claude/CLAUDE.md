@@ -248,4 +248,19 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to prompt for a PyPI token. Pass the token via environment variable:
   `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
 
+- **`pytest.importorskip` triggers ruff E402**: Test files that call
+  `pytest.importorskip(...)` before optional imports cause ruff to
+  flag those imports as E402 (module level import not at top of file).
+  Fix: add `# noqa: E402` to each import line after the `importorskip`
+  call. The pattern is intentional and correct — ruff just can't see
+  the skip logic.
+
+- **Pre-commit stash conflict when black/ruff fix files with unstaged
+  siblings**: When staging a subset of changed files and running
+  `git commit`, pre-commit stashes unstaged changes, auto-fixes staged
+  files, then tries to restore — causing a conflict if the same file
+  has both staged and unstaged changes. Fix: run
+  `uv run ruff check --fix <files>` and `uv run black <files>`
+  manually before staging, so the hook sees already-clean files.
+
 <!-- attune-lessons-end -->
