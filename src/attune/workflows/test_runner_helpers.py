@@ -85,10 +85,9 @@ def _get_previous_coverage() -> float | None:
         if len(records) >= 2:
             # Second-to-last record is the previous one
             return records[-2].overall_percentage
-        elif len(records) == 1:
+        if len(records) == 1:
             return records[0].overall_percentage
-        else:
-            return None
+        return None
 
     except Exception:
         return None
@@ -119,7 +118,7 @@ def _analyze_coverage_files(root: Element) -> dict[str, Any]:
             elif coverage_pct < 50:
                 files_critical += 1
                 critical_gaps.append(
-                    {"file": filename, "coverage": coverage_pct, "priority": "high"}
+                    {"file": filename, "coverage": coverage_pct, "priority": "high"},
                 )
 
             if coverage_pct == 0:
@@ -146,6 +145,7 @@ def _find_test_file(source_file: str) -> str | None:
 
     Returns:
         Path to test file or None if not found
+
     """
     source_path = Path(source_file)
     filename = source_path.stem
@@ -179,7 +179,7 @@ def _find_test_file(source_file: str) -> str | None:
                 Path("tests") / "unit" / module_name / f"test_{filename}.py",
                 Path("tests") / module_name / f"test_{filename}.py",
                 Path("tests") / "integration" / module_name / f"test_{filename}.py",
-            ]
+            ],
         )
 
     # Priority 2: Standard locations
@@ -189,7 +189,7 @@ def _find_test_file(source_file: str) -> str | None:
             Path("tests") / f"test_{filename}.py",
             Path("tests") / "integration" / f"test_{filename}.py",
             parent / f"test_{filename}.py",
-        ]
+        ],
     )
 
     # Check explicit patterns first
@@ -215,6 +215,7 @@ def _log_file_test(record: FileTestRecord) -> None:
 
     Args:
         record: FileTestRecord to log
+
     """
     try:
         store = get_telemetry_store()

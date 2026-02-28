@@ -365,22 +365,24 @@ class TestCoordinationService:
 
     def test_heartbeat_import_failure(self):
         svc = self._make_service(enable_heartbeat=True)
-        with patch(
-            "attune.workflows.services.coordination_service.HeartbeatCoordinator",
-            side_effect=ImportError("not available"),
-            create=True,
-        ):
-            with patch.dict(
+        with (
+            patch(
+                "attune.workflows.services.coordination_service.HeartbeatCoordinator",
+                side_effect=ImportError("not available"),
+                create=True,
+            ),
+            patch.dict(
                 "sys.modules",
                 {
                     "attune.telemetry": MagicMock(
-                        HeartbeatCoordinator=MagicMock(side_effect=ImportError("not available"))
-                    )
+                        HeartbeatCoordinator=MagicMock(side_effect=ImportError("not available")),
+                    ),
                 },
-            ):
-                result = svc.get_heartbeat_coordinator()
-                # Should gracefully degrade
-                assert svc._enable_heartbeat is False or result is None
+            ),
+        ):
+            result = svc.get_heartbeat_coordinator()
+            # Should gracefully degrade
+            assert svc._enable_heartbeat is False or result is None
 
     def test_send_signal_coordination_disabled(self):
         svc = self._make_service(enable_coordination=False)
@@ -403,7 +405,9 @@ class TestCoordinationService:
         mock_signals.signal.return_value = "signal-123"
         svc._coordination_signals = mock_signals
         result = svc.send_signal(
-            "task_complete", target_agent="agent-2", payload={"status": "done"}
+            "task_complete",
+            target_agent="agent-2",
+            payload={"status": "done"},
         )
         assert result == "signal-123"
 

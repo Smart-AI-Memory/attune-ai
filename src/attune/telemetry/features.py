@@ -44,6 +44,7 @@ class TelemetryFeatures:
 
         >>> # Require Redis or raise error
         >>> TelemetryFeatures.require_redis("Event streaming")
+
     """
 
     @staticmethod
@@ -52,6 +53,7 @@ class TelemetryFeatures:
 
         Returns:
             True if the redis package is importable, False otherwise.
+
         """
         from attune.memory import is_redis_available
 
@@ -70,6 +72,7 @@ class TelemetryFeatures:
         Example:
             >>> info = TelemetryFeatures.get_feature_status("event_streaming")
             >>> print(f"{info.name}: {info.status.value}")
+
         """
         redis_features = {
             "event_streaming": "Real-time event streaming",
@@ -127,12 +130,13 @@ class TelemetryFeatures:
             >>> def __init__(self):
             ...     TelemetryFeatures.require_redis("Event streaming")
             ...     # ... rest of init
+
         """
         if not TelemetryFeatures.is_redis_available():
             raise ImportError(
                 f"{feature_name} requires Redis.\n"
                 f"Install: pip install 'attune-ai[memory]'\n"
-                f"See: https://redis.io/docs/install/"
+                f"See: https://redis.io/docs/install/",
             )
 
     @staticmethod
@@ -146,6 +150,7 @@ class TelemetryFeatures:
             >>> features = TelemetryFeatures.list_all_features()
             >>> for name, info in features.items():
             ...     print(f"{name}: {info.status.value}")
+
         """
         features = [
             # Redis-dependent features

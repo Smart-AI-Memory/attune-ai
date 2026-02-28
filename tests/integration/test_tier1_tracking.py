@@ -516,12 +516,15 @@ class TestEndToEndIntegration:
                 """Execute a workflow stage."""
                 # Run tests
                 test_record = run_tests_with_tracking(
-                    test_suite="unit", triggered_by="workflow", workflow_id=self._run_id
+                    test_suite="unit",
+                    triggered_by="workflow",
+                    workflow_id=self._run_id,
                 )
 
                 # Track coverage
                 coverage_record = track_coverage(
-                    coverage_file=str(coverage_xml), workflow_id=self._run_id
+                    coverage_file=str(coverage_xml),
+                    workflow_id=self._run_id,
                 )
 
                 return (

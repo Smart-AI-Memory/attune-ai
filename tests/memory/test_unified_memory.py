@@ -214,7 +214,9 @@ class TestUnifiedMemoryBackendInit:
         """Test initialization with Redis URL (uses mock mode)"""
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                storage_dir=tmpdir, redis_url="redis://localhost:6379", redis_mock=True
+                storage_dir=tmpdir,
+                redis_url="redis://localhost:6379",
+                redis_mock=True,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 

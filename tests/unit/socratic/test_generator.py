@@ -342,7 +342,7 @@ class TestAgentGeneratorForRequirements:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["security"],
-            }
+            },
         )
 
         template_ids = [a.template_id for a in agents]
@@ -353,7 +353,7 @@ class TestAgentGeneratorForRequirements:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["performance"],
-            }
+            },
         )
 
         template_ids = [a.template_id for a in agents]
@@ -371,7 +371,7 @@ class TestAgentGeneratorForRequirements:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["security", "performance"],
-            }
+            },
         )
 
         template_ids = [a.template_id for a in agents]
@@ -383,7 +383,7 @@ class TestAgentGeneratorForRequirements:
             {
                 "quality_focus": ["security"],
                 "automation_level": "fully_auto",
-            }
+            },
         )
 
         agent = next(a for a in agents if a.template_id == "security_reviewer")
@@ -397,7 +397,7 @@ class TestAgentGeneratorForRequirements:
             {
                 "quality_focus": ["security"],
                 "automation_level": "advisory",
-            }
+            },
         )
 
         agent = next(a for a in agents if a.template_id == "security_reviewer")
@@ -421,7 +421,7 @@ class TestAgentGeneratorWorkflow:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["security"],
-            }
+            },
         )
 
         return WorkflowBlueprint(
@@ -479,7 +479,7 @@ class TestAgentGeneratorCreateWorkflowBlueprint:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["security", "maintainability"],
-            }
+            },
         )
 
         blueprint = generator.create_workflow_blueprint(
@@ -498,7 +498,7 @@ class TestAgentGeneratorCreateWorkflowBlueprint:
         agents = generator.generate_agents_for_requirements(
             {
                 "quality_focus": ["security", "testability"],
-            }
+            },
         )
 
         blueprint = generator.create_workflow_blueprint(
@@ -567,7 +567,7 @@ class TestGeneratedWorkflowDescribe:
                     "name": "Analysis",
                     "agents": ["security_reviewer"],
                     "parallel": True,
-                }
+                },
             ],
         )
 
@@ -629,7 +629,7 @@ class TestGeneratedWorkflowExecute:
                     "name": "Test Stage",
                     "agents": ["test_agent"],
                     "parallel": False,
-                }
+                },
             ],
         )
 

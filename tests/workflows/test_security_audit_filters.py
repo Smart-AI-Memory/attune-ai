@@ -134,7 +134,7 @@ class TestIsSafeRandomUsage:
 
     def test_safe_indicator_in_context_returns_true(self, f: ConcreteFilter) -> None:
         """'not cryptographic' comment near the line → True."""
-        file_content = "# not cryptographic - just for simulation\n" "x = random.randint(1, 10)\n"
+        file_content = "# not cryptographic - just for simulation\nx = random.randint(1, 10)\n"
         result = f._is_safe_random_usage(
             line_content="x = random.randint(1, 10)",
             file_path="/src/util.py",
@@ -145,7 +145,7 @@ class TestIsSafeRandomUsage:
     def test_test_data_indicator_returns_true(self, f: ConcreteFilter) -> None:
         """'test data' comment nearby → True."""
         file_content = (
-            "# test data - fixed values for reproducibility\n" "val = random.choice([1, 2, 3])\n"
+            "# test data - fixed values for reproducibility\nval = random.choice([1, 2, 3])\n"
         )
         result = f._is_safe_random_usage(
             line_content="val = random.choice([1, 2, 3])",

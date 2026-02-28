@@ -40,6 +40,7 @@ class ExperimentManager:
 
         Args:
             storage_path: Path to persist experiments
+
         """
         if storage_path is None:
             storage_path = Path.home() / ".attune" / "socratic" / "experiments.json"
@@ -75,6 +76,7 @@ class ExperimentManager:
 
         Returns:
             Created experiment
+
         """
         experiment_id = hashlib.sha256(f"{name}:{time.time()}".encode()).hexdigest()[:12]
 
@@ -90,7 +92,7 @@ class ExperimentManager:
                 config=control_config,
                 is_control=True,
                 traffic_percentage=traffic_each,
-            )
+            ),
         ]
 
         for i, config in enumerate(treatment_configs):
@@ -102,7 +104,7 @@ class ExperimentManager:
                     config=config.get("config", config),
                     is_control=False,
                     traffic_percentage=traffic_each,
-                )
+                ),
             )
 
         experiment = Experiment(
@@ -129,6 +131,7 @@ class ExperimentManager:
 
         Returns:
             True if started successfully
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment:
@@ -152,6 +155,7 @@ class ExperimentManager:
 
         Returns:
             Experiment results with analysis
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment:
@@ -176,6 +180,7 @@ class ExperimentManager:
 
         Returns:
             Allocated variant or None
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment or experiment.status != ExperimentStatus.RUNNING:
@@ -194,6 +199,7 @@ class ExperimentManager:
         Args:
             experiment_id: Experiment ID
             variant_id: Variant ID
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment:
@@ -218,6 +224,7 @@ class ExperimentManager:
             experiment_id: Experiment ID
             variant_id: Variant ID
             success_score: Score from 0-1
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment:
@@ -239,6 +246,7 @@ class ExperimentManager:
 
         Returns:
             Analysis results
+
         """
         experiment = self._experiments.get(experiment_id)
         if not experiment:
@@ -321,6 +329,7 @@ class ExperimentManager:
 
         Returns:
             List of running experiments
+
         """
         running = []
         for exp in self._experiments.values():

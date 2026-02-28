@@ -47,8 +47,8 @@ class ExecutionStrategy(ABC):
         Raises:
             ValueError: If agents list is empty
             TimeoutError: If execution exceeds timeout
+
         """
-        pass
 
     async def _execute_agent(self, agent: AgentTemplate, context: dict[str, Any]) -> AgentResult:
         """Execute a single agent with real analysis tools.
@@ -61,6 +61,7 @@ class ExecutionStrategy(ABC):
 
         Returns:
             AgentResult with execution outcome
+
         """
         import time
 
@@ -190,7 +191,7 @@ class ExecutionStrategy(ABC):
 
             logger.info(
                 f"Agent {agent.id} completed: success={success}, "
-                f"confidence={confidence:.2f}, duration={duration:.2f}s"
+                f"confidence={confidence:.2f}, duration={duration:.2f}s",
             )
 
             return AgentResult(
@@ -222,6 +223,7 @@ class ExecutionStrategy(ABC):
 
         Returns:
             Aggregated output dictionary
+
         """
         return {
             "num_agents": len(results),

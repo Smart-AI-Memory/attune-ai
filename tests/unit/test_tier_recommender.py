@@ -290,8 +290,8 @@ class TestRecommendWithPatterns:
                         "total_attempts": 2,
                         "cost_breakdown": {"total_cost": 0.05, "savings_percent": 40.0},
                     },
-                }
-            )
+                },
+            ),
         )
 
         recommender = TierRecommender(patterns_dir=patterns_dir)
@@ -315,8 +315,8 @@ class TestRecommendWithPatterns:
                         "total_attempts": 3,
                         "cost_breakdown": {"total_cost": 0.25, "savings_percent": 30.0},
                     },
-                }
-            )
+                },
+            ),
         )
 
         recommender = TierRecommender(patterns_dir=patterns_dir)
@@ -350,7 +350,10 @@ class TestGenerateReasoning:
         """Test reasoning with no similar bugs."""
         recommender = TierRecommender()
         reasoning = recommender._generate_reasoning(
-            bug_type="unknown", tier="CHEAP", confidence=0.5, similar_count=0
+            bug_type="unknown",
+            tier="CHEAP",
+            confidence=0.5,
+            similar_count=0,
         )
         assert "No historical data" in reasoning
 
@@ -358,7 +361,10 @@ class TestGenerateReasoning:
         """Test reasoning with one similar bug."""
         recommender = TierRecommender()
         reasoning = recommender._generate_reasoning(
-            bug_type="import_error", tier="CHEAP", confidence=1.0, similar_count=1
+            bug_type="import_error",
+            tier="CHEAP",
+            confidence=1.0,
+            similar_count=1,
         )
         assert "1 similar bug" in reasoning
         assert "import_error" in reasoning
@@ -367,7 +373,10 @@ class TestGenerateReasoning:
         """Test reasoning with multiple similar bugs."""
         recommender = TierRecommender()
         reasoning = recommender._generate_reasoning(
-            bug_type="type_mismatch", tier="CAPABLE", confidence=0.75, similar_count=10
+            bug_type="type_mismatch",
+            tier="CAPABLE",
+            confidence=0.75,
+            similar_count=10,
         )
         assert "75%" in reasoning
         assert "10 similar bugs" in reasoning
@@ -445,8 +454,8 @@ class TestGetStats:
                         "total_attempts": 2,
                         "cost_breakdown": {"total_cost": 0.05, "savings_percent": 40.0},
                     },
-                }
-            )
+                },
+            ),
         )
 
         recommender = TierRecommender(patterns_dir=patterns_dir)
@@ -503,9 +512,9 @@ class TestLoadPatterns:
                                 "cost_breakdown": {"total_cost": 0.1, "savings_percent": 30},
                             },
                         },
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         recommender = TierRecommender(patterns_dir=patterns_dir)

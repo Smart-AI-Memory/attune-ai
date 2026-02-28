@@ -168,7 +168,7 @@ class TestSensitiveFileBlocking:
                     "**/credentials*.json",
                     "**/service-account*.json",
                     "**/auth-token*",
-                ]
+                ],
             )
             scanner = ProjectScanner(tmpdir, config=config)
             files = scanner._discover_files()
@@ -592,7 +592,7 @@ class TestSecurityIntegration:
                     "**/.git/**",
                     "**/__pycache__/**",
                     "**/node_modules/**",
-                ]
+                ],
             )
             scanner = ProjectScanner(tmpdir, config=config)
             files = scanner._discover_files()
@@ -619,7 +619,7 @@ class TestSecurityIntegration:
 def main():
     '''Main function.'''
     return 42
-"""
+""",
             )
 
             # Create excluded sensitive files

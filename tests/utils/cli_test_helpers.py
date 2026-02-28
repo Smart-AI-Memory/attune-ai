@@ -23,6 +23,7 @@ class MockTyperContext:
 
         Args:
             obj: Optional context object dictionary
+
         """
         self.obj = obj or {}
         self.parent = None
@@ -50,6 +51,7 @@ def mock_cli_command(
         ...     return "result"
         >>> result, ctx = mock_cli_command(my_command)
         >>> assert result == "result"
+
     """
     ctx = MockTyperContext()
 
@@ -79,6 +81,7 @@ def mock_file_operations() -> dict[str, Any]:
     Example:
         >>> mocks = mock_file_operations()
         >>> result, ctx = mock_cli_command(command, mock_dependencies=mocks)
+
     """
     mock_path = Mock(spec=Path)
     mock_path.exists.return_value = True
@@ -104,6 +107,7 @@ def mock_workflow_execution() -> dict[str, Any]:
     Example:
         >>> mocks = mock_workflow_execution()
         >>> result, ctx = mock_cli_command(workflow_command, mock_dependencies=mocks)
+
     """
     mock_result = {
         "status": "success",
@@ -126,6 +130,7 @@ def mock_memory_backend() -> dict[str, Any]:
     Example:
         >>> mocks = mock_memory_backend()
         >>> result, ctx = mock_cli_command(memory_command, mock_dependencies=mocks)
+
     """
     mock_memory = Mock()
     mock_memory.stash.return_value = True
@@ -146,6 +151,7 @@ def mock_template_registry() -> dict[str, Any]:
     Example:
         >>> mocks = mock_template_registry()
         >>> result, ctx = mock_cli_command(template_command, mock_dependencies=mocks)
+
     """
     mock_registry = {
         "test-template": {
@@ -174,6 +180,7 @@ def mock_analytics_backend() -> dict[str, Any]:
     Example:
         >>> mocks = mock_analytics_backend()
         >>> result, ctx = mock_cli_command(analytics_command, mock_dependencies=mocks)
+
     """
     mock_runs = [
         {
@@ -192,7 +199,7 @@ def mock_analytics_backend() -> dict[str, Any]:
 
     return {
         "attune.meta_workflows.execution_tracker.get_recent_runs": MagicMock(
-            return_value=mock_runs
+            return_value=mock_runs,
         ),
     }
 
@@ -209,6 +216,7 @@ def create_mock_config(overrides: dict[str, Any] | None = None) -> dict[str, Any
     Example:
         >>> config = create_mock_config({"tier_routing": False})
         >>> assert config["tier_routing"] is False
+
     """
     default_config = {
         "tier_routing": True,

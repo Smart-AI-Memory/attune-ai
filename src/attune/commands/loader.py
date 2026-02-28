@@ -33,7 +33,7 @@ SKIP_FILES = frozenset(
         "changelog.md",
         "INDEX.md",
         "index.md",
-    }
+    },
 )
 
 
@@ -55,6 +55,7 @@ class CommandLoader:
         # Discover and iterate commands lazily
         for config in loader.discover(".claude/commands/"):
             print(config.name)
+
     """
 
     def __init__(self, parser: CommandParser | None = None):

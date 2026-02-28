@@ -208,7 +208,9 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
             # Encryption
             rules = self.classification_rules[classification]
             final_content, encrypted = self._apply_encryption(
-                sanitized_content, rules, classification
+                sanitized_content,
+                rules,
+                classification,
             )
 
             # Generate ID and store
@@ -404,7 +406,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
     def _generate_pattern_id(self, user_id: str, pattern_type: str) -> str:
         """Generate unique pattern ID (pat_{timestamp}_{hash})."""
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        hash_input = f"{user_id}:{pattern_type}:{timestamp}" f":{os.urandom(8).hex()}"
+        hash_input = f"{user_id}:{pattern_type}:{timestamp}:{os.urandom(8).hex()}"
         hash_digest = hashlib.sha256(hash_input.encode()).hexdigest()[:12]
         return f"pat_{timestamp}_{hash_digest}"
 

@@ -56,6 +56,7 @@ class FormQuestion:
         default: Default value if user doesn't provide one
         help_text: Additional help text shown to user
         required: Whether this question must be answered
+
     """
 
     id: str
@@ -71,6 +72,7 @@ class FormQuestion:
 
         Returns:
             Dictionary with question data for AskUserQuestion
+
         """
         # Boolean questions convert to Yes/No select
         if self.type == QuestionType.BOOLEAN:
@@ -101,6 +103,7 @@ class FormSchema:
         title: Form title
         description: Form description
         questions: List of questions to ask
+
     """
 
     title: str
@@ -115,6 +118,7 @@ class FormSchema:
 
         Returns:
             List of question batches
+
         """
         batches = []
         for i in range(0, len(self.questions), batch_size):
@@ -131,13 +135,14 @@ class FormResponse:
         responses: Dictionary mapping question_id → user's answer
         timestamp: When response was submitted
         response_id: Unique ID for this response
+
     """
 
     template_id: str
     responses: dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     response_id: str = field(
-        default_factory=lambda: f"resp-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        default_factory=lambda: f"resp-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
     )
 
     def get(self, question_id: str, default: Any = None) -> Any:
@@ -149,6 +154,7 @@ class FormResponse:
 
         Returns:
             User's response or default
+
         """
         return self.responses.get(question_id, default)
 
@@ -170,6 +176,7 @@ class AgentCompositionRule:
         required_responses: Conditions that must be met (question_id → required value)
         config_mapping: Map form responses to agent config (form_key → config_key)
         success_criteria: List of success criteria for this agent
+
     """
 
     role: str
@@ -188,6 +195,7 @@ class AgentCompositionRule:
 
         Returns:
             True if all required conditions are met
+
         """
         for key, required_value in self.required_responses.items():
             user_response = response.get(key)
@@ -199,20 +207,17 @@ class AgentCompositionRule:
                     if not any(rv in user_response for rv in required_value):
                         return False
                 # Single required value must be in user's selections
-                else:
-                    if required_value not in user_response:
-                        return False
+                elif required_value not in user_response:
+                    return False
 
             # Single value: exact match required
-            else:
-                if isinstance(required_value, list):
-                    # User must have picked one of the allowed values
-                    if user_response not in required_value:
-                        return False
-                else:
-                    # Exact match
-                    if user_response != required_value:
-                        return False
+            elif isinstance(required_value, list):
+                # User must have picked one of the allowed values
+                if user_response not in required_value:
+                    return False
+            # Exact match
+            elif user_response != required_value:
+                return False
 
         return True
 
@@ -224,6 +229,7 @@ class AgentCompositionRule:
 
         Returns:
             Agent configuration dictionary
+
         """
         config = {}
         for form_key, config_key in self.config_mapping.items():
@@ -245,6 +251,7 @@ class AgentSpec:
         config: Agent-specific configuration
         success_criteria: List of success criteria
         agent_id: Unique identifier for this agent instance
+
     """
 
     role: str
@@ -276,6 +283,7 @@ class MetaWorkflowTemplate:
         agent_composition_rules: Rules for creating agents
         estimated_cost_range: Estimated cost range (min, max)
         estimated_duration_minutes: Estimated duration in minutes
+
     """
 
     template_id: str
@@ -294,6 +302,7 @@ class MetaWorkflowTemplate:
 
         Returns:
             JSON string representation
+
         """
         data = {
             "template_id": self.template_id,
@@ -347,6 +356,7 @@ class MetaWorkflowTemplate:
 
         Raises:
             ValueError: If JSON is invalid or missing required fields
+
         """
         try:
             data = json.loads(json_str)
@@ -412,6 +422,7 @@ class AgentExecutionResult:
         tier_used: Model tier used
         output: Agent's output/result
         error: Error message if failed
+
     """
 
     agent_id: str
@@ -439,6 +450,7 @@ class MetaWorkflowResult:
         total_duration: Total duration in seconds
         success: Whether workflow succeeded
         error: Error message if failed
+
     """
 
     run_id: str
@@ -457,6 +469,7 @@ class MetaWorkflowResult:
 
         Returns:
             Dictionary representation
+
         """
         return {
             "run_id": self.run_id,
@@ -476,6 +489,7 @@ class MetaWorkflowResult:
 
         Returns:
             JSON string representation
+
         """
         return json.dumps(self.to_dict(), indent=2)
 
@@ -488,6 +502,7 @@ class MetaWorkflowResult:
 
         Returns:
             MetaWorkflowResult instance
+
         """
         form_responses = FormResponse(
             template_id=data["form_responses"]["template_id"],
@@ -552,6 +567,7 @@ class PatternInsight:
         confidence: Confidence level (0.0 to 1.0)
         data: Supporting data for this insight
         sample_size: Number of runs this insight is based on
+
     """
 
     insight_type: str
@@ -565,5 +581,6 @@ class PatternInsight:
 
         Returns:
             Dictionary representation
+
         """
         return asdict(self)

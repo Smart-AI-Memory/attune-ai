@@ -288,7 +288,10 @@ class TestRunStageRouting:
     async def test_routes_to_crew_security(self, workflow_with_crew):
         """Test routing to _crew_security stage."""
         with patch.object(
-            workflow_with_crew, "_crew_security", new_callable=AsyncMock, return_value=({}, 0, 0)
+            workflow_with_crew,
+            "_crew_security",
+            new_callable=AsyncMock,
+            return_value=({}, 0, 0),
         ):
             await workflow_with_crew.run_stage("crew_security", ModelTier.PREMIUM, {})
             workflow_with_crew._crew_security.assert_awaited_once()
@@ -406,7 +409,8 @@ class TestHealthStage:
         """Test health stage defaults to '.' if no path given."""
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
         with patch(
-            "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+            "attune.workflows.release_prep_stages.subprocess.run",
+            return_value=mock_result,
         ) as mock_run:
             await workflow._health({}, ModelTier.CHEAP)
 
@@ -437,7 +441,8 @@ class TestHealthStage:
 
             with (
                 patch(
-                    "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+                    "attune.workflows.release_prep_stages.subprocess.run",
+                    return_value=mock_result,
                 ),
                 patch("attune.models.get_auth_strategy", return_value=mock_strategy),
                 patch("attune.models.count_lines_of_code", return_value=10),
@@ -490,7 +495,8 @@ class TestHealthStage:
 
             with (
                 patch(
-                    "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+                    "attune.workflows.release_prep_stages.subprocess.run",
+                    return_value=mock_result,
                 ),
                 patch("attune.models.get_auth_strategy", return_value=mock_strategy),
                 patch("attune.models.count_lines_of_code", return_value=500),
@@ -540,7 +546,7 @@ class TestSecurityStage:
                     "issue_text": "Hardcoded password",
                     "issue_confidence": "HIGH",
                 },
-            ]
+            ],
         }
         mock_result = MagicMock()
         mock_result.returncode = 1
@@ -568,7 +574,7 @@ class TestSecurityStage:
                     "issue_text": "Assert used",
                     "issue_confidence": "HIGH",
                 },
-            ]
+            ],
         }
         mock_result = MagicMock()
         mock_result.returncode = 1
@@ -625,7 +631,7 @@ class TestSecurityStage:
                     "issue_confidence": "HIGH",
                 }
                 for i in range(30)
-            ]
+            ],
         }
         mock_result = MagicMock()
         mock_result.returncode = 1
@@ -697,7 +703,8 @@ class TestChangelogStage:
         mock_result = MagicMock(returncode=0, stdout="", stderr="")
 
         with patch(
-            "attune.workflows.release_prep_stages.subprocess.run", return_value=mock_result
+            "attune.workflows.release_prep_stages.subprocess.run",
+            return_value=mock_result,
         ) as mock_run:
             await workflow._changelog(
                 {"path": "/project", "since": "2 weeks ago"},
@@ -756,7 +763,8 @@ class TestCrewSecurityStage:
         ):
             # The ImportError inside _crew_security should be caught
             result, in_tok, out_tok = await workflow_with_crew._crew_security(
-                {"path": "."}, ModelTier.PREMIUM
+                {"path": "."},
+                ModelTier.PREMIUM,
             )
 
         crew = result["crew_security"]
@@ -774,7 +782,8 @@ class TestCrewSecurityStage:
 
         with patch.dict(sys.modules, {"attune.workflows.security_adapters": mock_module}):
             result, in_tok, out_tok = await workflow_with_crew._crew_security(
-                {"path": ".", "security": {}}, ModelTier.PREMIUM
+                {"path": ".", "security": {}},
+                ModelTier.PREMIUM,
             )
 
         crew = result["crew_security"]
@@ -795,7 +804,8 @@ class TestCrewSecurityStage:
 
         with patch.dict(sys.modules, {"attune.workflows.security_adapters": mock_module}):
             result, in_tok, out_tok = await workflow_with_crew._crew_security(
-                {"path": ".", "security": {}}, ModelTier.PREMIUM
+                {"path": ".", "security": {}},
+                ModelTier.PREMIUM,
             )
 
         crew = result["crew_security"]
@@ -887,7 +897,7 @@ class TestApproveStage:
     async def test_approve_clean_release(self, workflow, clean_input_data):
         """Test approve stage for a clean release."""
         workflow._call_llm = AsyncMock(
-            return_value=("Release looks good. Ready to ship.", 100, 200)
+            return_value=("Release looks good. Ready to ship.", 100, 200),
         )
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
@@ -925,7 +935,7 @@ class TestApproveStage:
         clean_input_data["security"]["high_severity"] = 3
 
         workflow._call_llm = AsyncMock(
-            return_value=("Security issues must be addressed.", 100, 200)
+            return_value=("Security issues must be addressed.", 100, 200),
         )
         workflow._is_xml_enabled = MagicMock(return_value=False)
         workflow._parse_xml_response = MagicMock(return_value={})
@@ -984,7 +994,7 @@ class TestApproveStage:
         workflow._render_xml_prompt = MagicMock(return_value="<xml>prompt</xml>")
         workflow._call_llm = AsyncMock(return_value=("<response>good</response>", 100, 200))
         workflow._parse_xml_response = MagicMock(
-            return_value={"xml_parsed": True, "summary": "All clear"}
+            return_value={"xml_parsed": True, "summary": "All clear"},
         )
 
         result, _, _ = await workflow._approve(clean_input_data, ModelTier.PREMIUM)

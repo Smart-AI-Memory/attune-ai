@@ -28,10 +28,10 @@ def _parse_timestamp(timestamp_str: str) -> datetime:
 
     Returns:
         Parsed datetime object (timezone-naive UTC)
+
     """
     # Python 3.10's fromisoformat() doesn't handle 'Z' suffix
-    if timestamp_str.endswith("Z"):
-        timestamp_str = timestamp_str[:-1]
+    timestamp_str = timestamp_str.removesuffix("Z")
 
     dt = datetime.fromisoformat(timestamp_str)
 
@@ -179,10 +179,10 @@ def _parse_timestamp(timestamp_str: str) -> datetime:
 
     Returns:
         Parsed datetime object (timezone-naive UTC)
+
     """
     # Python 3.10's fromisoformat() doesn't handle 'Z' suffix
-    if timestamp_str.endswith("Z"):
-        timestamp_str = timestamp_str[:-1]
+    timestamp_str = timestamp_str.removesuffix("Z")
 
     dt = datetime.fromisoformat(timestamp_str)
 

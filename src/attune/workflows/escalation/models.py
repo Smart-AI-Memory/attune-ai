@@ -22,6 +22,7 @@ class FeedbackType(Enum):
         SEMANTIC: Evaluator LLM judged the response poor quality.
         PARSE_FAILURE: Response could not be parsed as expected JSON.
         EXCEPTION: API or processing error during the attempt.
+
     """
 
     STRUCTURAL = "structural"
@@ -40,6 +41,7 @@ class ValidationFeedback:
         message: Human-readable description of the problem.
         severity: "error" (blocks success) or "warning" (informational).
         suggestion: Optional actionable hint injected into the retry prompt.
+
     """
 
     feedback_type: FeedbackType
@@ -65,6 +67,7 @@ class AttemptResult:
         latency_ms: Wall-clock time for the LLM call in milliseconds.
         input_tokens: Input tokens consumed.
         output_tokens: Output tokens generated.
+
     """
 
     model: str
@@ -92,6 +95,7 @@ class EscalationResult:
         total_retries: Number of same-model retries across all tiers.
         total_escalations: Number of tier upgrades (Haiku→Sonnet counts as 1).
         total_cost_estimate: Accumulated cost in USD across all attempts.
+
     """
 
     success: bool
@@ -111,6 +115,7 @@ class EscalationResult:
         Example:
             >>> result.summary()
             '✓ claude-haiku-4-5-20251001, 1 retry(ies)'
+
         """
         if self.success:
             parts = [f"✓ {self.final_model}"]

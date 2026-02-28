@@ -34,6 +34,7 @@ class ManageDocumentationCrewResult:
 
         Returns:
             Dictionary representation of the result.
+
         """
         return {
             "success": self.success,
@@ -64,6 +65,7 @@ class Agent:
 
         Returns:
             Formatted system prompt string (XML or legacy format).
+
         """
         if not self.use_xml_structure:
             # Legacy format for backward compatibility
@@ -129,6 +131,7 @@ class Task:
 
         Returns:
             Formatted user prompt string (XML or legacy format).
+
         """
         if not self.agent.use_xml_structure:
             # Legacy format for backward compatibility
@@ -179,6 +182,7 @@ def parse_xml_response(response: str) -> dict:
 
     Returns:
         Dictionary with 'thinking', 'answer', and 'raw' keys
+
     """
     thinking_match = re.search(r"<thinking>(.*?)</thinking>", response, re.DOTALL)
     answer_match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)

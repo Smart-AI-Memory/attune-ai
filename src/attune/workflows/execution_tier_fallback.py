@@ -64,7 +64,9 @@ class TierFallbackExecutionMixin:
 
                 try:
                     output, input_tokens, output_tokens = await self.run_stage(
-                        stage_name, tier, current_data
+                        stage_name,
+                        tier,
+                        current_data,
                     )
 
                     duration_ms = int((datetime.now() - stage_start).total_seconds() * 1000)
@@ -118,7 +120,10 @@ class TierFallbackExecutionMixin:
         return current_data
 
     def _handle_stage_skip(
-        self, stage_name: str, skip_reason: str | None, WorkflowStage: Any
+        self,
+        stage_name: str,
+        skip_reason: str | None,
+        WorkflowStage: Any,
     ) -> None:
         """Record a skipped stage and notify progress tracker."""
         tier = self.get_tier_for_stage(stage_name)
@@ -257,7 +262,7 @@ class TierFallbackExecutionMixin:
         log_fn(
             f"Stage {stage_name} failed "
             f"{'quality validation ' if level == 'info' else ''}"
-            f"with {tier.value}: {reason}"
+            f"with {tier.value}: {reason}",
         )
 
         if tier_index < len(tier_chain) - 1:

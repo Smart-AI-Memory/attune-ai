@@ -13,7 +13,7 @@ from attune.validation.xml_validator import (
 )
 
 __all__ = [
-    "XMLValidator",
     "ValidationResult",
+    "XMLValidator",
     "validate_xml_response",
 ]

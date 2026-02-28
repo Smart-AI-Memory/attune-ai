@@ -35,7 +35,10 @@ class _SecurityWorkflow(BaseWorkflow):
     tier_map = {"scan": ModelTier.CAPABLE}
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         return {"vulnerabilities": 0}, 100, 50
 
@@ -49,7 +52,10 @@ class _CodeReviewWorkflow(BaseWorkflow):
     tier_map = {"review": ModelTier.CAPABLE}
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         return {"issues": []}, 100, 50
 

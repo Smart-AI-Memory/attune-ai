@@ -36,7 +36,7 @@ def format_test_gen_report(result: dict, input_data: dict) -> str:
 
     # Parse XML review feedback
     xml_summary, xml_findings, xml_tests, coverage_improvement = _parse_xml_review(
-        result.get("review_feedback", "")
+        result.get("review_feedback", ""),
     )
 
     _format_quality_section(lines, xml_summary, coverage_improvement)
@@ -56,7 +56,10 @@ def format_test_gen_report(result: dict, input_data: dict) -> str:
 
 
 def _format_summary_section(
-    lines: list[str], total_tests: int, files_covered: int, input_data: dict
+    lines: list[str],
+    total_tests: int,
+    files_covered: int,
+    input_data: dict,
 ) -> None:
     """Format the summary stats and status indicator."""
     total_candidates = input_data.get("total_candidates", 0)

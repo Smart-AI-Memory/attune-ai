@@ -17,17 +17,17 @@ Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
 """
 
-from .base_agent import ReleaseAgent, _run_command  # noqa: F401
-from .coverage_agent import TestCoverageAgent  # noqa: F401
-from .documentation_agent import DocumentationAgent  # noqa: F401
-from .quality_agent import CodeQualityAgent  # noqa: F401
-from .security_agent import SecurityAuditorAgent  # noqa: F401
+from .base_agent import ReleaseAgent, _run_command
+from .coverage_agent import TestCoverageAgent
+from .documentation_agent import DocumentationAgent
+from .quality_agent import CodeQualityAgent
+from .security_agent import SecurityAuditorAgent
 
 __all__ = [
+    "CodeQualityAgent",
+    "DocumentationAgent",
     "ReleaseAgent",
     "SecurityAuditorAgent",
     "TestCoverageAgent",
-    "CodeQualityAgent",
-    "DocumentationAgent",
     "_run_command",
 ]

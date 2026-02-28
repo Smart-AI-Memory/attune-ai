@@ -20,6 +20,7 @@ def cost_tracker(tmp_path):
 
     Returns:
         CostTracker instance with isolated storage
+
     """
     storage_dir = tmp_path / ".empathy"
     return CostTracker(storage_dir=str(storage_dir))
@@ -34,6 +35,7 @@ def security_audit_workflow(cost_tracker):
 
     Returns:
         SecurityAuditWorkflow instance ready for testing
+
     """
     from attune.workflows.security_audit import SecurityAuditWorkflow
 
@@ -53,6 +55,7 @@ def code_review_workflow(cost_tracker):
 
     Returns:
         CodeReviewWorkflow instance ready for testing
+
     """
     from attune.workflows.code_review import CodeReviewWorkflow
 
@@ -68,6 +71,7 @@ def bug_predict_workflow(cost_tracker):
 
     Returns:
         BugPredictWorkflow instance ready for testing
+
     """
     from attune.workflows.bug_predict import BugPredictionWorkflow
 
@@ -83,6 +87,7 @@ def dependency_check_workflow(cost_tracker):
 
     Returns:
         DependencyCheckWorkflow instance ready for testing
+
     """
     from attune.workflows.dependency_check import DependencyCheckWorkflow
 

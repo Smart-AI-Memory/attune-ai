@@ -80,7 +80,8 @@ def show_analytics(
 
         summary_table.add_row("Total Runs", str(summary["total_runs"]))
         summary_table.add_row(
-            "Successful", f"{summary['successful_runs']} ({summary['success_rate']:.0%})"
+            "Successful",
+            f"{summary['successful_runs']} ({summary['success_rate']:.0%})",
         )
         summary_table.add_row("Total Cost", f"${summary['total_cost']:.2f}")
         summary_table.add_row("Avg Cost/Run", f"${summary['avg_cost_per_run']:.2f}")
@@ -104,7 +105,7 @@ def show_analytics(
             for insight in insights["tier_performance"][:5]:  # Top 5
                 console.print(f"  • {insight['description']}")
                 console.print(
-                    f"    [dim]Confidence: {insight['confidence']:.0%} (n={insight['sample_size']})[/dim]"
+                    f"    [dim]Confidence: {insight['confidence']:.0%} (n={insight['sample_size']})[/dim]",
                 )
 
         if insights.get("cost_analysis"):
@@ -119,7 +120,7 @@ def show_analytics(
                     for tier, stats in breakdown.items():
                         console.print(
                             f"    {tier}: ${stats['avg']:.2f} avg "
-                            f"(${stats['total']:.2f} total, {stats['count']} runs)"
+                            f"(${stats['total']:.2f} total, {stats['count']} runs)",
                         )
 
         if insights.get("failure_analysis"):
@@ -170,7 +171,7 @@ def list_runs(
             return
 
         console.print(
-            f"\n[bold]Recent Executions[/bold] (showing {min(limit, len(run_ids))} of {len(run_ids)}):\n"
+            f"\n[bold]Recent Executions[/bold] (showing {min(limit, len(run_ids))} of {len(run_ids)}):\n",
         )
 
         # Create table

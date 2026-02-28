@@ -42,7 +42,7 @@ class TestVerificationConfigDefaults:
                 "timeout_seconds": 60,
                 "fail_open": True,
                 "working_directory": "/tmp",
-            }
+            },
         )
         assert config.enabled is False
         assert config.strategy == "run-tests"
@@ -139,7 +139,7 @@ class TestVerificationConfigCorrection:
             {
                 "correction_enabled": True,
                 "max_corrections": 3,
-            }
+            },
         )
         assert config.correction_enabled is True
         assert config.max_corrections == 3
@@ -156,7 +156,7 @@ class TestVerificationConfigCorrection:
         config = VerificationConfig.from_dict(
             {
                 "correction_context_chars": 16000,
-            }
+            },
         )
         assert config.correction_context_chars == 16000
 

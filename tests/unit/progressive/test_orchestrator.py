@@ -55,7 +55,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         # Multiple syntax errors should trigger escalation
@@ -95,7 +98,10 @@ class TestMetaOrchestrator:
         # Success rate: 5/5 = 100% (all above 80 threshold)
         # Both well above escalation thresholds
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         # Excellent quality should not escalate
@@ -121,7 +127,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=1, config=config
+            Tier.CHEAP,
+            result,
+            attempt=1,
+            config=config,
         )
 
         # Should not escalate (min attempts not met)
@@ -137,7 +146,9 @@ class TestMetaOrchestrator:
 
         # Check if stagnation detected
         is_stagnant, reason = orchestrator._detect_stagnation(
-            cqs_history, improvement_threshold=5.0, consecutive_limit=2
+            cqs_history,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
 
         # With <5 point improvement per run, should detect stagnation
@@ -152,7 +163,9 @@ class TestMetaOrchestrator:
         cqs_history = [70.0, 78.0, 86.0]  # 8-point improvements
 
         is_stagnant, reason = orchestrator._detect_stagnation(
-            cqs_history, improvement_threshold=5.0, consecutive_limit=2
+            cqs_history,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
 
         # Good improvements should not be stagnant
@@ -205,7 +218,9 @@ class TestMetaOrchestrator:
         orchestrator = MetaOrchestrator()
 
         prompt = orchestrator.build_tier_prompt(
-            tier=Tier.CHEAP, base_task="Generate tests for app.py", failure_context=None
+            tier=Tier.CHEAP,
+            base_task="Generate tests for app.py",
+            failure_context=None,
         )
 
         assert prompt is not None
@@ -275,7 +290,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         # Low CQS after min attempts should trigger escalation
@@ -302,7 +320,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.PREMIUM, result, attempt=1, config=config
+            Tier.PREMIUM,
+            result,
+            attempt=1,
+            config=config,
         )
 
         # Cannot escalate beyond premium
@@ -317,7 +338,9 @@ class TestMetaOrchestratorEdgeCases:
         cqs_history = [75.0]
 
         is_stagnant, reason = orchestrator._detect_stagnation(
-            cqs_history, improvement_threshold=5.0, consecutive_limit=2
+            cqs_history,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
 
         assert is_stagnant is False
@@ -347,7 +370,10 @@ class TestMetaOrchestratorEdgeCases:
         assert analysis.failure_severity == "CRITICAL"
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         # CRITICAL severity should trigger immediate escalation
@@ -376,7 +402,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         # High failure rate should trigger escalation
@@ -405,7 +434,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=6, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=6,
+            config=config,
         )
 
         # Max attempts should force escalation
@@ -458,7 +490,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=4, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=4,
+            config=config,
         )
 
         assert should_escalate is True
@@ -472,7 +507,9 @@ class TestMetaOrchestratorEdgeCases:
         cqs_history = [70.0, 80.0, 81.0, 82.0]  # First jump is good, then minimal
 
         is_stagnant, reason = orchestrator._detect_stagnation(
-            cqs_history, improvement_threshold=5.0, consecutive_limit=2
+            cqs_history,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
 
         # Recent stagnation should be detected (81→82 and 82→83 are both <5)
@@ -505,7 +542,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=3, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=3,
+            config=config,
         )
 
         assert should_escalate is True
@@ -532,7 +572,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=2, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is True
@@ -558,7 +601,10 @@ class TestMetaOrchestratorEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=2, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is True
@@ -820,7 +866,7 @@ class TestPromptContentVerification:
             "reason": "Stagnation detected after 4 attempts",
             "failures": [{"error": "persistent async issue"}],
             "examples": [
-                {"error": "async timeout", "code": "async def test():", "quality_score": 72}
+                {"error": "async timeout", "code": "async def test():", "quality_score": 72},
             ],
         }
 

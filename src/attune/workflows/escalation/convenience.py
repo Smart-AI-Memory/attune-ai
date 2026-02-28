@@ -59,6 +59,7 @@ async def escalate(
         ...     use_evaluator=True,
         ...     retries=2,
         ... )
+
     """
     validators = []
     if required_fields:

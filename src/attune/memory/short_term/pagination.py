@@ -23,6 +23,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -65,6 +66,7 @@ class Pagination:
         ...     for pattern in result.items:
         ...         process(pattern)
         ...     result = pagination.list_staged_patterns_paginated(creds, result.cursor, 10)
+
     """
 
     PREFIX_STAGED = "empathy:staged:"
@@ -74,6 +76,7 @@ class Pagination:
 
         Args:
             base: BaseOperations instance for storage access
+
         """
         self._base = base
 
@@ -103,6 +106,7 @@ class Pagination:
             ...     next_result = pagination.list_staged_patterns_paginated(
             ...         creds, result.cursor, 10
             ...     )
+
         """
         start_time = time.perf_counter()
         pattern = f"{self.PREFIX_STAGED}*"
@@ -182,6 +186,7 @@ class Pagination:
             >>> result = pagination.scan_keys("empathy:session:*", "0", 50)
             >>> for key in result.items:
             ...     print(key)
+
         """
         # Handle mock storage mode
         if self._base.use_mock:

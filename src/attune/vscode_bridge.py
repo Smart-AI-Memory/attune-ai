@@ -74,6 +74,7 @@ def write_code_review_results(
 
     Returns:
         Path to the written file
+
     """
     findings = findings or []
 
@@ -137,6 +138,7 @@ def write_pr_review_results(
 
     Returns:
         Path to the written file
+
     """
     formatted_report = f"""## PR #{pr_number}: {title}
 
@@ -170,6 +172,7 @@ def send_to_vscode(
 
     Returns:
         Confirmation message
+
     """
     path = write_code_review_results(
         findings=findings or [],

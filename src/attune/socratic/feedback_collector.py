@@ -30,6 +30,7 @@ class FeedbackCollector:
         >>> collector = FeedbackCollector()
         >>> collector.record_execution(blueprint, evaluation)
         >>> performance = collector.get_agent_performance("security_reviewer")
+
     """
 
     def __init__(self, storage_path: str = ".attune/socratic/feedback"):
@@ -37,6 +38,7 @@ class FeedbackCollector:
 
         Args:
             storage_path: Path for feedback data storage
+
         """
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
@@ -96,6 +98,7 @@ class FeedbackCollector:
         Args:
             blueprint: The executed workflow blueprint
             evaluation: The success evaluation results
+
         """
         success = evaluation.overall_success
         score = evaluation.overall_score
@@ -134,7 +137,7 @@ class FeedbackCollector:
 
         self._save_data()
         logger.info(
-            f"Recorded feedback for blueprint {blueprint.id[:8]}: success={success}, score={score:.2f}"
+            f"Recorded feedback for blueprint {blueprint.id[:8]}: success={success}, score={score:.2f}",
         )
 
     def _generate_pattern_id(self, blueprint: WorkflowBlueprint) -> str:
@@ -167,6 +170,7 @@ class FeedbackCollector:
 
         Returns:
             List of (template_id, score) tuples sorted by score
+
         """
         scored_agents = []
 
@@ -197,6 +201,7 @@ class FeedbackCollector:
 
         Returns:
             List of successful patterns
+
         """
         patterns = []
 
@@ -219,6 +224,7 @@ class FeedbackCollector:
 
         Returns:
             Dictionary with various insights
+
         """
         insights: dict[str, Any] = {
             "total_agents_tracked": len(self._agent_performance),
@@ -247,7 +253,7 @@ class FeedbackCollector:
                         "template_id": tid,
                         "current_score": perf.average_score,
                         "uses": perf.total_uses,
-                    }
+                    },
                 )
 
         # Domain insights
@@ -281,7 +287,7 @@ class FeedbackCollector:
         for tid, perf in self._agent_performance.items():
             if perf.total_uses >= 10 and perf.success_rate < 0.5:
                 recommendations.append(
-                    f"Consider reviewing '{tid}' configuration - success rate is {perf.success_rate:.0%}"
+                    f"Consider reviewing '{tid}' configuration - success rate is {perf.success_rate:.0%}",
                 )
 
         # Check for agents that work well together
@@ -289,14 +295,14 @@ class FeedbackCollector:
         for pattern in successful_patterns[:3]:
             agents = ", ".join(pattern.agent_combination)
             recommendations.append(
-                f"Successful pattern for '{pattern.domain}': [{agents}] - {pattern.success_rate:.0%} success rate"
+                f"Successful pattern for '{pattern.domain}': [{agents}] - {pattern.success_rate:.0%} success rate",
             )
 
         # Check for domains needing more data
         for domain, stats in self.get_insights().get("domain_insights", {}).items():
             if stats["total_uses"] < 5:
                 recommendations.append(
-                    f"More data needed for '{domain}' domain - only {stats['total_uses']} executions recorded"
+                    f"More data needed for '{domain}' domain - only {stats['total_uses']} executions recorded",
                 )
 
         return recommendations

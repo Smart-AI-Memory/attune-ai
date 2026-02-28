@@ -19,6 +19,7 @@ class MetricsCollector:
 
         Args:
             db_path: Path to database (deprecated parameter)
+
         """
         self.db_path = db_path
 

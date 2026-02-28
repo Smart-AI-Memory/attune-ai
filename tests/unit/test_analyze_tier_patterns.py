@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Unit tests for tier pattern analysis system.
+"""Unit tests for tier pattern analysis system.
 
 Tests:
 - Pattern loading and validation
@@ -39,7 +38,7 @@ def sample_pattern():
                     "tier": "CHEAP",
                     "attempts": 1,
                     "success": {"attempt": 1, "quality_gates_passed": ["tests", "lint", "types"]},
-                }
+                },
             ],
             "cost_breakdown": {
                 "total_cost": 0.030,
@@ -199,7 +198,10 @@ class TestTierPatternAnalyzer:
         assert savings["savings_percent"] == 96.8
 
     def test_calculate_savings_multiple_patterns(
-        self, tmp_path, sample_pattern, sample_pattern_with_failures
+        self,
+        tmp_path,
+        sample_pattern,
+        sample_pattern_with_failures,
     ):
         """Test savings calculation with multiple patterns."""
         with open(tmp_path / "bug1.json", "w") as f:
@@ -297,7 +299,10 @@ class TestTierPatternAnalyzer:
         assert rec.reasoning == "No historical data, defaulting to CHEAP tier"
 
     def test_tier_distribution_calculation(
-        self, tmp_path, sample_pattern, sample_pattern_with_failures
+        self,
+        tmp_path,
+        sample_pattern,
+        sample_pattern_with_failures,
     ):
         """Test tier distribution across multiple patterns."""
         with open(tmp_path / "bug1.json", "w") as f:

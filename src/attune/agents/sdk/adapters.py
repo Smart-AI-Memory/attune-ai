@@ -47,6 +47,7 @@ class SDKToolsMixin:
 
         Returns:
             File contents as a string, or empty string on failure.
+
         """
         if SDK_AVAILABLE:
             try:
@@ -54,7 +55,7 @@ class SDKToolsMixin:
 
                 result = claude_agent_sdk.tools.read(file_path)
                 return str(result)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Fall back to stdlib on any SDK error
                 logger.debug(f"SDK read failed, using fallback: {e}")
 
@@ -73,6 +74,7 @@ class SDKToolsMixin:
 
         Returns:
             List of matching file paths as strings.
+
         """
         if SDK_AVAILABLE:
             try:
@@ -82,7 +84,7 @@ class SDKToolsMixin:
                 if isinstance(result, list):
                     return [str(p) for p in result]
                 return [str(result)]
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Fall back to stdlib on any SDK error
                 logger.debug(f"SDK glob failed, using fallback: {e}")
 
@@ -103,6 +105,7 @@ class SDKToolsMixin:
 
         Returns:
             Tuple of (return_code, stdout, stderr).
+
         """
         if SDK_AVAILABLE:
             try:
@@ -114,7 +117,7 @@ class SDKToolsMixin:
                     timeout=timeout * 1000,
                 )
                 return 0, str(result), ""
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Fall back to subprocess on any SDK error
                 logger.debug(f"SDK bash failed, using fallback: {e}")
 

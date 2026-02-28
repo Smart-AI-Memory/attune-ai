@@ -24,9 +24,9 @@ from .feedback_collector import FeedbackCollector
 from .feedback_models import AgentPerformance, WorkflowPattern
 
 __all__ = [
-    "AgentPerformance",
-    "WorkflowPattern",
-    "FeedbackCollector",
     "AdaptiveAgentGenerator",
+    "AgentPerformance",
+    "FeedbackCollector",
     "FeedbackLoop",
+    "WorkflowPattern",
 ]

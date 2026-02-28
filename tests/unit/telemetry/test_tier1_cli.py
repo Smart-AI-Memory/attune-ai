@@ -67,7 +67,7 @@ def populated_store(temp_dir):
             status="completed",
             success=True,
             actual_cost=0.01,
-        )
+        ),
     )
 
     store.log_task_routing(
@@ -83,7 +83,7 @@ def populated_store(temp_dir):
             confidence_score=0.85,
             status="failed",
             success=False,
-        )
+        ),
     )
 
     # Add test execution data
@@ -107,7 +107,7 @@ def populated_store(temp_dir):
                 {"name": "test_auth", "file": "test_auth.py", "error": "AssertionError"},
                 {"name": "test_api", "file": "test_api.py", "error": "Timeout"},
             ],
-        )
+        ),
     )
 
     # Add coverage data
@@ -130,7 +130,7 @@ def populated_store(temp_dir):
             trend="stable",
             coverage_format="xml",
             coverage_file="coverage.xml",
-        )
+        ),
     )
 
     # Add agent assignment data
@@ -150,7 +150,7 @@ def populated_store(temp_dir):
             success=True,
             actual_duration_hours=300.0 / 3600.0,
             quality_check_passed=True,
-        )
+        ),
     )
 
     return store

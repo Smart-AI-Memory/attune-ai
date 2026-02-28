@@ -50,12 +50,16 @@ class WorkflowPattern(BaseModel):
     complexity: WorkflowComplexity = Field(..., description="Pattern complexity")
     use_cases: list[str] = Field(default_factory=list, description="When to use this pattern")
     examples: list[str] = Field(
-        default_factory=list, description="Example workflows using this pattern"
+        default_factory=list,
+        description="Example workflows using this pattern",
     )
     conflicts_with: list[str] = Field(default_factory=list, description="Incompatible pattern IDs")
     requires: list[str] = Field(default_factory=list, description="Required pattern IDs")
     risk_weight: float = Field(
-        default=1.0, ge=0.0, le=5.0, description="Risk factor for testing (1=low, 5=high)"
+        default=1.0,
+        ge=0.0,
+        le=5.0,
+        description="Risk factor for testing (1=low, 5=high)",
     )
 
     def generate_code_sections(self, context: dict[str, Any]) -> list[CodeSection]:

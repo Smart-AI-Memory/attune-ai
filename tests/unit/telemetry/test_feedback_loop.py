@@ -118,7 +118,7 @@ class TestTierRecommendation:
                     max_quality=0.75,
                     sample_count=15,
                     recent_trend=-0.1,
-                )
+                ),
             },
         )
 

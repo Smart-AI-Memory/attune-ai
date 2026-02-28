@@ -37,6 +37,7 @@ class WorkflowAgentAdapter:
         agent_id: Optional agent identifier. Auto-generated if ``None``.
         role: Human-readable role name. Defaults to the workflow's ``name``.
         state_store: Optional ``AgentStateStore`` forwarded to the workflow.
+
     """
 
     def __init__(
@@ -64,6 +65,7 @@ class WorkflowAgentAdapter:
 
         Returns:
             ``SDKAgentResult`` with workflow findings and metadata.
+
         """
         start = time.time()
 
@@ -125,6 +127,7 @@ class WorkflowAgentAdapter:
 
         Returns:
             Dict of findings suitable for SDKAgentResult.
+
         """
         findings: dict[str, Any] = {
             "workflow_name": getattr(self.workflow_class, "name", "unknown"),
@@ -161,6 +164,7 @@ class WorkflowAgentAdapter:
 
         Returns:
             Quality score (0-100).
+
         """
         if not result.success:
             return 0.0

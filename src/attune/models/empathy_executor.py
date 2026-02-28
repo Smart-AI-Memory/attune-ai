@@ -227,7 +227,7 @@ class EmpathyLLMExecutor:
         result = await llm.interact(
             user_id=user_id,
             user_input=prompt,
-            context=full_context if full_context else None,
+            context=full_context or None,
             task_type=effective_task_type,
             **kwargs,
         )

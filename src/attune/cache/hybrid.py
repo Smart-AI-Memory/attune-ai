@@ -120,7 +120,7 @@ class HybridCache(BaseCache):
         logger.info(
             f"HybridCache initialized (model: {model_name}, threshold: {similarity_threshold}, "
             f"device: {device}, max_memory: {max_memory_mb}MB, "
-            f"loaded: {len(self._hash_cache)} entries from disk)"
+            f"loaded: {len(self._hash_cache)} entries from disk)",
         )
 
     def _load_model(self) -> None:
@@ -135,10 +135,10 @@ class HybridCache(BaseCache):
         except ImportError as e:
             logger.debug(
                 f"sentence-transformers not available: {e}. "
-                "Install with: pip install attune-ai[cache]"
+                "Install with: pip install attune-ai[cache]",
             )
             raise
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Graceful fallback — model loading is optional
             logger.warning("Failed to load model %s: %s", self.model_name, e)
             logger.warning("Falling back to hash-only mode")
@@ -169,7 +169,7 @@ class HybridCache(BaseCache):
                 # This is acceptable since semantic matching is secondary to hash matching
                 logger.debug("Semantic cache will be populated on-demand from hash hits")
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Graceful fallback — start with empty cache if storage fails
             logger.warning("Failed to load cache from storage: %s, starting with empty cache", e)
 
@@ -208,7 +208,7 @@ class HybridCache(BaseCache):
             self._access_times[cache_key] = current_time
             self.stats.hits += 1
             logger.debug(
-                f"Cache HIT (hash): {workflow}/{stage} (hit_rate: {self.stats.hit_rate:.1f}%)"
+                f"Cache HIT (hash): {workflow}/{stage} (hit_rate: {self.stats.hit_rate:.1f}%)",
             )
             return entry.response
 
@@ -224,14 +224,14 @@ class HybridCache(BaseCache):
                 self.stats.hits += 1
                 logger.debug(
                     f"Cache HIT (semantic): {workflow}/{stage} "
-                    f"(similarity: {similarity:.3f}, hit_rate: {self.stats.hit_rate:.1f}%)"
+                    f"(similarity: {similarity:.3f}, hit_rate: {self.stats.hit_rate:.1f}%)",
                 )
                 return entry.response
 
         # Step 3: Cache miss
         self.stats.misses += 1
         logger.debug(
-            f"Cache MISS (hybrid): {workflow}/{stage} (hit_rate: {self.stats.hit_rate:.1f}%)"
+            f"Cache MISS (hybrid): {workflow}/{stage} (hit_rate: {self.stats.hit_rate:.1f}%)",
         )
         return None
 
@@ -261,7 +261,7 @@ class HybridCache(BaseCache):
             raise RuntimeError(
                 f"Sentence transformer model '{self.model_name}' not loaded. "
                 "Install required dependencies with: pip install attune-ai[cache] "
-                "or pip install sentence-transformers torch"
+                "or pip install sentence-transformers torch",
             )
 
         # Encode prompt
@@ -348,9 +348,9 @@ class HybridCache(BaseCache):
                 f"Cache PUT (hybrid): {workflow}/{stage} "
                 f"(hash_entries: {len(self._hash_cache)}, "
                 f"semantic_entries: {len(self._semantic_cache)}, "
-                f"persisted: True)"
+                f"persisted: True)",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Graceful fallback — disk persistence is best-effort
             logger.warning("Failed to persist cache entry to disk: %s", e)
             logger.debug(
@@ -376,13 +376,15 @@ class HybridCache(BaseCache):
             storage_count = self._storage.clear()
             logger.info(
                 f"Cache cleared (hash: {hash_count}, semantic: {semantic_count}, "
-                f"storage: {storage_count} entries)"
+                f"storage: {storage_count} entries)",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Graceful fallback — cleanup is best-effort
             logger.warning("Failed to clear persistent storage: %s", e)
             logger.info(
-                "Cache cleared (hash: %d, semantic: %d entries)", hash_count, semantic_count
+                "Cache cleared (hash: %d, semantic: %d entries)",
+                hash_count,
+                semantic_count,
             )
 
     def get_stats(self) -> CacheStats:
@@ -422,7 +424,9 @@ class HybridCache(BaseCache):
 
             # Get oldest entries by access time (LRU eviction)
             oldest_keys = heapq.nsmallest(
-                num_to_evict, self._access_times.items(), key=lambda x: x[1]
+                num_to_evict,
+                self._access_times.items(),
+                key=lambda x: x[1],
             )
 
             for cache_key, _ in oldest_keys:
@@ -430,7 +434,7 @@ class HybridCache(BaseCache):
 
             logger.info(
                 f"LRU eviction: removed {num_to_evict} entries "
-                f"(hash: {len(self._hash_cache)}, semantic: {len(self._semantic_cache)})"
+                f"(hash: {len(self._hash_cache)}, semantic: {len(self._semantic_cache)})",
             )
 
     def evict_expired(self) -> int:

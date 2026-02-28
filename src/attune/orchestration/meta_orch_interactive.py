@@ -39,7 +39,9 @@ class InteractiveModeMixin:
     """Mixin providing interactive mode for meta-orchestrator."""
 
     def analyze_and_compose_interactive(
-        self, task: str, context: dict[str, Any] | None = None
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
     ) -> ExecutionPlan:
         """Analyze task with user confirmation for ambiguous cases.
 
@@ -65,6 +67,7 @@ class InteractiveModeMixin:
             ...     context={}
             ... )
             # User may be prompted to choose approach if confidence is low
+
         """
         if not task or not isinstance(task, str):
             raise ValueError("task must be a non-empty string")
@@ -76,7 +79,7 @@ class InteractiveModeMixin:
         requirements = self._analyze_task(task, context)
         logger.info(
             f"Task analysis: complexity={requirements.complexity.value}, "
-            f"domain={requirements.domain.value}"
+            f"domain={requirements.domain.value}",
         )
 
         # Step 2: Select agents
@@ -97,12 +100,14 @@ class InteractiveModeMixin:
             logger.info("High confidence - proceeding automatically")
             return self.create_execution_plan(requirements, agents, recommended_pattern)
 
-        else:
-            # Low confidence → ask user
-            logger.info("Low confidence - prompting user for choice")
-            return self._prompt_user_for_approach(
-                requirements, agents, recommended_pattern, confidence
-            )
+        # Low confidence → ask user
+        logger.info("Low confidence - prompting user for choice")
+        return self._prompt_user_for_approach(
+            requirements,
+            agents,
+            recommended_pattern,
+            confidence,
+        )
 
     def _calculate_confidence(
         self,
@@ -138,6 +143,7 @@ class InteractiveModeMixin:
             ... )
             >>> confidence >= 0.8  # High confidence for simple, clear task
             True
+
         """
         confidence = 1.0
 
@@ -193,6 +199,7 @@ class InteractiveModeMixin:
 
         Raises:
             ImportError: If AskUserQuestion tool not available
+
         """
         try:
             # Import here to avoid circular dependency and allow graceful degradation
@@ -229,8 +236,8 @@ class InteractiveModeMixin:
                                 "description": "Learn about patterns and select one",
                             },
                         ],
-                    }
-                ]
+                    },
+                ],
             )
         except (NotImplementedError, RuntimeError) as e:
             logger.warning(f"AskUserQuestion unavailable: {e}")
@@ -244,13 +251,13 @@ class InteractiveModeMixin:
             logger.info("User accepted recommended approach")
             return self.create_execution_plan(requirements, agents, recommended_pattern)
 
-        elif "Customize" in user_choice:
+        if "Customize" in user_choice:
             logger.info("User chose to customize team")
             return self._interactive_team_builder(requirements, agents, recommended_pattern)
 
-        else:  # Show patterns
-            logger.info("User chose to explore patterns")
-            return self._pattern_chooser_wizard(requirements, agents)
+        # Show patterns
+        logger.info("User chose to explore patterns")
+        return self._pattern_chooser_wizard(requirements, agents)
 
     def _interactive_team_builder(
         self,
@@ -272,6 +279,7 @@ class InteractiveModeMixin:
 
         Returns:
             ExecutionPlan with user-customized configuration
+
         """
         try:
             from attune.tools import AskUserQuestion
@@ -294,8 +302,8 @@ class InteractiveModeMixin:
                             }
                             for agent in suggested_agents
                         ],
-                    }
-                ]
+                    },
+                ],
             )
         except (NotImplementedError, RuntimeError) as e:
             logger.warning(f"AskUserQuestion unavailable: {e}")
@@ -337,8 +345,8 @@ class InteractiveModeMixin:
                                 "description": "Single agent with comprehensive tool access",
                             },
                         ],
-                    }
-                ]
+                    },
+                ],
             )
         except (NotImplementedError, RuntimeError) as e:
             logger.warning(f"AskUserQuestion unavailable: {e}")
@@ -379,6 +387,7 @@ class InteractiveModeMixin:
 
         Returns:
             ExecutionPlan with user-selected pattern
+
         """
         try:
             from attune.tools import AskUserQuestion
@@ -442,8 +451,8 @@ class InteractiveModeMixin:
                                 "Example: Task planner delegates to architects",
                             },
                         ],
-                    }
-                ]
+                    },
+                ],
             )
         except (NotImplementedError, RuntimeError) as e:
             logger.warning(f"AskUserQuestion unavailable: {e}")
@@ -473,6 +482,7 @@ class InteractiveModeMixin:
 
         Returns:
             Description string
+
         """
         descriptions = {
             CompositionPattern.SEQUENTIAL: "Execute agents one after another (A → B → C)",

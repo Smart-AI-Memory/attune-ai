@@ -351,7 +351,7 @@ def discover_workflows(
             if workflow_name in _OPT_IN_WORKFLOW_NAMES:
                 try:
                     discovered[workflow_name] = _get_workflow_class(
-                        _OPT_IN_WORKFLOW_NAMES[workflow_name]
+                        _OPT_IN_WORKFLOW_NAMES[workflow_name],
                     )
                 except (ImportError, AttributeError):
                     pass

@@ -99,7 +99,9 @@ class TestWorkflowCoordinationIntegration:
         workflow = SimpleWorkflow(enable_coordination=False)
 
         signal_id = workflow.send_signal(
-            signal_type="test", target_agent="target", payload={"data": "value"}
+            signal_type="test",
+            target_agent="target",
+            payload={"data": "value"},
         )
 
         assert signal_id == ""
@@ -181,12 +183,18 @@ class TestWorkflowCoordinationAPI:
 
         with patch.object(workflow, "_get_coordination_signals", return_value=mock_coordinator):
             signal = workflow.wait_for_signal(
-                signal_type="approval", source_agent="orchestrator", timeout=60.0, poll_interval=1.0
+                signal_type="approval",
+                source_agent="orchestrator",
+                timeout=60.0,
+                poll_interval=1.0,
             )
 
         assert signal == mock_signal
         mock_coordinator.wait_for_signal.assert_called_once_with(
-            signal_type="approval", source_agent="orchestrator", timeout=60.0, poll_interval=1.0
+            signal_type="approval",
+            source_agent="orchestrator",
+            timeout=60.0,
+            poll_interval=1.0,
         )
 
     def test_check_signal_with_mocked_coordinator(self):
@@ -204,7 +212,9 @@ class TestWorkflowCoordinationAPI:
 
         assert signal == mock_signal
         mock_coordinator.check_signal.assert_called_once_with(
-            signal_type="abort", source_agent="admin", consume=False
+            signal_type="abort",
+            source_agent="admin",
+            consume=False,
         )
 
 
@@ -215,7 +225,9 @@ class TestWorkflowBothFeaturesEnabled:
     async def test_workflow_with_both_features(self):
         """Test workflow with both heartbeat tracking and coordination enabled."""
         workflow = SimpleWorkflow(
-            enable_heartbeat_tracking=True, enable_coordination=True, agent_id="test-both"
+            enable_heartbeat_tracking=True,
+            enable_coordination=True,
+            agent_id="test-both",
         )
 
         assert workflow._enable_heartbeat_tracking is True
@@ -228,7 +240,9 @@ class TestWorkflowBothFeaturesEnabled:
 
         with patch.object(workflow, "_get_heartbeat_coordinator", return_value=mock_heartbeat):
             with patch.object(
-                workflow, "_get_coordination_signals", return_value=mock_coordination
+                workflow,
+                "_get_coordination_signals",
+                return_value=mock_coordination,
             ):
                 with patch.object(workflow, "run_stage", return_value=({"result": "test"}, 10, 5)):
                     result = await workflow.execute()

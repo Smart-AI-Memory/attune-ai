@@ -121,7 +121,9 @@ class TestPatternMatch:
         )
 
         match = PatternMatch(
-            pattern=pattern, relevance_score=0.85, matching_factors=["temporal", "contextual"]
+            pattern=pattern,
+            relevance_score=0.85,
+            matching_factors=["temporal", "contextual"],
         )
 
         assert match.pattern == pattern
@@ -145,7 +147,9 @@ class TestPatternMatch:
 
         # Test maximum score
         match_max = PatternMatch(
-            pattern=pattern, relevance_score=1.0, matching_factors=["perfect_match"]
+            pattern=pattern,
+            relevance_score=1.0,
+            matching_factors=["perfect_match"],
         )
         assert match_max.relevance_score == 1.0
 

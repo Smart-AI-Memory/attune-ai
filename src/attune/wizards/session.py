@@ -32,6 +32,7 @@ class WizardSession:
         >>> session.set("target_file", "src/main.py")
         >>> session.get("target_file")
         'src/main.py'
+
     """
 
     wizard_id: str
@@ -56,6 +57,7 @@ class WizardSession:
         Args:
             key: Data key.
             value: Data value.
+
         """
         self.collected_data[key] = value
 
@@ -68,6 +70,7 @@ class WizardSession:
 
         Returns:
             The value or *default*.
+
         """
         if key in self.collected_data:
             return self.collected_data[key]
@@ -89,6 +92,7 @@ class WizardSession:
             step_id: Identifier of the completed step.
             result: Optional result data to store.
             cost: LLM cost incurred during this step.
+
         """
         self.steps_completed.append(step_id)
         if result is not None:
@@ -100,6 +104,7 @@ class WizardSession:
 
         Args:
             step_id: Identifier of the skipped step.
+
         """
         self.steps_skipped.append(step_id)
 
@@ -112,6 +117,7 @@ class WizardSession:
 
         Returns:
             Dict representation of this session.
+
         """
         return {
             "wizard_id": self.wizard_id,

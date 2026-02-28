@@ -42,6 +42,7 @@ def execute_agents_real(agents: list[AgentSpec]) -> list[AgentExecutionResult]:
 
     Raises:
         RuntimeError: If agent execution encounters fatal error
+
     """
     results = []
     router = ModelRouter()
@@ -57,7 +58,7 @@ def execute_agents_real(agents: list[AgentSpec]) -> list[AgentExecutionResult]:
             logger.info(
                 f"Agent {agent.role} completed: "
                 f"tier={result.tier_used}, cost=${result.cost:.4f}, "
-                f"success={result.success}"
+                f"success={result.success}",
             )
 
         except Exception as e:
@@ -93,6 +94,7 @@ def _execute_single_agent_with_escalation(
 
     Returns:
         AgentExecutionResult with actual LLM execution data
+
     """
     start_time = time.time()
 
@@ -157,6 +159,7 @@ def _execute_at_tier(
 
     Returns:
         AgentExecutionResult from this tier
+
     """
     start_time = time.time()
 
@@ -236,6 +239,7 @@ def execute_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[st
 
     Raises:
         RuntimeError: If LLM call fails after retries
+
     """
     import os
 
@@ -247,7 +251,7 @@ def execute_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[st
         if not api_key:
             raise ValueError(
                 "ANTHROPIC_API_KEY not found. Set it in environment or .env file "
-                "(checked: ./env, ~/.env, ~/.attune/.env)"
+                "(checked: ./env, ~/.env, ~/.attune/.env)",
             )
 
         client = Anthropic(api_key=api_key)
@@ -318,6 +322,7 @@ def simulate_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[s
 
     Returns:
         Dict with cost, tokens, success, and output
+
     """
     import os
 
@@ -365,6 +370,7 @@ def evaluate_success_criteria(result: AgentExecutionResult, agent: AgentSpec) ->
 
     Returns:
         True if success criteria met, False otherwise
+
     """
     # Basic success check
     if not result.success:

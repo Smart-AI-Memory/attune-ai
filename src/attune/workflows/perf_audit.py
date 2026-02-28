@@ -54,7 +54,7 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
     """
 
     name = "perf-audit"
-    description = "Identify performance bottlenecks " "and optimization opportunities"
+    description = "Identify performance bottlenecks and optimization opportunities"
     stages = ["profile", "analyze", "hotspots", "optimize"]
     tier_map = {
         "profile": ModelTier.CHEAP,
@@ -98,6 +98,7 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         if xml_config is None:
             xml_config = {"enabled": False}
@@ -141,6 +142,7 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
 
         Raises:
             ValueError: If stage_name is unknown
+
         """
         if stage_name == "profile":
             return await self._profile(input_data, tier)
@@ -161,6 +163,7 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
         Returns:
             Action dict with action, description, and
             estimated_impact, or None if unknown concern.
+
         """
         return OPTIMIZATION_ACTIONS.get(concern)
 
@@ -187,7 +190,7 @@ def main() -> None:
             console.print("[dim]Cost: " f"${result.cost_report.total_cost:.4f}" "[/dim]")
             savings = result.cost_report.savings
             pct = result.cost_report.savings_percent
-            console.print(f"[dim]Savings: ${savings:.4f} " f"({pct:.1f}%)[/dim]")
+            console.print(f"[dim]Savings: ${savings:.4f} ({pct:.1f}%)[/dim]")
         else:
             # Fallback to plain text
             print("\nPerformance Audit Results")
@@ -202,7 +205,7 @@ def main() -> None:
             if output.get("top_issues"):
                 print("\nTop Issues:")
                 for issue in output["top_issues"]:
-                    print(f"  - {issue['type']}: " f"{issue['count']} occurrences")
+                    print(f"  - {issue['type']}: {issue['count']} occurrences")
 
             print("\nCost Report:")
             print("  Total Cost: " f"${result.cost_report.total_cost:.4f}")

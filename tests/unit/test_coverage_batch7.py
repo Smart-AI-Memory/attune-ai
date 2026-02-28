@@ -166,12 +166,12 @@ class _MockRedisMemory:
 class TestConversationSummaryIndex:
     """Tests for ConversationSummaryIndex with mock Redis backend."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def mock_memory(self) -> _MockRedisMemory:
         """Create a mock Redis memory backend."""
         return _MockRedisMemory()
 
-    @pytest.fixture()
+    @pytest.fixture
     def index(self, mock_memory: _MockRedisMemory) -> Any:
         """Create a ConversationSummaryIndex with mock backend."""
         from attune.memory.summary_index import ConversationSummaryIndex
@@ -1091,8 +1091,8 @@ class TestMigrationConfig:
                     "remembered_choices": {"old-wf": "new"},
                     "show_tips": False,
                     "last_prompted": {"old-wf": "2026-01-01"},
-                }
-            )
+                },
+            ),
         )
 
         with patch("attune.workflows.migration.Path.cwd", return_value=tmp_path):
@@ -1271,7 +1271,9 @@ class TestShowMigrationDialog:
 
         with patch("builtins.input", return_value="1"):
             name, kwargs, _ = show_migration_dialog(
-                "old-wf", "new-wf", {"autonomous": True, "_deprecated": True}
+                "old-wf",
+                "new-wf",
+                {"autonomous": True, "_deprecated": True},
             )
         assert kwargs == {"autonomous": True, "_deprecated": True}
 
@@ -1282,7 +1284,9 @@ class TestShowMigrationDialog:
         with patch("builtins.input", return_value="1"):
             # "code-review" is in WORKFLOW_DESCRIPTIONS
             name, kwargs, _ = show_migration_dialog(
-                "pro-review", "code-review", {"mode": "premium"}
+                "pro-review",
+                "code-review",
+                {"mode": "premium"},
             )
         assert name == "code-review"
 
@@ -1300,7 +1304,8 @@ class TestShowRemovedWorkflowError:
         assert "test5" in output
 
     def test_show_removed_workflow_error_long_message(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Test show_removed_workflow_error wraps long messages."""
         from attune.workflows.migration import show_removed_workflow_error
@@ -1430,7 +1435,8 @@ class TestResolveWorkflowMigration:
         with patch("attune.workflows.migration.is_interactive", return_value=True):
             with patch("attune.workflows.migration.show_deprecation_warning") as mock_warn:
                 name, kwargs, migrated = resolve_workflow_migration(
-                    "release-prep-legacy", config=config
+                    "release-prep-legacy",
+                    config=config,
                 )
                 mock_warn.assert_called_once()
         assert name == "release-prep-legacy"
@@ -1440,14 +1446,16 @@ class TestResolveWorkflowMigration:
         from attune.workflows.migration import MigrationConfig, resolve_workflow_migration
 
         config = MigrationConfig(mode="prompt")
-        with patch("attune.workflows.migration.is_interactive", return_value=True):
-            with patch(
+        with (
+            patch("attune.workflows.migration.is_interactive", return_value=True),
+            patch(
                 "attune.workflows.migration.show_migration_dialog",
                 return_value=("code-review", {"mode": "premium"}, True),
-            ):
-                with patch.object(config, "remember_choice") as mock_remember:
-                    name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
-                    mock_remember.assert_called_once_with("pro-review", "new")
+            ),
+            patch.object(config, "remember_choice") as mock_remember,
+        ):
+            name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
+            mock_remember.assert_called_once_with("pro-review", "new")
         assert name == "code-review"
         assert migrated is True
 
@@ -1456,14 +1464,16 @@ class TestResolveWorkflowMigration:
         from attune.workflows.migration import MigrationConfig, resolve_workflow_migration
 
         config = MigrationConfig(mode="prompt")
-        with patch("attune.workflows.migration.is_interactive", return_value=True):
-            with patch(
+        with (
+            patch("attune.workflows.migration.is_interactive", return_value=True),
+            patch(
                 "attune.workflows.migration.show_migration_dialog",
                 return_value=("pro-review", {}, True),
-            ):
-                with patch.object(config, "remember_choice") as mock_remember:
-                    name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
-                    mock_remember.assert_called_once_with("pro-review", "legacy")
+            ),
+            patch.object(config, "remember_choice") as mock_remember,
+        ):
+            name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
+            mock_remember.assert_called_once_with("pro-review", "legacy")
         assert name == "pro-review"
         assert migrated is False
 
@@ -1472,12 +1482,14 @@ class TestResolveWorkflowMigration:
         from attune.workflows.migration import MigrationConfig, resolve_workflow_migration
 
         config = MigrationConfig(mode="prompt")
-        with patch("attune.workflows.migration.is_interactive", return_value=True):
-            with patch(
+        with (
+            patch("attune.workflows.migration.is_interactive", return_value=True),
+            patch(
                 "attune.workflows.migration.show_migration_dialog",
                 return_value=("code-review", {"mode": "premium"}, False),
-            ):
-                name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
+            ),
+        ):
+            name, kwargs, migrated = resolve_workflow_migration("pro-review", config=config)
         assert name == "code-review"
         assert migrated is True
 
@@ -1513,23 +1525,27 @@ class TestShowMigrationTip:
         """Test show_migration_tip does nothing in non-interactive mode."""
         from attune.workflows.migration import MigrationConfig, show_migration_tip
 
-        with patch(
-            "attune.workflows.migration.MigrationConfig.load",
-            return_value=MigrationConfig(show_tips=True),
+        with (
+            patch(
+                "attune.workflows.migration.MigrationConfig.load",
+                return_value=MigrationConfig(show_tips=True),
+            ),
+            patch("attune.workflows.migration.is_interactive", return_value=False),
         ):
-            with patch("attune.workflows.migration.is_interactive", return_value=False):
-                show_migration_tip("old-wf", "new-wf", {})
+            show_migration_tip("old-wf", "new-wf", {})
 
     def test_show_migration_tip_interactive(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test show_migration_tip prints tip when interactive and enabled."""
         from attune.workflows.migration import MigrationConfig, show_migration_tip
 
-        with patch(
-            "attune.workflows.migration.MigrationConfig.load",
-            return_value=MigrationConfig(show_tips=True),
+        with (
+            patch(
+                "attune.workflows.migration.MigrationConfig.load",
+                return_value=MigrationConfig(show_tips=True),
+            ),
+            patch("attune.workflows.migration.is_interactive", return_value=True),
         ):
-            with patch("attune.workflows.migration.is_interactive", return_value=True):
-                show_migration_tip("old-wf", "new-wf", {"mode": "premium"})
+            show_migration_tip("old-wf", "new-wf", {"mode": "premium"})
         output = capsys.readouterr().out
         assert "Tip" in output
         assert "new-wf" in output
@@ -1538,12 +1554,14 @@ class TestShowMigrationTip:
         """Test show_migration_tip handles boolean flags in command."""
         from attune.workflows.migration import MigrationConfig, show_migration_tip
 
-        with patch(
-            "attune.workflows.migration.MigrationConfig.load",
-            return_value=MigrationConfig(show_tips=True),
+        with (
+            patch(
+                "attune.workflows.migration.MigrationConfig.load",
+                return_value=MigrationConfig(show_tips=True),
+            ),
+            patch("attune.workflows.migration.is_interactive", return_value=True),
         ):
-            with patch("attune.workflows.migration.is_interactive", return_value=True):
-                show_migration_tip("old-wf", "new-wf", {"autonomous": True, "_internal": True})
+            show_migration_tip("old-wf", "new-wf", {"autonomous": True, "_internal": True})
         output = capsys.readouterr().out
         assert "--autonomous" in output
 
@@ -1966,15 +1984,17 @@ class TestGetCrewAudit:
         mock_crews_mod.SecurityAuditCrew.return_value = mock_crew_instance
         mock_crews_mod.SecurityAuditConfig.return_value = MagicMock()
 
-        with patch(
-            "attune.workflows.security_adapters._check_crew_available",
-            return_value=True,
-        ):
-            with patch.dict(
+        with (
+            patch(
+                "attune.workflows.security_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch.dict(
                 "sys.modules",
                 {"attune.agent_factory.crews": mock_crews_mod},
-            ):
-                result = await _get_crew_audit("/path", timeout=0.01)
+            ),
+        ):
+            result = await _get_crew_audit("/path", timeout=0.01)
         assert result is None
 
     @pytest.mark.asyncio
@@ -2115,7 +2135,7 @@ class TestWorkflowFindingsToCrewFormat:
                 "match": "execute(query)",
                 "cwe_id": "CWE-89",
                 "confidence": 0.9,
-            }
+            },
         ]
 
         result = workflow_findings_to_crew_format(findings)

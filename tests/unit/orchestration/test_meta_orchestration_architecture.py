@@ -172,7 +172,6 @@ class TestAgentSelectionLogic:
         # NOTE: Actual implementation may select different agent counts
         # This is an implementation detail, not an architectural invariant
         # Skip for now - verify through integration tests instead
-        pass
 
     def test_no_duplicate_agents_selected(self):
         """Test that same agent is not selected multiple times."""
@@ -183,7 +182,7 @@ class TestAgentSelectionLogic:
         )
 
         with patch(
-            "attune.orchestration.meta_orchestrator.get_templates_by_capability"
+            "attune.orchestration.meta_orchestrator.get_templates_by_capability",
         ) as mock_get:
             mock_agents = [Mock(spec=AgentTemplate, role=f"Agent{i}") for i in range(5)]
             mock_get.return_value = mock_agents
@@ -212,22 +211,18 @@ class TestCompositionPatternSelection:
         """Test that parallel pattern is chosen for parallelizable tasks."""
         # NOTE: Method is _choose_composition_pattern, not _select_pattern
         # Skipped - would require extensive mocking
-        pass
 
     @pytest.mark.skip(reason="Testing private _choose_composition_pattern requires mocking")
     def test_sequential_pattern_for_dependent_tasks(self):
         """Test that sequential pattern is chosen for dependent tasks."""
-        pass
 
     @pytest.mark.skip(reason="Testing private _choose_composition_pattern requires mocking")
     def test_refinement_pattern_for_quality_gates(self):
         """Test that refinement pattern is used when quality gates present."""
-        pass
 
     @pytest.mark.skip(reason="Testing private _choose_composition_pattern requires mocking")
     def test_pattern_selection_respects_agent_count(self):
         """Test that patterns are appropriate for agent count."""
-        pass
 
 
 # ============================================================================
@@ -259,10 +254,12 @@ class TestQualityGatesEnforcement:
                 tools=["coverage_analyzer"],
                 default_instructions="Analyze coverage",
                 quality_gates={"min_coverage": 80},
-            )
+            ),
         ]
         plan = self.orchestrator.create_execution_plan(
-            requirements, agents, CompositionPattern.SEQUENTIAL
+            requirements,
+            agents,
+            CompositionPattern.SEQUENTIAL,
         )
 
         assert plan.quality_gates == {"min_coverage": 80, "max_complexity": 10}
@@ -284,10 +281,12 @@ class TestQualityGatesEnforcement:
                 tools=[],
                 default_instructions="Test",
                 quality_gates={},
-            )
+            ),
         ]
         plan = self.orchestrator.create_execution_plan(
-            requirements, agents, CompositionPattern.SEQUENTIAL
+            requirements,
+            agents,
+            CompositionPattern.SEQUENTIAL,
         )
 
         assert plan.quality_gates == {}
@@ -332,7 +331,9 @@ class TestCostAndDurationEstimation:
         )
 
         plan_small = self.orchestrator.create_execution_plan(
-            requirements, [base_agent], CompositionPattern.SEQUENTIAL
+            requirements,
+            [base_agent],
+            CompositionPattern.SEQUENTIAL,
         )
         plan_large = self.orchestrator.create_execution_plan(
             requirements,
@@ -360,7 +361,9 @@ class TestCostAndDurationEstimation:
         )
 
         plan = self.orchestrator.create_execution_plan(
-            requirements, [agent, agent], CompositionPattern.SEQUENTIAL
+            requirements,
+            [agent, agent],
+            CompositionPattern.SEQUENTIAL,
         )
 
         assert plan.estimated_duration > 0
@@ -383,13 +386,11 @@ class TestLearningLoopIntegration:
     def test_successful_execution_increases_pattern_confidence(self):
         """Test that successful executions increase pattern confidence."""
         # TODO: Implement when learning loop is added to meta_orchestrator
-        pass
 
     @pytest.mark.skip(reason="Learning loop not yet implemented in meta_orchestrator")
     def test_failed_execution_decreases_pattern_confidence(self):
         """Test that failed executions decrease pattern confidence."""
         # TODO: Implement when learning loop is added to meta_orchestrator
-        pass
 
 
 # ============================================================================
@@ -413,7 +414,7 @@ class TestFailureHandlingAndRecovery:
         )
 
         with patch(
-            "attune.orchestration.meta_orchestrator.get_templates_by_capability"
+            "attune.orchestration.meta_orchestrator.get_templates_by_capability",
         ) as mock_get:
             mock_get.return_value = []  # No agents found
 
@@ -424,12 +425,11 @@ class TestFailureHandlingAndRecovery:
             assert isinstance(agents, list)
 
     @pytest.mark.skip(
-        reason="Private method _choose_composition_pattern not accessible - architectural gap"
+        reason="Private method _choose_composition_pattern not accessible - architectural gap",
     )
     def test_invalid_pattern_selection_fallback(self):
         """Test that invalid pattern selection has fallback."""
         # TODO: Re-enable when pattern selection is testable
-        pass
 
 
 # ============================================================================
@@ -500,7 +500,7 @@ class TestMetaOrchestratorIntegration:
         context = {"current_coverage": 75}
 
         with patch(
-            "attune.orchestration.meta_orchestrator.get_templates_by_capability"
+            "attune.orchestration.meta_orchestrator.get_templates_by_capability",
         ) as mock_get:
             # Provide mock agents with id attribute
             mock_resource_req = Mock(timeout_seconds=300)
@@ -539,7 +539,7 @@ class TestMetaOrchestratorIntegration:
         context = {"target": "src/"}
 
         with patch(
-            "attune.orchestration.meta_orchestrator.get_templates_by_capability"
+            "attune.orchestration.meta_orchestrator.get_templates_by_capability",
         ) as mock_get:
             mock_resource_req = Mock(timeout_seconds=300)
             mock_agents = [
@@ -550,7 +550,7 @@ class TestMetaOrchestratorIntegration:
                     capabilities=["security_scan"],
                     tier_preference="capable",
                     resource_requirements=mock_resource_req,
-                )
+                ),
             ]
             mock_get.return_value = mock_agents
 
@@ -585,7 +585,7 @@ class TestResourceLimits:
         )
 
         with patch(
-            "attune.orchestration.meta_orchestrator.get_templates_by_capability"
+            "attune.orchestration.meta_orchestrator.get_templates_by_capability",
         ) as mock_get:
             # Provide many agents
             mock_agents = [Mock(spec=AgentTemplate) for _ in range(50)]

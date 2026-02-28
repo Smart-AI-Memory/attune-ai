@@ -35,7 +35,7 @@ class TestAnalyzeSimpleFile:
 
             def multiply(x: float, y: float) -> float:
                 return x * y
-        """
+        """,
         )
         (src_dir / "simple.py").write_text(simple_code)
 
@@ -91,7 +91,7 @@ class TestDetectHighComplexity:
                     return "nine"
                 else:
                     return "large"
-        """
+        """,
         )
         (src_dir / "complex.py").write_text(complex_code)
 

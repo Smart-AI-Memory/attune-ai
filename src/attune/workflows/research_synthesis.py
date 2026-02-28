@@ -122,6 +122,7 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         return WorkflowContext(
             prompt=PromptService("research", xml_config=xml_config),

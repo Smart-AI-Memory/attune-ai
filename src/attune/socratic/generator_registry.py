@@ -50,6 +50,7 @@ class AgentTemplate:
 
         Returns:
             AgentSpec with customizations applied
+
         """
         customizations = customizations or {}
 

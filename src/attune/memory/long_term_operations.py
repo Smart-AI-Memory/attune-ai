@@ -211,7 +211,7 @@ class PatternOperationsMixin:
                 if metadata.get("pii_removed", 0) > 0:
                     stats["with_pii_scrubbed"] += 1
 
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Log but continue aggregating stats
                 logger.warning(
                     "Failed to retrieve pattern for stats",

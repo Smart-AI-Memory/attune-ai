@@ -471,7 +471,8 @@ class TestAtomicOperations:
     def test_atomic_promote_nonexistent_pattern(self, memory, validator_creds):
         """Test atomic promote of non-existent pattern fails."""
         success, pattern, message = memory.atomic_promote_pattern(
-            "nonexistent_pattern", validator_creds
+            "nonexistent_pattern",
+            validator_creds,
         )
 
         assert success is False
@@ -479,7 +480,10 @@ class TestAtomicOperations:
         assert "not found" in message.lower()
 
     def test_atomic_promote_with_confidence_threshold(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test atomic promote respects confidence threshold."""
         # Stage a low-confidence pattern
@@ -495,7 +499,9 @@ class TestAtomicOperations:
 
         # Try to promote with high threshold
         success, promoted, message = memory.atomic_promote_pattern(
-            "low_conf", validator_creds, min_confidence=0.7
+            "low_conf",
+            validator_creds,
+            min_confidence=0.7,
         )
 
         assert success is False

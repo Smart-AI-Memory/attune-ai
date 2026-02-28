@@ -33,6 +33,7 @@ class WizardInternalWorkflow(BaseWorkflow):
     Args:
         provider: Model provider string (e.g. "anthropic").
         **kwargs: Forwarded to ``BaseWorkflow.__init__``.
+
     """
 
     name = "wizard-internal"
@@ -53,5 +54,6 @@ class WizardInternalWorkflow(BaseWorkflow):
 
         Raises:
             NotImplementedError: Always.
+
         """
         raise NotImplementedError("Wizards do not use run_stage")

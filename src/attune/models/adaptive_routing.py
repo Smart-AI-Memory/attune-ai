@@ -47,6 +47,7 @@ class ModelPerformance:
         avg_cost: Average cost per call in USD
         sample_size: Number of calls analyzed
         recent_failures: Number of failures in last 20 calls
+
     """
 
     model_id: str
@@ -67,6 +68,7 @@ class ModelPerformance:
 
         Returns:
             Quality score (higher is better)
+
         """
         # Success rate contributes 100 points max
         # Lower cost adds bonus points
@@ -100,6 +102,7 @@ class AdaptiveModelRouter:
         >>> if should_upgrade:
         ...     print(f"⚠️ {reason}")
         ⚠️ High failure rate: 25.0% in last 20 calls
+
     """
 
     # Minimum sample size for making routing decisions
@@ -116,6 +119,7 @@ class AdaptiveModelRouter:
 
         Args:
             telemetry: UsageTracker instance for telemetry data access
+
         """
         self.telemetry = telemetry
 
@@ -130,6 +134,7 @@ class AdaptiveModelRouter:
 
         Returns:
             Model ID from registry (e.g., "claude-haiku-4-5-20251001")
+
         """
         registry = _get_registry()
 
@@ -178,6 +183,7 @@ class AdaptiveModelRouter:
             ... )
             >>> print(model)
             claude-haiku-4-5-20251001
+
         """
         # Get performance data for all models on this workflow/stage
         performances = self._analyze_model_performance(workflow, stage)
@@ -263,6 +269,7 @@ class AdaptiveModelRouter:
             >>> if should_upgrade:
             ...     print(f"⚠️ Upgrading tier: {reason}")
             ⚠️ Upgrading tier: High failure rate: 25.0% in last 20 calls
+
         """
         # Get recent entries for this workflow/stage
         entries = self._get_workflow_stage_entries(workflow, stage, days=7)
@@ -284,7 +291,10 @@ class AdaptiveModelRouter:
         return False, f"Performance acceptable: {failure_rate:.1%} failure rate"
 
     def get_routing_stats(
-        self, workflow: str, stage: str | None = None, days: int = 7
+        self,
+        workflow: str,
+        stage: str | None = None,
+        days: int = 7,
     ) -> dict[str, Any]:
         """Get routing statistics for a workflow (or specific stage).
 
@@ -307,6 +317,7 @@ class AdaptiveModelRouter:
             Models used: ['claude-haiku-3.5', 'claude-sonnet-4.5']
             >>> print(f"Average cost: ${stats['avg_cost']:.4f}")
             Average cost: $0.0023
+
         """
         entries = self._get_workflow_stage_entries(workflow, stage, days=days)
 
@@ -351,7 +362,10 @@ class AdaptiveModelRouter:
         }
 
     def _analyze_model_performance(
-        self, workflow: str, stage: str, days: int = 7
+        self,
+        workflow: str,
+        stage: str,
+        days: int = 7,
     ) -> list[ModelPerformance]:
         """Analyze performance of all models for this workflow/stage.
 
@@ -362,6 +376,7 @@ class AdaptiveModelRouter:
 
         Returns:
             List of ModelPerformance objects, one per model
+
         """
         entries = self._get_workflow_stage_entries(workflow, stage, days=days)
 
@@ -399,13 +414,16 @@ class AdaptiveModelRouter:
                     avg_cost=avg_cost,
                     sample_size=total,
                     recent_failures=recent_failures,
-                )
+                ),
             )
 
         return performances
 
     def _get_workflow_stage_entries(
-        self, workflow: str, stage: str | None, days: int
+        self,
+        workflow: str,
+        stage: str | None,
+        days: int,
     ) -> list[dict[str, Any]]:
         """Get telemetry entries for a workflow/stage.
 
@@ -416,6 +434,7 @@ class AdaptiveModelRouter:
 
         Returns:
             List of telemetry entries
+
         """
         # Get recent entries from telemetry tracker
         all_entries = self.telemetry.get_recent_entries(limit=10000, days=days)

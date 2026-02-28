@@ -51,6 +51,7 @@ class TelemetryMixin:
         workflow._track_telemetry(...)
         workflow._emit_call_telemetry(...)
         workflow._emit_workflow_telemetry(...)
+
     """
 
     # Instance variables (set by __init__ or subclass)
@@ -71,6 +72,7 @@ class TelemetryMixin:
         Args:
             telemetry_backend: Optional backend for storing telemetry records.
                              Defaults to TelemetryStore (JSONL file backend).
+
         """
         from attune.models import get_telemetry_store
 
@@ -112,6 +114,7 @@ class TelemetryMixin:
             cache_hit: Whether this was a cache hit
             cache_type: Cache type if cache hit
             duration_ms: Duration in milliseconds
+
         """
         if not self._enable_telemetry or self._telemetry_tracker is None:
             return
@@ -165,6 +168,7 @@ class TelemetryMixin:
             success: Whether the call succeeded
             error_message: Error message if failed
             fallback_used: Whether fallback was used
+
         """
         from attune.models import LLMCallRecord
 
@@ -195,7 +199,7 @@ class TelemetryMixin:
         except OSError:
             # File system errors - log but don't crash workflow
             logger.debug("Failed to log call telemetry (file system error)")
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
@@ -204,6 +208,7 @@ class TelemetryMixin:
 
         Args:
             result: The WorkflowResult to record
+
         """
         from attune.models import WorkflowRunRecord, WorkflowStageRecord
 
@@ -255,7 +260,7 @@ class TelemetryMixin:
         except OSError:
             # File system errors - log but don't crash workflow
             logger.debug("Failed to log workflow telemetry (file system error)")
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging workflow telemetry")
 
@@ -264,6 +269,7 @@ class TelemetryMixin:
 
         Returns:
             A new UUID string for the run
+
         """
         self._run_id = str(uuid.uuid4())
         return self._run_id

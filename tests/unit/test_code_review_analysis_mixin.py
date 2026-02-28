@@ -184,7 +184,7 @@ class TestFormatFindingsForPrompt:
                 "line": 10,
                 "description": "slow loop",
                 "severity": "high",
-            }
+            },
         ]
         snippets: dict = {}
         result = _format_findings_for_prompt(findings, snippets)
@@ -203,7 +203,7 @@ class TestFormatFindingsForPrompt:
                 "line": 5,
                 "description": "desc",
                 "severity": "medium",
-            }
+            },
         ]
         snippets = {"bar.py": {5: "  5: x = 1"}}
         result = _format_findings_for_prompt(findings, snippets)
@@ -220,7 +220,7 @@ class TestFormatFindingsForPrompt:
                 "line": 1,
                 "description": "d",
                 "impact": "low",
-            }
+            },
         ]
         result = _format_findings_for_prompt(findings, {})
         assert "low" in result
@@ -268,8 +268,8 @@ class TestParseDeepEnrichment:
                         "false_positive": False,
                         "suggestion": "fix it",
                     },
-                ]
-            }
+                ],
+            },
         )
 
         result = _parse_deep_enrichment(response, original)
@@ -304,7 +304,7 @@ class TestParseDeepEnrichment:
     def test_out_of_range_index_ignored(self):
         original = [{"type": "issue", "severity": "high"}]
         response = json.dumps(
-            {"findings": [{"index": 99, "validated": True, "false_positive": True}]}
+            {"findings": [{"index": 99, "validated": True, "false_positive": True}]},
         )
 
         result = _parse_deep_enrichment(response, original)
@@ -315,7 +315,7 @@ class TestParseDeepEnrichment:
     def test_negative_index_ignored(self):
         original = [{"type": "issue"}]
         response = json.dumps(
-            {"findings": [{"index": -1, "validated": True, "false_positive": True}]}
+            {"findings": [{"index": -1, "validated": True, "false_positive": True}]},
         )
 
         result = _parse_deep_enrichment(response, original)
@@ -327,9 +327,9 @@ class TestParseDeepEnrichment:
         response = json.dumps(
             {
                 "findings": [
-                    {"index": 0, "validated": True, "false_positive": False, "severity": "low"}
-                ]
-            }
+                    {"index": 0, "validated": True, "false_positive": False, "severity": "low"},
+                ],
+            },
         )
 
         result = _parse_deep_enrichment(response, original)
@@ -342,9 +342,9 @@ class TestParseDeepEnrichment:
         response = json.dumps(
             {
                 "findings": [
-                    {"index": 0, "validated": True, "false_positive": True, "suggestion": "fix"}
-                ]
-            }
+                    {"index": 0, "validated": True, "false_positive": True, "suggestion": "fix"},
+                ],
+            },
         )
 
         _parse_deep_enrichment(response, original)
@@ -451,8 +451,8 @@ class TestPerfCheck:
                 import time
                 time.sleep(5)
                 data = sorted(items)[:10]
-            """
-            )
+            """,
+            ),
         )
 
         host = _FakeHost()
@@ -471,7 +471,8 @@ class TestPerfCheck:
     async def test_preserves_input_data(self):
         host = _FakeHost()
         result, _, _ = await host._perf_check(
-            {"files_changed": [], "extra_key": "preserved"}, "cheap"
+            {"files_changed": [], "extra_key": "preserved"},
+            "cheap",
         )
         assert result["extra_key"] == "preserved"
 
@@ -517,9 +518,9 @@ class TestPerfCheckDeep:
                         "validated": True,
                         "false_positive": False,
                         "suggestion": "use heapq",
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
         host._call_llm = AsyncMock(return_value=(llm_response, 100, 50))
 
@@ -532,7 +533,7 @@ class TestPerfCheckDeep:
                     "description": "sorted()[:N] pattern",
                     "impact": "medium",
                     "match": "sorted(items)[:10]",
-                }
+                },
             ],
             "files_changed": [str(src)],
         }
@@ -556,8 +557,8 @@ class TestPerfCheckDeep:
             {
                 "findings": [
                     {"index": 0, "validated": True, "false_positive": True, "suggestion": "ok"},
-                ]
-            }
+                ],
+            },
         )
         host._call_llm = AsyncMock(return_value=(llm_response, 50, 30))
 
@@ -569,7 +570,7 @@ class TestPerfCheckDeep:
                     "line": 1,
                     "description": "d",
                     "impact": "high",
-                }
+                },
             ],
             "files_changed": [],
         }
@@ -670,8 +671,8 @@ class TestQualityCheck:
                     risky()
                 except:
                     pass
-            """
-            )
+            """,
+            ),
         )
 
         host = _FakeHost()
@@ -691,8 +692,8 @@ class TestQualityCheck:
                     risky()
                 except Exception:  # noqa: BLE001
                     pass
-            """
-            )
+            """,
+            ),
         )
 
         host = _FakeHost()
@@ -785,8 +786,8 @@ class TestQualityCheck:
                     x = 1
                 except:
                     pass
-            """
-            )
+            """,
+            ),
         )
 
         host = _FakeHost()
@@ -829,9 +830,9 @@ class TestQualityCheckDeep:
                         "false_positive": False,
                         "severity": "high",
                         "suggestion": "add specific exception types",
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
         host._call_llm = AsyncMock(return_value=(llm_response, 80, 40))
 
@@ -843,7 +844,7 @@ class TestQualityCheckDeep:
                     "line": 2,
                     "description": "Bare except",
                     "severity": "high",
-                }
+                },
             ],
             "files_changed": [str(src)],
         }
@@ -870,8 +871,8 @@ class TestQualityCheckDeep:
                         "false_positive": True,
                         "suggestion": "intentional pattern",
                     },
-                ]
-            }
+                ],
+            },
         )
         host._call_llm = AsyncMock(return_value=(llm_response, 50, 30))
 
@@ -883,7 +884,7 @@ class TestQualityCheckDeep:
                     "line": 1,
                     "description": "Bare except",
                     "severity": "high",
-                }
+                },
             ],
             "files_changed": [],
         }
@@ -909,7 +910,7 @@ class TestQualityCheckDeep:
                     "line": 1,
                     "description": "d",
                     "severity": "low",
-                }
+                },
             ],
             "quality_finding_count": 1,
             "quality_by_severity": {"high": 0, "medium": 0, "low": 1},

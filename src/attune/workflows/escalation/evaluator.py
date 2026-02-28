@@ -36,6 +36,7 @@ class Evaluator(ABC):
         ...             validator_name="MyEvaluator",
         ...             message="Response too short",
         ...         )
+
     """
 
     @abstractmethod
@@ -54,6 +55,7 @@ class Evaluator(ABC):
 
         Returns:
             (True, None) on pass or (False, ValidationFeedback) on fail.
+
         """
         ...
 
@@ -68,6 +70,7 @@ class Evaluator(ABC):
 
         Returns:
             True to run evaluation, False to skip it.
+
         """
         return True
 
@@ -89,6 +92,7 @@ class SemanticEvaluator(Evaluator):
         False
         >>> evaluator.should_run(is_last_tier=True)
         True
+
     """
 
     EVAL_PROMPT_TEMPLATE = """You are evaluating an AI response for quality.
@@ -128,6 +132,7 @@ Respond with JSON only:
                 "always" — run on every attempt (default),
                 "last_tier" — only on the final model tier,
                 "never" — disable semantic evaluation entirely.
+
         """
         self.evaluator_model = evaluator_model
         self.max_tokens = max_tokens
@@ -142,6 +147,7 @@ Respond with JSON only:
 
         Returns:
             True to run evaluation, False to skip.
+
         """
         if self.gate == "never":
             return False
@@ -172,6 +178,7 @@ Respond with JSON only:
 
         Returns:
             (True, None) if evaluation passes, (False, ValidationFeedback) otherwise.
+
         """
         response_str = json.dumps(response) if isinstance(response, dict) else str(response)
         eval_prompt = self.EVAL_PROMPT_TEMPLATE.format(
@@ -191,7 +198,7 @@ Respond with JSON only:
         except json.JSONDecodeError:
             logger.warning("SemanticEvaluator: evaluator response was not valid JSON")
             return True, None  # Don't block on evaluator failure
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Evaluator errors should not block the chain.
             logger.exception("SemanticEvaluator: evaluation call failed")
             return True, None

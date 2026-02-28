@@ -168,6 +168,7 @@ class SessionEvaluator:
         Args:
             min_interactions: Minimum interactions for evaluation
             min_score_for_extraction: Minimum score to recommend extraction
+
         """
         self._min_interactions = min_interactions
         self._min_score_for_extraction = min_score_for_extraction
@@ -195,6 +196,7 @@ class SessionEvaluator:
 
         Returns:
             EvaluationResult with quality rating and metrics
+
         """
         # Compute metrics
         metrics = self._compute_metrics(state)
@@ -369,14 +371,13 @@ class SessionEvaluator:
         """Convert score to quality rating."""
         if score >= 0.7:
             return SessionQuality.EXCELLENT
-        elif score >= 0.5:
+        if score >= 0.5:
             return SessionQuality.GOOD
-        elif score >= 0.3:
+        if score >= 0.3:
             return SessionQuality.AVERAGE
-        elif score >= 0.1:
+        if score >= 0.1:
             return SessionQuality.POOR
-        else:
-            return SessionQuality.SKIP
+        return SessionQuality.SKIP
 
     def _build_reasoning(
         self,
@@ -418,6 +419,7 @@ class SessionEvaluator:
 
         Returns:
             True if extraction is recommended
+
         """
         result = self.evaluate(state)
         return result.recommended_extraction
@@ -433,6 +435,7 @@ class SessionEvaluator:
 
         Returns:
             Priority from 0-100
+
         """
         result = self.evaluate(state)
         return int(result.score * 100)

@@ -243,7 +243,6 @@ class LLMMixin:
 
         if num_stages <= 2 and premium_stages == 0:
             return "simple"
-        elif num_stages <= 4 and premium_stages <= 1:
+        if num_stages <= 4 and premium_stages <= 1:
             return "moderate"
-        else:
-            return "complex"
+        return "complex"

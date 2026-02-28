@@ -71,6 +71,7 @@ def run_workflow(
         empathy meta-workflow run test-coverage-boost --real
         empathy meta-workflow run manage-docs --use-defaults
         empathy meta-workflow run release-prep --json --use-defaults
+
     """
     import json
 
@@ -174,7 +175,7 @@ def run_workflow(
             summary_lines.append(f"\n[bold red]Error:[/bold red] {result.error}")
 
         console.print(
-            Panel("\n".join(summary_lines), title="Execution Summary", border_style="green")
+            Panel("\n".join(summary_lines), title="Execution Summary", border_style="green"),
         )
 
         # Show agents
@@ -184,7 +185,7 @@ def run_workflow(
             status = "✅" if agent_result.success else "❌"
             console.print(
                 f"  {status} [cyan]{agent_result.role}[/cyan] "
-                f"(tier: {agent_result.tier_used}, cost: ${agent_result.cost:.2f})"
+                f"(tier: {agent_result.tier_used}, cost: ${agent_result.cost:.2f})",
             )
 
         # Show where results saved
@@ -237,6 +238,7 @@ def natural_language_run(
         empathy meta-workflow ask "I need to prepare for a release"
         empathy meta-workflow ask "improve my test coverage" --auto --real
         empathy meta-workflow ask "check if documentation is up to date"
+
     """
     try:
         detector = IntentDetector()
@@ -244,14 +246,14 @@ def natural_language_run(
 
         if not matches:
             console.print(
-                "\n[yellow]I couldn't identify a matching agent team for your request.[/yellow]"
+                "\n[yellow]I couldn't identify a matching agent team for your request.[/yellow]",
             )
             console.print("\n[bold]Available agent teams:[/bold]")
             console.print(
-                "  • [cyan]release-prep[/cyan] - Security, testing, code quality, documentation checks"
+                "  • [cyan]release-prep[/cyan] - Security, testing, code quality, documentation checks",
             )
             console.print(
-                "  • [cyan]test-coverage-boost[/cyan] - Analyze and improve test coverage"
+                "  • [cyan]test-coverage-boost[/cyan] - Analyze and improve test coverage",
             )
             console.print("  • [cyan]test-maintenance[/cyan] - Test lifecycle management")
             console.print("  • [cyan]manage-docs[/cyan] - Documentation sync and gap detection")
@@ -267,7 +269,7 @@ def natural_language_run(
         # If auto-run and high confidence, run immediately
         if auto_run and best_match.confidence >= 0.6:
             console.print(
-                f"[bold green]Auto-detected:[/bold green] {best_match.template_name} ({confidence_pct}% confidence)"
+                f"[bold green]Auto-detected:[/bold green] {best_match.template_name} ({confidence_pct}% confidence)",
             )
             console.print(f"[dim]{best_match.description}[/dim]\n")
             console.print(f"[bold]Running {best_match.template_id}...[/bold]\n")
@@ -304,10 +306,10 @@ def natural_language_run(
         # Prompt to run best match
         if best_match.confidence >= 0.5:
             console.print(
-                "[bold]Quick Run:[/bold] Use [cyan]--auto[/cyan] to automatically run the best match"
+                "[bold]Quick Run:[/bold] Use [cyan]--auto[/cyan] to automatically run the best match",
             )
             console.print(
-                f'[dim]Example: empathy meta-workflow ask "{request}" --auto --real[/dim]\n'
+                f'[dim]Example: empathy meta-workflow ask "{request}" --auto --real[/dim]\n',
             )
 
     except Exception as e:
@@ -332,6 +334,7 @@ def detect_intent(
     Examples:
         empathy meta-workflow detect "check security vulnerabilities"
         empathy meta-workflow detect "generate more tests" --threshold 0.5
+
     """
     try:
         detector = IntentDetector()

@@ -13,6 +13,7 @@ Example:
     >>> templates = get_all_templates()
     >>> len(templates) >= 13
     True
+
 """
 
 import logging

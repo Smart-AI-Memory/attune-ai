@@ -107,6 +107,7 @@ class TestGenWizard(BaseWizard):
 
         Returns:
             PromptContext for the LLM call.
+
         """
         assert self._session is not None
 
@@ -155,6 +156,7 @@ class TestGenWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response.
+
         """
         assert self._session is not None
         if step.id == "analyze":

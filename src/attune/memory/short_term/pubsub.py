@@ -22,6 +22,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -67,6 +68,7 @@ class PubSubManager:
         ...     print(f"Signal: {msg['data']}")
         >>> pubsub.subscribe("agent_signals", on_signal)
         >>> pubsub.publish("agent_signals", {"type": "heartbeat"}, creds)
+
     """
 
     PREFIX_PUBSUB = "pubsub:"
@@ -76,6 +78,7 @@ class PubSubManager:
 
         Args:
             base: BaseOperations instance for Redis client access
+
         """
         self._base = base
         self._pubsub: PubSub | None = None
@@ -111,6 +114,7 @@ class PubSubManager:
             ...     creds
             ... )
             2
+
         """
         if not credentials.can_stage():
             raise PermissionError(
@@ -172,6 +176,7 @@ class PubSubManager:
             ...     print(f"Received: {msg['data']}")
             >>> pubsub.subscribe("agent_signals", on_message)
             True
+
         """
         full_channel = f"{self.PREFIX_PUBSUB}{channel}"
 
@@ -285,7 +290,7 @@ class PubSubManager:
                     if self._pubsub_client:
                         try:
                             self._pubsub_client.close()
-                        except Exception:  # noqa: BLE001
+                        except Exception:
                             # INTENTIONAL: Best-effort cleanup before reconnect
                             pass
 
@@ -303,7 +308,7 @@ class PubSubManager:
                         attempt=reconnect_attempts,
                         error=str(reconnect_err),
                     )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Listener thread must not crash on unexpected errors
                 logger.warning("pubsub_listener_error", error=str(e))
                 time.sleep(1)
@@ -320,6 +325,7 @@ class PubSubManager:
         Example:
             >>> pubsub.unsubscribe("agent_signals")
             True
+
         """
         full_channel = f"{self.PREFIX_PUBSUB}{channel}"
 
@@ -344,6 +350,7 @@ class PubSubManager:
 
         Example:
             >>> pubsub.close()
+
         """
         self._pubsub_running = False
         if self._pubsub_thread is not None:

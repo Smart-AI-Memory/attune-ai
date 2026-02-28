@@ -246,10 +246,16 @@ class TestInputPatterns:
             fields_by_step={
                 1: [
                     FieldDefinition(
-                        name="field1", field_type="str", required=True, description="Field 1"
+                        name="field1",
+                        field_type="str",
+                        required=True,
+                        description="Field 1",
                     ),
                     FieldDefinition(
-                        name="field2", field_type="int", required=False, default_value=0
+                        name="field2",
+                        field_type="int",
+                        required=False,
+                        default_value=0,
                     ),
                 ],
             },
@@ -270,7 +276,10 @@ class TestInputPatterns:
             fields_by_step={
                 1: [
                     FieldDefinition(
-                        name="name", field_type="str", required=True, description="User name"
+                        name="name",
+                        field_type="str",
+                        required=True,
+                        description="User name",
                     ),
                     FieldDefinition(name="age", field_type="int", required=False, default_value=0),
                 ],

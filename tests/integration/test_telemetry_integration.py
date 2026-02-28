@@ -64,7 +64,7 @@ async def test_workflow_tracks_llm_calls(tracker):
             cost_estimate=0.01,
             tier="CAPABLE",
             model_id="test-model",
-        )
+        ),
     )
     workflow._executor = mock_executor
 
@@ -97,7 +97,7 @@ async def test_workflow_tracks_cache_hits(tracker):
             "content": "Cached response",
             "input_tokens": 100,
             "output_tokens": 50,
-        }
+        },
     )
     workflow._cache = mock_cache
 
@@ -165,7 +165,7 @@ async def test_telemetry_disabled(tracker, temp_telemetry_dir):
             cost_estimate=0.01,
             tier="CAPABLE",
             model_id="test-model",
-        )
+        ),
     )
     workflow._executor = mock_executor
 
@@ -199,7 +199,7 @@ async def test_telemetry_tracking_on_error(tracker):
             cost_estimate=0.01,
             tier="CAPABLE",
             model_id="test-model",
-        )
+        ),
     )
     workflow._executor = mock_executor
 
@@ -227,7 +227,7 @@ async def test_multiple_workflows_share_tracker(tracker):
             cost_estimate=0.01,
             tier="CAPABLE",
             model_id="test-model",
-        )
+        ),
     )
     workflow1._executor = mock_executor
     workflow2._executor = mock_executor

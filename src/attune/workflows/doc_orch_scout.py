@@ -41,7 +41,7 @@ class DocOrchScoutMixin:
     include_stale: bool = True
     include_missing: bool = True
     max_items: int = 5
-    project_root: Path = Path(".")
+    project_root: Path = Path()
 
     async def _run_scout_phase(self) -> tuple[list, float]:
         """Run the scout phase to identify documentation gaps.

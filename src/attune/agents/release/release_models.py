@@ -91,6 +91,7 @@ class ReleaseAgentResult:
         cost: LLM API cost in USD
         execution_time_ms: Wall-clock time in milliseconds
         escalated: Whether tier escalation occurred
+
     """
 
     agent_id: str
@@ -116,6 +117,7 @@ class QualityGate:
         passed: Whether gate passed
         critical: Whether failure blocks release
         message: Human-readable status message
+
     """
 
     name: str
@@ -150,6 +152,7 @@ class ReleaseReadinessReport:
         timestamp: Report generation time
         total_duration: Total execution time in seconds
         total_cost: Total LLM API cost
+
     """
 
     approved: bool
@@ -246,7 +249,7 @@ class ReleaseReadinessReport:
             lines.append(
                 f"  [{status}] {result.agent_role}: "
                 f"tier={result.tier_used.value}{esc} "
-                f"[{result.execution_time_ms:.0f}ms]"
+                f"[{result.execution_time_ms:.0f}ms]",
             )
         lines.append("")
 

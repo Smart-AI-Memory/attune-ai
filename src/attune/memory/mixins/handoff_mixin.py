@@ -28,7 +28,6 @@ class HandoffAndExportMixin:
     # Needs access to capabilities from CapabilitiesMixin
     def get_capabilities(self) -> dict[str, bool]:
         """Get capabilities - provided by CapabilitiesMixin."""
-        ...
 
     # =========================================================================
     # COMPACT STATE GENERATION
@@ -42,6 +41,7 @@ class HandoffAndExportMixin:
 
         Returns:
             Markdown-formatted compact state string
+
         """
         lines = [
             "# Compact State - Session Handoff",
@@ -57,7 +57,7 @@ class HandoffAndExportMixin:
                     f"**Session ID:** {session.session_id}",
                     f"**User ID:** {session.user_id}",
                     "",
-                ]
+                ],
             )
 
         lines.extend(
@@ -65,7 +65,7 @@ class HandoffAndExportMixin:
                 "## SBAR Handoff",
                 "",
                 "### Situation",
-            ]
+            ],
         )
 
         # Get context from file session
@@ -91,7 +91,7 @@ class HandoffAndExportMixin:
                 "### Recommendation",
                 recommendation,
                 "",
-            ]
+            ],
         )
 
         # Add working memory summary
@@ -104,7 +104,7 @@ class HandoffAndExportMixin:
                         "",
                         f"**Active keys:** {len(working_keys)}",
                         "",
-                    ]
+                    ],
                 )
                 for key in working_keys[:10]:  # Show max 10
                     lines.append(f"- `{key}`")
@@ -122,11 +122,11 @@ class HandoffAndExportMixin:
                         "",
                         f"**Pending validation:** {len(staged)}",
                         "",
-                    ]
+                    ],
                 )
                 for pattern in staged[:5]:  # Show max 5
                     lines.append(
-                        f"- {pattern.name} ({pattern.pattern_type}, conf: {pattern.confidence:.2f})"
+                        f"- {pattern.name} ({pattern.pattern_type}, conf: {pattern.confidence:.2f})",
                     )
                 if len(staged) > 5:
                     lines.append(f"- ... and {len(staged) - 5} more")
@@ -143,7 +143,7 @@ class HandoffAndExportMixin:
                 f"- Long-term memory: {'Yes' if caps['long_term'] else 'No'}",
                 f"- Real-time sync: {'Yes' if caps['realtime'] else 'No'}",
                 "",
-            ]
+            ],
         )
 
         return "\n".join(lines)
@@ -156,6 +156,7 @@ class HandoffAndExportMixin:
 
         Returns:
             Path where state was written
+
         """
         from attune.security.path_validation import _validate_file_path
 
@@ -190,6 +191,7 @@ class HandoffAndExportMixin:
             assessment: Assessment of progress/state
             recommendation: Recommended next steps
             **extra_context: Additional context key-value pairs
+
         """
         if not self._file_session:
             logger.warning("file_session_not_available")

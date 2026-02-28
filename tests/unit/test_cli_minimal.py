@@ -53,7 +53,7 @@ class TestGetVersion:
 class TestCreateParser:
     """Tests for create_parser()."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parser(self) -> argparse.ArgumentParser:
         return create_parser()
 

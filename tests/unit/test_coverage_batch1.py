@@ -66,7 +66,10 @@ class TestSocraticRouter:
         from attune.socratic_router import WorkflowOption
 
         opt = WorkflowOption(
-            label="Run tests", description="Execute suite", skill="testing", args="run"
+            label="Run tests",
+            description="Execute suite",
+            skill="testing",
+            args="run",
         )
         result = opt.to_ask_user_option()
 
@@ -394,7 +397,8 @@ class TestSocraticRouter:
 
         with patch("attune.socratic_router.FieldType", mock_field_type_class, create=True):
             with patch.dict(
-                "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)}
+                "sys.modules",
+                {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)},
             ):
                 result = form_to_ask_user_question(mock_form)
 
@@ -424,7 +428,8 @@ class TestSocraticRouter:
         mock_form.fields = [mock_field]
 
         with patch.dict(
-            "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)}
+            "sys.modules",
+            {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)},
         ):
             result = form_to_ask_user_question(mock_form)
 
@@ -446,14 +451,15 @@ class TestSocraticRouter:
         mock_field.category = "tools"
         mock_field.field_type = "multi_select"  # matches MULTI_SELECT
         mock_field.options = [
-            MagicMock(value="A", description="Desc A", label="A", recommended=False)
+            MagicMock(value="A", description="Desc A", label="A", recommended=False),
         ]
 
         mock_form = MagicMock()
         mock_form.fields = [mock_field]
 
         with patch.dict(
-            "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)}
+            "sys.modules",
+            {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)},
         ):
             result = form_to_ask_user_question(mock_form)
 
@@ -485,7 +491,8 @@ class TestSocraticRouter:
         mock_form.fields = [mock_field]
 
         with patch.dict(
-            "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)}
+            "sys.modules",
+            {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)},
         ):
             result = form_to_ask_user_question(mock_form)
 
@@ -511,7 +518,8 @@ class TestSocraticRouter:
         mock_form.fields = fields
 
         with patch.dict(
-            "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)}
+            "sys.modules",
+            {"attune.socratic.forms": MagicMock(FieldType=mock_field_type_class)},
         ):
             result = form_to_ask_user_question(mock_form)
 
@@ -543,7 +551,8 @@ class TestSocraticRouter:
 
         with patch("attune.socratic.SocraticWorkflowBuilder", return_value=mock_builder):
             with patch.dict(
-                "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)}
+                "sys.modules",
+                {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)},
             ):
                 session, ask_user_format = start_deep_discovery("automate reviews")
 
@@ -617,7 +626,8 @@ class TestSocraticRouter:
 
         with patch("attune.socratic.SocraticWorkflowBuilder", return_value=mock_builder):
             with patch.dict(
-                "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)}
+                "sys.modules",
+                {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)},
             ):
                 session, next_questions = continue_deep_discovery(mock_session, {"answer": "more"})
 
@@ -759,7 +769,8 @@ class TestSocraticRouter:
 
         with patch("attune.socratic.SocraticWorkflowBuilder", return_value=mock_builder):
             with patch.dict(
-                "sys.modules", {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)}
+                "sys.modules",
+                {"attune.socratic.forms": MagicMock(FieldType=mock_field_type)},
             ):
                 result = router.continue_session("cont-sess-1", {"answer": "more"})
 
@@ -1074,7 +1085,7 @@ class TestLevels:
                 "current_state": {"health": "good"},
                 "trajectory": "compliance_gap",
                 "prediction_horizon": "30_days",
-            }
+            },
         )
 
         assert resp["level"] == 4
@@ -1130,7 +1141,7 @@ class TestLevels:
                 "problem_class": "documentation_burden",
                 "instances": 18,
                 "pattern": "repetitive_structure",
-            }
+            },
         )
 
         assert resp["level"] == 5
@@ -1562,6 +1573,7 @@ class TestXMLValidator:
 
         Returns:
             Tuple of (saved_lxml, saved_lxml_etree) for cleanup
+
         """
         import sys
         import types
@@ -1581,6 +1593,7 @@ class TestXMLValidator:
         Args:
             saved_lxml: Original lxml module or None
             saved_lxml_etree: Original lxml.etree module or None
+
         """
         import sys
 

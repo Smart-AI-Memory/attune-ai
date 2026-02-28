@@ -21,6 +21,7 @@ class ValidationResult:
         error_message: Error message if invalid
         parsed_data: Parsed data if valid
         fallback_used: Whether fallback parsing was used
+
     """
 
     is_valid: bool
@@ -61,6 +62,7 @@ class XMLValidator:
             schema_dir: Directory containing XSD schemas
             strict: If True, fail on validation errors. If False, use fallback.
             enable_xsd: Enable XSD schema validation (requires lxml)
+
         """
         self.schema_dir = Path(schema_dir)
         self.strict = strict
@@ -86,6 +88,7 @@ class XMLValidator:
 
         Returns:
             ValidationResult with validation status and parsed data
+
         """
         # Step 1: Well-formedness validation
         try:
@@ -132,6 +135,7 @@ class XMLValidator:
 
         Returns:
             ValidationResult
+
         """
         if not self._lxml_available:
             return ValidationResult(
@@ -197,6 +201,7 @@ class XMLValidator:
 
         Returns:
             ValidationResult with fallback data
+
         """
         # Try to extract data using regex patterns
         import re
@@ -237,6 +242,7 @@ class XMLValidator:
 
         Returns:
             Dictionary with extracted data
+
         """
         data: dict[str, Any] = {}
 
@@ -247,7 +253,7 @@ class XMLValidator:
                 data[child.tag] = self._extract_data(child)
             else:
                 # Leaf node - get text content
-                data[child.tag] = child.text if child.text else ""
+                data[child.tag] = child.text or ""
 
         # Also store root attributes
         if root.attrib:
@@ -276,6 +282,7 @@ def validate_xml_response(
         >>> result = validate_xml_response(response)
         >>> if result.is_valid:
         ...     print(result.parsed_data)
+
     """
     validator = XMLValidator(strict=strict)
     return validator.validate(response, schema_name)

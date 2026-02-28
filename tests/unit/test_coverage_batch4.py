@@ -50,6 +50,7 @@ def cost_tracker(tmp_path: Path) -> Any:
 
     Returns:
         CostTracker instance with isolated storage
+
     """
     from attune.cost_tracker import CostTracker
 
@@ -70,6 +71,7 @@ def scan_dir() -> Path:
 
     Yields:
         Path to a clean directory.  Automatically removed after the test.
+
     """
     d = tempfile.mkdtemp(prefix="scan_")
     yield Path(d)
@@ -252,7 +254,8 @@ class TestPerfAuditProfile:
         """Test profiling an empty directory returns no findings."""
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, in_tokens, out_tokens = await wf._profile(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["findings"] == []
         assert result["finding_count"] == 0
@@ -270,7 +273,8 @@ class TestPerfAuditProfile:
 
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         global_findings = [f for f in result["findings"] if f["type"] == "global_import"]
         assert len(global_findings) >= 1
@@ -286,7 +290,8 @@ class TestPerfAuditProfile:
 
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         regex_findings = [f for f in result["findings"] if f["type"] == "repeated_regex"]
         assert len(regex_findings) >= 1
@@ -302,7 +307,8 @@ class TestPerfAuditProfile:
 
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["files_scanned"] >= 1
         n_plus_one_findings = [f for f in result["findings"] if f["type"] == "n_plus_one"]
@@ -318,7 +324,8 @@ class TestPerfAuditProfile:
 
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["files_scanned"] == 0
 
@@ -327,14 +334,17 @@ class TestPerfAuditProfile:
         """Test profiling a non-existent path returns empty results."""
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": "/nonexistent/path/xyz", "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": "/nonexistent/path/xyz", "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["findings"] == []
         assert result["files_scanned"] == 0
 
     @pytest.mark.asyncio
     async def test_profile_with_auth_strategy_enabled(
-        self, cost_tracker: Any, scan_dir: Path
+        self,
+        cost_tracker: Any,
+        scan_dir: Path,
     ) -> None:
         """Test profile stage with auth strategy integration (mocked)."""
         sub = scan_dir / "src"
@@ -364,7 +374,8 @@ class TestPerfAuditProfile:
         sys.modules["attune.models"] = mock_models
         try:
             result, _, _ = await wf._profile(
-                {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+                {"path": str(scan_dir), "file_types": [".py"]},
+                ModelTier.CHEAP,
             )
         finally:
             if saved is not None:
@@ -377,7 +388,9 @@ class TestPerfAuditProfile:
 
     @pytest.mark.asyncio
     async def test_profile_auth_strategy_subscription(
-        self, cost_tracker: Any, scan_dir: Path
+        self,
+        cost_tracker: Any,
+        scan_dir: Path,
     ) -> None:
         """Test profile with auth strategy recommending subscription mode."""
         sub = scan_dir / "src"
@@ -404,7 +417,8 @@ class TestPerfAuditProfile:
         sys.modules["attune.models"] = mock_models
         try:
             result, _, _ = await wf._profile(
-                {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+                {"path": str(scan_dir), "file_types": [".py"]},
+                ModelTier.CHEAP,
             )
         finally:
             if saved is not None:
@@ -416,7 +430,9 @@ class TestPerfAuditProfile:
 
     @pytest.mark.asyncio
     async def test_profile_auth_strategy_import_error(
-        self, cost_tracker: Any, scan_dir: Path
+        self,
+        cost_tracker: Any,
+        scan_dir: Path,
     ) -> None:
         """Test profile handles ImportError from auth strategy gracefully."""
         sub = scan_dir / "src"
@@ -436,7 +452,8 @@ class TestPerfAuditProfile:
         sys.modules["attune.models"] = bad_module
         try:
             result, _, _ = await wf._profile(
-                {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+                {"path": str(scan_dir), "file_types": [".py"]},
+                ModelTier.CHEAP,
             )
         finally:
             if saved is not None:
@@ -461,7 +478,8 @@ class TestPerfAuditProfile:
 
         wf = PerformanceAuditWorkflow(cost_tracker=cost_tracker, enable_auth_strategy=False)
         result, _, _ = await wf._profile(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         by_impact = result["by_impact"]
         assert "high" in by_impact
@@ -1072,9 +1090,9 @@ class TestRefactorPlanWorkflowInit:
                     "snapshots": [
                         {"total_items": 10, "date": "2025-01-01"},
                         {"total_items": 15, "date": "2025-02-01"},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
         wf = RefactorPlanWorkflow(
             cost_tracker=cost_tracker,
@@ -1179,7 +1197,8 @@ class TestRefactorPlanScan:
         """Test scanning empty directory."""
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._scan(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_debt"] == 0
         assert result["debt_items"] == []
@@ -1201,7 +1220,8 @@ x = 1
 
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._scan(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_debt"] == 4
         assert result["files_scanned"] == 1
@@ -1213,7 +1233,9 @@ x = 1
 
     @pytest.mark.asyncio
     async def test_scan_by_file_and_marker_grouping(
-        self, cost_tracker: Any, tmp_path: Path
+        self,
+        cost_tracker: Any,
+        tmp_path: Path,
     ) -> None:
         """Test scan groups debt items by file and by marker type."""
         sub = tmp_path / "src"
@@ -1225,7 +1247,8 @@ x = 1
 
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._scan(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_debt"] == 3
         by_file = result["by_file"]
@@ -1244,7 +1267,8 @@ x = 1
 
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._scan(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_debt"] == 0
 
@@ -1253,7 +1277,8 @@ x = 1
         """Test scanning nonexistent path returns empty results."""
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._scan(
-            {"path": "/nonexistent/xyz", "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": "/nonexistent/xyz", "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_debt"] == 0
 
@@ -1279,7 +1304,8 @@ class TestRefactorPlanAnalyze:
         """Test trajectory is stable with no history."""
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir="/nonexistent")
         result, _, _ = await wf._analyze(
-            {"total_debt": 10, "by_file": {"a.py": 5}}, ModelTier.CAPABLE
+            {"total_debt": 10, "by_file": {"a.py": 5}},
+            ModelTier.CAPABLE,
         )
         analysis = result["analysis"]
         assert analysis["trajectory"] == "stable"
@@ -1294,7 +1320,8 @@ class TestRefactorPlanAnalyze:
         debt_file.write_text(json.dumps({"snapshots": [{"total_items": 10}, {"total_items": 30}]}))
         wf = RefactorPlanWorkflow(cost_tracker=cost_tracker, patterns_dir=str(patterns_dir))
         result, _, _ = await wf._analyze(
-            {"total_debt": 30, "by_file": {"a.py": 10}}, ModelTier.CAPABLE
+            {"total_debt": 30, "by_file": {"a.py": 10}},
+            ModelTier.CAPABLE,
         )
         assert result["analysis"]["trajectory"] == "increasing"
         assert result["analysis"]["velocity"] > 0
@@ -1338,7 +1365,8 @@ class TestRefactorPlanPrioritize:
         wf._crew_available = False
 
         result, _, _ = await wf._prioritize(
-            {"debt_items": [], "analysis": {"hotspots": []}}, ModelTier.CAPABLE
+            {"debt_items": [], "analysis": {"hotspots": []}},
+            ModelTier.CAPABLE,
         )
         assert result["prioritized_items"] == []
         assert result["high_priority"] == []
@@ -1359,7 +1387,8 @@ class TestRefactorPlanPrioritize:
         analysis = {"hotspots": [{"file": "hot.py"}]}
 
         result, _, _ = await wf._prioritize(
-            {"debt_items": debt_items, "analysis": analysis}, ModelTier.CAPABLE
+            {"debt_items": debt_items, "analysis": analysis},
+            ModelTier.CAPABLE,
         )
         items = result["prioritized_items"]
         # hot.py: base=5, severity_factor=3 (high), hotspot_bonus=2 => 5*3+2=17
@@ -1391,7 +1420,8 @@ class TestRefactorPlanPrioritize:
             {"file": "c.py", "marker": "TODO", "severity": "low", "weight": 1},  # 1*1=1 (low)
         ]
         result, _, _ = await wf._prioritize(
-            {"debt_items": debt_items, "analysis": {"hotspots": []}}, ModelTier.CAPABLE
+            {"debt_items": debt_items, "analysis": {"hotspots": []}},
+            ModelTier.CAPABLE,
         )
         assert len(result["high_priority"]) == 1
         assert len(result["medium_priority"]) == 1
@@ -1432,7 +1462,8 @@ class TestRefactorPlanPrioritize:
         analysis = {"hotspots": [{"file": str(code_file)}]}
 
         result, _, _ = await wf._prioritize(
-            {"debt_items": debt_items, "analysis": analysis}, ModelTier.CAPABLE
+            {"debt_items": debt_items, "analysis": analysis},
+            ModelTier.CAPABLE,
         )
         assert result["crew_enhanced"] is True
         assert result["crew_findings_count"] >= 1
@@ -1753,9 +1784,9 @@ class TestTestGenWorkflowInit:
                     "patterns": [
                         {"files_affected": ["src/auth.py", "src/db.py"]},
                         {"files_affected": ["src/auth.py", None]},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
         wf = TestGenerationWorkflow(
             cost_tracker=cost_tracker,
@@ -1907,7 +1938,8 @@ class TestTestGenIdentify:
         # Auth strategy will fail because attune.models functions aren't available
         # but that's fine - the except block handles it
         result, _, _ = await wf._identify(
-            {"path": str(tmp_path), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(tmp_path), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_candidates"] == 0
         assert result["candidates"] == []
@@ -1927,7 +1959,8 @@ class TestTestGenIdentify:
             enable_auth_strategy=True,
         )
         result, _, _ = await wf._identify(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_candidates"] >= 1
         assert result["untested_count"] >= 1
@@ -1951,7 +1984,8 @@ class TestTestGenIdentify:
             enable_auth_strategy=True,
         )
         result, _, _ = await wf._identify(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["existing_test_files"] >= 1
         candidate_files = [c["file"] for c in result["candidates"]]
@@ -1975,7 +2009,8 @@ class TestTestGenIdentify:
         wf._bug_hotspots = [str(src_file)]
 
         result, _, _ = await wf._identify(
-            {"path": str(scan_dir), "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": str(scan_dir), "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["hotspot_count"] >= 1
         candidate = result["candidates"][0]
@@ -1984,7 +2019,9 @@ class TestTestGenIdentify:
 
     @pytest.mark.asyncio
     async def test_identify_respects_max_candidates(
-        self, cost_tracker: Any, scan_dir: Path
+        self,
+        cost_tracker: Any,
+        scan_dir: Path,
     ) -> None:
         """Test identify limits candidates to max_candidates."""
         sub = scan_dir / "src"
@@ -2007,7 +2044,9 @@ class TestTestGenIdentify:
 
     @pytest.mark.asyncio
     async def test_identify_respects_max_files_to_scan(
-        self, cost_tracker: Any, scan_dir: Path
+        self,
+        cost_tracker: Any,
+        scan_dir: Path,
     ) -> None:
         """Test identify stops scanning at max_files_to_scan limit."""
         sub = scan_dir / "src"
@@ -2061,7 +2100,8 @@ class TestTestGenIdentify:
             enable_auth_strategy=True,
         )
         result, _, _ = await wf._identify(
-            {"path": "/nonexistent/xyz", "file_types": [".py"]}, ModelTier.CHEAP
+            {"path": "/nonexistent/xyz", "file_types": [".py"]},
+            ModelTier.CHEAP,
         )
         assert result["total_candidates"] == 0
 
@@ -2118,7 +2158,9 @@ class TestTestGenFindTestFile:
         assert found.exists()
 
     def test_find_test_file_returns_expected_path_when_missing(
-        self, cost_tracker: Any, tmp_path: Path
+        self,
+        cost_tracker: Any,
+        tmp_path: Path,
     ) -> None:
         """Test returns expected path even when test file doesn't exist."""
         src_file = tmp_path / "module.py"
@@ -2169,7 +2211,8 @@ def multiply(x: float, y: float) -> float:
         )
         candidates = [{"file": str(src_file), "priority": 50}]
         result, _, _ = await wf._analyze(
-            {"candidates": candidates, "config": {}}, ModelTier.CAPABLE
+            {"candidates": candidates, "config": {}},
+            ModelTier.CAPABLE,
         )
         assert len(result["analysis"]) == 1
         assert result["total_functions"] >= 2
@@ -2198,7 +2241,8 @@ class Calculator:
         )
         candidates = [{"file": str(src_file), "priority": 50}]
         result, _, _ = await wf._analyze(
-            {"candidates": candidates, "config": {}}, ModelTier.CAPABLE
+            {"candidates": candidates, "config": {}},
+            ModelTier.CAPABLE,
         )
         assert result["total_classes"] >= 1
 
@@ -2215,7 +2259,8 @@ class Calculator:
         )
         candidates = [{"file": str(src_file), "priority": 50}]
         result, _, _ = await wf._analyze(
-            {"candidates": candidates, "config": {}}, ModelTier.CAPABLE
+            {"candidates": candidates, "config": {}},
+            ModelTier.CAPABLE,
         )
         assert len(result["analysis"]) == 1
         assert result["parse_errors"] != []
@@ -2230,13 +2275,16 @@ class Calculator:
         )
         candidates = [{"file": "/nonexistent/file.py", "priority": 50}]
         result, _, _ = await wf._analyze(
-            {"candidates": candidates, "config": {}}, ModelTier.CAPABLE
+            {"candidates": candidates, "config": {}},
+            ModelTier.CAPABLE,
         )
         assert result["analysis"] == []
 
     @pytest.mark.asyncio
     async def test_analyze_respects_max_files_to_analyze(
-        self, cost_tracker: Any, tmp_path: Path
+        self,
+        cost_tracker: Any,
+        tmp_path: Path,
     ) -> None:
         """Test analyze limits files analyzed to config value."""
         for i in range(5):

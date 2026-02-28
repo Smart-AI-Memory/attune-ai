@@ -40,7 +40,7 @@ def create_test_template(template_id: str = "test-template") -> MetaWorkflowTemp
                     id="q1",
                     text="Test question?",
                     type=QuestionType.TEXT_INPUT,
-                )
+                ),
             ],
         ),
         agent_composition_rules=[
@@ -48,7 +48,7 @@ def create_test_template(template_id: str = "test-template") -> MetaWorkflowTemp
                 role="tester",
                 base_template="test-agent",
                 tier_strategy=TierStrategy.CHEAP_ONLY,
-            )
+            ),
         ],
     )
 

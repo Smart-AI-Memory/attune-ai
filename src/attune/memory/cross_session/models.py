@@ -114,6 +114,7 @@ def generate_agent_id(session_type: SessionType) -> str:
 
     Returns:
         A unique agent ID string.
+
     """
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     suffix = secrets.token_hex(3)  # 6 character hex string

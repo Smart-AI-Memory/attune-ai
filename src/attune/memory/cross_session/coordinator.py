@@ -75,6 +75,7 @@ class CrossSessionCoordinator:
         Raises:
             ValueError: If memory is in mock mode (Redis required)
             ImportError: If Redis package is not installed
+
         """
         # Verify Redis is available -- degrade gracefully in mock mode
         self._degraded = False
@@ -84,7 +85,7 @@ class CrossSessionCoordinator:
             logging.getLogger(__name__).warning(
                 "Cross-session coordination running in degraded mode "
                 "(no Redis). Cross-process agent coordination and "
-                "distributed features are unavailable."
+                "distributed features are unavailable.",
             )
             self._degraded = True
 
@@ -195,6 +196,7 @@ class CrossSessionCoordinator:
 
         Returns:
             List of SessionInfo for all active sessions
+
         """
         client = self._memory._client
         if client is None:
@@ -235,6 +237,7 @@ class CrossSessionCoordinator:
 
         Returns:
             SessionInfo if found and not stale, None otherwise
+
         """
         client = self._memory._client
         if client is None:
@@ -310,6 +313,7 @@ class CrossSessionCoordinator:
 
         Returns:
             ConflictResult with winner and loser
+
         """
         other_session = self.get_session(other_agent_id)
 
@@ -321,19 +325,19 @@ class CrossSessionCoordinator:
                 resource_key,
                 other_session,
             )
-        elif strategy == ConflictStrategy.FIRST_WRITE_WINS:
+        if strategy == ConflictStrategy.FIRST_WRITE_WINS:
             return resolve_first_write(
                 self._agent_id,
                 self._memory._client,
                 resource_key,
                 other_session,
             )
-        else:  # LAST_WRITE_WINS
-            return resolve_last_write(
-                self._agent_id,
-                resource_key,
-                other_session,
-            )
+        # LAST_WRITE_WINS
+        return resolve_last_write(
+            self._agent_id,
+            resource_key,
+            other_session,
+        )
 
     # === Distributed Locking ===
 
@@ -350,6 +354,7 @@ class CrossSessionCoordinator:
 
         Returns:
             True if lock acquired, False otherwise
+
         """
         client = self._memory._client
         if client is None:
@@ -376,6 +381,7 @@ class CrossSessionCoordinator:
 
         Returns:
             True if lock released, False if not owner
+
         """
         client = self._memory._client
         if client is None:
@@ -406,6 +412,7 @@ class CrossSessionCoordinator:
 
         Returns:
             Agent ID of lock holder, or None if unlocked
+
         """
         client = self._memory._client
         if client is None:
@@ -431,6 +438,7 @@ class CrossSessionCoordinator:
 
         Args:
             handler: Callback receiving SessionInfo of joining session
+
         """
         self._on_session_joined.append(handler)
 
@@ -439,6 +447,7 @@ class CrossSessionCoordinator:
 
         Args:
             handler: Callback receiving agent_id of departing session
+
         """
         self._on_session_left.append(handler)
 

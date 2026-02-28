@@ -36,6 +36,7 @@ def resolve_by_priority(
 
     Returns:
         ConflictResult indicating winner and loser.
+
     """
     my_tier = access_tier.value
     other_tier = other_session.access_tier.value if other_session else 0
@@ -54,14 +55,13 @@ def resolve_by_priority(
             f"{other_session.access_tier.name if other_session else 'N/A'}"
             f" > {access_tier.name})"
         )
+    # Equal tier - use timestamp (first write wins)
+    elif other_session and other_session.started_at < session_info.started_at:
+        winner, loser = other_id, agent_id
+        reason = "Equal tier, earlier session wins"
     else:
-        # Equal tier - use timestamp (first write wins)
-        if other_session and other_session.started_at < session_info.started_at:
-            winner, loser = other_id, agent_id
-            reason = "Equal tier, earlier session wins"
-        else:
-            winner, loser = agent_id, other_id
-            reason = "Equal tier, earlier session wins"
+        winner, loser = agent_id, other_id
+        reason = "Equal tier, earlier session wins"
 
     return ConflictResult(
         winner_agent_id=winner,
@@ -88,6 +88,7 @@ def resolve_first_write(
 
     Returns:
         ConflictResult indicating winner and loser.
+
     """
     if client is None:
         return ConflictResult(
@@ -138,6 +139,7 @@ def resolve_last_write(
 
     Returns:
         ConflictResult indicating winner and loser.
+
     """
     return ConflictResult(
         winner_agent_id=agent_id,

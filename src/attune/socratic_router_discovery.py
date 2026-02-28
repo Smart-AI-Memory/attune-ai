@@ -42,6 +42,7 @@ def form_to_ask_user_question(form: Form) -> dict[str, Any]:
         >>> session = builder.start_session("automate code reviews")
         >>> form = builder.get_next_questions(session)
         >>> ask_user_format = form_to_ask_user_question(form)
+
     """
     from attune.socratic.forms import FieldType
 
@@ -99,6 +100,7 @@ def should_use_deep_discovery(user_response: str, classification: IntentClassifi
 
     Returns:
         True if should use SocraticWorkflowBuilder, False for quick routing
+
     """
     # Low confidence - need more clarification
     if classification.confidence < 0.5:
@@ -141,6 +143,7 @@ def start_deep_discovery(
         ... )
         >>> # Use questions with AskUserQuestion tool
         >>> # Then call continue_deep_discovery(session, answers)
+
     """
     from attune.socratic import SocraticWorkflowBuilder
 
@@ -168,15 +171,16 @@ def start_deep_discovery(
                         },
                     ],
                     "multiSelect": False,
-                }
-            ]
+                },
+            ],
         }
 
     return session, ask_user_format
 
 
 def continue_deep_discovery(
-    session: SocraticSession, answers: dict[str, Any]
+    session: SocraticSession,
+    answers: dict[str, Any],
 ) -> tuple[SocraticSession, dict[str, Any] | None]:
     """Continue a SocraticWorkflowBuilder session with answers.
 
@@ -186,6 +190,7 @@ def continue_deep_discovery(
 
     Returns:
         Tuple of (updated_session, next_questions_or_None)
+
     """
     from attune.socratic import SocraticWorkflowBuilder
 

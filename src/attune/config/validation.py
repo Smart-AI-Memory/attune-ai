@@ -22,6 +22,7 @@ class ValidationError:
         key: The configuration key that failed validation.
         message: Human-readable error message.
         severity: Error severity ('error' or 'warning').
+
     """
 
     key: str
@@ -48,6 +49,7 @@ class ConfigValidator:
 
         Returns:
             List of validation errors (empty if valid).
+
         """
         errors: list[ValidationError] = []
 
@@ -70,6 +72,7 @@ class ConfigValidator:
 
         Returns:
             List of validation errors.
+
         """
         # Dispatch to appropriate validator
         validators = {
@@ -103,7 +106,7 @@ class ConfigValidator:
                 ValidationError(
                     "auth.strategy",
                     f"Invalid strategy '{auth.strategy}'. Must be one of: {valid_strategies}",
-                )
+                ),
             )
 
         # Warn if API strategy but no API key env var set
@@ -114,7 +117,7 @@ class ConfigValidator:
                         "auth.api_key_env",
                         f"Environment variable '{auth.api_key_env}' not set",
                         severity="warning",
-                    )
+                    ),
                 )
 
         # Check thresholds are positive
@@ -123,7 +126,7 @@ class ConfigValidator:
                 ValidationError(
                     "auth.small_module_threshold",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         if auth.medium_module_threshold <= auth.small_module_threshold:
@@ -131,7 +134,7 @@ class ConfigValidator:
                 ValidationError(
                     "auth.medium_module_threshold",
                     "Must be greater than small_module_threshold",
-                )
+                ),
             )
 
         # Check daily limits are positive
@@ -140,7 +143,7 @@ class ConfigValidator:
                 ValidationError(
                     "auth.subscription_daily_limit",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         if auth.api_daily_limit <= 0:
@@ -148,7 +151,7 @@ class ConfigValidator:
                 ValidationError(
                     "auth.api_daily_limit",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         return errors
@@ -168,7 +171,7 @@ class ConfigValidator:
                 ValidationError(
                     "routing.default_tier",
                     f"Invalid tier '{routing.default_tier}'. Must be one of: {valid_tiers}",
-                )
+                ),
             )
 
         # Check model IDs are non-empty
@@ -189,7 +192,7 @@ class ConfigValidator:
                     ValidationError(
                         f"routing.max_tokens_{tier}",
                         "Must be a positive integer",
-                    )
+                    ),
                 )
 
         # Check temperature is in valid range
@@ -198,7 +201,7 @@ class ConfigValidator:
                 ValidationError(
                     "routing.temperature_default",
                     "Must be between 0.0 and 2.0",
-                )
+                ),
             )
 
         # Check max_retries is positive
@@ -207,7 +210,7 @@ class ConfigValidator:
                 ValidationError(
                     "routing.max_retries",
                     "Must be a non-negative integer",
-                )
+                ),
             )
 
         return errors
@@ -226,7 +229,7 @@ class ConfigValidator:
                 ValidationError(
                     "workflows.timeout_seconds",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         return errors
@@ -245,7 +248,7 @@ class ConfigValidator:
                 ValidationError(
                     "analysis.complexity_threshold",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         # Check max file size
@@ -254,7 +257,7 @@ class ConfigValidator:
                 ValidationError(
                     "analysis.max_file_size_kb",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         # Check test coverage target
@@ -263,7 +266,7 @@ class ConfigValidator:
                 ValidationError(
                     "analysis.test_coverage_target",
                     "Must be between 0 and 100",
-                )
+                ),
             )
 
         # Check max function length
@@ -272,7 +275,7 @@ class ConfigValidator:
                 ValidationError(
                     "analysis.max_function_length",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         return errors
@@ -293,7 +296,7 @@ class ConfigValidator:
                     "persistence.memory_backend",
                     f"Invalid backend '{persistence.memory_backend}'. "
                     f"Must be one of: {valid_backends}",
-                )
+                ),
             )
 
         # Check cache TTL is positive
@@ -302,7 +305,7 @@ class ConfigValidator:
                 ValidationError(
                     "persistence.cache_ttl_hours",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         # Check max history entries
@@ -311,7 +314,7 @@ class ConfigValidator:
                 ValidationError(
                     "persistence.max_history_entries",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         # Check save interval
@@ -320,7 +323,7 @@ class ConfigValidator:
                 ValidationError(
                     "persistence.save_interval_seconds",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         # Check backup count
@@ -329,7 +332,7 @@ class ConfigValidator:
                 ValidationError(
                     "persistence.backup_count",
                     "Must be a non-negative integer",
-                )
+                ),
             )
 
         # Check export format
@@ -340,7 +343,7 @@ class ConfigValidator:
                     "persistence.export_format",
                     f"Invalid format '{persistence.export_format}'. "
                     f"Must be one of: {valid_formats}",
-                )
+                ),
             )
 
         # Check merge strategy
@@ -351,7 +354,7 @@ class ConfigValidator:
                     "persistence.import_merge_strategy",
                     f"Invalid strategy '{persistence.import_merge_strategy}'. "
                     f"Must be one of: {valid_strategies}",
-                )
+                ),
             )
 
         return errors
@@ -370,7 +373,7 @@ class ConfigValidator:
                 ValidationError(
                     "telemetry.retention_days",
                     "Must be a positive integer",
-                )
+                ),
             )
 
         return errors
@@ -391,7 +394,7 @@ class ConfigValidator:
                     "environment.log_level",
                     f"Invalid log level '{environment.log_level}'. "
                     f"Must be one of: {valid_levels}",
-                )
+                ),
             )
 
         return errors
@@ -405,6 +408,7 @@ def validate_config(config: UnifiedConfig) -> list[ValidationError]:
 
     Returns:
         List of validation errors.
+
     """
     validator = ConfigValidator()
     return validator.validate(config)

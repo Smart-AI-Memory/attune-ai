@@ -33,6 +33,7 @@ class AgentExecutionRecord:
         cost: LLM API cost in USD
         execution_time_ms: Wall-clock time in milliseconds
         error: Error message if failed
+
     """
 
     execution_id: str
@@ -109,6 +110,7 @@ class AgentStateRecord:
         accumulated_metrics: Rolling metric aggregates
         execution_history: List of execution records (trimmed to max size)
         last_checkpoint: Arbitrary state dict for restart recovery
+
     """
 
     agent_id: str

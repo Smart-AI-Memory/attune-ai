@@ -320,7 +320,9 @@ class TestUnifiedMemoryShortTermOps:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                file_session_enabled=True, file_session_dir=tmpdir, redis_mock=True
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
+                redis_mock=True,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 
@@ -335,7 +337,9 @@ class TestUnifiedMemoryShortTermOps:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                file_session_enabled=True, file_session_dir=tmpdir, redis_mock=True
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
+                redis_mock=True,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 
@@ -365,7 +369,9 @@ class TestUnifiedMemoryShortTermOps:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                file_session_enabled=True, file_session_dir=tmpdir, redis_mock=True
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
+                redis_mock=True,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 
@@ -581,8 +587,8 @@ class TestUnifiedMemorySearch:
                     {"content": "algorithm for sorting", "pattern_type": "algorithm"},
                     {"content": "protocol for messaging", "pattern_type": "protocol"},
                     {"content": "algorithm for searching", "pattern_type": "algorithm"},
-                ]
-            )
+                ],
+            ),
         )
 
         result = memory.search_patterns(query="algorithm")
@@ -607,8 +613,8 @@ class TestUnifiedMemorySearch:
                 [
                     {"content": "test content", "pattern_type": "algorithm"},
                     {"content": "test content", "pattern_type": "protocol"},
-                ]
-            )
+                ],
+            ),
         )
 
         result = memory.search_patterns(pattern_type="algorithm")
@@ -636,8 +642,8 @@ class TestUnifiedMemorySearch:
                     {"content": "pattern 3"},
                     {"content": "pattern 4"},
                     {"content": "pattern 5"},
-                ]
-            )
+                ],
+            ),
         )
 
         result = memory.search_patterns(limit=3)
@@ -853,7 +859,9 @@ class TestUnifiedMemoryTTLStrategy:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                redis_mock=True, file_session_enabled=True, file_session_dir=tmpdir
+                redis_mock=True,
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 
@@ -868,7 +876,9 @@ class TestUnifiedMemoryTTLStrategy:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                redis_mock=True, file_session_enabled=True, file_session_dir=tmpdir
+                redis_mock=True,
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 
@@ -883,7 +893,9 @@ class TestUnifiedMemoryTTLStrategy:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(
-                redis_mock=True, file_session_enabled=True, file_session_dir=tmpdir
+                redis_mock=True,
+                file_session_enabled=True,
+                file_session_dir=tmpdir,
             )
             memory = UnifiedMemory(user_id="test_user", config=config)
 

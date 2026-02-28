@@ -63,7 +63,7 @@ class CacheStorage:
 
         logger.debug(
             f"CacheStorage initialized (dir: {self.cache_dir}, "
-            f"max: {max_disk_mb}MB, entries: {len(self._entries)})"
+            f"max: {max_disk_mb}MB, entries: {len(self._entries)})",
         )
 
     def load(self) -> int:
@@ -109,7 +109,7 @@ class CacheStorage:
 
             logger.info(
                 f"Loaded {loaded} cache entries from disk (version: {version}, "
-                f"skipped {len(entries_data) - loaded} expired)"
+                f"skipped {len(entries_data) - loaded} expired)",
             )
             return loaded
 

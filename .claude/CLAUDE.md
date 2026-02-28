@@ -223,4 +223,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   collect meaningful data before building on top of them or advertising
   session memory as a feature.
 
+- **ruff parses pytest.ini as Python**: When committing `pytest.ini`
+  alongside `.py` files, ruff's pre-commit hook tries to parse it as
+  Python and produces syntax errors. Commit `pytest.ini` in a separate
+  commit from Python files so the ruff hook only sees valid Python.
+
+- **Read source before writing tests for tricky logic**: The inline-
+  comment check in `is_in_docstring_or_comment()` uses a ternary that
+  defaults to `True` for any line not containing `eval`. Tests written
+  against assumed behavior (expected `False`) failed. Always read the
+  actual implementation before asserting expected values for
+  non-obvious control flow.
+
+- **Background processes from previous sessions persist across
+  restarts**: Long-running processes started by Claude (e.g.
+  `attune dashboard start`, `npm run dev`) survive session end and
+  keep running silently. They can open browser tabs, consume ports,
+  or interfere with the next session. Always `kill` them explicitly
+  when removing a feature, and check `ps aux` if unexpected behavior
+  is observed (Chrome tabs opening, ports already in use, etc.).
+
+- **Twine cannot prompt for tokens in Claude Code's non-interactive
+  terminal**: `twine upload` hangs or raises `EOFError` when it tries
+  to prompt for a PyPI token. Pass the token via environment variable:
+  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
+
 <!-- attune-lessons-end -->

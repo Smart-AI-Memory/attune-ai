@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # Module-level helpers (extracted to code_review_analysis_helpers.py)
 # ---------------------------------------------------------------------------
 
-from .code_review_analysis_helpers import (  # noqa: E402, F401 - re-exported
+from .code_review_analysis_helpers import (  # noqa: E402 - re-exported
     CHARS_PER_TOKEN_ESTIMATE,
     MAX_FILE_LINES,
     _format_findings_for_prompt,
@@ -79,6 +79,7 @@ class CodeReviewAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens).
+
         """
         from .perf_audit import PERF_PATTERNS
 
@@ -110,7 +111,7 @@ class CodeReviewAnalysisMixin:
                                 "description": pattern_info["description"],
                                 "impact": pattern_info["impact"],
                                 "match": match.group()[:80],
-                            }
+                            },
                         )
 
         by_impact: dict[str, int] = {"high": 0, "medium": 0, "low": 0}
@@ -151,6 +152,7 @@ class CodeReviewAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens).
+
         """
         findings = input_data.get("perf_findings", [])
         if not findings:
@@ -182,7 +184,7 @@ class CodeReviewAnalysisMixin:
             "When uncertain, keep validated=true and false_positive=false."
         )
 
-        user_message = f"Analyze these {len(findings)} performance findings:\n\n" f"{findings_text}"
+        user_message = f"Analyze these {len(findings)} performance findings:\n\n{findings_text}"
 
         response, in_tokens, out_tokens = await self._call_llm(
             tier,
@@ -229,6 +231,7 @@ class CodeReviewAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens).
+
         """
         health_snapshot: dict[str, Any] = {}
 
@@ -299,6 +302,7 @@ class CodeReviewAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens).
+
         """
         files_changed: list[str] = input_data.get("files_changed", [])
         findings: list[dict] = []
@@ -332,7 +336,7 @@ class CodeReviewAnalysisMixin:
                         "line": None,
                         "description": f"File has {len(lines)} lines (>{MAX_FILE_LINES}), consider splitting",
                         "severity": "medium",
-                    }
+                    },
                 )
 
             # Check for bare except
@@ -347,7 +351,7 @@ class CodeReviewAnalysisMixin:
                             "line": line_num,
                             "description": "Bare except or broad except Exception without # noqa",
                             "severity": "high",
-                        }
+                        },
                     )
 
             # Count TODOs/FIXMEs
@@ -360,7 +364,7 @@ class CodeReviewAnalysisMixin:
                         "line": None,
                         "description": f"{todo_count} TODO/FIXME comment(s) found",
                         "severity": "low",
-                    }
+                    },
                 )
 
             # Check public functions for return type hints
@@ -377,7 +381,7 @@ class CodeReviewAnalysisMixin:
                             "line": line_num,
                             "description": f"Public function '{func_name}' missing return type hint",
                             "severity": "medium",
-                        }
+                        },
                     )
 
         by_severity: dict[str, int] = {"high": 0, "medium": 0, "low": 0}
@@ -419,6 +423,7 @@ class CodeReviewAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens).
+
         """
         findings = input_data.get("quality_findings", [])
         if not findings:
@@ -453,7 +458,7 @@ class CodeReviewAnalysisMixin:
             "When uncertain, keep validated=true and false_positive=false."
         )
 
-        user_message = f"Analyze these {len(findings)} quality findings:\n\n" f"{findings_text}"
+        user_message = f"Analyze these {len(findings)} quality findings:\n\n{findings_text}"
 
         response, in_tokens, out_tokens = await self._call_llm(
             tier,

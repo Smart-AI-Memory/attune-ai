@@ -42,7 +42,10 @@ class DummyWorkflow(BaseWorkflow):
     }
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         return {"result": stage_name}, 100, 50
 

@@ -23,10 +23,10 @@ from .feedback_loop import FeedbackEntry, FeedbackLoop, QualityStats, TierRecomm
 from .usage_tracker import UsageTracker
 
 __all__ = [
+    "AgentHeartbeat",
     "ApprovalGate",
     "ApprovalRequest",
     "ApprovalResponse",
-    "AgentHeartbeat",
     "CoordinationSignal",
     "CoordinationSignals",
     "EventStreamer",

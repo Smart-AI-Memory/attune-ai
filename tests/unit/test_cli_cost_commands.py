@@ -32,12 +32,12 @@ _COST_TRACKER = "attune.cost_tracker.CostTracker"
 class TestCostsParser:
     """Tests that the costs command group parses correctly."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parser(self):
         return create_parser()
 
     def test_costs_defaults(self, parser) -> None:
-        """attune costs parses with default values."""
+        """Attune costs parses with default values."""
         args = parser.parse_args(["costs"])
         assert args.command == "costs"
         assert args.days == 7
@@ -45,51 +45,51 @@ class TestCostsParser:
         assert args.workflow is None
 
     def test_costs_days_flag(self, parser) -> None:
-        """attune costs --days 30 parses days."""
+        """Attune costs --days 30 parses days."""
         args = parser.parse_args(["costs", "--days", "30"])
         assert args.days == 30
 
     def test_costs_json_flag(self, parser) -> None:
-        """attune costs --json parses json flag."""
+        """Attune costs --json parses json flag."""
         args = parser.parse_args(["costs", "--json"])
         assert args.json is True
 
     def test_costs_workflow_flag(self, parser) -> None:
-        """attune costs --workflow code-review parses workflow."""
+        """Attune costs --workflow code-review parses workflow."""
         args = parser.parse_args(["costs", "--workflow", "code-review"])
         assert args.workflow == "code-review"
 
     def test_costs_short_flags(self, parser) -> None:
-        """attune costs -d 14 -w test parses short flags."""
+        """Attune costs -d 14 -w test parses short flags."""
         args = parser.parse_args(["costs", "-d", "14", "-w", "test"])
         assert args.days == 14
         assert args.workflow == "test"
 
     def test_costs_today(self, parser) -> None:
-        """attune costs today parses subcommand."""
+        """Attune costs today parses subcommand."""
         args = parser.parse_args(["costs", "today"])
         assert args.costs_command == "today"
 
     def test_costs_export(self, parser) -> None:
-        """attune costs export parses with required output."""
+        """Attune costs export parses with required output."""
         args = parser.parse_args(["costs", "export", "-o", "out.json"])
         assert args.costs_command == "export"
         assert args.output == "out.json"
 
     def test_costs_export_csv(self, parser) -> None:
-        """attune costs export -f csv parses format."""
+        """Attune costs export -f csv parses format."""
         args = parser.parse_args(["costs", "export", "-o", "out.csv", "-f", "csv", "-d", "60"])
         assert args.format == "csv"
         assert args.days == 60
 
     def test_costs_reset_confirm(self, parser) -> None:
-        """attune costs reset --confirm parses flag."""
+        """Attune costs reset --confirm parses flag."""
         args = parser.parse_args(["costs", "reset", "--confirm"])
         assert args.costs_command == "reset"
         assert args.confirm is True
 
     def test_costs_reset_no_confirm(self, parser) -> None:
-        """attune costs reset without --confirm defaults to False."""
+        """Attune costs reset without --confirm defaults to False."""
         args = parser.parse_args(["costs", "reset"])
         assert args.confirm is False
 
@@ -104,25 +104,25 @@ class TestMainCostsRouting:
 
     @patch(f"{_CLI}.cmd_costs", return_value=0)
     def test_costs_default(self, mock_fn: MagicMock) -> None:
-        """attune costs dispatches to cmd_costs."""
+        """Attune costs dispatches to cmd_costs."""
         assert main(["costs"]) == 0
         mock_fn.assert_called_once()
 
     @patch(f"{_CLI}.cmd_costs_today", return_value=0)
     def test_costs_today(self, mock_fn: MagicMock) -> None:
-        """attune costs today dispatches to cmd_costs_today."""
+        """Attune costs today dispatches to cmd_costs_today."""
         assert main(["costs", "today"]) == 0
         mock_fn.assert_called_once()
 
     @patch(f"{_CLI}.cmd_costs_export", return_value=0)
     def test_costs_export(self, mock_fn: MagicMock) -> None:
-        """attune costs export dispatches to cmd_costs_export."""
+        """Attune costs export dispatches to cmd_costs_export."""
         assert main(["costs", "export", "-o", "f.json"]) == 0
         mock_fn.assert_called_once()
 
     @patch(f"{_CLI}.cmd_costs_reset", return_value=0)
     def test_costs_reset(self, mock_fn: MagicMock) -> None:
-        """attune costs reset dispatches to cmd_costs_reset."""
+        """Attune costs reset dispatches to cmd_costs_reset."""
         assert main(["costs", "reset", "--confirm"]) == 0
         mock_fn.assert_called_once()
 
@@ -211,7 +211,7 @@ class TestCmdCosts:
                     "baseline_cost": 0.30,
                     "savings": 0.27,
                 },
-            ]
+            ],
         }
 
         args = Namespace(days=365, json=False, workflow="code-review")
@@ -237,7 +237,7 @@ class TestCmdCosts:
                     "baseline_cost": 0.50,
                     "savings": 0.45,
                 },
-            ]
+            ],
         }
 
         args = Namespace(days=365, json=True, workflow="code-review")
@@ -351,7 +351,7 @@ class TestCmdCostsExport:
                     "baseline_cost": 0.40,
                     "savings": 0.36,
                 },
-            }
+            },
         }
 
         from attune.cli_commands.cost_commands import cmd_costs_export

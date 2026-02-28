@@ -378,7 +378,7 @@ class TestFallbackActivation:
         for step in chain:
             # Should not go to cheaper tiers from premium
             assert step.tier in [
-                "premium"
+                "premium",
             ], f"Premium tier should not fallback to cheaper tier {step.tier}"
 
     def test_max_retries_respected(self):

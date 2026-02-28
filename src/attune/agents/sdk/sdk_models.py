@@ -39,6 +39,7 @@ class SDKExecutionMode(Enum):
             attune LLM routing for the main conversation.
         FULL_SDK: Let the SDK manage the entire agent lifecycle including
             conversation, tool calls, and subagent delegation.
+
     """
 
     TOOLS_ONLY = "tools_only"
@@ -72,6 +73,7 @@ class SDKAgentResult:
         escalated: Whether tier escalation occurred.
         sdk_used: Whether the Agent SDK was actually invoked.
         error: Error message if the execution failed.
+
     """
 
     agent_id: str
@@ -93,6 +95,7 @@ class SDKAgentResult:
 
         Returns:
             Dict representation of this result.
+
         """
         return {
             "agent_id": self.agent_id,
@@ -119,6 +122,7 @@ class SDKAgentResult:
 
         Returns:
             Reconstructed SDKAgentResult.
+
         """
         mode_str = data.get("mode", SDKExecutionMode.TOOLS_ONLY.value)
         try:

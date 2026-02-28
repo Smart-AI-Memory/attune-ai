@@ -148,7 +148,7 @@ class TestGetBestModel:
                     "success": True,
                     "cost": 0.001,
                     "duration_ms": 100,
-                }
+                },
             )
         for _i in range(10):
             entries.append(
@@ -160,7 +160,7 @@ class TestGetBestModel:
                     "success": False,
                     "cost": 0.001,
                     "duration_ms": 100,
-                }
+                },
             )
         mock_telemetry.get_recent_entries.return_value = entries
 
@@ -209,7 +209,9 @@ class TestGetBestModel:
 
         router = AdaptiveModelRouter(mock_telemetry)
         model = router.get_best_model(
-            workflow="test", stage="test", max_latency_ms=1000  # Fast requirement
+            workflow="test",
+            stage="test",
+            max_latency_ms=1000,  # Fast requirement
         )
         # Should fall back to default due to latency constraint
         assert model is not None
@@ -444,7 +446,7 @@ class TestAnalyzeModelPerformance:
                     "duration_ms": 200,
                 }
                 for _ in range(15)
-            ]
+            ],
         )
         mock_telemetry.get_recent_entries.return_value = entries
 
@@ -471,7 +473,7 @@ class TestAnalyzeModelPerformance:
                     "success": True,
                     "cost": 0.001,
                     "duration_ms": 100,
-                }
+                },
             )
         for _i in range(2):
             entries.append(
@@ -483,7 +485,7 @@ class TestAnalyzeModelPerformance:
                     "success": False,
                     "cost": 0.001,
                     "duration_ms": 100,
-                }
+                },
             )
         mock_telemetry.get_recent_entries.return_value = entries
 

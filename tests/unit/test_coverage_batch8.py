@@ -116,7 +116,7 @@ def mock_workflow_result() -> Mock:
     result.final_output = {
         "security_score": 85,
         "security_findings": [
-            {"severity": "medium", "file": "test.py", "line": 10, "type": "issue"}
+            {"severity": "medium", "file": "test.py", "line": 10, "type": "issue"},
         ],
         "verdict": "approve_with_suggestions",
     }
@@ -583,7 +583,8 @@ class TestPipelineExecute:
 
     @pytest.mark.asyncio
     async def test_execute_metadata_contains_formatted_report(
-        self, mock_workflow_result: Mock
+        self,
+        mock_workflow_result: Mock,
     ) -> None:
         """Test that metadata includes formatted report."""
         pipeline = CodeReviewPipeline(mode="standard")
@@ -665,7 +666,9 @@ class TestRunFullMode:
             return_value=mock_wf_instance,
         ):
             crew_report, wf_result = await pipeline._run_full_mode(
-                "some code", ["a.py"], {"extra": "context"}
+                "some code",
+                ["a.py"],
+                {"extra": "context"},
             )
 
             # Workflow should have been called
@@ -955,7 +958,9 @@ class TestCodeReviewWorkflowAdditional:
             mock_arch.return_value = ({"verdict": "approve"}, 200, 100)
 
             result, _, _ = await wf.run_stage(
-                "architect_review", ModelTier.PREMIUM, {"code_to_review": "x"}
+                "architect_review",
+                ModelTier.PREMIUM,
+                {"code_to_review": "x"},
             )
 
             mock_arch.assert_called_once()
@@ -1037,7 +1042,8 @@ class TestCodeReviewWorkflowAdditional:
             with patch.dict("sys.modules", {"attune.workflows.code_review_adapters": None}):
                 try:
                     result, it, ot = await wf._crew_review(
-                        {"diff": "code", "files_changed": []}, ModelTier.CAPABLE
+                        {"diff": "code", "files_changed": []},
+                        ModelTier.CAPABLE,
                     )
                     assert result["crew_review"]["available"] is False
                     assert result["crew_review"]["fallback"] is True
@@ -1173,7 +1179,6 @@ class TestAutonomousTestGeneratorInit:
         tmp_path: Path,
     ) -> None:
         """Test initialization with Redis available."""
-
         gen = AutonomousTestGenerator(
             agent_id="test-agent",
             batch_num=1,
@@ -1190,7 +1195,10 @@ class TestAutonomousTestGeneratorInit:
     @patch("attune.workflows.autonomous_test_gen.RedisShortTermMemory")
     @patch("attune.workflows.autonomous_test_gen.HeartbeatCoordinator")
     def test_init_redis_failure_fallback(
-        self, mock_coordinator: Mock, mock_redis: Mock, tmp_path: Path
+        self,
+        mock_coordinator: Mock,
+        mock_redis: Mock,
+        tmp_path: Path,
     ) -> None:
         """Test initialization falls back when Redis fails."""
         mock_redis.side_effect = ConnectionError("Redis not available")
@@ -1409,7 +1417,7 @@ class TestAutonomousTestGeneratorGenerate:
         gen = AutonomousTestGenerator("agent", 1, [])
 
         result = gen._generate_module_tests(
-            {"file": "/nonexistent/path/module.py", "total": 100, "missing": 80}
+            {"file": "/nonexistent/path/module.py", "total": 100, "missing": 80},
         )
         assert result is None
 
@@ -1434,7 +1442,7 @@ class TestAutonomousTestGeneratorGenerate:
 
         with patch.object(gen, "_generate_with_llm", return_value=None):
             result = gen._generate_module_tests(
-                {"file": str(source_file), "total": 10, "missing": 5}
+                {"file": str(source_file), "total": 10, "missing": 5},
             )
             assert result is None
 
@@ -1465,7 +1473,7 @@ class TestAutonomousTestGeneratorGenerate:
         with patch.object(gen, "_generate_with_llm", return_value=test_content):
             with patch.object(gen, "_validate_test_file", return_value=False):
                 result = gen._generate_module_tests(
-                    {"file": str(source_file), "total": 10, "missing": 5}
+                    {"file": str(source_file), "total": 10, "missing": 5},
                 )
                 assert result is None
 
@@ -1496,7 +1504,7 @@ class TestAutonomousTestGeneratorGenerate:
         with patch.object(gen, "_generate_with_llm", return_value=test_content):
             with patch.object(gen, "_validate_test_file", return_value=True):
                 result = gen._generate_module_tests(
-                    {"file": str(source_file), "total": 10, "missing": 5}
+                    {"file": str(source_file), "total": 10, "missing": 5},
                 )
                 assert result is not None
                 assert result.exists()
@@ -1528,7 +1536,7 @@ class TestAutonomousTestGeneratorGenerate:
         with patch.object(gen, "_generate_with_refinement", return_value=test_content):
             with patch.object(gen, "_validate_test_file", return_value=True):
                 result = gen._generate_module_tests(
-                    {"file": str(source_file), "total": 10, "missing": 5}
+                    {"file": str(source_file), "total": 10, "missing": 5},
                 )
                 assert result is not None
 
@@ -1561,7 +1569,7 @@ class TestAutonomousTestGeneratorGenerate:
             with patch.object(gen, "_generate_with_coverage_target", return_value=improved_content):
                 with patch.object(gen, "_validate_test_file", return_value=True):
                     result = gen._generate_module_tests(
-                        {"file": str(source_file), "total": 10, "missing": 5}
+                        {"file": str(source_file), "total": 10, "missing": 5},
                     )
                     assert result is not None
 
@@ -1593,7 +1601,7 @@ class TestAutonomousTestGeneratorGenerate:
             with patch.object(gen, "_generate_with_coverage_target", return_value=None):
                 with patch.object(gen, "_validate_test_file", return_value=True):
                     result = gen._generate_module_tests(
-                        {"file": str(source_file), "total": 10, "missing": 5}
+                        {"file": str(source_file), "total": 10, "missing": 5},
                     )
                     assert result is not None
                     # Should contain initial_content since coverage failed
@@ -1722,7 +1730,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": MagicMock()}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -1742,7 +1753,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": None}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -1790,7 +1804,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
 
             assert result is not None
@@ -1822,7 +1839,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -1857,7 +1877,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -1906,7 +1929,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
 
             assert result is not None
@@ -1947,7 +1973,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -1974,7 +2003,10 @@ class TestAutonomousTestGeneratorLLM:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = gen._generate_with_llm(
-                "module", "attune.module", Path("src/module.py"), "def foo(): pass"
+                "module",
+                "attune.module",
+                Path("src/module.py"),
+                "def foo(): pass",
             )
             assert result is None
 
@@ -2018,7 +2050,9 @@ class MyWorkflow(BaseWorkflow):
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             with patch.object(gen, "_is_workflow_module", return_value=True):
                 with patch.object(
-                    gen, "_get_workflow_specific_prompt", return_value="Generate tests"
+                    gen,
+                    "_get_workflow_specific_prompt",
+                    return_value="Generate tests",
                 ):
                     gen._generate_with_llm(
                         "my_workflow",
@@ -2081,7 +2115,9 @@ class TestRunBatchGeneration:
 
     @patch("attune.workflows.autonomous_test_gen.AutonomousTestGenerator")
     def test_run_batch_generation_calls_generator(
-        self, mock_gen_class: Mock, capsys: pytest.CaptureFixture
+        self,
+        mock_gen_class: Mock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test that run_batch_generation creates and runs generator."""
         mock_instance = mock_gen_class.return_value
@@ -2098,7 +2134,7 @@ class TestRunBatchGeneration:
             [
                 {"file": "src/attune/mod1.py"},
                 {"file": "src/attune/mod2.py"},
-            ]
+            ],
         )
 
         run_batch_generation(
@@ -2116,7 +2152,9 @@ class TestRunBatchGeneration:
 
     @patch("attune.workflows.autonomous_test_gen.AutonomousTestGenerator")
     def test_run_batch_generation_with_coverage(
-        self, mock_gen_class: Mock, capsys: pytest.CaptureFixture
+        self,
+        mock_gen_class: Mock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test run_batch_generation with coverage-guided mode."""
         mock_instance = mock_gen_class.return_value
@@ -2225,7 +2263,9 @@ class TestAuthStrategyIntegration:
     async def test_classify_with_auth_strategy_disabled(self, cost_tracker: Any) -> None:
         """Test classify works with auth strategy disabled."""
         wf = CodeReviewWorkflow(
-            cost_tracker=cost_tracker, use_crew=False, enable_auth_strategy=False
+            cost_tracker=cost_tracker,
+            use_crew=False,
+            enable_auth_strategy=False,
         )
 
         with patch.object(wf, "_call_llm", new_callable=AsyncMock) as mock_llm:
@@ -2244,7 +2284,9 @@ class TestAuthStrategyIntegration:
     async def test_classify_auth_strategy_exception(self, cost_tracker: Any) -> None:
         """Test classify handles auth strategy exceptions gracefully."""
         wf = CodeReviewWorkflow(
-            cost_tracker=cost_tracker, use_crew=False, enable_auth_strategy=True
+            cost_tracker=cost_tracker,
+            use_crew=False,
+            enable_auth_strategy=True,
         )
 
         with patch.object(wf, "_call_llm", new_callable=AsyncMock) as mock_llm:
@@ -2270,7 +2312,9 @@ class TestAuthStrategyIntegration:
     async def test_classify_detects_high_complexity(self, cost_tracker: Any) -> None:
         """Test that classify detects high complexity in LLM response."""
         wf = CodeReviewWorkflow(
-            cost_tracker=cost_tracker, use_crew=False, enable_auth_strategy=False
+            cost_tracker=cost_tracker,
+            use_crew=False,
+            enable_auth_strategy=False,
         )
 
         with patch.object(wf, "_call_llm", new_callable=AsyncMock) as mock_llm:

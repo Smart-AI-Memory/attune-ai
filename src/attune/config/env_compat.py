@@ -29,6 +29,7 @@ def get_attune_env(name: str, default: str | None = None) -> str | None:
     Returns:
         The value from ATTUNE_{name}, or EMPATHY_{name} with a deprecation
         warning, or the default.
+
     """
     attune_key = f"ATTUNE_{name}"
     empathy_key = f"EMPATHY_{name}"
@@ -64,6 +65,7 @@ def iter_attune_env_prefix(prefix: str, suffix: str = "") -> Iterator[tuple[str,
     Yields:
         Tuples of (middle_part, value) where middle_part is the string
         between prefix and suffix.
+
     """
     attune_prefix = f"ATTUNE_{prefix}"
     empathy_prefix = f"EMPATHY_{prefix}"

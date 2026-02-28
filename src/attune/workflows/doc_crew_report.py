@@ -19,6 +19,7 @@ def format_manage_docs_report(result: ManageDocumentationCrewResult, path: str) 
 
     Returns:
         Formatted report string
+
     """
     lines: list[str] = []
 
@@ -39,7 +40,7 @@ def format_manage_docs_report(result: ManageDocumentationCrewResult, path: str) 
     lines.append("=" * 60)
     lines.append("")
     lines.append(f"Path Analyzed: {path}")
-    lines.append(f"Confidence: {confidence_icon} {confidence_text} " f"({confidence:.0%})")
+    lines.append(f"Confidence: {confidence_icon} {confidence_text} ({confidence:.0%})")
     lines.append("")
 
     # Summary
@@ -49,7 +50,7 @@ def format_manage_docs_report(result: ManageDocumentationCrewResult, path: str) 
     lines.append(f"Files Analyzed: {result.files_analyzed}")
     lines.append(f"Docs Needing Update: {result.docs_needing_update}")
     lines.append(f"New Docs Needed: {result.new_docs_needed}")
-    lines.append(f"Duration: {result.duration_ms}ms " f"({result.duration_ms / 1000:.1f}s)")
+    lines.append(f"Duration: {result.duration_ms}ms ({result.duration_ms / 1000:.1f}s)")
     lines.append(f"Cost: ${result.cost:.4f}")
     lines.append("")
 
@@ -83,13 +84,12 @@ def format_manage_docs_report(result: ManageDocumentationCrewResult, path: str) 
                     lines.append(f"   {answer[:300]}...")
                 else:
                     lines.append(f"   {answer}")
+            # Fallback to original response
+            elif len(response) > 500:
+                lines.append(f"   {response[:500]}...")
+                lines.append(f"   [Truncated - {len(response)} chars total]")
             else:
-                # Fallback to original response
-                if len(response) > 500:
-                    lines.append(f"   {response[:500]}...")
-                    lines.append(f"   [Truncated - {len(response)} chars total]")
-                else:
-                    lines.append(f"   {response}")
+                lines.append(f"   {response}")
             lines.append("")
 
     # Recommendations

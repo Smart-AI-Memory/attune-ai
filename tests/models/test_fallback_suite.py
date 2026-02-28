@@ -100,6 +100,7 @@ class FallbackTestSuite:
 
         Args:
             verbose: Enable verbose output
+
         """
         self.verbose = verbose
         self.console = Console() if RICH_AVAILABLE else None
@@ -131,6 +132,7 @@ class FallbackTestSuite:
 
         Returns:
             TestResult with outcome
+
         """
         if self.verbose:
             self._print(f"  Testing: {scenario_name}...", "cyan")
@@ -146,7 +148,7 @@ class FallbackTestSuite:
             if not api_key:
                 raise ValueError(
                     "ANTHROPIC_API_KEY not found in environment. "
-                    "Please set it in your .env file or export it."
+                    "Please set it in your .env file or export it.",
                 )
 
             # Create executor with fallback (explicitly pass API key)
@@ -399,6 +401,7 @@ class FallbackTestSuite:
 
         Returns:
             TestReport with analysis
+
         """
         end_time = datetime.utcnow()
         duration = (end_time - self.start_time).total_seconds()
@@ -450,6 +453,7 @@ class FallbackTestSuite:
 
         Args:
             report: Test report to display
+
         """
         if RICH_AVAILABLE and self.console:
             self._print_rich_report(report)
@@ -464,7 +468,9 @@ class FallbackTestSuite:
 
         console.print("\n" + "=" * 80, style="cyan")
         console.print(
-            "🎯 SONNET 4.5 → OPUS 4.5 FALLBACK TEST REPORT", style="bold cyan", justify="center"
+            "🎯 SONNET 4.5 → OPUS 4.5 FALLBACK TEST REPORT",
+            style="bold cyan",
+            justify="center",
         )
         console.print("=" * 80, style="cyan")
 
@@ -502,7 +508,8 @@ class FallbackTestSuite:
             else ("yellow" if report.fallback_rate < 15 else "red")
         )
         usage_text.append(
-            f"\nFallback Rate: {report.fallback_rate:.1f}%", style=f"{fallback_style} bold"
+            f"\nFallback Rate: {report.fallback_rate:.1f}%",
+            style=f"{fallback_style} bold",
         )
 
         console.print(Panel(usage_text, title="Model Usage Distribution", border_style="blue"))
@@ -549,7 +556,7 @@ class FallbackTestSuite:
             rec_text.append("✅ Excellent Performance!\n", style="green bold")
             rec_text.append(f"Sonnet handles {100 - report.fallback_rate:.1f}% of tasks.\n")
             rec_text.append(
-                f"Cost savings: ${report.savings:.4f} ({report.savings_percent:.1f}%)\n"
+                f"Cost savings: ${report.savings:.4f} ({report.savings_percent:.1f}%)\n",
             )
             rec_text.append("\nRecommendation: Continue current strategy.")
             console.print(Panel(rec_text, title="Assessment", border_style="green"))
@@ -582,7 +589,7 @@ class FallbackTestSuite:
 
         print("\nModel Usage:")
         print(
-            f"  Sonnet Only: {report.sonnet_only} ({(report.sonnet_only / report.total_tests * 100):.1f}%)"
+            f"  Sonnet Only: {report.sonnet_only} ({(report.sonnet_only / report.total_tests * 100):.1f}%)",
         )
         print(f"  Opus Fallback: {report.opus_fallback} ({report.fallback_rate:.1f}%)")
 
@@ -594,13 +601,16 @@ class FallbackTestSuite:
         print("\n" + "=" * 80)
 
     def save_report(
-        self, report: TestReport, output_path: str = "fallback_test_report.json"
+        self,
+        report: TestReport,
+        output_path: str = "fallback_test_report.json",
     ) -> None:
         """Save report to JSON file.
 
         Args:
             report: Test report
             output_path: Path to save report
+
         """
         report_dict = asdict(report)
 
@@ -617,6 +627,7 @@ class FallbackTestSuite:
 
         Returns:
             TestReport
+
         """
         self._print("\n🧪 Sonnet 4.5 → Opus 4.5 Fallback Test Suite", "bold magenta")
         self._print(f"Test ID: {self.test_run_id}", "dim")
@@ -647,7 +658,7 @@ class FallbackTestSuite:
 async def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Automated test suite for Sonnet 4.5 → Opus 4.5 fallback"
+        description="Automated test suite for Sonnet 4.5 → Opus 4.5 fallback",
     )
     parser.add_argument(
         "--quick",

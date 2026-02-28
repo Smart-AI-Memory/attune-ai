@@ -57,13 +57,13 @@ class MockWizardCustomResponse:
     async def analyze(self, context: dict) -> dict:
         if self.response_format == "response":
             return {"response": "response value"}
-        elif self.response_format == "result":
+        if self.response_format == "result":
             return {"result": ["item1", "item2"]}
-        elif self.response_format == "analysis":
+        if self.response_format == "analysis":
             return {"analysis": {"key": "value"}}
-        elif self.response_format == "recommendations_only":
+        if self.response_format == "recommendations_only":
             return {"recommendations": ["rec1", "rec2"]}
-        elif self.response_format == "empty":
+        if self.response_format == "empty":
             return {}
         return {"output": "default"}
 

@@ -290,7 +290,7 @@ class ExecutionMixin(
             from .suggestions import generate_suggestions
 
             result.suggestions = generate_suggestions(self.name, result)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Suggestions are optional — never crash workflow
             logger.debug("Suggestion generation skipped: %s", e)
 

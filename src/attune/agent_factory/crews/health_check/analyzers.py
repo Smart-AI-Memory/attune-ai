@@ -39,6 +39,7 @@ def build_check_task(
 
     Returns:
         Task description string for the crew.
+
     """
     issues_summary = "\n".join(
         f"  - [{i.severity.value.upper()}] {i.category.value}: {i.title}" for i in issues[:30]
@@ -92,6 +93,7 @@ def parse_fixes(result: dict, issues: list[HealthIssue]) -> list[HealthFix]:
 
     Returns:
         List of health fixes (suggested or structured).
+
     """
     fixes: list[HealthFix] = []
 
@@ -144,6 +146,7 @@ async def apply_fixes(
 
     Returns:
         Updated list of fixes with applied statuses.
+
     """
     updated_fixes: list[HealthFix] = []
 
@@ -189,6 +192,7 @@ def calculate_health_score(issues: list[HealthIssue]) -> float:
 
     Returns:
         Health score from 0.0 to 100.0.
+
     """
     if not issues:
         return 100.0

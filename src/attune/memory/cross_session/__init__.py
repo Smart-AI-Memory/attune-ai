@@ -38,17 +38,17 @@ from .service import (
 )
 
 __all__ = [
-    "BackgroundService",
     "CHANNEL_SESSIONS",
-    "ConflictResult",
-    "ConflictStrategy",
-    "CrossSessionCoordinator",
     "HEARTBEAT_INTERVAL_SECONDS",
     "KEY_ACTIVE_AGENTS",
     "KEY_SERVICE_HEARTBEAT",
     "KEY_SERVICE_LOCK",
     "SERVICE_LOCK_TTL_SECONDS",
     "STALE_THRESHOLD_SECONDS",
+    "BackgroundService",
+    "ConflictResult",
+    "ConflictStrategy",
+    "CrossSessionCoordinator",
     "SessionInfo",
     "SessionType",
     "check_redis_cross_session_support",

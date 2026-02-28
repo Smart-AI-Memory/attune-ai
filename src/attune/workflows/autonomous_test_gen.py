@@ -97,6 +97,7 @@ class AutonomousTestGenerator(
             max_refinement_iterations: Max iterations for refinement (default: 3)
             enable_coverage_guided: Enable Phase 3 coverage-guided generation (default: False)
             target_coverage: Target coverage percentage (default: 0.80 = 80%)
+
         """
         warnings.warn(
             "AutonomousTestGenerator is deprecated since v5.3.0. "
@@ -131,7 +132,7 @@ class AutonomousTestGenerator(
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"Generator initialized: refinement={enable_refinement}, coverage_guided={enable_coverage_guided}"
+            f"Generator initialized: refinement={enable_refinement}, coverage_guided={enable_coverage_guided}",
         )
 
     def generate_all(self) -> dict[str, Any]:
@@ -139,6 +140,7 @@ class AutonomousTestGenerator(
 
         Returns:
             Summary of generation results
+
         """
         # Start tracking
         self.coordinator.start_heartbeat(
@@ -252,13 +254,13 @@ class AutonomousTestGenerator(
 
         except Exception as e:
             # Error tracking
-            self.coordinator.beat(status="failed", progress=0.0, current_task=f"Failed: {str(e)}")
+            self.coordinator.beat(status="failed", progress=0.0, current_task=f"Failed: {e!s}")
             raise
 
         finally:
             # Stop heartbeat
             self.coordinator.stop_heartbeat(
-                final_status="completed" if results["completed"] > 0 else "failed"
+                final_status="completed" if results["completed"] > 0 else "failed",
             )
 
     def _generate_module_tests(self, module: dict[str, Any]) -> Path | None:
@@ -269,6 +271,7 @@ class AutonomousTestGenerator(
 
         Returns:
             Path to generated test file, or None if skipped
+
         """
         source_file = Path(module["file"])
         module_name = source_file.stem
@@ -299,12 +302,19 @@ class AutonomousTestGenerator(
         if self.enable_refinement:
             logger.info(f"🔄 Using Phase 2: Multi-turn refinement for {module_name}")
             test_content = self._generate_with_refinement(
-                module_name, module_path, source_file, source_code, test_file
+                module_name,
+                module_path,
+                source_file,
+                source_code,
+                test_file,
             )
         else:
             logger.info(f"📝 Using Phase 1: Basic generation for {module_name}")
             test_content = self._generate_with_llm(
-                module_name, module_path, source_file, source_code
+                module_name,
+                module_path,
+                source_file,
+                source_code,
             )
 
         if not test_content:
@@ -317,14 +327,19 @@ class AutonomousTestGenerator(
         if self.enable_coverage_guided:
             logger.info(f"📊 Applying Phase 3: Coverage-guided improvement for {module_name}")
             improved_content = self._generate_with_coverage_target(
-                module_name, module_path, source_file, source_code, test_file, test_content
+                module_name,
+                module_path,
+                source_file,
+                source_code,
+                test_file,
+                test_content,
             )
             if improved_content:
                 test_content = improved_content
                 logger.info(f"✅ Coverage-guided improvement complete for {module_name}")
             else:
                 logger.warning(
-                    f"⚠️  Coverage-guided improvement failed, using previous version for {module_name}"
+                    f"⚠️  Coverage-guided improvement failed, using previous version for {module_name}",
                 )
 
         # Write final test file
@@ -340,7 +355,11 @@ class AutonomousTestGenerator(
         return test_file
 
     def _generate_with_llm(
-        self, module_name: str, module_path: str, source_file: Path, source_code: str
+        self,
+        module_name: str,
+        module_path: str,
+        source_file: Path,
+        source_code: str,
     ) -> str | None:
         """Generate comprehensive tests using LLM with Anthropic best practices.
 
@@ -358,6 +377,7 @@ class AutonomousTestGenerator(
 
         Returns:
             Test file content with comprehensive tests, or None if generation failed
+
         """
         import os
 
@@ -376,13 +396,15 @@ class AutonomousTestGenerator(
         # Detect if this is a workflow module
         is_workflow = self._is_workflow_module(source_code, module_path)
         logger.info(
-            f"Module {module_name}: workflow={is_workflow}, size={len(source_code)} bytes (FULL)"
+            f"Module {module_name}: workflow={is_workflow}, size={len(source_code)} bytes (FULL)",
         )
 
         # Build appropriate prompt based on module type
         if is_workflow:
             generation_prompt = self._get_workflow_specific_prompt(
-                module_name, module_path, source_code
+                module_name,
+                module_path,
+                source_code,
             )
         else:
             generation_prompt = f"""Generate comprehensive behavioral tests for this Python module.
@@ -438,13 +460,13 @@ Return ONLY the complete Python test file content, no explanations."""
                     },
                     {"type": "text", "text": generation_prompt},
                 ],
-            }
+            },
         ]
 
         try:
             # Call Anthropic API with extended thinking and caching
             logger.info(
-                f"Calling LLM with extended thinking for {module_name} (workflow={is_workflow})"
+                f"Calling LLM with extended thinking for {module_name} (workflow={is_workflow})",
             )
             client = anthropic.Anthropic(api_key=api_key)
             response = client.messages.create(
@@ -498,7 +520,7 @@ Return ONLY the complete Python test file content, no explanations."""
                 logger.info(f"✓ Quick syntax check passed for {module_name}")
             except SyntaxError as e:
                 logger.error(
-                    f"❌ LLM generated invalid syntax for {module_name}: {e.msg} at line {e.lineno}"
+                    f"❌ LLM generated invalid syntax for {module_name}: {e.msg} at line {e.lineno}",
                 )
                 return None
 
@@ -517,6 +539,7 @@ Return ONLY the complete Python test file content, no explanations."""
 
         Returns:
             True if valid, False otherwise
+
         """
         # Step 1: Check for syntax errors with ast.parse (fast)
         try:
@@ -561,6 +584,7 @@ Return ONLY the complete Python test file content, no explanations."""
 
         Returns:
             Number of tests
+
         """
         try:
             result = subprocess.run(
@@ -591,6 +615,7 @@ def run_batch_generation(
         modules_json: JSON string of modules to process
         enable_refinement: Enable Phase 2 multi-turn refinement (default: True)
         enable_coverage_guided: Enable Phase 3 coverage-guided generation (default: False)
+
     """
     # Parse modules
     modules = json.loads(modules_json)
@@ -632,7 +657,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 3:
         print(
-            "Usage: python -m attune.workflows.autonomous_test_gen <batch_num> <modules_json> [--no-refinement] [--coverage-guided]"
+            "Usage: python -m attune.workflows.autonomous_test_gen <batch_num> <modules_json> [--no-refinement] [--coverage-guided]",
         )
         print("\nOptions:")
         print("  --no-refinement     Disable Phase 2 multi-turn refinement")

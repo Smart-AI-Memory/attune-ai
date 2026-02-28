@@ -46,7 +46,11 @@ Note: The canonical CLI is 'attune telemetry <command>'.
     export_parser = subparsers.add_parser("export", help="Export telemetry data")
     export_parser.add_argument("--output", "-o", required=True, help="Output file path")
     export_parser.add_argument(
-        "--format", "-f", choices=["json", "csv"], default="json", help="Output format"
+        "--format",
+        "-f",
+        choices=["json", "csv"],
+        default="json",
+        help="Output format",
     )
     export_parser.add_argument("--days", "-d", type=int, default=30, help="Number of days")
 

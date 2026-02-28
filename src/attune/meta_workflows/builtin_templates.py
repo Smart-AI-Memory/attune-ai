@@ -545,6 +545,7 @@ def get_builtin_template(template_id: str) -> MetaWorkflowTemplate | None:
 
     Returns:
         MetaWorkflowTemplate if found, None otherwise
+
     """
     return BUILTIN_TEMPLATES.get(template_id)
 
@@ -554,6 +555,7 @@ def list_builtin_templates() -> list[str]:
 
     Returns:
         List of template IDs
+
     """
     return list(BUILTIN_TEMPLATES.keys())
 
@@ -563,5 +565,6 @@ def get_all_builtin_templates() -> dict[str, MetaWorkflowTemplate]:
 
     Returns:
         Dictionary mapping template_id → MetaWorkflowTemplate
+
     """
     return BUILTIN_TEMPLATES.copy()

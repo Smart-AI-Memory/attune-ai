@@ -117,6 +117,7 @@ class JSONFileStorage(StorageBackend):
         >>> storage = JSONFileStorage(".attune/socratic")
         >>> storage.save_session(session)
         >>> loaded = storage.load_session(session.session_id)
+
     """
 
     def __init__(self, base_dir: str = ".attune/socratic"):
@@ -124,6 +125,7 @@ class JSONFileStorage(StorageBackend):
 
         Args:
             base_dir: Base directory for storage
+
         """
         self.base_dir = Path(base_dir)
         self.sessions_dir = self.base_dir / "sessions"
@@ -188,7 +190,7 @@ class JSONFileStorage(StorageBackend):
                         "goal": data.get("goal", "")[:100],
                         "created_at": data.get("created_at"),
                         "updated_at": data.get("updated_at"),
-                    }
+                    },
                 )
             except (json.JSONDecodeError, KeyError):
                 continue
@@ -257,7 +259,7 @@ class JSONFileStorage(StorageBackend):
                         "domain": data.get("domain"),
                         "agents_count": len(data.get("agents", [])),
                         "generated_at": data.get("generated_at"),
-                    }
+                    },
                 )
             except (json.JSONDecodeError, KeyError):
                 continue
@@ -307,7 +309,7 @@ class JSONFileStorage(StorageBackend):
 # SQLITE STORAGE (extracted to sqlite_storage.py)
 # =============================================================================
 
-from .sqlite_storage import SQLiteStorage  # noqa: E402, F401 - re-exported
+from .sqlite_storage import SQLiteStorage  # noqa: E402 - re-exported
 
 # =============================================================================
 # STORAGE MANAGER
@@ -330,6 +332,7 @@ class StorageManager:
         >>> manager = StorageManager(StorageConfig(backend="sqlite"))
         >>> storage = manager.get_storage()
         >>> storage.save_session(session)
+
     """
 
     def __init__(self, config: StorageConfig | None = None):
@@ -337,6 +340,7 @@ class StorageManager:
 
         Args:
             config: Storage configuration
+
         """
         self.config = config or StorageConfig()
         self._storage: StorageBackend | None = None
@@ -351,12 +355,11 @@ class StorageManager:
         """Create storage backend based on config."""
         if self.config.backend == "sqlite":
             return SQLiteStorage(f"{self.config.path}.db")
-        elif self.config.backend == "redis":
+        if self.config.backend == "redis":
             # Redis would be implemented separately
             logger.warning("Redis storage not implemented, using JSON")
             return JSONFileStorage(self.config.path)
-        else:
-            return JSONFileStorage(self.config.path)
+        return JSONFileStorage(self.config.path)
 
 
 # Default storage instance

@@ -33,8 +33,6 @@ logger = logging.getLogger(__name__)
 class ValidationResult:
     """Re-export reference - actual class is in autonomous_test_gen.py."""
 
-    pass
-
 
 class TestGenRefinementMixin:
     """Mixin providing Phase 2 multi-turn refinement for test generation."""
@@ -50,6 +48,7 @@ class TestGenRefinementMixin:
 
         Returns:
             ValidationResult with test outcomes and failure details
+
         """
         from .autonomous_test_gen import ValidationResult
 
@@ -86,7 +85,10 @@ class TestGenRefinementMixin:
             logger.info(f"Pytest validation: passed={passed}, errors={error_count}")
 
             return ValidationResult(
-                passed=passed, failures=failures, error_count=error_count, output=output
+                passed=passed,
+                failures=failures,
+                error_count=error_count,
+                output=output,
             )
 
         except subprocess.TimeoutExpired:
@@ -100,11 +102,16 @@ class TestGenRefinementMixin:
         except Exception as e:
             logger.error(f"Pytest validation exception: {e}")
             return ValidationResult(
-                passed=False, failures=f"Validation exception: {e}", error_count=1, output=str(e)
+                passed=False,
+                failures=f"Validation exception: {e}",
+                error_count=1,
+                output=str(e),
             )
 
     def _call_llm_with_history(
-        self, conversation_history: list[dict[str, Any]], api_key: str
+        self,
+        conversation_history: list[dict[str, Any]],
+        api_key: str,
     ) -> str | None:
         """Call LLM with conversation history for refinement.
 
@@ -114,6 +121,7 @@ class TestGenRefinementMixin:
 
         Returns:
             Refined test content or None if failed
+
         """
         try:
             import anthropic
@@ -182,6 +190,7 @@ class TestGenRefinementMixin:
 
         Returns:
             Final test content or None if all attempts failed
+
         """
         import os
 
@@ -191,7 +200,7 @@ class TestGenRefinementMixin:
             return None
 
         logger.info(
-            f"🔄 Phase 2: Multi-turn refinement enabled for {module_name} (max {self.max_refinement_iterations} iterations)"
+            f"🔄 Phase 2: Multi-turn refinement enabled for {module_name} (max {self.max_refinement_iterations} iterations)",
         )
 
         # Step 1: Generate initial tests
@@ -206,7 +215,9 @@ class TestGenRefinementMixin:
         # Initial prompt (for history tracking)
         if is_workflow:
             initial_prompt = self._get_workflow_specific_prompt(
-                module_name, module_path, source_code
+                module_name,
+                module_path,
+                source_code,
             )
         else:
             initial_prompt = f"""Generate comprehensive behavioral tests for {module_name}.
@@ -239,7 +250,7 @@ SOURCE CODE:
         # Step 2: Iterative refinement loop
         for iteration in range(self.max_refinement_iterations):
             logger.info(
-                f"📝 Refinement iteration {iteration + 1}/{self.max_refinement_iterations} for {module_name}"
+                f"📝 Refinement iteration {iteration + 1}/{self.max_refinement_iterations} for {module_name}",
             )
 
             # Write current version to temp file
@@ -257,7 +268,7 @@ SOURCE CODE:
 
             # Tests failed - ask Claude to fix
             logger.warning(
-                f"⚠️  Tests failed on iteration {iteration + 1}: {validation_result.error_count} errors"
+                f"⚠️  Tests failed on iteration {iteration + 1}: {validation_result.error_count} errors",
             )
 
             refinement_prompt = f"""The tests you generated have failures. Please fix these specific issues:
@@ -293,6 +304,6 @@ Return ONLY the complete Python test file, no explanations."""
 
         # Max iterations reached
         logger.warning(
-            f"⚠️  Max refinement iterations reached for {module_name} - returning best attempt"
+            f"⚠️  Max refinement iterations reached for {module_name} - returning best attempt",
         )
         return test_content

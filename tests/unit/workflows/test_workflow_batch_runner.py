@@ -268,7 +268,8 @@ class TestBatchPresets:
         for name, specs in BATCH_PRESETS.items():
             for spec in specs:
                 assert isinstance(
-                    spec, WorkflowSpec
+                    spec,
+                    WorkflowSpec,
                 ), f"Preset '{name}' contains non-WorkflowSpec: {spec!r}"
 
 
@@ -340,9 +341,9 @@ class TestListBatchSafeWorkflows:
 
         for preset_name, specs in BATCH_PRESETS.items():
             for spec in specs:
-                assert spec.workflow_id in safe, (
-                    f"Preset '{preset_name}' uses non-batch-safe " f"workflow '{spec.workflow_id}'"
-                )
+                assert (
+                    spec.workflow_id in safe
+                ), f"Preset '{preset_name}' uses non-batch-safe workflow '{spec.workflow_id}'"
 
 
 # =============================================================================
@@ -487,7 +488,9 @@ class TestExecuteOne:
         )
 
         with patch.object(
-            runner, "_create_workflow", return_value=self._make_mock_workflow(mock_result)
+            runner,
+            "_create_workflow",
+            return_value=self._make_mock_workflow(mock_result),
         ):
             result = await runner._execute_one(spec)
 
@@ -507,7 +510,9 @@ class TestExecuteOne:
         spec = WorkflowSpec(workflow_id="bug-predict", input_data={"path": "src/"})
 
         with patch.object(
-            runner, "_create_workflow", return_value=self._make_mock_workflow(mock_result)
+            runner,
+            "_create_workflow",
+            return_value=self._make_mock_workflow(mock_result),
         ):
             result = await runner._execute_one(spec)
 
@@ -905,7 +910,8 @@ class TestRunPreset:
                 report = await runner.run_preset(preset_name)
 
             assert isinstance(
-                report, BatchRunReport
+                report,
+                BatchRunReport,
             ), f"Preset '{preset_name}' did not return a BatchRunReport"
 
 

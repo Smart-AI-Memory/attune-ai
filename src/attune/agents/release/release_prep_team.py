@@ -77,6 +77,7 @@ class ReleasePrepTeam:
     Args:
         quality_gates: Custom quality gate thresholds
         redis_url: Optional Redis URL for coordination
+
     """
 
     def __init__(
@@ -95,7 +96,7 @@ class ReleasePrepTeam:
                 self.redis = redis_lib.from_url(redis_url)
                 self.redis.ping()
                 logger.info("Release team connected to Redis")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Redis is optional for local development
                 logger.info(f"Redis not available (non-fatal): {e}")
                 self.redis = None
@@ -105,7 +106,7 @@ class ReleasePrepTeam:
                 self.redis = redis_lib.Redis(host="localhost", port=6379, decode_responses=True)
                 self.redis.ping()
                 logger.info("Release team connected to local Redis")
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Redis is optional
                 self.redis = None
 
@@ -132,6 +133,7 @@ class ReleasePrepTeam:
 
         Returns:
             ReleaseReadinessReport with consolidated results
+
         """
         start = time.time()
         logger.info(f"Starting release readiness assessment: {codebase_path}")
@@ -183,6 +185,7 @@ class ReleasePrepTeam:
 
         Returns:
             List of evaluated QualityGate objects
+
         """
         gates: list[QualityGate] = []
 
@@ -206,7 +209,7 @@ class ReleasePrepTeam:
                 actual=float(critical_issues),
                 passed=critical_issues <= self.quality_gates["max_critical_issues"],
                 critical=True,
-            )
+            ),
         )
 
         # Coverage gate
@@ -221,14 +224,15 @@ class ReleasePrepTeam:
                 actual=coverage_pct,
                 passed=coverage_pct >= self.quality_gates["min_coverage"],
                 critical=True,
-            )
+            ),
         )
 
         # Quality gate
         quality_score = 0.0
         if quality:
             quality_score = quality.findings.get(
-                "quality_score", quality.findings.get("score", 0.0)
+                "quality_score",
+                quality.findings.get("score", 0.0),
             )
 
         gates.append(
@@ -238,7 +242,7 @@ class ReleasePrepTeam:
                 actual=quality_score,
                 passed=quality_score >= self.quality_gates["min_quality_score"],
                 critical=True,
-            )
+            ),
         )
 
         # Documentation gate (non-critical — warning only)
@@ -253,7 +257,7 @@ class ReleasePrepTeam:
                 actual=doc_coverage,
                 passed=doc_coverage >= self.quality_gates["min_doc_coverage"],
                 critical=False,
-            )
+            ),
         )
 
         return gates
@@ -271,6 +275,7 @@ class ReleasePrepTeam:
 
         Returns:
             Tuple of (blockers, warnings)
+
         """
         blockers: list[str] = []
         warnings: list[str] = []
@@ -303,6 +308,7 @@ class ReleasePrepTeam:
 
         Returns:
             Summary text
+
         """
         lines: list[str] = []
 
@@ -323,7 +329,7 @@ class ReleasePrepTeam:
             lines.append("Failed gates:")
             for gate in failed_gates:
                 lines.append(
-                    f"  - {gate.name}: {gate.actual:.1f} vs threshold {gate.threshold:.1f}"
+                    f"  - {gate.name}: {gate.actual:.1f} vs threshold {gate.threshold:.1f}",
                 )
 
         lines.append("")
@@ -352,6 +358,7 @@ class ReleasePrepTeamWorkflow:
         description: Human-readable description
         stages: Stage names for dashboard display
         tier_map: Tier mapping for dashboard display
+
     """
 
     name = "release-prep"
@@ -369,6 +376,7 @@ class ReleasePrepTeamWorkflow:
         Args:
             quality_gates: Custom quality gate thresholds
             **kwargs: Extra CLI parameters (absorbed for compatibility)
+
         """
         self.quality_gates = quality_gates
         self._kwargs = kwargs
@@ -388,6 +396,7 @@ class ReleasePrepTeamWorkflow:
 
         Returns:
             ReleaseReadinessReport with consolidated results
+
         """
         # Map 'target' to 'path' for VSCode/CLI compatibility
         if "target" in kwargs and path == ".":

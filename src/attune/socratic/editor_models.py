@@ -36,6 +36,7 @@ class Position:
 
         Returns:
             Dict with x and y coordinates.
+
         """
         return {"x": self.x, "y": self.y}
 
@@ -57,6 +58,7 @@ class EditorNode:
 
         Returns:
             Dict representation of the node.
+
         """
         # Handle both string and enum for node_type
         node_type_str = (
@@ -89,6 +91,7 @@ class EditorEdge:
 
         Returns:
             Dict representation of the edge.
+
         """
         return {
             "id": self.edge_id,
@@ -116,6 +119,7 @@ class EditorState:
 
         Returns:
             Dict representation of the editor state.
+
         """
         return {
             "nodes": [n.to_dict() for n in self.nodes],
@@ -131,6 +135,7 @@ class EditorState:
 
         Returns:
             Dict with 'nodes' and 'edges' arrays for React Flow
+
         """
         return {
             "nodes": [n.to_dict() for n in self.nodes],

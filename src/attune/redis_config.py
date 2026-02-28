@@ -98,7 +98,7 @@ def _resolve_redis_mode() -> str:
         if explicit_mode not in _VALID_REDIS_MODES:
             raise ValueError(
                 f"Invalid REDIS_MODE='{explicit_mode}'. "
-                f"Valid values: {', '.join(sorted(_VALID_REDIS_MODES))}"
+                f"Valid values: {', '.join(sorted(_VALID_REDIS_MODES))}",
             )
         return explicit_mode
 
@@ -221,13 +221,13 @@ def get_redis_config() -> RedisConfig:
     if not host:
         logger.warning(
             "REDIS_MODE=cloud but REDIS_HOST not set. "
-            "Set REDIS_HOST to your Redis Cloud endpoint."
+            "Set REDIS_HOST to your Redis Cloud endpoint.",
         )
 
     if not password:
         logger.warning(
             "REDIS_MODE=cloud but REDIS_PASSWORD not set. "
-            "Most cloud Redis services require a password."
+            "Most cloud Redis services require a password.",
         )
 
     return RedisConfig(

@@ -44,6 +44,7 @@ def _run_command(cmd: list[str], cwd: str = ".") -> tuple[int, str, str]:
 
     Returns:
         Tuple of (return_code, stdout, stderr)
+
     """
     try:
         result = subprocess.run(
@@ -78,6 +79,7 @@ class ReleaseAgent:
         agent_id: Unique identifier for this agent instance
         role: Human-readable role name
         redis_client: Optional Redis connection for coordination
+
     """
 
     def __init__(
@@ -123,7 +125,7 @@ class ReleaseAgent:
                 },
             )
             self.redis.expire(key, 60)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Redis is optional, don't fail on connection issues
             logger.debug(f"Heartbeat failed (non-fatal): {e}")
 
@@ -145,7 +147,7 @@ class ReleaseAgent:
                 f"release:signals:{self.agent_id}",
                 json.dumps(signal),
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Redis is optional
             logger.debug(f"Signal failed (non-fatal): {e}")
 
@@ -159,6 +161,7 @@ class ReleaseAgent:
 
         Returns:
             Tuple of (response_text, metadata)
+
         """
         if not self.llm_client:
             return "", {"model": "rule_based", "cost": 0.0}
@@ -215,6 +218,7 @@ class ReleaseAgent:
 
         Returns:
             ReleaseAgentResult with findings and score
+
         """
         start = time.time()
         escalated = False
@@ -299,5 +303,6 @@ class ReleaseAgent:
 
         Returns:
             Tuple of (success, findings_dict)
+
         """
         raise NotImplementedError

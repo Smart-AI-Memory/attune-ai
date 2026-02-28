@@ -74,7 +74,7 @@ class Test_ValidateFilePath:
 
         if platform.system() == "Darwin":
             pytest.skip(
-                "/etc resolves to /private/etc on macOS - see test_system_directory_sys instead"
+                "/etc resolves to /private/etc on macOS - see test_system_directory_sys instead",
             )
 
         with pytest.raises(ValueError, match="Cannot write to system directory"):
@@ -207,10 +207,10 @@ class TestRealSecurityAuditor:
         mock_result.stdout = json.dumps(
             {
                 "metrics": {
-                    "_totals": {"SEVERITY.HIGH": 0, "SEVERITY.MEDIUM": 0, "SEVERITY.LOW": 0}
+                    "_totals": {"SEVERITY.HIGH": 0, "SEVERITY.MEDIUM": 0, "SEVERITY.LOW": 0},
                 },
                 "results": [],
-            }
+            },
         )
 
         with patch("subprocess.run", return_value=mock_result):
@@ -247,8 +247,8 @@ class TestRealSecurityAuditor:
                         "line_number": 10,
                         "test_id": "B307",
                     },
-                ]
-            }
+                ],
+            },
         )
 
         with patch("subprocess.run", return_value=mock_result):
@@ -319,7 +319,7 @@ class TestRealCodeQualityAnalyzer:
                     "location": {"row": 15, "column": 1},
                     "filename": "src/test.py",
                 },
-            ]
+            ],
         )
 
         # Mock MyPy (no errors)
@@ -375,7 +375,7 @@ class DocumentedClass:
     def method(self):
         """Method docstring."""
         pass
-'''
+''',
         )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
@@ -398,7 +398,7 @@ class DocumentedClass:
 class UndocumentedClass:
     def method(self):
         pass
-"""
+""",
         )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
@@ -494,7 +494,9 @@ class TestRealTestGenerator:
         output_dir = tmp_path / "tests" / "generated"
 
         generator = RealTestGenerator(
-            project_root=str(tmp_path), output_dir="tests/generated", use_llm=False
+            project_root=str(tmp_path),
+            output_dir="tests/generated",
+            use_llm=False,
         )
 
         assert generator.project_root == tmp_path.resolve()
@@ -535,7 +537,9 @@ class TestRealTestGenerator:
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
             generator = RealTestGenerator(
-                project_root=str(tmp_path), api_key="test-key-123", use_llm=True
+                project_root=str(tmp_path),
+                api_key="test-key-123",
+                use_llm=True,
             )
 
             assert generator.use_llm is True
@@ -550,7 +554,9 @@ class TestRealTestGenerator:
         """
         with patch.dict("sys.modules", {"anthropic": None}):
             generator = RealTestGenerator(
-                project_root=str(tmp_path), api_key="test-key", use_llm=True
+                project_root=str(tmp_path),
+                api_key="test-key",
+                use_llm=True,
             )
 
         assert generator.use_llm is False  # Should fallback
@@ -565,13 +571,14 @@ class TestRealTestGenerator:
             """
 def add(a: int, b: int) -> int:
     return a + b
-"""
+""",
         )
 
         generator = RealTestGenerator(project_root=str(tmp_path), use_llm=False)
 
         test_path = generator.generate_tests_for_file(
-            str(source_file.relative_to(tmp_path)), missing_lines=[3, 4]
+            str(source_file.relative_to(tmp_path)),
+            missing_lines=[3, 4],
         )
 
         assert test_path.exists()
@@ -599,7 +606,8 @@ def add(a: int, b: int) -> int:
         # Should not allow writing to system directories
         # The validation happens in _validate_file_path
         test_path = generator.generate_tests_for_file(
-            str(source_file.relative_to(tmp_path)), missing_lines=[1]
+            str(source_file.relative_to(tmp_path)),
+            missing_lines=[1],
         )
 
         # Should generate in output_dir, not system dir
@@ -617,8 +625,8 @@ import pytest
 
 def test_example():
     assert True
-"""
-            )
+""",
+            ),
         ]
         mock_client.messages.create.return_value = mock_response
 
@@ -635,11 +643,14 @@ def test_example():
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
             generator = RealTestGenerator(
-                project_root=str(tmp_path), api_key="test-key", use_llm=True
+                project_root=str(tmp_path),
+                api_key="test-key",
+                use_llm=True,
             )
 
             test_path = generator.generate_tests_for_file(
-                str(source_file.relative_to(tmp_path)), missing_lines=[1]
+                str(source_file.relative_to(tmp_path)),
+                missing_lines=[1],
             )
 
         assert test_path.exists()
@@ -658,8 +669,8 @@ import pytest
 
 def test_example():
     assert True
-```"""
-            )
+```""",
+            ),
         ]
         mock_client.messages.create.return_value = mock_response
 
@@ -675,11 +686,14 @@ def test_example():
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
             generator = RealTestGenerator(
-                project_root=str(tmp_path), api_key="test-key", use_llm=True
+                project_root=str(tmp_path),
+                api_key="test-key",
+                use_llm=True,
             )
 
             test_path = generator.generate_tests_for_file(
-                str(source_file.relative_to(tmp_path)), missing_lines=[1]
+                str(source_file.relative_to(tmp_path)),
+                missing_lines=[1],
             )
 
         test_content = test_path.read_text()
@@ -705,11 +719,14 @@ def test_example():
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
             generator = RealTestGenerator(
-                project_root=str(tmp_path), api_key="test-key", use_llm=True
+                project_root=str(tmp_path),
+                api_key="test-key",
+                use_llm=True,
             )
 
             test_path = generator.generate_tests_for_file(
-                str(source_file.relative_to(tmp_path)), missing_lines=[1]
+                str(source_file.relative_to(tmp_path)),
+                missing_lines=[1],
             )
 
         # Should fallback to template
@@ -770,7 +787,7 @@ import pytest
 
 def test_passes():
     assert True
-"""
+""",
         )
 
         mock_result = Mock()
@@ -792,7 +809,7 @@ def test_passes():
             """
 def test_fails():
     assert False
-"""
+""",
         )
 
         mock_result = Mock()
@@ -916,9 +933,9 @@ class TestRealSecurityAuditorEdgeCases:
                         "filename": "src/bad.py",
                         "line_number": 10,
                         "test_id": "B501",
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         with patch("subprocess.run", return_value=mock_result):
@@ -959,8 +976,8 @@ class TestRealSecurityAuditorEdgeCases:
                         "issue_text": "Issue 3",
                         "issue_confidence": "LOW",
                     },
-                ]
-            }
+                ],
+            },
         )
 
         with patch("subprocess.run", return_value=mock_result):
@@ -1076,13 +1093,13 @@ class TestRealDocumentationAnalyzerEdgeCases:
             """
 def public_function():
     pass
-"""
+""",
         )
         (src_dir / "__main__.py").write_text(
             """
 def main():
     pass
-"""
+""",
         )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
@@ -1102,7 +1119,7 @@ def main():
 def valid_function():
     '''Documented'''
     pass
-"""
+""",
         )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))
@@ -1130,7 +1147,7 @@ class PublicClass:
 
 class _PrivateClass:
     pass
-"""
+""",
         )
 
         analyzer = RealDocumentationAnalyzer(str(tmp_path))

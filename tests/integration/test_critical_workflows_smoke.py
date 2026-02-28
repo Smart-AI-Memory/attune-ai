@@ -818,7 +818,7 @@ class TestDynamicTeam:
                 metric="score",
                 threshold=50.0,
                 required=True,
-            )
+            ),
         ]
         team = DynamicTeam(
             team_name="gated-test",
@@ -980,7 +980,7 @@ class TestTeamStore:
                     agents=[{"template_id": "generic_agent"}],
                     strategy="parallel",
                     quality_gates={},
-                )
+                ),
             )
             store.save(
                 TeamSpecification(
@@ -988,7 +988,7 @@ class TestTeamStore:
                     agents=[{"template_id": "code_reviewer"}],
                     strategy="sequential",
                     quality_gates={},
-                )
+                ),
             )
 
             all_teams = store.list_all()
@@ -1006,7 +1006,7 @@ class TestTeamStore:
                     agents=[{"template_id": "generic_agent"}],
                     strategy="parallel",
                     quality_gates={},
-                )
+                ),
             )
 
             assert store.delete("to-delete") is True
@@ -1202,7 +1202,7 @@ class TestMultiAgentStageMixin:
             "analyze": {
                 "agents": [{"template_id": "code_reviewer"}],
                 "strategy": "parallel",
-            }
+            },
         }
         workflow = WorkflowClass(multi_agent_configs=configs)
         assert workflow._multi_agent_configs is not None

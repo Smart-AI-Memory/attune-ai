@@ -42,6 +42,7 @@ class DynamicTeamResult:
         total_cost: Sum of all agent costs.
         execution_time_ms: Wall-clock time for the full team run.
         phase_results: Optional per-phase results for multi-phase strategies.
+
     """
 
     team_name: str
@@ -58,6 +59,7 @@ class DynamicTeamResult:
 
         Returns:
             Dict representation.
+
         """
         return {
             "team_name": self.team_name,
@@ -91,6 +93,7 @@ class DynamicTeam:
         strategy: Execution strategy name.
         quality_gates: Optional quality gate thresholds.
         phases: Optional phase definitions for two_phase strategy.
+
     """
 
     def __init__(
@@ -119,6 +122,7 @@ class DynamicTeam:
 
         Returns:
             Aggregated DynamicTeamResult.
+
         """
         start = time.time()
 
@@ -158,7 +162,8 @@ class DynamicTeam:
     # ------------------------------------------------------------------
 
     async def _execute_parallel(
-        self, input_data: dict[str, Any]
+        self,
+        input_data: dict[str, Any],
     ) -> tuple[list[SDKAgentResult], list[dict[str, Any]]]:
         """Run all agents concurrently.
 
@@ -167,6 +172,7 @@ class DynamicTeam:
 
         Returns:
             Tuple of (results, phase_results).
+
         """
         loop = asyncio.get_running_loop()
         tasks = [loop.run_in_executor(None, agent.process, input_data) for agent in self.agents]
@@ -174,7 +180,8 @@ class DynamicTeam:
         return results, []
 
     async def _execute_sequential(
-        self, input_data: dict[str, Any]
+        self,
+        input_data: dict[str, Any],
     ) -> tuple[list[SDKAgentResult], list[dict[str, Any]]]:
         """Run agents one-at-a-time.
 
@@ -183,6 +190,7 @@ class DynamicTeam:
 
         Returns:
             Tuple of (results, phase_results).
+
         """
         results: list[SDKAgentResult] = []
         for agent in self.agents:
@@ -191,7 +199,8 @@ class DynamicTeam:
         return results, []
 
     async def _execute_two_phase(
-        self, input_data: dict[str, Any]
+        self,
+        input_data: dict[str, Any],
     ) -> tuple[list[SDKAgentResult], list[dict[str, Any]]]:
         """Execute in two phases: gather then reason.
 
@@ -203,6 +212,7 @@ class DynamicTeam:
 
         Returns:
             Tuple of (all_results, phase_results).
+
         """
         if len(self.phases) >= 2:
             phase1_indices = self.phases[0].get("agent_indices", [])
@@ -239,7 +249,8 @@ class DynamicTeam:
         return all_results, phase_summaries
 
     async def _execute_delegation(
-        self, input_data: dict[str, Any]
+        self,
+        input_data: dict[str, Any],
     ) -> tuple[list[SDKAgentResult], list[dict[str, Any]]]:
         """First agent delegates to subsequent agents.
 
@@ -251,6 +262,7 @@ class DynamicTeam:
 
         Returns:
             Tuple of (all_results, phase_results).
+
         """
         if not self.agents:
             return [], []
@@ -287,6 +299,7 @@ class DynamicTeam:
 
         Returns:
             Dict mapping gate name to pass/fail boolean.
+
         """
         gate_results: dict[str, bool] = {}
         results_by_role = {r.role: r for r in results}
@@ -318,6 +331,7 @@ class DynamicTeam:
 
         Returns:
             True if the gate is required or unknown.
+
         """
         for gate in self.quality_gates:
             if gate.name == gate_name:

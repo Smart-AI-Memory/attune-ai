@@ -54,6 +54,7 @@ class TierRoutingMixin:
 
         Returns:
             ModelTier to use for this stage (potentially upgraded by adaptive routing)
+
         """
         # Get base tier from routing strategy or static map
         if self._routing_strategy is not None:
@@ -108,6 +109,7 @@ class TierRoutingMixin:
 
         Returns:
             Estimated token count
+
         """
         try:
             # Serialize to estimate size

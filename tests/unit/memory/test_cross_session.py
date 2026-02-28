@@ -702,7 +702,7 @@ class TestCrossSessionCoordinatorInvalidData:
                     "started_at": now.isoformat(),
                     "last_heartbeat": now.isoformat(),
                     "metadata": {},
-                }
+                },
             ).encode(),
             b"bad_agent": b"not valid json {{{",
         }
@@ -724,7 +724,7 @@ class TestCrossSessionCoordinatorInvalidData:
                 {
                     "agent_id": "incomplete_agent",
                     # Missing required fields
-                }
+                },
             ).encode(),
         }
 

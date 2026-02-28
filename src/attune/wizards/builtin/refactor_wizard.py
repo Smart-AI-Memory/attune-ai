@@ -116,6 +116,7 @@ class RefactorWizard(BaseWizard):
 
         Args:
             **kwargs: Forwarded to ``BaseWizard.__init__``.
+
         """
         super().__init__(**kwargs)
         self._refactor_workflow: Any = None
@@ -129,6 +130,7 @@ class RefactorWizard(BaseWizard):
 
         Returns:
             RefactorPlanWorkflow instance, or None if unavailable.
+
         """
         if self._refactor_workflow is not None:
             return self._refactor_workflow
@@ -143,7 +145,7 @@ class RefactorWizard(BaseWizard):
         except ImportError:
             logger.warning("RefactorPlanWorkflow not available, using LLM fallback")
             return None
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Workflow is optional enhancement, not required
             logger.exception("Failed to initialize RefactorPlanWorkflow")
             return None
@@ -156,12 +158,13 @@ class RefactorWizard(BaseWizard):
 
         Args:
             step: A step with ``step_type == StepType.LLM_CALL``.
+
         """
         if step.id == "analyze":
             try:
                 await self._run_analysis_via_workflow()
                 return
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow analysis failed, falling back to LLM")
 
@@ -176,6 +179,7 @@ class RefactorWizard(BaseWizard):
 
         Raises:
             RuntimeError: If the workflow is not available.
+
         """
         assert self._session is not None
         workflow = self._get_or_create_workflow()
@@ -254,6 +258,7 @@ class RefactorWizard(BaseWizard):
 
         Returns:
             PromptContext for the LLM call.
+
         """
         assert self._session is not None
 
@@ -301,6 +306,7 @@ class RefactorWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response or workflow output.
+
         """
         assert self._session is not None
         if step.id == "analyze":

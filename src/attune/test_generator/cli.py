@@ -134,7 +134,9 @@ def cmd_analyze(args):
 
     print("Test Priorities:")
     for test_name, priority in heapq.nsmallest(
-        10, analysis.test_priorities.items(), key=lambda x: x[1]
+        10,
+        analysis.test_priorities.items(),
+        key=lambda x: x[1],
     ):
         priority_label = {
             1: "CRITICAL",

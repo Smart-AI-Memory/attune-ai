@@ -34,6 +34,7 @@ class RealCoverageAnalyzer:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -51,6 +52,7 @@ class RealCoverageAnalyzer:
 
         Raises:
             RuntimeError: If coverage analysis fails
+
         """
         logger.info("Running coverage analysis on all packages")
 
@@ -109,7 +111,7 @@ class RealCoverageAnalyzer:
         # Read coverage.json
         if not coverage_file.exists():
             raise RuntimeError(
-                "Coverage report not found. Run 'pytest --cov=src --cov-report=json' first."
+                "Coverage report not found. Run 'pytest --cov=src --cov-report=json' first.",
             )
 
         try:
@@ -132,13 +134,13 @@ class RealCoverageAnalyzer:
                             "path": filepath,
                             "coverage": file_coverage,
                             "missing_lines": file_data["missing_lines"],
-                        }
+                        },
                     )
                     missing_lines[filepath] = file_data["missing_lines"]
 
             logger.info(
                 f"Coverage analysis complete: {total_coverage:.1f}% "
-                f"({len(uncovered_files)} files below 80%)"
+                f"({len(uncovered_files)} files below 80%)",
             )
 
             return CoverageReport(
@@ -170,6 +172,7 @@ class RealTestGenerator:
             output_dir: Directory for generated tests (relative to project_root)
             api_key: Anthropic API key (or uses env var)
             use_llm: Whether to use LLM for intelligent test generation
+
         """
         self.project_root = Path(project_root).resolve()
         self.output_dir = self.project_root / output_dir
@@ -202,7 +205,7 @@ class RealTestGenerator:
                 logger.warning(
                     "No Anthropic API key found. Set ANTHROPIC_API_KEY environment variable "
                     "or create .env file with ANTHROPIC_API_KEY=your_key_here. "
-                    "Falling back to basic templates."
+                    "Falling back to basic templates.",
                 )
                 self.use_llm = False
                 return
@@ -229,6 +232,7 @@ class RealTestGenerator:
 
         Raises:
             RuntimeError: If test generation fails
+
         """
         logger.info(f"Generating tests for {source_file} (lines: {missing_lines[:5]}...)")
 
@@ -266,7 +270,10 @@ class RealTestGenerator:
         return test_path
 
     def _generate_llm_tests(
-        self, source_file: str, source_code: str, missing_lines: list[int]
+        self,
+        source_file: str,
+        source_code: str,
+        missing_lines: list[int],
     ) -> str:
         """Generate tests using LLM (Claude).
 
@@ -280,6 +287,7 @@ class RealTestGenerator:
 
         Raises:
             RuntimeError: If LLM generation fails
+
         """
         logger.info(f"Using LLM to generate intelligent tests for {source_file}")
 
@@ -393,6 +401,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 
         Returns:
             Formatted API documentation for LLM prompt
+
         """
         try:
             import sys
@@ -412,7 +421,10 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
             return "# API extraction failed - use source code carefully"
 
     def _generate_basic_test_template(
-        self, source_file: str, source_code: str, missing_lines: list[int]
+        self,
+        source_file: str,
+        source_code: str,
+        missing_lines: list[int],
     ) -> str:
         """Generate basic test template.
 
@@ -426,6 +438,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 
         Returns:
             Test code as string
+
         """
         # Extract module name
         module_path = source_file.replace("/", ".").replace(".py", "")
@@ -485,6 +498,7 @@ class RealTestValidator:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -499,6 +513,7 @@ class RealTestValidator:
 
         Raises:
             RuntimeError: If validation fails
+
         """
         logger.info(f"Validating {len(test_files)} generated test files")
 
@@ -524,7 +539,7 @@ class RealTestValidator:
 
             logger.info(
                 f"Validation complete: {passed} passed, {failed} failed, "
-                f"tests_passed={tests_passed}"
+                f"tests_passed={tests_passed}",
             )
 
             return {

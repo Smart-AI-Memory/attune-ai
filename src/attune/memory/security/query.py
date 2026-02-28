@@ -109,7 +109,7 @@ class AuditQueryMixin:
                         logger.warning("Skipping malformed audit log line")
                         continue
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Query should not crash on I/O errors
             logger.error(f"Failed to query audit logs: {e}")
 
@@ -132,6 +132,7 @@ def _apply_custom_filters(
 
     Returns:
         True if the event matches all filters
+
     """
     for key, value in filters.items():
         # Handle comparison operators

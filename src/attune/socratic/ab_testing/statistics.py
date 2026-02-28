@@ -32,6 +32,7 @@ class StatisticalAnalyzer:
 
         Returns:
             (z_score, p_value)
+
         """
         if n1 == 0 or n2 == 0:
             return 0.0, 1.0
@@ -71,6 +72,7 @@ class StatisticalAnalyzer:
 
         Returns:
             (t_score, p_value)
+
         """
         if n1 < 2 or n2 < 2:
             return 0.0, 1.0
@@ -106,6 +108,7 @@ class StatisticalAnalyzer:
 
         Returns:
             (lower, upper) bounds
+
         """
         if n == 0:
             return 0.0, 1.0

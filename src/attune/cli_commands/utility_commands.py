@@ -140,7 +140,7 @@ def cmd_setup(args: Namespace) -> int:
 
     total = copied + agents_copied + configs_copied
     print(
-        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)"
+        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
     )
     print("\n📝 You can now use in Claude Code:")
     print("   /dev              - Developer tools (debug, commit, PR)")
@@ -203,7 +203,7 @@ def cmd_validate(args: Namespace) -> int:
     if keys_found == 0:
         errors.append(
             "No API keys found. Set ANTHROPIC_API_KEY\n"
-            "   Run: python -m attune.models.auth_cli setup"
+            "   Run: python -m attune.models.auth_cli setup",
         )
 
     # Check workflows
@@ -250,7 +250,7 @@ def cmd_version(args: Namespace) -> int:
 
             reqs = requires("attune-ai") or []
             print(f"\nDependencies: {len(reqs)}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     return 0

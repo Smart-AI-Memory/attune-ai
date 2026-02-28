@@ -123,6 +123,7 @@ Draft:
 
         Returns:
             Tuple of (system_prompt, user_message).
+
         """
         if self._is_xml_enabled():
             user_message = self._render_xml_prompt(
@@ -246,6 +247,7 @@ Return the complete, polished documentation with all API reference sections pres
 
         Returns:
             Tuple of (response, input_tokens, output_tokens).
+
         """
         if self._executor is not None or self._api_key:
             try:
@@ -289,6 +291,7 @@ Return the complete, polished documentation with all API reference sections pres
 
         Returns:
             Result dictionary with document and metadata.
+
         """
         result: dict[str, Any] = {
             "document": response,

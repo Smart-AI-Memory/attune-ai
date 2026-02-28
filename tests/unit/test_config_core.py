@@ -194,20 +194,20 @@ class TestEmpathyConfigDictOps:
         assert "metadata" in d
 
     def test_update_known_fields(self) -> None:
-        """update modifies known fields in place."""
+        """Update modifies known fields in place."""
         cfg = EmpathyConfig()
         cfg.update(user_id="new_user", target_level=5)
         assert cfg.user_id == "new_user"
         assert cfg.target_level == 5
 
     def test_update_ignores_unknown_fields(self) -> None:
-        """update silently ignores unknown attribute names."""
+        """Update silently ignores unknown attribute names."""
         cfg = EmpathyConfig()
         cfg.update(nonexistent_field="value")
         assert not hasattr(cfg, "nonexistent_field")
 
     def test_merge_other_overrides_non_defaults(self) -> None:
-        """merge takes non-default values from other."""
+        """Merge takes non-default values from other."""
         base = EmpathyConfig(user_id="base_user")
         other = EmpathyConfig(target_level=5)
         merged = base.merge(other)
@@ -216,7 +216,7 @@ class TestEmpathyConfigDictOps:
         assert merged.target_level == 5
 
     def test_merge_returns_new_instance(self) -> None:
-        """merge returns a new EmpathyConfig, not mutating originals."""
+        """Merge returns a new EmpathyConfig, not mutating originals."""
         base = EmpathyConfig(user_id="a")
         other = EmpathyConfig(user_id="b")
         merged = base.merge(other)
@@ -488,7 +488,9 @@ class TestFromFile:
         assert cfg.user_id == "yaml_explicit"
 
     def test_auto_detects_empathy_json(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """from_file auto-detects .empathy.json in cwd."""
         monkeypatch.chdir(tmp_path)
@@ -498,7 +500,9 @@ class TestFromFile:
         assert cfg.user_id == "auto_json"
 
     def test_auto_detects_empathy_yml(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """from_file auto-detects .empathy.yml in cwd."""
         yaml = pytest.importorskip("yaml")
@@ -509,7 +513,9 @@ class TestFromFile:
         assert cfg.user_id == "auto_yaml"
 
     def test_returns_default_when_no_file(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """from_file returns default config when no config file exists."""
         monkeypatch.chdir(tmp_path)
@@ -534,7 +540,7 @@ class TestFromDict:
     def test_unknown_fields_ignored(self) -> None:
         """Unknown fields in the dict are silently ignored."""
         cfg = EmpathyConfig.from_dict(
-            {"user_id": "known", "totally_unknown": True, "another_garbage": [1, 2, 3]}
+            {"user_id": "known", "totally_unknown": True, "another_garbage": [1, 2, 3]},
         )
         assert cfg.user_id == "known"
         assert not hasattr(cfg, "totally_unknown")
@@ -633,7 +639,9 @@ class TestLoadConfig:
             load_config(defaults={"target_level": 0})
 
     def test_returns_defaults_with_no_file_no_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Returns default config when no file or env vars exist."""
         monkeypatch.chdir(tmp_path)

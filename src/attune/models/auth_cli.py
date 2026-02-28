@@ -48,6 +48,7 @@ def cmd_auth_setup(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     try:
         print("\n🔐 Authentication Strategy Setup\n")
@@ -86,6 +87,7 @@ def cmd_auth_status(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     try:
         # Load strategy
@@ -120,7 +122,7 @@ def cmd_auth_status(args: Any) -> int:
             config_text.append(f"{strategy.default_mode.value.upper()}\n", style="bold")
             config_text.append("Setup Completed: ", style="cyan")
             config_text.append(
-                "✅ Yes\n" if strategy.setup_completed else "❌ No (run 'attune auth setup')\n"
+                "✅ Yes\n" if strategy.setup_completed else "❌ No (run 'attune auth setup')\n",
             )
 
             console.print(Panel(config_text, title="Authentication Strategy", border_style="blue"))
@@ -141,7 +143,9 @@ def cmd_auth_status(args: Any) -> int:
                 threshold_table.add_row("Large", f"> {strategy.medium_module_threshold}", "API")
             else:
                 threshold_table.add_row(
-                    "Small", f"< {strategy.small_module_threshold}", "Subscription"
+                    "Small",
+                    f"< {strategy.small_module_threshold}",
+                    "Subscription",
                 )
                 threshold_table.add_row(
                     "Medium",
@@ -149,7 +153,9 @@ def cmd_auth_status(args: Any) -> int:
                     "Subscription",
                 )
                 threshold_table.add_row(
-                    "Large", f"> {strategy.medium_module_threshold}", "API (1M context)"
+                    "Large",
+                    f"> {strategy.medium_module_threshold}",
+                    "API (1M context)",
                 )
 
             console.print(threshold_table)
@@ -169,7 +175,7 @@ def cmd_auth_status(args: Any) -> int:
             print("\nModule Size Thresholds:")
             print(f"  Small: < {strategy.small_module_threshold} LOC")
             print(
-                f"  Medium: {strategy.small_module_threshold}-{strategy.medium_module_threshold} LOC"
+                f"  Medium: {strategy.small_module_threshold}-{strategy.medium_module_threshold} LOC",
             )
             print(f"  Large: > {strategy.medium_module_threshold} LOC")
 
@@ -203,6 +209,7 @@ def cmd_auth_reset(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     confirm = getattr(args, "confirm", False)
 
@@ -219,9 +226,8 @@ def cmd_auth_reset(args: Any) -> int:
             print("✅ Authentication strategy reset successfully.")
             print("Run 'attune auth setup' to configure a new strategy.")
             return 0
-        else:
-            print("ℹ️  No configuration file found - nothing to reset.")
-            return 0
+        print("ℹ️  No configuration file found - nothing to reset.")
+        return 0
 
     except Exception as e:
         print(f"❌ Error resetting configuration: {e}")
@@ -237,6 +243,7 @@ def cmd_auth_recommend(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     file_path_str = getattr(args, "file_path", None)
 
@@ -312,13 +319,15 @@ def cmd_auth_recommend(args: Any) -> int:
                 cost_table.add_row("Monetary Cost", "$0.00")
                 cost_table.add_row("Quota Cost", cost_estimate["quota_cost"])
                 cost_table.add_row(
-                    "Fits in 200K", "✅ Yes" if cost_estimate["fits_in_context"] else "❌ No"
+                    "Fits in 200K",
+                    "✅ Yes" if cost_estimate["fits_in_context"] else "❌ No",
                 )
             else:
                 cost_table.add_row("Monetary Cost", f"${cost_estimate['monetary_cost']:.4f}")
                 cost_table.add_row("Quota Cost", "None")
                 cost_table.add_row(
-                    "Fits in 1M", "✅ Yes" if cost_estimate["fits_in_context"] else "❌ No"
+                    "Fits in 1M",
+                    "✅ Yes" if cost_estimate["fits_in_context"] else "❌ No",
                 )
 
             cost_table.add_row("Estimated Tokens", f"{cost_estimate['tokens_used']:,}")
@@ -394,20 +403,26 @@ Examples:
     # Status command
     status_parser = subparsers.add_parser("status", help="Show current authentication strategy")
     status_parser.add_argument(
-        "--json", action="store_true", help="Output as JSON instead of formatted table"
+        "--json",
+        action="store_true",
+        help="Output as JSON instead of formatted table",
     )
 
     # Reset command
     reset_parser = subparsers.add_parser(
-        "reset", help="Reset authentication strategy configuration"
+        "reset",
+        help="Reset authentication strategy configuration",
     )
     reset_parser.add_argument(
-        "--confirm", action="store_true", help="Confirm deletion of configuration"
+        "--confirm",
+        action="store_true",
+        help="Confirm deletion of configuration",
     )
 
     # Recommend command
     rec_parser = subparsers.add_parser(
-        "recommend", help="Get authentication recommendation for a file"
+        "recommend",
+        help="Get authentication recommendation for a file",
     )
     rec_parser.add_argument("file_path", help="Path to the file to analyze")
 

@@ -249,7 +249,7 @@ class TestMemoryToolsWithMock:
             return_value=[
                 {"key": "pattern-1", "value": "test match"},
                 {"key": "pattern-2", "value": "another match"},
-            ]
+            ],
         )
         server._memory = mock_memory
 
@@ -266,7 +266,7 @@ class TestMemoryToolsWithMock:
 
         result = await server.call_tool("memory_forget", {"key": "old-key"})
         assert result["success"] is True
-        assert "old-key" == result["key"]
+        assert result["key"] == "old-key"
 
     @pytest.mark.asyncio
     async def test_memory_store_import_error(self, server: EmpathyMCPServer):

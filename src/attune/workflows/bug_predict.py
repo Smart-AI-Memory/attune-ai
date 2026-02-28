@@ -30,7 +30,7 @@ from .bug_predict_patterns import (  # noqa: F401
     _remove_docstrings,
     _should_exclude_file,
 )
-from .bug_predict_report import (  # noqa: F401
+from .bug_predict_report import (
     format_bug_predict_report,
     main,
 )
@@ -126,6 +126,7 @@ class BugPredictionWorkflow(BaseWorkflow):
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         return WorkflowContext(
             prompt=PromptService("bug-predict", xml_config=xml_config),

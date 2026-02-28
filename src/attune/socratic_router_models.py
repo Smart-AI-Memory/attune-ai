@@ -36,6 +36,7 @@ class WorkflowOption:
         description: What this option does
         skill: The skill to invoke
         args: Arguments for the skill
+
     """
 
     label: str
@@ -58,6 +59,7 @@ class IntentClassification:
         keywords_matched: Keywords that triggered this classification
         suggested_question: Question to ask via AskUserQuestion
         options: Workflow options to present
+
     """
 
     category: IntentCategory

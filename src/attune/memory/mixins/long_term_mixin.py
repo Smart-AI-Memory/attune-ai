@@ -146,6 +146,7 @@ class LongTermOperationsMixin:
 
         Returns:
             Number of entries cleared
+
         """
         count = len(self._pattern_cache)
         self._pattern_cache.clear()
@@ -171,6 +172,7 @@ class LongTermOperationsMixin:
 
         Returns:
             Relevance score (0.0 if no match)
+
         """
         if not query_lower:
             return 1.0  # No query - all patterns have equal score
@@ -211,6 +213,7 @@ class LongTermOperationsMixin:
 
         Yields:
             Tuples of (score, pattern) for matching patterns
+
         """
         from ..long_term import Classification
 
@@ -272,6 +275,7 @@ class LongTermOperationsMixin:
             ...     pattern_type="meta_workflow_execution",
             ...     limit=5
             ... )
+
         """
         if not self._long_term:
             logger.debug("long_term_memory_unavailable")
@@ -302,6 +306,7 @@ class LongTermOperationsMixin:
 
         Returns:
             Path to storage directory, or None if unavailable.
+
         """
         if not self._long_term:
             return None
@@ -309,7 +314,7 @@ class LongTermOperationsMixin:
         # Try different ways to access storage directory
         if hasattr(self._long_term, "storage_dir"):
             return Path(self._long_term.storage_dir)
-        elif hasattr(self._long_term, "storage"):
+        if hasattr(self._long_term, "storage"):
             if hasattr(self._long_term.storage, "storage_dir"):
                 return Path(self._long_term.storage.storage_dir)
         elif hasattr(self._long_term, "_storage"):
@@ -330,6 +335,7 @@ class LongTermOperationsMixin:
         Note:
             This is O(1) memory vs O(n) for _get_all_patterns().
             Use this for large datasets or when streaming is acceptable.
+
         """
         storage_dir = self._get_storage_dir()
         if not storage_dir:

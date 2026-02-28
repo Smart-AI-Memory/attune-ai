@@ -47,6 +47,7 @@ class AlertEngine:
         >>> events = engine.check_and_trigger()
         >>> for event in events:
         ...     print(f"Alert: {event.message}")
+
     """
 
     def __init__(
@@ -59,6 +60,7 @@ class AlertEngine:
         Args:
             db_path: Path to SQLite database for alert storage
             telemetry_dir: Path to telemetry directory (default: ~/.attune/telemetry)
+
         """
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,7 +93,7 @@ class AlertEngine:
                 severity TEXT DEFAULT 'warning',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
+        """,
         )
 
         # Alert history table for audit trail
@@ -109,7 +111,7 @@ class AlertEngine:
                 delivery_error TEXT,
                 FOREIGN KEY (alert_id) REFERENCES alerts(id)
             )
-        """
+        """,
         )
 
         conn.commit()
@@ -145,6 +147,7 @@ class AlertEngine:
 
         Raises:
             ValueError: If webhook_url missing for webhook channel or email missing for email channel
+
         """
         # Normalize enum values
         if isinstance(metric, str):
@@ -228,12 +231,13 @@ class AlertEngine:
 
         Returns:
             List of AlertConfig objects
+
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute(
             "SELECT id, name, metric, threshold, channel, webhook_url, email, "
-            "enabled, cooldown, severity, created_at FROM alerts"
+            "enabled, cooldown, severity, created_at FROM alerts",
         )
         rows = cursor.fetchall()
         conn.close()
@@ -247,6 +251,7 @@ class AlertEngine:
 
         Returns:
             AlertConfig or None if not found
+
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -269,6 +274,7 @@ class AlertEngine:
 
         Returns:
             True if deleted, False if not found
+
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -312,6 +318,7 @@ class AlertEngine:
 
         Returns:
             Dictionary of metric name to current value
+
         """
         return collect_metrics(self.telemetry_dir)
 
@@ -320,6 +327,7 @@ class AlertEngine:
 
         Returns:
             List of AlertEvent objects for triggered alerts
+
         """
         alerts = self.list_alerts()
         metrics = self.get_metrics()
@@ -443,7 +451,9 @@ class AlertEngine:
         conn.close()
 
     def get_alert_history(
-        self, alert_id: str | None = None, limit: int = 100
+        self,
+        alert_id: str | None = None,
+        limit: int = 100,
     ) -> list[dict[str, Any]]:
         """Get alert history.
 
@@ -453,6 +463,7 @@ class AlertEngine:
 
         Returns:
             List of alert history records
+
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -500,5 +511,6 @@ def get_alert_engine(
 
     Returns:
         Configured AlertEngine instance
+
     """
     return AlertEngine(db_path=db_path)

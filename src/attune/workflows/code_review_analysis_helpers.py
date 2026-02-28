@@ -31,6 +31,7 @@ def _has_return_type_hint(content: str, func_start: int) -> bool:
 
     Returns:
         True if the function has a ``-> ...`` return type annotation.
+
     """
     open_paren = content.find("(", func_start)
     if open_paren == -1:
@@ -63,6 +64,7 @@ def _gather_file_snippets(
 
     Returns:
         Dict mapping file path to {line_num: snippet_text}.
+
     """
     snippets: dict[str, dict[int, str]] = {}
     file_cache: dict[str, list[str]] = {}
@@ -97,6 +99,7 @@ def _format_findings_for_prompt(
 
     Returns:
         Formatted string for inclusion in an LLM prompt.
+
     """
     parts: list[str] = []
     for i, finding in enumerate(findings):
@@ -105,7 +108,7 @@ def _format_findings_for_prompt(
         desc = finding.get("description", "")
         ftype = finding.get("type", "unknown")
         severity = finding.get("severity", finding.get("impact", "unknown"))
-        parts.append(f"[{i}] {ftype} ({severity}) at {fpath}:{line_num}\n" f"    {desc}")
+        parts.append(f"[{i}] {ftype} ({severity}) at {fpath}:{line_num}\n    {desc}")
         snippet = snippets.get(fpath, {}).get(line_num)
         if snippet:
             parts.append(f"    Code context:\n{snippet}")
@@ -129,6 +132,7 @@ def _parse_deep_enrichment(
     Returns:
         List of enriched finding dicts with added keys:
         ``validated``, ``false_positive``, ``suggestion``.
+
     """
     import json as _json
 
@@ -180,6 +184,7 @@ def _recount_by_key(findings: list[dict], key: str) -> dict[str, int]:
 
     Returns:
         Dict mapping key values to counts, e.g. ``{"high": 2, "medium": 1, "low": 0}``.
+
     """
     counts: dict[str, int] = {"high": 0, "medium": 0, "low": 0}
     for f in findings:

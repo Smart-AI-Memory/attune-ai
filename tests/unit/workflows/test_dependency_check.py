@@ -38,6 +38,7 @@ def dependency_check_workflow(cost_tracker):
 
     Returns:
         DependencyCheckWorkflow instance ready for testing
+
     """
     return DependencyCheckWorkflow(cost_tracker=cost_tracker)
 
@@ -144,7 +145,9 @@ requests==2.25.0
         assert deps[0]["name"] == "requests"
 
     def test_handles_package_names_with_hyphens_and_underscores(
-        self, tmp_path, dependency_check_workflow
+        self,
+        tmp_path,
+        dependency_check_workflow,
     ):
         """Test parsing package names with hyphens and underscores."""
         req_file = tmp_path / "requirements.txt"
@@ -338,7 +341,9 @@ class TestParsePackageJson:
             assert dep["dev"] is True
 
     def test_parses_both_dependencies_and_dev_dependencies(
-        self, tmp_path, dependency_check_workflow
+        self,
+        tmp_path,
+        dependency_check_workflow,
     ):
         """Test parsing both regular and dev dependencies together."""
         package_json = tmp_path / "package.json"
@@ -431,7 +436,8 @@ class TestInventoryStage:
         from attune.workflows.base import ModelTier
 
         result, input_tokens, output_tokens = await dependency_check_workflow._inventory(
-            {"path": str(tmp_path)}, ModelTier.CHEAP
+            {"path": str(tmp_path)},
+            ModelTier.CHEAP,
         )
 
         assert result["total_dependencies"] == 0
@@ -456,7 +462,8 @@ flask==2.0.0
         from attune.workflows.base import ModelTier
 
         result, _, _ = await dependency_check_workflow._inventory(
-            {"path": str(tmp_path)}, ModelTier.CHEAP
+            {"path": str(tmp_path)},
+            ModelTier.CHEAP,
         )
 
         assert result["total_dependencies"] == 2
@@ -485,7 +492,8 @@ flask==2.0.0
         from attune.workflows.base import ModelTier
 
         result, _, _ = await dependency_check_workflow._inventory(
-            {"path": str(tmp_path)}, ModelTier.CHEAP
+            {"path": str(tmp_path)},
+            ModelTier.CHEAP,
         )
 
         assert result["total_dependencies"] == 2
@@ -495,7 +503,10 @@ flask==2.0.0
 
     @pytest.mark.asyncio
     async def test_scans_multi_ecosystem_project(
-        self, tmp_path, monkeypatch, dependency_check_workflow
+        self,
+        tmp_path,
+        monkeypatch,
+        dependency_check_workflow,
     ):
         """Test inventory stage with both Python and Node.js dependencies."""
         monkeypatch.chdir(tmp_path)
@@ -516,7 +527,8 @@ dependencies = ["flask>=2.0.0"]
         from attune.workflows.base import ModelTier
 
         result, _, _ = await dependency_check_workflow._inventory(
-            {"path": str(tmp_path)}, ModelTier.CHEAP
+            {"path": str(tmp_path)},
+            ModelTier.CHEAP,
         )
 
         assert result["total_dependencies"] >= 2  # At least requests and react
@@ -526,7 +538,10 @@ dependencies = ["flask>=2.0.0"]
 
     @pytest.mark.asyncio
     async def test_deduplicates_dependencies(
-        self, tmp_path, monkeypatch, dependency_check_workflow
+        self,
+        tmp_path,
+        monkeypatch,
+        dependency_check_workflow,
     ):
         """Test that duplicate dependencies across files are deduplicated."""
         monkeypatch.chdir(tmp_path)
@@ -538,7 +553,8 @@ dependencies = ["flask>=2.0.0"]
         from attune.workflows.base import ModelTier
 
         result, _, _ = await dependency_check_workflow._inventory(
-            {"path": str(tmp_path)}, ModelTier.CHEAP
+            {"path": str(tmp_path)},
+            ModelTier.CHEAP,
         )
 
         # Should only count requests once (case-insensitive deduplication)
@@ -547,7 +563,10 @@ dependencies = ["flask>=2.0.0"]
 
     @pytest.mark.asyncio
     async def test_uses_current_directory_as_default(
-        self, tmp_path, monkeypatch, dependency_check_workflow
+        self,
+        tmp_path,
+        monkeypatch,
+        dependency_check_workflow,
     ):
         """Test that current directory is used when no path specified."""
         monkeypatch.chdir(tmp_path)
@@ -1282,11 +1301,10 @@ class TestWorkflowConfiguration:
         assert dependency_check_workflow.tier_map["report"] == ModelTier.CAPABLE
 
     @pytest.mark.skip(
-        reason="KNOWN_VULNERABILITIES constant was removed; vuln detection uses pip-audit"
+        reason="KNOWN_VULNERABILITIES constant was removed; vuln detection uses pip-audit",
     )
     def test_known_vulnerabilities_database(self):
         """Test that KNOWN_VULNERABILITIES is populated."""
-        pass
 
 
 # =============================================================================
@@ -1304,7 +1322,9 @@ class TestRunStage:
         from attune.workflows.base import ModelTier
 
         result, _, _ = await dependency_check_workflow.run_stage(
-            "inventory", ModelTier.CHEAP, {"path": str(tmp_path)}
+            "inventory",
+            ModelTier.CHEAP,
+            {"path": str(tmp_path)},
         )
 
         assert "dependencies" in result
@@ -1317,7 +1337,9 @@ class TestRunStage:
 
         input_data = {"dependencies": {"python": [], "node": []}}
         result, _, _ = await dependency_check_workflow.run_stage(
-            "assess", ModelTier.CAPABLE, input_data
+            "assess",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "assessment" in result
@@ -1341,7 +1363,9 @@ class TestRunStage:
             },
         }
         result, _, _ = await dependency_check_workflow.run_stage(
-            "report", ModelTier.CAPABLE, input_data
+            "report",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "risk_score" in result

@@ -28,6 +28,7 @@ def load_user_profile(profile_path: str) -> UserProfile:
 
     Returns:
         UserProfile loaded from disk, or a default UserProfile on failure.
+
     """
     path = Path(profile_path)
     if path.exists():
@@ -56,6 +57,7 @@ def save_user_profile(user_profile: UserProfile, profile_path: str) -> None:
     Args:
         user_profile: The UserProfile to save.
         profile_path: Path to the user profile JSON file.
+
     """
     path = Path(profile_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,6 +92,7 @@ def record_decision(
         finding: The finding that was accepted or rejected.
         accepted: True if user accepted, False if rejected.
         profile_path: Path to the user profile JSON file for saving.
+
     """
     cat = finding.category.value
 
@@ -128,6 +131,7 @@ def apply_user_preferences(
 
     Returns:
         Findings sorted by user-preference-adjusted score.
+
     """
 
     def score(finding: RefactoringFinding) -> float:

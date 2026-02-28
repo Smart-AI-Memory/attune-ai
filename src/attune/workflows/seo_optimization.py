@@ -116,6 +116,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             WorkflowResult with findings, suggestions, and cost breakdown
+
         """
         # Convert to Path if string
         docs_path = Path(docs_path) if isinstance(docs_path, str) else docs_path
@@ -175,6 +176,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Tuple of (output_data, input_tokens, output_tokens)
+
         """
         # Route to appropriate stage method
         if stage_name == "scan":
@@ -182,29 +184,27 @@ class SEOOptimizationWorkflow(BaseWorkflow):
             self._scan_result = result
             return result, 0, 0  # Minimal tokens for file scanning
 
-        elif stage_name == "analyze":
+        if stage_name == "analyze":
             result = await self._analyze_seo(self._seo_config, self._scan_result)
             self._analyze_result = result
             # Estimate tokens for analysis stage
             return result, 1000, 500
 
-        elif stage_name == "recommend":
+        if stage_name == "recommend":
             result = await self._generate_recommendations(self._seo_config, self._analyze_result)
             self._recommend_result = result
             # Estimate tokens for recommendation stage
             return result, 2000, 1500
 
-        elif stage_name == "implement":
+        if stage_name == "implement":
             if self._mode == "fix":
                 result = await self._implement_fixes(self._seo_config, self._recommend_result)
                 # Estimate tokens for implementation stage
                 return result, 1500, 800
-            else:
-                # Skip implementation if not in fix mode
-                return {"skipped": True, "reason": "Not in fix mode"}, 0, 0
+            # Skip implementation if not in fix mode
+            return {"skipped": True, "reason": "Not in fix mode"}, 0, 0
 
-        else:
-            raise ValueError(f"Unknown stage: {stage_name}")
+        raise ValueError(f"Unknown stage: {stage_name}")
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
         """Determine if a stage should be skipped based on mode.
@@ -215,6 +215,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Tuple of (should_skip, reason)
+
         """
         # Skip recommend stage if mode is audit
         if stage_name == "recommend" and self._mode == "audit":
@@ -245,7 +246,9 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         }
 
     async def _analyze_seo(
-        self, config: SEOOptimizationConfig, scan_data: dict[str, Any]
+        self,
+        config: SEOOptimizationConfig,
+        scan_data: dict[str, Any],
     ) -> dict[str, Any]:
         """Analyze SEO issues (CAPABLE tier - detailed analysis).
 
@@ -271,7 +274,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
                             "element": "meta_description",
                             "severity": "critical",
                             "message": "Missing meta description",
-                        }
+                        },
                     )
 
                 # Check for H1 count
@@ -283,7 +286,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
                             "element": "h1_count",
                             "severity": "warning",
                             "message": "No H1 heading found",
-                        }
+                        },
                     )
                 elif h1_count > 1:
                     issues.append(
@@ -292,7 +295,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
                             "element": "h1_count",
                             "severity": "warning",
                             "message": f"Multiple H1 headings ({h1_count})",
-                        }
+                        },
                     )
             except Exception:
                 pass  # Skip files that can't be read
@@ -304,7 +307,9 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         }
 
     async def _generate_recommendations(
-        self, config: SEOOptimizationConfig, analysis: dict[str, Any]
+        self,
+        config: SEOOptimizationConfig,
+        analysis: dict[str, Any],
     ) -> dict[str, Any]:
         """Generate strategic recommendations with Socratic questioning (PREMIUM tier).
 
@@ -360,6 +365,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Question to ask the user
+
         """
         element = issue.get("element")
         file_name = Path(issue["file"]).name
@@ -394,7 +400,9 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         )
 
     async def _implement_fixes(
-        self, config: SEOOptimizationConfig, recommendations: dict[str, Any]
+        self,
+        config: SEOOptimizationConfig,
+        recommendations: dict[str, Any],
     ) -> dict[str, Any]:
         """Implement approved fixes (CAPABLE tier - execution).
 
@@ -430,6 +438,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             User's primary goal (launch, visibility, health, specific)
+
         """
         # Note: This method would use the AskUserQuestion tool when called from Claude Code
         # The actual implementation is handled by the Claude Code agent invoking this workflow
@@ -478,6 +487,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Confidence score between 0.0 and 1.0
+
         """
         confidence = 0.0
 
@@ -503,7 +513,9 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         return min(1.0, max(0.0, confidence))
 
     def _format_educational_explanation(
-        self, issue: dict[str, Any], confidence: float
+        self,
+        issue: dict[str, Any],
+        confidence: float,
     ) -> dict[str, str]:
         """Format educational explanation for an issue.
 
@@ -513,6 +525,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Dictionary with impact, time, and reasoning
+
         """
         # Map severity to impact
         impact_map = {
@@ -551,6 +564,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Explanation of why the issue matters
+
         """
         reasoning_map = {
             "meta_description": (
@@ -586,7 +600,8 @@ class SEOOptimizationWorkflow(BaseWorkflow):
         )
 
     def _create_clarification_question(
-        self, recommendations: list[dict[str, Any]]
+        self,
+        recommendations: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Create AskUserQuestion structure for low-confidence recommendations.
 
@@ -598,6 +613,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
 
         Returns:
             Question structure for AskUserQuestion tool
+
         """
         if not recommendations:
             return None

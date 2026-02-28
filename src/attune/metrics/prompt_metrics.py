@@ -41,6 +41,7 @@ class PromptMetrics:
         validation_success: Whether XML validation succeeded (None if not validated)
         error_message: Error message if execution failed (None if successful)
         xml_structure_used: Whether XML-enhanced prompts were used
+
     """
 
     timestamp: str
@@ -88,6 +89,7 @@ class MetricsTracker:
 
         Args:
             metrics_file: Path to metrics file (JSON Lines format)
+
         """
         self.metrics_file = Path(metrics_file)
         self.metrics_file.parent.mkdir(parents=True, exist_ok=True)
@@ -102,6 +104,7 @@ class MetricsTracker:
 
         Args:
             metric: PromptMetrics instance to log
+
         """
         try:
             validated_path = _validate_file_path(str(self.metrics_file))
@@ -125,6 +128,7 @@ class MetricsTracker:
 
         Returns:
             List of PromptMetrics matching filters
+
         """
         metrics: list[PromptMetrics] = []
 
@@ -167,6 +171,7 @@ class MetricsTracker:
             - avg_latency_ms: Average latency in milliseconds
             - success_rate: Ratio of successful parses
             - retry_rate: Average retry count per prompt
+
         """
         metrics = self.get_metrics(workflow=workflow)
 

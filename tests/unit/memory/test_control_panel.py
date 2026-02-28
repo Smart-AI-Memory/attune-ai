@@ -806,7 +806,9 @@ class TestPrintHealth:
 
         with patch.object(panel, "get_statistics") as mock_stats:
             mock_stats.return_value = MemoryStats(
-                redis_available=True, long_term_available=True, patterns_total=1
+                redis_available=True,
+                long_term_available=True,
+                patterns_total=1,
             )
             print_health(panel)
 

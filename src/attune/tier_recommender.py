@@ -1,5 +1,4 @@
-"""
-Real-time tier recommendation system for cascading workflows.
+"""Real-time tier recommendation system for cascading workflows.
 
 This module provides intelligent tier selection based on historical patterns,
 bug types, and file analysis. It can be used programmatically or via CLI.
@@ -40,8 +39,7 @@ class TierRecommendationResult:
 
 
 class TierRecommender:
-    """
-    Intelligent tier recommendation system.
+    """Intelligent tier recommendation system.
 
     Learns from historical patterns to recommend optimal starting tier
     for new bugs based on:
@@ -52,8 +50,7 @@ class TierRecommender:
     """
 
     def __init__(self, patterns_dir: Path | None = None, confidence_threshold: float = 0.7):
-        """
-        Initialize tier recommender.
+        """Initialize tier recommender.
 
         Args:
             patterns_dir: Directory containing pattern JSON files.
@@ -62,11 +59,12 @@ class TierRecommender:
 
         Raises:
             ValueError: If confidence_threshold is out of valid range
+
         """
         # Pattern 4: Range validation
         if not 0.0 <= confidence_threshold <= 1.0:
             raise ValueError(
-                f"confidence_threshold must be between 0.0 and 1.0, got {confidence_threshold}"
+                f"confidence_threshold must be between 0.0 and 1.0, got {confidence_threshold}",
             )
 
         if patterns_dir is None:
@@ -129,8 +127,7 @@ class TierRecommender:
         files_affected: list[str] | None = None,
         complexity_hint: int | None = None,
     ) -> TierRecommendationResult:
-        """
-        Recommend optimal starting tier for a new bug.
+        """Recommend optimal starting tier for a new bug.
 
         Args:
             bug_description: Description of the bug/task
@@ -143,6 +140,7 @@ class TierRecommender:
         Raises:
             ValueError: If bug_description is empty or complexity_hint out of range
             TypeError: If files_affected is not a list
+
         """
         # Pattern 1: String ID validation
         if not bug_description or not bug_description.strip():
@@ -161,13 +159,15 @@ class TierRecommender:
 
         # Step 2: Find similar patterns
         similar_patterns = self._find_similar_patterns(
-            bug_type=bug_type, files_affected=files_affected or []
+            bug_type=bug_type,
+            files_affected=files_affected or [],
         )
 
         # Step 3: If no similar patterns, use fallback logic
         if not similar_patterns:
             return self._fallback_recommendation(
-                bug_description=bug_description, complexity_hint=complexity_hint
+                bug_description=bug_description,
+                complexity_hint=complexity_hint,
             )
 
         # Step 4: Analyze tier distribution in similar patterns
@@ -219,6 +219,7 @@ class TierRecommender:
 
         Raises:
             TypeError: If files_affected is not a list
+
         """
         # Pattern 5: Type validation
         if not isinstance(files_affected, list):
@@ -245,7 +246,7 @@ class TierRecommender:
     def _analyze_tier_distribution(self, patterns: list[dict]) -> dict[str, dict]:
         """Analyze tier success rates from similar patterns."""
         tier_stats: dict[str, dict] = defaultdict(
-            lambda: {"count": 0, "total_cost": 0.0, "total_attempts": 0}
+            lambda: {"count": 0, "total_cost": 0.0, "total_attempts": 0},
         )
 
         for pattern in patterns:
@@ -273,7 +274,9 @@ class TierRecommender:
 
         # Sort by success rate
         sorted_tiers = sorted(
-            tier_analysis.items(), key=lambda x: x[1]["success_rate"], reverse=True
+            tier_analysis.items(),
+            key=lambda x: x[1]["success_rate"],
+            reverse=True,
         )
 
         best_tier, stats = sorted_tiers[0]
@@ -303,10 +306,11 @@ class TierRecommender:
         }
 
     def _fallback_recommendation(
-        self, bug_description: str, complexity_hint: int | None
+        self,
+        bug_description: str,
+        complexity_hint: int | None,
     ) -> TierRecommendationResult:
         """Provide fallback recommendation when no historical data available."""
-
         # Use complexity hint if provided
         if complexity_hint is not None:
             if complexity_hint <= 3:
@@ -341,19 +345,20 @@ class TierRecommender:
         )
 
     def _generate_reasoning(
-        self, bug_type: str, tier: str, confidence: float, similar_count: int
+        self,
+        bug_type: str,
+        tier: str,
+        confidence: float,
+        similar_count: int,
     ) -> str:
         """Generate human-readable reasoning for recommendation."""
         percent = int(confidence * 100)
 
         if similar_count == 0:
             return "No historical data - defaulting to CHEAP tier"
-        elif similar_count == 1:
+        if similar_count == 1:
             return f"1 similar bug ({bug_type}) resolved at {tier} tier"
-        else:
-            return (
-                f"{percent}% of {similar_count} similar bugs ({bug_type}) resolved at {tier} tier"
-            )
+        return f"{percent}% of {similar_count} similar bugs ({bug_type}) resolved at {tier} tier"
 
     def get_stats(self) -> dict:
         """Get overall statistics about pattern learning."""

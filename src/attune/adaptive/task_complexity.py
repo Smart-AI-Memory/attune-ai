@@ -36,6 +36,7 @@ class ComplexityScore:
         file_count: Number of files involved
         complexity_level: Classified complexity
         confidence: Confidence in classification (0-1)
+
     """
 
     token_count: int
@@ -85,6 +86,7 @@ class TaskComplexityScorer:
 
         Returns:
             ComplexityScore with classification and metrics
+
         """
         # Count tokens
         if self.tokenizer:

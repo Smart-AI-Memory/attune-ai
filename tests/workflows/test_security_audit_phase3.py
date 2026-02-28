@@ -108,7 +108,10 @@ class TestEnhancedCommandInjectionDetectionFallback:
     def test_non_python_file_line_in_comment_filtered_out(self) -> None:
         """Non-Python file: line that starts with '#' is filtered out."""
         with tempfile.NamedTemporaryFile(
-            suffix=".sh", mode="w", delete=False, encoding="utf-8"
+            suffix=".sh",
+            mode="w",
+            delete=False,
+            encoding="utf-8",
         ) as tmp:
             tmp.write("#!/bin/bash\n# eval is used here for templating\neval $cmd\n")
             tmp_path = tmp.name
@@ -124,7 +127,10 @@ class TestEnhancedCommandInjectionDetectionFallback:
     def test_non_python_file_real_code_kept(self) -> None:
         """Non-Python file: code line not in comment is kept."""
         with tempfile.NamedTemporaryFile(
-            suffix=".sh", mode="w", delete=False, encoding="utf-8"
+            suffix=".sh",
+            mode="w",
+            delete=False,
+            encoding="utf-8",
         ) as tmp:
             tmp.write("#!/bin/bash\neval $user_input\n")
             tmp_path = tmp.name
@@ -145,7 +151,10 @@ class TestEnhancedCommandInjectionDetectionFallback:
     def test_ast_exception_falls_back_to_text_filter(self) -> None:
         """When AST import fails for a .py file, falls back to text-based filter."""
         with tempfile.NamedTemporaryFile(
-            suffix=".py", mode="w", delete=False, encoding="utf-8"
+            suffix=".py",
+            mode="w",
+            delete=False,
+            encoding="utf-8",
         ) as tmp:
             tmp.write("# eval is documented here\nsome_func()\n")
             tmp_path = tmp.name
@@ -170,7 +179,10 @@ class TestEnhancedCommandInjectionDetectionFallback:
         1-line file, so the finding is not appended to filtered.
         """
         with tempfile.NamedTemporaryFile(
-            suffix=".sh", mode="w", delete=False, encoding="utf-8"
+            suffix=".sh",
+            mode="w",
+            delete=False,
+            encoding="utf-8",
         ) as tmp:
             tmp.write("echo hello\n")
             tmp_path = tmp.name

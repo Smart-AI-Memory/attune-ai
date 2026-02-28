@@ -40,6 +40,7 @@ class WorkflowHistoryStore:
         >>> stats = store.get_stats()
         >>> recent = store.query_runs(limit=10)
         >>> store.close()
+
     """
 
     SCHEMA_VERSION = 1
@@ -50,6 +51,7 @@ class WorkflowHistoryStore:
 
         Args:
             db_path: Path to SQLite database file (default: .attune/history.db)
+
         """
         self.db_path = db_path
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -88,7 +90,7 @@ class WorkflowHistoryStore:
                 summary TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
-        """
+        """,
         )
 
         # Workflow stages (1:many relationship)
@@ -107,7 +109,7 @@ class WorkflowHistoryStore:
                 output_tokens INTEGER DEFAULT 0,
                 FOREIGN KEY (run_id) REFERENCES workflow_runs(run_id)
             )
-        """
+        """,
         )
 
         # Indexes for common queries
@@ -115,28 +117,28 @@ class WorkflowHistoryStore:
             """
             CREATE INDEX IF NOT EXISTS idx_workflow_name
             ON workflow_runs(workflow_name)
-        """
+        """,
         )
 
         self.conn.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_started_at
             ON workflow_runs(started_at DESC)
-        """
+        """,
         )
 
         self.conn.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_provider
             ON workflow_runs(provider)
-        """
+        """,
         )
 
         self.conn.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_success
             ON workflow_runs(success)
-        """
+        """,
         )
 
         # Index for stage queries
@@ -144,7 +146,7 @@ class WorkflowHistoryStore:
             """
             CREATE INDEX IF NOT EXISTS idx_run_stages
             ON workflow_stages(run_id)
-        """
+        """,
         )
 
         self.conn.commit()
@@ -168,6 +170,7 @@ class WorkflowHistoryStore:
         Raises:
             sqlite3.IntegrityError: If run_id already exists
             sqlite3.OperationalError: If database is locked
+
         """
         cursor = self.conn.cursor()
 
@@ -276,6 +279,7 @@ class WorkflowHistoryStore:
             ...     success_only=True,
             ...     limit=10
             ... )
+
         """
         query = "SELECT * FROM workflow_runs WHERE 1=1"
         params: list[Any] = []
@@ -343,6 +347,7 @@ class WorkflowHistoryStore:
             >>> stats = store.get_stats()
             >>> print(f"Total savings: ${stats['total_savings']:.2f}")
             >>> print(f"Success rate: {stats['successful_runs'] / stats['total_runs']:.1%}")
+
         """
         cursor = self.conn.cursor()
 
@@ -357,7 +362,7 @@ class WorkflowHistoryStore:
                 SUM(success) as successful
             FROM workflow_runs
             GROUP BY workflow_name
-        """
+        """,
         )
         by_workflow = {row["workflow_name"]: dict(row) for row in cursor.fetchall()}
 
@@ -370,7 +375,7 @@ class WorkflowHistoryStore:
                 SUM(total_cost) as cost
             FROM workflow_runs
             GROUP BY provider
-        """
+        """,
         )
         by_provider = {row["provider"]: dict(row) for row in cursor.fetchall()}
 
@@ -383,7 +388,7 @@ class WorkflowHistoryStore:
             FROM workflow_stages
             WHERE skipped = 0
             GROUP BY tier
-        """
+        """,
         )
         by_tier = {row["tier"]: row["total_cost"] for row in cursor.fetchall()}
 
@@ -393,7 +398,7 @@ class WorkflowHistoryStore:
             SELECT * FROM workflow_runs
             ORDER BY started_at DESC
             LIMIT 10
-        """
+        """,
         )
         recent_runs = [dict(row) for row in cursor.fetchall()]
 
@@ -407,7 +412,7 @@ class WorkflowHistoryStore:
                 SUM(savings) as total_savings,
                 AVG(CASE WHEN success = 1 THEN savings_percent ELSE NULL END) as avg_savings_percent
             FROM workflow_runs
-        """
+        """,
         )
         totals = dict(cursor.fetchone())
 
@@ -431,6 +436,7 @@ class WorkflowHistoryStore:
 
         Returns:
             Run dictionary with stages, or None if not found
+
         """
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM workflow_runs WHERE run_id = ?", (run_id,))
@@ -462,6 +468,7 @@ class WorkflowHistoryStore:
 
         Returns:
             True if run was deleted, False if not found
+
         """
         cursor = self.conn.cursor()
 
@@ -487,6 +494,7 @@ class WorkflowHistoryStore:
 
         Returns:
             Number of runs deleted
+
         """
         cursor = self.conn.cursor()
 

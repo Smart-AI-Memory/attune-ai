@@ -65,9 +65,10 @@ class MultiAgentStageMixin:
                 "strategy": "parallel",
                 "quality_gates": {"min_score": 70},
             }
+
         """
         # Lazy imports to avoid circular dependencies
-        from attune.orchestration.dynamic_team import DynamicTeam  # noqa: F811
+        from attune.orchestration.dynamic_team import DynamicTeam
         from attune.orchestration.team_builder import DynamicTeamBuilder
 
         # Resolve config
@@ -79,7 +80,7 @@ class MultiAgentStageMixin:
         if config is None:
             raise ValueError(
                 f"No multi-agent team config found for stage '{stage_name}'. "
-                f"Pass team_config directly or set _multi_agent_configs['{stage_name}']."
+                f"Pass team_config directly or set _multi_agent_configs['{stage_name}'].",
             )
 
         # Build the team
@@ -122,6 +123,7 @@ class MultiAgentStageMixin:
 
         Returns:
             Merged dict suitable as workflow stage output.
+
         """
         agent_findings = []
         for r in team_result.agent_results:
@@ -132,7 +134,7 @@ class MultiAgentStageMixin:
                     "success": r.success,
                     "score": r.score,
                     "findings": r.findings,
-                }
+                },
             )
 
         return {
@@ -159,6 +161,7 @@ class MultiAgentStageMixin:
 
         Returns:
             Estimated token count.
+
         """
         if cost <= 0:
             return 0

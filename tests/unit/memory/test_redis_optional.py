@@ -67,7 +67,7 @@ class TestCoreWithoutRedis:
 
             names = [ep.name for ep in backends]
             assert "file" in names, f"Expected 'file' in entry points, got: {names}"
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: entry_points may not resolve in editable
             # installs without rebuilding; skip gracefully
             pytest.skip("entry_points not available (editable install)")

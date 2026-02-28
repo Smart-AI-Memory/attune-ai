@@ -289,7 +289,7 @@ class UsageTracker:
             except OSError as e:
                 # File system errors - log but don't crash the workflow
                 logger.debug(f"Failed to flush telemetry buffer: {e}")
-            except Exception as ex:  # noqa: BLE001
+            except Exception as ex:
                 # INTENTIONAL: Telemetry failures should never crash the workflow
                 logger.debug(f"Unexpected error flushing telemetry: {ex}")
 

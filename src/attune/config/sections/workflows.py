@@ -19,6 +19,7 @@ class WorkflowConfig:
         parallel_execution: Enable parallel execution of workflow steps.
         timeout_seconds: Maximum time for workflow execution.
         cache_results: Cache workflow results for reuse.
+
     """
 
     default_workflow: str = "code-review"

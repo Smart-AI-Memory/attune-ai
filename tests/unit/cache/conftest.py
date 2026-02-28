@@ -15,6 +15,7 @@ def temp_cache_dir(tmp_path):
 
     Returns:
         Path to isolated cache storage
+
     """
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -27,6 +28,7 @@ def sample_cache_entry():
 
     Returns:
         Dict with test cache entry
+
     """
     return {
         "key": "test_query_hash",
@@ -48,6 +50,7 @@ def mock_embeddings():
         Uses `random` (not `secrets`) intentionally for reproducible test data.
         This is NOT used for cryptographic operations or security tokens.
         For security-critical random generation, use `secrets` module.
+
     """
     import random
 

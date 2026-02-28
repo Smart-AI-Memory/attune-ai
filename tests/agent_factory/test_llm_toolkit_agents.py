@@ -741,7 +741,7 @@ class TestAgentFactoryIntegration:
     @pytest.mark.asyncio
     @pytest.mark.integration
     @pytest.mark.skip(
-        reason="Integration test requiring valid ANTHROPIC_API_KEY - run manually with: pytest -m integration"
+        reason="Integration test requiring valid ANTHROPIC_API_KEY - run manually with: pytest -m integration",
     )
     async def test_full_workflow_execution(self):
         """Test complete workflow from factory creation to execution."""

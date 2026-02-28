@@ -34,6 +34,7 @@ class StepType(str, Enum):
         TASK_DECOMPOSE: Breaks a problem into structured XML sub-tasks.
         PREVIEW: Shows generated results and asks for approval.
         CONFIRM: Final yes/no gate before execution.
+
     """
 
     QUESTION = "question"
@@ -66,6 +67,7 @@ class WizardStep:
         prompt_context_template: Declarative prompt context for config-driven wizards.
             Keys: ``role``, ``goal``, ``instructions``, ``constraints``.
             Values may contain ``{session.var}`` placeholders.
+
     """
 
     id: str
@@ -93,6 +95,7 @@ class WizardConfig:
         source: Origin of this wizard (``"builtin"`` or ``"custom"``).
         estimated_cost_range: Estimated USD cost range per run.
         estimated_duration_minutes: Estimated wall-clock minutes per run.
+
     """
 
     wizard_id: str
@@ -120,6 +123,7 @@ class WizardResult:
         total_cost: Total LLM cost in USD.
         total_duration_ms: Wall-clock duration in milliseconds.
         error: Error message if ``success`` is ``False``.
+
     """
 
     wizard_id: str
@@ -138,6 +142,7 @@ class WizardResult:
 
         Returns:
             Dict representation of this result.
+
         """
         return {
             "wizard_id": self.wizard_id,

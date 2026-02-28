@@ -26,6 +26,7 @@ class ParsingService:
     Example:
         >>> parser = ParsingService()
         >>> findings = parser.extract_findings(response_text, ["src/auth.py"])
+
     """
 
     def __init__(self, xml_config: dict[str, Any] | None = None) -> None:
@@ -39,6 +40,7 @@ class ParsingService:
 
         Returns:
             Dictionary with parsed fields or raw response data.
+
         """
         from attune.prompts import XmlResponseParser
 
@@ -78,6 +80,7 @@ class ParsingService:
 
         Returns:
             List of finding dicts with id, file, line, column, severity, etc.
+
         """
         findings: list[dict[str, Any]] = []
 
@@ -135,7 +138,7 @@ class ParsingService:
                             "message": message.strip() if message else "",
                             "details": "",
                             "recommendation": "",
-                        }
+                        },
                     )
 
         # Deduplicate by file:line
@@ -187,6 +190,7 @@ class ParsingService:
 
         Returns:
             Tuple of (file_path, line_number, column_number)
+
         """
         if not location:
             return (files_changed[0] if files_changed else "", 1, 1)
@@ -230,6 +234,7 @@ class ParsingService:
 
         Returns:
             Severity level: critical, high, medium, low, or info
+
         """
         text_lower = text.lower()
 
@@ -288,6 +293,7 @@ class ParsingService:
 
         Returns:
             Category: security, performance, maintainability, style, or correctness
+
         """
         text_lower = text.lower()
 

@@ -207,7 +207,7 @@ class TestPatternRegistry:
                 description="Step-by-step wizard",
                 frequency=16,
                 reusability_score=0.9,
-            )
+            ),
         )
         registry.register(
             BasePattern(
@@ -217,7 +217,7 @@ class TestPatternRegistry:
                 description="User approval",
                 frequency=16,
                 reusability_score=0.95,
-            )
+            ),
         )
         registry.register(
             BasePattern(
@@ -227,7 +227,7 @@ class TestPatternRegistry:
                 description="Code analysis",
                 frequency=16,
                 reusability_score=0.9,
-            )
+            ),
         )
 
         recommendations = registry.recommend_for_wizard(wizard_type="domain", domain="healthcare")
@@ -249,7 +249,7 @@ class TestPatternRegistry:
                 description="Code analysis",
                 frequency=16,
                 reusability_score=0.9,
-            )
+            ),
         )
         registry.register(
             BasePattern(
@@ -259,7 +259,7 @@ class TestPatternRegistry:
                 description="Risk analysis",
                 frequency=16,
                 reusability_score=0.8,
-            )
+            ),
         )
 
         recommendations = registry.recommend_for_wizard(wizard_type="coach")
@@ -278,7 +278,7 @@ class TestPatternRegistry:
                 description="Multi-phase pipeline",
                 frequency=12,
                 reusability_score=0.85,
-            )
+            ),
         )
         registry.register(
             BasePattern(
@@ -288,7 +288,7 @@ class TestPatternRegistry:
                 description="Flexible context",
                 frequency=12,
                 reusability_score=0.8,
-            )
+            ),
         )
 
         recommendations = registry.recommend_for_wizard(wizard_type="ai")
@@ -307,7 +307,7 @@ class TestPatternRegistry:
                 description="Empathy config",
                 frequency=16,
                 reusability_score=1.0,
-            )
+            ),
         )
 
         # Empathy level is recommended for all types
@@ -327,7 +327,7 @@ class TestPatternRegistry:
                 description="Pattern",
                 frequency=10,
                 reusability_score=0.9,
-            )
+            ),
         )
         registry.register(
             BasePattern(
@@ -337,7 +337,7 @@ class TestPatternRegistry:
                 description="Pattern",
                 frequency=5,
                 reusability_score=0.7,
-            )
+            ),
         )
 
         stats = registry.get_statistics()

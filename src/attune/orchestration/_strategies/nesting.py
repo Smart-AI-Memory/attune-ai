@@ -62,6 +62,7 @@ class WorkflowReference:
         ...     ),
         ...     result_key="analysis_result"
         ... )
+
     """
 
     workflow_id: str = ""
@@ -93,6 +94,7 @@ class InlineWorkflow:
         ...     strategy="sequential",
         ...     description="Code review sub-workflow"
         ... )
+
     """
 
     agents: list[AgentTemplate]
@@ -107,6 +109,7 @@ class NestingContext:
         current_depth: Current nesting level (0 = root)
         max_depth: Maximum allowed nesting depth
         workflow_stack: Stack of workflow IDs for cycle detection
+
     """
 
     CONTEXT_KEY = "_nesting"
@@ -117,6 +120,7 @@ class NestingContext:
 
         Args:
             max_depth: Maximum allowed nesting depth
+
         """
         self.current_depth = 0
         self.max_depth = max_depth
@@ -131,6 +135,7 @@ class NestingContext:
 
         Returns:
             NestingContext instance
+
         """
         if cls.CONTEXT_KEY in context:
             return context[cls.CONTEXT_KEY]
@@ -144,6 +149,7 @@ class NestingContext:
 
         Returns:
             True if nesting is allowed
+
         """
         if self.current_depth >= self.max_depth:
             return False
@@ -159,6 +165,7 @@ class NestingContext:
 
         Returns:
             New NestingContext with incremented depth
+
         """
         child = NestingContext(self.max_depth)
         child.current_depth = self.current_depth + 1
@@ -175,6 +182,7 @@ class NestingContext:
 
         Returns:
             Updated context with nesting info
+
         """
         context = context.copy()
         context[self.CONTEXT_KEY] = self
@@ -196,6 +204,7 @@ class WorkflowDefinition:
         agents: Agents in the workflow
         strategy: Composition strategy name
         description: Human-readable description
+
     """
 
     id: str
@@ -209,6 +218,7 @@ def register_workflow(workflow: WorkflowDefinition) -> None:
 
     Args:
         workflow: Workflow definition to register
+
     """
     WORKFLOW_REGISTRY[workflow.id] = workflow
     logger.info(f"Registered workflow: {workflow.id}")
@@ -225,9 +235,10 @@ def get_workflow(workflow_id: str) -> WorkflowDefinition:
 
     Raises:
         ValueError: If workflow is not registered
+
     """
     if workflow_id not in WORKFLOW_REGISTRY:
         raise ValueError(
-            f"Unknown workflow: {workflow_id}. Available: {list(WORKFLOW_REGISTRY.keys())}"
+            f"Unknown workflow: {workflow_id}. Available: {list(WORKFLOW_REGISTRY.keys())}",
         )
     return WORKFLOW_REGISTRY[workflow_id]

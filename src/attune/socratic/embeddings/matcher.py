@@ -39,6 +39,7 @@ class SemanticGoalMatcher:
             provider: Embedding provider ("tfidf", "anthropic", "sentence-transformer")
             storage_path: Path to persist vectors
             api_key: API key for cloud providers
+
         """
         if storage_path is None:
             storage_path = Path.home() / ".attune" / "socratic" / "embeddings.json"
@@ -74,6 +75,7 @@ class SemanticGoalMatcher:
 
         Returns:
             Goal ID
+
         """
         goal = self.store.add(
             goal_text=goal_text,
@@ -101,6 +103,7 @@ class SemanticGoalMatcher:
 
         Returns:
             List of similar goals with their workflows
+
         """
         results = self.store.search(
             query=goal_text,
@@ -120,7 +123,7 @@ class SemanticGoalMatcher:
                         "domains": result.goal.domains,
                         "success_score": result.goal.success_score,
                         "metadata": result.goal.metadata,
-                    }
+                    },
                 )
 
             if len(formatted) >= top_k:
@@ -143,6 +146,7 @@ class SemanticGoalMatcher:
 
         Returns:
             Best matching workflow suggestion or None
+
         """
         similar = self.find_similar(
             goal_text=goal_text,
@@ -161,6 +165,7 @@ class SemanticGoalMatcher:
         Args:
             goal_id: Goal ID to update
             success_score: New success score (0.0-1.0)
+
         """
         self.store.update_success_score(goal_id, success_score)
 

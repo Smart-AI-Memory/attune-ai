@@ -97,6 +97,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
             config: Configuration (uses defaults if None).
             session_id: Resume specific session (creates new
                 if None).
+
         """
         self.user_id = user_id
         self.config = config or FileSessionConfig()
@@ -139,6 +140,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             True if stored successfully.
+
         """
         ttl = ttl or self.config.working_ttl_seconds
         agent_id = agent_id or self.user_id
@@ -171,6 +173,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Stored value or None if not found/expired.
+
         """
         # Clean up expired entries
         self._cleanup_expired()
@@ -194,6 +197,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             True if deleted, False if key not found.
+
         """
         if key in self._state.working_memory:
             del self._state.working_memory[key]
@@ -209,6 +213,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             List of matching key names.
+
         """
         import fnmatch
 
@@ -234,6 +239,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
         Args:
             key: Context key.
             value: Context value.
+
         """
         self._state.context[key] = value
         self._dirty = True
@@ -247,6 +253,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Stored context value or default.
+
         """
         return self._state.context.get(key, default)
 
@@ -255,6 +262,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Copy of the full context dictionary.
+
         """
         return self._state.context.copy()
 
@@ -270,6 +278,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             List of session summaries (most recent first).
+
         """
         archive_dir = self.config.archive_dir
         sessions: list[dict] = []
@@ -297,7 +306,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
                         "last_updated": data.get("last_updated"),
                         "context_keys": list(data.get("context", {}).keys()),
                         "pattern_count": len(data.get("staged_patterns", {})),
-                    }
+                    },
                 )
             except (json.JSONDecodeError, OSError) as e:
                 logger.warning(
@@ -317,6 +326,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Dictionary of current memory statistics.
+
         """
         self._cleanup_expired()
 
@@ -337,6 +347,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Always True for file-based storage.
+
         """
         return True
 
@@ -370,6 +381,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Self for use in with-statement.
+
         """
         return self
 
@@ -400,6 +412,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Always 0 (no subscribers).
+
         """
         logger.warning("publish_not_supported", channel=channel)
         return 0
@@ -413,6 +426,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Always False.
+
         """
         logger.warning("subscribe_not_supported", channel=channel)
         return False
@@ -422,6 +436,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Always False for file-based storage.
+
         """
         return False
 
@@ -430,6 +445,7 @@ class FileSessionMemory(PersistenceMixin, PatternStagingMixin):
 
         Returns:
             Always False for file-based storage.
+
         """
         return False
 
@@ -454,6 +470,7 @@ def get_file_session_memory(
 
     Returns:
         Configured FileSessionMemory instance.
+
     """
     config = FileSessionConfig(base_dir=base_dir, **kwargs)
     return FileSessionMemory(user_id=user_id, config=config)

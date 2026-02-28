@@ -160,7 +160,9 @@ class TestLongTermMemoryListKeys:
         memory.store("public_key", {"data": "public"}, classification=Classification.PUBLIC)
         memory.store("internal_key", {"data": "internal"}, classification=Classification.INTERNAL)
         memory.store(
-            "sensitive_key", {"data": "sensitive"}, classification=Classification.SENSITIVE
+            "sensitive_key",
+            {"data": "sensitive"},
+            classification=Classification.SENSITIVE,
         )
 
         # Filter by PUBLIC
@@ -390,10 +392,16 @@ class TestSecureMemDocsStatistics:
     def test_statistics_counts_by_classification(self, integration):
         """Test statistics correctly counts patterns by classification."""
         integration.store_pattern(
-            "Public 1", "tutorial", "user@test.com", explicit_classification=Classification.PUBLIC
+            "Public 1",
+            "tutorial",
+            "user@test.com",
+            explicit_classification=Classification.PUBLIC,
         )
         integration.store_pattern(
-            "Public 2", "tutorial", "user@test.com", explicit_classification=Classification.PUBLIC
+            "Public 2",
+            "tutorial",
+            "user@test.com",
+            explicit_classification=Classification.PUBLIC,
         )
         integration.store_pattern(
             "Internal 1",
@@ -454,7 +462,8 @@ class TestSecureMemDocsListPatterns:
     def test_list_patterns_filter_by_classification(self, integration_with_patterns):
         """Test filtering patterns by classification."""
         patterns = integration_with_patterns.list_patterns(
-            "user1@example.com", classification=Classification.PUBLIC
+            "user1@example.com",
+            classification=Classification.PUBLIC,
         )
 
         for pattern in patterns:
@@ -463,7 +472,8 @@ class TestSecureMemDocsListPatterns:
     def test_list_patterns_filter_by_pattern_type(self, integration_with_patterns):
         """Test filtering patterns by pattern_type."""
         patterns = integration_with_patterns.list_patterns(
-            "user1@example.com", pattern_type="architecture"
+            "user1@example.com",
+            pattern_type="architecture",
         )
 
         for pattern in patterns:
@@ -547,13 +557,19 @@ class TestMemDocsStorage:
     def test_list_patterns_combined_filters(self, storage):
         """Test listing patterns with multiple filters."""
         storage.store(
-            "pattern_1", "content 1", {"classification": "PUBLIC", "created_by": "user_a"}
+            "pattern_1",
+            "content 1",
+            {"classification": "PUBLIC", "created_by": "user_a"},
         )
         storage.store(
-            "pattern_2", "content 2", {"classification": "PUBLIC", "created_by": "user_b"}
+            "pattern_2",
+            "content 2",
+            {"classification": "PUBLIC", "created_by": "user_b"},
         )
         storage.store(
-            "pattern_3", "content 3", {"classification": "INTERNAL", "created_by": "user_a"}
+            "pattern_3",
+            "content 3",
+            {"classification": "INTERNAL", "created_by": "user_a"},
         )
 
         patterns = storage.list_patterns(classification="PUBLIC", created_by="user_a")

@@ -369,7 +369,7 @@ class TestFeedbackCollectorInitialization:
                 "total_uses": 5,
                 "successful_uses": 4,
                 "average_score": 0.85,
-            }
+            },
         }
         (storage_path / "agent_performance.json").write_text(json.dumps(perf_data))
 
@@ -638,7 +638,7 @@ class TestAdaptiveAgentGenerator:
                 "domain": "code_review",
                 "languages": ["python"],
                 "quality_focus": ["security"],
-            }
+            },
         )
 
         assert "context" in explanation

@@ -30,6 +30,7 @@ class ASCIIVisualizer:
 
         Args:
             width: Maximum width in characters
+
         """
         self.width = width
 
@@ -41,6 +42,7 @@ class ASCIIVisualizer:
 
         Returns:
             ASCII art string
+
         """
         lines: list[str] = []
 
@@ -111,6 +113,7 @@ class ASCIIVisualizer:
 
         Returns:
             Compact string representation
+
         """
         stages = []
         for stage in blueprint.stages:
@@ -129,6 +132,7 @@ class ASCIIVisualizer:
 
         Returns:
             Centered text string
+
         """
         if len(text) >= self.width:
             return text
@@ -143,6 +147,7 @@ class ASCIIVisualizer:
 
         Returns:
             Section header string
+
         """
         fill = _HORIZONTAL * (self.width - len(title) - 5)
         return f"{_TOP_LEFT}{_HORIZONTAL} {title} {fill}{_TOP_RIGHT}"

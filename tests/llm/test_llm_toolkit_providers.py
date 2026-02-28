@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.llm.providers import (  # noqa: E402
+from attune.llm.providers import (
     AnthropicBatchProvider,
     AnthropicProvider,
     BaseLLMProvider,
@@ -104,12 +104,15 @@ class TestAnthropicProvider:
 
     def test_init_requires_anthropic_package(self):
         """Test handling when anthropic package not installed."""
-        with patch.dict("sys.modules", {"anthropic": None}):
-            with patch(
-                "builtins.__import__", side_effect=ImportError("No module named 'anthropic'")
-            ):
-                with pytest.raises(ImportError, match="anthropic package required"):
-                    AnthropicProvider(api_key="sk-test")
+        with (
+            patch.dict("sys.modules", {"anthropic": None}),
+            patch(
+                "builtins.__import__",
+                side_effect=ImportError("No module named 'anthropic'"),
+            ),
+            pytest.raises(ImportError, match="anthropic package required"),
+        ):
+            AnthropicProvider(api_key="sk-test")
 
     @patch("anthropic.AsyncAnthropic")
     def test_init_success(self, mock_anthropic_class):
@@ -264,7 +267,7 @@ class TestAnthropicProvider:
 class TestAnthropicBatchProvider:
     """Tests for AnthropicBatchProvider class."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def mock_anthropic_class(self):
         """Patch anthropic.Anthropic for batch provider tests."""
         with patch("anthropic.Anthropic") as mock_cls:
@@ -299,7 +302,7 @@ class TestAnthropicBatchProvider:
                 "model": "claude-sonnet-4-6",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 100,
-            }
+            },
         ]
 
         batch_id = provider.create_batch(requests)

@@ -158,6 +158,7 @@ class ApprovalGate:
     Attributes:
         DEFAULT_TIMEOUT: Default approval timeout (300s = 5 minutes)
         POLL_INTERVAL: Poll interval when waiting for approval (1s)
+
     """
 
     DEFAULT_TIMEOUT = 300.0  # 5 minutes default timeout
@@ -169,6 +170,7 @@ class ApprovalGate:
         Args:
             memory: Memory instance for storing approval requests/responses
             agent_id: This agent's ID (for workflow requesting approval)
+
         """
         self.memory = memory
         self.agent_id = agent_id
@@ -216,6 +218,7 @@ class ApprovalGate:
             ... )
             >>> if approval.approved:
             ...     deploy()
+
         """
         if not self.memory or not self.agent_id:
             logger.warning("Cannot request approval: no memory backend or agent_id")
@@ -249,7 +252,9 @@ class ApprovalGate:
                 import json
 
                 self.memory._client.setex(
-                    request_key, int(timeout) + 60, json.dumps(request.to_dict())
+                    request_key,
+                    int(timeout) + 60,
+                    json.dumps(request.to_dict()),
                 )
             else:
                 logger.warning("Cannot store approval request: no Redis backend available")
@@ -279,7 +284,7 @@ class ApprovalGate:
 
         # Wait for approval response (blocking with timeout)
         logger.info(
-            f"Waiting for approval: {approval_type} (request_id={request_id}, timeout={timeout}s)"
+            f"Waiting for approval: {approval_type} (request_id={request_id}, timeout={timeout}s)",
         )
 
         start_time = time.time()
@@ -288,7 +293,7 @@ class ApprovalGate:
             response = self._check_for_response(request_id)
             if response:
                 logger.info(
-                    f"Approval received: {approval_type} → {'APPROVED' if response.approved else 'REJECTED'}"
+                    f"Approval received: {approval_type} → {'APPROVED' if response.approved else 'REJECTED'}",
                 )
                 return response
 
@@ -349,7 +354,11 @@ class ApprovalGate:
             return None
 
     def respond_to_approval(
-        self, request_id: str, approved: bool, responder: str, reason: str = ""
+        self,
+        request_id: str,
+        approved: bool,
+        responder: str,
+        reason: str = "",
     ) -> bool:
         """Respond to an approval request (called from UI/human).
 
@@ -370,6 +379,7 @@ class ApprovalGate:
             ...     responder="user@example.com",
             ...     reason="Looks good to deploy"
             ... )
+
         """
         if not self.memory:
             logger.warning("Cannot respond to approval: no memory backend")
@@ -456,6 +466,7 @@ class ApprovalGate:
             >>> pending = gate.get_pending_approvals()
             >>> for request in pending:
             ...     print(f"{request.approval_type}: {request.context}")
+
         """
         if not self.memory or not hasattr(self.memory, "_client"):
             return []
@@ -508,6 +519,7 @@ class ApprovalGate:
 
         Returns:
             Number of requests cleared
+
         """
         if not self.memory or not hasattr(self.memory, "_client"):
             return 0

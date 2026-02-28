@@ -163,7 +163,9 @@ class TestApprovalGate:
         with patch.object(gate, "_check_for_response", return_value=None):
             with patch("time.sleep"):  # Speed up test
                 response = gate.request_approval(
-                    approval_type="deploy", context={"version": "2.0.0"}, timeout=0.1
+                    approval_type="deploy",
+                    context={"version": "2.0.0"},
+                    timeout=0.1,
                 )
 
         # Should have stored the request
@@ -194,7 +196,9 @@ class TestApprovalGate:
 
         with patch.object(gate, "_check_for_response", return_value=approved_response):
             response = gate.request_approval(
-                approval_type="deploy", context={"version": "2.0.0"}, timeout=5.0
+                approval_type="deploy",
+                context={"version": "2.0.0"},
+                timeout=5.0,
             )
 
         assert response.approved is True
@@ -219,7 +223,9 @@ class TestApprovalGate:
 
         with patch.object(gate, "_check_for_response", return_value=rejected_response):
             response = gate.request_approval(
-                approval_type="deploy", context={"version": "2.0.0"}, timeout=5.0
+                approval_type="deploy",
+                context={"version": "2.0.0"},
+                timeout=5.0,
             )
 
         assert response.approved is False
@@ -314,7 +320,7 @@ class TestApprovalGate:
 
             if "approval_abc123" in key:
                 return json.dumps(request1_data).encode()
-            elif "approval_xyz789" in key:
+            if "approval_xyz789" in key:
                 return json.dumps(request2_data).encode()
             return None
 
@@ -367,7 +373,7 @@ class TestApprovalGate:
 
             if "approval_abc123" in key:
                 return json.dumps(request1_data).encode()
-            elif "approval_xyz789" in key:
+            if "approval_xyz789" in key:
                 return json.dumps(request2_data).encode()
             return None
 
@@ -486,7 +492,7 @@ class TestApprovalGateIntegration:
             time.sleep(0.5)
             # UI: Respond to approval
             # Find the request_id from stored keys
-            request_keys = [k for k in stored_data.keys() if k.startswith("approval_request:")]
+            request_keys = [k for k in stored_data if k.startswith("approval_request:")]
             if request_keys:
                 request_id = request_keys[0].replace("approval_request:", "")
                 ui_gate = ApprovalGate(memory=mock_memory)
@@ -502,7 +508,9 @@ class TestApprovalGateIntegration:
 
         # Request approval (blocks until response)
         response = workflow_gate.request_approval(
-            approval_type="deploy", context={"version": "2.0.0"}, timeout=5.0
+            approval_type="deploy",
+            context={"version": "2.0.0"},
+            timeout=5.0,
         )
 
         response_thread.join()

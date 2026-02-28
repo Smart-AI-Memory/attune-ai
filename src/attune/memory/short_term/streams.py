@@ -25,6 +25,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -66,6 +67,7 @@ class StreamManager:
         >>> entries = streams.read("audit", creds, count=100)
         >>> for eid, data in entries:
         ...     print(f"{eid}: {data}")
+
     """
 
     PREFIX_STREAM = "stream:"
@@ -75,6 +77,7 @@ class StreamManager:
 
         Args:
             base: BaseOperations instance for Redis client access
+
         """
         self._base = base
         self._mock_streams: dict[str, list[tuple[str, dict]]] = {}
@@ -112,6 +115,7 @@ class StreamManager:
             ...     creds
             ... )
             '1704067200000-0'
+
         """
         if not credentials.can_stage():
             raise PermissionError(
@@ -176,6 +180,7 @@ class StreamManager:
             >>> entries = streams.read("audit", creds, count=50)
             >>> for entry_id, data in entries:
             ...     print(f"{entry_id}: {data}")
+
         """
         full_stream = f"{self.PREFIX_STREAM}{stream_name}"
 
@@ -219,6 +224,7 @@ class StreamManager:
         Example:
             >>> # Wait up to 5 seconds for new entries
             >>> entries = streams.read_new("audit", creds, block_ms=5000)
+
         """
         full_stream = f"{self.PREFIX_STREAM}{stream_name}"
 

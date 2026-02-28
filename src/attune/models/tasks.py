@@ -172,7 +172,7 @@ BATCH_ELIGIBLE_TASKS: frozenset[str] = frozenset(
         TaskType.SUMMARIZE.value,  # Batch summarization
         TaskType.CLASSIFY.value,  # Bulk classification
         TaskType.DOCUMENT_CODE.value,  # Batch documentation
-    ]
+    ],
 )
 
 # Tasks requiring real-time response (cannot be batched)
@@ -191,7 +191,7 @@ REALTIME_REQUIRED_TASKS: frozenset[str] = frozenset(
         # Real-time Analysis
         "stream_analysis",
         "realtime_monitoring",
-    ]
+    ],
 )
 
 

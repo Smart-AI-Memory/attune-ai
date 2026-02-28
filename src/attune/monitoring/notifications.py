@@ -34,17 +34,17 @@ def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
 
     Returns:
         True if delivered successfully
+
     """
     try:
         if alert.channel == AlertChannel.WEBHOOK:
             return deliver_webhook(alert, event)
-        elif alert.channel == AlertChannel.EMAIL:
+        if alert.channel == AlertChannel.EMAIL:
             return deliver_email(alert, event)
-        elif alert.channel in (AlertChannel.VSCODE_OUTPUT, AlertChannel.STDOUT):
+        if alert.channel in (AlertChannel.VSCODE_OUTPUT, AlertChannel.STDOUT):
             return deliver_stdout(event)
-        else:
-            logger.warning("unknown_alert_channel", channel=alert.channel.value)
-            return False
+        logger.warning("unknown_alert_channel", channel=alert.channel.value)
+        return False
     except Exception as e:
         logger.error(
             "alert_delivery_failed",
@@ -122,13 +122,12 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
             if response.status == 200:
                 logger.info("webhook_delivered", url=validated_url)
                 return True
-            else:
-                logger.warning(
-                    "webhook_unexpected_status",
-                    url=validated_url,
-                    status=response.status,
-                )
-                return False
+            logger.warning(
+                "webhook_unexpected_status",
+                url=validated_url,
+                status=response.status,
+            )
+            return False
     except urllib.error.HTTPError as e:
         logger.warning(
             "webhook_http_error",

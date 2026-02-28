@@ -163,7 +163,7 @@ class BackendInitMixin:
                         "Redis is required but not available. "
                         f"Config requires Redis (redis_required=True, environment={self.config.environment.value}). "
                         "Either: (1) Start Redis server, (2) Set REDIS_URL environment variable, "
-                        "or (3) Set redis_required=False in MemoryConfig."
+                        "or (3) Set redis_required=False in MemoryConfig.",
                     )
 
             except RuntimeError:

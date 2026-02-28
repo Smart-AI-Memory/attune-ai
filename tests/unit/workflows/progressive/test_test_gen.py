@@ -70,7 +70,7 @@ class TestProgressiveTestGenWorkflow:
 
 # Just a comment
 x = 42
-'''
+''',
         )
 
         result = workflow.execute(target_file=str(file_with_no_funcs))
@@ -93,7 +93,7 @@ def add(a, b):
 def multiply(x, y):
     """Multiply two numbers."""
     return x * y
-'''
+''',
         )
 
         functions = workflow._parse_functions(sample_file)
@@ -125,7 +125,7 @@ def documented_func(param1: str, param2: int) -> bool:
         A boolean value
     """
     return len(param1) > param2
-'''
+''',
         )
 
         functions = workflow._parse_functions(sample_file)
@@ -144,7 +144,7 @@ def documented_func(param1: str, param2: int) -> bool:
             """
 def broken_func(
     # Missing closing paren and body
-"""
+""",
         )
 
         functions = workflow._parse_functions(bad_file)
@@ -413,7 +413,7 @@ def test_passing():
 def test_also_passing():
     """Another passing test."""
     assert True
-'''
+''',
         )
 
         result = execute_test_file(test_file)
@@ -449,7 +449,7 @@ def add(a, b):
 
 def multiply(x, y):
     return x * y
-"""
+""",
         )
 
         # Create test file
@@ -460,7 +460,7 @@ from sample import add
 
 def test_add():
     assert add(1, 2) == 3
-"""
+""",
         )
 
         coverage = calculate_coverage(test_file, source_file)
@@ -487,7 +487,7 @@ def add(a: int, b: int) -> int:
 def subtract(a: int, b: int) -> int:
     """Subtract two numbers."""
     return a - b
-'''
+''',
         )
 
         # Create workflow with escalation disabled (single tier)
@@ -515,7 +515,7 @@ def subtract(a: int, b: int) -> int:
 def complex_function(data: dict) -> list:
     """Complex function that processes data."""
     return [item for item in data.values() if item > 0]
-'''
+''',
         )
 
         # Create workflow with escalation enabled
@@ -547,7 +547,7 @@ def complex_function(data: dict) -> list:
             """
 def hello() -> str:
     return "world"
-"""
+""",
         )
 
         workflow = ProgressiveTestGenWorkflow()

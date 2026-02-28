@@ -289,7 +289,7 @@ class TestFormatManageDocsReport:
                     "answer": "",
                     "has_xml_structure": False,
                     "cost": 0.001,
-                }
+                },
             ],
             recommendations=["Add docstrings", "Update README"],
             files_analyzed=100,
@@ -344,7 +344,7 @@ class TestFormatManageDocsReport:
                     "answer": "Final conclusions",
                     "has_xml_structure": True,
                     "cost": 0.002,
-                }
+                },
             ],
             confidence=0.8,
         )
@@ -368,7 +368,7 @@ class TestFormatManageDocsReport:
                     "answer": "short",
                     "has_xml_structure": True,
                     "cost": 0.0,
-                }
+                },
             ],
             confidence=0.8,
         )
@@ -389,7 +389,7 @@ class TestFormatManageDocsReport:
                     "answer": long_answer,
                     "has_xml_structure": True,
                     "cost": 0.0,
-                }
+                },
             ],
             confidence=0.8,
         )
@@ -409,7 +409,7 @@ class TestFormatManageDocsReport:
                     "answer": "",
                     "has_xml_structure": False,
                     "cost": 0.0,
-                }
+                },
             ],
             confidence=0.8,
         )
@@ -577,7 +577,8 @@ class TestManageDocumentationCrew:
 
     @pytest.mark.asyncio
     async def test_call_llm_with_executor_error_fallback(
-        self, crew: ManageDocumentationCrew
+        self,
+        crew: ManageDocumentationCrew,
     ) -> None:
         """Test _call_llm falls back to mock when executor raises error."""
         mock_executor = AsyncMock()
@@ -606,7 +607,9 @@ class TestManageDocumentationCrew:
 
     @pytest.mark.asyncio
     async def test_execute_fallback_scanning(
-        self, crew: ManageDocumentationCrew, tmp_path: Path
+        self,
+        crew: ManageDocumentationCrew,
+        tmp_path: Path,
     ) -> None:
         """Test execute with fallback directory scanning (no ProjectIndex)."""
         crew._project_index = None  # Force fallback
@@ -923,7 +926,7 @@ class TestOrchestratedReleasePrepWorkflowExtended:
                 total_duration=0.4,
             )
             with patch(
-                "attune.workflows.orchestrated_release_prep.ParallelStrategy"
+                "attune.workflows.orchestrated_release_prep.ParallelStrategy",
             ) as MockStrategy:
                 mock_instance = AsyncMock()
                 mock_instance.execute = AsyncMock(return_value=mock_strategy_result)
@@ -1079,7 +1082,9 @@ class TestSEOOptimizationWorkflow:
 
     @pytest.mark.asyncio
     async def test_scan_files_empty_directory(
-        self, workflow: SEOOptimizationWorkflow, tmp_path: Path
+        self,
+        workflow: SEOOptimizationWorkflow,
+        tmp_path: Path,
     ) -> None:
         """Test _scan_files with empty directory."""
         config = SEOOptimizationConfig(
@@ -1093,7 +1098,9 @@ class TestSEOOptimizationWorkflow:
 
     @pytest.mark.asyncio
     async def test_analyze_seo_with_issues(
-        self, workflow: SEOOptimizationWorkflow, tmp_path: Path
+        self,
+        workflow: SEOOptimizationWorkflow,
+        tmp_path: Path,
     ) -> None:
         """Test _analyze_seo finds SEO issues in files."""
         # Create file without description but with H1
@@ -1214,7 +1221,8 @@ class TestSEOOptimizationWorkflow:
         assert goal == "health"
 
     def test_calculate_confidence_meta_description_critical(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test confidence for critical meta_description issue."""
         issue = {"element": "meta_description", "severity": "critical"}
@@ -1257,7 +1265,8 @@ class TestSEOOptimizationWorkflow:
         assert 0.0 <= confidence <= 1.0
 
     def test_format_educational_explanation_critical(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test educational explanation for critical issue."""
         issue = {"element": "meta_description", "severity": "critical"}
@@ -1268,7 +1277,8 @@ class TestSEOOptimizationWorkflow:
         assert "90%" in explanation["confidence"]
 
     def test_format_educational_explanation_warning(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test educational explanation for warning severity."""
         issue = {"element": "h1_count", "severity": "warning"}
@@ -1284,7 +1294,8 @@ class TestSEOOptimizationWorkflow:
         assert "broken links" in explanation["why"].lower()
 
     def test_format_educational_explanation_unknown(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test educational explanation for unknown element/severity."""
         issue = {"element": "unknown", "severity": "unknown"}
@@ -1312,7 +1323,8 @@ class TestSEOOptimizationWorkflow:
         assert "search engines" in reasoning.lower()
 
     def test_generate_clarifying_question_known_types(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test clarifying questions for known issue types."""
         known_types = ["keyword_density", "meta_description", "content_length", "heading_structure"]
@@ -1323,7 +1335,8 @@ class TestSEOOptimizationWorkflow:
             assert "test.md" in question
 
     def test_generate_clarifying_question_unknown_type(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test clarifying question for unknown issue type."""
         issue = {"element": "unknown_type", "file": "/tmp/test.md"}
@@ -1337,7 +1350,8 @@ class TestSEOOptimizationWorkflow:
         assert result is None
 
     def test_create_clarification_question_few_recommendations(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test _create_clarification_question with few recommendations."""
         recs = [{"title": "Fix 1"}, {"title": "Fix 2"}, {"title": "Fix 3"}]
@@ -1348,7 +1362,8 @@ class TestSEOOptimizationWorkflow:
         assert len(result["options"]) == 3
 
     def test_create_clarification_question_many_recommendations(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test _create_clarification_question with many recommendations."""
         recs = [{"title": f"Fix {i}"} for i in range(10)]
@@ -1375,7 +1390,9 @@ class TestSEOOptimizationWorkflow:
 
     @pytest.mark.asyncio
     async def test_run_stage_analyze(
-        self, workflow: SEOOptimizationWorkflow, tmp_path: Path
+        self,
+        workflow: SEOOptimizationWorkflow,
+        tmp_path: Path,
     ) -> None:
         """Test run_stage dispatches to analyze correctly."""
         from attune.workflows.base import ModelTier
@@ -1427,7 +1444,8 @@ class TestSEOOptimizationWorkflow:
 
     @pytest.mark.asyncio
     async def test_run_stage_implement_non_fix_mode(
-        self, workflow: SEOOptimizationWorkflow
+        self,
+        workflow: SEOOptimizationWorkflow,
     ) -> None:
         """Test run_stage implement stage skipped when not in fix mode."""
         from attune.workflows.base import ModelTier
@@ -1564,14 +1582,19 @@ class TestResearchSynthesisWorkflow:
 
         mock_response = ("Summary of doc.", 50, 30)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             input_data = {
                 "sources": ["Document A content", "Document B content"],
                 "question": "What patterns exist?",
             }
             result, in_tok, out_tok = await workflow.run_stage(
-                "summarize", ModelTier.CHEAP, input_data
+                "summarize",
+                ModelTier.CHEAP,
+                input_data,
             )
             assert result["source_count"] == 2
             assert len(result["summaries"]) == 2
@@ -1586,7 +1609,10 @@ class TestResearchSynthesisWorkflow:
 
         mock_response = ("Pattern analysis result with moderate complexity" * 20, 200, 150)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             input_data = {
                 "summaries": [
@@ -1596,7 +1622,9 @@ class TestResearchSynthesisWorkflow:
                 "question": "What patterns?",
             }
             result, in_tok, out_tok = await workflow.run_stage(
-                "analyze", ModelTier.CAPABLE, input_data
+                "analyze",
+                ModelTier.CAPABLE,
+                input_data,
             )
             assert len(result["patterns"]) == 1
             assert result["summary_count"] == 2
@@ -1627,7 +1655,9 @@ class TestResearchSynthesisWorkflow:
                 "analysis": "Analysis text",
             }
             result, in_tok, out_tok = await workflow.run_stage(
-                "synthesize", ModelTier.PREMIUM, input_data
+                "synthesize",
+                ModelTier.PREMIUM,
+                input_data,
             )
             assert result["answer"] == "Synthesized insights."
             assert result["confidence"] == 0.85
@@ -1666,7 +1696,9 @@ class TestResearchSynthesisWorkflow:
                 "analysis": "A",
             }
             result, in_tok, out_tok = await workflow.run_stage(
-                "synthesize", ModelTier.PREMIUM, input_data
+                "synthesize",
+                ModelTier.PREMIUM,
+                input_data,
             )
             assert result["xml_parsed"] is True
             assert result["summary"] == "Parsed summary"
@@ -1675,7 +1707,8 @@ class TestResearchSynthesisWorkflow:
 
     @pytest.mark.asyncio
     async def test_run_stage_synthesize_xml_no_extra(
-        self, workflow: ResearchSynthesisWorkflow
+        self,
+        workflow: ResearchSynthesisWorkflow,
     ) -> None:
         """Test synthesize with XML parsed but no extra key_insights."""
         from attune.workflows.base import ModelTier
@@ -1701,7 +1734,9 @@ class TestResearchSynthesisWorkflow:
                 "analysis": "A",
             }
             result, in_tok, out_tok = await workflow.run_stage(
-                "synthesize", ModelTier.PREMIUM, input_data
+                "synthesize",
+                ModelTier.PREMIUM,
+                input_data,
             )
             assert result["xml_parsed"] is True
             # key_insights should remain empty list (no extra data)
@@ -1733,7 +1768,10 @@ class TestResearchSynthesisWorkflow:
         workflow._executor = None
         mock_response = ("response text", 100, 50)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             content, in_tok, out_tok = await workflow._call_with_step(
                 SUMMARIZE_STEP,
@@ -1766,7 +1804,8 @@ class TestResearchSynthesisWorkflow:
 
     @pytest.mark.asyncio
     async def test_call_with_step_with_executor_no_system(
-        self, workflow: ResearchSynthesisWorkflow
+        self,
+        workflow: ResearchSynthesisWorkflow,
     ) -> None:
         """Test _call_with_step with executor and empty system prompt."""
         workflow._executor = MagicMock()
@@ -1791,7 +1830,10 @@ class TestResearchSynthesisWorkflow:
 
         mock_response = ("Summary of content.", 50, 30)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             result, in_tok, out_tok = await workflow._summarize(
                 {
@@ -1815,7 +1857,10 @@ class TestResearchSynthesisWorkflow:
         response_text = "A" * 1000  # 1000 chars / 2000 = 0.5 complexity
         mock_response = (response_text, 100, 80)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             result, in_tok, out_tok = await workflow._analyze(
                 {
@@ -1839,7 +1884,10 @@ class TestResearchSynthesisWorkflow:
         long_response = "X" * 5000
         mock_response = (long_response, 200, 150)
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             result, _, _ = await workflow._analyze(
                 {"summaries": [{"source": "s", "summary": "s"}], "question": "Q"},

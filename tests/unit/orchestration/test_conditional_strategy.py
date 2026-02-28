@@ -179,7 +179,7 @@ class TestConditionEvaluator:
     def test_or_operator(self, evaluator):
         """Test $or logical operator."""
         cond = Condition(
-            predicate={"$or": [{"status": {"$eq": "success"}}, {"confidence": {"$gt": 0.9}}]}
+            predicate={"$or": [{"status": {"$eq": "success"}}, {"confidence": {"$gt": 0.9}}]},
         )
         assert evaluator.evaluate(cond, {"status": "success", "confidence": 0.5}) is True
         assert evaluator.evaluate(cond, {"status": "pending", "confidence": 0.95}) is True
@@ -209,7 +209,8 @@ class TestConditionEvaluator:
         """Test negation handling in keyword fallback."""
         # Condition says "no critical errors" - if context has errors, should be False
         result = evaluator._keyword_fallback(
-            "no critical errors found", {"report": "Found 5 critical errors in module"}
+            "no critical errors found",
+            {"report": "Found 5 critical errors in module"},
         )
         # "no" negates - errors found means condition "no errors" is False
         assert result is False
@@ -231,7 +232,9 @@ class TestConditionalStrategy:
         else_branch = Branch(agents=[mock_agent], label="Auto Approve")
 
         strategy = ConditionalStrategy(
-            condition=condition, then_branch=then_branch, else_branch=else_branch
+            condition=condition,
+            then_branch=then_branch,
+            else_branch=else_branch,
         )
 
         # Mock the branch strategy execution
@@ -259,7 +262,9 @@ class TestConditionalStrategy:
         else_branch = Branch(agents=[mock_agent], label="Auto Approve")
 
         strategy = ConditionalStrategy(
-            condition=condition, then_branch=then_branch, else_branch=else_branch
+            condition=condition,
+            then_branch=then_branch,
+            else_branch=else_branch,
         )
 
         with patch("attune.orchestration._strategies.get_strategy") as mock_get:
@@ -321,7 +326,10 @@ class TestMultiConditionalStrategy:
         with patch("attune.orchestration._strategies.get_strategy") as mock_get:
             mock_branch_strategy = AsyncMock()
             mock_branch_strategy.execute.return_value = StrategyResult(
-                success=True, outputs=[], aggregated_output={}, total_duration=1.0
+                success=True,
+                outputs=[],
+                aggregated_output={},
+                total_duration=1.0,
             )
             mock_get.return_value = mock_branch_strategy
 
@@ -343,7 +351,10 @@ class TestMultiConditionalStrategy:
         with patch("attune.orchestration._strategies.get_strategy") as mock_get:
             mock_branch_strategy = AsyncMock()
             mock_branch_strategy.execute.return_value = StrategyResult(
-                success=True, outputs=[], aggregated_output={}, total_duration=0.5
+                success=True,
+                outputs=[],
+                aggregated_output={},
+                total_duration=0.5,
             )
             mock_get.return_value = mock_branch_strategy
 

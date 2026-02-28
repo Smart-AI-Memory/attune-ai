@@ -14,6 +14,7 @@ def mock_anthropic_client():
 
     Returns:
         MagicMock configured as Anthropic client
+
     """
     mock = MagicMock()
     mock.messages = MagicMock()
@@ -21,7 +22,7 @@ def mock_anthropic_client():
         return_value=MagicMock(
             content=[MagicMock(text="Mock LLM response")],
             usage=MagicMock(input_tokens=100, output_tokens=50),
-        )
+        ),
     )
     return mock
 
@@ -32,6 +33,7 @@ def sample_model_config():
 
     Returns:
         Dict with model configuration
+
     """
     return {
         "provider": "anthropic",
@@ -47,6 +49,7 @@ def sample_tier_config():
 
     Returns:
         Dict with tier routing configuration
+
     """
     return {
         "cheap": {

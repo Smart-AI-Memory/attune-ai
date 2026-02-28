@@ -23,6 +23,7 @@ class Validator(Protocol):
         >>> class MyValidator:
         ...     def validate(self, response: Any) -> tuple[bool, str | None]:
         ...         return bool(response), "Response was empty"
+
     """
 
     def validate(self, response: Any) -> tuple[bool, str | None]:
@@ -33,6 +34,7 @@ class Validator(Protocol):
 
         Returns:
             (True, None) on success or (False, reason) on failure.
+
         """
         ...
 
@@ -49,6 +51,7 @@ class StructureValidator:
         (True, None)
         >>> v.validate({"answer": "42"})
         (False, "Missing required fields: confidence")
+
     """
 
     def __init__(self, required_fields: list[str]) -> None:
@@ -56,6 +59,7 @@ class StructureValidator:
 
         Args:
             required_fields: Field names that must exist in the response dict.
+
         """
         self.required_fields = required_fields
 
@@ -67,6 +71,7 @@ class StructureValidator:
 
         Returns:
             (True, None) if all fields present, (False, reason) otherwise.
+
         """
         if not isinstance(response, dict):
             return False, f"Expected dict response, got {type(response).__name__}"
@@ -90,6 +95,7 @@ class ConfidenceValidator:
         (True, None)
         >>> v.validate({"confidence": 0.5})
         (False, "Confidence 0.50 below threshold 0.70")
+
     """
 
     def __init__(self, min_confidence: float = 0.7) -> None:
@@ -97,6 +103,7 @@ class ConfidenceValidator:
 
         Args:
             min_confidence: Minimum acceptable confidence value (0.0–1.0).
+
         """
         self.min_confidence = min_confidence
 
@@ -108,6 +115,7 @@ class ConfidenceValidator:
 
         Returns:
             (True, None) if confidence is sufficient, (False, reason) otherwise.
+
         """
         if not isinstance(response, dict):
             return False, f"Expected dict response, got {type(response).__name__}"

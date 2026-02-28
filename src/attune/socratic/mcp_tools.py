@@ -21,7 +21,7 @@ SOCRATIC_TOOLS = [
                 "goal": {
                     "type": "string",
                     "description": "Optional initial goal. If not provided, session starts in AWAITING_GOAL state.",
-                }
+                },
             },
             "required": [],
         },
@@ -81,7 +81,7 @@ SOCRATIC_TOOLS = [
                     "type": "string",
                     "enum": ["all", "active", "completed"],
                     "description": "Filter sessions by status",
-                }
+                },
             },
             "required": [],
         },
@@ -95,7 +95,7 @@ SOCRATIC_TOOLS = [
                 "session_id": {
                     "type": "string",
                     "description": "The session ID to retrieve",
-                }
+                },
             },
             "required": ["session_id"],
         },
@@ -109,7 +109,7 @@ SOCRATIC_TOOLS = [
                 "domain_filter": {
                     "type": "string",
                     "description": "Optional domain to filter by (e.g., 'code_review', 'security')",
-                }
+                },
             },
             "required": [],
         },

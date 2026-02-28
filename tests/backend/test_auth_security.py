@@ -67,7 +67,8 @@ class TestPasswordHashing:
 
         with temp_db._get_connection() as conn:
             cursor = conn.execute(
-                "SELECT password_hash FROM users WHERE email = ?", ("test@example.com",)
+                "SELECT password_hash FROM users WHERE email = ?",
+                ("test@example.com",),
             )
             row = cursor.fetchone()
             password_hash = row["password_hash"]
@@ -87,7 +88,8 @@ class TestPasswordHashing:
 
         with temp_db._get_connection() as conn:
             cursor = conn.execute(
-                "SELECT password_hash FROM users WHERE id IN (?, ?)", (user1_id, user2_id)
+                "SELECT password_hash FROM users WHERE id IN (?, ?)",
+                (user1_id, user2_id),
             )
             hashes = [row["password_hash"] for row in cursor.fetchall()]
 

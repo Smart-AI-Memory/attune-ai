@@ -60,6 +60,7 @@ class EscalationChain:
         >>> result = await chain.run("What is 2+2?")
         >>> print(result.summary())
         '✓ claude-haiku-4-5-20251001'
+
     """
 
     DEFAULT_MODELS: list[str] = [
@@ -90,6 +91,7 @@ class EscalationChain:
             system_prompt: System prompt sent with every generator call.
             max_tokens: Max tokens for each generator call.
             executor: EmpathyLLMExecutor. Created lazily if omitted.
+
         """
         self.models = models or self.DEFAULT_MODELS
         self.validators: list[Validator] = validators or []
@@ -116,6 +118,7 @@ class EscalationChain:
 
         Returns:
             EscalationResult with the final response and full audit trail.
+
         """
         all_attempts: list[AttemptResult] = []
         total_retries = 0
@@ -157,7 +160,7 @@ class EscalationChain:
 
                 # Layer 1: structural validators
                 structural_passed, structural_feedback = self._run_validators(
-                    attempt.parsed_response
+                    attempt.parsed_response,
                 )
                 if not structural_passed:
                     accumulated_feedback.extend(structural_feedback)
@@ -223,6 +226,7 @@ class EscalationChain:
 
         Returns:
             AttemptResult with success=False (caller sets True if checks pass).
+
         """
         from attune.models.executor import ExecutionContext
 
@@ -260,7 +264,7 @@ class EscalationChain:
                             validator_name="_try_model",
                             message=f"JSON parse failed: {exc}",
                             suggestion="Respond with valid JSON only.",
-                        )
+                        ),
                     ],
                 )
 
@@ -276,10 +280,13 @@ class EscalationChain:
                 output_tokens=response.tokens_output,
             )
 
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # INTENTIONAL: API errors keep the chain alive for escalation.
             logger.warning(
-                "EscalationChain: API error on %s attempt %d: %s", model, attempt_num, exc
+                "EscalationChain: API error on %s attempt %d: %s",
+                model,
+                attempt_num,
+                exc,
             )
             return AttemptResult(
                 model=model,
@@ -294,7 +301,7 @@ class EscalationChain:
                         feedback_type=FeedbackType.EXCEPTION,
                         validator_name="_try_model",
                         message=f"API error: {exc}",
-                    )
+                    ),
                 ],
             )
 
@@ -309,6 +316,7 @@ class EscalationChain:
 
         Returns:
             Deduplicated list of ValidationFeedback items.
+
         """
         seen: set[str] = set()
         summary: list[ValidationFeedback] = []
@@ -332,6 +340,7 @@ class EscalationChain:
 
         Returns:
             Original prompt unchanged, or prompt with appended feedback block.
+
         """
         if not feedback:
             return original_prompt
@@ -359,6 +368,7 @@ class EscalationChain:
 
         Returns:
             (all_passed, list_of_feedback) — feedback is empty when all pass.
+
         """
         all_feedback: list[ValidationFeedback] = []
         all_passed = True
@@ -372,7 +382,7 @@ class EscalationChain:
                         feedback_type=FeedbackType.STRUCTURAL,
                         validator_name=type(validator).__name__,
                         message=message or "Validation failed",
-                    )
+                    ),
                 )
 
         return all_passed, all_feedback
@@ -394,6 +404,7 @@ class EscalationChain:
 
         Returns:
             EscalationResult with success=False and the best partial response.
+
         """
         parsed = [a for a in attempts if a.parsed_response is not None]
         best = parsed[-1] if parsed else attempts[-1]
@@ -416,6 +427,7 @@ class EscalationChain:
 
         Returns:
             Total estimated cost in USD.
+
         """
         from attune.models.registry import get_model
 

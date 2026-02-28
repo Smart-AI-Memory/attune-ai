@@ -170,7 +170,9 @@ Generate complete, runnable tests that will increase coverage.""",
             return {"file": file_path, "error": str(e)}
 
     async def generate_test_template_with_ai(
-        self, module_path: str, structure: dict[str, Any]
+        self,
+        module_path: str,
+        structure: dict[str, Any],
     ) -> str:
         """Generate test template using cheap tier AI."""
         prompt = f"""Generate a behavioral test template for this module:
@@ -228,7 +230,10 @@ Output the COMPLETE test file, no TODOs remaining."""
         return result.get("content", "")
 
     async def process_module_batch(
-        self, modules: list[tuple[str, float]], output_dir: Path, batch_size: int = 10
+        self,
+        modules: list[tuple[str, float]],
+        output_dir: Path,
+        batch_size: int = 10,
     ) -> list[TestGenerationTask]:
         """Process modules in parallel batches."""
         tasks = []
@@ -243,7 +248,7 @@ Output the COMPLETE test file, no TODOs remaining."""
                     module_path=module_path,
                     coverage=coverage,
                     output_path=str(output_path),
-                )
+                ),
             )
 
         # Process in batches
@@ -316,6 +321,7 @@ Output the COMPLETE test file, no TODOs remaining."""
 
         Returns:
             WorkflowResult with generated file paths and statistics
+
         """
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True, parents=True)

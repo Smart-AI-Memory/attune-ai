@@ -57,6 +57,7 @@ def get_project_root(**context: Any) -> Path:
 
     Returns:
         Project root path
+
     """
     project_path = context.get("project_path")
     if project_path:
@@ -74,6 +75,7 @@ def is_initialized(project_root: Path) -> bool:
 
     Returns:
         True if .empathy directory exists with config
+
     """
     empathy_dir = project_root / ".attune"
     config_file = project_root / "attune.config.yaml"
@@ -105,6 +107,7 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
 
     Returns:
         Initialization result
+
     """
     result = {
         "success": True,
@@ -165,6 +168,7 @@ def check_init(**context: Any) -> dict[str, Any]:
 
     Returns:
         Dict with initialization status and prompt if needed
+
     """
     project_root = get_project_root(**context)
 
@@ -228,6 +232,7 @@ def handle_init_response(action: str, **context: Any) -> dict[str, Any]:
 
     Returns:
         Result of the action
+
     """
     project_root = get_project_root(**context)
 
@@ -239,7 +244,7 @@ def handle_init_response(action: str, **context: Any) -> dict[str, Any]:
             result["message"] = "Initialization completed with errors."
         return result
 
-    elif action == "never":
+    if action == "never":
         mark_never_ask(project_root)
         return {
             "success": True,
@@ -247,12 +252,12 @@ def handle_init_response(action: str, **context: Any) -> dict[str, Any]:
             "message": "Got it! Won't ask again for this project.",
         }
 
-    else:  # skip_once
-        return {
-            "success": True,
-            "action": "skip_once",
-            "message": "No problem! I'll ask again next time.",
-        }
+    # skip_once
+    return {
+        "success": True,
+        "action": "skip_once",
+        "message": "No problem! I'll ask again next time.",
+    }
 
 
 def main(**context: Any) -> dict[str, Any]:
@@ -265,6 +270,7 @@ def main(**context: Any) -> dict[str, Any]:
 
     Returns:
         Initialization check result
+
     """
     return check_init(**context)
 

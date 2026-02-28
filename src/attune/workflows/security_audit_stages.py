@@ -156,7 +156,7 @@ class AssessStageMixin:
                                 "cwe_id": finding.cwe_id or "",
                                 "cvss_score": finding.cvss_score or 0.0,
                                 "source": "crew",
-                            }
+                            },
                         )
                     # Update severity counts with crew findings
                     for finding in crew_findings:
@@ -340,7 +340,9 @@ Severity Breakdown: {json.dumps(assessment.get("severity_breakdown", {}), indent
         return (result, input_tokens, output_tokens)
 
     def _build_remediation_prompt(
-        self, input_payload: str, assessment: dict
+        self,
+        input_payload: str,
+        assessment: dict,
     ) -> tuple[str | None, str]:
         """Build the remediation prompt (XML-enhanced or legacy).
 
@@ -350,6 +352,7 @@ Severity Breakdown: {json.dumps(assessment.get("severity_breakdown", {}), indent
 
         Returns:
             Tuple of (system_message, user_message).
+
         """
         # Check if XML prompts are enabled
         if self._is_xml_enabled():
@@ -417,6 +420,7 @@ Provide a detailed remediation plan with specific fixes."""
 
         Returns:
             Crew results dict or None if failed
+
         """
         try:
             from attune.agent_factory.crews import (
@@ -468,6 +472,7 @@ Provide a detailed remediation plan with specific fixes."""
 
         Returns:
             Merged response with crew enhancements
+
         """
         crew_findings = crew_remediation.get("findings", [])
 

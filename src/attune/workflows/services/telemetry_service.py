@@ -48,6 +48,7 @@ class TelemetryService:
         ...     cost=0.001, tokens={"input": 500, "output": 200},
         ...     cache_hit=False, duration_ms=1200,
         ... )
+
     """
 
     def __init__(
@@ -95,6 +96,7 @@ class TelemetryService:
 
         Returns:
             A new UUID string for the run
+
         """
         self._run_id = str(uuid.uuid4())
         return self._run_id
@@ -121,6 +123,7 @@ class TelemetryService:
             cache_hit: Whether this was a cache hit
             cache_type: Cache type if cache hit
             duration_ms: Duration in milliseconds
+
         """
         if not self._enabled or self._tracker is None:
             return
@@ -171,6 +174,7 @@ class TelemetryService:
             success: Whether the call succeeded
             error_message: Error message if failed
             fallback_used: Whether fallback was used
+
         """
         from attune.models import LLMCallRecord
 
@@ -199,7 +203,7 @@ class TelemetryService:
             logger.debug("Failed to log call telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log call telemetry (file system error)")
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
@@ -213,6 +217,7 @@ class TelemetryService:
         Args:
             result: The WorkflowResult to record
             model_for_tier_fn: Optional callable to resolve model name for a tier
+
         """
         from attune.models import WorkflowRunRecord, WorkflowStageRecord
 
@@ -257,6 +262,6 @@ class TelemetryService:
             logger.debug("Failed to log workflow telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log workflow telemetry (file system error)")
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging workflow telemetry")

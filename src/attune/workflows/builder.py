@@ -58,6 +58,7 @@ class WorkflowBuilder(Generic[T]):
         - with_routing() - Set routing strategy
         - with_context() - Set WorkflowContext for composition
         - build() - Construct the workflow
+
     """
 
     def __init__(self, workflow_class: type[T]):
@@ -65,6 +66,7 @@ class WorkflowBuilder(Generic[T]):
 
         Args:
             workflow_class: The workflow class to build (e.g., TestGenerationWorkflow)
+
         """
         self.workflow_class = workflow_class
 
@@ -89,6 +91,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._config = config
         return self
@@ -101,6 +104,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._executor = executor
         return self
@@ -113,6 +117,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._provider = provider
         return self
@@ -125,6 +130,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._cache = cache
         return self
@@ -137,6 +143,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._enable_cache = enabled
         return self
@@ -149,6 +156,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._telemetry_backend = backend
         return self
@@ -161,12 +169,14 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._enable_telemetry = enabled
         return self
 
     def with_progress_callback(
-        self, callback: ProgressCallback | Callable[[str, int, int], None]
+        self,
+        callback: ProgressCallback | Callable[[str, int, int], None],
     ) -> WorkflowBuilder[T]:
         """Set progress callback for workflow execution.
 
@@ -175,6 +185,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._progress_callback = callback  # type: ignore
         return self
@@ -187,6 +198,7 @@ class WorkflowBuilder(Generic[T]):
 
         Returns:
             Self for method chaining
+
         """
         self._tier_tracker = tracker
         return self
@@ -203,6 +215,7 @@ class WorkflowBuilder(Generic[T]):
         Example:
             >>> from attune.workflows.routing import BalancedRouting
             >>> builder.with_routing(BalancedRouting(budget=50.0))
+
         """
         self._routing_strategy = strategy
         return self
@@ -233,6 +246,7 @@ class WorkflowBuilder(Generic[T]):
             ...     .with_context(ctx)
             ...     .build()
             ... )
+
         """
         self._ctx = ctx
         return self
@@ -245,6 +259,7 @@ class WorkflowBuilder(Generic[T]):
 
         Raises:
             TypeError: If workflow_class constructor doesn't accept the provided parameters
+
         """
         # Build kwargs for constructor
         kwargs: dict[str, Any] = {}
@@ -305,5 +320,6 @@ def workflow_builder(workflow_class: type[T]) -> WorkflowBuilder[T]:
         ...     .with_telemetry_enabled(False)
         ...     .build()
         ... )
+
     """
     return WorkflowBuilder(workflow_class)

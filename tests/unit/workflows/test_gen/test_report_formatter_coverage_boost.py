@@ -270,7 +270,7 @@ class TestReportFormatterXMLParsing:
             [
                 f'<test target="func{i}"><type>unit</type><description>Test {i}</description></test>'
                 for i in range(10)
-            ]
+            ],
         )
         result = {
             "total_tests": 5,
@@ -294,8 +294,8 @@ class TestReportFormatterPathTruncation:
         result = {"total_tests": 5, "files_covered": 1}
         input_data = {
             "generated_tests": [
-                {"source_file": long_path, "test_count": 3, "test_file": "test_a.py"}
-            ]
+                {"source_file": long_path, "test_count": 3, "test_file": "test_a.py"},
+            ],
         }
 
         report = format_test_gen_report(result, input_data)
@@ -366,7 +366,7 @@ class TestReportFormatterGeneratedTestsSection:
             "generated_tests": [
                 {"source_file": "module1.py", "test_count": 3, "test_file": "test_module1.py"},
                 {"source_file": "module2.py", "test_count": 3, "test_file": "test_module2.py"},
-            ]
+            ],
         }
 
         report = format_test_gen_report(result, input_data)
@@ -397,8 +397,8 @@ class TestReportFormatterGeneratedTestsSection:
         }
         input_data = {
             "generated_tests": [
-                {"source_file": "module.py", "test_count": 5, "test_file": "test_module.py"}
-            ]
+                {"source_file": "module.py", "test_count": 5, "test_file": "test_module.py"},
+            ],
         }
 
         report = format_test_gen_report(result, input_data)

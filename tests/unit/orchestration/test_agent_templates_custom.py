@@ -72,7 +72,7 @@ class TestRegisterCustomTemplate:
                     tools=["tool"],
                     default_instructions="Instructions",
                     quality_gates={},
-                )
+                ),
             )
 
 

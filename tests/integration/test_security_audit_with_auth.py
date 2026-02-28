@@ -193,7 +193,7 @@ async def test_security_audit_with_auth():
 
         print(f"   Total cost: ${result.cost_report.total_cost:.4f}")
         print(
-            f"   Savings: ${result.cost_report.savings:.4f} ({result.cost_report.savings_percent:.1f}%)"
+            f"   Savings: ${result.cost_report.savings:.4f} ({result.cost_report.savings_percent:.1f}%)",
         )
         print(f"   Stages with costs: {len(result.cost_report.by_stage)}")
 

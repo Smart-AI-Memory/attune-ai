@@ -12,11 +12,6 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 
 def format_bug_predict_report(result: dict, input_data: dict) -> str:
     """Format bug prediction output as a human-readable report.

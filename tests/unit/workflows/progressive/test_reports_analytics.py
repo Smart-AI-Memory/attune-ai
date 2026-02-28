@@ -254,7 +254,9 @@ class TestCleanupPolicy:
 
         # Dry run cleanup (30 day retention)
         deleted, retained = cleanup_old_results(
-            storage_path=str(storage_path), retention_days=30, dry_run=True
+            storage_path=str(storage_path),
+            retention_days=30,
+            dry_run=True,
         )
 
         assert deleted == 1  # Would delete old-task
@@ -279,7 +281,9 @@ class TestCleanupPolicy:
 
         # Cleanup (30 day retention)
         deleted, retained = cleanup_old_results(
-            storage_path=str(storage_path), retention_days=30, dry_run=False
+            storage_path=str(storage_path),
+            retention_days=30,
+            dry_run=False,
         )
 
         assert deleted == 1

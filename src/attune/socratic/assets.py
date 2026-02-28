@@ -452,6 +452,7 @@ def get_form_assets() -> dict[str, str]:
 
     Returns:
         Dictionary with 'css' and 'js' keys
+
     """
     return {
         "css": FORM_CSS,

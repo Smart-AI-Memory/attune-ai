@@ -19,6 +19,7 @@ def create_perf_audit_workflow_report(result: dict, input_data: dict) -> Workflo
 
     Returns:
         WorkflowReport instance for Rich or plain text rendering
+
     """
     perf_score = result.get("perf_score", 0)
     perf_level = result.get("perf_level", "unknown")
@@ -109,6 +110,7 @@ def format_perf_audit_report(result: dict, input_data: dict) -> str:
 
     Returns:
         Formatted report string
+
     """
     lines: list[str] = []
 
@@ -133,7 +135,7 @@ def format_perf_audit_report(result: dict, input_data: dict) -> str:
     lines.append("PERFORMANCE AUDIT REPORT")
     lines.append("=" * 60)
     lines.append("")
-    lines.append(f"Performance Score: {perf_icon} " f"{perf_score}/100 ({perf_text})")
+    lines.append(f"Performance Score: {perf_icon} {perf_score}/100 ({perf_text})")
     lines.append(f"Performance Level: {perf_level}")
     lines.append("")
 
@@ -187,7 +189,7 @@ def format_perf_audit_report(result: dict, input_data: dict) -> str:
             else:
                 score_icon = "\U0001f7e1"
             lines.append(f"  {score_icon} {file_path}")
-            lines.append(f"      Score: {score} | " f"Concerns: {', '.join(concerns[:3])}")
+            lines.append(f"      Score: {score} | Concerns: {', '.join(concerns[:3])}")
         lines.append("")
 
     # High impact findings
@@ -218,7 +220,7 @@ def format_perf_audit_report(result: dict, input_data: dict) -> str:
     lines.append("=" * 60)
     model_tier = result.get("model_tier_used", "unknown")
     rec_count = result.get("recommendation_count", 0)
-    lines.append(f"Analyzed {rec_count} hotspots " f"using {model_tier} tier model")
+    lines.append(f"Analyzed {rec_count} hotspots using {model_tier} tier model")
     lines.append("=" * 60)
 
     return "\n".join(lines)

@@ -46,6 +46,7 @@ class AgentConfiguration:
         ...     success_rate=0.95,
         ...     avg_quality_score=87.5,
         ... )
+
     """
 
     # Identity
@@ -80,6 +81,7 @@ class AgentConfiguration:
 
         Raises:
             ValueError: If quality_score is out of range
+
         """
         if not 0.0 <= quality_score <= 100.0:
             raise ValueError(f"quality_score must be 0-100, got {quality_score}")
@@ -121,11 +123,12 @@ class AgentConfiguration:
 
         Returns:
             AgentConfiguration instance
+
         """
         # Convert ISO format strings back to datetime objects
         if "created_at" in data and isinstance(data["created_at"], str):
             data["created_at"] = datetime.fromisoformat(data["created_at"])
-        if "last_used" in data and data["last_used"]:
+        if data.get("last_used"):
             data["last_used"] = datetime.fromisoformat(data["last_used"])
 
         return cls(**data)
@@ -163,6 +166,7 @@ class ConfigurationStore:
         >>>
         >>> # Search for similar tasks
         >>> matches = store.search(task_pattern="release_prep", min_success_rate=0.8)
+
     """
 
     def __init__(
@@ -176,6 +180,7 @@ class ConfigurationStore:
             storage_dir: Directory for storing configurations
                         (default: .attune/orchestration/compositions/)
             pattern_library: Optional pattern library for integration
+
         """
         # Set default storage directory
         if storage_dir is None:
@@ -233,6 +238,7 @@ class ConfigurationStore:
         Raises:
             ValueError: If config.id is invalid or file path is unsafe
             OSError: If file write fails
+
         """
         if not config.id or not isinstance(config.id, str):
             raise ValueError("config.id must be a non-empty string")
@@ -275,6 +281,7 @@ class ConfigurationStore:
 
         Raises:
             ValueError: If config_id is invalid
+
         """
         if not config_id or not isinstance(config_id, str):
             raise ValueError("config_id must be a non-empty string")
@@ -305,6 +312,7 @@ class ConfigurationStore:
 
         Raises:
             ValueError: If parameters are out of range
+
         """
         if not 0.0 <= min_success_rate <= 1.0:
             raise ValueError(f"min_success_rate must be 0-1, got {min_success_rate}")
@@ -350,6 +358,7 @@ class ConfigurationStore:
 
         Returns:
             Best configuration if found, None otherwise
+
         """
         results = self.search(task_pattern=task_pattern, limit=1)
         return results[0] if results else None
@@ -366,6 +375,7 @@ class ConfigurationStore:
         Raises:
             ValueError: If config_id is invalid
             OSError: If file deletion fails
+
         """
         if not config_id or not isinstance(config_id, str):
             raise ValueError("config_id must be a non-empty string")
@@ -397,6 +407,7 @@ class ConfigurationStore:
 
         Returns:
             List of all configurations, sorted by last_used descending
+
         """
         self._load_all_from_disk()
 
@@ -418,6 +429,7 @@ class ConfigurationStore:
 
         Args:
             config: Configuration to contribute as pattern
+
         """
         if not self.pattern_library:
             return
@@ -426,7 +438,7 @@ class ConfigurationStore:
         if config.usage_count < 3 or config.success_rate < 0.7:
             logger.debug(
                 f"Configuration {config.id} not yet proven "
-                f"(uses={config.usage_count}, rate={config.success_rate:.2f})"
+                f"(uses={config.usage_count}, rate={config.success_rate:.2f})",
             )
             return
 

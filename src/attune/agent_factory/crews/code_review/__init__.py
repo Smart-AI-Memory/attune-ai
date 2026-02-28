@@ -32,6 +32,7 @@ from .models import (
 )
 
 __all__ = [
+    "XML_PROMPT_TEMPLATES",
     "CodeReviewConfig",
     "CodeReviewCrew",
     "CodeReviewReport",
@@ -39,5 +40,4 @@ __all__ = [
     "ReviewFinding",
     "Severity",
     "Verdict",
-    "XML_PROMPT_TEMPLATES",
 ]

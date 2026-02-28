@@ -46,6 +46,7 @@ class SDKAgent:
         mode: SDK execution mode (TOOLS_ONLY or FULL_SDK).
         redis_client: Optional Redis connection for coordination.
         state_store: Optional persistent state store.
+
     """
 
     def __init__(
@@ -84,6 +85,7 @@ class SDKAgent:
         Args:
             status: Current agent status.
             task: Human-readable description of current task.
+
         """
         if self.redis is None:
             return
@@ -101,7 +103,7 @@ class SDKAgent:
                 },
             )
             self.redis.expire(key, 60)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Redis is optional, don't fail on connection issues
             logger.debug(f"Heartbeat failed (non-fatal): {e}")
 
@@ -118,6 +120,7 @@ class SDKAgent:
 
         Returns:
             Tuple of (response_text, metadata_dict).
+
         """
         model = MODEL_CONFIG[tier.value]
 
@@ -205,6 +208,7 @@ class SDKAgent:
 
         Returns:
             Tuple of (success, findings_dict).
+
         """
         prompt = json.dumps(input_data, indent=2, default=str)
         response_text, meta = self._call_sdk_query(prompt, tier)
@@ -234,6 +238,7 @@ class SDKAgent:
 
         Returns:
             SDKAgentResult with findings and metadata.
+
         """
         start = time.time()
         escalated = False

@@ -212,7 +212,9 @@ class TestPagination:
     def test_paginated_result_empty(self, redis_memory, agent_contributor):
         """Test pagination with no staged patterns."""
         result = redis_memory.list_staged_patterns_paginated(
-            agent_contributor, cursor="0", count=10
+            agent_contributor,
+            cursor="0",
+            count=10,
         )
 
         assert isinstance(result, PaginatedResult)
@@ -231,7 +233,9 @@ class TestPagination:
         redis_memory.stage_pattern(pattern, agent_contributor)
 
         result = redis_memory.list_staged_patterns_paginated(
-            agent_contributor, cursor="0", count=10
+            agent_contributor,
+            cursor="0",
+            count=10,
         )
 
         assert len(result.items) == 1

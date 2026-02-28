@@ -365,7 +365,7 @@ class TestResilientExecutor:
 
     @pytest.mark.asyncio
     @pytest.mark.skip(
-        reason="Anthropic-only architecture - circuit breaker skip requires multi-provider fallback"
+        reason="Anthropic-only architecture - circuit breaker skip requires multi-provider fallback",
     )
     async def test_circuit_breaker_skip(self, executor):
         """Test that open circuits are skipped (requires multiple providers)."""

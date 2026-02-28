@@ -29,6 +29,7 @@ def list_templates() -> list:
 
     Returns:
         List of dicts with id, name, and description for each template.
+
     """
     return [
         {"id": tid, "name": t["name"], "description": t["description"]}
@@ -54,6 +55,7 @@ def scaffold_project(
 
     Returns:
         Dict with created files and status
+
     """
     if template_name not in TEMPLATES:
         return {
@@ -144,6 +146,7 @@ def cmd_new(args: object) -> int:
 
     Returns:
         Exit code (0 for success, 1 for error).
+
     """
     template = getattr(args, "template", None)
     project_name = getattr(args, "name", None)

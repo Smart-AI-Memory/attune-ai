@@ -96,7 +96,7 @@ def cmd_lessons(args: Namespace) -> int:
         for lesson in lessons:
             source_tag = f" [{lesson['source']}]" if not global_only else ""
             print(
-                f"  {lesson['number']:3d}. " f"[{lesson['date']}] " f"{lesson['text']}{source_tag}"
+                f"  {lesson['number']:3d}. [{lesson['date']}] {lesson['text']}{source_tag}",
             )
 
         print(f"\n{len(lessons)} lesson(s) total.")

@@ -274,7 +274,7 @@ class ContextualPatternInjector:
                 return [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
         except subprocess.SubprocessError as e:
             logger.debug(f"Git command failed: {e}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Git availability detection - don't crash on git errors
             logger.debug("Could not get git changed files (expected in non-git directories)")
         return []

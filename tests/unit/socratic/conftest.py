@@ -293,11 +293,11 @@ def mock_anthropic_client():
                             "question": "Which programming languages?",
                             "type": "multi_select",
                             "options": ["Python", "JavaScript"],
-                        }
+                        },
                     ],
-                }
-            )
-        )
+                },
+            ),
+        ),
     ]
 
     mock_client.messages.create.return_value = mock_response
@@ -314,7 +314,7 @@ def mock_llm_executor():
             {
                 "domain": "code_review",
                 "confidence": 0.8,
-            }
+            },
         )
 
     mock_executor.run.return_value = MockResponse()

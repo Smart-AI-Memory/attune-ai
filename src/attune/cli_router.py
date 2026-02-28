@@ -52,6 +52,7 @@ class HybridRouter:
         # Natural language
         result = await router.route("I want to commit my changes")
         # → {type: "skill", skill: "dev", args: "commit", reasoning: "..."}
+
     """
 
     def __init__(self, preferences_path: str | None = None):
@@ -60,9 +61,10 @@ class HybridRouter:
         Args:
             preferences_path: Path to user preferences YAML
                 Default: .attune/routing_preferences.yaml
+
         """
         self.preferences_path = Path(
-            preferences_path or Path.home() / ".attune" / "routing_preferences.yaml"
+            preferences_path or Path.home() / ".attune" / "routing_preferences.yaml",
         )
         self.smart_router = SmartRouter()
         self.preferences: dict[str, RoutingPreference] = {}
@@ -207,7 +209,7 @@ class HybridRouter:
                     usage_count=pref_data.get("usage_count", 0),
                     confidence=pref_data.get("confidence", 1.0),
                 )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Routing preferences are optional, never fail init
             print(f"Warning: Could not load routing preferences: {e}")
 
@@ -224,7 +226,7 @@ class HybridRouter:
                     "confidence": pref.confidence,
                 }
                 for pref in self.preferences.values()
-            }
+            },
         }
 
         validated_path = _validate_file_path(str(self.preferences_path))
@@ -240,6 +242,7 @@ class HybridRouter:
 
         Returns:
             Routing result with type, command/workflow, and metadata
+
         """
         user_input = user_input.strip()
 
@@ -265,6 +268,7 @@ class HybridRouter:
 
         Returns:
             Skill invocation instructions
+
         """
         parts = command[1:].split(maxsplit=1)  # Remove leading /
         skill = parts[0] if parts else "help"
@@ -288,6 +292,7 @@ class HybridRouter:
 
         Returns:
             Skill invocation instructions if inference successful, None otherwise
+
         """
         keyword_lower = keyword.lower().strip()
 
@@ -339,7 +344,9 @@ class HybridRouter:
         return None
 
     async def _route_natural_language(
-        self, text: str, context: dict[str, Any] | None = None
+        self,
+        text: str,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Route natural language input using SmartRouter.
 
@@ -349,6 +356,7 @@ class HybridRouter:
 
         Returns:
             Skill invocation instructions based on SmartRouter decision
+
         """
         # Use SmartRouter for classification
         decision = await self.smart_router.route(text, context)
@@ -378,6 +386,7 @@ class HybridRouter:
 
         Returns:
             Tuple of (skill_name, args)
+
         """
         # Workflow to skill mapping
         workflow_map = {
@@ -405,6 +414,7 @@ class HybridRouter:
             keyword: Keyword user typed
             skill: Skill name that was invoked
             args: Arguments passed to skill
+
         """
         if keyword in self.preferences:
             pref = self.preferences[keyword]
@@ -430,6 +440,7 @@ class HybridRouter:
 
         Returns:
             List of suggested keywords and skills
+
         """
         suggestions = []
         partial_lower = partial.lower()
@@ -450,7 +461,8 @@ class HybridRouter:
 
 # Convenience functions
 async def route_user_input(
-    user_input: str, context: dict[str, Any] | None = None
+    user_input: str,
+    context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Quick routing helper.
 
@@ -460,6 +472,7 @@ async def route_user_input(
 
     Returns:
         Routing result
+
     """
     router = HybridRouter()
     return await router.route(user_input, context)
@@ -473,5 +486,6 @@ def is_slash_command(text: str) -> bool:
 
     Returns:
         True if slash command, False otherwise
+
     """
     return text.strip().startswith("/")

@@ -67,7 +67,7 @@ class MockProgressiveWorkflow(ProgressiveWorkflow):
                     "coverage": quality * 0.9,
                     "assertions": quality / 15,
                     "confidence": quality / 100,
-                }
+                },
             )
 
         return generated
@@ -157,9 +157,8 @@ class TestProgressiveWorkflowIntegration:
         workflow = MockProgressiveWorkflow(config=config)
 
         # Mock input to return 'n' for cancellation
-        with patch("builtins.input", return_value="n"):
-            with pytest.raises(UserCancelledError):
-                workflow.execute(["item1", "item2"], expensive=True)
+        with patch("builtins.input", return_value="n"), pytest.raises(UserCancelledError):
+            workflow.execute(["item1", "item2"], expensive=True)
 
     def test_execute_single_tier_success(self, monkeypatch):
         """Test _execute_single_tier when progressive disabled."""
@@ -267,7 +266,7 @@ class TestProgressiveWorkflowBudgetManagement:
                 timestamp=datetime.now(),
                 cost=5.00,  # Exceeds budget
                 duration=10.0,
-            )
+            ),
         )
 
         # Should log warning but not raise
@@ -293,7 +292,7 @@ class TestProgressiveWorkflowBudgetManagement:
                 timestamp=datetime.now(),
                 cost=5.00,  # Exceeds budget
                 duration=10.0,
-            )
+            ),
         )
 
         with pytest.raises(BudgetExceededError, match="exceeds budget"):
@@ -431,20 +430,19 @@ class TestEscalationEdgeCases:
                         }
                         for item in items
                     ]
-                else:
-                    # Second execution: high quality
-                    return [
-                        {
-                            "item": item,
-                            "quality_score": 90,
-                            "passed": True,
-                            "syntax_errors": [],
-                            "coverage": 90.0,
-                            "assertions": 6.0,
-                            "confidence": 0.90,
-                        }
-                        for item in items
-                    ]
+                # Second execution: high quality
+                return [
+                    {
+                        "item": item,
+                        "quality_score": 90,
+                        "passed": True,
+                        "syntax_errors": [],
+                        "coverage": 90.0,
+                        "assertions": 6.0,
+                        "confidence": 0.90,
+                    }
+                    for item in items
+                ]
 
         workflow = EscalatingWorkflow(config=config)
         # Manually disable telemetry

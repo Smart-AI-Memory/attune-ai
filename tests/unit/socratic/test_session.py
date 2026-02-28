@@ -30,7 +30,6 @@ class TestSocraticSession:
 
     def test_session_serialization(self, sample_session):
         """Test session serialization to dict."""
-
         data = sample_session.to_dict()
 
         assert data["session_id"] == sample_session.session_id
@@ -103,7 +102,8 @@ class TestSocraticSession:
         assert session.current_round == 0
 
         session.add_question_round(
-            questions=[{"id": "q1", "text": "What language?"}], answers={"q1": "python"}
+            questions=[{"id": "q1", "text": "What language?"}],
+            answers={"q1": "python"},
         )
 
         assert session.current_round == 1

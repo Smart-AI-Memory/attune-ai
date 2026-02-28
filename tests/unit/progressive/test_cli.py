@@ -136,7 +136,9 @@ class TestCmdShowReport:
         storage_path.mkdir()
 
         args = argparse.Namespace(
-            task_id="nonexistent-task", storage_path=str(storage_path), json=False
+            task_id="nonexistent-task",
+            storage_path=str(storage_path),
+            json=False,
         )
         exit_code = cmd_show_report(args)
 

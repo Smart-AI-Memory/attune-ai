@@ -27,16 +27,16 @@ from .exceptions import ValidationError  # noqa: F401 - re-exported
 from .feedback_loops import FeedbackLoopDetector
 from .leverage_points import LeveragePoint, LeveragePointAnalyzer  # noqa: F401 - re-exported
 from .memory import Classification, UnifiedMemory  # noqa: F401 - re-exported
-from .memory.backend import MemoryBackend  # noqa: F401 - re-exported
+from .memory.backend import MemoryBackend
 from .memory.types import (
-    AccessTier,  # noqa: F401 - re-exported
+    AccessTier,
     AgentCredentials,
     StagedPattern,  # noqa: F401 - re-exported
 )
 
 # Backward compat: re-export RedisShortTermMemory for existing callers
 try:
-    from .redis_memory import RedisShortTermMemory  # noqa: F401 - re-exported
+    from .redis_memory import RedisShortTermMemory
 except ImportError:
     RedisShortTermMemory = None  # type: ignore[assignment,misc]
 
@@ -53,6 +53,7 @@ class InteractionResponse:
         response: The response text
         confidence: Confidence score (0.0 to 1.0)
         predictions: Optional list of predictions (for Level 4+)
+
     """
 
     level: int
@@ -177,6 +178,7 @@ class EmpathyOS(
     - **SharedLibraryMixin**: async context manager, contribute_pattern(), query_patterns()
     - **FeedbackManagementMixin**: monitor_feedback_loops()
     - **ShortTermMemoryMixin**: Redis coordination, signals, pattern staging
+
     """
 
     def __init__(

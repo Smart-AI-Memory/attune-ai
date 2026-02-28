@@ -40,6 +40,7 @@ def generate_progression_report(result: ProgressiveWorkflowResult) -> str:
         🎯 PROGRESSIVE ESCALATION REPORT
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         ...
+
     """
     report = []
 
@@ -59,7 +60,7 @@ def generate_progression_report(result: ProgressiveWorkflowResult) -> str:
     # Cost savings
     if result.cost_savings > 0:
         report.append(
-            f"Cost Savings: ${result.cost_savings:.2f} ({result.cost_savings_percent:.0f}% vs all-Premium)"
+            f"Cost Savings: ${result.cost_savings:.2f} ({result.cost_savings_percent:.0f}% vs all-Premium)",
         )
         report.append("")
 
@@ -130,6 +131,7 @@ def save_results_to_disk(result: ProgressiveWorkflowResult, storage_path: str) -
     Example:
         >>> save_results_to_disk(result, ".attune/progressive_runs")
         # Creates .attune/progressive_runs/test-gen-20260117-143022/...
+
     """
     task_dir = Path(storage_path) / result.task_id
     task_dir.mkdir(parents=True, exist_ok=True)
@@ -209,6 +211,7 @@ def _format_duration(seconds: float) -> str:
         '1m 24s'
         >>> _format_duration(12.3)
         '12s'
+
     """
     if seconds < 60:
         return f"{int(seconds)}s"
@@ -220,7 +223,8 @@ def _format_duration(seconds: float) -> str:
 
 
 def load_result_from_disk(
-    task_id: str, storage_path: str = ".attune/progressive_runs"
+    task_id: str,
+    storage_path: str = ".attune/progressive_runs",
 ) -> dict[str, Any]:
     """Load saved result from disk.
 
@@ -238,6 +242,7 @@ def load_result_from_disk(
         >>> result = load_result_from_disk("test-gen-20260117-143022")
         >>> print(result["summary"]["total_cost"])
         0.95
+
     """
     task_dir = Path(storage_path) / task_id
 
@@ -277,6 +282,7 @@ def list_saved_results(storage_path: str = ".attune/progressive_runs") -> list[d
         >>> results = list_saved_results()
         >>> for r in results:
         ...     print(f"{r['task_id']}: ${r['total_cost']:.2f}")
+
     """
     storage_dir = Path(storage_path)
 
@@ -306,7 +312,9 @@ def list_saved_results(storage_path: str = ".attune/progressive_runs") -> list[d
 
 
 def cleanup_old_results(
-    storage_path: str = ".attune/progressive_runs", retention_days: int = 30, dry_run: bool = False
+    storage_path: str = ".attune/progressive_runs",
+    retention_days: int = 30,
+    dry_run: bool = False,
 ) -> tuple[int, int]:
     """Clean up old progressive workflow results.
 
@@ -321,6 +329,7 @@ def cleanup_old_results(
     Example:
         >>> deleted, retained = cleanup_old_results(retention_days=7)
         >>> print(f"Deleted {deleted} old results, kept {retained}")
+
     """
     from datetime import datetime, timedelta
 
@@ -392,6 +401,7 @@ def generate_cost_analytics(storage_path: str = ".attune/progressive_runs") -> d
         >>> analytics = generate_cost_analytics()
         >>> print(f"Total savings: ${analytics['total_savings']:.2f}")
         >>> print(f"Avg escalation rate: {analytics['avg_escalation_rate']:.1%}")
+
     """
     results = list_saved_results(storage_path)
 
@@ -483,6 +493,7 @@ def format_cost_analytics_report(analytics: dict[str, Any]) -> str:
     Example:
         >>> analytics = generate_cost_analytics()
         >>> print(format_cost_analytics_report(analytics))
+
     """
     report = []
 

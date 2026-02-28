@@ -313,7 +313,7 @@ class ResilientExecutor:
 
         # All fallbacks exhausted
         raise AllProvidersFailedError(
-            f"All fallback options exhausted. " f"Last error: {last_error}",
+            f"All fallback options exhausted. Last error: {last_error}",
             attempts=metadata["fallback_chain"],
         ) from last_error
 

@@ -48,7 +48,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is True
@@ -80,7 +83,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is False
@@ -105,7 +111,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=2, config=config
+            Tier.CHEAP,
+            result,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is True
@@ -135,7 +144,10 @@ class TestMetaOrchestrator:
         )
 
         should_esc1, _ = orchestrator.should_escalate(
-            Tier.CAPABLE, result1, attempt=1, config=config
+            Tier.CAPABLE,
+            result1,
+            attempt=1,
+            config=config,
         )
         assert should_esc1 is False  # First attempt, no history for stagnation
 
@@ -155,7 +167,10 @@ class TestMetaOrchestrator:
         )
 
         should_esc2, reason2 = orchestrator.should_escalate(
-            Tier.CAPABLE, result2, attempt=2, config=config
+            Tier.CAPABLE,
+            result2,
+            attempt=2,
+            config=config,
         )
         # Need 3 items in history (consecutive_stagnation_limit + 1) before checking stagnation
         # After result2, we have 2 items, so no stagnation check yet
@@ -177,7 +192,10 @@ class TestMetaOrchestrator:
         )
 
         should_esc3, reason3 = orchestrator.should_escalate(
-            Tier.CAPABLE, result3, attempt=3, config=config
+            Tier.CAPABLE,
+            result3,
+            attempt=3,
+            config=config,
         )
 
         assert should_esc3 is True  # 2 consecutive stagnations
@@ -224,7 +242,10 @@ class TestMetaOrchestrator:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result2, attempt=2, config=config
+            Tier.CAPABLE,
+            result2,
+            attempt=2,
+            config=config,
         )
 
         assert should_escalate is False
@@ -253,7 +274,10 @@ class TestMetaOrchestrator:
             orchestrator.tier_history[Tier.CAPABLE].append(70 + i)
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CAPABLE, result, attempt=6, config=config
+            Tier.CAPABLE,
+            result,
+            attempt=6,
+            config=config,
         )
 
         assert should_escalate is True
@@ -266,14 +290,18 @@ class TestMetaOrchestrator:
         # No stagnation: good improvement
         history1 = [70.0, 78.0, 86.0, 92.0]
         is_stagnant1, _ = orchestrator._detect_stagnation(
-            history1, improvement_threshold=5.0, consecutive_limit=2
+            history1,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
         assert is_stagnant1 is False
 
         # Stagnation: <5% improvement for 2 consecutive runs
         history2 = [70.0, 78.0, 79.0, 80.0]  # Last two improvements: +1%, +1%
         is_stagnant2, reason2 = orchestrator._detect_stagnation(
-            history2, improvement_threshold=5.0, consecutive_limit=2
+            history2,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
         assert is_stagnant2 is True
         assert "consecutive" in reason2.lower()
@@ -281,7 +309,9 @@ class TestMetaOrchestrator:
         # Not enough history
         history3 = [70.0]
         is_stagnant3, _ = orchestrator._detect_stagnation(
-            history3, improvement_threshold=5.0, consecutive_limit=2
+            history3,
+            improvement_threshold=5.0,
+            consecutive_limit=2,
         )
         assert is_stagnant3 is False
 
@@ -294,7 +324,9 @@ class TestPromptGeneration:
         orchestrator = MetaOrchestrator()
 
         prompt = orchestrator.build_tier_prompt(
-            Tier.CHEAP, "Generate tests for module.py", failure_context=None
+            Tier.CHEAP,
+            "Generate tests for module.py",
+            failure_context=None,
         )
 
         assert "<task>" in prompt
@@ -320,12 +352,14 @@ class TestPromptGeneration:
                     "error": "SyntaxError: invalid syntax",
                     "code": "def test_async():\n    result = async_function()",
                     "quality_score": 45,
-                }
+                },
             ],
         }
 
         prompt = orchestrator.build_tier_prompt(
-            Tier.CAPABLE, "Generate tests for async module", failure_context=failure_context
+            Tier.CAPABLE,
+            "Generate tests for async module",
+            failure_context=failure_context,
         )
 
         assert "<context_from_previous_tier>" in prompt
@@ -353,12 +387,14 @@ class TestPromptGeneration:
                     "error": "AssertionError: timeout",
                     "code": "async def test_timeout():\n    result = await slow_function()",
                     "quality_score": 75,
-                }
+                },
             ],
         }
 
         prompt = orchestrator.build_tier_prompt(
-            Tier.PREMIUM, "Generate tests for complex async module", failure_context=failure_context
+            Tier.PREMIUM,
+            "Generate tests for complex async module",
+            failure_context=failure_context,
         )
 
         assert "<escalation_context>" in prompt
@@ -526,7 +562,10 @@ class TestEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.CHEAP, result, attempt=1, config=config
+            Tier.CHEAP,
+            result,
+            attempt=1,
+            config=config,
         )
 
         assert should_escalate is False
@@ -547,7 +586,10 @@ class TestEdgeCases:
         )
 
         should_escalate, reason = orchestrator.should_escalate(
-            Tier.PREMIUM, result, attempt=1, config=config
+            Tier.PREMIUM,
+            result,
+            attempt=1,
+            config=config,
         )
 
         assert should_escalate is False

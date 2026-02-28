@@ -60,7 +60,10 @@ class TestProgressiveTelemetry:
         )
 
         telemetry.track_tier_execution(
-            tier_result, attempt=1, escalated=False, escalation_reason=None
+            tier_result,
+            attempt=1,
+            escalated=False,
+            escalation_reason=None,
         )
 
         # Verify tracker was called

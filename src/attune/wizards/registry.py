@@ -42,6 +42,7 @@ def register_wizard(wizard_id: str, wizard_class: type[BaseWizard]) -> None:
     Args:
         wizard_id: Short identifier (e.g. ``"debug"``).
         wizard_class: The wizard class to register.
+
     """
     _WIZARD_REGISTRY[wizard_id] = wizard_class
     logger.debug("Registered wizard: %s", wizard_id)
@@ -58,6 +59,7 @@ def get_wizard(wizard_id: str) -> type[BaseWizard] | None:
 
     Returns:
         Wizard class or ``None`` if not found.
+
     """
     if wizard_id in _WIZARD_REGISTRY:
         return _WIZARD_REGISTRY[wizard_id]
@@ -74,6 +76,7 @@ def list_wizards() -> list[WizardConfig]:
 
     Returns:
         List of ``WizardConfig`` sorted by wizard_id.
+
     """
     _discover_wizards()
     _load_builtins()
@@ -105,6 +108,7 @@ def save_custom_wizard(wizard_data: dict[str, Any], base_dir: str | None = None)
 
     Raises:
         ValueError: If the data is invalid or path targets a system directory.
+
     """
     from .config_driven import ConfigDrivenWizard, _validate_schema
 
@@ -151,6 +155,7 @@ def delete_custom_wizard(wizard_id: str, base_dir: str | None = None) -> bool:
 
     Raises:
         ValueError: If attempting to delete a built-in wizard.
+
     """
     # Protect built-in wizards
     try:
@@ -208,11 +213,11 @@ def _discover_wizards() -> None:
                 if hasattr(wizard_class, "config"):
                     _WIZARD_REGISTRY[wizard_class.config.wizard_id] = wizard_class
                     logger.debug("Discovered wizard via entry point: %s", ep.name)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Entry point loading is best-effort
                 logger.warning("Failed to load wizard entry point %s: %s", ep.name, e)
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: Entry point discovery is optional
         logger.debug("Entry point discovery failed: %s", e)
 
@@ -258,6 +263,6 @@ def _load_custom_wizards() -> None:
                 _WIZARD_REGISTRY[wizard_id] = type(wizard)
                 _CUSTOM_WIZARD_INSTANCES[wizard_id] = wizard
                 logger.debug("Loaded custom wizard: %s from %s", wizard_id, yaml_path)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Custom wizard loading is best-effort
             logger.warning("Failed to load custom wizard from %s: %s", yaml_path, e)

@@ -234,7 +234,7 @@ class TestExecutionRecord:
 
     # Failures
     failed_tests: list[dict[str, Any]] = field(
-        default_factory=list
+        default_factory=list,
     )  # [{name, file, error, traceback}]
 
     # Status
@@ -284,7 +284,7 @@ class CoverageRecord:
 
     # Critical gaps
     critical_gaps: list[dict[str, Any]] = field(
-        default_factory=list
+        default_factory=list,
     )  # [{file, coverage, priority}]
 
     # Trend data

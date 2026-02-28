@@ -352,12 +352,11 @@ pytest tests/unit/workflows/test_{name}_workflow.py --cov
 
         if has_linear_flow:
             return "linear_flow_workflow.py.jinja2"
-        elif workflow_type == "coach":
+        if workflow_type == "coach":
             return "coach_workflow.py.jinja2"
-        elif workflow_type == "domain":
+        if workflow_type == "domain":
             return "domain_workflow.py.jinja2"
-        else:
-            return "base_workflow.py.jinja2"
+        return "base_workflow.py.jinja2"
 
     def _to_class_name(self, name: str) -> str:
         """Convert workflow name to class name.

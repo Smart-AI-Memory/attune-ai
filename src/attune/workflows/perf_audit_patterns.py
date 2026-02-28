@@ -81,7 +81,7 @@ PERF_PATTERNS = {
     },
     "nested_loops": {
         "patterns": [
-            r"for\s+\w+\s+in\s+\w+:\s*\n\s+for\s+\w+\s+in\s+\w+:" r"\s*\n\s+for",
+            r"for\s+\w+\s+in\s+\w+:\s*\n\s+for\s+\w+\s+in\s+\w+:\s*\n\s+for",
         ],
         "description": "Triple nested loop (O(n^3) complexity)",
         "impact": "high",
@@ -121,7 +121,7 @@ PERF_PATTERNS = {
 OPTIMIZATION_ACTIONS: dict[str, dict[str, str]] = {
     "n_plus_one": {
         "action": "Batch database queries",
-        "description": ("Use prefetch_related/select_related " "or batch queries"),
+        "description": ("Use prefetch_related/select_related or batch queries"),
         "estimated_impact": "high",
     },
     "sync_in_async": {
@@ -131,7 +131,7 @@ OPTIMIZATION_ACTIONS: dict[str, dict[str, str]] = {
     },
     "string_concat_loop": {
         "action": "Use str.join()",
-        "description": ("Build list of strings and join at the end " "instead of concatenating"),
+        "description": ("Build list of strings and join at the end instead of concatenating"),
         "estimated_impact": "medium",
     },
     "repeated_regex": {
@@ -141,7 +141,7 @@ OPTIMIZATION_ACTIONS: dict[str, dict[str, str]] = {
     },
     "nested_loops": {
         "action": "Optimize algorithm",
-        "description": ("Consider using sets, dicts, or itertools " "to reduce complexity"),
+        "description": ("Consider using sets, dicts, or itertools to reduce complexity"),
         "estimated_impact": "high",
     },
     "list_comprehension_in_loop": {
@@ -152,7 +152,7 @@ OPTIMIZATION_ACTIONS: dict[str, dict[str, str]] = {
     # large_list_copy removed - too many false positives
     "global_import": {
         "action": "Use specific imports",
-        "description": ("Import only needed names to reduce memory " "and startup time"),
+        "description": ("Import only needed names to reduce memory and startup time"),
         "estimated_impact": "low",
     },
 }

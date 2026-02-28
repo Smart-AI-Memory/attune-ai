@@ -31,6 +31,7 @@ def _get_default_template_dir() -> Path:
     Note:
         Uses multiple fallback strategies to avoid __file__ AttributeError
         in pytest environments.
+
     """
     try:
         # Try __file__ first (works in most cases)
@@ -145,7 +146,7 @@ class TestGenerator:
             f"Generated tests for {workflow_id}: "
             f"unit={len(unit_tests)} chars, "
             f"integration={'yes' if integration_tests else 'no'}, "
-            f"fixtures={len(fixtures)} chars"
+            f"fixtures={len(fixtures)} chars",
         )
 
         return {
@@ -336,8 +337,7 @@ def mock_{context["workflow_id"]}_dependencies():
         # This is a simple heuristic - can be improved
         if workflow_id in ["soap_note", "sbar", "care_plan"]:
             return f"workflows.{workflow_id}"
-        else:
-            return f"workflows.{workflow_id}_workflow"
+        return f"workflows.{workflow_id}_workflow"
 
     def _infer_class_name(self, workflow_id: str) -> str:
         """Infer workflow class name from ID.

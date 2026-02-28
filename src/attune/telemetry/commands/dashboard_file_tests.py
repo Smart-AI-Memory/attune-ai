@@ -25,6 +25,7 @@ def cmd_file_test_dashboard(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from attune.models.telemetry import get_telemetry_store
 
@@ -92,7 +93,6 @@ def cmd_file_test_dashboard(args: Any) -> int:
 
         def log_message(self, format: str, *args: Any) -> None:
             """Suppress logging."""
-            pass
 
     print(f"Starting File Test Dashboard on http://localhost:{port}")
     print("Press Ctrl+C to stop the server")

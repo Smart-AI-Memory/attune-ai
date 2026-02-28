@@ -244,7 +244,6 @@ class TestOllamaDetection:
 
     def test_check_ollama_timeout(self):
         """Test _check_ollama_available with timeout."""
-
         with patch("socket.socket") as mock_socket:
             mock_instance = MagicMock()
             mock_instance.connect.side_effect = TimeoutError()
@@ -294,7 +293,9 @@ class TestEnvFileLoading:
     def test_auto_detect_with_multiple_providers(self):
         """Test auto_detect with multiple providers prioritizes anthropic."""
         with patch.object(
-            ProviderConfig, "detect_available_providers", return_value=["openai", "anthropic"]
+            ProviderConfig,
+            "detect_available_providers",
+            return_value=["openai", "anthropic"],
         ):
             config = ProviderConfig.auto_detect()
 

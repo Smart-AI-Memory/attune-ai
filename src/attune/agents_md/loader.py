@@ -34,6 +34,7 @@ class AgentLoader:
         # Discover and iterate agents lazily
         for config in loader.discover("agents/"):
             print(config.name)
+
     """
 
     def __init__(self, parser: MarkdownAgentParser | None = None):

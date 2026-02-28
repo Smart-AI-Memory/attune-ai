@@ -55,6 +55,7 @@ class ProjectIndex:
                 N: Use N worker processes
             use_parallel: Whether to use parallel scanner (default: True).
                 Set to False to force sequential processing.
+
         """
         self.project_root = Path(project_root)
         self.config = config or IndexConfig()
@@ -206,6 +207,7 @@ class ProjectIndex:
             - Sequential: ~3.6s for 3,472 files
             - Parallel (12 workers): ~1.8s for 3,472 files
             - Parallel without deps: ~1.0s for 3,472 files
+
         """
         logger.info(f"Refreshing index for {self.project_root}")
 
@@ -213,7 +215,9 @@ class ProjectIndex:
         if self.use_parallel and (self.workers is None or self.workers > 1):
             logger.info(f"Using parallel scanner (workers: {self.workers or 'auto'})")
             scanner = ParallelProjectScanner(
-                str(self.project_root), self.config, workers=self.workers
+                str(self.project_root),
+                self.config,
+                workers=self.workers,
             )
         else:
             logger.info("Using sequential scanner")
@@ -231,11 +235,13 @@ class ProjectIndex:
 
         logger.info(
             f"Index refreshed: {len(self._records)} files, "
-            f"{summary.files_needing_attention} need attention"
+            f"{summary.files_needing_attention} need attention",
         )
 
     def refresh_incremental(
-        self, analyze_dependencies: bool = True, base_ref: str = "HEAD"
+        self,
+        analyze_dependencies: bool = True,
+        base_ref: str = "HEAD",
     ) -> tuple[int, int]:
         """Incrementally refresh index by scanning only changed files.
 
@@ -267,13 +273,14 @@ class ProjectIndex:
             >>> index.load()
             >>> updated, removed = index.refresh_incremental()
             >>> print(f"Updated {updated} files, removed {removed}")
+
         """
         import subprocess
 
         # Ensure we have a previous index to update
         if not self._records:
             raise ValueError(
-                "No existing index to update. Run refresh() first to create initial index."
+                "No existing index to update. Run refresh() first to create initial index.",
             )
 
         # Get changed files from git
@@ -338,7 +345,7 @@ class ProjectIndex:
                 changed_paths.append(file_path)
 
         logger.info(
-            f"Incremental refresh: {len(changed_paths)} changed, {len(deleted_files)} deleted"
+            f"Incremental refresh: {len(changed_paths)} changed, {len(deleted_files)} deleted",
         )
 
         # If no changes, nothing to do
@@ -351,7 +358,9 @@ class ProjectIndex:
             if self.use_parallel and len(changed_paths) > 100:
                 # Use parallel scanner for large change sets
                 scanner = ParallelProjectScanner(
-                    str(self.project_root), self.config, workers=self.workers
+                    str(self.project_root),
+                    self.config,
+                    workers=self.workers,
                 )
                 # Monkey-patch _discover_files to return only changed files
                 scanner._discover_files = lambda: changed_paths
@@ -391,7 +400,7 @@ class ProjectIndex:
 
         files_updated = len(changed_paths)
         logger.info(
-            f"Incremental refresh complete: {files_updated} updated, {files_removed} removed"
+            f"Incremental refresh complete: {files_updated} updated, {files_removed} removed",
         )
 
         return files_updated, files_removed

@@ -31,6 +31,7 @@ class AnthropicBatchProvider:
         >>> batch_id = provider.create_batch(requests)
         >>> # Wait for processing (up to 24 hours)
         >>> results = await provider.wait_for_batch(batch_id)
+
     """
 
     def __init__(self, api_key: str | None = None):
@@ -38,11 +39,12 @@ class AnthropicBatchProvider:
 
         Args:
             api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
+
         """
         if not api_key or not api_key.strip():
             raise ValueError(
                 "API key is required for Anthropic Batch API. "
-                "Provide via api_key parameter or ANTHROPIC_API_KEY environment variable"
+                "Provide via api_key parameter or ANTHROPIC_API_KEY environment variable",
             )
 
         try:
@@ -52,7 +54,7 @@ class AnthropicBatchProvider:
             self._batch_jobs: dict[str, Any] = {}
         except ImportError as e:
             raise ImportError(
-                "anthropic package required for Batch API. Install with: pip install anthropic"
+                "anthropic package required for Batch API. Install with: pip install anthropic",
             ) from e
 
     def create_batch(self, requests: list[dict[str, Any]], job_id: str | None = None) -> str:
@@ -84,6 +86,7 @@ class AnthropicBatchProvider:
             >>> batch_id = provider.create_batch(requests)
             >>> print(f"Batch created: {batch_id}")
             Batch created: msgbatch_abc123
+
         """
         if not requests:
             raise ValueError("requests cannot be empty")
@@ -136,6 +139,7 @@ class AnthropicBatchProvider:
             >>> print(status.processing_status)
             in_progress
             >>> print(f"Succeeded: {status.request_counts.succeeded}")
+
         """
         try:
             # Use correct Message Batches API endpoint
@@ -170,13 +174,14 @@ class AnthropicBatchProvider:
             ...     else:
             ...         error = result['result']['error']
             ...         print(f"{result['custom_id']}: Error {error['type']}")
+
         """
         status = self.get_batch_status(batch_id)
 
         # Check processing_status instead of status
         if status.processing_status != "ended":
             raise ValueError(
-                f"Batch {batch_id} has not ended processing (status: {status.processing_status})"
+                f"Batch {batch_id} has not ended processing (status: {status.processing_status})",
             )
 
         try:
@@ -214,8 +219,8 @@ class AnthropicBatchProvider:
             ...     poll_interval=300,  # Check every 5 minutes
             ... )
             >>> print(f"Batch completed: {len(results)} results")
-        """
 
+        """
         start_time = datetime.now()
 
         while True:
@@ -228,7 +233,7 @@ class AnthropicBatchProvider:
                 logger.info(
                     f"Batch {batch_id} ended: "
                     f"{counts.succeeded} succeeded, {counts.errored} errored, "
-                    f"{counts.canceled} canceled, {counts.expired} expired"
+                    f"{counts.canceled} canceled, {counts.expired} expired",
                 )
 
                 # Return results even if some requests failed
@@ -245,11 +250,11 @@ class AnthropicBatchProvider:
                 counts = status.request_counts
                 logger.debug(
                     f"Batch {batch_id} status: {status.processing_status} "
-                    f"(processing: {counts.processing}, elapsed: {elapsed:.0f}s)"
+                    f"(processing: {counts.processing}, elapsed: {elapsed:.0f}s)",
                 )
             except AttributeError:
                 logger.debug(
-                    f"Batch {batch_id} status: {status.processing_status} (elapsed: {elapsed:.0f}s)"
+                    f"Batch {batch_id} status: {status.processing_status} (elapsed: {elapsed:.0f}s)",
                 )
 
             # Wait before next poll

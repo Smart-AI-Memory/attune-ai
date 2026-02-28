@@ -37,6 +37,7 @@ class CacheService:
         >>> if cached is None:
         ...     # call LLM, then store
         ...     cache_svc.store("stage1", system_prompt, user_msg, model, response)
+
     """
 
     def __init__(
@@ -76,7 +77,7 @@ class CacheService:
             logger.info(f"Cache initialized for workflow: {self._workflow_name}")
         except ImportError as e:
             logger.info(
-                f"Using hash-only cache (install attune-ai[cache] for semantic caching): {e}"
+                f"Using hash-only cache (install attune-ai[cache] for semantic caching): {e}",
             )
             self._cache = create_cache(cache_type="hash")
         except (OSError, PermissionError) as e:
@@ -95,6 +96,7 @@ class CacheService:
 
         Returns:
             Combined prompt string for cache key
+
         """
         return f"{system}\n\n{user_message}" if system else user_message
 
@@ -115,6 +117,7 @@ class CacheService:
 
         Returns:
             CachedResponse if found, None otherwise
+
         """
         if not self._enable or self._cache is None:
             return None
@@ -153,6 +156,7 @@ class CacheService:
 
         Returns:
             True if stored successfully, False otherwise
+
         """
         if not self._enable or self._cache is None:
             return False
@@ -174,6 +178,7 @@ class CacheService:
 
         Returns:
             Cache type string (e.g., "hash", "semantic", "none")
+
         """
         if self._cache is None:
             return "none"
@@ -189,6 +194,7 @@ class CacheService:
 
         Returns:
             Dictionary with cache stats (hits, misses, hit_rate)
+
         """
         if self._cache is None:
             return {"hits": 0, "misses": 0, "hit_rate": 0.0}

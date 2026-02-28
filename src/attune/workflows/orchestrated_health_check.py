@@ -34,6 +34,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 import asyncio
@@ -98,6 +99,7 @@ class OrchestratedHealthCheckWorkflow:
         >>> report = await workflow.execute(project_root=".")
         >>> if report.overall_health_score >= 80:
         ...     print("Project is healthy!")
+
     """
 
     # Category weights for overall score
@@ -146,10 +148,11 @@ class OrchestratedHealthCheckWorkflow:
 
         Raises:
             ValueError: If mode is invalid
+
         """
         if mode not in self.MODE_AGENTS:
             raise ValueError(
-                f"Invalid mode: {mode}. Must be one of " f"{list(self.MODE_AGENTS.keys())}"
+                f"Invalid mode: {mode}. Must be one of {list(self.MODE_AGENTS.keys())}",
             )
 
         self.mode = mode
@@ -160,7 +163,7 @@ class OrchestratedHealthCheckWorkflow:
         self.tracking_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"OrchestratedHealthCheckWorkflow initialized: " f"mode={mode}, root={project_root}"
+            f"OrchestratedHealthCheckWorkflow initialized: mode={mode}, root={project_root}",
         )
 
     async def execute(
@@ -184,6 +187,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Raises:
             ValueError: If project_root is invalid
+
         """
         # Map 'target' to 'project_root' for VSCode compat
         if "target" in kwargs and not project_root:
@@ -192,9 +196,9 @@ class OrchestratedHealthCheckWorkflow:
             self.project_root = Path(project_root).resolve()
 
         if not self.project_root.exists():
-            raise ValueError(f"Project root does not exist: " f"{self.project_root}")
+            raise ValueError(f"Project root does not exist: {self.project_root}")
 
-        logger.info(f"Starting health check: mode={self.mode}, " f"root={self.project_root}")
+        logger.info(f"Starting health check: mode={self.mode}, root={self.project_root}")
         start_time = asyncio.get_event_loop().time()
 
         # Prepare context
@@ -217,7 +221,7 @@ class OrchestratedHealthCheckWorkflow:
         if not agents:
             raise ValueError(f"No agents available for mode: {self.mode}")
 
-        logger.info(f"Selected {len(agents)} agents: " f"{[a.id for a in agents]}")
+        logger.info(f"Selected {len(agents)} agents: {[a.id for a in agents]}")
 
         # Execute agents using parallel strategy
         strategy = ParallelStrategy()
@@ -240,7 +244,7 @@ class OrchestratedHealthCheckWorkflow:
             f"Health check completed: "
             f"score={report.overall_health_score:.1f}, "
             f"grade={report.grade}, "
-            f"duration={report.execution_time:.2f}s"
+            f"duration={report.execution_time:.2f}s",
         )
 
         return report
@@ -258,6 +262,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             HealthCheckReport with all findings
+
         """
         # Extract agent results
         agent_results: dict[str, dict[str, Any]] = {}
@@ -303,7 +308,8 @@ class OrchestratedHealthCheckWorkflow:
         )
 
     def _calculate_category_scores(
-        self, agent_results: dict[str, dict[str, Any]]
+        self,
+        agent_results: dict[str, dict[str, Any]],
     ) -> list[CategoryScore]:
         """Calculate health scores for each category.
 
@@ -312,6 +318,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             List of CategoryScore objects
+
         """
         return calculate_category_scores(agent_results, self.CATEGORY_WEIGHTS)
 
@@ -323,6 +330,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             Overall score 0-100
+
         """
         return calculate_overall_score(category_scores)
 
@@ -334,6 +342,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             Letter grade (A/B/C/D/F)
+
         """
         return assign_grade(score, self.GRADE_THRESHOLDS)
 
@@ -345,6 +354,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             List of recommendations with commands to run
+
         """
         return generate_recommendations(category_scores)
 
@@ -356,6 +366,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Returns:
             Trend description
+
         """
         return get_trend_comparison(current_score, self.tracking_dir)
 
@@ -364,6 +375,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Args:
             report: Health check report to save
+
         """
         save_tracking_history(report, self.tracking_dir)
 
@@ -372,6 +384,7 @@ class OrchestratedHealthCheckWorkflow:
 
         Args:
             report: Health check report to save
+
         """
         save_health_json(report, self.project_root)
 

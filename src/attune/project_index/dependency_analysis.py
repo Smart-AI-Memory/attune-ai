@@ -38,8 +38,7 @@ class DependencyAnalysisMixin:
             if record.language == "python":
                 # Convert path to module name: src/attune/core.py -> src.attune.core
                 module_name = record.path.replace("/", ".").replace("\\", ".")
-                if module_name.endswith(".py"):
-                    module_name = module_name[:-3]
+                module_name = module_name.removesuffix(".py")
 
                 module_to_path[module_name] = record.path
 

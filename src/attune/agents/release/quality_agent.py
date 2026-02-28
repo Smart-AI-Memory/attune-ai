@@ -104,6 +104,7 @@ class CodeQualityAgent(ReleaseAgent):
 
         Returns:
             Quality findings dict
+
         """
         if returncode == -1:
             return {

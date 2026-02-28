@@ -26,14 +26,14 @@ try:
     attune.workflows.discover_workflows()
 
     # Import additional workflow modules not in lazy registry
-    import attune.workflows.batch_processing  # noqa: F401
-    import attune.workflows.history  # noqa: F401
-    import attune.workflows.manage_docs  # noqa: F401
-    import attune.workflows.progressive.core  # noqa: F401
-    import attune.workflows.progressive.orchestrator  # noqa: F401
-    import attune.workflows.progressive.test_gen  # noqa: F401
-    import attune.workflows.security_adapters  # noqa: F401
-    import attune.workflows.security_audit_phase3  # noqa: F401
+    import attune.workflows.batch_processing
+    import attune.workflows.history
+    import attune.workflows.manage_docs
+    import attune.workflows.progressive.core
+    import attune.workflows.progressive.orchestrator
+    import attune.workflows.progressive.test_gen
+    import attune.workflows.security_adapters
+    import attune.workflows.security_audit_phase3
 except ImportError:
     pass  # Package might not be available in minimal test environments
 
@@ -62,7 +62,7 @@ _test_results_by_file: dict = defaultdict(
         "errors": 0,
         "duration": 0.0,
         "failed_tests": [],
-    }
+    },
 )
 
 
@@ -73,6 +73,7 @@ def _map_test_to_source(test_file: str) -> str | None:
         tests/test_config.py -> src/attune/config.py
         tests/unit/models/test_registry.py -> src/attune/models/registry.py
         tests/unit/cli/test_cli_commands.py -> src/attune/cli.py
+
     """
     test_path = Path(test_file)
 
@@ -149,7 +150,7 @@ def pytest_runtest_makereport(item, call):
                         "name": item.name,
                         "file": test_file,
                         "error": error_msg,
-                    }
+                    },
                 )
         elif report.skipped:
             _test_results_by_file[test_file]["skipped"] += 1
@@ -181,7 +182,7 @@ def _aggregate_xdist_results() -> dict:
             "errors": 0,
             "duration": 0.0,
             "failed_tests": [],
-        }
+        },
     )
 
     if not _XDIST_RESULTS_DIR.exists():
@@ -362,6 +363,7 @@ def setup_test_environment(tmp_path, monkeypatch, request):
 
     Yields:
         Path: The current working directory with .empathy structure
+
     """
     # Save original working directory to restore later
     original_cwd = Path.cwd()
@@ -406,6 +408,7 @@ def mock_llm_response():
     Example:
         >>> response = mock_llm_response(content="test response")
         >>> assert response["content"] == "test response"
+
     """
 
     def _mock_response(content: str = "mock response", model: str = "claude-3-5-sonnet"):
@@ -434,6 +437,7 @@ def temp_project_dir(tmp_path):
         >>> project = temp_project_dir
         >>> assert (project / "src").exists()
         >>> assert (project / "README.md").exists()
+
     """
     project = tmp_path / "project"
     project.mkdir()
@@ -451,7 +455,7 @@ def temp_project_dir(tmp_path):
         """[project]
 name = "test-project"
 version = "0.1.0"
-"""
+""",
     )
 
     return project
@@ -467,6 +471,7 @@ def mock_workflow_config():
     Example:
         >>> config = mock_workflow_config
         >>> assert config["tier_routing"] is True
+
     """
     return {
         "tier_routing": True,

@@ -37,7 +37,7 @@ class TestAnthropicBatchProvider:
                     "messages": [{"role": "user", "content": "Hello"}],
                     "max_tokens": 1024,
                 },
-            }
+            },
         ]
 
         # Mock the API response
@@ -62,7 +62,7 @@ class TestAnthropicBatchProvider:
                 "model": "claude-sonnet-4-6",
                 "messages": [{"role": "user", "content": "Hello"}],
                 "max_tokens": 1024,
-            }
+            },
         ]
 
         # Mock the API response
@@ -94,7 +94,11 @@ class TestAnthropicBatchProvider:
         mock_status.id = "msgbatch_abc123"
         mock_status.processing_status = "in_progress"
         mock_status.request_counts = MagicMock(
-            processing=10, succeeded=0, errored=0, canceled=0, expired=0
+            processing=10,
+            succeeded=0,
+            errored=0,
+            canceled=0,
+            expired=0,
         )
         provider.client.messages.batches.retrieve = MagicMock(return_value=mock_status)
 
@@ -138,7 +142,7 @@ class TestAnthropicBatchProvider:
                         "stop_reason": "end_turn",
                     },
                 },
-            }
+            },
         ]
         provider.client.messages.batches.results = MagicMock(return_value=iter(mock_results))
 

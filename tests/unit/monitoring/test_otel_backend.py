@@ -176,7 +176,7 @@ class TestOTELBackendLogging:
                     latency_ms=1000,
                     success=True,
                     skipped=False,
-                )
+                ),
             ],
             total_input_tokens=100,
             total_output_tokens=50,
@@ -305,7 +305,7 @@ class TestOTELBackendErrorHandling:
                     success=True,
                     skipped=True,
                     skip_reason="Cache hit",
-                )
+                ),
             ],
             total_input_tokens=0,
             total_output_tokens=0,
@@ -343,7 +343,7 @@ class TestOTELBackendErrorHandling:
                     success=False,
                     skipped=False,
                     error="API timeout",
-                )
+                ),
             ],
             total_input_tokens=100,
             total_output_tokens=0,
