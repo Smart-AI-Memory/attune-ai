@@ -1,6 +1,6 @@
 """Tests for utility_commands.py.
 
-Tests for dashboard start, setup, validate, version, and features commands.
+Tests for setup, validate, version, and features commands.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -16,101 +16,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.cli_commands.utility_commands import (
-    cmd_dashboard_start,
     cmd_features,
     cmd_setup,
     cmd_validate,
     cmd_version,
 )
-
-
-# ---------------------------------------------------------------------------
-# cmd_dashboard_start tests
-# ---------------------------------------------------------------------------
-class TestCmdDashboardStart:
-    """Tests for cmd_dashboard_start."""
-
-    def _make_args(self, host: str = "0.0.0.0", port: int = 8000) -> argparse.Namespace:
-        """Create args namespace for dashboard command."""
-        return argparse.Namespace(host=host, port=port)
-
-    def test_dashboard_start_success(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard starts successfully and returns 0."""
-        args = self._make_args()
-
-        mock_run = MagicMock()
-        mock_module = MagicMock()
-        mock_module.run_simple_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="0.0.0.0", port=8000)
-
-    def test_dashboard_start_import_error(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard returns 1 when import fails (dependencies missing)."""
-        args = self._make_args()
-
-        # Remove attune.dashboard from sys.modules if present, and force ImportError
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "not available" in captured.out or "Dashboard" in captured.out
-
-    def test_dashboard_start_import_error_message(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard shows install instructions on ImportError."""
-        args = self._make_args()
-
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            cmd_dashboard_start(args)
-
-        captured = capsys.readouterr()
-        assert "pip install redis" in captured.out
-
-    def test_dashboard_start_keyboard_interrupt(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard handles KeyboardInterrupt gracefully."""
-        args = self._make_args()
-
-        mock_module = MagicMock()
-        mock_module.run_simple_dashboard.side_effect = KeyboardInterrupt()
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "stopped" in captured.out
-
-    def test_dashboard_start_unexpected_error(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard handles unexpected exceptions and returns 1."""
-        args = self._make_args()
-
-        mock_module = MagicMock()
-        mock_module.run_simple_dashboard.side_effect = RuntimeError("Connection refused")
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Error starting dashboard" in captured.out
-
-    def test_dashboard_start_custom_host_port(self) -> None:
-        """Test dashboard passes custom host and port."""
-        args = self._make_args(host="127.0.0.1", port=9000)
-
-        mock_run = MagicMock()
-        mock_module = MagicMock()
-        mock_module.run_simple_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="127.0.0.1", port=9000)
 
 
 # ---------------------------------------------------------------------------

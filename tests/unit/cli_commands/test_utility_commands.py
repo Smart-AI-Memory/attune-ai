@@ -1,6 +1,6 @@
 """Tests for utility_commands.py.
 
-Tests for dashboard start, setup, validate, and version CLI commands.
+Tests for setup, validate, and version CLI commands.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -15,119 +15,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.cli_commands.utility_commands import (
-    cmd_dashboard_start,
     cmd_setup,
     cmd_validate,
     cmd_version,
 )
-
-# ---------------------------------------------------------------------------
-# cmd_dashboard_start
-# ---------------------------------------------------------------------------
-
-
-class TestCmdDashboardStart:
-    """Tests for cmd_dashboard_start."""
-
-    def _make_args(self, host: str = "0.0.0.0", port: int = 8000) -> types.SimpleNamespace:
-        """Create a mock args namespace for dashboard start."""
-        return types.SimpleNamespace(host=host, port=port)
-
-    @patch(
-        "attune.cli_commands.utility_commands.cmd_dashboard_start.__module__",
-        new="attune.cli_commands.utility_commands",
-    )
-    def test_success_returns_zero(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test dashboard starts successfully and returns 0."""
-        args = self._make_args()
-
-        with patch.dict(
-            "sys.modules",
-            {"attune.dashboard": MagicMock()},
-        ):
-            with patch(
-                "attune.cli_commands.utility_commands.cmd_dashboard_start",
-                wraps=cmd_dashboard_start,
-            ):
-                # Patch the late import inside the function
-                mock_dashboard = MagicMock()
-                mock_run = MagicMock()
-                mock_dashboard.run_simple_dashboard = mock_run
-
-                with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-                    result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Agent Coordination Dashboard" in captured.out
-        assert "0.0.0.0" in captured.out
-        assert "8000" in captured.out
-
-    def test_success_calls_run_with_host_and_port(self) -> None:
-        """Test that run_simple_dashboard is called with correct host and port."""
-        args = self._make_args(host="127.0.0.1", port=9999)
-        mock_dashboard = MagicMock()
-        mock_run = MagicMock()
-        mock_dashboard.run_simple_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="127.0.0.1", port=9999)
-
-    def test_keyboard_interrupt_returns_zero(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that KeyboardInterrupt returns 0 and prints stop message."""
-        args = self._make_args()
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_simple_dashboard.side_effect = KeyboardInterrupt
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Dashboard stopped" in captured.out
-
-    def test_import_error_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that ImportError returns 1 with helpful message."""
-        args = self._make_args()
-
-        # Remove any cached module so the import inside the function fails
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Dashboard not available" in captured.out
-        assert "pip install redis" in captured.out
-
-    def test_generic_exception_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that a generic exception returns 1 and logs error."""
-        args = self._make_args()
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_simple_dashboard.side_effect = RuntimeError("connection refused")
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Error starting dashboard" in captured.out
-        assert "connection refused" in captured.out
-
-    def test_output_shows_custom_host_and_port(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that the printed URL uses the custom host and port."""
-        args = self._make_args(host="192.168.1.10", port=3000)
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_simple_dashboard = MagicMock()
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            cmd_dashboard_start(args)
-
-        captured = capsys.readouterr()
-        assert "http://192.168.1.10:3000" in captured.out
-
 
 # ---------------------------------------------------------------------------
 # cmd_setup

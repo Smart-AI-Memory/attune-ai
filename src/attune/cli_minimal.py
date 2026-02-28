@@ -18,10 +18,6 @@ Cost tracking:
     attune costs export -o FILE       Export costs to file
     attune costs reset --confirm      Clear all cost data
 
-Monitoring commands:
-    attune dashboard start            Start agent coordination dashboard
-                                      (opens web UI at http://localhost:8000)
-
 Utility commands:
     attune features                   Show available features and dependencies
     attune telemetry show             Display usage summary
@@ -80,7 +76,6 @@ from attune.cli_commands.telemetry_commands import (  # noqa: F401
     cmd_telemetry_signals,
 )
 from attune.cli_commands.utility_commands import (  # noqa: F401
-    cmd_dashboard_start,
     cmd_features,
     cmd_setup,
     cmd_validate,
@@ -233,22 +228,6 @@ Documentation: https://smartaimemory.com/framework-docs/
     set_parser = provider_sub.add_parser("set", help="Set provider")
     set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
 
-    # --- Dashboard commands ---
-    dashboard_parser = subparsers.add_parser("dashboard", help="Agent coordination dashboard")
-    dashboard_sub = dashboard_parser.add_subparsers(dest="dashboard_command")
-
-    # dashboard start
-    start_parser = dashboard_sub.add_parser("start", help="Start dashboard web server")
-    start_parser.add_argument(
-        "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
-    )
-    start_parser.add_argument(
-        "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
-    )
-    start_parser.add_argument(
-        "--build", action="store_true", help="Force rebuild the React dashboard UI"
-    )
-
     # --- Memory commands (quick lessons) ---
     remember_parser = subparsers.add_parser(
         "remember", help='Save a lesson: attune remember "lesson text"'
@@ -364,13 +343,6 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_provider_set(args)
         else:
             print("Usage: attune provider {show|set}")
-            return 1
-
-    elif args.command == "dashboard":
-        if args.dashboard_command == "start":
-            return cmd_dashboard_start(args)
-        else:
-            print("Usage: attune dashboard start [--host HOST] [--port PORT]")
             return 1
 
     elif args.command == "remember":

@@ -23,6 +23,13 @@ pip install attune-ai[developer]
 
 ---
 
+## What's New in v3.6.5
+
+- **Dashboard removed** — `attune.dashboard` Python module and
+  `attune dashboard start` CLI command deleted. Was deprecated in
+  v3.6.3. Use `FeedbackLoop` and `UsageTracker` from
+  `attune.telemetry` directly.
+
 ## What's New in v3.6.4
 
 - **EscalationChain** — New retry-with-feedback LLM wrapper
@@ -30,13 +37,6 @@ pip install attune-ai[developer]
   tiers, feeding structured failure feedback back into each retry.
   Includes `StructureValidator`, `ConfidenceValidator`,
   `SemanticEvaluator`, and an `escalate()` convenience function.
-
-## What's New in v3.6.3
-
-- **Dashboard deprecated** — React frontend, startup scripts, and
-  example scripts removed. The Python backend (`attune.dashboard`)
-  is soft-deprecated with warnings and will be removed in a future
-  major version. Use `FeedbackLoop` and `UsageTracker` directly.
 
 
 ## What's New in v3.6.2
@@ -57,8 +57,8 @@ pip install attune-ai[developer]
   standalone package (`pip install attune-redis`),
   fully decoupled from core. Ships with 5 MCP tools and
   a v4.0.0 migration guide.
-- **React dashboard** *(deprecated in v3.6.3)* — Removed.
-  Use `FeedbackLoop` and `UsageTracker` directly.
+- **FeedbackLoop** — Quality-based model tier recommendations
+  via pluggable `MemoryBackend` with `_InMemoryStore` fallback.
 - **FeedbackLoop in-memory fallback** — Works out of the
   box without Redis via a pluggable `MemoryBackend`
   protocol with `_InMemoryStore` fallback. Enables
@@ -288,34 +288,6 @@ echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.m
 
 ---
 
-## Agent Coordination Dashboard
-
-Real-time monitoring with 6 coordination patterns:
-
-- Agent heartbeats and status tracking
-- Inter-agent coordination signals
-- Event streaming across agent workflows
-- Approval gates for human-in-the-loop
-- Quality feedback and performance metrics
-- Demo mode with test data generation
-
-```bash
-# Launch dashboard (works without Redis)
-attune dashboard start
-# Open http://localhost:8000
-
-# For development with hot reload
-cd dashboard && npm run dev
-# Open http://localhost:5173
-```
-
-**Redis optional:** Core dashboard features (quality
-feedback, model routing, system health) work without
-Redis. Real-time pub/sub features (event streaming,
-approval gates) activate automatically when Redis is
-available. Full Redis 8.4 support: RediSearch,
-RedisJSON, RedisTimeSeries, RedisBloom, VectorSet.
-
 ---
 
 ## Authentication Strategy
@@ -346,7 +318,7 @@ python -m attune.models.auth_cli recommend src/module.py
 # Base install (CLI + workflows)
 pip install attune-ai
 
-# Full developer experience (agents, memory, dashboard, caching)
+# Full developer experience (agents, memory, semantic caching)
 pip install attune-ai[developer]
 
 # Enterprise (auth, rate limiting, telemetry)
@@ -362,7 +334,7 @@ cd attune-ai && pip install -e .[dev]
 | Option         | What You Get                                    |
 | -------------- | ----------------------------------------------- |
 | Base           | CLI, workflows, Anthropic SDK                   |
-| `[developer]`  | + Agents, memory, dashboard, semantic caching   |
+| `[developer]`  | + Agents, memory, semantic caching              |
 | `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry        |
 
 ---

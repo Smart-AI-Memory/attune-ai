@@ -110,12 +110,6 @@ class TestCreateParser:
         assert args.provider_command == "set"
         assert args.name == "anthropic"
 
-    def test_dashboard_start(self, parser: argparse.ArgumentParser) -> None:
-        args = parser.parse_args(["dashboard", "start", "--host", "0.0.0.0", "--port", "9090"])
-        assert args.dashboard_command == "start"
-        assert args.host == "0.0.0.0"
-        assert args.port == 9090
-
     def test_setup(self, parser: argparse.ArgumentParser) -> None:
         args = parser.parse_args(["setup"])
         assert args.command == "setup"
@@ -232,20 +226,6 @@ class TestMainProviderRouting:
         assert main(["provider"]) == 1
         captured = capsys.readouterr()
         assert "provider" in captured.out.lower()
-
-
-class TestMainDashboardRouting:
-    """Tests that main() routes dashboard subcommands correctly."""
-
-    @patch(f"{_CLI}.cmd_dashboard_start", return_value=0)
-    def test_start(self, mock_fn: MagicMock) -> None:
-        assert main(["dashboard", "start"]) == 0
-        mock_fn.assert_called_once()
-
-    def test_no_subcommand(self, capsys: pytest.CaptureFixture) -> None:
-        assert main(["dashboard"]) == 1
-        captured = capsys.readouterr()
-        assert "dashboard" in captured.out.lower()
 
 
 class TestMainUtilityRouting:
