@@ -83,7 +83,8 @@ class TestStore:
         assert record["classification"] == "SENSITIVE"
 
     def test_store_with_invalid_classification_falls_back_to_internal(
-        self, tmp_path: "Path"
+        self,
+        tmp_path: "Path",
     ) -> None:
         """Test that an invalid classification string falls back to INTERNAL."""
         storage_dir = tmp_path / "storage"

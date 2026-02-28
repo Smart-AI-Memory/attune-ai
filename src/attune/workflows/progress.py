@@ -175,9 +175,7 @@ class ProgressTracker:
             old_tier = stage.tier
             stage.tier = new_tier
 
-            message = (
-                f"Tier upgrade: {stage_name} " f"[{old_tier.upper()} \u2192 {new_tier.upper()}]"
-            )
+            message = f"Tier upgrade: {stage_name} [{old_tier.upper()} \u2192 {new_tier.upper()}]"
             if reason:
                 message += f" ({reason})"
 
@@ -287,7 +285,7 @@ class ProgressTracker:
         for callback in self._callbacks:
             try:
                 callback(update)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Callbacks are optional - never fail workflow
                 # on callback error
                 logger.warning("Progress callback error", exc_info=True)

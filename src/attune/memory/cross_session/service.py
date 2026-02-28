@@ -55,11 +55,12 @@ class BackgroundService:
             memory: RedisShortTermMemory instance
             auto_start_on_connect: Start automatically when first
                 session connects
+
         """
         if memory.use_mock:
             raise ValueError(
                 "Background service requires Redis. "
-                "Mock mode does not support cross-session features."
+                "Mock mode does not support cross-session features.",
             )
 
         self._memory = memory
@@ -82,6 +83,7 @@ class BackgroundService:
         Returns:
             True if started, False if already running or
             couldn't acquire lock
+
         """
         if self._running:
             logger.warning("service_already_running")
@@ -205,6 +207,7 @@ class BackgroundService:
 
         Returns:
             Dict with service status information
+
         """
         status: dict[str, Any] = {
             "running": self._running,
@@ -233,6 +236,7 @@ def check_redis_cross_session_support(
 
     Returns:
         True if Redis is available and not in mock mode
+
     """
     return not memory.use_mock and memory._client is not None
 
@@ -247,6 +251,7 @@ def get_or_start_service(
 
     Returns:
         BackgroundService if started/running, None if unavailable
+
     """
     if not check_redis_cross_session_support(memory):
         return None

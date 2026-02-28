@@ -82,22 +82,22 @@ class TestRoleFrozensets:
     def test_executive_roles_contains_expected(self) -> None:
         """Test EXECUTIVE_ROLES contains all expected roles."""
         expected = {"executive", "ceo", "cto", "manager", "director", "vp"}
-        assert EXECUTIVE_ROLES == expected
+        assert expected == EXECUTIVE_ROLES
 
     def test_technical_roles_contains_expected(self) -> None:
         """Test TECHNICAL_ROLES contains all expected roles."""
         expected = {"developer", "engineer", "architect", "devops", "sre"}
-        assert TECHNICAL_ROLES == expected
+        assert expected == TECHNICAL_ROLES
 
     def test_coordination_roles_contains_expected(self) -> None:
         """Test COORDINATION_ROLES contains all expected roles."""
         expected = {"team_lead", "project_manager", "scrum_master", "coordinator"}
-        assert COORDINATION_ROLES == expected
+        assert expected == COORDINATION_ROLES
 
     def test_high_stress_levels_contains_expected(self) -> None:
         """Test HIGH_STRESS_LEVELS contains all expected levels."""
         expected = {"critical", "high", "severe"}
-        assert HIGH_STRESS_LEVELS == expected
+        assert expected == HIGH_STRESS_LEVELS
 
     def test_all_role_sets_are_frozenset(self) -> None:
         """Test that all role sets are frozensets (immutable)."""
@@ -131,7 +131,9 @@ class TestPreFormatForHandoff:
         behaviors = TrustBuildingBehaviors()
         data = {"revenue": 1000000, "growth": 15.5, "users": 500}
         result = behaviors.pre_format_for_handoff(
-            data=data, recipient_role="executive", context="quarterly_review"
+            data=data,
+            recipient_role="executive",
+            context="quarterly_review",
         )
         assert result["format"] == "executive_summary"
         assert result["summary"]["type"] == "executive_summary"
@@ -145,7 +147,9 @@ class TestPreFormatForHandoff:
         """Test CEO role (member of EXECUTIVE_ROLES) goes through executive branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={"items": [1, 2]}, recipient_role="ceo", context="board"
+            data={"items": [1, 2]},
+            recipient_role="ceo",
+            context="board",
         )
         assert result["summary"]["type"] == "executive_summary"
 
@@ -153,7 +157,9 @@ class TestPreFormatForHandoff:
         """Test CTO role (member of EXECUTIVE_ROLES) goes through executive branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={}, recipient_role="cto", context="tech_review"
+            data={},
+            recipient_role="cto",
+            context="tech_review",
         )
         assert result["summary"]["type"] == "executive_summary"
 
@@ -161,7 +167,9 @@ class TestPreFormatForHandoff:
         """Test manager role uses executive formatting."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={}, recipient_role="manager", context="review"
+            data={},
+            recipient_role="manager",
+            context="review",
         )
         assert result["format"] == "executive_summary"
 
@@ -170,7 +178,9 @@ class TestPreFormatForHandoff:
         behaviors = TrustBuildingBehaviors()
         data = {"function": "parse_config", "complexity": 12}
         result = behaviors.pre_format_for_handoff(
-            data=data, recipient_role="developer", context="code_review"
+            data=data,
+            recipient_role="developer",
+            context="code_review",
         )
         assert result["format"] == "technical_detail"
         assert result["summary"]["type"] == "technical_detail"
@@ -181,7 +191,9 @@ class TestPreFormatForHandoff:
         """Test engineer role (member of TECHNICAL_ROLES) uses technical branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={"module": "auth"}, recipient_role="engineer", context="debug"
+            data={"module": "auth"},
+            recipient_role="engineer",
+            context="debug",
         )
         assert result["summary"]["type"] == "technical_detail"
 
@@ -189,7 +201,9 @@ class TestPreFormatForHandoff:
         """Test architect role uses technical branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={}, recipient_role="architect", context="design"
+            data={},
+            recipient_role="architect",
+            context="design",
         )
         assert result["summary"]["type"] == "technical_detail"
 
@@ -198,7 +212,9 @@ class TestPreFormatForHandoff:
         behaviors = TrustBuildingBehaviors()
         data = {"actions": ["deploy", "review", "test"], "priorities": ["p1", "p2"]}
         result = behaviors.pre_format_for_handoff(
-            data=data, recipient_role="team_lead", context="sprint_planning"
+            data=data,
+            recipient_role="team_lead",
+            context="sprint_planning",
         )
         assert result["format"] == "action_oriented"
         assert result["summary"]["type"] == "action_oriented"
@@ -209,7 +225,9 @@ class TestPreFormatForHandoff:
         """Test coordinator (member of COORDINATION_ROLES) uses action branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={"tasks": [1, 2, 3]}, recipient_role="coordinator", context="standup"
+            data={"tasks": [1, 2, 3]},
+            recipient_role="coordinator",
+            context="standup",
         )
         assert result["summary"]["type"] == "action_oriented"
 
@@ -217,7 +235,9 @@ class TestPreFormatForHandoff:
         """Test project_manager uses coordination branch."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={}, recipient_role="project_manager", context="planning"
+            data={},
+            recipient_role="project_manager",
+            context="planning",
         )
         assert result["summary"]["type"] == "action_oriented"
 
@@ -226,7 +246,9 @@ class TestPreFormatForHandoff:
         behaviors = TrustBuildingBehaviors()
         data = {"key": "value"}
         result = behaviors.pre_format_for_handoff(
-            data=data, recipient_role="intern", context="onboarding"
+            data=data,
+            recipient_role="intern",
+            context="onboarding",
         )
         assert result["format"] == "general"
         assert result["summary"]["type"] == "general"
@@ -236,7 +258,9 @@ class TestPreFormatForHandoff:
         """Test that pre_format_for_handoff records a building trust signal."""
         behaviors = TrustBuildingBehaviors()
         behaviors.pre_format_for_handoff(
-            data={"x": 1}, recipient_role="developer", context="review"
+            data={"x": 1},
+            recipient_role="developer",
+            context="review",
         )
         assert len(behaviors.trust_signals) == 1
         assert behaviors.trust_signals[0].signal_type == "building"
@@ -247,7 +271,9 @@ class TestPreFormatForHandoff:
         """Test the reasoning field mentions the recipient role."""
         behaviors = TrustBuildingBehaviors()
         result = behaviors.pre_format_for_handoff(
-            data={}, recipient_role="devops", context="incident"
+            data={},
+            recipient_role="devops",
+            context="incident",
         )
         assert "devops" in result["reasoning"]
 
@@ -405,7 +431,8 @@ class TestVolunteerStructureDuringStress:
         """Test volunteer_structure_during_stress records a trust signal."""
         behaviors = TrustBuildingBehaviors()
         behaviors.volunteer_structure_during_stress(
-            stress_indicators={"x": 1}, available_scaffolding=["templates"]
+            stress_indicators={"x": 1},
+            available_scaffolding=["templates"],
         )
         assert len(behaviors.trust_signals) == 1
         assert behaviors.trust_signals[0].behavior == "volunteer_structure"
@@ -615,7 +642,7 @@ class TestGetTrustTrajectory:
         behaviors = TrustBuildingBehaviors()
         for i in range(7):
             behaviors.trust_signals.append(
-                TrustSignal(signal_type="building", behavior=f"action_{i}")
+                TrustSignal(signal_type="building", behavior=f"action_{i}"),
             )
         result = behaviors.get_trust_trajectory()
         assert result["recent_behaviors"] == [
@@ -1217,16 +1244,18 @@ class TestGetCrewReview:
         mock_module.CodeReviewCrew = mock_crew
         mock_module.CodeReviewConfig = mock_config
 
-        with patch(
-            "attune.workflows.code_review_adapters._check_crew_available",
-            return_value=True,
-        ):
-            with patch.dict(
+        with (
+            patch(
+                "attune.workflows.code_review_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch.dict(
                 "sys.modules",
                 {"attune.agent_factory.crews": mock_module},
-            ):
-                result = self._run_async(_get_crew_review(diff="diff", timeout=0.01))
-                assert result is None
+            ),
+        ):
+            result = self._run_async(_get_crew_review(diff="diff", timeout=0.01))
+            assert result is None
 
     def test_returns_none_on_exception(self) -> None:
         """Test _get_crew_review returns None when crew raises an exception."""
@@ -1244,16 +1273,18 @@ class TestGetCrewReview:
         mock_module.CodeReviewCrew = mock_crew
         mock_module.CodeReviewConfig = mock_config
 
-        with patch(
-            "attune.workflows.code_review_adapters._check_crew_available",
-            return_value=True,
-        ):
-            with patch.dict(
+        with (
+            patch(
+                "attune.workflows.code_review_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch.dict(
                 "sys.modules",
                 {"attune.agent_factory.crews": mock_module},
-            ):
-                result = self._run_async(_get_crew_review(diff="diff"))
-                assert result is None
+            ),
+        ):
+            result = self._run_async(_get_crew_review(diff="diff"))
+            assert result is None
 
     def test_returns_report_on_success(self) -> None:
         """Test _get_crew_review returns report on successful review."""
@@ -1272,18 +1303,20 @@ class TestGetCrewReview:
         mock_module.CodeReviewCrew = mock_crew_cls
         mock_module.CodeReviewConfig = mock_config_cls
 
-        with patch(
-            "attune.workflows.code_review_adapters._check_crew_available",
-            return_value=True,
-        ):
-            with patch.dict(
+        with (
+            patch(
+                "attune.workflows.code_review_adapters._check_crew_available",
+                return_value=True,
+            ),
+            patch.dict(
                 "sys.modules",
                 {"attune.agent_factory.crews": mock_module},
-            ):
-                result = self._run_async(
-                    _get_crew_review(diff="diff", files_changed=["a.py"], config={"strict": True})
-                )
-                assert result is mock_report
+            ),
+        ):
+            result = self._run_async(
+                _get_crew_review(diff="diff", files_changed=["a.py"], config={"strict": True}),
+            )
+            assert result is mock_report
 
 
 class TestCrewReportToWorkflowFormat:
@@ -1316,6 +1349,7 @@ class TestCrewReportToWorkflowFormat:
 
         Returns:
             MagicMock configured as a CodeReviewReport
+
         """
         report = MagicMock()
         report.findings = findings or []
@@ -1361,6 +1395,7 @@ class TestCrewReportToWorkflowFormat:
 
         Returns:
             MagicMock configured as a ReviewFinding
+
         """
         finding = MagicMock()
         finding.category = MagicMock()
@@ -1510,7 +1545,7 @@ class TestWorkflowFindingsToCrewFormat:
                 "code_snippet": "query = ...",
                 "suggestion": "Use parameterized queries",
                 "confidence": 0.9,
-            }
+            },
         ]
         result = workflow_findings_to_crew_format(findings)
         assert len(result) == 1

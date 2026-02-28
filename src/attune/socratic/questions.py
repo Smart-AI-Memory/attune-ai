@@ -36,6 +36,7 @@ def generate_initial_questions(
 
     Returns:
         Form with initial questions
+
     """
     fields: list[FormField] = []
 
@@ -62,15 +63,19 @@ def generate_initial_questions(
                     ),
                     FieldOption("file", "Single File", description="Deep review of one file"),
                     FieldOption(
-                        "directory", "Directory/Module", description="Review entire module"
+                        "directory",
+                        "Directory/Module",
+                        description="Review entire module",
                     ),
                     FieldOption(
-                        "project", "Full Project", description="Comprehensive codebase review"
+                        "project",
+                        "Full Project",
+                        description="Comprehensive codebase review",
                     ),
                 ],
                 validation=FieldValidation(required=True),
                 category="scope",
-            )
+            ),
         )
 
     if goal_analysis.domain == "security":
@@ -83,16 +88,20 @@ def generate_initial_questions(
                     FieldOption("owasp", "OWASP Top 10", description="Common web vulnerabilities"),
                     FieldOption("injection", "Injection Attacks", description="SQL, command, XSS"),
                     FieldOption(
-                        "auth", "Authentication/Authorization", description="Access control issues"
+                        "auth",
+                        "Authentication/Authorization",
+                        description="Access control issues",
                     ),
                     FieldOption(
-                        "crypto", "Cryptography", description="Encryption, hashing, secrets"
+                        "crypto",
+                        "Cryptography",
+                        description="Encryption, hashing, secrets",
                     ),
                     FieldOption("deps", "Dependencies", description="Vulnerable dependencies"),
                 ],
                 validation=FieldValidation(required=True),
                 category="security",
-            )
+            ),
         )
 
     if goal_analysis.domain == "testing":
@@ -118,7 +127,7 @@ def generate_initial_questions(
                 ],
                 validation=FieldValidation(required=True),
                 category="testing",
-            )
+            ),
         )
 
     # Automation level (always relevant)
@@ -150,6 +159,7 @@ def generate_followup_questions(
 
     Returns:
         Form with follow-up questions, or None if ready to generate
+
     """
     # Check if we need more clarification
     if session.requirements.completeness_score() >= 0.8:
@@ -173,7 +183,7 @@ def generate_followup_questions(
                 help_text="Be as specific as possible about what success looks like.",
                 validation=FieldValidation(required=True, min_length=20),
                 category="priorities",
-            )
+            ),
         )
 
     # If technical constraints missing
@@ -194,15 +204,20 @@ def generate_followup_questions(
                     label="How thorough should the review be?",
                     options=[
                         FieldOption(
-                            "quick", "Quick Scan", description="Fast, surface-level review"
+                            "quick",
+                            "Quick Scan",
+                            description="Fast, surface-level review",
                         ),
                         FieldOption(
-                            "standard", "Standard", description="Balanced depth", recommended=True
+                            "standard",
+                            "Standard",
+                            description="Balanced depth",
+                            recommended=True,
                         ),
                         FieldOption("deep", "Deep Dive", description="Thorough, detailed analysis"),
                     ],
                     category="depth",
-                )
+                ),
             )
 
     if not fields:

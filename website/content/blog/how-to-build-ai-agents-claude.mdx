@@ -1,0 +1,226 @@
+---
+title: "How to Build AI Agents with Claude: A Step-by-Step Tutorial"
+date: "2026-02-27"
+author: "Patrick Roebuck"
+excerpt: "A practical, code-first tutorial for building AI agents with Claude and Attune AI. Covers single agents, multi-agent teams, tool use, and state persistence."
+tags: ["tutorial", "agents", "claude-code", "python", "multi-agent"]
+published: true
+---
+
+Building AI agents with Claude is simpler than it looks. This tutorial walks you through everything from a minimal single agent to a multi-agent team with persistent state, using the Anthropic SDK and Attune AI.
+
+## What Is an AI Agent?
+
+An agent is a program that:
+
+1. Receives a goal (not just a question)
+2. Decides what tools or steps to use
+3. Executes those steps
+4. Evaluates the result and adjusts
+
+The key difference from a plain LLM call: agents can use **tools**, maintain **state**, and **iterate** until they reach the goal.
+
+## Prerequisites
+
+```bash
+pip install attune-ai anthropic
+export ANTHROPIC_API_KEY=your_key_here
+```
+
+## Part 1: Minimal Agent with Tool Use
+
+The simplest agent: Claude with a tool it can call.
+
+```python
+import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+# Define a tool
+tools = [
+    {
+        "name": "read_file",
+        "description": "Read a file from the filesystem",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "File path to read"}
+            },
+            "required": ["path"],
+        },
+    }
+]
+
+def read_file(path: str) -> str:
+    try:
+        with open(path) as f:
+            return f.read()
+    except FileNotFoundError:
+        return f"File not found: {path}"
+
+def run_agent(goal: str) -> str:
+    messages = [{"role": "user", "content": goal}]
+
+    while True:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            tools=tools,
+            messages=messages,
+        )
+
+        if response.stop_reason == "end_turn":
+            # Agent is done
+            return response.content[-1].text
+
+        # Handle tool calls
+        messages.append({"role": "assistant", "content": response.content})
+
+        tool_results = []
+        for block in response.content:
+            if block.type == "tool_use":
+                if block.name == "read_file":
+                    result = read_file(**block.input)
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": result,
+                    })
+
+        messages.append({"role": "user", "content": tool_results})
+
+# Run it
+result = run_agent("Read src/main.py and summarize what it does.")
+print(result)
+```
+
+## Part 2: Agent with State Persistence
+
+Agents that remember across runs are more useful. Attune AI's `AgentStateStore` handles this:
+
+```python
+from attune.agents.state import AgentStateStore
+
+store = AgentStateStore(agent_id="my-code-reviewer")
+
+# Load previous state
+state = store.load()
+previous_reviews = state.get("reviews", [])
+
+# Run the agent...
+new_review = await run_agent_with_context(previous_reviews)
+
+# Save updated state
+state["reviews"] = previous_reviews + [new_review]
+store.save(state)
+```
+
+## Part 3: Multi-Agent Team
+
+Attune AI's `SDKAgentTeam` lets you compose agents that collaborate:
+
+```python
+from attune.agents.sdk import SDKAgent, SDKAgentTeam
+
+security_agent = SDKAgent(
+    name="security",
+    role="Security expert who identifies vulnerabilities",
+    tools=["read_file", "list_directory"],
+)
+
+review_agent = SDKAgent(
+    name="reviewer",
+    role="Senior developer who reviews code quality",
+    tools=["read_file"],
+)
+
+# Create a team
+team = SDKAgentTeam(
+    agents=[security_agent, review_agent],
+    strategy="parallel",  # Both run at once
+)
+
+results = await team.execute("Review the src/ directory for issues.")
+print(results.security.output)
+print(results.reviewer.output)
+```
+
+Available strategies:
+
+- `parallel` — All agents run simultaneously
+- `sequential` — Each agent builds on the previous output
+- `delegation` — Lead agent assigns tasks to specialists
+- `two_phase` — Exploration phase followed by synthesis
+
+## Part 4: Using Agent Templates
+
+Attune AI ships 7 pre-built agent templates for common roles:
+
+```python
+from attune.orchestration import DynamicTeamComposer
+
+# Automatically build a team for the task
+composer = DynamicTeamComposer()
+team = composer.build_for("Audit this codebase for security and performance issues")
+
+# The composer selects and configures the right agents
+results = await team.execute({"path": "src/"})
+```
+
+Available templates: `security-auditor`, `code-reviewer`, `performance-analyst`,
+`test-writer`, `doc-writer`, `release-manager`, `researcher`.
+
+## Part 5: Adding Quality Gates
+
+Quality gates stop a workflow if the output doesn't meet a threshold:
+
+```python
+from attune.agents.sdk import SDKAgentTeam, QualityGate
+
+def check_quality(result: str) -> bool:
+    """Return True if the result is actionable."""
+    return len(result) > 200 and "recommendation" in result.lower()
+
+team = SDKAgentTeam(
+    agents=[security_agent, review_agent],
+    strategy="sequential",
+    quality_gate=QualityGate(check_quality, max_retries=2),
+)
+```
+
+If the quality gate fails, the team retries with additional context.
+
+## Part 6: Connecting to Claude Code
+
+The most natural way to use Attune AI agents is through Claude Code's CLI:
+
+```bash
+# Run an agent wizard directly
+attune wizard run security-audit
+
+# Compose a multi-agent team workflow
+attune workflow run security --multi-agent
+```
+
+Or trigger agents from within a Claude Code session:
+
+```
+/attune run security-audit on the authentication module
+```
+
+## Summary
+
+| Concept | Attune AI API | When to Use |
+|---------|--------------|-------------|
+| Single agent | `SDKAgent` | Simple, focused tasks |
+| Multi-agent team | `SDKAgentTeam` | Parallel analysis, peer review |
+| Dynamic team | `DynamicTeamComposer` | Unknown scope, let AI decide |
+| State persistence | `AgentStateStore` | Learning across sessions |
+| Quality gates | `QualityGate` | Critical outputs, reliability |
+
+## Next Steps
+
+- [Building Agent Teams with the Anthropic SDK](/blog/building-agent-teams-sdk)
+- [Multi-Agent Orchestration Patterns](/blog/multi-agent-orchestration-patterns)
+- [Agent templates reference](/framework-docs/agents/templates/)

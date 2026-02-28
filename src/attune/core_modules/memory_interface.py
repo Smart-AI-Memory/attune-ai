@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..memory import Classification, UnifiedMemory
-    from ..redis_memory import AgentCredentials
+    from ..memory.types import AgentCredentials
 
 
 class MemoryInterfaceMixin:

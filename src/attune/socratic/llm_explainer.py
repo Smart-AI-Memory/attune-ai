@@ -39,6 +39,7 @@ Format as markdown with clear sections."""
 
         Args:
             api_key: Anthropic API key
+
         """
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         self._client = None
@@ -69,6 +70,7 @@ Format as markdown with clear sections."""
 
         Returns:
             Generated explanation markdown
+
         """
         client = self._get_client()
         if not client:

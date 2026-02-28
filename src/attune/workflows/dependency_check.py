@@ -27,7 +27,7 @@ from .dependency_check_audit import (  # noqa: F401
     _save_advisory_cache,
 )
 from .dependency_check_parsers import DependencyParserMixin
-from .dependency_check_report import (  # noqa: F401
+from .dependency_check_report import (
     format_dependency_check_report,
     main,
 )
@@ -85,6 +85,7 @@ class DependencyCheckWorkflow(DependencyParserMixin, BaseWorkflow):
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         return WorkflowContext(
             prompt=PromptService("dependency-check", xml_config=xml_config),

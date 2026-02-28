@@ -1,0 +1,172 @@
+---
+title: "Claude Code Workflows: A Complete Guide for Developers"
+date: "2026-02-27"
+author: "Patrick Roebuck"
+excerpt: "A comprehensive guide to AI developer workflows in Claude Code: what they are, how to run them, how to build custom ones, and how Attune AI extends them."
+tags: ["tutorial", "claude-code", "workflows", "getting-started", "python"]
+published: true
+---
+
+Claude Code workflows turn your AI assistant into a specialized, repeatable developer tool. Instead of typing the same long prompts repeatedly, a workflow packages instructions, context collection, and output formatting into a single command.
+
+This guide covers everything you need to know: what workflows are, how to run built-in ones, how Attune AI extends them, and how to build your own.
+
+## What Is a Claude Code Workflow?
+
+A workflow is a structured sequence of steps that:
+
+1. **Collects context** from your codebase (files, git history, tests)
+2. **Builds a prompt** with that context baked in
+3. **Calls Claude** with the optimized prompt
+4. **Formats the output** for your use case
+
+Instead of manually copying files into a chat, a workflow handles all of that for you. The result is a consistent, repeatable process that you can run from the CLI.
+
+## Attune AI's 10 Workflows
+
+Attune AI ships with 10 workflows covering the most common developer tasks:
+
+```bash
+# List all available workflows
+attune workflow list
+```
+
+| Workflow | Command | What It Does |
+|----------|---------|--------------|
+| Security Audit | `attune workflow run security` | OWASP scan with fix recommendations |
+| Bug Prediction | `attune workflow run bug-predict` | Flag risky code patterns |
+| Code Review | `attune workflow run code-review` | Quality + best practices check |
+| Performance Audit | `attune workflow run perf-audit` | Bottleneck identification |
+| Test Generation | `attune workflow run test-gen` | Generate pytest tests |
+| Documentation | `attune workflow run doc-gen` | Generate API docs + READMEs |
+| Release Prep | `attune workflow run release-prep` | Pre-release quality gate |
+
+## Running Your First Workflow
+
+```bash
+# Install Attune AI
+pip install attune-ai
+
+# Set your Anthropic API key
+export ANTHROPIC_API_KEY=your_key_here
+
+# Run a security audit on your source directory
+attune workflow run security --input '{"path": "src/"}'
+```
+
+The output is a prioritized list of findings with severity levels and fix suggestions.
+
+## How Workflows Use Prompt Caching
+
+Attune AI automatically enables Anthropic's prompt caching for all workflows. When you run multiple workflows on the same codebase in a session, the codebase context is cached after the first call.
+
+This means:
+
+- First workflow run: full token cost
+- Subsequent runs (within 5 min): **up to 90% cheaper**
+
+```bash
+# Run two workflows in quick succession — second one hits cache
+attune workflow run security --input '{"path": "src/"}'
+attune workflow run code-review --input '{"path": "src/"}'
+```
+
+## Multi-Tier Model Routing
+
+Attune AI routes each workflow to the optimal Claude model tier:
+
+```python
+from attune.models import Tier
+
+# Cheap tier: fast, low-cost for simple tasks
+# Capable tier: balanced for most dev tasks
+# Premium tier: maximum capability for complex analysis
+```
+
+Workflows automatically select the appropriate tier. You can override:
+
+```python
+from attune.workflows import SecurityAuditWorkflow, Tier
+
+workflow = SecurityAuditWorkflow(tier=Tier.PREMIUM)
+result = await workflow.execute({"path": "src/"})
+```
+
+## Building a Custom Workflow
+
+```python
+from attune.workflows import BaseWorkflow
+from attune.models import Tier
+
+class DependencyAnalysisWorkflow(BaseWorkflow):
+    """Analyze dependencies for outdated packages and CVEs."""
+
+    name = "dependency-analysis"
+    tier = Tier.CHEAP
+
+    def build_prompt(self, input_data: dict) -> str:
+        requirements = self._read_file("requirements.txt")
+        return f"""Analyze these Python dependencies for:
+1. Known CVEs (check against NVD)
+2. Packages with newer major versions
+3. Unmaintained packages (no releases in 2+ years)
+
+requirements.txt:
+{requirements}
+
+Return a prioritized list of actions, highest risk first."""
+
+    def format_output(self, raw: str) -> dict:
+        return {"analysis": raw, "source": "requirements.txt"}
+```
+
+Run it:
+
+```bash
+attune workflow run dependency-analysis
+```
+
+## Chaining Workflows with Multi-Agent Teams
+
+You can compose workflows into multi-agent pipelines:
+
+```python
+from attune.orchestration import WorkflowComposer
+
+# Run security audit → code review → test generation in sequence
+pipeline = WorkflowComposer([
+    "security",
+    "code-review",
+    "test-gen",
+])
+
+results = await pipeline.execute({"path": "src/"})
+```
+
+Or run them in parallel:
+
+```python
+from attune.orchestration import ParallelWorkflowRunner
+
+runner = ParallelWorkflowRunner(["security", "perf-audit"])
+results = await runner.execute({"path": "src/"})
+```
+
+## Workflow Output Formats
+
+All workflows support structured JSON output for CI/CD integration:
+
+```bash
+# JSON output for scripts and CI
+attune workflow run security --json
+
+# Save to file
+attune workflow run security --output security-report.json
+```
+
+## Next Steps
+
+- [Run your first wizard](/wizards) — specialized single-task agents
+- [Set up multi-agent teams](/framework-docs/guides/agent-teams/)
+- [Configure model routing](/framework-docs/guides/model-routing/)
+- [Prompt caching tutorial](/blog/prompt-caching-save-90-percent)

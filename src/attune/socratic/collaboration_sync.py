@@ -55,6 +55,7 @@ class SyncAdapter:
 
         Args:
             session_id: Session to sync
+
         """
         self.session_id = session_id
         self._event_handlers: list[Callable[[SyncEvent], None]] = []
@@ -67,7 +68,7 @@ class SyncAdapter:
         for handler in self._event_handlers:
             try:
                 handler(event)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Handler failure should not prevent other handlers.
                 # Event propagation must continue for sync reliability.
                 pass
@@ -77,6 +78,7 @@ class SyncAdapter:
 
         Args:
             handler: Callback for incoming events
+
         """
         self._event_handlers.append(handler)
 
@@ -95,9 +97,10 @@ class SyncAdapter:
 
         Returns:
             Created SyncEvent
+
         """
         event_id = hashlib.sha256(
-            f"{self.session_id}:{event_type}:{time.time()}".encode()
+            f"{self.session_id}:{event_type}:{time.time()}".encode(),
         ).hexdigest()[:12]
 
         return SyncEvent(

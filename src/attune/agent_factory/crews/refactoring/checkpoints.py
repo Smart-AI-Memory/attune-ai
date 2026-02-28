@@ -27,6 +27,7 @@ def create_checkpoint(
 
     Returns:
         CodeCheckpoint that can be used for rollback.
+
     """
     checkpoint = CodeCheckpoint(
         id=str(uuid.uuid4()),
@@ -46,5 +47,6 @@ def rollback(checkpoint: CodeCheckpoint) -> str:
 
     Returns:
         The original file content.
+
     """
     return checkpoint.original_content

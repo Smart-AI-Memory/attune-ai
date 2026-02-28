@@ -121,6 +121,7 @@ class FormField:
         ...     ],
         ...     validation=FieldValidation(required=True)
         ... )
+
     """
 
     # Unique field identifier
@@ -167,6 +168,7 @@ class FormField:
 
         Returns:
             Tuple of (is_valid, error_message)
+
         """
         v = self.validation
 
@@ -218,6 +220,7 @@ class FormField:
 
         Returns:
             True if field should be shown
+
         """
         if self.show_when is None:
             return True
@@ -265,6 +268,7 @@ class Form:
         ...         ),
         ...     ]
         ... )
+
     """
 
     # Unique form identifier
@@ -299,6 +303,7 @@ class Form:
 
         Returns:
             List of visible FormField objects
+
         """
         return [f for f in self.fields if f.should_show(current_answers)]
 
@@ -313,6 +318,7 @@ class Form:
 
         Returns:
             Dictionary mapping category name to list of fields
+
         """
         current_answers = current_answers or {}
         result: dict[str, list[FormField]] = {}
@@ -411,6 +417,7 @@ class FormResponse:
         ...         "focus_areas": ["security", "performance"]
         ...     }
         ... )
+
     """
 
     # ID of the form being responded to
@@ -436,6 +443,7 @@ class FormResponse:
 
         Returns:
             ValidationResult with any errors
+
         """
         result = ValidationResult(is_valid=True)
 

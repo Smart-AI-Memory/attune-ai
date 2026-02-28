@@ -103,7 +103,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Failed routing
@@ -120,7 +120,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.70,
                 status="failed",
                 success=False,
-            )
+            ),
         )
 
         # Another successful routing
@@ -137,7 +137,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.88,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         stats = analytics.task_routing_accuracy()
@@ -163,7 +163,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
         store.log_task_routing(
             TaskRoutingRecord(
@@ -178,7 +178,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.90,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Bug fix task
@@ -195,7 +195,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.75,
                 status="failed",
                 success=False,
-            )
+            ),
         )
 
         stats = analytics.task_routing_accuracy()
@@ -224,7 +224,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # ML predicted routing
@@ -241,7 +241,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.80,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         stats = analytics.task_routing_accuracy()
@@ -272,7 +272,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Recent routing
@@ -289,7 +289,7 @@ class TestTaskRoutingAccuracy:
                 confidence_score=0.90,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Filter to last 24 hours
@@ -361,7 +361,7 @@ class TestTestExecutionTrends:
                 errors=0,
                 success=True,
                 exit_code=0,
-            )
+            ),
         )
 
         # Failed execution
@@ -382,7 +382,7 @@ class TestTestExecutionTrends:
                 success=False,
                 exit_code=1,
                 failed_tests=[{"name": "test_api", "file": "test_api.py", "error": "Timeout"}],
-            )
+            ),
         )
 
         stats = analytics.test_execution_trends()
@@ -414,9 +414,9 @@ class TestTestExecutionTrends:
                     success=False,
                     exit_code=1,
                     failed_tests=[
-                        {"name": "test_flaky", "file": "test_unit.py", "error": "AssertionError"}
+                        {"name": "test_flaky", "file": "test_unit.py", "error": "AssertionError"},
                     ],
-                )
+                ),
             )
 
         stats = analytics.test_execution_trends()
@@ -486,7 +486,7 @@ class TestCoverageProgress:
                 trend="stable",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
         # Recent improved coverage
@@ -505,7 +505,7 @@ class TestCoverageProgress:
                 trend="improving",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
         stats = analytics.coverage_progress()
@@ -534,7 +534,7 @@ class TestCoverageProgress:
                 trend="stable",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
         # Recent declined coverage
@@ -553,7 +553,7 @@ class TestCoverageProgress:
                 trend="declining",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
         stats = analytics.coverage_progress()
@@ -618,7 +618,7 @@ class TestAgentPerformance:
                     has_dependencies=False,
                     status="completed",
                     success=True,
-                )
+                ),
             )
 
         # Agent 2: Lower success rate
@@ -637,7 +637,7 @@ class TestAgentPerformance:
                     has_dependencies=False,
                     status="completed",
                     success=(i < 2),  # 2 successes, 1 failure
-                )
+                ),
             )
 
         stats = analytics.agent_performance()
@@ -647,7 +647,8 @@ class TestAgentPerformance:
         assert "agent-2" in stats["by_agent"]
         assert stats["by_agent"]["agent-1"]["success_rate"] == 1.0  # Returns decimal
         assert stats["by_agent"]["agent-2"]["success_rate"] == pytest.approx(
-            0.6667, rel=0.01
+            0.6667,
+            rel=0.01,
         )  # Returns decimal
 
 
@@ -683,7 +684,7 @@ class TestTier1Summary:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Add test execution data
@@ -703,7 +704,7 @@ class TestTier1Summary:
                 errors=0,
                 success=True,
                 exit_code=0,
-            )
+            ),
         )
 
         # Add coverage data
@@ -722,7 +723,7 @@ class TestTier1Summary:
                 trend="stable",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
         # Add agent assignment data
@@ -740,7 +741,7 @@ class TestTier1Summary:
                 has_dependencies=False,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         summary = analytics.tier1_summary()
@@ -771,7 +772,7 @@ class TestTier1Summary:
                 confidence_score=0.95,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Recent routing
@@ -788,7 +789,7 @@ class TestTier1Summary:
                 confidence_score=0.90,
                 status="completed",
                 success=True,
-            )
+            ),
         )
 
         # Filter to last 24 hours

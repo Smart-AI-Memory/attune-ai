@@ -1,40 +1,38 @@
-"""Redis Short-Term Memory for Attune AI
+"""Deprecated — use attune_redis.AMSMemoryBackend.
 
-Per EMPATHY_PHILOSOPHY.md v1.1.0:
-- Implements fast, TTL-based working memory for agent coordination
-- Role-based access tiers for data integrity
-- Pattern staging before validation
-- Principled negotiation support
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
 
-This module serves as the public API facade. The implementation
-is split across focused modules:
-- redis_memory_models: Data models (TTLStrategy, AgentCredentials,
-  StagedPattern, ConflictContext)
-- redis_memory_storage: Core storage engine and working memory
-- redis_memory_patterns: Pattern staging workflow
-- redis_memory_coordination: Conflict negotiation, coordination
-  signals, and session management
+Legacy facade for RedisShortTermMemory. Kept for backward
+compatibility. New code should use the ``attune_redis``
+plugin package.
 
-Copyright 2025 Smart AI Memory, LLC
+Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-# Re-export all public models
-# Import implementation components
-from .redis_memory_coordination import (
-    ConflictNegotiationMixin,
-    CoordinationSignalsMixin,
-    SessionManagementMixin,
+import warnings
+
+warnings.warn(
+    "attune.redis_memory is deprecated. Use attune_redis.AMSMemoryBackend instead.",
+    DeprecationWarning,
+    stacklevel=2,
 )
-from .redis_memory_models import (  # noqa: F401 - re-exported
+
+# Re-export types for backward compat
+from .memory.types import (  # noqa: E402
     AccessTier,
     AgentCredentials,
     ConflictContext,
     StagedPattern,
     TTLStrategy,
 )
-from .redis_memory_patterns import PatternStagingMixin
-from .redis_memory_storage import REDIS_AVAILABLE, RedisStorageBase  # noqa: F401 - re-exported
+from .redis_memory_coordination import (  # noqa: E402
+    ConflictNegotiationMixin,
+    CoordinationSignalsMixin,
+    SessionManagementMixin,
+)
+from .redis_memory_patterns import PatternStagingMixin  # noqa: E402
+from .redis_memory_storage import REDIS_AVAILABLE, RedisStorageBase  # noqa: E402
 
 
 class RedisShortTermMemory(
@@ -61,14 +59,12 @@ class RedisShortTermMemory(
 
     """
 
-    pass
-
 
 __all__ = [
+    "REDIS_AVAILABLE",
     "AccessTier",
     "AgentCredentials",
     "ConflictContext",
-    "REDIS_AVAILABLE",
     "RedisShortTermMemory",
     "StagedPattern",
     "TTLStrategy",

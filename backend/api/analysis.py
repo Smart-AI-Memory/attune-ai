@@ -17,7 +17,12 @@ security = HTTPBearer()
 
 
 def get_empathy_service() -> EmpathyService:
-    """Get EmpathyService instance."""
+    """Get EmpathyService instance.
+
+    Returns:
+        A new EmpathyService for use as a FastAPI dependency.
+
+    """
     return EmpathyService()
 
 
@@ -31,7 +36,18 @@ class ProjectAnalysisRequest(BaseModel):
 
     @validator("project_path")
     def validate_project_path(cls, v):
-        """Validate project path is provided"""
+        """Validate project path is non-empty and within length limits.
+
+        Args:
+            v: Raw project_path value from the request.
+
+        Returns:
+            The validated project path string.
+
+        Raises:
+            ValueError: If the path is empty or exceeds 1024 characters.
+
+        """
         if not v or not v.strip():
             raise ValueError("project_path cannot be empty")
         if len(v) > 1024:
@@ -49,7 +65,18 @@ class SessionConfig(BaseModel):
 
     @validator("name")
     def validate_name(cls, v):
-        """Validate session name"""
+        """Validate session name is non-empty and within length limits.
+
+        Args:
+            v: Raw name value from the request.
+
+        Returns:
+            The validated session name string.
+
+        Raises:
+            ValueError: If the name is empty or exceeds 255 characters.
+
+        """
         if not v or not v.strip():
             raise ValueError("Session name cannot be empty")
         if len(v) > 255:
@@ -58,7 +85,18 @@ class SessionConfig(BaseModel):
 
     @validator("wizards")
     def validate_wizards(cls, v):
-        """Validate wizards list"""
+        """Validate that at least one and at most 20 wizards are specified.
+
+        Args:
+            v: Raw wizards list from the request.
+
+        Returns:
+            The validated list of wizard identifiers.
+
+        Raises:
+            ValueError: If the list is empty or contains more than 20 entries.
+
+        """
         if not v or len(v) == 0:
             raise ValueError("At least one wizard must be specified")
         if len(v) > 20:

@@ -17,10 +17,11 @@ Example:
     >>> templates = get_templates_by_capability("analyze_gaps")
     >>> print([t.id for t in templates])
     ['test_coverage_analyzer']
+
 """
 
 # Import builtin_templates to trigger registration
-from . import builtin_templates as _builtin_templates  # noqa: F401
+from . import builtin_templates as _builtin_templates
 from .models import AgentCapability, AgentTemplate, ResourceRequirements
 from .registry import (
     get_all_templates,

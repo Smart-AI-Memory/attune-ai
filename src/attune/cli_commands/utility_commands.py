@@ -1,6 +1,6 @@
 """Utility CLI commands.
 
-Commands for dashboard, setup, validation, and version info.
+Commands for setup, validation, and version info.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -17,39 +17,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
 logger = logging.getLogger(__name__)
-
-
-def cmd_dashboard_start(args: Namespace) -> int:
-    """Start the agent coordination dashboard."""
-    try:
-        from attune.dashboard import run_standalone_dashboard
-
-        # Get host and port from args
-        host = args.host
-        port = args.port
-
-        print("\n🚀 Starting Agent Coordination Dashboard...")
-        print(f"📊 Dashboard will be available at: http://{host}:{port}\n")
-        print("💡 Make sure Redis is populated with test data:")
-        print("   python scripts/populate_redis_direct.py\n")
-        print("Press Ctrl+C to stop\n")
-
-        # Start dashboard
-        run_standalone_dashboard(host=host, port=port)
-        return 0
-
-    except KeyboardInterrupt:
-        print("\n\n🛑 Dashboard stopped")
-        return 0
-    except ImportError as e:
-        print(f"❌ Dashboard not available: {e}")
-        print("   Install dashboard dependencies: pip install redis")
-        return 1
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Dashboard error: {e}")
-        print(f"❌ Error starting dashboard: {e}")
-        return 1
 
 
 def cmd_setup(args: Namespace) -> int:
@@ -173,7 +140,7 @@ def cmd_setup(args: Namespace) -> int:
 
     total = copied + agents_copied + configs_copied
     print(
-        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)"
+        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
     )
     print("\n📝 You can now use in Claude Code:")
     print("   /dev              - Developer tools (debug, commit, PR)")
@@ -236,7 +203,7 @@ def cmd_validate(args: Namespace) -> int:
     if keys_found == 0:
         errors.append(
             "No API keys found. Set ANTHROPIC_API_KEY\n"
-            "   Run: python -m attune.models.auth_cli setup"
+            "   Run: python -m attune.models.auth_cli setup",
         )
 
     # Check workflows
@@ -283,7 +250,7 @@ def cmd_version(args: Namespace) -> int:
 
             reqs = requires("attune-ai") or []
             print(f"\nDependencies: {len(reqs)}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     return 0

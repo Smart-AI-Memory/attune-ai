@@ -155,14 +155,13 @@ class InteractionMixin:
         # Start conservative, increase with trust
         if trust < 0.3:
             return 1  # Reactive only
-        elif trust < 0.5:
+        if trust < 0.5:
             return 2  # Guided
-        elif trust < 0.7:
+        if trust < 0.7:
             return min(3, self.target_level)  # Proactive
-        elif trust < 0.85:
+        if trust < 0.85:
             return min(4, self.target_level)  # Anticipatory
-        else:
-            return min(5, self.target_level)  # Systems
+        return min(5, self.target_level)  # Systems
 
     def _generate_response(self, user_input: str, context: dict, level: int) -> str:
         """Generate response based on empathy level.

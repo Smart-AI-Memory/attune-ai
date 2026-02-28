@@ -208,7 +208,7 @@ class CompactState:
             for pattern in self.detected_patterns[:5]:  # Top 5
                 lines.append(
                     f"- **{pattern.trigger}** \u2192 {pattern.action} "
-                    f"(confidence: {pattern.confidence:.0%})"
+                    f"(confidence: {pattern.confidence:.0%})",
                 )
             lines.append("")
 
@@ -250,6 +250,7 @@ class CompactionStateManager:
         Args:
             storage_dir: Directory for state files
             max_states_per_user: Maximum states to keep per user
+
         """
         self.storage_dir = Path(storage_dir)
         self.max_states_per_user = max_states_per_user
@@ -272,6 +273,7 @@ class CompactionStateManager:
 
         Returns:
             Path to the saved state file
+
         """
         self._ensure_storage()
 
@@ -305,6 +307,7 @@ class CompactionStateManager:
 
         Returns:
             Most recent CompactState or None if not found
+
         """
         user_dir = self._get_user_dir(user_id)
 
@@ -345,6 +348,7 @@ class CompactionStateManager:
 
         Returns:
             CompactState for session or None if not found
+
         """
         self._ensure_storage()
 
@@ -374,6 +378,7 @@ class CompactionStateManager:
 
         Returns:
             Number of files removed
+
         """
         user_dir = self._get_user_dir(user_id)
 
@@ -407,6 +412,7 @@ class CompactionStateManager:
 
         Returns:
             List of CompactStates, newest first
+
         """
         user_dir = self._get_user_dir(user_id)
 
@@ -438,6 +444,7 @@ class CompactionStateManager:
 
         Returns:
             Number of files removed
+
         """
         user_dir = self._get_user_dir(user_id)
 

@@ -176,7 +176,7 @@ class TestDeprecationWarnings:
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) >= 1
             assert "OrchestratedReleasePrepWorkflow is deprecated" in str(
-                deprecation_warnings[0].message
+                deprecation_warnings[0].message,
             )
 
 

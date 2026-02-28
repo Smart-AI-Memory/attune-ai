@@ -135,6 +135,7 @@ class PatternExtractor:
         Args:
             min_confidence: Minimum confidence to include pattern
             max_patterns_per_session: Maximum patterns to extract per session
+
         """
         self._min_confidence = min_confidence
         self._max_patterns = max_patterns_per_session
@@ -152,6 +153,7 @@ class PatternExtractor:
 
         Returns:
             List of extracted patterns
+
         """
         patterns = []
 
@@ -405,7 +407,8 @@ class PatternExtractor:
                 category=PatternCategory.PROJECT_SPECIFIC,
                 trigger="Project convention",
                 context=self._extract_context_around_keyword(
-                    interaction.content, convention_indicators
+                    interaction.content,
+                    convention_indicators,
                 ),
                 resolution=self._summarize(interaction.content, 150),
                 confidence=0.6,
@@ -448,7 +451,7 @@ class PatternExtractor:
                 return match.group(0)[:100]
 
         # Fall back to first line
-        first_line = error_text.split("\n")[0]
+        first_line = error_text.split("\n", maxsplit=1)[0]
         return self._summarize(first_line, 100)
 
     def _extract_context_around_keyword(
@@ -492,6 +495,7 @@ class PatternExtractor:
 
         Returns:
             Appropriate PatternCategory
+
         """
         content_lower = content.lower()
         trigger_lower = trigger.lower()

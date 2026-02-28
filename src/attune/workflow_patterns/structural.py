@@ -141,7 +141,7 @@ class MultiStagePattern(WorkflowPattern):
         for _i, stage in enumerate(stages):
             stage_routing.append(
                 f"""        if stage_name == "{stage}":
-            return await self._{stage}(input_data, tier)"""
+            return await self._{stage}(input_data, tier)""",
             )
 
         stage_routing_code = "\n".join(stage_routing)
@@ -175,7 +175,7 @@ class MultiStagePattern(WorkflowPattern):
             )
             return result.content, result.input_tokens, result.output_tokens
 
-        return {{"stage": "{stage}", "input": input_data}}, 0, 0'''
+        return {{"stage": "{stage}", "input": input_data}}, 0, 0''',
             )
 
         return [

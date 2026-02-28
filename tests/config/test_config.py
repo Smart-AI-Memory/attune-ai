@@ -448,7 +448,7 @@ class TestConfigErrorHandling:
             EmpathyConfig.from_yaml("nonexistent.yml")
 
     @pytest.mark.skip(
-        reason="Mocking module-level constants is unreliable; functionality works in practice"
+        reason="Mocking module-level constants is unreliable; functionality works in practice",
     )
     def test_from_yaml_no_pyyaml(self, tmp_path):
         """Test from_yaml raises ImportError without PyYAML"""
@@ -466,7 +466,7 @@ class TestConfigErrorHandling:
                 EmpathyConfig.from_yaml(str(yaml_file))
 
     @pytest.mark.skip(
-        reason="Mocking module-level constants is unreliable; functionality works in practice"
+        reason="Mocking module-level constants is unreliable; functionality works in practice",
     )
     def test_to_yaml_no_pyyaml(self, temp_dir):
         """Test to_yaml raises ImportError without PyYAML"""

@@ -42,6 +42,7 @@ class PerfAuditAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens)
+
         """
         target_path = input_data.get("path", ".")
         file_types = input_data.get("file_types", [".py"])
@@ -101,6 +102,7 @@ class PerfAuditAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens)
+
         """
         findings = input_data.get("findings", [])
 
@@ -159,6 +161,7 @@ class PerfAuditAnalysisMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens)
+
         """
         analysis = input_data.get("analysis", [])
 
@@ -207,6 +210,7 @@ def _scan_file_for_patterns(content: str, file_path: str, findings: list[dict]) 
         content: File content to scan
         file_path: Path string for the file
         findings: List to append findings to (mutated in place)
+
     """
     for pattern_name, pattern_info in PERF_PATTERNS.items():
         for pattern in pattern_info["patterns"]:
@@ -238,6 +242,7 @@ def _run_auth_strategy(
         target: Target path to scan
         file_types: File extensions to scan
         target_path: Original target path string
+
     """
     try:
         import logging
@@ -272,7 +277,7 @@ def _run_auth_strategy(
             size_category = get_module_size_category(total_lines)
             logger.info(
                 f"Performance audit target: {target_path} "
-                f"({total_lines:,} LOC, {size_category})"
+                f"({total_lines:,} LOC, {size_category})",
             )
             logger.info(f"Recommended auth mode: {recommended_mode.value}")
 
@@ -280,7 +285,7 @@ def _run_auth_strategy(
             if recommended_mode.value == "subscription":
                 logger.info(
                     f"Cost estimate: ~${cost_estimate:.4f} "
-                    "(significantly cheaper with subscription)"
+                    "(significantly cheaper with subscription)",
                 )
             else:
                 logger.info(f"Cost estimate: ~${cost_estimate:.4f} (API-based)")

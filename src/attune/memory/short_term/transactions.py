@@ -21,6 +21,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -72,6 +73,7 @@ class TransactionManager:
         ... )
         >>> if success:
         ...     library.add(pattern)
+
     """
 
     PREFIX_STAGED = "empathy:staged:"
@@ -82,6 +84,7 @@ class TransactionManager:
         Args:
             base: BaseOperations instance for Redis client access
             caching: CachingOperations instance for cache invalidation
+
         """
         self._base = base
         self._caching = caching
@@ -116,6 +119,7 @@ class TransactionManager:
             ... )
             >>> if success:
             ...     library.add(pattern)
+
         """
         # Pattern 1: String ID validation
         if not pattern_id or not pattern_id.strip():
@@ -187,6 +191,6 @@ class TransactionManager:
         finally:
             try:
                 self._base._client.unwatch()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Best effort cleanup - don't fail on unwatch errors
                 pass

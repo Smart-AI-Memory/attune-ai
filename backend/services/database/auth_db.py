@@ -34,6 +34,7 @@ class AuthDatabase:
         Args:
             db_path: Path to SQLite database file.
                     Defaults to backend/data/auth.db
+
         """
         if db_path is None:
             # Default to backend/data/auth.db
@@ -116,7 +117,7 @@ class AuthDatabase:
 
                 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
                 CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email, attempted_at);
-                """
+                """,
             )
 
     def _hash_password(self, password: str) -> str:
@@ -127,6 +128,7 @@ class AuthDatabase:
 
         Returns:
             Bcrypt hash string
+
         """
         # Encode password to bytes
         password_bytes = password.encode("utf-8")
@@ -145,13 +147,18 @@ class AuthDatabase:
 
         Returns:
             True if password matches hash
+
         """
         password_bytes = password.encode("utf-8")
         hash_bytes = password_hash.encode("utf-8")
         return bcrypt.checkpw(password_bytes, hash_bytes)
 
     def create_user(
-        self, email: str, password: str, name: str, license_key: str | None = None
+        self,
+        email: str,
+        password: str,
+        name: str,
+        license_key: str | None = None,
     ) -> int:
         """Create new user with hashed password.
 
@@ -166,9 +173,10 @@ class AuthDatabase:
 
         Raises:
             sqlite3.IntegrityError: If email already exists
+
         """
         logger.info(
-            f"Creating new user account: email={email}, has_license={license_key is not None}"
+            f"Creating new user account: email={email}, has_license={license_key is not None}",
         )
         password_hash = self._hash_password(password)
 
@@ -193,6 +201,7 @@ class AuthDatabase:
 
         Returns:
             User dict if credentials valid, None otherwise
+
         """
         logger.info(f"Authentication attempt: email={email}")
 
@@ -212,7 +221,7 @@ class AuthDatabase:
             if not self._verify_password(password, row["password_hash"]):
                 # Invalid password - security-relevant event
                 logger.warning(
-                    f"Authentication failed: invalid password: user_id={row['id']}, email={email}"
+                    f"Authentication failed: invalid password: user_id={row['id']}, email={email}",
                 )
                 return None
 
@@ -233,7 +242,10 @@ class AuthDatabase:
             }
 
     def record_login_attempt(
-        self, email: str, success: bool, ip_address: str | None = None
+        self,
+        email: str,
+        success: bool,
+        ip_address: str | None = None,
     ) -> None:
         """Record login attempt for rate limiting.
 
@@ -241,10 +253,12 @@ class AuthDatabase:
             email: Email attempted
             success: Whether login succeeded
             ip_address: Optional IP address
+
         """
         log_level = logging.INFO if success else logging.WARNING
         logger.log(
-            log_level, f"Recording login attempt: email={email}, success={success}, ip={ip_address}"
+            log_level,
+            f"Recording login attempt: email={email}, success={success}, ip={ip_address}",
         )
 
         with self._get_connection() as conn:
@@ -264,6 +278,7 @@ class AuthDatabase:
 
         Returns:
             Number of failed attempts in time window
+
         """
         with self._get_connection() as conn:
             cursor = conn.execute(
@@ -286,6 +301,7 @@ class AuthDatabase:
 
         Returns:
             True if user exists
+
         """
         with self._get_connection() as conn:
             cursor = conn.execute("SELECT 1 FROM users WHERE email = ? LIMIT 1", (email,))

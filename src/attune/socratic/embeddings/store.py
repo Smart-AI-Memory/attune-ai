@@ -40,6 +40,7 @@ class VectorStore:
         Args:
             provider: Embedding provider to use
             storage_path: Path to persist vectors
+
         """
         self.provider = provider or TFIDFEmbeddingProvider()
         self.storage_path = Path(storage_path) if storage_path else None
@@ -70,6 +71,7 @@ class VectorStore:
 
         Returns:
             The embedded goal
+
         """
         if goal_id is None:
             goal_id = hashlib.sha256(goal_text.encode()).hexdigest()[:12]
@@ -110,6 +112,7 @@ class VectorStore:
 
         Returns:
             List of similarity results sorted by relevance
+
         """
         if not self._goals:
             return []
@@ -148,6 +151,7 @@ class VectorStore:
 
         Returns:
             List of similarity results
+
         """
         results: list[tuple[float, EmbeddedGoal]] = []
 

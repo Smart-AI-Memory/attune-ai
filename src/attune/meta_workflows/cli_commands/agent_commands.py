@@ -62,6 +62,7 @@ def create_agent(
     Examples:
         empathy meta-workflow create-agent --interactive
         empathy meta-workflow create-agent -q --name "SecurityBot" --role "Scan for vulnerabilities"
+
     """
     import json
 
@@ -76,7 +77,7 @@ def create_agent(
         # Question 2: Specific tasks
         console.print("\n[bold]2. What specific tasks will it perform?[/bold]")
         console.print(
-            "   [dim]Examples: analyze code, generate tests, review PRs, write docs[/dim]"
+            "   [dim]Examples: analyze code, generate tests, review PRs, write docs[/dim]",
         )
         tasks = typer.prompt("   List main tasks (comma-separated)")
 
@@ -142,7 +143,7 @@ def create_agent(
     # Show usage
     console.print("\n[bold]Next Steps:[/bold]")
     console.print(
-        "  1. Use this agent in a custom team: [cyan]empathy meta-workflow create-team[/cyan]"
+        "  1. Use this agent in a custom team: [cyan]empathy meta-workflow create-team[/cyan]",
     )
     console.print("  2. Or add to an existing template manually")
     console.print(f"\n[dim]Agent tier '{tier}' will cost approximately:")
@@ -187,6 +188,7 @@ def create_team(
     Examples:
         empathy meta-workflow create-team --interactive
         empathy meta-workflow create-team -q --name "ReviewTeam" --goal "Code review pipeline"
+
     """
     import json
 
@@ -208,7 +210,7 @@ def create_team(
         # Question 3: Agent roles
         console.print(f"\n[bold]3. Define {agent_count} agent roles:[/bold]")
         console.print(
-            "   [dim]Common roles: analyst, reviewer, generator, validator, reporter[/dim]"
+            "   [dim]Common roles: analyst, reviewer, generator, validator, reporter[/dim]",
         )
 
         agents = []
@@ -224,7 +226,7 @@ def create_team(
                     "purpose": purpose,
                     "tier": tier,
                     "base_template": "generic",
-                }
+                },
             )
 
         # Question 4: Collaboration pattern
@@ -302,10 +304,10 @@ def create_team(
     # Show usage
     console.print("\n[bold]Next Steps:[/bold]")
     console.print(
-        f"  1. Save as template: [cyan]--output .attune/meta_workflows/templates/{team_template['id']}.json[/cyan]"
+        f"  1. Save as template: [cyan]--output .attune/meta_workflows/templates/{team_template['id']}.json[/cyan]",
     )
     console.print(
-        f"  2. Run the team: [cyan]empathy meta-workflow run {team_template['id']}[/cyan]"
+        f"  2. Run the team: [cyan]empathy meta-workflow run {team_template['id']}[/cyan]",
     )
 
     cost_min = team_template["estimated_cost_range"]["min"]

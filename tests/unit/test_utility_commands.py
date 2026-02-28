@@ -1,6 +1,6 @@
 """Tests for utility_commands.py.
 
-Tests for dashboard start, setup, validate, version, and features commands.
+Tests for setup, validate, version, and features commands.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -16,101 +16,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.cli_commands.utility_commands import (
-    cmd_dashboard_start,
     cmd_features,
     cmd_setup,
     cmd_validate,
     cmd_version,
 )
-
-
-# ---------------------------------------------------------------------------
-# cmd_dashboard_start tests
-# ---------------------------------------------------------------------------
-class TestCmdDashboardStart:
-    """Tests for cmd_dashboard_start."""
-
-    def _make_args(self, host: str = "0.0.0.0", port: int = 8000) -> argparse.Namespace:
-        """Create args namespace for dashboard command."""
-        return argparse.Namespace(host=host, port=port)
-
-    def test_dashboard_start_success(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard starts successfully and returns 0."""
-        args = self._make_args()
-
-        mock_run = MagicMock()
-        mock_module = MagicMock()
-        mock_module.run_standalone_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="0.0.0.0", port=8000)
-
-    def test_dashboard_start_import_error(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard returns 1 when import fails (dependencies missing)."""
-        args = self._make_args()
-
-        # Remove attune.dashboard from sys.modules if present, and force ImportError
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "not available" in captured.out or "Dashboard" in captured.out
-
-    def test_dashboard_start_import_error_message(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard shows install instructions on ImportError."""
-        args = self._make_args()
-
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            cmd_dashboard_start(args)
-
-        captured = capsys.readouterr()
-        assert "pip install redis" in captured.out
-
-    def test_dashboard_start_keyboard_interrupt(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard handles KeyboardInterrupt gracefully."""
-        args = self._make_args()
-
-        mock_module = MagicMock()
-        mock_module.run_standalone_dashboard.side_effect = KeyboardInterrupt()
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "stopped" in captured.out
-
-    def test_dashboard_start_unexpected_error(self, capsys: pytest.CaptureFixture) -> None:
-        """Test dashboard handles unexpected exceptions and returns 1."""
-        args = self._make_args()
-
-        mock_module = MagicMock()
-        mock_module.run_standalone_dashboard.side_effect = RuntimeError("Connection refused")
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Error starting dashboard" in captured.out
-
-    def test_dashboard_start_custom_host_port(self) -> None:
-        """Test dashboard passes custom host and port."""
-        args = self._make_args(host="127.0.0.1", port=9000)
-
-        mock_run = MagicMock()
-        mock_module = MagicMock()
-        mock_module.run_standalone_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_module}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="127.0.0.1", port=9000)
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +34,10 @@ class TestCmdSetup:
         return argparse.Namespace()
 
     def test_setup_source_dir_not_found(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test setup returns 1 when no source directory found."""
         args = self._make_args()
@@ -154,7 +67,10 @@ class TestCmdSetup:
         assert "Could not find" in captured.out
 
     def test_setup_copies_md_files(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test setup copies .md files from source to target."""
         args = self._make_args()
@@ -194,7 +110,10 @@ class TestCmdSetup:
         assert result == 0
 
     def test_setup_no_command_files_found(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test setup returns 1 when source dir exists but has no .md files."""
         args = self._make_args()
@@ -274,12 +193,14 @@ class TestCmdValidate:
             "GOOGLE_API_KEY": "",
         }
 
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
+        with (
+            patch.dict("os.environ", env_patch, clear=False),
+            patch(
                 "attune.workflows.WORKFLOW_REGISTRY",
                 {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
+            ),
+        ):
+            result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
@@ -294,19 +215,24 @@ class TestCmdValidate:
             "ANTHROPIC_API_KEY": "",
         }
 
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
+        with (
+            patch.dict("os.environ", env_patch, clear=False),
+            patch(
                 "attune.workflows.WORKFLOW_REGISTRY",
                 {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
+            ),
+        ):
+            result = cmd_validate(args)
 
         assert result == 1
         captured = capsys.readouterr()
         assert "ANTHROPIC_API_KEY" in captured.out
 
     def test_validate_config_file_found(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test validate detects config file when present."""
         args = self._make_args()
@@ -320,12 +246,14 @@ class TestCmdValidate:
             "ANTHROPIC_API_KEY": "sk-test",
         }
 
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
+        with (
+            patch.dict("os.environ", env_patch, clear=False),
+            patch(
                 "attune.workflows.WORKFLOW_REGISTRY",
                 {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
+            ),
+        ):
+            result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
@@ -333,7 +261,10 @@ class TestCmdValidate:
         assert "attune.config.json" in captured.out
 
     def test_validate_no_config_file_warning(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test validate warns when no config file exists."""
         args = self._make_args()
@@ -344,19 +275,23 @@ class TestCmdValidate:
             "ANTHROPIC_API_KEY": "sk-test",
         }
 
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
+        with (
+            patch.dict("os.environ", env_patch, clear=False),
+            patch(
                 "attune.workflows.WORKFLOW_REGISTRY",
                 {"wf1": MagicMock()},
-            ):
-                result = cmd_validate(args)
+            ),
+        ):
+            result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
         assert "No attune.config file found" in captured.out or "Warnings" in captured.out
 
     def test_validate_workflow_import_error(
-        self, capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test validate handles workflow import failure gracefully."""
         args = self._make_args()
@@ -398,12 +333,14 @@ class TestCmdValidate:
         env_patch = {"ANTHROPIC_API_KEY": "sk-test"}
         mock_workflows = {"sec-audit": MagicMock(), "code-review": MagicMock(), "perf": MagicMock()}
 
-        with patch.dict("os.environ", env_patch, clear=False):
-            with patch(
+        with (
+            patch.dict("os.environ", env_patch, clear=False),
+            patch(
                 "attune.workflows.discover_workflows",
                 return_value=mock_workflows,
-            ):
-                result = cmd_validate(args)
+            ),
+        ):
+            result = cmd_validate(args)
 
         assert result == 0
         captured = capsys.readouterr()
@@ -459,12 +396,14 @@ class TestCmdVersion:
         """Test verbose version handles missing metadata gracefully."""
         args = argparse.Namespace(verbose=True)
 
-        with patch("attune.cli_minimal.get_version", return_value="dev"):
-            with patch(
+        with (
+            patch("attune.cli_minimal.get_version", return_value="dev"),
+            patch(
                 "importlib.metadata.requires",
                 side_effect=Exception("Package not found"),
-            ):
-                result = cmd_version(args)
+            ),
+        ):
+            result = cmd_version(args)
 
         assert result == 0
         captured = capsys.readouterr()
@@ -512,19 +451,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    result = cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            result = cmd_features(args)
 
         assert result == 0
 
@@ -535,19 +476,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "MEMORY FEATURES" in captured.out
@@ -559,19 +502,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "TELEMETRY FEATURES" in captured.out
@@ -583,19 +528,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "Long-term memory" in captured.out
@@ -603,7 +550,8 @@ class TestCmdFeatures:
         assert "Usage tracking" in captured.out
 
     def test_features_redis_not_available_shows_install(
-        self, capsys: pytest.CaptureFixture
+        self,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test cmd_features shows install instructions when Redis is not available."""
         args = self._make_args()
@@ -611,19 +559,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "pip install" in captured.out
@@ -636,23 +586,25 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features(redis_available=True)
         mock_telemetry_features = self._make_mock_telemetry_features(redis_available=True)
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=True,
-                ):
-                    with patch(
-                        "attune.memory.features.MemoryFeatures.is_redis_running",
-                        return_value=True,
-                    ):
-                        cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=True,
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_running",
+                return_value=True,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "all features available" in captured.out
@@ -664,29 +616,32 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features(redis_available=True)
         mock_telemetry_features = self._make_mock_telemetry_features(redis_available=True)
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=True,
-                ):
-                    with patch(
-                        "attune.memory.features.MemoryFeatures.is_redis_running",
-                        return_value=False,
-                    ):
-                        cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=True,
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_running",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "not running" in captured.out
 
     def test_features_shows_install_command_for_missing_deps(
-        self, capsys: pytest.CaptureFixture
+        self,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test cmd_features shows install_command for unavailable features."""
         args = self._make_args()
@@ -715,19 +670,21 @@ class TestCmdFeatures:
             ),
         }
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "Install:" in captured.out
@@ -740,19 +697,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            cmd_features(args)
 
         captured = capsys.readouterr()
         assert "FEATURE AVAILABILITY" in captured.out
@@ -764,19 +723,21 @@ class TestCmdFeatures:
         mock_memory_features = self._make_mock_memory_features()
         mock_telemetry_features = self._make_mock_telemetry_features()
 
-        with patch(
-            "attune.memory.features.MemoryFeatures.list_all_features",
-            return_value=mock_memory_features,
-        ):
-            with patch(
+        with (
+            patch(
+                "attune.memory.features.MemoryFeatures.list_all_features",
+                return_value=mock_memory_features,
+            ),
+            patch(
                 "attune.telemetry.features.TelemetryFeatures.list_all_features",
                 return_value=mock_telemetry_features,
-            ):
-                with patch(
-                    "attune.memory.features.MemoryFeatures.is_redis_available",
-                    return_value=False,
-                ):
-                    result = cmd_features(args)
+            ),
+            patch(
+                "attune.memory.features.MemoryFeatures.is_redis_available",
+                return_value=False,
+            ),
+        ):
+            result = cmd_features(args)
 
         assert result == 0
 

@@ -32,6 +32,7 @@ class EvalExecDetector(ast.NodeVisitor):
 
         Args:
             file_path: Path to file being analyzed (for context)
+
         """
         self.file_path = file_path
         self.findings: list[dict[str, Any]] = []
@@ -64,7 +65,7 @@ class EvalExecDetector(ast.NodeVisitor):
                     "line": node.lineno,
                     "col": node.col_offset,
                     "context": self._current_function,
-                }
+                },
             )
 
         self.generic_visit(node)
@@ -83,6 +84,7 @@ def analyze_file_for_eval_exec(file_path: str | Path) -> list[dict[str, Any]]:
         >>> findings = analyze_file_for_eval_exec("myfile.py")
         >>> for finding in findings:
         ...     print(f"{finding['function']} at line {finding['line']}")
+
     """
     file_path = Path(file_path)
 
@@ -117,6 +119,7 @@ def is_scanner_implementation_file(file_path: str) -> bool:
 
     Returns:
         True if this is a scanner implementation file
+
     """
     scanner_indicators = [
         # Scanner implementation files
@@ -153,6 +156,7 @@ def is_in_docstring_or_comment(line_content: str, file_content: str, line_num: i
 
     Returns:
         True if line is in docstring or comment
+
     """
     line = line_content.strip()
 
@@ -210,7 +214,8 @@ def is_in_docstring_or_comment(line_content: str, file_content: str, line_num: i
 
 
 def enhanced_command_injection_detection(
-    file_path: str, original_findings: list[dict[str, Any]]
+    file_path: str,
+    original_findings: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Enhanced command injection detection with AST-based filtering.
 
@@ -223,6 +228,7 @@ def enhanced_command_injection_detection(
 
     Returns:
         Filtered list of actual vulnerabilities (not false positives)
+
     """
     # Step 1: Check if this is a scanner implementation file
     if is_scanner_implementation_file(file_path):
@@ -267,7 +273,7 @@ def enhanced_command_injection_detection(
                         "owasp": "A03:2021 Injection",
                         "context": finding.get("context", ""),
                         "is_test": is_test_file,
-                    }
+                    },
                 )
 
             # Keep subprocess/os.system findings (not filtered by AST)
@@ -278,7 +284,6 @@ def enhanced_command_injection_detection(
         except Exception as e:
             logger.debug(f"AST analysis failed for {file_path}, falling back to regex: {e}")
             # Fall back to original findings if AST fails
-            pass
 
     # Step 3: For non-Python files or if AST fails, filter original findings
     try:
@@ -321,6 +326,7 @@ def apply_phase3_filtering(findings: list[dict[str, Any]]) -> list[dict[str, Any
 
     Returns:
         Filtered list with false positives removed
+
     """
     if not findings:
         return []

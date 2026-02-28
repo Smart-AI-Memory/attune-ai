@@ -254,6 +254,7 @@ def is_redis_available() -> bool:
 
     Returns:
         True if the redis package is importable, False otherwise.
+
     """
     try:
         importlib.import_module("redis")
@@ -291,18 +292,18 @@ __all__ = [
     "FileSessionConfig",
     "FileSessionMemory",
     "MemDocsStorage",
-    "MemoryFeatures",
     "MemoryConfig",
     "MemoryControlPanel",
+    "MemoryFeatures",
     "MemoryGraph",
     "MemoryPermissionError",
     "MemoryStats",
     "Node",
     "NodeType",
-    "PaginatedResult",
     "PIIDetection",
     "PIIPattern",
     "PIIScrubber",
+    "PaginatedResult",
     "PatternMetadata",
     "PatternNode",
     "PerformanceNode",

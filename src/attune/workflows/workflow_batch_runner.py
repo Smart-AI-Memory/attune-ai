@@ -38,6 +38,7 @@ class WorkflowSpec:
         workflow_id: Registry name (e.g., "security-audit")
         config: Workflow constructor kwargs
         input_data: Workflow execute() kwargs
+
     """
 
     workflow_id: str
@@ -56,6 +57,7 @@ class WorkflowBatchResult:
         error: Error message (if failed)
         duration_seconds: Wall-clock time
         cost: Estimated cost in USD
+
     """
 
     workflow_id: str
@@ -77,6 +79,7 @@ class BatchRunReport:
         total_cost: Sum of all workflow costs
         success_count: Number of successful workflows
         failure_count: Number of failed workflows
+
     """
 
     preset: str
@@ -95,7 +98,7 @@ class BatchRunReport:
         lines.append(
             f"Workflows: {self.success_count} passed, "
             f"{self.failure_count} failed, "
-            f"{len(self.results)} total"
+            f"{len(self.results)} total",
         )
         lines.append(f"Duration: {self.total_duration:.1f}s")
         lines.append(f"Est. Cost: ${self.total_cost:.4f}")
@@ -104,7 +107,7 @@ class BatchRunReport:
         for r in self.results:
             status = "OK" if r.success else "FAIL"
             lines.append(
-                f"  [{status}] {r.workflow_id} " f"({r.duration_seconds:.1f}s, ${r.cost:.4f})"
+                f"  [{status}] {r.workflow_id} ({r.duration_seconds:.1f}s, ${r.cost:.4f})",
             )
             if r.error:
                 lines.append(f"         Error: {r.error}")
@@ -206,6 +209,7 @@ class WorkflowBatchRunner:
     Attributes:
         max_parallel: Max concurrent workflows (0 = serial)
         timeout_per_workflow: Per-workflow timeout in seconds
+
     """
 
     # Workflows verified as batch-safe (no interactive prompts)
@@ -227,7 +231,7 @@ class WorkflowBatchRunner:
             "secure-release",
             "keyboard-shortcuts",
             "test-maintenance",
-        }
+        },
     )
 
     def __init__(
@@ -241,6 +245,7 @@ class WorkflowBatchRunner:
             max_parallel: Max concurrent workflows. 1 = serial (default).
                 Use 2-3 for parallel execution.
             timeout_per_workflow: Per-workflow timeout in seconds.
+
         """
         self.max_parallel = max_parallel
         self.timeout_per_workflow = timeout_per_workflow
@@ -262,6 +267,7 @@ class WorkflowBatchRunner:
 
         Raises:
             ValueError: If preset_name is not recognized
+
         """
         if preset_name not in BATCH_PRESETS:
             available = ", ".join(sorted(BATCH_PRESETS.keys()))
@@ -294,6 +300,7 @@ class WorkflowBatchRunner:
 
         Returns:
             BatchRunReport with per-workflow results
+
         """
         self._validate_specs(specs)
 
@@ -339,6 +346,7 @@ class WorkflowBatchRunner:
 
         Raises:
             ValueError: If any workflow is not batch-safe or unknown
+
         """
         if not specs:
             raise ValueError("specs cannot be empty")
@@ -348,7 +356,7 @@ class WorkflowBatchRunner:
                 raise ValueError(
                     f"Workflow '{spec.workflow_id}' is not in the "
                     f"batch-safe allowlist. Available: "
-                    f"{', '.join(sorted(self.BATCH_SAFE_WORKFLOWS))}"
+                    f"{', '.join(sorted(self.BATCH_SAFE_WORKFLOWS))}",
                 )
 
     async def _execute_one(self, spec: WorkflowSpec) -> WorkflowBatchResult:
@@ -359,6 +367,7 @@ class WorkflowBatchRunner:
 
         Returns:
             WorkflowBatchResult with outcome
+
         """
         start_time = time.monotonic()
 
@@ -386,7 +395,7 @@ class WorkflowBatchRunner:
         except asyncio.TimeoutError:
             duration = time.monotonic() - start_time
             logger.error(
-                f"Workflow '{spec.workflow_id}' timed out " f"after {self.timeout_per_workflow}s"
+                f"Workflow '{spec.workflow_id}' timed out after {self.timeout_per_workflow}s",
             )
             return WorkflowBatchResult(
                 workflow_id=spec.workflow_id,
@@ -416,6 +425,7 @@ class WorkflowBatchRunner:
 
         Raises:
             ValueError: If workflow ID is not found in registry
+
         """
         from attune.workflows import get_workflow
 
@@ -432,7 +442,7 @@ class WorkflowBatchRunner:
             logger.warning(
                 f"Workflow '{spec.workflow_id}' doesn't accept "
                 f"config params {list(spec.config.keys())}, "
-                f"using defaults"
+                f"using defaults",
             )
             return workflow_class()
 
@@ -442,10 +452,11 @@ class WorkflowBatchRunner:
 
         Returns:
             Dict mapping preset name to description
+
         """
         return {
             "daily-quality": (
-                "Security audit + bug prediction + dependency check. " "Quick daily health check."
+                "Security audit + bug prediction + dependency check. Quick daily health check."
             ),
             "pre-release": (
                 "Security audit + dependency check + performance audit. "
@@ -467,5 +478,6 @@ class WorkflowBatchRunner:
 
         Returns:
             Sorted list of batch-safe workflow IDs
+
         """
         return sorted(WorkflowBatchRunner.BATCH_SAFE_WORKFLOWS)

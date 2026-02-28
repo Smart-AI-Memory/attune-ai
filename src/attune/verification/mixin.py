@@ -61,7 +61,8 @@ class VerificationMixin:
 
             workflow_name = getattr(self, "name", "unknown")
             self._verification_config = VerificationConfig.load_for_workflow(
-                workflow_name, verification_data
+                workflow_name,
+                verification_data,
             )
         except Exception as e:
             # INTENTIONAL: Verification init is optional, never crash
@@ -167,7 +168,7 @@ class VerificationMixin:
                             total_correction_cost += cost
                             corrections_made += 1
                             logger.info(
-                                "Correction applied (attempt %d/%d), " "re-verifying...",
+                                "Correction applied (attempt %d/%d), re-verifying...",
                                 corrections_made,
                                 self._verification_config.max_corrections,
                             )
@@ -180,7 +181,7 @@ class VerificationMixin:
                             )
                     else:
                         logger.info(
-                            "Verification failed (attempt %d/%d), " "retrying...",
+                            "Verification failed (attempt %d/%d), retrying...",
                             attempt,
                             max_attempts,
                         )

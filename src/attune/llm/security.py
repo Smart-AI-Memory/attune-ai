@@ -33,6 +33,7 @@ class SecurityMixin:
         pii_scrubber: PII detection and scrubbing instance.
         secrets_detector: Secrets detection instance.
         audit_logger: Audit logging instance.
+
     """
 
     # These attributes are declared here for type-checking clarity.
@@ -59,6 +60,7 @@ class SecurityMixin:
 
         Returns:
             True if production indicators are detected
+
         """
         import os
 
@@ -112,6 +114,7 @@ class SecurityMixin:
 
         Raises:
             SecurityError: If secrets detected and block_on_secrets=True.
+
         """
         pii_detections: list[dict] = []
         secrets_detections: list[dict] = []
@@ -182,6 +185,7 @@ class SecurityMixin:
             pii_detections: List of PII detections from input pipeline.
             secrets_detections: List of secrets detections from input pipeline.
             start_time: Timestamp when the interaction started.
+
         """
         if not (self.enable_security and self.audit_logger):
             return

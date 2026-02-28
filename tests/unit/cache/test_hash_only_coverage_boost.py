@@ -114,7 +114,10 @@ class TestHashOnlyCacheGetOperations:
 
         # Get cache key
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
         original_access_time = cache._access_times[cache_key]
 
@@ -272,7 +275,10 @@ class TestHashOnlyCachePutOperations:
 
         # Get the cache key
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
 
         entry = cache._memory_cache[cache_key]
@@ -296,7 +302,10 @@ class TestHashOnlyCachePutOperations:
 
         # Get the cache key
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
 
         entry = cache._memory_cache[cache_key]
@@ -316,7 +325,10 @@ class TestHashOnlyCachePutOperations:
 
         # Get the cache key
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
 
         entry = cache._memory_cache[cache_key]
@@ -336,7 +348,10 @@ class TestHashOnlyCachePutOperations:
 
         # Get the cache key
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
 
         assert cache_key in cache._access_times
@@ -425,7 +440,10 @@ class TestHashOnlyCacheLRUEviction:
 
         # Old entry should be evicted (LRU)
         old_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "old prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "old prompt",
+            "claude-3-5-sonnet",
         )
         assert old_key not in cache._memory_cache
 
@@ -442,7 +460,10 @@ class TestHashOnlyCacheLRUEviction:
         )
 
         cache_key = cache._create_cache_key(
-            "test-workflow", "test-stage", "test prompt", "claude-3-5-sonnet"
+            "test-workflow",
+            "test-stage",
+            "test prompt",
+            "claude-3-5-sonnet",
         )
 
         # Verify entry exists

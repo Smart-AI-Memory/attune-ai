@@ -40,6 +40,7 @@ def _extract_output_text(final_output: Any) -> str:
 
     Returns:
         Lowercased text representation for keyword matching
+
     """
     if isinstance(final_output, str):
         return final_output.lower()
@@ -57,6 +58,7 @@ def _count_keyword_hits(text: str, keywords: list[str]) -> int:
 
     Returns:
         Number of keywords found
+
     """
     return sum(1 for kw in keywords if kw in text)
 
@@ -78,6 +80,7 @@ def _transitions_for_code_review(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
     output_text = _extract_output_text(result.final_output)
@@ -96,7 +99,7 @@ def _transitions_for_code_review(result: Any) -> list[NextAction]:
                 reasoning="Code review surfaced security keywords suggesting deeper analysis.",
                 priority="high",
                 confidence=min(0.5 + security_hits * 0.15, 0.95),
-            )
+            ),
         )
 
     # Performance findings -> perf audit
@@ -113,7 +116,7 @@ def _transitions_for_code_review(result: Any) -> list[NextAction]:
                 reasoning="Code review surfaced performance-related findings.",
                 priority="medium",
                 confidence=min(0.5 + perf_hits * 0.15, 0.9),
-            )
+            ),
         )
 
     # Any findings -> test generation
@@ -125,7 +128,7 @@ def _transitions_for_code_review(result: Any) -> list[NextAction]:
                 reasoning="Code review identified areas that would benefit from test coverage.",
                 priority="medium",
                 confidence=0.7,
-            )
+            ),
         )
 
     return suggestions
@@ -139,6 +142,7 @@ def _transitions_for_security_audit(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
     output_text = _extract_output_text(result.final_output)
@@ -157,7 +161,7 @@ def _transitions_for_security_audit(result: Any) -> list[NextAction]:
                 reasoning="High-severity security findings often correlate with dependency risks.",
                 priority="high",
                 confidence=0.85,
-            )
+            ),
         )
 
     # Any security findings -> release prep
@@ -169,7 +173,7 @@ def _transitions_for_security_audit(result: Any) -> list[NextAction]:
                 reasoning="Security audit completed — validate overall release readiness.",
                 priority="medium",
                 confidence=0.7,
-            )
+            ),
         )
 
     return suggestions
@@ -183,6 +187,7 @@ def _transitions_for_test_gen(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
 
@@ -194,7 +199,7 @@ def _transitions_for_test_gen(result: Any) -> list[NextAction]:
                 reasoning="Generated tests benefit from a quality pass before committing.",
                 priority="medium",
                 confidence=0.75,
-            )
+            ),
         )
 
     return suggestions
@@ -208,6 +213,7 @@ def _transitions_for_bug_predict(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
     output_text = _extract_output_text(result.final_output)
@@ -226,7 +232,7 @@ def _transitions_for_bug_predict(result: Any) -> list[NextAction]:
                 reasoning="High-risk code areas benefit most from targeted test coverage.",
                 priority="high",
                 confidence=0.85,
-            )
+            ),
         )
 
     # Complexity findings -> refactor plan
@@ -239,7 +245,7 @@ def _transitions_for_bug_predict(result: Any) -> list[NextAction]:
                 reasoning="Complex code correlates with bug density.",
                 priority="medium",
                 confidence=0.7,
-            )
+            ),
         )
 
     return suggestions
@@ -253,6 +259,7 @@ def _transitions_for_perf_audit(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
     output_text = _extract_output_text(result.final_output)
@@ -266,7 +273,7 @@ def _transitions_for_perf_audit(result: Any) -> list[NextAction]:
                 reasoning="Simpler code is often faster code — reduce unnecessary complexity.",
                 priority="medium",
                 confidence=0.7,
-            )
+            ),
         )
 
     return suggestions
@@ -280,6 +287,7 @@ def _transitions_for_refactor_plan(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
 
@@ -291,7 +299,7 @@ def _transitions_for_refactor_plan(result: Any) -> list[NextAction]:
                 reasoning="Test-first refactoring prevents regressions.",
                 priority="high",
                 confidence=0.9,
-            )
+            ),
         )
 
     return suggestions
@@ -305,6 +313,7 @@ def _transitions_for_simplify_code(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
 
@@ -316,7 +325,7 @@ def _transitions_for_simplify_code(result: Any) -> list[NextAction]:
                 reasoning="Simplification changes should be validated before committing.",
                 priority="medium",
                 confidence=0.8,
-            )
+            ),
         )
 
     return suggestions
@@ -330,6 +339,7 @@ def _transitions_for_dependency_check(result: Any) -> list[NextAction]:
 
     Returns:
         List of relevant NextAction suggestions
+
     """
     suggestions: list[NextAction] = []
     output_text = _extract_output_text(result.final_output)
@@ -343,7 +353,7 @@ def _transitions_for_dependency_check(result: Any) -> list[NextAction]:
                 reasoning="Test coverage reduces risk when updating dependencies.",
                 priority="medium",
                 confidence=0.75,
-            )
+            ),
         )
 
     return suggestions
@@ -380,6 +390,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
 
     Returns:
         List of NextAction based on project health signals
+
     """
     import json as _json
     from pathlib import Path as _Path
@@ -416,7 +427,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
                 reasoning="Project index shows coverage below 80% threshold.",
                 priority="medium",
                 confidence=min(0.5 + (80 - coverage_avg) * 0.01, 0.85),
-            )
+            ),
         )
 
     # Stale tests -> suggest test generation
@@ -432,7 +443,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
                 reasoning="Code changed but tests haven't been updated.",
                 priority="medium",
                 confidence=min(0.5 + stale_count * 0.05, 0.8),
-            )
+            ),
         )
 
     # Critical untested files -> suggest security audit
@@ -448,7 +459,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
                 reasoning="High-impact files without test coverage pose security risk.",
                 priority="high",
                 confidence=min(0.6 + len(critical_untested) * 0.05, 0.85),
-            )
+            ),
         )
 
     # Files needing attention -> suggest code review
@@ -458,12 +469,12 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
             NextAction(
                 workflow_name="code-review",
                 description=(
-                    f"{attention_count} file(s) need attention — " f"run a code review to triage?"
+                    f"{attention_count} file(s) need attention — run a code review to triage?"
                 ),
                 reasoning="Project index flagged multiple files for review.",
                 priority="medium",
                 confidence=min(0.5 + attention_count * 0.03, 0.75),
-            )
+            ),
         )
 
     return suggestions
@@ -486,8 +497,8 @@ def _suggestions_from_history(workflow_name: str) -> list[NextAction]:
 
     Returns:
         List of NextAction based on historical patterns
-    """
 
+    """
     suggestions: list[NextAction] = []
 
     try:
@@ -499,7 +510,7 @@ def _suggestions_from_history(workflow_name: str) -> list[NextAction]:
 
         # Get recent successful runs (last 50)
         recent_runs = store.query_runs(success_only=True, limit=50)
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: History is optional — don't crash if unavailable
         logger.debug("Workflow history unavailable for suggestions")
         return suggestions
@@ -541,7 +552,7 @@ def _suggestions_from_history(workflow_name: str) -> list[NextAction]:
                 ),
                 priority="low",
                 confidence=min(0.4 + frequency * 0.4, 0.75),
-            )
+            ),
         )
 
     return suggestions
@@ -557,6 +568,7 @@ def _load_suggestion_state() -> dict[str, Any]:
 
     Returns:
         State dict with 'dismissed' mapping of workflow_name to ISO timestamp
+
     """
     import json as _json
     from pathlib import Path as _Path
@@ -578,6 +590,7 @@ def _save_suggestion_state(state: dict[str, Any]) -> None:
 
     Args:
         state: State dict to persist
+
     """
     import json as _json
     from pathlib import Path as _Path
@@ -603,6 +616,7 @@ def _filter_recently_shown(suggestions: list[NextAction]) -> list[NextAction]:
 
     Returns:
         Filtered list with recently-shown suggestions removed
+
     """
     from datetime import datetime as _dt
 
@@ -639,6 +653,7 @@ def record_suggestions_shown(suggestions: list[NextAction]) -> None:
 
     Args:
         suggestions: List of suggestions that were displayed
+
     """
     from datetime import datetime as _dt
 
@@ -678,6 +693,7 @@ def generate_suggestions(
     Returns:
         List of NextAction suggestions, sorted by priority then confidence,
         limited to MAX_SUGGESTIONS
+
     """
     if not result.success:
         # On failure, suggest retry or related diagnostic workflow
@@ -690,21 +706,21 @@ def generate_suggestions(
     if transition_fn:
         try:
             suggestions.extend(transition_fn(result))
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Suggestion generation is optional — never crash workflow
             logger.debug("Suggestion transition failed for %s", workflow_name)
 
     # Source 2: Project index signals
     try:
         suggestions.extend(_suggestions_from_project_index(workflow_name))
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: Project index is optional
         logger.debug("Project index suggestions failed for %s", workflow_name)
 
     # Source 3: Workflow history patterns
     try:
         suggestions.extend(_suggestions_from_history(workflow_name))
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: History is optional
         logger.debug("History suggestions failed for %s", workflow_name)
 
@@ -744,6 +760,7 @@ def format_suggestions_markdown(suggestions: list[NextAction]) -> str:
 
     Returns:
         Markdown-formatted suggestions text, or empty string if none
+
     """
     if not suggestions:
         return ""
@@ -772,6 +789,7 @@ def suggestions_to_options(suggestions: list[NextAction]) -> list[dict[str, str]
 
     Returns:
         List of option dicts with 'label' and 'description' keys
+
     """
     options = []
     for s in suggestions:
@@ -779,7 +797,7 @@ def suggestions_to_options(suggestions: list[NextAction]) -> list[dict[str, str]
             {
                 "label": f"/{s.workflow_name}",
                 "description": s.description,
-            }
+            },
         )
     return options
 
@@ -796,6 +814,7 @@ def _suggestions_for_failure(
 
     Returns:
         List of NextAction suggestions for recovery
+
     """
     suggestions: list[NextAction] = []
 
@@ -807,7 +826,7 @@ def _suggestions_for_failure(
                 reasoning=f"Error classified as {result.error_type} (transient).",
                 priority="high",
                 confidence=0.8,
-            )
+            ),
         )
 
     if result.error_type == "config":
@@ -818,7 +837,7 @@ def _suggestions_for_failure(
                 reasoning="Configuration error suggests setup issue.",
                 priority="high",
                 confidence=0.75,
-            )
+            ),
         )
 
     return suggestions[:MAX_SUGGESTIONS]

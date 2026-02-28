@@ -130,7 +130,7 @@ class TestAnalyzeFileForEvalExec:
                 """
 def dangerous_func(user_input):
     return eval(user_input)
-"""
+""",
             )
             f.flush()
             temp_path = f.name
@@ -154,7 +154,7 @@ def check_security(code):
     '''
     # Never use eval() on user input
     return "eval(" in code
-"""
+""",
             )
             f.flush()
             temp_path = f.name
@@ -259,11 +259,12 @@ class TestEnhancedCommandInjectionDetection:
                 "match": "eval(",
                 "severity": "critical",
                 "owasp": "A03:2021 Injection",
-            }
+            },
         ]
 
         result = enhanced_command_injection_detection(
-            "src/attune/workflows/bug_predict.py", findings
+            "src/attune/workflows/bug_predict.py",
+            findings,
         )
 
         assert result == [], "Should filter scanner implementation file"
@@ -277,7 +278,7 @@ class TestEnhancedCommandInjectionDetection:
 def check_eval(code):
     '''Check for eval() usage.'''
     return "eval(" in code
-"""
+""",
             )
             f.flush()
             temp_path = f.name
@@ -291,7 +292,7 @@ def check_eval(code):
                     "match": "eval(",
                     "severity": "critical",
                     "owasp": "A03:2021 Injection",
-                }
+                },
             ]
 
             result = enhanced_command_injection_detection(temp_path, findings)
@@ -308,7 +309,7 @@ def check_eval(code):
                 """
 def unsafe_func(x):
     return eval(x)  # Actual vulnerability!
-"""
+""",
             )
             f.flush()
             temp_path = f.name
@@ -322,7 +323,7 @@ def unsafe_func(x):
                     "match": "eval(",
                     "severity": "critical",
                     "owasp": "A03:2021 Injection",
-                }
+                },
             ]
 
             result = enhanced_command_injection_detection(temp_path, findings)
@@ -352,7 +353,7 @@ class TestPhase3Integration:
         file_path = "src/attune/workflows/bug_predict.py"
 
         assert is_scanner_implementation_file(
-            file_path
+            file_path,
         ), "bug_predict.py should be recognized as scanner file"
 
         # Even if regex finds patterns, they should be filtered
@@ -362,7 +363,7 @@ class TestPhase3Integration:
                 "file": file_path,
                 "line": 233,
                 "match": "eval(",
-            }
+            },
         ]
 
         result = enhanced_command_injection_detection(file_path, fake_findings)

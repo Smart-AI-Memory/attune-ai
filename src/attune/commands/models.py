@@ -181,7 +181,7 @@ class CommandConfig:
                     "## Aliases",
                     ", ".join(f"/{a}" for a in self.aliases),
                     "",
-                ]
+                ],
             )
 
         if self.metadata.tags:
@@ -190,7 +190,7 @@ class CommandConfig:
                     "## Tags",
                     ", ".join(self.metadata.tags),
                     "",
-                ]
+                ],
             )
 
         lines.extend(
@@ -198,7 +198,7 @@ class CommandConfig:
                 "## Instructions",
                 "",
                 self.body,
-            ]
+            ],
         )
 
         return "\n".join(lines)

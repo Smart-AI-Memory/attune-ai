@@ -5,6 +5,138 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.6] - 2026-02-28
+
+### Added
+
+- **AskUserQuestion guide** — comprehensive developer reference covering
+  all parameters, 5 worked examples (single-select, multi-select,
+  multi-question, preview feature, Socratic pattern), VS Code ASCII
+  mockups, and common mistakes. Published as
+  `docs/guides/ask-user-question-guide.md`.
+
+### Changed
+
+- **MyPy removed from CI** — 437 pre-existing errors made it noise.
+  Will be re-enabled after a dedicated type-hint sprint.
+
+### Maintenance
+
+- **Branch cleanup** — deleted 50 stale local branches; created 7
+  missing version tags (v2.8.0, v2.10.0, v3.0.0, v3.1.1, v3.1.2,
+  v3.2.0, v3.5.0) and pushed to origin.
+- **develop branch** — created and pushed; CI now triggers on both
+  `main` and `develop`.
+- **Remote tracking pruned** — 38 stale `origin/*` refs removed.
+
+## [3.6.5] - 2026-02-28
+
+### Removed
+
+- **Dashboard module deleted** — `attune.dashboard` (Python backend),
+  `attune dashboard start` CLI command, and all associated static
+  assets removed. Was soft-deprecated in v3.6.3. Use `FeedbackLoop`
+  and `UsageTracker` from `attune.telemetry` directly.
+
+## [3.6.4] - 2026-02-27
+
+### Added
+
+- **EscalationChain** — Retry-with-feedback LLM wrapper
+  (`attune.workflows.escalation`). Runs a prompt through up
+  to N tiers, collecting structured feedback on each failure
+  and feeding it back into the next attempt. Ships with
+  `StructureValidator`, `ConfidenceValidator`, and
+  `SemanticEvaluator`; includes `escalate()` convenience
+  function for zero-config usage.
+
+## [3.6.3] - 2026-02-27
+
+### Deprecated
+
+- **Dashboard frontend removed** — React/Vite frontend (`dashboard/`),
+  startup scripts, and example scripts deleted. The Python backend
+  (`attune.dashboard`) is soft-deprecated with `DeprecationWarning`
+  and will be removed in a future major version.
+  Use `FeedbackLoop` and `UsageTracker` directly.
+
+## [3.6.2] - 2026-02-27
+
+### Fixed
+
+- **Version sync** — Aligned `pyproject.toml` and
+  `src/attune/__init__.py` to `3.6.2` (were mismatched
+  at `3.6.1` / `3.5.0`).
+
+## [3.6.1] - 2026-02-25
+
+### Added
+
+- **Lessons Learned Stop hook** — `lessons_reminder.py`
+  fires once per session at Stop, prompts Claude to update
+  the `## Lessons Learned` section in `.claude/CLAUDE.md`,
+  then silences itself via a TTL sentinel file so it
+  doesn't loop on repeated stop attempts.
+
+## [3.6.0] - 2026-02-25
+
+### Added
+
+- **attune-redis plugin** — Redis memory as a standalone
+  installable plugin (`pip install attune-redis`), fully
+  decoupled from the core package. Ships with 5 MCP tools
+  (store, retrieve, search, promote, health check) wired
+  into `EmpathyMCPServer` via a new `register_mcp_tools()`
+  hook on `BasePlugin`. Includes standalone CI, PyPI
+  config, and a v4.0.0 migration guide for users on the
+  old embedded Redis modules.
+- **React dashboard** — Standalone Vite + React +
+  TypeScript dashboard (`dashboard/`) with dark-themed UI:
+  stat cards, model routing, system health, wizard usage,
+  and maturity level panels. All panels driven by live
+  APIs; `SystemHealth` fetches `/api/system/services`
+  instead of hardcoded values.
+- **FeedbackLoop in-memory fallback** — `FeedbackLoop`
+  and `UsageTracker` now use a pluggable `MemoryBackend`
+  protocol with an `_InMemoryStore` fallback so they work
+  out of the box without Redis.
+- **`MemoryBackend` protocol** — Runtime-checkable
+  protocol that all memory backends must satisfy. Enables
+  dependency injection and makes Redis optional at runtime.
+
+### Changed
+
+- **Legacy Redis modules** converted to deprecation shims
+  with v4.0.0 removal markers. Import paths remain
+  unchanged; shims emit `DeprecationWarning` and delegate
+  to the new plugin.
+- **`BasePlugin`** extended with `register_mcp_tools()`
+  hook for plugins to contribute MCP tools at server
+  initialization.
+
+### Fixed
+
+- **SQL query f-strings removed** in
+  `src/attune/monitoring/engine.py` — replaced f-string
+  interpolation with plain string concatenation, removing
+  scanner false-positive and clarifying that no user input
+  is ever interpolated into SQL.
+- **AMS protocol tests** guarded against missing
+  `agent-memory-client` dependency so the suite runs
+  cleanly without the optional package installed.
+- **Redis CI workflow** — added step timeout, SHA-pinned
+  actions, and pip cache to prevent flaky runs.
+- **MCP tool count** aligned with project standards after
+  Redis MCP tools were added via the plugin system.
+
+### Tests
+
+- Error path and signals tests added for 97% plugin
+  coverage (`attune-redis`).
+- `feedback_loop` and `usage_tracker` tests updated to use
+  `_InMemoryStore` directly, removing the Redis test
+  dependency from the core suite.
+
 ## [3.5.0] - 2026-02-24
 
 ### Added

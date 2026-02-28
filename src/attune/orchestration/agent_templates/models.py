@@ -19,6 +19,7 @@ Example:
     ...     default_instructions="Analyze code.",
     ...     quality_gates={"min_score": 7},
     ... )
+
 """
 
 import logging
@@ -43,6 +44,7 @@ class AgentCapability:
         ...     description="Identify test coverage gaps",
         ...     required_tools=["coverage_analyzer"]
         ... )
+
     """
 
     name: str
@@ -76,6 +78,7 @@ class ResourceRequirements:
         ...     timeout_seconds=300,
         ...     memory_mb=512
         ... )
+
     """
 
     min_tokens: int = 1000
@@ -127,6 +130,7 @@ class AgentTemplate:
         - All fields validated on creation
         - tier_preference restricted to allowed values
         - No user input used in eval/exec
+
     """
 
     id: str
@@ -145,6 +149,7 @@ class AgentTemplate:
 
         Raises:
             ValueError: If any field is invalid
+
         """
         # Validate ID
         if not self.id or not isinstance(self.id, str):

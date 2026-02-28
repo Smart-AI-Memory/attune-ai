@@ -35,6 +35,7 @@ class APIReferenceMixin:
 
         Returns:
             List of dicts with function information (name, args, returns, docstring)
+
         """
         functions = []
 
@@ -72,7 +73,7 @@ class APIReferenceMixin:
                         "return_type": return_type,
                         "docstring": docstring,
                         "lineno": node.lineno,
-                    }
+                    },
                 )
 
         return functions
@@ -93,6 +94,7 @@ class APIReferenceMixin:
 
         Returns:
             Markdown formatted API reference section
+
         """
         func_name = func_info["name"]
         args_list = func_info["args"]
@@ -141,7 +143,7 @@ Function:
 ```
 
 Docstring:
-{docstring if docstring else "No docstring"}
+{docstring or "No docstring"}
 
 Output the formatted section EXACTLY as shown in system prompt. Use **Args:** (not Parameters). NO conversational text."""
 
@@ -199,6 +201,7 @@ None
 
         Returns:
             Complete documentation with API reference appendix
+
         """
         logger.info("Adding structured API reference sections...")
 

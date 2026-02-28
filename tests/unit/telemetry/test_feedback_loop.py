@@ -118,7 +118,7 @@ class TestTierRecommendation:
                     max_quality=0.75,
                     sample_count=15,
                     recent_trend=-0.1,
-                )
+                ),
             },
         )
 
@@ -131,21 +131,25 @@ class TestTierRecommendation:
 class TestFeedbackLoop:
     """Test FeedbackLoop class."""
 
-    def test_init_without_memory(self):
-        """Test FeedbackLoop initialization without memory backend."""
+    def test_init_without_memory_uses_in_memory_store(self):
+        """Test FeedbackLoop falls back to _InMemoryStore when no backend given."""
+        from attune.telemetry.feedback_loop import _InMemoryStore
+
         loop = FeedbackLoop()
 
-        assert loop.memory is None
+        assert loop.memory is not None
+        assert isinstance(loop.memory, _InMemoryStore)
+        assert loop.memory.is_connected()
 
     def test_init_with_memory(self):
-        """Test FeedbackLoop initialization with memory backend."""
+        """Test FeedbackLoop initialization with explicit memory backend."""
         mock_memory = Mock()
         loop = FeedbackLoop(memory=mock_memory)
 
         assert loop.memory == mock_memory
 
-    def test_record_feedback_without_memory(self):
-        """Test record_feedback returns empty string when no memory."""
+    def test_record_feedback_with_in_memory_store(self):
+        """Test record_feedback works with the default in-memory store."""
         loop = FeedbackLoop()
 
         feedback_id = loop.record_feedback(
@@ -155,34 +159,18 @@ class TestFeedbackLoop:
             quality_score=0.85,
         )
 
-        assert feedback_id == ""
+        assert feedback_id.startswith("feedback_")
 
     def test_record_feedback_validates_quality_score(self):
         """Test record_feedback validates quality score range."""
-        mock_client = Mock()
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
+        loop = FeedbackLoop()
 
-        loop = FeedbackLoop(memory=mock_memory)
-
-        # Test invalid scores
-        result = loop.record_feedback(
-            workflow_name="test", stage_name="analysis", tier="cheap", quality_score=1.5
-        )
-        assert result == ""
-
-        result = loop.record_feedback(
-            workflow_name="test", stage_name="analysis", tier="cheap", quality_score=-0.1
-        )
-        assert result == ""
+        assert loop.record_feedback("test", "analysis", "cheap", 1.5) == ""
+        assert loop.record_feedback("test", "analysis", "cheap", -0.1) == ""
 
     def test_record_feedback_stores_entry(self):
-        """Test that record_feedback stores feedback in memory."""
-        mock_client = Mock()
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        """Test that record_feedback stores feedback retrievable via history."""
+        loop = FeedbackLoop()
 
         feedback_id = loop.record_feedback(
             workflow_name="code-review",
@@ -192,24 +180,17 @@ class TestFeedbackLoop:
             metadata={"tokens": 150},
         )
 
-        # Should have stored feedback
-        assert mock_client.setex.called
         assert feedback_id.startswith("feedback_")
 
-        # Verify key format
-        call_args = mock_client.setex.call_args[0]
-        assert call_args[0].startswith("feedback:code-review:analysis:cheap:")
-        assert call_args[1] == loop.FEEDBACK_TTL  # 7 days
+        history = loop.get_feedback_history("code-review", "analysis")
+        assert len(history) == 1
+        assert history[0].feedback_id == feedback_id
+        assert history[0].quality_score == 0.85
 
     def test_record_feedback_converts_model_tier_enum(self):
         """Test that record_feedback converts ModelTier enum to string."""
-        mock_client = Mock()
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
+        loop = FeedbackLoop()
 
-        loop = FeedbackLoop(memory=mock_memory)
-
-        # Use enum
         feedback_id = loop.record_feedback(
             workflow_name="test",
             stage_name="analysis",
@@ -218,100 +199,33 @@ class TestFeedbackLoop:
         )
 
         assert feedback_id != ""
-
-        # Verify tier stored as string
-        call_args = mock_client.setex.call_args[0]
-        assert "capable" in call_args[0]
+        keys = loop.memory.keys("feedback:test:analysis:capable:*")
+        assert len(keys) == 1
+        assert "capable" in keys[0]
 
     def test_get_feedback_history_empty(self):
         """Test get_feedback_history returns empty list when no data."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = []
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        loop = FeedbackLoop()
 
         history = loop.get_feedback_history("test-workflow", "analysis")
 
         assert history == []
 
     def test_get_feedback_history_filters_by_tier(self):
-        """Test get_feedback_history filters by tier."""
-        mock_client = Mock()
+        """Test get_feedback_history filters results by tier."""
+        loop = FeedbackLoop()
 
-        all_keys = [
-            b"feedback:test:analysis:cheap:abc123",
-            b"feedback:test:analysis:capable:xyz789",
-        ]
+        loop.record_feedback("test", "analysis", "cheap", 0.75)
+        loop.record_feedback("test", "analysis", "capable", 0.88)
 
-        # Mock keys() to filter based on pattern
-        def mock_scan_iter(match="", count=100):
-            if "cheap" in match:
-                return [k for k in all_keys if b"cheap" in k]
-            elif "capable" in match:
-                return [k for k in all_keys if b"capable" in k]
-            else:
-                return all_keys
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        cheap_data = {
-            "feedback_id": "feedback_abc123",
-            "workflow_name": "test",
-            "stage_name": "analysis",
-            "tier": "cheap",
-            "quality_score": 0.75,
-            "timestamp": "2026-01-27T12:00:00",
-            "metadata": {},
-        }
-
-        capable_data = {
-            "feedback_id": "feedback_xyz789",
-            "workflow_name": "test",
-            "stage_name": "analysis",
-            "tier": "capable",
-            "quality_score": 0.88,
-            "timestamp": "2026-01-27T12:05:00",
-            "metadata": {},
-        }
-
-        def mock_get(key):
-            if isinstance(key, bytes):
-                key = key.decode()
-
-            if "cheap" in key:
-                return json.dumps(cheap_data).encode()
-            elif "capable" in key:
-                return json.dumps(capable_data).encode()
-            return None
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
-
-        # Get only cheap tier feedback
         history = loop.get_feedback_history("test", "analysis", tier="cheap")
 
-        # Should filter to only cheap tier
         assert len(history) == 1
         assert history[0].tier == "cheap"
 
     def test_get_quality_stats_no_data(self):
         """Test get_quality_stats returns None when no data."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = []
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        loop = FeedbackLoop()
 
         stats = loop.get_quality_stats("test", "analysis")
 
@@ -319,44 +233,11 @@ class TestFeedbackLoop:
 
     def test_get_quality_stats_calculates_correctly(self):
         """Test get_quality_stats calculates statistics correctly."""
-        mock_client = Mock()
+        loop = FeedbackLoop()
 
-        # Create 10 feedback entries
-        all_keys = [f"feedback:test:analysis:cheap:id{i}".encode() for i in range(10)]
-
-        # Mock keys() to return all_keys when pattern matches
-        def mock_scan_iter(match="", count=100):
-            if "cheap" in match:
-                return all_keys
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            # Quality scores: 0.5, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 1.0
-            key_str = key.decode() if isinstance(key, bytes) else key
-            idx = int(key_str.split("id")[1])
-            score = 0.5 + (idx * 0.1) if idx < 5 else 0.5 + ((idx - 5) * 0.1) + 0.1
-
-            data = {
-                "feedback_id": f"feedback_id{idx}",
-                "workflow_name": "test",
-                "stage_name": "analysis",
-                "tier": "cheap",
-                "quality_score": score,
-                "timestamp": f"2026-01-27T12:{idx:02d}:00",
-                "metadata": {},
-            }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        # Average: (0.5+0.6+0.7+0.8+0.9 + 0.6+0.7+0.8+0.9+1.0) / 10 = 0.75
+        for score in [0.5, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 1.0]:
+            loop.record_feedback("test", "analysis", "cheap", score)
 
         stats = loop.get_quality_stats("test", "analysis", tier="cheap")
 
@@ -364,18 +245,11 @@ class TestFeedbackLoop:
         assert stats.sample_count == 10
         assert stats.min_quality == 0.5
         assert stats.max_quality == 1.0
-        # Average: (0.5+0.6+0.7+0.8+0.9 + 0.6+0.7+0.8+0.9+1.0) / 10 = 0.75
         assert abs(stats.avg_quality - 0.75) < 0.01
 
     def test_recommend_tier_no_data(self):
         """Test recommend_tier with no feedback data."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = []
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        loop = FeedbackLoop()
 
         recommendation = loop.recommend_tier("test", "analysis", current_tier="cheap")
 
@@ -385,42 +259,11 @@ class TestFeedbackLoop:
         assert "No feedback data" in recommendation.reason
 
     def test_recommend_tier_insufficient_samples(self):
-        """Test recommend_tier with insufficient samples."""
-        mock_client = Mock()
+        """Test recommend_tier with fewer than MIN_SAMPLES entries."""
+        loop = FeedbackLoop()
 
-        # Create 5 feedback entries (less than MIN_SAMPLES=10)
-        all_keys = [f"feedback:test:analysis:cheap:id{i}".encode() for i in range(5)]
-
-        # Mock keys() to return based on pattern
-        def mock_scan_iter(match="", count=100):
-            if "cheap" in match:
-                return all_keys
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            key_str = key.decode() if isinstance(key, bytes) else key
-            idx = int(key_str.split("id")[1])
-            data = {
-                "feedback_id": f"feedback_id{idx}",
-                "workflow_name": "test",
-                "stage_name": "analysis",
-                "tier": "cheap",
-                "quality_score": 0.8,
-                "timestamp": f"2026-01-27T12:{idx:02d}:00",
-                "metadata": {},
-            }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        for _ in range(5):  # MIN_SAMPLES = 10
+            loop.record_feedback("test", "analysis", "cheap", 0.8)
 
         recommendation = loop.recommend_tier("test", "analysis", current_tier="cheap")
 
@@ -430,42 +273,11 @@ class TestFeedbackLoop:
         assert "Insufficient data" in recommendation.reason
 
     def test_recommend_tier_upgrade_on_low_quality(self):
-        """Test recommend_tier suggests upgrade when quality is low."""
-        mock_client = Mock()
+        """Test recommend_tier suggests upgrade when quality is below threshold."""
+        loop = FeedbackLoop()
 
-        # Create 15 feedback entries with low quality (0.6)
-        all_keys = [f"feedback:test:analysis:cheap:id{i}".encode() for i in range(15)]
-
-        # Mock keys() to return based on pattern
-        def mock_scan_iter(match="", count=100):
-            if "cheap" in match:
-                return all_keys
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            key_str = key.decode() if isinstance(key, bytes) else key
-            idx = int(key_str.split("id")[1])
-            data = {
-                "feedback_id": f"feedback_id{idx}",
-                "workflow_name": "test",
-                "stage_name": "analysis",
-                "tier": "cheap",
-                "quality_score": 0.6,  # Below QUALITY_THRESHOLD (0.7)
-                "timestamp": f"2026-01-27T12:{idx:02d}:00",
-                "metadata": {},
-            }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        for _ in range(15):
+            loop.record_feedback("test", "analysis", "cheap", 0.6)  # below 0.7
 
         recommendation = loop.recommend_tier("test", "analysis", current_tier="cheap")
 
@@ -475,41 +287,10 @@ class TestFeedbackLoop:
 
     def test_recommend_tier_maintain_on_acceptable_quality(self):
         """Test recommend_tier maintains tier when quality is acceptable."""
-        mock_client = Mock()
+        loop = FeedbackLoop()
 
-        # Create 15 feedback entries with acceptable quality (0.8)
-        all_keys = [f"feedback:test:analysis:cheap:id{i}".encode() for i in range(15)]
-
-        # Mock keys() to return based on pattern
-        def mock_scan_iter(match="", count=100):
-            if "cheap" in match:
-                return all_keys
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            key_str = key.decode() if isinstance(key, bytes) else key
-            idx = int(key_str.split("id")[1])
-            data = {
-                "feedback_id": f"feedback_id{idx}",
-                "workflow_name": "test",
-                "stage_name": "analysis",
-                "tier": "cheap",
-                "quality_score": 0.8,  # Above QUALITY_THRESHOLD (0.7), below 0.9
-                "timestamp": f"2026-01-27T12:{idx:02d}:00",
-                "metadata": {},
-            }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        for _ in range(15):
+            loop.record_feedback("test", "analysis", "cheap", 0.8)  # above 0.7, below 0.9
 
         recommendation = loop.recommend_tier("test", "analysis", current_tier="cheap")
 
@@ -518,42 +299,11 @@ class TestFeedbackLoop:
         assert "maintain" in recommendation.reason.lower()
 
     def test_recommend_tier_already_premium(self):
-        """Test recommend_tier when already using premium tier."""
-        mock_client = Mock()
+        """Test recommend_tier stays on premium even with low quality."""
+        loop = FeedbackLoop()
 
-        # Create 15 feedback entries with low quality on premium tier
-        all_keys = [f"feedback:test:analysis:premium:id{i}".encode() for i in range(15)]
-
-        # Mock keys() to return based on pattern
-        def mock_scan_iter(match="", count=100):
-            if "premium" in match:
-                return all_keys
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            key_str = key.decode() if isinstance(key, bytes) else key
-            idx = int(key_str.split("id")[1])
-            data = {
-                "feedback_id": f"feedback_id{idx}",
-                "workflow_name": "test",
-                "stage_name": "analysis",
-                "tier": "premium",
-                "quality_score": 0.6,  # Low quality even on premium
-                "timestamp": f"2026-01-27T12:{idx:02d}:00",
-                "metadata": {},
-            }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        for _ in range(15):
+            loop.record_feedback("test", "analysis", "premium", 0.6)
 
         recommendation = loop.recommend_tier("test", "analysis", current_tier="premium")
 
@@ -562,119 +312,52 @@ class TestFeedbackLoop:
         assert "already using premium" in recommendation.reason.lower()
 
     def test_get_underperforming_stages_no_stages(self):
-        """Test get_underperforming_stages returns empty when no stages."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = []
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        """Test get_underperforming_stages returns empty when no data."""
+        loop = FeedbackLoop()
 
         underperforming = loop.get_underperforming_stages("test-workflow")
 
         assert underperforming == []
 
     def test_get_underperforming_stages_filters_by_threshold(self):
-        """Test get_underperforming_stages filters by quality threshold."""
-        mock_client = Mock()
+        """Test get_underperforming_stages returns only stages below threshold."""
+        loop = FeedbackLoop()
 
-        # Create feedback for 2 stages: one good, one bad
-        all_keys = [
-            b"feedback:test:stage1:cheap:id1",
-            b"feedback:test:stage1:cheap:id2",
-            b"feedback:test:stage2:cheap:id3",
-            b"feedback:test:stage2:cheap:id4",
-        ]
-
-        # Mock keys() to return all keys for workflow pattern, or specific stage keys
-        def mock_scan_iter(match="", count=100):
-            if match == "feedback:test:*":
-                return all_keys
-            elif "stage1" in match:
-                return [k for k in all_keys if b"stage1" in k]
-            elif "stage2" in match:
-                return [k for k in all_keys if b"stage2" in k]
-            return []
-
-        mock_client.scan_iter.side_effect = mock_scan_iter
-
-        import json
-
-        def mock_get(key):
-            key_str = key.decode() if isinstance(key, bytes) else key
-
-            if "stage1" in key_str:
-                # Good quality stage
-                data = {
-                    "feedback_id": "id1",
-                    "workflow_name": "test",
-                    "stage_name": "stage1",
-                    "tier": "cheap",
-                    "quality_score": 0.85,
-                    "timestamp": "2026-01-27T12:00:00",
-                    "metadata": {},
-                }
-            else:
-                # Poor quality stage
-                data = {
-                    "feedback_id": "id3",
-                    "workflow_name": "test",
-                    "stage_name": "stage2",
-                    "tier": "cheap",
-                    "quality_score": 0.55,
-                    "timestamp": "2026-01-27T12:00:00",
-                    "metadata": {},
-                }
-            return json.dumps(data).encode()
-
-        mock_client.get.side_effect = mock_get
-
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        # stage1: good quality
+        loop.record_feedback("test", "stage1", "cheap", 0.85)
+        loop.record_feedback("test", "stage1", "cheap", 0.85)
+        # stage2: poor quality
+        loop.record_feedback("test", "stage2", "cheap", 0.55)
+        loop.record_feedback("test", "stage2", "cheap", 0.55)
 
         underperforming = loop.get_underperforming_stages("test", quality_threshold=0.7)
 
-        # Should only return stage2 (quality 0.55 < 0.7)
         assert len(underperforming) == 1
-        assert underperforming[0][0] == "stage2/cheap"  # Stage name includes tier
+        assert underperforming[0][0] == "stage2/cheap"
         assert underperforming[0][1].avg_quality < 0.7
 
     def test_clear_feedback_no_stage(self):
-        """Test clear_feedback clears all stages for workflow."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = [
-            b"feedback:test:stage1:cheap:id1",
-            b"feedback:test:stage2:cheap:id2",
-        ]
-        mock_client.delete.return_value = 2
+        """Test clear_feedback removes all entries for a workflow."""
+        loop = FeedbackLoop()
 
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        loop.record_feedback("test", "stage1", "cheap", 0.8)
+        loop.record_feedback("test", "stage2", "cheap", 0.9)
 
         cleared = loop.clear_feedback("test")
 
         assert cleared == 2
-        assert mock_client.delete.called
+        assert loop.get_feedback_history("test", "stage1") == []
+        assert loop.get_feedback_history("test", "stage2") == []
 
     def test_clear_feedback_specific_stage(self):
-        """Test clear_feedback clears only specified stage."""
-        mock_client = Mock()
-        mock_client.scan_iter.return_value = [b"feedback:test:stage1:cheap:id1"]
-        mock_client.delete.return_value = 1
+        """Test clear_feedback removes only the specified stage."""
+        loop = FeedbackLoop()
 
-        mock_memory = Mock(spec=["_client"])
-        mock_memory._client = mock_client
-
-        loop = FeedbackLoop(memory=mock_memory)
+        loop.record_feedback("test", "stage1", "cheap", 0.8)
+        loop.record_feedback("test", "stage2", "cheap", 0.9)
 
         cleared = loop.clear_feedback("test", stage_name="stage1")
 
         assert cleared == 1
-
-        # Verify pattern includes stage name
-        mock_client.scan_iter.assert_called_with(match="feedback:test:stage1:*", count=100)
+        assert loop.get_feedback_history("test", "stage1") == []
+        assert len(loop.get_feedback_history("test", "stage2")) == 1

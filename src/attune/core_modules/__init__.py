@@ -24,6 +24,6 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "EmpathyOS",
     "CollaborationState",
+    "EmpathyOS",
 ]

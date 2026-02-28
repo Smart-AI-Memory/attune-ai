@@ -155,18 +155,18 @@ def get_strategy(
     if strategy_cls is None:
         raise ValueError(
             f"Unknown verification strategy: {strategy_name!r}. "
-            f"Available: {', '.join(STRATEGY_REGISTRY)} or 'custom-command'"
+            f"Available: {', '.join(STRATEGY_REGISTRY)} or 'custom-command'",
         )
 
     return strategy_cls()
 
 
 __all__ = [
+    "STRATEGY_REGISTRY",
     "BuildStrategy",
     "CustomCommandStrategy",
     "LintCheckStrategy",
     "RunTestsStrategy",
-    "STRATEGY_REGISTRY",
     "TypeCheckStrategy",
     "VerificationStrategy",
     "get_strategy",

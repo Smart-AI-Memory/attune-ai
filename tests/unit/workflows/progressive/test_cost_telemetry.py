@@ -181,7 +181,7 @@ class TestBudgetChecking:
                 duration=10.0,
                 tokens_used={"input": 1000, "output": 500, "total": 1500},
                 escalated=False,
-            )
+            ),
         )
 
         # Should not raise exception
@@ -211,7 +211,7 @@ class TestBudgetChecking:
                 duration=10.0,
                 tokens_used={"input": 1000, "output": 500, "total": 1500},
                 escalated=False,
-            )
+            ),
         )
 
         with pytest.raises(BudgetExceededError, match="exceeds budget"):
@@ -245,7 +245,7 @@ class TestBudgetChecking:
                 duration=10.0,
                 tokens_used={"input": 1000, "output": 500, "total": 1500},
                 escalated=False,
-            )
+            ),
         )
 
         # Should not raise exception, just log warning
@@ -473,7 +473,7 @@ class TestCostManagementEdgeCases:
                 duration=10.0,
                 tokens_used={"input": 1000, "output": 500, "total": 1500},
                 escalated=False,
-            )
+            ),
         )
 
         # Should not raise exception (not exceeded, just equal)

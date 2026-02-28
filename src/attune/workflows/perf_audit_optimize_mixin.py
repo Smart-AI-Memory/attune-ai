@@ -48,6 +48,7 @@ class PerfAuditOptimizeMixin:
 
         Returns:
             Tuple of (result_dict, input_tokens, output_tokens)
+
         """
         hotspot_result = input_data.get("hotspot_result", {})
         hotspots = hotspot_result.get("hotspots", [])
@@ -60,7 +61,7 @@ class PerfAuditOptimizeMixin:
             hotspots_summary.append(
                 f"- {h.get('file')}: "
                 f"score={h.get('complexity_score', 0)}, "
-                f"concerns={', '.join(h.get('concerns', []))}"
+                f"concerns={', '.join(h.get('concerns', []))}",
             )
 
         # Summary of most common issues
@@ -93,7 +94,10 @@ class PerfAuditOptimizeMixin:
 
         # Execute LLM call
         response, input_tokens, output_tokens = await _execute_optimize_llm(
-            self, tier, system, user_message
+            self,
+            tier,
+            system,
+            user_message,
         )
 
         # Parse XML response if enforcement is enabled
@@ -145,22 +149,23 @@ def _build_optimize_prompt(
 
     Returns:
         Tuple of (system_prompt, user_message)
+
     """
     if workflow._is_xml_enabled():
         from attune.prompts.examples import PERF_AUDIT_EXAMPLES
 
         user_message = workflow._render_xml_prompt(
             role="performance engineer specializing in optimization",
-            goal=("Generate comprehensive optimization " "recommendations for performance issues"),
+            goal=("Generate comprehensive optimization recommendations for performance issues"),
             instructions=[
                 "Analyze each performance hotspot and its concerns",
-                "Provide specific optimization strategies " "with code examples",
-                "Estimate the impact of each optimization " "(high/medium/low)",
-                "Prioritize recommendations by potential " "performance gain",
+                "Provide specific optimization strategies with code examples",
+                "Estimate the impact of each optimization (high/medium/low)",
+                "Prioritize recommendations by potential performance gain",
                 "Include before/after code patterns where helpful",
             ],
             constraints=[
-                "Be specific about which files and patterns " "to optimize",
+                "Be specific about which files and patterns to optimize",
                 "Include actionable code changes",
                 "Focus on high-impact optimizations first",
             ],
@@ -215,6 +220,7 @@ async def _execute_optimize_llm(
 
     Returns:
         Tuple of (response, input_tokens, output_tokens)
+
     """
     if workflow._executor is not None or workflow._api_key:
         try:

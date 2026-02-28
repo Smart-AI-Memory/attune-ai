@@ -517,7 +517,9 @@ class TestConfigurationStore:
 
         # Search for release_prep with success rate >= 0.8
         results = temp_store.search(
-            task_pattern="release_prep", min_success_rate=0.8, min_quality_score=80.0
+            task_pattern="release_prep",
+            min_success_rate=0.8,
+            min_quality_score=80.0,
         )
 
         assert len(results) == 1

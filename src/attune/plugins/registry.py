@@ -73,7 +73,7 @@ class PluginRegistry:
                     if ep.name not in _discovery_cache:
                         try:
                             _discovery_cache[ep.name] = ep.load()
-                        except Exception as e:  # noqa: BLE001
+                        except Exception as e:
                             # INTENTIONAL: entry point load is best-effort
                             self.logger.warning(
                                 f"Failed to load plugin '{ep.name}': {e}",
@@ -89,7 +89,7 @@ class PluginRegistry:
                 self.register_plugin(name, plugin_instance)
                 plugin_instance.on_activate()
                 self.logger.info(f"Successfully loaded plugin: {name}")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: graceful degradation, log but don't crash
                 self.logger.warning(f"Failed to init plugin '{name}': {e}", exc_info=True)
 

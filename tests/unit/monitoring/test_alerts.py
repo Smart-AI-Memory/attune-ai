@@ -63,8 +63,7 @@ def temp_telemetry():
         ]
 
         with open(usage_file, "w") as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + "\n")
+            f.writelines(json.dumps(entry) + "\n" for entry in entries)
 
         yield telemetry_dir
 

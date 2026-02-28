@@ -76,7 +76,10 @@ class TestSecurityScanning:
     def test_bandit_is_installed(self):
         """Verify Bandit is installed and accessible"""
         result = subprocess.run(
-            ["bandit", "--version"], check=False, capture_output=True, text=True
+            ["bandit", "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0, "Bandit is not installed. Run: pip install bandit"
         assert "bandit" in result.stdout.lower()

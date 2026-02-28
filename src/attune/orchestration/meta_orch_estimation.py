@@ -30,6 +30,7 @@ class EstimationMixin:
 
         Returns:
             Estimated cost in arbitrary units
+
         """
         tier_costs = {
             "CHEAP": 1.0,
@@ -52,6 +53,7 @@ class EstimationMixin:
 
         Returns:
             Estimated duration in seconds
+
         """
         # Get max timeout from agents
         max_timeout = max(

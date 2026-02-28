@@ -76,6 +76,7 @@ class DecomposedTask:
         validation_checks: How to verify correctness.
         risks: List of ``{severity, description}`` dicts.
         dependencies: Task IDs that must complete first.
+
     """
 
     task_id: str
@@ -92,6 +93,7 @@ class DecomposedTask:
 
         Returns:
             Dict representation of this task.
+
         """
         return {
             "task_id": self.task_id,
@@ -109,6 +111,7 @@ class DecomposedTask:
 
         Returns:
             XML string following the task prompt schema.
+
         """
         parts = [f'<task id="{self.task_id}" name="{self.name}">']
         parts.append(f"  <objective>{self.objective}</objective>")
@@ -170,6 +173,7 @@ class TaskDecomposer:
         ...     codebase_context="Flask app with SQLAlchemy",
         ...     constraints=["Use JWT tokens", "Add tests"],
         ... )
+
     """
 
     def __init__(self, workflow: Any) -> None:
@@ -190,6 +194,7 @@ class TaskDecomposer:
 
         Returns:
             Ordered list of ``DecomposedTask`` objects.
+
         """
         constraints = constraints or []
 
@@ -234,6 +239,7 @@ class TaskDecomposer:
 
         Returns:
             List of ``DecomposedTask`` objects.
+
         """
         tasks: list[DecomposedTask] = []
 
@@ -265,7 +271,7 @@ class TaskDecomposer:
                     validation_checks=validation_checks,
                     risks=risks,
                     dependencies=dependencies,
-                )
+                ),
             )
 
         if not tasks:
@@ -286,6 +292,7 @@ class TaskDecomposer:
 
         Returns:
             Tag text content, or empty string if not found.
+
         """
         match = re.search(rf"<{tag}>(.*?)</{tag}>", xml, re.DOTALL)
         return match.group(1).strip() if match else ""
@@ -299,6 +306,7 @@ class TaskDecomposer:
 
         Returns:
             List of ``{path, description}`` dicts.
+
         """
         section_match = re.search(
             rf"<{section_tag}>(.*?)</{section_tag}>",
@@ -326,6 +334,7 @@ class TaskDecomposer:
 
         Returns:
             List of text strings.
+
         """
         section_match = re.search(
             rf"<{section_tag}>(.*?)</{section_tag}>",
@@ -351,6 +360,7 @@ class TaskDecomposer:
 
         Returns:
             List of ``{severity, description}`` dicts.
+
         """
         section_match = re.search(r"<risks>(.*?)</risks>", xml, re.DOTALL)
         if not section_match:

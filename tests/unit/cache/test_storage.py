@@ -264,7 +264,7 @@ class TestCacheStorage:
                         "prompt_hash": "hash",
                         "timestamp": current_time - 7200,  # 2 hours ago
                         "ttl": 3600,  # 1 hour TTL
-                    }
+                    },
                 ],
             }
 

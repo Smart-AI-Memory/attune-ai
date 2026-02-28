@@ -25,6 +25,7 @@ def generate_react_flow_schema(state: EditorState) -> dict[str, Any]:
 
     Returns:
         Schema for React Flow library
+
     """
     # Node types for React Flow
     node_type_map = {
@@ -120,6 +121,7 @@ def generate_editor_html(
 
     Returns:
         Complete HTML page
+
     """
     visualizer = WorkflowVisualizer()
     state = visualizer.blueprint_to_editor(blueprint)

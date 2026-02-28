@@ -116,7 +116,7 @@ class TestWorkflowHistoryStore:
             """
             SELECT name FROM sqlite_master
             WHERE type='table'
-        """
+        """,
         )
         tables = {row["name"] for row in cursor.fetchall()}
 
@@ -131,7 +131,7 @@ class TestWorkflowHistoryStore:
             """
             SELECT name FROM sqlite_master
             WHERE type='index' AND name LIKE 'idx_%'
-        """
+        """,
         )
         indexes = {row["name"] for row in cursor.fetchall()}
 
@@ -169,7 +169,8 @@ class TestWorkflowHistoryStore:
         # Verify stages were inserted
         cursor = store.conn.cursor()
         cursor.execute(
-            "SELECT * FROM workflow_stages WHERE run_id = ? ORDER BY stage_id", (run_id,)
+            "SELECT * FROM workflow_stages WHERE run_id = ? ORDER BY stage_id",
+            (run_id,),
         )
         stages = cursor.fetchall()
 
@@ -205,7 +206,7 @@ class TestWorkflowHistoryStore:
                     **sample_result.__dict__,
                     "started_at": datetime.now(),
                     "completed_at": datetime.now(),
-                }
+                },
             )
             store.record_run(f"run-{i}", "test-workflow", "anthropic", result)
 
@@ -248,7 +249,7 @@ class TestWorkflowHistoryStore:
                 **sample_result.__dict__,
                 "started_at": now - timedelta(days=10),
                 "completed_at": now - timedelta(days=10),
-            }
+            },
         )
 
         recent_result = WorkflowResult(
@@ -256,7 +257,7 @@ class TestWorkflowHistoryStore:
                 **sample_result.__dict__,
                 "started_at": now - timedelta(days=1),
                 "completed_at": now - timedelta(days=1),
-            }
+            },
         )
 
         store.record_run("old-run", "test-workflow", "anthropic", old_result)
@@ -405,7 +406,7 @@ class TestWorkflowHistoryStore:
                     **sample_result.__dict__,
                     "started_at": datetime.now(),
                     "completed_at": datetime.now(),
-                }
+                },
             )
             store.record_run(f"run-{i}", "test-workflow", "anthropic", result)
 

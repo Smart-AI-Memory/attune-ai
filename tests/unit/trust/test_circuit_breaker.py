@@ -264,7 +264,7 @@ class TestDamageScore:
         """Test damage score with single event."""
         breaker = TrustCircuitBreaker(user_id="user123")
         breaker._damage_events.append(
-            TrustDamageEvent(event_type=TrustDamageType.WRONG_ANSWER, severity=1.0)
+            TrustDamageEvent(event_type=TrustDamageType.WRONG_ANSWER, severity=1.0),
         )
 
         # Recent event should have recency factor close to 1.0
@@ -277,7 +277,7 @@ class TestDamageScore:
 
         # Add a repetitive error (weight 2.0)
         breaker._damage_events.append(
-            TrustDamageEvent(event_type=TrustDamageType.REPETITIVE_ERROR, severity=1.0)
+            TrustDamageEvent(event_type=TrustDamageType.REPETITIVE_ERROR, severity=1.0),
         )
 
         # Score should be close to 2.0 (weight) * 1.0 (severity) * ~1.0 (recency)
@@ -316,7 +316,7 @@ class TestDamageScore:
         # Add 3 wrong answer events
         for _ in range(3):
             breaker._damage_events.append(
-                TrustDamageEvent(event_type=TrustDamageType.WRONG_ANSWER, severity=1.0)
+                TrustDamageEvent(event_type=TrustDamageType.WRONG_ANSWER, severity=1.0),
             )
 
         # Should be approximately 3.0
@@ -651,7 +651,7 @@ class TestSerialization:
                 event_type=TrustDamageType.WRONG_ANSWER,
                 context="Bad suggestion",
                 severity=0.8,
-            )
+            ),
         )
 
         data = breaker.to_dict()
@@ -678,7 +678,7 @@ class TestSerialization:
                     "context": "Test error",
                     "severity": 0.5,
                     "user_explicit": False,
-                }
+                },
             ],
             "config": {
                 "damage_threshold": 4,

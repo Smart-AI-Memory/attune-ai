@@ -49,7 +49,7 @@ class TeamSession:
             purpose: Description of what this session is for
 
         """
-        from ..redis_memory import AccessTier, AgentCredentials
+        from ..memory.types import AccessTier, AgentCredentials
 
         self.memory = short_term_memory
         self.session_id = session_id
@@ -69,7 +69,7 @@ class TeamSession:
 
     def add_agent(self, agent_id: str) -> bool:
         """Add an agent to this session."""
-        from ..redis_memory import AccessTier, AgentCredentials
+        from ..memory.types import AccessTier, AgentCredentials
 
         agent_creds = AgentCredentials(agent_id=agent_id, tier=AccessTier.CONTRIBUTOR)
         return bool(self.memory.join_session(self.session_id, agent_creds))

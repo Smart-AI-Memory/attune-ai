@@ -87,7 +87,7 @@ class TestRedisAutoDetector:
         mod._cached_result = None
         mod._cached_at = 0.0
 
-    @pytest.fixture()
+    @pytest.fixture
     def detector(self, tmp_path):
         """Create detector with temp config path."""
         config_path = tmp_path / "config.yml"
@@ -396,7 +396,7 @@ class TestBaseOperationsBackwardCompat:
             with patch("attune.memory.redis_auto_detect.auto_detect_redis") as mock_detect:
                 try:
                     BaseOperations()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     # INTENTIONAL: Connection may fail — we only care that
                     # auto-detect was NOT called
                     pass

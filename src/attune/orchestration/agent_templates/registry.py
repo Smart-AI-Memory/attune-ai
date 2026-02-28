@@ -9,6 +9,7 @@ Example:
     >>> template = get_template("test_coverage_analyzer")
     >>> print(template.role)
     Test Coverage Expert
+
 """
 
 import logging
@@ -29,6 +30,7 @@ def _register_template(template: AgentTemplate) -> None:
 
     Raises:
         ValueError: If template with same ID already registered
+
     """
     if template.id in _TEMPLATE_REGISTRY:
         raise ValueError(f"Template '{template.id}' already registered")
@@ -49,6 +51,7 @@ def get_template(template_id: str) -> AgentTemplate | None:
         >>> template = get_template("test_coverage_analyzer")
         >>> print(template.role)
         Test Coverage Expert
+
     """
     if not template_id or not isinstance(template_id, str):
         logger.warning(f"Invalid template_id: {template_id}")
@@ -66,6 +69,7 @@ def get_all_templates() -> list[AgentTemplate]:
         >>> templates = get_all_templates()
         >>> len(templates) >= 13
         True
+
     """
     return list(_TEMPLATE_REGISTRY.values())
 
@@ -83,6 +87,7 @@ def get_templates_by_capability(capability: str) -> list[AgentTemplate]:
         >>> templates = get_templates_by_capability("analyze_gaps")
         >>> any(t.id == "test_coverage_analyzer" for t in templates)
         True
+
     """
     if not capability or not isinstance(capability, str):
         logger.warning(f"Invalid capability: {capability}")
@@ -106,6 +111,7 @@ def get_templates_by_tier(tier: str) -> list[AgentTemplate]:
         >>> templates = get_templates_by_tier("CAPABLE")
         >>> len(templates) > 0
         True
+
     """
     if tier not in AgentTemplate.ALLOWED_TIERS:
         logger.warning(f"Invalid tier: {tier}")
@@ -127,6 +133,7 @@ def register_custom_template(template: AgentTemplate) -> None:
 
     Raises:
         ValueError: If template validation fails.
+
     """
     _TEMPLATE_REGISTRY[template.id] = template
     logger.info(f"Registered custom template: {template.id}")
@@ -140,6 +147,7 @@ def unregister_template(template_id: str) -> bool:
 
     Returns:
         True if removed, False if not found.
+
     """
     if template_id in _TEMPLATE_REGISTRY:
         del _TEMPLATE_REGISTRY[template_id]
@@ -153,5 +161,6 @@ def get_registry() -> dict[str, AgentTemplate]:
 
     Returns:
         Dict mapping template IDs to templates.
+
     """
     return dict(_TEMPLATE_REGISTRY)

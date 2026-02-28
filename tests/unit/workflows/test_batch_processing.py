@@ -336,9 +336,9 @@ class TestBatchProcessingCostSavings:
                 def get_model_side_effect(provider, tier):
                     if tier == "cheap":
                         return mock_cheap
-                    elif tier == "capable":
+                    if tier == "capable":
                         return mock_capable
-                    elif tier == "premium":
+                    if tier == "premium":
                         return mock_premium
                     return None
 
@@ -353,10 +353,16 @@ class TestBatchProcessingCostSavings:
                 requests = [
                     BatchRequest(task_id="t1", task_type="test", input_data={}, model_tier="cheap"),
                     BatchRequest(
-                        task_id="t2", task_type="test", input_data={}, model_tier="capable"
+                        task_id="t2",
+                        task_type="test",
+                        input_data={},
+                        model_tier="capable",
                     ),
                     BatchRequest(
-                        task_id="t3", task_type="test", input_data={}, model_tier="premium"
+                        task_id="t3",
+                        task_type="test",
+                        input_data={},
+                        model_tier="premium",
                     ),
                 ]
 

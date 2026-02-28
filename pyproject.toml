@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "3.5.0"
+version = "3.6.5"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -77,6 +77,10 @@ dependencies = [
 memory = [
     "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support
 ]
+redis = [
+    "agent-memory-client>=0.14.0",
+    "redis>=5.0.0,<8.0.0",
+]
 
 # LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
@@ -121,17 +125,10 @@ agent-sdk = [
 # NOTE: attune-software is bundled in this repo at attune_software/
 software = []
 
-# Agent Coordination Dashboard (optional, falls back to stdlib server)
-dashboard = [
-    "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
-    "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<1.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
-]
-
 # Socratic meta-workflows (no extra deps - uses core anthropic SDK)
 socratic = []
 
-# Backend API server (optional) - dashboard + authentication
+# Backend API server (optional) - authentication
 backend = [
     "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
     "uvicorn>=0.20.0,<1.0.0",
@@ -331,6 +328,7 @@ Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md
 # Plugin entry points for auto-discovery
 [project.entry-points."attune.plugins"]
 software = "attune_software.plugin:SoftwarePlugin"
+redis = "attune_redis.plugin:RedisPlugin"
 
 # Backward-compat alias (removed in v3.0.0)
 [project.entry-points."empathy_framework.plugins"]
@@ -365,6 +363,11 @@ test-gen = "attune.wizards.builtin.test_gen_wizard:TestGenWizard"
 refactor = "attune.wizards.builtin.refactor_wizard:RefactorWizard"
 security = "attune.wizards.builtin.security_wizard:SecurityWizard"
 release-prep = "attune.wizards.builtin.release_prep_wizard:ReleasePrepWizard"
+
+# Memory backend plugin entry points
+[project.entry-points."attune.memory_backends"]
+file = "attune.memory.file_session:FileSessionMemory"
+redis = "attune_redis.memory:AMSMemoryBackend"
 
 [tool.setuptools]
 # Automatic package discovery
@@ -409,7 +412,6 @@ exclude = [
     "website/",  # Next.js website - separate linting
     "docs/archive/",  # Archived code
     "examples/",  # Example code
-    "dashboard/",  # Dashboard code
     "deployments/",  # Deployment scripts
     ".archive/",  # Archived files
     "src/attune/workflows/new_sample_workflow1.py",  # Test workflow
@@ -460,7 +462,6 @@ known-first-party = ["attune", "attune_software"]
 "src/attune/**/*.py" = ["BLE001"]  # Core framework needs broad exception handling
 "*_adapter.py" = ["BLE001"]  # Adapter files need broad exception handling
 "*_crew.py" = ["BLE001"]  # Crew files need broad exception handling
-"dashboard/**/*.py" = ["BLE001"]  # Dashboard needs broad exception handling
 "deployments/**/*.py" = ["BLE001"]  # Deployment scripts need broad exception handling
 "docs/archive/**/*.py" = ["BLE001"]  # Archived code
 "attune_software/**/*.py" = ["BLE001"]  # Plugin needs broad exception handling
@@ -501,7 +502,6 @@ exclude = [
     "scripts/",  # Utility scripts (not production code)
     "docs/",  # Documentation scripts
     "book-indesign/",  # Book publishing scripts
-    "dashboard/",  # Dashboard (separate project)
     "archived_wizards/",  # Archived code
     "wizards_consolidated/",  # Consolidated wizards (separate)
     "coach_wizards/",  # Coach wizards (separate package)
@@ -583,9 +583,6 @@ omit = [
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
     # Infrastructure servers (require HTTP/WebSocket clients, not unit-testable)
-    "*/dashboard/app.py",  # FastAPI dashboard server
-    "*/dashboard/standalone_server.py",  # Standalone HTTP server
-    "*/dashboard/simple_server.py",  # Simple HTTP server
     "*/mcp/server.py",  # MCP protocol server
     "*/workflows/progress_server.py",  # Progress streaming server
     # Interactive CLIs (require TTY/user input)
@@ -643,8 +640,6 @@ omit = [
     # Core module stubs
     "*/core_modules/interaction.py",  # Interaction stubs
     "*/core_modules/short_term_memory.py",  # Memory stubs
-    # Dashboard init
-    "*/dashboard/__init__.py",  # Dashboard package init
     # MCP init
     "*/mcp/__init__.py",  # MCP package init
     # Project index (requires filesystem scanning)

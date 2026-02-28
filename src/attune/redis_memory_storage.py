@@ -1,17 +1,26 @@
-"""Redis Short-Term Memory Storage for Attune AI
+"""Deprecated — use attune_redis.AMSMemoryBackend.
 
-Core storage engine for Redis-backed short-term memory:
-- Low-level Redis/mock get/set/delete/keys operations
-- Working memory (stash/retrieve/clear)
-- Health check and statistics
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
 
-Copyright 2025 Smart AI Memory, LLC
+Legacy storage engine kept for backward compatibility.
+New code should use ``attune_redis.memory.AMSMemoryBackend``.
+
+Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import json
-from datetime import datetime
-from typing import Any
+import warnings
+
+warnings.warn(
+    "attune.redis_memory_storage is deprecated. "
+    "Use attune_redis.memory.AMSMemoryBackend instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+import json  # noqa: E402
+from datetime import datetime  # noqa: E402
+from typing import Any  # noqa: E402
 
 try:
     import redis
@@ -20,7 +29,7 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
 
-from .redis_memory_models import AgentCredentials, TTLStrategy
+from .memory.types import AgentCredentials, TTLStrategy  # noqa: E402
 
 
 class RedisStorageBase:
@@ -227,7 +236,7 @@ class RedisStorageBase:
             return False
         try:
             return bool(self._client.ping())
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Health check is best-effort. Connection
             # failure is non-fatal. Consumers will handle
             # disconnection gracefully.

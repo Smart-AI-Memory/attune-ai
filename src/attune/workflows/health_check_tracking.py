@@ -30,6 +30,7 @@ def get_trend_comparison(
 
     Returns:
         Trend description
+
     """
     history_file = tracking_dir / "history.jsonl"
 
@@ -51,10 +52,9 @@ def get_trend_comparison(
 
             if abs(delta) < 1.0:
                 return f"Stable (~{previous_score:.1f})"
-            elif delta > 0:
-                return f"Improving (+{delta:.1f} " f"from {previous_score:.1f})"
-            else:
-                return f"Declining ({delta:.1f} " f"from {previous_score:.1f})"
+            if delta > 0:
+                return f"Improving (+{delta:.1f} from {previous_score:.1f})"
+            return f"Declining ({delta:.1f} from {previous_score:.1f})"
 
     except (json.JSONDecodeError, KeyError, IndexError) as e:
         logger.warning(f"Error reading tracking history: {e}")
@@ -70,6 +70,7 @@ def save_tracking_history(
     Args:
         report: Health check report to save
         tracking_dir: Directory for history.jsonl
+
     """
     history_file = tracking_dir / "history.jsonl"
 
@@ -88,7 +89,7 @@ def save_tracking_history(
             }
             f.write(json.dumps(entry) + "\n")
 
-        logger.info(f"Saved health check to tracking history: " f"{history_file}")
+        logger.info(f"Saved health check to tracking history: {history_file}")
 
     except OSError as e:
         logger.error(f"Failed to save tracking history: {e}")
@@ -106,6 +107,7 @@ def save_health_json(
     Args:
         report: Health check report to save
         project_root: Project root directory
+
     """
     health_file = project_root / ".attune" / "health.json"
 
@@ -176,13 +178,13 @@ def save_health_json(
         with validated_health_file.open("w") as f:
             json.dump(health_data, f, indent=2)
 
-        logger.info(f"Saved health data to {validated_health_file} " f"for VS Code extension")
+        logger.info(f"Saved health data to {validated_health_file} for VS Code extension")
 
     except OSError as e:
-        logger.warning(f"Failed to save health.json " f"(file system error): {e}")
+        logger.warning(f"Failed to save health.json (file system error): {e}")
     except (TypeError, ValueError) as e:
-        logger.error(f"Failed to save health.json " f"(serialization error): {e}")
-    except Exception as e:  # noqa: BLE001
+        logger.error(f"Failed to save health.json (serialization error): {e}")
+    except Exception as e:
         # INTENTIONAL: Saving health data should never crash
         # a health check
-        logger.warning(f"Failed to save health.json " f"(unexpected error): {e}")
+        logger.warning(f"Failed to save health.json (unexpected error): {e}")

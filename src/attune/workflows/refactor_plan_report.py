@@ -105,7 +105,8 @@ def _format_scan_summary(lines: list[str], input_data: dict) -> None:
             marker_info = DEBT_MARKERS_SEVERITY.get(marker, {"severity": "low"})
             severity = str(marker_info.get("severity", "low"))
             sev_icon = {"high": "\U0001f534", "medium": "\U0001f7e1", "low": "\U0001f7e2"}.get(
-                severity, "\u26aa"
+                severity,
+                "\u26aa",
             )
             lines.append(f"  {sev_icon} {marker}: {count}")
     lines.append("")

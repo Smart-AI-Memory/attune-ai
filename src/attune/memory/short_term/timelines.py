@@ -25,6 +25,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -64,6 +65,7 @@ class TimelineManager:
         >>> timelines.add("agent_events", "evt_123", {"action": "login"}, creds)
         >>> query = TimeWindowQuery(limit=100)
         >>> events = timelines.query("agent_events", creds, query)
+
     """
 
     PREFIX_TIMELINE = "timeline:"
@@ -73,6 +75,7 @@ class TimelineManager:
 
         Args:
             base: BaseOperations instance for Redis client access
+
         """
         self._base = base
         self._mock_sorted_sets: dict[str, list[tuple[float, str]]] = {}
@@ -108,6 +111,7 @@ class TimelineManager:
             ...     creds
             ... )
             True
+
         """
         if not credentials.can_stage():
             raise PermissionError(
@@ -167,6 +171,7 @@ class TimelineManager:
             ...     limit=50
             ... )
             >>> events = timelines.query("agent_events", creds, query)
+
         """
         full_timeline = f"{self.PREFIX_TIMELINE}{timeline_name}"
         q = query or TimeWindowQuery()
@@ -216,6 +221,7 @@ class TimelineManager:
         Example:
             >>> count = timelines.count("agent_events", creds)
             >>> print(f"Total events: {count}")
+
         """
         full_timeline = f"{self.PREFIX_TIMELINE}{timeline_name}"
         q = query or TimeWindowQuery()

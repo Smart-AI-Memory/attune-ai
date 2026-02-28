@@ -34,6 +34,7 @@ class UnifiedConfig:
         _version: Configuration schema version.
         _created: Timestamp when config was created.
         _modified: Timestamp when config was last modified.
+
     """
 
     auth: AuthConfig = field(default_factory=AuthConfig)
@@ -83,6 +84,7 @@ class UnifiedConfig:
 
         Returns:
             UnifiedConfig instance.
+
         """
         return cls(
             auth=AuthConfig.from_dict(data.get("auth", {})),
@@ -108,6 +110,7 @@ class UnifiedConfig:
 
         Raises:
             KeyError: If key is not found.
+
         """
         parts = key.split(".", 1)
         if len(parts) == 1:
@@ -133,6 +136,7 @@ class UnifiedConfig:
         Raises:
             KeyError: If key is not found.
             TypeError: If value type doesn't match expected type.
+
         """
         parts = key.split(".", 1)
         if len(parts) == 1:
@@ -154,6 +158,7 @@ class UnifiedConfig:
 
         Returns:
             List of all configuration keys.
+
         """
         keys = []
         sections = [

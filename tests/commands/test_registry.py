@@ -193,7 +193,7 @@ name: cmd1
 ---
 
 Body.
-"""
+""",
         )
         (tmp_path / "cmd2.md").write_text(
             """---
@@ -201,7 +201,7 @@ name: cmd2
 ---
 
 Body.
-"""
+""",
         )
 
         count = registry.load_from_directory(tmp_path)
@@ -220,7 +220,7 @@ description: Single command
 ---
 
 Body.
-"""
+""",
         )
 
         config = registry.load_from_file(file_path)
@@ -237,7 +237,7 @@ description: Original
 ---
 
 Body.
-"""
+""",
         )
 
         registry.load_from_directory(tmp_path)
@@ -251,7 +251,7 @@ description: Updated
 ---
 
 Body.
-"""
+""",
         )
 
         count = registry.reload()
@@ -308,7 +308,7 @@ Body.
                 description="Create a git commit",
                 body="",
                 metadata=CommandMetadata(name="git-commit", tags=["git"]),
-            )
+            ),
         )
         registry.register(
             CommandConfig(
@@ -316,7 +316,7 @@ Body.
                 description="Run tests",
                 body="",
                 metadata=CommandMetadata(name="test", tags=["testing"]),
-            )
+            ),
         )
 
         # Search by name
@@ -345,7 +345,7 @@ Body.
                     category=CommandCategory.GIT,
                     aliases=["c1"],
                 ),
-            )
+            ),
         )
         registry.register(
             CommandConfig(
@@ -353,7 +353,7 @@ Body.
                 description="",
                 body="",
                 metadata=CommandMetadata(name="cmd2", category=CommandCategory.GIT),
-            )
+            ),
         )
 
         summary = registry.get_summary()
@@ -373,7 +373,7 @@ Body.
                     name="commit",
                     category=CommandCategory.GIT,
                 ),
-            )
+            ),
         )
         registry.register(
             CommandConfig(
@@ -381,7 +381,7 @@ Body.
                 description="Run tests",
                 body="",
                 metadata=CommandMetadata(name="test", category=CommandCategory.TEST),
-            )
+            ),
         )
 
         help_text = registry.format_help()

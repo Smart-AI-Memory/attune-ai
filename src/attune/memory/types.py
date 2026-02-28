@@ -203,6 +203,7 @@ class RedisMetrics:
             Dictionary with keys: operations_total, operations_success,
             operations_failed, retries_total, latency_avg_ms, latency_max_ms,
             success_rate, by_operation, security.
+
         """
         return {
             "operations_total": self.operations_total,
@@ -327,6 +328,7 @@ class StagedPattern:
         Returns:
             Dictionary with keys: pattern_id, agent_id, pattern_type, name,
             description, code, context, confidence, staged_at, interests.
+
         """
         return {
             "pattern_id": self.pattern_id,
@@ -355,6 +357,7 @@ class StagedPattern:
         Raises:
             KeyError: If required keys are missing.
             ValueError: If data format is invalid.
+
         """
         return cls(
             pattern_id=data["pattern_id"],
@@ -394,6 +397,7 @@ class ConflictContext:
         Returns:
             Dictionary with keys: conflict_id, positions, interests,
             batna, created_at, resolved, resolution.
+
         """
         return {
             "conflict_id": self.conflict_id,
@@ -419,6 +423,7 @@ class ConflictContext:
         Raises:
             KeyError: If required keys are missing.
             ValueError: If data format is invalid.
+
         """
         return cls(
             conflict_id=data["conflict_id"],

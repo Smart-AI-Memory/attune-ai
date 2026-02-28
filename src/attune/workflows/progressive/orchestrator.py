@@ -40,6 +40,7 @@ class MetaOrchestrator(TierPromptMixin):
         ... )
         >>> if should_esc:
         ...     print(f"Escalating: {reason}")
+
     """
 
     def __init__(self) -> None:
@@ -51,7 +52,11 @@ class MetaOrchestrator(TierPromptMixin):
         }
 
     def should_escalate(
-        self, tier: Tier, result: TierResult, attempt: int, config: EscalationConfig
+        self,
+        tier: Tier,
+        result: TierResult,
+        attempt: int,
+        config: EscalationConfig,
     ) -> tuple[bool, str]:
         """Determine if tier should escalate to next tier.
 
@@ -76,6 +81,7 @@ class MetaOrchestrator(TierPromptMixin):
             ...     Tier.CHEAP, result, 2, config
             ... )
             >>> # (True, "Quality score 65 below threshold 70")
+
         """
         cqs = result.quality_score
 
@@ -90,14 +96,16 @@ class MetaOrchestrator(TierPromptMixin):
         # Tier-specific threshold checks
         if tier == Tier.CHEAP:
             return self._check_cheap_escalation(result, config)
-        elif tier == Tier.CAPABLE:
+        if tier == Tier.CAPABLE:
             return self._check_capable_escalation(result, attempt, config)
-        else:  # PREMIUM
-            # Premium doesn't escalate (highest tier)
-            return False, "Premium tier is final"
+        # PREMIUM
+        # Premium doesn't escalate (highest tier)
+        return False, "Premium tier is final"
 
     def _check_cheap_escalation(
-        self, result: TierResult, config: EscalationConfig
+        self,
+        result: TierResult,
+        config: EscalationConfig,
     ) -> tuple[bool, str]:
         """Check if cheap tier should escalate to capable.
 
@@ -107,6 +115,7 @@ class MetaOrchestrator(TierPromptMixin):
 
         Returns:
             Tuple of (should_escalate, reason)
+
         """
         cqs = result.quality_score
         failure_rate = 1.0 - result.success_rate
@@ -141,7 +150,10 @@ class MetaOrchestrator(TierPromptMixin):
         return False, f"Quality acceptable (CQS={cqs:.1f})"
 
     def _check_capable_escalation(
-        self, result: TierResult, attempt: int, config: EscalationConfig
+        self,
+        result: TierResult,
+        attempt: int,
+        config: EscalationConfig,
     ) -> tuple[bool, str]:
         """Check if capable tier should escalate to premium.
 
@@ -155,6 +167,7 @@ class MetaOrchestrator(TierPromptMixin):
 
         Returns:
             Tuple of (should_escalate, reason)
+
         """
         cqs = result.quality_score
         failure_rate = 1.0 - result.success_rate
@@ -204,7 +217,10 @@ class MetaOrchestrator(TierPromptMixin):
         return False, f"Quality acceptable (CQS={cqs:.1f}), continuing improvement"
 
     def _detect_stagnation(
-        self, cqs_history: list[float], improvement_threshold: float, consecutive_limit: int
+        self,
+        cqs_history: list[float],
+        improvement_threshold: float,
+        consecutive_limit: int,
     ) -> tuple[bool, str]:
         """Detect if improvement has stagnated.
 
@@ -217,6 +233,7 @@ class MetaOrchestrator(TierPromptMixin):
 
         Returns:
             Tuple of (is_stagnant, reason)
+
         """
         if len(cqs_history) < consecutive_limit + 1:
             return False, "Insufficient history for stagnation detection"
@@ -245,7 +262,9 @@ class MetaOrchestrator(TierPromptMixin):
         return False, "No stagnation detected"
 
     def create_agent_team(
-        self, tier: Tier, failure_context: dict[str, Any] | None = None
+        self,
+        tier: Tier,
+        failure_context: dict[str, Any] | None = None,
     ) -> list[str]:
         """Create specialized agent team for tier.
 
@@ -260,13 +279,14 @@ class MetaOrchestrator(TierPromptMixin):
 
         Returns:
             List of agent types to create
+
         """
         if tier == Tier.CHEAP:
             return ["generator"]
-        elif tier == Tier.CAPABLE:
+        if tier == Tier.CAPABLE:
             return ["generator", "analyzer"]
-        else:  # PREMIUM
-            return ["generator", "analyzer", "reviewer"]
+        # PREMIUM
+        return ["generator", "analyzer", "reviewer"]
 
     def analyze_failure_patterns(self, failures: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze failure patterns to inform next tier.
@@ -278,6 +298,7 @@ class MetaOrchestrator(TierPromptMixin):
 
         Returns:
             Failure pattern analysis
+
         """
         # Group by error type
         error_types: dict[str, int] = {}

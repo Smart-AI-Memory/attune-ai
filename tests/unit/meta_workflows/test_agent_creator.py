@@ -63,7 +63,7 @@ class TestDynamicAgentCreator:
                     tier_strategy=TierStrategy.CHEAP_ONLY,
                     tools=["pytest"],
                     required_responses={"has_tests": "Yes"},
-                )
+                ),
             ],
         )
 
@@ -92,7 +92,7 @@ class TestDynamicAgentCreator:
                     tier_strategy=TierStrategy.CHEAP_ONLY,
                     tools=["pytest"],
                     required_responses={"has_tests": "Yes"},
-                )
+                ),
             ],
         )
 
@@ -168,7 +168,7 @@ class TestDynamicAgentCreator:
                     tier_strategy=TierStrategy.CHEAP_ONLY,
                     tools=["git"],
                     config_mapping={"version_bump": "bump_type"},
-                )
+                ),
             ],
         )
 
@@ -212,7 +212,8 @@ class TestDynamicAgentCreator:
 
         # Only 2 out of 3 conditions met
         response = FormResponse(
-            template_id="test", responses={"q1": "Yes", "q2": "Yes", "q3": "No"}
+            template_id="test",
+            responses={"q1": "Yes", "q2": "Yes", "q3": "No"},
         )
 
         creator.create_agents(template, response)
@@ -236,7 +237,7 @@ class TestDynamicAgentCreator:
                     role="agent1",
                     base_template="generic",
                     tier_strategy=TierStrategy.CHEAP_ONLY,
-                )
+                ),
             ],
         )
 
@@ -264,10 +265,14 @@ class TestGroupAgentsByTierStrategy:
         """Test grouping with all agents same tier."""
         agents = [
             AgentSpec(
-                role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent1",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="agent2", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent2",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
         ]
 
@@ -281,16 +286,24 @@ class TestGroupAgentsByTierStrategy:
         """Test grouping with agents in different tiers."""
         agents = [
             AgentSpec(
-                role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent1",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="agent2", base_template="generic", tier_strategy=TierStrategy.PROGRESSIVE
+                role="agent2",
+                base_template="generic",
+                tier_strategy=TierStrategy.PROGRESSIVE,
             ),
             AgentSpec(
-                role="agent3", base_template="generic", tier_strategy=TierStrategy.CAPABLE_FIRST
+                role="agent3",
+                base_template="generic",
+                tier_strategy=TierStrategy.CAPABLE_FIRST,
             ),
             AgentSpec(
-                role="agent4", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent4",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
         ]
 
@@ -315,10 +328,14 @@ class TestEstimateAgentCosts:
         """Test estimation with default cost mapping."""
         agents = [
             AgentSpec(
-                role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent1",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="agent2", base_template="generic", tier_strategy=TierStrategy.PROGRESSIVE
+                role="agent2",
+                base_template="generic",
+                tier_strategy=TierStrategy.PROGRESSIVE,
             ),
         ]
 
@@ -334,7 +351,9 @@ class TestEstimateAgentCosts:
         """Test estimation with custom cost mapping."""
         agents = [
             AgentSpec(
-                role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent1",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
         ]
 
@@ -349,13 +368,19 @@ class TestEstimateAgentCosts:
         """Test estimation with multiple agents in same tier."""
         agents = [
             AgentSpec(
-                role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent1",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="agent2", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent2",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="agent3", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="agent3",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
         ]
 
@@ -378,7 +403,9 @@ class TestValidateAgentDependencies:
                 tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="publisher", base_template="generic", tier_strategy=TierStrategy.PROGRESSIVE
+                role="publisher",
+                base_template="generic",
+                tier_strategy=TierStrategy.PROGRESSIVE,
             ),
         ]
 
@@ -390,7 +417,9 @@ class TestValidateAgentDependencies:
         """Test warning when publisher present but package_builder missing."""
         agents = [
             AgentSpec(
-                role="publisher", base_template="generic", tier_strategy=TierStrategy.PROGRESSIVE
+                role="publisher",
+                base_template="generic",
+                tier_strategy=TierStrategy.PROGRESSIVE,
             ),
         ]
 
@@ -420,7 +449,9 @@ class TestValidateAgentDependencies:
         """Test multiple dependency warnings."""
         agents = [
             AgentSpec(
-                role="publisher", base_template="generic", tier_strategy=TierStrategy.PROGRESSIVE
+                role="publisher",
+                base_template="generic",
+                tier_strategy=TierStrategy.PROGRESSIVE,
             ),
             AgentSpec(
                 role="changelog_updater",
@@ -437,10 +468,14 @@ class TestValidateAgentDependencies:
         """Test no warnings for agents that don't have dependencies."""
         agents = [
             AgentSpec(
-                role="test_runner", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="test_runner",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
             AgentSpec(
-                role="linter", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+                role="linter",
+                base_template="generic",
+                tier_strategy=TierStrategy.CHEAP_ONLY,
             ),
         ]
 

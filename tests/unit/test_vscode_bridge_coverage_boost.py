@@ -129,7 +129,7 @@ class TestCodeReviewResult:
                 "severity": "high",
                 "category": "security",
                 "message": "SQL injection",
-            }
+            },
         ]
         summary = {
             "total_findings": 1,
@@ -403,7 +403,7 @@ class TestWritePRReviewResults:
                 "line": 42,
                 "severity": "high",
                 "message": "Security issue",
-            }
+            },
         ]
 
         output_path = write_pr_review_results(
@@ -536,7 +536,7 @@ class TestSendToVSCode:
                 "line": 42,
                 "severity": "critical",
                 "message": "Critical issue",
-            }
+            },
         ]
 
         result = send_to_vscode(
@@ -660,7 +660,7 @@ class TestIntegration:
                 "severity": "low",
                 "category": "style",
                 "message": "Missing description",
-            }
+            },
         ]
 
         output_path = write_pr_review_results(

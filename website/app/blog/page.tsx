@@ -7,9 +7,18 @@ import { generateMetadata } from '@/lib/metadata';
 import { getAllPosts } from '@/lib/blog';
 
 export const metadata: Metadata = generateMetadata({
-  title: 'Blog',
-  description: 'Insights on AI development, anticipatory intelligence, and the future of AI-human collaboration.',
+  title: 'AI Dev Blog — Claude Code Tutorials & Agent Patterns',
+  description:
+    'Tutorials, architecture deep-dives, and release notes for Claude Code developers. Learn multi-agent orchestration, prompt caching, and AI workflow automation.',
   url: 'https://smartaimemory.com/blog',
+  keywords: [
+    'Claude Code tutorials',
+    'AI agent patterns',
+    'multi-agent orchestration',
+    'prompt caching tutorial',
+    'AI workflow automation',
+    'developer blog',
+  ],
 });
 
 export default function BlogPage() {

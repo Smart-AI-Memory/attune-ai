@@ -61,7 +61,7 @@ class HashOnlyCache(BaseCache):
 
         logger.debug(
             f"HashOnlyCache initialized (max_memory: {max_memory_mb}MB, "
-            f"max_disk: {max_size_mb}MB, ttl: {default_ttl}s)"
+            f"max_disk: {max_size_mb}MB, ttl: {default_ttl}s)",
         )
 
     def get(
@@ -102,7 +102,7 @@ class HashOnlyCache(BaseCache):
             self.stats.hits += 1
             logger.debug(
                 f"Cache HIT (hash): {workflow}/{stage} "
-                f"(key: {cache_key[:16]}..., hit_rate: {self.stats.hit_rate:.1f}%)"
+                f"(key: {cache_key[:16]}..., hit_rate: {self.stats.hit_rate:.1f}%)",
             )
             return entry.response
 
@@ -110,7 +110,7 @@ class HashOnlyCache(BaseCache):
         self.stats.misses += 1
         logger.debug(
             f"Cache MISS (hash): {workflow}/{stage} "
-            f"(key: {cache_key[:16]}..., hit_rate: {self.stats.hit_rate:.1f}%)"
+            f"(key: {cache_key[:16]}..., hit_rate: {self.stats.hit_rate:.1f}%)",
         )
         return None
 
@@ -158,7 +158,7 @@ class HashOnlyCache(BaseCache):
 
         logger.debug(
             f"Cache PUT: {workflow}/{stage} (key: {cache_key[:16]}..., "
-            f"entries: {len(self._memory_cache)})"
+            f"entries: {len(self._memory_cache)})",
         )
 
     def clear(self) -> None:
@@ -205,7 +205,9 @@ class HashOnlyCache(BaseCache):
 
             # Get oldest entries by access time (LRU eviction)
             oldest_keys = heapq.nsmallest(
-                num_to_evict, self._access_times.items(), key=lambda x: x[1]
+                num_to_evict,
+                self._access_times.items(),
+                key=lambda x: x[1],
             )
 
             for cache_key, _ in oldest_keys:
@@ -214,7 +216,7 @@ class HashOnlyCache(BaseCache):
 
             logger.info(
                 f"LRU eviction: removed {num_to_evict} entries "
-                f"(cache size: {len(self._memory_cache)} entries)"
+                f"(cache size: {len(self._memory_cache)} entries)",
             )
 
     def evict_expired(self) -> int:

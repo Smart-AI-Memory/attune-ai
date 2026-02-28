@@ -63,6 +63,7 @@ def _load_workflow_history(history_file: str = WORKFLOW_HISTORY_FILE) -> list[di
 
     Returns:
         List of workflow run dictionaries
+
     """
     import warnings
 
@@ -100,6 +101,7 @@ def _save_workflow_run(
         result: WorkflowResult object
         history_file: Legacy JSON path (ignored if SQLite available)
         max_history: Legacy max history limit (ignored if SQLite available)
+
     """
     # Try SQLite first (new approach)
     store = _get_history_store()
@@ -188,6 +190,7 @@ def get_workflow_stats(history_file: str = WORKFLOW_HISTORY_FILE) -> dict:
         - total_cost: Total cost across all runs
         - total_savings: Total cost savings
         - avg_savings_percent: Average savings percentage
+
     """
     # Try SQLite first (new approach)
     store = _get_history_store()

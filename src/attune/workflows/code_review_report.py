@@ -32,7 +32,7 @@ def _format_perf_section(input_data: dict) -> list[str]:
             f"Perf Issues: {perf_icon} {perf_count} "
             f"(High: {perf_by_impact.get('high', 0)}, "
             f"Medium: {perf_by_impact.get('medium', 0)}, "
-            f"Low: {perf_by_impact.get('low', 0)})"
+            f"Low: {perf_by_impact.get('low', 0)})",
         )
         if input_data.get("perf_deep_ran"):
             lines.append("Deep Analysis: ✅ LLM-validated")
@@ -84,9 +84,11 @@ def _format_health_section(input_data: dict) -> list[str]:
         if cost_today:
             total = cost_today.get("total_cost", cost_today.get("total", 0))
             lines.append(
-                f"Cost Today: ${total:.4f}"
-                if isinstance(total, int | float)
-                else f"Cost Today: {total}"
+                (
+                    f"Cost Today: ${total:.4f}"
+                    if isinstance(total, int | float)
+                    else f"Cost Today: {total}"
+                ),
             )
         else:
             lines.append("Cost Today: No cost data")
@@ -120,7 +122,7 @@ def _format_quality_section(input_data: dict) -> list[str]:
             f"Quality Issues: {quality_icon} {quality_count} "
             f"(High: {quality_by_severity.get('high', 0)}, "
             f"Medium: {quality_by_severity.get('medium', 0)}, "
-            f"Low: {quality_by_severity.get('low', 0)})"
+            f"Low: {quality_by_severity.get('low', 0)})",
         )
         if input_data.get("quality_deep_ran"):
             lines.append("Deep Analysis: ✅ LLM-validated")

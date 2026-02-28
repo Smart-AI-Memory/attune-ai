@@ -137,7 +137,7 @@ class TestTeamStore:
                 name="persistent",
                 agents=[{"role": "A"}],
                 strategy="sequential",
-            )
+            ),
         )
 
         store2 = TeamStore(storage_dir=str(tmp_path))
@@ -157,7 +157,7 @@ class TestTeamStorePathSecurity:
                 TeamSpecification(
                     name="team\x00evil",
                     agents=[{"role": "A"}],
-                )
+                ),
             )
 
     def test_sanitizes_path_traversal(self, tmp_path: Path) -> None:

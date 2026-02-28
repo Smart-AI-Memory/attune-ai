@@ -51,6 +51,7 @@ class DocCrewExecutionMixin:
         Returns:
             ManageDocumentationCrewResult with findings and
             recommendations
+
         """
         started_at = datetime.now()
         context = context or {}
@@ -94,6 +95,7 @@ class DocCrewExecutionMixin:
 
         Returns:
             Tuple of (scan_results, agent_context).
+
         """
         index_context = self._get_index_context()
 
@@ -129,6 +131,7 @@ class DocCrewExecutionMixin:
 
         Returns:
             Tuple of (scan_results, agent_context).
+
         """
         print("  [ProjectIndex] Using indexed file data")
         doc_stats = index_context.get("documentation_stats", {})
@@ -202,13 +205,14 @@ class DocCrewExecutionMixin:
 
         Returns:
             Tuple of (all_findings, all_responses).
+
         """
         tasks = self.define_tasks()
         all_findings: list[dict] = []
         all_responses: list[str] = []
 
         for i, task in enumerate(tasks):
-            print(f"  [{i + 1}/{len(tasks)}] " f"{task.agent.role}: " f"{task.description[:50]}...")
+            print(f"  [{i + 1}/{len(tasks)}] {task.agent.role}: {task.description[:50]}...")
 
             if all_responses:
                 agent_context["previous_analysis"] = all_responses[-1][:2000]
@@ -257,6 +261,7 @@ class DocCrewExecutionMixin:
         Args:
             path: Path that was analyzed.
             all_responses: Responses from the previous agents.
+
         """
         manager_context = {
             "path": path,
@@ -316,6 +321,7 @@ class DocCrewExecutionMixin:
 
         Returns:
             ManageDocumentationCrewResult.
+
         """
         recommendations = [
             f"Documentation analysis complete for {path}",
@@ -324,7 +330,7 @@ class DocCrewExecutionMixin:
         ]
 
         if len(all_responses) > 2:
-            recommendations.append("See synthesizer output for prioritized " "action plan")
+            recommendations.append("See synthesizer output for prioritized action plan")
 
         return ManageDocumentationCrewResult(
             success=True,

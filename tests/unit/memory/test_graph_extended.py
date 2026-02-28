@@ -365,7 +365,8 @@ class TestMemoryGraphSearch:
         """Test find_similar returns similar nodes."""
         # Use lower threshold since similarity is based on word overlap
         results = graph_with_types.find_similar(
-            {"name": "Memory Leak Bug", "description": "Leak in memory"}, threshold=0.3
+            {"name": "Memory Leak Bug", "description": "Leak in memory"},
+            threshold=0.3,
         )
 
         # Should find "Memory Leak" as similar
@@ -395,7 +396,8 @@ class TestMemoryGraphStatistics:
         graph.add_finding("test", {"type": "bug", "name": "Bug 2", "severity": "high"})
         graph.add_finding("test", {"type": "bug", "name": "Bug 3", "severity": "medium"})
         graph.add_finding(
-            "test", {"type": "vulnerability", "name": "Vuln 1", "severity": "critical"}
+            "test",
+            {"type": "vulnerability", "name": "Vuln 1", "severity": "critical"},
         )
 
         return graph

@@ -36,7 +36,7 @@ category: git
 ## Steps
 1. Stage files
 2. Commit
-"""
+""",
         )
 
         (tmp_path / "test.md").write_text(
@@ -49,7 +49,7 @@ aliases: [t]
 
 ## Steps
 1. Run pytest
-"""
+""",
         )
 
         (tmp_path / "review.md").write_text(
@@ -57,7 +57,7 @@ aliases: [t]
 
 ## Overview
 Review code for issues.
-"""
+""",
         )
 
         # Create files that should be skipped
@@ -137,7 +137,7 @@ category: git
 ---
 
 Body without explicit name.
-"""
+""",
         )
 
         # Should load both - one gets name from content, other from filename
@@ -171,7 +171,7 @@ name: valid
 ---
 
 Body.
-"""
+""",
         )
         (tmp_path / "invalid.md").write_text("")  # Empty file
 
@@ -216,7 +216,7 @@ description: First version
 ---
 
 First body.
-"""
+""",
         )
         (tmp_path / "second.md").write_text(
             """---
@@ -225,7 +225,7 @@ description: Second version
 ---
 
 Second body.
-"""
+""",
         )
 
         commands = loader.load_directory(tmp_path)
@@ -248,7 +248,7 @@ class TestLoadCommandsFromPaths:
             [
                 tmp_path / "a.md",
                 tmp_path / "b.md",
-            ]
+            ],
         )
 
         assert len(commands) == 2
@@ -283,7 +283,7 @@ class TestLoadCommandsFromPaths:
             [
                 tmp_path / "file.md",
                 dir1,
-            ]
+            ],
         )
 
         assert len(commands) == 2
@@ -298,7 +298,7 @@ class TestLoadCommandsFromPaths:
             [
                 tmp_path / "exists.md",
                 tmp_path / "nonexistent.md",
-            ]
+            ],
         )
 
         assert len(commands) == 1

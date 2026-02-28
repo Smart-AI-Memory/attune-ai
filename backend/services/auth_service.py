@@ -41,6 +41,7 @@ def _get_jwt_secret_key() -> str:
         - Requires explicit configuration (no defaults)
         - Enforces minimum 32 bytes for HS256 security
         - Fails fast at startup, not during request handling
+
     """
     secret = os.getenv("JWT_SECRET_KEY")
 
@@ -86,6 +87,7 @@ class AuthService:
 
         Args:
             db: AuthDatabase instance (creates default if None)
+
         """
         self.db = db or AuthDatabase()
 
@@ -97,6 +99,7 @@ class AuthService:
 
         Returns:
             Tuple of (token_string, expires_in_seconds)
+
         """
         expires_at = datetime.utcnow() + timedelta(minutes=JWT_EXPIRATION_MINUTES)
         expires_in = JWT_EXPIRATION_MINUTES * 60
@@ -123,6 +126,7 @@ class AuthService:
 
         Raises:
             HTTPException: If token is invalid or expired
+
         """
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
@@ -153,6 +157,7 @@ class AuthService:
 
         Raises:
             HTTPException: If authentication fails or rate limit exceeded
+
         """
         # Check rate limiting
         failed_attempts = self.db.get_failed_attempts(email, LOCKOUT_MINUTES)
@@ -206,6 +211,7 @@ class AuthService:
 
         Raises:
             HTTPException: If registration fails
+
         """
         # Validate password strength
         if len(password) < 8:
@@ -227,7 +233,7 @@ class AuthService:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create user: {str(e)}",
+                detail=f"Failed to create user: {e!s}",
             )
 
         # Generate token for new user
@@ -256,6 +262,7 @@ class AuthService:
 
         Raises:
             HTTPException: If token is invalid
+
         """
         # Verify current token
         payload = self.verify_token(current_token)
@@ -285,6 +292,7 @@ class AuthService:
 
         Raises:
             HTTPException: If token is invalid
+
         """
         payload = self.verify_token(token)
 

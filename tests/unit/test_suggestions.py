@@ -224,7 +224,7 @@ class TestBugPredictTransitions:
     def test_complexity_suggests_refactor(self):
         """Test complexity findings suggest refactor plan."""
         result = _make_result(
-            final_output="Deeply nested complex module with high complexity score"
+            final_output="Deeply nested complex module with high complexity score",
         )
         suggestions = generate_suggestions("bug-predict", result)
         workflow_names = [s.workflow_name for s in suggestions]
@@ -257,7 +257,7 @@ class TestGenerateSuggestions:
             final_output=(
                 "security vulnerability, performance bottleneck, "
                 "XSS injection, path traversal, slow query"
-            )
+            ),
         )
         suggestions = generate_suggestions("code-review", result)
         assert len(suggestions) <= MAX_SUGGESTIONS
@@ -403,9 +403,9 @@ class TestProjectIndexSignals:
                     "summary": {
                         "test_coverage_avg": 45.0,
                         "files_without_tests": 12,
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("code-review")
@@ -423,9 +423,9 @@ class TestProjectIndexSignals:
                     "summary": {
                         "test_coverage_avg": 30.0,
                         "files_without_tests": 20,
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("test-gen")
@@ -443,9 +443,9 @@ class TestProjectIndexSignals:
                     "summary": {
                         "test_coverage_avg": 90.0,
                         "stale_file_count": 5,
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("code-review")
@@ -463,9 +463,9 @@ class TestProjectIndexSignals:
                     "summary": {
                         "test_coverage_avg": 90.0,
                         "critical_untested_files": ["auth.py", "crypto.py"],
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("code-review")
@@ -483,9 +483,9 @@ class TestProjectIndexSignals:
                     "summary": {
                         "test_coverage_avg": 90.0,
                         "files_needing_attention": 8,
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("security-audit")
@@ -512,9 +512,9 @@ class TestProjectIndexSignals:
                         "stale_file_count": 0,
                         "critical_untested_files": [],
                         "files_needing_attention": 0,
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
         monkeypatch.chdir(tmp_path)
         suggestions = _suggestions_from_project_index("code-review")
@@ -606,7 +606,7 @@ class TestWorkflowHistorySignals:
                 {
                     "workflow_name": "test-gen",
                     "started_at": f"2026-01-{i + 1:02d}T10:30:00",
-                }
+                },
             )
 
         def mock_get_store():

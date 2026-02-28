@@ -770,7 +770,7 @@ class TestCollaborationState:
                 confidence=0.8,
                 occurrences=5,
                 last_seen=datetime.now(),
-            )
+            ),
         )
         assert state.should_progress_to_level(3) is True
 
@@ -787,7 +787,7 @@ class TestCollaborationState:
                 confidence=0.8,
                 occurrences=5,
                 last_seen=datetime.now(),
-            )
+            ),
         )
         state.detected_patterns.append(
             UserPattern(
@@ -797,7 +797,7 @@ class TestCollaborationState:
                 confidence=0.8,
                 occurrences=5,
                 last_seen=datetime.now(),
-            )
+            ),
         )
         assert state.should_progress_to_level(4) is True
 

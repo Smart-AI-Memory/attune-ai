@@ -30,6 +30,7 @@ class CoordinationService:
     Example:
         >>> coord = CoordinationService("code-review", agent_id="agent-1")
         >>> coord.send_signal("task_complete", target_agent="orchestrator")
+
     """
 
     def __init__(
@@ -51,6 +52,7 @@ class CoordinationService:
 
         Returns:
             HeartbeatCoordinator if available, None otherwise
+
         """
         if not self._enable_heartbeat:
             return None
@@ -64,7 +66,7 @@ class CoordinationService:
             except ImportError as e:
                 logger.warning(f"HeartbeatCoordinator import failed: {e}")
                 self._enable_heartbeat = False
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Redis unavailable shouldn't crash workflow
                 logger.warning(f"HeartbeatCoordinator init failed: {e}")
                 self._enable_heartbeat = False
@@ -88,6 +90,7 @@ class CoordinationService:
 
         Returns:
             Signal ID if sent, empty string otherwise
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:
@@ -101,7 +104,7 @@ class CoordinationService:
                 payload=payload or {},
                 ttl_seconds=ttl_seconds,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to send coordination signal: {e}")
             return ""
@@ -123,6 +126,7 @@ class CoordinationService:
 
         Returns:
             CoordinationSignal if received, None if timeout
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:
@@ -135,7 +139,7 @@ class CoordinationService:
                 timeout=timeout,
                 poll_interval=poll_interval,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to wait for signal: {e}")
             return None
@@ -155,6 +159,7 @@ class CoordinationService:
 
         Returns:
             CoordinationSignal if available, None otherwise
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:
@@ -166,7 +171,7 @@ class CoordinationService:
                 source_agent=source_agent,
                 consume=consume,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to check signal: {e}")
             return None
@@ -185,7 +190,7 @@ class CoordinationService:
             except ImportError as e:
                 logger.warning(f"CoordinationSignals import failed: {e}")
                 self._enable_coordination = False
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Redis unavailable shouldn't crash workflow
                 logger.warning(f"CoordinationSignals init failed: {e}")
                 self._enable_coordination = False

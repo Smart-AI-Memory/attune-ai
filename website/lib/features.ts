@@ -7,7 +7,7 @@
 
 export const FEATURE_COUNTS = {
   wizards: 10,
-  workflows: 14,
+  workflows: 10,
   agentTemplates: 7,
   compositionPatterns: 6,
 } as const;
@@ -54,11 +54,11 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'workflows',
-    name: '14 Integrated Workflows',
+    name: '10 AI Workflows',
     icon: '⚡',
-    benefitDescription: 'Research, code review, debugging, refactoring, test generation, documentation, security scanning, and more.',
-    technicalDescription: '10 base workflows + 4 meta-workflows for release prep, test coverage, test maintenance, and documentation.',
-    pricingDescription: '14 integrated workflows',
+    benefitDescription: 'Security audit, code review, bug prediction, test generation, documentation, refactoring, dependency check, release prep, and more — all non-interactive, CI/CD-ready.',
+    technicalDescription: '10 multi-stage pipelines with automatic tier escalation (Haiku → Sonnet → Opus). Structured JSON output. Run via CLI or CI/CD. Wizards wrap these same workflows in an interactive guided experience.',
+    pricingDescription: '10 AI workflows (CLI + CI/CD)',
   },
   {
     id: 'agent-templates',
@@ -86,11 +86,11 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'memory',
-    name: 'Persistent Memory System',
+    name: 'Shared Agent State (Redis)',
     icon: '🧠',
-    benefitDescription: 'Short-term Redis memory for agent coordination during workflows. Long-term MemDocs storage remembers your coding patterns, past decisions, and project context across sessions.',
-    technicalDescription: 'Two-tier memory: Redis for real-time agent coordination, MemDocs for persistent cross-session storage with semantic search.',
-    pricingDescription: 'Persistent memory system',
+    benefitDescription: 'Coordinate multiple Claude Code instances simultaneously. Shared wizard context, parallel agent execution, and cross-session telemetry — capabilities native Claude Code memory cannot provide.',
+    technicalDescription: 'attune-redis plugin provides shared state across concurrent Claude Code instances. Distinct from per-developer auto-memory: enables team coordination, parallel wizard execution, and cross-project telemetry rollups.',
+    pricingDescription: 'Redis shared agent state (optional plugin)',
   },
   {
     id: 'security',

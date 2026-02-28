@@ -356,6 +356,7 @@ Be precise with ID references. Verify CWE/CVE mappings are accurate."""
 
         Returns:
             Formatted task string for the workflow.
+
         """
         depth_instructions = {
             "quick": "Focus on critical and high severity issues only. Skip detailed analysis.",
@@ -416,6 +417,7 @@ Focus Areas Requested: {", ".join(context["focus_areas"])}
 
         Returns:
             List of SecurityFinding objects.
+
         """
         return parse_findings(result)
 
@@ -427,6 +429,7 @@ Focus Areas Requested: {", ".join(context["focus_areas"])}
 
         Returns:
             A SecurityFinding instance.
+
         """
         return dict_to_finding(data)
 
@@ -438,6 +441,7 @@ Focus Areas Requested: {", ".join(context["focus_areas"])}
 
         Returns:
             List of SecurityFinding objects.
+
         """
         return parse_text_findings(text)
 
@@ -449,5 +453,6 @@ Focus Areas Requested: {", ".join(context["focus_areas"])}
 
         Returns:
             Human-readable summary string.
+
         """
         return generate_summary(findings)

@@ -51,6 +51,7 @@ class VisualWorkflowEditor:
 
         Returns:
             EditorState for the editor
+
         """
         return self.visualizer.blueprint_to_editor(blueprint)
 
@@ -67,6 +68,7 @@ class VisualWorkflowEditor:
 
         Returns:
             Updated WorkflowBlueprint
+
         """
         return self.visualizer.editor_to_blueprint(state, original_blueprint)
 
@@ -78,6 +80,7 @@ class VisualWorkflowEditor:
 
         Returns:
             ASCII art visualization
+
         """
         return self.ascii_visualizer.render(blueprint)
 
@@ -89,6 +92,7 @@ class VisualWorkflowEditor:
 
         Returns:
             Compact string
+
         """
         return self.ascii_visualizer.render_compact(blueprint)
 
@@ -100,6 +104,7 @@ class VisualWorkflowEditor:
 
         Returns:
             Complete HTML page
+
         """
         return generate_editor_html(blueprint)
 
@@ -111,6 +116,7 @@ class VisualWorkflowEditor:
 
         Returns:
             React Flow schema
+
         """
         state = self.visualizer.blueprint_to_editor(blueprint)
         return generate_react_flow_schema(state)
@@ -123,6 +129,7 @@ class VisualWorkflowEditor:
 
         Returns:
             List of validation errors (empty if valid)
+
         """
         errors: list[str] = []
 

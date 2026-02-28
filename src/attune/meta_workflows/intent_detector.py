@@ -27,6 +27,7 @@ class IntentMatch:
         matched_keywords: Keywords that triggered the match
         description: What this template does
         cli_fallback: CLI command to run when no template exists
+
     """
 
     template_id: str
@@ -291,6 +292,7 @@ class IntentDetector:
 
         Returns:
             List of IntentMatch objects, sorted by confidence (highest first)
+
         """
         if not user_input or not isinstance(user_input, str):
             return []
@@ -300,7 +302,8 @@ class IntentDetector:
 
         for template_id, pattern_config in self.patterns.items():
             confidence, matched_keywords = self._calculate_match_score(
-                user_input_lower, pattern_config
+                user_input_lower,
+                pattern_config,
             )
 
             if confidence >= threshold:
@@ -314,7 +317,7 @@ class IntentDetector:
                         matched_keywords=matched_keywords,
                         description=template.description if template else fallback_desc,
                         cli_fallback=pattern_config.get("cli_fallback", ""),
-                    )
+                    ),
                 )
 
         # Sort by confidence (highest first)
@@ -322,7 +325,9 @@ class IntentDetector:
         return matches
 
     def _calculate_match_score(
-        self, user_input: str, pattern_config: dict[str, Any]
+        self,
+        user_input: str,
+        pattern_config: dict[str, Any],
     ) -> tuple[float, list[str]]:
         """Calculate match score for a template.
 
@@ -332,6 +337,7 @@ class IntentDetector:
 
         Returns:
             Tuple of (confidence score, list of matched keywords)
+
         """
         keywords = pattern_config.get("keywords", [])
         phrases = pattern_config.get("phrases", [])
@@ -370,6 +376,7 @@ class IntentDetector:
 
         Returns:
             Formatted suggestion text
+
         """
         if not matches:
             return ""
@@ -394,6 +401,7 @@ class IntentDetector:
 
         Returns:
             True if we should suggest agent teams
+
         """
         matches = self.detect(user_input, threshold=min_confidence)
         return len(matches) > 0
@@ -406,6 +414,7 @@ class IntentDetector:
 
         Returns:
             Best matching IntentMatch or None if no good match
+
         """
         matches = self.detect(user_input, threshold=0.4)
         return matches[0] if matches else None
@@ -419,6 +428,7 @@ def detect_and_suggest(user_input: str) -> str:
 
     Returns:
         Suggestion text or empty string if no matches
+
     """
     detector = IntentDetector()
     matches = detector.detect(user_input)
@@ -433,13 +443,14 @@ def auto_detect_template(user_input: str) -> str | None:
 
     Returns:
         Template ID if confident match, None otherwise
+
     """
     detector = IntentDetector()
     match = detector.get_best_match(user_input)
 
     if match and match.confidence >= 0.6:
         logger.info(
-            f"Auto-detected template: {match.template_id} (confidence: {match.confidence:.0%})"
+            f"Auto-detected template: {match.template_id} (confidence: {match.confidence:.0%})",
         )
         return match.template_id
 

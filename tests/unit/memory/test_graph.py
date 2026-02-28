@@ -95,7 +95,7 @@ class TestGraphInitialization:
     def test_creates_storage_directory(self, tmp_path):
         """Test that graph creates parent directories."""
         path = tmp_path / "nested" / "dir" / "graph.json"
-        _graph = MemoryGraph(path=path)  # noqa: F841 - instantiation creates directory
+        _graph = MemoryGraph(path=path)
         assert path.parent.exists()
 
     def test_loads_existing_graph(self, temp_graph_path):

@@ -31,8 +31,8 @@ from .cli_console import (
     _input_single_select,  # noqa: F401 - re-exported
     _input_text,  # noqa: F401 - re-exported
     _input_text_area,  # noqa: F401 - re-exported
-    console,  # noqa: F401 - re-exported (module-level instance)
-    render_form_interactive,  # noqa: F401 - re-exported
+    console,
+    render_form_interactive,
 )
 from .engine import SocraticWorkflowBuilder
 from .session import SessionState
@@ -215,7 +215,7 @@ def cmd_list(args: argparse.Namespace) -> int:
                     else s.get("goal") or ""
                 ),
                 s.get("updated_at", "")[:16],
-            ]
+            ],
         )
 
     console.table(headers, rows)
@@ -244,7 +244,7 @@ def cmd_blueprints(args: argparse.Namespace) -> int:
                 b.get("domain", ""),
                 str(b.get("agents_count", 0)),
                 (b.get("generated_at") or "")[:16],
-            ]
+            ],
         )
 
     console.table(headers, rows)
@@ -318,9 +318,8 @@ def cmd_delete(args: argparse.Namespace) -> int:
     if storage.delete_session(args.session_id):
         console.success(f"Deleted session {args.session_id}")
         return 0
-    else:
-        console.error(f"Session not found: {args.session_id}")
-        return 1
+    console.error(f"Session not found: {args.session_id}")
+    return 1
 
 
 def cmd_export(args: argparse.Namespace) -> int:

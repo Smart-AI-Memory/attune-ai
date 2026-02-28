@@ -55,6 +55,7 @@ class CoordinationMixin:
 
         Returns:
             AdaptiveModelRouter instance if telemetry is available, None otherwise
+
         """
         if not self._enable_adaptive_routing:
             return None
@@ -66,7 +67,7 @@ class CoordinationMixin:
 
                 if TELEMETRY_AVAILABLE and UsageTracker is not None:
                     self._adaptive_router = AdaptiveModelRouter(
-                        telemetry=UsageTracker.get_instance()
+                        telemetry=UsageTracker.get_instance(),
                     )
                     logger.debug(
                         "adaptive_routing_initialized",
@@ -96,6 +97,7 @@ class CoordinationMixin:
 
         Returns:
             HeartbeatCoordinator instance if heartbeat tracking is enabled, None otherwise
+
         """
         if not self._enable_heartbeat_tracking:
             return None
@@ -135,6 +137,7 @@ class CoordinationMixin:
 
         Returns:
             CoordinationSignals instance if coordination is enabled, None otherwise
+
         """
         if not self._enable_coordination:
             return None
@@ -181,6 +184,7 @@ class CoordinationMixin:
 
         Returns:
             Upgraded tier if recommended, otherwise current_tier
+
         """
         from .compat import ModelTier
 
@@ -245,6 +249,7 @@ class CoordinationMixin:
             ...     target_agent=None,  # Broadcast
             ...     payload={"reason": "user_cancelled"}
             ... )
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:
@@ -291,6 +296,7 @@ class CoordinationMixin:
             ... )
             >>> if signal:
             ...     proceed_with_deployment(signal.payload)
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:
@@ -330,6 +336,7 @@ class CoordinationMixin:
             >>> signal = workflow.check_signal(signal_type="abort")
             >>> if signal:
             ...     raise WorkflowAbortedException(signal.payload["reason"])
+
         """
         coordinator = self._get_coordination_signals()
         if coordinator is None:

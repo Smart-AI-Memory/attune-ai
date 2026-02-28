@@ -38,6 +38,7 @@ class AgentRecoveryManager:
         ...         resume_from(checkpoint)
         ...     else:
         ...         recovery.mark_abandoned(agent.agent_id)
+
     """
 
     def __init__(self, state_store: AgentStateStore) -> None:
@@ -48,6 +49,7 @@ class AgentRecoveryManager:
 
         Returns:
             List of AgentStateRecord with at least one 'running' execution
+
         """
         interrupted = []
         for record in self._store.get_all_agents():
@@ -67,6 +69,7 @@ class AgentRecoveryManager:
 
         Returns:
             Checkpoint dict or None if no checkpoint exists
+
         """
         checkpoint = self._store.get_last_checkpoint(agent_id)
         if checkpoint:
@@ -83,6 +86,7 @@ class AgentRecoveryManager:
 
         Args:
             agent_id: Unique agent identifier
+
         """
         record = self._store.get_agent_state(agent_id)
         if record is None:

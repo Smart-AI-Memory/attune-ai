@@ -18,12 +18,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from .forms import FieldOption, FieldType, FieldValidation, Form, FormField
-from .llm_analyzer_prompts import (  # noqa: F401 - re-exported
+from .llm_analyzer_prompts import (
     AGENT_RECOMMENDATION_PROMPT,
     GOAL_ANALYSIS_PROMPT,
     QUESTION_REFINEMENT_PROMPT,
 )
-from .llm_analyzer_types import (  # noqa: F401 - re-exported
+from .llm_analyzer_types import (
     LLMAgentRecommendation,
     LLMAnalysisResult,
     LLMQuestionResult,
@@ -45,6 +45,7 @@ class LLMGoalAnalyzer:
         >>> result = await analyzer.analyze_goal("I want to automate code reviews")
         >>> print(result.domain)  # "code_review"
         >>> print(result.suggested_questions)
+
     """
 
     # Model selection by tier
@@ -66,6 +67,7 @@ class LLMGoalAnalyzer:
             api_key: Anthropic API key (enables direct API access)
             provider: LLM provider to use (for executor mode)
             model_tier: Model tier (cheap, capable, premium)
+
         """
         import os
 
@@ -113,6 +115,7 @@ class LLMGoalAnalyzer:
 
         Returns:
             Response content as string
+
         """
         # Try direct Anthropic API first (preferred)
         client = self._get_client()
@@ -146,6 +149,7 @@ class LLMGoalAnalyzer:
 
         Returns:
             LLMAnalysisResult with structured analysis
+
         """
         prompt = GOAL_ANALYSIS_PROMPT.format(goal=goal)
         system = "You are an expert requirements analyst. Respond only with valid JSON."
@@ -182,6 +186,7 @@ class LLMGoalAnalyzer:
 
         Returns:
             LLMQuestionResult with questions
+
         """
         # Gather context
         previous_answers = {}
@@ -237,6 +242,7 @@ class LLMGoalAnalyzer:
 
         Returns:
             LLMAgentRecommendation with agent configuration
+
         """
         requirements = {
             "must_have": session.requirements.must_have,
@@ -407,6 +413,7 @@ def llm_questions_to_form(
 
     Returns:
         Form ready for display
+
     """
     fields = []
 
@@ -436,7 +443,7 @@ def llm_questions_to_form(
                         value=opt.get("value", opt.get("label", "").lower().replace(" ", "_")),
                         label=opt.get("label", ""),
                         description=opt.get("description", ""),
-                    )
+                    ),
                 )
 
         fields.append(
@@ -448,7 +455,7 @@ def llm_questions_to_form(
                 validation=FieldValidation(required=q.get("required", False)),
                 category=q.get("category", "general"),
                 order=q.get("priority", 5),
-            )
+            ),
         )
 
     # Sort by priority (higher priority = lower order number = appears first)

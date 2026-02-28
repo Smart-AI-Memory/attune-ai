@@ -161,7 +161,7 @@ class TestMultiBackendLogging:
                     latency_ms=1000,
                     success=True,
                     skipped=False,
-                )
+                ),
             ],
             total_input_tokens=100,
             total_output_tokens=50,

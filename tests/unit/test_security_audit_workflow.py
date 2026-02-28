@@ -129,9 +129,9 @@ class TestSecurityAuditWorkflowInit:
                             "reason": "Not user input",
                             "decided_by": "lead_dev",
                         },
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
@@ -227,7 +227,7 @@ class TestTriageScanning:
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
         result, in_tok, out_tok = _run(
-            wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None)
+            wf._triage({"path": str(tmp_path), "file_types": [".py"]}, None),
         )
 
         assert result["files_scanned"] == 1
@@ -332,9 +332,9 @@ class TestAnalyzeStage:
                             "reason": "Test code only",
                             "decided_by": "security_team",
                         },
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
@@ -361,9 +361,9 @@ class TestAnalyzeStage:
                             "decision": "deferred",
                             "reason": "Next sprint",
                         },
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         wf = SecurityAuditWorkflow(patterns_dir=str(tmp_path))
@@ -1015,8 +1015,8 @@ class TestTriageScanningFilters:
             import sqlite3
             placeholders = ",".join("?" * len(ids))
             cursor.execute(f"SELECT * FROM users WHERE id IN ({placeholders})", ids)
-        """
-            )
+        """,
+            ),
         )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
@@ -1047,8 +1047,8 @@ class TestTriageScanningFilters:
                 """\
             # This is an example of dangerous eval() usage
             # eval(user_input) is insecure and should be avoided
-        """
-            )
+        """,
+            ),
         )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
@@ -1066,8 +1066,8 @@ class TestTriageScanningFilters:
             import re
             for match in re.finditer(r'eval\\(', content):
                 print("Found eval usage")
-        """
-            )
+        """,
+            ),
         )
 
         wf = SecurityAuditWorkflow(enable_auth_strategy=False)
@@ -1228,7 +1228,7 @@ class TestRemediateWithCrewAndXml:
                 "summary": "XML summary",
                 "findings": [{"id": 1}],
                 "checklist": ["item1"],
-            }
+            },
         )
 
         input_data = {

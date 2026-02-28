@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from ..file_session import FileSessionMemory
     from ..long_term import LongTermMemory
     from ..redis_bootstrap import RedisStatus
-    from ..short_term import RedisShortTermMemory
 
 
 class CapabilitiesMixin:
@@ -20,7 +19,7 @@ class CapabilitiesMixin:
 
     # Type hints for attributes that will be provided by UnifiedMemory
     _file_session: "FileSessionMemory | None"
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
     _long_term: Any  # SecureMemDocsIntegration
     _simple_long_term: "LongTermMemory | None"
     _redis_status: "RedisStatus | None"
@@ -57,7 +56,7 @@ class CapabilitiesMixin:
         )
 
     @property
-    def short_term(self) -> "RedisShortTermMemory":
+    def short_term(self) -> Any:
         """Get short-term memory backend for direct access (testing).
 
         Returns:
@@ -70,7 +69,7 @@ class CapabilitiesMixin:
         if self._short_term is None:
             raise RuntimeError(
                 "Short-term memory not initialized. "
-                "Ensure Redis is running and UnifiedMemory was initialized with Redis enabled."
+                "Ensure Redis is running and UnifiedMemory was initialized with Redis enabled.",
             )
         return self._short_term
 
@@ -92,7 +91,7 @@ class CapabilitiesMixin:
         if self._simple_long_term is None:
             raise RuntimeError(
                 "Long-term memory not initialized. "
-                "Ensure UnifiedMemory was initialized with long_term_enabled=True."
+                "Ensure UnifiedMemory was initialized with long_term_enabled=True.",
             )
         return self._simple_long_term
 
@@ -149,11 +148,12 @@ class CapabilitiesMixin:
 
         Raises:
             RuntimeError: If file session memory is not initialized
+
         """
         if self._file_session is None:
             raise RuntimeError(
                 "File session memory not initialized. "
-                "File session tracking is automatically enabled when UnifiedMemory is initialized."
+                "File session tracking is automatically enabled when UnifiedMemory is initialized.",
             )
         return self._file_session
 
@@ -167,6 +167,7 @@ class CapabilitiesMixin:
 
         Returns:
             True if Redis is available and connected
+
         """
         return self.using_real_redis
 
@@ -180,6 +181,7 @@ class CapabilitiesMixin:
 
         Returns:
             True if Redis is available and connected
+
         """
         return self.using_real_redis
 
@@ -188,6 +190,7 @@ class CapabilitiesMixin:
 
         Returns:
             True if file session or long-term memory is available
+
         """
         return self._file_session is not None or self._long_term is not None
 
@@ -196,6 +199,7 @@ class CapabilitiesMixin:
 
         Returns:
             Dictionary mapping capability names to availability
+
         """
         return {
             "file_session": self.has_file_session,

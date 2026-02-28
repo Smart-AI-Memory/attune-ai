@@ -191,9 +191,9 @@ class TestEventStreamerInit:
             {
                 "attune.telemetry": MagicMock(
                     UsageTracker=MagicMock(
-                        get_instance=MagicMock(side_effect=ImportError("no tracker"))
-                    )
-                )
+                        get_instance=MagicMock(side_effect=ImportError("no tracker")),
+                    ),
+                ),
             },
         ):
             streamer = EventStreamer(memory=None)

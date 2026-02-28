@@ -238,7 +238,7 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                                         "end_line": node.end_lineno or node.lineno,
                                         "complexity": complexity,
                                         "loc": loc,
-                                    }
+                                    },
                                 )
                 except (SyntaxError, OSError) as e:
                     logger.debug("Skipped %s: %s", file_path, e)
@@ -436,7 +436,7 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                                 "category": updated.category.value,
                                 "before": updated.before_code[:500],
                                 "after": updated.after_code[:500],
-                            }
+                            },
                         )
                 except (OSError, ValueError, KeyError, RuntimeError) as e:
                     logger.debug("Simplification failed: %s", e)
@@ -460,9 +460,7 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                     "before (original), after (simplified). "
                     "Preserve all behavior."
                 ),
-                user_message=(
-                    f"Generate simplified code for these " f"findings:\n\n{findings_text}"
-                ),
+                user_message=(f"Generate simplified code for these findings:\n\n{findings_text}"),
                 max_tokens=4096,
             )
 
@@ -534,7 +532,7 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                 "Flag any issues. Be concise."
             ),
             user_message=(
-                f"Review these {len(simplifications)} proposed " f"simplifications:\n\n{diffs}"
+                f"Review these {len(simplifications)} proposed simplifications:\n\n{diffs}"
             ),
             max_tokens=2048,
         )

@@ -31,6 +31,7 @@ def cmd_tier1_status(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from datetime import timedelta
 
@@ -125,6 +126,7 @@ def cmd_task_routing_report(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from datetime import timedelta
 
@@ -171,7 +173,10 @@ def cmd_task_routing_report(args: Any) -> int:
 
             for task_type, data in stats["by_task_type"].items():
                 type_table.add_row(
-                    task_type, str(data["total"]), str(data["success"]), f"{data['rate']:.1%}"
+                    task_type,
+                    str(data["total"]),
+                    str(data["success"]),
+                    f"{data['rate']:.1%}",
                 )
 
             console.print(type_table)
@@ -200,6 +205,7 @@ def cmd_test_status(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from datetime import timedelta
 
@@ -277,6 +283,7 @@ def cmd_agent_performance(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from datetime import timedelta
 
@@ -323,7 +330,8 @@ def cmd_agent_performance(args: Any) -> int:
         # Summary panel
         summary_text = Text()
         summary_text.append(
-            f"Automation Rate: {stats['automation_rate']:.1%}\n", style="green bold"
+            f"Automation Rate: {stats['automation_rate']:.1%}\n",
+            style="green bold",
         )
         summary_text.append(f"Human Review Rate: {stats['human_review_rate']:.1%}\n")
 

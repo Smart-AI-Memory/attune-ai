@@ -46,6 +46,7 @@ class CacheAnalyzer:
         >>> health = analyzer.analyze_cache("ast_parse")
         >>> print(f"Health: {health.health}")
         >>> print(f"Recommendation: {health.recommendation}")
+
     """
 
     @staticmethod
@@ -57,6 +58,7 @@ class CacheAnalyzer:
 
         Returns:
             CacheHealthScore with assessment and recommendations
+
         """
         monitor = CacheMonitor.get_instance()
         stats = monitor.get_stats(cache_name)
@@ -72,6 +74,7 @@ class CacheAnalyzer:
 
         Returns:
             Dictionary mapping cache names to CacheHealthScore
+
         """
         monitor = CacheMonitor.get_instance()
         all_stats = monitor.get_all_stats()
@@ -87,6 +90,7 @@ class CacheAnalyzer:
 
         Returns:
             CacheHealthScore with health assessment
+
         """
         hit_rate = stats.hit_rate
         total_requests = stats.total_requests
@@ -179,6 +183,7 @@ class CacheReporter:
     Example:
         >>> reporter = CacheReporter()
         >>> print(reporter.generate_health_report())
+
     """
 
     @staticmethod
@@ -190,6 +195,7 @@ class CacheReporter:
 
         Returns:
             Formatted health report
+
         """
         analyzer = CacheAnalyzer()
         health_scores = analyzer.analyze_all()
@@ -244,6 +250,7 @@ class CacheReporter:
 
         Returns:
             Formatted optimization report
+
         """
         monitor = CacheMonitor.get_instance()
         analyzer = CacheAnalyzer()
@@ -278,6 +285,7 @@ class CacheReporter:
 
         Returns:
             Formatted comprehensive report
+
         """
         monitor = CacheMonitor.get_instance()
 

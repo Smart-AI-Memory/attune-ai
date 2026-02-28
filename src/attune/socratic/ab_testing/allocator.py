@@ -23,6 +23,7 @@ class TrafficAllocator:
 
         Args:
             experiment: The experiment to allocate for
+
         """
         self.experiment = experiment
         self._random = random.Random()
@@ -35,19 +36,19 @@ class TrafficAllocator:
 
         Returns:
             Allocated variant
+
         """
         strategy = self.experiment.allocation_strategy
 
         if strategy == AllocationStrategy.FIXED:
             return self._fixed_allocation(user_id)
-        elif strategy == AllocationStrategy.EPSILON_GREEDY:
+        if strategy == AllocationStrategy.EPSILON_GREEDY:
             return self._epsilon_greedy(epsilon=0.1)
-        elif strategy == AllocationStrategy.THOMPSON_SAMPLING:
+        if strategy == AllocationStrategy.THOMPSON_SAMPLING:
             return self._thompson_sampling()
-        elif strategy == AllocationStrategy.UCB:
+        if strategy == AllocationStrategy.UCB:
             return self._ucb_allocation()
-        else:
-            return self._fixed_allocation(user_id)
+        return self._fixed_allocation(user_id)
 
     def _fixed_allocation(self, user_id: str) -> Variant:
         """Deterministic allocation based on user ID hash."""
@@ -70,12 +71,11 @@ class TrafficAllocator:
         if self._random.random() < epsilon:
             # Explore: random variant
             return self._random.choice(self.experiment.variants)
-        else:
-            # Exploit: best performing variant
-            return max(
-                self.experiment.variants,
-                key=lambda v: v.avg_success_score,
-            )
+        # Exploit: best performing variant
+        return max(
+            self.experiment.variants,
+            key=lambda v: v.avg_success_score,
+        )
 
     def _thompson_sampling(self) -> Variant:
         """Thompson sampling: Bayesian multi-armed bandit."""

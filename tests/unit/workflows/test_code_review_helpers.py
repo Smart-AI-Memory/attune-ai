@@ -30,7 +30,10 @@ class TestGatherProjectContextBasics:
     """Educational tests for project context gathering basics."""
 
     def test_returns_empty_string_for_empty_directory(
-        self, tmp_path, monkeypatch, code_review_workflow
+        self,
+        tmp_path,
+        monkeypatch,
+        code_review_workflow,
     ):
         """Testing the "no context available" path.
 
@@ -55,7 +58,10 @@ class TestGatherProjectContextBasics:
         assert "## README" not in context
 
     def test_includes_project_name_from_directory(
-        self, tmp_path, monkeypatch, code_review_workflow
+        self,
+        tmp_path,
+        monkeypatch,
+        code_review_workflow,
     ):
         """Teaching Pattern: Testing extraction of metadata from environment.
         The project name comes from the directory name.

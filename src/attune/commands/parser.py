@@ -69,7 +69,6 @@ class CommandParser:
 
     def __init__(self):
         """Initialize the parser."""
-        pass
 
     def parse_file(self, file_path: str | Path) -> CommandConfig:
         """Parse a command markdown file.
@@ -233,7 +232,7 @@ class CommandParser:
             name = source_path.stem
 
         # Try to extract description from first line
-        first_line = body.split("\n")[0].strip() if body else ""
+        first_line = body.split("\n", maxsplit=1)[0].strip() if body else ""
         if first_line:
             # Remove markdown heading prefix
             if first_line.startswith("#"):
@@ -344,7 +343,7 @@ class CommandParser:
                 if name and not re.match(r"^[a-z0-9][-a-z0-9]*$", name):
                     errors.append(
                         f"Invalid command name '{name}'. "
-                        "Use lowercase letters, numbers, and hyphens."
+                        "Use lowercase letters, numbers, and hyphens.",
                     )
 
                 # Validate category if provided

@@ -199,19 +199,28 @@ class TestCostTracker:
 
         # Test haiku (cheap)
         req1 = tracker.log_request(
-            model="claude-3-haiku-20240307", input_tokens=100, output_tokens=50, task_type="test"
+            model="claude-3-haiku-20240307",
+            input_tokens=100,
+            output_tokens=50,
+            task_type="test",
         )
         assert req1["tier"] == "cheap"
 
         # Test sonnet (capable)
         req2 = tracker.log_request(
-            model="claude-3-5-sonnet-20241022", input_tokens=100, output_tokens=50, task_type="test"
+            model="claude-3-5-sonnet-20241022",
+            input_tokens=100,
+            output_tokens=50,
+            task_type="test",
         )
         assert req2["tier"] == "capable"
 
         # Test opus (premium)
         req3 = tracker.log_request(
-            model="claude-opus-4-20250514", input_tokens=100, output_tokens=50, task_type="test"
+            model="claude-opus-4-20250514",
+            input_tokens=100,
+            output_tokens=50,
+            task_type="test",
         )
         assert req3["tier"] == "premium"
 
@@ -239,7 +248,10 @@ def test_log_request_convenience(tmp_path):
 
     # First call creates tracker
     request = log_request(
-        model="claude-3-haiku-20240307", input_tokens=1000, output_tokens=500, task_type="test"
+        model="claude-3-haiku-20240307",
+        input_tokens=1000,
+        output_tokens=500,
+        task_type="test",
     )
 
     assert request is not None
@@ -255,7 +267,10 @@ def test_cmd_costs_basic(tmp_path):
     # Log some requests
     for _i in range(5):
         tracker.log_request(
-            model="claude-3-haiku-20240307", input_tokens=1000, output_tokens=500, task_type="test"
+            model="claude-3-haiku-20240307",
+            input_tokens=1000,
+            output_tokens=500,
+            task_type="test",
         )
 
     # Create args object
@@ -279,7 +294,10 @@ def test_cmd_costs_json_output(tmp_path, capsys):
     # Log some requests
     for _i in range(5):
         tracker.log_request(
-            model="claude-3-haiku-20240307", input_tokens=1000, output_tokens=500, task_type="test"
+            model="claude-3-haiku-20240307",
+            input_tokens=1000,
+            output_tokens=500,
+            task_type="test",
         )
 
     # Create args object with json flag

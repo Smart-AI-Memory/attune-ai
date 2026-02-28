@@ -78,7 +78,7 @@ preferences:
     args: run
     usage_count: 3
     confidence: 0.9
-"""
+""",
         )
         router = HybridRouter(preferences_path=str(prefs_path))
         assert "mycommand" in router.preferences
@@ -201,7 +201,7 @@ preferences:
     args: custom-args
     usage_count: 5
     confidence: 0.9
-"""
+""",
         )
         router = HybridRouter(preferences_path=str(prefs_path))
         result = router._infer_command("mykey")
@@ -353,7 +353,7 @@ preferences:
     args: myargs
     usage_count: 1
     confidence: 0.8
-"""
+""",
         )
         router = HybridRouter(preferences_path=str(prefs_path))
         suggestions = router.get_suggestions("cust")
@@ -477,7 +477,7 @@ preferences:
     slash_command: /dev commit
     usage_count: 5
     confidence: 0.9
-"""
+""",
         )
         router = HybridRouter(preferences_path=str(prefs_path))
         assert "oldkey" in router.preferences

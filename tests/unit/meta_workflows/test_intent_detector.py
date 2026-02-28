@@ -262,7 +262,7 @@ class TestIntentDetectorSuggestionText:
                 template_name="Release Preparation",
                 confidence=0.8,
                 description="Prepare for release",
-            )
+            ),
         ]
 
         text = detector.get_suggestion_text(matches)

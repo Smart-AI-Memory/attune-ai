@@ -22,6 +22,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -64,6 +65,7 @@ class PatternStaging:
         True
         >>> staging.list_staged_patterns(creds)
         [StagedPattern(...)]
+
     """
 
     PREFIX_STAGED = "empathy:staged:"
@@ -73,6 +75,7 @@ class PatternStaging:
 
         Args:
             base: BaseOperations instance for storage access
+
         """
         self._base = base
 
@@ -101,6 +104,7 @@ class PatternStaging:
             >>> pattern = StagedPattern(pattern_id="p1", name="Test", ...)
             >>> staging.stage_pattern(pattern, creds)
             True
+
         """
         # Pattern 5: Type validation
         if not isinstance(pattern, StagedPattern):
@@ -140,6 +144,7 @@ class PatternStaging:
             >>> pattern = staging.get_staged_pattern("p1", creds)
             >>> if pattern:
             ...     print(f"Found: {pattern.name}")
+
         """
         # Pattern 1: String ID validation
         if not pattern_id or not pattern_id.strip():
@@ -169,6 +174,7 @@ class PatternStaging:
             >>> patterns = staging.list_staged_patterns(creds)
             >>> for p in patterns:
             ...     print(f"{p.pattern_id}: {p.name}")
+
         """
         pattern = f"{self.PREFIX_STAGED}*"
         keys = self._base._keys(pattern)
@@ -202,6 +208,7 @@ class PatternStaging:
             >>> pattern = staging.promote_pattern("p1", validator_creds)
             >>> if pattern:
             ...     pattern_library.add(pattern)
+
         """
         if not credentials.can_validate():
             raise PermissionError(
@@ -237,6 +244,7 @@ class PatternStaging:
         Example:
             >>> staging.reject_pattern("p1", validator_creds, "Not applicable")
             True
+
         """
         if not credentials.can_validate():
             raise PermissionError(
@@ -266,6 +274,7 @@ class PatternStaging:
         Example:
             >>> count = staging.count_staged()
             >>> print(f"{count} patterns awaiting validation")
+
         """
         pattern = f"{self.PREFIX_STAGED}*"
         return len(self._base._keys(pattern))

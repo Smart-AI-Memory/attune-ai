@@ -104,7 +104,7 @@ class TestRunPostSimplification:
                                     except ValueError:
                                         pass
                 return None
-        """
+        """,
         )
         (tmp_path / "complex.py").write_text(code)
 
@@ -141,7 +141,7 @@ class TestRunPostSimplification:
                                 if e:
                                     return 1
                 return 0
-        """
+        """,
         )
         (tmp_path / "nested.py").write_text(code)
 

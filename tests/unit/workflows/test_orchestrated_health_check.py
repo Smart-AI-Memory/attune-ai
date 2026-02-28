@@ -93,7 +93,7 @@ class TestHealthCheckReport:
                 raw_metrics={"critical": 0},
                 issues=[],
                 passed=True,
-            )
+            ),
         ]
 
         report = HealthCheckReport(
@@ -149,7 +149,7 @@ class TestOrchestratedHealthCheckWorkflow:
         workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=".")
 
         assert workflow.mode == "daily"
-        assert workflow.project_root == Path(".").resolve()
+        assert workflow.project_root == Path().resolve()
         assert workflow.tracking_dir.exists()
 
     def test_init_invalid_mode(self):
@@ -465,7 +465,7 @@ class TestOrchestratedHealthCheckWorkflow:
         # Create history file with one entry
         history_file = workflow.tracking_dir / "history.jsonl"
         history_file.write_text(
-            json.dumps({"timestamp": "2025-01-01", "overall_health_score": 80.0}) + "\n"
+            json.dumps({"timestamp": "2025-01-01", "overall_health_score": 80.0}) + "\n",
         )
 
         trend = workflow._get_trend_comparison(85.0)
@@ -551,8 +551,8 @@ class TestOrchestratedHealthCheckWorkflow:
 
         agent_results = {
             "security_auditor": {
-                "output": {"critical_issues": 2, "high_issues": 1, "medium_issues": 3}
-            }
+                "output": {"critical_issues": 2, "high_issues": 1, "medium_issues": 3},
+            },
         }
 
         scores = workflow._calculate_category_scores(agent_results)
@@ -569,8 +569,8 @@ class TestOrchestratedHealthCheckWorkflow:
 
         agent_results = {
             "security_auditor": {
-                "output": {"critical_issues": 0, "high_issues": 0, "medium_issues": 0}
-            }
+                "output": {"critical_issues": 0, "high_issues": 0, "medium_issues": 0},
+            },
         }
 
         scores = workflow._calculate_category_scores(agent_results)
@@ -678,7 +678,10 @@ async def test_health_check_integration(tmp_path):
         ]
 
         mock_strategy_result = StrategyResult(
-            success=True, outputs=mock_results, aggregated_output={}, total_duration=7.5
+            success=True,
+            outputs=mock_results,
+            aggregated_output={},
+            total_duration=7.5,
         )
 
         mock_strategy.return_value.execute = AsyncMock(return_value=mock_strategy_result)

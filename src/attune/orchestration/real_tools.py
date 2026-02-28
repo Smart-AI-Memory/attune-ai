@@ -6,7 +6,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from .tools import (  # noqa: F401
+from .tools import (
     PERFORMANCE_TOOLS,
     QUALITY_TOOLS,
     REAL_TOOLS,
@@ -28,22 +28,22 @@ from .tools import (  # noqa: F401
 )
 
 __all__ = [
-    "REAL_TOOLS",
-    "TESTING_TOOLS",
-    "QUALITY_TOOLS",
-    "SECURITY_TOOLS",
     "PERFORMANCE_TOOLS",
-    "_validate_file_path",
+    "QUALITY_TOOLS",
+    "REAL_TOOLS",
+    "SECURITY_TOOLS",
+    "TESTING_TOOLS",
     "CoverageReport",
-    "SecurityReport",
-    "QualityReport",
     "DocumentationReport",
     "PerformanceReport",
-    "RealCoverageAnalyzer",
-    "RealTestGenerator",
-    "RealTestValidator",
-    "RealSecurityAuditor",
+    "QualityReport",
     "RealCodeQualityAnalyzer",
+    "RealCoverageAnalyzer",
     "RealDocumentationAnalyzer",
     "RealPerformanceProfiler",
+    "RealSecurityAuditor",
+    "RealTestGenerator",
+    "RealTestValidator",
+    "SecurityReport",
+    "_validate_file_path",
 ]

@@ -74,6 +74,7 @@ class StreamEvent:
 
         Returns:
             StreamEvent instance
+
         """
         # Decode bytes to strings (handle both bytes and str)
         decoded = {}
@@ -112,10 +113,12 @@ class EventStreamer:
     events via polling or blocking reads.
 
     Stream naming: stream:{event_type}
+
     Examples:
     - stream:agent_heartbeat
     - stream:coordination_signal
     - stream:workflow_progress
+
     """
 
     STREAM_PREFIX = "stream:"
@@ -127,6 +130,7 @@ class EventStreamer:
 
         Args:
             memory: Memory backend with Redis connection
+
         """
         self.memory = memory
 
@@ -151,6 +155,7 @@ class EventStreamer:
 
         Returns:
             Stream key (e.g., "stream:agent_heartbeat")
+
         """
         return f"{self.STREAM_PREFIX}{event_type}"
 
@@ -169,6 +174,7 @@ class EventStreamer:
 
         Returns:
             Event ID (Redis stream entry ID) if successful, empty string otherwise
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             logger.debug("Cannot publish event: no Redis backend")
@@ -226,6 +232,7 @@ class EventStreamer:
             >>> streamer = EventStreamer()
             >>> for event in streamer.consume_events(event_types=["agent_heartbeat"]):
             ...     print(f"Agent {event.data['agent_id']} status: {event.data['status']}")
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             logger.warning("Cannot consume events: no Redis backend")
@@ -239,7 +246,7 @@ class EventStreamer:
         else:
             # Subscribe to all event streams (expensive - requires KEYS scan)
             all_streams = list(
-                self.memory._client.scan_iter(match=f"{self.STREAM_PREFIX}*", count=100)
+                self.memory._client.scan_iter(match=f"{self.STREAM_PREFIX}*", count=100),
             )
             streams = {
                 s.decode("utf-8") if isinstance(s, bytes) else s: start_id for s in all_streams
@@ -305,6 +312,7 @@ class EventStreamer:
 
         Returns:
             List of recent events (newest first)
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             logger.debug("Cannot get recent events: no Redis backend")
@@ -344,6 +352,7 @@ class EventStreamer:
 
         Returns:
             Dictionary with stream info (length, first_entry, last_entry, etc.)
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             return {}
@@ -376,6 +385,7 @@ class EventStreamer:
 
         Returns:
             True if deleted, False otherwise
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             return False
@@ -398,6 +408,7 @@ class EventStreamer:
 
         Returns:
             Number of events trimmed
+
         """
         if not self.memory or not hasattr(self.memory, "_client") or not self.memory._client:
             return 0

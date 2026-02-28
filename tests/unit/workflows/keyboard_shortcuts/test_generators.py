@@ -185,7 +185,9 @@ class TestVSCodeKeybindingsGenerator:
         assert bindings[0]["// mnemonic"] == "M = Morning"
 
     def test_generate_bindings_converts_ctrl_to_cmd_for_mac(
-        self, sample_manifest, sample_generated_shortcuts
+        self,
+        sample_manifest,
+        sample_generated_shortcuts,
     ):
         """Test that ctrl is converted to cmd for Mac shortcuts."""
         generator = VSCodeKeybindingsGenerator()
@@ -545,7 +547,9 @@ class TestMarkdownDocGenerator:
         assert "S" in diagram or "s" in diagram
 
     def test_generate_scales_section_shows_progression(
-        self, sample_manifest, sample_generated_shortcuts
+        self,
+        sample_manifest,
+        sample_generated_shortcuts,
     ):
         """Test that scales section shows learning progression."""
         generator = MarkdownDocGenerator()
@@ -558,7 +562,9 @@ class TestMarkdownDocGenerator:
         assert "s" in scales.lower() or "S" in scales
 
     def test_generate_full_table_includes_all_shortcuts(
-        self, sample_manifest, sample_generated_shortcuts
+        self,
+        sample_manifest,
+        sample_generated_shortcuts,
     ):
         """Test that full table includes all shortcuts."""
         generator = MarkdownDocGenerator()
@@ -684,7 +690,9 @@ class TestComprehensiveGenerator:
         assert docs_file.name == "KEYBOARD_SHORTCUTS.md"
 
     def test_generate_all_organizes_keybindings_in_subdirectory(
-        self, tmp_path, sample_generated_shortcuts
+        self,
+        tmp_path,
+        sample_generated_shortcuts,
     ):
         """Test that keybindings are organized in subdirectory."""
         generator = ComprehensiveGenerator()

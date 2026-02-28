@@ -38,14 +38,11 @@ import os
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import structlog
 
 from attune.memory.types import RedisConfig, RedisMetrics
-
-if TYPE_CHECKING:
-    pass
 
 logger = structlog.get_logger(__name__)
 
@@ -90,6 +87,7 @@ class BaseOperations:
         _metrics: Operation metrics tracker
         _client: Redis client instance (None if mock)
         _mock_storage: In-memory storage for mock mode
+
     """
 
     # Key prefixes for namespacing (shared across all operations)
@@ -120,6 +118,7 @@ class BaseOperations:
             password: Redis password (optional)
             use_mock: Use in-memory mock for testing
             config: Full RedisConfig for advanced settings (overrides other args)
+
         """
         # Use config if provided, otherwise build from individual args
         if config is not None:
@@ -198,6 +197,7 @@ class BaseOperations:
             >>> memory = BaseOperations(use_mock=True)
             >>> memory.client is None
             True
+
         """
         return self._client
 
@@ -212,6 +212,7 @@ class BaseOperations:
             >>> base = BaseOperations(use_mock=True)
             >>> base.metrics.retries_total
             0
+
         """
         return self._metrics
 
@@ -223,6 +224,7 @@ class BaseOperations:
 
         Raises:
             ConnectionError: If all retry attempts fail
+
         """
         max_attempts = self._config.retry_max_attempts
         base_delay = self._config.retry_base_delay
@@ -263,7 +265,7 @@ class BaseOperations:
             max_attempts=max_attempts,
             error=str(last_error),
         )
-        raise last_error if last_error else ConnectionError("Failed to connect to Redis")
+        raise last_error or ConnectionError("Failed to connect to Redis")
 
     def _execute_with_retry(self, operation: Callable[[], Any], op_name: str = "operation") -> Any:
         """Execute a Redis operation with retry logic.
@@ -277,6 +279,7 @@ class BaseOperations:
 
         Raises:
             ConnectionError: If all retry attempts fail
+
         """
         start_time = time.perf_counter()
         max_attempts = self._config.retry_max_attempts
@@ -307,7 +310,7 @@ class BaseOperations:
 
         latency_ms = (time.perf_counter() - start_time) * 1000
         self._metrics.record_operation(op_name, latency_ms, success=False)
-        raise last_error if last_error else ConnectionError("Redis operation failed")
+        raise last_error or ConnectionError("Redis operation failed")
 
     def _get(self, key: str) -> str | None:
         """Get value from Redis or mock storage.
@@ -317,6 +320,7 @@ class BaseOperations:
 
         Returns:
             Value as string, or None if not found
+
         """
         # Mock mode path
         if self.use_mock:
@@ -349,6 +353,7 @@ class BaseOperations:
 
         Returns:
             True if successful
+
         """
         effective_ttl = ttl if ttl is not None else self.DEFAULT_TTL
 
@@ -374,6 +379,7 @@ class BaseOperations:
 
         Returns:
             True if key was deleted
+
         """
         # Mock mode path
         if self.use_mock:
@@ -396,6 +402,7 @@ class BaseOperations:
 
         Returns:
             List of matching keys
+
         """
         if self.use_mock:
             import fnmatch
@@ -416,6 +423,7 @@ class BaseOperations:
 
         Returns:
             True if connected and responsive
+
         """
         if self.use_mock:
             return True
@@ -423,7 +431,7 @@ class BaseOperations:
             return False
         try:
             return bool(self._client.ping())
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Health check should not raise, just return False
             return False
 
@@ -432,6 +440,7 @@ class BaseOperations:
 
         Returns:
             Dict with memory stats including mode, key counts by prefix
+
         """
         if self.use_mock:
             # Use generator expressions for memory-efficient counting
@@ -468,6 +477,7 @@ class BaseOperations:
 
         Returns:
             Dict with operation counts, latencies, and success rates
+
         """
         return self._metrics.to_dict()
 

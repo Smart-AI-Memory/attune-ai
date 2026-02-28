@@ -45,6 +45,7 @@ class SequentialStrategy(ExecutionStrategy):
 
     Example:
         Coverage Analyzer → Test Generator → Quality Validator
+
     """
 
     async def execute(self, agents: list[AgentTemplate], context: dict[str, Any]) -> StrategyResult:
@@ -56,6 +57,7 @@ class SequentialStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with sequential execution results
+
         """
         if not agents:
             raise ValueError("agents list cannot be empty")
@@ -88,7 +90,7 @@ class SequentialStrategy(ExecutionStrategy):
                         success=False,
                         output={},
                         error=str(e),
-                    )
+                    ),
                 )
 
         return StrategyResult(
@@ -113,6 +115,7 @@ class ParallelStrategy(ExecutionStrategy):
 
     Example:
         Security Audit || Performance Check || Code Quality || Docs Check
+
     """
 
     async def execute(self, agents: list[AgentTemplate], context: dict[str, Any]) -> StrategyResult:
@@ -124,6 +127,7 @@ class ParallelStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with parallel execution results
+
         """
         if not agents:
             raise ValueError("agents list cannot be empty")
@@ -150,7 +154,7 @@ class ParallelStrategy(ExecutionStrategy):
                         success=False,
                         output={},
                         error=str(result),
-                    )
+                    ),
                 )
             else:
                 # Type checker doesn't know we already filtered out exceptions
@@ -181,6 +185,7 @@ class DebateStrategy(ExecutionStrategy):
 
     Example:
         Architect(scale) || Architect(cost) || Architect(simplicity) → Synthesizer
+
     """
 
     async def execute(self, agents: list[AgentTemplate], context: dict[str, Any]) -> StrategyResult:
@@ -192,6 +197,7 @@ class DebateStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with synthesized consensus
+
         """
         if not agents:
             raise ValueError("agents list cannot be empty")
@@ -229,6 +235,7 @@ class DebateStrategy(ExecutionStrategy):
 
         Returns:
             Synthesized consensus
+
         """
         # Simplified synthesis: majority vote on success
         success_votes = sum(1 for r in results if r.success)
@@ -257,6 +264,7 @@ class TeachingStrategy(ExecutionStrategy):
 
     Example:
         Junior Writer(CHEAP) → Quality Gate → (pass ? done : Expert Review(CAPABLE))
+
     """
 
     def __init__(self, quality_threshold: float = 0.7):
@@ -264,6 +272,7 @@ class TeachingStrategy(ExecutionStrategy):
 
         Args:
             quality_threshold: Minimum confidence for junior to pass (0-1)
+
         """
         self.quality_threshold = quality_threshold
 
@@ -276,6 +285,7 @@ class TeachingStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with teaching outcome
+
         """
         if len(agents) != 2:
             raise ValueError("Teaching strategy requires exactly 2 agents")
@@ -298,7 +308,7 @@ class TeachingStrategy(ExecutionStrategy):
         else:
             logger.info(
                 f"Junior failed quality gate, expert taking over "
-                f"(confidence={junior_result.confidence:.2f})"
+                f"(confidence={junior_result.confidence:.2f})",
             )
 
             # Phase 3: Expert takeover
@@ -336,6 +346,7 @@ class RefinementStrategy(ExecutionStrategy):
 
     Example:
         Drafter(CHEAP) → Reviewer(CAPABLE) → Polisher(PREMIUM)
+
     """
 
     async def execute(self, agents: list[AgentTemplate], context: dict[str, Any]) -> StrategyResult:
@@ -347,6 +358,7 @@ class RefinementStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with refined output
+
         """
         if len(agents) < 2:
             raise ValueError("Refinement strategy requires at least 2 agents")
@@ -402,6 +414,7 @@ class AdaptiveStrategy(ExecutionStrategy):
 
     Example:
         Classifier(CHEAP) → route(simple|moderate|complex) → Specialist(tier)
+
     """
 
     async def execute(self, agents: list[AgentTemplate], context: dict[str, Any]) -> StrategyResult:
@@ -413,6 +426,7 @@ class AdaptiveStrategy(ExecutionStrategy):
 
         Returns:
             StrategyResult with routed execution
+
         """
         if len(agents) < 2:
             raise ValueError("Adaptive strategy requires at least 2 agents")
@@ -433,29 +447,28 @@ class AdaptiveStrategy(ExecutionStrategy):
         if not classifier_result.success:
             logger.error("Classifier failed, defaulting to first specialist")
             selected_specialist = specialists[0]
+        # Phase 2: Route to specialist based on classification
+        # Simplified: select based on confidence score
+        elif classifier_result.confidence > 0.8:
+            # High confidence → simple task → cheap specialist
+            selected_specialist = min(
+                specialists,
+                key=lambda s: {
+                    "CHEAP": 0,
+                    "CAPABLE": 1,
+                    "PREMIUM": 2,
+                }.get(s.tier_preference, 1),
+            )
         else:
-            # Phase 2: Route to specialist based on classification
-            # Simplified: select based on confidence score
-            if classifier_result.confidence > 0.8:
-                # High confidence → simple task → cheap specialist
-                selected_specialist = min(
-                    specialists,
-                    key=lambda s: {
-                        "CHEAP": 0,
-                        "CAPABLE": 1,
-                        "PREMIUM": 2,
-                    }.get(s.tier_preference, 1),
-                )
-            else:
-                # Low confidence → complex task → premium specialist
-                selected_specialist = max(
-                    specialists,
-                    key=lambda s: {
-                        "CHEAP": 0,
-                        "CAPABLE": 1,
-                        "PREMIUM": 2,
-                    }.get(s.tier_preference, 1),
-                )
+            # Low confidence → complex task → premium specialist
+            selected_specialist = max(
+                specialists,
+                key=lambda s: {
+                    "CHEAP": 0,
+                    "CAPABLE": 1,
+                    "PREMIUM": 2,
+                }.get(s.tier_preference, 1),
+            )
 
         logger.info(f"Routed to specialist: {selected_specialist.id}")
 

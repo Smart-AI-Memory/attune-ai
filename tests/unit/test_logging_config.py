@@ -91,7 +91,10 @@ class TestLoggingConfig:
         LoggingConfig._loggers.clear()
 
         LoggingConfig.configure(
-            level=logging.DEBUG, log_dir=None, use_color=True, include_context=False
+            level=logging.DEBUG,
+            log_dir=None,
+            use_color=True,
+            include_context=False,
         )
 
         assert LoggingConfig._configured is True

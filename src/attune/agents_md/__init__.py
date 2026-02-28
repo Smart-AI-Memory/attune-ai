@@ -16,7 +16,7 @@ from attune.agents_md.parser import MarkdownAgentParser
 from attune.agents_md.registry import AgentRegistry
 
 __all__ = [
-    "MarkdownAgentParser",
     "AgentLoader",
     "AgentRegistry",
+    "MarkdownAgentParser",
 ]

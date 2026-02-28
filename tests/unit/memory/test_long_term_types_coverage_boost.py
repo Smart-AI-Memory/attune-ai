@@ -300,7 +300,9 @@ class TestSecurePattern:
         )
 
         pattern = SecurePattern(
-            pattern_id="pat_123", content="Pattern content here", metadata=metadata
+            pattern_id="pat_123",
+            content="Pattern content here",
+            metadata=metadata,
         )
 
         assert pattern.pattern_id == "pat_123"

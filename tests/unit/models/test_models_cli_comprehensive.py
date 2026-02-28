@@ -279,7 +279,7 @@ class TestValidateFileRealData:
 name: test-workflow
 description: Test workflow for validation
 default_provider: anthropic
-"""
+""",
         )
 
         result = validate_file(str(config_file))
@@ -288,7 +288,7 @@ default_provider: anthropic
         assert result == 0
 
     @pytest.mark.skip(
-        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)"
+        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)",
     )
     def test_validate_invalid_yaml_syntax(self, tmp_path, capsys):
         """Test validating a YAML file with syntax errors."""
@@ -297,7 +297,7 @@ default_provider: anthropic
             """
 mode: [
   invalid: yaml: syntax
-"""
+""",
         )
 
         with pytest.raises(Exception):
@@ -305,7 +305,7 @@ mode: [
             validate_file(str(config_file))
 
     @pytest.mark.skip(
-        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)"
+        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)",
     )
     def test_validate_nonexistent_file(self, capsys):
         """Test validating a file that doesn't exist."""
@@ -319,7 +319,7 @@ mode: [
             """
 mode: single
 primary_provider: anthropic
-"""
+""",
         )
 
         validate_file(str(config_file), format="json")
@@ -685,7 +685,9 @@ class TestMainCLIRealData:
     def test_main_costs_with_custom_tokens(self, capsys):
         """Test costs command with custom token counts."""
         with patch.object(
-            sys, "argv", ["cli", "costs", "--input-tokens", "50000", "--output-tokens", "10000"]
+            sys,
+            "argv",
+            ["cli", "costs", "--input-tokens", "50000", "--output-tokens", "10000"],
         ):
             result = main()
 
@@ -899,7 +901,9 @@ class TestCLIArgumentParsing:
     def test_main_with_multiple_flags(self, capsys):
         """Test main with multiple flags."""
         with patch.object(
-            sys, "argv", ["cli", "registry", "--provider", "anthropic", "--format", "json"]
+            sys,
+            "argv",
+            ["cli", "registry", "--provider", "anthropic", "--format", "json"],
         ):
             result = main()
 
@@ -914,7 +918,9 @@ class TestCLIArgumentParsing:
         telemetry_dir.mkdir()
 
         with patch.object(
-            sys, "argv", ["cli", "telemetry", "--days", "30", "--storage-dir", str(telemetry_dir)]
+            sys,
+            "argv",
+            ["cli", "telemetry", "--days", "30", "--storage-dir", str(telemetry_dir)],
         ):
             result = main()
 

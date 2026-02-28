@@ -216,7 +216,7 @@ class SocraticSession:
                 "questions": questions,
                 "answers": answers,
                 "timestamp": datetime.now().isoformat(),
-            }
+            },
         )
         self.current_round += 1
         self.touch()

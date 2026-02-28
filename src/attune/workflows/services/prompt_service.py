@@ -36,6 +36,7 @@ class PromptService:
         ...     input_type="code",
         ...     input_payload=code_content,
         ... )
+
     """
 
     def __init__(
@@ -79,6 +80,7 @@ class PromptService:
 
         Returns:
             System prompt with static content first for optimal caching
+
         """
         parts = []
 
@@ -105,7 +107,7 @@ class PromptService:
         parts.append(
             "\n# Instructions\n"
             "The user will provide the specific task context in their message. "
-            "Apply the above guidelines and reference documentation to their request."
+            "Apply the above guidelines and reference documentation to their request.",
         )
 
         return "\n".join(parts)
@@ -135,6 +137,7 @@ class PromptService:
 
         Returns:
             Rendered prompt string (XML if enabled, plain text otherwise)
+
         """
         if not self.xml_enabled:
             return self.render_plain(
@@ -190,6 +193,7 @@ class PromptService:
 
         Returns:
             Rendered plain text prompt
+
         """
         parts = [f"You are a {role}.", "", f"Goal: {goal}", ""]
 

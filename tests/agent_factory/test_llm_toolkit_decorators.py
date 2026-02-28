@@ -92,7 +92,7 @@ class TestSafeAgentOperation:
                         "state": state,
                         "action": action,
                         "details": details,
-                    }
+                    },
                 )
 
             @safe_agent_operation("audited_op")
@@ -359,7 +359,7 @@ class TestWithCostTracking:
                         "operation_type": operation_type,
                         "model": model,
                         "tokens": tokens,
-                    }
+                    },
                 )
 
             @with_cost_tracking(operation_type="research")

@@ -35,6 +35,7 @@ class DynamicTeamBuilder:
     Args:
         state_store: Optional persistent state store shared by agents.
         redis_client: Optional Redis client shared by agents.
+
     """
 
     def __init__(
@@ -57,6 +58,7 @@ class DynamicTeamBuilder:
 
         Returns:
             Runnable DynamicTeam instance.
+
         """
         from .dynamic_team import DynamicTeam
 
@@ -83,6 +85,7 @@ class DynamicTeamBuilder:
 
         Returns:
             Runnable DynamicTeam instance.
+
         """
         from .dynamic_team import DynamicTeam
 
@@ -110,6 +113,7 @@ class DynamicTeamBuilder:
 
         Returns:
             Runnable DynamicTeam instance.
+
         """
         from .dynamic_team import DynamicTeam
 
@@ -139,6 +143,7 @@ class DynamicTeamBuilder:
 
         Returns:
             Configured SDKAgent instance.
+
         """
         template_id = agent_spec.get("template_id")
         template = get_template(template_id) if template_id else None
@@ -186,6 +191,7 @@ class DynamicTeamBuilder:
 
         Returns:
             List of QualityGate objects.
+
         """
         gates: list[QualityGate] = []
         for name, value in gates_spec.items():
@@ -197,7 +203,7 @@ class DynamicTeamBuilder:
                         metric=value.get("metric", "score"),
                         threshold=float(value.get("threshold", 0.0)),
                         required=value.get("required", True),
-                    )
+                    ),
                 )
             else:
                 # Simple shorthand: name = threshold (check all agents)
@@ -208,6 +214,6 @@ class DynamicTeamBuilder:
                         metric="score",
                         threshold=float(value),
                         required=True,
-                    )
+                    ),
                 )
         return gates

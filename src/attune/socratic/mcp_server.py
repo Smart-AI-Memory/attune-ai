@@ -30,8 +30,8 @@ import sys
 from typing import Any
 
 from .mcp_tools import (
-    MCP_VERSION,  # noqa: F401 - re-exported
-    SOCRATIC_TOOLS,  # noqa: F401 - re-exported
+    MCP_VERSION,
+    SOCRATIC_TOOLS,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,6 +91,7 @@ class SocraticMCPServer:
 
         Returns:
             Tool result as dictionary
+
         """
         await self._ensure_initialized()
 
@@ -284,7 +285,7 @@ class SocraticMCPServer:
                     "role": agent.role.value,
                     "description": agent.description,
                     "tools": [t.tool_id for t in agent.tools],
-                }
+                },
             )
 
         stages = []
@@ -295,7 +296,7 @@ class SocraticMCPServer:
                     "name": stage.name,
                     "agent_ids": stage.agent_ids,
                     "dependencies": stage.dependencies,
-                }
+                },
             )
 
         metrics = []
@@ -307,7 +308,7 @@ class SocraticMCPServer:
                     "description": metric.description,
                     "type": metric.metric_type.value,
                     "target": metric.target_value,
-                }
+                },
             )
 
         return {
@@ -330,11 +331,11 @@ class SocraticMCPServer:
         if self._storage:
             stored = self._storage.list_sessions()
             for s in stored:
-                if status_filter == "all":
-                    sessions.append(s)
-                elif status_filter == "active" and s.get("state") != "completed":
-                    sessions.append(s)
-                elif status_filter == "completed" and s.get("state") == "completed":
+                if (
+                    status_filter == "all"
+                    or (status_filter == "active" and s.get("state") != "completed")
+                    or (status_filter == "completed" and s.get("state") == "completed")
+                ):
                     sessions.append(s)
 
         # Add in-memory sessions not yet persisted
@@ -348,7 +349,7 @@ class SocraticMCPServer:
                         "created_at": (
                             session.created_at.isoformat() if session.created_at else None
                         ),
-                    }
+                    },
                 )
 
         return {"sessions": sessions, "count": len(sessions)}
@@ -468,10 +469,14 @@ async def run_mcp_server():
     await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
 
     writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
-        asyncio.streams.FlowControlMixin, sys.stdout
+        asyncio.streams.FlowControlMixin,
+        sys.stdout,
     )
     writer = asyncio.StreamWriter(
-        writer_transport, writer_protocol, reader, asyncio.get_event_loop()
+        writer_transport,
+        writer_protocol,
+        reader,
+        asyncio.get_event_loop(),
     )
 
     async def send_response(response: dict):

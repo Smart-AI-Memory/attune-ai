@@ -107,7 +107,7 @@ class TestPrintRegistry:
                     tier="cheap",
                     input_cost_per_million=0.25,
                     output_cost_per_million=1.25,
-                )
+                ),
             },
             "openai": {
                 "cheap": ModelInfo(
@@ -116,7 +116,7 @@ class TestPrintRegistry:
                     tier="cheap",
                     input_cost_per_million=0.50,
                     output_cost_per_million=1.50,
-                )
+                ),
             },
         }
 

@@ -233,7 +233,9 @@ Write the documentation now in complete Markdown format. Be specific and technic
             # Get directory structure
             structure.append("\n**Directory Structure:**")
             for item in heapq.nsmallest(
-                15, path.iterdir(), key=lambda x: str(x)
+                15,
+                path.iterdir(),
+                key=lambda x: str(x),
             ):  # Limit to 15 items
                 if item.name.startswith("."):
                     continue

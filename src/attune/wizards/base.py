@@ -54,6 +54,7 @@ def _resolve_tier(tier_str: str) -> ModelTier:
 
     Returns:
         Corresponding ``ModelTier`` value.
+
     """
     return _TIER_MAP.get(tier_str, ModelTier.CAPABLE)
 
@@ -80,6 +81,7 @@ class BaseWizard(ABC):
         ...     def process_step_result(self, step, result): ...
         >>> wizard = MyWizard()
         >>> result = await wizard.run({"target": "src/main.py"})
+
     """
 
     config: WizardConfig
@@ -98,6 +100,7 @@ class BaseWizard(ABC):
                 When ``None``, question steps use default values.
             provider: Model provider string (e.g. ``"anthropic"``).
             **workflow_kwargs: Extra arguments forwarded to ``BaseWorkflow``.
+
         """
         from .internal_workflow import WizardInternalWorkflow
 
@@ -120,6 +123,7 @@ class BaseWizard(ABC):
 
         Returns:
             ``WizardResult`` with collected data, generated output, and tasks.
+
         """
         start = time.time()
         self._session = WizardSession(
@@ -178,6 +182,7 @@ class BaseWizard(ABC):
 
         Args:
             step: The step to execute.
+
         """
         handlers = {
             StepType.QUESTION: self._run_question_step,
@@ -198,6 +203,7 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.QUESTION``.
+
         """
         assert self._session is not None
         questions = step.questions or []
@@ -228,6 +234,7 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.LLM_CALL``.
+
         """
         assert self._session is not None
         context = self.build_prompt_context(step)
@@ -275,6 +282,7 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.TASK_DECOMPOSE``.
+
         """
         from .decomposer import TaskDecomposer
 
@@ -307,6 +315,7 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.PREVIEW``.
+
         """
         assert self._session is not None
 
@@ -353,6 +362,7 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.CONFIRM``.
+
         """
         assert self._session is not None
         confirm_question = FormQuestion(
@@ -372,7 +382,7 @@ class BaseWizard(ABC):
 
         if "no" in str(answer).lower() or "cancel" in str(answer).lower():
             self._session.complete_step(step.id, result={"confirmed": False})
-            raise _WizardAbort()
+            raise _WizardAbort
 
         self._session.complete_step(step.id, result={"confirmed": True})
 
@@ -391,6 +401,7 @@ class BaseWizard(ABC):
 
         Returns:
             A ``PromptContext`` with role, goal, instructions, input, etc.
+
         """
 
     @abstractmethod
@@ -404,6 +415,7 @@ class BaseWizard(ABC):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response dict.
+
         """
 
 

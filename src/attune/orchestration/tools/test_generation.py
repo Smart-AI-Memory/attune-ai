@@ -29,6 +29,7 @@ class RealTestGenerator:
             output_dir: Directory for generated tests (relative to project_root)
             api_key: Anthropic API key (or uses env var)
             use_llm: Whether to use LLM for intelligent test generation
+
         """
         self.project_root = Path(project_root).resolve()
         self.output_dir = self.project_root / output_dir
@@ -61,7 +62,7 @@ class RealTestGenerator:
                 logger.warning(
                     "No Anthropic API key found. Set ANTHROPIC_API_KEY environment variable "
                     "or create .env file with ANTHROPIC_API_KEY=your_key_here. "
-                    "Falling back to basic templates."
+                    "Falling back to basic templates.",
                 )
                 self.use_llm = False
                 return
@@ -88,6 +89,7 @@ class RealTestGenerator:
 
         Raises:
             RuntimeError: If test generation fails
+
         """
         logger.info(f"Generating tests for {source_file} (lines: {missing_lines[:5]}...)")
 
@@ -125,7 +127,10 @@ class RealTestGenerator:
         return test_path
 
     def _generate_llm_tests(
-        self, source_file: str, source_code: str, missing_lines: list[int]
+        self,
+        source_file: str,
+        source_code: str,
+        missing_lines: list[int],
     ) -> str:
         """Generate tests using LLM (Claude).
 
@@ -139,6 +144,7 @@ class RealTestGenerator:
 
         Raises:
             RuntimeError: If LLM generation fails
+
         """
         logger.info(f"Using LLM to generate intelligent tests for {source_file}")
 
@@ -252,6 +258,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 
         Returns:
             Formatted API documentation for LLM prompt
+
         """
         try:
             import sys
@@ -271,7 +278,10 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
             return "# API extraction failed - use source code carefully"
 
     def _generate_basic_test_template(
-        self, source_file: str, source_code: str, missing_lines: list[int]
+        self,
+        source_file: str,
+        source_code: str,
+        missing_lines: list[int],
     ) -> str:
         """Generate basic test template.
 
@@ -285,6 +295,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 
         Returns:
             Test code as string
+
         """
         # Extract module name
         module_path = source_file.replace("/", ".").replace(".py", "")

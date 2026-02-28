@@ -161,6 +161,7 @@ class TriageStageMixin:
 
         Returns:
             Filtered findings list.
+
         """
         try:
             from .security_audit_phase3 import apply_phase3_filtering
@@ -177,7 +178,7 @@ class TriageStageMixin:
 
             logger.info(
                 f"Phase 3: Filtered command_injection from {len(cmd_findings)} to {len(filtered_cmd)} "
-                f"({len(cmd_findings) - len(filtered_cmd)} false positives removed)"
+                f"({len(cmd_findings) - len(filtered_cmd)} false positives removed)",
             )
         except ImportError:
             logger.debug("Phase 3 module not available, skipping AST-based filtering")
@@ -192,6 +193,7 @@ class TriageStageMixin:
         Args:
             target: Path to scan target.
             input_data: Original input data dict.
+
         """
         if not self.enable_auth_strategy:
             return
@@ -237,11 +239,11 @@ class TriageStageMixin:
                 if recommended_mode.value == "subscription":
                     logger.info(
                         f"Cost: {cost_estimate['quota_cost']} "
-                        f"(fits in {cost_estimate['fits_in_context']} context)"
+                        f"(fits in {cost_estimate['fits_in_context']} context)",
                     )
                 else:  # API
                     logger.info(
-                        f"Cost: ~${cost_estimate['monetary_cost']:.4f} " f"(1M context window)"
+                        f"Cost: ~${cost_estimate['monetary_cost']:.4f} (1M context window)",
                     )
 
         except Exception as e:

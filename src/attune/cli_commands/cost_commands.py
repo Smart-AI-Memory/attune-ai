@@ -147,7 +147,7 @@ def cmd_costs_today(args: Namespace) -> int:
             f"Today: {requests} requests | "
             f"${actual:.4f} actual | "
             f"${baseline:.4f} baseline | "
-            f"saved ${savings:.4f} ({pct}%)"
+            f"saved ${savings:.4f} ({pct}%)",
         )
         return 0
     except OSError as e:
@@ -236,7 +236,7 @@ def _export_csv(tracker: CostTracker, days: int, path: Path) -> None:
                 "actual_cost",
                 "baseline_cost",
                 "savings",
-            ]
+            ],
         )
 
         for date in sorted(daily_totals.keys()):
@@ -251,7 +251,7 @@ def _export_csv(tracker: CostTracker, days: int, path: Path) -> None:
                         row.get("actual_cost", 0),
                         row.get("baseline_cost", 0),
                         row.get("savings", 0),
-                    ]
+                    ],
                 )
 
 

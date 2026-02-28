@@ -35,6 +35,7 @@ class InteractionMixin:
 
         Returns:
             Complete system prompt
+
         """
         level_prompt = EmpathyLevel.get_system_prompt(level)
 
@@ -401,6 +402,6 @@ TASK:
                 f"Pattern detection complete. Detected {len(state.detected_patterns)} patterns.",
             )
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Pattern detection should never break the main flow
             logger.warning(f"Pattern detection error (non-critical): {e}")

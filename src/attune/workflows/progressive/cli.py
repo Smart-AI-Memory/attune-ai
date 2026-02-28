@@ -27,6 +27,7 @@ def cmd_list_results(args: argparse.Namespace) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     storage_path = args.storage_path or ".attune/progressive_runs"
     results = list_saved_results(storage_path)
@@ -60,6 +61,7 @@ def cmd_show_report(args: argparse.Namespace) -> int:
 
     Returns:
         Exit code (0 for success, 1 for error)
+
     """
     task_id = args.task_id
     storage_path = args.storage_path or ".attune/progressive_runs"
@@ -94,6 +96,7 @@ def cmd_analytics(args: argparse.Namespace) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     storage_path = args.storage_path or ".attune/progressive_runs"
     analytics = generate_cost_analytics(storage_path)
@@ -121,13 +124,16 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     storage_path = args.storage_path or ".attune/progressive_runs"
     retention_days = args.retention_days
     dry_run = args.dry_run
 
     deleted, retained = cleanup_old_results(
-        storage_path=storage_path, retention_days=retention_days, dry_run=dry_run
+        storage_path=storage_path,
+        retention_days=retention_days,
+        dry_run=dry_run,
     )
 
     if dry_run:
@@ -147,9 +153,11 @@ def create_parser() -> argparse.ArgumentParser:
 
     Returns:
         Configured argument parser
+
     """
     parser = argparse.ArgumentParser(
-        prog="empathy progressive", description="Manage progressive tier escalation workflows"
+        prog="empathy progressive",
+        description="Manage progressive tier escalation workflows",
     )
 
     parser.add_argument(
@@ -178,7 +186,8 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Cleanup command
     cleanup_parser = subparsers.add_parser(
-        "cleanup", help="Clean up old progressive workflow results"
+        "cleanup",
+        help="Clean up old progressive workflow results",
     )
     cleanup_parser.add_argument(
         "--retention-days",
@@ -204,6 +213,7 @@ def main(argv: list[str] | None = None) -> int:
 
     Returns:
         Exit code
+
     """
     parser = create_parser()
     args = parser.parse_args(argv)

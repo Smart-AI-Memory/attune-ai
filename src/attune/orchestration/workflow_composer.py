@@ -44,6 +44,7 @@ class WorkflowComposer:
 
     Args:
         state_store: Optional ``AgentStateStore`` shared by all adapters.
+
     """
 
     def __init__(self, state_store: Any | None = None) -> None:
@@ -81,6 +82,7 @@ class WorkflowComposer:
 
         Raises:
             ValueError: If ``workflows`` is empty.
+
         """
         if not workflows:
             raise ValueError("At least one workflow is required")
@@ -166,6 +168,7 @@ class WorkflowComposer:
 
         Returns:
             Configured ``WorkflowAgentAdapter``.
+
         """
         return WorkflowAgentAdapter(
             workflow_class=spec["workflow"],
@@ -185,6 +188,7 @@ class WorkflowComposer:
 
         Returns:
             List of ``QualityGate`` objects.
+
         """
         gates: list[QualityGate] = []
         for name, value in gates_spec.items():
@@ -196,7 +200,7 @@ class WorkflowComposer:
                         metric=value.get("metric", "score"),
                         threshold=float(value.get("threshold", 0.0)),
                         required=value.get("required", True),
-                    )
+                    ),
                 )
             else:
                 gates.append(
@@ -206,6 +210,6 @@ class WorkflowComposer:
                         metric="score",
                         threshold=float(value),
                         required=True,
-                    )
+                    ),
                 )
         return gates

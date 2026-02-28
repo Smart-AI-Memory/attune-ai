@@ -21,6 +21,7 @@ class TelemetryConfig:
         export_path: Path for telemetry exports.
         retention_days: Days to retain telemetry data.
         detailed_logging: Enable detailed operation logging.
+
     """
 
     enabled: bool = True

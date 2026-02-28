@@ -42,6 +42,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
         - Tool schemas validated before execution
         - No eval() or exec() usage
         - Tool execution sandboxed
+
     """
 
     def __init__(self, tools: list[dict[str, Any]] | None = None):
@@ -57,6 +58,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
                     },
                     ...
                 ]
+
         """
         self.tools = tools or []
 
@@ -69,10 +71,14 @@ class ToolEnhancedStrategy(ExecutionStrategy):
 
         Returns:
             Result with tool usage trace
+
         """
         if not agents:
             return StrategyResult(
-                success=False, outputs=[], aggregated_output={}, errors=["No agent provided"]
+                success=False,
+                outputs=[],
+                aggregated_output={},
+                errors=["No agent provided"],
             )
 
         agent = agents[0]  # Use first agent only
@@ -93,7 +99,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
                         output=result["output"],
                         confidence=result.get("confidence", 1.0),
                         duration_seconds=duration,
-                    )
+                    ),
                 ],
                 aggregated_output=result["output"],
                 total_duration=duration,
@@ -110,7 +116,10 @@ class ToolEnhancedStrategy(ExecutionStrategy):
             )
 
     async def _execute_with_tools(
-        self, agent: AgentTemplate, context: dict[str, Any], tools: list[dict[str, Any]]
+        self,
+        agent: AgentTemplate,
+        context: dict[str, Any],
+        tools: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Execute agent with tool use enabled."""
         from attune.models import LLMClient
@@ -121,7 +130,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
         response = await client.call(
             prompt=context.get("task", ""),
             system_prompt=agent.system_prompt,
-            tools=tools if tools else None,
+            tools=tools or None,
             tier=agent.tier,
             workflow_id=f"tool-enhanced:{agent.agent_id}",
         )
@@ -149,6 +158,7 @@ class PromptCachedSequentialStrategy(ExecutionStrategy):
         - Cached content validated once
         - No executable code in cache
         - Cache size limits enforced
+
     """
 
     def __init__(self, cached_context: str | None = None, cache_ttl: int = 3600):
@@ -158,6 +168,7 @@ class PromptCachedSequentialStrategy(ExecutionStrategy):
             cached_context: Large unchanging context to cache
                 (e.g., documentation, code files, guidelines)
             cache_ttl: Cache time-to-live in seconds (default: 1 hour)
+
         """
         self.cached_context = cached_context
         self.cache_ttl = cache_ttl
@@ -171,6 +182,7 @@ class PromptCachedSequentialStrategy(ExecutionStrategy):
 
         Returns:
             Result with cumulative outputs
+
         """
         from attune.models import LLMClient
 
@@ -257,6 +269,7 @@ class DelegationChainStrategy(ExecutionStrategy):
         - Max depth enforced (default: 3)
         - Delegation trace logged
         - Circular delegation prevented
+
     """
 
     MAX_DEPTH = 3
@@ -266,6 +279,7 @@ class DelegationChainStrategy(ExecutionStrategy):
 
         Args:
             max_depth: Maximum delegation depth (default: 3, max: 3)
+
         """
         self.max_depth = min(max_depth, self.MAX_DEPTH)
 
@@ -278,6 +292,7 @@ class DelegationChainStrategy(ExecutionStrategy):
 
         Returns:
             Result with delegation trace
+
         """
         current_depth = context.get("_delegation_depth", 0)
 
@@ -287,7 +302,7 @@ class DelegationChainStrategy(ExecutionStrategy):
                 outputs=[],
                 aggregated_output={},
                 errors=[
-                    f"Max delegation depth ({self.max_depth}) exceeded at depth {current_depth}"
+                    f"Max delegation depth ({self.max_depth}) exceeded at depth {current_depth}",
                 ],
             )
 
@@ -308,7 +323,9 @@ class DelegationChainStrategy(ExecutionStrategy):
         try:
             # Coordinator analyzes and plans delegation
             delegation_plan = await self._plan_delegation(
-                coordinator=coordinator, task=context.get("task", ""), specialists=specialists
+                coordinator=coordinator,
+                task=context.get("task", ""),
+                specialists=specialists,
             )
 
             # Execute delegated tasks
@@ -326,14 +343,17 @@ class DelegationChainStrategy(ExecutionStrategy):
                     }
 
                     sub_result = await self._execute_specialist(
-                        specialist=specialist, context=sub_context
+                        specialist=specialist,
+                        context=sub_context,
                     )
 
                     results.append(sub_result)
 
             # Synthesize results
             final_output = await self._synthesize_results(
-                coordinator=coordinator, results=results, original_task=context.get("task", "")
+                coordinator=coordinator,
+                results=results,
+                original_task=context.get("task", ""),
             )
 
             duration = asyncio.get_event_loop().time() - start_time
@@ -357,7 +377,10 @@ class DelegationChainStrategy(ExecutionStrategy):
             )
 
     async def _plan_delegation(
-        self, coordinator: AgentTemplate, task: str, specialists: list[AgentTemplate]
+        self,
+        coordinator: AgentTemplate,
+        task: str,
+        specialists: list[AgentTemplate],
     ) -> dict[str, Any]:
         """Coordinator plans delegation strategy."""
         import json
@@ -399,12 +422,14 @@ Return JSON:
                     {
                         "specialist_id": specialists[0].agent_id if specialists else "unknown",
                         "task": task,
-                    }
-                ]
+                    },
+                ],
             }
 
     async def _execute_specialist(
-        self, specialist: AgentTemplate, context: dict[str, Any]
+        self,
+        specialist: AgentTemplate,
+        context: dict[str, Any],
     ) -> AgentResult:
         """Execute specialist agent."""
         from attune.models import LLMClient
@@ -442,7 +467,9 @@ Return JSON:
             )
 
     def _find_specialist(
-        self, specialist_id: str, agents: list[AgentTemplate]
+        self,
+        specialist_id: str,
+        agents: list[AgentTemplate],
     ) -> AgentTemplate | None:
         """Find specialist by ID."""
         for agent in agents:
@@ -451,7 +478,10 @@ Return JSON:
         return None
 
     async def _synthesize_results(
-        self, coordinator: AgentTemplate, results: list[AgentResult], original_task: str
+        self,
+        coordinator: AgentTemplate,
+        results: list[AgentResult],
+        original_task: str,
     ) -> dict[str, Any]:
         """Coordinator synthesizes specialist results."""
         from attune.models import LLMClient
@@ -459,7 +489,7 @@ Return JSON:
         client = LLMClient()
 
         specialist_reports = "\n\n".join(
-            [f"## {r.agent_id}\n{r.output.get('content', '')}" for r in results]
+            [f"## {r.agent_id}\n{r.output.get('content', '')}" for r in results],
         )
 
         prompt = f"""Synthesize these specialist reports:

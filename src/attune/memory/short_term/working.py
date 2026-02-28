@@ -22,6 +22,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -66,6 +67,7 @@ class WorkingMemory:
         True
         >>> working.retrieve("analysis", creds)
         {'score': 95}
+
     """
 
     PREFIX_WORKING = "empathy:working:"
@@ -80,6 +82,7 @@ class WorkingMemory:
         Args:
             base: BaseOperations instance for storage access
             sanitizer: Optional DataSanitizer for PII/secrets handling
+
         """
         self._base = base
         self._sanitizer = sanitizer
@@ -120,6 +123,7 @@ class WorkingMemory:
             >>> creds = AgentCredentials("agent_1", AccessTier.CONTRIBUTOR)
             >>> working.stash("analysis_v1", {"findings": [...]}, creds)
             True
+
         """
         # Pattern 1: String ID validation
         if not key or not key.strip():
@@ -174,6 +178,7 @@ class WorkingMemory:
             >>> data = working.retrieve("analysis_v1", creds)
             >>> if data:
             ...     print(f"Found: {data}")
+
         """
         # Pattern 1: String ID validation
         if not key or not key.strip():
@@ -205,6 +210,7 @@ class WorkingMemory:
             >>> creds = AgentCredentials("agent_1", AccessTier.CONTRIBUTOR)
             >>> deleted = working.clear(creds)
             >>> print(f"Deleted {deleted} keys")
+
         """
         pattern = f"{self.PREFIX_WORKING}{credentials.agent_id}:*"
         keys = self._base._keys(pattern)
@@ -229,6 +235,7 @@ class WorkingMemory:
 
         Returns:
             True if key exists
+
         """
         if not key or not key.strip():
             return False
@@ -245,6 +252,7 @@ class WorkingMemory:
 
         Returns:
             List of key names (without prefix)
+
         """
         pattern = f"{self.PREFIX_WORKING}{credentials.agent_id}:*"
         keys = self._base._keys(pattern)

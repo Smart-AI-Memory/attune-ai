@@ -206,7 +206,7 @@ class TestSHAPinning:
         assert len(parts) == 2, f"No @ in uses: {uses_value}"
         ref = parts[1].split()[0]  # strip trailing comment
         assert SHA_PATTERN.fullmatch(
-            ref
+            ref,
         ), f"{workflow_file}:{job_id} step {step_idx} uses mutable ref: {uses_value}"
 
     @pytest.mark.parametrize("filename", sorted(ALL_WORKFLOWS.keys()))

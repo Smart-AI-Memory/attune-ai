@@ -52,7 +52,7 @@ class AnthropicProvider(BaseLLMProvider):
             logger.warning(
                 "API key does not start with 'sk-ant-'. "
                 "Anthropic API keys typically start with 'sk-ant-api03-'. "
-                "Verify you are using a valid Anthropic API key."
+                "Verify you are using a valid Anthropic API key.",
             )
 
         # Lazy import to avoid requiring anthropic if not used
@@ -189,14 +189,14 @@ class AnthropicProvider(BaseLLMProvider):
                     total_savings = cache_read * savings_per_token
                     logger.info(
                         f"Cache HIT: {cache_read:,} tokens read from cache "
-                        f"(saved ${total_savings:.4f} vs full price)"
+                        f"(saved ${total_savings:.4f} vs full price)",
                     )
                 if cache_creation > 0:
                     write_cost_per_token = input_cost_per_token * 1.25
                     write_cost = cache_creation * write_cost_per_token
                     logger.debug(
                         f"Cache WRITE: {cache_creation:,} tokens written to cache "
-                        f"(cost ${write_cost:.4f})"
+                        f"(cost ${write_cost:.4f})",
                     )
 
         # Add thinking content if present
@@ -366,6 +366,7 @@ class AnthropicProvider(BaseLLMProvider):
 
         Returns:
             Estimated token count
+
         """
         try:
             from attune.utils.tokens import count_tokens
@@ -411,6 +412,7 @@ class AnthropicProvider(BaseLLMProvider):
             ... )
             >>> cost["total_cost"]
             0.0105  # Significantly less than without cache
+
         """
         # Get pricing for this model
         model_info = self.get_model_info()

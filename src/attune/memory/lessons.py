@@ -216,7 +216,7 @@ class LessonsManager:
                         "date": date,
                         "text": text,
                         "source": "project",
-                    }
+                    },
                 )
                 number += 1
 
@@ -230,7 +230,7 @@ class LessonsManager:
                     "date": date,
                     "text": text,
                     "source": "global",
-                }
+                },
             )
             number += 1
 
@@ -246,7 +246,7 @@ class LessonsManager:
                         "date": date,
                         "text": text,
                         "source": "claude_md",
-                    }
+                    },
                 )
                 number += 1
 
@@ -429,7 +429,7 @@ class LessonsManager:
 
         if target is None:
             raise ValueError(
-                f"No lesson at line {line_num}. " f"Run `attune lessons` to see current lessons."
+                f"No lesson at line {line_num}. Run `attune lessons` to see current lessons.",
             )
 
         return self._remove_from_file(target)
@@ -455,7 +455,7 @@ class LessonsManager:
                 return self._remove_from_file(lesson)
 
         raise ValueError(
-            f"No lesson matching {keyword!r}. " f"Run `attune lessons` to see current lessons."
+            f"No lesson matching {keyword!r}. Run `attune lessons` to see current lessons.",
         )
 
     def _remove_from_file(self, lesson: dict[str, Any]) -> str:

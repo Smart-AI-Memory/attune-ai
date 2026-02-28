@@ -34,8 +34,8 @@ class EmbeddingProvider(ABC):
 
         Returns:
             Embedding vector as list of floats
+
         """
-        pass
 
     @abstractmethod
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
@@ -46,14 +46,13 @@ class EmbeddingProvider(ABC):
 
         Returns:
             List of embedding vectors
+
         """
-        pass
 
     @property
     @abstractmethod
     def dimension(self) -> int:
         """Return the embedding dimension."""
-        pass
 
 
 class TFIDFEmbeddingProvider(EmbeddingProvider):
@@ -69,6 +68,7 @@ class TFIDFEmbeddingProvider(EmbeddingProvider):
         Args:
             dimension: Output embedding dimension
             vocabulary_size: Maximum vocabulary size
+
         """
         self._dimension = dimension
         self._vocabulary_size = vocabulary_size
@@ -130,6 +130,7 @@ class TFIDFEmbeddingProvider(EmbeddingProvider):
 
         Args:
             documents: List of documents to compute IDF from
+
         """
         self._document_count = len(documents)
         doc_freq: dict[str, int] = {}
@@ -170,6 +171,7 @@ class AnthropicEmbeddingProvider(EmbeddingProvider):
         Args:
             api_key: Anthropic API key
             dimension: Number of semantic aspects to score
+
         """
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         self._dimension = min(dimension, len(self.ASPECTS))
@@ -242,6 +244,7 @@ class SentenceTransformerProvider(EmbeddingProvider):
 
         Args:
             model_name: HuggingFace model name
+
         """
         self.model_name = model_name
         self._model = None

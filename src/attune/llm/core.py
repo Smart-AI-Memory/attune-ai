@@ -23,7 +23,7 @@ from attune.routing import ModelRouter
 
 # Re-export security classes so existing patch targets like
 # "attune.llm.core.AuditLogger" continue to resolve.
-__all__ = ["EmpathyLLM", "AuditLogger", "PIIScrubber", "SecretsDetector", "SecurityError"]
+__all__ = ["AuditLogger", "EmpathyLLM", "PIIScrubber", "SecretsDetector", "SecurityError"]
 
 from .interaction import InteractionMixin
 from .levels import EmpathyLevel

@@ -102,6 +102,7 @@ class TestGenerationWorkflow(BaseWorkflow):
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         return WorkflowContext(
             prompt=PromptService("test-gen", xml_config=xml_config),
@@ -194,7 +195,7 @@ class TestGenerationWorkflow(BaseWorkflow):
                     size_category = get_module_size_category(total_lines)
                     logger.info(
                         f"Test generation target: {target_path} "
-                        f"({total_lines:,} LOC, {size_category})"
+                        f"({total_lines:,} LOC, {size_category})",
                     )
                     logger.info(f"Recommended auth mode: {recommended_mode.value}")
 

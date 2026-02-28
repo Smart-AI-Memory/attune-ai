@@ -21,6 +21,7 @@ def generate_report(result: MetaWorkflowResult, template: MetaWorkflowTemplate) 
 
     Returns:
         Markdown-formatted report
+
     """
     lines = []
 

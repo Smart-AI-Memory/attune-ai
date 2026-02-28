@@ -83,6 +83,7 @@ class ToolSpec:
         ...         "file_type": {"type": "string", "required": False}
         ...     }
         ... )
+
     """
 
     # Unique tool identifier
@@ -138,6 +139,7 @@ class AgentSpec:
         ...     quality_focus=["security"],
         ...     model_tier="capable"
         ... )
+
     """
 
     # Unique agent identifier
@@ -285,6 +287,7 @@ class AgentBlueprint:
 
         Returns:
             True if valid, False otherwise
+
         """
         self.validation_errors = []
 
@@ -317,6 +320,7 @@ class WorkflowBlueprint:
         ...     stages=[analysis_stage, synthesis_stage],
         ...     success_criteria=success_spec
         ... )
+
     """
 
     # Unique workflow identifier
@@ -389,6 +393,7 @@ class WorkflowBlueprint:
 
         Returns:
             Tuple of (is_valid, list of error messages)
+
         """
         errors = []
 
@@ -501,7 +506,7 @@ class WorkflowBlueprint:
                         requires_confirmation=tool_data.get("requires_confirmation", False),
                         is_mutating=tool_data.get("is_mutating", False),
                         cost_tier=tool_data.get("cost_tier", "cheap"),
-                    )
+                    ),
                 )
 
             blueprint.agents.append(
@@ -510,7 +515,7 @@ class WorkflowBlueprint:
                     generated_from=agent_data.get("generated_from", "socratic"),
                     template_id=agent_data.get("template_id"),
                     customizations=agent_data.get("customizations", {}),
-                )
+                ),
             )
 
         # Parse stages
@@ -527,7 +532,7 @@ class WorkflowBlueprint:
                     input_mapping=stage_data.get("input_mapping", {}),
                     output_aggregation=stage_data.get("output_aggregation", "merge"),
                     timeout=stage_data.get("timeout", 300),
-                )
+                ),
             )
 
         return blueprint

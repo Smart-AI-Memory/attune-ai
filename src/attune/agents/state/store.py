@@ -47,6 +47,7 @@ def _sanitize_agent_id(agent_id: str) -> str:
 
     Raises:
         ValueError: If agent_id is empty or contains null bytes
+
     """
     if not agent_id:
         raise ValueError("agent_id must be a non-empty string")
@@ -76,6 +77,7 @@ class AgentStateStore:
         ...     success=True, findings={"issues": 0},
         ...     score=95.0, cost=0.02, execution_time_ms=1500.0,
         ... )
+
     """
 
     DEFAULT_DIR = ".attune/agents/state"
@@ -105,6 +107,7 @@ class AgentStateStore:
 
         Returns:
             execution_id for use in record_completion/record_failure
+
         """
         execution_id = uuid.uuid4().hex[:12]
         record = self._load_or_create(agent_id, role)
@@ -148,6 +151,7 @@ class AgentStateStore:
             execution_time_ms: Wall-clock time in milliseconds
             tier_used: Final model tier used
             confidence: Confidence in result (0.0-1.0)
+
         """
         record = self._load_or_create(agent_id, "")
         execution = self._find_execution(record, execution_id)
@@ -187,6 +191,7 @@ class AgentStateStore:
             agent_id: Unique agent identifier
             execution_id: ID returned by record_start
             error: Error message or traceback summary
+
         """
         record = self._load_or_create(agent_id, "")
         execution = self._find_execution(record, execution_id)
@@ -213,6 +218,7 @@ class AgentStateStore:
         Args:
             agent_id: Unique agent identifier
             checkpoint_data: Arbitrary state dict to persist
+
         """
         record = self._load_or_create(agent_id, "")
         record.last_checkpoint = checkpoint_data
@@ -227,6 +233,7 @@ class AgentStateStore:
 
         Returns:
             Checkpoint dict or None if no checkpoint exists
+
         """
         record = self._load(agent_id)
         if record is None:
@@ -241,6 +248,7 @@ class AgentStateStore:
 
         Returns:
             AgentStateRecord or None if agent not found
+
         """
         return self._load(agent_id)
 
@@ -249,6 +257,7 @@ class AgentStateStore:
 
         Returns:
             List of AgentStateRecord sorted by last_active (newest first)
+
         """
         records = []
         for path in self._storage_dir.glob("*.json"):
@@ -275,6 +284,7 @@ class AgentStateStore:
 
         Returns:
             Matching AgentStateRecord list
+
         """
         all_agents = self.get_all_agents()
         results = []
@@ -338,7 +348,9 @@ class AgentStateStore:
             record.execution_history = record.execution_history[-MAX_HISTORY_PER_AGENT:]
 
     def _find_execution(
-        self, record: AgentStateRecord, execution_id: str
+        self,
+        record: AgentStateRecord,
+        execution_id: str,
     ) -> AgentExecutionRecord | None:
         """Find an execution record by ID."""
         for execution in reversed(record.execution_history):
@@ -366,6 +378,6 @@ class AgentStateStore:
                     "tier_used": execution.tier_used,
                 },
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Pattern learning is optional; don't fail agent operations
             logger.warning("Failed to contribute to pattern learner: %s", e)

@@ -39,6 +39,7 @@ class ContextOptimizer:
 
         Args:
             level: Compression level to apply
+
         """
         self.level = level
 
@@ -75,6 +76,7 @@ class ContextOptimizer:
 
         Returns:
             Optimized prompt with reduced token count
+
         """
         if self.level == CompressionLevel.NONE:
             return xml_prompt
@@ -107,6 +109,7 @@ class ContextOptimizer:
 
         Returns:
             Response with full tag names restored
+
         """
         decompressed = compressed_response
 
@@ -128,6 +131,7 @@ class ContextOptimizer:
 
         Returns:
             Text with optimized whitespace
+
         """
         # Replace multiple spaces with single space
         text = re.sub(r" {2,}", " ", text)
@@ -151,6 +155,7 @@ class ContextOptimizer:
 
         Returns:
             Text without comments
+
         """
         # Remove XML comments
         text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
@@ -165,6 +170,7 @@ class ContextOptimizer:
 
         Returns:
             Text with compressed tags
+
         """
         for full, short in self._tag_mappings.items():
             # Opening tags
@@ -183,6 +189,7 @@ class ContextOptimizer:
 
         Returns:
             Text with redundancy removed
+
         """
         # Common redundant phrases in prompts
         redundant_phrases = [
@@ -207,6 +214,7 @@ class ContextOptimizer:
 
         Returns:
             Aggressively compressed text
+
         """
         # Remove articles (a, an, the) where they don't affect meaning
         # Only in instruction text, not in code or structured output
@@ -267,6 +275,7 @@ def optimize_xml_prompt(
         >>> optimized = optimize_xml_prompt(prompt)
         >>> print(optimized)
         <t>Analyze code carefully</t><a>Code is good</a>
+
     """
     optimizer = ContextOptimizer(level)
     return optimizer.optimize(prompt)

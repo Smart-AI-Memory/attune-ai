@@ -67,6 +67,7 @@ class PlanGenerator:
 
         Args:
             template: The meta-workflow template to generate a plan from
+
         """
         self.template = template
 
@@ -83,6 +84,7 @@ class PlanGenerator:
 
         Returns:
             ExecutionPlan ready for execution
+
         """
         # Collect form responses
         responses = self._collect_responses(form_responses, use_defaults)
@@ -152,7 +154,7 @@ class PlanGenerator:
                     prompt=prompt,
                     success_criteria=rule.success_criteria,
                     config=config,
-                )
+                ),
             )
             order += 1
 
@@ -267,7 +269,7 @@ What risks exist? What's the recommended path forward?
                     "```",
                     "",
                     "**Success Criteria:**",
-                ]
+                ],
             )
             for criterion in step.success_criteria:
                 lines.append(f"- [ ] {criterion}")
@@ -282,7 +284,7 @@ What risks exist? What's the recommended path forward?
                 "```",
                 plan.synthesis_prompt,
                 "```",
-            ]
+            ],
         )
 
         return "\n".join(lines)
@@ -299,7 +301,7 @@ What risks exist? What's the recommended path forward?
 ### {step.role}
 Use the Task tool with subagent_type="Explore" to:
 {step.prompt}
-"""
+""",
             )
 
         return f"""# {plan.template_name}
@@ -341,6 +343,7 @@ def generate_plan(
 
     Returns:
         Plan in the requested format
+
     """
     from attune.meta_workflows.registry import get_template as get_workflow_template
 
@@ -353,9 +356,9 @@ def generate_plan(
 
     if output_format == "markdown":
         return generator.to_markdown(plan)
-    elif output_format == "skill":
+    if output_format == "skill":
         return generator.to_claude_code_skill(plan)
-    elif output_format == "json":
+    if output_format == "json":
         import json
 
         return json.dumps(
@@ -380,5 +383,4 @@ def generate_plan(
             },
             indent=2,
         )
-    else:
-        raise ValueError(f"Unknown format: {output_format}")
+    raise ValueError(f"Unknown format: {output_format}")

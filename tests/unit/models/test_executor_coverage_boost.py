@@ -329,7 +329,7 @@ class TestMockLLMExecutor:
     async def test_mock_executor_token_estimation(self):
         """Test that mock executor estimates tokens roughly."""
         executor = MockLLMExecutor(
-            default_response="This is a longer mock response with more words"
+            default_response="This is a longer mock response with more words",
         )
 
         response = await executor.run(
@@ -402,7 +402,7 @@ class TestMockLLMExecutorIntegration:
                 response2.success,
                 response3.success,
                 response4.success,
-            ]
+            ],
         )
 
         # History should be complete

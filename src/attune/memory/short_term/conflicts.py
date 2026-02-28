@@ -24,6 +24,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -64,6 +65,7 @@ class ConflictNegotiation:
         >>> creds = AgentCredentials("agent_1", AccessTier.CONTRIBUTOR)
         >>> context = negotiation.create_conflict_context(...)
         >>> negotiation.resolve_conflict("conflict_1", "Chose Redis", validator_creds)
+
     """
 
     PREFIX_CONFLICT = "empathy:conflict:"
@@ -73,6 +75,7 @@ class ConflictNegotiation:
 
         Args:
             base: BaseOperations instance for storage access
+
         """
         self._base = base
 
@@ -113,6 +116,7 @@ class ConflictNegotiation:
             ...     credentials=creds,
             ...     batna="Use file-based storage",
             ... )
+
         """
         # Pattern 1: String ID validation
         if not conflict_id or not conflict_id.strip():
@@ -174,6 +178,7 @@ class ConflictNegotiation:
             >>> context = negotiation.get_conflict_context("conflict_1", creds)
             >>> if context:
             ...     print(f"BATNA: {context.batna}")
+
         """
         # Pattern 1: String ID validation
         if not conflict_id or not conflict_id.strip():
@@ -213,6 +218,7 @@ class ConflictNegotiation:
             ...     validator_creds,
             ... )
             True
+
         """
         if not credentials.can_validate():
             raise PermissionError(
@@ -250,6 +256,7 @@ class ConflictNegotiation:
 
         Returns:
             List of unresolved conflict contexts
+
         """
         pattern = f"{self.PREFIX_CONFLICT}*"
         keys = self._base._keys(pattern)

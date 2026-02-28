@@ -18,6 +18,7 @@ class Tier(Enum):
         CHEAP: Low-cost models (e.g., gpt-4o-mini, claude-3-haiku)
         CAPABLE: Mid-tier models (e.g., claude-3-5-sonnet, gpt-4o)
         PREMIUM: High-end models (e.g., claude-opus-4, o1)
+
     """
 
     CHEAP = "cheap"
@@ -63,6 +64,7 @@ class FailureAnalysis:
         87.7
         >>> analysis.should_escalate
         False
+
     """
 
     syntax_errors: list[SyntaxError] = field(default_factory=list)
@@ -105,6 +107,7 @@ class FailureAnalysis:
             ... )
             >>> analysis.calculate_quality_score()
             91.25
+
         """
         # Component scores (convert to 0-100 scale)
         pass_rate_score = self.test_pass_rate * 100
@@ -146,6 +149,7 @@ class FailureAnalysis:
             >>> analysis = FailureAnalysis(test_pass_rate=0.50)
             >>> analysis.should_escalate
             True
+
         """
         cqs = self.calculate_quality_score()
         return (
@@ -169,17 +173,17 @@ class FailureAnalysis:
             >>> analysis = FailureAnalysis(test_pass_rate=0.25)
             >>> analysis.failure_severity
             'CRITICAL'
+
         """
         cqs = self.calculate_quality_score()
 
         if len(self.syntax_errors) > 5 or self.test_pass_rate < 0.3:
             return "CRITICAL"
-        elif cqs < 70 or self.test_pass_rate < 0.5:
+        if cqs < 70 or self.test_pass_rate < 0.5:
             return "HIGH"
-        elif cqs < 80 or self.test_pass_rate < 0.7:
+        if cqs < 80 or self.test_pass_rate < 0.7:
             return "MODERATE"
-        else:
-            return "LOW"
+        return "LOW"
 
 
 @dataclass
@@ -214,6 +218,7 @@ class TierResult:
         ... )
         >>> result.quality_score
         65.0
+
     """
 
     tier: Tier
@@ -240,6 +245,7 @@ class TierResult:
 
         Returns:
             CQS from 0.0 to 100.0
+
         """
         return self.failure_analysis.calculate_quality_score()
 
@@ -249,6 +255,7 @@ class TierResult:
 
         Returns:
             Number of items meeting quality threshold
+
         """
         return sum(1 for item in self.generated_items if item.get("quality_score", 0) >= 80)
 
@@ -258,6 +265,7 @@ class TierResult:
 
         Returns:
             Success rate from 0.0 to 1.0
+
         """
         if not self.generated_items:
             return 0.0
@@ -293,6 +301,7 @@ class ProgressiveWorkflowResult:
         >>> print(result.generate_report())
         🎯 PROGRESSIVE ESCALATION REPORT
         ...
+
     """
 
     workflow_name: str
@@ -315,6 +324,7 @@ class ProgressiveWorkflowResult:
 
         Returns:
             Formatted report string
+
         """
         # Implementation will be in reports.py module
         from attune.workflows.progressive.reports import generate_progression_report
@@ -331,6 +341,7 @@ class ProgressiveWorkflowResult:
 
         Args:
             storage_path: Base path for saving results
+
         """
         from attune.workflows.progressive.reports import save_results_to_disk
 
@@ -343,6 +354,7 @@ class ProgressiveWorkflowResult:
 
         Returns:
             Estimated cost in USD if all items were processed at Premium tier
+
         """
         total_items = sum(len(r.generated_items) for r in self.tier_results)
         # Assume Premium costs ~$0.05 per item (conservative estimate)
@@ -354,6 +366,7 @@ class ProgressiveWorkflowResult:
 
         Returns:
             Dollar amount saved by using progressive escalation
+
         """
         all_premium_cost = self._calculate_all_premium_cost()
         savings = all_premium_cost - self.total_cost
@@ -365,6 +378,7 @@ class ProgressiveWorkflowResult:
 
         Returns:
             Savings percentage (0-100)
+
         """
         all_premium_cost = self._calculate_all_premium_cost()
 
@@ -424,6 +438,7 @@ class EscalationConfig:
         ...     cheap_min_attempts=2,
         ...     capable_max_attempts=6
         ... )
+
     """
 
     # Global settings
@@ -469,13 +484,14 @@ class EscalationConfig:
 
         Returns:
             Maximum number of attempts allowed
+
         """
         if tier == Tier.CHEAP:
             return self.cheap_max_attempts
-        elif tier == Tier.CAPABLE:
+        if tier == Tier.CAPABLE:
             return self.capable_max_attempts
-        else:  # PREMIUM
-            return self.premium_max_attempts
+        # PREMIUM
+        return self.premium_max_attempts
 
     def get_min_attempts(self, tier: Tier) -> int:
         """Get minimum attempts for a specific tier.
@@ -485,10 +501,11 @@ class EscalationConfig:
 
         Returns:
             Minimum number of attempts required
+
         """
         if tier == Tier.CHEAP:
             return self.cheap_min_attempts
-        elif tier == Tier.CAPABLE:
+        if tier == Tier.CAPABLE:
             return self.capable_min_attempts
-        else:  # PREMIUM
-            return 1  # Premium always gets exactly 1 attempt
+        # PREMIUM
+        return 1  # Premium always gets exactly 1 attempt

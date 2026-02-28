@@ -27,6 +27,7 @@ class TestGenPromptMixin:
 
         Returns:
             True if this is a workflow module needing LLM mocking
+
         """
         # Check for workflow indicators
         indicators = [
@@ -121,7 +122,10 @@ class TestMyWorkflow:
 """
 
     def _get_workflow_specific_prompt(
-        self, module_name: str, module_path: str, source_code: str
+        self,
+        module_name: str,
+        module_path: str,
+        source_code: str,
     ) -> str:
         """Get workflow-specific test generation prompt with comprehensive mocking guidance."""
         return f"""Generate comprehensive tests for this WORKFLOW module.

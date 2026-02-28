@@ -38,7 +38,10 @@ class _StubWorkflow(BaseWorkflow):
     }
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         """Return dummy output."""
         return {"stage": stage_name, "result": "ok"}, 100, 50
@@ -56,7 +59,10 @@ class _FailingStubWorkflow(BaseWorkflow):
     }
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         """Raise on stage_b."""
         if stage_name == "stage_b":
@@ -109,7 +115,9 @@ class TestStatePersistenceEnabled:
         return CostTracker(storage_dir=str(tmp_path / ".empathy"))
 
     async def test_records_workflow_start(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """record_start is called during execute()."""
         wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=state_store)
@@ -132,7 +140,9 @@ class TestStatePersistenceEnabled:
         assert "stub-workflow" in agent_id
 
     async def test_records_stage_checkpoints(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """Checkpoints are saved for each stage start and completion."""
         wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=state_store)
@@ -152,7 +162,9 @@ class TestStatePersistenceEnabled:
         assert len(save_calls) == 4
 
     async def test_checkpoint_tracks_completed_stages(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """Final checkpoint includes all completed stage names."""
         wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=state_store)
@@ -168,7 +180,9 @@ class TestStatePersistenceEnabled:
         assert checkpoint["completed_stages"] == ["stage_a", "stage_b"]
 
     async def test_records_workflow_completion(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """record_completion is called on successful workflow."""
         wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=state_store)
@@ -188,7 +202,9 @@ class TestStatePersistenceEnabled:
         assert completion_calls[0][1]["success"] is True
 
     async def test_records_workflow_failure(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """record_failure is called on failed workflow."""
         wf = _FailingStubWorkflow(cost_tracker=cost_tracker, state_store=state_store)
@@ -208,7 +224,9 @@ class TestStatePersistenceEnabled:
         assert len(failure_calls) == 1
 
     async def test_stage_costs_tracked_in_checkpoint(
-        self, state_store: AgentStateStore, cost_tracker: CostTracker
+        self,
+        state_store: AgentStateStore,
+        cost_tracker: CostTracker,
     ) -> None:
         """Checkpoint includes per-stage cost breakdown."""
         wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=state_store)

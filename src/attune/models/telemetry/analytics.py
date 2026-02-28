@@ -195,6 +195,7 @@ class TelemetryAnalytics:
 
         Returns:
             Dict with fallback analysis and cost savings
+
         """
         calls = self.store.get_calls(since=since, limit=100000)
 
@@ -493,7 +494,9 @@ class TelemetryAnalytics:
 
         """
         assignments = self.store.get_agent_assignments(
-            since=since, automated_only=False, limit=10000
+            since=since,
+            automated_only=False,
+            limit=10000,
         )
 
         if not assignments:

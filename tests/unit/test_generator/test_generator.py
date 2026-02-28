@@ -151,7 +151,8 @@ class TestTemplateContextBuilding:
 
         # Create mock risk analysis
         risk_analysis = generator.risk_analyzer.analyze(
-            workflow_id="test_wizard", pattern_ids=["linear_flow"]
+            workflow_id="test_wizard",
+            pattern_ids=["linear_flow"],
         )
 
         context = generator._build_template_context(
@@ -176,7 +177,8 @@ class TestTemplateContextBuilding:
         generator = TestGenerator()
 
         risk_analysis = generator.risk_analyzer.analyze(
-            workflow_id="linear_wizard", pattern_ids=["linear_flow"]
+            workflow_id="linear_wizard",
+            pattern_ids=["linear_flow"],
         )
 
         context = generator._build_template_context(
@@ -196,7 +198,8 @@ class TestTemplateContextBuilding:
 
         pattern_ids = ["linear_flow", "phased_processing", "approval"]
         risk_analysis = generator.risk_analyzer.analyze(
-            workflow_id="multi_pattern_wizard", pattern_ids=pattern_ids
+            workflow_id="multi_pattern_wizard",
+            pattern_ids=pattern_ids,
         )
 
         context = generator._build_template_context(

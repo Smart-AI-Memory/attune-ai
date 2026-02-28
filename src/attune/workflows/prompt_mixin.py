@@ -18,10 +18,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +85,7 @@ class PromptMixin:
             ... )
             >>> # This prompt will be cached by Anthropic for 5 minutes
             >>> # Subsequent calls with same prompt read from cache (90% cost reduction)
+
         """
         parts = []
 
@@ -126,7 +124,7 @@ class PromptMixin:
         parts.append(
             "\n# Instructions\n"
             "The user will provide the specific task context in their message. "
-            "Apply the above guidelines and reference documentation to their request."
+            "Apply the above guidelines and reference documentation to their request.",
         )
 
         return "\n".join(parts)
@@ -144,7 +142,7 @@ class PromptMixin:
 
             manager = LessonsManager()
             return manager.format_for_prompt()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Lessons are optional; never break a workflow
             logger.debug("Could not load lessons for prompt injection")
             return None

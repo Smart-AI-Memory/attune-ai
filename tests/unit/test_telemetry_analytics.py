@@ -67,7 +67,7 @@ class TestTopExpensiveWorkflows:
                     success=True,
                     providers_used=["anthropic"],
                     tiers_used=["capable"],
-                )
+                ),
             )
 
             store.log_workflow(
@@ -87,7 +87,7 @@ class TestTopExpensiveWorkflows:
                     success=True,
                     providers_used=["anthropic"],
                     tiers_used=["cheap"],
-                )
+                ),
             )
 
             top = analytics.top_expensive_workflows(n=10)
@@ -123,7 +123,7 @@ class TestTopExpensiveWorkflows:
                         success=True,
                         providers_used=["anthropic"],
                         tiers_used=["capable"],
-                    )
+                    ),
                 )
 
             top = analytics.top_expensive_workflows(n=10)
@@ -159,7 +159,7 @@ class TestTopExpensiveWorkflows:
                         success=True,
                         providers_used=["anthropic"],
                         tiers_used=["capable"],
-                    )
+                    ),
                 )
 
             top = analytics.top_expensive_workflows(n=3)
@@ -205,7 +205,7 @@ class TestProviderUsageSummary:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             store.log_call(
@@ -221,7 +221,7 @@ class TestProviderUsageSummary:
                     estimated_cost=0.02,
                     latency_ms=2000,
                     success=True,
-                )
+                ),
             )
 
             summary = analytics.provider_usage_summary()
@@ -254,7 +254,7 @@ class TestProviderUsageSummary:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             # Add failed call
@@ -272,7 +272,7 @@ class TestProviderUsageSummary:
                     latency_ms=500,
                     success=False,
                     error_type="RateLimitError",
-                )
+                ),
             )
 
             summary = analytics.provider_usage_summary()
@@ -301,7 +301,7 @@ class TestProviderUsageSummary:
                         estimated_cost=0.01,
                         latency_ms=1000,
                         success=True,
-                    )
+                    ),
                 )
 
             summary = analytics.provider_usage_summary()
@@ -345,7 +345,7 @@ class TestTierDistribution:
                     estimated_cost=0.001,
                     latency_ms=500,
                     success=True,
-                )
+                ),
             )
 
             store.log_call(
@@ -361,7 +361,7 @@ class TestTierDistribution:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             dist = analytics.tier_distribution()
@@ -396,7 +396,7 @@ class TestTierDistribution:
                         estimated_cost=0.001,
                         latency_ms=500,
                         success=True,
-                    )
+                    ),
                 )
 
             store.log_call(
@@ -412,7 +412,7 @@ class TestTierDistribution:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             store.log_call(
@@ -428,7 +428,7 @@ class TestTierDistribution:
                     estimated_cost=0.05,
                     latency_ms=2000,
                     success=True,
-                )
+                ),
             )
 
             dist = analytics.tier_distribution()
@@ -475,7 +475,7 @@ class TestFallbackStats:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             # Add call with fallback
@@ -495,7 +495,7 @@ class TestFallbackStats:
                     fallback_used=True,
                     original_provider="openai",
                     original_model="gpt-4o",
-                )
+                ),
             )
 
             stats = analytics.fallback_stats()
@@ -526,7 +526,7 @@ class TestFallbackStats:
                     success=True,
                     fallback_used=True,
                     original_provider="openai",
-                )
+                ),
             )
 
             # Add another fallback from OpenAI
@@ -545,7 +545,7 @@ class TestFallbackStats:
                     success=True,
                     fallback_used=True,
                     original_provider="openai",
-                )
+                ),
             )
 
             stats = analytics.fallback_stats()
@@ -572,7 +572,7 @@ class TestFallbackStats:
                     estimated_cost=0.01,
                     latency_ms=1000,
                     success=True,
-                )
+                ),
             )
 
             # Add failed call
@@ -590,7 +590,7 @@ class TestFallbackStats:
                     latency_ms=500,
                     success=False,
                     error_type="RateLimitError",
-                )
+                ),
             )
 
             stats = analytics.fallback_stats()
@@ -639,7 +639,7 @@ class TestCostSavingsReport:
                     success=True,
                     providers_used=["anthropic"],
                     tiers_used=["capable"],
-                )
+                ),
             )
 
             report = analytics.cost_savings_report()
@@ -675,7 +675,7 @@ class TestCostSavingsReport:
                         success=True,
                         providers_used=["anthropic"],
                         tiers_used=["capable"],
-                    )
+                    ),
                 )
 
             report = analytics.cost_savings_report()

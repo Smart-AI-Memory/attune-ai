@@ -192,14 +192,13 @@ def _classify_error(error: str) -> tuple[str, bool]:
     error_lower = error.lower()
     if "timeout" in error_lower or "timed out" in error_lower:
         return "timeout", True
-    elif "config" in error_lower or "configuration" in error_lower:
+    if "config" in error_lower or "configuration" in error_lower:
         return "config", False
-    elif "api" in error_lower or "rate limit" in error_lower or "quota" in error_lower:
+    if "api" in error_lower or "rate limit" in error_lower or "quota" in error_lower:
         return "provider", True
-    elif "validation" in error_lower or "invalid" in error_lower:
+    if "validation" in error_lower or "invalid" in error_lower:
         return "validation", False
-    else:
-        return "runtime", False
+    return "runtime", False
 
 
 def _update_routing_record(workflow: Any, routing_record: Any, result: Any) -> None:

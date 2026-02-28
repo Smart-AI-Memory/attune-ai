@@ -37,7 +37,9 @@ class DynamicAgentCreator:
         }
 
     def create_agents(
-        self, template: MetaWorkflowTemplate, form_response: FormResponse
+        self,
+        template: MetaWorkflowTemplate,
+        form_response: FormResponse,
     ) -> list[AgentSpec]:
         """Create agents from template rules and form responses.
 
@@ -50,6 +52,7 @@ class DynamicAgentCreator:
 
         Raises:
             ValueError: If template or form_response is invalid
+
         """
         if not template.agent_composition_rules:
             logger.warning(f"Template {template.template_id} has no composition rules")
@@ -69,20 +72,22 @@ class DynamicAgentCreator:
 
                 logger.debug(
                     f"Created agent: {agent.role} "
-                    f"(tier: {agent.tier_strategy.value}, id: {agent.agent_id})"
+                    f"(tier: {agent.tier_strategy.value}, id: {agent.agent_id})",
                 )
             else:
                 self.creation_stats["rules_skipped"] += 1
                 logger.debug(f"Skipped agent {rule.role} - conditions not met")
 
         logger.info(
-            f"Created {len(agents)} agents from {len(template.agent_composition_rules)} rules"
+            f"Created {len(agents)} agents from {len(template.agent_composition_rules)} rules",
         )
 
         return agents
 
     def _create_agent_from_rule(
-        self, rule: AgentCompositionRule, form_response: FormResponse
+        self,
+        rule: AgentCompositionRule,
+        form_response: FormResponse,
     ) -> AgentSpec:
         """Create an AgentSpec from a composition rule and form responses.
 
@@ -92,6 +97,7 @@ class DynamicAgentCreator:
 
         Returns:
             AgentSpec instance configured for execution
+
         """
         # Map config from form responses
         config = rule.create_agent_config(form_response)
@@ -113,6 +119,7 @@ class DynamicAgentCreator:
 
         Returns:
             Dictionary with creation statistics
+
         """
         return self.creation_stats.copy()
 
@@ -152,6 +159,7 @@ def group_agents_by_tier_strategy(
         >>> grouped = group_agents_by_tier_strategy(agents)
         >>> len(grouped[TierStrategy.CHEAP_ONLY])
         1
+
     """
     grouped: dict[TierStrategy, list[AgentSpec]] = {}
 
@@ -164,7 +172,8 @@ def group_agents_by_tier_strategy(
 
 
 def estimate_agent_costs(
-    agents: list[AgentSpec], cost_per_tier: dict[str, float] | None = None
+    agents: list[AgentSpec],
+    cost_per_tier: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Estimate total cost for executing agents.
 
@@ -180,6 +189,7 @@ def estimate_agent_costs(
         >>> agents = [AgentSpec(role="test", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY)]
         >>> estimate_agent_costs(agents)
         {'total_estimated_cost': 0.05, 'by_tier': {'cheap_only': 0.05}, 'agent_count': 1}
+
     """
     if cost_per_tier is None:
         # Default cost estimates per tier strategy
@@ -226,6 +236,7 @@ def validate_agent_dependencies(agents: list[AgentSpec]) -> list[str]:
         >>> warnings = validate_agent_dependencies(agents)
         >>> len(warnings) > 0  # Should warn about missing package_builder
         True
+
     """
     warnings = []
     agent_roles = {agent.role for agent in agents}
@@ -242,7 +253,7 @@ def validate_agent_dependencies(agents: list[AgentSpec]) -> list[str]:
                 if required_role not in agent_roles:
                     warnings.append(
                         f"Agent '{agent.role}' typically requires '{required_role}' "
-                        f"but it's not in the agent list"
+                        f"but it's not in the agent list",
                     )
 
     return warnings

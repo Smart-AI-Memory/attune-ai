@@ -42,9 +42,9 @@ class TestDefaultStrategies:
             "none",
         }
         for workflow, strategy in DEFAULT_VERIFICATION_STRATEGIES.items():
-            assert strategy in valid_strategies, (
-                f"Workflow {workflow!r} has invalid default strategy " f"{strategy!r}"
-            )
+            assert (
+                strategy in valid_strategies
+            ), f"Workflow {workflow!r} has invalid default strategy {strategy!r}"
 
     def test_security_audit_defaults_to_lint(self) -> None:
         """Test security-audit maps to lint-check."""

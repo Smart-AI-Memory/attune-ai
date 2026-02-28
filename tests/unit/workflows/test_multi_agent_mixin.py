@@ -81,7 +81,10 @@ class _MultiAgentWorkflow(BaseWorkflow):
     }
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         """Delegate stage_b to a multi-agent team."""
         if stage_name == "stage_b":
@@ -132,7 +135,8 @@ class TestMultiAgentStage:
             )
 
             output, in_tokens, out_tokens = await wf._run_multi_agent_stage(
-                "stage_b", {"data": "test"}
+                "stage_b",
+                {"data": "test"},
             )
 
             assert "team_success" in output
@@ -185,7 +189,9 @@ class TestMultiAgentStage:
             assert in_tokens > 0  # Estimated from cost
 
     async def test_passes_state_store_to_builder(
-        self, cost_tracker: CostTracker, tmp_path: Path
+        self,
+        cost_tracker: CostTracker,
+        tmp_path: Path,
     ) -> None:
         """state_store is forwarded to DynamicTeamBuilder."""
         from attune.agents.state.store import AgentStateStore

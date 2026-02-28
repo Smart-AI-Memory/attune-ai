@@ -21,17 +21,14 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 import structlog
-
-if TYPE_CHECKING:
-    pass
 
 logger = structlog.get_logger(__name__)
 
@@ -57,6 +54,7 @@ class CacheManager:
         >>> value = cache.get("user:123")
         >>> stats = cache.get_stats()
         >>> print(f"Hit rate: {stats['hit_rate']:.1f}%")
+
     """
 
     def __init__(
@@ -69,6 +67,7 @@ class CacheManager:
         Args:
             enabled: Whether local caching is enabled
             max_size: Maximum number of entries to cache (LRU eviction)
+
         """
         self.enabled = enabled
         self.max_size = max_size
@@ -99,6 +98,7 @@ class CacheManager:
 
         Returns:
             Cached value or None if not found or disabled
+
         """
         if not self.enabled:
             self._misses += 1
@@ -124,6 +124,7 @@ class CacheManager:
         Args:
             key: Cache key
             value: Value to cache
+
         """
         if not self.enabled:
             return
@@ -147,6 +148,7 @@ class CacheManager:
 
         Returns:
             True if key was present and removed
+
         """
         if key in self._cache:
             del self._cache[key]
@@ -163,6 +165,7 @@ class CacheManager:
 
         Returns:
             True if key was present and invalidated
+
         """
         return self.remove(key)
 
@@ -174,6 +177,7 @@ class CacheManager:
 
         Returns:
             True if key exists in cache
+
         """
         return self.enabled and key in self._cache
 
@@ -184,6 +188,7 @@ class CacheManager:
 
         Returns:
             Number of entries cleared
+
         """
         count = len(self._cache)
         self._cache.clear()
@@ -204,6 +209,7 @@ class CacheManager:
             - misses: Total cache misses
             - hit_rate: Percentage of requests served from cache
             - total_requests: Total get requests
+
         """
         total = self._hits + self._misses
         hit_rate = (self._hits / total * 100) if total > 0 else 0.0

@@ -1,4 +1,9 @@
-"""Redis Configuration for Attune AI
+"""Redis Configuration for Attune AI (deprecated).
+
+REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+
+.. deprecated::
+    Use ``attune_redis.config.RedisPluginConfig`` for new code.
 
 Handles connection to Redis from environment variables.
 Supports Redis Cloud, Railway, local Docker, managed Redis, or mock mode.
@@ -93,7 +98,7 @@ def _resolve_redis_mode() -> str:
         if explicit_mode not in _VALID_REDIS_MODES:
             raise ValueError(
                 f"Invalid REDIS_MODE='{explicit_mode}'. "
-                f"Valid values: {', '.join(sorted(_VALID_REDIS_MODES))}"
+                f"Valid values: {', '.join(sorted(_VALID_REDIS_MODES))}",
             )
         return explicit_mode
 
@@ -154,6 +159,10 @@ def _get_common_connection_kwargs() -> dict:
 def get_redis_config() -> RedisConfig:
     """Get Redis configuration from environment variables.
 
+    .. deprecated::
+        Use ``attune_redis.config.RedisPluginConfig.from_env()``
+        for the AMS-based configuration.
+
     Priority:
     1. EMPATHY_REDIS_MOCK=true -> mock mode
     2. REDIS_URL (full URL, used by Railway/Heroku/managed services)
@@ -212,13 +221,13 @@ def get_redis_config() -> RedisConfig:
     if not host:
         logger.warning(
             "REDIS_MODE=cloud but REDIS_HOST not set. "
-            "Set REDIS_HOST to your Redis Cloud endpoint."
+            "Set REDIS_HOST to your Redis Cloud endpoint.",
         )
 
     if not password:
         logger.warning(
             "REDIS_MODE=cloud but REDIS_PASSWORD not set. "
-            "Most cloud Redis services require a password."
+            "Most cloud Redis services require a password.",
         )
 
     return RedisConfig(
@@ -261,6 +270,10 @@ def get_redis_memory(
     config: RedisConfig | None = None,
 ) -> RedisShortTermMemory:
     """Create a RedisShortTermMemory instance with environment-based config.
+
+    .. deprecated::
+        Use ``attune_redis.AMSMemoryBackend`` with
+        ``RedisPluginConfig.from_env()`` instead.
 
     Args:
         url: Optional explicit Redis URL (overrides env vars)

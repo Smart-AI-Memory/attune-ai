@@ -47,6 +47,7 @@ class CommandRegistry:
         # List all available commands
         for name in registry.list_commands():
             print(name)
+
     """
 
     _instance: CommandRegistry | None = None
@@ -92,7 +93,7 @@ class CommandRegistry:
         """
         if config.name in self._commands and not overwrite:
             raise ValueError(
-                f"Command '{config.name}' already registered. Use overwrite=True to replace."
+                f"Command '{config.name}' already registered. Use overwrite=True to replace.",
             )
 
         self._commands[config.name] = config
@@ -359,11 +360,11 @@ class CommandRegistry:
         results: list[CommandConfig] = []
 
         for config in self._commands.values():
-            if query in config.name.lower():
-                results.append(config)
-            elif query in config.description.lower():
-                results.append(config)
-            elif any(query in tag.lower() for tag in config.metadata.tags):
+            if (
+                query in config.name.lower()
+                or query in config.description.lower()
+                or any(query in tag.lower() for tag in config.metadata.tags)
+            ):
                 results.append(config)
 
         return results

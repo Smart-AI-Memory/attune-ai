@@ -13,6 +13,7 @@ def print_analytics_report(report: dict[str, Any]) -> None:
 
     Args:
         report: Analytics report dictionary
+
     """
     print("\n" + "=" * 70)
     print("META-WORKFLOW ANALYTICS REPORT")

@@ -19,7 +19,7 @@ from .domain_models import Domain, WorkflowTemplate
 CODE_REVIEW_WORKFLOW = WorkflowTemplate(
     template_id="code_review_standard",
     name="Standard Code Review",
-    description=("Comprehensive code review covering quality, security, " "and tests"),
+    description=("Comprehensive code review covering quality, security, and tests"),
     domain=Domain.CODE_REVIEW,
     agents=["code_reviewer", "security_scanner", "result_synthesizer"],
     stages=[
@@ -165,7 +165,7 @@ PERFORMANCE_WORKFLOW = WorkflowTemplate(
 SECURITY_AUDIT_WORKFLOW = WorkflowTemplate(
     template_id="security_audit_comprehensive",
     name="Comprehensive Security Audit",
-    description=("Full security audit including vulnerability scanning " "and compliance"),
+    description=("Full security audit including vulnerability scanning and compliance"),
     domain=Domain.SECURITY_AUDIT,
     agents=[
         "security_scanner",

@@ -77,6 +77,7 @@ class CachingMixin:
         workflow._maybe_setup_cache()
         cached = workflow._try_cache_lookup(...)
         workflow._store_in_cache(...)
+
     """
 
     # Instance variables (set by __init__ or subclass)
@@ -116,7 +117,7 @@ class CachingMixin:
         except ImportError as e:
             # Hybrid cache dependencies not available, fall back to hash-only
             logger.info(
-                f"Using hash-only cache (install attune-ai[cache] for semantic caching): {e}"
+                f"Using hash-only cache (install attune-ai[cache] for semantic caching): {e}",
             )
             self._cache = create_cache(cache_type="hash")
         except (OSError, PermissionError) as e:
@@ -137,6 +138,7 @@ class CachingMixin:
 
         Returns:
             Combined prompt string for cache key
+
         """
         return f"{system}\n\n{user_message}" if system else user_message
 
@@ -157,6 +159,7 @@ class CachingMixin:
 
         Returns:
             CachedResponse if found, None otherwise
+
         """
         if not self._enable_cache or self._cache is None:
             return None
@@ -197,6 +200,7 @@ class CachingMixin:
 
         Returns:
             True if stored successfully, False otherwise
+
         """
         if not self._enable_cache or self._cache is None:
             return False
@@ -220,6 +224,7 @@ class CachingMixin:
 
         Returns:
             Cache type string (e.g., "hash", "semantic")
+
         """
         if self._cache is None:
             return "none"
@@ -236,6 +241,7 @@ class CachingMixin:
 
         Returns:
             Dictionary with cache stats (hits, misses, hit_rate)
+
         """
         if self._cache is None:
             return {"hits": 0, "misses": 0, "hit_rate": 0.0}

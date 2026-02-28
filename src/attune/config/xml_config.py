@@ -15,7 +15,7 @@ Licensed under the Apache License, Version 2.0
 import json
 from dataclasses import asdict, dataclass, field
 
-from attune.security.path_validation import _validate_file_path  # noqa: F401
+from attune.security.path_validation import _validate_file_path
 
 
 @dataclass
@@ -59,14 +59,14 @@ class AdaptiveConfig:
             "moderate": "claude-sonnet-4-6",
             "complex": "claude-sonnet-4-6",
             "very_complex": "claude-opus-4-6",
-        }
+        },
     )
     complexity_thresholds: dict[str, int] = field(
         default_factory=lambda: {
             "simple_tokens": 100,
             "moderate_tokens": 500,
             "complex_tokens": 2000,
-        }
+        },
     )
 
 
@@ -133,6 +133,7 @@ class EmpathyXMLConfig:
 
         Returns:
             EmpathyXMLConfig instance loaded from file, or default config if file doesn't exist
+
         """
         # Validate path to prevent path traversal attacks
         try:
@@ -167,6 +168,7 @@ class EmpathyXMLConfig:
 
         Args:
             config_file: Path to save config (default: .attune/config.json)
+
         """
         validated_path = _validate_file_path(config_file)
         validated_path.parent.mkdir(parents=True, exist_ok=True)
@@ -195,6 +197,7 @@ class EmpathyXMLConfig:
 
         Returns:
             EmpathyXMLConfig with settings from environment variables
+
         """
         from attune.config.env_compat import get_attune_env
 
@@ -230,6 +233,7 @@ def get_config() -> EmpathyXMLConfig:
 
     Returns:
         Global EmpathyXMLConfig instance
+
     """
     global _global_config
 
@@ -245,6 +249,7 @@ def set_config(config: EmpathyXMLConfig) -> None:
 
     Args:
         config: EmpathyXMLConfig to use globally
+
     """
     global _global_config
     _global_config = config

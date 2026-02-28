@@ -111,7 +111,7 @@ def get_compaction_recommendations(context: dict[str, Any]) -> list[str]:
 
     if completed_phases:
         recommendations.append(
-            f"Completed phases ({', '.join(completed_phases)}) can be summarized"
+            f"Completed phases ({', '.join(completed_phases)}) can be summarized",
         )
 
     # Check for exploration context

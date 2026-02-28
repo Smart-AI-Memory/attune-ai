@@ -25,6 +25,7 @@ class AuthConfig:
         subscription_daily_limit: Max requests per day via subscription.
         api_daily_limit: Max requests per day via API.
         fallback_enabled: Whether to fallback to API when subscription limit reached.
+
     """
 
     strategy: Literal["subscription", "api", "hybrid"] = "hybrid"

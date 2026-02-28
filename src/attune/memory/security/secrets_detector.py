@@ -19,7 +19,7 @@ from re import Pattern
 
 import structlog
 
-from .secrets_types import (  # noqa: F401 - re-exported
+from .secrets_types import (
     SecretDetection,
     SecretType,
     Severity,

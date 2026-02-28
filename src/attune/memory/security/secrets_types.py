@@ -19,14 +19,14 @@ class SecretType(Enum):
     ANTHROPIC_API_KEY = "anthropic_api_key"
     OPENAI_API_KEY = "openai_api_key"
     AWS_ACCESS_KEY = "aws_access_key"
-    AWS_SECRET_KEY = "aws_secret_key"
-    GITHUB_TOKEN = "github_token"
-    SLACK_TOKEN = "slack_token"
+    AWS_SECRET_KEY = "aws_secret_key"  # noqa: S105
+    GITHUB_TOKEN = "github_token"  # noqa: S105
+    SLACK_TOKEN = "slack_token"  # noqa: S105
     STRIPE_KEY = "stripe_key"
     GENERIC_API_KEY = "generic_api_key"
 
     # Passwords
-    PASSWORD = "password"
+    PASSWORD = "password"  # noqa: S105
     BASIC_AUTH = "basic_auth"
 
     # Private Keys
@@ -37,9 +37,9 @@ class SecretType(Enum):
     TLS_CERTIFICATE_KEY = "tls_certificate_key"
 
     # Tokens
-    JWT_TOKEN = "jwt_token"
-    OAUTH_TOKEN = "oauth_token"
-    BEARER_TOKEN = "bearer_token"
+    JWT_TOKEN = "jwt_token"  # noqa: S105
+    OAUTH_TOKEN = "oauth_token"  # noqa: S105
+    BEARER_TOKEN = "bearer_token"  # noqa: S105
 
     # Database
     DATABASE_URL = "database_url"

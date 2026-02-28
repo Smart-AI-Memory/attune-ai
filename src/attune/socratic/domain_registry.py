@@ -86,7 +86,7 @@ class DomainTemplateRegistry:
         self._domains[Domain.SECURITY_AUDIT] = DomainTemplate(
             domain=Domain.SECURITY_AUDIT,
             name="Security Audit",
-            description=("Security vulnerability scanning and compliance " "auditing"),
+            description=("Security vulnerability scanning and compliance auditing"),
             agents=[
                 SECURITY_SCANNER,
                 COMPLIANCE_AUDITOR,
@@ -225,6 +225,7 @@ class DomainTemplateRegistry:
 
         Returns:
             (domain, confidence) tuple
+
         """
         goal_lower = goal.lower()
         scores: dict[Domain, float] = {}

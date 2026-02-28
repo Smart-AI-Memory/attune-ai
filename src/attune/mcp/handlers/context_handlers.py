@@ -20,6 +20,7 @@ async def handle_context_get(server: EmpathyMCPServer, args: dict[str, Any]) -> 
     Args:
         server: MCP server instance
         args: Must contain key
+
     """
     key = args["key"]
     value = server._context.get(key)
@@ -37,6 +38,7 @@ async def handle_context_set(server: EmpathyMCPServer, args: dict[str, Any]) -> 
     Args:
         server: MCP server instance
         args: Must contain key and value
+
     """
     key = args["key"]
     value = args["value"]
@@ -77,6 +79,7 @@ async def handle_attune_set_level(server: EmpathyMCPServer, args: dict[str, Any]
     Args:
         server: MCP server instance
         args: Must contain level (integer 1-5)
+
     """
     level = args.get("level")
     if not isinstance(level, int) or level < 1 or level > 5:

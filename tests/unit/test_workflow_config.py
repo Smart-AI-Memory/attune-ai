@@ -91,7 +91,7 @@ class TestWorkflowConfigLoading:
 default_provider: openai
 workflow_providers:
   research: anthropic
-"""
+""",
             )
 
             config = WorkflowConfig.load(config_path)
@@ -196,7 +196,7 @@ provider: openai
 model_preferences:
   cheap: gpt-4o-mini
   capable: gpt-4o
-"""
+""",
             )
 
             config = WorkflowConfig.load(config_path)
@@ -243,8 +243,8 @@ class TestWorkflowConfigProviderMethods:
             custom_models={
                 "anthropic": {
                     "capable": "claude-sonnet-4-custom",
-                }
-            }
+                },
+            },
         )
 
         model = config.get_model_for_tier("anthropic", "capable")
@@ -257,7 +257,7 @@ class TestWorkflowConfigProviderMethods:
             custom_models={
                 "env": {"capable": "env-model"},
                 "anthropic": {"capable": "provider-model"},
-            }
+            },
         )
 
         model = config.get_model_for_tier("anthropic", "capable")
@@ -269,7 +269,7 @@ class TestWorkflowConfigProviderMethods:
         config = WorkflowConfig(
             pricing_overrides={
                 "custom-model": {"input": 1.0, "output": 5.0},
-            }
+            },
         )
 
         pricing = config.get_pricing("custom-model")
@@ -503,7 +503,7 @@ class TestGetModelFunction:
         config = WorkflowConfig(
             custom_models={
                 "anthropic": {"capable": "custom-model"},
-            }
+            },
         )
 
         model = get_model("anthropic", "capable", config)

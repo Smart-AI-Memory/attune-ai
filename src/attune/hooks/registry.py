@@ -47,6 +47,7 @@ class HookRegistry:
             HookEvent.SESSION_START,
             context={"session_id": "abc123"}
         )
+
     """
 
     def __init__(self, config: HookConfig | None = None):

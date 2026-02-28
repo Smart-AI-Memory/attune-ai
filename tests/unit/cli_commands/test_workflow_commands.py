@@ -411,7 +411,11 @@ class TestCmdWorkflowRunPathValidation:
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_valid_path_is_validated_and_passed(
-        self, mock_discover, mock_validate, capsys, tmp_path
+        self,
+        mock_discover,
+        mock_validate,
+        capsys,
+        tmp_path,
     ):
         """Test that a valid path is validated and included in input_data."""
         call_kwargs = {}
@@ -652,7 +656,7 @@ class TestCmdWorkflowRunJsonOutput:
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
 
-        args = _make_args(name="wf", **{"json": True})
+        args = _make_args(name="wf", json=True)
         result = cmd_workflow_run(args)
 
         assert result == 0
@@ -683,7 +687,7 @@ class TestCmdWorkflowRunJsonOutput:
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
 
-        args = _make_args(name="wf", **{"json": True})
+        args = _make_args(name="wf", json=True)
         result = cmd_workflow_run(args)
 
         assert result == 0
@@ -699,7 +703,7 @@ class TestCmdWorkflowRunJsonOutput:
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
 
-        args = _make_args(name="wf", **{"json": False})
+        args = _make_args(name="wf", json=False)
         result = cmd_workflow_run(args)
 
         assert result == 0
@@ -793,7 +797,11 @@ class TestCmdWorkflowRunCombinedInputs:
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.discover_workflows")
     def test_run_json_input_plus_path_and_target(
-        self, mock_discover, mock_validate, capsys, tmp_path
+        self,
+        mock_discover,
+        mock_validate,
+        capsys,
+        tmp_path,
     ):
         """Test that JSON input, validated path, and target are all merged."""
         call_kwargs = {}

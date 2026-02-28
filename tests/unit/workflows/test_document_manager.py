@@ -43,7 +43,10 @@ class TestDocumentManagerWorkflow:
         mock_response = ("# Generated Documentation\n\nAPI docs here.", 500, 200)
 
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             result = await workflow.execute(path=".")
 
@@ -59,7 +62,10 @@ class TestDocumentManagerWorkflow:
         mock_response = ("# Docs for current directory", 300, 100)
 
         with patch.object(
-            workflow, "_call_llm", new_callable=AsyncMock, return_value=mock_response
+            workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=mock_response,
         ):
             result = await workflow.execute()
 

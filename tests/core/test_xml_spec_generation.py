@@ -220,6 +220,5 @@ class TestErrorHandling:
         """Test handling of file write errors."""
         mock_file.side_effect = PermissionError("Cannot write file")
 
-        with pytest.raises(PermissionError):
-            with open("test.md", "w") as f:
-                f.write("content")
+        with pytest.raises(PermissionError), open("test.md", "w") as f:
+            f.write("content")

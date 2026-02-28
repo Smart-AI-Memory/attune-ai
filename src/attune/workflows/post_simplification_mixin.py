@@ -29,7 +29,7 @@ CODE_GENERATING_WORKFLOWS = frozenset(
         "refactor-plan",
         "test-gen",
         "code-review",
-    }
+    },
 )
 
 

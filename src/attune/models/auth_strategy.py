@@ -90,6 +90,7 @@ class AuthStrategy:
             - Small modules (< 500 LOC) → Subscription (fits easily)
             - Medium modules (500-2000 LOC) → Subscription (still fits)
             - Large modules (> 2000 LOC) → API (1M context window)
+
         """
         # If not in AUTO mode, respect user preference
         if self.default_mode != AuthMode.AUTO:
@@ -108,13 +109,12 @@ class AuthStrategy:
             # Small modules → Use subscription (saves money)
             return AuthMode.SUBSCRIPTION
 
-        elif module_lines < self.medium_module_threshold:
+        if module_lines < self.medium_module_threshold:
             # Medium modules → Use subscription if preferred
             return AuthMode.SUBSCRIPTION if self.prefer_subscription else AuthMode.API
 
-        else:
-            # Large modules → Use API (1M context window benefit)
-            return AuthMode.API
+        # Large modules → Use API (1M context window benefit)
+        return AuthMode.API
 
     def estimate_tokens(self, module_lines: int) -> int:
         """Estimate token count from lines of code.
@@ -124,6 +124,7 @@ class AuthStrategy:
 
         Returns:
             Estimated token count
+
         """
         return int(module_lines * self.loc_to_tokens_multiplier)
 
@@ -136,6 +137,7 @@ class AuthStrategy:
 
         Returns:
             Cost estimate with breakdown
+
         """
         if mode is None:
             mode = self.get_recommended_mode(module_lines)
@@ -163,14 +165,14 @@ class AuthStrategy:
                 "tokens_used": tokens,
                 "fits_in_context": tokens < 200_000,  # 200K context window
             }
-        else:  # API
-            return {
-                "mode": "api",
-                "monetary_cost": round(total_api_cost, 4),
-                "quota_cost": None,
-                "tokens_used": tokens,
-                "fits_in_context": tokens < 1_000_000,  # 1M context window
-            }
+        # API
+        return {
+            "mode": "api",
+            "monetary_cost": round(total_api_cost, 4),
+            "quota_cost": None,
+            "tokens_used": tokens,
+            "fits_in_context": tokens < 1_000_000,  # 1M context window
+        }
 
     def get_pros_cons(self, module_lines: int) -> dict[str, Any]:
         """Get pros/cons comparison for first-time setup.
@@ -180,6 +182,7 @@ class AuthStrategy:
 
         Returns:
             Comparison data for UI display
+
         """
         sub_estimate = self.estimate_cost(module_lines, AuthMode.SUBSCRIPTION)
         api_estimate = self.estimate_cost(module_lines, AuthMode.API)
@@ -302,6 +305,7 @@ def configure_auth_interactive(module_lines: int = 1000) -> AuthStrategy:
 
     Returns:
         Configured AuthStrategy
+
     """
     print("\n" + "=" * 60)
     print("Attune AI - Authentication Setup")
@@ -394,6 +398,7 @@ def get_auth_strategy() -> AuthStrategy:
 
     Returns:
         AuthStrategy instance
+
     """
     return AuthStrategy.load()
 
@@ -407,6 +412,7 @@ def count_lines_of_code(file_path: str | Path) -> int:
 
     Returns:
         Number of lines (excluding blank lines and comments)
+
     """
     path = Path(file_path)
     if not path.exists():
@@ -439,10 +445,10 @@ def get_module_size_category(module_lines: int) -> str:
 
     Returns:
         Size category: "small", "medium", or "large"
+
     """
     if module_lines < 500:
         return "small"
-    elif module_lines < 2000:
+    if module_lines < 2000:
         return "medium"
-    else:
-        return "large"
+    return "large"

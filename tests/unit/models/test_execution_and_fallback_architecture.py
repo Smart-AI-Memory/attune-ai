@@ -108,10 +108,12 @@ class TestModelRegistryAndSelection:
         for provider_name, provider_models in MODEL_REGISTRY.items():
             for tier, model_info in provider_models.items():
                 assert hasattr(
-                    model_info, "input_cost_per_million"
+                    model_info,
+                    "input_cost_per_million",
                 ), f"Model {provider_name}/{tier} missing input cost"
                 assert hasattr(
-                    model_info, "output_cost_per_million"
+                    model_info,
+                    "output_cost_per_million",
                 ), f"Model {provider_name}/{tier} missing output cost"
                 # Ollama models are free (cost = 0), others should cost > 0
                 if provider_name != "ollama":
@@ -364,7 +366,7 @@ class TestLLMExecutorInterface:
             return_value=Mock(
                 choices=[Mock(message=Mock(content="Response"))],
                 usage=Mock(total_tokens=100),
-            )
+            ),
         )
         mock_get_client.return_value = mock_client
 
@@ -705,8 +707,9 @@ class TestProviderSwitching:
         anthropic_client = Mock()
         anthropic_client.messages.create = Mock(
             return_value=Mock(
-                content=[Mock(text="Anthropic response")], usage=Mock(input_tokens=50)
-            )
+                content=[Mock(text="Anthropic response")],
+                usage=Mock(input_tokens=50),
+            ),
         )
 
         # First call fails (OpenAI), second succeeds (Anthropic)
@@ -716,7 +719,8 @@ class TestProviderSwitching:
         # (Implementation-dependent - may need fallback logic)
         try:
             result = executor.execute(
-                model="gpt-4o", messages=[{"role": "user", "content": "Test"}]
+                model="gpt-4o",
+                messages=[{"role": "user", "content": "Test"}],
             )
         except Exception:
             # Fallback should happen automatically
@@ -756,7 +760,7 @@ class TestTelemetryAndLogging:
             return_value=Mock(
                 choices=[Mock(message=Mock(content="Response"))],
                 usage=Mock(total_tokens=100),
-            )
+            ),
         )
         mock_get_client.return_value = mock_client
 
@@ -805,7 +809,7 @@ class TestExecutionAndFallbackIntegration:
             return_value=Mock(
                 choices=[Mock(message=Mock(content="Fallback success"))],
                 usage=Mock(total_tokens=100),
-            )
+            ),
         )
 
         mock_get_client.side_effect = [primary_client, fallback_client]
@@ -815,7 +819,8 @@ class TestExecutionAndFallbackIntegration:
         # Try primary (will fail)
         try:
             result = executor.execute(
-                model="gpt-4o", messages=[{"role": "user", "content": "Test"}]
+                model="gpt-4o",
+                messages=[{"role": "user", "content": "Test"}],
             )
         except Exception:
             # Expected - now try fallback
@@ -904,13 +909,14 @@ class TestEdgeCasesAndRobustness:
                 return_value=Mock(
                     choices=[Mock(message=Mock(content="Response"))],
                     usage=Mock(total_tokens=100),
-                )
+                ),
             )
             mock_get_client.return_value = mock_client
 
             try:
                 result = executor.execute(
-                    model="gpt-4o", messages=[{"role": "user", "content": "Test"}]
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": "Test"}],
                 )
                 with lock:
                     results.append(result)

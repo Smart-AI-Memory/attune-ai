@@ -30,13 +30,13 @@ from .alerts import (
 @click.group()
 def alerts():
     """Alert management commands for LLM telemetry monitoring."""
-    pass
 
 
 @alerts.command()
 @click.option("--non-interactive", is_flag=True, help="Skip interactive prompts")
 @click.option(
-    "--metric", type=click.Choice(["daily_cost", "error_rate", "avg_latency", "token_usage"])
+    "--metric",
+    type=click.Choice(["daily_cost", "error_rate", "avg_latency", "token_usage"]),
 )
 @click.option("--threshold", type=float)
 @click.option("--channel", type=click.Choice(["webhook", "email", "stdout"]))
@@ -55,7 +55,7 @@ def init(
         # Non-interactive mode - require all parameters
         if not all([metric, threshold, channel]):
             click.echo(
-                "Error: --metric, --threshold, and --channel required in non-interactive mode"
+                "Error: --metric, --threshold, and --channel required in non-interactive mode",
             )
             sys.exit(1)
 
@@ -263,7 +263,7 @@ def watch(interval: int, daemon: bool, once: bool):
             click.echo(f"\n⚠️  {len(events)} alert(s) triggered!")
             for event in events:
                 click.echo(
-                    f"   - {event.alert_name}: {event.current_value:.2f} >= {event.threshold:.2f}"
+                    f"   - {event.alert_name}: {event.current_value:.2f} >= {event.threshold:.2f}",
                 )
         else:
             click.echo("✅ All metrics within thresholds")
@@ -272,7 +272,7 @@ def watch(interval: int, daemon: bool, once: bool):
     if daemon:
         click.echo("🔄 Starting alert watcher as daemon...")
         click.echo(
-            "⚠️  Daemon mode runs in background. Use 'ps aux | grep empathy' to check status."
+            "⚠️  Daemon mode runs in background. Use 'ps aux | grep empathy' to check status.",
         )
         # Daemonize
         _daemonize()
@@ -304,13 +304,13 @@ def watch(interval: int, daemon: bool, once: bool):
                 for event in events:
                     click.echo(f"⚠️  ALERT: {event.alert_name}")
                     click.echo(
-                        f"   {event.metric.value}: {event.current_value:.2f} >= {event.threshold:.2f}"
+                        f"   {event.metric.value}: {event.current_value:.2f} >= {event.threshold:.2f}",
                     )
 
             # Status update every 5 checks
             if check_count % 5 == 0:
                 click.echo(
-                    f"   [Check #{check_count}] Monitoring... ({triggered_count} alerts triggered)"
+                    f"   [Check #{check_count}] Monitoring... ({triggered_count} alerts triggered)",
                 )
 
             time.sleep(interval)
@@ -390,7 +390,7 @@ def history(alert_id: str | None, limit: int, as_json: bool):
         delivered = "✓" if record["delivered"] else "✗"
         click.echo(f"  [{delivered}] {record['alert_id']}")
         click.echo(
-            f"    Metric: {record['metric']} = {record['current_value']:.2f} (threshold: {record['threshold']:.2f})"
+            f"    Metric: {record['metric']} = {record['current_value']:.2f} (threshold: {record['threshold']:.2f})",
         )
         click.echo(f"    Severity: {record['severity']}")
         click.echo(f"    Triggered: {record['triggered_at']}")

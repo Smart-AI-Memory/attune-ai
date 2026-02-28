@@ -387,7 +387,7 @@ class TestPatternRecommender:
                     pattern="parallel",
                     success=True,
                     duration_seconds=1.0,
-                )
+                ),
             )
 
         recommender = PatternRecommender(store)

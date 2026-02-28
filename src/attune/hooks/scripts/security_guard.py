@@ -36,7 +36,7 @@ SYSTEM_DIRECTORIES = frozenset(
         "/usr/sbin",
         "/private/etc",
         "/private/var",
-    }
+    },
 )
 
 # Dangerous patterns in Bash commands
@@ -73,7 +73,7 @@ SEARCH_COMMAND_PREFIXES = frozenset(
         "git grep",
         "git log",
         "git diff",
-    }
+    },
 )
 
 

@@ -27,6 +27,7 @@ def parse_findings(result: dict) -> list[ReviewFinding]:
 
     Returns:
         List of parsed ReviewFinding objects.
+
     """
     findings = []
 
@@ -53,6 +54,7 @@ def dict_to_finding(data: dict) -> ReviewFinding:
 
     Returns:
         A ReviewFinding instance.
+
     """
     return ReviewFinding(
         title=data.get("title", "Untitled Finding"),
@@ -78,6 +80,7 @@ def parse_text_findings(text: str) -> list[ReviewFinding]:
 
     Returns:
         List of ReviewFinding objects extracted from the text.
+
     """
     findings = []
 
@@ -147,6 +150,7 @@ def determine_verdict(findings: list[ReviewFinding]) -> Verdict:
 
     Returns:
         The appropriate Verdict based on finding severities.
+
     """
     if not findings:
         return Verdict.APPROVE
@@ -179,6 +183,7 @@ def generate_summary(findings: list[ReviewFinding], verdict: Verdict) -> str:
 
     Returns:
         A formatted summary string.
+
     """
     if not findings:
         return "Code review passed with no issues identified."

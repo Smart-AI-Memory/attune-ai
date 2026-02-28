@@ -72,7 +72,7 @@ def populated_store(temp_dir):
                 status="completed",
                 success=(i < 4),  # 4 successes, 1 failure
                 actual_cost=0.01 * (i + 1),
-            )
+            ),
         )
 
     # Add test execution data
@@ -98,7 +98,7 @@ def populated_store(temp_dir):
                     if i > 0
                     else []
                 ),
-            )
+            ),
         )
 
     # Add coverage data
@@ -123,7 +123,7 @@ def populated_store(temp_dir):
                 trend="improving" if i == 1 else "stable",
                 coverage_format="xml",
                 coverage_file="coverage.xml",
-            )
+            ),
         )
 
     # Add agent assignment data
@@ -144,7 +144,7 @@ def populated_store(temp_dir):
                 success=(i < 3),  # 3 successes, 1 failure
                 actual_duration_hours=(300.0 + (i * 100)) / 3600.0,  # Convert seconds to hours
                 quality_check_passed=(i < 3),
-            )
+            ),
         )
 
     return store
@@ -163,7 +163,8 @@ def test_client(populated_store, monkeypatch):
     monkeypatch.setattr("attune.models.telemetry.get_telemetry_store", lambda: populated_store)
     # 2. In the monitoring API module (where it's imported)
     monkeypatch.setattr(
-        "dashboard.backend.api.monitoring.get_telemetry_store", lambda: populated_store
+        "dashboard.backend.api.monitoring.get_telemetry_store",
+        lambda: populated_store,
     )
 
     # Create test app with monitoring router
@@ -490,7 +491,8 @@ class TestErrorHandling:
 
         # Patch where the function is imported in the monitoring module
         monkeypatch.setattr(
-            "dashboard.backend.api.monitoring.get_telemetry_store", mock_get_store_error
+            "dashboard.backend.api.monitoring.get_telemetry_store",
+            mock_get_store_error,
         )
 
         app = FastAPI()
@@ -510,7 +512,8 @@ class TestErrorHandling:
         empty_store = TelemetryStore(storage_dir=str(temp_dir))
         # Patch where the function is imported in the monitoring module
         monkeypatch.setattr(
-            "dashboard.backend.api.monitoring.get_telemetry_store", lambda: empty_store
+            "dashboard.backend.api.monitoring.get_telemetry_store",
+            lambda: empty_store,
         )
 
         app = FastAPI()

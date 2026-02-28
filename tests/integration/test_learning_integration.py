@@ -396,7 +396,7 @@ class TestLearningWithContextIntegration:
             [
                 PatternCategory.PREFERENCE,
                 PatternCategory.ERROR_RESOLUTION,
-            ]
+            ],
         ):
             pattern = ExtractedPattern(
                 category=category,

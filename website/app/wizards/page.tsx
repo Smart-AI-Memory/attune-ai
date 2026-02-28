@@ -3,115 +3,24 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+import { wizards, tierColors, tierLabels } from '@/lib/wizards';
 
 export const metadata: Metadata = generateSEOMetadata({
-  title: '10 Smart Wizards',
-  description: 'Specialized AI agents for security audits, code review, bug prediction, performance analysis, test generation, and more.',
+  title: 'AI Code Wizards — Security, Review & Testing Automation',
+  description:
+    '10 AI-powered code wizards for security audits, code review, bug prediction, performance analysis, test generation, and more. Works with Claude Code.',
   url: 'https://smartaimemory.com/wizards',
   keywords: [
-    'AI wizards',
-    'security audit AI',
-    'code review automation',
-    'bug prediction',
-    'test generation',
-    'AI developer tools',
+    'AI security audit tool',
+    'AI code review tool',
+    'AI test generation Python',
+    'bug prediction AI',
+    'AI performance audit',
+    'Claude Code wizards',
+    'developer automation tools',
   ],
 });
 
-const wizards = [
-  {
-    name: 'security-audit',
-    displayName: 'Security Audit',
-    description: 'Analyze code for security vulnerabilities, injection risks, and compliance issues',
-    tier: 'capable',
-    domain: 'Security',
-    keywords: ['security', 'vulnerability', 'injection', 'xss', 'sql', 'owasp'],
-  },
-  {
-    name: 'code-review',
-    displayName: 'Code Review',
-    description: 'Review code for quality, best practices, maintainability, and potential bugs',
-    tier: 'capable',
-    domain: 'Quality',
-    keywords: ['review', 'quality', 'lint', 'style', 'best practice', 'refactor'],
-  },
-  {
-    name: 'bug-predict',
-    displayName: 'Bug Prediction',
-    description: 'Predict potential bugs based on code patterns and historical data',
-    tier: 'capable',
-    domain: 'Debugging',
-    keywords: ['bug', 'error', 'exception', 'fail', 'fix', 'defect'],
-  },
-  {
-    name: 'perf-audit',
-    displayName: 'Performance Audit',
-    description: 'Analyze code for performance issues, bottlenecks, and optimization opportunities',
-    tier: 'capable',
-    domain: 'Performance',
-    keywords: ['performance', 'slow', 'optimize', 'bottleneck', 'memory', 'cpu'],
-  },
-  {
-    name: 'refactor-plan',
-    displayName: 'Refactor Plan',
-    description: 'Plan code refactoring to improve structure and reduce complexity',
-    tier: 'capable',
-    domain: 'Architecture',
-    keywords: ['refactor', 'restructure', 'simplify', 'complexity', 'design'],
-  },
-  {
-    name: 'test-gen',
-    displayName: 'Test Generation',
-    description: 'Generate test cases and improve test coverage automatically',
-    tier: 'cheap',
-    domain: 'Testing',
-    keywords: ['test', 'unit', 'integration', 'coverage', 'pytest', 'mock'],
-  },
-  {
-    name: 'doc-gen',
-    displayName: 'Documentation',
-    description: 'Generate documentation from code including API docs, READMEs, and guides',
-    tier: 'cheap',
-    domain: 'Documentation',
-    keywords: ['document', 'readme', 'api', 'docstring', 'explain'],
-  },
-  {
-    name: 'dependency-check',
-    displayName: 'Dependency Check',
-    description: 'Audit dependencies for vulnerabilities, updates, and license issues',
-    tier: 'cheap',
-    domain: 'Dependencies',
-    keywords: ['dependency', 'package', 'npm', 'pip', 'vulnerability', 'update'],
-  },
-  {
-    name: 'release-prep',
-    displayName: 'Release Prep',
-    description: 'Pre-release quality gate with health checks, security scan, and changelog',
-    tier: 'capable',
-    domain: 'Release',
-    keywords: ['release', 'deploy', 'publish', 'version', 'changelog', 'production'],
-  },
-  {
-    name: 'research',
-    displayName: 'Research',
-    description: 'Research and synthesize information from multiple sources',
-    tier: 'capable',
-    domain: 'Research',
-    keywords: ['research', 'investigate', 'explore', 'analyze', 'study'],
-  },
-];
-
-const tierColors = {
-  cheap: 'bg-green-100 text-green-800 border-green-200',
-  capable: 'bg-blue-100 text-blue-800 border-blue-200',
-  premium: 'bg-purple-100 text-purple-800 border-purple-200',
-};
-
-const tierLabels = {
-  cheap: 'Fast & Affordable',
-  capable: 'Balanced',
-  premium: 'Most Capable',
-};
 
 export default function WizardsPage() {
   return (
@@ -125,9 +34,16 @@ export default function WizardsPage() {
               <h1 className="text-4xl sm:text-5xl font-bold mb-6">
                 10 Smart Wizards
               </h1>
-              <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Specialized AI agents that understand your codebase.
-                Each wizard is optimized for specific tasks with built-in best practices.
+              <p className="text-xl text-[var(--text-secondary)] mb-4">
+                Interactive guides that walk you through each step — asking questions,
+                collecting context, and showing results as you go.
+              </p>
+              <p className="text-base text-[var(--muted)] mb-8">
+                Need non-interactive CI/CD pipelines instead? See{' '}
+                <Link href="/workflows" className="underline hover:text-[var(--primary)]">
+                  Workflows
+                </Link>{' '}
+                — wizards call the same underlying engines.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link
@@ -175,24 +91,32 @@ export default function WizardsPage() {
           <div className="container">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {wizards.map((wizard) => (
-                <div
+                <Link
                   key={wizard.name}
-                  className="bg-[var(--background)] p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:shadow-lg transition-all"
+                  href={`/wizards/${wizard.name}`}
+                  className="group bg-[var(--background)] p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:shadow-lg transition-all block"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-xl">{wizard.displayName}</h3>
-                    <span className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded border ${tierColors[wizard.tier as keyof typeof tierColors]}`}>
+                    <h3 className="font-bold text-xl group-hover:text-[var(--primary)] transition-colors">
+                      {wizard.displayName}
+                    </h3>
+                    <span className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded border ${tierColors[wizard.tier]}`}>
                       {wizard.tier}
                     </span>
                   </div>
                   <p className="text-[var(--text-secondary)] mb-4">
                     {wizard.description}
                   </p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-[var(--muted)]">Domain:</span>
-                    <span className="font-medium">{wizard.domain}</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[var(--muted)]">Domain:</span>
+                      <span className="font-medium">{wizard.domain}</span>
+                    </div>
+                    <span className="text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold">
+                      Learn more →
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

@@ -159,6 +159,7 @@ class TaskAnalysisMixin:
 
         Returns:
             TaskRequirements with extracted information
+
         """
         task_lower = task.lower()
 
@@ -194,6 +195,7 @@ class TaskAnalysisMixin:
 
         Returns:
             TaskComplexity classification
+
         """
         # Check for complex keywords first (most specific)
         for keyword in self.COMPLEXITY_KEYWORDS[TaskComplexity.COMPLEX]:
@@ -221,6 +223,7 @@ class TaskAnalysisMixin:
 
         Returns:
             TaskDomain classification
+
         """
         # Score each domain based on keyword matches
         domain_scores: dict[TaskDomain, int] = dict.fromkeys(TaskDomain, 0)
@@ -249,6 +252,7 @@ class TaskAnalysisMixin:
 
         Returns:
             List of capability names
+
         """
         # Get default capabilities for domain
         capabilities = self.DOMAIN_CAPABILITIES.get(domain, []).copy()
@@ -270,6 +274,7 @@ class TaskAnalysisMixin:
 
         Returns:
             True if task can be parallelized
+
         """
         # Keywords indicating parallel execution
         parallel_keywords = [
@@ -312,6 +317,7 @@ class TaskAnalysisMixin:
 
         Raises:
             ValueError: If no agents match requirements
+
         """
         agents: list[AgentTemplate] = []
 
@@ -342,6 +348,7 @@ class TaskAnalysisMixin:
 
         Returns:
             List of default agent templates
+
         """
         defaults = {
             TaskDomain.TESTING: ["test_coverage_analyzer"],
@@ -363,7 +370,9 @@ class TaskAnalysisMixin:
         return agents
 
     def _choose_composition_pattern(
-        self, requirements: TaskRequirements, agents: list[AgentTemplate]
+        self,
+        requirements: TaskRequirements,
+        agents: list[AgentTemplate],
     ) -> CompositionPattern:
         """Choose optimal composition pattern.
 
@@ -373,6 +382,7 @@ class TaskAnalysisMixin:
 
         Returns:
             CompositionPattern to use
+
         """
         num_agents = len(agents)
         context = requirements.context

@@ -87,7 +87,7 @@ class TestSQLParameterization:
 
             # Verify table wasn't dropped
             cursor.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='workflow_runs'"
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='workflow_runs'",
             )
             assert cursor.fetchone() is not None
 
@@ -310,7 +310,7 @@ class TestSecurityAuditAccuracy:
     """Test that security audit produces accurate results after improvements."""
 
     @pytest.mark.skip(
-        reason="Integration test - requires API credentials and full workflow execution"
+        reason="Integration test - requires API credentials and full workflow execution",
     )
     @pytest.mark.asyncio
     async def test_reduced_false_positive_rate(self):

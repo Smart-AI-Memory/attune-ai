@@ -43,6 +43,7 @@ def suggest_defaults_cmd(
     Examples:
         empathy meta-workflow suggest-defaults test_creation_management_workflow
         empathy meta-workflow suggest-defaults python_package_publish --session-id sess_123
+
     """
     try:
         from attune.memory.unified import UnifiedMemory
@@ -82,7 +83,8 @@ def suggest_defaults_cmd(
         for question_id, value in defaults.items():
             # Find the question to get the display text
             question = next(
-                (q for q in template.form_schema.questions if q.id == question_id), None
+                (q for q in template.form_schema.questions if q.id == question_id),
+                None,
             )
             question_text = question.text if question else question_id
 
@@ -95,13 +97,13 @@ def suggest_defaults_cmd(
         console.print(table)
         console.print(
             f"\n[dim]Use these defaults by running:[/dim]\n"
-            f"  empathy meta-workflow run {template_id} --use-defaults\n"
+            f"  empathy meta-workflow run {template_id} --use-defaults\n",
         )
 
     except ImportError:
         console.print(
             "[red]Error:[/red] Session context not available. "
-            "Ensure memory and session modules are installed."
+            "Ensure memory and session modules are installed.",
         )
         raise typer.Exit(code=1)
     except Exception as e:
@@ -129,6 +131,7 @@ def show_migration_guide(
     Examples:
         empathy meta-workflow migrate
         empathy meta-workflow migrate ReleasePreparationCrew
+
     """
     # Migration mapping
     CREW_MIGRATION_MAP = {
@@ -212,7 +215,7 @@ def show_migration_guide(
 
         console.print("\n[bold]Quick Start:[/bold]")
         console.print(
-            "  1. List available templates: [cyan]empathy meta-workflow list-templates[/cyan]"
+            "  1. List available templates: [cyan]empathy meta-workflow list-templates[/cyan]",
         )
         console.print("  2. Run a workflow: [cyan]empathy meta-workflow run release-prep[/cyan]")
         console.print("  3. View results: [cyan]empathy meta-workflow list-runs[/cyan]\n")

@@ -164,7 +164,16 @@ _circuit_breakers: dict[str, CircuitBreaker] = {}
 
 
 def get_circuit_breaker(name: str) -> CircuitBreaker | None:
-    """Get a circuit breaker by name."""
+    """Get a registered circuit breaker by name.
+
+    Args:
+        name: The circuit breaker name used when it was created
+            (defaults to the decorated function's name).
+
+    Returns:
+        The ``CircuitBreaker`` instance if it exists, otherwise ``None``.
+
+    """
     return _circuit_breakers.get(name)
 
 

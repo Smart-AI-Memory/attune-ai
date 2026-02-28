@@ -73,7 +73,8 @@ from .redis_bootstrap import (
     ensure_redis,
     stop_redis,
 )
-from .short_term import AccessTier, AgentCredentials, RedisShortTermMemory
+from .short_term import RedisShortTermMemory
+from .types import AccessTier, AgentCredentials
 
 # Suppress noisy warnings in CLI mode
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
@@ -267,7 +268,7 @@ class MemoryControlPanel:
         if not _validate_classification(classification):
             raise ValueError(
                 f"Invalid classification '{classification}'. "
-                f"Must be PUBLIC, INTERNAL, or SENSITIVE."
+                f"Must be PUBLIC, INTERNAL, or SENSITIVE.",
             )
 
         # Validate limit range
@@ -364,7 +365,7 @@ class MemoryControlPanel:
         if not _validate_classification(classification):
             raise ValueError(
                 f"Invalid classification '{classification}'. "
-                f"Must be PUBLIC, INTERNAL, or SENSITIVE."
+                f"Must be PUBLIC, INTERNAL, or SENSITIVE.",
             )
 
         patterns = self.list_patterns(classification=classification)

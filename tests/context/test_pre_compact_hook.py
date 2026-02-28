@@ -36,7 +36,7 @@ class TestRunPreCompact:
                 {
                     "collaboration_state": collab,
                     "context_manager": context_manager,
-                }
+                },
             )
 
             assert result["state_saved"] is True
@@ -56,7 +56,7 @@ class TestRunPreCompact:
                     "collaboration_state": collab,
                     "context_manager": context_manager,
                     "session_id": "test-session-123",
-                }
+                },
             )
 
             assert result["state_saved"] is True
@@ -73,7 +73,7 @@ class TestRunPreCompact:
                     "collaboration_state": collab,
                     "context_manager": context_manager,
                     "current_phase": "implementation",
-                }
+                },
             )
 
             assert result["state_saved"] is True
@@ -96,7 +96,7 @@ class TestRunPreCompact:
                         "recommendation": "Complete unit tests",
                         "priority": "high",
                     },
-                }
+                },
             )
 
             assert result["state_saved"] is True
@@ -125,7 +125,7 @@ class TestRunPreCompact:
                 {
                     "collaboration_state": collab,
                     "context_manager": context_manager,
-                }
+                },
             )
 
             assert result["state_saved"] is True
@@ -150,7 +150,7 @@ class TestRunPreCompact:
                     run_pre_compact(
                         {
                             "collaboration_state": collab,
-                        }
+                        },
                     )
                 except Exception:
                     pass  # Expected due to mock

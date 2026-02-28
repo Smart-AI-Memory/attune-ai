@@ -31,7 +31,7 @@ from attune._workflow_helpers import (  # noqa: F401
 )
 
 # Expose logger for backward compatibility
-from attune.logging_config import get_logger as _get_logger  # noqa: E402
+from attune.logging_config import get_logger as _get_logger
 from attune.workflow_fixall import (  # noqa: F401
     cmd_fix_all,
     fix_all_workflow,

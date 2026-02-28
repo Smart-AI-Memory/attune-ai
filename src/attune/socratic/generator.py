@@ -47,6 +47,7 @@ class AgentGenerator:
         ...     "security_reviewer",
         ...     customizations={"languages": ["python"]}
         ... )
+
     """
 
     def __init__(self):
@@ -78,6 +79,7 @@ class AgentGenerator:
 
         Raises:
             ValueError: If template not found
+
         """
         template = self.templates.get(template_id)
         if not template:
@@ -110,6 +112,7 @@ class AgentGenerator:
 
         Returns:
             List of AgentBlueprints for a complete team
+
         """
         agents: list[AgentBlueprint] = []
         quality_focus = requirements.get("quality_focus", [])
@@ -177,6 +180,7 @@ class AgentGenerator:
 
         Returns:
             GeneratedWorkflow ready for execution
+
         """
         # Validate blueprint
         is_valid, errors = blueprint.validate()
@@ -200,7 +204,7 @@ class AgentGenerator:
                     "parallel": stage.parallel,
                     "depends_on": stage.depends_on,
                     "timeout": stage.timeout,
-                }
+                },
             )
 
         return GeneratedWorkflow(
@@ -243,6 +247,7 @@ class AgentGenerator:
 
         Returns:
             Complete WorkflowBlueprint
+
         """
         # Group agents by role for staging
         analyzers = [
@@ -265,7 +270,7 @@ class AgentGenerator:
                     agent_ids=[a.spec.id for a in analyzers],
                     parallel=True,
                     output_aggregation="merge",
-                )
+                ),
             )
 
         # Stage 2: Generation (sequential, depends on analysis)
@@ -278,7 +283,7 @@ class AgentGenerator:
                     agent_ids=[a.spec.id for a in generators],
                     parallel=False,
                     depends_on=["analysis"] if analyzers else [],
-                )
+                ),
             )
 
         # Stage 3: Synthesis (always last)
@@ -297,7 +302,7 @@ class AgentGenerator:
                     agent_ids=[a.spec.id for a in reporters],
                     parallel=False,
                     depends_on=depends,
-                )
+                ),
             )
 
         return WorkflowBlueprint(

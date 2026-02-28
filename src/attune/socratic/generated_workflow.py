@@ -50,6 +50,7 @@ class GeneratedWorkflow:
 
         Returns:
             Workflow results
+
         """
         # This is a simplified execution - real implementation would
         # integrate with BaseWorkflow

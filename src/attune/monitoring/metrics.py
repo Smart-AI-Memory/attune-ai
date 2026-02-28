@@ -39,6 +39,7 @@ def collect_metrics(telemetry_dir: Path) -> dict[str, float]:
 
     Returns:
         Dictionary of metric name to current value
+
     """
     usage_file = telemetry_dir / "usage.jsonl"
 

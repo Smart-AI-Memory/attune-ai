@@ -24,6 +24,7 @@ def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
 
     Raises:
         ValueError: If path is invalid or unsafe
+
     """
     if not path or not isinstance(path, str):
         raise ValueError("path must be a non-empty string")

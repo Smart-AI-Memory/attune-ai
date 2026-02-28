@@ -29,6 +29,7 @@ def _parse_response(text: str) -> dict[str, Any]:
 
     Returns:
         Parsed dict with findings
+
     """
     if not text or not text.strip():
         return {"parse_error": "empty response"}
@@ -73,7 +74,9 @@ def _parse_response(text: str) -> dict[str, Any]:
 
     # Try to find issue count patterns
     issues_match = re.search(
-        r"(\d+)\s+(?:critical|high)\s+(?:issue|finding|vuln)", text, re.IGNORECASE
+        r"(\d+)\s+(?:critical|high)\s+(?:issue|finding|vuln)",
+        text,
+        re.IGNORECASE,
     )
     if issues_match:
         result["critical_issues"] = int(issues_match.group(1))

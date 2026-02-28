@@ -47,6 +47,7 @@ def create_form_response(
 
     Returns:
         APIResponse with form data or generation prompt
+
     """
     session_schema = ReactSessionSchema.from_session(session)
 
@@ -60,7 +61,7 @@ def create_form_response(
             },
             next_action="continue",
         )
-    elif builder.is_ready_to_generate(session):
+    if builder.is_ready_to_generate(session):
         return APIResponse(
             success=True,
             data={
@@ -69,11 +70,10 @@ def create_form_response(
             },
             next_action="generate",
         )
-    else:
-        return APIResponse(
-            success=False,
-            error="Unable to determine next step",
-        )
+    return APIResponse(
+        success=False,
+        error="Unable to determine next step",
+    )
 
 
 def create_blueprint_response(
@@ -88,6 +88,7 @@ def create_blueprint_response(
 
     Returns:
         APIResponse with blueprint data
+
     """
     blueprint_schema = ReactBlueprintSchema.from_blueprint(blueprint)
     session_schema = ReactSessionSchema.from_session(session)

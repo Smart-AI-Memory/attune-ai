@@ -134,7 +134,10 @@ class SecurityFilterMixin:
         return False
 
     def _is_safe_sql_parameterization(
-        self, line_content: str, match_text: str, file_content: str
+        self,
+        line_content: str,
+        match_text: str,
+        file_content: str,
     ) -> bool:
         """Check if SQL query uses safe parameterization despite f-string usage.
 
@@ -152,6 +155,7 @@ class SecurityFilterMixin:
 
         Returns:
             True if this is safe parameterized SQL, False otherwise
+
         """
         # Get the position of the match in the full file content
         match_pos = file_content.find(match_text)
@@ -219,6 +223,7 @@ class SecurityFilterMixin:
 
         Returns:
             True if random usage is safe/documented, False if potentially insecure
+
         """
         # Check if file is a test file
         is_test = any(pattern in file_path.lower() for pattern in ["/test", "test_", "conftest"])

@@ -12,7 +12,7 @@ import structlog
 
 if TYPE_CHECKING:
     from ..long_term import Classification
-    from ..short_term import AgentCredentials, RedisShortTermMemory
+    from ..types import AgentCredentials
 
 logger = structlog.get_logger(__name__)
 
@@ -21,18 +21,16 @@ class PatternPromotionMixin:
     """Mixin providing pattern promotion capabilities for UnifiedMemory."""
 
     # Type hints for attributes that will be provided by UnifiedMemory
-    _short_term: "RedisShortTermMemory | None"
+    _short_term: Any  # MemoryBackend | None
     _long_term: Any  # SecureMemDocsIntegration | None
 
     # Needs access to methods from other mixins
     @property
     def credentials(self) -> "AgentCredentials":
         """Get credentials - provided by ShortTermOperationsMixin."""
-        ...
 
     def get_staged_patterns(self) -> list[dict]:
         """Get staged patterns - provided by ShortTermOperationsMixin."""
-        ...
 
     def persist_pattern(
         self,
@@ -43,7 +41,6 @@ class PatternPromotionMixin:
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         """Persist pattern - provided by LongTermOperationsMixin."""
-        ...
 
     # =========================================================================
     # PATTERN PROMOTION (SHORT-TERM → LONG-TERM)

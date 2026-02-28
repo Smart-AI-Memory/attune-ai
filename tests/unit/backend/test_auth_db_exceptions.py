@@ -39,13 +39,12 @@ class TestConnectionExceptionHandling:
 
     def test_integrity_error_logs_and_rollsback(self, temp_db, caplog):
         """IntegrityError should log, rollback, and re-raise."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(sqlite3.IntegrityError):
-                with temp_db._get_connection() as conn:
-                    # Create duplicate primary keys to trigger IntegrityError
-                    conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-                    conn.execute("INSERT INTO test VALUES (1)")
-                    conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
+        with caplog.at_level(logging.ERROR), pytest.raises(sqlite3.IntegrityError):
+            with temp_db._get_connection() as conn:
+                # Create duplicate primary keys to trigger IntegrityError
+                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+                conn.execute("INSERT INTO test VALUES (1)")
+                conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
 
         # Should log error
         assert any("integrity error" in record.message.lower() for record in caplog.records)
@@ -57,21 +56,19 @@ class TestConnectionExceptionHandling:
         db_path.touch()
         db_path.chmod(0o444)  # Read-only
 
-        with caplog.at_level(logging.CRITICAL):
-            with pytest.raises(sqlite3.OperationalError):
-                db = AuthDatabase(str(db_path))
-                db.create_user(email="test@example.com", password="password", name="Test User")
+        with caplog.at_level(logging.CRITICAL), pytest.raises(sqlite3.OperationalError):
+            db = AuthDatabase(str(db_path))
+            db.create_user(email="test@example.com", password="password", name="Test User")
 
         # Should log critical error
         assert any("operational error" in record.message.lower() for record in caplog.records)
 
     def test_database_error_logs_and_raises(self, temp_db, caplog):
         """SQL syntax errors should log and re-raise as OperationalError."""
-        with caplog.at_level(logging.CRITICAL):
-            with pytest.raises(sqlite3.OperationalError):
-                with temp_db._get_connection() as conn:
-                    # Trigger an operational error (SQL syntax error)
-                    conn.execute("INVALID SQL STATEMENT")
+        with caplog.at_level(logging.CRITICAL), pytest.raises(sqlite3.OperationalError):
+            with temp_db._get_connection() as conn:
+                # Trigger an operational error (SQL syntax error)
+                conn.execute("INVALID SQL STATEMENT")
 
         # Should log error (as operational error for SQL syntax issues)
         assert any(
@@ -91,28 +88,25 @@ class TestConnectionExceptionHandling:
 
     def test_unexpected_error_logs_with_traceback(self, temp_db, caplog):
         """Unexpected errors should log with full exception traceback."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(Exception):
-                with temp_db._get_connection():
-                    # Trigger unexpected error
-                    raise RuntimeError("Unexpected database operation error")
+        with caplog.at_level(logging.ERROR), pytest.raises(Exception):
+            with temp_db._get_connection():
+                # Trigger unexpected error
+                raise RuntimeError("Unexpected database operation error")
 
         # Should log exception with traceback
         assert any("unexpected error" in record.message.lower() for record in caplog.records)
 
     def test_rollback_occurs_on_exception(self, temp_db):
         """Database should rollback on exception, not commit partial changes."""
-
-        with pytest.raises(sqlite3.IntegrityError):
-            with temp_db._get_connection() as conn:
-                conn.execute(
-                    "INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)",
-                    ("test@example.com", "hash", "Test User"),
-                )
-                # Trigger error before commit
-                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-                conn.execute("INSERT INTO test VALUES (1)")
-                conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
+        with pytest.raises(sqlite3.IntegrityError), temp_db._get_connection() as conn:
+            conn.execute(
+                "INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)",
+                ("test@example.com", "hash", "Test User"),
+            )
+            # Trigger error before commit
+            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            conn.execute("INSERT INTO test VALUES (1)")
+            conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
 
         # Changes should be rolled back - user should not exist
         assert not temp_db.user_exists("test@example.com")
@@ -214,7 +208,9 @@ class TestSecurityAuditTrail:
         """Successful login attempt should log at INFO level."""
         with caplog.at_level(logging.INFO):
             temp_db.record_login_attempt(
-                email="test@example.com", success=True, ip_address="192.168.1.100"
+                email="test@example.com",
+                success=True,
+                ip_address="192.168.1.100",
             )
 
         # Should log at INFO level for successful login
@@ -229,7 +225,9 @@ class TestSecurityAuditTrail:
         """Failed login attempt should log at WARNING level."""
         with caplog.at_level(logging.WARNING):
             temp_db.record_login_attempt(
-                email="attacker@example.com", success=False, ip_address="192.168.1.200"
+                email="attacker@example.com",
+                success=False,
+                ip_address="192.168.1.200",
             )
 
         # Should log at WARNING level for failed login (security event)
@@ -245,7 +243,9 @@ class TestSecurityAuditTrail:
         with caplog.at_level(logging.INFO):
             # Create user
             temp_db.create_user(
-                email="audit@example.com", password="password123", name="Audit User"
+                email="audit@example.com",
+                password="password123",
+                name="Audit User",
             )
 
             # Successful login
@@ -291,13 +291,12 @@ class TestAuthenticationOperations:
 
     def test_duplicate_email_raises_integrity_error(self, populated_db, caplog):
         """Duplicate email should raise IntegrityError and log it."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(sqlite3.IntegrityError):
-                populated_db.create_user(
-                    email="test@example.com",  # Already exists
-                    password="another_password",
-                    name="Duplicate User",
-                )
+        with caplog.at_level(logging.ERROR), pytest.raises(sqlite3.IntegrityError):
+            populated_db.create_user(
+                email="test@example.com",  # Already exists
+                password="another_password",
+                name="Duplicate User",
+            )
 
         # Should log integrity error
         assert any("integrity error" in record.message.lower() for record in caplog.records)
@@ -331,16 +330,17 @@ class TestErrorPropagation:
 
     def test_database_error_reaches_caller(self, temp_db):
         """Database errors should propagate to caller, not be silently swallowed."""
-        with pytest.raises(sqlite3.DatabaseError):
-            with temp_db._get_connection() as conn:
-                conn.execute("COMPLETELY INVALID SQL STATEMENT")
+        with pytest.raises(sqlite3.DatabaseError), temp_db._get_connection() as conn:
+            conn.execute("COMPLETELY INVALID SQL STATEMENT")
 
     def test_integrity_error_reaches_caller(self, populated_db):
         """Integrity errors should propagate to caller."""
         with pytest.raises(sqlite3.IntegrityError):
             # Try to create user with duplicate email
             populated_db.create_user(
-                email="test@example.com", password="password", name="Duplicate"
+                email="test@example.com",
+                password="password",
+                name="Duplicate",
             )
 
     def test_file_error_reaches_caller(self, caplog):
@@ -356,13 +356,16 @@ class TestPasswordSecurity:
     def test_password_not_stored_in_plain_text(self, temp_db):
         """Password should be hashed, not stored in plain text."""
         temp_db.create_user(
-            email="secure@example.com", password="my_secret_password", name="Secure User"
+            email="secure@example.com",
+            password="my_secret_password",
+            name="Secure User",
         )
 
         # Verify password is hashed in database
         with temp_db._get_connection() as conn:
             cursor = conn.execute(
-                "SELECT password_hash FROM users WHERE email = ?", ("secure@example.com",)
+                "SELECT password_hash FROM users WHERE email = ?",
+                ("secure@example.com",),
             )
             row = cursor.fetchone()
             password_hash = row["password_hash"]

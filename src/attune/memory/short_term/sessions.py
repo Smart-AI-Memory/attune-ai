@@ -20,6 +20,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -59,6 +60,7 @@ class SessionManager:
         >>> sessions.create_session("session_1", creds)
         True
         >>> info = sessions.get_session("session_1", creds)
+
     """
 
     PREFIX_SESSION = "empathy:session:"
@@ -68,6 +70,7 @@ class SessionManager:
 
         Args:
             base: BaseOperations instance for storage access
+
         """
         self._base = base
 
@@ -98,6 +101,7 @@ class SessionManager:
             ...     metadata={"topic": "code review"},
             ... )
             True
+
         """
         # Pattern 1: String ID validation
         if not session_id or not session_id.strip():
@@ -147,6 +151,7 @@ class SessionManager:
         Example:
             >>> sessions.join_session("session_1", agent2_creds)
             True
+
         """
         # Pattern 1: String ID validation
         if not session_id or not session_id.strip():
@@ -187,6 +192,7 @@ class SessionManager:
             >>> info = sessions.get_session("session_1", creds)
             >>> if info:
             ...     print(f"Participants: {info['participants']}")
+
         """
         key = f"{self.PREFIX_SESSION}{session_id}"
         raw = self._base._get(key)
@@ -210,6 +216,7 @@ class SessionManager:
 
         Returns:
             True if left successfully
+
         """
         if not session_id or not session_id.strip():
             raise ValueError(f"session_id cannot be empty. Got: {session_id!r}")
@@ -237,6 +244,7 @@ class SessionManager:
 
         Returns:
             List of session data dicts
+
         """
         pattern = f"{self.PREFIX_SESSION}*"
         keys = self._base._keys(pattern)

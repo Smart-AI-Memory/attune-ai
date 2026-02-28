@@ -10,8 +10,8 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-14800%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-82%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-15125%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -23,23 +23,51 @@ pip install attune-ai[developer]
 
 ---
 
-## What's New in v3.5.0
+## What's New in v3.6.5
 
-- **Project-Aware Guidance** — After any workflow
-  completes, Attune analyzes your project context and
-  surfaces 2-3 prioritized next-step suggestions
-  grounded in real findings — not generic menus. Three
-  signal sources: workflow transitions, project index
-  health, and workflow history patterns.
-- **Suggestion Persistence** — Suggestions survive across
-  sessions with a 24-hour dismiss window to avoid
-  repetition. Stored in `.attune/suggestion_state.json`.
-- **Code Simplifier workflow** (v3.4.0) — `simplify-code`
-  workflow that reduces unnecessary complexity in
-  Claude-generated code.
-- **Verification feedback loop** (v3.3.0) — Errors fed
-  back to the LLM for self-correction before
-  re-verifying.
+- **Dashboard removed** — `attune.dashboard` Python module and
+  `attune dashboard start` CLI command deleted. Was deprecated in
+  v3.6.3. Use `FeedbackLoop` and `UsageTracker` from
+  `attune.telemetry` directly.
+
+## What's New in v3.6.4
+
+- **EscalationChain** — New retry-with-feedback LLM wrapper
+  (`attune.workflows.escalation`). Runs a prompt through up to N
+  tiers, feeding structured failure feedback back into each retry.
+  Includes `StructureValidator`, `ConfidenceValidator`,
+  `SemanticEvaluator`, and an `escalate()` convenience function.
+
+
+## What's New in v3.6.2
+
+- **Version sync** — Aligned `pyproject.toml` and
+  `src/attune/__init__.py` to `3.6.2`.
+
+## What's New in v3.6.1
+
+- **Lessons Learned Stop hook** — `lessons_reminder.py`
+  automatically prompts Claude to record new patterns and
+  fixes in `.claude/CLAUDE.md` at session end. Fires once
+  per session via a TTL sentinel; no looping.
+
+## What's New in v3.6.0
+
+- **attune-redis plugin** — Redis memory is now a
+  standalone package (`pip install attune-redis`),
+  fully decoupled from core. Ships with 5 MCP tools and
+  a v4.0.0 migration guide.
+- **FeedbackLoop** — Quality-based model tier recommendations
+  via pluggable `MemoryBackend` with `_InMemoryStore` fallback.
+- **FeedbackLoop in-memory fallback** — Works out of the
+  box without Redis via a pluggable `MemoryBackend`
+  protocol with `_InMemoryStore` fallback. Enables
+  quality-based model tier recommendations and
+  underperforming stage detection.
+- **Project-Aware Guidance** (v3.5.0) — Surfaces 2-3
+  prioritized next-step suggestions after every workflow,
+  grounded in real findings. Persists across sessions
+  with a 24-hour dismiss window.
 
 
 ---
@@ -260,25 +288,6 @@ echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.m
 
 ---
 
-## Agent Coordination Dashboard
-
-Real-time monitoring with 6 coordination patterns:
-
-- Agent heartbeats and status tracking
-- Inter-agent coordination signals
-- Event streaming across agent workflows
-- Approval gates for human-in-the-loop
-- Quality feedback and performance metrics
-- Demo mode with test data generation
-
-```bash
-# Launch dashboard (requires Redis 7.x or 8.x)
-python examples/dashboard_demo.py
-# Open http://localhost:8000
-```
-
-**Redis 8.4 Support:** Full compatibility with RediSearch, RedisJSON, RedisTimeSeries, RedisBloom, and VectorSet modules.
-
 ---
 
 ## Authentication Strategy
@@ -309,7 +318,7 @@ python -m attune.models.auth_cli recommend src/module.py
 # Base install (CLI + workflows)
 pip install attune-ai
 
-# Full developer experience (agents, memory, dashboard, caching)
+# Full developer experience (agents, memory, semantic caching)
 pip install attune-ai[developer]
 
 # Enterprise (auth, rate limiting, telemetry)
@@ -325,7 +334,7 @@ cd attune-ai && pip install -e .[dev]
 | Option         | What You Get                                    |
 | -------------- | ----------------------------------------------- |
 | Base           | CLI, workflows, Anthropic SDK                   |
-| `[developer]`  | + Agents, memory, dashboard, semantic caching   |
+| `[developer]`  | + Agents, memory, semantic caching              |
 | `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry        |
 
 ---

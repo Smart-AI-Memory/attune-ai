@@ -145,10 +145,10 @@ class TestSecurityAuditWorkflowInit:
                             "decision": "false_positive",
                             "reason": "Test pattern",
                             "decided_by": "test_user",
-                        }
-                    ]
-                }
-            )
+                        },
+                    ],
+                },
+            ),
         )
 
         workflow = SecurityAuditWorkflow(patterns_dir=str(tmp_path / "patterns"))
@@ -189,7 +189,8 @@ class TestTriageStage:
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
         result, input_tokens, output_tokens = await security_audit_workflow._triage(
-            input_data, ModelTier.CHEAP
+            input_data,
+            ModelTier.CHEAP,
         )
 
         assert result["files_scanned"] >= 1
@@ -270,7 +271,8 @@ class TestTriageStage:
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
         result, input_tokens, output_tokens = await security_audit_workflow._triage(
-            input_data, ModelTier.CHEAP
+            input_data,
+            ModelTier.CHEAP,
         )
 
         assert isinstance(input_tokens, int)
@@ -295,7 +297,7 @@ class TestAnalyzeStage:
             "findings": [
                 {"type": "sql_injection", "file": "db.py", "line": 10, "severity": "critical"},
                 {"type": "xss", "file": "web.py", "line": 20, "severity": "high"},
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._analyze(input_data, ModelTier.CAPABLE)
@@ -320,10 +322,10 @@ class TestAnalyzeStage:
                             "decision": "false_positive",
                             "reason": "Parameter is validated",
                             "decided_by": "security_team",
-                        }
-                    ]
-                }
-            )
+                        },
+                    ],
+                },
+            ),
         )
 
         workflow = SecurityAuditWorkflow(patterns_dir=str(tmp_path / "patterns"))
@@ -331,7 +333,7 @@ class TestAnalyzeStage:
         input_data = {
             "findings": [
                 {"type": "sql_injection", "file": "db.py", "line": 10, "severity": "critical"},
-            ]
+            ],
         }
 
         result, _, _ = await workflow._analyze(input_data, ModelTier.CAPABLE)
@@ -346,7 +348,7 @@ class TestAnalyzeStage:
         input_data = {
             "findings": [
                 {"type": "sql_injection", "file": "db.py", "line": 10, "severity": "critical"},
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._analyze(input_data, ModelTier.CAPABLE)
@@ -369,10 +371,10 @@ class TestAnalyzeStage:
                             "finding_hash": "insecure_random",
                             "decision": "accepted",
                             "reason": "Used only for non-security purposes",
-                        }
-                    ]
-                }
-            )
+                        },
+                    ],
+                },
+            ),
         )
 
         workflow = SecurityAuditWorkflow(patterns_dir=str(tmp_path / "patterns"))
@@ -380,7 +382,7 @@ class TestAnalyzeStage:
         input_data = {
             "findings": [
                 {"type": "insecure_random", "file": "utils.py", "line": 5, "severity": "medium"},
-            ]
+            ],
         }
 
         result, _, _ = await workflow._analyze(input_data, ModelTier.CAPABLE)
@@ -401,10 +403,10 @@ class TestAnalyzeStage:
                             "finding_hash": "path_traversal",
                             "decision": "deferred",
                             "reason": "Will fix in Q2",
-                        }
-                    ]
-                }
-            )
+                        },
+                    ],
+                },
+            ),
         )
 
         workflow = SecurityAuditWorkflow(patterns_dir=str(tmp_path / "patterns"))
@@ -412,7 +414,7 @@ class TestAnalyzeStage:
         input_data = {
             "findings": [
                 {"type": "path_traversal", "file": "files.py", "line": 15, "severity": "high"},
-            ]
+            ],
         }
 
         result, _, _ = await workflow._analyze(input_data, ModelTier.CAPABLE)
@@ -438,7 +440,7 @@ class TestAssessStage:
                 {"type": "sql_injection", "severity": "critical", "owasp": "A03:2021"},
                 {"type": "xss", "severity": "high", "owasp": "A03:2021"},
                 {"type": "insecure_random", "severity": "medium", "owasp": "A02:2021"},
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -458,7 +460,7 @@ class TestAssessStage:
                 {"type": "xss2", "severity": "high", "owasp": "A03:2021"},
                 {"type": "insecure_random", "severity": "medium", "owasp": "A02:2021"},
                 {"type": "info", "severity": "low", "owasp": "Other"},
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -475,7 +477,7 @@ class TestAssessStage:
         input_data = {
             "needs_review": [
                 {"type": "sql_injection", "severity": "critical", "owasp": "A03:2021"},
-            ]
+            ],
         }
 
         await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -489,7 +491,7 @@ class TestAssessStage:
             "needs_review": [
                 {"type": "insecure_random", "severity": "medium", "owasp": "A02:2021"},
                 {"type": "info", "severity": "low", "owasp": "Other"},
-            ]
+            ],
         }
 
         await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -508,7 +510,7 @@ class TestAssessStage:
                     "severity": "critical",
                     "owasp": "A02:2021 Crypto",
                 },
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -526,7 +528,7 @@ class TestAssessStage:
                 {"type": "a", "severity": "critical", "owasp": "A"},
                 {"type": "b", "severity": "critical", "owasp": "A"},
                 {"type": "c", "severity": "critical", "owasp": "A"},
-            ]
+            ],
         }  # 75 points
         result, _, _ = await security_audit_workflow._assess(critical_input, ModelTier.CAPABLE)
         assert result["assessment"]["risk_level"] == "critical"
@@ -536,7 +538,7 @@ class TestAssessStage:
             "needs_review": [
                 {"type": "a", "severity": "critical", "owasp": "A"},
                 {"type": "b", "severity": "critical", "owasp": "A"},
-            ]
+            ],
         }  # 50 points
         result, _, _ = await security_audit_workflow._assess(high_input, ModelTier.CAPABLE)
         assert result["assessment"]["risk_level"] == "high"
@@ -545,7 +547,7 @@ class TestAssessStage:
         low_input = {
             "needs_review": [
                 {"type": "a", "severity": "low", "owasp": "A"},
-            ]
+            ],
         }  # 1 point
         result, _, _ = await security_audit_workflow._assess(low_input, ModelTier.CAPABLE)
         assert result["assessment"]["risk_level"] == "low"
@@ -556,7 +558,7 @@ class TestAssessStage:
         input_data = {
             "needs_review": [
                 {"type": "sql_injection", "severity": "critical", "owasp": "A03:2021"},
-            ]
+            ],
         }
 
         result, _, _ = await security_audit_workflow._assess(input_data, ModelTier.CAPABLE)
@@ -637,7 +639,9 @@ class TestRunStageRouter:
         input_data = {"path": str(tmp_path)}
 
         result, _, _ = await security_audit_workflow.run_stage(
-            "triage", ModelTier.CHEAP, input_data
+            "triage",
+            ModelTier.CHEAP,
+            input_data,
         )
 
         assert "findings" in result
@@ -649,7 +653,9 @@ class TestRunStageRouter:
         input_data = {"findings": []}
 
         result, _, _ = await security_audit_workflow.run_stage(
-            "analyze", ModelTier.CAPABLE, input_data
+            "analyze",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "needs_review" in result
@@ -661,7 +667,9 @@ class TestRunStageRouter:
         input_data = {"needs_review": []}
 
         result, _, _ = await security_audit_workflow.run_stage(
-            "assess", ModelTier.CAPABLE, input_data
+            "assess",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "assessment" in result
@@ -698,7 +706,7 @@ class TestFormatSecurityReport:
                 "risk_level": "medium",
                 "risk_score": 30,
                 "severity_breakdown": {"critical": 1, "high": 2, "medium": 3, "low": 4},
-            }
+            },
         }
         report = format_security_report(output)
 
@@ -721,7 +729,7 @@ class TestFormatSecurityReport:
                     "severity": "critical",
                     "owasp": "A03:2021 Injection",
                     "analysis": "SQL injection risk",
-                }
+                },
             ],
         }
         report = format_security_report(output)
@@ -740,7 +748,7 @@ class TestFormatSecurityReport:
                     "file": "/path/utils.py",
                     "line": 5,
                     "decision_reason": "Non-security use",
-                }
+                },
             ],
         }
         report = format_security_report(output)
@@ -837,7 +845,7 @@ class TestCrewIntegration:
                     "remediation": "Use prepared statements",
                     "cwe_id": "CWE-89",
                     "cvss_score": 9.8,
-                }
+                },
             ],
             "agents_used": ["Scanner", "Analyzer", "Remediator"],
         }
@@ -888,17 +896,18 @@ class TestRemediateStage:
                             "file": "db.py",
                             "line": 10,
                             "owasp": "A03:2021",
-                        }
+                        },
                     ],
                     "high_findings": [
-                        {"type": "xss", "file": "web.py", "line": 20, "owasp": "A03:2021"}
+                        {"type": "xss", "file": "web.py", "line": 20, "owasp": "A03:2021"},
                     ],
                 },
                 "target": "./src",
             }
 
             result, input_tokens, output_tokens = await security_audit_workflow._remediate(
-                input_data, ModelTier.PREMIUM
+                input_data,
+                ModelTier.PREMIUM,
             )
 
             assert "remediation_plan" in result
@@ -919,11 +928,12 @@ class TestRemediateStage:
                     "severity_breakdown": {},
                     "critical_findings": [],
                     "high_findings": [],
-                }
+                },
             }
 
             result, input_tokens, output_tokens = await security_audit_workflow._remediate(
-                input_data, ModelTier.PREMIUM
+                input_data,
+                ModelTier.PREMIUM,
             )
 
             assert input_tokens == 150
@@ -938,7 +948,9 @@ class TestRemediateStage:
         security_audit_workflow._api_key = "test-key"
 
         with patch.object(
-            security_audit_workflow, "run_step_with_executor", new_callable=AsyncMock
+            security_audit_workflow,
+            "run_step_with_executor",
+            new_callable=AsyncMock,
         ) as mock_run:
             mock_run.return_value = ("Executor plan", 100, 200, 0.05)
 
@@ -949,7 +961,7 @@ class TestRemediateStage:
                     "severity_breakdown": {},
                     "critical_findings": [],
                     "high_findings": [],
-                }
+                },
             }
 
             result, _, _ = await security_audit_workflow._remediate(input_data, ModelTier.PREMIUM)
@@ -959,19 +971,24 @@ class TestRemediateStage:
 
     @pytest.mark.asyncio
     async def test_remediate_falls_back_to_call_llm_on_executor_failure(
-        self, security_audit_workflow
+        self,
+        security_audit_workflow,
     ):
         """Test remediate falls back to _call_llm when executor fails."""
         security_audit_workflow._executor = MagicMock()
         security_audit_workflow._api_key = "test-key"
 
         with patch.object(
-            security_audit_workflow, "run_step_with_executor", new_callable=AsyncMock
+            security_audit_workflow,
+            "run_step_with_executor",
+            new_callable=AsyncMock,
         ) as mock_run:
             mock_run.side_effect = Exception("Executor failed")
 
             with patch.object(
-                security_audit_workflow, "_call_llm", new_callable=AsyncMock
+                security_audit_workflow,
+                "_call_llm",
+                new_callable=AsyncMock,
             ) as mock_llm:
                 mock_llm.return_value = ("Fallback plan", 50, 100)
 
@@ -982,11 +999,12 @@ class TestRemediateStage:
                         "severity_breakdown": {},
                         "critical_findings": [],
                         "high_findings": [],
-                    }
+                    },
                 }
 
                 result, _, _ = await security_audit_workflow._remediate(
-                    input_data, ModelTier.PREMIUM
+                    input_data,
+                    ModelTier.PREMIUM,
                 )
 
                 mock_llm.assert_called_once()
@@ -1005,7 +1023,7 @@ class TestRemediateStage:
                     "severity_breakdown": {"low": 2},
                     "critical_findings": [],
                     "high_findings": [],
-                }
+                },
             }
 
             result, _, _ = await security_audit_workflow._remediate(input_data, ModelTier.PREMIUM)
@@ -1025,11 +1043,13 @@ class TestRemediateStage:
                     "severity_breakdown": {},
                     "critical_findings": [],
                     "high_findings": [],
-                }
+                },
             }
 
             result, _, _ = await security_audit_workflow.run_stage(
-                "remediate", ModelTier.PREMIUM, input_data
+                "remediate",
+                ModelTier.PREMIUM,
+                input_data,
             )
 
             assert "remediation_plan" in result
@@ -1049,10 +1069,14 @@ class TestXMLPromptHandling:
         """Test remediate uses XML-enhanced prompts when enabled."""
         with patch.object(security_audit_workflow, "_is_xml_enabled", return_value=True):
             with patch.object(
-                security_audit_workflow, "_render_xml_prompt", return_value="<xml>prompt</xml>"
+                security_audit_workflow,
+                "_render_xml_prompt",
+                return_value="<xml>prompt</xml>",
             ) as mock_render:
                 with patch.object(
-                    security_audit_workflow, "_call_llm", new_callable=AsyncMock
+                    security_audit_workflow,
+                    "_call_llm",
+                    new_callable=AsyncMock,
                 ) as mock_llm:
                     mock_llm.return_value = ("XML response", 100, 200)
 
@@ -1063,7 +1087,7 @@ class TestXMLPromptHandling:
                             "severity_breakdown": {},
                             "critical_findings": [],
                             "high_findings": [],
-                        }
+                        },
                     }
 
                     await security_audit_workflow._remediate(input_data, ModelTier.PREMIUM)
@@ -1075,7 +1099,9 @@ class TestXMLPromptHandling:
         """Test remediate uses legacy prompts when XML is disabled."""
         with patch.object(security_audit_workflow, "_is_xml_enabled", return_value=False):
             with patch.object(
-                security_audit_workflow, "_call_llm", new_callable=AsyncMock
+                security_audit_workflow,
+                "_call_llm",
+                new_callable=AsyncMock,
             ) as mock_llm:
                 mock_llm.return_value = ("Legacy response", 100, 200)
 
@@ -1086,7 +1112,7 @@ class TestXMLPromptHandling:
                         "severity_breakdown": {},
                         "critical_findings": [],
                         "high_findings": [],
-                    }
+                    },
                 }
 
                 await security_audit_workflow._remediate(input_data, ModelTier.PREMIUM)

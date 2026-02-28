@@ -40,6 +40,7 @@ class RealPerformanceProfiler:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -54,6 +55,7 @@ class RealPerformanceProfiler:
 
         Raises:
             RuntimeError: If analysis fails
+
         """
         import ast
 
@@ -97,7 +99,7 @@ class RealPerformanceProfiler:
                                 "line": node.lineno,
                                 "function": func_name,
                                 "complexity": complexity,
-                            }
+                            },
                         )
 
                     # Function length
@@ -109,7 +111,7 @@ class RealPerformanceProfiler:
                                 "line": node.lineno,
                                 "function": func_name,
                                 "lines": func_lines,
-                            }
+                            },
                         )
 
         # Scoring: start at 10.0
@@ -122,7 +124,7 @@ class RealPerformanceProfiler:
         logger.info(
             f"Performance analysis complete: score={score:.1f}, "
             f"files={total_files}, functions={functions_analyzed}, "
-            f"high_complexity={len(high_complexity)}, large_functions={len(large_functions)}"
+            f"high_complexity={len(high_complexity)}, large_functions={len(large_functions)}",
         )
 
         return PerformanceReport(
@@ -143,18 +145,18 @@ class RealPerformanceProfiler:
 
         Returns:
             Approximate cyclomatic complexity (1 + number of branches)
+
         """
         import ast
 
         complexity = 1  # Base complexity
         for child in ast.walk(node):
-            if isinstance(child, ast.If | ast.IfExp):
-                complexity += 1
-            elif isinstance(child, ast.For | ast.AsyncFor):
-                complexity += 1
-            elif isinstance(child, ast.While):
-                complexity += 1
-            elif isinstance(child, ast.ExceptHandler):
+            if (
+                isinstance(child, ast.If | ast.IfExp)
+                or isinstance(child, ast.For | ast.AsyncFor)
+                or isinstance(child, ast.While)
+                or isinstance(child, ast.ExceptHandler)
+            ):
                 complexity += 1
             elif isinstance(child, ast.BoolOp):
                 # Each `and`/`or` adds a branch
@@ -170,6 +172,7 @@ class RealPerformanceProfiler:
 
         Returns:
             Number of lines in the function body
+
         """
         if not node.body:
             return 0

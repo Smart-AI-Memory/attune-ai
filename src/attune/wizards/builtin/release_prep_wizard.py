@@ -25,6 +25,7 @@ def _wants_changelog(session: WizardSession) -> bool:
 
     Returns:
         True if user selected changelog generation.
+
     """
     answer = session.get("generate_changelog", "Yes")
     return str(answer).lower() in ("yes", "true")
@@ -129,6 +130,7 @@ class ReleasePrepWizard(BaseWizard):
 
         Returns:
             PromptContext for the LLM call.
+
         """
         assert self._session is not None
 
@@ -198,6 +200,7 @@ class ReleasePrepWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response.
+
         """
         assert self._session is not None
         if step.id == "readiness_check":

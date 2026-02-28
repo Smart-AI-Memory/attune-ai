@@ -460,6 +460,7 @@ class TelemetryStore:
 
         Args:
             record: FileTestRecord to log
+
         """
         with open(self.file_tests_file, "a") as f:
             f.write(json.dumps(record.to_dict()) + "\n")
@@ -481,6 +482,7 @@ class TelemetryStore:
 
         Returns:
             List of FileTestRecord
+
         """
         records: list[FileTestRecord] = []
         if not self.file_tests_file.exists():
@@ -523,6 +525,7 @@ class TelemetryStore:
 
         Returns:
             Most recent FileTestRecord or None if not found
+
         """
         records = self.get_file_tests(file_path=file_path, limit=10000)
         if not records:
@@ -544,6 +547,7 @@ class TelemetryStore:
 
         Returns:
             List of FileTestRecord for files needing attention
+
         """
         all_records = self.get_file_tests(limit=100000)
 
@@ -551,12 +555,8 @@ class TelemetryStore:
         latest_by_file: dict[str, FileTestRecord] = {}
         for record in all_records:
             existing = latest_by_file.get(record.file_path)
-            if existing is None:
+            if existing is None or record.timestamp > existing.timestamp:
                 latest_by_file[record.file_path] = record
-            else:
-                # Keep the more recent one
-                if record.timestamp > existing.timestamp:
-                    latest_by_file[record.file_path] = record
 
         # Filter based on criteria
         results = []

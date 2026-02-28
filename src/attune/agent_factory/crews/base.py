@@ -51,6 +51,7 @@ class CrewBase:
                 build from kwargs.
             **kwargs: Individual config parameters forwarded to
                 the config dataclass constructor.
+
         """
         if config:
             self.config = config

@@ -661,7 +661,7 @@ class TestClaudeMemoryIntegration:
         main_file = tmp_path / ".claude" / "CLAUDE.md"
         main_file.parent.mkdir()
         main_file.write_text(
-            "# Main\n@../shared/coding.md\n@../shared/security.md\n## Project Specific"
+            "# Main\n@../shared/coding.md\n@../shared/security.md\n## Project Specific",
         )
 
         config = ClaudeMemoryConfig(

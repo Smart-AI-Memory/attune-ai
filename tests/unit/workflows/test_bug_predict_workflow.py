@@ -92,9 +92,9 @@ class TestBugPredictionWorkflowInit:
                     "patterns": [
                         {"bug_type": "null_reference", "root_cause": "Missing null check"},
                         {"bug_type": "type_mismatch", "root_cause": "Wrong type"},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         workflow = BugPredictionWorkflow(patterns_dir=str(patterns_dir))
@@ -197,7 +197,7 @@ def process():
         risky()
     except Exception:
         print("error")  # Bad: just printing
-"""
+""",
         )
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
@@ -221,7 +221,7 @@ def process():
 def incomplete():
     # TODO: Implement this
     pass
-"""
+""",
         )
 
         input_data = {"path": str(tmp_path), "file_types": [".py"]}
@@ -314,17 +314,17 @@ class TestCorrelateStage:
                 {
                     "patterns": [
                         {"bug_type": "null_reference", "root_cause": "Missing null check"},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         workflow = BugPredictionWorkflow(patterns_dir=str(patterns_dir))
 
         input_data = {
             "patterns_found": [
-                {"file": "test.py", "pattern": "broad_exception", "severity": "medium"}
-            ]
+                {"file": "test.py", "pattern": "broad_exception", "severity": "medium"},
+            ],
         }
 
         result, _, _ = await workflow._correlate(input_data, ModelTier.CAPABLE)
@@ -337,8 +337,8 @@ class TestCorrelateStage:
         """Test correlate sets confidence scores for matches."""
         input_data = {
             "patterns_found": [
-                {"file": "test.py", "pattern": "broad_exception", "severity": "medium"}
-            ]
+                {"file": "test.py", "pattern": "broad_exception", "severity": "medium"},
+            ],
         }
 
         result, _, _ = await bug_predict_workflow._correlate(input_data, ModelTier.CAPABLE)
@@ -364,7 +364,7 @@ class TestCorrelateStage:
             "patterns_found": [
                 {"file": "a.py", "pattern": "broad_exception", "severity": "medium"},
                 {"file": "b.py", "pattern": "incomplete_code", "severity": "low"},
-            ]
+            ],
         }
 
         result, _, _ = await bug_predict_workflow._correlate(input_data, ModelTier.CAPABLE)
@@ -428,10 +428,10 @@ class TestPredictStage:
                         "severity": "high",
                     },
                     "confidence": 0.8,
-                }
+                },
             ],
             "patterns_found": [
-                {"file": "risky.py", "pattern": "broad_exception", "severity": "high"}
+                {"file": "risky.py", "pattern": "broad_exception", "severity": "high"},
             ],
         }
 
@@ -494,7 +494,7 @@ class TestPredictStage:
                 {
                     "current_pattern": {"file": "critical.py", "severity": "high"},
                     "confidence": 1.0,
-                }
+                },
             ],
             "patterns_found": [],
         }
@@ -550,7 +550,7 @@ class TestRecommendStage:
                         "file": "risky.py",
                         "risk_score": 0.8,
                         "patterns": [{"pattern": "broad_exception", "severity": "high"}],
-                    }
+                    },
                 ],
                 "overall_risk_score": 0.8,
             }
@@ -583,7 +583,9 @@ class TestRecommendStage:
         bug_predict_workflow._api_key = "test-key"
 
         with patch.object(
-            bug_predict_workflow, "run_step_with_executor", new_callable=AsyncMock
+            bug_predict_workflow,
+            "run_step_with_executor",
+            new_callable=AsyncMock,
         ) as mock_run:
             mock_run.return_value = ("Executor recommendations", 100, 200, 0.05)
 
@@ -600,12 +602,16 @@ class TestRecommendStage:
         bug_predict_workflow._api_key = "test-key"
 
         with patch.object(
-            bug_predict_workflow, "run_step_with_executor", new_callable=AsyncMock
+            bug_predict_workflow,
+            "run_step_with_executor",
+            new_callable=AsyncMock,
         ) as mock_run:
             mock_run.side_effect = Exception("Executor failed")
 
             with patch.object(
-                bug_predict_workflow, "_call_llm", new_callable=AsyncMock
+                bug_predict_workflow,
+                "_call_llm",
+                new_callable=AsyncMock,
             ) as mock_llm:
                 mock_llm.return_value = ("Fallback recommendations", 50, 100)
 
@@ -642,7 +648,9 @@ class TestRunStageRouter:
         input_data = {"patterns_found": []}
 
         result, _, _ = await bug_predict_workflow.run_stage(
-            "correlate", ModelTier.CAPABLE, input_data
+            "correlate",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "correlations" in result
@@ -653,7 +661,9 @@ class TestRunStageRouter:
         input_data = {"correlations": [], "patterns_found": []}
 
         result, _, _ = await bug_predict_workflow.run_stage(
-            "predict", ModelTier.CAPABLE, input_data
+            "predict",
+            ModelTier.CAPABLE,
+            input_data,
         )
 
         assert "predictions" in result
@@ -667,7 +677,9 @@ class TestRunStageRouter:
             input_data = {"predictions": [], "overall_risk_score": 0.5}
 
             result, _, _ = await bug_predict_workflow.run_stage(
-                "recommend", ModelTier.PREMIUM, input_data
+                "recommend",
+                ModelTier.PREMIUM,
+                input_data,
             )
 
             assert "recommendations" in result
@@ -740,7 +752,7 @@ class TestFormatBugPredictReport:
                 {"severity": "medium"},
                 {"severity": "medium"},
                 {"severity": "low"},
-            ]
+            ],
         }
         report = format_bug_predict_report(result, input_data)
 
@@ -758,8 +770,8 @@ class TestFormatBugPredictReport:
                     "file": "critical.py",
                     "risk_score": 0.9,
                     "patterns": [{"pattern": "broad_exception", "severity": "high"}],
-                }
-            ]
+                },
+            ],
         }
         report = format_bug_predict_report(result, input_data)
 
@@ -775,8 +787,8 @@ class TestFormatBugPredictReport:
                     "current_pattern": {"pattern": "broad_exception"},
                     "historical_bug": {"type": "null_reference", "root_cause": "Missing check"},
                     "confidence": 0.75,
-                }
-            ]
+                },
+            ],
         }
         report = format_bug_predict_report(result, input_data)
 
@@ -820,10 +832,14 @@ class TestXMLPromptHandling:
         """Test recommend uses XML-enhanced prompts when enabled."""
         with patch.object(bug_predict_workflow, "_is_xml_enabled", return_value=True):
             with patch.object(
-                bug_predict_workflow, "_render_xml_prompt", return_value="<xml>prompt</xml>"
+                bug_predict_workflow,
+                "_render_xml_prompt",
+                return_value="<xml>prompt</xml>",
             ) as mock_render:
                 with patch.object(
-                    bug_predict_workflow, "_call_llm", new_callable=AsyncMock
+                    bug_predict_workflow,
+                    "_call_llm",
+                    new_callable=AsyncMock,
                 ) as mock_llm:
                     mock_llm.return_value = ("XML response", 100, 200)
 
@@ -838,7 +854,9 @@ class TestXMLPromptHandling:
         """Test recommend uses legacy prompts when XML is disabled."""
         with patch.object(bug_predict_workflow, "_is_xml_enabled", return_value=False):
             with patch.object(
-                bug_predict_workflow, "_call_llm", new_callable=AsyncMock
+                bug_predict_workflow,
+                "_call_llm",
+                new_callable=AsyncMock,
             ) as mock_llm:
                 mock_llm.return_value = ("Legacy response", 100, 200)
 

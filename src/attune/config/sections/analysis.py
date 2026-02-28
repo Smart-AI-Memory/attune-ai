@@ -26,12 +26,13 @@ class AnalysisConfig:
         type_hint_check: Check for missing type hints.
         test_coverage_target: Target test coverage percentage.
         max_function_length: Maximum recommended function length (lines).
+
     """
 
     complexity_threshold: int = 10
     max_file_size_kb: int = 500
     exclude_patterns: list[str] = field(
-        default_factory=lambda: ["*.pyc", "__pycache__", ".git", "node_modules", ".venv"]
+        default_factory=lambda: ["*.pyc", "__pycache__", ".git", "node_modules", ".venv"],
     )
     include_patterns: list[str] = field(default_factory=lambda: ["*.py"])
     security_scan_enabled: bool = True

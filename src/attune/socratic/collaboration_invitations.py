@@ -48,6 +48,7 @@ class InvitationManager:
 
         Args:
             collaboration_manager: The collaboration manager
+
         """
         self.collab = collaboration_manager
         self._invitations: dict[str, Invitation] = {}
@@ -73,6 +74,7 @@ class InvitationManager:
 
         Returns:
             Created invitation or None
+
         """
         session = self.collab.get_session(session_id)
         if not session:
@@ -84,7 +86,7 @@ class InvitationManager:
             return None
 
         invite_id = hashlib.sha256(
-            f"{session_id}:{invitee_email}:{time.time()}".encode()
+            f"{session_id}:{invitee_email}:{time.time()}".encode(),
         ).hexdigest()[:16]
 
         expires = datetime.now() + timedelta(hours=expires_hours)
@@ -117,6 +119,7 @@ class InvitationManager:
 
         Returns:
             Added participant or None
+
         """
         invitation = self._invitations.get(invite_id)
         if not invitation:
@@ -151,6 +154,7 @@ class InvitationManager:
 
         Returns:
             List of pending invitations
+
         """
         now = datetime.now()
         return [

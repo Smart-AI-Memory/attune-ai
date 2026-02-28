@@ -23,6 +23,7 @@ class EnvironmentConfig:
         pager: Default pager for long output.
         shell: Default shell for command execution.
         timezone: Timezone for timestamps.
+
     """
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"

@@ -236,7 +236,7 @@ class TestWorkflowFileHandlerExtractWorkflowId:
         handler = WorkflowFileHandler(reload_callback=callback)
 
         workflow_id = handler._extract_workflow_id(
-            "/home/user/project/src/attune/workflows/test_gen.py"
+            "/home/user/project/src/attune/workflows/test_gen.py",
         )
 
         assert workflow_id == "test_gen"
@@ -345,7 +345,8 @@ class TestWorkflowFileWatcherStart:
         invalid_dir = tmp_path / "nonexistent"
 
         watcher = WorkflowFileWatcher(
-            workflow_dirs=[valid_dir, invalid_dir], reload_callback=callback
+            workflow_dirs=[valid_dir, invalid_dir],
+            reload_callback=callback,
         )
 
         with patch.object(watcher.observer, "schedule") as mock_schedule:
@@ -368,7 +369,8 @@ class TestWorkflowFileWatcherStart:
         valid_dir.mkdir()
 
         watcher = WorkflowFileWatcher(
-            workflow_dirs=[file_path, valid_dir], reload_callback=callback
+            workflow_dirs=[file_path, valid_dir],
+            reload_callback=callback,
         )
 
         with patch.object(watcher.observer, "schedule") as mock_schedule:
@@ -447,9 +449,8 @@ class TestWorkflowFileWatcherStop:
         watcher = WorkflowFileWatcher(workflow_dirs=["/path"], reload_callback=callback)
         watcher._running = True
 
-        with patch.object(watcher.observer, "stop"):
-            with patch.object(watcher.observer, "join"):
-                watcher.stop()
+        with patch.object(watcher.observer, "stop"), patch.object(watcher.observer, "join"):
+            watcher.stop()
 
         assert watcher._running is False
 
@@ -487,9 +488,8 @@ class TestWorkflowFileWatcherContextManager:
 
         watcher = WorkflowFileWatcher(workflow_dirs=[valid_dir], reload_callback=callback)
 
-        with patch.object(watcher, "start") as mock_start:
-            with watcher:
-                mock_start.assert_called_once()
+        with patch.object(watcher, "start") as mock_start, watcher:
+            mock_start.assert_called_once()
 
     def test_context_manager_stops_watcher_on_exit(self, tmp_path):
         """Test that context manager stops watcher on __exit__."""
@@ -499,11 +499,10 @@ class TestWorkflowFileWatcherContextManager:
 
         watcher = WorkflowFileWatcher(workflow_dirs=[valid_dir], reload_callback=callback)
 
-        with patch.object(watcher, "start"):
-            with patch.object(watcher, "stop") as mock_stop:
-                with watcher:
-                    pass
-                mock_stop.assert_called_once()
+        with patch.object(watcher, "start"), patch.object(watcher, "stop") as mock_stop:
+            with watcher:
+                pass
+            mock_stop.assert_called_once()
 
     def test_context_manager_returns_self_on_enter(self, tmp_path):
         """Test that context manager returns self on __enter__."""
@@ -513,9 +512,8 @@ class TestWorkflowFileWatcherContextManager:
 
         watcher = WorkflowFileWatcher(workflow_dirs=[valid_dir], reload_callback=callback)
 
-        with patch.object(watcher, "start"):
-            with watcher as w:
-                assert w is watcher
+        with patch.object(watcher, "start"), watcher as w:
+            assert w is watcher
 
     def test_context_manager_stops_on_exception(self, tmp_path):
         """Test that context manager stops watcher even on exception."""
@@ -525,16 +523,15 @@ class TestWorkflowFileWatcherContextManager:
 
         watcher = WorkflowFileWatcher(workflow_dirs=[valid_dir], reload_callback=callback)
 
-        with patch.object(watcher, "start"):
-            with patch.object(watcher, "stop") as mock_stop:
-                try:
-                    with watcher:
-                        raise ValueError("Test exception")
-                except ValueError:
-                    pass
+        with patch.object(watcher, "start"), patch.object(watcher, "stop") as mock_stop:
+            try:
+                with watcher:
+                    raise ValueError("Test exception")
+            except ValueError:
+                pass
 
-                # Stop should still be called
-                mock_stop.assert_called_once()
+            # Stop should still be called
+            mock_stop.assert_called_once()
 
 
 @pytest.mark.unit
@@ -563,7 +560,8 @@ class TestWorkflowFileWatcherEdgeCases:
         file_path.write_text("test")
 
         watcher = WorkflowFileWatcher(
-            workflow_dirs=[valid1, invalid1, valid2, file_path], reload_callback=callback
+            workflow_dirs=[valid1, invalid1, valid2, file_path],
+            reload_callback=callback,
         )
 
         with patch.object(watcher.observer, "schedule") as mock_schedule:

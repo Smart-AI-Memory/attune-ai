@@ -54,6 +54,7 @@ class CommandContext:
         # Commands can access components
         patterns = ctx.get_patterns_for_context()
         ctx.fire_hook("PreCommand", {"command": "compact"})
+
     """
 
     user_id: str
@@ -196,6 +197,7 @@ class CommandExecutor:
         # Check result
         if result.success:
             print(f"Output: {result.output}")
+
     """
 
     def __init__(self, context: CommandContext):

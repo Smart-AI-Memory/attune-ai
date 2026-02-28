@@ -22,6 +22,7 @@ class ProgressiveTelemetry:
         Args:
             workflow_name: Name of the workflow (e.g., "test-gen")
             user_id: Optional user identifier (will be hashed)
+
         """
         self.workflow_name = workflow_name
         self.user_id = user_id
@@ -41,6 +42,7 @@ class ProgressiveTelemetry:
             attempt: Attempt number for this tier
             escalated: Whether this tier escalated to next
             escalation_reason: Why escalation occurred (if escalated)
+
         """
         # Extract token counts from tier result
         tokens = {
@@ -67,7 +69,7 @@ class ProgressiveTelemetry:
 
             logger.debug(
                 f"Tracked {tier_result.tier.value} tier execution: "
-                f"${tier_result.cost:.3f}, {tokens['total_tokens']} tokens"
+                f"${tier_result.cost:.3f}, {tokens['total_tokens']} tokens",
             )
 
         except Exception as e:
@@ -82,6 +84,7 @@ class ProgressiveTelemetry:
 
         Args:
             result: Final workflow result
+
         """
         try:
             # Calculate metrics
@@ -114,7 +117,7 @@ class ProgressiveTelemetry:
                 f"  Items: {total_items}\n"
                 f"  Cost: ${total_cost:.3f} (saved ${savings:.3f}, {savings_percent:.0f}%)\n"
                 f"  Duration: {result.total_duration:.1f}s\n"
-                f"  Tiers: {list(tier_breakdown.keys())}"
+                f"  Tiers: {list(tier_breakdown.keys())}",
             )
 
             # Custom telemetry event for workflow summary
@@ -158,6 +161,7 @@ class ProgressiveTelemetry:
             reason: Why escalation occurred
             item_count: Number of items being escalated
             current_cost: Cost accumulated so far
+
         """
         try:
             self._track_custom_event(
@@ -173,7 +177,7 @@ class ProgressiveTelemetry:
             )
 
             logger.info(
-                f"Escalated {item_count} items from {from_tier.value} → {to_tier.value}: {reason}"
+                f"Escalated {item_count} items from {from_tier.value} → {to_tier.value}: {reason}",
             )
 
         except Exception as e:
@@ -191,6 +195,7 @@ class ProgressiveTelemetry:
             current_cost: Current cost that exceeded budget
             max_budget: Maximum budget allowed
             action: Action taken ("abort" or "warn")
+
         """
         try:
             self._track_custom_event(
@@ -215,6 +220,7 @@ class ProgressiveTelemetry:
         Args:
             event_type: Type of event
             data: Event data
+
         """
         # For now, just log to telemetry directory as JSONL
         # Future: could send to analytics service
@@ -249,15 +255,15 @@ class ProgressiveTelemetry:
 
         Returns:
             Provider name
+
         """
         if "gpt" in model.lower():
             return "openai"
-        elif "claude" in model.lower():
+        if "claude" in model.lower():
             return "anthropic"
-        elif "gemini" in model.lower():
+        if "gemini" in model.lower():
             return "google"
-        else:
-            return "unknown"
+        return "unknown"
 
     @staticmethod
     def _hash_user_id(user_id: str) -> str:
@@ -268,6 +274,7 @@ class ProgressiveTelemetry:
 
         Returns:
             SHA256 hash of user_id
+
         """
         import hashlib
 

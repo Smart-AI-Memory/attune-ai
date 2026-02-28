@@ -22,6 +22,7 @@ from .types import (
 )
 
 __all__ = [
+    "XML_PROMPT_TEMPLATES",
     "CodeCheckpoint",
     "Impact",
     "RefactoringCategory",
@@ -31,5 +32,4 @@ __all__ = [
     "RefactoringReport",
     "Severity",
     "UserProfile",
-    "XML_PROMPT_TEMPLATES",
 ]

@@ -17,13 +17,14 @@ def _emit_cli_deprecation(module_name: str, canonical_command: str) -> None:
     Args:
         module_name: The module being invoked (e.g. "attune.telemetry")
         canonical_command: The preferred command (e.g. "attune telemetry <command>")
+
     """
     warnings.warn(
-        f"'python -m {module_name}' is deprecated. " f"Use '{canonical_command}' instead.",
+        f"'python -m {module_name}' is deprecated. Use '{canonical_command}' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
     print(
-        f"WARNING: 'python -m {module_name}' is deprecated." f" Use '{canonical_command}' instead.",
+        f"WARNING: 'python -m {module_name}' is deprecated. Use '{canonical_command}' instead.",
         file=sys.stderr,
     )

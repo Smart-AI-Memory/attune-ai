@@ -16,11 +16,11 @@ from attune.config.sections.telemetry import TelemetryConfig
 from attune.config.sections.workflows import WorkflowConfig
 
 __all__ = [
-    "AuthConfig",
-    "RoutingConfig",
-    "WorkflowConfig",
     "AnalysisConfig",
-    "PersistenceConfig",
-    "TelemetryConfig",
+    "AuthConfig",
     "EnvironmentConfig",
+    "PersistenceConfig",
+    "RoutingConfig",
+    "TelemetryConfig",
+    "WorkflowConfig",
 ]

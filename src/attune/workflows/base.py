@@ -73,7 +73,7 @@ from .data_classes import (
     NextAction,  # noqa: F401 - re-exported
     StageQualityMetrics,  # noqa: F401 - re-exported
     WorkflowResult,  # noqa: F401 - re-exported
-    WorkflowStage,  # noqa: F401 - re-exported
+    WorkflowStage,
 )
 from .execution_mixin import ExecutionMixin
 from .executor_mixin import ExecutorMixin
@@ -96,7 +96,7 @@ from .post_simplification_mixin import PostSimplificationMixin
 # Import progress tracking
 from .progress import (
     ProgressCallback,
-    ProgressTracker,  # noqa: F401 - re-exported for backward compat
+    ProgressTracker,
 )
 from .prompt_mixin import PromptMixin
 from .state_mixin import StatePersistenceMixin

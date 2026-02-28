@@ -44,15 +44,15 @@ from .success import (
 # External code (tests, llm_analyzer, etc.) imports these from
 # attune.socratic.engine, so they must remain available here.
 __all__ = [
-    "DomainPattern",
     "DOMAIN_PATTERNS",
+    "DomainPattern",
+    "SocraticWorkflowBuilder",
     "detect_domain",
     "extract_keywords",
+    "generate_followup_questions",
+    "generate_initial_questions",
     "identify_ambiguities",
     "identify_assumptions",
-    "generate_initial_questions",
-    "generate_followup_questions",
-    "SocraticWorkflowBuilder",
 ]
 
 logger = logging.getLogger(__name__)
@@ -82,6 +82,7 @@ class SocraticWorkflowBuilder:
         >>> if builder.is_ready_to_generate(session):
         ...     workflow = builder.generate_workflow(session)
         ...     print(workflow.describe())
+
     """
 
     def __init__(self) -> None:
@@ -97,6 +98,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             New SocraticSession
+
         """
         session = SocraticSession()
 
@@ -114,6 +116,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             The session, or None if not found
+
         """
         return self._sessions.get(session_id)
 
@@ -126,6 +129,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Updated session with goal analysis
+
         """
         session.goal = goal
         session.state = SessionState.ANALYZING_GOAL
@@ -160,6 +164,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Human-readable intent description
+
         """
         intent_patterns = {
             "code_review": "Automated code review",
@@ -177,6 +182,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Form for capturing the user's goal
+
         """
         return Form(
             id="initial_goal",
@@ -198,6 +204,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Form with questions, or None if ready to generate
+
         """
         if session.state == SessionState.AWAITING_GOAL:
             return self.get_initial_form()
@@ -231,6 +238,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Updated session
+
         """
         session.state = SessionState.PROCESSING_ANSWERS
         session.touch()
@@ -264,6 +272,7 @@ class SocraticWorkflowBuilder:
         Args:
             session: The current session
             answers: Dictionary mapping field IDs to values
+
         """
         reqs = session.requirements
 
@@ -299,7 +308,7 @@ class SocraticWorkflowBuilder:
             reqs.domain_specific["test_type"] = answers["test_type"]
 
         # Additional context
-        if "additional_context" in answers and answers["additional_context"]:
+        if answers.get("additional_context"):
             reqs.domain_specific["additional_context"] = answers["additional_context"]
 
         # Priorities
@@ -320,6 +329,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             True if the session is ready to generate a workflow
+
         """
         return session.state == SessionState.READY_TO_GENERATE or session.can_generate()
 
@@ -337,6 +347,7 @@ class SocraticWorkflowBuilder:
 
         Raises:
             ValueError: If session not ready for generation
+
         """
         if not self.is_ready_to_generate(session):
             raise ValueError("Session not ready for generation. Answer more questions.")
@@ -400,6 +411,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Human-readable workflow name
+
         """
         domain_names = {
             "code_review": "Code Review",
@@ -434,36 +446,36 @@ class SocraticWorkflowBuilder:
 
         Returns:
             SuccessCriteria for the generated workflow
+
         """
         # Use predefined criteria based on domain
         if domain == "code_review":
             return code_review_criteria()
-        elif domain == "security":
+        if domain == "security":
             return security_audit_criteria()
-        elif domain == "testing":
+        if domain == "testing":
             return test_generation_criteria()
-        else:
-            # Generic criteria
-            return SuccessCriteria(
-                id=f"{domain}_success",
-                name=f"{domain.title()} Success Criteria",
-                metrics=[
-                    SuccessMetric(
-                        id="task_completed",
-                        name="Task Completed",
-                        metric_type=MetricType.BOOLEAN,
-                        is_primary=True,
-                        extraction_path="success",
-                    ),
-                    SuccessMetric(
-                        id="findings_count",
-                        name="Findings",
-                        metric_type=MetricType.COUNT,
-                        extraction_path="findings_count",
-                    ),
-                ],
-                success_threshold=0.7,
-            )
+        # Generic criteria
+        return SuccessCriteria(
+            id=f"{domain}_success",
+            name=f"{domain.title()} Success Criteria",
+            metrics=[
+                SuccessMetric(
+                    id="task_completed",
+                    name="Task Completed",
+                    metric_type=MetricType.BOOLEAN,
+                    is_primary=True,
+                    extraction_path="success",
+                ),
+                SuccessMetric(
+                    id="findings_count",
+                    name="Findings",
+                    metric_type=MetricType.COUNT,
+                    extraction_path="findings_count",
+                ),
+            ],
+            success_threshold=0.7,
+        )
 
     def get_session_summary(self, session: SocraticSession) -> dict[str, Any]:
         """Get a summary of the session state for display.
@@ -473,6 +485,7 @@ class SocraticWorkflowBuilder:
 
         Returns:
             Dictionary with session summary information
+
         """
         return {
             "session_id": session.session_id,

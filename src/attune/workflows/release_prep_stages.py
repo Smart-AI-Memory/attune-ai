@@ -71,7 +71,7 @@ class ReleasePrepStagesMixin:
 
                     size_category = get_module_size_category(total_lines)
                     logger.info(
-                        f"Release prep target: {target_path} ({total_lines:,} LOC, {size_category})"
+                        f"Release prep target: {target_path} ({total_lines:,} LOC, {size_category})",
                     )
                     logger.info(f"Recommended auth mode: {recommended_mode.value}")
 
@@ -222,7 +222,7 @@ class ReleasePrepStagesMixin:
                                 "severity": severity,
                                 "message": finding.get("issue_text", ""),
                                 "confidence": finding.get("issue_confidence", ""),
-                            }
+                            },
                         )
 
                         if severity == "high":

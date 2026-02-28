@@ -18,6 +18,7 @@ Example:
     sequential
     >>> print([a.role for a in plan.agents])
     ['Test Coverage Expert', 'Test Generation Specialist', 'Quality Assurance Validator']
+
 """
 
 import logging
@@ -80,6 +81,7 @@ class TaskRequirements:
         parallelizable: Whether task can be parallelized
         quality_gates: Quality thresholds to enforce
         context: Additional context for customization
+
     """
 
     complexity: TaskComplexity
@@ -100,6 +102,7 @@ class ExecutionPlan:
         quality_gates: Quality thresholds to enforce
         estimated_cost: Estimated execution cost
         estimated_duration: Estimated time in seconds
+
     """
 
     agents: list[AgentTemplate]
@@ -126,6 +129,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
         ...     task="Prepare for v3.12.0 release",
         ...     context={"version": "3.12.0"}
         ... )
+
     """
 
     def __init__(self):
@@ -153,6 +157,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
             ... )
             >>> print(requirements.domain)
             TaskDomain.TESTING
+
         """
         if not task or not isinstance(task, str):
             raise ValueError("task must be a non-empty string")
@@ -189,6 +194,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
             >>> plan = orchestrator.create_execution_plan(requirements, agents, strategy)
             >>> print(plan.strategy)
             CompositionPattern.SEQUENTIAL
+
         """
         return ExecutionPlan(
             agents=agents,
@@ -199,7 +205,10 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
         )
 
     def analyze_and_compose(
-        self, task: str, context: dict[str, Any] | None = None, interactive: bool = False
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+        interactive: bool = False,
     ) -> ExecutionPlan:
         """Analyze task and create execution plan.
 
@@ -222,6 +231,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
             ...     task="Improve test coverage",
             ...     context={"current_coverage": 75}
             ... )
+
         """
         if not task or not isinstance(task, str):
             raise ValueError("task must be a non-empty string")
@@ -239,7 +249,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
         logger.info(
             f"Task analysis: complexity={requirements.complexity.value}, "
             f"domain={requirements.domain.value}, "
-            f"capabilities={requirements.capabilities_needed}"
+            f"capabilities={requirements.capabilities_needed}",
         )
 
         # Step 2: Select appropriate agents
@@ -275,6 +285,7 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
 
         Returns:
             A ``DynamicTeam`` instance ready to call ``execute()``.
+
         """
         from attune.orchestration.team_builder import DynamicTeamBuilder
 

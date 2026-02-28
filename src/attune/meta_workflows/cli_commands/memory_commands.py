@@ -48,6 +48,7 @@ def search_memory(
         empathy meta-workflow search-memory "successful workflow"
         empathy meta-workflow search-memory "test coverage" --type meta_workflow_execution
         empathy meta-workflow search-memory "error" --limit 20
+
     """
     try:
         from attune.memory.unified import UnifiedMemory
@@ -89,7 +90,7 @@ def search_memory(
 
     except ImportError:
         console.print(
-            "[red]Error:[/red] UnifiedMemory not available. Ensure memory module is installed."
+            "[red]Error:[/red] UnifiedMemory not available. Ensure memory module is installed.",
         )
         raise typer.Exit(code=1)
     except Exception as e:
@@ -127,6 +128,7 @@ def show_session_stats(
     Examples:
         empathy meta-workflow session-stats
         empathy meta-workflow session-stats --session-id sess_123
+
     """
     try:
         from attune.memory.unified import UnifiedMemory
@@ -169,7 +171,7 @@ def show_session_stats(
     except ImportError:
         console.print(
             "[red]Error:[/red] Session context not available. "
-            "Ensure memory and session modules are installed."
+            "Ensure memory and session modules are installed.",
         )
         raise typer.Exit(code=1)
     except Exception as e:

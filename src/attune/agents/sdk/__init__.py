@@ -18,8 +18,8 @@ from .sdk_models import SDK_AVAILABLE, SDKAgentResult, SDKExecutionMode
 from .sdk_team import QualityGate, SDKAgentTeam, SDKTeamResult
 
 __all__ = [
-    "QualityGate",
     "SDK_AVAILABLE",
+    "QualityGate",
     "SDKAgent",
     "SDKAgentResult",
     "SDKAgentTeam",

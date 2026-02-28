@@ -600,7 +600,8 @@ class TestMergeExternalAudit:
             "risk_score": 95,
         }
         merged_resp, findings, has_critical = workflow._merge_external_audit(
-            "LLM response", external
+            "LLM response",
+            external,
         )
         assert has_critical is True
         assert len(findings) == 1
@@ -634,7 +635,8 @@ class TestMergeExternalAudit:
         """Test merge with empty external audit."""
         external = {"summary": "", "findings": [], "risk_score": 0}
         merged_resp, findings, has_critical = workflow._merge_external_audit(
-            "LLM response", external
+            "LLM response",
+            external,
         )
         assert has_critical is False
         assert len(findings) == 0
@@ -891,7 +893,9 @@ class TestArchitectReviewStage:
             mock_llm.return_value = ("APPROVE", 500, 200)
             with patch.object(workflow, "_is_xml_enabled", return_value=True):
                 with patch.object(
-                    workflow, "_render_xml_prompt", return_value="<xml>prompt</xml>"
+                    workflow,
+                    "_render_xml_prompt",
+                    return_value="<xml>prompt</xml>",
                 ) as mock_xml:
                     with patch.object(
                         workflow,
@@ -1323,7 +1327,7 @@ class TestWorkflowFindingsToCrewFormat:
                 "code_snippet": "cursor.execute(q)",
                 "suggestion": "Use parameterized queries",
                 "confidence": 0.95,
-            }
+            },
         ]
         result = workflow_findings_to_crew_format(findings)
         assert len(result) == 1
@@ -1348,7 +1352,7 @@ class TestWorkflowFindingsToCrewFormat:
                 "type": "xss",
                 "match": "innerHTML = userInput",
                 "remediation": "Use textContent instead",
-            }
+            },
         ]
         result = workflow_findings_to_crew_format(findings)
         assert result[0]["description"] == "innerHTML = userInput"
@@ -1717,7 +1721,7 @@ class TestPerfCheckStage:
         """Test that perf_check detects triple nested loops."""
         bad_file = tmp_path / "nested.py"
         bad_file.write_text(
-            "for a in x:\n" "    for b in y:\n" "        for c in z:\n" "            pass\n"
+            "for a in x:\n    for b in y:\n        for c in z:\n            pass\n",
         )
         input_data = {"files_changed": [str(bad_file)]}
         result, _, _ = await workflow._perf_check(input_data, ModelTier.CHEAP)
@@ -1791,7 +1795,7 @@ class TestHealthMonitorStage:
         """Test that health_monitor returns a health_snapshot dict."""
         mock_monitor = MagicMock()
         mock_monitor.get_all_stats.return_value = {
-            "llm_cache": MagicMock(to_dict=lambda: {"hit_rate": 0.75, "hits": 30, "misses": 10})
+            "llm_cache": MagicMock(to_dict=lambda: {"hit_rate": 0.75, "hits": 30, "misses": 10}),
         }
         mock_tracker = MagicMock()
         mock_tracker.get_today.return_value = {"total_cost": 0.05}
@@ -1865,7 +1869,7 @@ class TestQualityCheckStage:
     async def test_quality_check_detects_bare_except(self, workflow, tmp_path):
         """Test that quality_check flags bare except clauses."""
         bad_file = tmp_path / "bad.py"
-        bad_file.write_text("try:\n" "    risky()\n" "except:\n" "    pass\n")
+        bad_file.write_text("try:\n    risky()\nexcept:\n    pass\n")
         input_data = {"files_changed": [str(bad_file)]}
         result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
 
@@ -1877,7 +1881,7 @@ class TestQualityCheckStage:
         """Test that quality_check respects # noqa comments."""
         ok_file = tmp_path / "ok.py"
         ok_file.write_text(
-            "try:\n" "    risky()\n" "except Exception:  # noqa: BLE001\n" "    pass\n"
+            "try:\n    risky()\nexcept Exception:  # noqa: BLE001\n    pass\n",
         )
         input_data = {"files_changed": [str(ok_file)]}
         result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
@@ -1889,7 +1893,7 @@ class TestQualityCheckStage:
     async def test_quality_check_detects_todos(self, workflow, tmp_path):
         """Test that quality_check counts TODO/FIXME comments."""
         todo_file = tmp_path / "todo.py"
-        todo_file.write_text("# TODO: fix this\n" "x = 1\n" "# FIXME: also this\n")
+        todo_file.write_text("# TODO: fix this\nx = 1\n# FIXME: also this\n")
         input_data = {"files_changed": [str(todo_file)]}
         result, _, _ = await workflow._quality_check(input_data, ModelTier.CHEAP)
 
@@ -1951,7 +1955,8 @@ class TestQualityCheckStage:
     def test_no_skip_quality_check_with_files(self, workflow):
         """Test that quality_check is NOT skipped when files present."""
         should_skip, reason = workflow.should_skip_stage(
-            "quality_check", {"files_changed": ["a.py"]}
+            "quality_check",
+            {"files_changed": ["a.py"]},
         )
         assert should_skip is False
 
@@ -1978,7 +1983,7 @@ class TestReportNewSections:
                     "line": 10,
                     "description": "N+1 query",
                     "impact": "high",
-                }
+                },
             ],
             "perf_finding_count": 1,
             "perf_by_impact": {"high": 1, "medium": 0, "low": 0},
@@ -1997,7 +2002,7 @@ class TestReportNewSections:
                 "cache_stats": {"llm": {"hit_rate": 0.8}},
                 "cost_today": {"total_cost": 0.05},
                 "usage_stats_7d": {"total_calls": 42},
-            }
+            },
         }
         report = format_code_review_report(result, input_data)
         assert "HEALTH MONITOR" in report
@@ -2018,7 +2023,7 @@ class TestReportNewSections:
                     "line": 3,
                     "description": "Bare except",
                     "severity": "high",
-                }
+                },
             ],
             "quality_finding_count": 1,
             "quality_by_severity": {"high": 1, "medium": 0, "low": 0},
@@ -2152,7 +2157,7 @@ class TestReportCoverageBoost:
                 "finding_count": 3,
                 "agents_used": ["review_lead", "security_agent"],
                 "summary": "Minor quality improvements recommended.",
-            }
+            },
         }
         report = format_code_review_report(result, input_data)
 
@@ -2315,7 +2320,8 @@ class TestPerfCheckDeep:
     def test_perf_check_deep_skipped_when_no_findings(self, workflow):
         """Test that should_skip_stage gates perf_check_deep on zero findings."""
         should_skip, reason = workflow.should_skip_stage(
-            "perf_check_deep", {"perf_finding_count": 0}
+            "perf_check_deep",
+            {"perf_finding_count": 0},
         )
         assert should_skip is True
         assert "no perf findings" in reason.lower()
@@ -2323,7 +2329,8 @@ class TestPerfCheckDeep:
     def test_perf_check_deep_not_skipped_with_findings(self, workflow):
         """Test that should_skip_stage allows perf_check_deep when findings exist."""
         should_skip, reason = workflow.should_skip_stage(
-            "perf_check_deep", {"perf_finding_count": 3}
+            "perf_check_deep",
+            {"perf_finding_count": 3},
         )
         assert should_skip is False
 
@@ -2417,7 +2424,8 @@ class TestQualityCheckDeep:
     def test_quality_check_deep_skipped_when_no_findings(self, workflow):
         """Test that should_skip_stage gates quality_check_deep on zero findings."""
         should_skip, reason = workflow.should_skip_stage(
-            "quality_check_deep", {"quality_finding_count": 0}
+            "quality_check_deep",
+            {"quality_finding_count": 0},
         )
         assert should_skip is True
         assert "no quality findings" in reason.lower()
@@ -2425,7 +2433,8 @@ class TestQualityCheckDeep:
     def test_quality_check_deep_not_skipped_with_findings(self, workflow):
         """Test that should_skip_stage allows quality_check_deep when findings exist."""
         should_skip, reason = workflow.should_skip_stage(
-            "quality_check_deep", {"quality_finding_count": 2}
+            "quality_check_deep",
+            {"quality_finding_count": 2},
         )
         assert should_skip is False
 
@@ -2449,7 +2458,7 @@ class TestQualityCheckDeep:
         }
 
         result, in_t, out_t = asyncio.run(
-            workflow._quality_check_deep(input_data, ModelTier.CAPABLE)
+            workflow._quality_check_deep(input_data, ModelTier.CAPABLE),
         )
 
         workflow._call_llm.assert_called_once()

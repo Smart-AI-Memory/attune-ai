@@ -40,6 +40,7 @@ class PatternLearner(PatternMemoryMixin):
     Attributes:
         executions_dir: Directory where execution results are stored
         memory: Optional UnifiedMemory instance for enhanced querying
+
     """
 
     def __init__(
@@ -54,6 +55,7 @@ class PatternLearner(PatternMemoryMixin):
                            (default: .attune/meta_workflows/executions/)
             memory: Optional UnifiedMemory instance for enhanced querying
                    If provided, insights will be stored in both files and memory
+
         """
         if executions_dir is None:
             executions_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
@@ -66,7 +68,9 @@ class PatternLearner(PatternMemoryMixin):
         )
 
     def analyze_patterns(
-        self, template_id: str | None = None, min_confidence: float = 0.5
+        self,
+        template_id: str | None = None,
+        min_confidence: float = 0.5,
     ) -> list[PatternInsight]:
         """Analyze patterns from historical executions.
 
@@ -76,6 +80,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of pattern insights
+
         """
         run_ids = list_execution_results(storage_dir=str(self.executions_dir))
 
@@ -117,6 +122,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of insights about agent counts
+
         """
         insights = []
         agent_counts = [len(r.agents_created) for r in results]
@@ -144,7 +150,7 @@ class PatternLearner(PatternMemoryMixin):
                     "counts": agent_counts,
                 },
                 sample_size=len(results),
-            )
+            ),
         )
 
         return insights
@@ -157,6 +163,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of insights about tier performance
+
         """
         insights = []
         tier_stats = defaultdict(lambda: {"success": 0, "total": 0, "costs": []})
@@ -192,7 +199,7 @@ class PatternLearner(PatternMemoryMixin):
                             "total_runs": stats["total"],
                         },
                         sample_size=stats["total"],
-                    )
+                    ),
                 )
 
         return insights
@@ -205,6 +212,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of insights about costs
+
         """
         insights = []
 
@@ -246,7 +254,7 @@ class PatternLearner(PatternMemoryMixin):
                     "tier_breakdown": tier_breakdown,
                 },
                 sample_size=len(results),
-            )
+            ),
         )
 
         return insights
@@ -259,6 +267,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of insights about failures
+
         """
         insights = []
         failed_agents: dict[str, int] = defaultdict(int)
@@ -291,7 +300,7 @@ class PatternLearner(PatternMemoryMixin):
                             "failure_rate": failure_rate,
                         },
                         sample_size=total,
-                    )
+                    ),
                 )
 
         return insights
@@ -305,6 +314,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             List of recommendation strings
+
         """
         insights = self.analyze_patterns(template_id=template_id, min_confidence=min_confidence)
 
@@ -318,12 +328,12 @@ class PatternLearner(PatternMemoryMixin):
 
                 if success_rate >= 0.9:
                     recommendations.append(
-                        f"{role} works well at {tier} tier ({success_rate:.0%} success)"
+                        f"{role} works well at {tier} tier ({success_rate:.0%} success)",
                     )
                 elif success_rate < 0.6:
                     recommendations.append(
                         f"{role} struggles at {tier} tier "
-                        f"({success_rate:.0%} success) - consider upgrading tier"
+                        f"({success_rate:.0%} success) - consider upgrading tier",
                     )
 
             elif insight.insight_type == "cost_analysis":
@@ -335,7 +345,7 @@ class PatternLearner(PatternMemoryMixin):
                 failure_rate = insight.data["failure_rate"]
                 if failure_rate > 0.3:
                     recommendations.append(
-                        f"{role} needs attention ({failure_rate:.0%} failure rate)"
+                        f"{role} needs attention ({failure_rate:.0%} failure rate)",
                     )
 
         return recommendations
@@ -348,6 +358,7 @@ class PatternLearner(PatternMemoryMixin):
 
         Returns:
             Dictionary with analytics data
+
         """
         insights = self.analyze_patterns(template_id=template_id, min_confidence=0.0)
 

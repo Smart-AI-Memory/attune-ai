@@ -23,7 +23,7 @@ from typing import Any
 from .base import BaseWorkflow, ModelTier
 from .context import WorkflowContext
 from .refactor_plan_report import (
-    format_refactor_plan_report,  # noqa: F401 - re-exported
+    format_refactor_plan_report,
     main,  # noqa: F401 - re-exported
 )
 from .services import ParsingService, PromptService
@@ -392,7 +392,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
                                         ),
                                         "is_hotspot": True,
                                         "source": "crew",
-                                    }
+                                    },
                                 )
                     except Exception as e:
                         logger.debug(f"Crew analysis failed for {hotspot}: {e}")

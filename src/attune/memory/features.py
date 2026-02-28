@@ -57,6 +57,7 @@ class MemoryFeatures:
 
         >>> # Require Redis or raise helpful error
         >>> MemoryFeatures.require_redis("Short-term memory")
+
     """
 
     @staticmethod
@@ -65,6 +66,7 @@ class MemoryFeatures:
 
         Returns:
             True if the redis package is importable, False otherwise.
+
         """
         try:
             importlib.import_module("redis")
@@ -82,6 +84,7 @@ class MemoryFeatures:
 
         Returns:
             True if Redis server responds to ping, False otherwise.
+
         """
         if not MemoryFeatures.is_redis_available():
             return False
@@ -94,7 +97,7 @@ class MemoryFeatures:
         except ImportError:
             logger.debug("redis module not installed")
             return False
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Redis availability is optional; any failure means unavailable
             logger.debug("Redis ping failed", exc_info=True)
             return False
@@ -113,6 +116,7 @@ class MemoryFeatures:
             >>> info = MemoryFeatures.get_feature_status("short_term")
             >>> if info.status == FeatureStatus.MISSING_DEPENDENCY:
             ...     print(f"Install: {info.install_command}")
+
         """
         redis_features = {
             "short_term": "Short-term memory (Redis-based)",
@@ -174,6 +178,7 @@ class MemoryFeatures:
 
         Returns:
             True if Redis is available, False otherwise.
+
         """
         info = MemoryFeatures.get_feature_status("short_term")
         return info.status == FeatureStatus.AVAILABLE
@@ -192,13 +197,14 @@ class MemoryFeatures:
             >>> def __init__(self):
             ...     MemoryFeatures.require_redis("Short-term memory")
             ...     # ... rest of init
+
         """
         info = MemoryFeatures.get_feature_status("short_term")
         if info.status != FeatureStatus.AVAILABLE:
             raise ImportError(
                 f"{feature_name} requires Redis.\n"
                 f"Status: {info.message}\n"
-                f"Install: {info.install_command}"
+                f"Install: {info.install_command}",
             )
 
     @staticmethod
@@ -212,6 +218,7 @@ class MemoryFeatures:
             >>> features = MemoryFeatures.list_all_features()
             >>> for name, info in features.items():
             ...     print(f"{name}: {info.status.value}")
+
         """
         features = [
             # Redis-dependent features

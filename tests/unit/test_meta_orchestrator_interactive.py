@@ -142,7 +142,10 @@ class TestConfidenceScoring:
         assert confidence < 0.9, "Complex task should reduce confidence"
 
     def test_confidence_boost_anthropic_patterns(
-        self, orchestrator, simple_requirements, test_agent
+        self,
+        orchestrator,
+        simple_requirements,
+        test_agent,
     ):
         """Test confidence boost for Anthropic patterns."""
         # Test tool-enhanced pattern
@@ -209,7 +212,10 @@ class TestInteractiveMode:
     """Tests for analyze_and_compose_interactive() method."""
 
     def test_high_confidence_automatic_execution(
-        self, orchestrator, simple_requirements, test_agent
+        self,
+        orchestrator,
+        simple_requirements,
+        test_agent,
     ):
         """Test that high confidence proceeds automatically without prompting."""
         with patch.object(orchestrator, "_analyze_task", return_value=simple_requirements):
@@ -222,7 +228,8 @@ class TestInteractiveMode:
                     # Should NOT call _prompt_user_for_approach
                     with patch.object(orchestrator, "_prompt_user_for_approach") as mock_prompt:
                         plan = orchestrator.analyze_and_compose_interactive(
-                            task="Simple test task", context={}
+                            task="Simple test task",
+                            context={},
                         )
 
                         mock_prompt.assert_not_called()
@@ -246,7 +253,8 @@ class TestInteractiveMode:
                         return_value=mock_plan,
                     ) as mock_prompt:
                         plan = orchestrator.analyze_and_compose_interactive(
-                            task="Complex ambiguous task", context={}
+                            task="Complex ambiguous task",
+                            context={},
                         )
 
                         mock_prompt.assert_called_once()
@@ -284,7 +292,10 @@ class TestUserPrompting:
     """Tests for _prompt_user_for_approach() method."""
 
     def test_graceful_degradation_without_ask_user_question(
-        self, orchestrator, simple_requirements, test_agent
+        self,
+        orchestrator,
+        simple_requirements,
+        test_agent,
     ):
         """Test fallback when AskUserQuestion is not available.
 
@@ -313,7 +324,10 @@ class TestInteractiveTeamBuilder:
     """Tests for _interactive_team_builder() method."""
 
     def test_graceful_degradation_uses_defaults(
-        self, orchestrator, simple_requirements, test_agent
+        self,
+        orchestrator,
+        simple_requirements,
+        test_agent,
     ):
         """Test that team builder falls back to defaults when tool unavailable.
 
@@ -340,7 +354,10 @@ class TestPatternChooserWizard:
     """Tests for _pattern_chooser_wizard() method."""
 
     def test_graceful_degradation_without_ask_user_question(
-        self, orchestrator, simple_requirements, test_agent
+        self,
+        orchestrator,
+        simple_requirements,
+        test_agent,
     ):
         """Test fallback when AskUserQuestion is not available.
 
@@ -387,7 +404,7 @@ class TestPatternDescriptions:
                     "agent" in description.lower(),
                     "branching" in description.lower(),
                     "if" in description.lower(),
-                ]
+                ],
             ), f"Pattern {pattern.value} has insufficient description: {description}"
 
     def test_anthropic_patterns_descriptions(self, orchestrator):
@@ -396,7 +413,7 @@ class TestPatternDescriptions:
         assert "tool" in tool_desc.lower()
 
         cached_desc = orchestrator._get_pattern_description(
-            CompositionPattern.PROMPT_CACHED_SEQUENTIAL
+            CompositionPattern.PROMPT_CACHED_SEQUENTIAL,
         )
         assert "cached" in cached_desc.lower() or "cache" in cached_desc.lower()
 

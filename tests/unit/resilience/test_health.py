@@ -51,7 +51,9 @@ class TestHealthCheckResult:
     def test_create_healthy_result(self):
         """Test creating a healthy check result."""
         result = HealthCheckResult(
-            name="test_check", status=HealthStatus.HEALTHY, message="All good"
+            name="test_check",
+            status=HealthStatus.HEALTHY,
+            message="All good",
         )
 
         assert result.name == "test_check"
@@ -91,7 +93,10 @@ class TestSystemHealth:
         ]
 
         health = SystemHealth(
-            status=HealthStatus.HEALTHY, checks=checks, version="1.0.0", uptime_seconds=3600
+            status=HealthStatus.HEALTHY,
+            checks=checks,
+            version="1.0.0",
+            uptime_seconds=3600,
         )
 
         assert health.status == HealthStatus.HEALTHY

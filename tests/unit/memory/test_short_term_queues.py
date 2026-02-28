@@ -41,13 +41,17 @@ class TestTaskQueues:
     def test_queue_push_returns_queue_length(self, memory, contributor_creds):
         """Test queue_push returns the new queue length."""
         length = memory.queue_push(
-            "tasks", {"type": "analyze", "file": "main.py"}, contributor_creds
+            "tasks",
+            {"type": "analyze", "file": "main.py"},
+            contributor_creds,
         )
 
         assert length == 1
 
         length = memory.queue_push(
-            "tasks", {"type": "test", "file": "test_main.py"}, contributor_creds
+            "tasks",
+            {"type": "test", "file": "test_main.py"},
+            contributor_creds,
         )
 
         assert length == 2
@@ -292,7 +296,10 @@ class TestTaskQueues:
 
         # Add urgent task with priority=True
         memory.queue_push(
-            queue_name, {"priority": "urgent", "id": "urgent"}, contributor_creds, priority=True
+            queue_name,
+            {"priority": "urgent", "id": "urgent"},
+            contributor_creds,
+            priority=True,
         )
 
         # Pop - should get urgent first

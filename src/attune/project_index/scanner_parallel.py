@@ -43,6 +43,7 @@ def _analyze_file_worker(
 
     Returns:
         FileRecord for the analyzed file, or None if analysis fails
+
     """
     from pathlib import Path
 
@@ -83,6 +84,7 @@ class ParallelProjectScanner(ProjectScanner):
         >>> scanner = ParallelProjectScanner(project_root=".", workers=4)
         >>> records, summary = scanner.scan()
         >>> print(f"Scanned {summary.total_files} files")
+
     """
 
     def __init__(
@@ -100,6 +102,7 @@ class ParallelProjectScanner(ProjectScanner):
                 None (default): Use all available CPUs
                 1: Sequential processing (same as ProjectScanner)
                 N: Use N worker processes
+
         """
         super().__init__(project_root, config)
         self.workers = workers or mp.cpu_count()
@@ -125,6 +128,7 @@ class ParallelProjectScanner(ProjectScanner):
         Note:
             Dependency analysis is always sequential (after file analysis).
             Parallel processing only applies to file analysis phase.
+
         """
         records: list[FileRecord] = []
 
@@ -171,6 +175,7 @@ class ParallelProjectScanner(ProjectScanner):
         Note:
             Uses multiprocessing.Pool with chunksize optimization.
             Chunksize is calculated to balance overhead vs parallelism.
+
         """
         # Serialize configuration for workers
         config_dict = {
@@ -228,6 +233,7 @@ def compare_sequential_vs_parallel(project_root: str = ".", workers: int = 4) ->
         >>> results = compare_sequential_vs_parallel(workers=4)
         >>> print(f"Speedup: {results['speedup']:.2f}x")
         Speedup: 3.74x
+
     """
     import time
 

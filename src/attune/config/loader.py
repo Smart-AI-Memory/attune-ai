@@ -39,6 +39,7 @@ class ConfigLoader:
 
         Args:
             config_path: Explicit config path. If None, searches default locations.
+
         """
         self._explicit_path = Path(config_path).expanduser() if config_path else None
         self._loaded_path: Path | None = None
@@ -55,6 +56,7 @@ class ConfigLoader:
 
         Returns:
             Path to configuration file if found, None otherwise.
+
         """
         for path_str in CONFIG_SEARCH_PATHS:
             path = Path(path_str).expanduser()
@@ -71,6 +73,7 @@ class ConfigLoader:
 
         Returns:
             Path to ~/.attune/config.json
+
         """
         return Path("~/.attune/config.json").expanduser()
 
@@ -79,6 +82,7 @@ class ConfigLoader:
 
         Returns:
             Path to config file if loaded or explicit, None otherwise.
+
         """
         return self._loaded_path or self._explicit_path
 
@@ -95,6 +99,7 @@ class ConfigLoader:
         Raises:
             ValueError: If explicit path doesn't exist.
             json.JSONDecodeError: If config file is malformed.
+
         """
         # Determine path
         if self._explicit_path:
@@ -136,6 +141,7 @@ class ConfigLoader:
         Raises:
             ValueError: If path is invalid or targets system directory.
             PermissionError: If insufficient permissions.
+
         """
         # Determine save path
         if path:
@@ -189,6 +195,7 @@ class ConfigLoader:
 
         Returns:
             Configuration with environment overrides applied.
+
         """
         for key, value in os.environ.items():
             if not key.startswith(ENV_PREFIX):
@@ -232,6 +239,7 @@ class ConfigLoader:
 
         Returns:
             Current UnifiedConfig.
+
         """
         if self._config is None:
             return self.load()
@@ -247,6 +255,7 @@ def get_loader() -> ConfigLoader:
 
     Returns:
         Global ConfigLoader singleton.
+
     """
     global _global_loader
     if _global_loader is None:
@@ -262,6 +271,7 @@ def load_unified_config(path: str | Path | None = None) -> UnifiedConfig:
 
     Returns:
         Loaded UnifiedConfig.
+
     """
     loader = ConfigLoader(config_path=path)
     return loader.load()
@@ -276,5 +286,6 @@ def save_unified_config(config: UnifiedConfig, path: str | Path | None = None) -
 
     Returns:
         Path where configuration was saved.
+
     """
     return get_loader().save(config, Path(path) if path else None)

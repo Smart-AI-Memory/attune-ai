@@ -43,6 +43,7 @@ class TestGenCoverageMixin:
 
         Returns:
             CoverageResult with coverage metrics and missing lines
+
         """
         from .autonomous_test_gen import CoverageResult
 
@@ -70,7 +71,10 @@ class TestGenCoverageMixin:
             if not coverage_json_path.exists():
                 logger.warning("Coverage JSON not generated")
                 return CoverageResult(
-                    coverage=0.0, missing_lines=[], total_statements=0, covered_statements=0
+                    coverage=0.0,
+                    missing_lines=[],
+                    total_statements=0,
+                    covered_statements=0,
                 )
 
             with open(coverage_json_path) as f:
@@ -87,7 +91,10 @@ class TestGenCoverageMixin:
             if not file_coverage:
                 logger.warning(f"No coverage data found for {source_file}")
                 return CoverageResult(
-                    coverage=0.0, missing_lines=[], total_statements=0, covered_statements=0
+                    coverage=0.0,
+                    missing_lines=[],
+                    total_statements=0,
+                    covered_statements=0,
                 )
 
             # Extract metrics
@@ -97,7 +104,7 @@ class TestGenCoverageMixin:
             missing_lines = file_coverage["missing_lines"]
 
             logger.info(
-                f"Coverage: {coverage_pct:.1%} ({covered_statements}/{total_statements} statements)"
+                f"Coverage: {coverage_pct:.1%} ({covered_statements}/{total_statements} statements)",
             )
 
             return CoverageResult(
@@ -110,12 +117,18 @@ class TestGenCoverageMixin:
         except subprocess.TimeoutExpired:
             logger.error("Coverage analysis timeout")
             return CoverageResult(
-                coverage=0.0, missing_lines=[], total_statements=0, covered_statements=0
+                coverage=0.0,
+                missing_lines=[],
+                total_statements=0,
+                covered_statements=0,
             )
         except Exception as e:
             logger.error(f"Coverage analysis error: {e}", exc_info=True)
             return CoverageResult(
-                coverage=0.0, missing_lines=[], total_statements=0, covered_statements=0
+                coverage=0.0,
+                missing_lines=[],
+                total_statements=0,
+                covered_statements=0,
             )
 
     def _extract_uncovered_lines(self, source_file: Path, missing_lines: list[int]) -> str:
@@ -127,6 +140,7 @@ class TestGenCoverageMixin:
 
         Returns:
             Formatted string with uncovered code sections
+
         """
         if not missing_lines:
             return "No uncovered lines"
@@ -196,6 +210,7 @@ class TestGenCoverageMixin:
 
         Returns:
             Final test content with improved coverage or None if failed
+
         """
         import os
 
@@ -205,7 +220,7 @@ class TestGenCoverageMixin:
             return None
 
         logger.info(
-            f"📊 Phase 3: Coverage-guided generation enabled (target: {self.target_coverage:.0%})"
+            f"📊 Phase 3: Coverage-guided generation enabled (target: {self.target_coverage:.0%})",
         )
 
         test_content = initial_test_content
@@ -214,7 +229,7 @@ class TestGenCoverageMixin:
 
         for iteration in range(max_coverage_iterations):
             logger.info(
-                f"📈 Coverage iteration {iteration + 1}/{max_coverage_iterations} for {module_name}"
+                f"📈 Coverage iteration {iteration + 1}/{max_coverage_iterations} for {module_name}",
             )
 
             # Write current tests
@@ -225,7 +240,7 @@ class TestGenCoverageMixin:
             coverage_result = self._run_coverage_analysis(test_file, source_file)
 
             logger.info(
-                f"Current coverage: {coverage_result.coverage:.1%}, target: {self.target_coverage:.0%}"
+                f"Current coverage: {coverage_result.coverage:.1%}, target: {self.target_coverage:.0%}",
             )
 
             # Check if target reached
@@ -240,7 +255,8 @@ class TestGenCoverageMixin:
 
             # Identify uncovered code
             uncovered_code = self._extract_uncovered_lines(
-                source_file, coverage_result.missing_lines
+                source_file,
+                coverage_result.missing_lines,
             )
 
             # Ask Claude to add tests for uncovered lines
@@ -283,7 +299,7 @@ Return ONLY the complete Python test file with additions, no explanations."""
                         {"type": "text", "text": f"Current tests:\n```python\n{test_content}\n```"},
                         {"type": "text", "text": refinement_prompt},
                     ],
-                }
+                },
             ]
 
             # Call LLM for coverage improvement

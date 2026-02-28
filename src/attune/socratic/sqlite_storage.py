@@ -30,6 +30,7 @@ class SQLiteStorage(StorageBackend):
         >>> storage = SQLiteStorage(".attune/socratic.db")
         >>> storage.save_session(session)
         >>> sessions = storage.list_sessions(state=SessionState.COMPLETED)
+
     """
 
     def __init__(self, db_path: str = ".attune/socratic.db"):
@@ -37,6 +38,7 @@ class SQLiteStorage(StorageBackend):
 
         Args:
             db_path: Path to SQLite database file
+
         """
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +96,7 @@ class SQLiteStorage(StorageBackend):
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_evaluations_blueprint ON evaluations(blueprint_id);
-            """
+            """,
             )
 
     def save_session(self, session: SocraticSession) -> None:
@@ -126,7 +128,8 @@ class SQLiteStorage(StorageBackend):
         """Load session from database."""
         with self._get_connection() as conn:
             row = conn.execute(
-                "SELECT data FROM sessions WHERE session_id = ?", (session_id,)
+                "SELECT data FROM sessions WHERE session_id = ?",
+                (session_id,),
             ).fetchone()
 
             if row:
@@ -197,7 +200,8 @@ class SQLiteStorage(StorageBackend):
         """Load blueprint from database."""
         with self._get_connection() as conn:
             row = conn.execute(
-                "SELECT data FROM blueprints WHERE blueprint_id = ?", (blueprint_id,)
+                "SELECT data FROM blueprints WHERE blueprint_id = ?",
+                (blueprint_id,),
             ).fetchone()
 
             if row:

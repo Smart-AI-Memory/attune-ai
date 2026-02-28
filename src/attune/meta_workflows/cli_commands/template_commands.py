@@ -57,13 +57,13 @@ def list_templates(
 
         console.print(f"\n[bold]Available Templates[/bold] ({len(template_ids)} total)")
         console.print(
-            f"  [cyan]📦 Built-in:[/cyan] {builtin_count}  [green]👤 User:[/green] {user_count}\n"
+            f"  [cyan]📦 Built-in:[/cyan] {builtin_count}  [green]👤 User:[/green] {user_count}\n",
         )
 
         # Show migration hint for users coming from Crew workflows
         if builtin_count > 0:
             console.print(
-                "[dim]💡 Tip: Built-in templates replace deprecated Crew workflows.[/dim]"
+                "[dim]💡 Tip: Built-in templates replace deprecated Crew workflows.[/dim]",
             )
             console.print("[dim]   See: empathy meta-workflow migrate --help[/dim]\n")
 
@@ -95,11 +95,11 @@ def list_templates(
                 # Add quick start command
                 info_lines.append("")
                 info_lines.append(
-                    f"[bold]Quick Start:[/bold] empathy meta-workflow run {template_id}"
+                    f"[bold]Quick Start:[/bold] empathy meta-workflow run {template_id}",
                 )
 
                 console.print(
-                    Panel("\n".join(info_lines), border_style="blue" if is_builtin else "green")
+                    Panel("\n".join(info_lines), border_style="blue" if is_builtin else "green"),
                 )
                 console.print()
 
@@ -167,7 +167,7 @@ def inspect_template(
         # Agent Composition Rules (optional)
         if show_rules:
             console.print(
-                f"\n[bold]Agent Composition Rules:[/bold] ({len(template.agent_composition_rules)})\n"
+                f"\n[bold]Agent Composition Rules:[/bold] ({len(template.agent_composition_rules)})\n",
             )
 
             for i, rule in enumerate(template.agent_composition_rules, 1):
@@ -192,7 +192,7 @@ def inspect_template(
         console.print(f"  Questions: {len(template.form_schema.questions)}")
         console.print(f"  Agent Rules: {len(template.agent_composition_rules)}")
         console.print(
-            f"  Estimated Cost: ${template.estimated_cost_range[0]:.2f}-${template.estimated_cost_range[1]:.2f}"
+            f"  Estimated Cost: ${template.estimated_cost_range[0]:.2f}-${template.estimated_cost_range[1]:.2f}",
         )
         console.print()
 
@@ -248,6 +248,7 @@ def generate_plan_cmd(
         empathy meta-workflow plan release-prep --format skill --install
         empathy meta-workflow plan test-coverage-boost -o plan.md
         empathy meta-workflow plan manage-docs --format json
+
     """
     try:
         from attune.meta_workflows.plan_generator import generate_plan
@@ -312,7 +313,7 @@ def generate_plan_cmd(
             validated_skill_path = _validate_file_path(str(skill_path))
             validated_skill_path.write_text(plan_content)
             console.print(
-                f"\n[green]✓ Installed as Claude Code skill:[/green] {validated_skill_path}"
+                f"\n[green]✓ Installed as Claude Code skill:[/green] {validated_skill_path}",
             )
             console.print(f"\nRun with: [bold]/project:{template_id}[/bold]")
 

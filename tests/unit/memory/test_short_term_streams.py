@@ -45,7 +45,9 @@ class TestRedisStreams:
     def test_stream_append_returns_entry_id(self, memory, contributor_creds):
         """Test stream_append returns a valid entry ID."""
         entry_id = memory.stream_append(
-            "audit", {"action": "pattern_created", "pattern_id": "pat_001"}, contributor_creds
+            "audit",
+            {"action": "pattern_created", "pattern_id": "pat_001"},
+            contributor_creds,
         )
 
         assert entry_id is not None
@@ -59,7 +61,9 @@ class TestRedisStreams:
     def test_stream_append_validator_can_write(self, memory, validator_creds):
         """Test that VALIDATOR tier can write to streams."""
         entry_id = memory.stream_append(
-            "validation_log", {"action": "pattern_validated"}, validator_creds
+            "validation_log",
+            {"action": "pattern_validated"},
+            validator_creds,
         )
 
         assert entry_id is not None
@@ -140,7 +144,10 @@ class TestRedisStreams:
 
         # Read from the third entry
         entries = memory.stream_read(
-            "filtered_stream", contributor_creds, start_id=entry_ids[2], count=10
+            "filtered_stream",
+            contributor_creds,
+            start_id=entry_ids[2],
+            count=10,
         )
 
         # Should only get entries after start_id
@@ -190,7 +197,10 @@ class TestRedisStreams:
     def test_stream_read_new_nonexistent_stream(self, memory, contributor_creds):
         """Test stream_read_new on nonexistent stream."""
         entries = memory.stream_read_new(
-            "nonexistent_stream", contributor_creds, block_ms=0, count=10
+            "nonexistent_stream",
+            contributor_creds,
+            block_ms=0,
+            count=10,
         )
 
         assert entries == []

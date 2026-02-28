@@ -153,7 +153,9 @@ class TestCreateHeaderFromQuestion:
     def test_test_related_question(self):
         """Test header for test-related questions."""
         question = FormQuestion(
-            id="has_tests", text="Do you have tests?", type=QuestionType.BOOLEAN
+            id="has_tests",
+            text="Do you have tests?",
+            type=QuestionType.BOOLEAN,
         )
 
         header = create_header_from_question(question)

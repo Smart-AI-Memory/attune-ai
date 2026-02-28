@@ -80,7 +80,10 @@ class TestFailureAnalysis:
     def test_should_escalate_low_cqs(self):
         """Test escalation trigger on low CQS."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.50, coverage_percent=40.0, assertion_depth=2.0, confidence_score=0.60
+            test_pass_rate=0.50,
+            coverage_percent=40.0,
+            assertion_depth=2.0,
+            confidence_score=0.60,
         )
 
         assert analysis.should_escalate is True
@@ -88,7 +91,10 @@ class TestFailureAnalysis:
     def test_should_escalate_high_quality(self):
         """Test no escalation on high quality."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.90, coverage_percent=85.0, assertion_depth=7.0, confidence_score=0.95
+            test_pass_rate=0.90,
+            coverage_percent=85.0,
+            assertion_depth=7.0,
+            confidence_score=0.95,
         )
 
         assert analysis.should_escalate is False
@@ -108,7 +114,8 @@ class TestFailureAnalysis:
     def test_failure_severity_critical(self):
         """Test critical severity detection."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.25, syntax_errors=[SyntaxError(f"error {i}") for i in range(6)]
+            test_pass_rate=0.25,
+            syntax_errors=[SyntaxError(f"error {i}") for i in range(6)],
         )
 
         assert analysis.failure_severity == "CRITICAL"
@@ -122,7 +129,10 @@ class TestFailureAnalysis:
     def test_failure_severity_moderate(self):
         """Test moderate severity detection."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.75, coverage_percent=70.0, assertion_depth=5.0, confidence_score=0.80
+            test_pass_rate=0.75,
+            coverage_percent=70.0,
+            assertion_depth=5.0,
+            confidence_score=0.80,
         )
 
         # CQS = 0.4*75 + 0.25*70 + 0.2*50 + 0.15*80
@@ -130,7 +140,10 @@ class TestFailureAnalysis:
         # CQS < 70 but pass_rate >= 0.5, so HIGH severity
         # Let's adjust to get MODERATE (CQS 70-80, pass_rate >= 0.7)
         analysis = FailureAnalysis(
-            test_pass_rate=0.75, coverage_percent=75.0, assertion_depth=6.0, confidence_score=0.85
+            test_pass_rate=0.75,
+            coverage_percent=75.0,
+            assertion_depth=6.0,
+            confidence_score=0.85,
         )
 
         # CQS = 0.4*75 + 0.25*75 + 0.2*60 + 0.15*85
@@ -142,7 +155,10 @@ class TestFailureAnalysis:
     def test_failure_severity_low(self):
         """Test low severity (acceptable quality)."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.90, coverage_percent=85.0, assertion_depth=7.0, confidence_score=0.95
+            test_pass_rate=0.90,
+            coverage_percent=85.0,
+            assertion_depth=7.0,
+            confidence_score=0.95,
         )
 
         assert analysis.failure_severity == "LOW"
@@ -154,7 +170,10 @@ class TestTierResult:
     def test_quality_score_property(self):
         """Test quality_score property delegates to FailureAnalysis."""
         analysis = FailureAnalysis(
-            test_pass_rate=0.85, coverage_percent=78.0, assertion_depth=5.2, confidence_score=0.92
+            test_pass_rate=0.85,
+            coverage_percent=78.0,
+            assertion_depth=5.2,
+            confidence_score=0.92,
         )
 
         result = TierResult(
@@ -276,7 +295,9 @@ class TestEscalationConfig:
     def test_get_max_attempts(self):
         """Test get_max_attempts for each tier."""
         config = EscalationConfig(
-            cheap_max_attempts=3, capable_max_attempts=6, premium_max_attempts=1
+            cheap_max_attempts=3,
+            capable_max_attempts=6,
+            premium_max_attempts=1,
         )
 
         assert config.get_max_attempts(Tier.CHEAP) == 3

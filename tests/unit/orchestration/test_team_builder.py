@@ -273,7 +273,7 @@ class TestInstantiateAgent:
             {
                 "template_id": "nonexistent_template",
                 "role": "Fallback",
-            }
+            },
         )
 
         # Should still create agent with the provided role
@@ -285,7 +285,7 @@ class TestInstantiateAgent:
         agent = builder._instantiate_agent(
             {
                 "template_id": "code_reviewer",
-            }
+            },
         )
 
         assert agent.role == "Code Quality Reviewer"
@@ -297,7 +297,7 @@ class TestInstantiateAgent:
             {
                 "role": "SDK Agent",
                 "mode": "full_sdk",
-            }
+            },
         )
 
         assert agent.mode == SDKExecutionMode.FULL_SDK
@@ -309,7 +309,7 @@ class TestInstantiateAgent:
             {
                 "role": "Agent",
                 "mode": "invalid_mode",
-            }
+            },
         )
 
         assert agent.mode == SDKExecutionMode.TOOLS_ONLY
@@ -321,7 +321,7 @@ class TestInstantiateAgent:
             {
                 "agent_id": "my-custom-id",
                 "role": "Agent",
-            }
+            },
         )
 
         assert agent.agent_id == "my-custom-id"
@@ -364,7 +364,7 @@ class TestBuildQualityGates:
                     "threshold": 95.0,
                     "required": False,
                 },
-            }
+            },
         )
 
         assert len(gates) == 1
@@ -386,7 +386,7 @@ class TestBuildQualityGates:
                     "metric": "quality",
                     "threshold": 85.0,
                 },
-            }
+            },
         )
 
         assert len(gates) == 2

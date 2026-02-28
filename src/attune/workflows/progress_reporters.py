@@ -66,6 +66,7 @@ class ConsoleProgressReporter:
         Args:
             verbose: Show additional details (fallback info, errors)
             show_tokens: Include token counts in output
+
         """
         self.verbose = verbose
         self.show_tokens = show_tokens
@@ -77,6 +78,7 @@ class ConsoleProgressReporter:
 
         Args:
             update: Progress update from the tracker
+
         """
         # Track start time for elapsed calculation
         if self._start_time is None:
@@ -144,7 +146,7 @@ class ConsoleProgressReporter:
         if not self._stage_times:
             return
 
-        print("")
+        print()
         print("\u2500" * 50)
         print("Stage Summary:")
         for stage in update.stages:
@@ -203,10 +205,11 @@ class RichProgressReporter:
         Args:
             workflow_name: Name of the workflow for display
             stage_names: List of stage names for progress tracking
+
         """
         if not RICH_AVAILABLE:
             raise RuntimeError(
-                "Rich library required for RichProgressReporter. " "Install with: pip install rich"
+                "Rich library required for RichProgressReporter. Install with: pip install rich",
             )
 
         self.workflow_name = workflow_name
@@ -259,6 +262,7 @@ class RichProgressReporter:
 
         Args:
             update: Progress update from the tracker
+
         """
         self._current_stage = update.current_stage
         self._cost = update.cost_so_far
@@ -287,9 +291,10 @@ class RichProgressReporter:
 
         Returns:
             Rich Panel containing progress information
+
         """
         if not RICH_AVAILABLE or Panel is None or Table is None:
-            raise RuntimeError("Rich library not available. " "Install with: pip install rich")
+            raise RuntimeError("Rich library not available. Install with: pip install rich")
 
         # Build metrics table
         metrics = Table(show_header=False, box=None, padding=(0, 2))
@@ -362,6 +367,7 @@ def live_progress(
                 # ... do work ...
                 tracker.complete_stage(stage, cost=0.01)
             tracker.complete_workflow()
+
     """
     # Import here to avoid circular imports
 
@@ -381,7 +387,7 @@ def live_progress(
             reporter = RichProgressReporter(workflow_name, stage_names)
             tracker.add_callback(reporter.report)
             reporter.start()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Rich display is optional - fall back to console output
             reporter = None
             simple_reporter = ConsoleProgressReporter(verbose=False)

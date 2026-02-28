@@ -22,14 +22,10 @@ from __future__ import annotations
 
 import warnings
 from enum import Enum
-from typing import TYPE_CHECKING
 
 # Import unified types for conversion
 from attune.models import ModelProvider as UnifiedModelProvider
 from attune.models import ModelTier as UnifiedModelTier
-
-if TYPE_CHECKING:
-    pass
 
 
 class ModelTier(Enum):
@@ -111,6 +107,7 @@ def _build_provider_models() -> dict[ModelProvider, dict[ModelTier, str]]:
 
     Returns:
         Dictionary mapping ModelProvider -> ModelTier -> model_id
+
     """
     # Lazy import to avoid circular dependencies
     from attune.models import MODEL_REGISTRY
@@ -147,8 +144,8 @@ PROVIDER_MODELS: dict[ModelProvider, dict[ModelTier, str]] = _build_provider_mod
 
 # Expose all public symbols
 __all__ = [
-    "ModelTier",
-    "ModelProvider",
     "PROVIDER_MODELS",
+    "ModelProvider",
+    "ModelTier",
     "_build_provider_models",
 ]

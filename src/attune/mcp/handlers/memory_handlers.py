@@ -26,6 +26,7 @@ def get_memory(server: EmpathyMCPServer) -> Any:
 
     Raises:
         ImportError: If attune memory module is not available
+
     """
     if server._memory is None:
         from attune.memory import UnifiedMemory
@@ -43,6 +44,7 @@ async def handle_memory_store(server: EmpathyMCPServer, args: dict[str, Any]) ->
     Args:
         server: MCP server instance
         args: Must contain key and value; optional classification and pattern_type
+
     """
     try:
         memory = get_memory(server)
@@ -70,7 +72,7 @@ async def handle_memory_store(server: EmpathyMCPServer, args: dict[str, Any]) ->
                     pattern_type=pattern_type,
                 )
                 result["pattern_id"] = persist_result.get("pattern_id")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Pattern persistence is best-effort
                 logger.warning(f"Pattern persistence failed: {e}")
 
@@ -93,6 +95,7 @@ async def handle_memory_retrieve(server: EmpathyMCPServer, args: dict[str, Any])
     Args:
         server: MCP server instance
         args: Must contain key (key or pattern_id)
+
     """
     try:
         memory = get_memory(server)
@@ -108,7 +111,7 @@ async def handle_memory_retrieve(server: EmpathyMCPServer, args: dict[str, Any])
             pattern = memory.recall_pattern(key)
             if pattern:
                 return {"success": True, "key": key, "data": pattern, "source": "long_term"}
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Pattern recall may fail for non-pattern keys
             pass
 
@@ -131,6 +134,7 @@ async def handle_memory_search(server: EmpathyMCPServer, args: dict[str, Any]) -
     Args:
         server: MCP server instance
         args: Must contain query; optional pattern_type filter
+
     """
     try:
         memory = get_memory(server)
@@ -169,6 +173,7 @@ async def handle_memory_forget(server: EmpathyMCPServer, args: dict[str, Any]) -
     Args:
         server: MCP server instance
         args: Must contain key; optional scope (session/persistent/all)
+
     """
     try:
         memory = get_memory(server)
@@ -181,7 +186,7 @@ async def handle_memory_forget(server: EmpathyMCPServer, args: dict[str, Any]) -
             try:
                 memory.stash(key, None)  # Clear short-term
                 removed_from.append("session")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Short-term removal is best-effort
                 logger.debug(f"Short-term removal failed for {key}: {e}")
 
@@ -190,7 +195,7 @@ async def handle_memory_forget(server: EmpathyMCPServer, args: dict[str, Any]) -
                 if hasattr(memory, "delete_pattern"):
                     memory.delete_pattern(key)
                     removed_from.append("persistent")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: Long-term removal is best-effort
                 logger.debug(f"Long-term removal failed for {key}: {e}")
 

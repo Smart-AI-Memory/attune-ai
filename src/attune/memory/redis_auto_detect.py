@@ -178,7 +178,7 @@ class RedisAutoDetector:
 
             client = redis.Redis(host=host, port=port, socket_connect_timeout=0.5)
             return client.ping()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Any failure means server is not reachable
             return False
 
@@ -345,10 +345,10 @@ class RedisAutoDetector:
         """
         if IS_MACOS:
             return "brew install redis && brew services start redis"
-        elif IS_LINUX:
+        if IS_LINUX:
             if shutil.which("apt"):
                 return "sudo apt install -y redis-server"
-            elif shutil.which("yum"):
+            if shutil.which("yum"):
                 return "sudo yum install -y redis"
             return "sudo apt install -y redis-server"
         return "docker run -d -p 6379:6379 --name attune-redis redis:alpine"
@@ -383,17 +383,16 @@ class RedisAutoDetector:
             if self._check_server_reachable():
                 print("  ✓ Redis installed and running")
                 self._save_preference("installed", True)
-                self._save_preference("install_method", install_cmd.split()[0])
+                self._save_preference("install_method", install_cmd.split(maxsplit=1)[0])
                 self._invalidate_cache()
                 print("=" * 60)
                 print()
                 return True
-            else:
-                print("  ✗ Redis installed but not responding")
-                print("  Try starting manually: redis-server")
-                print("=" * 60)
-                print()
-                return False
+            print("  ✗ Redis installed but not responding")
+            print("  Try starting manually: redis-server")
+            print("=" * 60)
+            print()
+            return False
 
         except subprocess.CalledProcessError as e:
             print(f"  ✗ Installation failed: {e}")

@@ -83,6 +83,7 @@ class MigrationConfig:
         remembered_choices: User's choices for specific workflows
         show_tips: Whether to show migration tips after workflow runs
         last_prompted: Track when workflows were last prompted
+
     """
 
     mode: str = MIGRATION_MODE_PROMPT
@@ -156,7 +157,9 @@ def is_interactive() -> bool:
 
 
 def show_migration_dialog(
-    old_name: str, new_name: str, kwargs: dict[str, Any]
+    old_name: str,
+    new_name: str,
+    kwargs: dict[str, Any],
 ) -> tuple[str, dict[str, Any], bool]:
     """Show interactive migration dialog to user.
 
@@ -167,6 +170,7 @@ def show_migration_dialog(
 
     Returns:
         Tuple of (chosen_name, chosen_kwargs, should_remember)
+
     """
     # Build the new command string
     flag_parts = []
@@ -211,14 +215,13 @@ def show_migration_dialog(
 
             if choice == "1":
                 return new_name, kwargs, False
-            elif choice == "2":
+            if choice == "2":
                 return old_name, {}, False
-            elif choice == "3":
+            if choice == "3":
                 return new_name, kwargs, True  # Remember: use new
-            elif choice == "4":
+            if choice == "4":
                 return old_name, {}, True  # Remember: use legacy
-            else:
-                print("Please enter 1, 2, 3, or 4")
+            print("Please enter 1, 2, 3, or 4")
         except (EOFError, KeyboardInterrupt):
             # User cancelled - default to new syntax
             print("\nDefaulting to new syntax...")
@@ -267,7 +270,7 @@ def show_deprecation_warning(old_name: str, new_name: str, kwargs: dict[str, Any
 
     logger.warning(
         f"'{old_name}' is deprecated. Use '{new_command}' instead. "
-        f"Set ATTUNE_NO_INTERACTIVE=1 to suppress this warning in CI."
+        f"Set ATTUNE_NO_INTERACTIVE=1 to suppress this warning in CI.",
     )
 
 
@@ -291,6 +294,7 @@ def resolve_workflow_migration(
 
     Raises:
         SystemExit: If workflow has been removed
+
     """
     # Not an aliased workflow - return as-is
     if workflow_name not in WORKFLOW_ALIASES:
@@ -317,7 +321,7 @@ def resolve_workflow_migration(
         if remembered == "new":
             logger.debug(f"Using remembered choice: {new_name}")
             return new_name, kwargs, True
-        elif remembered == "legacy":
+        if remembered == "legacy":
             logger.debug(f"Using remembered choice: {workflow_name} (legacy)")
             return workflow_name, {}, True
 
@@ -329,9 +333,8 @@ def resolve_workflow_migration(
         if config.mode == MIGRATION_MODE_LEGACY:
             logger.info(f"Using legacy workflow '{workflow_name}' (migration mode: legacy)")
             return workflow_name, {}, False
-        else:
-            show_deprecation_warning(workflow_name, new_name, kwargs)
-            return new_name, kwargs, True
+        show_deprecation_warning(workflow_name, new_name, kwargs)
+        return new_name, kwargs, True
 
     # Interactive mode
     if config.mode == MIGRATION_MODE_AUTO:
@@ -339,26 +342,28 @@ def resolve_workflow_migration(
         show_deprecation_warning(workflow_name, new_name, kwargs)
         return new_name, kwargs, True
 
-    elif config.mode == MIGRATION_MODE_LEGACY:
+    if config.mode == MIGRATION_MODE_LEGACY:
         # Use legacy behavior
         if is_deprecated:
             show_deprecation_warning(workflow_name, new_name, kwargs)
         return workflow_name, {}, False
 
-    else:  # MIGRATION_MODE_PROMPT
-        # Show interactive dialog
-        chosen_name, chosen_kwargs, remember = show_migration_dialog(
-            workflow_name, new_name, kwargs
-        )
+    # MIGRATION_MODE_PROMPT
+    # Show interactive dialog
+    chosen_name, chosen_kwargs, remember = show_migration_dialog(
+        workflow_name,
+        new_name,
+        kwargs,
+    )
 
-        if remember:
-            if chosen_name == new_name:
-                config.remember_choice(workflow_name, "new")
-            else:
-                config.remember_choice(workflow_name, "legacy")
+    if remember:
+        if chosen_name == new_name:
+            config.remember_choice(workflow_name, "new")
+        else:
+            config.remember_choice(workflow_name, "legacy")
 
-        was_migrated = chosen_name == new_name
-        return chosen_name, chosen_kwargs, was_migrated
+    was_migrated = chosen_name == new_name
+    return chosen_name, chosen_kwargs, was_migrated
 
 
 def show_migration_tip(old_name: str, new_name: str, kwargs: dict[str, Any]) -> None:
@@ -401,7 +406,7 @@ def get_canonical_workflow_name(workflow_name: str) -> str:
     """
     if workflow_name in WORKFLOW_ALIASES:
         new_name, _ = WORKFLOW_ALIASES[workflow_name]
-        return new_name if new_name else workflow_name
+        return new_name or workflow_name
     return workflow_name
 
 
@@ -410,6 +415,7 @@ def list_migrations() -> list[dict[str, Any]]:
 
     Returns:
         List of migration info dicts
+
     """
     migrations = []
     for old_name, (new_name, kwargs) in WORKFLOW_ALIASES.items():
@@ -427,7 +433,7 @@ def list_migrations() -> list[dict[str, Any]]:
                 "status": status,
                 "kwargs": {k: v for k, v in kwargs.items() if not k.startswith("_")},
                 "message": kwargs.get("_message", ""),
-            }
+            },
         )
 
     return migrations

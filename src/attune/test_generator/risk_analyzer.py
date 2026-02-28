@@ -113,7 +113,7 @@ class RiskAnalyzer:
 
         logger.info(
             f"Risk analysis complete: {len(analysis.critical_paths)} critical paths, "
-            f"{analysis.recommended_coverage}% coverage recommended"
+            f"{analysis.recommended_coverage}% coverage recommended",
         )
 
         return analysis

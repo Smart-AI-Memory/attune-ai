@@ -10,4 +10,4 @@ from attune.adaptive.task_complexity import (
     TaskComplexityScorer,
 )
 
-__all__ = ["TaskComplexity", "ComplexityScore", "TaskComplexityScorer"]
+__all__ = ["ComplexityScore", "TaskComplexity", "TaskComplexityScorer"]

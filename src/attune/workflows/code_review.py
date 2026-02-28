@@ -170,6 +170,7 @@ class CodeReviewWorkflow(
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         if xml_config is None:
             xml_config = {"enabled": False}

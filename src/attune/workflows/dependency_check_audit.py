@@ -40,6 +40,7 @@ def _load_cached_advisories() -> dict[str, list[dict]]:
 
     Returns:
         Dict mapping package names to list of vulnerability dicts.
+
     """
     cache_path = _get_cache_path()
     if not cache_path.exists():
@@ -75,6 +76,7 @@ def _run_pip_audit(target_path: Path) -> list[dict]:
 
     Returns:
         List of vulnerability dicts from pip-audit
+
     """
     # Check for requirements file
     req_file = target_path / "requirements.txt"
@@ -128,7 +130,7 @@ def _run_pip_audit(target_path: Path) -> list[dict]:
     except FileNotFoundError:
         logger.warning(
             "pip-audit not installed. Install with: pip install pip-audit. "
-            "Falling back to cached advisories."
+            "Falling back to cached advisories.",
         )
     except subprocess.TimeoutExpired:
         logger.warning("pip-audit timed out after 120s")
@@ -148,6 +150,7 @@ def _run_npm_audit(target_path: Path) -> list[dict]:
 
     Returns:
         List of vulnerability dicts from npm audit
+
     """
     package_json = target_path / "package.json"
     if not package_json.exists():
@@ -176,7 +179,7 @@ def _run_npm_audit(target_path: Path) -> list[dict]:
                         "via": vuln_data.get("via", []),
                         "range": vuln_data.get("range", ""),
                         "fixAvailable": vuln_data.get("fixAvailable", False),
-                    }
+                    },
                 )
 
             return vulnerabilities

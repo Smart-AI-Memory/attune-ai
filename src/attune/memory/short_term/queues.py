@@ -26,6 +26,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -63,6 +64,7 @@ class QueueManager:
         >>> creds = AgentCredentials("agent_1", AccessTier.CONTRIBUTOR)
         >>> queues.push("analysis_tasks", {"file": "main.py"}, creds)
         >>> task = queues.pop("analysis_tasks", creds, timeout=5)
+
     """
 
     PREFIX_QUEUE = "queue:"
@@ -72,6 +74,7 @@ class QueueManager:
 
         Args:
             base: BaseOperations instance for Redis client access
+
         """
         self._base = base
         self._mock_lists: dict[str, list[str]] = {}
@@ -101,6 +104,7 @@ class QueueManager:
             >>> task = {"type": "analyze", "file": "main.py"}
             >>> queues.push("agent_tasks", task, creds)
             1
+
         """
         if not credentials.can_stage():
             raise PermissionError(
@@ -155,6 +159,7 @@ class QueueManager:
             >>> task = queues.pop("agent_tasks", creds, timeout=5)
             >>> if task:
             ...     process(task["task"])
+
         """
         full_queue = f"{self.PREFIX_QUEUE}{queue_name}"
 
@@ -195,6 +200,7 @@ class QueueManager:
         Example:
             >>> count = queues.length("agent_tasks")
             >>> print(f"Tasks pending: {count}")
+
         """
         full_queue = f"{self.PREFIX_QUEUE}{queue_name}"
 
@@ -228,6 +234,7 @@ class QueueManager:
             >>> tasks = queues.peek("agent_tasks", creds, count=5)
             >>> for task in tasks:
             ...     print(task["task"]["type"])
+
         """
         full_queue = f"{self.PREFIX_QUEUE}{queue_name}"
 

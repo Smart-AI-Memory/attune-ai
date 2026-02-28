@@ -33,6 +33,7 @@ def _validate_webhook_url(url: str) -> str:
         - Cloud metadata services (169.254.169.254)
         - Private IP ranges (10.x, 172.16-31.x, 192.168.x)
         - Common internal service ports (Redis, PostgreSQL, etc.)
+
     """
     if not url or not isinstance(url, str):
         raise ValueError("webhook_url must be a non-empty string")
@@ -46,7 +47,7 @@ def _validate_webhook_url(url: str) -> str:
     # Only allow http and https schemes
     if parsed.scheme not in ("http", "https"):
         raise ValueError(
-            f"Invalid scheme '{parsed.scheme}'. Only http and https allowed for webhooks."
+            f"Invalid scheme '{parsed.scheme}'. Only http and https allowed for webhooks.",
         )
 
     # Check hostname exists
@@ -103,7 +104,7 @@ def _validate_webhook_url(url: str) -> str:
         if parsed.port in blocked_ports:
             raise ValueError(
                 f"Webhook URL cannot target internal service port {parsed.port}. "
-                "Use standard HTTP (80) or HTTPS (443) ports."
+                "Use standard HTTP (80) or HTTPS (443) ports.",
             )
 
     return url

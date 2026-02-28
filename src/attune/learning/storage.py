@@ -104,6 +104,7 @@ class LearnedSkillsStorage:
             storage_dir: Directory for storage files
             max_patterns_per_user: Maximum patterns to store per user
             max_skills_per_user: Maximum skills to store per user
+
         """
         self.storage_dir = Path(storage_dir)
         self._max_patterns = max_patterns_per_user
@@ -141,6 +142,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Pattern ID
+
         """
         self._ensure_storage()
         user_dir = self._get_user_dir(user_id)
@@ -182,6 +184,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of saved pattern IDs
+
         """
         return [self.save_pattern(user_id, p) for p in patterns]
 
@@ -198,6 +201,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Pattern or None if not found
+
         """
         patterns = self._load_patterns(user_id)
 
@@ -215,6 +219,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of patterns
+
         """
         patterns = self._load_patterns(user_id)
         return [ExtractedPattern.from_dict(p) for p in patterns]
@@ -232,6 +237,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of matching patterns
+
         """
         all_patterns = self.get_all_patterns(user_id)
         return [p for p in all_patterns if p.category == category]
@@ -249,6 +255,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of matching patterns
+
         """
         all_patterns = self.get_all_patterns(user_id)
         return [p for p in all_patterns if tag in p.tags]
@@ -266,6 +273,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of matching patterns
+
         """
         all_patterns = self.get_all_patterns(user_id)
         query_lower = query.lower()
@@ -287,6 +295,7 @@ class LearnedSkillsStorage:
 
         Returns:
             True if deleted
+
         """
         patterns = self._load_patterns(user_id)
         original_count = len(patterns)
@@ -340,6 +349,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Skill ID
+
         """
         self._ensure_storage()
         user_dir = self._get_user_dir(user_id)
@@ -378,6 +388,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Skill or None
+
         """
         skills = self._load_skills(user_id)
 
@@ -395,6 +406,7 @@ class LearnedSkillsStorage:
 
         Returns:
             List of skills
+
         """
         skills = self._load_skills(user_id)
         return [LearnedSkill.from_dict(s) for s in skills]
@@ -409,6 +421,7 @@ class LearnedSkillsStorage:
         Args:
             user_id: User identifier
             skill_id: Skill that was used
+
         """
         skills = self._load_skills(user_id)
 
@@ -429,6 +442,7 @@ class LearnedSkillsStorage:
 
         Returns:
             True if deleted
+
         """
         skills = self._load_skills(user_id)
         original_count = len(skills)
@@ -477,6 +491,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Summary dictionary
+
         """
         patterns = self.get_all_patterns(user_id)
         skills = self.get_all_skills(user_id)
@@ -506,6 +521,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Number of items cleared
+
         """
         user_dir = self._get_user_dir(user_id)
         count = 0
@@ -543,6 +559,7 @@ class LearnedSkillsStorage:
 
         Returns:
             Formatted markdown string
+
         """
         patterns = self.get_all_patterns(user_id)
 

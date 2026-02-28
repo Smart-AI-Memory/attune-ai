@@ -1926,11 +1926,15 @@ class TestMetaWorkflow:
         template = self._make_template()
         wf = MetaWorkflow(template=template, storage_dir=str(tmp_path / "exec"))
 
-        with patch.object(
-            wf.form_engine, "ask_questions", side_effect=RuntimeError("form engine error")
+        with (
+            patch.object(
+                wf.form_engine,
+                "ask_questions",
+                side_effect=RuntimeError("form engine error"),
+            ),
+            pytest.raises(ValueError, match="Meta-workflow execution failed"),
         ):
-            with pytest.raises(ValueError, match="Meta-workflow execution failed"):
-                wf.execute(use_defaults=True)
+            wf.execute(use_defaults=True)
 
     def test_execute_agents_mock_tier_strategies(self, tmp_path: Path) -> None:
         """Test mock execution handles all tier strategies."""
@@ -2371,7 +2375,7 @@ class TestCLIWorkflowCommands:
         mock_result.total_duration = 2.0
         mock_result.agents_created = [MagicMock()]
         mock_result.agent_results = [
-            MagicMock(role="Analyzer", success=True, tier_used="cheap", cost=0.05)
+            MagicMock(role="Analyzer", success=True, tier_used="cheap", cost=0.05),
         ]
         mock_result.form_responses = MagicMock()
 
@@ -2739,7 +2743,8 @@ class TestCLIWorkflowCommands:
         mock_unified.side_effect = RuntimeError("Redis not available")
 
         with patch.dict(
-            "sys.modules", {"attune.memory.unified": MagicMock(UnifiedMemory=mock_unified)}
+            "sys.modules",
+            {"attune.memory.unified": MagicMock(UnifiedMemory=mock_unified)},
         ):
             rw(
                 template_id="test",
@@ -2790,6 +2795,6 @@ class TestTTLStrategy:
         """Test TTLStrategy values match expected seconds."""
         assert TTLStrategy.WORKING_RESULTS.value == 3600
         assert TTLStrategy.STAGED_PATTERNS.value == 86400
-        assert TTLStrategy.COORDINATION.value == 300
+        # COORDINATION removed from TTLStrategy in v5.0
         assert TTLStrategy.CONFLICT_CONTEXT.value == 604800
         assert TTLStrategy.SESSION.value == 1800

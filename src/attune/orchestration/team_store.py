@@ -37,6 +37,7 @@ def _validate_team_path(path: str, allowed_dir: str) -> Path:
 
     Raises:
         ValueError: If path is invalid or outside allowed_dir.
+
     """
     if not path or not isinstance(path, str):
         raise ValueError("path must be a non-empty string")
@@ -68,6 +69,7 @@ def _sanitize_team_name(name: str) -> str:
 
     Raises:
         ValueError: If name is empty or contains null bytes.
+
     """
     if not name or not isinstance(name, str):
         raise ValueError("name must be a non-empty string")
@@ -97,6 +99,7 @@ class TeamSpecification:
         phases: Optional phase definitions for multi-phase strategies.
         description: Human-readable description.
         tags: Searchable tags.
+
     """
 
     name: str
@@ -117,7 +120,7 @@ class TeamSpecification:
             raise ValueError("agents list must not be empty")
         if self.strategy not in self.ALLOWED_STRATEGIES:
             raise ValueError(
-                f"strategy must be one of {self.ALLOWED_STRATEGIES}, got '{self.strategy}'"
+                f"strategy must be one of {self.ALLOWED_STRATEGIES}, got '{self.strategy}'",
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -125,6 +128,7 @@ class TeamSpecification:
 
         Returns:
             Dict representation.
+
         """
         return asdict(self)
 
@@ -137,6 +141,7 @@ class TeamSpecification:
 
         Returns:
             Reconstructed TeamSpecification.
+
         """
         # Remove ALLOWED_STRATEGIES if accidentally serialized
         data = {k: v for k, v in data.items() if k != "ALLOWED_STRATEGIES"}
@@ -154,6 +159,7 @@ class TeamStore:
     Args:
         storage_dir: Directory for team JSON files.
             Defaults to ``.attune/orchestration/teams``.
+
     """
 
     DEFAULT_DIR = ".attune/orchestration/teams"
@@ -172,6 +178,7 @@ class TeamStore:
 
         Returns:
             Path to the saved JSON file.
+
         """
         safe_name = _sanitize_team_name(spec.name)
         file_path = self._dir / f"{safe_name}.json"
@@ -192,6 +199,7 @@ class TeamStore:
 
         Returns:
             Specification if found, None otherwise.
+
         """
         if name in self._cache:
             return self._cache[name]
@@ -216,6 +224,7 @@ class TeamStore:
 
         Returns:
             List of all specifications.
+
         """
         specs: list[TeamSpecification] = []
         for json_file in sorted(self._dir.glob("*.json")):
@@ -235,6 +244,7 @@ class TeamStore:
 
         Returns:
             True if deleted, False if not found.
+
         """
         safe_name = _sanitize_team_name(name)
         file_path = self._dir / f"{safe_name}.json"

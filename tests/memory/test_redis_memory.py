@@ -12,16 +12,21 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+import warnings
+
 import pytest
 
-from attune.redis_memory import (
+from attune.memory.types import (
     AccessTier,
     AgentCredentials,
     ConflictContext,
-    RedisShortTermMemory,
     StagedPattern,
     TTLStrategy,
 )
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from attune.redis_memory import RedisShortTermMemory
 
 
 class TestAccessTier:
@@ -457,7 +462,7 @@ class TestTTLStrategy:
         """Test TTL values are reasonable"""
         assert TTLStrategy.WORKING_RESULTS.value == 3600  # 1 hour
         assert TTLStrategy.STAGED_PATTERNS.value == 86400  # 24 hours
-        assert TTLStrategy.COORDINATION.value == 300  # 5 minutes
+        # COORDINATION removed from TTLStrategy in v5.0
         assert TTLStrategy.SESSION.value == 1800  # 30 minutes
 
     def test_conflict_context_ttl_longer(self):

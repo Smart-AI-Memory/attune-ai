@@ -16,7 +16,9 @@ from attune.workflows.history_utils import (
 
 
 def _make_result(
-    success: bool = True, cost: float = 0.01, savings: float = 0.005
+    success: bool = True,
+    cost: float = 0.01,
+    savings: float = 0.005,
 ) -> WorkflowResult:
     """Create a minimal WorkflowResult for testing."""
     now = datetime.now()

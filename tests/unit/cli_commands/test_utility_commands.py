@@ -1,6 +1,6 @@
 """Tests for utility_commands.py.
 
-Tests for dashboard start, setup, validate, and version CLI commands.
+Tests for setup, validate, and version CLI commands.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -15,119 +15,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.cli_commands.utility_commands import (
-    cmd_dashboard_start,
     cmd_setup,
     cmd_validate,
     cmd_version,
 )
-
-# ---------------------------------------------------------------------------
-# cmd_dashboard_start
-# ---------------------------------------------------------------------------
-
-
-class TestCmdDashboardStart:
-    """Tests for cmd_dashboard_start."""
-
-    def _make_args(self, host: str = "0.0.0.0", port: int = 8000) -> types.SimpleNamespace:
-        """Create a mock args namespace for dashboard start."""
-        return types.SimpleNamespace(host=host, port=port)
-
-    @patch(
-        "attune.cli_commands.utility_commands.cmd_dashboard_start.__module__",
-        new="attune.cli_commands.utility_commands",
-    )
-    def test_success_returns_zero(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test dashboard starts successfully and returns 0."""
-        args = self._make_args()
-
-        with patch.dict(
-            "sys.modules",
-            {"attune.dashboard": MagicMock()},
-        ):
-            with patch(
-                "attune.cli_commands.utility_commands.cmd_dashboard_start",
-                wraps=cmd_dashboard_start,
-            ):
-                # Patch the late import inside the function
-                mock_dashboard = MagicMock()
-                mock_run = MagicMock()
-                mock_dashboard.run_standalone_dashboard = mock_run
-
-                with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-                    result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Starting Agent Coordination Dashboard" in captured.out
-        assert "0.0.0.0" in captured.out
-        assert "8000" in captured.out
-
-    def test_success_calls_run_with_host_and_port(self) -> None:
-        """Test that run_standalone_dashboard is called with correct host and port."""
-        args = self._make_args(host="127.0.0.1", port=9999)
-        mock_dashboard = MagicMock()
-        mock_run = MagicMock()
-        mock_dashboard.run_standalone_dashboard = mock_run
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        mock_run.assert_called_once_with(host="127.0.0.1", port=9999)
-
-    def test_keyboard_interrupt_returns_zero(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that KeyboardInterrupt returns 0 and prints stop message."""
-        args = self._make_args()
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard.side_effect = KeyboardInterrupt
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Dashboard stopped" in captured.out
-
-    def test_import_error_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that ImportError returns 1 with helpful message."""
-        args = self._make_args()
-
-        # Remove any cached module so the import inside the function fails
-        with patch.dict("sys.modules", {"attune.dashboard": None}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Dashboard not available" in captured.out
-        assert "pip install redis" in captured.out
-
-    def test_generic_exception_returns_one(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that a generic exception returns 1 and logs error."""
-        args = self._make_args()
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard.side_effect = RuntimeError("connection refused")
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            result = cmd_dashboard_start(args)
-
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "Error starting dashboard" in captured.out
-        assert "connection refused" in captured.out
-
-    def test_output_shows_custom_host_and_port(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that the printed URL uses the custom host and port."""
-        args = self._make_args(host="192.168.1.10", port=3000)
-        mock_dashboard = MagicMock()
-        mock_dashboard.run_standalone_dashboard = MagicMock()
-
-        with patch.dict("sys.modules", {"attune.dashboard": mock_dashboard}):
-            cmd_dashboard_start(args)
-
-        captured = capsys.readouterr()
-        assert "http://192.168.1.10:3000" in captured.out
-
 
 # ---------------------------------------------------------------------------
 # cmd_setup
@@ -142,7 +33,10 @@ class TestCmdSetup:
         return types.SimpleNamespace()
 
     def test_returns_one_when_source_dir_not_found(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test returns 1 when no command source directory is found."""
         args = self._make_args()
@@ -168,7 +62,10 @@ class TestCmdSetup:
         assert "Could not find Attune command files" in captured.out
 
     def test_returns_one_when_no_md_files_found(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test returns 1 when source dir exists but contains no .md files."""
         args = self._make_args()
@@ -198,7 +95,10 @@ class TestCmdSetup:
         assert "No command files found" in captured.out
 
     def test_copies_md_files_and_returns_zero(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successfully copies .md files and returns 0."""
         args = self._make_args()
@@ -231,7 +131,10 @@ class TestCmdSetup:
         assert not (target_dir / "not-a-command.txt").exists()
 
     def test_copies_agents_subdirectory(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test copies agent definitions from agents/ subdirectory."""
         args = self._make_args()
@@ -271,7 +174,10 @@ class TestCmdSetup:
         assert (target_agents / "security-agent.md").exists()
 
     def test_skips_existing_config_files(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that existing config files are not overwritten."""
         args = self._make_args()
@@ -306,7 +212,10 @@ class TestCmdSetup:
         assert '"existing": true' in content
 
     def test_copies_config_when_not_existing(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that config files are copied when they do not exist at target."""
         args = self._make_args()
@@ -335,7 +244,9 @@ class TestCmdSetup:
         assert '"source": true' in config_content
 
     def test_creates_target_directory(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that the target ~/.claude/commands/ directory is created."""
         args = self._make_args()
@@ -356,7 +267,10 @@ class TestCmdSetup:
         assert (home_dir / ".claude" / "commands").is_dir()
 
     def test_uses_importlib_resources_when_available(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that importlib.resources.files is used when available."""
         args = self._make_args()
@@ -384,7 +298,10 @@ class TestCmdSetup:
         assert "Installed: workflows.md" in captured.out
 
     def test_output_shows_total_counts(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that final output shows total counts of copied files."""
         args = self._make_args()
@@ -448,7 +365,8 @@ class TestCmdValidate:
         # Mock workflow registry
         mock_registry = {"code-review": {}, "test-gen": {}, "security": {}}
         with patch.dict(
-            "sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY=mock_registry)}
+            "sys.modules",
+            {"attune.workflows": MagicMock(WORKFLOW_REGISTRY=mock_registry)},
         ):
             result = cmd_validate(args)
 
@@ -700,7 +618,8 @@ class TestCmdVersion:
         assert "attune-ai 2.5.0" in captured.out
 
     def test_non_verbose_does_not_show_python_info(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Test non-verbose mode does not show Python info."""
         args = self._make_args(verbose=False)
@@ -747,7 +666,8 @@ class TestCmdVersion:
         assert "Dependencies: 3" in captured.out
 
     def test_verbose_handles_metadata_failure_gracefully(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Test verbose mode handles importlib.metadata failure gracefully."""
         args = self._make_args(verbose=True)
@@ -755,12 +675,14 @@ class TestCmdVersion:
         mock_cli_minimal = MagicMock()
         mock_cli_minimal.get_version.return_value = "2.5.0"
 
-        with patch.dict("sys.modules", {"attune.cli_minimal": mock_cli_minimal}):
-            with patch(
+        with (
+            patch.dict("sys.modules", {"attune.cli_minimal": mock_cli_minimal}),
+            patch(
                 "importlib.metadata.requires",
                 side_effect=Exception("metadata unavailable"),
-            ):
-                result = cmd_version(args)
+            ),
+        ):
+            result = cmd_version(args)
 
         # Should still return 0 -- failure is gracefully swallowed
         assert result == 0
