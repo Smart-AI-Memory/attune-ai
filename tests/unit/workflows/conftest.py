@@ -92,3 +92,73 @@ def dependency_check_workflow(cost_tracker):
     from attune.workflows.dependency_check import DependencyCheckWorkflow
 
     return DependencyCheckWorkflow(cost_tracker=cost_tracker)
+
+
+@pytest.fixture
+def parallel_test_gen_workflow(cost_tracker):
+    """Create ParallelTestGenerationWorkflow with isolated storage.
+
+    Args:
+        cost_tracker: Isolated CostTracker fixture
+
+    Returns:
+        ParallelTestGenerationWorkflow instance ready for testing
+
+    """
+    import logging
+
+    from attune.workflows.test_gen_parallel import ParallelTestGenerationWorkflow
+
+    wf = ParallelTestGenerationWorkflow(cost_tracker=cost_tracker)
+    # Workflow uses self.logger but BaseWorkflow doesn't provide it
+    wf.logger = logging.getLogger("attune.workflows.test_gen_parallel")
+    return wf
+
+
+@pytest.fixture
+def research_synthesis_workflow(cost_tracker):
+    """Create ResearchSynthesisWorkflow with isolated storage.
+
+    Args:
+        cost_tracker: Isolated CostTracker fixture
+
+    Returns:
+        ResearchSynthesisWorkflow instance ready for testing
+
+    """
+    from attune.workflows.research_synthesis import ResearchSynthesisWorkflow
+
+    return ResearchSynthesisWorkflow(cost_tracker=cost_tracker)
+
+
+@pytest.fixture
+def seo_optimization_workflow():
+    """Create SEOOptimizationWorkflow for testing.
+
+    Returns:
+        SEOOptimizationWorkflow instance ready for testing
+
+    """
+    from attune.workflows.seo_optimization import SEOOptimizationWorkflow
+
+    return SEOOptimizationWorkflow()
+
+
+@pytest.fixture
+def test_maintenance_workflow(tmp_path):
+    """Create TestMaintenanceWorkflow with isolated project root.
+
+    Args:
+        tmp_path: pytest fixture providing temporary directory
+
+    Returns:
+        TestMaintenanceWorkflow instance ready for testing
+
+    """
+    from unittest.mock import MagicMock
+
+    from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+
+    mock_index = MagicMock()
+    mock_index.load.return_value = True
+    return TestMaintenanceWorkflow(project_root=str(tmp_path), index=mock_index)

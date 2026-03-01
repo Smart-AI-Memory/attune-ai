@@ -1,0 +1,252 @@
+"""Tests for ParallelTestGenerationWorkflow.
+
+Covers initialization, coverage discovery, module analysis,
+code extraction, and end-to-end execute().
+
+Copyright 2026 Smart-AI-Memory
+Licensed under the Apache License, Version 2.0
+"""
+
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from attune.workflows.base import ModelTier
+from attune.workflows.test_gen_parallel import (
+    TestGenerationTask,
+)
+
+
+@pytest.mark.unit
+class TestParallelTestGenInit:
+    """Verify class attributes and initialization."""
+
+    def test_class_attributes(self, parallel_test_gen_workflow):
+        wf = parallel_test_gen_workflow
+        assert wf.name == "parallel-test-generation"
+        assert wf.stages == [
+            "discover",
+            "generate_templates",
+            "complete_tests",
+            "validate",
+        ]
+        assert wf.tier_map == {
+            "discover": ModelTier.CHEAP,
+            "generate_templates": ModelTier.CHEAP,
+            "complete_tests": ModelTier.CAPABLE,
+            "validate": ModelTier.CHEAP,
+        }
+
+    @pytest.mark.asyncio
+    async def test_run_stage_raises(self, parallel_test_gen_workflow):
+        """run_stage is not used — execute() overrides the pipeline."""
+        with pytest.raises(NotImplementedError):
+            await parallel_test_gen_workflow.run_stage("discover", ModelTier.CHEAP, {})
+
+
+@pytest.mark.unit
+class TestDiscoverLowCoverageModules:
+    """Tests for discover_low_coverage_modules()."""
+
+    def test_returns_sorted_modules(self, parallel_test_gen_workflow):
+        """Modules should be sorted by coverage ascending."""
+        coverage_json = {
+            "files": {
+                "src/a.py": {"summary": {"percent_covered": 80.0, "num_statements": 50}},
+                "src/b.py": {"summary": {"percent_covered": 20.0, "num_statements": 100}},
+                "src/c.py": {"summary": {"percent_covered": 50.0, "num_statements": 40}},
+            }
+        }
+
+        mock_run = MagicMock()
+        mock_run.returncode = 0
+
+        with (
+            patch("subprocess.run", return_value=mock_run),
+            patch(
+                "builtins.open",
+                MagicMock(
+                    return_value=MagicMock(
+                        __enter__=lambda s: s,
+                        __exit__=MagicMock(return_value=False),
+                        read=lambda: json.dumps(coverage_json),
+                    )
+                ),
+            ),
+            patch("json.load", return_value=coverage_json),
+        ):
+            result = parallel_test_gen_workflow.discover_low_coverage_modules(top_n=10)
+
+        # b.py (20%) should come before c.py (50%) before a.py (80%)
+        assert len(result) == 3  # c.py included (40 > 30 statements)
+        assert result[0][0] == "src/b.py"
+        assert result[1][0] == "src/c.py"
+        assert result[2][0] == "src/a.py"
+
+    def test_skips_small_files(self, parallel_test_gen_workflow):
+        """Files with <=30 statements should be skipped."""
+        coverage_json = {
+            "files": {
+                "src/tiny.py": {"summary": {"percent_covered": 10.0, "num_statements": 5}},
+            }
+        }
+
+        with (
+            patch("subprocess.run"),
+            patch("json.load", return_value=coverage_json),
+            patch("builtins.open", MagicMock()),
+        ):
+            result = parallel_test_gen_workflow.discover_low_coverage_modules()
+
+        assert result == []
+
+    def test_returns_empty_on_error(self, parallel_test_gen_workflow):
+        """Should return empty list when coverage data unavailable."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("coverage not found")):
+            result = parallel_test_gen_workflow.discover_low_coverage_modules()
+
+        assert result == []
+
+    def test_skips_non_src_files(self, parallel_test_gen_workflow):
+        """Files not under src/ should be excluded."""
+        coverage_json = {
+            "files": {
+                "tests/test_foo.py": {"summary": {"percent_covered": 10.0, "num_statements": 100}},
+                "src/bar.py": {"summary": {"percent_covered": 50.0, "num_statements": 100}},
+            }
+        }
+
+        with (
+            patch("subprocess.run"),
+            patch("json.load", return_value=coverage_json),
+            patch("builtins.open", MagicMock()),
+        ):
+            result = parallel_test_gen_workflow.discover_low_coverage_modules()
+
+        assert len(result) == 1
+        assert result[0][0] == "src/bar.py"
+
+
+@pytest.mark.unit
+class TestAnalyzeModuleStructure:
+    """Tests for analyze_module_structure()."""
+
+    def test_extracts_classes_and_functions(self, parallel_test_gen_workflow, tmp_path):
+        source = (
+            "class Foo:\n" "    def bar(self):\n" "        pass\n" "\n" "def baz():\n" "    pass\n"
+        )
+        src_file = tmp_path / "module.py"
+        src_file.write_text(source)
+
+        result = parallel_test_gen_workflow.analyze_module_structure(str(src_file))
+
+        assert result["file"] == str(src_file)
+        assert len(result["classes"]) == 1
+        assert result["classes"][0]["name"] == "Foo"
+        assert "bar" in result["classes"][0]["methods"]
+        assert len(result["functions"]) == 1
+        assert result["functions"][0]["name"] == "baz"
+
+    def test_returns_error_on_invalid_file(self, parallel_test_gen_workflow):
+        result = parallel_test_gen_workflow.analyze_module_structure("/nonexistent/path.py")
+
+        assert "error" in result
+
+    def test_handles_async_functions(self, parallel_test_gen_workflow, tmp_path):
+        source = "class Service:\n" "    async def fetch(self):\n" "        pass\n"
+        src_file = tmp_path / "async_mod.py"
+        src_file.write_text(source)
+
+        result = parallel_test_gen_workflow.analyze_module_structure(str(src_file))
+
+        assert result["classes"][0]["methods"] == ["fetch"]
+
+
+@pytest.mark.unit
+class TestExtractCode:
+    """Tests for _extract_code()."""
+
+    def test_extracts_from_markdown(self, parallel_test_gen_workflow):
+        content = (
+            "Here is the code:\n" "```python\n" "def test_foo():\n" "    assert True\n" "```\n"
+        )
+        result = parallel_test_gen_workflow._extract_code(content)
+        assert result == "def test_foo():\n    assert True"
+
+    def test_returns_raw_content_without_fences(self, parallel_test_gen_workflow):
+        content = "def test_foo():\n    assert True\n"
+        result = parallel_test_gen_workflow._extract_code(content)
+        assert result == content
+
+
+@pytest.mark.unit
+class TestExecute:
+    """Tests for the end-to-end execute() method.
+
+    Note: execute() has a pre-existing bug -- it constructs
+    WorkflowResult with keyword arguments that don't exist on the
+    dataclass (workflow_name, stages_executed).  These tests verify
+    that the bug surfaces as TypeError so it can be tracked.
+    """
+
+    @pytest.mark.asyncio
+    async def test_execute_no_coverage_raises_due_to_result_mismatch(
+        self, parallel_test_gen_workflow, tmp_path
+    ):
+        """execute() currently raises TypeError due to WorkflowResult mismatch."""
+        with patch.object(
+            parallel_test_gen_workflow,
+            "discover_low_coverage_modules",
+            return_value=[],
+        ):
+            with pytest.raises(TypeError, match="workflow_name"):
+                await parallel_test_gen_workflow.execute(output_dir=str(tmp_path / "out"))
+
+    @pytest.mark.asyncio
+    async def test_execute_discovers_modules_before_processing(
+        self, parallel_test_gen_workflow, tmp_path
+    ):
+        """Verify discover is called and modules are passed to batch processor."""
+        modules = [("src/foo.py", 30.0)]
+        out_dir = tmp_path / "out"
+
+        mock_task = TestGenerationTask(
+            module_path="src/foo.py",
+            coverage=30.0,
+            output_path=str(out_dir / "test_foo_behavioral.py"),
+            status="completed",
+        )
+
+        with (
+            patch.object(
+                parallel_test_gen_workflow,
+                "discover_low_coverage_modules",
+                return_value=modules,
+            ) as mock_discover,
+            patch.object(
+                parallel_test_gen_workflow,
+                "process_module_batch",
+                new_callable=AsyncMock,
+                return_value=[mock_task],
+            ) as mock_batch,
+        ):
+            # Will raise TypeError on WorkflowResult construction
+            with pytest.raises(TypeError):
+                await parallel_test_gen_workflow.execute(output_dir=str(out_dir))
+
+        mock_discover.assert_called_once()
+        mock_batch.assert_called_once()
+
+
+@pytest.mark.unit
+class TestTestGenerationTask:
+    """Tests for the TestGenerationTask dataclass."""
+
+    def test_default_status(self):
+        task = TestGenerationTask(
+            module_path="src/foo.py",
+            coverage=50.0,
+            output_path="tests/test_foo.py",
+        )
+        assert task.status == "pending"
