@@ -13,11 +13,14 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attune.meta_workflows.models import FormQuestion, QuestionType
 from attune.prompts import PromptContext
 from attune.workflows.compat import ModelTier
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow
 
 from ..base import BaseWizard, StepType, WizardConfig, WizardStep
 from ..session import WizardSession
@@ -36,6 +39,7 @@ def _has_findings(session: WizardSession) -> bool:
 
     Returns:
         True if high or critical findings exist.
+
     """
     scan_result = session.step_results.get("scan", {})
 
@@ -159,9 +163,10 @@ class SecurityWizard(BaseWizard):
 
         Args:
             **kwargs: Forwarded to ``BaseWizard.__init__``.
+
         """
         super().__init__(**kwargs)
-        self._security_workflow: Any = None
+        self._security_workflow: BaseWorkflow | None = None
         self._workflow_state: dict[str, Any] = {}
 
     # -----------------------------------------------------------------
@@ -173,6 +178,7 @@ class SecurityWizard(BaseWizard):
 
         Returns:
             SecurityAuditWorkflow instance, or None if unavailable.
+
         """
         if self._security_workflow is not None:
             return self._security_workflow
@@ -190,7 +196,7 @@ class SecurityWizard(BaseWizard):
         except ImportError:
             logger.warning("SecurityAuditWorkflow not available, using LLM fallback")
             return None
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Workflow is optional enhancement, not required
             logger.exception("Failed to initialize SecurityAuditWorkflow")
             return None
@@ -203,12 +209,13 @@ class SecurityWizard(BaseWizard):
 
         Args:
             step: A step with ``step_type == StepType.LLM_CALL``.
+
         """
         if step.id == "scan":
             try:
                 await self._run_scan_via_workflow()
                 return
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow scan failed, falling back to LLM")
 
@@ -216,7 +223,7 @@ class SecurityWizard(BaseWizard):
             try:
                 await self._run_fixes_via_workflow()
                 return
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow remediation failed, falling back to LLM")
 
@@ -231,6 +238,7 @@ class SecurityWizard(BaseWizard):
 
         Raises:
             RuntimeError: If the workflow is not available.
+
         """
         if self._session is None:
             raise RuntimeError("Wizard session not initialized")
@@ -290,6 +298,7 @@ class SecurityWizard(BaseWizard):
 
         Raises:
             RuntimeError: If the workflow is not available.
+
         """
         if self._session is None:
             raise RuntimeError("Wizard session not initialized")
@@ -337,6 +346,7 @@ class SecurityWizard(BaseWizard):
 
         Returns:
             PromptContext for the LLM call.
+
         """
         if self._session is None:
             raise RuntimeError("Wizard session not initialized")
@@ -392,6 +402,7 @@ class SecurityWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response or workflow output.
+
         """
         if self._session is None:
             raise RuntimeError("Wizard session not initialized")

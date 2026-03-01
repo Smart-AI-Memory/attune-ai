@@ -27,6 +27,7 @@ needs_api_key = pytest.mark.skipif(not HAS_API_KEY, reason="ANTHROPIC_API_KEY no
 class TestSonnetOpusFallback:
     """Test suite for Sonnet → Opus fallback mechanism."""
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_simple_tasks_use_sonnet(self):
         """Test that simple tasks succeed with Sonnet 4.5 (no fallback)."""
@@ -46,6 +47,7 @@ class TestSonnetOpusFallback:
         assert not response.metadata.get("fallback_used"), "Simple task should not trigger fallback"
         assert response.metadata.get("original_provider") == "anthropic"
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_complex_reasoning_may_use_opus(self):
         """Test that complex reasoning tasks may trigger Opus fallback."""
@@ -74,6 +76,7 @@ class TestSonnetOpusFallback:
         if response.metadata.get("fallback_used"):
             assert "Opus" in str(response.metadata.get("fallback_chain"))
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_telemetry_tracking(self):
         """Test that fallback events are tracked in telemetry."""
@@ -136,14 +139,17 @@ class TestSonnetOpusFallback:
 
         # Circuit should be open
         assert not breaker.is_available(
-            "anthropic", "capable"
+            "anthropic",
+            "capable",
         ), "Circuit should be open after threshold"
 
         # Other tiers should still be available
         assert breaker.is_available(
-            "anthropic", "premium"
+            "anthropic",
+            "premium",
         ), "Premium tier should still be available"
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_fallback_metadata_complete(self):
         """Test that fallback metadata is complete and accurate."""

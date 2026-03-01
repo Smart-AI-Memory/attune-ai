@@ -36,6 +36,7 @@ class PersistenceConfig:
         compress_exports: Compress exported data.
         index_patterns: Build indexes for pattern search.
         pattern_learning: Enable learning from sessions.
+
     """
 
     memory_enabled: bool = True

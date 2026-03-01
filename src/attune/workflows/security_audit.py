@@ -106,6 +106,7 @@ class SecurityAuditWorkflow(
                 subscription vs API routing based on codebase
                 size (default: True)
             **kwargs: Additional arguments passed to BaseWorkflow
+
         """
         super().__init__(**kwargs)
         self.patterns_dir = patterns_dir
@@ -133,6 +134,7 @@ class SecurityAuditWorkflow(
 
         Returns:
             WorkflowContext with prompt and parsing services.
+
         """
         if xml_config is None:
             xml_config = {"enabled": True, "enforce_response_xml": True}
@@ -180,6 +182,7 @@ class SecurityAuditWorkflow(
 
         Returns:
             Tuple of (should_skip, reason)
+
         """
         if stage_name == "remediate" and self.skip_remediate_if_clean:
             if not self._has_critical:

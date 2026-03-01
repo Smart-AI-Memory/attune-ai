@@ -433,7 +433,7 @@ class TestClaudeMdSync:
             f"{_CLAUDE_MD_START}\n"
             f"## Lessons Learned\n\n"
             f"- **2026-01-01** First lesson\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -498,7 +498,7 @@ class TestClaudeMdParse:
             f"## Lessons Learned\n\n"
             f"- **2026-02-20** First lesson\n"
             f"- **2026-02-21** Second lesson\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -522,7 +522,7 @@ class TestClaudeMdParse:
             f"{_CLAUDE_MD_START}\n"
             f"- **2026-02-20** Inside marker lesson\n"
             f"{_CLAUDE_MD_END}\n"
-            f"- **2026-03-01** After marker lesson\n"
+            f"- **2026-03-01** After marker lesson\n",
         )
 
         manager = _make_manager(
@@ -574,7 +574,7 @@ class TestClaudeMdIntegration:
             f"# Project\n\n"
             f"{_CLAUDE_MD_START}\n"
             f"- **2026-02-20** Claude MD only lesson\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -600,7 +600,7 @@ class TestClaudeMdIntegration:
             f"# Project\n\n"
             f"{_CLAUDE_MD_START}\n"
             f"- **2026-02-20** Shared lesson\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -630,7 +630,7 @@ class TestClaudeMdIntegration:
             f"{_CLAUDE_MD_START}\n"
             f"## Lessons Learned\n\n"
             f"- **2026-02-15** Hand-written by developer\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -654,7 +654,7 @@ class TestClaudeMdIntegration:
             f"{_CLAUDE_MD_START}\n"
             f"## Lessons Learned\n\n"
             f"- **2026-02-20** Only in claude md\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(
@@ -716,7 +716,7 @@ class TestClaudeMdIntegration:
             f"# Project\n\n"
             f"{_CLAUDE_MD_START}\n"
             f"- **2026-02-20** Should not appear\n"
-            f"{_CLAUDE_MD_END}\n"
+            f"{_CLAUDE_MD_END}\n",
         )
 
         manager = _make_manager(

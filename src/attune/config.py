@@ -27,7 +27,7 @@ except ImportError:
     YAML_AVAILABLE = False
 
 
-from attune.security.path_validation import _validate_file_path  # noqa: F401, E402
+from attune.security.path_validation import _validate_file_path
 
 
 @dataclass

@@ -18,10 +18,6 @@ Cost tracking:
     attune costs export -o FILE       Export costs to file
     attune costs reset --confirm      Clear all cost data
 
-Monitoring commands:
-    attune dashboard start            Start agent coordination dashboard
-                                      (opens web UI at http://localhost:8000)
-
 Utility commands:
     attune features                   Show available features and dependencies
     attune telemetry show             Display usage summary
@@ -54,22 +50,22 @@ import argparse
 import logging
 import sys
 
-from attune.cli_commands.cost_commands import (  # noqa: F401
+from attune.cli_commands.cost_commands import (
     cmd_costs,
     cmd_costs_export,
     cmd_costs_reset,
     cmd_costs_today,
 )
-from attune.cli_commands.memory_commands import (  # noqa: F401
+from attune.cli_commands.memory_commands import (
     cmd_forget,
     cmd_lessons,
     cmd_remember,
 )
-from attune.cli_commands.provider_commands import (  # noqa: F401
+from attune.cli_commands.provider_commands import (
     cmd_provider_set,
     cmd_provider_show,
 )
-from attune.cli_commands.telemetry_commands import (  # noqa: F401
+from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_agents,
     cmd_telemetry_export,
     cmd_telemetry_models,
@@ -79,14 +75,13 @@ from attune.cli_commands.telemetry_commands import (  # noqa: F401
     cmd_telemetry_show,
     cmd_telemetry_signals,
 )
-from attune.cli_commands.utility_commands import (  # noqa: F401
-    cmd_dashboard_start,
+from attune.cli_commands.utility_commands import (
     cmd_features,
     cmd_setup,
     cmd_validate,
     cmd_version,
 )
-from attune.cli_commands.workflow_commands import (  # noqa: F401
+from attune.cli_commands.workflow_commands import (
     cmd_workflow_info,
     cmd_workflow_list,
     cmd_workflow_run,
@@ -101,7 +96,7 @@ def get_version() -> str:
         from importlib.metadata import version
 
         return version("attune-ai")
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: Fallback for dev installs without metadata
         return "dev"
 
@@ -165,42 +160,67 @@ Documentation: https://smartaimemory.com/framework-docs/
     # telemetry show
     show_parser = telemetry_sub.add_parser("show", help="Display usage summary")
     show_parser.add_argument(
-        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
     )
 
     # telemetry savings
     savings_parser = telemetry_sub.add_parser("savings", help="Show cost savings")
     savings_parser.add_argument(
-        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
     )
 
     # telemetry export
     export_parser = telemetry_sub.add_parser("export", help="Export telemetry data")
     export_parser.add_argument("--output", "-o", required=True, help="Output file path")
     export_parser.add_argument(
-        "--format", "-f", choices=["csv", "json"], default="json", help="Output format"
+        "--format",
+        "-f",
+        choices=["csv", "json"],
+        default="json",
+        help="Output format",
     )
     export_parser.add_argument(
-        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
     )
 
     # telemetry routing-stats
     routing_stats_parser = telemetry_sub.add_parser(
-        "routing-stats", help="Show adaptive routing statistics"
+        "routing-stats",
+        help="Show adaptive routing statistics",
     )
     routing_stats_parser.add_argument("--workflow", "-w", help="Workflow name")
     routing_stats_parser.add_argument("--stage", "-s", help="Stage name")
     routing_stats_parser.add_argument(
-        "--days", "-d", type=int, default=7, help="Number of days (default: 7)"
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
     )
 
     # telemetry routing-check
     routing_check_parser = telemetry_sub.add_parser(
-        "routing-check", help="Check for tier upgrade recommendations"
+        "routing-check",
+        help="Check for tier upgrade recommendations",
     )
     routing_check_parser.add_argument("--workflow", "-w", help="Workflow name")
     routing_check_parser.add_argument(
-        "--all", "-a", action="store_true", help="Check all workflows"
+        "--all",
+        "-a",
+        action="store_true",
+        help="Check all workflows",
     )
 
     # telemetry models
@@ -212,7 +232,11 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Filter by provider",
     )
     models_parser.add_argument(
-        "--days", "-d", type=int, default=7, help="Number of days (default: 7)"
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
     )
 
     # telemetry agents
@@ -233,25 +257,10 @@ Documentation: https://smartaimemory.com/framework-docs/
     set_parser = provider_sub.add_parser("set", help="Set provider")
     set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
 
-    # --- Dashboard commands ---
-    dashboard_parser = subparsers.add_parser("dashboard", help="Agent coordination dashboard")
-    dashboard_sub = dashboard_parser.add_subparsers(dest="dashboard_command")
-
-    # dashboard start
-    start_parser = dashboard_sub.add_parser("start", help="Start dashboard web server")
-    start_parser.add_argument(
-        "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
-    )
-    start_parser.add_argument(
-        "--port", type=int, default=8000, help="Port to bind to (default: 8000)"
-    )
-    start_parser.add_argument(
-        "--build", action="store_true", help="Force rebuild the React dashboard UI"
-    )
-
     # --- Memory commands (quick lessons) ---
     remember_parser = subparsers.add_parser(
-        "remember", help='Save a lesson: attune remember "lesson text"'
+        "remember",
+        help='Save a lesson: attune remember "lesson text"',
     )
     remember_parser.add_argument("lesson_text", help="Lesson to remember")
     remember_parser.add_argument(
@@ -275,7 +284,11 @@ Documentation: https://smartaimemory.com/framework-docs/
     # --- Cost tracking commands ---
     costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
     costs_parser.add_argument(
-        "--days", "-d", type=int, default=7, help="Number of days (default: 7)"
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
     )
     costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
     costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
@@ -289,10 +302,18 @@ Documentation: https://smartaimemory.com/framework-docs/
     costs_export = costs_sub.add_parser("export", help="Export cost data")
     costs_export.add_argument("--output", "-o", required=True, help="Output file path")
     costs_export.add_argument(
-        "--format", "-f", choices=["csv", "json"], default="json", help="Output format"
+        "--format",
+        "-f",
+        choices=["csv", "json"],
+        default="json",
+        help="Output format",
     )
     costs_export.add_argument(
-        "--days", "-d", type=int, default=30, help="Number of days (default: 30)"
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
     )
 
     # costs reset
@@ -326,88 +347,99 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "workflow":
         if args.workflow_command == "list":
             return cmd_workflow_list(args)
-        elif args.workflow_command == "info":
+        if args.workflow_command == "info":
             return cmd_workflow_info(args)
-        elif args.workflow_command == "run":
+        if args.workflow_command == "run":
             return cmd_workflow_run(args)
-        else:
-            print("Usage: attune workflow {list|info|run}")
-            return 1
+        print("Usage: attune workflow {list|info|run}")
+        return 1
 
-    elif args.command == "telemetry":
+    if args.command == "telemetry":
         if args.telemetry_command == "show":
             return cmd_telemetry_show(args)
-        elif args.telemetry_command == "savings":
+        if args.telemetry_command == "savings":
             return cmd_telemetry_savings(args)
-        elif args.telemetry_command == "export":
+        if args.telemetry_command == "export":
             return cmd_telemetry_export(args)
-        elif args.telemetry_command == "routing-stats":
+        if args.telemetry_command == "routing-stats":
             return cmd_telemetry_routing_stats(args)
-        elif args.telemetry_command == "routing-check":
+        if args.telemetry_command == "routing-check":
             return cmd_telemetry_routing_check(args)
-        elif args.telemetry_command == "models":
+        if args.telemetry_command == "models":
             return cmd_telemetry_models(args)
-        elif args.telemetry_command == "agents":
+        if args.telemetry_command == "agents":
             return cmd_telemetry_agents(args)
-        elif args.telemetry_command == "signals":
+        if args.telemetry_command == "signals":
             return cmd_telemetry_signals(args)
-        else:
-            print(
-                "Usage: attune telemetry {show|savings|export|routing-stats|routing-check|models|agents|signals}"
-            )
-            return 1
+        print(
+            "Usage: attune telemetry {show|savings|export|routing-stats|routing-check|models|agents|signals}",
+        )
+        return 1
 
-    elif args.command == "provider":
+    if args.command == "provider":
         if args.provider_command == "show":
             return cmd_provider_show(args)
-        elif args.provider_command == "set":
+        if args.provider_command == "set":
             return cmd_provider_set(args)
-        else:
-            print("Usage: attune provider {show|set}")
-            return 1
+        print("Usage: attune provider {show|set}")
+        return 1
 
-    elif args.command == "dashboard":
-        if args.dashboard_command == "start":
-            return cmd_dashboard_start(args)
-        else:
-            print("Usage: attune dashboard start [--host HOST] [--port PORT]")
-            return 1
-
-    elif args.command == "remember":
+    if args.command == "remember":
         return cmd_remember(args)
 
-    elif args.command == "forget":
+    if args.command == "forget":
         return cmd_forget(args)
 
-    elif args.command == "lessons":
+    if args.command == "lessons":
         return cmd_lessons(args)
 
-    elif args.command == "costs":
+    if args.command == "costs":
         if getattr(args, "costs_command", None) == "today":
             return cmd_costs_today(args)
-        elif getattr(args, "costs_command", None) == "export":
+        if getattr(args, "costs_command", None) == "export":
             return cmd_costs_export(args)
-        elif getattr(args, "costs_command", None) == "reset":
+        if getattr(args, "costs_command", None) == "reset":
             return cmd_costs_reset(args)
-        else:
-            # Default: show cost report
-            return cmd_costs(args)
+        # Default: show cost report
+        return cmd_costs(args)
 
-    elif args.command == "setup":
+    if args.command == "setup":
         return cmd_setup(args)
 
-    elif args.command == "features":
+    if args.command == "features":
         return cmd_features(args)
 
-    elif args.command == "validate":
+    if args.command == "validate":
         return cmd_validate(args)
 
-    elif args.command == "version":
+    if args.command == "version":
         return cmd_version(args)
 
-    else:
-        parser.print_help()
-        return 0
+    # No command given — show a concise welcome instead of full argparse help
+    try:
+        from attune import __version__
+
+        ver = __version__
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: version is non-critical for welcome message
+        ver = "?"
+    print(
+        f"""Attune AI v{ver} — AI-powered developer workflows
+
+Get started:
+  attune workflow list        See all available workflows
+  attune workflow run <name>  Run a workflow (requires ANTHROPIC_API_KEY)
+  attune validate             Check your configuration
+
+For interactive development in Claude Code:
+  /attune       Socratic discovery — finds the right workflow for you
+  /dev          Developer tools (commit, review, debug, refactor)
+  /testing      Run tests, coverage, generate tests
+  /wizard run   Guided multi-step wizards
+
+More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
+    )
+    return 0
 
 
 if __name__ == "__main__":

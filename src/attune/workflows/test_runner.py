@@ -13,16 +13,13 @@ import subprocess
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 try:
     import defusedxml.ElementTree as ET
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
+    import xml.etree.ElementTree as ET
 
 # Import Element for type hints only (defusedxml doesn't expose it)
-if TYPE_CHECKING:
-    pass
 
 from attune.models import (
     CoverageRecord,
@@ -71,11 +68,10 @@ def run_tests_with_tracking(
         if test_files:
             files_str = " ".join(test_files)
             command = f"pytest {files_str} -v --tb=short"
+        elif test_suite == "all":
+            command = "pytest tests/ -v --tb=short"
         else:
-            if test_suite == "all":
-                command = "pytest tests/ -v --tb=short"
-            else:
-                command = f"pytest tests/{test_suite}/ -v --tb=short"
+            command = f"pytest tests/{test_suite}/ -v --tb=short"
 
     # Determine working directory
     working_directory = str(Path.cwd())
@@ -250,7 +246,7 @@ def track_coverage(
 
 # Helper functions (extracted to test_runner_helpers.py)
 
-from .test_runner_helpers import (  # noqa: E402, F401 - re-exported
+from .test_runner_helpers import (  # noqa: E402 - re-exported
     _analyze_coverage_files,
     _find_test_file,
     _get_previous_coverage,
@@ -281,6 +277,7 @@ def track_file_tests(
         >>> from attune.workflows.test_runner import track_file_tests
         >>> result = track_file_tests("src/attune/config.py")
         >>> print(f"Tests for config.py: {result.last_test_result}")
+
     """
     timestamp = datetime.utcnow().isoformat() + "Z"
     started_at = datetime.utcnow()
@@ -406,6 +403,7 @@ def get_file_test_status(file_path: str) -> FileTestRecord | None:
 
     Returns:
         Latest FileTestRecord or None if no tests recorded
+
     """
     store = get_telemetry_store()
     return store.get_latest_file_test(file_path)
@@ -423,6 +421,7 @@ def get_files_needing_tests(
 
     Returns:
         List of FileTestRecord for files needing attention
+
     """
     store = get_telemetry_store()
     return store.get_files_needing_tests(stale_only=stale_only, failed_only=failed_only)

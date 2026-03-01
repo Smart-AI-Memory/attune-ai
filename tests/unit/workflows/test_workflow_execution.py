@@ -286,7 +286,6 @@ class TestTierRouting:
 
     def test_tier_selection_based_on_complexity(self):
         """Test tier selection logic for different task complexities."""
-
         # Simple tasks should use cheap tier
         simple_tier = ModelTier.CHEAP
         assert simple_tier.value == "cheap"

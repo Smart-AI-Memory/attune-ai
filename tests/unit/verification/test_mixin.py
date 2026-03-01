@@ -176,7 +176,9 @@ class TestVerificationMixinLoop:
         )
         wf = FakeWorkflow()
         wf._verification_config = VerificationConfig(
-            enabled=True, strategy="run-tests", max_retries=0
+            enabled=True,
+            strategy="run-tests",
+            max_retries=0,
         )
         result = FakeWorkflowResult()
 
@@ -233,7 +235,9 @@ class TestVerificationMixinLoop:
         )
         wf = FakeWorkflow()
         wf._verification_config = VerificationConfig(
-            enabled=True, strategy="run-tests", max_retries=2
+            enabled=True,
+            strategy="run-tests",
+            max_retries=2,
         )
         result = FakeWorkflowResult()
 
@@ -272,7 +276,9 @@ class TestVerificationMixinLoop:
 
         wf = FakeWorkflow()
         wf._verification_config = VerificationConfig(
-            enabled=True, strategy="run-tests", max_retries=2
+            enabled=True,
+            strategy="run-tests",
+            max_retries=2,
         )
         result = FakeWorkflowResult()
 
@@ -376,7 +382,8 @@ class TestVerificationCorrectionLoop:
         # The call should include the stderr in the user message
         call_kwargs = wf._call_llm.call_args
         user_msg = call_kwargs.kwargs.get("user_message") or call_kwargs[1].get(
-            "user_message", call_kwargs[0][2] if len(call_kwargs[0]) > 2 else ""
+            "user_message",
+            call_kwargs[0][2] if len(call_kwargs[0]) > 2 else "",
         )
         assert "AssertionError" in str(user_msg) or "AssertionError" in str(call_kwargs)
 
@@ -511,7 +518,7 @@ class TestVerificationCorrectionLoop:
 
         wf = FakeWorkflowWithLLM()
         wf._call_llm = AsyncMock(
-            return_value=("Error calling LLM (timeout/API error): timeout", 0, 0)
+            return_value=("Error calling LLM (timeout/API error): timeout", 0, 0),
         )
         wf._verification_config = VerificationConfig(
             enabled=True,

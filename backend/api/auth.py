@@ -78,6 +78,7 @@ async def login(request: LoginRequest, http_request: Request):
         HTTPException 400: Invalid input
         HTTPException 401: Invalid credentials
         HTTPException 429: Rate limit exceeded (too many failed attempts)
+
     """
     # Input validation
     if not request.email or not request.password:
@@ -115,6 +116,7 @@ async def register(request: RegisterRequest):
     Raises:
         HTTPException 400: Invalid input or email already exists
         HTTPException 500: Database error
+
     """
     # Input validation
     if not request.email or not request.password or not request.name:
@@ -147,6 +149,7 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(secu
 
     Raises:
         HTTPException 401: Invalid or expired token
+
     """
     auth_service = get_auth_service()
     result = auth_service.refresh_token(credentials.credentials)
@@ -166,6 +169,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
     Raises:
         HTTPException 401: Invalid or expired token
+
     """
     auth_service = get_auth_service()
     user = auth_service.get_current_user(credentials.credentials)
@@ -193,6 +197,7 @@ async def validate_license(
 
     Returns:
         License validation result
+
     """
     # Verify user is authenticated
     auth_service = get_auth_service()

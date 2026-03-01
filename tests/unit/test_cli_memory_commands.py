@@ -32,42 +32,42 @@ _LESSONS_MGR = "attune.memory.lessons.LessonsManager"
 class TestParserMemoryCommands:
     """Tests for memory command argument parsing."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def parser(self):
         return create_parser()
 
     def test_remember_parses_text(self, parser) -> None:
-        """remember command parses lesson text."""
+        """Remember command parses lesson text."""
         args = parser.parse_args(["remember", "Always run tests"])
         assert args.command == "remember"
         assert args.lesson_text == "Always run tests"
 
     def test_remember_global_flag(self, parser) -> None:
-        """remember --global flag is parsed."""
+        """Remember --global flag is parsed."""
         args = parser.parse_args(["remember", "--global", "Global lesson"])
         assert args.command == "remember"
         assert getattr(args, "global") is True
 
     def test_forget_parses_identifier(self, parser) -> None:
-        """forget command parses identifier."""
+        """Forget command parses identifier."""
         args = parser.parse_args(["forget", "3"])
         assert args.command == "forget"
         assert args.identifier == "3"
 
     def test_forget_keyword(self, parser) -> None:
-        """forget command accepts keyword string."""
+        """Forget command accepts keyword string."""
         args = parser.parse_args(["forget", "security"])
         assert args.command == "forget"
         assert args.identifier == "security"
 
     def test_lessons_default(self, parser) -> None:
-        """lessons command with no flags."""
+        """Lessons command with no flags."""
         args = parser.parse_args(["lessons"])
         assert args.command == "lessons"
         assert getattr(args, "global") is False
 
     def test_lessons_global_flag(self, parser) -> None:
-        """lessons --global flag is parsed."""
+        """Lessons --global flag is parsed."""
         args = parser.parse_args(["lessons", "--global"])
         assert args.command == "lessons"
         assert getattr(args, "global") is True

@@ -268,7 +268,7 @@ class MemoryControlPanel:
         if not _validate_classification(classification):
             raise ValueError(
                 f"Invalid classification '{classification}'. "
-                f"Must be PUBLIC, INTERNAL, or SENSITIVE."
+                f"Must be PUBLIC, INTERNAL, or SENSITIVE.",
             )
 
         # Validate limit range
@@ -365,7 +365,7 @@ class MemoryControlPanel:
         if not _validate_classification(classification):
             raise ValueError(
                 f"Invalid classification '{classification}'. "
-                f"Must be PUBLIC, INTERNAL, or SENSITIVE."
+                f"Must be PUBLIC, INTERNAL, or SENSITIVE.",
             )
 
         patterns = self.list_patterns(classification=classification)

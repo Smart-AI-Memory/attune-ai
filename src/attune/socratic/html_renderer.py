@@ -26,6 +26,7 @@ def render_form_html(form: Form, action_url: str = "/api/socratic/submit") -> st
 
     Returns:
         HTML string
+
     """
     html_parts = [
         f'<form id="{form.id}" action="{action_url}" method="POST" class="socratic-form">',
@@ -61,7 +62,7 @@ def render_form_html(form: Form, action_url: str = "/api/socratic/submit") -> st
             '    <button type="submit" class="btn-primary">Continue</button>',
             "  </div>",
             "</form>",
-        ]
+        ],
     )
 
     return "\n".join(html_parts)
@@ -92,12 +93,12 @@ def _render_field_html(field: FormField) -> str:
             rec_class = " recommended" if opt.recommended else ""
             parts.append(f'        <label class="radio-option{rec_class}">')
             parts.append(
-                f'          <input type="radio" name="{field.id}" value="{opt.value}" {required}>'
+                f'          <input type="radio" name="{field.id}" value="{opt.value}" {required}>',
             )
             parts.append(f'          <span class="option-label">{_escape_html(opt.label)}</span>')
             if opt.description:
                 parts.append(
-                    f'          <span class="option-desc">{_escape_html(opt.description)}</span>'
+                    f'          <span class="option-desc">{_escape_html(opt.description)}</span>',
                 )
             parts.append("        </label>")
         parts.append("      </div>")
@@ -111,7 +112,7 @@ def _render_field_html(field: FormField) -> str:
             parts.append(f'          <span class="option-label">{_escape_html(opt.label)}</span>')
             if opt.description:
                 parts.append(
-                    f'          <span class="option-desc">{_escape_html(opt.description)}</span>'
+                    f'          <span class="option-desc">{_escape_html(opt.description)}</span>',
                 )
             parts.append("        </label>")
         parts.append("      </div>")
@@ -121,14 +122,14 @@ def _render_field_html(field: FormField) -> str:
             f' maxlength="{field.validation.max_length}"' if field.validation.max_length else ""
         )
         parts.append(
-            f'      <textarea id="{field.id}" name="{field.id}" placeholder="{_escape_html(field.placeholder)}"{max_len} {required}></textarea>'
+            f'      <textarea id="{field.id}" name="{field.id}" placeholder="{_escape_html(field.placeholder)}"{max_len} {required}></textarea>',
         )
 
     elif field.field_type == FieldType.BOOLEAN:
         parts.append('      <div class="switch-container">')
         parts.append('        <label class="switch">')
         parts.append(
-            f'          <input type="checkbox" id="{field.id}" name="{field.id}" value="true">'
+            f'          <input type="checkbox" id="{field.id}" name="{field.id}" value="true">',
         )
         parts.append('          <span class="slider"></span>')
         parts.append("        </label>")
@@ -139,7 +140,7 @@ def _render_field_html(field: FormField) -> str:
         max_val = field.validation.max_value or 100
         parts.append('      <div class="slider-container">')
         parts.append(
-            f'        <input type="range" id="{field.id}" name="{field.id}" min="{min_val}" max="{max_val}">'
+            f'        <input type="range" id="{field.id}" name="{field.id}" min="{min_val}" max="{max_val}">',
         )
         parts.append(f'        <output for="{field.id}"></output>')
         parts.append("      </div>")
@@ -150,7 +151,7 @@ def _render_field_html(field: FormField) -> str:
             f' maxlength="{field.validation.max_length}"' if field.validation.max_length else ""
         )
         parts.append(
-            f'      <input type="{input_type}" id="{field.id}" name="{field.id}" placeholder="{_escape_html(field.placeholder)}"{max_len} {required}>'
+            f'      <input type="{input_type}" id="{field.id}" name="{field.id}" placeholder="{_escape_html(field.placeholder)}"{max_len} {required}>',
         )
 
     parts.append("    </div>")
@@ -178,6 +179,7 @@ def render_complete_page(form: Form, session: SocraticSession) -> str:
 
     Returns:
         Complete HTML page
+
     """
     form_html = render_form_html(form)
     session_data = ReactSessionSchema.from_session(session)

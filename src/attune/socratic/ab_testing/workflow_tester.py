@@ -29,6 +29,7 @@ class WorkflowABTester:
 
         Args:
             storage_path: Path to persist data
+
         """
         self.manager = ExperimentManager(storage_path)
 
@@ -51,6 +52,7 @@ class WorkflowABTester:
 
         Returns:
             Experiment ID
+
         """
         control_config = {"agents": control_agents}
         treatment_configs = [
@@ -88,6 +90,7 @@ class WorkflowABTester:
 
         Returns:
             (config, experiment_id, variant_id) or (default_config, None, None)
+
         """
         # Check for running experiments
         experiments = self.manager.get_running_experiments(domain)
@@ -115,6 +118,7 @@ class WorkflowABTester:
             variant_id: Variant ID
             success: Whether workflow succeeded
             success_score: Success score (0-1)
+
         """
         if success:
             self.manager.record_conversion(
@@ -131,6 +135,7 @@ class WorkflowABTester:
 
         Returns:
             Best configuration based on completed experiments
+
         """
         best_config: dict[str, Any] = {}
         best_score = 0.0

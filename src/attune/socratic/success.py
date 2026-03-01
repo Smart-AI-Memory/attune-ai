@@ -22,10 +22,10 @@ from typing import Any
 # Re-export models for backward compatibility
 from .success_models import (
     MetricDirection,  # noqa: F401
-    MetricResult,  # noqa: F401
+    MetricResult,
     MetricType,  # noqa: F401
-    SuccessEvaluation,  # noqa: F401
-    SuccessMetric,  # noqa: F401
+    SuccessEvaluation,
+    SuccessMetric,
 )
 
 # Re-export template factories for backward compatibility
@@ -62,6 +62,7 @@ class SuccessCriteria:
         ...     ],
         ...     success_threshold=0.7  # 70% overall score = success
         ... )
+
     """
 
     # Unique identifier
@@ -109,6 +110,7 @@ class SuccessCriteria:
 
         Returns:
             SuccessEvaluation with detailed results
+
         """
         baselines = baselines or {}
         results: list[MetricResult] = []
@@ -129,7 +131,7 @@ class SuccessCriteria:
                         score=0.0,
                         explanation=f"Metric '{metric.name}' not found in output",
                         timestamp=timestamp,
-                    )
+                    ),
                 )
                 continue
 
@@ -148,7 +150,7 @@ class SuccessCriteria:
                     explanation=explanation,
                     baseline=baseline,
                     timestamp=timestamp,
-                )
+                ),
             )
 
         # Calculate overall success

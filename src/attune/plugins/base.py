@@ -314,6 +314,7 @@ class BasePlugin(ABC):
         Args:
             server: EmpathyMCPServer instance to register
                 tools on.
+
         """
 
     def get_cli_commands(self) -> list[dict[str, str]]:

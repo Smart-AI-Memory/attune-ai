@@ -50,6 +50,7 @@ class SessionContext:
         session_id: Unique session identifier
         user_id: User identifier (from memory)
         default_ttl: Time-to-live for session data (seconds)
+
     """
 
     def __init__(
@@ -64,6 +65,7 @@ class SessionContext:
             memory: UnifiedMemory instance (optional, graceful fallback if None)
             session_id: Optional session ID (generates new if None)
             default_ttl: TTL for session data in seconds (default: 1 hour)
+
         """
         self.memory = memory
         self.session_id = session_id or str(uuid.uuid4())
@@ -72,7 +74,7 @@ class SessionContext:
 
         logger.info(
             f"SessionContext initialized: session_id={self.session_id}, "
-            f"user_id={self.user_id}, memory={'enabled' if memory else 'disabled'}"
+            f"user_id={self.user_id}, memory={'enabled' if memory else 'disabled'}",
         )
 
     def record_choice(
@@ -92,6 +94,7 @@ class SessionContext:
 
         Returns:
             True if recorded successfully, False otherwise
+
         """
         if not self.memory:
             logger.debug("Memory not available, cannot record choice")
@@ -109,7 +112,7 @@ class SessionContext:
             self.memory.stash(key, value, ttl_seconds=ttl or self.default_ttl)
 
             logger.debug(
-                f"Recorded choice: template={template_id}, question={question_id}, choice={choice}"
+                f"Recorded choice: template={template_id}, question={question_id}, choice={choice}",
             )
             return True
 
@@ -130,6 +133,7 @@ class SessionContext:
 
         Returns:
             Most recent choice, or None if not found
+
         """
         if not self.memory:
             return None
@@ -158,6 +162,7 @@ class SessionContext:
 
         Returns:
             Dict mapping question_id -> choice
+
         """
         if not self.memory:
             return {}
@@ -188,6 +193,7 @@ class SessionContext:
 
         Returns:
             Dict mapping question_id -> suggested_default
+
         """
         if not self.memory:
             return {}
@@ -235,6 +241,7 @@ class SessionContext:
 
         Returns:
             True if recorded successfully
+
         """
         if not self.memory:
             return False
@@ -264,6 +271,7 @@ class SessionContext:
 
         Returns:
             Dict with session statistics (executions, success rate, etc.)
+
         """
         if not self.memory:
             return {"session_id": self.session_id, "memory_enabled": False}
@@ -292,6 +300,7 @@ class SessionContext:
 
         Returns:
             True if cleared successfully
+
         """
         if not self.memory:
             return False
@@ -320,6 +329,7 @@ class SessionContext:
 
         Returns:
             Redis key string
+
         """
         return f"session:{self.session_id}:form:{template_id}:{question_id}"
 
@@ -332,6 +342,7 @@ class SessionContext:
 
         Returns:
             True if valid, False otherwise
+
         """
         try:
             # Basic validation - could be enhanced
@@ -340,9 +351,8 @@ class SessionContext:
                 if isinstance(choice, list):
                     # Multi-select - all choices must be in options
                     return all(c in question.options for c in choice)
-                else:
-                    # Single-select - choice must be in options
-                    return choice in question.options
+                # Single-select - choice must be in options
+                return choice in question.options
 
             # No specific validation - assume valid
             return True
@@ -370,6 +380,7 @@ def create_session_context(
 
     Returns:
         SessionContext instance
+
     """
     return SessionContext(memory=memory, session_id=session_id)
 
@@ -392,6 +403,7 @@ def get_session_defaults(
 
     Returns:
         Dict of suggested defaults
+
     """
     session = SessionContext(memory=memory, session_id=session_id)
     return session.suggest_defaults(template_id, form_schema)

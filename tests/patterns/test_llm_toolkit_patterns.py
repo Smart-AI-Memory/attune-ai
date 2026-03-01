@@ -63,8 +63,8 @@ class TestGetRelevantPatterns:
                     "fix_description": "Check for null",
                     "status": "resolved",
                     "timestamp": datetime.now().isoformat(),
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -90,8 +90,8 @@ class TestGetRelevantPatterns:
                     "fix_description": "Use async lock",
                     "status": "resolved",
                     "timestamp": datetime.now().isoformat(),
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -117,8 +117,8 @@ class TestGetRelevantPatterns:
                         "error_message": f"Error {i}",
                         "status": "resolved",
                         "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                    },
+                ),
             )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -173,8 +173,8 @@ class TestGetPatternsForReview:
                     "error_message": "Error",
                     "status": "resolved",
                     "timestamp": datetime.now().isoformat(),
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -225,8 +225,8 @@ class TestInternalMethods:
                     "bug_id": "BUG-001",
                     "file_path": "src/test.py",
                     "error_type": "TypeError",
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -254,9 +254,9 @@ class TestInternalMethods:
                 {
                     "decisions": [
                         {"finding_hash": "abc123", "decision": "ACCEPTED"},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -283,7 +283,10 @@ class TestInternalMethods:
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         result = injector._score_bugs(
-            bugs, file_path="src/api.py", error_type=None, error_message=None
+            bugs,
+            file_path="src/api.py",
+            error_type=None,
+            error_message=None,
         )
 
         # Bug with matching file should score higher
@@ -323,7 +326,7 @@ class TestInternalMethods:
                 "error_type": "TypeError",
                 "error_message": "Cannot read property",
                 "fix_description": "Check for null",
-            }
+            },
         ]
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -342,7 +345,7 @@ class TestInternalMethods:
                 "finding_hash": "abc123",
                 "decision": "ACCEPTED",
                 "reasoning": "Low risk",
-            }
+            },
         ]
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -367,8 +370,8 @@ class TestCaching:
                     "bug_id": "BUG-001",
                     "file_path": "src/test.py",
                     "error_type": "TypeError",
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -426,7 +429,7 @@ class TestEdgeCases:
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         result = injector.get_relevant_patterns(
-            error_message="Error: Can't find 'value' in <object>"
+            error_message="Error: Can't find 'value' in <object>",
         )
 
         assert isinstance(result, str)
@@ -463,7 +466,6 @@ class TestGetPatternsFromGitChanges:
 
     def test_get_patterns_from_git_changes_no_changes(self, tmp_path):
         """Test when no git changes detected."""
-
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         with patch.object(injector, "_get_git_changed_files", return_value=[]):
@@ -473,7 +475,6 @@ class TestGetPatternsFromGitChanges:
 
     def test_get_patterns_from_git_changes_with_files(self, tmp_path):
         """Test with git changes and matching bugs."""
-
         debug_dir = tmp_path / "debugging"
         debug_dir.mkdir()
 
@@ -488,14 +489,16 @@ class TestGetPatternsFromGitChanges:
                     "error_message": "Test error",
                     "status": "resolved",
                     "timestamp": datetime.now().isoformat(),
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         with patch.object(
-            injector, "_get_git_changed_files", return_value=["src/main.py", "src/utils.py"]
+            injector,
+            "_get_git_changed_files",
+            return_value=["src/main.py", "src/utils.py"],
         ):
             result = injector.get_patterns_from_git_changes(max_patterns=5)
 
@@ -507,7 +510,6 @@ class TestGetGitChangedFiles:
 
     def test_get_git_changed_files_success(self, tmp_path):
         """Test successful git changed files retrieval."""
-
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         mock_result = MagicMock()
@@ -523,7 +525,6 @@ class TestGetGitChangedFiles:
 
     def test_get_git_changed_files_failure(self, tmp_path):
         """Test git changed files when git fails."""
-
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         mock_result = MagicMock()
@@ -537,7 +538,6 @@ class TestGetGitChangedFiles:
 
     def test_get_git_changed_files_exception(self, tmp_path):
         """Test git changed files when exception occurs."""
-
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         with patch("subprocess.run", side_effect=Exception("Git not found")):
@@ -561,8 +561,8 @@ class TestClearCache:
                     "bug_id": "BUG-001",
                     "file_path": "src/test.py",
                     "error_type": "TypeError",
-                }
-            )
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
@@ -601,7 +601,10 @@ class TestScoreBugsAdvanced:
 
         # Bug 1 should score higher due to matching error message words
         result = injector._score_bugs(
-            bugs, file_path=None, error_type=None, error_message="Cannot read property of undefined"
+            bugs,
+            file_path=None,
+            error_type=None,
+            error_message="Cannot read property of undefined",
         )
 
         assert isinstance(result, list)
@@ -627,7 +630,10 @@ class TestScoreBugsAdvanced:
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))
 
         result = injector._score_bugs(
-            bugs, file_path="src/api.py", error_type="TypeError", error_message=None
+            bugs,
+            file_path="src/api.py",
+            error_type="TypeError",
+            error_message=None,
         )
 
         assert isinstance(result, list)
@@ -680,9 +686,9 @@ class TestLoadSecurityEdgeCases:
                 {
                     "decisions": [
                         {"finding_hash": "abc123", "decision": "ACCEPTED"},
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
 
         injector = ContextualPatternInjector(patterns_dir=str(tmp_path))

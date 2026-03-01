@@ -16,6 +16,7 @@ def get_prompt_list(prompts: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
 
     Returns:
         List of prompt definitions
+
     """
     return list(prompts.values())
 
@@ -37,6 +38,7 @@ def get_prompt_messages(
 
     Raises:
         ValueError: If prompt_name is not found
+
     """
     if prompt_name not in prompts:
         raise ValueError(f"Unknown prompt: {prompt_name}")
@@ -57,9 +59,9 @@ def get_prompt_messages(
                         "and recommended fix."
                     ),
                 },
-            }
+            },
         ]
-    elif prompt_name == "test-gen":
+    if prompt_name == "test-gen":
         module = arguments.get("module", "")
         batch = arguments.get("batch", "false").lower() == "true"
         if batch:
@@ -74,7 +76,7 @@ def get_prompt_messages(
                             "Run: `uv run attune workflow run test-gen-behavioral --batch`"
                         ),
                     },
-                }
+                },
             ]
         return [
             {
@@ -88,9 +90,9 @@ def get_prompt_messages(
                         f"Run: `uv run attune workflow run test-gen-behavioral --path {module}`"
                     ),
                 },
-            }
+            },
         ]
-    elif prompt_name == "cost-report":
+    if prompt_name == "cost-report":
         days = arguments.get("days", "30")
         return [
             {
@@ -105,7 +107,6 @@ def get_prompt_messages(
                         "Run: `uv run attune telemetry report`"
                     ),
                 },
-            }
+            },
         ]
-    else:
-        raise ValueError(f"Unknown prompt: {prompt_name}")
+    raise ValueError(f"Unknown prompt: {prompt_name}")

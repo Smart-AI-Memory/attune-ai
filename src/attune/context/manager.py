@@ -52,6 +52,7 @@ class ContextManager:
             storage_dir: Directory for state persistence
             token_threshold: Token usage percentage to trigger compaction suggestions
             auto_save: Whether to auto-save state on compaction
+
         """
         self._state_manager = CompactionStateManager(storage_dir=storage_dir)
         self._token_threshold = token_threshold
@@ -86,6 +87,7 @@ class ContextManager:
 
         Args:
             phase: Name of the completed phase
+
         """
         if phase not in self._completed_phases:
             self._completed_phases.append(phase)
@@ -118,6 +120,7 @@ class ContextManager:
 
         Returns:
             The created SBARHandoff
+
         """
         self._pending_handoff = SBARHandoff(
             situation=situation,
@@ -147,6 +150,7 @@ class ContextManager:
 
         Returns:
             Compact state for preservation
+
         """
         # Convert patterns to summaries
         pattern_summaries = [
@@ -180,6 +184,7 @@ class ContextManager:
 
         Returns:
             Compact pattern summary
+
         """
         return PatternSummary(
             pattern_type=pattern.pattern_type.value,
@@ -204,6 +209,7 @@ class ContextManager:
 
         Returns:
             Filtered preferences dict
+
         """
         # Priority keys to always include if present
         priority_keys = {
@@ -229,9 +235,9 @@ class ContextManager:
         for key, value in preferences.items():
             if key not in result:
                 # Skip complex nested structures
-                if isinstance(value, str | int | float | bool):
-                    result[key] = value
-                elif isinstance(value, list) and len(value) <= 5:
+                if isinstance(value, str | int | float | bool) or (
+                    isinstance(value, list) and len(value) <= 5
+                ):
                     result[key] = value
 
             if len(result) >= max_items:
@@ -252,6 +258,7 @@ class ContextManager:
 
         Returns:
             Path to saved state file
+
         """
         compact_state = self.extract_compact_state(collaboration_state)
         return self._state_manager.save_state(compact_state)
@@ -264,6 +271,7 @@ class ContextManager:
 
         Returns:
             Most recent CompactState or None
+
         """
         state = self._state_manager.load_latest_state(user_id)
 
@@ -286,6 +294,7 @@ class ContextManager:
 
         Returns:
             CompactState for session or None
+
         """
         state = self._state_manager.load_state_by_session(session_id)
 
@@ -310,6 +319,7 @@ class ContextManager:
 
         Returns:
             Formatted restoration prompt or None if no state
+
         """
         state = self.restore_state(user_id)
 
@@ -331,6 +341,7 @@ class ContextManager:
 
         Returns:
             True if compaction should be suggested
+
         """
         # Primary check: token usage
         if token_usage_percent >= self._token_threshold:
@@ -353,6 +364,7 @@ class ContextManager:
 
         Returns:
             Formatted suggestion message
+
         """
         return (
             f"Context usage at {token_usage_percent:.0f}%. "
@@ -372,6 +384,7 @@ class ContextManager:
         Args:
             compact_state: State to restore from
             collaboration_state: State to update
+
         """
         # Restore trust level
         collaboration_state.trust_level = compact_state.trust_level
@@ -392,7 +405,7 @@ class ContextManager:
         logger.info(
             f"Applied compact state to collaboration: "
             f"trust={compact_state.trust_level:.2f}, "
-            f"level={compact_state.empathy_level}"
+            f"level={compact_state.empathy_level}",
         )
 
     def get_state_summary(self, user_id: str) -> dict[str, Any] | None:
@@ -403,6 +416,7 @@ class ContextManager:
 
         Returns:
             Summary dict or None if no states
+
         """
         states = self._state_manager.get_all_states(user_id)
 
@@ -430,5 +444,6 @@ class ContextManager:
 
         Returns:
             Number of states cleared
+
         """
         return self._state_manager.clear_user_states(user_id)

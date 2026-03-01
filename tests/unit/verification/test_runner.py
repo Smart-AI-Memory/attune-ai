@@ -29,7 +29,10 @@ class TestRunVerification:
     def test_passing_verification(self, mock_run) -> None:
         """Test verification that passes (exit code 0)."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=0, stdout="2 passed", stderr=""
+            args=["pytest"],
+            returncode=0,
+            stdout="2 passed",
+            stderr="",
         )
         config = self._make_config()
         strategy = RunTestsStrategy()
@@ -47,7 +50,10 @@ class TestRunVerification:
     def test_failing_verification(self, mock_run) -> None:
         """Test verification that fails (exit code 1)."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=1, stdout="", stderr="FAILED"
+            args=["pytest"],
+            returncode=1,
+            stdout="",
+            stderr="FAILED",
         )
         config = self._make_config()
         strategy = RunTestsStrategy()
@@ -101,7 +107,10 @@ class TestRunVerification:
         """Test that stdout is truncated to 10KB."""
         long_output = "x" * 20000
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=0, stdout=long_output, stderr=""
+            args=["pytest"],
+            returncode=0,
+            stdout=long_output,
+            stderr="",
         )
         config = self._make_config()
         strategy = RunTestsStrategy()
@@ -114,7 +123,10 @@ class TestRunVerification:
     def test_custom_command_override(self, mock_run) -> None:
         """Test that config.command overrides strategy command."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["echo"], returncode=0, stdout="hello", stderr=""
+            args=["echo"],
+            returncode=0,
+            stdout="hello",
+            stderr="",
         )
         config = self._make_config(command="echo hello")
         strategy = RunTestsStrategy()
@@ -130,7 +142,10 @@ class TestRunVerification:
     def test_working_directory_passed(self, mock_run) -> None:
         """Test working_directory is passed to subprocess."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=0, stdout="ok", stderr=""
+            args=["pytest"],
+            returncode=0,
+            stdout="ok",
+            stderr="",
         )
         config = self._make_config(working_directory="/tmp/project")
         strategy = RunTestsStrategy()
@@ -144,7 +159,10 @@ class TestRunVerification:
     def test_no_shell_true(self, mock_run) -> None:
         """Test that shell=True is never used (security)."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=0, stdout="ok", stderr=""
+            args=["pytest"],
+            returncode=0,
+            stdout="ok",
+            stderr="",
         )
         config = self._make_config()
         strategy = RunTestsStrategy()
@@ -160,7 +178,10 @@ class TestRunVerification:
     def test_attempt_number_passed_through(self, mock_run) -> None:
         """Test that attempt number is set correctly."""
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["pytest"], returncode=0, stdout="", stderr=""
+            args=["pytest"],
+            returncode=0,
+            stdout="",
+            stderr="",
         )
         config = self._make_config()
         strategy = RunTestsStrategy()

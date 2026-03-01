@@ -62,7 +62,7 @@ class {result_class_name}:
     """Result from {class_name} execution."""
 
     success: bool
-    {custom_fields_code if custom_fields_code else "    # Add custom fields here"}duration_seconds: float
+    {custom_fields_code or "    # Add custom fields here"}duration_seconds: float
     cost: float
     metadata: dict = field(default_factory=dict)''',
                 priority=1,

@@ -34,7 +34,7 @@ class AlertMetric(Enum):
     DAILY_COST = "daily_cost"
     ERROR_RATE = "error_rate"
     AVG_LATENCY = "avg_latency"
-    TOKEN_USAGE = "token_usage"
+    TOKEN_USAGE = "token_usage"  # noqa: S105
 
 
 class AlertSeverity(Enum):

@@ -31,6 +31,7 @@ class CostService:
         >>> cost_svc = CostService()
         >>> cost = cost_svc.calculate_cost(tier, input_tokens=500, output_tokens=200)
         >>> report = cost_svc.generate_report(stages_run)
+
     """
 
     def __init__(
@@ -49,6 +50,7 @@ class CostService:
 
         Returns:
             Total cost in dollars for this stage
+
         """
         from attune.cost_tracker import MODEL_PRICING
 
@@ -67,6 +69,7 @@ class CostService:
 
         Returns:
             Cost in dollars if premium tier was used
+
         """
         from attune.cost_tracker import MODEL_PRICING
 
@@ -86,6 +89,7 @@ class CostService:
 
         Returns:
             CostReport with comprehensive cost breakdown and savings analysis
+
         """
         from ..data_classes import CostReport
 

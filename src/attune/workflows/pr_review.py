@@ -23,8 +23,8 @@ from .pr_review_analysis import PRReviewAnalysisMixin
 # Re-export public API from sub-modules so existing imports keep working:
 #   from attune.workflows.pr_review import PRReviewResult
 #   from attune.workflows.pr_review import format_pr_review_report
-from .pr_review_formatting import format_pr_review_report, main  # noqa: F401
-from .pr_review_models import PRReviewResult  # noqa: F401
+from .pr_review_formatting import format_pr_review_report, main
+from .pr_review_models import PRReviewResult
 
 logger = logging.getLogger(__name__)
 
@@ -162,10 +162,10 @@ class PRReviewWorkflow(PRReviewAnalysisMixin):
 
             total_cost = 0.0
             total_cost, code_findings, recommendations, agents_used = self._collect_code_findings(
-                code_review
+                code_review,
             )
             sec_cost, security_findings, sec_recs, sec_agents = self._collect_security_findings(
-                security_audit
+                security_audit,
             )
             total_cost += sec_cost
             recommendations.extend(sec_recs)

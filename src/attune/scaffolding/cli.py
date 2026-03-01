@@ -140,7 +140,7 @@ def cmd_list_patterns(args):
         print(f"{category.value.upper()} ({len(patterns)} patterns):")
         for pattern in patterns:
             print(
-                f"  - {pattern.id:25} | {pattern.name:20} | Reusability: {pattern.reusability_score:.2f}"
+                f"  - {pattern.id:25} | {pattern.name:20} | Reusability: {pattern.reusability_score:.2f}",
             )
         print()
 

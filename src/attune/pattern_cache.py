@@ -39,6 +39,7 @@ class PatternMatchCache:
         ...     context,
         ...     compute_fn=lambda: expensive_query(context)
         ... )
+
     """
 
     def __init__(self, max_size: int = 1000):
@@ -46,6 +47,7 @@ class PatternMatchCache:
 
         Args:
             max_size: Maximum number of cached query results
+
         """
         self.max_size = max_size
         self._cache: dict[str, Any] = {}
@@ -67,6 +69,7 @@ class PatternMatchCache:
 
         Returns:
             JSON string suitable for cache key
+
         """
         return json.dumps(context, sort_keys=True)
 
@@ -80,6 +83,7 @@ class PatternMatchCache:
 
         Returns:
             Cached result or None if not in cache
+
         """
         key = self._make_key(context)
 
@@ -100,6 +104,7 @@ class PatternMatchCache:
         Args:
             context: Query context
             result: Result to cache
+
         """
         key = self._make_key(context)
 
@@ -144,12 +149,13 @@ class PatternMatchCache:
 
         Returns:
             Cached or newly computed result
+
         """
         from typing import cast
 
         cached = self.get(context)
         if cached is not None:
-            return cast(T, cached)
+            return cast("T", cached)
 
         result = compute_fn()
         self.set(context, result)
@@ -170,6 +176,7 @@ def cached_pattern_query(cache: PatternMatchCache) -> Callable:
 
     Returns:
         Decorator function
+
     """
 
     def decorator(func: Callable) -> Callable:

@@ -92,7 +92,7 @@ class WorkflowFileHandler(FileSystemEventHandler):
         # Convert to workflow ID format (snake_case)
         workflow_id = workflow_id.lower()
 
-        return workflow_id if workflow_id else None
+        return workflow_id or None
 
 
 class WorkflowFileWatcher:
@@ -150,7 +150,7 @@ class WorkflowFileWatcher:
 
         logger.info(
             f"Hot-reload enabled for {len(valid_dirs)} "
-            f"{'directory' if len(valid_dirs) == 1 else 'directories'}"
+            f"{'directory' if len(valid_dirs) == 1 else 'directories'}",
         )
 
     def stop(self) -> None:

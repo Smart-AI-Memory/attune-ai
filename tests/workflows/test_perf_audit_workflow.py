@@ -637,3 +637,65 @@ async def process_items(items):
 
                 assert "optimization_plan" in optimize_result
                 assert "formatted_report" in optimize_result
+
+
+class TestDefaultContext:
+    """Tests for PerformanceAuditWorkflow.default_context()."""
+
+    def test_default_context_returns_workflow_context(self):
+        """Test default_context() returns a WorkflowContext with services."""
+        ctx = PerformanceAuditWorkflow.default_context()
+        assert ctx.prompt is not None
+        assert ctx.parsing is not None
+
+    def test_default_context_with_custom_xml_config(self):
+        """Test default_context() forwards xml_config to services."""
+        xml_cfg = {"enabled": True, "format": "v2"}
+        ctx = PerformanceAuditWorkflow.default_context(xml_config=xml_cfg)
+        assert ctx.prompt is not None
+        assert ctx.parsing is not None
+
+
+class TestGetOptimizationAction:
+    """Tests for PerformanceAuditWorkflow._get_optimization_action()."""
+
+    def test_known_concern_returns_action_dict(self):
+        """Test that a known concern returns a dict with expected keys."""
+        workflow = PerformanceAuditWorkflow()
+        result = workflow._get_optimization_action("n_plus_one")
+        assert result is not None
+        assert "action" in result
+        assert "description" in result
+        assert "estimated_impact" in result
+
+    def test_unknown_concern_returns_none(self):
+        """Test that an unknown concern returns None."""
+        workflow = PerformanceAuditWorkflow()
+        result = workflow._get_optimization_action("nonexistent_concern_xyz")
+        assert result is None
+
+
+class TestMainEntryPoint:
+    """Tests for the main() CLI entry point."""
+
+    def test_main_runs_workflow(self):
+        """Test that main() creates and executes a workflow."""
+        mock_result = AsyncMock()
+        mock_result.final_output = {"perf_level": "good", "perf_score": 85}
+        mock_result.provider = "test-provider"
+        mock_result.success = True
+        mock_result.cost_report.total_cost = 0.01
+        mock_result.cost_report.savings = 0.005
+        mock_result.cost_report.savings_percent = 50.0
+
+        with (
+            patch(
+                "attune.workflows.perf_audit.PerformanceAuditWorkflow.execute",
+                new_callable=AsyncMock,
+                return_value=mock_result,
+            ),
+            patch("attune.workflows.perf_audit.get_console", return_value=None),
+        ):
+            from attune.workflows.perf_audit import main
+
+            main()

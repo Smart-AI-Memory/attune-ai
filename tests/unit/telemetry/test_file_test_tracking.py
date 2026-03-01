@@ -159,7 +159,7 @@ class TestTelemetryStoreFileTests:
                 timestamp="2026-01-22T10:00:00Z",
                 last_test_result="passed",
                 test_count=5,
-            )
+            ),
         )
         temp_store.log_file_test(
             FileTestRecord(
@@ -168,7 +168,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="failed",
                 test_count=3,
                 failed=1,
-            )
+            ),
         )
 
         # Filter by path
@@ -184,7 +184,7 @@ class TestTelemetryStoreFileTests:
                 timestamp="2026-01-22T10:00:00Z",
                 last_test_result="passed",
                 test_count=5,
-            )
+            ),
         )
         temp_store.log_file_test(
             FileTestRecord(
@@ -193,7 +193,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="failed",
                 test_count=3,
                 failed=1,
-            )
+            ),
         )
 
         # Filter by result
@@ -211,7 +211,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="failed",
                 test_count=5,
                 failed=1,
-            )
+            ),
         )
         temp_store.log_file_test(
             FileTestRecord(
@@ -220,7 +220,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="passed",
                 test_count=5,
                 passed=5,
-            )
+            ),
         )
 
         # Get latest
@@ -242,7 +242,7 @@ class TestTelemetryStoreFileTests:
                 timestamp="2026-01-22T10:00:00Z",
                 last_test_result="passed",
                 test_count=5,
-            )
+            ),
         )
         temp_store.log_file_test(
             FileTestRecord(
@@ -251,7 +251,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="failed",
                 test_count=3,
                 failed=1,
-            )
+            ),
         )
 
         # Get only failed
@@ -268,7 +268,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="passed",
                 test_count=5,
                 is_stale=False,
-            )
+            ),
         )
         temp_store.log_file_test(
             FileTestRecord(
@@ -277,7 +277,7 @@ class TestTelemetryStoreFileTests:
                 last_test_result="passed",
                 test_count=3,
                 is_stale=True,
-            )
+            ),
         )
 
         # Get only stale

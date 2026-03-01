@@ -288,7 +288,9 @@ class TestEventStreamer:
 
         assert trimmed == 50
         mock_client.xtrim.assert_called_once_with(
-            "stream:agent_heartbeat", maxlen=1000, approximate=True
+            "stream:agent_heartbeat",
+            maxlen=1000,
+            approximate=True,
         )
 
     def test_trim_stream_failure(self):
@@ -334,7 +336,7 @@ class TestEventStreamerIntegration:
                     b"data": b'{"agent_id": "test-agent", "status": "running"}',
                     b"source": b"attune",
                 },
-            )
+            ),
         ]
 
         mock_memory = Mock()

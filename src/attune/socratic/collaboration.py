@@ -29,7 +29,7 @@ from .collaboration_invitations import (  # noqa: F401
     Invitation,
     InvitationManager,
 )
-from .collaboration_models import (  # noqa: F401
+from .collaboration_models import (
     Change,
     ChangeType,
     CollaborativeSession,
@@ -59,6 +59,7 @@ class CollaborationManager:
 
         Args:
             storage_path: Path to persist collaboration data
+
         """
         if storage_path is None:
             storage_path = Path.home() / ".attune" / "socratic" / "collaboration"
@@ -89,6 +90,7 @@ class CollaborationManager:
 
         Returns:
             The created session
+
         """
         session_id = hashlib.sha256(f"{base_session_id}:{time.time()}".encode()).hexdigest()[:12]
 
@@ -135,6 +137,7 @@ class CollaborationManager:
 
         Returns:
             The added participant or None
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -174,6 +177,7 @@ class CollaborationManager:
 
         Returns:
             True if successful
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -215,6 +219,7 @@ class CollaborationManager:
 
         Returns:
             The created comment or None
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -269,6 +274,7 @@ class CollaborationManager:
 
         Returns:
             True if successful
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -302,6 +308,7 @@ class CollaborationManager:
 
         Returns:
             True if successful
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -342,6 +349,7 @@ class CollaborationManager:
 
         Returns:
             The cast vote or None
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -373,7 +381,7 @@ class CollaborationManager:
             return existing
 
         vote_id = hashlib.sha256(
-            f"{session_id}:{voter_id}:{target_id}:{time.time()}".encode()
+            f"{session_id}:{voter_id}:{target_id}:{time.time()}".encode(),
         ).hexdigest()[:12]
 
         vote = Vote(
@@ -414,6 +422,7 @@ class CollaborationManager:
 
         Returns:
             VotingResult or None
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -466,6 +475,7 @@ class CollaborationManager:
 
         Returns:
             List of comments
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -493,6 +503,7 @@ class CollaborationManager:
 
         Returns:
             List of changes (most recent first)
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -522,11 +533,17 @@ class CollaborationManager:
             description: Description of the change
             before_value: Value before change
             after_value: Value after change
+
         """
         session = self._sessions.get(session_id)
         if session:
             self._track_change(
-                session, change_type, author_id, description, before_value, after_value
+                session,
+                change_type,
+                author_id,
+                description,
+                before_value,
+                after_value,
             )
             self._save_session(session)
 
@@ -535,6 +552,7 @@ class CollaborationManager:
 
         Args:
             listener: Callback function
+
         """
         self._change_listeners.append(listener)
 
@@ -543,6 +561,7 @@ class CollaborationManager:
 
         Args:
             listener: Callback function to remove
+
         """
         if listener in self._change_listeners:
             self._change_listeners.remove(listener)
@@ -573,7 +592,7 @@ class CollaborationManager:
         for listener in self._change_listeners:
             try:
                 listener(change)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Listener failure should not break change tracking.
                 # One bad listener shouldn't prevent others from executing.
                 pass
@@ -592,7 +611,7 @@ class CollaborationManager:
                     data = json.load(f)
                 session = CollaborativeSession.from_dict(data)
                 self._sessions[session.session_id] = session
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Skip corrupted session files gracefully.
                 # Loading should not fail due to one malformed file.
                 pass
@@ -613,6 +632,7 @@ class CollaborationManager:
 
         Returns:
             List of sessions the user participates in
+
         """
         return [
             s for s in self._sessions.values() if any(p.user_id == user_id for p in s.participants)

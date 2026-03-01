@@ -123,6 +123,7 @@ class CoordinationSignals:
             agent_id: This agent's ID (for receiving targeted signals)
             enable_streaming: If True, publish signal events to Redis Streams
                             for real-time monitoring (Pattern 4).
+
         """
         self.memory = memory
         self.agent_id = agent_id
@@ -187,6 +188,7 @@ class CoordinationSignals:
             Coordination signals require CONTRIBUTOR tier or higher. If credentials
             are not provided, a warning is logged but the signal is still sent
             (backward compatibility). For production use, always provide credentials.
+
         """
         if not self.memory:
             logger.warning("Cannot send signal: no memory backend")
@@ -197,13 +199,13 @@ class CoordinationSignals:
             if not credentials.can_stage():
                 raise PermissionError(
                     f"Agent {credentials.agent_id} (Tier {credentials.tier.name}) "
-                    "cannot send coordination signals. Requires CONTRIBUTOR tier or higher."
+                    "cannot send coordination signals. Requires CONTRIBUTOR tier or higher.",
                 )
         else:
             # Log warning if no credentials provided (security best practice)
             logger.warning(
                 "Sending coordination signal without credentials - "
-                "permission check bypassed. Provide credentials for secure coordination."
+                "permission check bypassed. Provide credentials for secure coordination.",
             )
 
         source = source_agent or self.agent_id or "unknown"
@@ -272,6 +274,7 @@ class CoordinationSignals:
 
         Raises:
             PermissionError: If credentials provided but agent lacks CONTRIBUTOR tier
+
         """
         return self.signal(
             signal_type=signal_type,
@@ -299,6 +302,7 @@ class CoordinationSignals:
 
         Returns:
             CoordinationSignal if received, None if timeout
+
         """
         if not self.memory or not self.agent_id:
             return None
@@ -308,7 +312,9 @@ class CoordinationSignals:
         while time.time() - start_time < timeout:
             # Check for signal
             signal = self.check_signal(
-                signal_type=signal_type, source_agent=source_agent, consume=True
+                signal_type=signal_type,
+                source_agent=source_agent,
+                consume=True,
             )
 
             if signal:
@@ -320,7 +326,10 @@ class CoordinationSignals:
         return None
 
     def check_signal(
-        self, signal_type: str, source_agent: str | None = None, consume: bool = True
+        self,
+        signal_type: str,
+        source_agent: str | None = None,
+        consume: bool = True,
     ) -> CoordinationSignal | None:
         """Check for a signal without blocking.
 
@@ -331,6 +340,7 @@ class CoordinationSignals:
 
         Returns:
             CoordinationSignal if available, None otherwise
+
         """
         if not self.memory or not self.agent_id:
             return None
@@ -384,6 +394,7 @@ class CoordinationSignals:
 
         Returns:
             List of pending signals
+
         """
         if not self.memory or not self.agent_id:
             return []
@@ -431,6 +442,7 @@ class CoordinationSignals:
 
         Returns:
             Number of signals cleared
+
         """
         if not self.memory or not self.agent_id:
             return 0

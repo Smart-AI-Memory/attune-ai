@@ -1,4 +1,4 @@
-# Attune AI Framework v3.6.1
+# Attune AI Framework v3.6.6
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -9,11 +9,17 @@ AI-powered developer workflows with cost optimization and multi-agent orchestrat
 ## Quick Start
 
 ```bash
-python -m attune.models.auth_cli setup    # Configure authentication
+pip install attune-ai                     # Install (zero-config, ready to use)
 python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
-**CLI:** `attune <command>` (canonical) or `python -m attune.cli_minimal` (full). See `docs/reference/cli-reference.md`.
+Works out of the box: subscription-first routing with automatic
+API fallback for large modules when `ANTHROPIC_API_KEY` is set.
+Run `python -m attune.models.auth_cli setup` to customize.
+
+**CLI:** `attune <command>` (canonical) or
+`python -m attune.cli_minimal` (full).
+See `docs/reference/cli-reference.md`.
 
 ---
 
@@ -26,7 +32,7 @@ Use `/hub-name` to access organized workflows:
 | `/attune` | Socratic discovery | Natural language routing to all workflows |
 | `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
 | `/testing` | run, coverage, generate, benchmark | Test runner and generation |
-| `/workflows` | security, bugs, perf, review, list | Automated analysis |
+| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, seo, list | Automated analysis |
 | `/plan` | feature, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
@@ -140,7 +146,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 3.6.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.6.6 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -222,5 +228,140 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   shells (zero tokens, no patterns detected). Verify they are wired to
   collect meaningful data before building on top of them or advertising
   session memory as a feature.
+
+- **ruff parses pytest.ini as Python**: When committing `pytest.ini`
+  alongside `.py` files, ruff's pre-commit hook tries to parse it as
+  Python and produces syntax errors. Commit `pytest.ini` in a separate
+  commit from Python files so the ruff hook only sees valid Python.
+
+- **Read source before writing tests for tricky logic**: The inline-
+  comment check in `is_in_docstring_or_comment()` uses a ternary that
+  defaults to `True` for any line not containing `eval`. Tests written
+  against assumed behavior (expected `False`) failed. Always read the
+  actual implementation before asserting expected values for
+  non-obvious control flow.
+
+- **Background processes from previous sessions persist across
+  restarts**: Long-running processes started by Claude (e.g.
+  `attune dashboard start`, `npm run dev`) survive session end and
+  keep running silently. They can open browser tabs, consume ports,
+  or interfere with the next session. Always `kill` them explicitly
+  when removing a feature, and check `ps aux` if unexpected behavior
+  is observed (Chrome tabs opening, ports already in use, etc.).
+
+- **Twine cannot prompt for tokens in Claude Code's non-interactive
+  terminal**: `twine upload` hangs or raises `EOFError` when it tries
+  to prompt for a PyPI token. Pass the token via environment variable:
+  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
+
+- **`pytest.importorskip` triggers ruff E402**: Test files that call
+  `pytest.importorskip(...)` before optional imports cause ruff to
+  flag those imports as E402 (module level import not at top of file).
+  Fix: add `# noqa: E402` to each import line after the `importorskip`
+  call. The pattern is intentional and correct — ruff just can't see
+  the skip logic.
+
+- **Pre-commit stash conflict when black/ruff fix files with unstaged
+  siblings**: When staging a subset of changed files and running
+  `git commit`, pre-commit stashes unstaged changes, auto-fixes staged
+  files, then tries to restore — causing a conflict if the same file
+  has both staged and unstaged changes. Fix: run
+  `uv run ruff check --fix <files>` and `uv run black <files>`
+  manually before staging, so the hook sees already-clean files.
+
+- **`**kwargs` collides with explicit params of the same name**: If a
+  helper like `_result_from_plan(plan, status, **kwargs)` builds a
+  dataclass and callers pass `reason_codes=...` in `**kwargs`, it
+  silently conflicts with any `reason_codes=...` already set inside
+  the function body. Fix: add an explicit `reason_codes: list[str] |
+  None = None` parameter so the signature is unambiguous.
+
+- **Module-level optional imports enable clean test patching**: A
+  local `import anthropic` inside a function body can't be patched
+  with `unittest.mock.patch` because the name isn't bound at module
+  scope. Move to module-level with an availability guard
+  (`_anthropic = None`; `_ANTHROPIC_AVAILABLE = False`) and patch as
+  `module._anthropic`. This is the established pattern in adapters
+  (YAML guard) — apply it to any optional SDK dependency.
+
+- **New dataclass fields need both the class AND the parser updated**:
+  Adding a field (e.g. `local_python`) to a dataclass only updates
+  the in-memory model. If there's a `_parse_*()` helper that builds
+  the dataclass from raw YAML/JSON, the field stays silently empty
+  at runtime until the parser is also updated. Always grep for the
+  parser function when adding a new dataclass field.
+
+- **Verify new dispatch branches with a known fixture, not just
+  imports**: When adding a new runtime case (e.g. `local_python`)
+  to an existing dispatch table, a clean import doesn't prove the
+  branch fires. Run `Executor.run()` directly with a spec whose
+  `runtime` matches the new case and assert `result.status ==
+  "success"` before considering the feature done.
+
+- **`from __future__ import annotations` breaks FastAPI route
+  injection**: With PEP 563 lazy annotations, all type hints are
+  stored as strings. FastAPI resolves them with `get_type_hints()`
+  against the function's `__globals__` (module scope), not the
+  local scope where the function was defined. If `Request` or any
+  FastAPI dependency type is only imported inside a helper function
+  (not at module level), every route returns 422 with
+  `"Field required"` for the injected parameter. Fix: either remove
+  `from __future__ import annotations` from server modules, or
+  ensure all FastAPI-injected types are imported at module level.
+
+- **`patch()` requires the target name to exist at module scope at
+  patch time**: `unittest.mock.patch("module.Name")` fails with
+  `AttributeError` if `Name` is only imported inside a function
+  body (lazy/deferred import). The mock library looks up the
+  attribute on the module object immediately when the patch context
+  is entered. Move any import that needs to be patchable to module
+  level — even optional ones, using an availability guard pattern
+  if needed.
+
+- **Shadow directories at repo root break imports**: An `attune/`
+  directory at the repo root (from prototyping) shadows the installed
+  `src/attune/` package, causing `ModuleNotFoundError` on submodules
+  that only exist in one copy. Always check for rogue top-level
+  directories matching the package name before debugging import errors.
+
+- **BaseWorkflow uses class attributes, not constructor params**: The
+  `name`, `description`, `stages`, and `tier_map` fields on
+  BaseWorkflow are CLASS ATTRIBUTES, not `__init__()` parameters.
+  Passing them to `super().__init__()` raises `TypeError`. Define them
+  as class-level assignments on the subclass.
+
+- **Non-BaseWorkflow classes in workflow registry crash the CLI**:
+  Classes registered in `_DEFAULT_WORKFLOW_NAMES` that don't inherit
+  BaseWorkflow (missing `execute()`, `run_stage()`, or wrong method
+  signatures) will crash `attune workflow run`. Only register true
+  BaseWorkflow subclasses; keep standalone utilities importable but
+  out of the registry.
+
+- **Validate infrastructure against user value before extending**:
+  BEP middleware was well-built (93 tests, clean protocol) but had
+  zero working skills and no integration with CLI workflows — the
+  surface where all user value lives. Always validate that new
+  infrastructure serves actual users before investing in production
+  hardening.
+
+- **`ModelTier` has two copies — imports must match**: The enum
+  `ModelTier` exists in both `attune.models` and
+  `attune.workflows.base` as separate classes (`id()` differs).
+  Tests comparing `tier_map` values will fail if the import source
+  doesn't match the workflow's import. Check which module the
+  workflow imports from and use the same one in tests.
+
+- **BaseWorkflow does not provide `self.logger`**: Some workflows
+  (e.g. `ParallelTestGenerationWorkflow`) use `self.logger` but
+  `BaseWorkflow` only has a module-level `logger`. Tests must
+  attach a logger to the instance: `wf.logger = logging.getLogger(name)`.
+  This is a source-code bug worth fixing globally.
+
+- **`WorkflowResult` constructor mismatches surface only at
+  runtime**: `ParallelTestGenerationWorkflow.execute()` constructs
+  `WorkflowResult` with kwargs (`workflow_name`, `stages_executed`)
+  that don't exist on the dataclass. This passes import checks and
+  lint but raises `TypeError` at runtime. Tests should exercise
+  `execute()` end-to-end to catch these mismatches.
 
 <!-- attune-lessons-end -->

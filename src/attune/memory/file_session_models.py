@@ -80,6 +80,7 @@ class WorkingEntry:
 
         Returns:
             True if the entry is past its expiration time.
+
         """
         if self.expires_at is None:
             return False
@@ -90,6 +91,7 @@ class WorkingEntry:
 
         Returns:
             Dictionary representation of this entry.
+
         """
         return {
             "key": self.key,
@@ -108,6 +110,7 @@ class WorkingEntry:
 
         Returns:
             Reconstructed WorkingEntry instance.
+
         """
         return cls(
             key=data["key"],
@@ -138,6 +141,7 @@ class StagedPatternFile:
 
         Returns:
             True if the pattern is past its expiration time.
+
         """
         if self.expires_at is None:
             return False
@@ -148,6 +152,7 @@ class StagedPatternFile:
 
         Returns:
             Dictionary representation of this pattern.
+
         """
         return {
             "pattern_id": self.pattern_id,
@@ -171,6 +176,7 @@ class StagedPatternFile:
 
         Returns:
             Reconstructed StagedPatternFile instance.
+
         """
         return cls(
             pattern_id=data["pattern_id"],
@@ -204,6 +210,7 @@ class SessionState:
 
         Returns:
             Dictionary representation of this session state.
+
         """
         return {
             "session_id": self.session_id,
@@ -225,6 +232,7 @@ class SessionState:
 
         Returns:
             Reconstructed SessionState instance.
+
         """
         return cls(
             session_id=data["session_id"],
@@ -251,6 +259,7 @@ class SessionState:
 
         Returns:
             Fresh SessionState with generated session ID.
+
         """
         now = time.time()
         return cls(

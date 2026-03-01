@@ -5,6 +5,80 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.6] - 2026-03-01
+
+### Added
+
+- **82 tests for 4 untested workflows** — Added test coverage for
+  `ParallelTestGenerationWorkflow` (14 tests),
+  `ResearchSynthesisWorkflow` (17 tests),
+  `SEOOptimizationWorkflow` (22 tests), and
+  `TestMaintenanceWorkflow` (29 tests). Workflow test coverage
+  raised from 76% (13/17) to 100% (17/17).
+- **4 conftest fixtures** — Shared test fixtures for the newly
+  tested workflows in `tests/unit/workflows/conftest.py`.
+- **Wizard REVIEW step** — New `StepType.REVIEW` shows LLM
+  analysis results and asks "Does this look right?" before
+  proceeding. Retries up to 2 times on rejection. Added to
+  debug and test-gen wizards. Config-driven YAML wizards also
+  support the new step type.
+- **Wizard discoverability** — Getting-started docs now include
+  a section on interactive wizards with examples.
+- **AskUserQuestion guide** — Comprehensive developer reference
+  with all parameters, 5 worked examples, and common mistakes.
+
+### Fixed
+
+- **Website workflow count** — `features.ts` claimed 10 workflows
+  but 17 exist in registry. Updated to match.
+- **test-gen-parallel crash** — Moved `name`, `description`,
+  `stages` to class attributes (were incorrectly passed to
+  `super().__init__()`).
+- **4 workflows missing BaseWorkflow** — `doc-orchestrator`,
+  `orchestrated-health-check`, `release-prep`, and
+  `secure-release` now inherit `BaseWorkflow`.
+- **batch-processing and test-maintenance** — Removed from
+  workflow registry (not `BaseWorkflow` subclasses). Still
+  importable as standalone utilities.
+- **Stale test file** — `tests/test_claude_export.py` referenced
+  deleted adapters module. Removed.
+
+### Changed
+
+- **CLAUDE.md hub table** — `/workflows` row expanded to show
+  more of the 17 registered workflows.
+- **CLI no-args output** — `attune` with no arguments now shows
+  a concise 13-line welcome with clear next steps.
+- **Install default** — README and docs now recommend
+  `pip install 'attune-ai[developer]'` as the default install.
+- **README accuracy** — Workflow count updated, test count to
+  15,250+, dashboard reference removed from `[all]`.
+- **MyPy removed from CI** — 437 pre-existing errors made it
+  noise. Will be re-enabled after a type-hint sprint.
+
+### Removed
+
+- **BEP middleware** — `src/attune/bep/` module, skills, specs,
+  and adapters preserved on `feature/bep-middleware-v0.1` branch.
+- **Shadow `attune/` directory** — Rogue directory at repo root
+  shadowing `src/attune/` package. Deleted.
+
+### Maintenance
+
+- **Branch cleanup** — Deleted 50 stale local branches; created
+  7 missing version tags; pruned 38 stale remote refs.
+- **develop branch** — CI now triggers on both `main` and
+  `develop`.
+
+## [3.6.5] - 2026-02-28
+
+### Removed
+
+- **Dashboard module deleted** — `attune.dashboard` (Python backend),
+  `attune dashboard start` CLI command, and all associated static
+  assets removed. Was soft-deprecated in v3.6.3. Use `FeedbackLoop`
+  and `UsageTracker` from `attune.telemetry` directly.
+
 ## [3.6.4] - 2026-02-27
 
 ### Added

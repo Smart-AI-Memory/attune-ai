@@ -112,6 +112,7 @@ class CacheMonitor:
         >>>
         >>> # Generate report
         >>> print(monitor.get_report())
+
     """
 
     _instance: "CacheMonitor | None" = None
@@ -148,6 +149,7 @@ class CacheMonitor:
 
         Raises:
             ValueError: If cache name already exists
+
         """
         if name in self._caches:
             raise ValueError(f"Cache '{name}' already registered")
@@ -164,6 +166,7 @@ class CacheMonitor:
 
         Returns:
             CacheStats object or None if not found
+
         """
         return self._caches.get(name)
 
@@ -172,6 +175,7 @@ class CacheMonitor:
 
         Args:
             name: Cache identifier
+
         """
         if stats := self._caches.get(name):
             stats.record_hit()
@@ -181,6 +185,7 @@ class CacheMonitor:
 
         Args:
             name: Cache identifier
+
         """
         if stats := self._caches.get(name):
             stats.record_miss()
@@ -190,6 +195,7 @@ class CacheMonitor:
 
         Args:
             name: Cache identifier
+
         """
         if stats := self._caches.get(name):
             stats.record_eviction()
@@ -201,6 +207,7 @@ class CacheMonitor:
             name: Cache identifier
             size: Current cache size
             max_size: Maximum cache size (optional)
+
         """
         if stats := self._caches.get(name):
             stats.update_size(size, max_size)
@@ -210,6 +217,7 @@ class CacheMonitor:
 
         Returns:
             Dict mapping cache names to CacheStats
+
         """
         return dict(self._caches)
 
@@ -221,6 +229,7 @@ class CacheMonitor:
 
         Returns:
             Formatted report string
+
         """
         if not self._caches:
             return "No caches registered"
@@ -248,7 +257,7 @@ class CacheMonitor:
                 lines.append(f"  Utilization:     {stats.utilization:>6.1%}")
                 lines.append(f"  Created:         {stats.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
                 lines.append(
-                    f"  Last Updated:    {stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')}"
+                    f"  Last Updated:    {stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')}",
                 )
 
             lines.append("")
@@ -273,6 +282,7 @@ class CacheMonitor:
 
         Returns:
             Dict with all cache statistics
+
         """
         return {
             "caches": {name: stats.to_dict() for name, stats in self._caches.items()},
@@ -302,6 +312,7 @@ class CacheMonitor:
 
         Returns:
             List of CacheStats with hit rate >= threshold, sorted by hit rate
+
         """
         # Use generator expression for memory efficiency
         return sorted(
@@ -318,6 +329,7 @@ class CacheMonitor:
 
         Returns:
             List of CacheStats with hit rate <= threshold, sorted by hit rate
+
         """
         # Use generator expression for memory efficiency
         return sorted(
@@ -330,6 +342,7 @@ class CacheMonitor:
 
         Returns:
             Formatted string with memory usage details
+
         """
         lines = ["=" * 70, "CACHE SIZE REPORT", "=" * 70, ""]
 
@@ -339,7 +352,7 @@ class CacheMonitor:
         for stats in sorted(self._caches.values(), key=lambda s: s.size, reverse=True):
             used_pct = stats.utilization * 100
             lines.append(
-                f"{stats.name:<30} {stats.size:>8,} / {stats.max_size:>8,}  ({used_pct:>5.1f}%)"
+                f"{stats.name:<30} {stats.size:>8,} / {stats.max_size:>8,}  ({used_pct:>5.1f}%)",
             )
             total_used += stats.size
             total_capacity += stats.max_size
@@ -347,7 +360,7 @@ class CacheMonitor:
         lines.append("=" * 70)
         if total_capacity > 0:
             lines.append(
-                f"{'TOTAL':<30} {total_used:>8,} / {total_capacity:>8,}  ({total_used / total_capacity * 100:>5.1f}%)"
+                f"{'TOTAL':<30} {total_used:>8,} / {total_capacity:>8,}  ({total_used / total_capacity * 100:>5.1f}%)",
             )
         else:
             lines.append(f"{'TOTAL':<30} {total_used:>8,} / unlimited")

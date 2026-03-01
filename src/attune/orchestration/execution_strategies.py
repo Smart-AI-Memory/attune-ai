@@ -33,12 +33,13 @@ Example:
     ...     else_branch=fast_agents
     ... )
     >>> result = await cond_strategy.execute([], context)
+
 """
 
 import logging
 
 # Advanced Patterns 11-13 (extracted to _strategies/advanced_strategies.py)
-from ._strategies.advanced_strategies import (  # noqa: E402, F401 - re-exported
+from ._strategies.advanced_strategies import (
     DelegationChainStrategy,
     PromptCachedSequentialStrategy,
     ToolEnhancedStrategy,
@@ -123,10 +124,11 @@ def get_strategy(strategy_name: str) -> ExecutionStrategy:
         >>> strategy = get_strategy("sequential")
         >>> isinstance(strategy, SequentialStrategy)
         True
+
     """
     if strategy_name not in STRATEGY_REGISTRY:
         raise ValueError(
-            f"Unknown strategy: {strategy_name}. Available: {list(STRATEGY_REGISTRY.keys())}"
+            f"Unknown strategy: {strategy_name}. Available: {list(STRATEGY_REGISTRY.keys())}",
         )
 
     strategy_class = STRATEGY_REGISTRY[strategy_name]

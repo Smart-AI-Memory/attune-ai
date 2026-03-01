@@ -105,6 +105,7 @@ class SecurityAuditorAgent(ReleaseAgent):
 
         Returns:
             Dict with classified findings
+
         """
         if returncode == -1:
             # bandit not installed -- report as unknown
@@ -163,7 +164,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                     "line": r.get("line_number", 0),
                     "issue": r.get("issue_text", ""),
                     "severity": r.get("issue_severity", "LOW"),
-                }
+                },
             )
 
         return {

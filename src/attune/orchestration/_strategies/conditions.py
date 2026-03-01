@@ -43,6 +43,7 @@ class ConditionType(Enum):
         JSON_PREDICATE: MongoDB-style JSON predicate ({"field": {"$op": value}})
         NATURAL_LANGUAGE: LLM-interpreted natural language condition
         COMPOSITE: Logical combination of conditions (AND/OR)
+
     """
 
     JSON_PREDICATE = "json"
@@ -89,6 +90,7 @@ class Condition:
         ...     condition_type=ConditionType.NATURAL_LANGUAGE,
         ...     description="Security issues detected"
         ... )
+
     """
 
     predicate: dict[str, Any] | str
@@ -116,6 +118,7 @@ class Condition:
 
         Raises:
             ValueError: If predicate contains invalid operators
+
         """
         valid_operators = {
             "$eq",
@@ -149,6 +152,7 @@ class Branch:
         agents: Agents to execute in this branch
         strategy: Strategy to use for executing agents (default: sequential)
         label: Human-readable branch label
+
     """
 
     agents: list[AgentTemplate]
@@ -203,15 +207,15 @@ class ConditionEvaluator:
             >>> cond = Condition(predicate={"confidence": {"$lt": 0.8}})
             >>> evaluator.evaluate(cond, context)
             True
+
         """
         if condition.condition_type == ConditionType.JSON_PREDICATE:
             return self._evaluate_json(condition.predicate, context)
-        elif condition.condition_type == ConditionType.NATURAL_LANGUAGE:
+        if condition.condition_type == ConditionType.NATURAL_LANGUAGE:
             return self._evaluate_natural_language(condition.predicate, context)
-        elif condition.condition_type == ConditionType.COMPOSITE:
+        if condition.condition_type == ConditionType.COMPOSITE:
             return self._evaluate_composite(condition.predicate, context)
-        else:
-            raise ValueError(f"Unknown condition type: {condition.condition_type}")
+        raise ValueError(f"Unknown condition type: {condition.condition_type}")
 
     def _evaluate_json(self, predicate: dict[str, Any], context: dict[str, Any]) -> bool:
         """Evaluate JSON predicate against context.
@@ -222,6 +226,7 @@ class ConditionEvaluator:
 
         Returns:
             True if all conditions match
+
         """
         for field_name, condition_spec in predicate.items():
             # Handle logical operators
@@ -242,10 +247,9 @@ class ConditionEvaluator:
                         raise ValueError(f"Unknown operator: {op}")
                     if not self.OPERATORS[op](value, target):
                         return False
-            else:
-                # Direct equality check
-                if value != condition_spec:
-                    return False
+            # Direct equality check
+            elif value != condition_spec:
+                return False
 
         return True
 
@@ -258,6 +262,7 @@ class ConditionEvaluator:
 
         Returns:
             Value at path or None if not found
+
         """
         parts = path.split(".")
         current = context
@@ -282,13 +287,14 @@ class ConditionEvaluator:
 
         Note:
             Falls back to keyword matching if LLM unavailable.
+
         """
         logger.info(f"Evaluating natural language condition: {condition_text}")
 
         # Try LLM evaluation first
         try:
             return self._evaluate_with_llm(condition_text, context)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Fallback to keyword matching if any LLM error
             logger.warning(f"LLM evaluation failed, using keyword fallback: {e}")
             return self._keyword_fallback(condition_text, context)
@@ -302,6 +308,7 @@ class ConditionEvaluator:
 
         Returns:
             LLM's determination (True/False)
+
         """
         # Import LLM client lazily to avoid circular imports
         try:
@@ -337,6 +344,7 @@ Respond with ONLY "TRUE" or "FALSE" (no explanation)."""
 
         Returns:
             True if keywords suggest condition is likely met
+
         """
         # Simple keyword matching as fallback
         condition_lower = condition_text.lower()
@@ -365,5 +373,6 @@ Respond with ONLY "TRUE" or "FALSE" (no explanation)."""
 
         Returns:
             Result of logical combination
+
         """
         return self._evaluate_json(predicate, context)

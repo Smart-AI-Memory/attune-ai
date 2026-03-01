@@ -91,7 +91,8 @@ class TestCmdProviderShow:
         assert "openai" in captured
 
     def test_show_prints_cost_optimization_enabled(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show prints enabled indicator when cost_optimization is True."""
         config = _make_config(cost_optimization=True)
@@ -104,7 +105,8 @@ class TestCmdProviderShow:
         assert "Enabled" in captured
 
     def test_show_prints_cost_optimization_disabled(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show prints disabled indicator when cost_optimization is False."""
         config = _make_config(cost_optimization=False)
@@ -135,7 +137,8 @@ class TestCmdProviderShow:
         assert "google" in captured
 
     def test_show_marks_primary_provider_with_checkmark(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show marks the primary provider with a checkmark."""
         config = _make_config(
@@ -157,7 +160,8 @@ class TestCmdProviderShow:
             pytest.fail("Primary provider line with checkmark not found")
 
     def test_show_non_primary_provider_has_no_checkmark(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show does not mark non-primary providers with a checkmark."""
         config = _make_config(
@@ -179,7 +183,8 @@ class TestCmdProviderShow:
     # -- Empty available providers -------------------------------------------
 
     def test_show_empty_available_providers_prints_warning(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show prints warning when no providers are available."""
         config = _make_config(available_providers=[])
@@ -193,7 +198,8 @@ class TestCmdProviderShow:
         assert "No API keys detected" in captured
 
     def test_show_empty_providers_suggests_env_vars(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_show suggests setting API keys when none are detected."""
         config = _make_config(available_providers=[])
@@ -411,7 +417,8 @@ class TestCmdProviderSet:
         assert config.primary_provider == "google"
 
     def test_set_single_provider_prints_confirmation(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_set prints confirmation with the provider name."""
         config = _make_config()
@@ -484,7 +491,8 @@ class TestCmdProviderSet:
         assert "invalid provider" in captured
 
     def test_set_exception_during_set_provider_config_returns_one(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_set returns 1 when set_provider_config raises."""
         config = _make_config()
@@ -502,7 +510,8 @@ class TestCmdProviderSet:
         assert result == 1
 
     def test_set_exception_during_set_provider_config_prints_error(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         """cmd_provider_set prints error when set_provider_config raises."""
         config = _make_config()

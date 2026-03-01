@@ -1,6 +1,6 @@
 """Utility CLI commands.
 
-Commands for dashboard, setup, validation, and version info.
+Commands for setup, validation, and version info.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -17,108 +17,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
 logger = logging.getLogger(__name__)
-
-
-def _build_react_dashboard() -> bool:
-    """Build the React dashboard into the Python static directory.
-
-    Returns True if build succeeded or React build already exists.
-    """
-    import shutil
-    import subprocess
-
-    dashboard_dir = Path(__file__).parent.parent.parent.parent / "dashboard"
-    react_out = Path(__file__).parent.parent / "dashboard" / "static" / "react"
-
-    # Already built — skip
-    if (react_out / "index.html").exists():
-        return True
-
-    # No dashboard source — can't build
-    if not (dashboard_dir / "package.json").exists():
-        return False
-
-    npm = shutil.which("npm")
-    if not npm:
-        logger.warning("npm not found — cannot build React dashboard")
-        return False
-
-    print("Building React dashboard...")
-    try:
-        # Install deps if needed
-        if not (dashboard_dir / "node_modules").exists():
-            subprocess.run(
-                [npm, "install"],
-                cwd=str(dashboard_dir),
-                check=True,
-                capture_output=True,
-            )
-        # Build
-        subprocess.run(
-            [npm, "run", "build"],
-            cwd=str(dashboard_dir),
-            check=True,
-            capture_output=True,
-        )
-        print("React dashboard built successfully")
-        return True
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Dashboard build failed: {e.stderr.decode() if e.stderr else e}")
-        return False
-
-
-def cmd_dashboard_start(args: Namespace) -> int:
-    """Start the agent coordination dashboard.
-
-    .. deprecated:: 3.6.3
-        The dashboard is deprecated. Use telemetry classes directly.
-    """
-    import warnings
-    import webbrowser
-
-    warnings.warn(
-        "The 'attune dashboard' command is deprecated as of v3.6.3 and will "
-        "be removed in a future major version.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    try:
-        from attune.dashboard import run_simple_dashboard
-
-        host = args.host
-        port = args.port
-        url = f"http://{host}:{port}"
-
-        # Build React UI if --build flag or first run
-        react_index = Path(__file__).parent.parent / "dashboard" / "static" / "react" / "index.html"
-        if getattr(args, "build", False) or not react_index.exists():
-            _build_react_dashboard()
-
-        ui_type = "React" if react_index.exists() else "legacy"
-        print(f"\n  Agent Coordination Dashboard ({ui_type})")
-        print(f"  {url}\n")
-
-        # Auto-open browser after a short delay
-        import threading
-
-        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
-
-        run_simple_dashboard(host=host, port=port)
-        return 0
-
-    except KeyboardInterrupt:
-        print("\n  Dashboard stopped")
-        return 0
-    except ImportError as e:
-        print(f"Dashboard not available: {e}")
-        print("  Install dashboard dependencies: pip install redis")
-        return 1
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Dashboard error: {e}")
-        print(f"Error starting dashboard: {e}")
-        return 1
 
 
 def cmd_setup(args: Namespace) -> int:
@@ -242,7 +140,7 @@ def cmd_setup(args: Namespace) -> int:
 
     total = copied + agents_copied + configs_copied
     print(
-        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)"
+        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
     )
     print("\n📝 You can now use in Claude Code:")
     print("   /dev              - Developer tools (debug, commit, PR)")
@@ -305,7 +203,7 @@ def cmd_validate(args: Namespace) -> int:
     if keys_found == 0:
         errors.append(
             "No API keys found. Set ANTHROPIC_API_KEY\n"
-            "   Run: python -m attune.models.auth_cli setup"
+            "   Run: python -m attune.models.auth_cli setup",
         )
 
     # Check workflows
@@ -352,7 +250,7 @@ def cmd_version(args: Namespace) -> int:
 
             reqs = requires("attune-ai") or []
             print(f"\nDependencies: {len(reqs)}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     return 0

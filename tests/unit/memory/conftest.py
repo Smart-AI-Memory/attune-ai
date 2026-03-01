@@ -17,6 +17,7 @@ def temp_memory_dir(tmp_path):
 
     Returns:
         Path to isolated memory storage
+
     """
     memory_dir = tmp_path / "memory"
     memory_dir.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,7 @@ def mock_redis():
 
     Returns:
         MagicMock configured as Redis client
+
     """
     mock = MagicMock()
     mock.ping.return_value = True
@@ -46,6 +48,7 @@ def sample_memory_data():
 
     Returns:
         Dict with test data for memory operations
+
     """
     return {
         "key": "test_pattern",

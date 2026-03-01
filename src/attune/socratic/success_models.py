@@ -61,6 +61,7 @@ class SuccessMetric:
         ...     minimum_value=0,
         ...     unit="issues"
         ... )
+
     """
 
     # Unique metric identifier
@@ -115,6 +116,7 @@ class SuccessMetric:
 
         Returns:
             Tuple of (met_criteria, score 0-1, explanation)
+
         """
         # Boolean metrics
         if self.metric_type == MetricType.BOOLEAN:

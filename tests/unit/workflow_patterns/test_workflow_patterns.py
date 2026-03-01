@@ -457,7 +457,7 @@ class TestWorkflowPatternRegistry:
         registry = WorkflowPatternRegistry()
 
         is_valid, error = registry.validate_pattern_combination(
-            ["multi-stage", "conditional-tier", "config-driven"]
+            ["multi-stage", "conditional-tier", "config-driven"],
         )
 
         assert is_valid is True
@@ -487,7 +487,7 @@ class TestWorkflowPatternRegistry:
 
         # conditional-tier requires multi-stage
         is_valid, error = registry.validate_pattern_combination(
-            ["single-stage", "conditional-tier"]
+            ["single-stage", "conditional-tier"],
         )
 
         assert is_valid is False

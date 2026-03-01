@@ -127,7 +127,7 @@ def cmd_workflow_run(args: Namespace) -> int:
 
         return 0
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Workflow failed: {e}")
         print(f"\n❌ Workflow failed: {e}")
@@ -143,6 +143,7 @@ def _print_workflow_result(result: object) -> None:
 
     Args:
         result: Workflow execution result (WorkflowResult, dict, or other)
+
     """
     from attune.workflows.data_classes import WorkflowResult
 

@@ -37,6 +37,7 @@ class SDKTeamResult:
         quality_gate_results: Per-gate pass/fail details.
         total_cost: Sum of all agent costs.
         execution_time_ms: Wall-clock time for the full team run.
+
     """
 
     team_name: str
@@ -51,6 +52,7 @@ class SDKTeamResult:
 
         Returns:
             Dict representation of this team result.
+
         """
         return {
             "team_name": self.team_name,
@@ -77,6 +79,7 @@ class QualityGate:
         metric: Key in ``SDKAgentResult.findings`` to evaluate.
         threshold: Minimum acceptable value.
         required: If ``True``, gate failure fails the entire team.
+
     """
 
     name: str
@@ -99,6 +102,7 @@ class SDKAgentTeam:
         agents: List of ``SDKAgent`` instances.
         quality_gates: Optional list of ``QualityGate`` thresholds.
         parallel: If ``True``, agents run concurrently via ``asyncio.gather``.
+
     """
 
     def __init__(
@@ -125,6 +129,7 @@ class SDKAgentTeam:
 
         Returns:
             Aggregated ``SDKTeamResult``.
+
         """
         start = time.time()
 
@@ -160,6 +165,7 @@ class SDKAgentTeam:
 
         Returns:
             List of agent results.
+
         """
         loop = asyncio.get_event_loop()
         tasks = [loop.run_in_executor(None, agent.process, input_data) for agent in self.agents]
@@ -174,6 +180,7 @@ class SDKAgentTeam:
 
         Returns:
             List of agent results.
+
         """
         results: list[SDKAgentResult] = []
         for agent in self.agents:
@@ -193,6 +200,7 @@ class SDKAgentTeam:
 
         Returns:
             Dict mapping gate name to pass/fail boolean.
+
         """
         gate_results: dict[str, bool] = {}
         results_by_role = {r.role: r for r in results}
@@ -201,7 +209,7 @@ class SDKAgentTeam:
             agent_result = results_by_role.get(gate.agent_role)
             if agent_result is None:
                 logger.warning(
-                    f"Quality gate '{gate.name}' references unknown role " f"'{gate.agent_role}'"
+                    f"Quality gate '{gate.name}' references unknown role '{gate.agent_role}'",
                 )
                 gate_results[gate.name] = False
                 continue
@@ -219,6 +227,7 @@ class SDKAgentTeam:
 
         Returns:
             True if the gate is required or unknown.
+
         """
         for gate in self.quality_gates:
             if gate.name == gate_name:

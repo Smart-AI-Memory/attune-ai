@@ -416,7 +416,11 @@ class TestEnsureRedis:
     @patch("attune.memory.redis_bootstrap.IS_LINUX", False)
     @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
     def test_returns_mock_when_all_methods_fail(
-        self, mock_homebrew, mock_docker, mock_direct, mock_check
+        self,
+        mock_homebrew,
+        mock_docker,
+        mock_direct,
+        mock_check,
     ):
         """Test returns MOCK when all start methods fail."""
         mock_check.return_value = False

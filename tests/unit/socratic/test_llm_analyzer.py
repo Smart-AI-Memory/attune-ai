@@ -89,9 +89,9 @@ def sample_llm_response():
                     "question": "Which languages?",
                     "type": "multi_select",
                     "options": ["Python", "JavaScript"],
-                }
+                },
             ],
-        }
+        },
     )
 
 
@@ -108,12 +108,12 @@ def sample_question_response():
                     "options": ["pytest", "unittest"],
                     "category": "technical",
                     "priority": 5,
-                }
+                },
             ],
             "confidence_after_answers": 0.9,
             "ready_to_generate": True,
             "reasoning": "All key information gathered",
-        }
+        },
     )
 
 
@@ -128,14 +128,14 @@ def sample_agent_response():
                     "priority": 1,
                     "customizations": {"focus_areas": ["style"]},
                     "reasoning": "Needed for quality",
-                }
+                },
             ],
             "workflow_stages": [
-                {"name": "Analysis", "agents": ["code_quality_reviewer"], "parallel": False}
+                {"name": "Analysis", "agents": ["code_quality_reviewer"], "parallel": False},
             ],
             "estimated_cost_tier": "cheap",
             "estimated_duration": "fast",
-        }
+        },
     )
 
 
@@ -390,7 +390,7 @@ That's the JSON."""
             {
                 "outer": {"inner": [1, 2, 3]},
                 "list": [{"a": 1}, {"b": 2}],
-            }
+            },
         )
         result = analyzer._parse_json_response(content)
 
@@ -456,7 +456,10 @@ class TestGenerateQuestions:
 
     @pytest.mark.asyncio
     async def test_generate_questions_success(
-        self, analyzer, mock_session, sample_question_response
+        self,
+        analyzer,
+        mock_session,
+        sample_question_response,
     ):
         """Test successful question generation."""
         with patch.object(analyzer, "_call_llm", new_callable=AsyncMock) as mock_call:
@@ -643,7 +646,7 @@ class TestLlmQuestionsToForm:
                 "question": "Which framework?",
                 "type": "single_select",
                 "options": ["pytest", "unittest"],
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -661,7 +664,7 @@ class TestLlmQuestionsToForm:
                 "question": "Which languages?",
                 "type": "multi_select",
                 "options": ["Python", "JavaScript"],
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -675,7 +678,7 @@ class TestLlmQuestionsToForm:
                 "id": "q1",
                 "question": "Any additional notes?",
                 "type": "text",
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -689,7 +692,7 @@ class TestLlmQuestionsToForm:
                 "id": "q1",
                 "question": "Describe your needs",
                 "type": "text_area",
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -703,7 +706,7 @@ class TestLlmQuestionsToForm:
                 "id": "q1",
                 "question": "Enable feature?",
                 "type": "boolean",
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -717,7 +720,7 @@ class TestLlmQuestionsToForm:
                 "id": "q1",
                 "question": "Question?",
                 "type": "unknown_type",
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -732,7 +735,7 @@ class TestLlmQuestionsToForm:
                 "question": "Choose one",
                 "type": "single_select",
                 "options": ["Option A", "Option B"],
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)
@@ -751,7 +754,7 @@ class TestLlmQuestionsToForm:
                     {"value": "a", "label": "Option A", "description": "Desc A"},
                     {"value": "b", "label": "Option B"},
                 ],
-            }
+            },
         ]
 
         form = llm_questions_to_form(questions, round_number=1, session=mock_session)

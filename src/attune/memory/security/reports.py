@@ -199,6 +199,7 @@ def _process_llm_request(
     Args:
         report: The compliance report dict to update
         event: The audit event dict
+
     """
     report["llm_requests"]["total"] += 1
     security = event.get("security", {})
@@ -219,6 +220,7 @@ def _process_store_pattern(
     Args:
         report: The compliance report dict to update
         event: The audit event dict
+
     """
     report["pattern_storage"]["total"] += 1
     pattern = event.get("pattern", {})
@@ -241,6 +243,7 @@ def _process_retrieve_pattern(
     Args:
         report: The compliance report dict to update
         event: The audit event dict
+
     """
     report["pattern_retrieval"]["total"] += 1
     pattern = event.get("pattern", {})
@@ -261,6 +264,7 @@ def _process_security_violation(
     Args:
         report: The compliance report dict to update
         event: The audit event dict
+
     """
     report["security_violations"]["total"] += 1
     violation = event.get("violation", {})

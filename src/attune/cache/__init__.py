@@ -73,7 +73,7 @@ def create_cache(
         if not HYBRID_AVAILABLE:
             raise ImportError(
                 "HybridCache requires sentence-transformers. "
-                "Install with: pip install attune-ai[cache]"
+                "Install with: pip install attune-ai[cache]",
             )
         logger.info("Using hybrid cache (explicit)")
         return HybridCache(**kwargs)
@@ -81,20 +81,20 @@ def create_cache(
     # Auto-detect (default)
     if HYBRID_AVAILABLE:
         try:
-            import sentence_transformers  # noqa: F401
+            import sentence_transformers
 
             logger.info("Using hybrid cache (auto-detected)")
             return HybridCache(**kwargs)
         except ImportError:
             logger.info(
                 "Using hash-only cache (sentence-transformers not installed). "
-                "For 70% cost savings, install with: pip install attune-ai[cache]"
+                "For 70% cost savings, install with: pip install attune-ai[cache]",
             )
             return HashOnlyCache(**kwargs)
 
     logger.info(
         "Using hash-only cache (numpy not available). "
-        "For 70% cost savings, install with: pip install attune-ai[cache]"
+        "For 70% cost savings, install with: pip install attune-ai[cache]",
     )
     return HashOnlyCache(**kwargs)
 
@@ -115,12 +115,12 @@ def auto_setup_cache() -> None:
 
 
 __all__ = [
+    "HYBRID_AVAILABLE",
     "BaseCache",
     "CacheEntry",
     "CacheStats",
     "HashOnlyCache",
     "HybridCache",
-    "create_cache",
     "auto_setup_cache",
-    "HYBRID_AVAILABLE",
+    "create_cache",
 ]

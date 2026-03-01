@@ -31,6 +31,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from datetime import timedelta
 
@@ -70,7 +71,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
                 perf_text,
                 title=f"Sonnet 4.5 -> Opus 4.5 Fallback Performance (last {days} days)",
                 border_style="cyan",
-            )
+            ),
         )
 
         # Cost Savings Panel
@@ -92,10 +93,10 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
             rec_text = Text()
             rec_text.append("Excellent Performance!\n", style="green bold")
             rec_text.append(
-                f"Sonnet 4.5 handles {100 - stats['fallback_rate']:.1f}% of tasks successfully.\n"
+                f"Sonnet 4.5 handles {100 - stats['fallback_rate']:.1f}% of tasks successfully.\n",
             )
             rec_text.append(
-                f"You're saving ${stats['savings']:.2f} compared to always using Opus.\n"
+                f"You're saving ${stats['savings']:.2f} compared to always using Opus.\n",
             )
             console.print(Panel(rec_text, title="Recommendation", border_style="green"))
         elif stats["fallback_rate"] < 15:
@@ -109,7 +110,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
             rec_text.append("High Fallback Rate\n", style="red bold")
             rec_text.append(f"{stats['fallback_rate']:.1f}% of tasks need Opus fallback.\n")
             rec_text.append(
-                "Consider using Opus directly for complex tasks to avoid retry overhead.\n"
+                "Consider using Opus directly for complex tasks to avoid retry overhead.\n",
             )
             console.print(Panel(rec_text, title="Recommendation", border_style="red"))
     else:
@@ -156,6 +157,7 @@ def cmd_file_test_status(args: Any) -> int:
 
     Returns:
         Exit code (0 for success)
+
     """
     from attune.models.telemetry import get_telemetry_store
 
@@ -309,7 +311,7 @@ def cmd_file_test_status(args: Any) -> int:
             print(f"\n{record.file_path}")
             print(f"  Status: {status}{stale_marker}")
             print(
-                f"  Tests: {record.test_count} (passed: {record.passed}, failed: {record.failed})"
+                f"  Tests: {record.test_count} (passed: {record.passed}, failed: {record.failed})",
             )
             if record.duration_seconds:
                 print(f"  Duration: {record.duration_seconds:.1f}s")

@@ -40,7 +40,7 @@ class PatternStagingMixin:
 
     def _atomic_write(self, path: object, data: dict) -> None:
         """Write JSON atomically (provided by PersistenceMixin)."""
-        ...  # pragma: no cover
+        # pragma: no cover
 
     def stage_pattern(
         self,
@@ -65,6 +65,7 @@ class PatternStagingMixin:
 
         Returns:
             True if staged successfully.
+
         """
         pattern = StagedPatternFile(
             pattern_id=pattern_id,
@@ -102,6 +103,7 @@ class PatternStagingMixin:
         Returns:
             List of staged patterns sorted by confidence
             (descending).
+
         """
         self._cleanup_expired_patterns()
 
@@ -124,6 +126,7 @@ class PatternStagingMixin:
 
         Returns:
             Tuple of (success, pattern, message).
+
         """
         pattern = self._state.staged_patterns.get(pattern_id)
         if pattern is None:
@@ -138,7 +141,7 @@ class PatternStagingMixin:
             return (
                 False,
                 None,
-                f"Confidence {pattern.confidence} " f"below threshold {min_confidence}",
+                f"Confidence {pattern.confidence} below threshold {min_confidence}",
             )
 
         # Move to promoted directory

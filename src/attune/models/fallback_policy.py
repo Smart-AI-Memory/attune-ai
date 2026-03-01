@@ -103,7 +103,7 @@ class FallbackPolicy:
                         FallbackStep(
                             provider=provider,
                             tier=self.primary_tier,
-                            description=(f"Same tier ({self.primary_tier})" f" on {provider}"),
+                            description=(f"Same tier ({self.primary_tier}) on {provider}"),
                         ),
                     )
 
@@ -114,7 +114,7 @@ class FallbackPolicy:
                     FallbackStep(
                         provider=self.primary_provider,
                         tier=tier,
-                        description=(f"Cheaper tier ({tier})" f" on {self.primary_provider}"),
+                        description=(f"Cheaper tier ({tier}) on {self.primary_provider}"),
                     ),
                 )
 
@@ -127,7 +127,7 @@ class FallbackPolicy:
                         FallbackStep(
                             provider=provider,
                             tier=self.primary_tier,
-                            description=(f"{self.primary_tier}" f" on {provider}"),
+                            description=(f"{self.primary_tier} on {provider}"),
                         ),
                     )
                     # Then cheaper tiers

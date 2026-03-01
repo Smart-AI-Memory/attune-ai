@@ -30,9 +30,9 @@ from .generator import TestGenerator
 from .risk_analyzer import RiskAnalysis, RiskAnalyzer
 
 __all__ = [
-    "TestGenerator",
-    "RiskAnalyzer",
     "RiskAnalysis",
+    "RiskAnalyzer",
+    "TestGenerator",
 ]
 
 __version__ = "1.0.0"

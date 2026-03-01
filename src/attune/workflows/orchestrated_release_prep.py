@@ -36,6 +36,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 import asyncio
@@ -70,6 +71,7 @@ class QualityGate:
         passed: Whether gate passed
         critical: Whether failure blocks release
         message: Human-readable status message
+
     """
 
     name: str
@@ -112,6 +114,7 @@ class ReleaseReadinessReport:
         summary: Executive summary of readiness
         timestamp: Report generation time
         total_duration: Total execution time in seconds
+
     """
 
     approved: bool
@@ -129,6 +132,7 @@ class ReleaseReadinessReport:
 
         Returns:
             Dictionary representation suitable for JSON serialization
+
         """
         return {
             "approved": self.approved,
@@ -157,6 +161,7 @@ class ReleaseReadinessReport:
 
         Returns:
             Human-readable formatted report
+
         """
         lines = []
 
@@ -169,7 +174,7 @@ class ReleaseReadinessReport:
         # Status
         status_icon = "✅" if self.approved else "❌"
         lines.append(
-            f"Status: {status_icon} {'READY FOR RELEASE' if self.approved else 'NOT READY'}"
+            f"Status: {status_icon} {'READY FOR RELEASE' if self.approved else 'NOT READY'}",
         )
         lines.append(f"Confidence: {self.confidence.upper()}")
         lines.append(f"Generated: {self.timestamp}")
@@ -251,6 +256,7 @@ class OrchestratedReleasePrepWorkflow:
         >>> report = await workflow.execute(path=".")
         >>> if report.approved:
         ...     print("Ready for release!")
+
     """
 
     # Default quality gate thresholds
@@ -280,6 +286,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Raises:
             ValueError: If quality gates are invalid
+
         """
         warnings.warn(
             "OrchestratedReleasePrepWorkflow is deprecated since v5.2.0. "
@@ -310,7 +317,7 @@ class OrchestratedReleasePrepWorkflow:
 
         logger.info(
             f"OrchestratedReleasePrepWorkflow initialized with gates: {self.quality_gates}, "
-            f"agents: {self.agent_ids}"
+            f"agents: {self.agent_ids}",
         )
 
     async def execute(
@@ -331,6 +338,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Raises:
             ValueError: If path is invalid
+
         """
         # Map 'target' to 'path' for VSCode compatibility
         if "target" in kwargs and path == ".":
@@ -356,7 +364,7 @@ class OrchestratedReleasePrepWorkflow:
 
         logger.info(
             f"Execution plan: {len(execution_plan.agents)} agents, "
-            f"strategy={execution_plan.strategy.value}"
+            f"strategy={execution_plan.strategy.value}",
         )
 
         # Override agents if specific IDs provided
@@ -387,7 +395,7 @@ class OrchestratedReleasePrepWorkflow:
 
         logger.info(
             f"Release prep completed: approved={report.approved}, "
-            f"duration={report.total_duration:.2f}s"
+            f"duration={report.total_duration:.2f}s",
         )
 
         return report
@@ -407,6 +415,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Returns:
             ReleaseReadinessReport with all findings
+
         """
         # Extract agent results
         agent_results: dict[str, dict] = {}
@@ -459,6 +468,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Returns:
             List of QualityGate results
+
         """
         gates = []
 
@@ -473,7 +483,7 @@ class OrchestratedReleasePrepWorkflow:
                 actual=float(critical_issues),
                 critical=True,
                 passed=critical_issues <= self.quality_gates["max_critical_issues"],
-            )
+            ),
         )
 
         # Coverage gate: minimum test coverage
@@ -487,7 +497,7 @@ class OrchestratedReleasePrepWorkflow:
                 actual=coverage_percent,
                 passed=coverage_percent >= self.quality_gates["min_coverage"],
                 critical=True,
-            )
+            ),
         )
 
         # Quality gate: minimum code quality score
@@ -501,7 +511,7 @@ class OrchestratedReleasePrepWorkflow:
                 actual=quality_score,
                 passed=quality_score >= self.quality_gates["min_quality_score"],
                 critical=True,
-            )
+            ),
         )
 
         # Documentation gate: completeness
@@ -515,13 +525,15 @@ class OrchestratedReleasePrepWorkflow:
                 actual=doc_coverage,
                 passed=doc_coverage >= self.quality_gates["min_doc_coverage"],
                 critical=False,  # Non-critical - warning only
-            )
+            ),
         )
 
         return gates
 
     def _identify_issues(
-        self, quality_gates: list[QualityGate], agent_results: dict[str, dict]
+        self,
+        quality_gates: list[QualityGate],
+        agent_results: dict[str, dict],
     ) -> tuple[list[str], list[str]]:
         """Identify blockers and warnings from quality gates and agent results.
 
@@ -531,6 +543,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Returns:
             Tuple of (blockers, warnings)
+
         """
         blockers = []
         warnings = []
@@ -566,6 +579,7 @@ class OrchestratedReleasePrepWorkflow:
 
         Returns:
             Executive summary text
+
         """
         lines = []
 

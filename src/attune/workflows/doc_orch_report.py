@@ -43,7 +43,7 @@ class DocOrchReportMixin:
     max_cost: float = 5.0
     doc_type: str = "api_reference"
     audience: str = "developers"
-    project_root: Path = Path(".")
+    project_root: Path = Path()
     export_path: Path = Path("docs/generated")
     dry_run: bool = False
 

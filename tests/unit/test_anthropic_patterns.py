@@ -151,7 +151,8 @@ class TestDelegationChainStrategy:
 
         # Try to exceed max depth
         result = await strategy.execute(
-            agents=[coordinator], context={"task": "Test", "_delegation_depth": 3}
+            agents=[coordinator],
+            context={"task": "Test", "_delegation_depth": 3},
         )
 
         assert result.success is False

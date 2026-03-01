@@ -95,7 +95,10 @@ class TestParallelComposition:
 
     @pytest.mark.asyncio
     async def test_parallel_execution_of_independent_agents(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that agents execute independently in parallel."""
         strategy = ParallelStrategy()
@@ -143,7 +146,10 @@ class TestParallelComposition:
 
     @pytest.mark.asyncio
     async def test_parallel_error_handling_one_agent_fails(
-        self, failing_mock_agents, test_context, mock_agent_result_factory
+        self,
+        failing_mock_agents,
+        test_context,
+        mock_agent_result_factory,
     ):
         """Test parallel execution when one agent fails."""
         strategy = ParallelStrategy()
@@ -172,7 +178,10 @@ class TestParallelComposition:
 
     @pytest.mark.asyncio
     async def test_parallel_performance_faster_than_sequential(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that parallel execution is faster than sequential for independent tasks."""
         # Execute parallel
@@ -229,7 +238,10 @@ class TestSequentialComposition:
 
     @pytest.mark.asyncio
     async def test_sequential_execution_maintains_order(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that agents execute in the specified order."""
         strategy = SequentialStrategy()
@@ -250,7 +262,10 @@ class TestSequentialComposition:
 
     @pytest.mark.asyncio
     async def test_sequential_context_passing_between_agents(
-        self, mock_agents, test_context, mock_agent_result_factory
+        self,
+        mock_agents,
+        test_context,
+        mock_agent_result_factory,
     ):
         """Test that context is passed from one agent to the next."""
         strategy = SequentialStrategy()
@@ -280,7 +295,10 @@ class TestSequentialComposition:
 
     @pytest.mark.asyncio
     async def test_sequential_early_termination_on_error(
-        self, mock_agents, test_context, mock_agent_result_factory
+        self,
+        mock_agents,
+        test_context,
+        mock_agent_result_factory,
     ):
         """Test sequential execution behavior when an agent fails."""
         strategy = SequentialStrategy()
@@ -308,7 +326,10 @@ class TestSequentialComposition:
 
     @pytest.mark.asyncio
     async def test_sequential_dependency_chain_validation(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that sequential composition validates dependency chains."""
         strategy = SequentialStrategy()
@@ -329,7 +350,10 @@ class TestSequentialComposition:
 
     @pytest.mark.asyncio
     async def test_sequential_state_accumulation(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that state accumulates across sequential execution."""
         strategy = SequentialStrategy()
@@ -362,7 +386,10 @@ class TestRefinementComposition:
 
     @pytest.mark.asyncio
     async def test_refinement_iterative_refinement_of_results(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that each stage refines previous output."""
         strategy = RefinementStrategy()
@@ -382,7 +409,10 @@ class TestRefinementComposition:
 
     @pytest.mark.asyncio
     async def test_refinement_quality_improvement_tracking(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that quality metrics improve across refinement stages."""
         strategy = RefinementStrategy()
@@ -403,7 +433,10 @@ class TestRefinementComposition:
 
     @pytest.mark.asyncio
     async def test_refinement_convergence_detection(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test refinement convergence detection."""
         strategy = RefinementStrategy()
@@ -421,7 +454,10 @@ class TestRefinementComposition:
 
     @pytest.mark.asyncio
     async def test_refinement_max_iteration_limits(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that refinement respects maximum iteration limits."""
         strategy = RefinementStrategy()
@@ -438,7 +474,10 @@ class TestRefinementComposition:
 
     @pytest.mark.asyncio
     async def test_refinement_stopping_criteria(
-        self, mock_agents, test_context, mock_agent_result_factory
+        self,
+        mock_agents,
+        test_context,
+        mock_agent_result_factory,
     ):
         """Test refinement stopping criteria."""
         strategy = RefinementStrategy()
@@ -473,7 +512,10 @@ class TestHierarchicalComposition:
 
     @pytest.mark.asyncio
     async def test_hierarchical_manager_worker_delegation(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test manager delegates to appropriate workers."""
         # Adaptive strategy implements hierarchical pattern
@@ -496,7 +538,10 @@ class TestHierarchicalComposition:
 
     @pytest.mark.asyncio
     async def test_hierarchical_task_decomposition(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that manager decomposes task for workers."""
         strategy = AdaptiveStrategy()
@@ -516,7 +561,10 @@ class TestHierarchicalComposition:
 
     @pytest.mark.asyncio
     async def test_hierarchical_result_synthesis(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that results from workers are synthesized."""
         strategy = AdaptiveStrategy()
@@ -536,7 +584,10 @@ class TestHierarchicalComposition:
 
     @pytest.mark.asyncio
     async def test_hierarchical_coordinator_role(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test coordinator (manager) role in orchestration."""
         strategy = AdaptiveStrategy()
@@ -556,7 +607,10 @@ class TestHierarchicalComposition:
 
     @pytest.mark.asyncio
     async def test_hierarchical_subtask_distribution(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test distribution of subtasks to specialized workers."""
         strategy = AdaptiveStrategy()
@@ -597,7 +651,10 @@ class TestDebateComposition:
 
     @pytest.mark.asyncio
     async def test_debate_multi_viewpoint_generation(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that multiple agents provide different viewpoints."""
         strategy = DebateStrategy()
@@ -637,7 +694,10 @@ class TestDebateComposition:
 
     @pytest.mark.asyncio
     async def test_debate_disagreement_resolution(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test handling of disagreements between agents."""
         strategy = DebateStrategy()
@@ -679,7 +739,10 @@ class TestDebateComposition:
 
     @pytest.mark.asyncio
     async def test_debate_synthesis_of_perspectives(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test synthesis of multiple perspectives into coherent output."""
         strategy = DebateStrategy()
@@ -717,7 +780,10 @@ class TestVotingComposition:
 
     @pytest.mark.asyncio
     async def test_voting_multiple_agent_proposals(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that multiple agents submit proposals for voting."""
         strategy = DebateStrategy()
@@ -754,7 +820,10 @@ class TestVotingComposition:
 
     @pytest.mark.asyncio
     async def test_voting_majority_consensus_selection(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test selection based on majority consensus."""
         strategy = DebateStrategy()
@@ -840,7 +909,10 @@ class TestCompositionPatternInvariants:
 
     @pytest.mark.asyncio
     async def test_all_patterns_return_strategy_result(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that all patterns return StrategyResult."""
         strategies = [
@@ -882,7 +954,10 @@ class TestCompositionPatternInvariants:
 
     @pytest.mark.asyncio
     async def test_all_patterns_produce_outputs(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that all patterns produce outputs."""
         strategies = [
@@ -903,7 +978,10 @@ class TestCompositionPatternInvariants:
 
     @pytest.mark.asyncio
     async def test_all_patterns_aggregate_results(
-        self, mock_agents, test_context, mock_execute_agent
+        self,
+        mock_agents,
+        test_context,
+        mock_execute_agent,
     ):
         """Test that all patterns aggregate results."""
         strategies = [

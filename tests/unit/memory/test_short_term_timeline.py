@@ -47,7 +47,10 @@ class TestTimeline:
     def test_timeline_add_creates_entry(self, memory, contributor_creds):
         """Test timeline_add creates a time-ordered entry."""
         result = memory.timeline_add(
-            "events", "event_001", {"type": "login", "user": "alice"}, contributor_creds
+            "events",
+            "event_001",
+            {"type": "login", "user": "alice"},
+            contributor_creds,
         )
 
         assert result is True
@@ -62,7 +65,11 @@ class TestTimeline:
         past_time = datetime.now() - timedelta(hours=2)
 
         result = memory.timeline_add(
-            "events", "event_past", {"type": "historical"}, contributor_creds, timestamp=past_time
+            "events",
+            "event_past",
+            {"type": "historical"},
+            contributor_creds,
+            timestamp=past_time,
         )
 
         assert result is True
@@ -113,7 +120,11 @@ class TestTimeline:
         for i in range(5):
             ts = base_time + timedelta(minutes=i)
             memory.timeline_add(
-                "ordered_events", f"event_{i}", {"index": i}, contributor_creds, timestamp=ts
+                "ordered_events",
+                f"event_{i}",
+                {"index": i},
+                contributor_creds,
+                timestamp=ts,
             )
 
         # Query all events
@@ -133,7 +144,11 @@ class TestTimeline:
         for i in range(10):
             ts = base_time + timedelta(minutes=i)
             memory.timeline_add(
-                "windowed_events", f"event_{i}", {"minute": i}, contributor_creds, timestamp=ts
+                "windowed_events",
+                f"event_{i}",
+                {"minute": i},
+                contributor_creds,
+                timestamp=ts,
             )
 
         # Query middle window (minutes 3-7)
@@ -167,7 +182,11 @@ class TestTimeline:
         for i in range(10):
             ts = base_time + timedelta(minutes=i)
             memory.timeline_add(
-                "offset_timeline", f"event_{i}", {"index": i}, contributor_creds, timestamp=ts
+                "offset_timeline",
+                f"event_{i}",
+                {"index": i},
+                contributor_creds,
+                timestamp=ts,
             )
 
         # Skip first 3, get next 3
@@ -189,7 +208,11 @@ class TestTimeline:
         # Add events in the past
         past_time = datetime.now() - timedelta(days=30)
         memory.timeline_add(
-            "past_events", "old_event", {"data": "old"}, contributor_creds, timestamp=past_time
+            "past_events",
+            "old_event",
+            {"data": "old"},
+            contributor_creds,
+            timestamp=past_time,
         )
 
         # Query future window
@@ -230,7 +253,11 @@ class TestTimeline:
         for i in range(10):
             ts = base_time + timedelta(minutes=i)
             memory.timeline_add(
-                "count_window", f"event_{i}", {"index": i}, contributor_creds, timestamp=ts
+                "count_window",
+                f"event_{i}",
+                {"index": i},
+                contributor_creds,
+                timestamp=ts,
             )
 
         # Count only first 5 minutes
@@ -253,7 +280,11 @@ class TestTimeline:
         """Test count with no events in time window returns zero."""
         past_time = datetime.now() - timedelta(days=30)
         memory.timeline_add(
-            "past_count", "old_event", {"data": "old"}, contributor_creds, timestamp=past_time
+            "past_count",
+            "old_event",
+            {"data": "old"},
+            contributor_creds,
+            timestamp=past_time,
         )
 
         query = TimeWindowQuery(
@@ -331,19 +362,25 @@ class TestTimeline:
 
         # Get first page (0-9)
         page1 = memory.timeline_query(
-            "paginated", contributor_creds, TimeWindowQuery(offset=0, limit=10)
+            "paginated",
+            contributor_creds,
+            TimeWindowQuery(offset=0, limit=10),
         )
         assert len(page1) == 10
 
         # Get second page (10-19)
         page2 = memory.timeline_query(
-            "paginated", contributor_creds, TimeWindowQuery(offset=10, limit=10)
+            "paginated",
+            contributor_creds,
+            TimeWindowQuery(offset=10, limit=10),
         )
         assert len(page2) == 10
 
         # Get third page (20-24)
         page3 = memory.timeline_query(
-            "paginated", contributor_creds, TimeWindowQuery(offset=20, limit=10)
+            "paginated",
+            contributor_creds,
+            TimeWindowQuery(offset=20, limit=10),
         )
         assert len(page3) == 5
 

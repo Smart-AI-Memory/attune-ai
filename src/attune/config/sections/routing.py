@@ -28,6 +28,7 @@ class RoutingConfig:
         temperature_default: Default temperature for completions.
         retry_on_rate_limit: Retry requests on rate limit errors.
         max_retries: Maximum retry attempts.
+
     """
 
     default_tier: Literal["cheap", "capable", "premium"] = "capable"

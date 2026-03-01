@@ -47,6 +47,7 @@ class OTELBackend:
         >>> if backend.is_available():
         ...     backend.log_call(call_record)
         ...     backend.log_workflow(workflow_record)
+
     """
 
     def __init__(
@@ -61,6 +62,7 @@ class OTELBackend:
             endpoint: OTEL collector endpoint (default: auto-detect)
             batch_size: Number of records to buffer before export
             retry_count: Number of retries on transient failures
+
         """
         self.endpoint = endpoint or self._detect_endpoint()
         self.batch_size = batch_size
@@ -84,6 +86,7 @@ class OTELBackend:
 
         Returns:
             OTEL collector endpoint URL
+
         """
         # Check environment variable
         from attune.config.env_compat import get_attune_env
@@ -109,6 +112,7 @@ class OTELBackend:
 
         Returns:
             True if port is open, False otherwise
+
         """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -124,6 +128,7 @@ class OTELBackend:
 
         Returns:
             True if collector is reachable, False otherwise
+
         """
         if not self.endpoint:
             return False
@@ -148,6 +153,7 @@ class OTELBackend:
 
         Returns:
             True if opentelemetry-api and opentelemetry-sdk are installed
+
         """
         import importlib.util
 
@@ -174,7 +180,7 @@ class OTELBackend:
                 {
                     "service.name": "empathy-framework",
                     "service.version": "3.8.0-alpha",
-                }
+                },
             )
 
             # Create tracer provider
@@ -202,6 +208,7 @@ class OTELBackend:
 
         Returns:
             True if OTEL collector is reachable and dependencies installed
+
         """
         return self._available and self._otel_available
 
@@ -212,6 +219,7 @@ class OTELBackend:
 
         Args:
             record: LLM call record to log
+
         """
         if not self.is_available():
             return
@@ -219,7 +227,7 @@ class OTELBackend:
         try:
             # Create span with LLM semantic conventions
             with self.tracer.start_as_current_span(
-                f"llm.{record.provider}.{record.model_id}"
+                f"llm.{record.provider}.{record.model_id}",
             ) as span:
                 # Set standard LLM attributes
                 span.set_attribute("llm.provider", record.provider)
@@ -231,7 +239,8 @@ class OTELBackend:
                 span.set_attribute("llm.usage.input_tokens", record.input_tokens)
                 span.set_attribute("llm.usage.output_tokens", record.output_tokens)
                 span.set_attribute(
-                    "llm.usage.total_tokens", record.input_tokens + record.output_tokens
+                    "llm.usage.total_tokens",
+                    record.input_tokens + record.output_tokens,
                 )
 
                 # Set cost and latency
@@ -253,7 +262,8 @@ class OTELBackend:
                     span.set_attribute("llm.fallback.used", True)
                     if record.original_provider:
                         span.set_attribute(
-                            "llm.fallback.original_provider", record.original_provider
+                            "llm.fallback.original_provider",
+                            record.original_provider,
                         )
                     if record.original_model:
                         span.set_attribute("llm.fallback.original_model", record.original_model)
@@ -276,6 +286,7 @@ class OTELBackend:
 
         Args:
             record: Workflow run record to log
+
         """
         if not self.is_available():
             return
@@ -318,7 +329,7 @@ class OTELBackend:
                 # Create child spans for each stage
                 for stage in record.stages:
                     with self.tracer.start_as_current_span(
-                        f"stage.{stage.stage_name}"
+                        f"stage.{stage.stage_name}",
                     ) as stage_span:
                         stage_span.set_attribute("stage.name", stage.stage_name)
                         stage_span.set_attribute("llm.tier", stage.tier)

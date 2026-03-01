@@ -26,7 +26,7 @@ def scanner_config():
             "**/__pycache__/**",
             "**/*.pyc",
             "**/.git/**",
-        ]
+        ],
     )
 
 

@@ -364,6 +364,7 @@ def _remove_docstrings(content: str) -> str:
 
     Returns:
         Content with docstrings replaced by placeholder comments.
+
     """
     # Remove triple-quoted strings (docstrings)
     # Match """ ... """ and ''' ... ''' including multiline
@@ -380,6 +381,7 @@ def _is_security_policy_line(line: str) -> bool:
 
     Returns:
         True if this appears to be security documentation.
+
     """
     line_lower = line.lower()
 

@@ -54,6 +54,7 @@ class LongTermMemory:
     Note:
         For enterprise features (PII scrubbing, encryption, audit logging),
         use SecureMemDocsIntegration instead.
+
     """
 
     def __init__(self, storage_path: str = "./long_term_storage"):

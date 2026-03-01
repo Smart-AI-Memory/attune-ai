@@ -223,7 +223,9 @@ class TestCmdTelemetrySavings:
         # Premium baseline: 10000 * 45/1M = $0.45
         records = [
             _make_workflow_record(
-                total_cost=0.05, total_input_tokens=5000, total_output_tokens=5000
+                total_cost=0.05,
+                total_input_tokens=5000,
+                total_output_tokens=5000,
             ),
         ]
         mock_store = MagicMock()
@@ -479,7 +481,7 @@ class TestCmdTelemetryExport:
 
         mock_config_module = MagicMock()
         mock_config_module._validate_file_path = MagicMock(
-            side_effect=ValueError("Cannot write to system directory: /etc")
+            side_effect=ValueError("Cannot write to system directory: /etc"),
         )
 
         with patch.dict(
@@ -597,7 +599,7 @@ class TestCmdTelemetryRoutingStats:
 
         with self._patch_routing_imports(mock_tracker, mock_router):
             result = cmd_telemetry_routing_stats(
-                _make_args(workflow="code-review", stage=None, days=7)
+                _make_args(workflow="code-review", stage=None, days=7),
             )
 
         assert result == 0
@@ -624,7 +626,7 @@ class TestCmdTelemetryRoutingStats:
 
         with self._patch_routing_imports(mock_tracker, mock_router):
             result = cmd_telemetry_routing_stats(
-                _make_args(workflow="code-review", stage="analysis", days=14)
+                _make_args(workflow="code-review", stage="analysis", days=14),
             )
 
         assert result == 0
@@ -642,7 +644,7 @@ class TestCmdTelemetryRoutingStats:
 
         with self._patch_routing_imports(mock_tracker, mock_router):
             result = cmd_telemetry_routing_stats(
-                _make_args(workflow="unknown-wf", stage=None, days=7)
+                _make_args(workflow="unknown-wf", stage=None, days=7),
             )
 
         assert result == 0
@@ -660,7 +662,7 @@ class TestCmdTelemetryRoutingStats:
 
         with self._patch_routing_imports(mock_tracker, mock_router):
             result = cmd_telemetry_routing_stats(
-                _make_args(workflow="unknown-wf", stage="prep", days=7)
+                _make_args(workflow="unknown-wf", stage="prep", days=7),
             )
 
         assert result == 0
@@ -1145,7 +1147,8 @@ class TestCmdTelemetryModels:
         assert result == 0
 
     def test_models_failed_entry_not_counted_as_success(
-        self, capsys: pytest.CaptureFixture
+        self,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test that entries with success=False are not counted in successes."""
         mock_tracker = MagicMock()

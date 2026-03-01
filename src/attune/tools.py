@@ -39,6 +39,7 @@ def set_ask_user_question_handler(handler: Callable) -> None:
         ...     # Custom UI logic
         ...     return {"Pattern": "sequential"}
         >>> set_ask_user_question_handler(my_handler)
+
     """
     global _custom_ask_function
     _custom_ask_function = handler
@@ -81,6 +82,7 @@ def AskUserQuestion(questions: list[dict[str, Any]]) -> dict[str, Any]:
         ... )
         >>> response
         {"Pattern": "sequential"}
+
     """
     # Mode 1: Custom handler
     if _custom_ask_function is not None:
@@ -100,7 +102,7 @@ def AskUserQuestion(questions: list[dict[str, Any]]) -> dict[str, Any]:
         "1. Custom handler via set_ask_user_question_handler()\n"
         "2. Running in Claude Code environment\n"
         "3. Using interactive=False for automatic mode\n\n"
-        "Use: orchestrator.analyze_and_compose(task, interactive=False)"
+        "Use: orchestrator.analyze_and_compose(task, interactive=False)",
     )
 
 
@@ -109,6 +111,7 @@ def _is_running_in_claude_code() -> bool:
 
     Returns:
         True if running in Claude Code, False otherwise
+
     """
     # Check for Claude Code environment markers
     return (
@@ -132,6 +135,7 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
 
     Raises:
         RuntimeError: If communication fails or times out
+
     """
     import time
     import uuid
@@ -174,7 +178,7 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
 
         raise RuntimeError(
             f"Timeout waiting for user response (waited {timeout}s). "
-            "User may have cancelled or Claude Code IPC is not active."
+            "User may have cancelled or Claude Code IPC is not active.",
         )
 
     except Exception as e:

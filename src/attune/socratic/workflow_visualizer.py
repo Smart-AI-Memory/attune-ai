@@ -27,6 +27,7 @@ class WorkflowVisualizer:
         Args:
             node_spacing: Horizontal spacing between nodes
             stage_spacing: Vertical spacing between stages
+
         """
         self.node_spacing = node_spacing
         self.stage_spacing = stage_spacing
@@ -39,6 +40,7 @@ class WorkflowVisualizer:
 
         Returns:
             EditorState ready for visualization
+
         """
         nodes: list[EditorNode] = []
         edges: list[EditorEdge] = []
@@ -82,7 +84,7 @@ class WorkflowVisualizer:
                         source="start",
                         target=stage.id,
                         animated=True,
-                    )
+                    ),
                 )
                 first_stage = False
             else:
@@ -92,7 +94,7 @@ class WorkflowVisualizer:
                             edge_id=f"{dep}->{stage.id}",
                             source=dep,
                             target=stage.id,
-                        )
+                        ),
                     )
 
             # Create agent nodes for this stage
@@ -124,7 +126,7 @@ class WorkflowVisualizer:
                         edge_id=f"{stage.id}->{agent_id}",
                         source=stage.id,
                         target=agent_id,
-                    )
+                    ),
                 )
 
             y_offset += self.stage_spacing
@@ -148,7 +150,7 @@ class WorkflowVisualizer:
                     source=last_stage.id,
                     target="end",
                     animated=True,
-                )
+                ),
             )
 
         return EditorState(workflow_id=blueprint.id, nodes=nodes, edges=edges)
@@ -161,11 +163,14 @@ class WorkflowVisualizer:
 
         Returns:
             EditorState ready for visualization
+
         """
         return self.blueprint_to_editor(blueprint)
 
     def to_blueprint(
-        self, state: EditorState, original_blueprint: WorkflowBlueprint | None = None
+        self,
+        state: EditorState,
+        original_blueprint: WorkflowBlueprint | None = None,
     ) -> WorkflowBlueprint:
         """Alias for editor_to_blueprint - converts editor state back to blueprint.
 
@@ -175,6 +180,7 @@ class WorkflowVisualizer:
 
         Returns:
             Updated WorkflowBlueprint
+
         """
         if original_blueprint is None:
             # Create minimal blueprint for reconstruction
@@ -201,6 +207,7 @@ class WorkflowVisualizer:
 
         Returns:
             Updated WorkflowBlueprint
+
         """
         # Extract stage nodes and their agents
         stage_nodes = [n for n in state.nodes if n.node_type == NodeType.STAGE]
@@ -240,7 +247,7 @@ class WorkflowVisualizer:
                     depends_on=dependencies,
                     parallel=stage_node.data.get("parallel", False),
                     timeout=stage_node.data.get("timeout"),
-                )
+                ),
             )
 
         # Update blueprint

@@ -128,6 +128,7 @@ class FeedbackLoop:
         FEEDBACK_TTL: Feedback entry TTL in seconds (7 days)
         MIN_SAMPLES: Minimum samples needed for a recommendation (10)
         QUALITY_THRESHOLD: Quality below this triggers upgrade advice (0.7)
+
     """
 
     FEEDBACK_TTL = 604800  # 7 days
@@ -141,6 +142,7 @@ class FeedbackLoop:
             memory: Optional MemoryBackend instance.  When omitted the loop
                 tries the UsageTracker's backend (Redis when available) and
                 falls back to an in-memory store.
+
         """
         self.memory = memory
 
@@ -187,6 +189,7 @@ class FeedbackLoop:
             ...     quality_score=0.85,
             ...     metadata={"tokens": 150, "latency_ms": 1200}
             ... )
+
         """
         if not 0.0 <= quality_score <= 1.0:
             logger.warning(f"Invalid quality score: {quality_score} (must be 0.0-1.0)")
@@ -216,7 +219,7 @@ class FeedbackLoop:
 
         logger.debug(
             f"Recorded feedback: {workflow_name}/{stage_name} "
-            f"tier={tier} quality={quality_score:.2f}"
+            f"tier={tier} quality={quality_score:.2f}",
         )
         return feedback_id
 
@@ -237,6 +240,7 @@ class FeedbackLoop:
 
         Returns:
             List of feedback entries (newest first)
+
         """
         if isinstance(tier, ModelTier):
             tier = tier.value
@@ -276,7 +280,10 @@ class FeedbackLoop:
             return None
 
     def get_quality_stats(
-        self, workflow_name: str, stage_name: str, tier: str | ModelTier | None = None
+        self,
+        workflow_name: str,
+        stage_name: str,
+        tier: str | ModelTier | None = None,
     ) -> QualityStats | None:
         """Get quality statistics for a workflow stage.
 
@@ -287,6 +294,7 @@ class FeedbackLoop:
 
         Returns:
             Quality statistics or None if insufficient data
+
         """
         history = self.get_feedback_history(workflow_name, stage_name, tier=tier)
 
@@ -321,7 +329,10 @@ class FeedbackLoop:
         )
 
     def recommend_tier(
-        self, workflow_name: str, stage_name: str, current_tier: str | ModelTier | None = None
+        self,
+        workflow_name: str,
+        stage_name: str,
+        current_tier: str | ModelTier | None = None,
     ) -> TierRecommendation:
         """Recommend optimal tier based on quality feedback.
 
@@ -337,6 +348,7 @@ class FeedbackLoop:
 
         Returns:
             Tier recommendation with confidence and reasoning
+
         """
         if isinstance(current_tier, ModelTier):
             current_tier = current_tier.value
@@ -421,7 +433,9 @@ class FeedbackLoop:
         )
 
     def get_underperforming_stages(
-        self, workflow_name: str, quality_threshold: float = 0.7
+        self,
+        workflow_name: str,
+        quality_threshold: float = 0.7,
     ) -> list[tuple[str, QualityStats]]:
         """Get workflow stages/tiers with poor quality scores.
 
@@ -431,6 +445,7 @@ class FeedbackLoop:
 
         Returns:
             List of (stage_label, stats) tuples sorted worst-first
+
         """
         try:
             keys = self.memory.keys(f"feedback:{workflow_name}:*")
@@ -462,6 +477,7 @@ class FeedbackLoop:
 
         Returns:
             Number of feedback entries cleared
+
         """
         try:
             pattern = (

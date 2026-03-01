@@ -129,6 +129,7 @@ class TestCoverageAgent(ReleaseAgent):
 
         Returns:
             Coverage percentage, or -1.0 if not parseable
+
         """
         # Look for "TOTAL" line: "TOTAL    1234   567    54%"
         for line in output.splitlines():

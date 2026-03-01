@@ -79,6 +79,13 @@ class TestGenWizard(BaseWizard):
             tier="capable",
         ),
         WizardStep(
+            id="review_analysis",
+            name="Review Analysis",
+            description="Check the coverage analysis before generating tests",
+            step_type=StepType.REVIEW,
+            review_source_step_id="analyze",
+        ),
+        WizardStep(
             id="decompose_tests",
             name="Generate Test Plan",
             description="Create individual test file tasks",
@@ -107,8 +114,10 @@ class TestGenWizard(BaseWizard):
 
         Returns:
             PromptContext for the LLM call.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         if step.id == "analyze":
             target = self._session.get("target_path", "src/")
@@ -155,7 +164,9 @@ class TestGenWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         if step.id == "analyze":
             self._session.set("test_analysis", result)

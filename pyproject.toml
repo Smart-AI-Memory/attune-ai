@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "3.6.4"
+version = "3.6.6"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -125,17 +125,10 @@ agent-sdk = [
 # NOTE: attune-software is bundled in this repo at attune_software/
 software = []
 
-# Agent Coordination Dashboard — DEPRECATED as of v3.6.3, will be removed in a future major version
-dashboard = [
-    "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
-    "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<1.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
-]
-
 # Socratic meta-workflows (no extra deps - uses core anthropic SDK)
 socratic = []
 
-# Backend API server (optional) - dashboard + authentication
+# Backend API server (optional) - authentication
 backend = [
     "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
     "uvicorn>=0.20.0,<1.0.0",
@@ -416,7 +409,6 @@ line-length = 100
 target-version = "py310"
 fix = true  # Auto-fix safe issues
 exclude = [
-    "tests/unit/wizards/",  # Generated wizard tests with syntax issues
     "website/",  # Next.js website - separate linting
     "docs/archive/",  # Archived code
     "examples/",  # Example code
@@ -591,9 +583,6 @@ omit = [
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
     # Infrastructure servers (require HTTP/WebSocket clients, not unit-testable)
-    "*/dashboard/app.py",  # FastAPI dashboard server
-    "*/dashboard/standalone_server.py",  # Standalone HTTP server
-    "*/dashboard/simple_server.py",  # Simple HTTP server
     "*/mcp/server.py",  # MCP protocol server
     "*/workflows/progress_server.py",  # Progress streaming server
     # Interactive CLIs (require TTY/user input)
@@ -651,8 +640,6 @@ omit = [
     # Core module stubs
     "*/core_modules/interaction.py",  # Interaction stubs
     "*/core_modules/short_term_memory.py",  # Memory stubs
-    # Dashboard init
-    "*/dashboard/__init__.py",  # Dashboard package init
     # MCP init
     "*/mcp/__init__.py",  # MCP package init
     # Project index (requires filesystem scanning)

@@ -27,6 +27,7 @@ class RoutingContext:
         complexity: Task complexity (simple, moderate, complex)
         budget_remaining: Remaining budget in USD
         latency_sensitivity: Latency requirements (low, medium, high)
+
     """
 
     task_type: str
@@ -55,8 +56,8 @@ class TierRoutingStrategy(ABC):
 
         Returns:
             ModelTier to use for this task
+
         """
-        pass
 
     @abstractmethod
     def can_fallback(self, tier: ModelTier) -> bool:
@@ -67,8 +68,8 @@ class TierRoutingStrategy(ABC):
 
         Returns:
             True if fallback is allowed, False otherwise
+
         """
-        pass
 
 
 class CostOptimizedRouting(TierRoutingStrategy):
@@ -79,6 +80,7 @@ class CostOptimizedRouting(TierRoutingStrategy):
     Example:
         >>> strategy = CostOptimizedRouting()
         >>> tier = strategy.route(context)  # CHEAP for simple tasks
+
     """
 
     def route(self, context: RoutingContext) -> ModelTier:
@@ -87,7 +89,7 @@ class CostOptimizedRouting(TierRoutingStrategy):
 
         if context.complexity == "simple":
             return ModelTier.CHEAP
-        elif context.complexity == "complex":
+        if context.complexity == "complex":
             return ModelTier.PREMIUM
         return ModelTier.CAPABLE
 
@@ -106,6 +108,7 @@ class PerformanceOptimizedRouting(TierRoutingStrategy):
     Example:
         >>> strategy = PerformanceOptimizedRouting()
         >>> tier = strategy.route(context)  # PREMIUM for high latency sensitivity
+
     """
 
     def route(self, context: RoutingContext) -> ModelTier:
@@ -129,6 +132,7 @@ class BalancedRouting(TierRoutingStrategy):
     Example:
         >>> strategy = BalancedRouting(total_budget=50.0)
         >>> tier = strategy.route(context)  # Adapts based on budget
+
     """
 
     def __init__(self, total_budget: float):
@@ -139,6 +143,7 @@ class BalancedRouting(TierRoutingStrategy):
 
         Raises:
             ValueError: If total_budget is not positive
+
         """
         if total_budget <= 0:
             raise ValueError("total_budget must be positive")

@@ -435,7 +435,7 @@ class TestAuthStrategyPersistence:
 
             # Should return default strategy
             assert isinstance(strategy, AuthStrategy)
-            assert strategy.subscription_tier == SubscriptionTier.API_ONLY
+            assert strategy.subscription_tier == SubscriptionTier.PRO
 
     def test_load_invalid_json_returns_default(self):
         """Test that loading invalid JSON returns default strategy."""

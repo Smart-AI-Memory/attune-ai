@@ -33,6 +33,7 @@ class CostTrackingMixin:
         - _stages_run: list[WorkflowStage] - stages executed in workflow
         - _get_cache_stats(): method returning cache statistics dict
         - ModelTier enum available
+
     """
 
     # These will be provided by the main class
@@ -48,6 +49,7 @@ class CostTrackingMixin:
 
         Returns:
             Total cost in dollars for this stage
+
         """
         from attune.cost_tracker import MODEL_PRICING
 
@@ -66,6 +68,7 @@ class CostTrackingMixin:
 
         Returns:
             Cost in dollars if premium tier was used
+
         """
         from attune.cost_tracker import MODEL_PRICING
 
@@ -82,6 +85,7 @@ class CostTrackingMixin:
 
         Returns:
             CostReport with comprehensive cost breakdown and savings analysis
+
         """
         from .data_classes import CostReport
 

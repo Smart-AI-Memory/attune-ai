@@ -36,6 +36,7 @@ _STEP_TYPE_MAP = {
     "question": StepType.QUESTION,
     "llm_call": StepType.LLM_CALL,
     "task_decompose": StepType.TASK_DECOMPOSE,
+    "review": StepType.REVIEW,
     "preview": StepType.PREVIEW,
     "confirm": StepType.CONFIRM,
 }
@@ -67,6 +68,7 @@ def _interpolate_session_vars(text: str, session: WizardSession) -> str:
 
     Returns:
         String with placeholders replaced by session values.
+
     """
 
     def _replacer(match: re.Match[str]) -> str:
@@ -86,6 +88,7 @@ def _interpolate_dict(data: dict[str, Any], session: WizardSession) -> dict[str,
 
     Returns:
         New dict with all string values interpolated.
+
     """
     result: dict[str, Any] = {}
     for key, value in data.items():
@@ -148,6 +151,7 @@ class ConfigDrivenWizard(BaseWizard):
             config: Wizard metadata.
             steps: Step definitions (already parsed from YAML).
             **kwargs: Forwarded to ``BaseWizard.__init__``.
+
         """
         self.config = config
         self.steps = steps
@@ -171,6 +175,7 @@ class ConfigDrivenWizard(BaseWizard):
         Raises:
             ValueError: If the YAML is invalid or missing required fields.
             FileNotFoundError: If the file does not exist.
+
         """
         path = Path(yaml_path)
         if not path.exists():
@@ -197,6 +202,7 @@ class ConfigDrivenWizard(BaseWizard):
 
         Raises:
             ValueError: If required fields are missing or step types are invalid.
+
         """
         _validate_schema(data)
 
@@ -229,6 +235,7 @@ class ConfigDrivenWizard(BaseWizard):
 
         Raises:
             ValueError: If the path is invalid or targets a system directory.
+
         """
         validated = _validate_file_path(output_path)
 
@@ -250,6 +257,7 @@ class ConfigDrivenWizard(BaseWizard):
 
         Returns:
             Dict suitable for ``yaml.safe_dump()``.
+
         """
         steps_data = []
         for step in self.steps:
@@ -294,8 +302,10 @@ class ConfigDrivenWizard(BaseWizard):
 
         Returns:
             ``PromptContext`` for the LLM call.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         template = step.prompt_context_template
         if not template:
@@ -321,8 +331,10 @@ class ConfigDrivenWizard(BaseWizard):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         self._session.set(f"{step.id}_result", result)
 
 
@@ -339,6 +351,7 @@ def _validate_schema(data: dict[str, Any]) -> None:
 
     Raises:
         ValueError: If required fields are missing or invalid.
+
     """
     required_fields = ["wizard_id", "name", "steps"]
     for field_name in required_fields:
@@ -357,7 +370,7 @@ def _validate_schema(data: dict[str, Any]) -> None:
         if step_type_str not in _STEP_TYPE_MAP:
             raise ValueError(
                 f"Step '{step['id']}' has invalid step_type '{step_type_str}'. "
-                f"Valid types: {list(_STEP_TYPE_MAP.keys())}"
+                f"Valid types: {list(_STEP_TYPE_MAP.keys())}",
             )
 
 
@@ -374,6 +387,7 @@ def _parse_steps(steps_data: list[dict[str, Any]]) -> list[WizardStep]:
 
     Returns:
         List of ``WizardStep`` instances.
+
     """
     steps: list[WizardStep] = []
     for step_data in steps_data:
@@ -396,7 +410,8 @@ def _parse_steps(steps_data: list[dict[str, Any]]) -> list[WizardStep]:
                 questions=questions,
                 max_tokens=step_data.get("max_tokens", 4096),
                 prompt_context_template=prompt_context_template,
-            )
+                review_source_step_id=step_data.get("review_source_step_id"),
+            ),
         )
 
     return steps
@@ -410,6 +425,7 @@ def _parse_question(q_data: dict[str, Any]) -> FormQuestion:
 
     Returns:
         ``FormQuestion`` instance.
+
     """
     q_type_str = q_data.get("type", "text_input")
     q_type = _QUESTION_TYPE_MAP.get(q_type_str, QuestionType.TEXT_INPUT)
@@ -432,6 +448,7 @@ def _question_to_dict(q: FormQuestion) -> dict[str, Any]:
 
     Returns:
         Dict suitable for YAML output.
+
     """
     d: dict[str, Any] = {"id": q.id, "text": q.text, "type": q.type}
     if isinstance(q.type, QuestionType):

@@ -494,7 +494,9 @@ class TestSingletonPattern:
         UsageTracker._instance = None
 
         instance = UsageTracker.get_instance(
-            telemetry_dir=temp_dir, retention_days=30, max_file_size_mb=5
+            telemetry_dir=temp_dir,
+            retention_days=30,
+            max_file_size_mb=5,
         )
 
         assert instance.retention_days == 30

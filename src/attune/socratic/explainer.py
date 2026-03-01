@@ -20,14 +20,14 @@ import os
 from typing import Any
 
 from .blueprint import AgentRole, AgentSpec, StageSpec, WorkflowBlueprint
-from .explainer_types import (  # noqa: F401 - re-exported
+from .explainer_types import (
     ROLE_DESCRIPTIONS,
     AudienceLevel,
     DetailLevel,
     Explanation,
     OutputFormat,
 )
-from .llm_explainer import LLMExplanationGenerator  # noqa: F401 - re-exported
+from .llm_explainer import LLMExplanationGenerator
 from .success import SuccessCriteria
 
 # =============================================================================
@@ -52,6 +52,7 @@ class WorkflowExplainer:
             detail_level: Level of detail
             use_llm: Whether to use LLM for richer explanations
             api_key: API key for LLM (if use_llm=True)
+
         """
         self.audience = audience
         self.detail_level = detail_level
@@ -72,6 +73,7 @@ class WorkflowExplainer:
 
         Returns:
             Explanation object
+
         """
         sections: list[dict[str, str]] = []
 
@@ -80,7 +82,7 @@ class WorkflowExplainer:
             {
                 "heading": "Overview",
                 "content": self._explain_overview(blueprint),
-            }
+            },
         )
 
         # Agents section
@@ -88,7 +90,7 @@ class WorkflowExplainer:
             {
                 "heading": "Agents Involved",
                 "content": self._explain_agents(blueprint.agents),
-            }
+            },
         )
 
         # Process section
@@ -96,7 +98,7 @@ class WorkflowExplainer:
             {
                 "heading": "How It Works",
                 "content": self._explain_process(blueprint.stages, blueprint.agents),
-            }
+            },
         )
 
         # Success criteria section (if provided)
@@ -105,7 +107,7 @@ class WorkflowExplainer:
                 {
                     "heading": "Success Metrics",
                     "content": self._explain_success_criteria(success_criteria),
-                }
+                },
             )
 
         # Summary
@@ -127,18 +129,20 @@ class WorkflowExplainer:
 
         Returns:
             Explanation object
+
         """
         sections: list[dict[str, str]] = []
 
         # Role section
         role_desc = ROLE_DESCRIPTIONS.get(self.audience, {}).get(
-            agent.role, "performs automated tasks"
+            agent.role,
+            "performs automated tasks",
         )
         sections.append(
             {
                 "heading": "Role",
                 "content": f"This agent {role_desc}.",
-            }
+            },
         )
 
         # Capabilities section
@@ -146,7 +150,7 @@ class WorkflowExplainer:
             {
                 "heading": "Capabilities",
                 "content": self._explain_tools(agent.tools),
-            }
+            },
         )
 
         # How it helps section
@@ -154,7 +158,7 @@ class WorkflowExplainer:
             {
                 "heading": "How It Helps",
                 "content": self._explain_agent_value(agent),
-            }
+            },
         )
 
         summary = f"{agent.name} is a {agent.role.value} agent that {agent.goal.lower()}"
@@ -175,28 +179,28 @@ class WorkflowExplainer:
                 f"complete {len(blueprint.stages)} steps. "
                 f"It focuses on: {blueprint.domain}."
             )
-        elif self.audience == AudienceLevel.BUSINESS:
+        if self.audience == AudienceLevel.BUSINESS:
             return (
                 f"This automated workflow deploys {len(blueprint.agents)} specialized agents "
                 f"across {len(blueprint.stages)} execution stages. "
                 f"Target domain: {blueprint.domain}."
             )
-        else:
-            generated_at = (
-                blueprint.generated_at.strftime("%Y-%m-%d") if blueprint.generated_at else "N/A"
-            )
-            return (
-                f"Multi-agent workflow with {len(blueprint.agents)} agents, "
-                f"{len(blueprint.stages)} stages. "
-                f"Domain: {blueprint.domain}. "
-                f"Generated: {generated_at}."
-            )
+        generated_at = (
+            blueprint.generated_at.strftime("%Y-%m-%d") if blueprint.generated_at else "N/A"
+        )
+        return (
+            f"Multi-agent workflow with {len(blueprint.agents)} agents, "
+            f"{len(blueprint.stages)} stages. "
+            f"Domain: {blueprint.domain}. "
+            f"Generated: {generated_at}."
+        )
 
     def _explain_agents(self, agents: list) -> str:
         """Generate agents explanation.
 
         Args:
             agents: List of AgentBlueprint objects (each has .spec with AgentSpec)
+
         """
         lines = []
 
@@ -232,11 +236,11 @@ class WorkflowExplainer:
             if self.audience == AudienceLevel.BEGINNER:
                 if stage.parallel:
                     lines.append(
-                        f"{i}. **{stage.name}**: {', '.join(agent_names)} work together at the same time"
+                        f"{i}. **{stage.name}**: {', '.join(agent_names)} work together at the same time",
                     )
                 else:
                     lines.append(
-                        f"{i}. **{stage.name}**: {', '.join(agent_names)} work one after another"
+                        f"{i}. **{stage.name}**: {', '.join(agent_names)} work one after another",
                     )
             else:
                 parallel_str = " (parallel)" if stage.parallel else ""
@@ -287,8 +291,7 @@ class WorkflowExplainer:
 
         if self.audience == AudienceLevel.BEGINNER:
             return f"This helper saves you time by {base_value}."
-        else:
-            return f"This agent adds value by {base_value}."
+        return f"This agent adds value by {base_value}."
 
     def _explain_success_criteria(self, criteria: SuccessCriteria) -> str:
         """Generate success criteria explanation."""
@@ -313,17 +316,16 @@ class WorkflowExplainer:
                 f"It uses {len(blueprint.agents)} AI helpers that work together in "
                 f"{len(blueprint.stages)} steps to get the job done."
             )
-        elif self.audience == AudienceLevel.BUSINESS:
+        if self.audience == AudienceLevel.BUSINESS:
             return (
                 f"{blueprint.description} "
                 f"The workflow orchestrates {len(blueprint.agents)} specialized agents "
                 f"to deliver results efficiently and consistently."
             )
-        else:
-            return (
-                blueprint.description
-                or f"A {len(blueprint.stages)}-stage workflow for {blueprint.domain}."
-            )
+        return (
+            blueprint.description
+            or f"A {len(blueprint.stages)}-stage workflow for {blueprint.domain}."
+        )
 
     def generate_narrative(self, blueprint: WorkflowBlueprint) -> str:
         """Generate a narrative story-like explanation.
@@ -333,6 +335,7 @@ class WorkflowExplainer:
 
         Returns:
             Narrative explanation string
+
         """
         # Build lookup from agent ID to AgentSpec (agents are AgentBlueprint)
         agent_lookup = {a.spec.id: a.spec for a in blueprint.agents}
@@ -349,7 +352,7 @@ class WorkflowExplainer:
         # Introduction
         lines.append(
             f"When you run this workflow, a team of {len(blueprint.agents)} specialized "
-            f"AI agents springs into action. Here's what happens:"
+            f"AI agents springs into action. Here's what happens:",
         )
         lines.append("")
 
@@ -377,7 +380,7 @@ class WorkflowExplainer:
         lines.append("")
         lines.append(
             "After all stages complete, you receive a comprehensive report with "
-            "findings, recommendations, and any automated fixes that were applied."
+            "findings, recommendations, and any automated fixes that were applied.",
         )
 
         return "\n".join(lines)
@@ -406,6 +409,7 @@ def explain_workflow(
 
     Returns:
         Formatted explanation string
+
     """
     # Convert string args to enums
     if isinstance(audience, str):
@@ -421,7 +425,7 @@ def explain_workflow(
 
         if format == OutputFormat.MARKDOWN:
             return markdown
-        elif format == OutputFormat.TEXT:
+        if format == OutputFormat.TEXT:
             # Simple markdown to text conversion
             import re
 
@@ -429,25 +433,23 @@ def explain_workflow(
             text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)  # Remove bold
             text = re.sub(r"\*([^*]+)\*", r"\1", text)  # Remove italic
             return text
-        elif format == OutputFormat.HTML:
+        if format == OutputFormat.HTML:
             # Simple markdown to HTML
             html = f"<div class='explanation'>{markdown}</div>"
             return html
-        else:
-            return markdown
+        return markdown
 
     explainer = WorkflowExplainer(audience=audience, detail_level=detail_level)
     explanation = explainer.explain_workflow(blueprint)
 
     if format == OutputFormat.TEXT:
         return explanation.to_text()
-    elif format == OutputFormat.MARKDOWN:
+    if format == OutputFormat.MARKDOWN:
         return explanation.to_markdown()
-    elif format == OutputFormat.HTML:
+    if format == OutputFormat.HTML:
         return explanation.to_html()
-    elif format == OutputFormat.JSON:
+    if format == OutputFormat.JSON:
         import json
 
         return json.dumps(explanation.to_dict(), indent=2)
-    else:
-        return explanation.to_markdown()
+    return explanation.to_markdown()

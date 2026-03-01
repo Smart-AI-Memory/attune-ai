@@ -83,15 +83,15 @@ class VSCodeCommandParser(FeatureParser):
                     return prefix.split(":")[-1].strip()
                 return prefix
         if ":" in title:
-            return title.split(":")[0].strip()
+            return title.split(":", maxsplit=1)[0].strip()
         return "General"
 
     def _extract_name(self, title: str) -> str:
         """Extract feature name from title like 'Empathy: Quick → Morning'."""
         if "→" in title:
-            return title.split("→")[-1].strip()
+            return title.rsplit("→", maxsplit=1)[-1].strip()
         if ":" in title:
-            return title.split(":")[-1].strip()
+            return title.rsplit(":", maxsplit=1)[-1].strip()
         return title.strip()
 
     def _infer_tier(self, category: str) -> FrequencyTier:

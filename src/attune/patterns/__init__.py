@@ -14,9 +14,9 @@ from attune.patterns.resolver import PatternResolver
 from attune.patterns.summary import PatternSummaryGenerator
 
 __all__ = [
+    "ContextualPatternInjector",
+    "GitPatternExtractor",
     "PatternConfidenceTracker",
     "PatternResolver",
     "PatternSummaryGenerator",
-    "GitPatternExtractor",
-    "ContextualPatternInjector",
 ]

@@ -20,7 +20,7 @@ import pytest
 
 # Skip entire module - wizard_factory_cli module was removed
 pytestmark = pytest.mark.skip(
-    reason="wizard_factory_cli module removed - tests need update or removal"
+    reason="wizard_factory_cli module removed - tests need update or removal",
 )
 
 import argparse
@@ -734,7 +734,7 @@ class TestWizardLifecycle:
                     methodology="empathy",
                     patterns=None,
                     interactive=False,
-                )
+                ),
             )
 
         # Step 2: Generate tests
@@ -744,7 +744,7 @@ class TestWizardLifecycle:
                     wizard_id="full_wizard",
                     patterns=None,
                     output="tests/test_full.py",
-                )
+                ),
             )
 
         # Step 3: Analyze
@@ -754,7 +754,7 @@ class TestWizardLifecycle:
                     wizard_id="full_wizard",
                     patterns=None,
                     json=False,
-                )
+                ),
             )
 
         # All three commands should have been called

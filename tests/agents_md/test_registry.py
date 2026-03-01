@@ -105,14 +105,14 @@ class TestAgentRegistry:
 name: agent1
 ---
 Agent 1.
-"""
+""",
             )
             (tmpdir / "agent2.md").write_text(
                 """---
 name: agent2
 ---
 Agent 2.
-"""
+""",
             )
 
             count = registry.load_from_directory(tmpdir)
@@ -133,7 +133,7 @@ Agent 2.
 name: file-agent
 ---
 From file.
-"""
+""",
             )
             f.flush()
 
@@ -152,7 +152,7 @@ From file.
 name: agent1
 ---
 Original.
-"""
+""",
             )
 
             registry.load_from_directory(tmpdir)
@@ -164,7 +164,7 @@ Original.
 name: agent1
 ---
 Updated.
-"""
+""",
             )
 
             registry.reload()
@@ -203,7 +203,7 @@ Updated.
                 role="architect",
                 model_tier=ModelTier.PREMIUM,
                 empathy_level=5,
-            )
+            ),
         )
         registry.register(
             UnifiedAgentConfig(
@@ -211,7 +211,7 @@ Updated.
                 role="reviewer",
                 model_tier=ModelTier.CAPABLE,
                 empathy_level=4,
-            )
+            ),
         )
 
         summary = registry.get_summary()

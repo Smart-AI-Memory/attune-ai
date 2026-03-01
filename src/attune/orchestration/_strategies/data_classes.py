@@ -27,6 +27,7 @@ class AgentResult:
         confidence: Confidence score (0-1)
         duration_seconds: Execution time
         error: Error message if failed
+
     """
 
     agent_id: str
@@ -47,6 +48,7 @@ class StrategyResult:
         aggregated_output: Combined/synthesized output
         total_duration: Total execution time
         errors: List of errors encountered
+
     """
 
     success: bool

@@ -24,12 +24,12 @@ from attune.hooks.scripts.pre_compact import run_pre_compact
 from attune.hooks.scripts.suggest_compact import main as suggest_compact
 
 __all__ = [
-    "suggest_compact",
-    "run_pre_compact",
-    "run_evaluate_session",
-    "get_learning_summary",
     "apply_learned_patterns",
     "check_init",
+    "get_learning_summary",
     "handle_init_response",
     "initialize_project",
+    "run_evaluate_session",
+    "run_pre_compact",
+    "suggest_compact",
 ]

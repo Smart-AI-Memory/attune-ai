@@ -53,7 +53,7 @@ class AuthStrategy:
     """
 
     # User's subscription tier
-    subscription_tier: SubscriptionTier = SubscriptionTier.API_ONLY
+    subscription_tier: SubscriptionTier = SubscriptionTier.PRO
 
     # Default auth mode
     default_mode: AuthMode = AuthMode.AUTO
@@ -65,8 +65,8 @@ class AuthStrategy:
     # Token estimation multiplier (LOC to tokens)
     loc_to_tokens_multiplier: float = 4.0  # ~4 tokens per line
 
-    # First-time setup completed
-    setup_completed: bool = False
+    # First-time setup completed (True by default — zero-config install)
+    setup_completed: bool = True
 
     # User preferences
     prefer_subscription: bool = True  # Use subscription when possible
@@ -90,6 +90,7 @@ class AuthStrategy:
             - Small modules (< 500 LOC) → Subscription (fits easily)
             - Medium modules (500-2000 LOC) → Subscription (still fits)
             - Large modules (> 2000 LOC) → API (1M context window)
+
         """
         # If not in AUTO mode, respect user preference
         if self.default_mode != AuthMode.AUTO:
@@ -108,13 +109,12 @@ class AuthStrategy:
             # Small modules → Use subscription (saves money)
             return AuthMode.SUBSCRIPTION
 
-        elif module_lines < self.medium_module_threshold:
+        if module_lines < self.medium_module_threshold:
             # Medium modules → Use subscription if preferred
             return AuthMode.SUBSCRIPTION if self.prefer_subscription else AuthMode.API
 
-        else:
-            # Large modules → Use API (1M context window benefit)
-            return AuthMode.API
+        # Large modules → Use API (1M context window benefit)
+        return AuthMode.API
 
     def estimate_tokens(self, module_lines: int) -> int:
         """Estimate token count from lines of code.
@@ -124,6 +124,7 @@ class AuthStrategy:
 
         Returns:
             Estimated token count
+
         """
         return int(module_lines * self.loc_to_tokens_multiplier)
 
@@ -136,6 +137,7 @@ class AuthStrategy:
 
         Returns:
             Cost estimate with breakdown
+
         """
         if mode is None:
             mode = self.get_recommended_mode(module_lines)
@@ -163,14 +165,14 @@ class AuthStrategy:
                 "tokens_used": tokens,
                 "fits_in_context": tokens < 200_000,  # 200K context window
             }
-        else:  # API
-            return {
-                "mode": "api",
-                "monetary_cost": round(total_api_cost, 4),
-                "quota_cost": None,
-                "tokens_used": tokens,
-                "fits_in_context": tokens < 1_000_000,  # 1M context window
-            }
+        # API
+        return {
+            "mode": "api",
+            "monetary_cost": round(total_api_cost, 4),
+            "quota_cost": None,
+            "tokens_used": tokens,
+            "fits_in_context": tokens < 1_000_000,  # 1M context window
+        }
 
     def get_pros_cons(self, module_lines: int) -> dict[str, Any]:
         """Get pros/cons comparison for first-time setup.
@@ -180,6 +182,7 @@ class AuthStrategy:
 
         Returns:
             Comparison data for UI display
+
         """
         sub_estimate = self.estimate_cost(module_lines, AuthMode.SUBSCRIPTION)
         api_estimate = self.estimate_cost(module_lines, AuthMode.API)
@@ -254,12 +257,12 @@ class AuthStrategy:
     def from_dict(cls, data: dict[str, Any]) -> AuthStrategy:
         """Deserialize from dictionary."""
         return cls(
-            subscription_tier=SubscriptionTier(data.get("subscription_tier", "api_only")),
+            subscription_tier=SubscriptionTier(data.get("subscription_tier", "pro")),
             default_mode=AuthMode(data.get("default_mode", "auto")),
             small_module_threshold=data.get("small_module_threshold", 500),
             medium_module_threshold=data.get("medium_module_threshold", 2000),
             loc_to_tokens_multiplier=data.get("loc_to_tokens_multiplier", 4.0),
-            setup_completed=data.get("setup_completed", False),
+            setup_completed=data.get("setup_completed", True),
             prefer_subscription=data.get("prefer_subscription", True),
             cost_optimization=data.get("cost_optimization", True),
             metadata=data.get("metadata", {}),
@@ -302,6 +305,7 @@ def configure_auth_interactive(module_lines: int = 1000) -> AuthStrategy:
 
     Returns:
         Configured AuthStrategy
+
     """
     print("\n" + "=" * 60)
     print("Attune AI - Authentication Setup")
@@ -386,29 +390,17 @@ def configure_auth_interactive(module_lines: int = 1000) -> AuthStrategy:
 def get_auth_strategy() -> AuthStrategy:
     """Get the global authentication strategy.
 
-    If setup not completed and running interactively, prompts for configuration.
-    In non-interactive contexts (workflows, CI/CD, piped input), returns a
-    sensible default strategy without prompting.
+    Zero-config by default: uses subscription-first routing with automatic
+    API fallback for large modules when ``ANTHROPIC_API_KEY`` is available.
+
+    Users can optionally run ``python -m attune.models.auth_cli setup`` to
+    customize tier, thresholds, and routing preferences.
 
     Returns:
         AuthStrategy instance
+
     """
-    import sys
-
-    strategy = AuthStrategy.load()
-
-    # First-time setup required
-    if not strategy.setup_completed:
-        # Only prompt interactively when stdin is a TTY
-        if sys.stdin.isatty():
-            print("\n⚠️  First-time authentication setup required")
-            return configure_auth_interactive()
-
-        # Non-interactive: return default strategy silently
-        logger.info("Auth strategy not configured; using defaults (non-interactive context)")
-        return strategy
-
-    return strategy
+    return AuthStrategy.load()
 
 
 # Utility functions for module size calculation
@@ -420,6 +412,7 @@ def count_lines_of_code(file_path: str | Path) -> int:
 
     Returns:
         Number of lines (excluding blank lines and comments)
+
     """
     path = Path(file_path)
     if not path.exists():
@@ -452,10 +445,10 @@ def get_module_size_category(module_lines: int) -> str:
 
     Returns:
         Size category: "small", "medium", or "large"
+
     """
     if module_lines < 500:
         return "small"
-    elif module_lines < 2000:
+    if module_lines < 2000:
         return "medium"
-    else:
-        return "large"
+    return "large"

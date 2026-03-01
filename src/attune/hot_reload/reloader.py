@@ -138,7 +138,7 @@ class WorkflowReloader:
             if success:
                 self._reload_count += 1
                 logger.info(
-                    f"✓ Successfully reloaded {workflow_id} ({self._reload_count} total reloads)"
+                    f"✓ Successfully reloaded {workflow_id} ({self._reload_count} total reloads)",
                 )
                 self._notify_reload_success(workflow_id)
 
@@ -147,16 +147,15 @@ class WorkflowReloader:
                     workflow_id=workflow_id,
                     message=f"Reloaded successfully (reload #{self._reload_count})",
                 )
-            else:
-                error_msg = "Registration failed"
-                logger.error(f"Failed to re-register {workflow_id}")
-                self._notify_reload_failed(workflow_id, error_msg)
-                return ReloadResult(
-                    success=False,
-                    workflow_id=workflow_id,
-                    message="Registration failed",
-                    error=error_msg,
-                )
+            error_msg = "Registration failed"
+            logger.error(f"Failed to re-register {workflow_id}")
+            self._notify_reload_failed(workflow_id, error_msg)
+            return ReloadResult(
+                success=False,
+                workflow_id=workflow_id,
+                message="Registration failed",
+                error=error_msg,
+            )
 
         except Exception as e:
             error_msg = f"Unexpected error reloading {workflow_id}: {e}"
@@ -262,7 +261,7 @@ class WorkflowReloader:
                         "workflow_id": workflow_id,
                         "success": True,
                         "reload_count": self._reload_count,
-                    }
+                    },
                 )
             except Exception as e:
                 logger.error(f"Error sending reload notification: {e}")
@@ -283,7 +282,7 @@ class WorkflowReloader:
                         "workflow_id": workflow_id,
                         "success": False,
                         "error": error,
-                    }
+                    },
                 )
             except Exception as e:
                 logger.error(f"Error sending failure notification: {e}")

@@ -94,6 +94,7 @@ class ProviderConfig:
 
         Returns:
             ProviderConfig with Anthropic as primary provider
+
         """
         available = cls.detect_available_providers()
 
@@ -111,6 +112,7 @@ class ProviderConfig:
 
         Returns:
             ModelInfo for the Anthropic model at the specified tier
+
         """
         tier_str = tier.value if isinstance(tier, ModelTier) else tier
         return MODEL_REGISTRY.get("anthropic", {}).get(tier_str)
@@ -179,6 +181,7 @@ def configure_provider_interactive() -> ProviderConfig:
 
     Returns:
         ProviderConfig configured for Anthropic
+
     """
     print("\n" + "=" * 60)
     print("Attune AI - Provider Configuration (Claude-Native v5.0.0)")
@@ -240,19 +243,20 @@ def configure_provider_cli(
 
     Raises:
         ValueError: If provider is not 'anthropic'
+
     """
     if provider and provider.lower() != "anthropic":
         raise ValueError(
             f"Provider '{provider}' is not supported. "
             f"Attune AI is now Claude-native (v5.0.0). "
             f"Only 'anthropic' provider is available. "
-            f"See docs/CLAUDE_NATIVE.md for migration guide."
+            f"See docs/CLAUDE_NATIVE.md for migration guide.",
         )
 
     if mode and mode.lower() != "single":
         raise ValueError(
             f"Mode '{mode}' is not supported. "
-            f"Only 'single' mode is available in v5.0.0 (Anthropic-only)."
+            f"Only 'single' mode is available in v5.0.0 (Anthropic-only).",
         )
 
     # Always return Anthropic configuration
@@ -291,6 +295,7 @@ def configure_hybrid_interactive() -> ProviderConfig:
 
     Returns:
         ProviderConfig configured for Anthropic
+
     """
     print("\n" + "=" * 60)
     print("NOTE: Hybrid mode is deprecated (v5.0.0)")

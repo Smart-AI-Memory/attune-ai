@@ -235,7 +235,8 @@ class TestAgentCompositionRule:
         )
 
         response = FormResponse(
-            template_id="test", responses={"quality_checks": ["Type checking (mypy)"]}
+            template_id="test",
+            responses={"quality_checks": ["Type checking (mypy)"]},
         )
 
         assert rule.should_create(response) is False
@@ -291,7 +292,8 @@ class TestAgentCompositionRule:
         )
 
         response = FormResponse(
-            template_id="test", responses={"version_bump": "minor", "package_name": "test-pkg"}
+            template_id="test",
+            responses={"version_bump": "minor", "package_name": "test-pkg"},
         )
 
         config = rule.create_agent_config(response)
@@ -344,10 +346,14 @@ class TestAgentSpec:
     def test_agent_id_unique(self):
         """Test that agent IDs are unique."""
         spec1 = AgentSpec(
-            role="agent1", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+            role="agent1",
+            base_template="generic",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
         )
         spec2 = AgentSpec(
-            role="agent2", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+            role="agent2",
+            base_template="generic",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
         )
 
         assert spec1.agent_id != spec2.agent_id
@@ -378,7 +384,7 @@ class TestMetaWorkflowTemplate:
                     base_template="generic",
                     tier_strategy=TierStrategy.PROGRESSIVE,
                     tools=["pytest"],
-                )
+                ),
             ],
         )
 
@@ -422,7 +428,7 @@ class TestMetaWorkflowTemplate:
                     required_responses={"q1": "Yes"},
                     config_mapping={"q2": "option"},
                     success_criteria=["Tests pass"],
-                )
+                ),
             ],
             estimated_cost_range=(0.10, 0.50),
             estimated_duration_minutes=10,
@@ -465,7 +471,9 @@ class TestMetaWorkflowResult:
         form_response = FormResponse(template_id="test", responses={"q1": "Answer"})
 
         agent_spec = AgentSpec(
-            role="test_agent", base_template="generic", tier_strategy=TierStrategy.CHEAP_ONLY
+            role="test_agent",
+            base_template="generic",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
         )
 
         agent_result = AgentExecutionResult(

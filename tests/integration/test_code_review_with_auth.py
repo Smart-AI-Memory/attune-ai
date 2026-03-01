@@ -128,9 +128,11 @@ async def test_code_review_with_auth():
 
     print("\n   Review Results:")
     print(
-        f"      Classification: {classification[:80]}..."
-        if classification
-        else "      Classification: None"
+        (
+            f"      Classification: {classification[:80]}..."
+            if classification
+            else "      Classification: None"
+        ),
     )
     print(f"      Verdict: {verdict.upper()}")
     print(f"      Security score: {security_score}/100")

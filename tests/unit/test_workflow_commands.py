@@ -23,7 +23,7 @@ class TestLoadPatterns:
             "patterns": [
                 {"id": "pattern1", "description": "Debug pattern 1"},
                 {"id": "pattern2", "description": "Debug pattern 2"},
-            ]
+            ],
         }
 
         security_patterns = {"patterns": [{"id": "sec1", "description": "Security pattern 1"}]}
@@ -67,7 +67,7 @@ class TestLoadPatterns:
             "items": [
                 {"id": "debt1", "description": "Technical debt item 1"},
                 {"id": "debt2", "description": "Technical debt item 2"},
-            ]
+            ],
         }
 
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
@@ -295,7 +295,7 @@ class TestGetTechDebtTrend:
             "snapshots": [
                 {"timestamp": "2025-01-10", "total_items": 5},
                 {"timestamp": "2025-01-14", "total_items": 8},
-            ]
+            ],
         }
 
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
@@ -314,7 +314,7 @@ class TestGetTechDebtTrend:
             "snapshots": [
                 {"timestamp": "2025-01-10", "total_items": 10},
                 {"timestamp": "2025-01-14", "total_items": 6},
-            ]
+            ],
         }
 
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
@@ -333,7 +333,7 @@ class TestGetTechDebtTrend:
             "snapshots": [
                 {"timestamp": "2025-01-10", "total_items": 7},
                 {"timestamp": "2025-01-14", "total_items": 7},
-            ]
+            ],
         }
 
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
@@ -377,7 +377,7 @@ class TestGetTechDebtTrend:
                 {"timestamp": "2025-01-07", "total_items": 8},
                 {"timestamp": "2025-01-10", "total_items": 12},
                 {"timestamp": "2025-01-14", "total_items": 15},
-            ]
+            ],
         }
 
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
@@ -458,7 +458,7 @@ class TestMorningWorkflow:
             "patterns": [
                 {"id": "p1", "bug_type": "null_reference", "status": "resolved"},
                 {"id": "p2", "bug_type": "type_mismatch", "status": "investigating"},
-            ]
+            ],
         }
         (patterns_dir / "debugging.json").write_text(json.dumps(debugging_patterns))
 
@@ -474,7 +474,9 @@ class TestMorningWorkflow:
 
         # Run workflow
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path), verbose=False
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
+            verbose=False,
         )
 
         assert result == 0
@@ -514,7 +516,7 @@ class TestMorningWorkflow:
                     "timestamp": old_date,
                     "root_cause": "Old bug fix",
                 },
-            ]
+            ],
         }
         (patterns_dir / "debugging.json").write_text(json.dumps(debugging_patterns))
 
@@ -524,7 +526,8 @@ class TestMorningWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -532,7 +535,10 @@ class TestMorningWorkflow:
         assert "New this week: 1 patterns" in captured.out
 
     def test_morning_workflow_suggests_resolving_investigating_bugs(
-        self, tmp_path, monkeypatch, capsys
+        self,
+        tmp_path,
+        monkeypatch,
+        capsys,
     ):
         """Test morning workflow suggests resolving investigating bugs."""
         patterns_dir = tmp_path / "patterns"
@@ -543,7 +549,7 @@ class TestMorningWorkflow:
                 {"id": "p1", "status": "investigating"},
                 {"id": "p2", "status": "investigating"},
                 {"id": "p3", "status": "resolved"},
-            ]
+            ],
         }
         (patterns_dir / "debugging.json").write_text(json.dumps(debugging_patterns))
 
@@ -553,7 +559,8 @@ class TestMorningWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -577,7 +584,7 @@ class TestMorningWorkflow:
                     "total_items": 8,
                     "hotspots": ["file1.py", "file2.py", "file4.py"],
                 },
-            ]
+            ],
         }
         (patterns_dir / "tech_debt.json").write_text(json.dumps(tech_debt_data))
 
@@ -587,7 +594,8 @@ class TestMorningWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -609,7 +617,8 @@ class TestMorningWorkflow:
         monkeypatch.setattr(workflow_commands, "_load_stats", lambda: {"commands": {}})
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -908,11 +917,14 @@ class TestLearnWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -946,11 +958,14 @@ class TestLearnWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -971,7 +986,7 @@ class TestLearnWorkflow:
 
         # Create existing pattern
         existing_pattern = {
-            "patterns": [{"pattern_id": "bug_20250114_abc123", "bug_type": "null_reference"}]
+            "patterns": [{"pattern_id": "bug_20250114_abc123", "bug_type": "null_reference"}],
         }
         (patterns_dir / "debugging.json").write_text(json.dumps(existing_pattern))
 
@@ -985,7 +1000,9 @@ class TestLearnWorkflow:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(patterns_dir=str(patterns_dir), analyze_commits=5)
@@ -1055,7 +1072,12 @@ class TestCLICommandHandlers:
         called_with = {}
 
         def mock_ship_workflow(
-            patterns_dir, project_root, skip_sync, tests_only, security_only, verbose
+            patterns_dir,
+            project_root,
+            skip_sync,
+            tests_only,
+            security_only,
+            verbose,
         ):
             called_with["skip_sync"] = skip_sync
             called_with["tests_only"] = tests_only
@@ -1209,7 +1231,9 @@ class TestVerboseOutputMode:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.ship_workflow(
-            project_root=str(tmp_path), skip_sync=True, verbose=True
+            project_root=str(tmp_path),
+            skip_sync=True,
+            verbose=True,
         )
 
         assert result == 1
@@ -1232,11 +1256,15 @@ class TestVerboseOutputMode:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=5, verbose=True
+            patterns_dir=str(patterns_dir),
+            analyze_commits=5,
+            verbose=True,
         )
 
         assert result == 0
@@ -1286,7 +1314,10 @@ class TestMorningWorkflowEdgeCases:
     """Additional tests for morning workflow edge cases."""
 
     def test_morning_workflow_handles_missing_timestamp_formats(
-        self, tmp_path, monkeypatch, capsys
+        self,
+        tmp_path,
+        monkeypatch,
+        capsys,
     ):
         """Test morning workflow handles various timestamp formats."""
         patterns_dir = tmp_path / "patterns"
@@ -1297,7 +1328,7 @@ class TestMorningWorkflowEdgeCases:
                 {"id": "p1", "timestamp": "invalid-timestamp"},
                 {"id": "p2", "resolved_at": "2025-01-14T10:00:00Z"},
                 {"id": "p3"},  # No timestamp
-            ]
+            ],
         }
         (patterns_dir / "debugging.json").write_text(json.dumps(debugging_patterns))
 
@@ -1307,7 +1338,8 @@ class TestMorningWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -1325,7 +1357,8 @@ class TestMorningWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -1345,7 +1378,8 @@ class TestMorningWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -1361,7 +1395,8 @@ class TestMorningWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         result = workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert result == 0
@@ -1553,11 +1588,14 @@ class TestLearnWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -1577,11 +1615,14 @@ class TestLearnWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -1606,11 +1647,14 @@ class TestLearnWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -1640,11 +1684,14 @@ class TestLearnWorkflowEdgeCases:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(
-            workflow_commands, "_load_stats", lambda: {"commands": {}, "patterns_learned": 0}
+            workflow_commands,
+            "_load_stats",
+            lambda: {"commands": {}, "patterns_learned": 0},
         )
 
         result = workflow_commands.learn_workflow(
-            patterns_dir=str(patterns_dir), analyze_commits=10
+            patterns_dir=str(patterns_dir),
+            analyze_commits=10,
         )
 
         assert result == 0
@@ -1686,7 +1733,12 @@ class TestCLIHandlerDefaults:
         called = False
 
         def mock_ship_workflow(
-            patterns_dir, project_root, skip_sync, tests_only, security_only, verbose
+            patterns_dir,
+            project_root,
+            skip_sync,
+            tests_only,
+            security_only,
+            verbose,
         ):
             nonlocal called
             called = True
@@ -1771,7 +1823,8 @@ class TestStatsIntegration:
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
 
         workflow_commands.morning_workflow(
-            patterns_dir=str(patterns_dir), project_root=str(tmp_path)
+            patterns_dir=str(patterns_dir),
+            project_root=str(tmp_path),
         )
 
         assert saved_stats["commands"]["morning"] == 6

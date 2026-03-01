@@ -22,7 +22,10 @@ class TierPromptMixin:
     """
 
     def build_tier_prompt(
-        self, tier: Tier, base_task: str, failure_context: dict[str, Any] | None = None
+        self,
+        tier: Tier,
+        base_task: str,
+        failure_context: dict[str, Any] | None = None,
     ) -> str:
         """Build XML-enhanced prompt with failure context.
 
@@ -38,13 +41,14 @@ class TierPromptMixin:
 
         Returns:
             XML-enhanced prompt string
+
         """
         if tier == Tier.CHEAP:
             return self._build_cheap_prompt(base_task)
-        elif tier == Tier.CAPABLE:
+        if tier == Tier.CAPABLE:
             return self._build_capable_prompt(base_task, failure_context)
-        else:  # PREMIUM
-            return self._build_premium_prompt(base_task, failure_context)
+        # PREMIUM
+        return self._build_premium_prompt(base_task, failure_context)
 
     def _build_cheap_prompt(self, base_task: str) -> str:
         """Build simple prompt for cheap tier.
@@ -54,6 +58,7 @@ class TierPromptMixin:
 
         Returns:
             XML-enhanced prompt
+
         """
         return f"""<task>
   <objective>{base_task}</objective>
@@ -79,6 +84,7 @@ class TierPromptMixin:
 
         Returns:
             XML-enhanced prompt with failure analysis
+
         """
         if not failure_context:
             # No context, use enhanced base prompt
@@ -122,7 +128,7 @@ class TierPromptMixin:
         if failure_patterns:
             prompt_parts.append("    <failure_analysis>")
             prompt_parts.append(
-                f"      <total_failures>{failure_patterns.get('total_failures', 0)}</total_failures>"
+                f"      <total_failures>{failure_patterns.get('total_failures', 0)}</total_failures>",
             )
             prompt_parts.append("      <patterns>")
 
@@ -150,7 +156,7 @@ class TierPromptMixin:
                 prompt_parts.append(f"        <error>{self._escape_xml(error)}</error>")
                 if code_snippet:
                     prompt_parts.append(
-                        f"        <code_snippet>{self._escape_xml(code_snippet)}</code_snippet>"
+                        f"        <code_snippet>{self._escape_xml(code_snippet)}</code_snippet>",
                     )
                 prompt_parts.append("      </example>")
 
@@ -176,7 +182,7 @@ class TierPromptMixin:
                 "    </quality_requirements>",
                 "",
                 "    <focus_areas>",
-            ]
+            ],
         )
 
         # Add targeted focus areas based on failure patterns
@@ -184,19 +190,19 @@ class TierPromptMixin:
             error_types = failure_patterns.get("error_types", {})
             if "async_errors" in error_types:
                 prompt_parts.append(
-                    '      <focus area="async">Proper async/await patterns and error handling</focus>'
+                    '      <focus area="async">Proper async/await patterns and error handling</focus>',
                 )
             if "mocking_errors" in error_types:
                 prompt_parts.append(
-                    '      <focus area="mocking">Correct mock setup and teardown</focus>'
+                    '      <focus area="mocking">Correct mock setup and teardown</focus>',
                 )
             if "syntax_errors" in error_types:
                 prompt_parts.append(
-                    '      <focus area="syntax">Valid Python syntax and imports</focus>'
+                    '      <focus area="syntax">Valid Python syntax and imports</focus>',
                 )
             if "other_errors" in error_types:
                 prompt_parts.append(
-                    '      <focus area="general">Edge cases and error handling</focus>'
+                    '      <focus area="general">Edge cases and error handling</focus>',
                 )
         else:
             # Default focus areas
@@ -206,7 +212,7 @@ class TierPromptMixin:
                     '      <focus area="coverage">Comprehensive test coverage</focus>',
                     '      <focus area="errors">Proper error handling</focus>',
                     '      <focus area="edge_cases">Edge case coverage</focus>',
-                ]
+                ],
             )
 
         prompt_parts.extend(["    </focus_areas>", "  </your_task>", "</task>"])
@@ -222,6 +228,7 @@ class TierPromptMixin:
 
         Returns:
             XML-enhanced prompt with full escalation context
+
         """
         if not failure_context:
             return f"""<task>
@@ -274,7 +281,7 @@ class TierPromptMixin:
         if failure_patterns:
             prompt_parts.append("    <persistent_issues>")
             prompt_parts.append(
-                f"      <total_failures>{failure_patterns.get('total_failures', 0)}</total_failures>"
+                f"      <total_failures>{failure_patterns.get('total_failures', 0)}</total_failures>",
             )
             prompt_parts.append("      <failure_patterns>")
 
@@ -285,22 +292,22 @@ class TierPromptMixin:
                 # Add specific guidance per error type
                 if error_type == "async_errors":
                     prompt_parts.append(
-                        "          <guidance>Use proper async/await patterns, handle timeouts correctly</guidance>"
+                        "          <guidance>Use proper async/await patterns, handle timeouts correctly</guidance>",
                     )
                 elif error_type == "mocking_errors":
                     prompt_parts.append(
-                        "          <guidance>Ensure mocks are properly configured and reset</guidance>"
+                        "          <guidance>Ensure mocks are properly configured and reset</guidance>",
                     )
                 elif error_type == "syntax_errors":
                     prompt_parts.append(
-                        "          <guidance>Double-check syntax, imports, and type annotations</guidance>"
+                        "          <guidance>Double-check syntax, imports, and type annotations</guidance>",
                     )
 
                 prompt_parts.append("        </pattern>")
 
             prompt_parts.append("      </failure_patterns>")
             prompt_parts.append(
-                f"      <primary_issue>{failure_patterns.get('primary_issue', 'unknown')}</primary_issue>"
+                f"      <primary_issue>{failure_patterns.get('primary_issue', 'unknown')}</primary_issue>",
             )
             prompt_parts.append("    </persistent_issues>")
             prompt_parts.append("")
@@ -319,7 +326,7 @@ class TierPromptMixin:
                 prompt_parts.append(f"        <error>{self._escape_xml(error)}</error>")
                 if code_snippet:
                     prompt_parts.append(
-                        f"        <code_snippet>{self._escape_xml(code_snippet)}</code_snippet>"
+                        f"        <code_snippet>{self._escape_xml(code_snippet)}</code_snippet>",
                     )
                 prompt_parts.append("      </attempt>")
 
@@ -346,7 +353,7 @@ class TierPromptMixin:
                 "      - Production-grade error handling and edge cases",
                 "      - Comprehensive documentation and clarity",
                 "      - Defensive programming against subtle bugs",
-            ]
+            ],
         )
 
         # Add specific techniques based on failure patterns
@@ -354,11 +361,11 @@ class TierPromptMixin:
             error_types = failure_patterns.get("error_types", {})
             if "async_errors" in error_types:
                 prompt_parts.append(
-                    "      - Advanced async patterns (asyncio.gather, proper timeouts)"
+                    "      - Advanced async patterns (asyncio.gather, proper timeouts)",
                 )
             if "mocking_errors" in error_types:
                 prompt_parts.append(
-                    "      - Sophisticated mocking (pytest fixtures, proper lifecycle)"
+                    "      - Sophisticated mocking (pytest fixtures, proper lifecycle)",
                 )
             if "syntax_errors" in error_types:
                 prompt_parts.append("      - Rigorous syntax validation before submission")
@@ -384,7 +391,7 @@ class TierPromptMixin:
                 "    </success_criteria>",
                 "  </expert_task>",
                 "</task>",
-            ]
+            ],
         )
 
         return "\n".join(prompt_parts)
@@ -397,6 +404,7 @@ class TierPromptMixin:
 
         Returns:
             XML-safe text
+
         """
         return (
             text.replace("&", "&amp;")

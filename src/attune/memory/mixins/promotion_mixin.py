@@ -28,11 +28,9 @@ class PatternPromotionMixin:
     @property
     def credentials(self) -> "AgentCredentials":
         """Get credentials - provided by ShortTermOperationsMixin."""
-        ...
 
     def get_staged_patterns(self) -> list[dict]:
         """Get staged patterns - provided by ShortTermOperationsMixin."""
-        ...
 
     def persist_pattern(
         self,
@@ -43,7 +41,6 @@ class PatternPromotionMixin:
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         """Persist pattern - provided by LongTermOperationsMixin."""
-        ...
 
     # =========================================================================
     # PATTERN PROMOTION (SHORT-TERM → LONG-TERM)

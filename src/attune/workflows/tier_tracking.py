@@ -1,5 +1,4 @@
-"""
-Automatic tier recommendation and progression tracking for workflows.
+"""Automatic tier recommendation and progression tracking for workflows.
 
 Integrates TierRecommender into workflows to:
 1. Auto-suggest optimal tier at workflow start
@@ -70,8 +69,7 @@ class WorkflowTierProgression:
 
 
 class WorkflowTierTracker:
-    """
-    Automatically track tier progression for workflow runs.
+    """Automatically track tier progression for workflow runs.
 
     Usage in BaseWorkflow:
         tracker = WorkflowTierTracker(workflow_name, description)
@@ -97,13 +95,13 @@ class WorkflowTierTracker:
         workflow_description: str,
         patterns_dir: Path | None = None,
     ):
-        """
-        Initialize tier tracker for a workflow.
+        """Initialize tier tracker for a workflow.
 
         Args:
             workflow_name: Name of the workflow
             workflow_description: Description/purpose of workflow
             patterns_dir: Directory to save tier progression patterns
+
         """
         self.workflow_name = workflow_name
         self.workflow_description = workflow_description
@@ -124,8 +122,7 @@ class WorkflowTierTracker:
         files_affected: list[str] | None = None,
         show_ui: bool = True,
     ) -> str:
-        """
-        Show tier recommendation at workflow start.
+        """Show tier recommendation at workflow start.
 
         Args:
             files_affected: Files involved in this workflow run
@@ -133,6 +130,7 @@ class WorkflowTierTracker:
 
         Returns:
             Recommended tier (CHEAP, CAPABLE, or PREMIUM)
+
         """
         try:
             from attune.tier_recommender import TierRecommender
@@ -201,7 +199,7 @@ class WorkflowTierTracker:
                 success=success,
                 quality_gate_failed=quality_gate_failed,
                 quality_gates_passed=quality_gates_passed,
-            )
+            ),
         )
 
     def save_progression(
@@ -211,8 +209,7 @@ class WorkflowTierTracker:
         bug_type: str = "workflow_run",
         tier_progression: list[tuple[str, str, bool]] | None = None,
     ) -> Path | None:
-        """
-        Save tier progression data after workflow completion.
+        """Save tier progression data after workflow completion.
 
         Args:
             workflow_result: WorkflowResult from workflow execution
@@ -223,6 +220,7 @@ class WorkflowTierTracker:
 
         Returns:
             Path to saved pattern file, or None if save failed
+
         """
         try:
             completed_at = datetime.now()
@@ -331,13 +329,13 @@ class WorkflowTierTracker:
 
         if "premium" in tiers_used:
             return "PREMIUM"
-        elif "capable" in tiers_used:
+        if "capable" in tiers_used:
             return "CAPABLE"
-        else:
-            return "CHEAP"
+        return "CHEAP"
 
     def _build_tier_history_from_progression(
-        self, tier_progression: list[tuple[str, str, bool]]
+        self,
+        tier_progression: list[tuple[str, str, bool]],
     ) -> list[dict[str, Any]]:
         """Build detailed tier history from tier progression tracking.
 
@@ -516,8 +514,7 @@ def auto_recommend_tier(
     workflow_description: str,
     files_affected: list[str] | None = None,
 ) -> str:
-    """
-    Quick helper to get tier recommendation without tracker.
+    """Quick helper to get tier recommendation without tracker.
 
     Args:
         workflow_name: Name of workflow
@@ -526,6 +523,7 @@ def auto_recommend_tier(
 
     Returns:
         Recommended tier
+
     """
     tracker = WorkflowTierTracker(workflow_name, workflow_description)
     return tracker.show_recommendation(files_affected, show_ui=False)

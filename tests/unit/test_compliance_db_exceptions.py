@@ -51,14 +51,13 @@ class TestConnectionExceptionHandling:
 
     def test_integrity_error_logs_and_rollsback(self, temp_db, caplog):
         """IntegrityError should log, rollback, and re-raise."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(sqlite3.IntegrityError):
-                with temp_db._get_connection() as conn:
-                    # Violate unique constraint (if we had one)
-                    # For now, trigger error by executing invalid SQL
-                    conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-                    conn.execute("INSERT INTO test VALUES (1)")
-                    conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
+        with caplog.at_level(logging.ERROR), pytest.raises(sqlite3.IntegrityError):
+            with temp_db._get_connection() as conn:
+                # Violate unique constraint (if we had one)
+                # For now, trigger error by executing invalid SQL
+                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+                conn.execute("INSERT INTO test VALUES (1)")
+                conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
 
         # Should log error
         assert any("integrity error" in record.message.lower() for record in caplog.records)
@@ -70,24 +69,22 @@ class TestConnectionExceptionHandling:
         db_path.touch()
         db_path.chmod(0o444)  # Read-only
 
-        with caplog.at_level(logging.CRITICAL):
-            with pytest.raises(sqlite3.OperationalError):
-                db = ComplianceDatabase(str(db_path))
-                db.record_audit(
-                    audit_date=datetime(2026, 1, 5),
-                    audit_type="HIPAA",
-                )
+        with caplog.at_level(logging.CRITICAL), pytest.raises(sqlite3.OperationalError):
+            db = ComplianceDatabase(str(db_path))
+            db.record_audit(
+                audit_date=datetime(2026, 1, 5),
+                audit_type="HIPAA",
+            )
 
         # Should log critical error
         assert any("operational error" in record.message.lower() for record in caplog.records)
 
     def test_database_error_logs_and_raises(self, temp_db, caplog):
         """SQL syntax errors should log and re-raise as OperationalError."""
-        with caplog.at_level(logging.CRITICAL):
-            with pytest.raises(sqlite3.OperationalError):
-                with temp_db._get_connection() as conn:
-                    # Trigger an operational error (SQL syntax error)
-                    conn.execute("INVALID SQL STATEMENT")
+        with caplog.at_level(logging.CRITICAL), pytest.raises(sqlite3.OperationalError):
+            with temp_db._get_connection() as conn:
+                # Trigger an operational error (SQL syntax error)
+                conn.execute("INVALID SQL STATEMENT")
 
         # Should log error (as operational error for SQL syntax issues)
         assert any(
@@ -110,32 +107,30 @@ class TestConnectionExceptionHandling:
 
     def test_unexpected_error_logs_with_traceback(self, temp_db, caplog):
         """Unexpected errors should log with full exception traceback."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(Exception):
-                with temp_db._get_connection():
-                    # Trigger unexpected error
-                    raise RuntimeError("Unexpected database operation error")
+        with caplog.at_level(logging.ERROR), pytest.raises(Exception):
+            with temp_db._get_connection():
+                # Trigger unexpected error
+                raise RuntimeError("Unexpected database operation error")
 
         # Should log exception with traceback
         assert any("unexpected error" in record.message.lower() for record in caplog.records)
 
     def test_rollback_occurs_on_exception(self, temp_db):
         """Database should rollback on exception, not commit partial changes."""
-        initial_audits = len(temp_db.get_last_audit() is not None and [1] or [])
+        initial_audits = len((temp_db.get_last_audit() is not None and [1]) or [])
 
-        with pytest.raises(sqlite3.IntegrityError):
-            with temp_db._get_connection() as conn:
-                conn.execute(
-                    "INSERT INTO compliance_audits (audit_date, audit_type) VALUES (?, ?)",
-                    (datetime(2026, 1, 5), "HIPAA"),
-                )
-                # Trigger error before commit
-                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-                conn.execute("INSERT INTO test VALUES (1)")
-                conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
+        with pytest.raises(sqlite3.IntegrityError), temp_db._get_connection() as conn:
+            conn.execute(
+                "INSERT INTO compliance_audits (audit_date, audit_type) VALUES (?, ?)",
+                (datetime(2026, 1, 5), "HIPAA"),
+            )
+            # Trigger error before commit
+            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            conn.execute("INSERT INTO test VALUES (1)")
+            conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
 
         # Changes should be rolled back
-        final_audits = len(temp_db.get_last_audit() is not None and [1] or [])
+        final_audits = len((temp_db.get_last_audit() is not None and [1]) or [])
         assert final_audits == initial_audits  # No new audits committed
 
     def test_connection_cleanup_on_error(self, temp_db):
@@ -264,10 +259,9 @@ class TestAuditTrailLogging:
 
     def test_database_error_preserves_context(self, temp_db, caplog):
         """Database errors should preserve context for audit purposes."""
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(sqlite3.DatabaseError):
-                with temp_db._get_connection() as conn:
-                    conn.execute("INVALID SQL FOR TESTING")
+        with caplog.at_level(logging.ERROR), pytest.raises(sqlite3.DatabaseError):
+            with temp_db._get_connection() as conn:
+                conn.execute("INVALID SQL FOR TESTING")
 
         # Error log should contain context
         error_logs = [r for r in caplog.records if r.levelno >= logging.ERROR]
@@ -358,17 +352,15 @@ class TestErrorPropagation:
 
     def test_database_error_reaches_caller(self, temp_db):
         """Database errors should propagate to caller, not be silently swallowed."""
-        with pytest.raises(sqlite3.DatabaseError):
-            with temp_db._get_connection() as conn:
-                conn.execute("COMPLETELY INVALID SQL STATEMENT")
+        with pytest.raises(sqlite3.DatabaseError), temp_db._get_connection() as conn:
+            conn.execute("COMPLETELY INVALID SQL STATEMENT")
 
     def test_integrity_error_reaches_caller(self, temp_db):
         """Integrity errors should propagate to caller."""
-        with pytest.raises(sqlite3.IntegrityError):
-            with temp_db._get_connection() as conn:
-                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
-                conn.execute("INSERT INTO test VALUES (1)")
-                conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
+        with pytest.raises(sqlite3.IntegrityError), temp_db._get_connection() as conn:
+            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            conn.execute("INSERT INTO test VALUES (1)")
+            conn.execute("INSERT INTO test VALUES (1)")  # Duplicate
 
     def test_file_error_reaches_caller(self, caplog):
         """File system errors should propagate to caller."""

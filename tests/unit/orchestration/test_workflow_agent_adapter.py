@@ -37,7 +37,10 @@ class _SuccessWorkflow(BaseWorkflow):
     }
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         return {"stage": stage_name, "result": "ok"}, 100, 50
 
@@ -51,7 +54,10 @@ class _FailingWorkflow(BaseWorkflow):
     tier_map = {"stage_a": ModelTier.CHEAP}
 
     async def run_stage(
-        self, stage_name: str, tier: ModelTier, input_data: Any
+        self,
+        stage_name: str,
+        tier: ModelTier,
+        input_data: Any,
     ) -> tuple[Any, int, int]:
         raise ValueError("Intentional failure")
 

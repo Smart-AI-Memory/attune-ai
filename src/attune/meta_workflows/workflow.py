@@ -79,6 +79,7 @@ class MetaWorkflow:
         form_engine: Engine for collecting form responses
         agent_creator: Creator for generating agent teams
         pattern_learner: Optional pattern learner for memory integration
+
     """
 
     def __init__(
@@ -101,6 +102,7 @@ class MetaWorkflow:
 
         Raises:
             ValueError: If neither template nor template_id provided
+
         """
         if template is None and template_id is None:
             raise ValueError("Must provide either template or template_id")
@@ -149,6 +151,7 @@ class MetaWorkflow:
 
         Raises:
             ValueError: If execution fails
+
         """
         run_id = f"{self.template.template_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         start_time = time.time()
@@ -163,7 +166,8 @@ class MetaWorkflow:
                 else:
                     logger.info("Stage 1: Collecting form responses")
                 form_response = self.form_engine.ask_questions(
-                    self.template.form_schema, self.template.template_id
+                    self.template.form_schema,
+                    self.template.template_id,
                 )
             else:
                 logger.info("Stage 1: Using provided form responses")
@@ -214,7 +218,7 @@ class MetaWorkflow:
 
             logger.info(
                 f"Meta-workflow execution complete: {run_id} "
-                f"(cost: ${total_cost:.2f}, duration: {total_duration:.1f}s)"
+                f"(cost: ${total_cost:.2f}, duration: {total_duration:.1f}s)",
             )
 
             return result
@@ -250,6 +254,7 @@ class MetaWorkflow:
 
         Returns:
             List of agent execution results
+
         """
         results = []
 
@@ -309,6 +314,7 @@ class MetaWorkflow:
 
         Raises:
             OSError: If save operation fails
+
         """
         # Create run directory
         run_dir = self.storage_dir / result.run_id
@@ -383,6 +389,7 @@ class MetaWorkflow:
 
         Returns:
             Markdown-formatted report
+
         """
         return generate_report(result, self.template)
 
@@ -396,6 +403,7 @@ class MetaWorkflow:
 
         Returns:
             Generic instructions appropriate for the role
+
         """
         return get_generic_instructions(role)
 
@@ -409,6 +417,7 @@ class MetaWorkflow:
 
         Returns:
             Formatted prompt string
+
         """
         return build_agent_prompt(agent)
 
@@ -423,6 +432,7 @@ class MetaWorkflow:
 
         Returns:
             True if success criteria met, False otherwise
+
         """
         return evaluate_success_criteria(result, agent)
 
@@ -445,6 +455,7 @@ def load_execution_result(run_id: str, storage_dir: str | None = None) -> MetaWo
     Raises:
         FileNotFoundError: If result not found
         ValueError: If result file is invalid
+
     """
     if storage_dir is None:
         storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")
@@ -471,6 +482,7 @@ def list_execution_results(storage_dir: str | None = None) -> list[str]:
 
     Returns:
         List of run IDs (sorted by timestamp, newest first)
+
     """
     if storage_dir is None:
         storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "executions")

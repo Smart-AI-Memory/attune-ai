@@ -212,7 +212,7 @@ class MemoryAwareAgent(BaseAgent):
                 }
                 for r in related
             ]
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Graceful degradation when graph unavailable
             logger.debug(f"Could not get resolutions for node {node_id}")
             return []
@@ -322,7 +322,7 @@ class MemoryAwareAgent(BaseAgent):
                 "edge_count": len(self._graph.edges),
                 "path": str(self._graph.path),
             }
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Stats are optional, don't crash on errors
             logger.debug(f"Could not get graph stats: {e}")
             return {"enabled": True, "error": "Could not get stats"}

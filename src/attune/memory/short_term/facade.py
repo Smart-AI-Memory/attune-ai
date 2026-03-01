@@ -115,6 +115,7 @@ class RedisShortTermMemory:
         True
         >>> memory.retrieve("key", credentials)
         {'data': 123}
+
     """
 
     # Key prefixes for backward compatibility
@@ -154,6 +155,7 @@ class RedisShortTermMemory:
 
         Raises:
             ImportError: If Redis package is not installed (when use_mock=False)
+
         """
         # Check Redis availability — auto-enable mock mode if Redis unavailable
         if not use_mock and (config is None or not config.use_mock):
@@ -162,7 +164,7 @@ class RedisShortTermMemory:
 
                 logging.getLogger(__name__).warning(
                     "Redis not available — falling back to in-memory mock mode. "
-                    "Set ATTUNE_REDIS_MOCK=true to silence this warning."
+                    "Set ATTUNE_REDIS_MOCK=true to silence this warning.",
                 )
                 use_mock = True
 

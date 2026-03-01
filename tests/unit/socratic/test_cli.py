@@ -380,7 +380,7 @@ class TestCLICommandList:
                     "state": "completed",
                     "goal": "Test goal",
                     "updated_at": "2026-01-22T10:00:00",
-                }
+                },
             ]
             mock_get_storage.return_value = mock_storage
 

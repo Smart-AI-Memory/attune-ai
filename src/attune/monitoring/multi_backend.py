@@ -65,6 +65,7 @@ class MultiBackend:
         >>> backend = MultiBackend.from_config()
         >>> backend.log_call(call_record)  # Logs to JSONL + OTEL
         >>> backend.log_workflow(workflow_record)
+
     """
 
     def __init__(self, backends: list[TelemetryBackend] | None = None):
@@ -72,6 +73,7 @@ class MultiBackend:
 
         Args:
             backends: List of backend instances (default: auto-detect)
+
         """
         self.backends = backends or []
         self._failed_backends: set[int] = set()
@@ -89,6 +91,7 @@ class MultiBackend:
 
         Returns:
             MultiBackend instance with all available backends
+
         """
         backends: list[TelemetryBackend] = []
 
@@ -119,12 +122,13 @@ class MultiBackend:
 
         Args:
             backend: Backend instance to add
+
         """
         if isinstance(backend, TelemetryBackend):
             self.backends.append(backend)
         else:
             raise TypeError(
-                f"Backend must implement TelemetryBackend protocol, got {type(backend)}"
+                f"Backend must implement TelemetryBackend protocol, got {type(backend)}",
             )
 
     def remove_backend(self, backend: TelemetryBackend) -> None:
@@ -132,6 +136,7 @@ class MultiBackend:
 
         Args:
             backend: Backend instance to remove
+
         """
         if backend in self.backends:
             self.backends.remove(backend)
@@ -143,6 +148,7 @@ class MultiBackend:
 
         Args:
             record: LLM call record to log
+
         """
         for i, backend in enumerate(self.backends):
             if i in self._failed_backends:
@@ -164,6 +170,7 @@ class MultiBackend:
 
         Args:
             record: Workflow run record to log
+
         """
         for i, backend in enumerate(self.backends):
             if i in self._failed_backends:
@@ -183,6 +190,7 @@ class MultiBackend:
 
         Returns:
             List of backend class names that are active (not failed)
+
         """
         return [
             type(backend).__name__
@@ -195,6 +203,7 @@ class MultiBackend:
 
         Returns:
             List of backend class names that have failed
+
         """
         return [
             type(self.backends[i]).__name__ for i in self._failed_backends if i < len(self.backends)
@@ -253,6 +262,7 @@ def get_multi_backend(storage_dir: str = ".attune") -> MultiBackend:
     Example:
         >>> backend = get_multi_backend()
         >>> backend.log_call(record)
+
     """
     global _global_backend
     if _global_backend is None:

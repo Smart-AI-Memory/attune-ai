@@ -29,6 +29,7 @@ class TemplateRegistry:
 
     Attributes:
         storage_dir: Directory where templates are stored
+
     """
 
     def __init__(self, storage_dir: str | None = None):
@@ -40,6 +41,7 @@ class TemplateRegistry:
 
         Raises:
             ValueError: If storage_dir is invalid
+
         """
         if storage_dir is None:
             storage_dir = str(Path.home() / ".attune" / "meta_workflows" / "templates")
@@ -63,6 +65,7 @@ class TemplateRegistry:
 
         Raises:
             ValueError: If template file is invalid or corrupted
+
         """
         # Check built-in templates first
         builtin = get_builtin_template(template_id)
@@ -99,6 +102,7 @@ class TemplateRegistry:
         Raises:
             ValueError: If template is invalid or path is unsafe
             OSError: If write operation fails
+
         """
         template_path = self.storage_dir / f"{template.template_id}.json"
 
@@ -123,6 +127,7 @@ class TemplateRegistry:
 
         Returns:
             List of template IDs (sorted, built-in templates marked with *)
+
         """
         # User templates
         template_files = self.storage_dir.glob("*.json")
@@ -144,6 +149,7 @@ class TemplateRegistry:
 
         Returns:
             True if template is built-in
+
         """
         return template_id in BUILTIN_TEMPLATES
 
@@ -155,6 +161,7 @@ class TemplateRegistry:
 
         Returns:
             Dictionary with basic template info, or None if not found
+
         """
         template = self.load_template(template_id)
         if template is None:
@@ -184,6 +191,7 @@ class TemplateRegistry:
 
         Raises:
             OSError: If delete operation fails
+
         """
         template_path = self.storage_dir / f"{template_id}.json"
 
@@ -211,5 +219,6 @@ def get_default_registry() -> TemplateRegistry:
 
     Returns:
         TemplateRegistry using default storage location
+
     """
     return TemplateRegistry()

@@ -1,0 +1,236 @@
+"""Wiring consistency tests.
+
+Verify that every registered name (tool, workflow, keyword, entry point)
+resolves to something real.  These are pure structural checks — no
+execution, no mocks, no I/O.
+"""
+
+import ast
+import importlib
+import importlib.metadata
+import inspect
+import re
+import textwrap
+
+# ---------------------------------------------------------------------------
+# 1. Socratic MCP: every tool has a handler
+# ---------------------------------------------------------------------------
+
+
+class TestSocraticMCPWiring:
+    """Every tool in SOCRATIC_TOOLS must have a handler in handle_tool_call."""
+
+    def _tool_names(self) -> set[str]:
+        from attune.socratic.mcp_tools import SOCRATIC_TOOLS
+
+        return {t["name"] for t in SOCRATIC_TOOLS}
+
+    def _handler_keys(self) -> set[str]:
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        source = inspect.getsource(SocraticMCPServer.handle_tool_call)
+        # The handlers dict is defined as  "key": self._handle_...
+        return set(re.findall(r'"(socratic_\w+)"', source))
+
+    def test_every_tool_has_a_handler(self):
+        tools = self._tool_names()
+        handlers = self._handler_keys()
+        orphan_tools = tools - handlers
+        assert not orphan_tools, f"Tools registered but missing handlers: {orphan_tools}"
+
+    def test_every_handler_has_a_tool(self):
+        tools = self._tool_names()
+        handlers = self._handler_keys()
+        orphan_handlers = handlers - tools
+        assert (
+            not orphan_handlers
+        ), f"Handlers defined but missing tool definitions: {orphan_handlers}"
+
+    def test_sets_are_equal(self):
+        assert self._tool_names() == self._handler_keys()
+
+
+# ---------------------------------------------------------------------------
+# 2. Empathy MCP: every registered tool has a dispatch branch
+# ---------------------------------------------------------------------------
+
+
+class TestEmpathyMCPWiring:
+    """Every key in _register_tools() must have an if/elif branch in call_tool()."""
+
+    def _registered_tools(self) -> set[str]:
+        from attune.mcp.server import EmpathyMCPServer
+
+        source = inspect.getsource(EmpathyMCPServer._register_tools)
+        # Keys are the top-level string literals that serve as dict keys.
+        # They appear as  "tool_name": {  at the start of each entry.
+        tree = ast.parse(textwrap.dedent(source))
+        keys: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Dict):
+                for key in node.keys:
+                    if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                        keys.add(key.value)
+                break  # only the outermost return dict
+        return keys
+
+    def _dispatched_tools(self) -> set[str]:
+        from attune.mcp.server import EmpathyMCPServer
+
+        source = inspect.getsource(EmpathyMCPServer.call_tool)
+        # Each branch is  tool_name == "..."  or  tool_name == "..."
+        return set(re.findall(r'tool_name\s*==\s*"(\w+)"', source))
+
+    def test_every_registered_tool_has_dispatch(self):
+        registered = self._registered_tools()
+        dispatched = self._dispatched_tools()
+        missing = registered - dispatched
+        assert not missing, f"Tools registered but not dispatched in call_tool(): {missing}"
+
+    def test_every_dispatched_tool_is_registered(self):
+        registered = self._registered_tools()
+        dispatched = self._dispatched_tools()
+        extra = dispatched - registered
+        assert not extra, f"Tools dispatched in call_tool() but not registered: {extra}"
+
+    def test_sets_are_equal(self):
+        assert self._registered_tools() == self._dispatched_tools()
+
+
+# ---------------------------------------------------------------------------
+# 3. Workflow registry: every default name resolves
+# ---------------------------------------------------------------------------
+
+
+class TestWorkflowRegistryWiring:
+    """Every _DEFAULT_WORKFLOW_NAMES class must exist in _LAZY_WORKFLOW_IMPORTS,
+    and every referenced module must be importable.
+    """
+
+    def test_every_default_name_in_lazy_imports(self):
+        from attune.workflows import _DEFAULT_WORKFLOW_NAMES, _LAZY_WORKFLOW_IMPORTS
+
+        for workflow_id, class_name in _DEFAULT_WORKFLOW_NAMES.items():
+            assert class_name in _LAZY_WORKFLOW_IMPORTS, (
+                f"Workflow '{workflow_id}' references class '{class_name}' "
+                f"which is missing from _LAZY_WORKFLOW_IMPORTS"
+            )
+
+    def test_lazy_import_modules_are_importable(self):
+        from attune.workflows import _DEFAULT_WORKFLOW_NAMES, _LAZY_WORKFLOW_IMPORTS
+
+        # Only check modules referenced by default workflows (keeps it fast)
+        checked_classes = set(_DEFAULT_WORKFLOW_NAMES.values())
+        for class_name in checked_classes:
+            module_path, attr_name = _LAZY_WORKFLOW_IMPORTS[class_name]
+            # Resolve relative imports against attune.workflows
+            if module_path.startswith("."):
+                full_module = "attune.workflows" + module_path
+            else:
+                full_module = module_path
+            mod = importlib.import_module(full_module)
+            assert hasattr(mod, attr_name), (
+                f"Module '{full_module}' has no attribute '{attr_name}' "
+                f"(referenced by class '{class_name}')"
+            )
+
+
+# ---------------------------------------------------------------------------
+# 4. Entry points: every pyproject.toml workflow entry point is importable
+# ---------------------------------------------------------------------------
+
+
+class TestWorkflowEntryPoints:
+    """Every attune.workflows entry point must load and have an execute method."""
+
+    def test_workflow_entry_points_are_loadable(self):
+        eps = list(importlib.metadata.entry_points(group="attune.workflows"))
+        assert eps, "No attune.workflows entry points found — is the package installed?"
+
+        for ep in eps:
+            cls = ep.load()
+            assert isinstance(
+                cls, type
+            ), f"Entry point '{ep.name}' did not load a class (got {type(cls).__name__})"
+            assert hasattr(
+                cls, "execute"
+            ), f"Entry point '{ep.name}' loaded {cls.__name__} which has no execute method"
+
+
+# ---------------------------------------------------------------------------
+# 5. CLI router: every keyword maps to a known hub
+# ---------------------------------------------------------------------------
+
+
+class TestCLIRouterWiring:
+    """Every skill referenced by _keyword_to_skill must be a known hub."""
+
+    KNOWN_HUBS = {
+        "dev",
+        "testing",
+        "workflows",
+        "docs",
+        "plan",
+        "release",
+        "wizard",
+        "agent",
+        "batch",
+        "utilities",
+        "brainstorm",
+    }
+
+    def test_every_keyword_maps_to_known_hub(self):
+        from attune.cli_router import HybridRouter
+
+        router = HybridRouter.__new__(HybridRouter)
+        # Manually init the mapping without triggering file I/O
+        router._keyword_to_skill = {}
+        # Re-read from source to get the mapping without side effects
+        source = inspect.getsource(HybridRouter.__init__)
+        # Extract (skill, args) pairs: ("skill_name", "args")
+        skills_referenced = set(re.findall(r'\("(\w+)"(?:,\s*"[^"]*")?\)', source))
+        unknown = skills_referenced - self.KNOWN_HUBS
+        assert not unknown, (
+            f"Keywords reference unknown hubs: {unknown}. " f"Known hubs: {sorted(self.KNOWN_HUBS)}"
+        )
+
+    def test_hub_descriptions_cover_all_skills(self):
+        """_hub_descriptions should document every hub used in _keyword_to_skill."""
+        from attune.cli_router import HybridRouter
+
+        source_init = inspect.getsource(HybridRouter.__init__)
+
+        # Extract skills from _keyword_to_skill assignments
+        skills_used = set(re.findall(r'\("(\w+)"(?:,\s*"[^"]*")?\)', source_init))
+
+        # Extract keys from _hub_descriptions
+        hub_desc_keys = (
+            set(re.findall(r'"(\w+)":\s*"[^"]*"', source_init.split("_hub_descriptions")[1]))
+            if "_hub_descriptions" in source_init
+            else set()
+        )
+
+        undocumented = skills_used - hub_desc_keys
+        assert not undocumented, (
+            f"Hubs used in _keyword_to_skill but missing from _hub_descriptions: " f"{undocumented}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 6. Wizard entry points: every wizard is importable
+# ---------------------------------------------------------------------------
+
+
+class TestWizardEntryPoints:
+    """Every attune.wizards entry point must load successfully."""
+
+    def test_wizard_entry_points_are_loadable(self):
+        eps = list(importlib.metadata.entry_points(group="attune.wizards"))
+        assert eps, "No attune.wizards entry points found — is the package installed?"
+
+        for ep in eps:
+            cls = ep.load()
+            assert isinstance(cls, type), (
+                f"Wizard entry point '{ep.name}' did not load a class "
+                f"(got {type(cls).__name__})"
+            )

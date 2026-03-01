@@ -71,11 +71,10 @@ class TestUnifiedMemoryInterface:
         assert result["data"] == "value"
 
     @pytest.mark.skip(
-        reason="UnifiedMemory.retrieve() only checks short-term storage (file session + Redis), not long-term"
+        reason="UnifiedMemory.retrieve() only checks short-term storage (file session + Redis), not long-term",
     )
     def test_retrieve_checks_both_tiers(self):
         """Test that retrieve checks short-term first, then long-term."""
-        pass
 
     def test_short_term_takes_precedence_over_long_term(self):
         """Test that short-term data overrides long-term if both exist."""
@@ -95,7 +94,6 @@ class TestUnifiedMemoryInterface:
     @pytest.mark.skip(reason="UnifiedMemory has no public delete() method")
     def test_delete_removes_from_both_tiers(self):
         """Test that delete operation removes from both tiers."""
-        pass
 
 
 # ============================================================================
@@ -167,7 +165,10 @@ class TestShortTermMemoryOperations:
         large_data = {"data": "x" * (1024 * 1024)}
 
         self.memory.stash(
-            "large_key", large_data, self.credentials, ttl=TTLStrategy.WORKING_RESULTS
+            "large_key",
+            large_data,
+            self.credentials,
+            ttl=TTLStrategy.WORKING_RESULTS,
         )
 
         retrieved = self.memory.retrieve("large_key", self.credentials)
@@ -177,10 +178,16 @@ class TestShortTermMemoryOperations:
     def test_update_existing_key(self):
         """Test that updating existing key works correctly."""
         self.memory.stash(
-            "test_key", {"version": 1}, self.credentials, ttl=TTLStrategy.WORKING_RESULTS
+            "test_key",
+            {"version": 1},
+            self.credentials,
+            ttl=TTLStrategy.WORKING_RESULTS,
         )
         self.memory.stash(
-            "test_key", {"version": 2}, self.credentials, ttl=TTLStrategy.WORKING_RESULTS
+            "test_key",
+            {"version": 2},
+            self.credentials,
+            ttl=TTLStrategy.WORKING_RESULTS,
         )
 
         result = self.memory.retrieve("test_key", self.credentials)
@@ -278,16 +285,14 @@ class TestCrossTierOperations:
         assert len(staged) >= 1
 
     @pytest.mark.skip(
-        reason="promote_to_long_term() replaced by stage_pattern+promote_pattern flow"
+        reason="promote_to_long_term() replaced by stage_pattern+promote_pattern flow",
     )
     def test_promotion_after_ttl_expiration_fails_gracefully(self):
         """Test that promoting expired data is handled."""
-        pass
 
     @pytest.mark.skip(reason="sync_tiers() not part of current UnifiedMemory API")
     def test_sync_tiers_maintains_consistency(self):
         """Test that tier synchronization maintains data consistency."""
-        pass
 
 
 # ============================================================================
@@ -307,19 +312,16 @@ class TestClassificationEnforcement:
     def test_internal_data_not_accessible_externally(self):
         """Test that INTERNAL classified data is protected."""
         # TODO: Implement when classification added
-        pass
 
     @pytest.mark.skip(reason="Classification not yet implemented in unified memory")
     def test_confidential_data_requires_authorization(self):
         """Test that CONFIDENTIAL data requires credentials."""
         # TODO: Implement when classification added
-        pass
 
     @pytest.mark.skip(reason="Classification not yet implemented in unified memory")
     def test_public_data_accessible_without_auth(self):
         """Test that PUBLIC data is freely accessible."""
         # TODO: Implement when classification added
-        pass
 
 
 # ============================================================================

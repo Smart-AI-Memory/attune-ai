@@ -286,7 +286,7 @@ class CrewAIAdapter(BaseAdapter):
             role=role,
             goal=goal,
             backstory=backstory,
-            tools=crewai_tools if crewai_tools else None,
+            tools=crewai_tools or None,
             verbose=False,
             allow_delegation=config.role == AgentRole.COORDINATOR,
         )

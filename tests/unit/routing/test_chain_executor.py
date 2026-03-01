@@ -82,7 +82,9 @@ class TestChainStep:
     def test_chain_step_initialization(self):
         """Test ChainStep can be created."""
         step = ChainStep(
-            workflow_name="security-scan", triggered_by="manual", approval_required=False
+            workflow_name="security-scan",
+            triggered_by="manual",
+            approval_required=False,
         )
 
         assert step.workflow_name == "security-scan"
@@ -127,13 +129,19 @@ class TestChainStep:
 
         # Approved
         approved = ChainStep(
-            workflow_name="test", triggered_by="auto", approval_required=True, approved=True
+            workflow_name="test",
+            triggered_by="auto",
+            approval_required=True,
+            approved=True,
         )
         assert approved.approved is True
 
         # Rejected
         rejected = ChainStep(
-            workflow_name="test", triggered_by="auto", approval_required=True, approved=False
+            workflow_name="test",
+            triggered_by="auto",
+            approval_required=True,
+            approved=False,
         )
         assert rejected.approved is False
 
@@ -157,7 +165,9 @@ class TestChainExecution:
         step2 = ChainStep(workflow_name="fix", triggered_by="auto", approval_required=True)
 
         execution = ChainExecution(
-            chain_id="chain_456", initial_workflow="scan", steps=[step1, step2]
+            chain_id="chain_456",
+            initial_workflow="scan",
+            steps=[step1, step2],
         )
 
         assert len(execution.steps) == 2
@@ -170,7 +180,9 @@ class TestChainExecution:
 
         for status in statuses:
             execution = ChainExecution(
-                chain_id=f"chain_{status}", initial_workflow="test", status=status
+                chain_id=f"chain_{status}",
+                initial_workflow="test",
+                status=status,
             )
             assert execution.status == status
 
@@ -275,7 +287,7 @@ chains:
     triggers:
       - condition: "severity > 5"
         next: "next-wizard"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -300,7 +312,7 @@ chains:
     triggers:
       - condition: "status == 'failed'"
         next: "error-handler"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -322,7 +334,7 @@ chains:
     triggers:
       - condition: "result != null"
         next: "processor"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -340,7 +352,7 @@ chains:
     triggers:
       - condition: "nonexistent > 5"
         next: "next-wizard"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -358,7 +370,7 @@ chains:
     triggers:
       - condition: "count > 0"
         next: "next-wizard"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -399,7 +411,8 @@ class TestChainExecutionManagement:
         trigger2 = ChainTrigger("errors > 0", "step3", approval_required=True)
 
         execution = executor.create_execution(
-            "initial-wizard", triggered_steps=[trigger1, trigger2]
+            "initial-wizard",
+            triggered_steps=[trigger1, trigger2],
         )
 
         assert len(execution.steps) == 3
@@ -470,7 +483,7 @@ class TestChainExecutionManagement:
 
         # Add step requiring approval
         execution.steps.append(
-            ChainStep("approval-step", "auto", approval_required=True, approved=None)
+            ChainStep("approval-step", "auto", approval_required=True, approved=None),
         )
 
         next_step = executor.get_next_step(execution)
@@ -488,12 +501,12 @@ class TestChainExecutionManagement:
 
         # Add rejected step
         execution.steps.append(
-            ChainStep("rejected-step", "auto", approval_required=True, approved=False)
+            ChainStep("rejected-step", "auto", approval_required=True, approved=False),
         )
 
         # Add approved step
         execution.steps.append(
-            ChainStep("approved-step", "auto", approval_required=False, approved=True)
+            ChainStep("approved-step", "auto", approval_required=False, approved=True),
         )
 
         next_step = executor.get_next_step(execution)
@@ -525,7 +538,7 @@ chains:
     triggers:
       - condition: "success == true"
         next: "step2"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -551,7 +564,7 @@ chains:
     triggers:
       - condition: "success == true"
         next: "step2"
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -594,7 +607,7 @@ templates:
       - security-scan
       - code-analysis
       - report-generation
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -619,7 +632,7 @@ templates:
     steps: ["step1", "step2"]
   template2:
     steps: ["step3", "step4"]
-"""
+""",
         )
         executor = ChainExecutor(config_path=config_file)
 
@@ -740,7 +753,10 @@ class TestChainDataClassIntegration:
         )
 
         step2 = ChainStep(
-            workflow_name="remediation", triggered_by="auto", approval_required=True, approved=True
+            workflow_name="remediation",
+            triggered_by="auto",
+            approval_required=True,
+            approved=True,
         )
 
         # Create execution

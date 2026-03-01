@@ -158,7 +158,7 @@ class PatternLibrary:
         if pattern.id in self.patterns:
             raise ValueError(
                 f"Pattern '{pattern.id}' already exists. "
-                f"Use a different ID or remove the existing pattern first."
+                f"Use a different ID or remove the existing pattern first.",
             )
 
         # Store pattern
@@ -288,6 +288,7 @@ class PatternLibrary:
 
         Example:
             >>> patterns = library.get_patterns_by_tag("debugging")
+
         """
         pattern_ids = self._patterns_by_tag.get(tag, [])
         # Generator expression for memory efficiency, converted to list for return type
@@ -309,6 +310,7 @@ class PatternLibrary:
 
         Example:
             >>> patterns = library.get_patterns_by_type("conditional")
+
         """
         pattern_ids = self._patterns_by_type.get(pattern_type, [])
         return [self.patterns[pid] for pid in pattern_ids if pid in self.patterns]
@@ -364,7 +366,10 @@ class PatternLibrary:
                 self.pattern_graph[pattern_id_2].append(pattern_id_1)
 
     def get_related_patterns(
-        self, pattern_id: str, depth: int = 1, _visited: set[str] | None = None
+        self,
+        pattern_id: str,
+        depth: int = 1,
+        _visited: set[str] | None = None,
     ) -> list[Pattern]:
         """Get patterns related to a given pattern
 

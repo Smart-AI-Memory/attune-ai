@@ -15,8 +15,8 @@ from attune.context.compaction import CompactionStateManager, CompactState, SBAR
 from attune.context.manager import ContextManager
 
 __all__ = [
-    "CompactionStateManager",
     "CompactState",
+    "CompactionStateManager",
     "ContextManager",
     "SBARHandoff",
 ]

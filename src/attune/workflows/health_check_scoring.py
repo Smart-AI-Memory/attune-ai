@@ -46,6 +46,7 @@ def calculate_category_scores(
 
     Returns:
         List of CategoryScore objects
+
     """
     weights = category_weights or CATEGORY_WEIGHTS
     scores: list[CategoryScore] = []
@@ -83,7 +84,7 @@ def calculate_category_scores(
             },
             issues=security_issues,
             passed=critical_issues == 0 and high_issues == 0,
-        )
+        ),
     )
 
     # Coverage score (from test_coverage_analyzer)
@@ -102,7 +103,7 @@ def calculate_category_scores(
             raw_metrics={"coverage_percent": coverage_percent},
             issues=coverage_issues,
             passed=coverage_percent >= 80.0,
-        )
+        ),
     )
 
     # Quality score (from code_reviewer)
@@ -123,7 +124,7 @@ def calculate_category_scores(
             raw_metrics={"quality_score": quality_score},
             issues=quality_issues,
             passed=quality_score >= 7.0,
-        )
+        ),
     )
 
     # Performance score (from performance_optimizer, if available)
@@ -146,7 +147,7 @@ def calculate_category_scores(
                 raw_metrics={"bottleneck_count": bottleneck_count},
                 issues=perf_issues,
                 passed=bottleneck_count <= 2,
-            )
+            ),
         )
 
     # Documentation score (from documentation_writer, if available)
@@ -166,7 +167,7 @@ def calculate_category_scores(
                 raw_metrics={"coverage_percent": doc_coverage},
                 issues=doc_issues,
                 passed=doc_coverage >= 90.0,
-            )
+            ),
         )
 
     return scores
@@ -182,6 +183,7 @@ def calculate_overall_score(
 
     Returns:
         Overall score 0-100
+
     """
     total_score = 0.0
     total_weight = 0.0
@@ -209,6 +211,7 @@ def assign_grade(
 
     Returns:
         Letter grade (A/B/C/D/F)
+
     """
     grade_thresholds = thresholds or GRADE_THRESHOLDS
     for grade, threshold in grade_thresholds.items():
@@ -227,6 +230,7 @@ def generate_recommendations(
 
     Returns:
         List of recommendations with commands to run
+
     """
     recommendations: list[str] = []
 
@@ -236,44 +240,44 @@ def generate_recommendations(
     for category in sorted_categories:
         if not category.passed:
             if category.name == "Security":
-                recommendations.append(f"🔒 Address {len(category.issues)} " f"security issue(s)")
-                recommendations.append("   → Run: empathy workflow run " "security-audit --path .")
+                recommendations.append(f"🔒 Address {len(category.issues)} security issue(s)")
+                recommendations.append("   → Run: empathy workflow run security-audit --path .")
             elif category.name == "Coverage":
                 recommendations.append(
-                    f"🧪 Increase test coverage to 80%+ " f"(currently {category.score:.1f}%)"
+                    f"🧪 Increase test coverage to 80%+ (currently {category.score:.1f}%)",
                 )
-                recommendations.append("   → Run: pytest --cov=src " "--cov-report=term-missing")
+                recommendations.append("   → Run: pytest --cov=src --cov-report=term-missing")
                 recommendations.append(
-                    "   → Or use: empathy workflow run " "test-gen --path <file>"
+                    "   → Or use: empathy workflow run test-gen --path <file>",
                 )
             elif category.name == "Quality":
                 quality_score = category.raw_metrics.get("quality_score", 0.0)
                 recommendations.append(
-                    f"✨ Improve code quality to 7+ " f"(currently {quality_score:.1f}/10)"
+                    f"✨ Improve code quality to 7+ (currently {quality_score:.1f}/10)",
                 )
-                recommendations.append("   → Run: empathy workflow run " "code-review --path .")
-                recommendations.append("   → Or: empathy fix-all  " "(auto-fix lint/format issues)")
+                recommendations.append("   → Run: empathy workflow run code-review --path .")
+                recommendations.append("   → Or: empathy fix-all  (auto-fix lint/format issues)")
             elif category.name == "Performance":
                 bottlenecks = category.raw_metrics.get("bottleneck_count", 0)
-                recommendations.append(f"⚡ Optimize {bottlenecks} " f"performance bottleneck(s)")
-                recommendations.append("   → Run: empathy workflow run " "perf-audit --path .")
+                recommendations.append(f"⚡ Optimize {bottlenecks} performance bottleneck(s)")
+                recommendations.append("   → Run: empathy workflow run perf-audit --path .")
             elif category.name == "Documentation":
                 recommendations.append(
-                    f"📚 Complete documentation " f"(currently {category.score:.1f}%)"
+                    f"📚 Complete documentation (currently {category.score:.1f}%)",
                 )
-                recommendations.append("   → Run: empathy workflow run " "doc-gen --path .")
+                recommendations.append("   → Run: empathy workflow run doc-gen --path .")
 
     # Add general recommendations
     if len(recommendations) == 0:
-        recommendations.append("✅ Project health looks good! " "Keep up the good work.")
+        recommendations.append("✅ Project health looks good! Keep up the good work.")
         recommendations.append(
-            "   → Run: empathy orchestrate health-check " "--mode weekly  (for deeper analysis)"
+            "   → Run: empathy orchestrate health-check --mode weekly  (for deeper analysis)",
         )
     elif len(recommendations) >= 6:  # Multiple issues
         recommendations.append("")
-        recommendations.append("💡 Tip: Focus on top priority first " "for maximum impact")
+        recommendations.append("💡 Tip: Focus on top priority first for maximum impact")
         recommendations.append(
-            "   → Rerun: empathy orchestrate health-check " "--mode daily  (to track progress)"
+            "   → Rerun: empathy orchestrate health-check --mode daily  (to track progress)",
         )
 
     return recommendations

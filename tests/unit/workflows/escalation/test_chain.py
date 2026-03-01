@@ -314,7 +314,7 @@ class TestEscalationChainErrors:
     async def test_api_exception_recorded_and_escalates(self):
         executor = MagicMock()
         executor.run = AsyncMock(
-            side_effect=[RuntimeError("connection error"), _mock_response({"answer": "ok"})]
+            side_effect=[RuntimeError("connection error"), _mock_response({"answer": "ok"})],
         )
         chain = EscalationChain(
             models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
@@ -396,7 +396,7 @@ class TestEscalationChainEvaluator:
                     ),
                 ),
                 (True, None),
-            ]
+            ],
         )
         mock_evaluator.evaluator_model = "claude-haiku-4-5-20251001"
 
@@ -463,7 +463,7 @@ class TestEscalateConvenience:
         with patch("attune.workflows.escalation.convenience.EscalationChain") as MockChain:
             mock_instance = MagicMock()
             mock_instance.run = AsyncMock(
-                return_value=EscalationResult(success=True, response={}, final_model="haiku")
+                return_value=EscalationResult(success=True, response={}, final_model="haiku"),
             )
             MockChain.return_value = mock_instance
             await escalate("prompt", required_fields=["answer"])
@@ -475,7 +475,7 @@ class TestEscalateConvenience:
         with patch("attune.workflows.escalation.convenience.EscalationChain") as MockChain:
             mock_instance = MagicMock()
             mock_instance.run = AsyncMock(
-                return_value=EscalationResult(success=True, response={}, final_model="haiku")
+                return_value=EscalationResult(success=True, response={}, final_model="haiku"),
             )
             MockChain.return_value = mock_instance
             await escalate("prompt", required_fields=["answer"])
@@ -487,7 +487,7 @@ class TestEscalateConvenience:
         with patch("attune.workflows.escalation.convenience.EscalationChain") as MockChain:
             mock_instance = MagicMock()
             mock_instance.run = AsyncMock(
-                return_value=EscalationResult(success=True, response={}, final_model="haiku")
+                return_value=EscalationResult(success=True, response={}, final_model="haiku"),
             )
             MockChain.return_value = mock_instance
             await escalate("prompt")

@@ -70,6 +70,7 @@ def detect_domain(goal: str) -> tuple[str, float]:
 
     Returns:
         Tuple of (domain, confidence)
+
     """
     goal_lower = goal.lower()
     scores: dict[str, float] = {}
@@ -110,6 +111,7 @@ def extract_keywords(goal: str) -> list[str]:
 
     Returns:
         List of unique keywords preserving order
+
     """
     # Remove common words
     stop_words = {
@@ -158,6 +160,7 @@ def identify_ambiguities(goal: str, domain: str) -> list[str]:
 
     Returns:
         List of ambiguity descriptions
+
     """
     ambiguities = []
 
@@ -196,6 +199,7 @@ def identify_assumptions(goal: str, domain: str) -> list[str]:
 
     Returns:
         List of assumption descriptions
+
     """
     assumptions = []
 

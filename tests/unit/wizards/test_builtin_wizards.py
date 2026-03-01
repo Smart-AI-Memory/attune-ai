@@ -11,20 +11,14 @@ Tests cover:
 Created: 2026-02-15
 """
 
-import pytest
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
 from attune.wizards.base import StepType, WizardConfig
-from attune.wizards.session import WizardSession
 from attune.wizards.builtin import BUILTIN_WIZARDS
 from attune.wizards.builtin.debug_wizard import DebugWizard
-from attune.wizards.builtin.security_wizard import SecurityWizard, _has_findings
 from attune.wizards.builtin.refactor_wizard import RefactorWizard
 from attune.wizards.builtin.release_prep_wizard import ReleasePrepWizard
+from attune.wizards.builtin.security_wizard import SecurityWizard, _has_findings
 from attune.wizards.builtin.test_gen_wizard import TestGenWizard
-from attune.meta_workflows.models import FormResponse
-
+from attune.wizards.session import WizardSession
 
 # =========================================================================
 # BUILTIN_WIZARDS dict
@@ -74,13 +68,21 @@ class TestDebugWizard:
     def test_steps_order(self):
         """Test step sequence."""
         step_ids = [s.id for s in DebugWizard.steps]
-        assert step_ids == ["gather_info", "analyze", "decompose_fix", "preview", "confirm"]
+        assert step_ids == [
+            "gather_info",
+            "analyze",
+            "review_analysis",
+            "decompose_fix",
+            "preview",
+            "confirm",
+        ]
 
     def test_step_types(self):
         """Test step types are correct."""
         types = {s.id: s.step_type for s in DebugWizard.steps}
         assert types["gather_info"] == StepType.QUESTION
         assert types["analyze"] == StepType.LLM_CALL
+        assert types["review_analysis"] == StepType.REVIEW
         assert types["decompose_fix"] == StepType.TASK_DECOMPOSE
         assert types["preview"] == StepType.PREVIEW
         assert types["confirm"] == StepType.CONFIRM
@@ -127,7 +129,7 @@ class TestDebugWizard:
         wizard._session = WizardSession(wizard_id="debug")
         wizard._session.step_results["analyze"] = {"summary": "Root cause: missing import"}
 
-        ctx = wizard.build_prompt_context(DebugWizard.steps[2])  # decompose_fix
+        ctx = wizard.build_prompt_context(DebugWizard.steps[3])  # decompose_fix
 
         assert "missing import" in ctx.goal
 
@@ -319,15 +321,99 @@ class TestReleasePrepWizard:
     def test_config(self):
         """Test wizard config."""
         assert ReleasePrepWizard.config.wizard_id == "release-prep"
+        assert ReleasePrepWizard.config.domain == "release"
 
-    def test_steps_present(self):
-        """Test steps are defined."""
-        assert len(ReleasePrepWizard.steps) >= 3
+    def test_steps_order(self):
+        """Test step sequence matches expected flow."""
+        step_ids = [s.id for s in ReleasePrepWizard.steps]
+        assert step_ids == [
+            "gather_info",
+            "readiness_check",
+            "changelog",
+            "decompose_release",
+            "preview",
+            "confirm",
+        ]
 
-    def test_has_question_step(self):
-        """Test has at least one question step."""
-        question_steps = [s for s in ReleasePrepWizard.steps if s.step_type == StepType.QUESTION]
-        assert len(question_steps) >= 1
+    def test_step_types(self):
+        """Test step types are correct."""
+        types = {s.id: s.step_type for s in ReleasePrepWizard.steps}
+        assert types["gather_info"] == StepType.QUESTION
+        assert types["readiness_check"] == StepType.LLM_CALL
+        assert types["changelog"] == StepType.LLM_CALL
+        assert types["decompose_release"] == StepType.TASK_DECOMPOSE
+        assert types["preview"] == StepType.PREVIEW
+        assert types["confirm"] == StepType.CONFIRM
+
+    def test_gather_info_has_questions(self):
+        """Test gather_info step has the expected questions."""
+        gather = ReleasePrepWizard.steps[0]
+        assert gather.questions is not None
+        assert len(gather.questions) == 3
+        q_ids = [q.id for q in gather.questions]
+        assert "version_type" in q_ids
+        assert "run_tests" in q_ids
+        assert "generate_changelog" in q_ids
+
+    def test_changelog_step_has_condition(self):
+        """Test changelog step has _wants_changelog condition."""
+        changelog_step = next(s for s in ReleasePrepWizard.steps if s.id == "changelog")
+        assert changelog_step.condition is not None
+
+    def test_build_prompt_context_fallback(self):
+        """Test build_prompt_context returns generic context for unknown step."""
+        wizard = ReleasePrepWizard()
+        wizard._session = WizardSession(wizard_id="release-prep")
+
+        from attune.wizards.base import WizardStep
+
+        dummy = WizardStep(id="unknown", name="Unknown")
+        ctx = wizard.build_prompt_context(dummy)
+
+        assert ctx.role == "assistant"
+
+    def test_build_prompt_context_no_session_raises(self):
+        """Test build_prompt_context raises when session is None."""
+        wizard = ReleasePrepWizard()
+
+        import pytest
+
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            wizard.build_prompt_context(ReleasePrepWizard.steps[1])
+
+    def test_process_step_result_no_session_raises(self):
+        """Test process_step_result raises when session is None."""
+        wizard = ReleasePrepWizard()
+
+        import pytest
+
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            wizard.process_step_result(ReleasePrepWizard.steps[1], {"data": "x"})
+
+    def test_process_step_result_unmatched_step(self):
+        """Test process_step_result does nothing for non-matching step ID."""
+        wizard = ReleasePrepWizard()
+        wizard._session = WizardSession(wizard_id="release-prep")
+
+        from attune.wizards.base import WizardStep
+
+        dummy = WizardStep(id="other", name="Other")
+        wizard.process_step_result(dummy, {"data": "x"})
+
+        # Should not store anything
+        assert wizard._session.get("readiness_report") is None
+        assert wizard._session.get("changelog_draft") is None
+
+    def test_build_prompt_context_readiness_defaults(self):
+        """Test readiness_check prompt with default session values."""
+        wizard = ReleasePrepWizard()
+        wizard._session = WizardSession(wizard_id="release-prep")
+
+        step = next(s for s in ReleasePrepWizard.steps if s.id == "readiness_check")
+        ctx = wizard.build_prompt_context(step)
+
+        assert "patch" in ctx.goal.lower()
+        assert "Yes" in ctx.input_payload
 
 
 # =========================================================================

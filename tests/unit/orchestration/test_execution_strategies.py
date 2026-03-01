@@ -292,7 +292,8 @@ class TestDebateStrategy:
 
         async def mock_execute(agent, context):
             return create_success_result(
-                agent.id, {"opinion": f"{agent.id}_opinion", "passed": True}
+                agent.id,
+                {"opinion": f"{agent.id}_opinion", "passed": True},
             )
 
         with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
@@ -385,7 +386,10 @@ class TestTeachingStrategy:
 
     @pytest.mark.asyncio
     async def test_teaching_expert_takeover(
-        self, mock_junior_agent, mock_expert_agent, test_context
+        self,
+        mock_junior_agent,
+        mock_expert_agent,
+        test_context,
     ):
         """Test teaching pattern when expert takes over."""
         strategy = TeachingStrategy(quality_threshold=0.95)
@@ -415,7 +419,10 @@ class TestTeachingStrategy:
 
     @pytest.mark.asyncio
     async def test_teaching_custom_threshold(
-        self, mock_junior_agent, mock_expert_agent, test_context
+        self,
+        mock_junior_agent,
+        mock_expert_agent,
+        test_context,
     ):
         """Test teaching with custom quality threshold."""
         strategy = TeachingStrategy(quality_threshold=0.5)
@@ -465,7 +472,8 @@ class TestRefinementStrategy:
             nonlocal stage
             stage += 1
             return create_success_result(
-                agent.id, {"stage": stage, "quality": 0.5 + stage * 0.1, "passed": True}
+                agent.id,
+                {"stage": stage, "quality": 0.5 + stage * 0.1, "passed": True},
             )
 
         with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
@@ -1311,7 +1319,9 @@ class TestConditionalStrategyExecute:
         condition = Condition(predicate={"confidence": {"$gt": 0.5}})
 
         strategy = ConditionalStrategy(
-            condition=condition, then_branch=then_branch, else_branch=None
+            condition=condition,
+            then_branch=then_branch,
+            else_branch=None,
         )
 
         context = {"confidence": 0.9}
@@ -1342,7 +1352,9 @@ class TestConditionalStrategyExecute:
         condition = Condition(predicate={"confidence": {"$gt": 0.8}})
 
         strategy = ConditionalStrategy(
-            condition=condition, then_branch=then_branch, else_branch=else_branch
+            condition=condition,
+            then_branch=then_branch,
+            else_branch=else_branch,
         )
 
         context = {"confidence": 0.5}  # Below threshold
@@ -1371,7 +1383,9 @@ class TestConditionalStrategyExecute:
         condition = Condition(predicate={"confidence": {"$gt": 0.8}})
 
         strategy = ConditionalStrategy(
-            condition=condition, then_branch=then_branch, else_branch=None
+            condition=condition,
+            then_branch=then_branch,
+            else_branch=None,
         )
 
         context = {"confidence": 0.5}  # Below threshold

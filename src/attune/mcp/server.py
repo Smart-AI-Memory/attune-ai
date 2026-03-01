@@ -35,7 +35,7 @@ class EmpathyMCPServer:
             from .version_check import check_for_updates
 
             check_for_updates()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass  # INTENTIONAL: Version check is best-effort
 
         # Register MCP tools from plugins
@@ -58,7 +58,7 @@ class EmpathyMCPServer:
                 if plugin and hasattr(plugin, "register_mcp_tools"):
                     try:
                         plugin.register_mcp_tools(self)
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         # INTENTIONAL: Plugin MCP registration is best-effort
                         logger.warning(
                             "Plugin '%s' MCP registration failed: %s",
@@ -67,7 +67,7 @@ class EmpathyMCPServer:
                         )
         except ImportError:
             pass  # Plugin registry not available
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Plugin discovery is best-effort
             logger.debug("Plugin tool registration skipped: %s", e)
 
@@ -76,6 +76,7 @@ class EmpathyMCPServer:
 
         Returns:
             Dictionary of tool definitions
+
         """
         return {
             "security_audit": {
@@ -87,7 +88,7 @@ class EmpathyMCPServer:
                         "path": {
                             "type": "string",
                             "description": "Path to directory or file to audit",
-                        }
+                        },
                     },
                     "required": ["path"],
                 },
@@ -101,7 +102,7 @@ class EmpathyMCPServer:
                         "path": {
                             "type": "string",
                             "description": "Path to directory or file to analyze",
-                        }
+                        },
                     },
                     "required": ["path"],
                 },
@@ -115,7 +116,7 @@ class EmpathyMCPServer:
                         "path": {
                             "type": "string",
                             "description": "Path to directory or file to review",
-                        }
+                        },
                     },
                     "required": ["path"],
                 },
@@ -145,7 +146,7 @@ class EmpathyMCPServer:
                         "path": {
                             "type": "string",
                             "description": "Path to directory or file to audit",
-                        }
+                        },
                     },
                     "required": ["path"],
                 },
@@ -160,7 +161,7 @@ class EmpathyMCPServer:
                             "type": "string",
                             "description": "Path to project root",
                             "default": ".",
-                        }
+                        },
                     },
                 },
             },
@@ -175,7 +176,7 @@ class EmpathyMCPServer:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "file_path": {"type": "string", "description": "Path to file to analyze"}
+                        "file_path": {"type": "string", "description": "Path to file to analyze"},
                     },
                     "required": ["file_path"],
                 },
@@ -190,7 +191,7 @@ class EmpathyMCPServer:
                             "type": "integer",
                             "description": "Number of days to analyze",
                             "default": 30,
-                        }
+                        },
                     },
                 },
             },
@@ -324,6 +325,7 @@ class EmpathyMCPServer:
 
         Returns:
             Dictionary of resource definitions
+
         """
         return {
             "workflows": {
@@ -354,6 +356,7 @@ class EmpathyMCPServer:
 
         Returns:
             Dictionary of prompt definitions
+
         """
         return {
             "security-scan": {
@@ -364,7 +367,7 @@ class EmpathyMCPServer:
                         "name": "path",
                         "description": "Directory or file to scan",
                         "required": True,
-                    }
+                    },
                 ],
             },
             "test-gen": {
@@ -391,7 +394,7 @@ class EmpathyMCPServer:
                         "name": "days",
                         "description": "Number of days to analyze (default: 30)",
                         "required": False,
-                    }
+                    },
                 ],
             },
         }
@@ -401,11 +404,14 @@ class EmpathyMCPServer:
 
         Returns:
             List of prompt definitions
+
         """
         return list(self.prompts.values())
 
     def get_prompt_messages(
-        self, prompt_name: str, arguments: dict[str, str]
+        self,
+        prompt_name: str,
+        arguments: dict[str, str],
     ) -> list[dict[str, Any]]:
         """Get messages for a specific prompt.
 
@@ -418,6 +424,7 @@ class EmpathyMCPServer:
 
         Raises:
             ValueError: If prompt_name is not found
+
         """
         if prompt_name not in self.prompts:
             raise ValueError(f"Unknown prompt: {prompt_name}")
@@ -438,9 +445,9 @@ class EmpathyMCPServer:
                             "and recommended fix."
                         ),
                     },
-                }
+                },
             ]
-        elif prompt_name == "test-gen":
+        if prompt_name == "test-gen":
             module = arguments.get("module", "")
             batch = arguments.get("batch", "false").lower() == "true"
             if batch:
@@ -455,7 +462,7 @@ class EmpathyMCPServer:
                                 "Run: `uv run attune workflow run test-gen-behavioral --batch`"
                             ),
                         },
-                    }
+                    },
                 ]
             return [
                 {
@@ -469,9 +476,9 @@ class EmpathyMCPServer:
                             f"Run: `uv run attune workflow run test-gen-behavioral --path {module}`"
                         ),
                     },
-                }
+                },
             ]
-        elif prompt_name == "cost-report":
+        if prompt_name == "cost-report":
             days = arguments.get("days", "30")
             return [
                 {
@@ -486,10 +493,9 @@ class EmpathyMCPServer:
                             "Run: `uv run attune telemetry report`"
                         ),
                     },
-                }
+                },
             ]
-        else:
-            raise ValueError(f"Unknown prompt: {prompt_name}")
+        raise ValueError(f"Unknown prompt: {prompt_name}")
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Execute a tool call.
@@ -500,49 +506,49 @@ class EmpathyMCPServer:
 
         Returns:
             Tool execution result
+
         """
         try:
             if tool_name == "security_audit":
                 return await self._run_security_audit(arguments)
-            elif tool_name == "bug_predict":
+            if tool_name == "bug_predict":
                 return await self._run_bug_predict(arguments)
-            elif tool_name == "code_review":
+            if tool_name == "code_review":
                 return await self._run_code_review(arguments)
-            elif tool_name == "test_generation":
+            if tool_name == "test_generation":
                 return await self._run_test_generation(arguments)
-            elif tool_name == "performance_audit":
+            if tool_name == "performance_audit":
                 return await self._run_performance_audit(arguments)
-            elif tool_name == "release_prep":
+            if tool_name == "release_prep":
                 return await self._run_release_prep(arguments)
-            elif tool_name == "auth_status":
+            if tool_name == "auth_status":
                 return await self._get_auth_status()
-            elif tool_name == "auth_recommend":
+            if tool_name == "auth_recommend":
                 return await self._get_auth_recommend(arguments)
-            elif tool_name == "telemetry_stats":
+            if tool_name == "telemetry_stats":
                 return await self._get_telemetry_stats(arguments)
-            elif tool_name == "dashboard_status":
+            if tool_name == "dashboard_status":
                 return await self._get_dashboard_status()
-            elif tool_name == "memory_store":
+            if tool_name == "memory_store":
                 return await self._handle_memory_store(arguments)
-            elif tool_name == "memory_retrieve":
+            if tool_name == "memory_retrieve":
                 return await self._handle_memory_retrieve(arguments)
-            elif tool_name == "memory_search":
+            if tool_name == "memory_search":
                 return await self._handle_memory_search(arguments)
-            elif tool_name == "memory_forget":
+            if tool_name == "memory_forget":
                 return await self._handle_memory_forget(arguments)
-            elif tool_name == "attune_get_level":
+            if tool_name == "attune_get_level":
                 return await self._handle_attune_get_level()
-            elif tool_name == "attune_set_level":
+            if tool_name == "attune_set_level":
                 return await self._handle_attune_set_level(arguments)
-            elif tool_name == "context_get":
+            if tool_name == "context_get":
                 return await self._handle_context_get(arguments)
-            elif tool_name == "context_set":
+            if tool_name == "context_set":
                 return await self._handle_context_set(arguments)
-            elif tool_name in self._plugin_handlers:
+            if tool_name in self._plugin_handlers:
                 handler = self._plugin_handlers[tool_name]
                 return await handler(self, arguments)
-            else:
-                return {"success": False, "error": f"Unknown tool: {tool_name}"}
+            return {"success": False, "error": f"Unknown tool: {tool_name}"}
         except Exception as e:
             logger.exception(f"Tool execution failed: {tool_name}")
             return {"success": False, "error": str(e)}
@@ -694,6 +700,7 @@ class EmpathyMCPServer:
 
         Raises:
             ImportError: If attune memory module is not available
+
         """
         if self._memory is None:
             from attune.memory import UnifiedMemory
@@ -709,6 +716,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain key and value; optional classification and pattern_type
+
         """
         try:
             memory = self._get_memory()
@@ -736,7 +744,7 @@ class EmpathyMCPServer:
                         pattern_type=pattern_type,
                     )
                     result["pattern_id"] = persist_result.get("pattern_id")
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     # INTENTIONAL: Pattern persistence is best-effort
                     logger.warning(f"Pattern persistence failed: {e}")
 
@@ -757,6 +765,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain key (key or pattern_id)
+
         """
         try:
             memory = self._get_memory()
@@ -772,7 +781,7 @@ class EmpathyMCPServer:
                 pattern = memory.recall_pattern(key)
                 if pattern:
                     return {"success": True, "key": key, "data": pattern, "source": "long_term"}
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Pattern recall may fail for non-pattern keys
                 pass
 
@@ -793,6 +802,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain query; optional pattern_type filter
+
         """
         try:
             memory = self._get_memory()
@@ -829,6 +839,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain key; optional scope (session/persistent/all)
+
         """
         try:
             memory = self._get_memory()
@@ -841,7 +852,7 @@ class EmpathyMCPServer:
                 try:
                     memory.stash(key, None)  # Clear short-term
                     removed_from.append("session")
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     # INTENTIONAL: Short-term removal is best-effort
                     logger.debug(f"Short-term removal failed for {key}: {e}")
 
@@ -850,7 +861,7 @@ class EmpathyMCPServer:
                     if hasattr(memory, "delete_pattern"):
                         memory.delete_pattern(key)
                         removed_from.append("persistent")
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     # INTENTIONAL: Long-term removal is best-effort
                     logger.debug(f"Long-term removal failed for {key}: {e}")
 
@@ -893,6 +904,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain level (integer 1-5)
+
         """
         level = args.get("level")
         if not isinstance(level, int) or level < 1 or level > 5:
@@ -924,6 +936,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain key
+
         """
         key = args["key"]
         value = self._context.get(key)
@@ -939,6 +952,7 @@ class EmpathyMCPServer:
 
         Args:
             args: Must contain key and value
+
         """
         key = args["key"]
         value = args["value"]
@@ -954,6 +968,7 @@ class EmpathyMCPServer:
 
         Returns:
             List of tool definitions
+
         """
         return list(self.tools.values())
 
@@ -962,6 +977,7 @@ class EmpathyMCPServer:
 
         Returns:
             List of resource definitions
+
         """
         return list(self.resources.values())
 
@@ -975,22 +991,23 @@ async def handle_request(server: EmpathyMCPServer, request: dict[str, Any]) -> d
 
     Returns:
         MCP response
+
     """
     method = request.get("method")
     params = request.get("params", {})
 
     if method == "tools/list":
         return {"tools": server.get_tool_list()}
-    elif method == "tools/call":
+    if method == "tools/call":
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         result = await server.call_tool(tool_name, arguments)
         return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
-    elif method == "resources/list":
+    if method == "resources/list":
         return {"resources": server.get_resource_list()}
-    elif method == "prompts/list":
+    if method == "prompts/list":
         return {"prompts": server.get_prompt_list()}
-    elif method == "prompts/get":
+    if method == "prompts/get":
         prompt_name = params.get("name")
         arguments = params.get("arguments", {})
         try:
@@ -1037,6 +1054,7 @@ def create_server() -> EmpathyMCPServer:
 
     Returns:
         Configured MCP server
+
     """
     return EmpathyMCPServer()
 

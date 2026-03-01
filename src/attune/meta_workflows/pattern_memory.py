@@ -44,6 +44,7 @@ class PatternMemoryMixin:
 
         Returns:
             Pattern ID if stored successfully, None otherwise
+
         """
         if not self.memory:
             logger.debug("Memory not available, skipping memory storage")
@@ -114,7 +115,7 @@ Form Responses:
             status = "ok" if agent_result.success else "fail"
             lines.append(
                 f"- {status} {agent_result.role} (tier: {agent_result.tier_used}, "
-                f"cost: ${agent_result.cost:.2f})"
+                f"cost: ${agent_result.cost:.2f})",
             )
         return "\n".join(lines)
 
@@ -145,6 +146,7 @@ Form Responses:
 
         Returns:
             List of matching MetaWorkflowResult objects
+
         """
         if not self.memory:
             logger.warning("Memory not available, falling back to file-based search")
@@ -224,6 +226,7 @@ Form Responses:
 
         Returns:
             List of recommendation strings
+
         """
         base_recs = self.get_recommendations(template_id, min_confidence)
 
@@ -246,7 +249,7 @@ Form Responses:
 
             if similar_executions:
                 success_rate = sum(1 for e in similar_executions if e.success) / len(
-                    similar_executions
+                    similar_executions,
                 )
 
                 if success_rate >= 0.8:

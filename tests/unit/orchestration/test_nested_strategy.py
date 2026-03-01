@@ -84,7 +84,9 @@ class TestWorkflowReference:
     def test_valid_inline_reference(self, mock_agent):
         """Test creating inline workflow reference."""
         inline = InlineWorkflow(
-            agents=[mock_agent], strategy="parallel", description="Inline workflow"
+            agents=[mock_agent],
+            strategy="parallel",
+            description="Inline workflow",
         )
         ref = WorkflowReference(inline=inline)
         assert ref.workflow_id == ""

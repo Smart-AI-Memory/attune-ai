@@ -86,7 +86,7 @@ class TestScanStage:
                                     except ValueError:
                                         pass
                 return None
-        """
+        """,
         )
         test_file = tmp_path / "test_code.py"
         test_file.write_text(code)
@@ -117,7 +117,7 @@ class TestScanStage:
 
             def also_simple(x):
                 return x + 1
-        """
+        """,
         )
         test_file = tmp_path / "simple.py"
         test_file.write_text(code)
@@ -139,7 +139,7 @@ class TestScanStage:
         cache_dir = tmp_path / "__pycache__"
         cache_dir.mkdir()
         (cache_dir / "cached.py").write_text(
-            "def f():\n    if True:\n        if True:\n            if True:\n                if True:\n                    if True:\n                        pass"
+            "def f():\n    if True:\n        if True:\n            if True:\n                if True:\n                    if True:\n                        pass",
         )
 
         wf = SimplifyCodeWorkflow(min_complexity=3)
@@ -195,7 +195,7 @@ class TestFunctionComplexity:
                         if z:
                             return 1
                 return 0
-        """
+        """,
         )
         tree = ast.parse(code)
         func = tree.body[0]
@@ -209,7 +209,7 @@ class TestFunctionComplexity:
                 for item in items:
                     while item > 0:
                         item -= 1
-        """
+        """,
         )
         tree = ast.parse(code)
         func = tree.body[0]
@@ -234,7 +234,7 @@ class TestFunctionComplexity:
                     pass
                 except TypeError:
                     pass
-        """
+        """,
         )
         tree = ast.parse(code)
         func = tree.body[0]
@@ -369,7 +369,7 @@ class TestAnalyzeStage:
                 '[{"title": "Flatten nested if", "category": "simplify"}]',
                 100,
                 50,
-            )
+            ),
         )
 
         input_data = {
@@ -491,11 +491,11 @@ class TestSimplifyConstants:
     def test_focus_areas_are_simplification_related(self) -> None:
         """Test SIMPLIFY_FOCUS_AREAS are all simplification-related."""
         expected = ["simplify", "consolidate_conditional", "inline", "dead_code"]
-        assert SIMPLIFY_FOCUS_AREAS == expected
+        assert expected == SIMPLIFY_FOCUS_AREAS
 
     def test_categories_match_focus_areas(self) -> None:
         """Test SIMPLIFY_CATEGORIES matches SIMPLIFY_FOCUS_AREAS."""
-        assert SIMPLIFY_CATEGORIES == set(SIMPLIFY_FOCUS_AREAS)
+        assert set(SIMPLIFY_FOCUS_AREAS) == SIMPLIFY_CATEGORIES
 
 
 class TestRunStageRouting:

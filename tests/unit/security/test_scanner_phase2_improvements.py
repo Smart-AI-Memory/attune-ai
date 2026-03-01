@@ -239,7 +239,8 @@ class TestPhase2Improvements:
         workflow = SecurityAuditWorkflow()
 
         result_dict, _, _ = await workflow._triage(
-            {"path": "src/attune/workflows/history.py"}, workflow.tier_map["triage"]
+            {"path": "src/attune/workflows/history.py"},
+            workflow.tier_map["triage"],
         )
 
         findings = result_dict.get("findings", [])
@@ -255,7 +256,8 @@ class TestPhase2Improvements:
         workflow = SecurityAuditWorkflow()
 
         result_dict, _, _ = await workflow._triage(
-            {"path": "tests/unit/cache/conftest.py"}, workflow.tier_map["triage"]
+            {"path": "tests/unit/cache/conftest.py"},
+            workflow.tier_map["triage"],
         )
 
         findings = result_dict.get("findings", [])
@@ -271,7 +273,8 @@ class TestPhase2Improvements:
         workflow = SecurityAuditWorkflow()
 
         result_dict, _, _ = await workflow._triage(
-            {"path": "src/attune/workflows/bug_predict.py"}, workflow.tier_map["triage"]
+            {"path": "src/attune/workflows/bug_predict.py"},
+            workflow.tier_map["triage"],
         )
 
         findings = result_dict.get("findings", [])

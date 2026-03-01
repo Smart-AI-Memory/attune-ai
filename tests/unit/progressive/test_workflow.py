@@ -216,7 +216,7 @@ class TestProgressiveWorkflow:
                 timestamp=datetime.now(),
                 cost=3.00,
                 duration=10.0,
-            )
+            ),
         )
 
         # Should not raise
@@ -225,7 +225,9 @@ class TestProgressiveWorkflow:
     def test_check_budget_exceeded_warning(self, caplog):
         """Test budget exceeded with warning."""
         config = EscalationConfig(
-            max_cost=5.00, warn_on_budget_exceeded=True, abort_on_budget_exceeded=False
+            max_cost=5.00,
+            warn_on_budget_exceeded=True,
+            abort_on_budget_exceeded=False,
         )
         workflow = ProgressiveWorkflow(config=config)
 
@@ -238,7 +240,7 @@ class TestProgressiveWorkflow:
                 timestamp=datetime.now(),
                 cost=6.00,
                 duration=10.0,
-            )
+            ),
         )
 
         # Should log warning but not raise
@@ -259,7 +261,7 @@ class TestProgressiveWorkflow:
                 timestamp=datetime.now(),
                 cost=6.00,
                 duration=10.0,
-            )
+            ),
         )
 
         # Should raise BudgetExceededError

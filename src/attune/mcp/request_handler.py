@@ -24,22 +24,23 @@ async def handle_request(server: EmpathyMCPServer, request: dict[str, Any]) -> d
 
     Returns:
         MCP response
+
     """
     method = request.get("method")
     params = request.get("params", {})
 
     if method == "tools/list":
         return {"tools": server.get_tool_list()}
-    elif method == "tools/call":
+    if method == "tools/call":
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         result = await server.call_tool(tool_name, arguments)
         return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
-    elif method == "resources/list":
+    if method == "resources/list":
         return {"resources": server.get_resource_list()}
-    elif method == "prompts/list":
+    if method == "prompts/list":
         return {"prompts": server.get_prompt_list()}
-    elif method == "prompts/get":
+    if method == "prompts/get":
         prompt_name = params.get("name")
         arguments = params.get("arguments", {})
         try:

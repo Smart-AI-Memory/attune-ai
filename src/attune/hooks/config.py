@@ -44,6 +44,7 @@ class HookDefinition(BaseModel):
             command="attune.hooks.scripts.lessons_reminder:main",
             description="Check for lessons to record at session end"
         )
+
     """
 
     type: HookType = Field(
@@ -85,6 +86,7 @@ class HookMatcher(BaseModel):
             file_pattern=r"\\.(ts|tsx|js|jsx)$",
             description="Match TypeScript/JavaScript file edits"
         )
+
     """
 
     tool: str | None = Field(
@@ -156,6 +158,7 @@ class HookRule(BaseModel):
             hooks=[HookDefinition(type=HookType.PYTHON, command="format_python")],
             description="Auto-format Python files after edits"
         )
+
     """
 
     matcher: HookMatcher = Field(

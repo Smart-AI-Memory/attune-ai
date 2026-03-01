@@ -41,6 +41,7 @@ class SocraticFormEngine:
 
         >>> # Default mode (no interaction)
         >>> engine = SocraticFormEngine()
+
     """
 
     def __init__(
@@ -58,6 +59,7 @@ class SocraticFormEngine:
             use_defaults_when_no_callback: If True and no callback is provided,
                 use default values from questions. If False, raise an error
                 when trying to ask questions without a callback.
+
         """
         self.responses_cache: dict[str, FormResponse] = {}
         self._ask_user_callback = ask_user_callback
@@ -75,6 +77,7 @@ class SocraticFormEngine:
 
         Raises:
             ValueError: If form_schema is invalid
+
         """
         if not form_schema.questions:
             logger.warning(f"Form schema for {template_id} has no questions")
@@ -116,6 +119,7 @@ class SocraticFormEngine:
 
         Returns:
             List of question dictionaries compatible with AskUserQuestion
+
         """
         return [q.to_ask_user_format() for q in batch]
 
@@ -136,6 +140,7 @@ class SocraticFormEngine:
         Note:
             When a callback is provided, invokes the real AskUserQuestion tool.
             Otherwise, uses default values from questions or raises an error.
+
         """
         logger.debug(f"_ask_batch called with {len(questions)} questions")
 
@@ -160,7 +165,7 @@ class SocraticFormEngine:
 
         raise RuntimeError(
             "No AskUserQuestion callback provided and use_defaults_when_no_callback=False. "
-            "Either provide a callback or set use_defaults_when_no_callback=True."
+            "Either provide a callback or set use_defaults_when_no_callback=True.",
         )
 
     def _get_defaults_from_questions(self, questions: list[dict[str, Any]]) -> dict[str, Any]:
@@ -171,6 +176,7 @@ class SocraticFormEngine:
 
         Returns:
             Dictionary mapping question_id → default value
+
         """
         defaults = {}
         for q in questions:
@@ -178,7 +184,7 @@ class SocraticFormEngine:
             key = q.get("question_id", q.get("header", q.get("question", "unknown")))
 
             # Check for explicit default value first
-            if "default" in q and q["default"]:
+            if q.get("default"):
                 defaults[key] = q["default"]
                 logger.debug(f"Default for '{key}': {defaults[key]} (explicit)")
                 continue
@@ -204,6 +210,7 @@ class SocraticFormEngine:
 
         Args:
             callback: The callback function to use, or None to disable
+
         """
         self._ask_user_callback = callback
         logger.debug(f"AskUserQuestion callback {'set' if callback else 'cleared'}")
@@ -216,6 +223,7 @@ class SocraticFormEngine:
 
         Returns:
             FormResponse if found, None otherwise
+
         """
         return self.responses_cache.get(response_id)
 
@@ -231,7 +239,8 @@ class SocraticFormEngine:
 
 
 def convert_ask_user_response_to_form_response(
-    ask_user_result: dict[str, Any], template_id: str
+    ask_user_result: dict[str, Any],
+    template_id: str,
 ) -> FormResponse:
     """Convert AskUserQuestion tool result to FormResponse.
 
@@ -247,6 +256,7 @@ def convert_ask_user_response_to_form_response(
         >>> response = convert_ask_user_response_to_form_response(result, "test")
         >>> response.get("q1")
         'Answer 1'
+
     """
     return FormResponse(template_id=template_id, responses=ask_user_result)
 
@@ -264,6 +274,7 @@ def create_header_from_question(question: FormQuestion) -> str:
         >>> q = FormQuestion(id="has_tests", text="Do you have tests?", type=QuestionType.BOOLEAN)
         >>> create_header_from_question(q)
         'Tests'
+
     """
     # Extract key words from question text
     text = question.text.lower()
@@ -271,21 +282,21 @@ def create_header_from_question(question: FormQuestion) -> str:
     # Common patterns
     if "test" in text:
         return "Tests"
-    elif "coverage" in text:
+    if "coverage" in text:
         return "Coverage"
-    elif "version" in text:
+    if "version" in text:
         return "Version"
-    elif "publish" in text:
+    if "publish" in text:
         return "Publishing"
-    elif "quality" in text:
+    if "quality" in text:
         return "Quality"
-    elif "security" in text:
+    if "security" in text:
         return "Security"
-    elif "name" in text:
+    if "name" in text:
         return "Name"
-    elif "changelog" in text:
+    if "changelog" in text:
         return "Changelog"
-    elif "git" in text:
+    if "git" in text:
         return "Git"
 
     # Fallback: use question ID (truncated to 12 chars)

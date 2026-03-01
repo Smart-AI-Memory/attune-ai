@@ -86,6 +86,7 @@ class CostTracker:
 
         Returns:
             List of request records. Triggers lazy loading on first access.
+
         """
         self._load_requests()
         return self.data.get("requests", [])
@@ -101,6 +102,7 @@ class CostTracker:
             - Lazy loading: Only load summary data on init, defer full request history
             - Separate summary file: Fast access to daily_totals without parsing JSONL
             - Init time reduced by 80-90% for large history files
+
         """
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
@@ -120,7 +122,7 @@ class CostTracker:
         try:
             if self._buffer:
                 self.flush()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Best-effort flush, don't break shutdown
             pass
 
@@ -143,10 +145,12 @@ class CostTracker:
                     summary_data = json.load(f)
                     self.data["daily_totals"] = summary_data.get("daily_totals", {})
                     self.data["created_at"] = summary_data.get(
-                        "created_at", self.data["created_at"]
+                        "created_at",
+                        self.data["created_at"],
                     )
                     self.data["last_updated"] = summary_data.get(
-                        "last_updated", self.data["last_updated"]
+                        "last_updated",
+                        self.data["last_updated"],
                     )
                     return  # Summary loaded, done
             except (OSError, json.JSONDecodeError):
@@ -160,7 +164,8 @@ class CostTracker:
                     self.data["daily_totals"] = json_data.get("daily_totals", {})
                     self.data["created_at"] = json_data.get("created_at", self.data["created_at"])
                     self.data["last_updated"] = json_data.get(
-                        "last_updated", self.data["last_updated"]
+                        "last_updated",
+                        self.data["last_updated"],
                     )
                     # Don't load requests here - they'll be lazy-loaded
             except (OSError, json.JSONDecodeError):
@@ -289,8 +294,7 @@ class CostTracker:
         try:
             validated_path = _validate_file_path(str(self.costs_jsonl))
             with open(validated_path, "a") as f:
-                for request in self._buffer:
-                    f.write(json.dumps(request) + "\n")
+                f.writelines(json.dumps(request) + "\n" for request in self._buffer)
 
             # Update daily totals (always in memory)
             for request in self._buffer:

@@ -756,7 +756,7 @@ class TestIntegration:
                 "min_quality_score": 0.0,  # Accept any quality
                 "max_critical_issues": 100.0,  # Accept issues
                 "min_doc_coverage": 0.0,  # Accept any docs
-            }
+            },
         )
 
         # Execute workflow
@@ -807,7 +807,7 @@ class TestIntegration:
     async def test_workflow_report_persistence(self):
         """Test that workflow results can be saved to configuration store."""
         workflow = OrchestratedReleasePrepWorkflow(
-            quality_gates={"min_coverage": 0.0, "max_critical_issues": 100.0}
+            quality_gates={"min_coverage": 0.0, "max_critical_issues": 100.0},
         )
 
         report = await workflow.execute(path=".")

@@ -95,7 +95,6 @@ class BaseCache(ABC):
             Cached response if found, None otherwise.
 
         """
-        pass
 
     @abstractmethod
     def put(
@@ -118,12 +117,10 @@ class BaseCache(ABC):
             ttl: Optional custom TTL (uses default if None).
 
         """
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """Clear all cached entries."""
-        pass
 
     @abstractmethod
     def get_stats(self) -> CacheStats:
@@ -133,7 +130,6 @@ class BaseCache(ABC):
             CacheStats with hit/miss counts.
 
         """
-        pass
 
     def _create_cache_key(
         self,

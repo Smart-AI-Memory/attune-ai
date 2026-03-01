@@ -13,13 +13,13 @@ Licensed under the Apache License, Version 2.0
 import warnings
 
 warnings.warn(
-    "attune.redis_memory is deprecated. " "Use attune_redis.AMSMemoryBackend instead.",
+    "attune.redis_memory is deprecated. Use attune_redis.AMSMemoryBackend instead.",
     DeprecationWarning,
     stacklevel=2,
 )
 
 # Re-export types for backward compat
-from .memory.types import (  # noqa: E402, F401
+from .memory.types import (  # noqa: E402
     AccessTier,
     AgentCredentials,
     ConflictContext,
@@ -32,7 +32,7 @@ from .redis_memory_coordination import (  # noqa: E402
     SessionManagementMixin,
 )
 from .redis_memory_patterns import PatternStagingMixin  # noqa: E402
-from .redis_memory_storage import REDIS_AVAILABLE, RedisStorageBase  # noqa: E402, F401
+from .redis_memory_storage import REDIS_AVAILABLE, RedisStorageBase  # noqa: E402
 
 
 class RedisShortTermMemory(
@@ -59,14 +59,12 @@ class RedisShortTermMemory(
 
     """
 
-    pass
-
 
 __all__ = [
+    "REDIS_AVAILABLE",
     "AccessTier",
     "AgentCredentials",
     "ConflictContext",
-    "REDIS_AVAILABLE",
     "RedisShortTermMemory",
     "StagedPattern",
     "TTLStrategy",

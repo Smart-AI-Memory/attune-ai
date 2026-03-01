@@ -123,7 +123,7 @@ class TestGetSummaryWorkflows:
             f.write(
                 '{"run_id":"r1","workflow_name":"w","started_at":"'
                 + datetime.utcnow().isoformat()
-                + '","total_cost":1.0,"total_input_tokens":100,"total_output_tokens":50}\n'
+                + '","total_cost":1.0,"total_input_tokens":100,"total_output_tokens":50}\n',
             )
             f.write("\n")  # blank line
             f.write("{bad json}\n")

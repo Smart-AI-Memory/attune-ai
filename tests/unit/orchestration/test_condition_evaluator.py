@@ -126,7 +126,7 @@ class TestCondition:
                 "$and": [
                     {"success": {"$eq": True}},
                     {"confidence": {"$gt": 0.5}},
-                ]
+                ],
             },
         )
         assert condition.predicate is not None
@@ -138,7 +138,7 @@ class TestCondition:
                 "$or": [
                     {"tier": {"$eq": "premium"}},
                     {"confidence": {"$gt": 0.9}},
-                ]
+                ],
             },
         )
         assert condition.predicate is not None
@@ -270,8 +270,8 @@ class TestConditionEvaluator:
                 "$and": [
                     {"success": {"$eq": True}},
                     {"confidence": {"$gt": 0.8}},
-                ]
-            }
+                ],
+            },
         )
         result = evaluator.evaluate(condition, test_context)
         assert result is True
@@ -283,8 +283,8 @@ class TestConditionEvaluator:
                 "$and": [
                     {"success": {"$eq": True}},
                     {"confidence": {"$gt": 0.9}},
-                ]
-            }
+                ],
+            },
         )
         result = evaluator.evaluate(condition, test_context)
         assert result is False
@@ -296,8 +296,8 @@ class TestConditionEvaluator:
                 "$or": [
                     {"tier": {"$eq": "premium"}},
                     {"confidence": {"$gt": 0.8}},
-                ]
-            }
+                ],
+            },
         )
         result = evaluator.evaluate(condition, test_context)
         assert result is True
@@ -309,8 +309,8 @@ class TestConditionEvaluator:
                 "$or": [
                     {"tier": {"$eq": "premium"}},
                     {"confidence": {"$gt": 0.9}},
-                ]
-            }
+                ],
+            },
         )
         result = evaluator.evaluate(condition, test_context)
         assert result is False
@@ -550,8 +550,8 @@ class TestConditionalStrategyExecute:
                 "$and": [
                     {"coverage": {"$gte": 80}},
                     {"tests_passing": {"$eq": True}},
-                ]
-            }
+                ],
+            },
         )
         then_branch = Branch(agents=["deployer"], strategy="sequential")
         else_branch = Branch(agents=["fixer"], strategy="sequential")
@@ -755,8 +755,8 @@ class TestMultiConditionalStrategyExecute:
                         "$or": [
                             {"tier": {"$eq": "premium"}},
                             {"priority": {"$eq": "high"}},
-                        ]
-                    }
+                        ],
+                    },
                 ),
                 Branch(agents=["fast_track"], strategy="parallel"),
             ),

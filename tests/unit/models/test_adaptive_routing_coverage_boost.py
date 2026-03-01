@@ -228,7 +228,10 @@ class TestGetBestModel:
 
         router = AdaptiveModelRouter(mock_telemetry)
         model = router.get_best_model(
-            workflow="test", stage="analysis", max_cost=0.005, min_success_rate=0.8
+            workflow="test",
+            stage="analysis",
+            max_cost=0.005,
+            min_success_rate=0.8,
         )
 
         # Should select cheap model (expensive exceeds max_cost)
@@ -741,7 +744,7 @@ class TestGetDefaultModel:
             "anthropic": {
                 "cheap": MagicMock(id="claude-haiku-4-5-20251001"),
                 "capable": MagicMock(id="claude-sonnet-4-6"),
-            }
+            },
         }
         mock_get_registry.return_value = mock_registry
 
@@ -769,7 +772,7 @@ class TestGetDefaultModel:
         mock_registry = {
             "anthropic": {
                 "cheap": MagicMock(id="test-model"),
-            }
+            },
         }
         mock_get_registry.return_value = mock_registry
 

@@ -1,0 +1,22 @@
+# CODEOWNERS
+#
+# Each line is a pattern followed by one or more owners.
+# The last matching pattern takes precedence.
+# Owners are notified when a PR touches matching files.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default — Patrick owns everything
+* @patrickroebuck
+
+# Core framework
+src/attune/ @patrickroebuck
+
+# Security-sensitive paths — always require review
+src/attune/security/ @patrickroebuck
+.github/workflows/ @patrickroebuck
+.pre-commit-config.yaml @patrickroebuck
+pyproject.toml @patrickroebuck
+
+# Release artifacts
+CHANGELOG.md @patrickroebuck

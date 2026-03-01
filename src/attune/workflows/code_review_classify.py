@@ -107,7 +107,7 @@ class ClassifyMixin:
 
                     size_category = get_module_size_category(total_lines)
                     logger.info(
-                        f"Code review target: {target_path} ({total_lines:,} LOC, {size_category})"
+                        f"Code review target: {target_path} ({total_lines:,} LOC, {size_category})",
                     )
                     logger.info(f"Recommended auth mode: {recommended_mode.value}")
 

@@ -23,7 +23,7 @@ from datetime import datetime  # noqa: E402
 from typing import Any  # noqa: E402
 
 try:
-    import redis  # noqa: E402
+    import redis
 
     REDIS_AVAILABLE = True
 except ImportError:
@@ -236,7 +236,7 @@ class RedisStorageBase:
             return False
         try:
             return bool(self._client.ping())
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: Health check is best-effort. Connection
             # failure is non-fatal. Consumers will handle
             # disconnection gracefully.

@@ -147,7 +147,7 @@ class TestLoadFromFileErrorHandling:
             "xml": {
                 "validate_schemas": True,
                 "strict_validation": True,
-            }
+            },
         }
 
         partial_file.write_text(json.dumps(data))

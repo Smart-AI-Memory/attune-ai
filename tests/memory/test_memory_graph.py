@@ -183,10 +183,12 @@ class TestMemoryGraph:
     def test_find_by_workflow(self, graph):
         """Test finding nodes by source workflow."""
         graph.add_finding(
-            workflow="security-audit", finding={"type": "vulnerability", "name": "V1"}
+            workflow="security-audit",
+            finding={"type": "vulnerability", "name": "V1"},
         )
         graph.add_finding(
-            workflow="security-audit", finding={"type": "vulnerability", "name": "V2"}
+            workflow="security-audit",
+            finding={"type": "vulnerability", "name": "V2"},
         )
         graph.add_finding(workflow="bug-predict", finding={"type": "bug", "name": "B1"})
 
@@ -248,7 +250,8 @@ class TestMemoryGraph:
             finding={"type": "vulnerability", "name": "V2", "severity": "critical"},
         )
         graph.add_finding(
-            workflow="bugs", finding={"type": "bug", "name": "B1", "severity": "high"}
+            workflow="bugs",
+            finding={"type": "bug", "name": "B1", "severity": "high"},
         )
 
         stats = graph.get_statistics()

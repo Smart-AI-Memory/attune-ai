@@ -61,7 +61,6 @@ class MarkdownAgentParser:
 
     def __init__(self):
         """Initialize the parser."""
-        pass
 
     def parse_file(self, file_path: str | Path) -> UnifiedAgentConfig:
         """Parse a Markdown agent file into UnifiedAgentConfig.
@@ -185,7 +184,7 @@ class MarkdownAgentParser:
             timeout=int(frontmatter.get("timeout", 120)),
             retry_attempts=int(frontmatter.get("retry_attempts", 3)),
             retry_delay=float(frontmatter.get("retry_delay", 1.0)),
-            system_prompt=body if body else None,
+            system_prompt=body or None,
             tools=tools,
             capabilities=capabilities,
             framework_options=frontmatter.get("framework_options", {}),
@@ -245,7 +244,7 @@ class MarkdownAgentParser:
         model = frontmatter.get("model", "").lower()
         if model and model not in self.MODEL_TIER_MAP:
             errors.append(
-                f"Invalid model '{model}'. Valid options: {', '.join(self.MODEL_TIER_MAP.keys())}"
+                f"Invalid model '{model}'. Valid options: {', '.join(self.MODEL_TIER_MAP.keys())}",
             )
 
         # Validate provider
@@ -253,7 +252,7 @@ class MarkdownAgentParser:
         if provider and provider not in self.PROVIDER_MAP:
             errors.append(
                 f"Invalid provider '{provider}'. "
-                f"Valid options: {', '.join(self.PROVIDER_MAP.keys())}"
+                f"Valid options: {', '.join(self.PROVIDER_MAP.keys())}",
             )
 
         # Validate empathy level

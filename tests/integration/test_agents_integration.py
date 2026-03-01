@@ -41,7 +41,7 @@ class TestMarkdownAgentParserIntegration:
             - Check for security vulnerabilities
             - Verify coding standards
             - Look for performance issues
-        """
+        """,
         ).strip()
 
         agent_file = tmp_path / "code-reviewer.md"
@@ -69,7 +69,7 @@ class TestMarkdownAgentParserIntegration:
             ---
 
             Just do the task.
-        """
+        """,
         ).strip()
 
         agent_file = tmp_path / "simple-agent.md"
@@ -93,7 +93,7 @@ class TestMarkdownAgentParserIntegration:
             ---
 
             Content
-        """
+        """,
         ).strip()
 
         agent_file = tmp_path / "invalid.md"
@@ -126,8 +126,8 @@ class TestAgentLoaderIntegration:
             ---
 
             You design scalable systems.
-        """
-            ).strip()
+        """,
+            ).strip(),
         )
 
         # Create reviewer agent
@@ -143,8 +143,8 @@ class TestAgentLoaderIntegration:
             ---
 
             You review code.
-        """
-            ).strip()
+        """,
+            ).strip(),
         )
 
         # Create subdirectory with empathy specialist
@@ -163,8 +163,8 @@ class TestAgentLoaderIntegration:
             ---
 
             You anticipate needs.
-        """
-            ).strip()
+        """,
+            ).strip(),
         )
 
         return agents
@@ -352,8 +352,8 @@ class TestAgentRegistryIntegration:
             description: Loaded from file
             ---
             System prompt here.
-        """
-            ).strip()
+        """,
+            ).strip(),
         )
 
         registry = AgentRegistry()
@@ -426,7 +426,7 @@ class TestAgentConfigValidation:
             empathy_level: 10
             ---
             Content
-        """
+        """,
         ).strip()
 
         agent_file = tmp_path / "invalid.md"
@@ -450,7 +450,7 @@ class TestAgentConfigValidation:
               - Write
             ---
             Content
-        """
+        """,
         ).strip()
 
         # String format (some parsers support this)

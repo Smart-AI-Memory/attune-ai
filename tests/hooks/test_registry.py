@@ -136,14 +136,14 @@ class TestHookRegistry:
                 "event": "SessionStart",
                 "hook": "test:main",
                 "success": True,
-            }
+            },
         )
         registry._execution_log.append(
             {
                 "event": "SessionEnd",
                 "hook": "test:end",
                 "success": False,
-            }
+            },
         )
 
         log = registry.get_execution_log()

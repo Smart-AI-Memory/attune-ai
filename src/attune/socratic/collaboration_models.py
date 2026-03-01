@@ -81,6 +81,13 @@ class Participant:
     is_online: bool = False
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize participant to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with all participant fields; datetime values as
+            ISO-8601 strings and role as its string value.
+
+        """
         return {
             "user_id": self.user_id,
             "name": self.name,
@@ -93,6 +100,15 @@ class Participant:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Participant:
+        """Deserialize a participant from a dictionary.
+
+        Args:
+            data: Dictionary as produced by ``to_dict()``.
+
+        Returns:
+            A new ``Participant`` instance.
+
+        """
         return cls(
             user_id=data["user_id"],
             name=data["name"],
@@ -120,6 +136,13 @@ class Comment:
     reactions: dict[str, list[str]] = field(default_factory=dict)  # emoji -> user_ids
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize comment to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with all comment fields; datetime values as
+            ISO-8601 strings and status as its string value.
+
+        """
         return {
             "comment_id": self.comment_id,
             "author_id": self.author_id,
@@ -135,6 +158,15 @@ class Comment:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Comment:
+        """Deserialize a comment from a dictionary.
+
+        Args:
+            data: Dictionary as produced by ``to_dict()``.
+
+        Returns:
+            A new ``Comment`` instance.
+
+        """
         return cls(
             comment_id=data["comment_id"],
             author_id=data["author_id"],
@@ -162,6 +194,13 @@ class Vote:
     created_at: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize vote to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with all vote fields; datetime as ISO-8601 string
+            and vote_type as its string value.
+
+        """
         return {
             "vote_id": self.vote_id,
             "voter_id": self.voter_id,
@@ -174,6 +213,15 @@ class Vote:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Vote:
+        """Deserialize a vote from a dictionary.
+
+        Args:
+            data: Dictionary as produced by ``to_dict()``.
+
+        Returns:
+            A new ``Vote`` instance.
+
+        """
         return cls(
             vote_id=data["vote_id"],
             voter_id=data["voter_id"],
@@ -198,6 +246,13 @@ class Change:
     created_at: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize change record to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with all change fields; datetime as ISO-8601 string
+            and change_type as its string value.
+
+        """
         return {
             "change_id": self.change_id,
             "change_type": self.change_type.value,
@@ -210,6 +265,15 @@ class Change:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Change:
+        """Deserialize a change record from a dictionary.
+
+        Args:
+            data: Dictionary as produced by ``to_dict()``.
+
+        Returns:
+            A new ``Change`` instance.
+
+        """
         return cls(
             change_id=data["change_id"],
             change_type=ChangeType(data["change_type"]),
@@ -266,6 +330,14 @@ class CollaborativeSession:
     quorum: float = 0.5  # 50% participation required
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize session to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with all session fields; nested participants,
+            comments, votes, and changes are each serialized via their
+            own ``to_dict()`` methods; datetime values as ISO-8601 strings.
+
+        """
         return {
             "session_id": self.session_id,
             "base_session_id": self.base_session_id,
@@ -284,6 +356,16 @@ class CollaborativeSession:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CollaborativeSession:
+        """Deserialize a collaborative session from a dictionary.
+
+        Args:
+            data: Dictionary as produced by ``to_dict()``.
+
+        Returns:
+            A new ``CollaborativeSession`` instance with all nested
+            objects reconstructed.
+
+        """
         return cls(
             session_id=data["session_id"],
             base_session_id=data["base_session_id"],

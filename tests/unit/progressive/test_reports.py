@@ -582,7 +582,7 @@ class TestFormatCostAnalyticsReport:
                     "avg_cost": 1.25,
                     "avg_savings": 0.87,
                     "success_rate": 0.80,
-                }
+                },
             },
         }
 

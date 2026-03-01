@@ -69,15 +69,18 @@ asyncio.run(audit())
 
 ## Try More Workflows
 
-Attune AI includes 10+ built-in workflows:
+Attune AI includes 17 built-in workflows. Here are the most
+popular:
 
 | Workflow | Command | What It Does |
 |----------|---------|--------------|
 | Security Audit | `attune workflow run security-audit` | Find vulnerabilities |
 | Bug Prediction | `attune workflow run bug-predict` | Predict likely bugs |
-| Test Coverage | `attune workflow run test-coverage` | Generate missing tests |
+| Code Review | `attune workflow run code-review` | Tiered code analysis |
+| Test Generation | `attune workflow run test-gen` | Generate missing tests |
 | Release Prep | `attune workflow run release-prep` | Pre-release checklist |
 | Dependency Check | `attune workflow run dependency-check` | Find outdated deps |
+| Perf Audit | `attune workflow run perf-audit` | Find bottlenecks |
 
 ```bash
 # List all available workflows
@@ -110,7 +113,7 @@ attune telemetry show
 attune telemetry savings --days 7
 ```
 
-All telemetry data stays local in `~/.empathy/telemetry/`.
+All telemetry data stays local in `~/.attune/telemetry/`.
 
 ---
 
@@ -127,9 +130,30 @@ This is the **tiered model** approach - automatically routing to the right model
 
 ---
 
+## Interactive Wizards (Claude Code)
+
+If you're using Claude Code, try the guided wizards for a
+more interactive experience:
+
+```bash
+/wizard run debug       # Step-by-step debugging
+/wizard run security    # Guided security audit
+/wizard run refactor    # Refactoring with analysis
+/wizard run test-gen    # Test generation wizard
+/wizard run release-prep  # Release readiness check
+```
+
+Wizards ask questions, adapt to your answers, and produce
+structured action plans. They use the same workflows under
+the hood but guide you through the process interactively.
+
+---
+
 ## Next Step
 
-Now that you've run a workflow, it's time to [Choose Your Path](choose-your-path.md) based on how you want to use the framework.
+Now that you've run a workflow, it's time to
+[Choose Your Path](choose-your-path.md) based on how you
+want to use the framework.
 
 ---
 

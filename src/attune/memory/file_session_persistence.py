@@ -63,6 +63,7 @@ class PersistenceMixin:
 
         Returns:
             Active or newly created SessionState.
+
         """
         current_file = self.config.sessions_dir / "current.json"
 
@@ -109,6 +110,7 @@ class PersistenceMixin:
 
         Raises:
             ValueError: If session is not found.
+
         """
         # Try current
         current_file = self.config.sessions_dir / "current.json"
@@ -131,6 +133,7 @@ class PersistenceMixin:
 
         Args:
             state: State to save; defaults to self._state.
+
         """
         state = state or self._state
         state.last_updated = time.time()
@@ -145,6 +148,7 @@ class PersistenceMixin:
         Args:
             path: Target file path.
             data: Dictionary to serialize as JSON.
+
         """
         # Validate path
         validated_path = _validate_file_path(str(path))
@@ -168,6 +172,7 @@ class PersistenceMixin:
 
         Returns:
             Path to the archived file.
+
         """
         archive_file = self.config.archive_dir / f"{state.session_id}.json.gz"
 

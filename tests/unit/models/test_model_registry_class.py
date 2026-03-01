@@ -48,7 +48,7 @@ class TestModelRegistryInitialization:
                     input_cost_per_million=3.0,
                     output_cost_per_million=15.0,
                 ),
-            }
+            },
         }
 
         registry = ModelRegistry(registry=custom_registry)

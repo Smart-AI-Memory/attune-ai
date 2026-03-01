@@ -14,6 +14,7 @@ Example:
     >>> strategy = get_strategy("tool_enhanced")
     >>> print(strategy.__class__.__name__)
     ToolEnhancedStrategy
+
 """
 
 from attune.orchestration.agent_templates import (

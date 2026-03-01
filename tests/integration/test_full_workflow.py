@@ -208,7 +208,7 @@ class TestFullSessionWorkflow:
                 resolution="Use ast.literal_eval() instead for security",
                 confidence=0.9,
                 source_session="test_session",
-            )
+            ),
         ]
 
         assert len(patterns) > 0

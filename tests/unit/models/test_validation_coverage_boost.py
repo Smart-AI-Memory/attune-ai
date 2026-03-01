@@ -38,7 +38,9 @@ class TestValidationError:
     def test_validation_error_warning(self):
         """Test ValidationError warning severity."""
         warning = ValidationError(
-            path="config.provider", message="Deprecated provider", severity="warning"
+            path="config.provider",
+            message="Deprecated provider",
+            severity="warning",
         )
 
         assert str(warning) == "[WARNING] config.provider: Deprecated provider"
@@ -109,7 +111,7 @@ class TestConfigValidatorStages:
                     "tier": "invalid_tier",  # Invalid
                     "provider": "anthropic",
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -128,7 +130,7 @@ class TestConfigValidatorStages:
                     "tier": "cheap",
                     "provider": "invalid_provider",  # Invalid
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -147,7 +149,7 @@ class TestConfigValidatorStages:
                     "tier": "cheap",
                     "timeout_ms": -1,  # Below minimum (0)
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -166,7 +168,7 @@ class TestConfigValidatorStages:
                     "tier": "cheap",
                     "timeout_ms": 10000000,  # Above maximum
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -185,7 +187,7 @@ class TestConfigValidatorStages:
                     "tier": "cheap",
                     "timeout_ms": "not_an_int",  # Wrong type
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -204,7 +206,7 @@ class TestConfigValidatorStages:
                     "tier": "cheap",
                     "max_retries": 3.5,  # Wrong type
                 },
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)
@@ -219,7 +221,7 @@ class TestConfigValidatorStages:
         config = {
             "stages": [
                 "not_a_dict",  # Invalid: should be dict
-            ]
+            ],
         }
 
         result = validator.validate_workflow_config(config)

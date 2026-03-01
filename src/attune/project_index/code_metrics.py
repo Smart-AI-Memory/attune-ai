@@ -40,6 +40,7 @@ class CodeMetricsMixin:
         Note:
             Uses LRU cache with 1000 entries (~64KB memory).
             Hit rate expected: 80%+ for incremental scans.
+
         """
         try:
             return hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
@@ -63,6 +64,7 @@ class CodeMetricsMixin:
             Uses LRU cache with 2000 entries (~20MB memory).
             Hit rate expected: 90%+ for incremental operations.
             Cache invalidates automatically when file_hash changes.
+
         """
         try:
             content = Path(file_path).read_text(encoding="utf-8", errors="ignore")
@@ -71,7 +73,10 @@ class CodeMetricsMixin:
             return None
 
     def _analyze_code_metrics(
-        self, path: Path, language: str, category: FileCategory = FileCategory.SOURCE
+        self,
+        path: Path,
+        language: str,
+        category: FileCategory = FileCategory.SOURCE,
     ) -> dict[str, Any]:
         """Analyze code metrics for a file with caching.
 
@@ -85,6 +90,7 @@ class CodeMetricsMixin:
             path: Path to file to analyze
             language: Programming language of the file
             category: File category (SOURCE, TEST, etc.)
+
         """
         metrics: dict[str, Any] = {
             "lines_of_code": 0,

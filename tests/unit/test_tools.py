@@ -32,7 +32,7 @@ SAMPLE_QUESTIONS = [
             {"label": "sequential", "description": "One after another"},
             {"label": "parallel", "description": "All at once"},
         ],
-    }
+    },
 ]
 
 

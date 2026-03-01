@@ -48,12 +48,12 @@ def _get_client():
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
                 raise ValueError(
-                    "ANTHROPIC_API_KEY environment variable required for API token counting"
+                    "ANTHROPIC_API_KEY environment variable required for API token counting",
                 )
             _client = Anthropic(api_key=api_key)
         except ImportError as e:
             raise ImportError(
-                "anthropic package required for token counting. Install with: pip install anthropic"
+                "anthropic package required for token counting. Install with: pip install anthropic",
             ) from e
     return _client
 

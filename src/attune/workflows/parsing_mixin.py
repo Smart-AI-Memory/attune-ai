@@ -14,10 +14,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 
 class ResponseParsingMixin:
@@ -37,6 +34,7 @@ class ResponseParsingMixin:
     Note:
         This mixin expects the class to have a _get_xml_config() method
         that returns XML configuration settings.
+
     """
 
     def _parse_xml_response(self, response: str) -> dict[str, Any]:
@@ -47,6 +45,7 @@ class ResponseParsingMixin:
 
         Returns:
             Dictionary with parsed fields or raw response data.
+
         """
         from attune.prompts import XmlResponseParser
 
@@ -106,6 +105,7 @@ class ResponseParsingMixin:
                     "recommendation": "Fix suggestion"
                 }
             ]
+
         """
         findings: list[dict[str, Any]] = []
 
@@ -214,6 +214,7 @@ class ResponseParsingMixin:
 
         Returns:
             Enriched finding dict with file, line, column fields
+
         """
         location_str = raw_finding.get("location", "")
         file_path, line, column = self._parse_location_string(location_str, files_changed)
@@ -255,6 +256,7 @@ class ResponseParsingMixin:
         Returns:
             Tuple of (file_path, line_number, column_number)
             Defaults: ("", 1, 1) if parsing fails
+
         """
         if not location:
             # Fallback: use first file if available
@@ -312,6 +314,7 @@ class ResponseParsingMixin:
 
         Returns:
             Severity level: critical, high, medium, low, or info
+
         """
         text_lower = text.lower()
 
@@ -372,6 +375,7 @@ class ResponseParsingMixin:
 
         Returns:
             Category: security, performance, maintainability, style, or correctness
+
         """
         text_lower = text.lower()
 

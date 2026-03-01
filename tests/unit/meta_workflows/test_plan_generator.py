@@ -42,6 +42,7 @@ def _make_mock_question(question_id: str, default: str | None = None, required: 
 
     Returns:
         MagicMock mimicking a FormQuestion
+
     """
     question = MagicMock()
     question.id = question_id
@@ -66,6 +67,7 @@ def _make_mock_template(
 
     Returns:
         MagicMock mimicking a MetaWorkflowTemplate
+
     """
     if questions is None:
         questions = [_make_mock_question("scope", default="full")]
@@ -88,7 +90,7 @@ def _make_mock_template(
                 success_criteria=["No critical vulnerabilities"],
                 config_mapping={"scope": "scan_scope"},
                 required_responses={},
-            )
+            ),
         ]
 
     mock_template.agent_composition_rules = rules
@@ -613,6 +615,7 @@ class TestGeneratePlan:
 
         Returns:
             Patch context manager for the registry module
+
         """
         mock_registry_module = MagicMock()
         mock_registry_module.get_template.return_value = return_value

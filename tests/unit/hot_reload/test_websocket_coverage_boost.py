@@ -350,7 +350,10 @@ class TestCreateNotificationCallback:
     @patch("attune.hot_reload.websocket.asyncio.get_event_loop")
     @patch("attune.hot_reload.websocket.asyncio.run")
     def test_callback_broadcasts_with_non_running_loop(
-        self, mock_run, mock_get_loop, mock_get_manager
+        self,
+        mock_run,
+        mock_get_loop,
+        mock_get_manager,
     ):
         """Test that callback uses asyncio.run when loop not running."""
         # Setup mocks

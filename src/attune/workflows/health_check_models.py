@@ -24,6 +24,7 @@ class CategoryScore:
         raw_metrics: Raw metrics from agent
         issues: Issues found
         passed: Whether category passed threshold
+
     """
 
     name: str
@@ -50,6 +51,7 @@ class HealthCheckReport:
         timestamp: Report generation time
         agents_executed: Number of agents executed
         success: Whether check completed successfully
+
     """
 
     overall_health_score: float
@@ -69,6 +71,7 @@ class HealthCheckReport:
 
         Returns:
             Dictionary representation
+
         """
         return {
             "overall_health_score": self.overall_health_score,
@@ -99,6 +102,7 @@ class HealthCheckReport:
 
         Returns:
             Human-readable formatted report
+
         """
         lines = []
 
@@ -121,7 +125,7 @@ class HealthCheckReport:
         lines.append(
             f"Overall Health: {emoji} "
             f"{self.overall_health_score:.1f}/100 "
-            f"(Grade {self.grade})"
+            f"(Grade {self.grade})",
         )
         lines.append(f"Mode: {self.mode.upper()}")
         lines.append(f"Agents Executed: {self.agents_executed}")
@@ -145,7 +149,7 @@ class HealthCheckReport:
             lines.append(
                 f"{status} {category.name:15} "
                 f"{category.score:5.1f}/100 "
-                f"(weight: {category.weight * 100:2.0f}%) {bar}"
+                f"(weight: {category.weight * 100:2.0f}%) {bar}",
             )
 
             # Show issues for failing categories

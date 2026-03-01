@@ -135,15 +135,15 @@ class AuditLogger(
             self.log_dir.mkdir(parents=True, exist_ok=True)
             # Set restrictive permissions (owner read/write)
             os.chmod(self.log_dir, 0o700)
-            logger.info(f"Audit log directory initialized: " f"{self.log_dir}")
-        except Exception as e:  # noqa: BLE001
+            logger.info(f"Audit log directory initialized: {self.log_dir}")
+        except Exception as e:
             # INTENTIONAL: Fallback to local directory on
             # any init error (permissions, disk, etc.)
-            logger.error(f"Failed to initialize audit log " f"directory: {e}")
+            logger.error(f"Failed to initialize audit log directory: {e}")
             self.log_dir = Path("./logs")
             self.log_dir.mkdir(parents=True, exist_ok=True)
             self.log_path = self.log_dir / self.log_filename
-            logger.warning(f"Using fallback log directory: " f"{self.log_dir}")
+            logger.warning(f"Using fallback log directory: {self.log_dir}")
 
     def _write_event(self, event: AuditEvent) -> None:
         """Write an audit event to the log file.
@@ -152,6 +152,7 @@ class AuditLogger(
 
         Args:
             event: The audit event to write
+
         """
         try:
             # Check if rotation is needed
@@ -166,9 +167,9 @@ class AuditLogger(
 
             # Optional console logging for development
             if self.enable_console_logging:
-                logger.debug(f"Audit event: {event.event_type} " f"- {event.status}")
+                logger.debug(f"Audit event: {event.event_type} - {event.status}")
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Audit logging failure should not
             # crash the application
             logger.error(f"Failed to write audit event: {e}")
@@ -192,7 +193,7 @@ class AuditLogger(
             # Clean up old logs beyond retention period
             self._cleanup_old_logs()
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Rotation failure is non-fatal
             logger.error(f"Failed to rotate audit log: {e}")
 
@@ -209,12 +210,12 @@ class AuditLogger(
 
                     if file_date < cutoff_date:
                         log_file.unlink()
-                        logger.info(f"Removed old audit log: " f"{log_file}")
+                        logger.info(f"Removed old audit log: {log_file}")
                 except (ValueError, IndexError):
                     # Skip files that don't match format
                     continue
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: Cleanup failure is non-fatal
             logger.error(f"Failed to cleanup old audit logs: {e}")
 
@@ -234,6 +235,7 @@ class AuditLogger(
             violation_type: Type of violation
             severity: Violation severity level
             details: Additional violation details
+
         """
         # Track violations per user
         key = f"{user_id}:{violation_type}"

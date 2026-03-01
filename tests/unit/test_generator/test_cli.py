@@ -101,9 +101,8 @@ class TestCommandParsing:
             "my_wizard",
         ]
 
-        with patch("sys.argv", test_args):
-            with pytest.raises(SystemExit):
-                main()
+        with patch("sys.argv", test_args), pytest.raises(SystemExit):
+            main()
 
     def test_analyze_command_parsing(self):
         """Test parsing analyze command with all arguments."""

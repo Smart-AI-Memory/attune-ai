@@ -19,6 +19,7 @@ from .models import (
 )
 
 __all__ = [
+    "XML_PROMPT_TEMPLATES",
     "FixStatus",
     "HealthCategory",
     "HealthCheckConfig",
@@ -27,5 +28,4 @@ __all__ = [
     "HealthFix",
     "HealthIssue",
     "IssueSeverity",
-    "XML_PROMPT_TEMPLATES",
 ]

@@ -83,7 +83,7 @@ class PatternPipelineMixin:
             raise ValueError(f"user_id cannot be empty. Got: {user_id!r}")
         if custom_metadata is not None and not isinstance(custom_metadata, dict):
             raise TypeError(
-                "custom_metadata must be dict, " f"got {type(custom_metadata).__name__}"
+                "custom_metadata must be dict, " f"got {type(custom_metadata).__name__}",
             )
 
     def _run_security_pipeline(self, content: str) -> tuple:
@@ -300,7 +300,7 @@ class PatternPipelineMixin:
                 error="Access denied",
             )
             raise PermissionError(
-                f"User {user_id} does not have access to " f"{classification.value} pattern",
+                f"User {user_id} does not have access to {classification.value} pattern",
             )
 
     def _decrypt_if_needed(

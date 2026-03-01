@@ -58,10 +58,9 @@ class AgentPerformance:
 
         if recent_avg > older_avg * 1.1:
             return "improving"
-        elif recent_avg < older_avg * 0.9:
+        if recent_avg < older_avg * 0.9:
             return "declining"
-        else:
-            return "stable"
+        return "stable"
 
     def record_use(
         self,

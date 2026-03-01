@@ -455,7 +455,9 @@ class TestVulnerabilityNode:
     def test_vulnerability_node_default_values(self):
         """Test VulnerabilityNode default values for specialized fields."""
         node = VulnerabilityNode(
-            id="vuln-1", type=NodeType.VULNERABILITY, name="Test Vulnerability"
+            id="vuln-1",
+            type=NodeType.VULNERABILITY,
+            name="Test Vulnerability",
         )
 
         assert node.cwe_id == ""
@@ -511,7 +513,9 @@ class TestPerformanceNode:
     def test_performance_node_default_values(self):
         """Test PerformanceNode default values for specialized fields."""
         node = PerformanceNode(
-            id="perf-1", type=NodeType.PERFORMANCE_ISSUE, name="Test Performance Issue"
+            id="perf-1",
+            type=NodeType.PERFORMANCE_ISSUE,
+            name="Test Performance Issue",
         )
 
         assert node.metric == ""

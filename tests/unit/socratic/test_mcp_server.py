@@ -9,6 +9,12 @@ import json
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _no_anthropic_key(monkeypatch):
+    """Prevent real API calls by removing the Anthropic key."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+
 class TestSocraticMCPServer:
     """Tests for SocraticMCPServer class."""
 

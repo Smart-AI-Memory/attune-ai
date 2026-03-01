@@ -33,6 +33,7 @@ class RealCodeQualityAnalyzer:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -47,6 +48,7 @@ class RealCodeQualityAnalyzer:
 
         Raises:
             RuntimeError: If quality analysis fails
+
         """
         logger.info(f"Running code quality analysis on {target_path}")
 
@@ -74,7 +76,7 @@ class RealCodeQualityAnalyzer:
 
             logger.info(
                 f"Quality analysis complete: score={quality_score:.1f}/10 "
-                f"(ruff={ruff_issues}, mypy={mypy_issues})"
+                f"(ruff={ruff_issues}, mypy={mypy_issues})",
             )
 
             return QualityReport(
@@ -164,6 +166,7 @@ class RealDocumentationAnalyzer:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -178,6 +181,7 @@ class RealDocumentationAnalyzer:
 
         Raises:
             RuntimeError: If analysis fails
+
         """
         logger.info(f"Analyzing documentation completeness in {target_path}")
 
@@ -207,7 +211,7 @@ class RealDocumentationAnalyzer:
                                 documented_functions += 1
                             else:
                                 missing_docstrings.append(
-                                    f"{py_file.relative_to(self.project_root)}:{node.lineno} - function {node.name}"
+                                    f"{py_file.relative_to(self.project_root)}:{node.lineno} - function {node.name}",
                                 )
 
                     elif isinstance(node, ast.ClassDef):
@@ -217,7 +221,7 @@ class RealDocumentationAnalyzer:
                                 documented_classes += 1
                             else:
                                 missing_docstrings.append(
-                                    f"{py_file.relative_to(self.project_root)}:{node.lineno} - class {node.name}"
+                                    f"{py_file.relative_to(self.project_root)}:{node.lineno} - class {node.name}",
                                 )
 
             except Exception as e:
@@ -237,7 +241,7 @@ class RealDocumentationAnalyzer:
 
         logger.info(
             f"Documentation analysis complete: {completeness_percentage:.1f}% "
-            f"({documented_items}/{total_items} items documented)"
+            f"({documented_items}/{total_items} items documented)",
         )
 
         return DocumentationReport(

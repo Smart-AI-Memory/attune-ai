@@ -36,6 +36,7 @@ def _make_mock_agent(
 
     Returns:
         SDKAgent with mocked execution.
+
     """
     agent = SDKAgent(role=role)
 

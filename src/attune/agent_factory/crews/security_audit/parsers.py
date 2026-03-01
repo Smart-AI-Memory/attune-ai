@@ -21,6 +21,7 @@ def parse_findings(result: dict) -> list[SecurityFinding]:
 
     Returns:
         List of parsed SecurityFinding objects.
+
     """
     metadata = result.get("metadata", {})
 
@@ -41,6 +42,7 @@ def dict_to_finding(data: dict) -> SecurityFinding:
 
     Returns:
         A SecurityFinding instance.
+
     """
     return SecurityFinding(
         title=data.get("title", "Untitled Finding"),
@@ -69,6 +71,7 @@ def parse_text_findings(text: str) -> list[SecurityFinding]:
 
     Returns:
         List of SecurityFinding objects extracted from text.
+
     """
     findings: list[SecurityFinding] = []
 
@@ -162,6 +165,7 @@ def generate_summary(findings: list[SecurityFinding]) -> str:
 
     Returns:
         Human-readable summary string.
+
     """
     if not findings:
         return "No security issues were identified during the audit."

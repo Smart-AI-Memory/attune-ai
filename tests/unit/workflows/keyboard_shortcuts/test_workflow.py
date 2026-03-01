@@ -248,7 +248,8 @@ analyzed_features:
             mock_llm.return_value = ("analyzed_features: []", 123, 456)
 
             result, in_tokens, out_tokens = await workflow._analyze_features(
-                input_data, ModelTier.CAPABLE
+                input_data,
+                ModelTier.CAPABLE,
             )
 
             assert in_tokens == 123

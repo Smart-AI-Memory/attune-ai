@@ -29,6 +29,7 @@ class AdaptiveAgentGenerator:
         >>> generator = AdaptiveAgentGenerator()
         >>> agents = generator.generate_agents_for_requirements(requirements)
         >>> # Returns agents weighted by historical success
+
     """
 
     def __init__(self, feedback_collector: FeedbackCollector | None = None):
@@ -36,6 +37,7 @@ class AdaptiveAgentGenerator:
 
         Args:
             feedback_collector: Feedback collector instance
+
         """
         from .generator import AgentGenerator
 
@@ -55,6 +57,7 @@ class AdaptiveAgentGenerator:
 
         Returns:
             List of AgentBlueprints optimized based on feedback
+
         """
         # Get base recommendations
         base_agents = self.base_generator.generate_agents_for_requirements(requirements)
@@ -123,6 +126,7 @@ class AdaptiveAgentGenerator:
 
         Returns:
             Explanation of why agents were recommended
+
         """
         domain = requirements.get("domain", "general")
         languages = requirements.get("languages", [])
@@ -163,7 +167,7 @@ class AdaptiveAgentGenerator:
                     p.total_uses for p in self.feedback.get_all_performance().values()
                 ),
                 "agents_with_data": len(
-                    [p for p in self.feedback.get_all_performance().values() if p.total_uses >= 5]
+                    [p for p in self.feedback.get_all_performance().values() if p.total_uses >= 5],
                 ),
             },
         }
@@ -188,6 +192,7 @@ class FeedbackLoop:
         >>>
         >>> # View insights
         >>> insights = loop.get_insights()
+
     """
 
     def __init__(
@@ -198,6 +203,7 @@ class FeedbackLoop:
 
         Args:
             storage_path: Path for feedback storage
+
         """
         self.collector = FeedbackCollector(storage_path)
         self.adaptive_generator = AdaptiveAgentGenerator(self.collector)
@@ -212,6 +218,7 @@ class FeedbackLoop:
         Args:
             blueprint: The executed blueprint
             evaluation: The success evaluation
+
         """
         self.collector.record_execution(blueprint, evaluation)
 
@@ -226,6 +233,7 @@ class FeedbackLoop:
 
         Returns:
             List of recommended agents
+
         """
         return self.adaptive_generator.generate_agents_for_requirements(requirements)
 
@@ -234,6 +242,7 @@ class FeedbackLoop:
 
         Returns:
             Dictionary with insights and recommendations
+
         """
         return self.collector.get_insights()
 
@@ -245,6 +254,7 @@ class FeedbackLoop:
 
         Returns:
             Performance statistics or None
+
         """
         perf = self.collector.get_agent_performance(template_id)
         return perf.to_dict() if perf else None
@@ -260,5 +270,6 @@ class FeedbackLoop:
 
         Returns:
             Explanation dictionary
+
         """
         return self.adaptive_generator.get_recommendation_explanation(requirements)

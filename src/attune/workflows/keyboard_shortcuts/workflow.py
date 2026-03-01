@@ -379,7 +379,7 @@ class KeyboardShortcutWorkflow(BaseWorkflow):
             if isinstance(result, dict):
                 return result
             return None
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: LLM responses may have unparseable YAML.
             # Return None and let caller handle fallback gracefully.
             return None
@@ -399,7 +399,7 @@ class KeyboardShortcutWorkflow(BaseWorkflow):
             if isinstance(result, dict):
                 return result
             return None
-        except Exception:  # noqa: BLE001
+        except Exception:
             # INTENTIONAL: LLM responses may have unparseable JSON.
             # Return None and let caller handle fallback gracefully.
             return None

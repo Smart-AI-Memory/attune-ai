@@ -141,7 +141,8 @@ class TestLearnedSkillsStorage:
             )
 
             error_patterns = storage.get_patterns_by_category(
-                "user1", PatternCategory.ERROR_RESOLUTION
+                "user1",
+                PatternCategory.ERROR_RESOLUTION,
             )
             pref_patterns = storage.get_patterns_by_category("user1", PatternCategory.PREFERENCE)
 

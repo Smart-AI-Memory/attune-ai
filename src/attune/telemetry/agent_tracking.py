@@ -101,6 +101,7 @@ class HeartbeatCoordinator:
     Attributes:
         HEARTBEAT_TTL: Default heartbeat TTL in seconds (30s)
         HEARTBEAT_INTERVAL: Recommended update interval (10s)
+
     """
 
     HEARTBEAT_TTL = 30  # Heartbeat expires after 30s of no updates
@@ -114,6 +115,7 @@ class HeartbeatCoordinator:
                    If None, attempts to get from UsageTracker.
             enable_streaming: If True, publish heartbeat events to Redis Streams
                             for real-time monitoring (Pattern 4).
+
         """
         self.memory = memory
         self.agent_id: str | None = None
@@ -151,7 +153,10 @@ class HeartbeatCoordinator:
         return self._event_streamer
 
     def start_heartbeat(
-        self, agent_id: str, metadata: dict[str, Any] | None = None, display_name: str | None = None
+        self,
+        agent_id: str,
+        metadata: dict[str, Any] | None = None,
+        display_name: str | None = None,
     ) -> None:
         """Start heartbeat for an agent.
 
@@ -159,6 +164,7 @@ class HeartbeatCoordinator:
             agent_id: Unique agent identifier
             metadata: Initial metadata (workflow, run_id, etc.)
             display_name: Optional human-readable name for dashboard display
+
         """
         if not self.memory:
             logger.debug("Heartbeat tracking disabled (no memory backend)")
@@ -181,6 +187,7 @@ class HeartbeatCoordinator:
             status: Current agent status
             progress: Progress percentage (0.0 - 1.0)
             current_task: Human-readable current task description
+
         """
         if not self.agent_id or not self.memory:
             return
@@ -198,6 +205,7 @@ class HeartbeatCoordinator:
 
         Args:
             final_status: Final status ("completed", "failed", "cancelled")
+
         """
         if not self.agent_id or not self.memory:
             return
@@ -266,6 +274,7 @@ class HeartbeatCoordinator:
 
         Returns:
             List of active agent heartbeats
+
         """
         if not self.memory:
             return []
@@ -300,6 +309,7 @@ class HeartbeatCoordinator:
 
         Returns:
             True if heartbeat key exists (agent is alive)
+
         """
         if not self.memory:
             return False
@@ -316,6 +326,7 @@ class HeartbeatCoordinator:
 
         Returns:
             AgentHeartbeat or None if agent not active
+
         """
         if not self.memory:
             return None
@@ -363,6 +374,7 @@ class HeartbeatCoordinator:
 
         Returns:
             List of stale agent heartbeats
+
         """
         active = self.get_active_agents()
         now = datetime.utcnow()

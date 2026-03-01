@@ -116,7 +116,8 @@ class TestToolEnhancedPatternSelection:
 
         # Even with tools, if multiple agents, don't use tool-enhanced
         pattern = orchestrator._choose_composition_pattern(
-            requirements, [sample_agent, sample_agent]
+            requirements,
+            [sample_agent, sample_agent],
         )
 
         assert pattern != CompositionPattern.TOOL_ENHANCED
@@ -131,7 +132,9 @@ class TestPromptCachedSequentialPatternSelection:
     """Tests for prompt-cached sequential pattern selection."""
 
     def test_selects_cached_for_multiple_agents_with_large_context(
-        self, orchestrator, sample_agent
+        self,
+        orchestrator,
+        sample_agent,
     ):
         """Test cached pattern selected for 3+ agents with large context."""
         large_context = "x" * 3000  # > 2000 characters
@@ -200,7 +203,10 @@ class TestDelegationChainPatternSelection:
     """Tests for delegation chain pattern selection."""
 
     def test_selects_delegation_for_complex_with_coordinator(
-        self, orchestrator, coordinator_agent, specialist_agent
+        self,
+        orchestrator,
+        coordinator_agent,
+        specialist_agent,
     ):
         """Test delegation pattern selected for complex task with coordinator."""
         requirements = TaskRequirements(
@@ -251,7 +257,10 @@ class TestDelegationChainPatternSelection:
         assert pattern == CompositionPattern.ADAPTIVE
 
     def test_does_not_select_delegation_for_simple_tasks(
-        self, orchestrator, coordinator_agent, specialist_agent
+        self,
+        orchestrator,
+        coordinator_agent,
+        specialist_agent,
     ):
         """Test delegation NOT selected for simple tasks."""
         requirements = TaskRequirements(
@@ -331,7 +340,10 @@ class TestAnthropicPatternsMetaOrchestratorIntegration:
         ]
 
     def test_execution_plan_created_with_new_patterns(
-        self, orchestrator, coordinator_agent, specialist_agent
+        self,
+        orchestrator,
+        coordinator_agent,
+        specialist_agent,
     ):
         """Test that execution plans can be created with new patterns."""
         requirements = TaskRequirements(
@@ -382,7 +394,10 @@ class TestPatternSelectionPriority:
         assert pattern == CompositionPattern.TOOL_ENHANCED
 
     def test_delegation_takes_priority_over_adaptive(
-        self, orchestrator, coordinator_agent, specialist_agent
+        self,
+        orchestrator,
+        coordinator_agent,
+        specialist_agent,
     ):
         """Test that delegation is chosen over adaptive for complex with coordinator."""
         requirements = TaskRequirements(

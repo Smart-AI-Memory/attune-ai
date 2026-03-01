@@ -23,6 +23,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -54,6 +55,7 @@ class CrossSessionManager:
         >>> if cross_session.available():
         ...     coordinator = cross_session.enable(AccessTier.CONTRIBUTOR)
         ...     sessions = coordinator.get_active_sessions()
+
     """
 
     def __init__(self, base: BaseOperations) -> None:
@@ -61,6 +63,7 @@ class CrossSessionManager:
 
         Args:
             base: BaseOperations instance for Redis client access
+
         """
         self._base = base
 
@@ -88,11 +91,12 @@ class CrossSessionManager:
             >>> coordinator = cross_session.enable(AccessTier.CONTRIBUTOR)
             >>> print(f"Session ID: {coordinator.agent_id}")
             >>> sessions = coordinator.get_active_sessions()
+
         """
         if self._base.use_mock:
             raise ValueError(
                 "Cross-session communication requires Redis. "
-                "Set REDIS_HOST/REDIS_PORT or disable mock mode."
+                "Set REDIS_HOST/REDIS_PORT or disable mock mode.",
             )
 
         # Import lazily to avoid circular imports
@@ -118,5 +122,6 @@ class CrossSessionManager:
         Example:
             >>> if cross_session.available():
             ...     coordinator = cross_session.enable()
+
         """
         return not self._base.use_mock and self._base._client is not None

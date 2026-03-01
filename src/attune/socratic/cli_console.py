@@ -127,6 +127,7 @@ def render_form_interactive(form: Form, console: Console) -> dict[str, Any]:
 
     Returns:
         Dictionary of answers
+
     """
     console.subheader(form.title)
 
@@ -236,12 +237,11 @@ def _input_boolean(field: FormField, console: Console) -> bool:
 
         if response in ("y", "yes", "true", "1"):
             return True
-        elif response in ("n", "no", "false", "0"):
+        if response in ("n", "no", "false", "0") or (
+            not response and not field.validation.required
+        ):
             return False
-        elif not response and not field.validation.required:
-            return False
-        else:
-            console.error("Enter 'y' or 'n'")
+        console.error("Enter 'y' or 'n'")
 
 
 def _input_text(field: FormField, console: Console) -> str:

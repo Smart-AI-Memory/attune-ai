@@ -25,7 +25,7 @@ from typing import Any
 
 from attune.security.path_validation import _validate_file_path
 
-from .pattern_learner_models import (  # noqa: F401 - re-exported
+from .pattern_learner_models import (
     ContextSignature,
     ExecutionRecord,
     PatternStats,
@@ -50,6 +50,7 @@ class LearningStore:
         _records: In-memory execution records
         _stats: In-memory pattern statistics
         _dirty: Whether in-memory data needs saving
+
     """
 
     DEFAULT_FILE = "patterns/learning_memory.json"
@@ -59,6 +60,7 @@ class LearningStore:
 
         Args:
             file_path: Path to persistence file (default: patterns/learning_memory.json)
+
         """
         self.file_path = Path(file_path or self.DEFAULT_FILE)
         self._records: list[ExecutionRecord] = []
@@ -92,7 +94,7 @@ class LearningStore:
 
             logger.info(
                 f"Loaded {len(self._records)} records, "
-                f"{len(self._stats)} pattern stats from {self.file_path}"
+                f"{len(self._stats)} pattern stats from {self.file_path}",
             )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse learning data: {e}")
@@ -131,6 +133,7 @@ class LearningStore:
 
         Args:
             record: Record to add
+
         """
         self._records.append(record)
 
@@ -157,6 +160,7 @@ class LearningStore:
 
         Returns:
             PatternStats or None if not tracked
+
         """
         return self._stats.get(pattern)
 
@@ -181,7 +185,9 @@ class LearningStore:
         )
 
     def find_similar_records(
-        self, signature: ContextSignature, limit: int = 10
+        self,
+        signature: ContextSignature,
+        limit: int = 10,
     ) -> list[tuple[ExecutionRecord, float]]:
         """Find records with similar context.
 
@@ -191,6 +197,7 @@ class LearningStore:
 
         Returns:
             List of (record, similarity_score) tuples
+
         """
         scored: list[tuple[ExecutionRecord, float]] = []
 
@@ -226,6 +233,7 @@ class PatternRecommendation:
         reason: Why this pattern was recommended
         expected_success_rate: Predicted success rate
         expected_duration: Predicted duration
+
     """
 
     pattern: str
@@ -246,6 +254,7 @@ class PatternRecommender:
 
         Args:
             store: Learning store with historical data
+
         """
         self.store = store
 
@@ -263,6 +272,7 @@ class PatternRecommender:
 
         Returns:
             List of PatternRecommendation
+
         """
         signature = ContextSignature.from_context(context)
         recommendations: list[PatternRecommendation] = []
@@ -280,7 +290,9 @@ class PatternRecommender:
         return recommendations[:top_k]
 
     def _recommend_from_similar(
-        self, similar: list[tuple[ExecutionRecord, float]], top_k: int
+        self,
+        similar: list[tuple[ExecutionRecord, float]],
+        top_k: int,
     ) -> list[PatternRecommendation]:
         """Generate recommendations from similar records.
 
@@ -290,10 +302,11 @@ class PatternRecommender:
 
         Returns:
             List of recommendations
+
         """
         # Aggregate by pattern
         pattern_scores: dict[str, dict[str, Any]] = defaultdict(
-            lambda: {"total_similarity": 0, "success_similarity": 0, "count": 0}
+            lambda: {"total_similarity": 0, "success_similarity": 0, "count": 0},
         )
 
         for record, similarity in similar:
@@ -316,7 +329,7 @@ class PatternRecommender:
                         reason=f"Worked in {scores['count']} similar contexts",
                         expected_success_rate=stats.success_rate if stats else 0,
                         expected_duration=stats.avg_duration if stats else 0,
-                    )
+                    ),
                 )
 
         # Sort by confidence
@@ -331,6 +344,7 @@ class PatternRecommender:
 
         Returns:
             List of recommendations based on global stats
+
         """
         all_stats = self.store.get_all_stats()
         recommendations = []
@@ -344,7 +358,7 @@ class PatternRecommender:
                         reason=f"High overall success rate ({stats.success_rate:.0%})",
                         expected_success_rate=stats.success_rate,
                         expected_duration=stats.avg_duration,
-                    )
+                    ),
                 )
 
         return recommendations
@@ -373,6 +387,7 @@ class PatternLearner:
         >>> # Get recommendations
         >>> recs = learner.recommend({"task_type": "code_review"})
         >>> print(recs[0].pattern, recs[0].confidence)
+
     """
 
     def __init__(self, storage_path: str | None = None):
@@ -380,6 +395,7 @@ class PatternLearner:
 
         Args:
             storage_path: Path for persistence (default: patterns/learning_memory.json)
+
         """
         self.store = LearningStore(storage_path)
         self.recommender = PatternRecommender(self.store)
@@ -402,6 +418,7 @@ class PatternLearner:
             cost: Estimated cost
             confidence: Aggregate confidence score
             context: Execution context (for similarity matching)
+
         """
         record = ExecutionRecord(
             pattern=pattern,
@@ -423,6 +440,7 @@ class PatternLearner:
 
         Returns:
             List of PatternRecommendation
+
         """
         return self.recommender.recommend(context, top_k)
 
@@ -434,6 +452,7 @@ class PatternLearner:
 
         Returns:
             PatternStats or None
+
         """
         return self.store.get_stats(pattern)
 
@@ -442,6 +461,7 @@ class PatternLearner:
 
         Returns:
             List of PatternStats sorted by success rate
+
         """
         return self.store.get_all_stats()
 
@@ -454,6 +474,7 @@ class PatternLearner:
 
         Returns:
             Formatted report string
+
         """
         stats = self.get_all_stats()
         if not stats:
@@ -481,6 +502,7 @@ def get_learner() -> PatternLearner:
 
     Returns:
         PatternLearner singleton
+
     """
     global _default_learner
     if _default_learner is None:

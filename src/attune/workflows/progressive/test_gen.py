@@ -44,6 +44,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         >>> workflow = ProgressiveTestGenWorkflow(config)
         >>> result = workflow.execute(target_file="app.py")
         >>> print(result.generate_report())
+
     """
 
     def __init__(self, config: EscalationConfig | None = None):
@@ -56,6 +57,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
 
         Args:
             config: Escalation configuration (uses defaults if None)
+
         """
         warnings.warn(
             "ProgressiveTestGenWorkflow is deprecated since v5.3.0. "
@@ -85,6 +87,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         Example:
             >>> result = workflow.execute(target_file="src/app.py")
             >>> print(f"Generated {len(result.final_result.generated_items)} tests")
+
         """
         self.target_file = Path(target_file)
 
@@ -123,6 +126,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
             >>> functions = workflow._parse_functions(Path("app.py"))
             >>> print(functions[0]["name"])
             'calculate_total'
+
         """
         try:
             source = file_path.read_text()
@@ -149,7 +153,11 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         return functions
 
     def _execute_tier_impl(
-        self, tier: Tier, items: list[Any], context: dict[str, Any] | None, **kwargs
+        self,
+        tier: Tier,
+        items: list[Any],
+        context: dict[str, Any] | None,
+        **kwargs,
     ) -> list[dict[str, Any]]:
         """Execute test generation at specific tier.
 
@@ -165,12 +173,13 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         Note:
             This is a placeholder implementation. In production, this would
             call the actual LLM API to generate tests.
+
         """
         logger.info(f"Generating {len(items)} tests at {tier.value} tier")
 
         # Build prompt for this tier (prepared for future LLM integration)
         base_task = self._build_test_gen_task(items)
-        _prompt = self.meta_orchestrator.build_tier_prompt(tier, base_task, context)  # noqa: F841
+        _prompt = self.meta_orchestrator.build_tier_prompt(tier, base_task, context)
 
         # TODO(llm-integration): Call LLM API with _prompt
         # Deferred: Requires LLM API integration (tracked in P2B debt register)
@@ -192,6 +201,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
             >>> task = workflow._build_test_gen_task([{"name": "foo", ...}])
             >>> print(task)
             'Generate pytest tests for 1 functions from app.py'
+
         """
         file_name = self.target_file.name if self.target_file else "module"
         func_names = [f["name"] for f in functions]
@@ -204,7 +214,9 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
         return task
 
     def _simulate_test_generation(
-        self, tier: Tier, functions: list[dict[str, Any]]
+        self,
+        tier: Tier,
+        functions: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Simulate test generation (placeholder for LLM integration).
 
@@ -225,11 +237,12 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
             3. Validate syntax
             4. Execute tests
             5. Calculate coverage
+
         """
         generated_tests = []
 
         # Quality thresholds per tier (prepared for future LLM integration)
-        _base_quality = {  # noqa: F841
+        _base_quality = {
             Tier.CHEAP: 70,
             Tier.CAPABLE: 85,
             Tier.PREMIUM: 95,
@@ -256,7 +269,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
                     "confidence": analysis.confidence_score,
                     "syntax_errors": [str(e) for e in analysis.syntax_errors],
                     "error": "" if not analysis.syntax_errors else str(analysis.syntax_errors[0]),
-                }
+                },
             )
 
         return generated_tests
@@ -269,6 +282,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
 
         Returns:
             Generated test code as string
+
         """
         func_name = func["name"]
         args = func["args"]
@@ -296,6 +310,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
 
         Returns:
             Setup code as string
+
         """
         if not args:
             return "pass"
@@ -323,6 +338,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
 
         Returns:
             Failure analysis with quality metrics
+
         """
         analysis = FailureAnalysis()
 
@@ -364,6 +380,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
 
         Returns:
             Empty workflow result
+
         """
         empty_result = TierResult(
             tier=Tier.CHEAP,
@@ -405,6 +422,7 @@ def execute_test_file(test_file: Path) -> dict[str, Any]:
     Example:
         >>> result = execute_test_file(Path("test_app.py"))
         >>> print(f"Pass rate: {result['pass_rate']:.1%}")
+
     """
     try:
         result = subprocess.run(
@@ -470,6 +488,7 @@ def calculate_coverage(test_file: Path, source_file: Path) -> float:
         ...     Path("app.py")
         ... )
         >>> print(f"Coverage: {coverage:.1f}%")
+
     """
     try:
         # Run pytest with coverage

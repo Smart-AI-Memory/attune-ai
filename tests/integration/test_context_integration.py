@@ -370,7 +370,11 @@ class TestContextWithHooksIntegration:
         states_saved = []
 
         def pre_compact_handler(
-            user_id="unknown", trust_level=0.5, empathy_level=1, session_id="", **kwargs
+            user_id="unknown",
+            trust_level=0.5,
+            empathy_level=1,
+            session_id="",
+            **kwargs,
         ):
             # Save state on pre-compact
             state = CompactState(

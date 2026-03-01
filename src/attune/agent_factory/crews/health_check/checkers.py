@@ -24,6 +24,7 @@ async def run_lint_check(path: str) -> dict:
 
     Returns:
         Dictionary with 'passed', 'issues', and 'tool' keys.
+
     """
     issues: list[HealthIssue] = []
     passed = True
@@ -73,6 +74,7 @@ async def run_type_check(path: str) -> dict:
 
     Returns:
         Dictionary with 'passed', 'issues', and 'tool' keys.
+
     """
     issues: list[HealthIssue] = []
     passed = True
@@ -153,6 +155,7 @@ async def run_test_check(path: str) -> dict:
 
     Returns:
         Dictionary with 'passed', 'issues', and 'tool' keys.
+
     """
     issues: list[HealthIssue] = []
     passed = True
@@ -202,6 +205,7 @@ async def run_dep_check(path: str) -> dict:
 
     Returns:
         Dictionary with 'passed', 'issues', and 'tool' keys.
+
     """
     issues: list[HealthIssue] = []
     passed = True

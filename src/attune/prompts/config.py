@@ -42,7 +42,7 @@ class XmlPromptConfig:
         """
         merged_extra = {**self.extra, **other.extra}
         return XmlPromptConfig(
-            enabled=other.enabled if other.enabled else self.enabled,
+            enabled=other.enabled or self.enabled,
             schema_version=other.schema_version or self.schema_version,
             enforce_response_xml=other.enforce_response_xml or self.enforce_response_xml,
             fallback_on_parse_error=other.fallback_on_parse_error,

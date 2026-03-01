@@ -7,7 +7,7 @@
 
 export const FEATURE_COUNTS = {
   wizards: 10,
-  workflows: 10,
+  workflows: 17,
   agentTemplates: 7,
   compositionPatterns: 6,
 } as const;

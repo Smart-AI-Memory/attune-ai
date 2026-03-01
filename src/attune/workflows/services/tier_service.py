@@ -32,6 +32,7 @@ class TierService:
     Example:
         >>> tier_svc = TierService("code-review", stages, tier_map)
         >>> tier = tier_svc.get_tier("analysis", input_data)
+
     """
 
     def __init__(
@@ -69,6 +70,7 @@ class TierService:
 
         Returns:
             ModelTier to use for this stage
+
         """
         from ..compat import ModelTier
 
@@ -92,6 +94,7 @@ class TierService:
 
         Returns:
             ModelTier from tier_map, defaults to CAPABLE
+
         """
         from ..compat import ModelTier
 
@@ -136,10 +139,9 @@ class TierService:
 
         if num_stages <= 2 and premium_stages == 0:
             return "simple"
-        elif num_stages <= 4 and premium_stages <= 1:
+        if num_stages <= 4 and premium_stages <= 1:
             return "moderate"
-        else:
-            return "complex"
+        return "complex"
 
     def _estimate_input_tokens(self, input_data: dict[str, Any]) -> int:
         """Estimate input token count from data (~4 chars per token)."""
@@ -172,7 +174,7 @@ class TierService:
 
             logger.warning(
                 f"Adaptive tier upgrade: {self._workflow_name}:{stage_name} "
-                f"{current_tier.value} -> {new_tier.value} ({reason})"
+                f"{current_tier.value} -> {new_tier.value} ({reason})",
             )
             return new_tier
 

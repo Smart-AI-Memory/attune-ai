@@ -23,6 +23,7 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
@@ -66,6 +67,7 @@ class BatchOperations:
         2
         >>> batch_ops.retrieve_batch(["analysis", "summary"], creds)
         {'analysis': {'score': 95}, 'summary': {'text': '...'}}
+
     """
 
     PREFIX_WORKING = "empathy:working:"
@@ -75,6 +77,7 @@ class BatchOperations:
 
         Args:
             base: BaseOperations instance for storage access
+
         """
         self._base = base
 
@@ -104,6 +107,7 @@ class BatchOperations:
             >>> items = [("key1", {"a": 1}), ("key2", {"b": 2})]
             >>> count = batch_ops.stash_batch(items, creds)
             2
+
         """
         # Pattern 5: Type validation
         if not isinstance(items, list):
@@ -181,6 +185,7 @@ class BatchOperations:
             >>> data = batch_ops.retrieve_batch(["key1", "key2"], creds)
             >>> print(data["key1"])
             {'a': 1}
+
         """
         if not keys:
             return {}

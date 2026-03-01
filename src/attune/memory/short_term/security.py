@@ -25,12 +25,13 @@ Example:
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
+
 """
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import structlog
 
@@ -38,9 +39,6 @@ from attune.memory.security.pii_scrubber import PIIScrubber
 from attune.memory.security.secrets_detector import SecretsDetector
 from attune.memory.security.secrets_detector import Severity as SecretSeverity
 from attune.memory.types import RedisMetrics, SecurityError
-
-if TYPE_CHECKING:
-    pass
 
 logger = structlog.get_logger(__name__)
 
@@ -78,6 +76,7 @@ class DataSanitizer:
         >>> clean, count = sanitizer.sanitize(data)
         >>> print(clean)  # Email will be redacted
         {'user': 'john', 'email': '[EMAIL]'}
+
     """
 
     def __init__(
@@ -92,6 +91,7 @@ class DataSanitizer:
             pii_scrub_enabled: Enable PII scrubbing (emails, SSN, etc.)
             secrets_detection_enabled: Enable secrets detection (API keys, etc.)
             metrics: Optional RedisMetrics for tracking scrub operations
+
         """
         self.pii_enabled = pii_scrub_enabled
         self.secrets_enabled = secrets_detection_enabled
@@ -144,6 +144,7 @@ class DataSanitizer:
             >>> clean, count = sanitizer.sanitize(data)
             >>> count
             1
+
         """
         pii_count = 0
 
@@ -151,9 +152,7 @@ class DataSanitizer:
             return data, 0
 
         # Convert data to string for scanning
-        if isinstance(data, dict):
-            data_str = json.dumps(data)
-        elif isinstance(data, list):
+        if isinstance(data, dict) or isinstance(data, list):
             data_str = json.dumps(data)
         elif isinstance(data, str):
             data_str = data
@@ -180,7 +179,7 @@ class DataSanitizer:
                 )
                 raise SecurityError(
                     f"Cannot store data containing secrets: {secret_types}. "
-                    "Remove sensitive credentials before storing."
+                    "Remove sensitive credentials before storing.",
                 )
 
         # Scrub PII
@@ -231,14 +230,13 @@ class DataSanitizer:
             >>> secrets = sanitizer.check_secrets({"key": "sk-abc123..."})
             >>> if secrets:
             ...     print(f"Found secrets: {secrets}")
+
         """
         if self._secrets_detector is None or data is None:
             return []
 
         # Convert data to string for scanning
-        if isinstance(data, dict):
-            data_str = json.dumps(data)
-        elif isinstance(data, list):
+        if isinstance(data, dict) or isinstance(data, list):
             data_str = json.dumps(data)
         elif isinstance(data, str):
             data_str = data
@@ -261,14 +259,13 @@ class DataSanitizer:
             >>> sanitizer = DataSanitizer(pii_scrub_enabled=True)
             >>> clean, count = sanitizer.scrub_pii_only("Email: user@example.com")
             >>> print(clean)  # "Email: [EMAIL]"
+
         """
         if self._pii_scrubber is None or data is None:
             return data, 0
 
         # Convert data to string
-        if isinstance(data, dict):
-            data_str = json.dumps(data)
-        elif isinstance(data, list):
+        if isinstance(data, dict) or isinstance(data, list):
             data_str = json.dumps(data)
         elif isinstance(data, str):
             data_str = data
@@ -286,12 +283,7 @@ class DataSanitizer:
         self._metrics.pii_scrub_operations += 1
 
         # Convert back to original type
-        if isinstance(data, dict):
-            try:
-                return json.loads(sanitized_str), pii_count
-            except json.JSONDecodeError:
-                return data, 0
-        elif isinstance(data, list):
+        if isinstance(data, dict) or isinstance(data, list):
             try:
                 return json.loads(sanitized_str), pii_count
             except json.JSONDecodeError:

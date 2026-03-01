@@ -32,13 +32,17 @@ class StepType(str, Enum):
         QUESTION: Interactive step that collects user input via AskUserQuestion.
         LLM_CALL: Calls an LLM with an XML prompt template.
         TASK_DECOMPOSE: Breaks a problem into structured XML sub-tasks.
+        REVIEW: Shows intermediate results and asks if they look right.
+            If the user says no, the wizard re-runs the preceding LLM step.
         PREVIEW: Shows generated results and asks for approval.
         CONFIRM: Final yes/no gate before execution.
+
     """
 
     QUESTION = "question"
     LLM_CALL = "llm_call"
     TASK_DECOMPOSE = "task_decompose"
+    REVIEW = "review"
     PREVIEW = "preview"
     CONFIRM = "confirm"
 
@@ -66,6 +70,7 @@ class WizardStep:
         prompt_context_template: Declarative prompt context for config-driven wizards.
             Keys: ``role``, ``goal``, ``instructions``, ``constraints``.
             Values may contain ``{session.var}`` placeholders.
+
     """
 
     id: str
@@ -78,6 +83,7 @@ class WizardStep:
     condition: Callable[[WizardSession], bool] | None = None
     max_tokens: int = 4096
     prompt_context_template: dict[str, Any] | None = None
+    review_source_step_id: str | None = None
 
 
 @dataclass
@@ -93,6 +99,7 @@ class WizardConfig:
         source: Origin of this wizard (``"builtin"`` or ``"custom"``).
         estimated_cost_range: Estimated USD cost range per run.
         estimated_duration_minutes: Estimated wall-clock minutes per run.
+
     """
 
     wizard_id: str
@@ -120,6 +127,7 @@ class WizardResult:
         total_cost: Total LLM cost in USD.
         total_duration_ms: Wall-clock duration in milliseconds.
         error: Error message if ``success`` is ``False``.
+
     """
 
     wizard_id: str
@@ -138,6 +146,7 @@ class WizardResult:
 
         Returns:
             Dict representation of this result.
+
         """
         return {
             "wizard_id": self.wizard_id,

@@ -247,7 +247,7 @@ class ModelRegistry:
                 f"Provider '{provider}' is not supported. "
                 f"Attune AI is now Claude-native (v3.0.0). "
                 f"Only 'anthropic' provider is available. "
-                f"See docs/CLAUDE_NATIVE.md for migration guide."
+                f"See docs/CLAUDE_NATIVE.md for migration guide.",
             )
 
         provider_models = self._registry.get(provider.lower())

@@ -24,6 +24,7 @@ def check_for_updates() -> dict[str, Any] | None:
     Returns:
         Dict with keys (latest, current, update_available) or None if
         the check fails or the current version is up to date.
+
     """
     global _cached_status  # noqa: PLW0603
 
@@ -34,7 +35,7 @@ def check_for_updates() -> dict[str, Any] | None:
         import attune
 
         current = attune.__version__
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: Can't determine current version — skip check
         return None
 
@@ -59,7 +60,7 @@ def check_for_updates() -> dict[str, Any] | None:
         }
         return _cached_status
 
-    except Exception:  # noqa: BLE001
+    except Exception:
         # INTENTIONAL: Network failures silently skip — version check is best-effort
         return None
 
@@ -69,6 +70,7 @@ def get_update_status() -> dict[str, Any] | None:
 
     Returns:
         Cached result from check_for_updates(), or None if not yet checked.
+
     """
     return _cached_status
 
@@ -85,6 +87,7 @@ def _compare_versions(current: str, latest: str) -> bool:
 
     Returns:
         True if latest is newer than current
+
     """
     try:
         current_parts = tuple(int(x) for x in current.split(".")[:3])

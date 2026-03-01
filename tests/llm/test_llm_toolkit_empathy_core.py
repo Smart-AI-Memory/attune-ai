@@ -331,7 +331,7 @@ class TestEmpathyLLMInteract:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -361,7 +361,7 @@ class TestEmpathyLLMInteract:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -392,7 +392,7 @@ class TestEmpathyLLMInteract:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -497,7 +497,7 @@ class TestEmpathyLLMModelRouting:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -545,7 +545,7 @@ class TestEmpathyLLMIntegration:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -575,7 +575,7 @@ class TestEmpathyLLMIntegration:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -727,7 +727,7 @@ class TestLevelMethods:
                 tokens_used=5,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -758,7 +758,7 @@ class TestLevelMethods:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -791,7 +791,7 @@ class TestLevelMethods:
                 tokens_used=100,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -824,7 +824,7 @@ class TestLevelMethods:
                 tokens_used=150,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -872,7 +872,7 @@ class TestAuditLogging:
                 tokens_used=10,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 
@@ -906,7 +906,7 @@ class TestAuditLogging:
                 tokens_used=25,
                 finish_reason="stop",
                 metadata={},
-            )
+            ),
         )
         mock_provider_class.return_value = mock_provider
 

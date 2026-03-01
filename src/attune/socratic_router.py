@@ -62,6 +62,7 @@ def classify_intent(user_response: str) -> IntentClassification:
 
     Returns:
         IntentClassification with category, options, and metadata
+
     """
     response_lower = user_response.lower()
 
@@ -151,6 +152,7 @@ def get_ask_user_question_format(
 
     Returns:
         Dict ready to pass to AskUserQuestion tool
+
     """
     return {
         "questions": [
@@ -159,13 +161,14 @@ def get_ask_user_question_format(
                 "header": classification.category.value.title(),
                 "options": [opt.to_ask_user_option() for opt in classification.options],
                 "multiSelect": False,
-            }
-        ]
+            },
+        ],
     }
 
 
 def get_skill_for_selection(
-    classification: IntentClassification, selected_label: str
+    classification: IntentClassification,
+    selected_label: str,
 ) -> tuple[str, str]:
     """Get skill and args for user's selection.
 
@@ -175,6 +178,7 @@ def get_skill_for_selection(
 
     Returns:
         Tuple of (skill, args) to invoke
+
     """
     for option in classification.options:
         if option.label == selected_label:
@@ -207,6 +211,7 @@ def process_socratic_response(
             - classification: IntentClassification object
             - ask_user_format: Ready-to-use AskUserQuestion format
             - confidence: How confident we are in the classification
+
     """
     classification = classify_intent(user_response)
 
@@ -255,6 +260,7 @@ class AttuneRouter:
                 - ask_user_format: Ready for AskUserQuestion tool
                 - classification: (quick mode) IntentClassification
                 - session: (deep mode) SocraticSession
+
         """
         classification = classify_intent(user_response)
 
@@ -268,13 +274,12 @@ class AttuneRouter:
                 "ask_user_format": ask_user_format,
                 "classification": classification,
             }
-        else:
-            return {
-                "mode": "quick",
-                "ask_user_format": get_ask_user_question_format(classification),
-                "classification": classification,
-                "category": classification.category.value,
-            }
+        return {
+            "mode": "quick",
+            "ask_user_format": get_ask_user_question_format(classification),
+            "classification": classification,
+            "category": classification.category.value,
+        }
 
     def route_selection(
         self,
@@ -289,6 +294,7 @@ class AttuneRouter:
 
         Returns:
             Dict with skill and args to invoke
+
         """
         classification = process_result.get("classification")
 
@@ -317,6 +323,7 @@ class AttuneRouter:
 
         Returns:
             Dict with next questions or generated workflow
+
         """
         session = self._sessions.get(session_id)
         if not session:
@@ -331,26 +338,25 @@ class AttuneRouter:
                 "session_id": session_id,
                 "ask_user_format": next_questions,
             }
-        else:
-            # Ready to generate
-            from attune.socratic import SocraticWorkflowBuilder
+        # Ready to generate
+        from attune.socratic import SocraticWorkflowBuilder
 
-            builder = SocraticWorkflowBuilder()
-            builder._sessions[session_id] = session
-            workflow = builder.generate_workflow(session)
+        builder = SocraticWorkflowBuilder()
+        builder._sessions[session_id] = session
+        workflow = builder.generate_workflow(session)
 
-            return {
-                "mode": "complete",
-                "session_id": session_id,
-                "workflow": workflow,
-                "summary": builder.get_session_summary(session),
-            }
+        return {
+            "mode": "complete",
+            "session_id": session_id,
+            "workflow": workflow,
+            "summary": builder.get_session_summary(session),
+        }
 
 
 # Ensure all public names are importable from this module
 __all__ = [
-    "AttuneRouter",
     "INTENT_PATTERNS",
+    "AttuneRouter",
     "IntentCategory",
     "IntentClassification",
     "WorkflowOption",

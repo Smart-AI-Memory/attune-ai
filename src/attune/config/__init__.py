@@ -15,14 +15,14 @@ from pathlib import Path
 
 # Check if PyYAML is available
 try:
-    import yaml  # noqa: F401
+    import yaml
 
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
 
 # Import security utility from canonical location
-from attune.security.path_validation import _validate_file_path  # noqa: E402
+from attune.security.path_validation import _validate_file_path
 
 # Load the original config.py module directly
 config_py_path = Path(__file__).parent.parent / "config.py"

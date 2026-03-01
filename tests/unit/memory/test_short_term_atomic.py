@@ -70,7 +70,9 @@ class TestAtomicPromotePattern:
 
         # Promote atomically
         success, promoted_pattern, message = memory.atomic_promote_pattern(
-            "pat_atomic_001", validator_creds, min_confidence=0.5
+            "pat_atomic_001",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success is True
@@ -88,7 +90,9 @@ class TestAtomicPromotePattern:
 
         # Promote
         success, _, _ = memory.atomic_promote_pattern(
-            "pat_remove_001", validator_creds, min_confidence=0.5
+            "pat_remove_001",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success is True
@@ -98,7 +102,10 @@ class TestAtomicPromotePattern:
         assert staged is None
 
     def test_atomic_promote_returns_correct_pattern(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test that promotion returns the correct pattern data."""
         pattern = StagedPattern(
@@ -114,7 +121,9 @@ class TestAtomicPromotePattern:
         memory.stage_pattern(pattern, contributor_creds)
 
         success, promoted, _ = memory.atomic_promote_pattern(
-            "pat_data_001", validator_creds, min_confidence=0.5
+            "pat_data_001",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success is True
@@ -128,7 +137,9 @@ class TestAtomicPromotePattern:
         self._stage_pattern(memory, contributor_creds, "pat_steward_001", confidence=0.85)
 
         success, pattern, message = memory.atomic_promote_pattern(
-            "pat_steward_001", steward_creds, min_confidence=0.5
+            "pat_steward_001",
+            steward_creds,
+            min_confidence=0.5,
         )
 
         assert success is True
@@ -139,7 +150,10 @@ class TestAtomicPromotePattern:
     # =========================================================================
 
     def test_atomic_promote_below_confidence_threshold(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test promotion fails when confidence below threshold."""
         self._stage_pattern(memory, contributor_creds, "pat_low_conf", confidence=0.3)
@@ -155,14 +169,19 @@ class TestAtomicPromotePattern:
         assert "below threshold" in message
 
     def test_atomic_promote_pattern_stays_staged_on_failure(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test that pattern stays staged when promotion fails."""
         self._stage_pattern(memory, contributor_creds, "pat_stay_staged", confidence=0.3)
 
         # Try to promote with high threshold
         success, _, _ = memory.atomic_promote_pattern(
-            "pat_stay_staged", validator_creds, min_confidence=0.8
+            "pat_stay_staged",
+            validator_creds,
+            min_confidence=0.8,
         )
 
         assert success is False
@@ -172,7 +191,10 @@ class TestAtomicPromotePattern:
         assert staged is not None
 
     def test_atomic_promote_exact_confidence_threshold(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test promotion succeeds when confidence equals threshold."""
         self._stage_pattern(memory, contributor_creds, "pat_exact", confidence=0.7)
@@ -187,25 +209,35 @@ class TestAtomicPromotePattern:
         assert pattern is not None
 
     def test_atomic_promote_zero_confidence_threshold(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test promotion with zero confidence threshold (accepts all)."""
         self._stage_pattern(memory, contributor_creds, "pat_zero", confidence=0.1)
 
         success, pattern, _ = memory.atomic_promote_pattern(
-            "pat_zero", validator_creds, min_confidence=0.0
+            "pat_zero",
+            validator_creds,
+            min_confidence=0.0,
         )
 
         assert success is True
 
     def test_atomic_promote_max_confidence_threshold(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test promotion with maximum confidence threshold."""
         self._stage_pattern(memory, contributor_creds, "pat_max", confidence=1.0)
 
         success, pattern, _ = memory.atomic_promote_pattern(
-            "pat_max", validator_creds, min_confidence=1.0
+            "pat_max",
+            validator_creds,
+            min_confidence=1.0,
         )
 
         assert success is True
@@ -243,7 +275,9 @@ class TestAtomicPromotePattern:
         observer = AgentCredentials("observer", AccessTier.OBSERVER)
 
         success, pattern, message = memory.atomic_promote_pattern(
-            "pat_observer", observer, min_confidence=0.5
+            "pat_observer",
+            observer,
+            min_confidence=0.5,
         )
 
         assert success is False
@@ -256,7 +290,9 @@ class TestAtomicPromotePattern:
     def test_atomic_promote_nonexistent_pattern(self, memory, validator_creds):
         """Test promotion fails for nonexistent pattern."""
         success, promoted_pattern, message = memory.atomic_promote_pattern(
-            "nonexistent_pattern", validator_creds, min_confidence=0.5
+            "nonexistent_pattern",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success is False
@@ -296,7 +332,10 @@ class TestAtomicPromotePattern:
     # =========================================================================
 
     def test_promote_multiple_patterns_sequentially(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test promoting multiple patterns one after another."""
         # Stage multiple patterns
@@ -307,7 +346,9 @@ class TestAtomicPromotePattern:
         promoted_count = 0
         for i in range(5):
             success, _, _ = memory.atomic_promote_pattern(
-                f"pat_multi_{i}", validator_creds, min_confidence=0.5
+                f"pat_multi_{i}",
+                validator_creds,
+                min_confidence=0.5,
             )
             if success:
                 promoted_count += 1
@@ -332,7 +373,9 @@ class TestAtomicPromotePattern:
         results = []
         for i in range(5):
             success, _, _ = memory.atomic_promote_pattern(
-                f"pat_mixed_{i}", validator_creds, min_confidence=threshold
+                f"pat_mixed_{i}",
+                validator_creds,
+                min_confidence=threshold,
             )
             results.append(success)
 
@@ -341,14 +384,19 @@ class TestAtomicPromotePattern:
         assert results == [False, False, True, True, False]
 
     def test_idempotent_promotion_fails_on_second_attempt(
-        self, memory, validator_creds, contributor_creds
+        self,
+        memory,
+        validator_creds,
+        contributor_creds,
     ):
         """Test that promoting the same pattern twice fails the second time."""
         self._stage_pattern(memory, contributor_creds, "pat_once", confidence=0.85)
 
         # First promotion succeeds
         success1, _, msg1 = memory.atomic_promote_pattern(
-            "pat_once", validator_creds, min_confidence=0.5
+            "pat_once",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success1 is True
@@ -356,7 +404,9 @@ class TestAtomicPromotePattern:
 
         # Second promotion fails (pattern no longer staged)
         success2, _, msg2 = memory.atomic_promote_pattern(
-            "pat_once", validator_creds, min_confidence=0.5
+            "pat_once",
+            validator_creds,
+            min_confidence=0.5,
         )
 
         assert success2 is False

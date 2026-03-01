@@ -47,6 +47,7 @@ class XMLAgent:
         expertise_level: Level of expertise (expert, world-class, etc.)
         use_xml_structure: Enable/disable XML formatting (default: True)
         custom_instructions: Additional instructions to append
+
     """
 
     role: str
@@ -61,6 +62,7 @@ class XMLAgent:
 
         Returns:
             Structured prompt with XML tags for role, goal, backstory, etc.
+
         """
         if not self.use_xml_structure:
             # Legacy format for backward compatibility
@@ -134,6 +136,7 @@ class XMLTask:
         expected_output: Format and content of expected output
         agent: The XMLAgent assigned to this task
         examples: Optional list of example inputs/outputs
+
     """
 
     description: str
@@ -149,6 +152,7 @@ class XMLTask:
 
         Returns:
             Structured prompt with XML tags for description, context, etc.
+
         """
         if not self.agent.use_xml_structure:
             # Legacy format for backward compatibility
@@ -233,6 +237,7 @@ def parse_xml_response(response: str) -> dict[str, Any]:
         'Result'
         >>> parsed['has_structure']
         True
+
     """
     thinking_match = re.search(r"<thinking>(.*?)</thinking>", response, re.DOTALL)
     answer_match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
@@ -260,6 +265,7 @@ def extract_json_from_answer(answer: str) -> dict | None:
         >>> answer = "Here's the result: ```json\\n{'status': 'ok'}\\n```"
         >>> extract_json_from_answer(answer)
         {'status': 'ok'}
+
     """
     import json
 

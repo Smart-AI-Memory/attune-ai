@@ -114,6 +114,7 @@ Generate an outline that covers all these aspects comprehensively."""
 
         Returns:
             File content or fallback string.
+
         """
         target_path = Path(target)
         if target_path.exists() and target_path.is_file():
@@ -144,6 +145,7 @@ Generate an outline that covers all these aspects comprehensively."""
         Args:
             target: Target file path.
             content: Content to document.
+
         """
         try:
             from attune.models import (
@@ -161,7 +163,7 @@ Generate an outline that covers all these aspects comprehensively."""
                         line
                         for line in content.split("\n")
                         if line.strip() and not line.strip().startswith("#")
-                    ]
+                    ],
                 )
 
             if module_lines > 0:
@@ -177,11 +179,11 @@ Generate an outline that covers all these aspects comprehensively."""
                 if recommended_mode.value == "subscription":
                     logger.info(
                         f"Cost: {cost_estimate['quota_cost']} "
-                        f"(fits in {cost_estimate['fits_in_context']} context)"
+                        f"(fits in {cost_estimate['fits_in_context']} context)",
                     )
                 else:
                     logger.info(
-                        f"Cost: ~${cost_estimate['monetary_cost']:.4f} " f"(1M context window)"
+                        f"Cost: ~${cost_estimate['monetary_cost']:.4f} (1M context window)",
                     )
 
         except Exception as e:
@@ -198,6 +200,7 @@ Generate an outline that covers all these aspects comprehensively."""
 
         Returns:
             List of section title strings.
+
         """
         sections: list[str] = []
         top_level_pattern = re.compile(r"^(\d+)\.\s+([A-Za-z].*)")

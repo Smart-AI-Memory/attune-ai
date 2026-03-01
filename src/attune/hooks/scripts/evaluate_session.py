@@ -45,6 +45,7 @@ def run_evaluate_session(context: dict[str, Any]) -> dict[str, Any]:
             - learnable_topics: List of identified topics
             - reasoning: Human-readable evaluation reasoning
             - error: Error message if failed
+
     """
     try:
         collaboration_state = context.get("collaboration_state")
@@ -109,7 +110,7 @@ def run_evaluate_session(context: dict[str, Any]) -> dict[str, Any]:
 
                 logger.info(
                     f"Extracted {len(patterns)} patterns, stored {len(stored_ids)} "
-                    f"for user {user_id}"
+                    f"for user {user_id}",
                 )
         else:
             logger.debug(f"Session not recommended for extraction (score: {evaluation.score:.2f})")
@@ -132,6 +133,7 @@ def get_learning_summary(context: dict[str, Any]) -> dict[str, Any]:
 
     Returns:
         Learning summary dictionary
+
     """
     try:
         user_id = context.get("user_id")
@@ -158,6 +160,7 @@ def apply_learned_patterns(context: dict[str, Any]) -> str:
 
     Returns:
         Formatted markdown for context injection
+
     """
     try:
         user_id = context.get("user_id")

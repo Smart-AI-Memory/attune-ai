@@ -101,6 +101,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
 
         .. deprecated:: 4.3.0
             Use meta-workflow system instead.
+
         """
         warnings.warn(
             "ManageDocumentationCrew is deprecated since v4.3.0. "
@@ -136,7 +137,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
                         provider="anthropic",
                         api_key=api_key,
                     )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     # INTENTIONAL: executor init is best-effort
                     pass
 
@@ -146,19 +147,17 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
             try:
                 self._project_index = ProjectIndex(project_root)
                 if not self._project_index.load():
-                    print("  [ProjectIndex] Building index " "(first run)...")
+                    print("  [ProjectIndex] Building index (first run)...")
                     self._project_index.refresh()
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: index init is best-effort
-                print(f"  [ProjectIndex] Warning: " f"Could not load index: {e}")
+                print(f"  [ProjectIndex] Warning: Could not load index: {e}")
 
     def _init_agents(self) -> None:
         """Define the four crew agents."""
         self.analyst = Agent(
             role="Documentation Analyst",
-            goal=(
-                "Scan the codebase to identify files lacking " "documentation and find stale docs"
-            ),
+            goal=("Scan the codebase to identify files lacking documentation and find stale docs"),
             backstory=(
                 "Expert analyst who understands code structure, "
                 "docstrings, and documentation best practices. "
@@ -169,7 +168,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         )
         self.reviewer = Agent(
             role="Documentation Reviewer",
-            goal=("Cross-check findings and validate accuracy " "of the analysis"),
+            goal=("Cross-check findings and validate accuracy of the analysis"),
             backstory=(
                 "Experienced technical writer and reviewer "
                 "focused on quality, correctness, and ensuring "
@@ -179,7 +178,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         )
         self.synthesizer = Agent(
             role="Documentation Synthesizer",
-            goal=("Combine findings into actionable, prioritized " "recommendations"),
+            goal=("Combine findings into actionable, prioritized recommendations"),
             backstory=(
                 "Strategic thinker who excels at synthesis and "
                 "prioritization. Creates clear action plans that "
@@ -189,7 +188,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         )
         self.manager = Agent(
             role="Documentation Manager",
-            goal=("Coordinate actions of other agents and " "prioritize documentation work"),
+            goal=("Coordinate actions of other agents and prioritize documentation work"),
             backstory=(
                 "Understands the documentation needs of the "
                 "project and the capability of other agents. "
@@ -215,6 +214,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         Returns:
             List of Task objects for analyst, reviewer,
             and synthesizer.
+
         """
         return [
             Task(
@@ -286,6 +286,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         Returns:
             Tuple of (response_text, input_tokens,
             output_tokens, cost).
+
         """
         system_prompt = agent.get_system_prompt()
         user_prompt = task.get_user_prompt(context)
@@ -309,7 +310,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
                     response.tokens_output,
                     response.cost_estimate or 0.0,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # INTENTIONAL: fallback to mock on LLM error
                 return self._mock_response(agent, task, context, str(e))
         else:
@@ -337,6 +338,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
 
         Returns:
             Tuple of (response, in_tokens, out_tokens, cost).
+
         """
         mock_findings = {
             "Documentation Analyst": (
@@ -398,6 +400,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
 
         Returns:
             Dict with file counts/lists, or an error key.
+
         """
         path_obj = Path(path)
         if not path_obj.exists():
@@ -426,14 +429,15 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
 
         Returns:
             Context dict, or empty dict if unavailable.
+
         """
         if self._project_index is None:
             return {}
         try:
             return self._project_index.get_context_for_workflow("documentation")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # INTENTIONAL: index query is best-effort
-            print(f"  [ProjectIndex] Warning: " f"Could not get context: {e}")
+            print(f"  [ProjectIndex] Warning: Could not get context: {e}")
             return {}
 
 

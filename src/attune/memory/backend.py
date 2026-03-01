@@ -52,6 +52,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             True if stored successfully.
+
         """
         ...
 
@@ -68,6 +69,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             Stored value or None if not found/expired.
+
         """
         ...
 
@@ -79,6 +81,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             True if deleted, False if not found.
+
         """
         ...
 
@@ -90,6 +93,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             List of matching key names.
+
         """
         ...
 
@@ -98,6 +102,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             True if the backend is operational.
+
         """
         ...
 
@@ -106,6 +111,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             Dictionary of current statistics.
+
         """
         ...
 
@@ -118,6 +124,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             True if publish/subscribe is available.
+
         """
         ...
 
@@ -126,6 +133,7 @@ class MemoryBackend(Protocol):
 
         Returns:
             True if multi-node coordination is available.
+
         """
         ...
 
@@ -161,6 +169,7 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
 
         Returns:
             List of matching memory records as dicts.
+
         """
         ...
 
@@ -173,6 +182,7 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
 
         Returns:
             True if promotion was triggered.
+
         """
         ...
 

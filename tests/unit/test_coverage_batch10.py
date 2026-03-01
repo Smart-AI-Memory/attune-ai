@@ -386,7 +386,9 @@ class TestCmdSonnetOpusAnalysisRich:
     @patch("attune.telemetry.cli_analysis.RICH_AVAILABLE", True)
     @patch("attune.telemetry.cli_analysis.Console")
     def test_rich_low_fallback(
-        self, mock_console_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_console_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test Rich output with low fallback rate (<5%)."""
         from attune.telemetry.cli_analysis import cmd_sonnet_opus_analysis
@@ -428,7 +430,9 @@ class TestCmdSonnetOpusAnalysisRich:
     @patch("attune.telemetry.cli_analysis.RICH_AVAILABLE", True)
     @patch("attune.telemetry.cli_analysis.Console")
     def test_rich_moderate_fallback(
-        self, mock_console_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_console_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test Rich output with moderate fallback rate (5-15%)."""
         from attune.telemetry.cli_analysis import cmd_sonnet_opus_analysis
@@ -469,7 +473,9 @@ class TestCmdSonnetOpusAnalysisRich:
     @patch("attune.telemetry.cli_analysis.RICH_AVAILABLE", True)
     @patch("attune.telemetry.cli_analysis.Console")
     def test_rich_high_fallback(
-        self, mock_console_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_console_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test Rich output with high fallback rate (>15%)."""
         from attune.telemetry.cli_analysis import cmd_sonnet_opus_analysis
@@ -624,7 +630,9 @@ class TestCmdTelemetryShow:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_plain_text_entries(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test plain text output with telemetry entries."""
         from attune.telemetry.cli_core import cmd_telemetry_show
@@ -691,7 +699,9 @@ class TestCmdTelemetrySavings:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_plain_text_savings(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test plain text savings output."""
         from attune.telemetry.cli_core import cmd_telemetry_savings
@@ -744,7 +754,9 @@ class TestCmdTelemetryCacheStats:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_plain_text_cache_stats(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test plain text cache stats output."""
         from attune.telemetry.cli_core import cmd_telemetry_cache_stats
@@ -773,7 +785,9 @@ class TestCmdTelemetryCacheStats:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_low_hit_rate_recommendation(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test recommendations appear when cache hit rate is low."""
         from attune.telemetry.cli_core import cmd_telemetry_cache_stats
@@ -806,7 +820,9 @@ class TestCmdTelemetryCompare:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_insufficient_data(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test output when insufficient data for comparison."""
         from attune.telemetry.cli_core import cmd_telemetry_compare
@@ -827,7 +843,9 @@ class TestCmdTelemetryCompare:
     @patch("attune.telemetry.cli_core.RICH_AVAILABLE", False)
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_plain_text_comparison(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test plain text comparison output."""
         from attune.telemetry.cli_core import cmd_telemetry_compare
@@ -855,7 +873,9 @@ class TestCmdTelemetryReset:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_reset_no_confirm(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test reset without --confirm shows warning."""
         from attune.telemetry.cli_core import cmd_telemetry_reset
@@ -874,7 +894,9 @@ class TestCmdTelemetryReset:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_reset_confirmed(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test reset with --confirm deletes data."""
         from attune.telemetry.cli_core import cmd_telemetry_reset
@@ -897,7 +919,9 @@ class TestCmdTelemetryExport:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_export_no_data(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test export when no data exists."""
         from attune.telemetry.cli_core import cmd_telemetry_export
@@ -918,14 +942,16 @@ class TestCmdTelemetryExport:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_export_json_stdout(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test JSON export to stdout."""
         from attune.telemetry.cli_core import cmd_telemetry_export
 
         mock_tracker = MagicMock()
         mock_tracker.export_to_dict.return_value = [
-            {"ts": "2026-01-01", "workflow": "test", "cost": 0.01}
+            {"ts": "2026-01-01", "workflow": "test", "cost": 0.01},
         ]
         mock_tracker_cls.get_instance.return_value = mock_tracker
 
@@ -956,7 +982,7 @@ class TestCmdTelemetryExport:
 
         mock_tracker = MagicMock()
         mock_tracker.export_to_dict.return_value = [
-            {"ts": "2026-01-01", "workflow": "test", "cost": 0.01}
+            {"ts": "2026-01-01", "workflow": "test", "cost": 0.01},
         ]
         mock_tracker_cls.get_instance.return_value = mock_tracker
 
@@ -998,7 +1024,7 @@ class TestCmdTelemetryExport:
                 "tokens": {"input": 100, "output": 50},
                 "cache": {"hit": False, "type": ""},
                 "duration_ms": 500,
-            }
+            },
         ]
         mock_tracker_cls.get_instance.return_value = mock_tracker
 
@@ -1016,7 +1042,9 @@ class TestCmdTelemetryExport:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_export_csv_stdout(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test CSV export to stdout."""
         from attune.telemetry.cli_core import cmd_telemetry_export
@@ -1034,7 +1062,7 @@ class TestCmdTelemetryExport:
                 "tokens": {"input": 200, "output": 100},
                 "cache": {"hit": True, "type": "exact"},
                 "duration_ms": 800,
-            }
+            },
         ]
         mock_tracker_cls.get_instance.return_value = mock_tracker
 
@@ -1051,7 +1079,9 @@ class TestCmdTelemetryExport:
 
     @patch("attune.telemetry.cli_core.UsageTracker")
     def test_export_unknown_format(
-        self, mock_tracker_cls: MagicMock, capsys: pytest.CaptureFixture
+        self,
+        mock_tracker_cls: MagicMock,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         """Test export with unsupported format returns error."""
         from attune.telemetry.cli_core import cmd_telemetry_export
@@ -1283,6 +1313,7 @@ def _make_mock_result(
 
     Returns:
         MagicMock configured as a MetaWorkflowResult.
+
     """
     result = MagicMock()
     result.run_id = run_id
@@ -1475,7 +1506,9 @@ class TestPatternLearnerTierPerformance:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_tier_performance_with_enough_samples(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test tier performance insights require minimum 3 samples."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1508,7 +1541,9 @@ class TestPatternLearnerRecommendations:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_recommendations_from_insights(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test get_recommendations produces actionable text."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1613,7 +1648,9 @@ class TestPatternLearnerMemoryIntegration:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_search_no_memory_uses_file_fallback(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test search falls back to file-based when no memory available."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1650,7 +1687,9 @@ class TestPatternLearnerMemoryIntegration:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_search_memory_error_falls_back(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test search falls back to files when memory search errors."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1669,7 +1708,9 @@ class TestPatternLearnerMemoryIntegration:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_smart_recommendations_without_memory(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test get_smart_recommendations without memory returns base recs."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1685,7 +1726,9 @@ class TestPatternLearnerMemoryIntegration:
     @patch("attune.meta_workflows.pattern_learner.load_execution_result")
     @patch("attune.meta_workflows.pattern_learner.list_execution_results")
     def test_smart_recommendations_with_memory(
-        self, mock_list: MagicMock, mock_load: MagicMock
+        self,
+        mock_list: MagicMock,
+        mock_load: MagicMock,
     ) -> None:
         """Test get_smart_recommendations with memory enhances base recs."""
         from attune.meta_workflows.pattern_learner import PatternLearner
@@ -1704,7 +1747,9 @@ class TestPatternLearnerMemoryIntegration:
 
         learner = PatternLearner(executions_dir="/tmp/test", memory=mock_memory)
         recs = learner.get_smart_recommendations(
-            "tmpl-1", form_response=form_response, min_confidence=0.0
+            "tmpl-1",
+            form_response=form_response,
+            min_confidence=0.0,
         )
 
         assert isinstance(recs, list)
@@ -1734,7 +1779,7 @@ class TestPrintAnalyticsReport:
                         "description": "analyzer at cheap: 90% success",
                         "confidence": 0.8,
                         "sample_size": 10,
-                    }
+                    },
                 ],
                 "cost_analysis": [{"description": "Average workflow cost $0.15"}],
                 "failure_analysis": [{"description": "reviewer fails 20% of the time"}],
@@ -1796,8 +1841,6 @@ class TestDependencyParserMixin:
         class TestParser(DependencyParserMixin):
             """Test class using the mixin."""
 
-            pass
-
         return TestParser()
 
 
@@ -1840,7 +1883,7 @@ class TestParseRequirements(TestDependencyParserMixin):
             "http://example.com/pkg.whl\n"
             "./local-pkg\n"
             "/absolute/pkg\n"
-            "requests>=2.28.0\n"
+            "requests>=2.28.0\n",
         )
 
         parser = self._make_parser()
@@ -1910,8 +1953,8 @@ class TestParsePyproject(TestDependencyParserMixin):
                 "requests>=2.28.0",
                 "flask==2.3.0",
             ]
-        """
-            )
+        """,
+            ),
         )
 
         parser = self._make_parser()
@@ -1934,8 +1977,8 @@ class TestParsePyproject(TestDependencyParserMixin):
 
             [tool.poetry.dev-dependencies]
             pytest = "^7.0"
-        """
-            )
+        """,
+            ),
         )
 
         parser = self._make_parser()
@@ -1961,8 +2004,8 @@ class TestParsePyproject(TestDependencyParserMixin):
             [tool.poetry.dependencies]
             python = "^3.10"
             my-lib = {version = "^1.0", extras = ["all"]}
-        """
-            )
+        """,
+            ),
         )
 
         parser = self._make_parser()
@@ -1982,8 +2025,8 @@ class TestParsePyproject(TestDependencyParserMixin):
                 "requests>=2.28.0",
                 "flask==2.3.0",
             ]
-        """
-            )
+        """,
+            ),
         )
 
         parser = self._make_parser()
@@ -2018,8 +2061,8 @@ class TestParsePackageJson(TestDependencyParserMixin):
                     "devDependencies": {
                         "jest": "^29.0.0",
                     },
-                }
-            )
+                },
+            ),
         )
 
         parser = self._make_parser()
@@ -2078,8 +2121,8 @@ class TestParsePoetryLock(TestDependencyParserMixin):
             [[package]]
             name = "flask"
             version = "2.3.0"
-        """
-            )
+        """,
+            ),
         )
 
         parser = self._make_parser()
@@ -2109,8 +2152,6 @@ class TestParsePoetryLock(TestDependencyParserMixin):
             class TestParser(mod.DependencyParserMixin):
                 """Test parser."""
 
-                pass
-
             p = TestParser()
             deps = p._parse_poetry_lock(lock_file)
             # Should return empty since tomllib is not available
@@ -2130,9 +2171,9 @@ class TestParsePackageLockJson(TestDependencyParserMixin):
                         "": {"name": "root", "version": "1.0.0"},
                         "node_modules/express": {"version": "4.18.2"},
                         "node_modules/lodash": {"version": "4.17.21"},
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
 
         parser = self._make_parser()
@@ -2153,9 +2194,9 @@ class TestParsePackageLockJson(TestDependencyParserMixin):
                     "dependencies": {
                         "express": {"version": "4.18.2"},
                         "lodash": {"version": "4.17.21"},
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
 
         parser = self._make_parser()
@@ -2184,9 +2225,9 @@ class TestParsePackageLockJson(TestDependencyParserMixin):
                 {
                     "packages": {
                         "": {"name": "root", "version": "1.0.0"},
-                    }
-                }
-            )
+                    },
+                },
+            ),
         )
 
         parser = self._make_parser()

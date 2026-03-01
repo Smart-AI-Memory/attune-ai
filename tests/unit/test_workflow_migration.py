@@ -124,7 +124,8 @@ class TestResolveWorkflowMigration:
         config = MigrationConfig(mode=MIGRATION_MODE_AUTO)
 
         name, kwargs, was_migrated = resolve_workflow_migration(
-            "test-gen-behavioral", config=config
+            "test-gen-behavioral",
+            config=config,
         )
 
         assert name == "test-gen"
@@ -139,7 +140,8 @@ class TestResolveWorkflowMigration:
         config = MigrationConfig(mode=MIGRATION_MODE_LEGACY)
 
         name, kwargs, was_migrated = resolve_workflow_migration(
-            "test-gen-behavioral", config=config
+            "test-gen-behavioral",
+            config=config,
         )
 
         assert name == "test-gen-behavioral"

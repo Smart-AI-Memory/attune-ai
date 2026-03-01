@@ -194,8 +194,8 @@ class TestLangGraphAgent:
                 "messages": [
                     {"content": "first message"},
                     {"content": "last message"},
-                ]
-            }
+                ],
+            },
         )
 
         agent = LangGraphAgent(config, runnable=mock_runnable)
@@ -506,7 +506,8 @@ class TestLangGraphAdapter:
         mock_chat_class.return_value = MagicMock()
 
         with patch.dict(
-            "sys.modules", {"langchain_anthropic": MagicMock(ChatAnthropic=mock_chat_class)}
+            "sys.modules",
+            {"langchain_anthropic": MagicMock(ChatAnthropic=mock_chat_class)},
         ):
             try:
                 adapter._get_llm(config)
@@ -536,11 +537,14 @@ class TestLangGraphAdapter:
 
             # Mock langchain_anthropic to ensure we reach the api_key check
             mock_chat_class = MagicMock()
-            with patch.dict(
-                "sys.modules", {"langchain_anthropic": MagicMock(ChatAnthropic=mock_chat_class)}
+            with (
+                patch.dict(
+                    "sys.modules",
+                    {"langchain_anthropic": MagicMock(ChatAnthropic=mock_chat_class)},
+                ),
+                pytest.raises(ValueError, match="API key required"),
             ):
-                with pytest.raises(ValueError, match="API key required"):
-                    adapter._get_llm(config)
+                adapter._get_llm(config)
 
     def test_create_agent_not_available(self):
         """Test create_agent raises when LangGraph not available."""

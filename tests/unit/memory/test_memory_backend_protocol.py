@@ -136,7 +136,7 @@ class TestRedisShortTermMemoryProtocol:
     that bridges the current API to the protocol.
     """
 
-    @pytest.fixture()
+    @pytest.fixture
     def redis_mem(self):
         """Create RedisShortTermMemory in mock mode."""
         try:
@@ -196,7 +196,7 @@ class TestAMSMemoryBackendProtocol:
     Uses mocked AMS client so no server is needed.
     """
 
-    @pytest.fixture()
+    @pytest.fixture
     def backend(self):
         """Create AMSMemoryBackend with mocked client."""
         from unittest.mock import AsyncMock
@@ -322,7 +322,11 @@ class MinimalBackend:
         self._data: dict[str, Any] = {}
 
     def stash(
-        self, key: str, value: Any, ttl: int | None = None, agent_id: str | None = None
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        agent_id: str | None = None,
     ) -> bool:
         self._data[key] = value
         return True

@@ -15,7 +15,7 @@ Choose your installation option:
 === "Recommended (Developer)"
 
     ```bash
-    pip install attune-ai[developer]
+    pip install 'attune-ai[developer]'
     ```
 
     Includes: CLI tools, VSCode extension support, all workflows, local telemetry.
@@ -28,21 +28,14 @@ Choose your installation option:
 
     Core functionality only. Add extras later as needed.
 
-=== "Full"
+=== "All Features"
 
     ```bash
-    pip install attune-ai[full]
+    pip install 'attune-ai[all]'
     ```
 
-    Everything: LLM providers, healthcare support, webhooks, caching.
-
-=== "Healthcare"
-
-    ```bash
-    pip install attune-ai[healthcare]
-    ```
-
-    Includes: FHIR client, HL7 parsing, HIPAA audit logging.
+    Everything: agents, memory, semantic caching, enterprise
+    features.
 
 ### Verify Installation
 
@@ -148,7 +141,7 @@ python -m attune.models.cli provider --check
 pip install --upgrade attune-ai[developer]
 
 # Or for development
-pip install -e .[dev]
+pip install -e '.[dev]'
 ```
 
 ### Python version too old

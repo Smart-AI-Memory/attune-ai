@@ -50,7 +50,7 @@ def cmd_telemetry_show(args: Namespace) -> int:
     except ImportError:
         print("❌ Telemetry module not available")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Telemetry error: {e}")
         print(f"❌ Error: {e}")
@@ -104,7 +104,7 @@ def cmd_telemetry_savings(args: Namespace) -> int:
     except ImportError:
         print("❌ Telemetry module not available")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Telemetry error: {e}")
         print(f"❌ Error: {e}")
@@ -161,7 +161,7 @@ def cmd_telemetry_export(args: Namespace) -> int:
     except ValueError as e:
         print(f"❌ Invalid path: {e}")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Export error: {e}")
         print(f"❌ Error: {e}")
@@ -248,7 +248,7 @@ def cmd_telemetry_routing_stats(args: Namespace) -> int:
         print(f"❌ Adaptive routing not available: {e}")
         print("   Ensure attune-ai is installed with telemetry support")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Routing stats error: {e}")
         print(f"❌ Error: {e}")
@@ -284,7 +284,8 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
             for wf_name in workflows:
                 try:
                     should_upgrade, reason = router.recommend_tier_upgrade(
-                        workflow=wf_name, stage=None
+                        workflow=wf_name,
+                        stage=None,
                     )
 
                     if should_upgrade:
@@ -292,9 +293,9 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
                             {
                                 "workflow": wf_name,
                                 "reason": reason,
-                            }
+                            },
                         )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     # INTENTIONAL: Skip workflows without enough data
                     continue
 
@@ -331,7 +332,7 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Adaptive routing not available: {e}")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Routing check error: {e}")
         print(f"❌ Error: {e}")
@@ -395,7 +396,9 @@ def cmd_telemetry_models(args: Namespace) -> int:
             print(f"\n  Provider: {prov.upper()}")
 
             for model_name, mstats in sorted(
-                models.items(), key=lambda x: x[1]["total_cost"], reverse=True
+                models.items(),
+                key=lambda x: x[1]["total_cost"],
+                reverse=True,
             ):
                 calls = mstats["calls"]
                 avg_cost = mstats["total_cost"] / calls if calls > 0 else 0
@@ -415,7 +418,7 @@ def cmd_telemetry_models(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Telemetry not available: {e}")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Models error: {e}")
         print(f"❌ Error: {e}")
@@ -474,7 +477,7 @@ def cmd_telemetry_agents(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Agent tracking not available: {e}")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Agents error: {e}")
         print(f"❌ Error: {e}")
@@ -541,7 +544,7 @@ def cmd_telemetry_signals(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Coordination signals not available: {e}")
         return 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Signals error: {e}")
         print(f"❌ Error: {e}")

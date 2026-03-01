@@ -96,10 +96,11 @@ def get_strategy(strategy_name: str) -> ExecutionStrategy:
         >>> strategy = get_strategy("sequential")
         >>> isinstance(strategy, SequentialStrategy)
         True
+
     """
     if strategy_name not in _STRATEGY_REGISTRY:
         raise ValueError(
-            f"Unknown strategy: {strategy_name}. Available: {list(_STRATEGY_REGISTRY.keys())}"
+            f"Unknown strategy: {strategy_name}. Available: {list(_STRATEGY_REGISTRY.keys())}",
         )
 
     strategy_class = _STRATEGY_REGISTRY[strategy_name]
@@ -114,6 +115,7 @@ def register_strategy(name: str, strategy_class: type[ExecutionStrategy]) -> Non
     Args:
         name: Strategy name
         strategy_class: Strategy class
+
     """
     _STRATEGY_REGISTRY[name] = strategy_class
 

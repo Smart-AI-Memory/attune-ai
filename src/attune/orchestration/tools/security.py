@@ -35,6 +35,7 @@ class RealSecurityAuditor:
 
         Args:
             project_root: Project root directory
+
         """
         self.project_root = Path(project_root).resolve()
 
@@ -49,6 +50,7 @@ class RealSecurityAuditor:
 
         Raises:
             RuntimeError: If security audit fails
+
         """
         logger.info(f"Running security audit on {target_path}")
 
@@ -112,7 +114,7 @@ class RealSecurityAuditor:
                         "confidence": issue.get("issue_confidence"),
                         "message": issue.get("issue_text"),
                         "test_id": issue.get("test_id"),
-                    }
+                    },
                 )
 
             total_issues = len(results)
@@ -120,7 +122,7 @@ class RealSecurityAuditor:
 
             logger.info(
                 f"Security audit complete: {total_issues} issues "
-                f"(critical={critical_count}, high={high_count}, medium={medium_count})"
+                f"(critical={critical_count}, high={high_count}, medium={medium_count})",
             )
 
             return SecurityReport(

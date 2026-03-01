@@ -100,7 +100,7 @@ class WorkflowReport:
     ) -> None:
         """Add a section to the report."""
         self.sections.append(
-            ReportSection(title=title, content=content, collapsed=collapsed, style=style)
+            ReportSection(title=title, content=content, collapsed=collapsed, style=style),
         )
 
     def render(self, console: ConsoleType | None = None, use_rich: bool = True) -> str:
@@ -112,6 +112,7 @@ class WorkflowReport:
 
         Returns:
             Rendered report as string (for plain text) or prints to console (for Rich)
+
         """
         if use_rich and RICH_AVAILABLE and console is not None:
             self._render_rich(console)
@@ -160,9 +161,9 @@ class WorkflowReport:
             # Try to print directly (might be a Rich renderable)
             try:
                 console.print(
-                    Panel(section.content, title=section.title, border_style=border_style)
+                    Panel(section.content, title=section.title, border_style=border_style),
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # INTENTIONAL: Graceful fallback for unknown content types
                 console.print(f"\n[bold]{section.title}[/bold]")
                 console.print(str(section.content))
@@ -216,14 +217,24 @@ class WorkflowReport:
 
 
 class FindingsTable:
-    """Render findings as Rich Table or plain text."""
+    """Render a list of Finding objects as a Rich Table or plain text.
+
+    Args:
+        findings: List of Finding objects to render.
+
+    """
 
     def __init__(self, findings: list[Finding]) -> None:
         """Initialize with list of findings."""
         self.findings = findings
 
     def to_rich_table(self) -> Table:
-        """Convert findings to Rich Table."""
+        """Convert findings to a color-coded Rich Table.
+
+        Returns:
+            Rich Table with Severity, Location, and Message columns.
+
+        """
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Severity", style="bold", width=8)
         table.add_column("Location", style="cyan")
@@ -246,7 +257,13 @@ class FindingsTable:
         return table
 
     def to_plain(self) -> str:
-        """Convert findings to plain text."""
+        """Convert findings to indented plain text.
+
+        Returns:
+            Multi-line string with ``[SEVERITY] file:line``
+            format, or ``"  No findings."`` if empty.
+
+        """
         if not self.findings:
             return "  No findings."
 
@@ -272,9 +289,9 @@ class MetricsPanel:
         """Get level name for score."""
         if score >= 85:
             return "excellent"
-        elif score >= 70:
+        if score >= 70:
             return "good"
-        elif score >= 50:
+        if score >= 50:
             return "needs work"
         return "critical"
 
@@ -283,9 +300,9 @@ class MetricsPanel:
         """Get Rich style for score."""
         if score >= 85:
             return "green"
-        elif score >= 70:
+        if score >= 70:
             return "yellow"
-        elif score >= 50:
+        if score >= 50:
             return "orange1"
         return "red"
 
@@ -294,9 +311,9 @@ class MetricsPanel:
         """Get icon for score."""
         if score >= 85:
             return "[green]:heavy_check_mark:[/green]"
-        elif score >= 70:
+        if score >= 70:
             return "[yellow]:large_yellow_circle:[/yellow]"
-        elif score >= 50:
+        if score >= 50:
             return "[orange1]:warning:[/orange1]"
         return "[red]:x:[/red]"
 
@@ -305,9 +322,9 @@ class MetricsPanel:
         """Get plain text icon for score."""
         if score >= 85:
             return "[OK]"
-        elif score >= 70:
+        if score >= 70:
             return "[--]"
-        elif score >= 50:
+        if score >= 50:
             return "[!!]"
         return "[XX]"
 
@@ -321,9 +338,10 @@ class MetricsPanel:
 
         Returns:
             Rich Panel with formatted score
+
         """
         if not RICH_AVAILABLE or Panel is None:
-            raise RuntimeError("Rich library not available. " "Install with: pip install rich")
+            raise RuntimeError("Rich library not available. Install with: pip install rich")
 
         style = cls.get_style(score)
         icon = cls.get_icon(score)
@@ -342,6 +360,7 @@ class MetricsPanel:
 
         Returns:
             Plain text score display
+
         """
         icon = cls.get_plain_icon(score)
         level = cls.get_level(score)
@@ -375,6 +394,7 @@ def format_workflow_result(
 
     Returns:
         WorkflowReport instance
+
     """
     report = WorkflowReport(
         title=title,

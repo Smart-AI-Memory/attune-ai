@@ -17,4 +17,3 @@ def rich_console_width(monkeypatch):
     """
     monkeypatch.setenv("COLUMNS", "120")
     monkeypatch.setenv("LINES", "50")
-    yield

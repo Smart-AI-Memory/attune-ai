@@ -72,7 +72,8 @@ class TestCmdCreate:
         assert "✅ Workflow Created Successfully!" in captured.out
 
         mock_reg.recommend_for_workflow.assert_called_once_with(
-            workflow_type="domain", domain="general"
+            workflow_type="domain",
+            domain="general",
         )
         mock_method.create_workflow.assert_called_once()
 
@@ -115,7 +116,8 @@ class TestCmdCreate:
         assert "Healthcare Pattern" in captured.out
 
         mock_reg.recommend_for_workflow.assert_called_once_with(
-            workflow_type="domain", domain="healthcare"
+            workflow_type="domain",
+            domain="healthcare",
         )
 
     @patch("attune.scaffolding.cli.get_pattern_registry")
@@ -210,7 +212,11 @@ class TestCmdCreate:
     @patch("attune.scaffolding.cli.PatternCompose")
     @patch("builtins.input", return_value="all")
     def test_create_interactive_select_all(
-        self, mock_input, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_input,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with interactive mode selecting all patterns."""
         # Setup mocks
@@ -258,7 +264,11 @@ class TestCmdCreate:
     @patch("attune.scaffolding.cli.PatternCompose")
     @patch("builtins.input", return_value="1,2")
     def test_create_interactive_select_specific(
-        self, mock_input, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_input,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with interactive mode selecting specific patterns."""
         # Setup mocks
@@ -303,7 +313,11 @@ class TestCmdCreate:
     @patch("attune.scaffolding.cli.PatternCompose")
     @patch("builtins.input", return_value="invalid")
     def test_create_interactive_invalid_selection(
-        self, mock_input, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_input,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with interactive mode and invalid selection."""
         # Setup mocks
@@ -343,7 +357,11 @@ class TestCmdCreate:
     @patch("attune.scaffolding.cli.PatternCompose")
     @patch("builtins.input", return_value="10")
     def test_create_interactive_index_out_of_range(
-        self, mock_input, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_input,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with interactive mode and out-of-range index."""
         # Setup mocks
@@ -535,7 +553,8 @@ class TestCmdCreate:
         captured = capsys.readouterr()
         assert "Type: coach" in captured.out
         mock_reg.recommend_for_workflow.assert_called_once_with(
-            workflow_type="coach", domain="general"
+            workflow_type="coach",
+            domain="general",
         )
 
     @patch("attune.scaffolding.cli.get_pattern_registry")
@@ -829,7 +848,7 @@ class TestArgumentParsing:
         create_parser.add_argument("--interactive", "-i", action="store_true")
 
         args = parser.parse_args(
-            ["create", "test", "-d", "healthcare", "-t", "domain", "-m", "tdd"]
+            ["create", "test", "-d", "healthcare", "-t", "domain", "-m", "tdd"],
         )
         assert args.domain == "healthcare"
         assert args.type == "domain"
@@ -917,7 +936,10 @@ class TestEdgeCases:
     @patch("attune.scaffolding.cli.get_pattern_registry")
     @patch("attune.scaffolding.cli.PatternCompose")
     def test_create_with_special_characters_in_name(
-        self, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with special characters in wizard name."""
         # Setup mocks
@@ -954,7 +976,11 @@ class TestEdgeCases:
     @patch("attune.scaffolding.cli.PatternCompose")
     @patch("builtins.input", return_value="")
     def test_create_interactive_empty_input(
-        self, mock_input, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_input,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command with interactive mode and empty input."""
         # Setup mocks
@@ -1013,7 +1039,10 @@ class TestEdgeCases:
     @patch("attune.scaffolding.cli.get_pattern_registry")
     @patch("attune.scaffolding.cli.PatternCompose")
     def test_create_with_patterns_result_missing_key(
-        self, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test create command when result is missing 'patterns' key."""
         # Setup mocks
@@ -1090,7 +1119,10 @@ class TestLoggingOutput:
     @patch("attune.scaffolding.cli.get_pattern_registry")
     @patch("attune.scaffolding.cli.PatternCompose")
     def test_create_command_outputs_formatted_sections(
-        self, mock_pattern_compose, mock_registry, capsys
+        self,
+        mock_pattern_compose,
+        mock_registry,
+        capsys,
     ):
         """Test that create command outputs properly formatted sections."""
         # Setup mocks
@@ -1133,7 +1165,9 @@ class TestErrorHandling:
     @patch("attune.scaffolding.cli.get_pattern_registry")
     @patch("attune.scaffolding.cli.PatternCompose")
     def test_create_when_pattern_compose_raises_exception(
-        self, mock_pattern_compose, mock_registry
+        self,
+        mock_pattern_compose,
+        mock_registry,
     ):
         """Test create command when PatternCompose raises exception."""
         # Setup mocks

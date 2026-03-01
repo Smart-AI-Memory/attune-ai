@@ -183,7 +183,7 @@ class CoordinationSignalsMixin:
             )
 
         target = target_agent or "broadcast"
-        key = f"{self.PREFIX_COORDINATION}{signal_type}:" f"{credentials.agent_id}:{target}"
+        key = f"{self.PREFIX_COORDINATION}{signal_type}:{credentials.agent_id}:{target}"
         payload = {
             "signal_type": signal_type,
             "from_agent": credentials.agent_id,
@@ -213,9 +213,9 @@ class CoordinationSignalsMixin:
 
         """
         if signal_type:
-            pattern = f"{self.PREFIX_COORDINATION}{signal_type}:*:" f"{credentials.agent_id}"
+            pattern = f"{self.PREFIX_COORDINATION}{signal_type}:*:{credentials.agent_id}"
         else:
-            pattern = f"{self.PREFIX_COORDINATION}*:" f"{credentials.agent_id}"
+            pattern = f"{self.PREFIX_COORDINATION}*:{credentials.agent_id}"
 
         # Also get broadcasts
         broadcast_pattern = f"{self.PREFIX_COORDINATION}*:*:broadcast"

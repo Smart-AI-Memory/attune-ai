@@ -37,6 +37,7 @@ class AgentRegistry:
         # List all available agents
         for name in registry.list_agents():
             print(name)
+
     """
 
     _instance: "AgentRegistry | None" = None
@@ -81,7 +82,7 @@ class AgentRegistry:
         """
         if config.name in self._agents and not overwrite:
             raise ValueError(
-                f"Agent '{config.name}' already registered. Use overwrite=True to replace."
+                f"Agent '{config.name}' already registered. Use overwrite=True to replace.",
             )
 
         self._agents[config.name] = config

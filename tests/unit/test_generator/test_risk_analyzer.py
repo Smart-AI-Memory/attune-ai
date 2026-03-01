@@ -274,7 +274,8 @@ class TestRiskAnalyzer:
 
         # Test with complex wizard
         complex_result = analyzer.analyze(
-            workflow_id="complex", pattern_ids=["linear_flow", "approval", "phased_processing"]
+            workflow_id="complex",
+            pattern_ids=["linear_flow", "approval", "phased_processing"],
         )
 
         # Both should have valid coverage recommendations
@@ -304,7 +305,8 @@ class TestRiskAnalysisIntegration:
 
         # Step 1: Analyze
         analysis = analyzer.analyze(
-            workflow_id="integration_wizard", pattern_ids=["linear_flow", "approval"]
+            workflow_id="integration_wizard",
+            pattern_ids=["linear_flow", "approval"],
         )
 
         # Step 2: Get test cases

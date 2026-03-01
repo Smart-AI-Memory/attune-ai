@@ -64,6 +64,7 @@ class WorkflowContext:
         ...     .with_context(ctx)
         ...     .build()
         ... )
+
     """
 
     cache: CacheService | None = None
@@ -85,6 +86,7 @@ class WorkflowContext:
 
         Returns:
             Dictionary mapping service name to service instance.
+
         """
         result: dict[str, Any] = {}
         for name in (
@@ -112,6 +114,7 @@ class WorkflowContext:
 
         Returns:
             WorkflowContext with CostService only
+
         """
         return cls(cost=CostService())
 
@@ -134,6 +137,7 @@ class WorkflowContext:
 
         Returns:
             WorkflowContext with cache, cost, and telemetry services
+
         """
         return cls(
             cache=CacheService(workflow_name, enable=enable_cache),

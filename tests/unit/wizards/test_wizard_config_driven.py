@@ -12,14 +12,10 @@ Created: 2026-02-15
 """
 
 import pytest
-
-from pathlib import Path
-from unittest.mock import MagicMock
-
 import yaml
 
 from attune.meta_workflows.models import FormQuestion, QuestionType
-from attune.wizards.base import StepType, WizardStep
+from attune.wizards.base import StepType
 from attune.wizards.config_driven import (
     ConfigDrivenWizard,
     _interpolate_dict,
@@ -30,7 +26,6 @@ from attune.wizards.config_driven import (
     _validate_schema,
 )
 from attune.wizards.session import WizardSession
-
 
 # =========================================================================
 # Session variable interpolation
@@ -556,3 +551,68 @@ class TestConfigDrivenWizard:
         wizard.process_step_result(wizard.steps[0], {"key": "value"})
 
         assert wizard._session.get("s1_result") == {"key": "value"}
+
+
+# =========================================================================
+# File write error paths
+# =========================================================================
+
+
+class TestToYamlErrorPaths:
+    """Test to_yaml error handling for PermissionError and OSError."""
+
+    def _make_wizard(self, tmp_path):
+        """Create a ConfigDrivenWizard from a minimal YAML for testing."""
+        yaml_content = {
+            "schema_version": "1.0",
+            "wizard_id": "err-test",
+            "name": "Error Test",
+            "description": "Test error paths",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+        yaml_path = tmp_path / "err-test.yaml"
+        with yaml_path.open("w") as f:
+            yaml.safe_dump(yaml_content, f)
+        return ConfigDrivenWizard.from_yaml(str(yaml_path))
+
+    def test_to_yaml_permission_error_raises(self, tmp_path):
+        """Test to_yaml raises PermissionError on write failure."""
+        from pathlib import Path
+        from unittest.mock import patch as _patch
+
+        wizard = self._make_wizard(tmp_path)
+        output = tmp_path / "output.yaml"
+
+        with _patch.object(Path, "open", side_effect=PermissionError("read-only filesystem")):
+            with pytest.raises(PermissionError, match="read-only filesystem"):
+                wizard.to_yaml(str(output))
+
+    def test_to_yaml_os_error_raises_value_error(self, tmp_path):
+        """Test to_yaml wraps OSError as ValueError."""
+        from pathlib import Path
+        from unittest.mock import patch as _patch
+
+        wizard = self._make_wizard(tmp_path)
+        output = tmp_path / "output.yaml"
+
+        with _patch.object(Path, "open", side_effect=OSError("disk full")):
+            with pytest.raises(ValueError, match="Cannot write wizard YAML"):
+                wizard.to_yaml(str(output))
+
+    def test_build_prompt_context_raises_without_session(self, tmp_path):
+        """Test build_prompt_context raises RuntimeError without session."""
+        wizard = self._make_wizard(tmp_path)
+        wizard._session = None
+        step = wizard.steps[0]
+
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            wizard.build_prompt_context(step)
+
+    def test_process_step_result_raises_without_session(self, tmp_path):
+        """Test process_step_result raises RuntimeError without session."""
+        wizard = self._make_wizard(tmp_path)
+        wizard._session = None
+        step = wizard.steps[0]
+
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            wizard.process_step_result(step, {"key": "value"})

@@ -56,6 +56,7 @@ def cost_tracker(tmp_path: Path) -> Any:
 
     Returns:
         CostTracker instance with isolated storage
+
     """
     from attune.cost_tracker import CostTracker
 
@@ -75,6 +76,7 @@ def _make_cost_report(
 
     Returns:
         CostReport instance
+
     """
     return CostReport(
         total_cost=total_cost,
@@ -100,6 +102,7 @@ def _make_workflow_result(
 
     Returns:
         WorkflowResult instance
+
     """
     now = datetime.now()
     return WorkflowResult(
@@ -502,7 +505,7 @@ class TestPRReviewWorkflowExecute:
                     "severity": "low",
                     "title": "Minor style",
                     "suggestion": "Use f-strings",
-                }
+                },
             ],
             "agents_used": ["CodeReviewer"],
             "cost": 0.02,
@@ -531,7 +534,7 @@ class TestPRReviewWorkflowExecute:
                     "severity": "medium",
                     "title": "Weak hashing",
                     "remediation": "Use bcrypt",
-                }
+                },
             ],
             "agents_used": ["SecurityScanner"],
             "cost": 0.03,
@@ -795,6 +798,7 @@ class TestFormatPRReviewReport:
 
         Returns:
             PRReviewResult instance
+
         """
         defaults = {
             "success": True,
@@ -1140,8 +1144,8 @@ class TestSecureReleasePipelineHelpers:
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(
             final_output={
-                "assessment": {"severity_breakdown": {"critical": 2, "high": 3, "medium": 5}}
-            }
+                "assessment": {"severity_breakdown": {"critical": 2, "high": 3, "medium": 5}},
+            },
         )
         findings = pipeline._aggregate_findings(None, security_result, None)
         assert findings["critical"] == 2
@@ -1240,7 +1244,7 @@ class TestSecureReleasePipelineHelpers:
                     {"title": "RCE"},
                 ],
                 "high_findings": [{"title": "XSS"}],
-            }
+            },
         }
         blockers, warnings, recs = pipeline._generate_recommendations(crew_report, None, None, None)
         assert len(blockers) == 2
@@ -1251,10 +1255,13 @@ class TestSecureReleasePipelineHelpers:
         """Test recommendations with critical risk level."""
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(
-            final_output={"assessment": {"risk_level": "critical"}}
+            final_output={"assessment": {"risk_level": "critical"}},
         )
         blockers, warnings, recs = pipeline._generate_recommendations(
-            None, security_result, None, None
+            None,
+            security_result,
+            None,
+            None,
         )
         assert any("critical risk" in b.lower() for b in blockers)
 
@@ -1263,7 +1270,10 @@ class TestSecureReleasePipelineHelpers:
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(final_output={"assessment": {"risk_level": "high"}})
         blockers, warnings, recs = pipeline._generate_recommendations(
-            None, security_result, None, None
+            None,
+            security_result,
+            None,
+            None,
         )
         assert any("high risk" in w.lower() for w in warnings)
 
@@ -1288,10 +1298,13 @@ class TestSecureReleasePipelineHelpers:
             final_output={
                 "blockers": ["Missing changelog"],
                 "warnings": ["Version bump needed"],
-            }
+            },
         )
         blockers, warnings, recs = pipeline._generate_recommendations(
-            None, None, None, release_result
+            None,
+            None,
+            None,
+            release_result,
         )
         assert any("Missing changelog" in b for b in blockers)
         assert any("Version bump" in w for w in warnings)
@@ -1301,7 +1314,10 @@ class TestSecureReleasePipelineHelpers:
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(final_output={"assessment": {"risk_level": "high"}})
         blockers, warnings, recs = pipeline._generate_recommendations(
-            None, security_result, None, None
+            None,
+            security_result,
+            None,
+            None,
         )
         assert any("accepted risks" in r.lower() for r in recs)
 
@@ -1404,7 +1420,7 @@ class TestFormatSecureReleaseReport:
             success=True,
             go_no_go="GO",
             security_audit=_make_workflow_result(
-                final_output={"assessment": {"risk_score": 30, "risk_level": "medium"}}
+                final_output={"assessment": {"risk_score": 30, "risk_level": "medium"}},
             ),
             total_cost=0.02,
             total_duration_ms=2000,
@@ -1432,7 +1448,7 @@ class TestFormatSecureReleaseReport:
             success=True,
             go_no_go="GO",
             release_prep=_make_workflow_result(
-                final_output={"approved": True, "confidence": "high"}
+                final_output={"approved": True, "confidence": "high"},
             ),
             total_cost=0.02,
             total_duration_ms=2000,
@@ -1448,7 +1464,7 @@ class TestFormatSecureReleaseReport:
             success=False,
             go_no_go="NO_GO",
             release_prep=_make_workflow_result(
-                final_output={"approved": False, "confidence": "low"}
+                final_output={"approved": False, "confidence": "low"},
             ),
             total_cost=0.02,
             total_duration_ms=2000,
@@ -1557,7 +1573,10 @@ class TestReportSection:
     def test_create_with_options(self) -> None:
         """Test creating ReportSection with all options."""
         section = ReportSection(
-            title="Errors", content="Error details", collapsed=True, style="error"
+            title="Errors",
+            content="Error details",
+            collapsed=True,
+            style="error",
         )
         assert section.collapsed is True
         assert section.style == "error"
@@ -1911,6 +1930,7 @@ class MockParsingWorkflow(ResponseParsingMixin):
 
         Args:
             xml_config: XML configuration to return from _get_xml_config
+
         """
         self._xml_config = xml_config or {}
 
@@ -1919,6 +1939,7 @@ class MockParsingWorkflow(ResponseParsingMixin):
 
         Returns:
             XML configuration dict
+
         """
         return self._xml_config
 
@@ -2082,7 +2103,8 @@ class TestResponseParsingMixinParseLocation:
     def test_unparseable_location(self) -> None:
         """Test unparseable location returns defaults."""
         file, line, col = self.parser._parse_location_string(
-            "somewhere in the code", ["fallback.py"]
+            "somewhere in the code",
+            ["fallback.py"],
         )
         assert file == "fallback.py"
         assert line == 1
@@ -2309,7 +2331,7 @@ class TestResponseParsingMixinParseXml:
             xml_config={
                 "enforce_response_xml": True,
                 "fallback_on_parse_error": True,
-            }
+            },
         )
 
         with patch(
@@ -2374,7 +2396,7 @@ class TestSecureReleasePipelineExecute:
                     "risk_score": 20,
                     "risk_level": "low",
                     "severity_breakdown": {"critical": 0, "high": 0, "medium": 2},
-                }
+                },
             },
             total_cost=0.01,
         )
@@ -2448,7 +2470,9 @@ class TestSecureReleasePipelineExecute:
             ),
         ):
             result = await pipeline.execute(
-                path="./src", diff="some diff", files_changed=["auth.py"]
+                path="./src",
+                diff="some diff",
+                files_changed=["auth.py"],
             )
 
         assert result.success is True
@@ -2462,7 +2486,7 @@ class TestSecureReleasePipelineExecute:
 
         mock_security_cls = MagicMock()
         mock_security_cls.return_value.execute = AsyncMock(
-            side_effect=RuntimeError("LLM service unavailable")
+            side_effect=RuntimeError("LLM service unavailable"),
         )
 
         with patch(

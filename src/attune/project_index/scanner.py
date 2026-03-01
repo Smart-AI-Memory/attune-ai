@@ -66,6 +66,7 @@ class ProjectScanner(FileAnalysisMixin, CodeMetricsMixin, DependencyAnalysisMixi
 
         Returns:
             Tuple of (list of FileRecords, ProjectSummary)
+
         """
         records: list[FileRecord] = []
 

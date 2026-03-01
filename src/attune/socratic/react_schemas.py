@@ -175,7 +175,7 @@ class ReactBlueprintSchema:
                     ),
                     "modelTier": agent.spec.model_tier,
                     "tools": [t.name for t in agent.spec.tools],
-                }
+                },
             )
 
         stages = []
@@ -188,7 +188,7 @@ class ReactBlueprintSchema:
                     "agents": stage.agent_ids,
                     "parallel": stage.parallel,
                     "dependsOn": stage.depends_on,
-                }
+                },
             )
 
         success_criteria = None

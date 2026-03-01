@@ -34,6 +34,7 @@ class HookExecutor:
             HookDefinition(type=HookType.COMMAND, command="echo {file_path}"),
             context={"file_path": "/path/to/file.py"}
         )
+
     """
 
     def __init__(self, python_handlers: dict[str, Callable] | None = None):
@@ -121,12 +122,11 @@ class HookExecutor:
         """
         if hook.type == HookType.COMMAND:
             return await self._execute_command(hook.command, context)
-        elif hook.type == HookType.PYTHON:
+        if hook.type == HookType.PYTHON:
             return await self._execute_python(hook.command, context)
-        elif hook.type == HookType.WEBHOOK:
+        if hook.type == HookType.WEBHOOK:
             return await self._execute_webhook(hook.command, context)
-        else:
-            raise ValueError(f"Unknown hook type: {hook.type}")
+        raise ValueError(f"Unknown hook type: {hook.type}")
 
     async def _execute_command(
         self,
@@ -163,7 +163,7 @@ class HookExecutor:
         if process.returncode != 0:
             error_output = stderr.decode().strip() or stdout.decode().strip()
             raise RuntimeError(
-                f"Command failed with exit code {process.returncode}: {error_output}"
+                f"Command failed with exit code {process.returncode}: {error_output}",
             )
 
         return stdout.decode().strip()
@@ -219,10 +219,9 @@ class HookExecutor:
         """
         if asyncio.iscoroutinefunction(handler):
             return await handler(**context)
-        else:
-            # Run sync function in thread pool
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: handler(**context))
+        # Run sync function in thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, lambda: handler(**context))
 
     async def _execute_webhook(
         self,
@@ -246,20 +245,22 @@ class HookExecutor:
 
         logger.debug("Calling webhook: %s", url)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(
                 url,
                 json=context,
                 headers={"Content-Type": "application/json"},
-            ) as response:
-                if response.status >= 400:
-                    text = await response.text()
-                    raise RuntimeError(f"Webhook failed with status {response.status}: {text}")
+            ) as response,
+        ):
+            if response.status >= 400:
+                text = await response.text()
+                raise RuntimeError(f"Webhook failed with status {response.status}: {text}")
 
-                try:
-                    return await response.json()
-                except Exception:
-                    return {"status": response.status, "text": await response.text()}
+            try:
+                return await response.json()
+            except Exception:
+                return {"status": response.status, "text": await response.text()}
 
 
 class HookExecutorSync:

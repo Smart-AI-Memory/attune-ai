@@ -44,6 +44,7 @@ def run_pre_compact(context: dict[str, Any]) -> dict[str, Any]:
             - has_handoff: Whether a handoff was saved
             - restoration_available: Whether restoration will be available
             - message: Human-readable summary
+
     """
     try:
         # Get required components from context
@@ -105,7 +106,7 @@ def run_pre_compact(context: dict[str, Any]) -> dict[str, Any]:
 
         if compact_state.pending_handoff:
             message_parts.append(
-                f"Handoff recorded ({compact_state.pending_handoff.priority} priority)"
+                f"Handoff recorded ({compact_state.pending_handoff.priority} priority)",
             )
 
         logger.info(f"Pre-compact: Saved state to {saved_path}")
@@ -153,6 +154,7 @@ def generate_compaction_summary(
 
     Returns:
         Formatted summary string
+
     """
     lines = [
         "## Session Context Summary",

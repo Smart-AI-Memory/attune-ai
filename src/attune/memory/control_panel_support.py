@@ -95,7 +95,10 @@ class APIKeyAuth:
         if self.enabled and self.api_key:
             # Store PBKDF2 derived key for secure comparison
             self._key_hash = hashlib.pbkdf2_hmac(
-                "sha256", self.api_key.encode(), self._salt, iterations=100_000
+                "sha256",
+                self.api_key.encode(),
+                self._salt,
+                iterations=100_000,
             )
             logger.info("api_key_auth_enabled")
         else:
@@ -119,7 +122,10 @@ class APIKeyAuth:
 
         # Constant-time comparison via PBKDF2
         provided_hash = hashlib.pbkdf2_hmac(
-            "sha256", provided_key.encode(), self._salt, iterations=100_000
+            "sha256",
+            provided_key.encode(),
+            self._salt,
+            iterations=100_000,
         )
         return hmac.compare_digest(provided_hash, self._key_hash)
 

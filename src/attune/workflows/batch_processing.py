@@ -59,6 +59,7 @@ class BatchProcessingWorkflow:
         ... ]
         >>> results = await workflow.execute_batch(requests)
         >>> print(f"{sum(r.success for r in results)}/{len(results)} successful")
+
     """
 
     def __init__(self, api_key: str | None = None):
@@ -66,6 +67,7 @@ class BatchProcessingWorkflow:
 
         Args:
             api_key: Anthropic API key (optional, uses ANTHROPIC_API_KEY env var)
+
         """
         self.batch_provider = AnthropicBatchProvider(api_key=api_key)
 
@@ -105,6 +107,7 @@ class BatchProcessingWorkflow:
             ...         print(f"Task {result.task_id}: Success")
             ...     else:
             ...         print(f"Task {result.task_id}: {result.error}")
+
         """
         if not requests:
             raise ValueError("requests cannot be empty")
@@ -125,7 +128,7 @@ class BatchProcessingWorkflow:
                         "messages": self._format_messages(req),
                         "max_tokens": 4096,
                     },
-                }
+                },
             )
 
         # Submit batch
@@ -137,7 +140,9 @@ class BatchProcessingWorkflow:
         # Wait for completion
         try:
             raw_results = await self.batch_provider.wait_for_batch(
-                batch_id, poll_interval=poll_interval, timeout=timeout
+                batch_id,
+                poll_interval=poll_interval,
+                timeout=timeout,
             )
         except TimeoutError:
             logger.error(f"Batch {batch_id} timed out after {timeout}s")
@@ -188,7 +193,7 @@ class BatchProcessingWorkflow:
                 error_msg = error.get("message", "Unknown error")
                 error_type = error.get("type", "unknown_error")
                 results.append(
-                    BatchResult(task_id=task_id, success=False, error=f"{error_type}: {error_msg}")
+                    BatchResult(task_id=task_id, success=False, error=f"{error_type}: {error_msg}"),
                 )
 
             elif result_type == "expired":
@@ -196,7 +201,7 @@ class BatchProcessingWorkflow:
 
             elif result_type == "canceled":
                 results.append(
-                    BatchResult(task_id=task_id, success=False, error="Request canceled")
+                    BatchResult(task_id=task_id, success=False, error="Request canceled"),
                 )
 
             else:
@@ -205,7 +210,7 @@ class BatchProcessingWorkflow:
                         task_id=task_id,
                         success=False,
                         error=f"Unknown result type: {result_type}",
-                    )
+                    ),
                 )
 
         # Log summary
@@ -222,6 +227,7 @@ class BatchProcessingWorkflow:
 
         Returns:
             List of message dicts for Anthropic API
+
         """
         # Task-specific prompts
         task_prompts = {
@@ -241,7 +247,7 @@ class BatchProcessingWorkflow:
             content = prompt_template.format(**request.input_data)
         except KeyError as e:
             logger.warning(
-                f"Missing required field {e} for task {request.task_type}, using raw input"
+                f"Missing required field {e} for task {request.task_type}, using raw input",
             )
             # Use default template instead of the specific one
             default_template = "Process the following:\n\n{input}"
@@ -269,6 +275,7 @@ class BatchProcessingWorkflow:
                 },
                 ...
             ]
+
         """
         return cls()
 
@@ -285,6 +292,7 @@ class BatchProcessingWorkflow:
             FileNotFoundError: If file doesn't exist
             json.JSONDecodeError: If file is not valid JSON
             ValueError: If file format is invalid
+
         """
         path = Path(file_path)
         if not path.exists():
@@ -307,7 +315,7 @@ class BatchProcessingWorkflow:
                     task_type=item["task_type"],
                     input_data=item["input_data"],
                     model_tier=item.get("model_tier", "capable"),
-                )
+                ),
             )
 
         return requests
@@ -321,6 +329,7 @@ class BatchProcessingWorkflow:
 
         Raises:
             OSError: If file cannot be written
+
         """
         output_data = [
             {

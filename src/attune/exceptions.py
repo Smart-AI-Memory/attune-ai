@@ -36,6 +36,13 @@ class PatternNotFoundError(EmpathyFrameworkError):
     """
 
     def __init__(self, pattern_id: str, message: str | None = None):
+        """Initialize with the missing pattern ID.
+
+        Args:
+            pattern_id: ID of the pattern that was not found.
+            message: Optional override for the default error message.
+
+        """
         self.pattern_id = pattern_id
         if message is None:
             message = f"Pattern not found: {pattern_id}"
@@ -52,6 +59,14 @@ class TrustThresholdError(EmpathyFrameworkError):
     """
 
     def __init__(self, current_trust: float, required_trust: float, message: str | None = None):
+        """Initialize with the actual and required trust levels.
+
+        Args:
+            current_trust: Current trust score (0.0–1.0).
+            required_trust: Minimum trust score needed for the operation.
+            message: Optional override for the default error message.
+
+        """
         self.current_trust = current_trust
         self.required_trust = required_trust
         if message is None:
@@ -69,6 +84,14 @@ class ConfidenceThresholdError(EmpathyFrameworkError):
     """
 
     def __init__(self, confidence: float, threshold: float, message: str | None = None):
+        """Initialize with the actual confidence and required threshold.
+
+        Args:
+            confidence: Observed confidence score (0.0–1.0).
+            threshold: Minimum confidence needed for the action.
+            message: Optional override for the default error message.
+
+        """
         self.confidence = confidence
         self.threshold = threshold
         if message is None:
@@ -87,6 +110,13 @@ class EmpathyLevelError(EmpathyFrameworkError):
     """
 
     def __init__(self, level: int, message: str | None = None):
+        """Initialize with the problematic empathy level.
+
+        Args:
+            level: The empathy level number that caused the error.
+            message: Optional override for the default error message.
+
+        """
         self.level = level
         if message is None:
             message = f"Invalid empathy level: {level}"

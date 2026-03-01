@@ -12,7 +12,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from .dashboard_file_tests import cmd_file_test_dashboard  # noqa: F401 - re-exported
-from .dashboard_telemetry import cmd_telemetry_dashboard  # noqa: F401 - re-exported
+from .dashboard_file_tests import cmd_file_test_dashboard
+from .dashboard_telemetry import cmd_telemetry_dashboard
 
-__all__ = ["cmd_telemetry_dashboard", "cmd_file_test_dashboard"]
+__all__ = ["cmd_file_test_dashboard", "cmd_telemetry_dashboard"]

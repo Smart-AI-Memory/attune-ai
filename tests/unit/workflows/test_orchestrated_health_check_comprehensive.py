@@ -260,7 +260,7 @@ class TestExecuteEdgeCases:
                         success=True,
                         output={"critical_issues": 0, "high_issues": 0, "medium_issues": 0},
                         confidence=0.9,
-                    )
+                    ),
                 ],
                 aggregated_output={},
             )
@@ -310,7 +310,7 @@ class TestExecuteEdgeCases:
                         success=True,
                         output={"critical_issues": 0, "high_issues": 0, "medium_issues": 0},
                         confidence=0.9,
-                    )
+                    ),
                 ],
                 aggregated_output={},
             )
@@ -365,8 +365,8 @@ class TestCategoryScoreCalculations:
                     "critical_issues": 10,  # Would be -100
                     "high_issues": 10,  # Would be another -100
                     "medium_issues": 10,  # Would be another -50
-                }
-            }
+                },
+            },
         }
 
         scores = workflow._calculate_category_scores(agent_results)
@@ -380,7 +380,7 @@ class TestCategoryScoreCalculations:
         workflow = OrchestratedHealthCheckWorkflow(mode="weekly")
 
         agent_results = {
-            "performance_optimizer": {"output": {"bottleneck_count": 20}}  # Would be -100
+            "performance_optimizer": {"output": {"bottleneck_count": 20}},  # Would be -100
         }
 
         scores = workflow._calculate_category_scores(agent_results)
@@ -881,7 +881,7 @@ class TestRobustnessAndEdgeCases:
                             success=True,
                             output={"critical_issues": 0, "high_issues": 0, "medium_issues": 0},
                             confidence=0.9,
-                        )
+                        ),
                     ],
                     aggregated_output={},
                 )

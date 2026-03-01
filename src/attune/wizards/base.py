@@ -54,6 +54,7 @@ def _resolve_tier(tier_str: str) -> ModelTier:
 
     Returns:
         Corresponding ``ModelTier`` value.
+
     """
     return _TIER_MAP.get(tier_str, ModelTier.CAPABLE)
 
@@ -80,6 +81,7 @@ class BaseWizard(ABC):
         ...     def process_step_result(self, step, result): ...
         >>> wizard = MyWizard()
         >>> result = await wizard.run({"target": "src/main.py"})
+
     """
 
     config: WizardConfig
@@ -98,6 +100,7 @@ class BaseWizard(ABC):
                 When ``None``, question steps use default values.
             provider: Model provider string (e.g. ``"anthropic"``).
             **workflow_kwargs: Extra arguments forwarded to ``BaseWorkflow``.
+
         """
         from .internal_workflow import WizardInternalWorkflow
 
@@ -120,6 +123,7 @@ class BaseWizard(ABC):
 
         Returns:
             ``WizardResult`` with collected data, generated output, and tasks.
+
         """
         start = time.time()
         self._session = WizardSession(
@@ -178,11 +182,13 @@ class BaseWizard(ABC):
 
         Args:
             step: The step to execute.
+
         """
         handlers = {
             StepType.QUESTION: self._run_question_step,
             StepType.LLM_CALL: self._run_llm_step,
             StepType.TASK_DECOMPOSE: self._run_decompose_step,
+            StepType.REVIEW: self._run_review_step,
             StepType.PREVIEW: self._run_preview_step,
             StepType.CONFIRM: self._run_confirm_step,
         }
@@ -198,8 +204,10 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.QUESTION``.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         questions = step.questions or []
         if not questions:
             logger.warning("Question step %s has no questions", step.id)
@@ -228,8 +236,10 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.LLM_CALL``.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         context = self.build_prompt_context(step)
 
         # Render XML prompt
@@ -245,17 +255,12 @@ class BaseWizard(ABC):
 
         tier = _resolve_tier(step.tier)
 
-        # Call LLM (may not return tokens depending on executor)
-        try:
-            result = await self._workflow._call_llm(prompt, tier, step.id)
-            # _call_llm returns tuple[str, int, int] = (response, input_tokens, output_tokens)
-            if isinstance(result, tuple):
-                response_text, _input_tokens, _output_tokens = result
-            else:
-                response_text = str(result)
-        except TypeError:
-            # Fallback if _call_llm signature differs
-            response_text = str(await self._workflow._call_llm(prompt, tier, step.id))
+        # Call LLM — returns tuple[str, int, int] or str depending on executor
+        result = await self._workflow._call_llm(prompt, tier, step.id)
+        if isinstance(result, tuple):
+            response_text, _input_tokens, _output_tokens = result
+        else:
+            response_text = str(result)
 
         # Parse response
         parsed = self._workflow._parse_xml_response(response_text)
@@ -267,6 +272,95 @@ class BaseWizard(ABC):
         self._session.complete_step(step.id, result=parsed)
 
     # -----------------------------------------------------------------
+    # REVIEW step
+    # -----------------------------------------------------------------
+
+    async def _run_review_step(self, step: WizardStep) -> None:
+        """Show intermediate results and ask user for feedback.
+
+        Displays the output of a prior LLM step and asks
+        "Does this look right?" If the user says no, the source
+        LLM step is re-run and the review repeats (up to 2 retries).
+
+        Args:
+            step: A step with ``step_type == StepType.REVIEW``.
+                Must have ``review_source_step_id`` pointing to a
+                prior LLM_CALL step.
+
+        """
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
+
+        source_id = step.review_source_step_id
+        if not source_id:
+            logger.warning("REVIEW step %s has no review_source_step_id", step.id)
+            self._session.complete_step(step.id, result={"approved": True})
+            return
+
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            # Get the source step's result
+            source_result = self._session.step_results.get(source_id, {})
+            if isinstance(source_result, dict):
+                summary = source_result.get(
+                    "summary",
+                    source_result.get("raw_response", str(source_result)),
+                )
+            else:
+                summary = str(source_result)
+
+            # Show the result and ask for approval
+            review_question = FormQuestion(
+                id="review_approval",
+                text=(f"Here's what the analysis found:\n\n{summary}\n\n" "Does this look right?"),
+                type="single_select",
+                options=["Yes, continue", "No, try again"],
+                default="Yes, continue",
+            )
+            schema = FormSchema(
+                title=step.name,
+                description=step.description or "Review intermediate results",
+                questions=[review_question],
+            )
+            response = self._form_engine.ask_questions(schema, template_id=step.id)
+            answer = response.get("review_approval", "Yes, continue")
+
+            if "yes" in str(answer).lower() or "continue" in str(answer).lower():
+                self._session.complete_step(step.id, result={"approved": True})
+                return
+
+            # User said no — re-run the source LLM step if retries remain
+            if attempt < max_retries:
+                logger.info(
+                    "User rejected review — re-running step %s (attempt %d/%d)",
+                    source_id,
+                    attempt + 2,
+                    max_retries + 1,
+                )
+                source_step = self._find_step(source_id)
+                if source_step:
+                    await self._run_llm_step(source_step)
+
+        # Exhausted retries — proceed with last result
+        logger.info("Max retries reached for review step %s — proceeding", step.id)
+        self._session.complete_step(step.id, result={"approved": False})
+
+    def _find_step(self, step_id: str) -> WizardStep | None:
+        """Find a step by ID.
+
+        Args:
+            step_id: Step identifier to look up.
+
+        Returns:
+            The matching ``WizardStep``, or ``None``.
+
+        """
+        for s in self.steps:
+            if s.id == step_id:
+                return s
+        return None
+
+    # -----------------------------------------------------------------
     # TASK_DECOMPOSE step
     # -----------------------------------------------------------------
 
@@ -275,10 +369,12 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.TASK_DECOMPOSE``.
+
         """
         from .decomposer import TaskDecomposer
 
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         decomposer = TaskDecomposer(self._workflow)
 
         # Build problem description from session state
@@ -307,8 +403,10 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.PREVIEW``.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         preview_parts = [f"## {self.config.name} - Preview\n"]
 
@@ -353,8 +451,10 @@ class BaseWizard(ABC):
 
         Args:
             step: A step with ``step_type == StepType.CONFIRM``.
+
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         confirm_question = FormQuestion(
             id="confirm",
             text=step.description or "Proceed with these changes?",
@@ -372,7 +472,7 @@ class BaseWizard(ABC):
 
         if "no" in str(answer).lower() or "cancel" in str(answer).lower():
             self._session.complete_step(step.id, result={"confirmed": False})
-            raise _WizardAbort()
+            raise _WizardAbort
 
         self._session.complete_step(step.id, result={"confirmed": True})
 
@@ -391,6 +491,7 @@ class BaseWizard(ABC):
 
         Returns:
             A ``PromptContext`` with role, goal, instructions, input, etc.
+
         """
 
     @abstractmethod
@@ -404,6 +505,7 @@ class BaseWizard(ABC):
         Args:
             step: The step that produced this result.
             result: Parsed LLM response dict.
+
         """
 
 

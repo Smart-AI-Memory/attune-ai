@@ -142,22 +142,21 @@ class DependencyManager:
 
         if response in ["y", "yes", ""]:
             return self.install_cache_dependencies()
-        else:
-            print()
-            print("  ℹ Using hash-only cache (30% savings)")
-            print("  ℹ To enable later: pip install attune-ai[cache]")
-            print()
-            print("=" * 60)
-            print()
+        print()
+        print("  ℹ Using hash-only cache (30% savings)")
+        print("  ℹ To enable later: pip install attune-ai[cache]")
+        print()
+        print("=" * 60)
+        print()
 
-            # Save that user declined
-            if "cache" not in self.config:
-                self.config["cache"] = {}
-            self.config["cache"]["install_declined"] = True
-            self.config["cache"]["prompt_shown"] = True
-            self._save_config()
+        # Save that user declined
+        if "cache" not in self.config:
+            self.config["cache"] = {}
+        self.config["cache"]["install_declined"] = True
+        self.config["cache"]["prompt_shown"] = True
+        self._save_config()
 
-            return False
+        return False
 
     def install_cache_dependencies(self) -> bool:
         """Install cache dependencies using pip.

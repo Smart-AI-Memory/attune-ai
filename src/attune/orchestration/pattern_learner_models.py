@@ -28,6 +28,7 @@ class ExecutionRecord:
         confidence: Aggregate confidence score
         context_features: Key features of the execution context
         timestamp: When the execution occurred
+
     """
 
     pattern: str
@@ -59,6 +60,7 @@ class PatternStats:
         total_duration: Sum of all execution durations
         total_cost: Sum of all execution costs
         avg_confidence: Average confidence across executions
+
     """
 
     pattern: str
@@ -94,6 +96,7 @@ class PatternStats:
 
         Args:
             record: Execution record to incorporate
+
         """
         self.total_executions += 1
         if record.success:
@@ -145,6 +148,7 @@ class ContextSignature:
         has_conditions: Whether conditionals were used
         has_nesting: Whether nested workflows were used
         priority: Task priority level
+
     """
 
     task_type: str = ""
@@ -162,6 +166,7 @@ class ContextSignature:
 
         Returns:
             ContextSignature with extracted features
+
         """
         return cls(
             task_type=context.get("task_type", context.get("_task_type", "")),
@@ -179,6 +184,7 @@ class ContextSignature:
 
         Returns:
             Similarity score (0.0 - 1.0)
+
         """
         score = 0.0
         max_score = 0.0
@@ -195,7 +201,8 @@ class ContextSignature:
         max_score += 1.0
         if self.agent_count > 0 and other.agent_count > 0:
             ratio = min(self.agent_count, other.agent_count) / max(
-                self.agent_count, other.agent_count
+                self.agent_count,
+                other.agent_count,
             )
             score += ratio
 

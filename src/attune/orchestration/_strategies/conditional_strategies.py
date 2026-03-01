@@ -173,6 +173,7 @@ class NestedStrategy(ExecutionStrategy):
         ...         )
         ...     )
         ... )
+
     """
 
     def __init__(
@@ -185,6 +186,7 @@ class NestedStrategy(ExecutionStrategy):
         Args:
             workflow_ref: Reference to workflow (by ID or inline)
             max_depth: Maximum nesting depth allowed
+
         """
         self.workflow_ref = workflow_ref
         self.max_depth = max_depth
@@ -201,6 +203,7 @@ class NestedStrategy(ExecutionStrategy):
 
         Raises:
             RecursionError: If max depth exceeded or cycle detected
+
         """
         # Import here to avoid circular import
         from . import get_strategy
@@ -269,6 +272,7 @@ class StepDefinition:
     Attributes:
         agent: Agent to execute directly
         workflow_ref: Nested workflow to execute
+
     """
 
     agent: AgentTemplate | None = None
@@ -294,6 +298,7 @@ class NestedSequentialStrategy(ExecutionStrategy):
         ...         StepDefinition(agent=reporter),
         ...     ]
         ... )
+
     """
 
     def __init__(
@@ -306,6 +311,7 @@ class NestedSequentialStrategy(ExecutionStrategy):
         Args:
             steps: List of step definitions (agents or workflow refs)
             max_depth: Maximum nesting depth
+
         """
         self.steps = steps
         self.max_depth = max_depth
@@ -349,7 +355,7 @@ class NestedSequentialStrategy(ExecutionStrategy):
                         output=nested_result.aggregated_output,
                         confidence=nested_result.aggregated_output.get("avg_confidence", 0.0),
                         duration_seconds=nested_result.total_duration,
-                    )
+                    ),
                 )
 
                 if nested_result.success:

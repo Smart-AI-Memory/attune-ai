@@ -512,7 +512,7 @@ class TestParseScoutFindings:
                 "issue_type": "missing_docstring"
                 "severity": "high"
                 """,
-            }
+            },
         ]
 
         items = orchestrator._parse_scout_findings(mock_result)
@@ -632,7 +632,7 @@ class TestItemsFromIndex:
                     "source_modified_after_doc": True,
                     "related_source_files": ["src/api.py", "src/models.py"],
                     "days_since_doc_update": 15,
-                }
+                },
             ],
         }
         orchestrator._project_index = mock_index
@@ -662,7 +662,7 @@ class TestItemsFromIndex:
                     "source_modified_after_doc": True,
                     "related_source_files": [],
                     "days_since_doc_update": 10,
-                }
+                },
             ],
         }
         orchestrator._project_index = mock_index
@@ -819,7 +819,7 @@ class TestScoutPhase:
                 "issue_type": "missing_docstring"
                 "severity": "high"
                 """,
-            }
+            },
         ]
         mock_scout.execute = AsyncMock(return_value=mock_result)
         orchestrator._scout = mock_scout
@@ -1055,7 +1055,7 @@ class TestExecuteWorkflow:
                 "issue_type": "missing_docstring"
                 "severity": "high"
                 """,
-            }
+            },
         ]
         mock_scout.execute = AsyncMock(return_value=mock_result)
         orchestrator._scout = mock_scout
@@ -1218,7 +1218,7 @@ class TestGenerateForFilesMethods:
             [
                 "src/main.py",
                 "requirements.txt",  # Should be excluded
-            ]
+            ],
         )
 
         assert result["success"] is True
@@ -1279,7 +1279,7 @@ class TestEndToEndScenarios:
                 "issue_type": "missing_docstring"
                 "severity": "high"
                 """,
-            }
+            },
         ]
         mock_scout.execute = AsyncMock(return_value=mock_scout_result)
         orchestrator._scout = mock_scout
@@ -1326,7 +1326,7 @@ class TestEndToEndScenarios:
                 "issue_type": "missing_docstring"
                 "severity": "high"
                 """,
-            }
+            },
         ]
         mock_scout.execute = AsyncMock(return_value=mock_scout_result)
         orchestrator._scout = mock_scout
@@ -1391,7 +1391,7 @@ class TestErrorHandlingPaths:
                 issue_type="missing_docstring",
                 severity="high",
                 priority=1,
-            )
+            ),
         ]
 
         mock_writer = MagicMock()
