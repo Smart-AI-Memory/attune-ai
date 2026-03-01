@@ -10,8 +10,8 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15250%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-15%2C135%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-83%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -23,52 +23,30 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.6.5
+## What's New in v3.6.6
 
-- **Dashboard removed** — `attune.dashboard` Python module and
-  `attune dashboard start` CLI command deleted. Was deprecated in
-  v3.6.3. Use `FeedbackLoop` and `UsageTracker` from
-  `attune.telemetry` directly.
+- **Wizard REVIEW step** — New `StepType.REVIEW` shows LLM
+  analysis results and asks "Does this look right?" before
+  proceeding. Retries up to 2 times on rejection.
+- **82 new tests** — Full test coverage for 4 previously
+  untested workflows (ParallelTestGen, ResearchSynthesis,
+  SEOOptimization, TestMaintenance). 17/17 workflows now
+  tested.
+- **Workflow fixes** — 4 workflows now inherit BaseWorkflow;
+  test-gen-parallel class attribute crash fixed; website
+  workflow count corrected (10 → 17).
+- **BEP middleware removed** — 13K lines parked on feature
+  branch; CLI and docs cleaned up.
 
-## What's New in v3.6.4
+<details>
+<summary>Previous releases</summary>
 
-- **EscalationChain** — New retry-with-feedback LLM wrapper
-  (`attune.workflows.escalation`). Runs a prompt through up to N
-  tiers, feeding structured failure feedback back into each retry.
-  Includes `StructureValidator`, `ConfidenceValidator`,
-  `SemanticEvaluator`, and an `escalate()` convenience function.
+- **v3.6.5** — Dashboard module removed
+- **v3.6.4** — EscalationChain retry-with-feedback wrapper
+- **v3.6.0** — attune-redis plugin, FeedbackLoop, in-memory
+  fallback
 
-
-## What's New in v3.6.2
-
-- **Version sync** — Aligned `pyproject.toml` and
-  `src/attune/__init__.py` to `3.6.2`.
-
-## What's New in v3.6.1
-
-- **Lessons Learned Stop hook** — `lessons_reminder.py`
-  automatically prompts Claude to record new patterns and
-  fixes in `.claude/CLAUDE.md` at session end. Fires once
-  per session via a TTL sentinel; no looping.
-
-## What's New in v3.6.0
-
-- **attune-redis plugin** — Redis memory is now a
-  standalone package (`pip install attune-redis`),
-  fully decoupled from core. Ships with 5 MCP tools and
-  a v4.0.0 migration guide.
-- **FeedbackLoop** — Quality-based model tier recommendations
-  via pluggable `MemoryBackend` with `_InMemoryStore` fallback.
-- **FeedbackLoop in-memory fallback** — Works out of the
-  box without Redis via a pluggable `MemoryBackend`
-  protocol with `_InMemoryStore` fallback. Enables
-  quality-based model tier recommendations and
-  underperforming stage detection.
-- **Project-Aware Guidance** (v3.5.0) — Surfaces 2-3
-  prioritized next-step suggestions after every workflow,
-  grounded in real findings. Persists across sessions
-  with a 24-hour dismiss window.
-
+</details>
 
 ---
 
@@ -103,12 +81,11 @@ Attune AI is built exclusively for Anthropic/Claude, unlocking features impossib
 Full support for custom agents, dynamic teams, and Anthropic Agent SDK:
 
 - **Dynamic Team Composition** - Build agent teams from templates, specs, or MetaOrchestrator plans with 4 execution strategies (parallel, sequential, two-phase, delegation)
-- **13 Agent Templates** - Pre-built archetypes (security auditor, code reviewer, test coverage, etc.) with custom template registration
+- **14 Agent Templates** - Pre-built archetypes (security auditor, code reviewer, test coverage, etc.) with custom template registration
 - **Agent State Persistence** - `AgentStateStore` records execution history, saves checkpoints, and enables recovery from interruptions
 - **Workflow Composition** - Compose entire workflows into `DynamicTeam` instances for orchestrated parallel/sequential execution
 - **Progressive Tier Escalation** - Agents start cheap and escalate only when needed (CHEAP -> CAPABLE -> PREMIUM)
-- **Agent Coordination Dashboard** - Real-time monitoring with 6 coordination patterns
-- **Inter-Agent Communication** - Heartbeats, signals, events, and approval gates
+- **Inter-Agent Communication** - Heartbeats, signals, events, approval gates, and 6 coordination patterns
 - **Quality Gates** - Per-agent and cross-team quality thresholds with required/optional gate enforcement
 
 ### Modular Architecture
@@ -117,7 +94,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **15,250+ Tests** - Security, unit, integration, and behavioral test coverage
+- **15,100+ Tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
@@ -288,8 +265,6 @@ echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.m
 
 ---
 
----
-
 ## Authentication Strategy
 
 Intelligent routing between Claude subscription and Anthropic API:
@@ -331,11 +306,11 @@ cd attune-ai && pip install -e '.[dev]'
 
 **What's in each option:**
 
-| Option         | What You Get                                    |
-| -------------- | ----------------------------------------------- |
-| `[developer]`  | CLI, workflows, agents, memory, semantic caching |
-| Base           | CLI, workflows, Anthropic SDK                   |
-| `[all]`        | Everything including enterprise features        |
+| Option | What You Get |
+| --- | --- |
+| `[developer]` | CLI, workflows, agents, memory, semantic caching |
+| Base | CLI, workflows, Anthropic SDK |
+| `[all]` | Everything including enterprise features |
 
 ---
 
