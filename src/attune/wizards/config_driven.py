@@ -36,6 +36,7 @@ _STEP_TYPE_MAP = {
     "question": StepType.QUESTION,
     "llm_call": StepType.LLM_CALL,
     "task_decompose": StepType.TASK_DECOMPOSE,
+    "review": StepType.REVIEW,
     "preview": StepType.PREVIEW,
     "confirm": StepType.CONFIRM,
 }
@@ -303,7 +304,8 @@ class ConfigDrivenWizard(BaseWizard):
             ``PromptContext`` for the LLM call.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         template = step.prompt_context_template
         if not template:
@@ -331,7 +333,8 @@ class ConfigDrivenWizard(BaseWizard):
             result: Parsed LLM response.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         self._session.set(f"{step.id}_result", result)
 
 
@@ -407,6 +410,7 @@ def _parse_steps(steps_data: list[dict[str, Any]]) -> list[WizardStep]:
                 questions=questions,
                 max_tokens=step_data.get("max_tokens", 4096),
                 prompt_context_template=prompt_context_template,
+                review_source_step_id=step_data.get("review_source_step_id"),
             ),
         )
 

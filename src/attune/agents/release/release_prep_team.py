@@ -28,6 +28,9 @@ import logging
 import time
 from typing import Any
 
+from attune.workflows.base import BaseWorkflow
+from attune.workflows.compat import ModelTier
+
 # Re-export agent classes and helpers
 from .release_agents import (  # noqa: F401
     CodeQualityAgent,
@@ -347,7 +350,7 @@ class ReleasePrepTeam:
 # =============================================================================
 
 
-class ReleasePrepTeamWorkflow:
+class ReleasePrepTeamWorkflow(BaseWorkflow):
     """Workflow wrapper that integrates ReleasePrepTeam with the CLI registry.
 
     This class provides the same interface as OrchestratedReleasePrepWorkflow
@@ -366,6 +369,10 @@ class ReleasePrepTeamWorkflow:
     stages = ["triage", "parallel-validation", "synthesis", "decision"]
     tier_map: dict[str, Any] = {}  # Populated dynamically
 
+    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
+        """Not used — this workflow overrides execute() directly."""
+        raise NotImplementedError("ReleasePrepTeamWorkflow uses execute(), not run_stage()")
+
     def __init__(
         self,
         quality_gates: dict[str, float] | None = None,
@@ -378,6 +385,7 @@ class ReleasePrepTeamWorkflow:
             **kwargs: Extra CLI parameters (absorbed for compatibility)
 
         """
+        super().__init__()
         self.quality_gates = quality_gates
         self._kwargs = kwargs
 

@@ -13,11 +13,14 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attune.meta_workflows.models import FormQuestion, QuestionType
 from attune.prompts import PromptContext
 from attune.workflows.compat import ModelTier
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow
 
 from ..base import BaseWizard, StepType, WizardConfig, WizardStep
 
@@ -119,7 +122,7 @@ class RefactorWizard(BaseWizard):
 
         """
         super().__init__(**kwargs)
-        self._refactor_workflow: Any = None
+        self._refactor_workflow: BaseWorkflow | None = None
 
     # -----------------------------------------------------------------
     # Workflow delegation
@@ -181,7 +184,8 @@ class RefactorWizard(BaseWizard):
             RuntimeError: If the workflow is not available.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         workflow = self._get_or_create_workflow()
         if workflow is None:
             raise RuntimeError("RefactorPlanWorkflow not available")
@@ -260,7 +264,8 @@ class RefactorWizard(BaseWizard):
             PromptContext for the LLM call.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         if step.id == "analyze":
             refactor_type = self._session.get("refactor_type", "Reduce complexity")
@@ -308,6 +313,7 @@ class RefactorWizard(BaseWizard):
             result: Parsed LLM response or workflow output.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         if step.id == "analyze":
             self._session.set("refactor_analysis", result)

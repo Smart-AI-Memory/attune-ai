@@ -25,6 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .base import BaseWorkflow
+from .compat import ModelTier
 from .doc_orch_filters import DocOrchFilterMixin
 from .doc_orch_report import DocOrchReportMixin
 from .doc_orch_scout import DocOrchScoutMixin
@@ -143,6 +145,7 @@ class DocumentationOrchestrator(
     DocOrchFilterMixin,
     DocOrchScoutMixin,
     DocOrchReportMixin,
+    BaseWorkflow,
 ):
     """End-to-end documentation management orchestrator.
 
@@ -167,6 +170,12 @@ class DocumentationOrchestrator(
 
     name = "documentation-orchestrator"
     description = "End-to-end documentation management: scout gaps, prioritize, generate docs"
+    stages = ["scout", "prioritize", "generate", "update"]
+    tier_map: dict[str, ModelTier] = {}
+
+    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
+        """Not used — this workflow overrides execute() directly."""
+        raise NotImplementedError("DocumentationOrchestrator uses execute(), not run_stage()")
 
     # Patterns to exclude from SCANNING - things we don't want to analyze for documentation gaps
     # Note: The ALLOWED_OUTPUT_EXTENSIONS whitelist is the primary safety mechanism for writes
@@ -278,6 +287,7 @@ class DocumentationOrchestrator(
             exclude_patterns: Additional patterns to exclude (merged with defaults)
 
         """
+        super().__init__()
         self.project_root = Path(project_root)
         self.max_items = max_items
         self.max_cost = max_cost

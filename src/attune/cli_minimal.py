@@ -415,7 +415,30 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "version":
         return cmd_version(args)
 
-    parser.print_help()
+    # No command given — show a concise welcome instead of full argparse help
+    try:
+        from attune import __version__
+
+        ver = __version__
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: version is non-critical for welcome message
+        ver = "?"
+    print(
+        f"""Attune AI v{ver} — AI-powered developer workflows
+
+Get started:
+  attune workflow list        See all available workflows
+  attune workflow run <name>  Run a workflow (requires ANTHROPIC_API_KEY)
+  attune validate             Check your configuration
+
+For interactive development in Claude Code:
+  /attune       Socratic discovery — finds the right workflow for you
+  /dev          Developer tools (commit, review, debug, refactor)
+  /testing      Run tests, coverage, generate tests
+  /wizard run   Guided multi-step wizards
+
+More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
+    )
     return 0
 
 

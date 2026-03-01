@@ -13,11 +13,14 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attune.meta_workflows.models import FormQuestion, QuestionType
 from attune.prompts import PromptContext
 from attune.workflows.compat import ModelTier
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow
 
 from ..base import BaseWizard, StepType, WizardConfig, WizardStep
 from ..session import WizardSession
@@ -163,7 +166,7 @@ class SecurityWizard(BaseWizard):
 
         """
         super().__init__(**kwargs)
-        self._security_workflow: Any = None
+        self._security_workflow: BaseWorkflow | None = None
         self._workflow_state: dict[str, Any] = {}
 
     # -----------------------------------------------------------------

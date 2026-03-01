@@ -217,14 +217,24 @@ class WorkflowReport:
 
 
 class FindingsTable:
-    """Render findings as Rich Table or plain text."""
+    """Render a list of Finding objects as a Rich Table or plain text.
+
+    Args:
+        findings: List of Finding objects to render.
+
+    """
 
     def __init__(self, findings: list[Finding]) -> None:
         """Initialize with list of findings."""
         self.findings = findings
 
     def to_rich_table(self) -> Table:
-        """Convert findings to Rich Table."""
+        """Convert findings to a color-coded Rich Table.
+
+        Returns:
+            Rich Table with Severity, Location, and Message columns.
+
+        """
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Severity", style="bold", width=8)
         table.add_column("Location", style="cyan")
@@ -247,7 +257,13 @@ class FindingsTable:
         return table
 
     def to_plain(self) -> str:
-        """Convert findings to plain text."""
+        """Convert findings to indented plain text.
+
+        Returns:
+            Multi-line string with ``[SEVERITY] file:line``
+            format, or ``"  No findings."`` if empty.
+
+        """
         if not self.findings:
             return "  No findings."
 

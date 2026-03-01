@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15125%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-15250%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -18,7 +18,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 ```bash
-pip install attune-ai[developer]
+pip install 'attune-ai[developer]'
 ```
 
 ---
@@ -76,7 +76,7 @@ pip install attune-ai[developer]
 
 | | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 13 built-in | Build from scratch | None | PR review only |
+| **Ready-to-use workflows** | 17 built-in | Build from scratch | None | PR review only |
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
 | **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
@@ -117,7 +117,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **14,800+ Tests** - Security, unit, integration, and behavioral test coverage
+- **15,250+ Tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
@@ -147,7 +147,7 @@ Install the attune-ai plugin in Claude Code for integrated workflow, memory, and
 ### 1. Install
 
 ```bash
-pip install attune-ai
+pip install 'attune-ai[developer]'
 ```
 
 ### 2. Setup Slash Commands
@@ -198,7 +198,7 @@ pip install 'attune-ai[memory]'
 # Redis is automatically detected and enabled — no env vars needed
 ```
 
-**All features** (includes memory, dashboard, agents):
+**All features** (includes memory, agents, semantic caching):
 
 ```bash
 pip install 'attune-ai[all]'
@@ -315,40 +315,47 @@ python -m attune.models.auth_cli recommend src/module.py
 ## Installation Options
 
 ```bash
-# Base install (CLI + workflows)
+# Recommended (agents, memory, semantic caching)
+pip install 'attune-ai[developer]'
+
+# Minimal (CLI + workflows only)
 pip install attune-ai
 
-# Full developer experience (agents, memory, semantic caching)
-pip install attune-ai[developer]
+# All features
+pip install 'attune-ai[all]'
 
-# Enterprise (auth, rate limiting, telemetry)
-pip install attune-ai[enterprise]
-
-# Development
+# Development (contributing)
 git clone https://github.com/Smart-AI-Memory/attune-ai.git
-cd attune-ai && pip install -e .[dev]
+cd attune-ai && pip install -e '.[dev]'
 ```
 
 **What's in each option:**
 
 | Option         | What You Get                                    |
 | -------------- | ----------------------------------------------- |
+| `[developer]`  | CLI, workflows, agents, memory, semantic caching |
 | Base           | CLI, workflows, Anthropic SDK                   |
-| `[developer]`  | + Agents, memory, semantic caching              |
-| `[enterprise]` | + JWT auth, rate limiting, OpenTelemetry        |
+| `[all]`        | Everything including enterprise features        |
 
 ---
 
 ## Environment Setup
 
-**In Claude Code:** No setup needed - uses your Claude subscription.
+**In Claude Code:** No API key needed — workflows run as
+skills using your Claude subscription. Just type `/attune`.
 
-**For CLI/API usage:**
+**For CLI usage** (`attune workflow run ...`):
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."  # Required for CLI workflows
-export REDIS_URL="redis://localhost:6379"  # Optional: for memory features
+export REDIS_URL="redis://localhost:6379"  # Optional: memory features
 ```
+
+**How to tell which you need:**
+
+- Using Claude Code interactively? No key needed.
+- Running `attune workflow run` from terminal/CI? Set
+  `ANTHROPIC_API_KEY`.
 
 ---
 

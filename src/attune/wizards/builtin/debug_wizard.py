@@ -73,6 +73,13 @@ class DebugWizard(BaseWizard):
             tier="capable",
         ),
         WizardStep(
+            id="review_analysis",
+            name="Review Analysis",
+            description="Check the root cause analysis before planning a fix",
+            step_type=StepType.REVIEW,
+            review_source_step_id="analyze",
+        ),
+        WizardStep(
             id="decompose_fix",
             name="Plan the Fix",
             description="Break the fix into actionable tasks",
@@ -103,7 +110,8 @@ class DebugWizard(BaseWizard):
             PromptContext for the LLM call.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         if step.id == "analyze":
             error_desc = self._session.get("error_description", "Unknown error")
@@ -156,6 +164,7 @@ class DebugWizard(BaseWizard):
             result: Parsed LLM response.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         if step.id == "analyze":
             self._session.set("analysis", result)

@@ -44,6 +44,8 @@ from typing import Any
 
 from ..orchestration.agent_templates import AgentTemplate, get_template
 from ..orchestration.execution_strategies import ParallelStrategy, StrategyResult
+from .base import BaseWorkflow
+from .compat import ModelTier
 from .health_check_models import CategoryScore, HealthCheckReport
 from .health_check_scoring import (
     CATEGORY_WEIGHTS,
@@ -70,7 +72,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class OrchestratedHealthCheckWorkflow:
+class OrchestratedHealthCheckWorkflow(BaseWorkflow):
     """Health check workflow using meta-orchestration.
 
     This workflow performs comprehensive project health assessment
@@ -101,6 +103,13 @@ class OrchestratedHealthCheckWorkflow:
         ...     print("Project is healthy!")
 
     """
+
+    name = "orchestrated-health-check"
+    description = "Comprehensive project health assessment using meta-orchestration"
+
+    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
+        """Not used — this workflow overrides execute() directly."""
+        raise NotImplementedError("OrchestratedHealthCheckWorkflow uses execute(), not run_stage()")
 
     # Category weights for overall score
     CATEGORY_WEIGHTS = CATEGORY_WEIGHTS
@@ -150,6 +159,8 @@ class OrchestratedHealthCheckWorkflow:
             ValueError: If mode is invalid
 
         """
+        super().__init__()
+
         if mode not in self.MODE_AGENTS:
             raise ValueError(
                 f"Invalid mode: {mode}. Must be one of {list(self.MODE_AGENTS.keys())}",

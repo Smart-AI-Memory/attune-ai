@@ -201,6 +201,36 @@ class TestSaveCustomWizard:
         with pytest.raises(ValueError, match="Cannot write to system directory"):
             registry.save_custom_wizard(wizard_data, base_dir="/etc")
 
+    def test_save_permission_error_raises(self, tmp_path):
+        """Test save_custom_wizard raises PermissionError on write failure."""
+        from pathlib import Path
+        from unittest.mock import patch as _patch
+
+        wizard_data = {
+            "wizard_id": "perm-fail",
+            "name": "Perm Fail",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+
+        with _patch.object(Path, "open", side_effect=PermissionError("read-only filesystem")):
+            with pytest.raises(PermissionError, match="read-only filesystem"):
+                registry.save_custom_wizard(wizard_data, base_dir=str(tmp_path))
+
+    def test_save_os_error_raises_value_error(self, tmp_path):
+        """Test save_custom_wizard wraps OSError as ValueError."""
+        from pathlib import Path
+        from unittest.mock import patch as _patch
+
+        wizard_data = {
+            "wizard_id": "os-fail",
+            "name": "OS Fail",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+
+        with _patch.object(Path, "open", side_effect=OSError("disk full")):
+            with pytest.raises(ValueError, match="Cannot write wizard YAML"):
+                registry.save_custom_wizard(wizard_data, base_dir=str(tmp_path))
+
 
 # =========================================================================
 # delete_custom_wizard

@@ -19,7 +19,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from .base import WorkflowResult
+from .base import BaseWorkflow, WorkflowResult
+from .compat import ModelTier
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ class SecureReleaseResult:
         return format_secure_release_report(self)
 
 
-class SecureReleasePipeline:
+class SecureReleasePipeline(BaseWorkflow):
     """Comprehensive security pipeline for release preparation.
 
     This pipeline composes multiple security workflows to provide
@@ -111,6 +112,10 @@ class SecureReleasePipeline:
     name = "secure-release"
     description = "Comprehensive security pipeline composing multiple workflows"
 
+    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
+        """Not used — this workflow overrides execute() directly."""
+        raise NotImplementedError("SecureReleasePipeline uses execute(), not run_stage()")
+
     def __init__(
         self,
         mode: str = "full",  # "full" or "standard"
@@ -129,6 +134,8 @@ class SecureReleasePipeline:
             **kwargs: Additional arguments passed to child workflows
 
         """
+        super().__init__()
+
         # Validate mode
         if mode not in ("full", "standard"):
             raise ValueError(f"Invalid mode '{mode}'. Must be 'full' or 'standard'.")
@@ -302,7 +309,23 @@ class SecureReleasePipeline:
         code_review_result: WorkflowResult | None,
         release_result: WorkflowResult | None,
     ) -> float:
-        """Calculate combined risk score from all sources."""
+        """Calculate weighted combined risk score from all sources.
+
+        Crew results receive 1.5x weight, security audit 1.0x, and
+        code review 0.8x.  The code review security_score is inverted
+        to a risk value (100 - score).
+
+        Args:
+            crew_report: SecurityAuditCrew results dict.
+            security_result: SecurityAuditWorkflow result.
+            code_review_result: CodeReviewWorkflow result.
+            release_result: ReleasePreparationWorkflow result
+                (unused in scoring, reserved for future use).
+
+        Returns:
+            Combined risk score capped at 100.0.
+
+        """
         scores = []
         weights = []
 
@@ -333,7 +356,20 @@ class SecureReleasePipeline:
         security_result: WorkflowResult | None,
         code_review_result: WorkflowResult | None,
     ) -> dict:
-        """Aggregate findings from all sources."""
+        """Aggregate finding counts from all security sources.
+
+        Takes the maximum count per severity level across sources
+        to avoid double-counting overlapping findings.
+
+        Args:
+            crew_report: SecurityAuditCrew results dict.
+            security_result: SecurityAuditWorkflow result.
+            code_review_result: CodeReviewWorkflow result.
+
+        Returns:
+            Dict with ``critical``, ``high``, and ``total`` counts.
+
+        """
         critical = 0
         high = 0
         total = 0
@@ -366,7 +402,23 @@ class SecureReleasePipeline:
         findings: dict,
         release_result: WorkflowResult | None,
     ) -> str:
-        """Determine go/no-go decision."""
+        """Determine release go/no-go decision.
+
+        Decision logic:
+        - NO_GO: any critical findings or risk >= 75
+        - CONDITIONAL: >3 high findings, risk >= 50, or
+          release workflow not approved
+        - GO: all other cases
+
+        Args:
+            risk_score: Combined risk score (0-100).
+            findings: Dict with ``critical``, ``high``, ``total``.
+            release_result: ReleasePreparationWorkflow result.
+
+        Returns:
+            One of ``"GO"``, ``"NO_GO"``, or ``"CONDITIONAL"``.
+
+        """
         # Critical findings = immediate NO_GO
         if findings.get("critical", 0) > 0:
             return "NO_GO"
@@ -393,7 +445,21 @@ class SecureReleasePipeline:
         code_review_result: WorkflowResult | None,
         release_result: WorkflowResult | None,
     ) -> tuple[list[str], list[str], list[str]]:
-        """Generate blockers, warnings, and recommendations."""
+        """Generate actionable blockers, warnings, and recommendations.
+
+        Aggregates issues from all workflow results into three
+        priority-ordered lists for the release decision report.
+
+        Args:
+            crew_report: SecurityAuditCrew results dict.
+            security_result: SecurityAuditWorkflow result.
+            code_review_result: CodeReviewWorkflow result.
+            release_result: ReleasePreparationWorkflow result.
+
+        Returns:
+            Tuple of (blockers, warnings, recommendations) lists.
+
+        """
         blockers = []
         warnings = []
         recommendations = []
@@ -445,7 +511,18 @@ class SecureReleasePipeline:
 
     @classmethod
     def for_pr_review(cls, files_changed: int = 0) -> "SecureReleasePipeline":
-        """Create pipeline optimized for PR review."""
+        """Create a pipeline optimized for PR review.
+
+        Uses ``standard`` mode for small changes (<10 files) and
+        ``full`` mode with crew for larger changes.
+
+        Args:
+            files_changed: Number of files in the PR.
+
+        Returns:
+            Configured SecureReleasePipeline instance.
+
+        """
         return cls(
             mode="standard" if files_changed < 10 else "full",
             parallel_crew=True,
@@ -453,7 +530,14 @@ class SecureReleasePipeline:
 
     @classmethod
     def for_release(cls) -> "SecureReleasePipeline":
-        """Create pipeline for release preparation."""
+        """Create a pipeline for full release preparation.
+
+        Uses ``full`` mode with thorough crew scanning depth.
+
+        Returns:
+            Configured SecureReleasePipeline instance.
+
+        """
         return cls(
             mode="full",
             crew_config={"scan_depth": "thorough"},

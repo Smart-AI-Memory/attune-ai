@@ -192,7 +192,24 @@ class WorkflowConfig:
 
     @staticmethod
     def _load_file(path: Path) -> dict[str, Any]:
-        """Load config from YAML or JSON file."""
+        """Load config from a YAML or JSON file.
+
+        Handles multiple config formats: standalone workflow config,
+        ``attune.config.yaml`` with a ``workflows`` section, and
+        legacy formats with ``provider`` / ``model_preferences``
+        at the root.
+
+        Args:
+            path: Path to the config file.
+
+        Returns:
+            Normalized config dict ready for WorkflowConfig fields.
+
+        Raises:
+            ImportError: If YAML file is given but PyYAML is not
+                installed.
+
+        """
         content = path.read_text()
 
         if path.suffix in (".yaml", ".yml"):
@@ -228,7 +245,22 @@ class WorkflowConfig:
 
     @staticmethod
     def _apply_env_overrides(config: dict[str, Any]) -> dict[str, Any]:
-        """Apply environment variable overrides."""
+        """Apply environment variable overrides to config dict.
+
+        Recognized variables:
+        - ``ATTUNE_WORKFLOW_PROVIDER`` -- default provider
+        - ``ATTUNE_WORKFLOW_<NAME>_PROVIDER`` -- per-workflow
+        - ``ATTUNE_MODEL_<TIER>`` -- tier model override
+
+        Also supports legacy ``EMPATHY_`` prefix variants.
+
+        Args:
+            config: Mutable config dict to update in place.
+
+        Returns:
+            The same config dict with env overrides applied.
+
+        """
         # Ensure nested dicts exist (YAML may load them as None)
         if config.get("workflow_providers") is None:
             config["workflow_providers"] = {}

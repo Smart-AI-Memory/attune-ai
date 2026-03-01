@@ -65,7 +65,8 @@ class ConcreteWizard(BaseWizard):
         return PromptContext(role="tester", goal="test")
 
     def process_step_result(self, step, result):
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         self._session.set(f"{step.id}_result", result)
 
 
@@ -500,8 +501,8 @@ class TestRunLlmStep:
         assert result.success is True
 
     @pytest.mark.asyncio
-    async def test_llm_step_type_error_fallback(self):
-        """Test TypeError fallback when _call_llm signature differs."""
+    async def test_llm_step_type_error_propagates(self):
+        """Test that TypeError from _call_llm propagates as a failure."""
         wizard = ConcreteWizard()
         wizard.steps = [
             WizardStep(
@@ -511,23 +512,16 @@ class TestRunLlmStep:
             ),
         ]
         wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
-        # First call raises TypeError, second returns a string
-        call_count = 0
 
         async def side_effect(prompt, tier, step_id):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                raise TypeError("unexpected keyword")
-            return "fallback response"
+            raise TypeError("unexpected keyword")
 
         wizard._workflow._call_llm = side_effect
-        wizard._workflow._parse_xml_response = MagicMock(return_value={"summary": "ok"})
 
         result = await wizard.run()
 
-        assert result.success is True
-        assert "llm_te" in result.steps_completed
+        assert result.success is False
+        assert "unexpected keyword" in result.error
 
 
 class TestRunDecomposeStep:
@@ -712,6 +706,206 @@ class TestPreviewWithPopulatedState:
         output = str(result.generated_output)
         assert "target" in output
         assert "analyze_result" not in output
+
+
+class TestRunReviewStep:
+    """Test _run_review_step dispatch path with retry logic."""
+
+    @pytest.mark.asyncio
+    async def test_review_step_approve_on_first_try(self):
+        """Test review step completes when user approves immediately."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="llm_step",
+                name="LLM",
+                step_type=StepType.LLM_CALL,
+            ),
+            WizardStep(
+                id="review",
+                name="Review",
+                step_type=StepType.REVIEW,
+                review_source_step_id="llm_step",
+            ),
+        ]
+        wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("analysis", 10, 20))
+        wizard._workflow._parse_xml_response = MagicMock(
+            return_value={"summary": "Root cause found"}
+        )
+
+        # User approves on first try
+        wizard._form_engine.ask_questions = MagicMock(
+            return_value=FormResponse(
+                responses={"review_approval": "Yes, continue"},
+                template_id="review",
+            )
+        )
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "review" in result.steps_completed
+        review_result = wizard._session.step_results.get("review")
+        assert review_result == {"approved": True}
+
+    @pytest.mark.asyncio
+    async def test_review_step_reject_then_approve(self):
+        """Test review step re-runs source LLM step on rejection then approves."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="llm_step",
+                name="LLM",
+                step_type=StepType.LLM_CALL,
+            ),
+            WizardStep(
+                id="review",
+                name="Review",
+                step_type=StepType.REVIEW,
+                review_source_step_id="llm_step",
+            ),
+        ]
+        wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("analysis v2", 10, 20))
+        wizard._workflow._parse_xml_response = MagicMock(
+            return_value={"summary": "Better analysis"}
+        )
+
+        # First call: reject. Second call: approve.
+        call_count = 0
+
+        def mock_ask(schema, template_id=None):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return FormResponse(
+                    responses={"review_approval": "No, try again"},
+                    template_id=template_id or "",
+                )
+            return FormResponse(
+                responses={"review_approval": "Yes, continue"},
+                template_id=template_id or "",
+            )
+
+        wizard._form_engine.ask_questions = mock_ask
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "review" in result.steps_completed
+        # LLM was called for initial step + 1 retry = 2 total from review
+        # plus the initial dispatch = at least 2 calls
+        assert wizard._workflow._call_llm.call_count >= 2
+
+    @pytest.mark.asyncio
+    async def test_review_step_exhaust_retries(self):
+        """Test review step proceeds after exhausting max retries."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="llm_step",
+                name="LLM",
+                step_type=StepType.LLM_CALL,
+            ),
+            WizardStep(
+                id="review",
+                name="Review",
+                step_type=StepType.REVIEW,
+                review_source_step_id="llm_step",
+            ),
+        ]
+        wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("analysis", 10, 20))
+        wizard._workflow._parse_xml_response = MagicMock(return_value={"summary": "Same analysis"})
+
+        # Always reject
+        wizard._form_engine.ask_questions = MagicMock(
+            return_value=FormResponse(
+                responses={"review_approval": "No, try again"},
+                template_id="review",
+            )
+        )
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "review" in result.steps_completed
+        review_result = wizard._session.step_results.get("review")
+        assert review_result == {"approved": False}
+
+    @pytest.mark.asyncio
+    async def test_review_step_no_source_id_auto_approves(self):
+        """Test review step auto-approves when review_source_step_id is None."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="review",
+                name="Review",
+                step_type=StepType.REVIEW,
+                # No review_source_step_id set
+            ),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "review" in result.steps_completed
+        review_result = wizard._session.step_results.get("review")
+        assert review_result == {"approved": True}
+
+    @pytest.mark.asyncio
+    async def test_find_step_returns_none_for_unknown_id(self):
+        """Test _find_step returns None for a non-existent step ID."""
+        wizard = ConcreteWizard()
+        wizard._session = None  # Not needed for this test
+        assert wizard._find_step("nonexistent") is None
+
+    @pytest.mark.asyncio
+    async def test_find_step_returns_matching_step(self):
+        """Test _find_step returns the correct step by ID."""
+        wizard = ConcreteWizard()
+        found = wizard._find_step("q1")
+        assert found is not None
+        assert found.id == "q1"
+
+
+class TestSessionNotInitialized:
+    """Test RuntimeError when session is None."""
+
+    @pytest.mark.asyncio
+    async def test_question_step_raises_without_session(self):
+        """Test _run_question_step raises RuntimeError without session."""
+        wizard = ConcreteWizard()
+        wizard._session = None
+        step = WizardStep(
+            id="q",
+            name="Q",
+            step_type=StepType.QUESTION,
+            questions=[
+                FormQuestion(id="x", text="?", type=QuestionType.TEXT_INPUT),
+            ],
+        )
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            await wizard._run_question_step(step)
+
+    @pytest.mark.asyncio
+    async def test_llm_step_raises_without_session(self):
+        """Test _run_llm_step raises RuntimeError without session."""
+        wizard = ConcreteWizard()
+        wizard._session = None
+        step = WizardStep(id="l", name="L", step_type=StepType.LLM_CALL)
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            await wizard._run_llm_step(step)
+
+    @pytest.mark.asyncio
+    async def test_confirm_step_raises_without_session(self):
+        """Test _run_confirm_step raises RuntimeError without session."""
+        wizard = ConcreteWizard()
+        wizard._session = None
+        step = WizardStep(id="c", name="C", step_type=StepType.CONFIRM)
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            await wizard._run_confirm_step(step)
 
 
 class TestWizardAbort:

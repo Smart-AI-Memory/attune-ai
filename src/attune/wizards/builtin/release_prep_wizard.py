@@ -8,6 +8,8 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import json
+import logging
 from typing import Any
 
 from attune.meta_workflows.models import FormQuestion, QuestionType
@@ -15,6 +17,8 @@ from attune.prompts import PromptContext
 
 from ..base import BaseWizard, StepType, WizardConfig, WizardStep
 from ..session import WizardSession
+
+logger = logging.getLogger(__name__)
 
 
 def _wants_changelog(session: WizardSession) -> bool:
@@ -132,7 +136,8 @@ class ReleasePrepWizard(BaseWizard):
             PromptContext for the LLM call.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
 
         if step.id == "readiness_check":
             version_type = self._session.get("version_type", "Patch")
@@ -189,9 +194,10 @@ class ReleasePrepWizard(BaseWizard):
                 ],
                 constraints=["Order by dependency"],
                 input_type="readiness_report",
-                input_payload=str(readiness),
+                input_payload=json.dumps(readiness, indent=2, default=str),
             )
 
+        logger.warning("No prompt context defined for step %s, using fallback", step.id)
         return PromptContext(role="assistant", goal="Prepare release")
 
     def process_step_result(self, step: WizardStep, result: dict[str, Any]) -> None:
@@ -202,7 +208,8 @@ class ReleasePrepWizard(BaseWizard):
             result: Parsed LLM response.
 
         """
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Wizard session not initialized")
         if step.id == "readiness_check":
             self._session.set("readiness_report", result)
         elif step.id == "changelog":

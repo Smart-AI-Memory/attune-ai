@@ -37,11 +37,12 @@ class TestRegistryConsolidation:
         "release-prep",
         "test-gen",
         "test-gen-parallel",
-        "test-maintenance",
         "secure-release",
         "bug-predict",
         "security-audit",
         "perf-audit",
+        # test-maintenance: removed — utility class, not BaseWorkflow
+        # batch-processing: removed — batch API client, not BaseWorkflow
     ]
 
     def test_removed_slugs_not_in_default_registry(self):

@@ -264,10 +264,10 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "release-prep": "ReleasePrepTeamWorkflow",
     # Research and synthesis workflows
     "research-synthesis": "ResearchSynthesisWorkflow",
-    # Test management workflows
-    "test-maintenance": "TestMaintenanceWorkflow",
-    # Batch processing
-    "batch-processing": "BatchProcessingWorkflow",
+    # test-maintenance: Removed — utility class, not a BaseWorkflow.
+    # Import directly: from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+    # batch-processing: Removed — batch API client with execute_batch().
+    # Import directly: from attune.workflows.batch_processing import BatchProcessingWorkflow
     # Consolidated slugs removed from registry -- handled by migration system:
     # "pro-review" -> code-review (migration.py)
     # "pr-review" -> code-review (migration.py)

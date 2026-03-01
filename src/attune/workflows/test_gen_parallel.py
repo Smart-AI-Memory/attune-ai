@@ -25,19 +25,28 @@ from typing import Any
 
 from attune.security.path_validation import _validate_file_path
 
-from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult, WorkflowStage
+from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult
 from ..workflows.context import WorkflowContext
 from ..workflows.services import ParsingService, PromptService
 
 
 @dataclass
 class TestGenerationTask:
-    """A test generation task."""
+    """Tracks the state of a single test generation task.
+
+    Attributes:
+        module_path: Source module being tested.
+        coverage: Current test coverage percentage.
+        output_path: Destination path for the generated test file.
+        status: Lifecycle state -- one of ``pending``,
+            ``generated``, ``completed``, or ``error``.
+
+    """
 
     module_path: str
     coverage: float
     output_path: str
-    status: str = "pending"  # pending, generated, completed, validated
+    status: str = "pending"  # pending, generated, completed, error
 
 
 class ParallelTestGenerationWorkflow(BaseWorkflow):
@@ -47,52 +56,19 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
     to get a pre-configured context with prompt and parsing services.
     """
 
-    def __init__(self):
-        super().__init__(
-            name="parallel-test-generation",
-            description="Generate behavioral tests in parallel with AI completion",
-            stages={
-                "discover": WorkflowStage(
-                    name="discover",
-                    description="Find modules needing tests",
-                    tier_hint=ModelTier.CHEAP,
-                    system_prompt="Analyze coverage and prioritize modules for testing",
-                    task_type="analysis",
-                ),
-                "generate_templates": WorkflowStage(
-                    name="generate_templates",
-                    description="Generate test templates in parallel",
-                    tier_hint=ModelTier.CHEAP,
-                    system_prompt="Generate behavioral test template structure",
-                    task_type="code_generation",
-                ),
-                "complete_tests": WorkflowStage(
-                    name="complete_tests",
-                    description="Complete test implementation with AI",
-                    tier_hint=ModelTier.CAPABLE,
-                    system_prompt="""Complete the behavioral test implementation.
+    name = "parallel-test-generation"
+    description = "Generate behavioral tests in parallel with AI completion"
+    stages = ["discover", "generate_templates", "complete_tests", "validate"]
+    tier_map = {
+        "discover": ModelTier.CHEAP,
+        "generate_templates": ModelTier.CHEAP,
+        "complete_tests": ModelTier.CAPABLE,
+        "validate": ModelTier.CHEAP,
+    }
 
-You are given a test template with TODO markers. Your task:
-
-1. Analyze the module being tested
-2. Create realistic test data
-3. Add proper assertions
-4. Test both success AND error paths
-5. Use mocks/patches where needed
-6. Follow pytest best practices
-
-Generate complete, runnable tests that will increase coverage.""",
-                    task_type="code_generation",
-                ),
-                "validate": WorkflowStage(
-                    name="validate",
-                    description="Validate generated tests run correctly",
-                    tier_hint=ModelTier.CHEAP,
-                    system_prompt="Check if tests are valid Python and follow pytest conventions",
-                    task_type="validation",
-                ),
-            },
-        )
+    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
+        """Not used — this workflow overrides execute() directly."""
+        raise NotImplementedError("ParallelTestGenerationWorkflow uses execute(), not run_stage()")
 
     @classmethod
     def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
@@ -111,7 +87,21 @@ Generate complete, runnable tests that will increase coverage.""",
         )
 
     def discover_low_coverage_modules(self, top_n: int = 200) -> list[tuple[str, float]]:
-        """Find modules with lowest coverage."""
+        """Find modules with lowest test coverage.
+
+        Runs ``coverage json`` to get per-file coverage data, then
+        returns the files with the lowest coverage sorted ascending.
+        Skips files with fewer than 30 statements.
+
+        Args:
+            top_n: Maximum number of modules to return.
+
+        Returns:
+            List of (file_path, coverage_percent) tuples sorted by
+            coverage ascending.  Empty list if coverage data is
+            unavailable.
+
+        """
         try:
             # Get coverage data
             import subprocess
@@ -145,7 +135,17 @@ Generate complete, runnable tests that will increase coverage.""",
             return []
 
     def analyze_module_structure(self, file_path: str) -> dict[str, Any]:
-        """Analyze module to extract structure (fast, synchronous)."""
+        """Analyze a Python module's AST to extract classes and functions.
+
+        Args:
+            file_path: Path to the Python source file.
+
+        Returns:
+            Dict with ``file``, ``classes`` (name, methods, line),
+            and ``functions`` (name, line) keys.  Includes an
+            ``error`` key instead if parsing fails.
+
+        """
         try:
             source = Path(file_path).read_text()
             tree = ast.parse(source)
@@ -174,7 +174,18 @@ Generate complete, runnable tests that will increase coverage.""",
         module_path: str,
         structure: dict[str, Any],
     ) -> str:
-        """Generate test template using cheap tier AI."""
+        """Generate a pytest test skeleton using the cheap LLM tier.
+
+        Args:
+            module_path: Path to the source module.
+            structure: Module structure dict from
+                ``analyze_module_structure``.
+
+        Returns:
+            Generated Python test code as a string with TODO
+            markers where test logic is needed.
+
+        """
         prompt = f"""Generate a behavioral test template for this module:
 
 File: {module_path}
@@ -198,7 +209,19 @@ Output ONLY the Python code, no explanations."""
         return result.get("content", "")
 
     async def complete_test_with_ai(self, template: str, module_path: str) -> str:
-        """Complete test implementation using capable tier AI."""
+        """Complete a test template using the capable LLM tier.
+
+        Reads the source module and fills in TODO markers with
+        realistic test data, mocking, and assertions.
+
+        Args:
+            template: Skeleton test code with TODO placeholders.
+            module_path: Path to the source module being tested.
+
+        Returns:
+            Completed Python test code as a string.
+
+        """
         source_code = Path(module_path).read_text()
 
         prompt = f"""Complete this behavioral test implementation.
@@ -235,7 +258,22 @@ Output the COMPLETE test file, no TODOs remaining."""
         output_dir: Path,
         batch_size: int = 10,
     ) -> list[TestGenerationTask]:
-        """Process modules in parallel batches."""
+        """Generate and complete tests for modules in parallel batches.
+
+        For each batch, templates are generated concurrently (cheap
+        tier), then completed concurrently (capable tier), then
+        written to disk.
+
+        Args:
+            modules: List of (module_path, coverage_pct) tuples.
+            output_dir: Directory to write generated test files.
+            batch_size: Modules to process concurrently per batch.
+
+        Returns:
+            List of TestGenerationTask with status ``completed``
+            or ``error``.
+
+        """
         tasks = []
 
         # Create tasks
@@ -295,7 +333,17 @@ Output the COMPLETE test file, no TODOs remaining."""
         return tasks
 
     def _extract_code(self, content: str) -> str:
-        """Extract Python code from markdown code blocks if present."""
+        """Extract Python code from markdown fenced code blocks.
+
+        Args:
+            content: Raw LLM output that may contain
+                triple-backtick python blocks.
+
+        Returns:
+            Extracted code, or the original content if no
+            markdown fencing is detected.
+
+        """
         if "```python" in content:
             parts = content.split("```python")
             if len(parts) > 1:
