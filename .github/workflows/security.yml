@@ -40,7 +40,7 @@ jobs:
         bandit -c .bandit -r src/ attune_llm/ coach_wizards/ attune_software/ --format json --output bandit-report.json --severity-level medium --confidence-level medium || true
 
     - name: Upload Bandit results
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: bandit-results
         path: bandit-report.json
@@ -50,7 +50,7 @@ jobs:
         safety check --json --output safety-report.json || true
 
     - name: Upload Safety results
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: safety-results
         path: safety-report.json
