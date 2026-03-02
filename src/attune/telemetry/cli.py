@@ -38,6 +38,3 @@ from .cli_core import (  # noqa: F401
     cmd_telemetry_savings,
     cmd_telemetry_show,
 )
-
-# Import dashboard commands for backward compatibility (re-exported)
-from .commands import cmd_file_test_dashboard, cmd_telemetry_dashboard  # noqa: F401

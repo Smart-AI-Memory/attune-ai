@@ -10,7 +10,6 @@ AI-powered developer workflows with cost optimization and multi-agent orchestrat
 
 ```bash
 pip install attune-ai                     # Install (zero-config, ready to use)
-python examples/dashboard_demo.py         # Agent dashboard at localhost:8000
 ```
 
 Works out of the box: subscription-first routing with automatic
@@ -156,9 +155,8 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   fails on any file containing non-ASCII bytes.
 
 - **Test mocks must match imports**: When a function changes its
-  import (e.g. `run_standalone_dashboard` → `run_simple_dashboard`),
-  all test mocks must be updated to match or side effects are silently
-  ignored and assertions fail.
+  import path, all test mocks must be updated to match or side
+  effects are silently ignored and assertions fail.
 
 - **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
   fixtures — CI runners often execute as root, making the path
@@ -242,11 +240,11 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 - **Background processes from previous sessions persist across
   restarts**: Long-running processes started by Claude (e.g.
-  `attune dashboard start`, `npm run dev`) survive session end and
-  keep running silently. They can open browser tabs, consume ports,
-  or interfere with the next session. Always `kill` them explicitly
-  when removing a feature, and check `ps aux` if unexpected behavior
-  is observed (Chrome tabs opening, ports already in use, etc.).
+  `npm run dev`) survive session end and keep running silently.
+  They can open browser tabs, consume ports, or interfere with the
+  next session. Always `kill` them explicitly when removing a
+  feature, and check `ps aux` if unexpected behavior is observed
+  (Chrome tabs opening, ports already in use, etc.).
 
 - **Twine cannot prompt for tokens in Claude Code's non-interactive
   terminal**: `twine upload` hangs or raises `EOFError` when it tries

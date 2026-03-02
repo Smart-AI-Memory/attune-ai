@@ -29,8 +29,8 @@ pip install 'attune-ai[developer]'
   mixin classes shadowed real Redis storage methods, causing
   silent `None` returns. All stubs now guarded by
   `TYPE_CHECKING`.
-- **Stale dashboard docs removed** — 1,400+ lines of
-  obsolete dashboard documentation cleaned up.
+- **Dashboard fully removed** — Deleted all dashboard
+  source code, MCP tools, intent patterns, and tests.
 - **CI test coverage expanded** — Removed 4 stale
   `--ignore` entries from `pytest.ini`; 15,270 tests
   passing at 84% coverage.
@@ -57,7 +57,7 @@ pip install 'attune-ai[developer]'
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
 | **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
-| **MCP integration** | 18 native tools | No | No | No |
+| **MCP integration** | 17 native tools | No | No | No |
 
 Attune is a **workflow operating system for Claude** — it sits above coding agents and below general orchestration frameworks, providing production-ready developer workflows with intelligent cost routing. [Full comparison](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/comparison.md)
 
@@ -114,7 +114,7 @@ Workflows guide you through discovery instead of requiring upfront configuration
 
 ## Claude Code Plugin
 
-Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 18 MCP tools, and 7 skills. See the `plugin/` directory.
+Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 17 MCP tools, and 7 skills. See the `plugin/` directory.
 
 ---
 
@@ -253,7 +253,7 @@ attune telemetry savings --days 30
 
 Attune AI includes a Model Context Protocol (MCP) server that exposes all workflows as native Claude Code tools:
 
-- **18 Tools Available** - 10 workflow tools (security_audit, bug_predict, code_review, test_generation, performance_audit, release_prep, and more) plus 8 memory and context tools
+- **17 Tools Available** - 9 workflow tools (security_audit, bug_predict, code_review, test_generation, performance_audit, release_prep, and more) plus 8 memory and context tools
 - **Automatic Discovery** - Claude Code finds tools via `.claude/mcp.json`
 - **Natural Language Access** - Describe your need and Claude invokes the appropriate tool
 

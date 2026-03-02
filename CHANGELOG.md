@@ -31,11 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Type safety improvements** — Added `type: ignore`
   annotations across memory modules for mypy compatibility
   without changing runtime behavior.
-- **Dashboard docs removed** — Deleted 1,400+ lines of stale
-  dashboard documentation (`DASHBOARD_COMPLETE.md`,
-  `DASHBOARD_GUIDE.md`, `DASHBOARD_SUMMARY.md`) and removed
-  dashboard references from `FEATURES.md`,
-  `V4_FEATURES.md`, and `CLI_CHEATSHEET.md`.
+- **Dashboard fully removed** — Deleted all dashboard source
+  code (`dashboard_commands.py`, `dashboard_telemetry.py`,
+  `dashboard_file_tests.py`), the `dashboard_status` MCP
+  tool, the `agent-dashboard` intent pattern, and all
+  dashboard-related tests and documentation.
 - **Test coverage** — 15,270 tests passing, 84% coverage.
 
 ## [3.6.6] - 2026-03-01

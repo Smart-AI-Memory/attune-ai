@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class EmpathyMCPServer:
     """MCP server for Attune AI workflows.
 
-    Exposes workflows, agent dashboard, and telemetry as MCP tools
+    Exposes workflows and telemetry as MCP tools
     that can be invoked from Claude Code.
     """
 
@@ -194,11 +194,6 @@ class EmpathyMCPServer:
                         },
                     },
                 },
-            },
-            "dashboard_status": {
-                "name": "dashboard_status",
-                "description": "Get agent coordination dashboard status. Shows active agents, pending approvals, recent signals.",
-                "input_schema": {"type": "object", "properties": {}},
             },
             "memory_store": {
                 "name": "memory_store",
@@ -527,8 +522,6 @@ class EmpathyMCPServer:
                 return await self._get_auth_recommend(arguments)
             if tool_name == "telemetry_stats":
                 return await self._get_telemetry_stats(arguments)
-            if tool_name == "dashboard_status":
-                return await self._get_dashboard_status()
             if tool_name == "memory_store":
                 return await self._handle_memory_store(arguments)
             if tool_name == "memory_retrieve":
@@ -686,11 +679,6 @@ class EmpathyMCPServer:
             "savings": 0.0,
             "cache_hit_rate": 0.0,
         }
-
-    async def _get_dashboard_status(self) -> dict[str, Any]:
-        """Get dashboard status."""
-        # Placeholder - would integrate with actual dashboard
-        return {"success": True, "active_agents": 0, "pending_approvals": 0, "recent_signals": 0}
 
     def _get_memory(self) -> Any:
         """Lazily initialize and return UnifiedMemory instance.

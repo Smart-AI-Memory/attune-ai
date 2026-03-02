@@ -25,7 +25,6 @@ from attune.telemetry.cli import (
     cmd_test_status,
     cmd_tier1_status,
 )
-from attune.telemetry.commands.dashboard_commands import cmd_telemetry_dashboard
 from attune.telemetry.usage_tracker import UsageTracker
 
 
@@ -688,75 +687,6 @@ class TestCmdTelemetryExport:
         args = Mock(format="json", output="/dev/null", days=None)
         with pytest.raises(ValueError, match="Cannot write to system directory"):
             cmd_telemetry_export(args)
-
-
-class TestCmdTelemetryDashboard:
-    """Test cmd_telemetry_dashboard command."""
-
-    def test_dashboard_with_no_data(self, tmp_path, capsys):
-        """Test dashboard command with no data."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "No telemetry data available" in captured.out
-
-    @patch("webbrowser.open")
-    def test_dashboard_creates_html(self, mock_open, tmp_path):
-        """Test dashboard creates HTML file."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        # Add sample data
-        tracker.track_llm_call(
-            workflow="dashboard-test",
-            stage="test",
-            tier="CAPABLE",
-            model="claude-sonnet-4.5",
-            provider="anthropic",
-            cost=0.0025,
-            tokens={"input": 100, "output": 50},
-            cache_hit=True,
-            cache_type="hash",
-            duration_ms=1500,
-        )
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        assert mock_open.called
-
-    @patch("webbrowser.open")
-    def test_dashboard_with_multiple_tiers(self, mock_open, tmp_path):
-        """Test dashboard with data from multiple tiers."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        # Add data from each tier
-        for tier in ["CHEAP", "CAPABLE", "PREMIUM"]:
-            tracker.track_llm_call(
-                workflow=f"workflow-{tier}",
-                stage="test",
-                tier=tier,
-                model="test-model",
-                provider="test",
-                cost=0.001 if tier == "CHEAP" else 0.01 if tier == "CAPABLE" else 0.05,
-                tokens={"input": 50, "output": 25},
-                cache_hit=False,
-                cache_type=None,
-                duration_ms=500,
-            )
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        assert mock_open.called
 
 
 class TestTier1MonitoringCommands:
@@ -1522,90 +1452,6 @@ class TestCmdTelemetryExportEdgeCases:
 
         assert result == 0
         assert output_file.exists()
-
-
-class TestCmdTelemetryDashboardEdgeCases:
-    """Test edge cases for cmd_telemetry_dashboard."""
-
-    @patch("webbrowser.open")
-    def test_dashboard_with_single_entry(self, mock_open, tmp_path):
-        """Test dashboard with minimal data."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        tracker.track_llm_call(
-            workflow="single",
-            stage="test",
-            tier="CHEAP",
-            model="test-model",
-            provider="test",
-            cost=0.001,
-            tokens={"input": 10, "output": 5},
-            cache_hit=False,
-            cache_type=None,
-            duration_ms=100,
-        )
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        assert mock_open.called
-
-    @patch("webbrowser.open")
-    def test_dashboard_with_unknown_tier(self, mock_open, tmp_path):
-        """Test dashboard handles unknown tier gracefully."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        # Manually add entry with unknown tier
-        log_file = tracker.usage_file
-        with open(log_file, "a", encoding="utf-8") as f:
-            entry = {
-                "ts": datetime.utcnow().isoformat() + "Z",
-                "workflow": "test",
-                "stage": "test",
-                "tier": "UNKNOWN",
-                "model": "test",
-                "provider": "test",
-                "cost": 0.001,
-                "tokens": {"input": 10, "output": 5},
-                "cache": {"hit": False},
-                "duration_ms": 100,
-            }
-            f.write(json.dumps(entry) + "\n")
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        assert mock_open.called
-
-    @patch("webbrowser.open")
-    def test_dashboard_with_zero_baseline_cost(self, mock_open, tmp_path):
-        """Test dashboard handles zero baseline cost."""
-        tracker = UsageTracker(telemetry_dir=tmp_path)
-        UsageTracker._instance = tracker
-
-        # Add entry with zero tokens (edge case)
-        tracker.track_llm_call(
-            workflow="test",
-            stage="test",
-            tier="CHEAP",
-            model="test-model",
-            provider="test",
-            cost=0.0,
-            tokens={"input": 0, "output": 0},
-            cache_hit=True,
-            cache_type="hash",
-            duration_ms=10,
-        )
-
-        args = Mock(days=30)
-        result = cmd_telemetry_dashboard(args)
-
-        assert result == 0
-        assert mock_open.called
 
 
 class TestTier1MonitoringEdgeCases:

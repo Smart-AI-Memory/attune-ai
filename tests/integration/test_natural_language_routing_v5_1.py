@@ -1,7 +1,7 @@
 """Integration test for natural language routing with v5.1.0 features.
 
 Tests that the intent detector and CLI router properly recognize and route
-new v5.1.0 features: authentication strategy, agent dashboard, and batch test generation.
+new v5.1.0 features: authentication strategy and batch test generation.
 """
 
 import pytest
@@ -34,27 +34,6 @@ class TestIntentDetectorV5_1:
             auth_matches = [m for m in matches if m.template_id == "auth-strategy"]
             assert len(auth_matches) > 0, f"Failed to detect auth pattern in: {query}"
             assert auth_matches[0].confidence > 0.3, f"Low confidence for: {query}"
-
-    def test_agent_dashboard_intent_detection(self):
-        """Test that agent dashboard queries are correctly detected."""
-        detector = IntentDetector()
-
-        # Test various dashboard-related queries
-        dashboard_queries = [
-            "show dashboard",
-            "open agent dashboard",
-            "view coordination dashboard",
-            "monitor agents",
-            "check agent status",
-            "agent health metrics",
-        ]
-
-        for query in dashboard_queries:
-            matches = detector.detect(query, threshold=0.3)
-            # Should detect agent-dashboard pattern
-            dashboard_matches = [m for m in matches if m.template_id == "agent-dashboard"]
-            assert len(dashboard_matches) > 0, f"Failed to detect dashboard pattern in: {query}"
-            assert dashboard_matches[0].confidence > 0.3, f"Low confidence for: {query}"
 
     def test_batch_test_generation_intent_detection(self):
         """Test that batch test generation queries are enhanced."""
@@ -90,12 +69,10 @@ class TestIntentDetectorV5_1:
 
         for query in unrelated_queries:
             matches = detector.detect(query, threshold=0.3)
-            # Should not detect auth, dashboard, or test patterns strongly
+            # Should not detect auth or test patterns strongly
             auth_matches = [m for m in matches if m.template_id == "auth-strategy"]
-            dashboard_matches = [m for m in matches if m.template_id == "agent-dashboard"]
 
             assert len(auth_matches) == 0, f"False positive auth match for: {query}"
-            assert len(dashboard_matches) == 0, f"False positive dashboard match for: {query}"
 
 
 class TestKeywordRoutingV5_1:
@@ -120,20 +97,6 @@ class TestKeywordRoutingV5_1:
             assert result["type"] == "skill", f"Should route {keyword} to skill"
             # Check that it routes to auth CLI
             assert "auth_cli" in str(result).lower() or "auth" in str(result).lower()
-
-    @pytest.mark.asyncio
-    async def test_dashboard_keyword_routing(self):
-        """Test that dashboard keywords route to dashboard demo."""
-        router = HybridRouter()
-
-        dashboard_keywords = ["dashboard", "agent-dashboard"]
-
-        for keyword in dashboard_keywords:
-            result = await router.route(keyword)
-            # Router converts keywords to skill invocations
-            assert result["type"] == "skill", f"Should route {keyword} to skill"
-            # Check that it routes to dashboard
-            assert "dashboard" in str(result).lower()
 
     @pytest.mark.asyncio
     async def test_batch_test_keyword_routing(self):
@@ -176,21 +139,6 @@ class TestEndToEndRoutingV5_1:
         assert result["type"] in ["natural_language", "keyword", "slash_command", "skill"]
 
     @pytest.mark.asyncio
-    async def test_natural_language_dashboard_routing(self):
-        """Test that natural language dashboard queries get routed correctly."""
-        router = HybridRouter()
-
-        # Natural language query about dashboard
-        query = "show me the agent coordination dashboard"
-
-        result = await router.route(query)
-
-        # Should be valid routing result
-        assert result is not None
-        assert "type" in result
-        assert result["type"] in ["natural_language", "keyword", "slash_command", "skill"]
-
-    @pytest.mark.asyncio
     async def test_natural_language_batch_test_routing(self):
         """Test that natural language batch test queries get routed correctly."""
         router = HybridRouter()
@@ -213,7 +161,6 @@ def test_all_v5_1_patterns_registered():
 
     # Check that new patterns exist
     assert "auth-strategy" in INTENT_PATTERNS, "auth-strategy pattern not registered"
-    assert "agent-dashboard" in INTENT_PATTERNS, "agent-dashboard pattern not registered"
     assert "test-coverage-boost" in INTENT_PATTERNS, "test-coverage-boost should exist"
 
     # Check that auth-strategy has expected keywords
@@ -221,12 +168,6 @@ def test_all_v5_1_patterns_registered():
     assert "authentication" in auth_keywords
     assert "auth strategy" in auth_keywords
     assert "configure auth" in auth_keywords
-
-    # Check that agent-dashboard has expected keywords
-    dashboard_keywords = INTENT_PATTERNS["agent-dashboard"]["keywords"]
-    assert "dashboard" in dashboard_keywords
-    assert "agent dashboard" in dashboard_keywords
-    assert "coordination dashboard" in dashboard_keywords
 
     # Check that test-coverage-boost has batch keywords
     test_keywords = INTENT_PATTERNS["test-coverage-boost"]["keywords"]
@@ -245,10 +186,6 @@ def test_keyword_mappings_registered():
     assert "auth-status" in router._keyword_to_skill
     assert "auth-recommend" in router._keyword_to_skill
     assert "auth" in router._keyword_to_skill
-
-    # Check dashboard keywords
-    assert "dashboard" in router._keyword_to_skill
-    assert "agent-dashboard" in router._keyword_to_skill
 
     # Check batch test keywords
     assert "batch-tests" in router._keyword_to_skill
