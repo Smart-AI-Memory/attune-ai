@@ -182,32 +182,28 @@ class TestExtractCode:
 
 @pytest.mark.unit
 class TestExecute:
-    """Tests for the end-to-end execute() method.
-
-    Note: execute() has a pre-existing bug -- it constructs
-    WorkflowResult with keyword arguments that don't exist on the
-    dataclass (workflow_name, stages_executed).  These tests verify
-    that the bug surfaces as TypeError so it can be tracked.
-    """
+    """Tests for the end-to-end execute() method."""
 
     @pytest.mark.asyncio
-    async def test_execute_no_coverage_raises_due_to_result_mismatch(
-        self, parallel_test_gen_workflow, tmp_path
-    ):
-        """execute() currently raises TypeError due to WorkflowResult mismatch."""
+    async def test_execute_no_coverage_returns_failure(self, parallel_test_gen_workflow, tmp_path):
+        """execute() returns a failed WorkflowResult when no coverage data found."""
         with patch.object(
             parallel_test_gen_workflow,
             "discover_low_coverage_modules",
             return_value=[],
         ):
-            with pytest.raises(TypeError, match="workflow_name"):
-                await parallel_test_gen_workflow.execute(output_dir=str(tmp_path / "out"))
+            result = await parallel_test_gen_workflow.execute(output_dir=str(tmp_path / "out"))
+
+        assert result.success is False
+        assert len(result.stages) == 1
+        assert result.stages[0].name == "discover"
+        assert "error" in result.final_output
 
     @pytest.mark.asyncio
     async def test_execute_discovers_modules_before_processing(
         self, parallel_test_gen_workflow, tmp_path
     ):
-        """Verify discover is called and modules are passed to batch processor."""
+        """Verify discover is called, modules processed, and result is valid."""
         modules = [("src/foo.py", 30.0)]
         out_dir = tmp_path / "out"
 
@@ -231,12 +227,13 @@ class TestExecute:
                 return_value=[mock_task],
             ) as mock_batch,
         ):
-            # Will raise TypeError on WorkflowResult construction
-            with pytest.raises(TypeError):
-                await parallel_test_gen_workflow.execute(output_dir=str(out_dir))
+            result = await parallel_test_gen_workflow.execute(output_dir=str(out_dir))
 
         mock_discover.assert_called_once()
         mock_batch.assert_called_once()
+        assert result.success is True
+        assert len(result.stages) == 3
+        assert result.final_output["completed"] == 1
 
 
 @pytest.mark.unit

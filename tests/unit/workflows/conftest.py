@@ -105,14 +105,9 @@ def parallel_test_gen_workflow(cost_tracker):
         ParallelTestGenerationWorkflow instance ready for testing
 
     """
-    import logging
-
     from attune.workflows.test_gen_parallel import ParallelTestGenerationWorkflow
 
-    wf = ParallelTestGenerationWorkflow(cost_tracker=cost_tracker)
-    # Workflow uses self.logger but BaseWorkflow doesn't provide it
-    wf.logger = logging.getLogger("attune.workflows.test_gen_parallel")
-    return wf
+    return ParallelTestGenerationWorkflow(cost_tracker=cost_tracker)
 
 
 @pytest.fixture
