@@ -64,7 +64,7 @@ class SEOOptimizationWorkflow(BaseWorkflow):
     def __init__(self):
         """Initialize SEO optimization workflow."""
         super().__init__(
-            enable_heartbeat_tracking=True,  # Enable dashboard visibility
+            enable_heartbeat_tracking=True,  # Enable progress tracking
             enable_coordination=True,  # Enable coordination patterns
         )
 

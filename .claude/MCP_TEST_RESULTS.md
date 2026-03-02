@@ -30,7 +30,6 @@ echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.m
 | auth_status | Get authentication strategy status | ✅ |
 | auth_recommend | Get authentication recommendation | ✅ |
 | telemetry_stats | Get telemetry statistics | ✅ |
-| dashboard_status | Get agent coordination dashboard status | ✅ |
 
 ### Test 3: Resource Registration ✅
 
@@ -136,7 +135,6 @@ All Attune workflows are now accessible through natural language or direct MCP t
 - **Release Prep:** "prepare release", "check readiness"
 - **Auth Management:** "check auth status", "recommend auth mode"
 - **Telemetry:** "show cost stats", "telemetry report"
-- **Dashboard:** "dashboard status", "agent coordination"
 
 ## Next Steps
 

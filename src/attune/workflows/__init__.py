@@ -557,7 +557,6 @@ __all__ = [
     "discover_workflows",
     "get_model",
     "get_workflow",
-    # Stats for dashboard
     "get_workflow_stats",
     "list_workflows",
     "refresh_workflow_registry",

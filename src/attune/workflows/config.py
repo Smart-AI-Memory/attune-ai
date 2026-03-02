@@ -592,7 +592,7 @@ pricing_overrides:
 # XML PROMPT CONFIGURATION
 # =============================================================================
 # Enable structured XML prompts for consistent LLM interactions.
-# XML prompts improve parsing reliability for dashboards and automation.
+# XML prompts improve parsing reliability for automation.
 
 # Global defaults for all workflows
 xml_prompt_defaults:

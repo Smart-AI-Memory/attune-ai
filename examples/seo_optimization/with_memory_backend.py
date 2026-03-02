@@ -1,7 +1,7 @@
 """Run SEO workflow with in-memory backend (no Redis needed).
 
 This script demonstrates how to run the SEO workflow with an in-memory backend
-so the dashboard can track agent activity WITHOUT needing Redis.
+so agent activity can be tracked WITHOUT needing Redis.
 """
 
 import asyncio
@@ -80,10 +80,8 @@ async def main():
     print("📊 Next Steps")
     print("=" * 70)
     print()
-    print("To see this in the dashboard:")
-    print("  1. Run: python examples/dashboard_demo.py")
-    print("  2. Open: http://localhost:8000")
-    print("  3. Look for agent: seo-optimization-[run-id]")
+    print("Agent tracking data is available in the memory backend.")
+    print("Use scripts/monitor_agents.py to view live status.")
     print()
     print("⚠️  Note: In-memory backend data is ephemeral")
     print("   For persistent tracking, use Redis instead")

@@ -151,7 +151,6 @@ exclude_docs: |
   configuration-architecture.md
   context-management.md
   continuous-learning.md
-  dashboard-costs-by-tier.md
   experimental_assessment.md
   feature-overview-meta-workflows.md
   governance.md

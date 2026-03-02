@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Test Approval Gates - Interactive Demo
 
-This script creates approval requests and waits for you to approve/reject them
-via the dashboard UI at http://localhost:8000
+This script creates approval requests and waits for you to approve/reject them.
 
 Usage:
     python scripts/test_approval_gates.py
@@ -22,8 +21,7 @@ def create_test_approvals():
     print("🚦 APPROVAL GATES DEMO")
     print("=" * 60)
     print("\nThis demo will create 3 approval requests.")
-    print("Open the dashboard at: http://localhost:8000")
-    print("\nYou can approve or reject each request in the dashboard UI.")
+    print("You can approve or reject each request via the API.")
     print("=" * 60)
 
     # Approval 1: Deploy to Production
@@ -98,7 +96,7 @@ def create_background_approval():
     gate = ApprovalGate(agent_id="background-agent")
 
     print("\n🔄 Creating a persistent approval request...")
-    print("This will stay in your dashboard until you approve/reject it.")
+    print("This will stay pending until you approve/reject it.")
 
     gate.request_approval(
         approval_type="run_expensive_operation",

@@ -46,7 +46,7 @@ class TestPathTraversalPrevention:
         1. System directory blocking (/etc, /sys, /proc, /dev)
         2. The allowed_dir parameter to restrict writes to a specific directory
 
-        The dashboard API uses allowed_dir=tempfile.gettempdir() to prevent
+        The API uses allowed_dir=tempfile.gettempdir() to prevent
         writes outside the temp directory.
         """
         allowed_dir = tmp_path / "allowed"
@@ -127,18 +127,16 @@ class TestPathTraversalInPatternAPI:
         """Test that export filename parameter is validated.
 
         This is a documentation test - actual API testing requires FastAPI test client.
-        The fix ensures dashboard/backend/api/patterns.py validates paths.
+        The fix ensures API endpoints validate paths before writing.
         """
         # Path validation is called in the API endpoint
-        # See dashboard/backend/api/patterns.py:117-128
         assert True  # Placeholder - add FastAPI test if available
 
     def test_download_filename_validated(self):
         """Test that download filename parameter is validated.
 
         This is a documentation test - actual API testing requires FastAPI test client.
-        The fix ensures dashboard/backend/api/patterns.py validates paths.
+        The fix ensures API endpoints validate paths before writing.
         """
         # Path validation is called in the API endpoint
-        # See dashboard/backend/api/patterns.py:159-178
         assert True  # Placeholder - add FastAPI test if available

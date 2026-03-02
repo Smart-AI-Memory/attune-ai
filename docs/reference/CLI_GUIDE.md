@@ -1009,7 +1009,7 @@ attune review --staged           # Staged changes only
 attune-inspect .                 # Inspect current directory
 attune-inspect . --fix           # Auto-fix formatting/imports
 attune-inspect . --format sarif  # SARIF for GitHub Actions
-attune-inspect . --format html   # HTML dashboard
+attune-inspect . --format html   # HTML report
 ```
 
 ### Memory & Patterns

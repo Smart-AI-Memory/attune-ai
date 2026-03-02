@@ -37,7 +37,7 @@ class TrustBuildingBehaviors:
         Example:
         - Raw compliance data → Formatted summary for charge nurse
         - Gap list → Prioritized action items with assignments
-        - Assessment results → Executive dashboard for manager
+        - Assessment results → Executive summary for manager
 
         Trust Built:
         - "This AI understands my workflow"
@@ -240,7 +240,7 @@ class TrustBuildingBehaviors:
         Example:
         - Audit in 2 weeks, multiple critical gaps → Propose prioritized timeline
         - Overlapping deadlines → Suggest task delegation framework
-        - Information overload → Create structured dashboard/checklist
+        - Information overload → Create structured checklist
 
         Trust Built:
         - "This AI understands real problems"
@@ -287,7 +287,7 @@ class TrustBuildingBehaviors:
                 )
 
             elif source["type"] == "information_overload":
-                # Volunteer: Structured dashboard
+                # Volunteer: Structured overview
                 structural_interventions.append(
                     {
                         "intervention_type": "information_structure",

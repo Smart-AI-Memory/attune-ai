@@ -219,10 +219,6 @@ class TestSkipDirectories:
         """Should skip vscode-memory-panel directory."""
         assert "vscode-memory-panel" in SKIP_DIRECTORIES
 
-    def test_contains_workflow_dashboard(self):
-        """Should skip workflow-dashboard directory."""
-        assert "workflow-dashboard" in SKIP_DIRECTORIES
-
     def test_all_entries_are_strings(self):
         """All entries should be strings."""
         for entry in SKIP_DIRECTORIES:

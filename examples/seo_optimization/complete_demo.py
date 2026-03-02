@@ -3,7 +3,7 @@
 Demonstrates:
 1. Detailed SEO audit results
 2. Socratic questioning flow
-3. Dashboard integration setup
+3. Agent tracking setup
 
 Usage:
     python examples/seo_optimization/complete_demo.py
@@ -209,17 +209,16 @@ async def demonstrate_socratic_flow():
     print("   ✓ Apply this change? [Yes / No / Edit]")
 
 
-async def demonstrate_dashboard_setup():
-    """Demonstrate dashboard setup for agent tracking."""
-    print_section("📊 DASHBOARD INTEGRATION SETUP", "=")
+async def demonstrate_tracking_setup():
+    """Demonstrate tracking setup for agent monitoring."""
+    print_section("📊 AGENT TRACKING SETUP", "=")
 
-    print("To see SEO agents in the Agent Coordination Dashboard:\n")
+    print("To monitor SEO agents with heartbeat tracking:\n")
 
     print("OPTION 1: In-Memory Backend (Testing)")
     print("-" * 70)
     print("Quick setup for local testing:\n")
     print("```python")
-    print("# In your dashboard startup (examples/dashboard_demo.py)")
     print("from attune.coordination import InMemoryHeartbeatBackend")
     print()
     print("# Initialize backend")
@@ -236,26 +235,22 @@ async def demonstrate_dashboard_setup():
     print("# Terminal 1: Start Redis")
     print("redis-server")
     print()
-    print("# Terminal 2: Start Dashboard")
-    print("python examples/dashboard_demo.py")
-    print()
-    print("# Terminal 3: Run SEO Workflow")
+    print("# Terminal 2: Run SEO Workflow")
     print("python examples/seo_optimization/live_demo.py")
     print("```\n")
 
-    print("What You'll See in Dashboard:")
+    print("What You'll See:")
     print("-" * 70)
-    print("  • Agent Card: 'seo-optimization-[run-id]'")
-    print("  • Heartbeat Updates: Real-time status as it processes")
-    print("  • Stage Progress: scan → analyze → recommend → implement")
-    print("  • Cost Tracking: Live cost accumulation")
-    print("  • Coordination Status: Heartbeat patterns (Pattern 1)\n")
+    print("  • Agent heartbeat updates in real-time")
+    print("  • Stage progression: scan → analyze → recommend → implement")
+    print("  • Cost tracking: Live cost accumulation")
+    print("  • Coordination status: Heartbeat patterns (Pattern 1)\n")
 
     print("Current Status:")
     print("-" * 70)
     print("  ✅ SEO workflow configured with heartbeat tracking")
     print("  ⚠️  Memory backend needs Redis or in-memory setup")
-    print("  💡 Workflow works perfectly without dashboard - tracking is optional\n")
+    print("  💡 Tracking is optional - workflow works fine without it\n")
 
 
 async def main():
@@ -265,7 +260,7 @@ async def main():
     print("This demonstration covers:")
     print("  1. Detailed SEO audit results with actionable insights")
     print("  2. Socratic questioning flow for user guidance")
-    print("  3. Dashboard integration setup (optional)\n")
+    print("  3. Agent tracking setup (optional)\n")
 
     print("Starting demonstration...\n")
 
@@ -291,8 +286,8 @@ async def main():
 
     print("\n\n")
 
-    # Part 3: Dashboard Setup
-    await demonstrate_dashboard_setup()
+    # Part 3: Tracking Setup
+    await demonstrate_tracking_setup()
 
     # Summary
     print_section("✅ DEMONSTRATION COMPLETE", "=")
@@ -300,7 +295,7 @@ async def main():
     print("What You Learned:")
     print("  ✓ How the SEO workflow audits your documentation")
     print("  ✓ How Socratic questioning guides decision-making")
-    print("  ✓ How to set up dashboard tracking (optional)")
+    print("  ✓ How to set up agent tracking (optional)")
     print()
     print("Next Steps:")
     print("  • Run: /docs seo-audit (for quick audit)")

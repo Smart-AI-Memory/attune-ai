@@ -91,7 +91,7 @@ class ExecutionFinalizeMixin:
                 pass  # Best effort cleanup
             self._rich_reporter = None
 
-        # Save to workflow history for dashboard
+        # Save to workflow history
         try:
             _save_workflow_run(self.name, provider_str, result)
         except (OSError, PermissionError):

@@ -41,7 +41,6 @@ SKIP_DIRECTORIES = {
     ".coverage",  # Coverage data
     "vscode-extension",  # VSCode extension code (separate security review)
     "vscode-memory-panel",  # VSCode panel code
-    "workflow-dashboard",  # Dashboard build
 }
 
 # Patterns that indicate a line is DETECTION code, not vulnerable code

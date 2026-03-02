@@ -172,7 +172,7 @@ def _save_workflow_run(
 
 
 def get_workflow_stats(history_file: str = WORKFLOW_HISTORY_FILE) -> dict:
-    """Get workflow statistics for dashboard.
+    """Get workflow statistics.
 
     Uses SQLite-based storage by default. Falls back to JSON if unavailable.
 

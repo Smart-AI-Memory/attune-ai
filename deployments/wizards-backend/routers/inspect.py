@@ -57,7 +57,7 @@ async def run_inspection(request: InspectRequest):
     - terminal: Human-readable CLI output
     - markdown: Documentation-friendly format
     - sarif: GitHub Actions / CI integration
-    - html: Professional dashboard report
+    - html: Professional HTML report
     """
     try:
         from agents.code_inspection import CodeInspectionAgent
@@ -147,7 +147,7 @@ async def list_formats():
             },
             {
                 "name": "html",
-                "description": "Professional HTML dashboard",
+                "description": "Professional HTML report",
                 "use_case": "Stakeholder reports, sprint reviews",
             },
         ],

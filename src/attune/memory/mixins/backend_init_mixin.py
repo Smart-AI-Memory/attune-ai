@@ -209,8 +209,8 @@ class BackendInitMixin:
     def get_backend_status(self) -> dict[str, Any]:
         """Get the current status of all memory backends.
 
-        Returns a structured dict suitable for health checks, debugging,
-        and dashboard display. Can be serialized to JSON.
+        Returns a structured dict suitable for health checks and debugging.
+        Can be serialized to JSON.
 
         Returns:
             dict with keys:

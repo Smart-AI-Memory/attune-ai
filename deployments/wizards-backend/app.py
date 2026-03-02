@@ -60,7 +60,7 @@ if static_path.exists():
 
 @app.get("/")
 async def root():
-    """Serve the dashboard."""
+    """Serve the frontend."""
     index_path = static_path / "index.html"
     if index_path.exists():
         return FileResponse(index_path)

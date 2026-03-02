@@ -74,7 +74,7 @@ class ReleasePrepTeam:
         - Parallel agent execution via asyncio.gather
         - Progressive tier escalation per agent
         - Configurable quality gates
-        - Optional Redis coordination for dashboard visibility
+        - Optional Redis coordination
         - Cost tracking across all agents
 
     Args:
@@ -359,8 +359,8 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
     Attributes:
         name: Workflow name for registry
         description: Human-readable description
-        stages: Stage names for dashboard display
-        tier_map: Tier mapping for dashboard display
+        stages: Stage names for workflow registry
+        tier_map: Tier mapping for workflow registry
 
     """
 

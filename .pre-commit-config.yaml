@@ -7,7 +7,6 @@ exclude: |
   (?x)^(
     site/|
     website/public/|
-    examples/wizard-dashboard/node_modules/|
     \.venv/|
     test_env/|
     build/|
@@ -68,7 +67,6 @@ repos:
             .*_audit.*\.py$|
             .*\.html$|
             tests/|
-            dashboard/|
             website/|
             src/|
             attune_software/|

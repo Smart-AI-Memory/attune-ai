@@ -101,8 +101,7 @@ def save_health_json(
 ) -> None:
     """Save health check report to .attune/health.json.
 
-    This creates the health.json file that the Empathy VS Code
-    extension reads to display the interactive health dashboard.
+    This creates the health.json file for health check reporting.
 
     Args:
         report: Health check report to save

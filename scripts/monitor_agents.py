@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Real-time agent monitoring for dashboard integration.
+"""Real-time agent monitoring.
 
 Monitors background agent task outputs and provides JSON status updates
-that can be consumed by the dashboard or viewed in terminal.
+that can be viewed in terminal.
 
 Usage:
     python scripts/monitor_agents.py                    # Watch mode (updates every 2s)
     python scripts/monitor_agents.py --once              # Single snapshot
     python scripts/monitor_agents.py --json              # JSON output only
-    python scripts/monitor_agents.py --dashboard         # Dashboard-optimized JSON
 """
 
 import json
@@ -143,9 +142,9 @@ def get_all_agent_status() -> Dict[str, Any]:
 
 
 def print_dashboard_view(status: Dict[str, Any]):
-    """Print human-readable dashboard view."""
+    """Print human-readable status view."""
     print("\n" + "=" * 80)
-    print("🤖  AGENT MONITORING DASHBOARD")
+    print("🤖  AGENT MONITORING")
     print("=" * 80)
     print(f"Timestamp: {status['timestamp']}")
     print(f"Total Agents: {status['total_agents']}")
@@ -194,7 +193,6 @@ def main():
     parser = argparse.ArgumentParser(description="Monitor agent progress")
     parser.add_argument("--once", action="store_true", help="Single snapshot (no watch)")
     parser.add_argument("--json", action="store_true", help="Output JSON only")
-    parser.add_argument("--dashboard", action="store_true", help="Dashboard-optimized JSON")
     parser.add_argument("--interval", type=int, default=2, help="Update interval in seconds")
 
     args = parser.parse_args()
@@ -203,12 +201,8 @@ def main():
         while True:
             status = get_all_agent_status()
 
-            if args.json or args.dashboard:
+            if args.json:
                 print(json.dumps(status, indent=2))
-                if args.dashboard:
-                    # Write to a file that dashboard can read
-                    output_file = Path("agent_status.json")
-                    output_file.write_text(json.dumps(status, indent=2))
             else:
                 print_dashboard_view(status)
 

@@ -46,7 +46,7 @@ ANALYZE_FEATURES_PROMPT = """
     2. **Groupings**: Identify natural feature groups (4-6 max):
        - Quick Actions (morning routines, ship checks)
        - Workflows (code review, testing)
-       - Views (dashboard, costs)
+       - Views (costs, telemetry)
        - Analysis (security, bugs, health)
 
     3. **Mnemonic Suggestions**: For each feature, suggest:
@@ -74,7 +74,7 @@ ANALYZE_FEATURES_PROMPT = """
     suggested_groups:
       - name: "Quick Actions"
         icon: "$(zap)"
-        features: ["morning", "ship", "fix", "dashboard"]
+        features: ["morning", "ship", "fix", "review"]
 
     conflict_warnings:
       - type: "letter_conflict"

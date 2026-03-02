@@ -117,7 +117,7 @@ coordinator.HEARTBEAT_TTL = 120  # 2 minutes
 
 1. **Long-Running Workflows**: Monitor multi-agent workflows and detect crashes
 2. **Parallel Execution**: Track multiple agents running concurrently
-3. **Health Monitoring**: Dashboard showing active agents across system
+3. **Health Monitoring**: Track active agents across system
 4. **Failure Detection**: Auto-detect and restart failed agents
 5. **Progress Tracking**: Real-time progress updates for user interfaces
 
@@ -687,7 +687,7 @@ python examples/event_streaming_demo.py
 
 ### Event Streaming Use Cases
 
-1. **Real-Time Dashboards**: WebSocket server consumes events and pushes to browser clients
+1. **Real-Time Monitoring**: WebSocket server consumes events for live monitoring
 2. **Event Replay**: Retrieve historical events for debugging or analysis
 3. **Audit Logging**: Permanent record of agent coordination and execution
 4. **Multi-System Monitoring**: Other services consume events from shared Redis instance
@@ -761,7 +761,7 @@ ApprovalGate allows workflows to block and wait for human approval before procee
 
 - **Blocking requests** - Workflow pauses until human responds
 - **Timeout handling** - Configurable timeout (default 5 minutes)
-- **UI integration** - Pending approvals retrievable for dashboard
+- **UI integration** - Pending approvals retrievable via API
 - **Context sharing** - Rich context passed for informed decisions
 - **Graceful degradation** - Works without Redis (auto-rejects)
 
@@ -972,31 +972,17 @@ class AdaptiveWorkflow(BaseWorkflow):
 - ✅ **Pattern 5: Human Approval Gates** - Pause workflows for human decisions
 - ✅ **Pattern 6: Agent-to-LLM Feedback Loop** - Quality-based adaptive routing
 
-### Dashboard
+### Monitoring
 
-**Web Monitoring Dashboard** - ✅ Complete
+Agent monitoring is available via the CLI:
 
-A zero-dependency web dashboard for visualizing all 6 patterns in real-time:
-
-```python
-from attune.dashboard import run_simple_dashboard
-
-# Start dashboard (no external dependencies)
-run_simple_dashboard(host="0.0.0.0", port=8000)
-
-# Open browser: http://localhost:8000
+```bash
+python scripts/monitor_agents.py          # Watch mode
+python scripts/monitor_agents.py --json   # JSON output
 ```
 
-**Features:**
-
-- Real-time agent status monitoring
-- Approval request management (approve/reject from UI)
-- Quality metrics and underperforming stage detection
-- Coordination signal viewer
-- Event stream monitor
-- Auto-refresh every 5 seconds
-
-**See:** [DASHBOARD_GUIDE.md](DASHBOARD_GUIDE.md) and [DASHBOARD_SUMMARY.md](DASHBOARD_SUMMARY.md)
+All 6 coordination patterns emit events that can be
+consumed programmatically via the event streaming API.
 
 ### Next Steps
 

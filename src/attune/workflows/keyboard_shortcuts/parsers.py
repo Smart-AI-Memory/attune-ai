@@ -366,7 +366,7 @@ class CompositeParser:
             category = "General"
             if "quick" in feature.id.lower() or feature.frequency == FrequencyTier.DAILY:
                 category = "Quick Actions"
-            elif "view" in feature.id.lower() or "dashboard" in feature.id.lower():
+            elif "view" in feature.id.lower() or "telemetry" in feature.id.lower():
                 category = "Views"
             elif "workflow" in feature.id.lower() or "run" in feature.id.lower():
                 category = "Workflows"

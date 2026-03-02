@@ -76,7 +76,7 @@ When invoked with arguments, EXECUTE the corresponding action:
 | "setup", "install", "configure", "redis" | setup-guide agent |
 | "version", "update", "upgrade" | version check |
 | "cost", "spend", "usage", "telemetry" | telemetry_stats |
-| "dashboard", "agents", "status" | dashboard_status |
+| "agents", "status" | agent heartbeat status |
 
 ## No-Argument Behavior
 

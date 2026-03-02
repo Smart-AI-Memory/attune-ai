@@ -19,7 +19,7 @@ class ReportGenerator:
     Reports are designed for:
     - Human consumption (markdown)
     - Agent/crew consumption (structured data)
-    - Dashboard display (summary metrics)
+    - Summary metrics display
     """
 
     def __init__(self, summary: ProjectSummary, records: list[FileRecord]):

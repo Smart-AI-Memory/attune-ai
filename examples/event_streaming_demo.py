@@ -307,7 +307,7 @@ def main():
     print()
     print("📖 Next Steps:")
     print("  - View live events: empathy telemetry events --follow")
-    print("  - Build web dashboard with WebSocket integration")
+    print("  - Build monitoring tools with WebSocket integration")
     print("  - Enable streaming in workflows: enable_streaming=True")
     print()
     print("📚 Documentation:")

@@ -1,6 +1,6 @@
-"""Autonomous Test Generation with Dashboard Integration - Enhanced Edition.
+"""Autonomous Test Generation - Enhanced Edition.
 
-Generates behavioral tests with real-time monitoring via Agent Coordination Dashboard.
+Generates behavioral tests with real-time progress monitoring.
 
 ENHANCEMENTS (Phase 1):
 - Extended thinking mode for better test planning
@@ -70,7 +70,7 @@ class AutonomousTestGenerator(
     TestGenRefinementMixin,
     TestGenCoverageMixin,
 ):
-    """Generate tests autonomously with dashboard monitoring and Anthropic best practices."""
+    """Generate tests autonomously with progress monitoring and Anthropic best practices."""
 
     def __init__(
         self,
@@ -116,7 +116,7 @@ class AutonomousTestGenerator(
         self.enable_coverage_guided = enable_coverage_guided
         self.target_coverage = target_coverage
 
-        # Initialize memory backend for dashboard integration
+        # Initialize memory backend for tracking
         try:
             self.memory = RedisShortTermMemory()
             self.coordinator = HeartbeatCoordinator(memory=self.memory, enable_streaming=True)
@@ -166,7 +166,7 @@ class AutonomousTestGenerator(
                 progress = (i + 1) / len(self.modules)
                 module_name = module["file"].replace("src/attune/", "")
 
-                # Update dashboard
+                # Update progress
                 self.coordinator.beat(
                     status="running",
                     progress=progress,
@@ -181,7 +181,7 @@ class AutonomousTestGenerator(
                         results["files_created"].append(str(test_file))
                         logger.info(f"✅ Generated tests for {module_name}")
 
-                        # Send event to dashboard
+                        # Publish progress event
                         if self.event_streamer:
                             self.event_streamer.publish_event(
                                 event_type="test_file_created",

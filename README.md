@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C270%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-15%2C393%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -23,21 +23,22 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.7.0
+## What's New in v3.8.0
 
-- **Mixin MRO bug fixed** — Type annotation stubs on 8
-  mixin classes shadowed real Redis storage methods, causing
-  silent `None` returns. All stubs now guarded by
-  `TYPE_CHECKING`.
 - **Dashboard fully removed** — Deleted all dashboard
   source code, MCP tools, intent patterns, and tests.
-- **CI test coverage expanded** — Removed 4 stale
-  `--ignore` entries from `pytest.ini`; 15,270 tests
-  passing at 84% coverage.
+  Clean separation of concerns.
+- **146 new unit tests** — Added coverage for 9
+  modules including release prep
+  team, XML parser, workflow config, execution
+  finalization, and health check tracking.
+- **15,393 tests passing** at 84% coverage.
 
 <details>
 <summary>Previous releases</summary>
 
+- **v3.7.0** — Mixin MRO fix, dashboard removal began,
+  CI test coverage expanded
 - **v3.6.6** — Wizard REVIEW step, 82 new workflow tests,
   BEP middleware removed
 - **v3.6.5** — Dashboard module removed

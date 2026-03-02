@@ -53,7 +53,7 @@ class AgentHeartbeat:
     current_task: str
     last_beat: datetime
     metadata: dict[str, Any] = field(default_factory=dict)
-    display_name: str | None = None  # Optional human-readable name for dashboard
+    display_name: str | None = None  # Optional human-readable name
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -163,7 +163,7 @@ class HeartbeatCoordinator:
         Args:
             agent_id: Unique agent identifier
             metadata: Initial metadata (workflow, run_id, etc.)
-            display_name: Optional human-readable name for dashboard display
+            display_name: Optional human-readable name
 
         """
         if not self.memory:

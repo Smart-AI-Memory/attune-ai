@@ -578,9 +578,9 @@ def _severity_to_sarif_level(severity: str) -> str:
 
 
 def format_report_html(state: CodeInspectionState, include_trends: bool = False) -> str:
-    """Format report as HTML dashboard.
+    """Format report as HTML.
 
-    Creates a visual dashboard with:
+    Creates a visual report with:
     - Health score gauge
     - Category score cards
     - Findings table

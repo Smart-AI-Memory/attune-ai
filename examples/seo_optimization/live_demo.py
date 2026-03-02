@@ -1,12 +1,8 @@
-"""Live demo showing SEO workflow in Agent Coordination Dashboard.
+"""Live demo showing SEO workflow with agent coordination.
 
-Run this alongside the dashboard to see agents coordinating in real-time.
+Run this to see agents coordinating in real-time.
 
 Usage:
-    # Terminal 1: Start the dashboard
-    python examples/dashboard_demo.py
-
-    # Terminal 2: Run this script
     python examples/seo_optimization/live_demo.py
 """
 
@@ -17,13 +13,11 @@ from attune.workflows import SEOOptimizationWorkflow
 
 
 async def main():
-    """Run SEO optimization workflow with dashboard visibility."""
+    """Run SEO optimization workflow with agent tracking."""
     print("=" * 70)
     print("SEO Optimization - Live Agent Coordination Demo")
     print("=" * 70)
-    print("\n📊 Open the Agent Coordination Dashboard in your browser:")
-    print("   http://localhost:8000")
-    print("\n💡 You should see the seo-optimization agent appear shortly...")
+    print("\n💡 Starting SEO optimization workflow...")
     print("\nStarting in 5 seconds...")
     await asyncio.sleep(5)
 
@@ -31,7 +25,7 @@ async def main():
     workflow = SEOOptimizationWorkflow()
 
     print("\n🚀 Running SEO audit on Attune AI documentation...")
-    print("   Watch the dashboard to see:")
+    print("   Watch the output to see:")
     print("   - Agent heartbeat updates")
     print("   - Stage progression (scan → analyze)")
     print("   - Cost accumulation\n")
@@ -72,8 +66,7 @@ async def main():
     print("\n" + "=" * 70)
     print("✅ Demo complete!")
     print("=" * 70)
-    print("\n💡 The agent should now appear as 'completed' in the dashboard.")
-    print("   Check the coordination patterns and heartbeat history.\n")
+    print("\n💡 The agent has completed. Check heartbeat history for details.\n")
 
 
 if __name__ == "__main__":

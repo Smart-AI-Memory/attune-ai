@@ -5,6 +5,21 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-03-02
+
+### Removed
+
+- **Dashboard fully removed** — Deleted all dashboard source
+  code, MCP tools, intent patterns, and tests. Clean
+  separation of concerns.
+
+### Added
+
+- **146 new unit tests** — Added coverage for 9 modules
+  including release prep team, XML parser, workflow config,
+  execution finalization, and health check tracking.
+- **15,393 tests passing** at 84% coverage.
+
 ## [3.7.0] - 2026-03-01
 
 ### Fixed
@@ -31,11 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Type safety improvements** — Added `type: ignore`
   annotations across memory modules for mypy compatibility
   without changing runtime behavior.
-- **Dashboard fully removed** — Deleted all dashboard source
+- **Dashboard removal began** — Deleted dashboard source
   code (`dashboard_commands.py`, `dashboard_telemetry.py`,
   `dashboard_file_tests.py`), the `dashboard_status` MCP
-  tool, the `agent-dashboard` intent pattern, and all
-  dashboard-related tests and documentation.
+  tool, the `agent-dashboard` intent pattern, and related
+  tests and documentation.
 - **Test coverage** — 15,270 tests passing, 84% coverage.
 
 ## [3.6.6] - 2026-03-01

@@ -174,7 +174,7 @@ def main():
         print("7. 📈 Generate reports")
         print("   - Coverage report (HTML + terminal)")
         print("   - JUnit XML for CI/CD")
-        print("   - Performance metrics dashboard")
+        print("   - Performance metrics report")
         print()
 
         print("8. 🔄 CI/CD integration")

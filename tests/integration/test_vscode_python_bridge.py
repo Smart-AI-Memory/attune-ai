@@ -102,7 +102,7 @@ def test_workflow_categorization_coverage():
 
     # Simulate categorization logic from WorkflowDiscoveryService
     quick_workflows = ["morning", "ship", "fix-all", "learn", "health"]
-    view_workflows = ["dashboard", "costs", "status"]
+    view_workflows = ["costs", "status", "telemetry"]
     tool_workflows = ["fix-lint", "fix-format", "sync-claude"]
 
     categories = {"quick": 0, "workflow": 0, "view": 0, "tool": 0}

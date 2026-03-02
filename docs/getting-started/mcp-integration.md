@@ -110,7 +110,6 @@ The Attune MCP server exposes all production workflows as tools:
 | `auth_status` | Get authentication strategy status and configuration | none |
 | `auth_recommend` | Get authentication recommendation for a file | `file_path` |
 | `telemetry_stats` | Get cost savings, cache hit rates, workflow performance | `days` (optional) |
-| `dashboard_status` | Get agent coordination dashboard status | none |
 
 ### MCP Resources (3)
 
