@@ -34,7 +34,7 @@ class FeedbackManagementMixin:
             # MAINTAIN: Keep virtuous cycle going
             return self._maintain_trust_building_loop()
 
-        return active_loops
+        return active_loops  # type: ignore[no-any-return]
 
     def _break_trust_erosion_loop(self) -> dict:
         """Intervention to break vicious cycle of trust erosion"""

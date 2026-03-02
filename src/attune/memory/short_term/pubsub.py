@@ -203,8 +203,8 @@ class PubSubManager:
                 import redis
 
                 kwargs = self._base._config.to_redis_kwargs()
-                self._pubsub_client = redis.Redis(**kwargs)
-                self._pubsub = self._pubsub_client.pubsub()
+                self._pubsub_client = redis.Redis(**kwargs)  # type: ignore[assignment]
+                self._pubsub = self._pubsub_client.pubsub()  # type: ignore[attr-defined]
             except Exception as e:
                 logger.error("pubsub_connection_failed", error=str(e))
                 return False
@@ -295,8 +295,8 @@ class PubSubManager:
                             pass
 
                     kwargs = self._base._config.to_redis_kwargs()
-                    self._pubsub_client = redis.Redis(**kwargs)
-                    self._pubsub = self._pubsub_client.pubsub()
+                    self._pubsub_client = redis.Redis(**kwargs)  # type: ignore[assignment]
+                    self._pubsub = self._pubsub_client.pubsub()  # type: ignore[attr-defined]
 
                     # Re-subscribe to all channels
                     for channel in self._subscriptions:

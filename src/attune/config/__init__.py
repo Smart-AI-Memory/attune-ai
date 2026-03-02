@@ -12,10 +12,11 @@ Licensed under the Apache License, Version 2.0
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Any
 
 # Check if PyYAML is available
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 
     YAML_AVAILABLE = True
 except ImportError:
@@ -30,9 +31,9 @@ spec = importlib.util.spec_from_file_location("attune_config_legacy", config_py_
 if spec and spec.loader:
     legacy_config = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(legacy_config)
-    AttuneConfig = legacy_config.AttuneConfig
-    EmpathyConfig = legacy_config.EmpathyConfig  # backward-compat alias
-    load_config = legacy_config.load_config
+    AttuneConfig: Any = legacy_config.AttuneConfig
+    EmpathyConfig: Any = legacy_config.EmpathyConfig  # backward-compat alias
+    load_config: Any = legacy_config.load_config
 else:
     # Fallback if import fails
     AttuneConfig = None

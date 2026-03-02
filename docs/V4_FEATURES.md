@@ -18,7 +18,6 @@ Version 4.0 introduces **Meta-Orchestration** - workflows that use real analysis
 
 1. **Orchestrated Health Check** - Comprehensive codebase analysis
 2. **Orchestrated Release Prep** - Quality gate validation for releases
-3. **VSCode Extension Integration** - One-click access from dashboard
 
 ---
 
@@ -46,12 +45,6 @@ attune orchestrate health-check --mode weekly
 # Release check (6 agents: comprehensive validation)
 attune orchestrate health-check --mode release
 ```
-
-**VSCode Extension:**
-1. Open Attune Dashboard (sidebar)
-2. Scroll to "META-ORCHESTRATION (v4.0)" section
-3. Click "Health Check" button
-4. Results open in dedicated panel
 
 ### Example Output
 
@@ -122,11 +115,6 @@ attune orchestrate release-prep --path .
 
 # Example output shows which gates pass/fail
 ```
-
-**VSCode Extension:**
-1. Open Attune Dashboard
-2. Click "Release Prep" button in v4.0 section
-3. Review quality gates in dedicated panel
 
 ### Example Output
 

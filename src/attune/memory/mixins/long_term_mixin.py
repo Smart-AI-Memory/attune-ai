@@ -82,7 +82,7 @@ class LongTermOperationsMixin:
                 pattern_id=result.get("pattern_id"),
                 classification=result.get("classification"),
             )
-            return result
+            return result  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("persist_pattern_failed", error=str(e))
             return None
@@ -136,7 +136,7 @@ class LongTermOperationsMixin:
             if use_cache and pattern:
                 self._cache_pattern(pattern_id, pattern)
 
-            return pattern
+            return pattern  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("recall_pattern_failed", pattern_id=pattern_id, error=str(e))
             return None

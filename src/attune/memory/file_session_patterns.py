@@ -10,6 +10,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import structlog
 
@@ -38,7 +39,7 @@ class PatternStagingMixin:
     _state: SessionState
     _dirty: bool
 
-    def _atomic_write(self, path: object, data: dict) -> None:
+    def _atomic_write(self, path: Path, data: dict) -> None:
         """Write JSON atomically (provided by PersistenceMixin)."""
         # pragma: no cover
 

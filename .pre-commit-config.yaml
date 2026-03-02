@@ -37,9 +37,7 @@ repos:
         # Prevents bare except clauses from being committed
         # See docs/EXCEPTION_HANDLING_GUIDE.md for best practices
 
-  # MyPy - Static type checking (temporarily disabled)
-  # Note: 75 type annotation issues found - all non-critical, functionality unaffected
-  # Re-enable after type hints improvement sprint
+  # MyPy - Disabled (437 pre-existing errors, re-enable after type sprint)
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.15.0
   #   hooks:

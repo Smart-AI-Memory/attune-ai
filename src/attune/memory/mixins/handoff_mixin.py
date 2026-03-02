@@ -26,8 +26,9 @@ class HandoffAndExportMixin:
     config: Any  # MemoryConfig
 
     # Needs access to capabilities from CapabilitiesMixin
-    def get_capabilities(self) -> dict[str, bool]:
-        """Get capabilities - provided by CapabilitiesMixin."""
+    if TYPE_CHECKING:
+
+        def get_capabilities(self) -> dict[str, bool]: ...
 
     # =========================================================================
     # COMPACT STATE GENERATION

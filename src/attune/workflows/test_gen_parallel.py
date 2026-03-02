@@ -149,7 +149,7 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
 
         """
         try:
-            source = Path(file_path).read_text()
+            source = Path(file_path).read_text(encoding="utf-8")
             tree = ast.parse(source)
 
             classes = []
@@ -202,13 +202,13 @@ Generate a pytest test file with:
 
 Output ONLY the Python code, no explanations."""
 
-        result = await self._call_llm(
+        content, _in_tokens, _out_tokens = await self._call_llm(
             tier=ModelTier.CHEAP,
-            user_prompt=prompt,
-            context={"module": module_path, "structure": structure},
+            system="You are a test generation assistant. Output ONLY Python code.",
+            user_message=prompt,
         )
 
-        return result.get("content", "")
+        return content
 
     async def complete_test_with_ai(self, template: str, module_path: str) -> str:
         """Complete a test template using the capable LLM tier.
@@ -224,7 +224,7 @@ Output ONLY the Python code, no explanations."""
             Completed Python test code as a string.
 
         """
-        source_code = Path(module_path).read_text()
+        source_code = Path(module_path).read_text(encoding="utf-8")
 
         prompt = f"""Complete this behavioral test implementation.
 
@@ -246,13 +246,13 @@ Complete ALL TODOs with:
 
 Output the COMPLETE test file, no TODOs remaining."""
 
-        result = await self._call_llm(
+        content, _in_tokens, _out_tokens = await self._call_llm(
             tier=ModelTier.CAPABLE,
-            user_prompt=prompt,
-            context={"template": template, "module": module_path},
+            system="You are a test completion assistant. Output ONLY Python code.",
+            user_message=prompt,
         )
 
-        return result.get("content", "")
+        return content
 
     async def process_module_batch(
         self,

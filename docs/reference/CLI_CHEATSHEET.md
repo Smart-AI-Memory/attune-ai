@@ -69,15 +69,6 @@ attune report coverage        # Test coverage
 attune report patterns        # Learned patterns
 attune report metrics         # Project metrics
 attune report telemetry       # LLM usage telemetry
-attune report dashboard       # Open web dashboard
-```
-
-### Dashboard Options
-
-```bash
-attune report dashboard                # Default port 8765
-attune report dashboard --port 9000    # Custom port
-attune report dashboard --no-browser   # Don't open browser
 ```
 
 ---

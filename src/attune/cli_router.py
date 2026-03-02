@@ -113,9 +113,6 @@ class HybridRouter:
             "auth-recommend": ("utilities", "uv run attune provider recommend"),
             "auth-reset": ("utilities", "uv run attune provider reset"),
             "auth": ("utilities", "uv run attune provider status"),
-            # Agent dashboard commands
-            "dashboard": ("agent", "uv run attune dashboard start"),
-            "agent-dashboard": ("agent", "uv run attune dashboard start"),
             # Dependency and research workflows
             "deps": ("workflows", "run dependency-check"),
             "dependency-check": ("workflows", "run dependency-check"),

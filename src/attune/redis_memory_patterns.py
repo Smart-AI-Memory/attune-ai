@@ -22,6 +22,7 @@ warnings.warn(
 )
 
 import json  # noqa: E402
+from typing import TYPE_CHECKING  # noqa: E402
 
 from .memory.types import AgentCredentials, StagedPattern, TTLStrategy  # noqa: E402
 
@@ -32,6 +33,15 @@ class PatternStagingMixin:
     Must be combined with RedisStorageBase (or a subclass)
     to access _get, _set, _delete, _keys, and PREFIX_STAGED.
     """
+
+    PREFIX_STAGED: str
+
+    if TYPE_CHECKING:
+
+        def _get(self, key: str) -> str | None: ...
+        def _set(self, key: str, value: str, ttl: int | None = None) -> bool: ...
+        def _delete(self, key: str) -> bool: ...
+        def _keys(self, pattern: str) -> list[str]: ...
 
     def stage_pattern(
         self,
@@ -58,10 +68,12 @@ class PatternStagingMixin:
             )
 
         key = f"{self.PREFIX_STAGED}{pattern.pattern_id}"
-        return self._set(
-            key,
-            json.dumps(pattern.to_dict()),
-            TTLStrategy.STAGED_PATTERNS.value,
+        return bool(
+            self._set(
+                key,
+                json.dumps(pattern.to_dict()),
+                TTLStrategy.STAGED_PATTERNS.value,
+            )
         )
 
     def get_staged_pattern(

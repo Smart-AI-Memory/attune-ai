@@ -119,7 +119,7 @@ class RedisStorageBase:
             return False
         if self._client is None:
             return False
-        return self._client.delete(key) > 0
+        return self._client.delete(key) > 0  # type: ignore[operator]
 
     def _keys(self, pattern: str) -> list[str]:
         """Get keys matching pattern"""
@@ -270,8 +270,8 @@ class RedisStorageBase:
         info = self._client.info("memory")
         return {
             "mode": "redis",
-            "used_memory": info.get("used_memory_human"),
-            "peak_memory": info.get("used_memory_peak_human"),
+            "used_memory": info.get("used_memory_human"),  # type: ignore[union-attr]
+            "peak_memory": info.get("used_memory_peak_human"),  # type: ignore[union-attr]
             "total_keys": self._client.dbsize(),
             "working_keys": len(self._keys(f"{self.PREFIX_WORKING}*")),
             "staged_keys": len(self._keys(f"{self.PREFIX_STAGED}*")),

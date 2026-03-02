@@ -50,7 +50,6 @@ pip install 'attune-ai[memory]'
 |---------|-------------|
 | **Short-term memory** | Redis-based working memory with TTL expiration (5 min - 7 days) |
 | **Cross-session coordination** | Multi-agent session management across Claude Code sessions |
-| **Control panel** | Web dashboard for memory visualization and management |
 | **Pattern staging** | Redis-based pattern validation workflow before promotion |
 | **Agent heartbeats** | TTL-based agent liveness monitoring |
 
@@ -166,7 +165,6 @@ When Redis features are not available, Attune AI automatically falls back to cor
 | **UnifiedMemory** | Uses FileSessionMemory | Uses RedisShortTermMemory |
 | **Event streaming** | Logs events locally (no real-time) | Redis Streams with pub/sub |
 | **Agent coordination** | File-based handoff | Redis TTL-based coordination |
-| **Control panel** | Shows "Redis required" message | Full dashboard functionality |
 
 ### Example: UnifiedMemory Fallback
 
@@ -225,7 +223,6 @@ pip install 'attune-ai[all]'
 - Real-time event streaming
 - Cross-session agent coordination
 - Agent heartbeat monitoring
-- Control panel dashboard
 
 **Use when:**
 - Multi-session agent coordination needed
@@ -240,7 +237,6 @@ pip install 'attune-ai[all]'
 | Extra | Features | Install Command |
 |-------|----------|-----------------|
 | `memory` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[memory]'` |
-| `dashboard` | Agent dashboard (FastAPI + Uvicorn) | `pip install 'attune-ai[dashboard]'` |
 | `socratic` | Socratic workflow discovery | `pip install 'attune-ai[socratic]'` |
 | `crewai` | CrewAI integration (legacy) | `pip install 'attune-ai[crewai]'` |
 | `llm` | Anthropic LLM provider | `pip install 'attune-ai[llm]'` |
@@ -425,7 +421,6 @@ export REDIS_PORT=6380  # If non-default port
 | **Cross-Session** | ❌ | ✅ Multi-agent coordination |
 | **Real-time Events** | ❌ | ✅ Redis Streams |
 | **Agent Heartbeats** | ❌ | ✅ TTL-based monitoring |
-| **Control Panel** | ❌ | ✅ Web dashboard |
 | **Pattern Staging** | ✅ File-based | ✅ Redis workflow |
 | **PII Scrubbing** | ✅ | ✅ |
 | **Encryption** | ✅ AES-256-GCM | ✅ AES-256-GCM |

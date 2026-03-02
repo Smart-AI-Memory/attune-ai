@@ -228,7 +228,7 @@ attune orchestrate health-check --mode weekly
 # Pre-release deep dive (6 agents)
 attune orchestrate health-check --mode release
 
-# JSON output for dashboards
+# JSON output for CI integration
 attune orchestrate health-check --mode daily --json
 ```
 

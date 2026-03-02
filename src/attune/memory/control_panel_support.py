@@ -127,7 +127,7 @@ class APIKeyAuth:
             self._salt,
             iterations=100_000,
         )
-        return hmac.compare_digest(provided_hash, self._key_hash)
+        return hmac.compare_digest(provided_hash, self._key_hash)  # type: ignore[arg-type]
 
 
 @dataclass

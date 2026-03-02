@@ -70,7 +70,7 @@ def _check_redis_running(host: str = "localhost", port: int = 6379) -> bool:
         import redis
 
         client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
-        return client.ping()
+        return bool(client.ping())
     except Exception:
         # INTENTIONAL: Redis connectivity check — any failure means not available
         return False
