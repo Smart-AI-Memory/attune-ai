@@ -73,7 +73,6 @@ logger = structlog.get_logger(__name__)
 if TYPE_CHECKING:
     from attune.memory.types import (
         AgentCredentials,
-        CollaborationSession,
         ConflictContext,
         PaginatedResult,
         RedisConfig,
@@ -185,7 +184,7 @@ class RedisShortTermMemory:
         )
 
         # Initialize security sanitizer
-        self._security = DataSanitizer(self._base)
+        self._security = DataSanitizer(self._base)  # type: ignore[arg-type]
 
         # Initialize working memory (stash/retrieve)
         self._working = WorkingMemory(self._base, self._security)
@@ -344,7 +343,7 @@ class RedisShortTermMemory:
         topic: str = "",
     ) -> ConflictContext | None:
         """Create a conflict negotiation context."""
-        return self._conflicts.create_conflict_context(conflict_id, agents, credentials, topic)
+        return self._conflicts.create_conflict_context(conflict_id, agents, credentials, topic)  # type: ignore[arg-type]
 
     def get_conflict_context(
         self,
@@ -379,9 +378,9 @@ class RedisShortTermMemory:
         session_id: str,
         credentials: AgentCredentials,
         metadata: dict | None = None,
-    ) -> CollaborationSession | None:
+    ) -> dict | None:
         """Create a collaboration session."""
-        return self._sessions.create_session(session_id, credentials, metadata)
+        return self._sessions.create_session(session_id, credentials, metadata)  # type: ignore[return-value]
 
     def join_session(
         self,
@@ -395,7 +394,7 @@ class RedisShortTermMemory:
         self,
         session_id: str,
         credentials: AgentCredentials,
-    ) -> CollaborationSession | None:
+    ) -> dict | None:
         """Get session details."""
         return self._sessions.get_session(session_id, credentials)
 
@@ -410,9 +409,9 @@ class RedisShortTermMemory:
     def list_sessions(
         self,
         credentials: AgentCredentials,
-    ) -> list[CollaborationSession]:
+    ) -> list[dict]:
         """List all active sessions."""
-        return self._sessions.list_sessions(credentials)
+        return self._sessions.list_sessions()
 
     # =========================================================================
     # Base Operations - delegate to BaseOperations
@@ -644,7 +643,7 @@ class RedisShortTermMemory:
         credentials: AgentCredentials,
     ) -> bool:
         """Enable cross-session data sharing."""
-        return self._cross_session.enable(session_id, credentials)
+        return bool(self._cross_session.enable(session_id, credentials))  # type: ignore[arg-type]
 
     def cross_session_available(
         self,
@@ -652,7 +651,7 @@ class RedisShortTermMemory:
         credentials: AgentCredentials,
     ) -> bool:
         """Check if cross-session is available."""
-        return self._cross_session.available(session_id, credentials)
+        return self._cross_session.available()
 
     # =========================================================================
     # Cache Operations - expose cache stats
@@ -675,7 +674,7 @@ class RedisShortTermMemory:
         """Access mock storage for testing."""
         return self._base._mock_storage
 
-    @property
+    @property  # type: ignore[no-redef]
     def _client(self) -> Any:
         """Access Redis client for testing."""
         return self._base._client

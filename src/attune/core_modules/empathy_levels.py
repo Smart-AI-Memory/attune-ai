@@ -84,7 +84,7 @@ class EmpathyLevelsMixin:
         self.current_empathy_level = 1
 
         # Process request (implement your domain logic here)
-        result = await self._process_request(user_request)
+        result = await self._process_request(user_request)  # type: ignore[attr-defined]
 
         self.logger.info(
             "Level 1 reactive request completed",
@@ -142,7 +142,7 @@ class EmpathyLevelsMixin:
         )
 
         # Use Voss's calibrated questions
-        clarification = await self._ask_calibrated_questions(user_request)
+        clarification = await self._ask_calibrated_questions(user_request)  # type: ignore[attr-defined]
 
         if clarification["needs_clarification"]:
             return {
@@ -155,10 +155,10 @@ class EmpathyLevelsMixin:
             }
 
         # Refine request based on clarification
-        refined_request = self._refine_request(user_request, clarification)
+        refined_request = self._refine_request(user_request, clarification)  # type: ignore[attr-defined]
 
         # Process refined request
-        result = await self._process_request(refined_request)
+        result = await self._process_request(refined_request)  # type: ignore[attr-defined]
 
         # Update collaboration state
         self.collaboration_state.total_interactions += 1
@@ -222,21 +222,21 @@ class EmpathyLevelsMixin:
         )
 
         # Detect current patterns
-        active_patterns = self._detect_active_patterns(context)
+        active_patterns = self._detect_active_patterns(context)  # type: ignore[attr-defined]
 
         # Select proactive actions based on patterns
         proactive_actions = []
 
         for pattern in active_patterns:
             if pattern["confidence"] > 0.8:  # High confidence required
-                action = self._design_proactive_action(pattern)
+                action = self._design_proactive_action(pattern)  # type: ignore[attr-defined]
 
                 # Safety check
-                if self._is_safe_to_execute(action):
+                if self._is_safe_to_execute(action):  # type: ignore[attr-defined]
                     proactive_actions.append(action)
 
         # Execute proactive actions
-        results = await self._execute_proactive_actions(proactive_actions)
+        results = await self._execute_proactive_actions(proactive_actions)  # type: ignore[attr-defined]
 
         # Update collaboration state
         for result in results:
@@ -310,7 +310,7 @@ class EmpathyLevelsMixin:
         )
 
         # Analyze system trajectory
-        predicted_bottlenecks = self._predict_future_bottlenecks(system_trajectory)
+        predicted_bottlenecks = self._predict_future_bottlenecks(system_trajectory)  # type: ignore[attr-defined]
 
         # Design structural relief for each bottleneck
         interventions = []
@@ -320,12 +320,12 @@ class EmpathyLevelsMixin:
             # 1. High confidence (>75%)
             # 2. Appropriate time horizon (30-120 days)
             # 3. Reversible action
-            if self._should_anticipate(bottleneck):
-                intervention = self._design_anticipatory_intervention(bottleneck)
+            if self._should_anticipate(bottleneck):  # type: ignore[attr-defined]
+                intervention = self._design_anticipatory_intervention(bottleneck)  # type: ignore[attr-defined]
                 interventions.append(intervention)
 
         # Execute anticipatory interventions
-        results = await self._execute_anticipatory_interventions(interventions)
+        results = await self._execute_anticipatory_interventions(interventions)  # type: ignore[attr-defined]
 
         # Update collaboration state
         for result in results:
@@ -401,23 +401,23 @@ class EmpathyLevelsMixin:
         )
 
         # Identify problem class (not individual problem)
-        problem_classes = self._identify_problem_classes(domain_context)
+        problem_classes = self._identify_problem_classes(domain_context)  # type: ignore[attr-defined]
 
         # Find leverage points (Meadows's framework)
         leverage_points = []
         for problem_class in problem_classes:
-            points = self.leverage_analyzer.find_leverage_points(problem_class)
+            points = self.leverage_analyzer.find_leverage_points(problem_class)  # type: ignore[attr-defined]
             leverage_points.extend(points)
 
         # Design structural interventions at highest leverage points
         frameworks = []
         for lp in leverage_points:
             if lp.level.value >= 8:  # High leverage points only (Rules and above)
-                framework = self._design_framework(lp)
+                framework = self._design_framework(lp)  # type: ignore[attr-defined]
                 frameworks.append(framework)
 
         # Implement frameworks
-        results = await self._implement_frameworks(frameworks)
+        results = await self._implement_frameworks(frameworks)  # type: ignore[attr-defined]
 
         self.logger.info(
             "Level 5 systems frameworks implemented",

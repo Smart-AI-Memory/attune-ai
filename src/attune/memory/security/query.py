@@ -23,6 +23,8 @@ class AuditQueryMixin:
     - self.log_path: Path to the audit log file
     """
 
+    log_path: Any
+
     def query(
         self,
         event_type: str | None = None,

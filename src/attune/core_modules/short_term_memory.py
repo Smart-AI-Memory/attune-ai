@@ -86,7 +86,7 @@ class ShortTermMemoryMixin:
                 "No short-term memory configured. Pass short_term_memory to __init__ "
                 "to enable pattern staging.",
             )
-        return self.short_term_memory.stage_pattern(pattern, self.credentials)
+        return self.short_term_memory.stage_pattern(pattern, self.credentials)  # type: ignore[attr-defined,no-any-return]
 
     def get_staged_patterns(self) -> list[StagedPattern]:
         """Get all patterns currently in staging.
@@ -106,7 +106,7 @@ class ShortTermMemoryMixin:
                 "No short-term memory configured. Pass short_term_memory to __init__ "
                 "to enable pattern staging.",
             )
-        return self.short_term_memory.list_staged_patterns(self.credentials)
+        return self.short_term_memory.list_staged_patterns(self.credentials)  # type: ignore[attr-defined,no-any-return]
 
     def send_signal(
         self,
@@ -148,7 +148,7 @@ class ShortTermMemoryMixin:
                 "No short-term memory configured. Pass short_term_memory to __init__ "
                 "to enable coordination signals.",
             )
-        return self.short_term_memory.send_signal(
+        return self.short_term_memory.send_signal(  # type: ignore[attr-defined,no-any-return]
             signal_type=signal_type,
             data=data,
             credentials=self.credentials,
@@ -181,7 +181,7 @@ class ShortTermMemoryMixin:
                 "No short-term memory configured. Pass short_term_memory to __init__ "
                 "to enable coordination signals.",
             )
-        return self.short_term_memory.receive_signals(self.credentials, signal_type=signal_type)
+        return self.short_term_memory.receive_signals(self.credentials, signal_type=signal_type)  # type: ignore[attr-defined,no-any-return]
 
     def persist_collaboration_state(self) -> bool:
         """Persist current collaboration state to short-term memory.
@@ -214,7 +214,7 @@ class ShortTermMemoryMixin:
         return self.short_term_memory.stash(
             f"collaboration_state_{self.session_id}",
             state_data,
-            self.credentials,
+            self.credentials,  # type: ignore[arg-type]
         )
 
     def restore_collaboration_state(self, session_id: str | None = None) -> bool:
@@ -242,7 +242,7 @@ class ShortTermMemoryMixin:
         sid = session_id or self.session_id
         state_data = self.short_term_memory.retrieve(
             f"collaboration_state_{sid}",
-            self.credentials,
+            self.credentials,  # type: ignore[arg-type]
         )
 
         if state_data is None:

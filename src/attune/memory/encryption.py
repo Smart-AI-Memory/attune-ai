@@ -86,7 +86,7 @@ class EncryptionManager:
             "no_master_key_found",
             message="Generating ephemeral encryption key - set EMPATHY_MASTER_KEY for production",
         )
-        return AESGCM.generate_key(bit_length=256)
+        return AESGCM.generate_key(bit_length=256)  # type: ignore[no-any-return]
 
     def encrypt(self, plaintext: str) -> str:
         """Encrypt plaintext using AES-256-GCM.
@@ -154,7 +154,7 @@ class EncryptionManager:
             # Decrypt and verify
             plaintext_bytes = aesgcm.decrypt(nonce, ciphertext, None)
 
-            return plaintext_bytes.decode("utf-8")
+            return plaintext_bytes.decode("utf-8")  # type: ignore[no-any-return]
 
         except (ValueError, TypeError, UnicodeDecodeError, binascii.Error, InvalidTag) as e:
             logger.error("decryption_failed", error=str(e))

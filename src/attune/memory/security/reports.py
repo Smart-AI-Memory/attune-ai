@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 
 class AuditReportMixin:
@@ -17,6 +17,10 @@ class AuditReportMixin:
     Requires the host class to have:
     - self.query(): Query method from AuditQueryMixin
     """
+
+    if TYPE_CHECKING:
+
+        def query(self, **kwargs: Any) -> list[dict[str, Any]]: ...
 
     def get_violation_summary(
         self,

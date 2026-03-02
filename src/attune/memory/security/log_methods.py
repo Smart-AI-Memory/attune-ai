@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .events import AuditEvent, SecurityViolation
 
@@ -23,6 +23,17 @@ class AuditLogMethodsMixin:
     - self._write_event(event): Write an audit event
     - self._handle_security_violation(...): Handle violations
     """
+
+    if TYPE_CHECKING:
+
+        def _write_event(self, event: AuditEvent) -> None: ...
+        def _handle_security_violation(
+            self,
+            user_id: str,
+            violation_type: str,
+            severity: str,
+            details: dict[str, Any],
+        ) -> None: ...
 
     def log_llm_request(
         self,

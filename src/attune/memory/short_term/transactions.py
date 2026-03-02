@@ -48,7 +48,7 @@ from attune.memory.types import (
 
 if TYPE_CHECKING:
     from attune.memory.short_term.base import BaseOperations
-    from attune.memory.short_term.caching import CachingOperations
+    from attune.memory.short_term.caching import CacheManager as CachingOperations
 
 logger = structlog.get_logger(__name__)
 

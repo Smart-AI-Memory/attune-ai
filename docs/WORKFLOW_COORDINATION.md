@@ -718,7 +718,6 @@ Each workflow is wrapped via `WorkflowAgentAdapter` which bridges the async/sync
 **Pattern 6: Real-Time Event Streaming** (not yet implemented)
 
 - Redis Streams + WebSocket for live updates
-- Real-time dashboard integration
 
 **Pattern 7: Human Approval Gates** (not yet implemented)
 
@@ -767,7 +766,7 @@ attune telemetry agents
 attune telemetry signals --agent my-workflow-abc12345
 ```
 
-Or build a custom dashboard using the Python API from `HeartbeatCoordinator` and `CoordinationSignals`.
+See `HeartbeatCoordinator` and `CoordinationSignals` for the Python API.
 
 ---
 

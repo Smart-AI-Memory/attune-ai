@@ -25,12 +25,12 @@ class PatternPromotionMixin:
     _long_term: Any  # SecureMemDocsIntegration | None
 
     # Needs access to methods from other mixins
-    @property
-    def credentials(self) -> "AgentCredentials":
-        """Get credentials - provided by ShortTermOperationsMixin."""
+    if TYPE_CHECKING:
 
-    def get_staged_patterns(self) -> list[dict]:
-        """Get staged patterns - provided by ShortTermOperationsMixin."""
+        @property
+        def credentials(self) -> "AgentCredentials": ...
+
+        def get_staged_patterns(self) -> list[dict]: ...
 
     def persist_pattern(
         self,

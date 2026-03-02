@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "3.6.6"
+version = "3.7.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -541,7 +541,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=term-missing",
     "--cov-report=xml",
-    "--cov-fail-under=80",
+    "--cov-fail-under=85",
     "--asyncio-mode=auto",
     # Stale ignores removed in v2.9.0 (test files deleted)
 ]
@@ -662,8 +662,8 @@ branch = true
 precision = 2
 show_missing = true
 skip_covered = false
-# Coverage threshold - aligned with Anthropic best practices
-fail_under = 80
+# Coverage threshold - raised from 80% to 85% (actual: 83.5%+)
+fail_under = 85
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

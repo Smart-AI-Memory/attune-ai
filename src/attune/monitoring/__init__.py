@@ -4,7 +4,7 @@ A zero-config monitoring system for LLM usage tracking with progressive enhancem
 
 **Tier 1 (Default - Zero Config):**
 - JSONL telemetry (automatic logging to `.attune/`)
-- CLI dashboard (`empathy telemetry`)
+- CLI telemetry reports (`attune telemetry`)
 - VSCode panel (real-time visualization)
 
 **Tier 2 (Enterprise - Opt-in):**

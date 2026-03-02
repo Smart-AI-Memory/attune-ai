@@ -20,6 +20,7 @@ import ast
 import asyncio
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,7 @@ from attune.security.path_validation import _validate_file_path
 
 from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult
 from ..workflows.context import WorkflowContext
+from ..workflows.data_classes import WorkflowStage
 from ..workflows.services import ParsingService, PromptService
 
 
@@ -147,7 +149,7 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
 
         """
         try:
-            source = Path(file_path).read_text()
+            source = Path(file_path).read_text(encoding="utf-8")
             tree = ast.parse(source)
 
             classes = []
@@ -200,13 +202,13 @@ Generate a pytest test file with:
 
 Output ONLY the Python code, no explanations."""
 
-        result = await self._call_llm(
+        content, _in_tokens, _out_tokens = await self._call_llm(
             tier=ModelTier.CHEAP,
-            user_prompt=prompt,
-            context={"module": module_path, "structure": structure},
+            system="You are a test generation assistant. Output ONLY Python code.",
+            user_message=prompt,
         )
 
-        return result.get("content", "")
+        return content
 
     async def complete_test_with_ai(self, template: str, module_path: str) -> str:
         """Complete a test template using the capable LLM tier.
@@ -222,7 +224,7 @@ Output ONLY the Python code, no explanations."""
             Completed Python test code as a string.
 
         """
-        source_code = Path(module_path).read_text()
+        source_code = Path(module_path).read_text(encoding="utf-8")
 
         prompt = f"""Complete this behavioral test implementation.
 
@@ -244,13 +246,13 @@ Complete ALL TODOs with:
 
 Output the COMPLETE test file, no TODOs remaining."""
 
-        result = await self._call_llm(
+        content, _in_tokens, _out_tokens = await self._call_llm(
             tier=ModelTier.CAPABLE,
-            user_prompt=prompt,
-            context={"template": template, "module": module_path},
+            system="You are a test completion assistant. Output ONLY Python code.",
+            user_message=prompt,
         )
 
-        return result.get("content", "")
+        return content
 
     async def process_module_batch(
         self,
@@ -371,25 +373,37 @@ Output the COMPLETE test file, no TODOs remaining."""
             WorkflowResult with generated file paths and statistics
 
         """
+        started_at = datetime.now()
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True, parents=True)
 
         # Stage 1: Discover modules
-        self.logger.info(f"🔍 Discovering top {top} modules with lowest coverage...")
+        self.logger.info(f"Discovering top {top} modules with lowest coverage...")
         modules = self.discover_low_coverage_modules(top_n=top)
 
         if not modules:
+            completed_at = datetime.now()
+            duration_ms = int((completed_at - started_at).total_seconds() * 1000)
             return WorkflowResult(
-                workflow_name=self.name,
-                stages_executed=["discover"],
+                success=False,
+                stages=[
+                    WorkflowStage(
+                        name="discover",
+                        tier=self.tier_map["discover"],
+                        description="Discover low-coverage modules",
+                    ),
+                ],
                 final_output={"error": "No coverage data found. Run pytest with coverage first."},
                 cost_report=self._generate_cost_report(),
+                started_at=started_at,
+                completed_at=completed_at,
+                total_duration_ms=duration_ms,
             )
 
-        self.logger.info(f"📋 Found {len(modules)} modules to process")
+        self.logger.info(f"Found {len(modules)} modules to process")
 
         # Stage 2 & 3: Generate and complete in parallel batches
-        self.logger.info(f"⚡ Processing in batches of {batch_size}...")
+        self.logger.info(f"Processing in batches of {batch_size}...")
         tasks = await self.process_module_batch(modules, output_path, batch_size=batch_size)
 
         # Statistics
@@ -405,16 +419,29 @@ Output the COMPLETE test file, no TODOs remaining."""
         }
 
         self.logger.info(f"\n{'='*80}")
-        self.logger.info(f"✅ COMPLETED: {len(completed)} test files")
-        self.logger.info(f"❌ ERRORS: {len(errors)} modules")
-        self.logger.info(f"📁 Location: {output_path}")
+        self.logger.info(f"COMPLETED: {len(completed)} test files")
+        self.logger.info(f"ERRORS: {len(errors)} modules")
+        self.logger.info(f"Location: {output_path}")
         self.logger.info(f"{'='*80}\n")
 
+        completed_at = datetime.now()
+        duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+        stage_names = ["discover", "generate_templates", "complete_tests"]
         return WorkflowResult(
-            workflow_name=self.name,
-            stages_executed=["discover", "generate_templates", "complete_tests"],
+            success=len(errors) == 0,
+            stages=[
+                WorkflowStage(
+                    name=s,
+                    tier=self.tier_map[s],
+                    description=s.replace("_", " ").title(),
+                )
+                for s in stage_names
+            ],
             final_output=result_data,
             cost_report=self._generate_cost_report(),
+            started_at=started_at,
+            completed_at=completed_at,
+            total_duration_ms=duration_ms,
         )
 
 

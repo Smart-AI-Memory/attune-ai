@@ -93,7 +93,7 @@ class MemoryFeatures:
             import redis
 
             client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
-            return client.ping()
+            return bool(client.ping())
         except ImportError:
             logger.debug("redis module not installed")
             return False

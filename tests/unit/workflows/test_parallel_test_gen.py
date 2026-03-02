@@ -181,33 +181,180 @@ class TestExtractCode:
 
 
 @pytest.mark.unit
-class TestExecute:
-    """Tests for the end-to-end execute() method.
-
-    Note: execute() has a pre-existing bug -- it constructs
-    WorkflowResult with keyword arguments that don't exist on the
-    dataclass (workflow_name, stages_executed).  These tests verify
-    that the bug surfaces as TypeError so it can be tracked.
-    """
+class TestGenerateTestTemplateWithAI:
+    """Tests for generate_test_template_with_ai()."""
 
     @pytest.mark.asyncio
-    async def test_execute_no_coverage_raises_due_to_result_mismatch(
-        self, parallel_test_gen_workflow, tmp_path
-    ):
-        """execute() currently raises TypeError due to WorkflowResult mismatch."""
+    async def test_returns_llm_content(self, parallel_test_gen_workflow):
+        """Should call _call_llm and return the content string."""
+        with patch.object(
+            parallel_test_gen_workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=("def test_example(): pass", 100, 50),
+        ) as mock_llm:
+            result = await parallel_test_gen_workflow.generate_test_template_with_ai(
+                "src/foo.py",
+                {"file": "src/foo.py", "classes": [], "functions": [{"name": "foo", "line": 1}]},
+            )
+
+        mock_llm.assert_called_once()
+        assert "test_example" in result
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_on_empty_response(self, parallel_test_gen_workflow):
+        """Should return empty string when LLM returns empty content."""
+        with patch.object(
+            parallel_test_gen_workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=("", 10, 0),
+        ):
+            result = await parallel_test_gen_workflow.generate_test_template_with_ai(
+                "src/foo.py",
+                {"file": "src/foo.py", "classes": [], "functions": []},
+            )
+
+        assert result == ""
+
+
+@pytest.mark.unit
+class TestCompleteTestWithAI:
+    """Tests for complete_test_with_ai()."""
+
+    @pytest.mark.asyncio
+    async def test_reads_source_and_calls_llm(self, parallel_test_gen_workflow, tmp_path):
+        """Should read the source file and call _call_llm with template."""
+        src_file = tmp_path / "module.py"
+        src_file.write_text("def add(a, b): return a + b\n")
+
+        with patch.object(
+            parallel_test_gen_workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=("def test_add(): assert add(1, 2) == 3", 200, 100),
+        ) as mock_llm:
+            result = await parallel_test_gen_workflow.complete_test_with_ai(
+                "def test_add(): # TODO",
+                str(src_file),
+            )
+
+        mock_llm.assert_called_once()
+        assert "test_add" in result
+
+
+@pytest.mark.unit
+class TestProcessModuleBatch:
+    """Tests for process_module_batch()."""
+
+    @pytest.mark.asyncio
+    async def test_writes_completed_tests(self, parallel_test_gen_workflow, tmp_path):
+        """Should write generated tests to output_dir and mark tasks completed."""
+        src_file = tmp_path / "src" / "foo.py"
+        src_file.parent.mkdir(parents=True)
+        src_file.write_text("def foo(): pass\n")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+
+        modules = [(str(src_file), 30.0)]
+
+        with (
+            patch.object(
+                parallel_test_gen_workflow,
+                "generate_test_template_with_ai",
+                new_callable=AsyncMock,
+                return_value="def test_foo(): # TODO",
+            ),
+            patch.object(
+                parallel_test_gen_workflow,
+                "complete_test_with_ai",
+                new_callable=AsyncMock,
+                return_value="def test_foo(): assert True",
+            ),
+        ):
+            tasks = await parallel_test_gen_workflow.process_module_batch(
+                modules, out_dir, batch_size=10
+            )
+
+        assert len(tasks) == 1
+        assert tasks[0].status == "completed"
+        output_file = out_dir / "test_foo_behavioral.py"
+        assert output_file.exists()
+        assert "test_foo" in output_file.read_text()
+
+    @pytest.mark.asyncio
+    async def test_marks_error_on_template_failure(self, parallel_test_gen_workflow, tmp_path):
+        """Tasks should be marked error when template generation fails."""
+        src_file = tmp_path / "src" / "bar.py"
+        src_file.parent.mkdir(parents=True)
+        src_file.write_text("def bar(): pass\n")
+
+        out_dir = tmp_path / "out"
+        out_dir.mkdir()
+
+        modules = [(str(src_file), 20.0)]
+
+        with patch.object(
+            parallel_test_gen_workflow,
+            "generate_test_template_with_ai",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("LLM unavailable"),
+        ):
+            tasks = await parallel_test_gen_workflow.process_module_batch(
+                modules, out_dir, batch_size=10
+            )
+
+        assert len(tasks) == 1
+        assert tasks[0].status == "error"
+
+
+@pytest.mark.unit
+class TestDefaultContext:
+    """Tests for the default_context() classmethod."""
+
+    def test_returns_workflow_context(self):
+        """default_context() should return a WorkflowContext."""
+        from attune.workflows.context import WorkflowContext
+        from attune.workflows.test_gen_parallel import ParallelTestGenerationWorkflow
+
+        ctx = ParallelTestGenerationWorkflow.default_context()
+
+        assert isinstance(ctx, WorkflowContext)
+
+    def test_accepts_xml_config(self):
+        """default_context() should accept optional xml_config."""
+        from attune.workflows.test_gen_parallel import ParallelTestGenerationWorkflow
+
+        ctx = ParallelTestGenerationWorkflow.default_context(xml_config={"key": "value"})
+
+        assert ctx is not None
+
+
+@pytest.mark.unit
+class TestExecute:
+    """Tests for the end-to-end execute() method."""
+
+    @pytest.mark.asyncio
+    async def test_execute_no_coverage_returns_failure(self, parallel_test_gen_workflow, tmp_path):
+        """execute() returns a failed WorkflowResult when no coverage data found."""
         with patch.object(
             parallel_test_gen_workflow,
             "discover_low_coverage_modules",
             return_value=[],
         ):
-            with pytest.raises(TypeError, match="workflow_name"):
-                await parallel_test_gen_workflow.execute(output_dir=str(tmp_path / "out"))
+            result = await parallel_test_gen_workflow.execute(output_dir=str(tmp_path / "out"))
+
+        assert result.success is False
+        assert len(result.stages) == 1
+        assert result.stages[0].name == "discover"
+        assert "error" in result.final_output
 
     @pytest.mark.asyncio
     async def test_execute_discovers_modules_before_processing(
         self, parallel_test_gen_workflow, tmp_path
     ):
-        """Verify discover is called and modules are passed to batch processor."""
+        """Verify discover is called, modules processed, and result is valid."""
         modules = [("src/foo.py", 30.0)]
         out_dir = tmp_path / "out"
 
@@ -231,12 +378,13 @@ class TestExecute:
                 return_value=[mock_task],
             ) as mock_batch,
         ):
-            # Will raise TypeError on WorkflowResult construction
-            with pytest.raises(TypeError):
-                await parallel_test_gen_workflow.execute(output_dir=str(out_dir))
+            result = await parallel_test_gen_workflow.execute(output_dir=str(out_dir))
 
         mock_discover.assert_called_once()
         mock_batch.assert_called_once()
+        assert result.success is True
+        assert len(result.stages) == 3
+        assert result.final_output["completed"] == 1
 
 
 @pytest.mark.unit

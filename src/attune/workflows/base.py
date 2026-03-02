@@ -252,6 +252,9 @@ class BaseWorkflow(
         """
         from .config import WorkflowConfig
 
+        # Instance-level logger so subclasses can use self.logger
+        self.logger = logging.getLogger(type(self).__module__)
+
         # Composition context (Phase 2C) -- when provided, proxy methods
         # delegate to ctx services instead of mixin implementations.
         self._ctx = ctx

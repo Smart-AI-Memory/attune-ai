@@ -693,7 +693,7 @@ attune-inspect . --format markdown
 # SARIF for GitHub Actions
 attune-inspect . --format sarif
 
-# HTML dashboard
+# HTML report
 attune-inspect . --format html
 
 # Save report to file

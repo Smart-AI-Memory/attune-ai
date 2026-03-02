@@ -1,4 +1,4 @@
-# Attune AI Framework v3.6.6
+# Attune AI Framework v3.7.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -134,7 +134,6 @@ src/attune/
 │   └── state/         # AgentStateStore, AgentRecoveryManager
 ├── workflows/         # AI-powered workflows with state & multi-agent mixins
 ├── models/            # Authentication strategy and LLM providers
-├── dashboard/         # DEPRECATED — soft-deprecated, removal in future major
 ├── meta_workflows/    # Intent detection and natural language routing
 ├── orchestration/     # Dynamic teams, workflow composition, pattern learning
 ├── plugins/           # BasePlugin + register_mcp_tools() hook
@@ -146,7 +145,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 3.6.6 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.7.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -351,17 +350,18 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   doesn't match the workflow's import. Check which module the
   workflow imports from and use the same one in tests.
 
-- **BaseWorkflow does not provide `self.logger`**: Some workflows
-  (e.g. `ParallelTestGenerationWorkflow`) use `self.logger` but
-  `BaseWorkflow` only has a module-level `logger`. Tests must
-  attach a logger to the instance: `wf.logger = logging.getLogger(name)`.
-  This is a source-code bug worth fixing globally.
+- **BaseWorkflow now provides `self.logger`**: Fixed in `c67ad740`.
+  `BaseWorkflow.__init__` sets
+  `self.logger = logging.getLogger(type(self).__module__)` so all
+  subclasses get an instance logger namespaced to their own module.
+  No more manual `wf.logger = ...` workarounds in test fixtures.
 
 - **`WorkflowResult` constructor mismatches surface only at
-  runtime**: `ParallelTestGenerationWorkflow.execute()` constructs
-  `WorkflowResult` with kwargs (`workflow_name`, `stages_executed`)
-  that don't exist on the dataclass. This passes import checks and
-  lint but raises `TypeError` at runtime. Tests should exercise
-  `execute()` end-to-end to catch these mismatches.
+  runtime**: `ParallelTestGenerationWorkflow.execute()` was passing
+  non-existent kwargs (`workflow_name`, `stages_executed`). Fixed in
+  `c67ad740` — now passes all required fields (`success`, `stages`,
+  `started_at`, `completed_at`, `total_duration_ms`). Lesson: always
+  exercise `execute()` end-to-end in tests to catch dataclass
+  mismatches that lint can't see.
 
 <!-- attune-lessons-end -->

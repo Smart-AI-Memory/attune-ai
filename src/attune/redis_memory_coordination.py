@@ -22,7 +22,7 @@ warnings.warn(
 
 import json  # noqa: E402
 from datetime import datetime  # noqa: E402
-from typing import Any  # noqa: E402
+from typing import TYPE_CHECKING, Any  # noqa: E402
 
 from .memory.types import (  # noqa: E402
     AgentCredentials,
@@ -37,6 +37,14 @@ class ConflictNegotiationMixin:
     Must be combined with RedisStorageBase (or a subclass)
     to access _get, _set, _delete, and PREFIX_CONFLICT.
     """
+
+    PREFIX_CONFLICT: str
+
+    if TYPE_CHECKING:
+
+        def _get(self, key: str) -> str | None: ...
+        def _set(self, key: str, value: str, ttl: int | None = None) -> bool: ...
+        def _delete(self, key: str) -> bool: ...
 
     def create_conflict_context(
         self,
@@ -155,6 +163,14 @@ class CoordinationSignalsMixin:
     to access _get, _set, _keys, and PREFIX_COORDINATION.
     """
 
+    PREFIX_COORDINATION: str
+
+    if TYPE_CHECKING:
+
+        def _get(self, key: str) -> str | None: ...
+        def _set(self, key: str, value: str, ttl: int | None = None) -> bool: ...
+        def _keys(self, pattern: str) -> list[str]: ...
+
     def send_signal(
         self,
         signal_type: str,
@@ -191,10 +207,12 @@ class CoordinationSignalsMixin:
             "data": data,
             "sent_at": datetime.now().isoformat(),
         }
-        return self._set(
-            key,
-            json.dumps(payload),
-            300,  # 5 minutes (COORDINATION TTL removed from enum in v5.0)
+        return bool(
+            self._set(
+                key,
+                json.dumps(payload),
+                300,  # 5 minutes (COORDINATION TTL removed from enum in v5.0)
+            )
         )
 
     def receive_signals(
@@ -238,6 +256,13 @@ class SessionManagementMixin:
     to access _get, _set, and PREFIX_SESSION.
     """
 
+    PREFIX_SESSION: str
+
+    if TYPE_CHECKING:
+
+        def _get(self, key: str) -> str | None: ...
+        def _set(self, key: str, value: str, ttl: int | None = None) -> bool: ...
+
     def create_session(
         self,
         session_id: str,
@@ -263,10 +288,12 @@ class SessionManagementMixin:
             "participants": [credentials.agent_id],
             "metadata": metadata or {},
         }
-        return self._set(
-            key,
-            json.dumps(payload),
-            TTLStrategy.SESSION.value,
+        return bool(
+            self._set(
+                key,
+                json.dumps(payload),
+                TTLStrategy.SESSION.value,
+            )
         )
 
     def join_session(
@@ -294,10 +321,12 @@ class SessionManagementMixin:
         if credentials.agent_id not in payload["participants"]:
             payload["participants"].append(credentials.agent_id)
 
-        return self._set(
-            key,
-            json.dumps(payload),
-            TTLStrategy.SESSION.value,
+        return bool(
+            self._set(
+                key,
+                json.dumps(payload),
+                TTLStrategy.SESSION.value,
+            )
         )
 
     def get_session(

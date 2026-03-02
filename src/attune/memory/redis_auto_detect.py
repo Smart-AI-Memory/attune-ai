@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from attune.security.path_validation import _validate_file_path
 
@@ -177,7 +177,7 @@ class RedisAutoDetector:
             import redis
 
             client = redis.Redis(host=host, port=port, socket_connect_timeout=0.5)
-            return client.ping()
+            return bool(client.ping())
         except Exception:
             # INTENTIONAL: Any failure means server is not reachable
             return False

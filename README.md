@@ -10,8 +10,8 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C135%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-83%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-15%2C270%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-84%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -23,24 +23,23 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.6.6
+## What's New in v3.7.0
 
-- **Wizard REVIEW step** — New `StepType.REVIEW` shows LLM
-  analysis results and asks "Does this look right?" before
-  proceeding. Retries up to 2 times on rejection.
-- **82 new tests** — Full test coverage for 4 previously
-  untested workflows (ParallelTestGen, ResearchSynthesis,
-  SEOOptimization, TestMaintenance). 17/17 workflows now
-  tested.
-- **Workflow fixes** — 4 workflows now inherit BaseWorkflow;
-  test-gen-parallel class attribute crash fixed; website
-  workflow count corrected (10 → 17).
-- **BEP middleware removed** — 13K lines parked on feature
-  branch; CLI and docs cleaned up.
+- **Mixin MRO bug fixed** — Type annotation stubs on 8
+  mixin classes shadowed real Redis storage methods, causing
+  silent `None` returns. All stubs now guarded by
+  `TYPE_CHECKING`.
+- **Stale dashboard docs removed** — 1,400+ lines of
+  obsolete dashboard documentation cleaned up.
+- **CI test coverage expanded** — Removed 4 stale
+  `--ignore` entries from `pytest.ini`; 15,270 tests
+  passing at 84% coverage.
 
 <details>
 <summary>Previous releases</summary>
 
+- **v3.6.6** — Wizard REVIEW step, 82 new workflow tests,
+  BEP middleware removed
 - **v3.6.5** — Dashboard module removed
 - **v3.6.4** — EscalationChain retry-with-feedback wrapper
 - **v3.6.0** — attune-redis plugin, FeedbackLoop, in-memory

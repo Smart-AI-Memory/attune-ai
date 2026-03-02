@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from services.empathy_service import EmpathyService
 
@@ -34,8 +34,9 @@ class ProjectAnalysisRequest(BaseModel):
     exclude_patterns: list[str] | None = None
     wizards: list[str] | None = None
 
-    @validator("project_path")
-    def validate_project_path(cls, v):
+    @field_validator("project_path")
+    @classmethod
+    def validate_project_path(cls, v: str) -> str:
         """Validate project path is non-empty and within length limits.
 
         Args:
@@ -63,8 +64,9 @@ class SessionConfig(BaseModel):
     wizards: list[str]
     config: dict[str, Any] = {}
 
-    @validator("name")
-    def validate_name(cls, v):
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
         """Validate session name is non-empty and within length limits.
 
         Args:
@@ -83,8 +85,9 @@ class SessionConfig(BaseModel):
             raise ValueError("Session name exceeds maximum length")
         return v
 
-    @validator("wizards")
-    def validate_wizards(cls, v):
+    @field_validator("wizards")
+    @classmethod
+    def validate_wizards(cls, v: list[str]) -> list[str]:
         """Validate that at least one and at most 20 wizards are specified.
 
         Args:
@@ -122,7 +125,7 @@ async def create_session(
 
     """
     try:
-        session_id = await service.create_analysis_session(request.dict())
+        session_id = await service.create_analysis_session(request.model_dump())
         return {
             "success": True,
             "session_id": session_id,
