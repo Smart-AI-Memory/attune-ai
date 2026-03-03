@@ -1059,6 +1059,10 @@ class TestBaseOperationsCallerOverride:
 
 
 @pytest.mark.unit
+@pytest.mark.skipif(
+    not importlib.util.find_spec("redis"),
+    reason="redis not installed",
+)
 class TestBaseOperationsCreateClientRetry:
     """Test _create_client_with_retry retry logic."""
 

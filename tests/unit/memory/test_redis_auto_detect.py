@@ -12,6 +12,7 @@ Covers:
 Copyright 2025 Smart AI Memory, LLC
 """
 
+import importlib.util
 import time
 from unittest.mock import patch
 
@@ -486,6 +487,10 @@ class TestCheckPythonPackageImportError:
         assert result is False
 
 
+@pytest.mark.skipif(
+    not importlib.util.find_spec("redis"),
+    reason="redis not installed",
+)
 class TestCheckServerReachable:
     """Test _check_server_reachable paths."""
 

@@ -10,6 +10,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+import importlib.util
 import warnings
 from unittest.mock import MagicMock, patch
 
@@ -72,6 +73,10 @@ class TestProjectIndexMain:
 
 
 @pytest.mark.unit
+@pytest.mark.skipif(
+    not importlib.util.find_spec("jinja2"),
+    reason="jinja2 not installed",
+)
 class TestTestGeneratorMain:
     """Tests for attune.test_generator.__main__ entry point."""
 
