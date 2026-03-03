@@ -202,8 +202,8 @@ addopts =
 
 ```python
 def test_config_has_user_id_attribute():
-    """Test that EmpathyConfig has user_id attribute."""
-    assert hasattr(EmpathyConfig, 'user_id')  # Doesn't execute code!
+    """Test that AttuneConfig has user_id attribute."""
+    assert hasattr(AttuneConfig, 'user_id')  # Doesn't execute code!
 
 def test_model_tier_enum_values():
     """Test enum values."""
@@ -215,7 +215,7 @@ def test_model_tier_enum_values():
 ```python
 def test_config_to_yaml_creates_valid_file(tmp_path):
     """Test that to_yaml() actually creates and writes a file."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
     output = tmp_path / "config.yaml"
 
     # BEHAVIORAL: Actually call the method
@@ -280,7 +280,7 @@ pytest --cov=src -n 0
 **Diagnosis:**
 ```bash
 # Check what's being imported
-python -c "from attune.config import EmpathyConfig; import inspect; print(inspect.getfile(EmpathyConfig))"
+python -c "from attune.config import AttuneConfig; import inspect; print(inspect.getfile(AttuneConfig))"
 ```
 
 **Fix:** Reinstall in editable mode (see above)

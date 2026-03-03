@@ -12,10 +12,10 @@ The framework uses **two distinct configuration classes** for different concerns
 
 | Config Class | Location | Purpose |
 |-------------|----------|---------|
-| `EmpathyConfig` | `src/attune/config.py` | Core empathy-level settings |
+| `AttuneConfig` | `src/attune/config.py` | Core empathy-level settings |
 | `WorkflowConfig` | `src/attune/workflows/config.py` | Model routing and workflow settings |
 
-## EmpathyConfig
+## AttuneConfig
 
 Handles core Attune AI settings that control the five-level empathy system.
 
@@ -23,7 +23,7 @@ Handles core Attune AI settings that control the five-level empathy system.
 
 ```python
 @dataclass
-class EmpathyConfig:
+class AttuneConfig:
     # Core settings
     user_id: str = "default_user"
     target_level: int = 3                    # Empathy level 1-5
@@ -68,13 +68,13 @@ class EmpathyConfig:
 ### Loading
 
 ```python
-from attune.config import EmpathyConfig, load_config
+from attune.config import AttuneConfig, load_config
 
 # Direct instantiation
-config = EmpathyConfig(user_id="alice", target_level=4)
+config = AttuneConfig(user_id="alice", target_level=4)
 
 # From file (auto-detects .yml or .json)
-config = EmpathyConfig.from_file("empathy.config.yml")
+config = AttuneConfig.from_file("empathy.config.yml")
 
 # With environment variable overrides
 config = load_config(use_env=True)
@@ -82,7 +82,7 @@ config = load_config(use_env=True)
 
 ### Unknown Fields
 
-As of v3.3.3, `EmpathyConfig.from_yaml()` and `from_json()` **gracefully ignore unknown fields**. This allows config files to contain settings for other components (like `provider`, `model_preferences`) without breaking `EmpathyConfig` loading.
+As of v3.3.3, `AttuneConfig.from_yaml()` and `from_json()` **gracefully ignore unknown fields**. This allows config files to contain settings for other components (like `provider`, `model_preferences`) without breaking `AttuneConfig` loading.
 
 ## WorkflowConfig
 
@@ -140,7 +140,7 @@ workflows:
   max_cost_per_run: 5.00
   xml_enhanced: true
 
-# ===== EmpathyConfig fields =====
+# ===== AttuneConfig fields =====
 user_id: default_user
 target_level: 3
 confidence_threshold: 0.75
@@ -159,18 +159,18 @@ telemetry:
 ## Best Practices
 
 1. **Use the right config class** for each context:
-   - Building an EmpathyOS instance → `EmpathyConfig`
+   - Building an EmpathyOS instance → `AttuneConfig`
    - Running workflows → `WorkflowConfig`
 
 2. **Environment variables** follow different prefixes:
-   - `ATTUNE_*` → EmpathyConfig (e.g., `ATTUNE_USER_ID`)
+   - `ATTUNE_*` → AttuneConfig (e.g., `ATTUNE_USER_ID`)
    - `ATTUNE_WORKFLOW_*` → WorkflowConfig (e.g., `ATTUNE_WORKFLOW_PROVIDER`)
 
 3. **Don't duplicate fields** between config classes. Each class owns its domain.
 
 ## Migration Notes
 
-If you encounter `TypeError: EmpathyConfig.__init__() got an unexpected keyword argument`:
+If you encounter `TypeError: AttuneConfig.__init__() got an unexpected keyword argument`:
 
 1. Ensure you're using v3.3.3+ which filters unknown fields
 2. Or manually filter the config data before passing to the constructor
@@ -214,7 +214,7 @@ from attune.config.agent_config import WorkflowConfig as AgentWorkflowConfig
 
 ## Related Files
 
-- `src/attune/config.py` - EmpathyConfig implementation
+- `src/attune/config.py` - AttuneConfig implementation
 - `src/attune/workflows/config.py` - WorkflowConfig (model routing)
 - `attune_llm/config/unified.py` - WorkflowConfig (agent workflows)
 - `src/attune/models/registry.py` - Model registry (source of model IDs)
