@@ -131,6 +131,14 @@ Use these patterns to inform debugging, security, and code quality decisions.
 
 ---
 
+## Pattern Confidence (Top 5)
+
+- 🟢 **bug_a**: 100% confidence (3 applied, 3 successful)
+
+## Pattern Confidence (Top 5)
+
+- 🟢 **bug_a**: 100% confidence (3 applied, 3 successful)
+
 ## How to Use These Patterns
 
 - **Debugging**: When encountering errors, check if similar bugs have been resolved

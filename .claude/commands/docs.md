@@ -4,22 +4,22 @@ description: Documentation generation and explanation
 category: primary
 aliases: [doc]
 tags: [documentation, readme, changelog, explain, audit]
-version: "1.1.0"
+version: "2.0.0"
 question:
   header: "Docs action"
   question: "What documentation task do you need?"
   multiSelect: false
   options:
     - label: "Audit accuracy"
-      description: "Verify doc claims match the codebase"
+      description: "Quick inline checks (10 checks)"
+    - label: "Deep audit"
+      description: "Full DocAuditWorkflow with auto-fix"
     - label: "Explain code"
       description: "Understand how code works"
     - label: "Generate docs"
       description: "Create or update documentation"
     - label: "Update README"
       description: "Update the project README"
-    - label: "Generate changelog"
-      description: "Create changelog from git history"
 ---
 
 # docs
@@ -30,7 +30,8 @@ Documentation generation, explanation, and accuracy auditing.
 
 | Subcommand | Action |
 | ---------- | ------ |
-| `audit` | Verify documentation accuracy |
+| `audit` | Quick inline accuracy checks (10 checks) |
+| `audit-deep` | Full DocAuditWorkflow with auto-fix |
 | `explain` | Explain how code works |
 | `generate` | Generate documentation |
 | `readme` | Update README |
@@ -182,6 +183,36 @@ Present results as:
   but actual count is 11,016
 ...
 ```
+
+### audit-deep
+
+Trigger the DocAuditWorkflow for a full documentation
+audit with automatic fixes. This is the autonomous
+pipeline with 4 stages:
+
+1. **Audit** — Run all 10 doc checks programmatically
+2. **Plan** — For each failing check, generate a fix plan
+3. **Execute** — Apply auto-fixable changes (counts,
+   versions, stale refs)
+4. **Verify** — Re-run checks, confirm score improved,
+   build MkDocs to verify
+
+Show audit results and fix plan for approval before
+the execute phase.
+
+```bash
+# Interactive mode (default)
+uv run attune workflow run doc-audit
+
+# With --batch flag for fire-and-forget
+uv run attune workflow run doc-audit --batch
+```
+
+Use `AskUserQuestion` before running:
+
+- Auto-fix safe changes? (default: yes)
+- Build MkDocs to verify? (default: yes)
+- Approve plan before executing?
 
 ### explain
 

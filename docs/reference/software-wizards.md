@@ -18,16 +18,16 @@ Software wizards analyze your code, predict issues before they happen, and provi
 | [Performance](#performance-wizard) | Bottleneck prediction, optimization | Level 4 |
 | [API](#api-wizard) | Design review, versioning, documentation | Level 3 |
 | [Database](#database-wizard) | Query optimization, schema analysis | Level 4 |
-| [Documentation](#documentation-wizard) | Missing docs, clarity improvements | Level 2 |
-| [Refactoring](#refactoring-wizard) | Code smell detection, architecture | Level 3 |
-| [Compliance](#compliance-wizard) | GDPR, SOC2, HIPAA code patterns | Level 4 |
-| [Monitoring](#monitoring-wizard) | Observability gaps, alerting | Level 3 |
-| [CI/CD](#cicd-wizard) | Pipeline optimization, security | Level 3 |
-| [Accessibility](#accessibility-wizard) | WCAG compliance, screen reader | Level 2 |
-| [Localization](#localization-wizard) | i18n issues, RTL support | Level 2 |
-| [Migration](#migration-wizard) | Risk assessment, rollback planning | Level 4 |
-| [Observability](#observability-wizard) | Tracing, SLO definition | Level 3 |
-| [Scaling](#scaling-wizard) | Capacity planning, bottleneck prediction | Level 4 |
+| Documentation | Missing docs, clarity improvements | Level 2 |
+| Refactoring | Code smell detection, architecture | Level 3 |
+| Compliance | GDPR, SOC2, HIPAA code patterns | Level 4 |
+| Monitoring | Observability gaps, alerting | Level 3 |
+| CI/CD | Pipeline optimization, security | Level 3 |
+| Accessibility | WCAG compliance, screen reader | Level 2 |
+| Localization | i18n issues, RTL support | Level 2 |
+| Migration | Risk assessment, rollback planning | Level 4 |
+| Observability | Tracing, SLO definition | Level 3 |
+| Scaling | Capacity planning, bottleneck prediction | Level 4 |
 
 ---
 

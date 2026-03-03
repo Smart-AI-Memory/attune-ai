@@ -16,7 +16,7 @@ description: Frequently Asked Questions
 3. [Tool Compatibility](#tool-compatibility)
 4. [Implementation](#implementation)
 5. [Cost Optimization](#cost-optimization)
-6. [Results & ROI](#results--roi)
+6. [Results & ROI](#results-roi)
 7. [Common Concerns](#common-concerns)
 8. [Wizards](#wizards)
 9. [Advanced Topics](#advanced-topics)

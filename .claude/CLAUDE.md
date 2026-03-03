@@ -362,4 +362,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   exercise `execute()` end-to-end in tests to catch dataclass
   mismatches that lint can't see.
 
+- **RedisShortTermMemory mock injection path**: After the facade
+  refactor, `_client` is a read-only property on the facade.
+  Tests must inject mocks via `memory._base._client = mock_client`
+  (the plain attribute on `BaseOperations`), not
+  `memory._client = MagicMock()`. Old tests using the direct
+  path were all skipped with "Redis mocking API changed".
+
+- **Lazy imports inside function bodies can't be patched with
+  `patch("module.Name")`**: `HookEvent`, `HookRegistry`, and
+  similar names imported inside function bodies are never bound
+  at module scope. `patch("attune.commands.context.HookEvent")`
+  raises `AttributeError`. Use `patch.dict("sys.modules", ...)`
+  to simulate `ImportError`, or use the real value for happy-path
+  tests.
+
+- **Full coverage runs on 15k+ test suites timeout easily**:
+  `pytest --cov=src/attune` with the full test suite takes 10+
+  minutes. For development feedback, use targeted coverage:
+  `pytest tests/unit/module/ --cov=attune.module --no-cov-on-fail`
+  to measure specific modules in seconds.
+
 <!-- attune-lessons-end -->
