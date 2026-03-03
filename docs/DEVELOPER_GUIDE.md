@@ -289,7 +289,7 @@ pytest -n auto
 def test_{function_name}_{scenario}_{expected_outcome}():
     """Test description."""
     # Given
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
 
     # When
     result = config.to_yaml(valid_path)
@@ -306,7 +306,7 @@ from pathlib import Path
 
 def test_blocks_path_traversal():
     """Test that save blocks path traversal attacks."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
 
     dangerous_paths = [
         "/etc/passwd",
@@ -320,14 +320,14 @@ def test_blocks_path_traversal():
 
 def test_blocks_null_byte_injection():
     """Test that save blocks null byte injection."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
 
     with pytest.raises(ValueError, match="contains null bytes"):
         config.to_yaml("config\x00.json")
 
 def test_allows_valid_paths(tmp_path):
     """Test that save allows valid paths."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
     output_file = tmp_path / "config.yaml"
 
     result = config.to_yaml(str(output_file))
@@ -626,9 +626,9 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 - **[Coding Standards](../.claude/rules/attune/coding-standards-index.md)** - Complete coding standards reference
 - **[Exception Handling Guide](./EXCEPTION_HANDLING_GUIDE.md)** - Pattern examples
-- **[Testing Patterns](./TESTING_PATTERNS.md)** - Test examples and best practices
+- **Testing Patterns** - See coding standards for test conventions
 - **[Architecture Overview](./ARCHITECTURE.md)** - System design and components
-- **[API Reference](./api-reference/)** - Complete API documentation
+- **API Reference** - See [Reference](./reference/index.md)
 
 ---
 

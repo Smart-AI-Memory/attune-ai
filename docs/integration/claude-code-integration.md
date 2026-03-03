@@ -372,9 +372,9 @@ Current API is **stable** and will be maintained:
 
 ## Related Documentation
 
-- [Interactive Agent Creation](../architecture/interactive-agent-creation.md)
-- [Anthropic Patterns Integration](../architecture/ANTHROPIC_PATTERNS_INTEGRATION.md)
-- [Meta-Orchestrator API](../api-reference/meta-orchestration.md)
+- Interactive Agent Creation
+- Anthropic Patterns Integration
+- Meta-Orchestrator API
 
 ---
 

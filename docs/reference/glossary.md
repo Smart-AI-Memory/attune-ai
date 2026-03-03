@@ -17,7 +17,7 @@ A permission level that determines what an agent can do within the system. There
 - **Validator** (Level 3): Can promote patterns to permanent storage
 - **Steward** (Level 4): Full administrative access
 
-See: [Multi-Agent Philosophy](../explanation/multi-agent-philosophy.md#the-access-tier-system)
+See: Multi-Agent Philosophy
 
 ### Agent
 An AI instance that participates in the Empathy system. Agents can be specialized (security reviewer, performance analyst) or general-purpose. Multiple agents can coordinate through shared memory.

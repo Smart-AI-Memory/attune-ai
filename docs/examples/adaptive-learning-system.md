@@ -692,4 +692,4 @@ asyncio.run(adaptive_learning_demo())
 
 ---
 
-**Questions?** See [Adaptive Learning Guide](../guides/adaptive-learning.md)
+**Questions?** See the Adaptive Learning Guide

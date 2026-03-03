@@ -32,7 +32,7 @@ description: Attune AI API Reference API reference: **Version:** 3.8.0 **License
   - [OpenAIProvider](#openaiprovider)
   - [LocalProvider](#localprovider)
 - [Configuration](#configuration)
-  - [EmpathyConfig](#empathyconfig)
+  - [AttuneConfig](#empathyconfig)
 - [Coach Wizards](#coach-wizards)
   - [BaseCoachWizard](#basecoachwizard)
   - [SecurityWizard](#securitywizard)
@@ -805,16 +805,16 @@ provider = LocalProvider(
 
 ## Configuration
 
-### EmpathyConfig
+### AttuneConfig
 
 Comprehensive configuration management supporting YAML, JSON, and environment variables.
 
 #### Constructor
 
 ```python
-from attune.config import EmpathyConfig
+from attune.config import AttuneConfig
 
-config = EmpathyConfig(
+config = AttuneConfig(
     user_id: str = "default_user",
     target_level: int = 3,
     confidence_threshold: float = 0.75,
@@ -860,7 +860,7 @@ config = EmpathyConfig(
 
 ```python
 @classmethod
-def from_yaml(cls, filepath: str) -> EmpathyConfig
+def from_yaml(cls, filepath: str) -> AttuneConfig
 ```
 
 Load configuration from YAML file.
@@ -868,14 +868,14 @@ Load configuration from YAML file.
 **Example:**
 
 ```python
-config = EmpathyConfig.from_yaml("empathy.config.yml")
+config = AttuneConfig.from_yaml("empathy.config.yml")
 ```
 
 ##### `from_json()`
 
 ```python
 @classmethod
-def from_json(cls, filepath: str) -> EmpathyConfig
+def from_json(cls, filepath: str) -> AttuneConfig
 ```
 
 Load configuration from JSON file.
@@ -884,7 +884,7 @@ Load configuration from JSON file.
 
 ```python
 @classmethod
-def from_env(cls, prefix: str = "EMPATHY_") -> EmpathyConfig
+def from_env(cls, prefix: str = "EMPATHY_") -> AttuneConfig
 ```
 
 Load configuration from environment variables.
@@ -898,14 +898,14 @@ export ATTUNE_CONFIDENCE_THRESHOLD=0.8
 ```
 
 ```python
-config = EmpathyConfig.from_env()  # Checks ATTUNE_* first, falls back to EMPATHY_*
+config = AttuneConfig.from_env()  # Checks ATTUNE_* first, falls back to EMPATHY_*
 ```
 
 ##### `from_file()`
 
 ```python
 @classmethod
-def from_file(cls, filepath: Optional[str] = None) -> EmpathyConfig
+def from_file(cls, filepath: Optional[str] = None) -> AttuneConfig
 ```
 
 Auto-detect and load configuration. Searches for:
@@ -954,14 +954,14 @@ Update configuration fields dynamically.
 **Example:**
 
 ```python
-config = EmpathyConfig()
+config = AttuneConfig()
 config.update(user_id="alice", target_level=4)
 ```
 
 ##### `merge()`
 
 ```python
-def merge(other: EmpathyConfig) -> EmpathyConfig
+def merge(other: AttuneConfig) -> AttuneConfig
 ```
 
 Merge with another configuration (other takes precedence).
@@ -1596,7 +1596,7 @@ config = load_config(
     filepath: Optional[str] = None,
     use_env: bool = True,
     defaults: Optional[Dict[str, Any]] = None
-) -> EmpathyConfig
+) -> AttuneConfig
 ```
 
 **Precedence (highest to lowest):**

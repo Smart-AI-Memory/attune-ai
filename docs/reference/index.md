@@ -13,13 +13,13 @@ quick reference materials for when you need to look something up.
 
 <div class="grid cards" markdown>
 
-- :material-console: **[CLI Guide](CLI_GUIDE.md)**
+- :material-console: **[CLI Reference](cli-reference.md)**
 
     Complete guide to the `attune` command
 
-- :material-lightning-bolt: **[CLI Cheatsheet](CLI_CHEATSHEET.md)**
+- :material-lightning-bolt: **CLI Quick Reference**
 
-    Quick reference for common commands
+    Run `attune --help` for common commands
 
 </div>
 
@@ -55,7 +55,7 @@ quick reference materials for when you need to look something up.
 
 - [Getting Started](../guides/wizards-getting-started.md) - Run your first wizard in under 10 minutes
 - [Architecture](../guides/wizard-architecture.md) - How the wizard system works internally
-- [Custom Development](../guides/wizard-custom-development.md) - Build Python-based wizards
+- Custom Development - Build Python-based wizards
 
 ## Help
 
@@ -83,9 +83,9 @@ quick reference materials for when you need to look something up.
 
 ## Quick Links
 
-- [Getting Started Tutorial](../tutorials/quickstart.md)
+- [Getting Started](../getting-started/index.md)
 - [How-to Guides](../how-to/index.md)
-- [Explanation](../explanation/index.md)
+- Explanation
 
 ## Installation
 

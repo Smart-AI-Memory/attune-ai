@@ -225,7 +225,7 @@ MemDocs (Local) ← Pattern Extractor → CLAUDE.md (Opt-in)
 ### Python Configuration
 
 ```python
-from empathy_framework import EnterprisePrivacyConfig, EmpathyLLM
+from attune import EnterprisePrivacyConfig, EmpathyLLM
 
 # Example 1: Hybrid tier (recommended for most enterprises)
 config = EnterprisePrivacyConfig.from_tier("hybrid")
@@ -453,7 +453,7 @@ ATTUNE_MAX_CONTEXT_SIZE=50000
 ### Audit Query API
 
 ```python
-from empathy_framework import AuditLog
+from attune import AuditLog
 
 # Query recent API calls
 calls = AuditLog.query(
@@ -564,7 +564,7 @@ pip install attune-ai>=1.8.0
 llm = EmpathyLLM(provider="anthropic")
 
 # After (privacy-enabled)
-from empathy_framework import EnterprisePrivacyConfig
+from attune import EnterprisePrivacyConfig
 
 config = EnterprisePrivacyConfig.from_tier("hybrid")
 llm = EmpathyLLM(provider="anthropic", config=config)

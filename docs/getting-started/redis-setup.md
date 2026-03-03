@@ -203,5 +203,5 @@ print(f"Success rate: {stats.get('success_rate')}%")
 ## Next Steps
 
 - [Short-Term Memory Guide](../reference/SHORT_TERM_MEMORY.md) - Deep dive into memory patterns
-- [Multi-Agent Philosophy](../explanation/multi-agent-philosophy.md) - Team coordination with Redis
+- Multi-Agent Philosophy - Team coordination with Redis
 - [Configuration Reference](../reference/configuration.md) - All configuration options

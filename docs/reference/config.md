@@ -10,7 +10,7 @@ Configuration management for the Attune AI. Configure via direct instantiation, 
 
 The configuration system provides flexible options for customizing Attune AI behavior:
 
-- **Direct instantiation**: Pass parameters to `EmpathyConfig()` or `EmpathyOS()`
+- **Direct instantiation**: Pass parameters to `AttuneConfig()` or `EmpathyOS()`
 - **YAML/JSON files**: Load from `empathy.config.yml` or `empathy.config.json`
 - **Environment variables**: Use `ATTUNE_*` prefixed variables (`EMPATHY_*` also accepted for backward compatibility)
 - **Validation**: Automatic validation on load with helpful error messages
@@ -20,7 +20,7 @@ The configuration system provides flexible options for customizing Attune AI beh
 ### Direct Configuration
 
 ```python
-from attune import EmpathyConfig, EmpathyOS
+from attune import AttuneConfig, EmpathyOS
 
 # Option 1: Configure EmpathyOS directly
 empathy = EmpathyOS(
@@ -30,8 +30,8 @@ empathy = EmpathyOS(
     persistence_enabled=True
 )
 
-# Option 2: Use EmpathyConfig object
-config = EmpathyConfig(
+# Option 2: Use AttuneConfig object
+config = AttuneConfig(
     user_id="user_123",
     target_level=4,
     confidence_threshold=0.75
@@ -79,7 +79,7 @@ config = load_config(use_env=True)
 
 ## Class Reference
 
-::: attune.config.EmpathyConfig
+::: attune.config.AttuneConfig
     options:
       show_root_heading: false
       show_source: false
@@ -94,7 +94,7 @@ Unique identifier for the user or system.
 
 **Example:**
 ```python
-config = EmpathyConfig(user_id="user_123")
+config = AttuneConfig(user_id="user_123")
 ```
 
 #### `target_level` (int, default: 4)
@@ -108,7 +108,7 @@ Target empathy level (1-5). System will progress toward this level as trust buil
 
 **Example:**
 ```python
-config = EmpathyConfig(target_level=4)  # Aim for Level 4
+config = AttuneConfig(target_level=4)  # Aim for Level 4
 ```
 
 #### `confidence_threshold` (float, default: 0.75)
@@ -120,10 +120,10 @@ Minimum confidence score (0.0-1.0) required for predictions and suggestions.
 **Example:**
 ```python
 # Conservative: Only high-confidence predictions
-config = EmpathyConfig(confidence_threshold=0.85)
+config = AttuneConfig(confidence_threshold=0.85)
 
 # Aggressive: More predictions, accept lower confidence
-config = EmpathyConfig(confidence_threshold=0.60)
+config = AttuneConfig(confidence_threshold=0.60)
 ```
 
 ### Trust Settings
@@ -134,10 +134,10 @@ How much trust increases on successful interactions (0.0-1.0).
 **Example:**
 ```python
 # Fast trust building (+10% per success)
-config = EmpathyConfig(trust_building_rate=0.10)
+config = AttuneConfig(trust_building_rate=0.10)
 
 # Slow trust building (+2% per success)
-config = EmpathyConfig(trust_building_rate=0.02)
+config = AttuneConfig(trust_building_rate=0.02)
 ```
 
 #### `trust_erosion_rate` (float, default: 0.10)
@@ -146,10 +146,10 @@ How much trust decreases on failed interactions (0.0-1.0).
 **Example:**
 ```python
 # Forgiving: Small trust loss on failure
-config = EmpathyConfig(trust_erosion_rate=0.05)
+config = AttuneConfig(trust_erosion_rate=0.05)
 
 # Strict: Large trust loss on failure
-config = EmpathyConfig(trust_erosion_rate=0.20)
+config = AttuneConfig(trust_erosion_rate=0.20)
 ```
 
 ### Persistence Settings
@@ -160,10 +160,10 @@ Enable saving patterns, metrics, and state to disk.
 **Example:**
 ```python
 # Production: Enable persistence
-config = EmpathyConfig(persistence_enabled=True)
+config = AttuneConfig(persistence_enabled=True)
 
 # Testing: Disable persistence
-config = EmpathyConfig(persistence_enabled=False)
+config = AttuneConfig(persistence_enabled=False)
 ```
 
 #### `persistence_backend` (str, default: "sqlite")
@@ -177,10 +177,10 @@ Storage backend for persistence.
 **Example:**
 ```python
 # Local development
-config = EmpathyConfig(persistence_backend="sqlite")
+config = AttuneConfig(persistence_backend="sqlite")
 
 # Production
-config = EmpathyConfig(
+config = AttuneConfig(
     persistence_backend="postgresql",
     persistence_path="postgresql://user:pass@localhost/empathy"
 )
@@ -192,10 +192,10 @@ Path for storing persistence data.
 **Example:**
 ```python
 # Default location
-config = EmpathyConfig(persistence_path=".empathy")
+config = AttuneConfig(persistence_path=".empathy")
 
 # Custom location
-config = EmpathyConfig(persistence_path="/var/lib/empathy")
+config = AttuneConfig(persistence_path="/var/lib/empathy")
 ```
 
 ### Metrics Settings
@@ -205,7 +205,7 @@ Enable metrics collection for monitoring and analytics.
 
 **Example:**
 ```python
-config = EmpathyConfig(metrics_enabled=True)
+config = AttuneConfig(metrics_enabled=True)
 ```
 
 #### `metrics_path` (str, default: ".empathy/metrics.db")
@@ -213,7 +213,7 @@ Path for storing metrics data.
 
 **Example:**
 ```python
-config = EmpathyConfig(metrics_path="/var/lib/empathy/metrics.db")
+config = AttuneConfig(metrics_path="/var/lib/empathy/metrics.db")
 ```
 
 ### Pattern Library Settings
@@ -224,7 +224,7 @@ Enable pattern discovery and learning.
 **Example:**
 ```python
 # Disable for simple use cases
-config = EmpathyConfig(pattern_library_enabled=False)
+config = AttuneConfig(pattern_library_enabled=False)
 ```
 
 #### `pattern_sharing` (bool, default: False)
@@ -233,7 +233,7 @@ Enable pattern sharing across multiple agents (multi-agent coordination).
 **Example:**
 ```python
 # Enable for multi-agent teams
-config = EmpathyConfig(
+config = AttuneConfig(
     pattern_sharing=True,
     pattern_library_path="shared_patterns.db"
 )
@@ -244,7 +244,7 @@ Minimum confidence for applying learned patterns.
 
 **Example:**
 ```python
-config = EmpathyConfig(pattern_confidence_threshold=0.80)
+config = AttuneConfig(pattern_confidence_threshold=0.80)
 ```
 
 ## Configuration Methods
@@ -274,7 +274,7 @@ config = load_config(filepath="empathy.config.yml", use_env=True)
 Save configuration to file.
 
 ```python
-config = EmpathyConfig(user_id="user_123", target_level=4)
+config = AttuneConfig(user_id="user_123", target_level=4)
 
 # Save as YAML
 config.to_yaml("empathy.config.yml")
@@ -288,7 +288,7 @@ config.to_json("empathy.config.json")
 Validate configuration values.
 
 ```python
-config = EmpathyConfig(user_id="user_123", target_level=4)
+config = AttuneConfig(user_id="user_123", target_level=4)
 
 try:
     config.validate()
@@ -334,7 +334,7 @@ pattern_confidence_threshold: 0.85  # Higher quality patterns
 
 ```python
 # For unit tests
-config = EmpathyConfig(
+config = AttuneConfig(
     user_id="test_user",
     target_level=4,
     persistence_enabled=False,  # Don't save during tests
@@ -377,5 +377,5 @@ export ATTUNE_PATTERN_CONFIDENCE_THRESHOLD=0.70
 - [Installation Guide](../getting-started/installation.md) - Package installation and setup
 - [Persistence](persistence.md) - Configure pattern storage backends
 - [Multi-Agent Coordination](multi-agent.md) - Agent configuration and coordination
-- [Quick Start Guide](../tutorials/quickstart.md) - Get started with examples
+- [Getting Started](../getting-started/index.md) - Get started with examples
 - [Configuration Examples](../reference/configuration.md) - Additional configuration patterns

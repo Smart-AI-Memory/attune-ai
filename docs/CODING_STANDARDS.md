@@ -83,7 +83,7 @@ def save_config(user_path: str, data: dict):
 
 **Rationale:** User-controlled file paths enable path traversal attacks (CWE-22), allowing attackers to write to system directories.
 
-**See Also:** [Pattern 6 Implementation](SECURITY.md#security-hardening-pattern-6-implementation)
+**See Also:** [Pattern 6 Implementation](../SECURITY.md#security-hardening-pattern-6-implementation)
 
 ---
 
@@ -370,14 +370,14 @@ def test_divide_by_zero():
 ```python
 def test_save_prevents_path_traversal():
     """Test that save blocks path traversal attacks."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
 
     with pytest.raises(ValueError, match="Cannot write to system directory"):
         config.to_yaml("/etc/passwd")
 
 def test_save_prevents_null_bytes():
     """Test that save blocks null byte injection."""
-    config = EmpathyConfig(user_id="test")
+    config = AttuneConfig(user_id="test")
 
     with pytest.raises(ValueError, match="contains null bytes"):
         config.to_yaml("config\x00.yml")
@@ -649,7 +649,7 @@ pytest --cov=src --cov-report=term-missing
 ## Additional Resources
 
 - [Exception Handling Guide](./EXCEPTION_HANDLING_GUIDE.md)
-- [Security Policy](SECURITY.md)
+- [Security Policy](../SECURITY.md)
 - [Contributing Guide](contributing.md)
 - [API Reference](./reference/index.md)
 

@@ -552,4 +552,4 @@ new_agent.restore_collaboration_state(session_id=agent.session_id)
 
 ---
 
-*This chapter provides a hands-on implementation guide. For the philosophical foundations behind these design decisions, see [The Philosophy of Multi-Agent Coordination](../explanation/multi-agent-philosophy.md).*
+*This chapter provides a hands-on implementation guide. For the philosophical foundations behind these design decisions, see The Philosophy of Multi-Agent Coordination.*

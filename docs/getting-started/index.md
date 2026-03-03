@@ -81,4 +81,4 @@ Jump to:
 
 - [First Steps](first-steps.md) - Run your first workflow
 - [Choose Your Path](choose-your-path.md) - Find the right approach for you
-- [CLI Cheatsheet](../reference/CLI_CHEATSHEET.md) - Quick command reference
+- [CLI Reference](../reference/cli-reference.md) - Quick command reference

@@ -351,5 +351,5 @@ Attune AIs --recommend code_analysis
 
 ## Next Steps
 
-- [CLI Cheatsheet](../reference/CLI_CHEATSHEET.md) - Quick reference
+- [CLI Reference](../reference/cli-reference.md) - Quick reference
 - [Reference](../reference/index.md) - Full API documentation

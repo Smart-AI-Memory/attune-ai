@@ -615,7 +615,7 @@ Level 5 applies Donella Meadows' leverage points:
 
 ### Installation
 
-See [Quick Start Guide](../tutorials/QUICKSTART_GUIDE.md) for detailed installation instructions.
+See [Getting Started](../getting-started/index.md) for detailed installation instructions.
 
 **Quick Install:**
 
@@ -1432,9 +1432,9 @@ llm = EmpathyLLM(
 ### Programmatic Configuration
 
 ```python
-from attune.config import EmpathyConfig
+from attune.config import AttuneConfig
 
-config = EmpathyConfig(
+config = AttuneConfig(
     user_id="alice",
     target_level=4,
     confidence_threshold=0.75,
@@ -2325,10 +2325,10 @@ print(llm.get_metrics_summary())
 
 ### Documentation
 
-- **Quick Start Guide:** [Quick Start Guide](../tutorials/QUICKSTART_GUIDE.md)
+- **Quick Start Guide:** [Getting Started](../getting-started/index.md)
 - **API Reference:** [API_REFERENCE.md](API_REFERENCE.md)
 - **User Guide:** This document
-- **CLI Guide:** [CLI_GUIDE.md](CLI_GUIDE.md)
+- **CLI Guide:** [CLI Reference](cli-reference.md)
 
 ### Community
 
@@ -2346,7 +2346,7 @@ print(llm.get_metrics_summary())
 - Security advisories
 - Upgrade assistance
 
-**Learn more:** [Pricing](/pricing)
+**Learn more:** Contact us for pricing
 
 ### Contact
 

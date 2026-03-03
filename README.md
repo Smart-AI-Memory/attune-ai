@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-16%2C666%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-16%2C676%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -37,7 +37,7 @@ pip install 'attune-ai[developer]'
   `quick`, and `deep` routes for module-level analysis.
 - **Dashboard fully removed** — Deleted all dashboard
   source code, MCP tools, intent patterns, and tests.
-- **16,666 tests passing** at 84% coverage.
+- **16,676 tests passing** at 84% coverage.
 
 <details>
 <summary>Previous releases</summary>
@@ -99,7 +99,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **16,600+ Tests** - Security, unit, integration, and behavioral test coverage
+- **16,600+ tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
@@ -120,7 +120,7 @@ Workflows guide you through discovery instead of requiring upfront configuration
 
 ## Claude Code Plugin
 
-Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 17 MCP tools, and 7 skills. See the `plugin/` directory.
+Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 17 MCP tools, and 17 skills. See the `plugin/` directory.
 
 ---
 
@@ -260,7 +260,7 @@ attune telemetry savings --days 30
 
 Attune AI includes a Model Context Protocol (MCP) server that exposes all workflows as native Claude Code tools:
 
-- **17 Tools Available** - 9 workflow tools (security_audit, bug_predict, code_review, test_generation, performance_audit, release_prep, and more) plus 8 memory and context tools
+- **17 Tools Available** - Workflow tools (security_audit, bug_predict, code_review, test_generation, performance_audit, release_prep) plus utility, memory, and context tools
 - **Automatic Discovery** - Claude Code finds tools via `.claude/mcp.json`
 - **Natural Language Access** - Describe your need and Claude invokes the appropriate tool
 

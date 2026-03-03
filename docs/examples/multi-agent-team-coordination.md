@@ -702,4 +702,4 @@ for task_name, result in results.items():
 
 ---
 
-**Questions?** See [Multi-Agent Coordination Guide](../guides/multi-agent-coordination.md)
+**Questions?** See [Multi-Agent Coordination Guide](../how-to/multi-agent-coordination.md)

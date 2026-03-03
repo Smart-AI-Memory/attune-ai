@@ -111,7 +111,7 @@ As the project grows and attracts more contributors, the governance model may ev
 - Coordinated disclosure after fix available
 - Security advisory published
 
-See [SECURITY.md](SECURITY.md) for full details.
+See [SECURITY.md](../SECURITY.md) for full details.
 
 ## Release Process
 

@@ -357,7 +357,7 @@ Full example: [02_tech_debt_trajectory.py](https://github.com/Smart-AI-Memory/em
 
 ## What's Next
 
-- **Part 4:** [Security Learning](04-security-learning-deep-dive.md) — Teaching AI your team's security policies
+- **Part 4:**  — Teaching AI your team's security policies
 
 ---
 

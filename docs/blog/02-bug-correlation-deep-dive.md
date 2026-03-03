@@ -265,7 +265,7 @@ Full example: [01_bug_correlation.py](https://github.com/Smart-AI-Memory/empathy
 ## What's Next
 
 - **Part 3:** [Tech Debt Trajectory](03-tech-debt-trajectory-deep-dive.md) — Predicting when debt becomes critical
-- **Part 4:** [Security Learning](04-security-learning-deep-dive.md) — Teaching AI your team's security policies
+- **Part 4:**  — Teaching AI your team's security policies
 
 ---
 

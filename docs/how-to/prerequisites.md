@@ -306,7 +306,7 @@ pyenv local 3.11.0
 Once prerequisites are met:
 
 1. **Quick start**: [Unified Memory System](./unified-memory-system.md)
-2. **Understand the philosophy**: [Multi-Agent Philosophy](../explanation/multi-agent-philosophy.md)
+2. **Understand the philosophy**: Multi-Agent Philosophy
 3. **See patterns**: [Practical Patterns](./practical-patterns.md)
 
 ---

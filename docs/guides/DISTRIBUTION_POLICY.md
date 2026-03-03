@@ -126,10 +126,10 @@ If a file should be included in distributions despite the default policy:
 python -m build --sdist
 
 # List contents
-tar tzf dist/empathy_framework-*.tar.gz | head -50
+tar tzf dist/attune-*.tar.gz | head -50
 
 # Verify exclusions
-tar tzf dist/empathy_framework-*.tar.gz | grep -E "(marketing|book-indesign|patterns)" && echo "ERROR: Found excluded content"
+tar tzf dist/attune-*.tar.gz | grep -E "(marketing|book-indesign|patterns)" && echo "ERROR: Found excluded content"
 ```
 
 ### Test Git Archive

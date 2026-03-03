@@ -213,7 +213,7 @@ class MyWizard(BaseWizard):
 name = "my-domain-plugin"
 version = "1.0.0"
 
-[project.entry-points."empathy_framework.plugins"]
+[project.entry-points."attune.plugins"]
 my_domain = "my_domain_plugin.plugin:MyDomainPlugin"
 ```
 

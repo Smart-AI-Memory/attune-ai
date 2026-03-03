@@ -286,8 +286,8 @@ The MCP server works with any MCP-compatible client:
 
 ## Next Steps
 
-- **[CLI Reference](../reference/CLI_CHEATSHEET.md)** - Command-line interface
-- **[Python API](../api-reference/index.md)** - Programmatic access
+- **[CLI Reference](../reference/cli-reference.md)** - Command-line interface
+- **Python API** - Programmatic access
 - **[How-to Guides](../how-to/index.md)** - Workflow documentation
 
 ---

@@ -281,7 +281,7 @@ class MyWizard(BaseWizard):
     def process_step_result(self, step, result) → None
 ```
 
-All 5 built-in wizards use this approach. See [Custom Wizard Development](wizard-custom-development.md).
+All 5 built-in wizards use this approach. See Custom Wizard Development.
 
 ### 2. YAML-Based (ConfigDrivenWizard)
 
@@ -397,6 +397,6 @@ Multi-stage workflows typically start with `cheap` tiers for broad scanning and 
 ## Next Steps
 
 - [Getting Started](wizards-getting-started.md) — Run your first wizard in under 10 minutes
-- [Custom Wizard Development](wizard-custom-development.md) — Build Python wizards with workflow delegation
+- Custom Wizard Development — Build Python wizards with workflow delegation
 - [Software Wizards](../reference/software-wizards.md) — Full reference for all 16 software wizards
 - [Industry Wizards](../reference/wizards.md) — Domain-specific wizards (Healthcare, Finance, Legal, etc.)

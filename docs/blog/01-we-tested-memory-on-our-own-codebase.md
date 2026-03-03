@@ -263,7 +263,7 @@ This is Part 1 of a 4-part series:
 1. **This post** - Full repo test results
 2. **[Bug Correlation Deep Dive](02-bug-correlation-deep-dive.md)** - How historical matching works
 3. **[Tech Debt Trajectory](03-tech-debt-trajectory-deep-dive.md)** - Predicting the future from the past
-4. **[Security Learning](04-security-learning-deep-dive.md)** - Teaching your AI your team's policies
+4. **** - Teaching your AI your team's policies
 
 ---
 

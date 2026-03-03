@@ -847,4 +847,4 @@ def verify_webhook_signature(request, secret):
 
 ---
 
-**Questions?** See [Webhook Integration Guide](../guides/webhook-integration.md)
+**Questions?** See [Webhook Integration Guide](../../how-to/webhook-integration.md)

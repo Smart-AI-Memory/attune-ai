@@ -707,9 +707,7 @@ wizard = HealthcareWizard()
 
 ## Related Documentation
 
-- **[Security Architecture](./architecture/SECURE_MEMORY_ARCHITECTURE.md)** - Memory encryption, audit logging
 - **[Plugin System](./architecture/PLUGIN_SYSTEM_README.md)** - Building custom plugins
-- **[XML Enhancement](./architecture/xml-enhancement-summary.md)** - Structured prompting
 
 ---
 

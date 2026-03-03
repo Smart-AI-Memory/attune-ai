@@ -41,7 +41,7 @@ attune telemetry savings --days 30
 ### Next Steps
 
 - [CLI Reference](../reference/cli-reference.md) - Complete command reference
-- [CLI Cheatsheet](../reference/CLI_CHEATSHEET.md) - Quick reference
+- Run `attune --help` for a quick command reference
 
 ---
 
@@ -98,7 +98,7 @@ asyncio.run(audit())
 
 ### Next Steps
 
-- [Python API Reference](../api-reference/index.md) - Full API documentation
+- Python API Reference - Full API documentation
 - [Practical Patterns](../how-to/practical-patterns.md) - Ready-to-use patterns
 
 ---
@@ -123,7 +123,7 @@ result = await orchestrator.execute(plan)
 ### Next Steps
 
 - [Meta-Orchestration Tutorial](../tutorials/META_ORCHESTRATION_TUTORIAL.md)
-- [Multi-Agent Philosophy](../explanation/multi-agent-philosophy.md)
+- Multi-Agent Philosophy
 
 ---
 

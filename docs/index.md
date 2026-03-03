@@ -90,7 +90,7 @@ The Attune AI underwent extensive security hardening in v3.9.0:
 
 - ✅ **6 modules secured** with Pattern 6 (File Path Validation)
 - ✅ **13 file write operations** validated to prevent path traversal (CWE-22)
-- ✅ **174 security tests** (100% passing) - up from 14 tests (+1143% increase)
+- ✅ **174 security tests** (100% passing)
 - ✅ **Zero blind exception handlers** - all errors properly typed and logged
 
 **Attack vectors blocked:**
@@ -176,9 +176,9 @@ Organized using the [Diátaxis framework](https://diataxis.fr/) for better disco
 
 | Section | Purpose | Start Here |
 |---------|---------|------------|
-| **[Tutorials](tutorials/index.md)** | Learn by doing | [Quick Start](tutorials/quickstart.md) |
+| **[Tutorials](tutorials/index.md)** | Learn by doing | [Getting Started](getting-started/index.md) |
 | **[How-to](how-to/index.md)** | Solve specific tasks | [Agent Factory](how-to/agent-factory.md) |
-| **[Explanation](explanation/index.md)** | Understand concepts | [Philosophy](explanation/ATTUNE_PHILOSOPHY.md) |
+| **Explanation** | Understand concepts | Philosophy |
 | **[Reference](reference/index.md)** | Look up details | [API Reference](reference/API_REFERENCE.md) |
 
 ---
@@ -218,7 +218,7 @@ Organized using the [Diátaxis framework](https://diataxis.fr/) for better disco
 
     Get up and running in 5 minutes
 
-    [:octicons-arrow-right-24: Quick Start](tutorials/quickstart.md)
+    [:octicons-arrow-right-24: Getting Started](getting-started/index.md)
 
 -   :fontawesome-solid-robot:{ .lg .middle } **Examples**
 

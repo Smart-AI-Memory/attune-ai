@@ -17,8 +17,6 @@ A 5-part series exploring what becomes possible when AI can remember and learn.
 | 1 | [We Tested Memory on Our Own Codebase](01-we-tested-memory-on-our-own-codebase.md) | 78.7% security noise reduction |
 | 2 | [Bug Correlation Deep Dive](02-bug-correlation-deep-dive.md) | 4 historical matches with proven fixes |
 | 3 | [Tech Debt Trajectory Deep Dive](03-tech-debt-trajectory-deep-dive.md) | Projections showing 472 items in 90 days |
-| 4 | [Security Learning Deep Dive](04-security-learning-deep-dive.md) | 85 findings suppressed via team decisions |
-| 5 | [Code Health Assistant Deep Dive](05-code-health-assistant-deep-dive.md) | One command, one score, auto-fix **(NEW)** |
 
 ---
 
@@ -63,7 +61,6 @@ python examples/website_examples/03_security_learning.py
 | Post | Topic | Key Takeaway |
 |------|-------|--------------|
 | [Building AI Memory with Redis](06-building-ai-memory-with-redis.md) | Infrastructure | Sub-millisecond coordination, dual-layer architecture |
-| [Cutting Claude Costs 78% with Intelligent Fallback](07-cutting-claude-costs-with-intelligent-fallback.md) | Cost Optimization | $211/year saved, 100% quality maintained **(NEW)** |
 
 ---
 

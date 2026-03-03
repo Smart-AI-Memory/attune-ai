@@ -96,7 +96,7 @@ except (ValueError, SyntaxError) as e:
 - GitHub Copilot: `.github/copilot-instructions.md`
 - Cursor: `.cursorrules`
 
-**Learn more:** [Teaching AI Your Standards](../explanation/TEACHING_AI_YOUR_PHILOSOPHY.md) (11,000 words)
+**Learn more:** Teaching AI Your Standards (11,000 words)
 
 ---
 
@@ -808,7 +808,7 @@ Two approaches:
 
 **YAML (no Python required):** Create a `.attune/wizards/my-wizard.yaml` file with step definitions. See [Getting Started](../guides/wizards-getting-started.md).
 
-**Python (for advanced logic):** Subclass `BaseWizard` with custom step handling, workflow delegation, and conditional steps. See [Custom Wizard Development](../guides/wizard-custom-development.md).
+**Python (for advanced logic):** Subclass `BaseWizard` with custom step handling, workflow delegation, and conditional steps. See Custom Wizard Development.
 
 ---
 
@@ -961,7 +961,7 @@ git push
 
 - **Getting Started:** [Getting Started Guide](../getting-started/index.md)
 - **Five Levels:** Five Levels of Empathy Guide
-- **Teaching AI:** [Teaching AI Your Standards](../explanation/TEACHING_AI_YOUR_PHILOSOPHY.md)
+- **Teaching AI:** Teaching AI Your Standards
 - **Coding Standards:** [Our Standards Reference](../CODING_STANDARDS.md)
 
 ### Community

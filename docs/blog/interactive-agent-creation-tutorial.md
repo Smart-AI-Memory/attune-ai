@@ -811,7 +811,6 @@ Run this in Claude Code and see the magic happen!
 
 ## Next Steps
 
-- 📖 [Full technical docs](../architecture/interactive-agent-creation.md)
 - 🔧 [Claude Code integration guide](../integration/claude-code-integration.md)
 - 🎯 [Pattern selection guide](../how-to/practical-patterns.md)
 - 💬 [GitHub Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)

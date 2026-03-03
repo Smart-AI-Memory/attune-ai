@@ -519,7 +519,7 @@ See the complete [Multi-Agent Team Coordination Example](../tutorials/examples/m
 
 ## See Also
 
-- [Adaptive Learning](adaptive-learning.md) - How agents learn
+- Adaptive Learning - How agents learn
 - [Pattern Library API](../reference/pattern-library.md) - Pattern management
 - [Multi-Agent Example](../tutorials/examples/multi-agent-team-coordination.md) - Full implementation
 - [EmpathyOS API](../reference/empathy-os.md) - Agent configuration

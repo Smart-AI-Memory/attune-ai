@@ -440,7 +440,7 @@ class TestMaintenanceWorkflow(BaseWorkflow):
   # Test installation in clean environment
   python -m venv test_env
   source test_env/bin/activate
-  pip install dist/empathy_framework-3.7.0-py3-none-any.whl
+  pip install dist/attune-3.7.0-py3-none-any.whl
 
   # Verify imports
   python -c "from attune.workflows import BaseWorkflow; print('✅ OK')"

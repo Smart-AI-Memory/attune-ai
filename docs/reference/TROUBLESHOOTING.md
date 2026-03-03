@@ -875,9 +875,9 @@ export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 ```
 
 ```python
-from attune.config import EmpathyConfig
+from attune.config import AttuneConfig
 
-config = EmpathyConfig.from_env()
+config = AttuneConfig.from_env()
 ```
 
 ### Issue: Invalid configuration values
@@ -892,9 +892,9 @@ ValueError: confidence_threshold must be between 0.0 and 1.0, got 1.5
 
 **1. Validate configuration:**
 ```python
-from attune.config import EmpathyConfig
+from attune.config import AttuneConfig
 
-config = EmpathyConfig(
+config = AttuneConfig(
     target_level=4,  # Must be 1-5
     confidence_threshold=0.75  # Must be 0.0-1.0
 )

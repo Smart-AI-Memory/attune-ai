@@ -165,7 +165,7 @@ print(f"Total interactions: {global_stats['total_interactions']}")
 ### Complete Persistence Setup
 
 ```python
-from attune import EmpathyOS, EmpathyConfig
+from attune import EmpathyOS, AttuneConfig
 from attune.pattern_library import PatternLibrary
 from attune.persistence import (
     PatternPersistence,
@@ -174,7 +174,7 @@ from attune.persistence import (
 )
 
 # Initialize persistence components
-config = EmpathyConfig(
+config = AttuneConfig(
     user_id="user_123",
     target_level=4,
     persistence_enabled=True,
@@ -468,4 +468,4 @@ def batch_save_patterns(patterns, db_path):
 - [Pattern Library API](pattern-library.md)
 - [EmpathyOS API](empathy-os.md)
 - [Configuration API](config.md)
-- [CLI Export/Import Commands](../tutorials/quickstart.md#cli-commands)
+- [Getting Started](../getting-started/index.md)
