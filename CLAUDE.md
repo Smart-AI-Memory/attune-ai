@@ -12,8 +12,6 @@ integration and spends most time in code.
 |-----|------|
 | **Patrick** | Project owner, primary developer |
 
-> Full list: memory/glossary.md, profiles: memory/people/
-
 ## Terms
 
 | Term | Meaning |
@@ -29,16 +27,12 @@ integration and spends most time in code.
 | progressive | Multi-tier escalation workflow |
 | Socratic | Discovery-first interaction style |
 
-> Full glossary: memory/glossary.md
-
 ## Projects
 
 | Name | What |
 |------|------|
-| **attune-ai** | AI dev workflows, v3.7.0 |
+| **attune-ai** | AI dev workflows, v3.8.0 |
 | **Phase 2** | Profiling, caching, generators |
-
-> Details: memory/projects/
 
 ## Preferences
 
