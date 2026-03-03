@@ -8,7 +8,7 @@ import { wizards, tierColors, tierLabels } from '@/lib/wizards';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'AI Code Wizards — Security, Review & Testing Automation',
   description:
-    '10 AI-powered code wizards for security audits, code review, bug prediction, performance analysis, test generation, and more. Works with Claude Code.',
+    '5 AI-powered code wizards for debugging, refactoring, release prep, security audits, and test generation. Works with Claude Code.',
   url: 'https://smartaimemory.com/wizards',
   keywords: [
     'AI security audit tool',
@@ -32,7 +32,7 @@ export default function WizardsPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl sm:text-5xl font-bold mb-6">
-                10 Smart Wizards
+                5 Smart Wizards
               </h1>
               <p className="text-xl text-[var(--text-secondary)] mb-4">
                 Interactive guides that walk you through each step — asking questions,
@@ -166,7 +166,7 @@ attune workflow run release-prep
                 Need More Power?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Combine wizards with our 14 integrated workflows for multi-agent orchestration,
+                Combine wizards with our 19 integrated workflows for multi-agent orchestration,
                 progressive tier escalation, and automatic cost optimization.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

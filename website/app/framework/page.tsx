@@ -120,7 +120,7 @@ export default function FrameworkPage() {
               <div className="mb-4 text-3xl">🧭</div>
               <h3 className="text-xl font-bold mb-3">Meta-Orchestration <span className="text-xs font-normal text-purple-500 ml-2">v4.6</span></h3>
               <p className="text-[var(--text-secondary)]">
-                6 composition patterns (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive) + 7 agent templates. Agents compose themselves automatically.
+                6 composition patterns (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive) + 14 agent templates. Agents compose themselves automatically.
               </p>
             </div>
 

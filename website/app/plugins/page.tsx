@@ -5,7 +5,7 @@ import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Plugins',
-  description: 'Production-ready Level 4 Anticipatory AI plugins for software development and healthcare. 10 smart wizards included.',
+  description: 'Production-ready Level 4 Anticipatory AI plugins for software development and healthcare. 5 smart wizards included.',
   url: 'https://smartaimemory.com/plugins',
 });
 
@@ -132,10 +132,10 @@ export default function PluginsPage() {
             </div>
 
             <div className="bg-[var(--primary)] bg-opacity-10 border-l-4 border-[var(--primary)] p-6 rounded-r-lg">
-              <h3 className="text-xl font-bold mb-2">10 Smart Wizards</h3>
+              <h3 className="text-xl font-bold mb-2">5 Smart Wizards</h3>
               <p className="text-[var(--text-secondary)]">
-                The framework includes 10 specialized wizards covering security audits, code review, bug prediction,
-                performance analysis, refactoring, test generation, documentation, dependency checks, release prep, and research.
+                The framework includes 5 built-in wizards covering debugging, refactoring, release prep,
+                security audits, and test generation. Custom wizards can be added via the registry.
               </p>
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function PluginsPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--success)]">✓</span>
-                    <span>Full access to all 10 wizards and 10 workflows</span>
+                    <span>Full access to all 5 wizards and 19 workflows</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--success)]">✓</span>

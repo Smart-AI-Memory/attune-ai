@@ -4,8 +4,8 @@ interface TestsBadgeProps {
 }
 
 export default function TestsBadge({
-  tests = 14834,
-  coverage = 82
+  tests = 16676,
+  coverage = 84
 }: TestsBadgeProps) {
   return (
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#10B981] text-white">

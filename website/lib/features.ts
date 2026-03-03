@@ -6,9 +6,9 @@
  */
 
 export const FEATURE_COUNTS = {
-  wizards: 10,
-  workflows: 17,
-  agentTemplates: 7,
+  wizards: 5,
+  workflows: 19,
+  agentTemplates: 14,
   compositionPatterns: 6,
 } as const;
 
@@ -22,13 +22,20 @@ export const COMPOSITION_PATTERNS = [
 ] as const;
 
 export const AGENT_TEMPLATES = [
-  'Test Coverage',
-  'Security',
-  'Code Quality',
-  'Documentation',
-  'Performance',
-  'Architecture',
-  'Refactoring',
+  'Test Coverage Analyzer',
+  'Security Auditor',
+  'Code Quality Reviewer',
+  'Documentation Writer',
+  'Performance Optimizer',
+  'Architecture Analyst',
+  'Refactoring Specialist',
+  'Test Generator',
+  'Test Validator',
+  'Report Generator',
+  'Documentation Analyst',
+  'Information Synthesizer',
+  'Code Simplifier',
+  'General Purpose',
 ] as const;
 
 export interface Feature {
@@ -54,27 +61,27 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'workflows',
-    name: '10 AI Workflows',
+    name: '19 AI Workflows',
     icon: '⚡',
     benefitDescription: 'Security audit, code review, bug prediction, test generation, documentation, refactoring, dependency check, release prep, and more — all non-interactive, CI/CD-ready.',
-    technicalDescription: '10 multi-stage pipelines with automatic tier escalation (Haiku → Sonnet → Opus). Structured JSON output. Run via CLI or CI/CD. Wizards wrap these same workflows in an interactive guided experience.',
-    pricingDescription: '10 AI workflows (CLI + CI/CD)',
+    technicalDescription: '19 multi-stage pipelines with automatic tier escalation (Haiku → Sonnet → Opus). Structured JSON output. Run via CLI or CI/CD. Wizards wrap these same workflows in an interactive guided experience.',
+    pricingDescription: '19 AI workflows (CLI + CI/CD)',
   },
   {
     id: 'agent-templates',
-    name: '7 Agent Templates + 6 Patterns',
+    name: '14 Agent Templates + 6 Patterns',
     icon: '🤖',
     benefitDescription: 'Pre-built agents you can compose with Sequential, Parallel, Debate, Teaching, Refinement, or Adaptive patterns.',
-    technicalDescription: 'Agents for test coverage, security, code quality, docs, performance, architecture, and refactoring. 6 composition strategies.',
-    pricingDescription: '7 agent templates, 6 composition patterns',
+    technicalDescription: '14 agents including test coverage, security, code quality, docs, performance, architecture, refactoring, synthesis, and more. 6 composition strategies.',
+    pricingDescription: '14 agent templates, 6 composition patterns',
   },
   {
     id: 'wizards',
-    name: '10 Smart Wizards',
+    name: '5 Smart Wizards',
     icon: '🧙',
-    benefitDescription: 'Security audit, code review, bug prediction, performance analysis, and more—domain-specific AI assistance.',
-    technicalDescription: 'WizardRegistry with 10+ wizards including security, refactoring, test generation, documentation, and research.',
-    pricingDescription: '10 smart wizards',
+    benefitDescription: 'Debug, refactor, release prep, security audit, and test generation — guided interactive AI assistance.',
+    technicalDescription: 'WizardRegistry with 5 built-in wizards: debug, refactor, release-prep, security, and test-gen. Custom wizards can be added via the registry.',
+    pricingDescription: '5 smart wizards',
   },
   {
     id: 'model-routing',

@@ -56,15 +56,15 @@ export default function DocsRedirectPage() {
           <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>
-              <span><strong>10 Smart Wizards</strong> - Security, code review, testing, docs, and more</span>
+              <span><strong>5 Smart Wizards</strong> - Debug, refactor, release prep, security, and test generation</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>
-              <span><strong>12 Workflows</strong> - Including 4 meta-workflows with agent composition</span>
+              <span><strong>19 Workflows</strong> - Including multi-stage pipelines with agent composition</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>
-              <span><strong>Agent Templates</strong> - 7 pre-built templates with 6 composition patterns</span>
+              <span><strong>Agent Templates</strong> - 14 pre-built templates with 6 composition patterns</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>

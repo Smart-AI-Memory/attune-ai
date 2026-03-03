@@ -278,7 +278,7 @@ attune workflow run bug-predict --json`}</code>
                 Ready to automate your dev workflow?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Install Attune AI and run all 10 workflows today.
+                Install Attune AI and run all 19 workflows today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
