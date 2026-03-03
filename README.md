@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C393%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-16%2C666%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -25,14 +25,19 @@ pip install 'attune-ai[developer]'
 
 ## What's New in v3.8.0
 
+- **TestAuditWorkflow** — 4-stage workflow that parses
+  coverage JSON, prioritizes modules by test gap, generates
+  batch task specs, and verifies results.
+- **DocAuditWorkflow** — 4-stage workflow that runs 10
+  documentation checks with auto-fix capabilities.
+- **1,636 new unit tests** — Comprehensive audit covering
+  30+ modules across patterns, MCP handlers, wizards,
+  agents, memory, hooks, and both new workflows.
+- **`/testing` and `/docs` skills v2** — New `audit`,
+  `quick`, and `deep` routes for module-level analysis.
 - **Dashboard fully removed** — Deleted all dashboard
   source code, MCP tools, intent patterns, and tests.
-  Clean separation of concerns.
-- **146 new unit tests** — Added coverage for 9
-  modules including release prep
-  team, XML parser, workflow config, execution
-  finalization, and health check tracking.
-- **15,393 tests passing** at 84% coverage.
+- **16,666 tests passing** at 84% coverage.
 
 <details>
 <summary>Previous releases</summary>
@@ -54,7 +59,7 @@ pip install 'attune-ai[developer]'
 
 | | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 17 built-in | Build from scratch | None | PR review only |
+| **Ready-to-use workflows** | 19 built-in | Build from scratch | None | PR review only |
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
 | **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
@@ -94,7 +99,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **15,100+ Tests** - Security, unit, integration, and behavioral test coverage
+- **16,600+ Tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
@@ -162,7 +167,8 @@ Run workflows directly from terminal:
 ```bash
 attune workflow run release-prep           # 4-agent release readiness check
 attune workflow run security-audit --path ./src
-attune workflow run test-gen --path ./src
+attune workflow run test-audit             # Coverage-driven test gap analysis
+attune workflow run doc-audit              # 10-check documentation audit
 attune telemetry show
 ```
 
@@ -198,8 +204,8 @@ Workflows are organized into hubs for easy discovery:
 | Hub               | Command       | Description                                  |
 | ----------------- | ------------- | -------------------------------------------- |
 | **Developer**     | `/dev`        | Debug, commit, PR, code review, quality      |
-| **Testing**       | `/testing`    | Run tests, coverage analysis, benchmarks     |
-| **Documentation** | `/docs`       | Generate and manage documentation            |
+| **Testing**       | `/testing`    | Run tests, coverage audit, test generation   |
+| **Documentation** | `/docs`       | Generate docs, changelog, doc audit          |
 | **Release**       | `/release`    | Release prep, security scan, publishing      |
 | **Workflows**     | `/workflows`  | Automated analysis (security, bugs, perf)    |
 | **Plan**          | `/plan`       | Feature planning, brainstorm, refactoring    |
