@@ -682,10 +682,22 @@ def check_cross_doc_numbers(project_root: str = ".") -> CheckResult:
     check_name = "Numeric claims consistent across docs"
 
     # Pattern: number + noun (e.g. "146 tests", "10 workflows")
+    # Must be a direct count claim, not part of a larger phrase
     claim_pattern = re.compile(
-        r"(\d+)\s+(test[s]?|workflow[s]?|skill[s]?|command[s]?|tool[s]?|stage[s]?)",
+        r"(?<!\w)(\d+)\s+(test[s]?|workflow[s]?|skill[s]?|command[s]?|tool[s]?|stage[s]?)"
+        r"(?!\s+(?:mixin|module|helper|function|method|class|file|line|pattern|second|"
+        r"minute|hour|day|week|month|year|byte|item|step|iteration|version|page|example))",
         re.IGNORECASE,
     )
+
+    # Patterns that indicate a non-current claim (historical comparison)
+    skip_context = re.compile(
+        r"(?:from|up from|was|were|had|only|just|previously)\s+\d+\s+",
+        re.IGNORECASE,
+    )
+
+    # Strip fenced code blocks
+    code_block_pattern = re.compile(r"```.*?```", re.DOTALL)
 
     # Collect all claims: noun -> set of (count, file)
     claims: dict[str, list[tuple[int, str]]] = {}
@@ -704,10 +716,27 @@ def check_cross_doc_numbers(project_root: str = ".") -> CheckResult:
             text = path.read_text(encoding="utf-8")
         except OSError:
             continue
+
+        # Remove code blocks to avoid matching example output
+        text_clean = code_block_pattern.sub("", text)
+
         rel = str(path.relative_to(root)) if path.is_relative_to(root) else str(path)
-        for m in claim_pattern.finditer(text):
+        for m in claim_pattern.finditer(text_clean):
             count = int(m.group(1))
             noun = m.group(2).lower().rstrip("s")  # normalize to singular
+            # Skip small numbers unlikely to be total project counts
+            # Tests are typically 100+, workflows 5+, others 3+
+            min_threshold = 100 if noun == "test" else 3
+            if count < min_threshold:
+                continue
+            # Skip historical comparison context
+            start = max(0, m.start() - 30)
+            preceding = text_clean[start : m.start()]
+            if skip_context.search(preceding):
+                continue
+            # Skip fraction patterns like "5/6 tests"
+            if re.search(r"\d+/\d+\s*$", preceding):
+                continue
             claims.setdefault(noun, []).append((count, rel))
 
     contradictions: list[str] = []
@@ -769,13 +798,19 @@ def check_documentation_links(project_root: str = ".") -> CheckResult:
 
     broken: list[str] = []
 
+    # Pattern to strip fenced code blocks before link scanning
+    code_block_pattern = re.compile(r"```.*?```", re.DOTALL)
+
     for md_path in scan_paths:
         try:
             text = md_path.read_text(encoding="utf-8")
         except OSError:
             continue
 
-        for m in link_pattern.finditer(text):
+        # Remove fenced code blocks so links inside examples are ignored
+        text_no_code = code_block_pattern.sub("", text)
+
+        for m in link_pattern.finditer(text_no_code):
             raw_target = m.group(2)
             # Skip URLs and anchors
             if raw_target.startswith(("http://", "https://", "mailto:", "#")):
