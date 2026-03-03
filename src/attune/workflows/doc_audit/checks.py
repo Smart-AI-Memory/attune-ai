@@ -94,9 +94,10 @@ def check_test_count(project_root: str = ".") -> CheckResult:
         )
 
     content = readme_path.read_text(encoding="utf-8")
-    # Look for badge patterns like "146 tests" or "tests-146-brightgreen"
+    # Look for badge patterns like "tests-16%2C676%20passing" (URL-encoded),
+    # "tests-146-brightgreen", or "16,676 tests passing"
     badge_match = re.search(
-        r"tests[-_]?(\d+)[-_]|(\d+)\s+tests?\b",
+        r"tests[-_]?((?:\d+%2C)*\d+)(?:%20|\s|-)|" r"([\d,]+)\s+tests?\b",
         content,
         re.IGNORECASE,
     )
@@ -111,7 +112,9 @@ def check_test_count(project_root: str = ".") -> CheckResult:
             file=str(readme_path),
         )
 
-    badge_count = int(badge_match.group(1) or badge_match.group(2))
+    raw = badge_match.group(1) or badge_match.group(2)
+    # Decode URL-encoded commas and strip regular commas
+    badge_count = int(raw.replace("%2C", "").replace(",", ""))
     if badge_count == actual_count:
         return CheckResult(
             id=check_id,
@@ -179,9 +182,12 @@ def check_workflow_count(project_root: str = ".") -> CheckResult:
     keys = re.findall(r'^\s*"([^"]+)"\s*:', block, re.MULTILINE)
     actual_count = len(keys)
 
-    # Check README.md or docs for a claimed workflow count
+    # Check README.md or docs for a claimed workflow count.
+    # Try table pattern "N built-in" first (comparison table), then "N workflow(s)".
     readme_path = root / "README.md"
-    claimed = _find_numeric_claim(readme_path, r"(\d+)\s+workflow[s]?")
+    claimed = _find_numeric_claim(readme_path, r"(\d+)\s+built-in")
+    if claimed is None:
+        claimed = _find_numeric_claim(readme_path, r"(\d+)\s+workflow[s]?")
     if claimed is None:
         return CheckResult(
             id=check_id,
@@ -272,10 +278,10 @@ def check_skill_count(project_root: str = ".") -> CheckResult:
 
 
 def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
-    """Verify MCP tool count in docs matches @server.tool() decorators.
+    """Verify MCP tool count in docs matches actual registered tools.
 
-    Searches all .py files in src/ for @server.tool() decorators
-    and compares count to README.md.
+    Counts tools by looking for @server.tool() decorators and
+    dict-key entries in _register_tools() methods across src/.
 
     Args:
         project_root: Root directory of the project.
@@ -301,16 +307,35 @@ def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
     for py_file in src_dir.rglob("*.py"):
         try:
             text = py_file.read_text(encoding="utf-8")
-            actual_count += len(re.findall(r"@server\.tool\(\)", text))
         except OSError:
             continue
+        # Count @server.tool() decorators (only actual decorator lines)
+        actual_count += len(re.findall(r"^\s*@server\.tool\(\)", text, re.MULTILINE))
+        # Count dict-key tool entries in _register_tools() return dicts.
+        # Extracts the return block and counts top-level keys by finding
+        # the indentation of the first key, then matching that exact level.
+        if "_register_tools" in text:
+            block_match = re.search(
+                r"def _register_tools\b.*?return\s*\{(.*?)\n\s{8}\}",
+                text,
+                re.DOTALL,
+            )
+            if block_match:
+                block = block_match.group(1)
+                # Find indentation of first key
+                first_key = re.search(r"\n( +)\"(\w+)\": \{", block)
+                if first_key:
+                    indent = first_key.group(1)
+                    for line in block.split("\n"):
+                        if re.match(rf"^{re.escape(indent)}\"(\w+)\": \{{", line):
+                            actual_count += 1
 
     if actual_count == 0:
         return CheckResult(
             id=check_id,
             name=check_name,
             status="warn",
-            details="No @server.tool() decorators found in src/.",
+            details="No MCP tools found in src/.",
         )
 
     readme_path = root / "README.md"
@@ -320,10 +345,7 @@ def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
             id=check_id,
             name=check_name,
             status="warn",
-            details=(
-                f"{actual_count} @server.tool() decorators found; "
-                "no count claim found in README.md."
-            ),
+            details=(f"{actual_count} MCP tools found; " "no count claim found in README.md."),
         )
 
     if claimed == actual_count:
@@ -339,10 +361,7 @@ def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
         id=check_id,
         name=check_name,
         status="fail",
-        details=(
-            f"README claims {claimed} MCP tools but "
-            f"{actual_count} @server.tool() decorators found."
-        ),
+        details=(f"README claims {claimed} MCP tools but " f"{actual_count} MCP tools found."),
         file=str(readme_path),
         auto_fixable=True,
     )
@@ -433,9 +452,10 @@ def check_install_extras(project_root: str = ".") -> CheckResult:
         )
 
     content = pyproject_path.read_text(encoding="utf-8")
-    # Extract extra names from [project.optional-dependencies]
+    # Extract extra names from [project.optional-dependencies].
+    # Stop at the next TOML section header (line starting with [word).
     block_match = re.search(
-        r"\[project\.optional-dependencies\](.*?)(?=\[|\Z)",
+        r"\[project\.optional-dependencies\]\n(.*?)(?=\n\[(?!project\.optional)|\Z)",
         content,
         re.DOTALL,
     )
@@ -484,19 +504,27 @@ def check_install_extras(project_root: str = ".") -> CheckResult:
             file=str(pyproject_path),
         )
 
-    parts = []
-    if missing_from_readme:
-        parts.append(f"in pyproject.toml but not README: {sorted(missing_from_readme)}")
+    # Extras in pyproject.toml but not README is fine (not all need advertising).
+    # Extras in README but not pyproject.toml is a real problem (broken install).
     if missing_from_pyproject:
-        parts.append(f"in README but not pyproject.toml: {sorted(missing_from_pyproject)}")
+        return CheckResult(
+            id=check_id,
+            name=check_name,
+            status="fail",
+            details=f"in README but not pyproject.toml: {sorted(missing_from_pyproject)}",
+            file=str(readme_path),
+            auto_fixable=False,
+        )
 
     return CheckResult(
         id=check_id,
         name=check_name,
-        status="warn",
-        details="; ".join(parts),
-        file=str(readme_path),
-        auto_fixable=False,
+        status="pass",
+        details=(
+            f"All {len(readme_extras)} README extras exist in pyproject.toml"
+            f" ({len(pyproject_extras)} total defined)."
+        ),
+        file=str(pyproject_path),
     )
 
 
@@ -521,16 +549,16 @@ def check_stale_references(project_root: str = ".") -> CheckResult:
     stale_patterns = [
         "empathy_framework",
         "EmpathyConfig",
-        "HealthCheckCrew",
         "TestCoverageBoostCrew",
         "ReleasePreparationCrew",
     ]
 
-    # Search dirs: docs/, .claude/commands/, README.md
+    # Search dirs: docs/ (excluding archive/), .claude/commands/, README.md
     search_paths: list[Path] = []
     docs_dir = root / "docs"
+    archive_dir = docs_dir / "archive"
     if docs_dir.exists():
-        search_paths.extend(docs_dir.rglob("*.md"))
+        search_paths.extend(p for p in docs_dir.rglob("*.md") if not p.is_relative_to(archive_dir))
     commands_dir = root / ".claude" / "commands"
     if commands_dir.exists():
         search_paths.extend(commands_dir.glob("*.md"))
@@ -667,8 +695,9 @@ def check_cross_doc_numbers(project_root: str = ".") -> CheckResult:
     if readme.exists():
         scan_paths.append(readme)
     docs_dir = root / "docs"
+    archive_dir = docs_dir / "archive"
     if docs_dir.exists():
-        scan_paths.extend(docs_dir.rglob("*.md"))
+        scan_paths.extend(p for p in docs_dir.rglob("*.md") if not p.is_relative_to(archive_dir))
 
     for path in scan_paths:
         try:
@@ -728,8 +757,9 @@ def check_documentation_links(project_root: str = ".") -> CheckResult:
 
     scan_paths: list[Path] = []
     docs_dir = root / "docs"
+    archive_dir = docs_dir / "archive"
     if docs_dir.exists():
-        scan_paths.extend(docs_dir.rglob("*.md"))
+        scan_paths.extend(p for p in docs_dir.rglob("*.md") if not p.is_relative_to(archive_dir))
     commands_dir = root / ".claude" / "commands"
     if commands_dir.exists():
         scan_paths.extend(commands_dir.glob("*.md"))

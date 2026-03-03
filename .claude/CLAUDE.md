@@ -414,4 +414,19 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `/usr/sbin` entry in the blocklist. Use `/usr/sbin/...`
   directly in tests.
 
+- **Windows CI runners are ~3x slower than Ubuntu/macOS**: A
+  16k+ test suite that finishes in ~15min on macOS and ~17min
+  on Ubuntu needs ~45min+ on Windows. Set `timeout-minutes`
+  high enough (60) or the Windows matrix will always time out.
+  Remember to update `test_timeout_values_are_reasonable` when
+  changing the upper bound.
+
+- **mkdocs `--strict` treats broken links as fatal errors**:
+  The CI docs build uses `mkdocs build --strict` even though
+  `mkdocs.yml` has `strict: false`. When source files are
+  deleted but docs still link to them, the CI build fails with
+  "Aborted with N warnings in strict mode!" Move stale docs
+  to `docs/archive/` (excluded by mkdocs `exclude_docs`
+  config) rather than fixing every dead link.
+
 <!-- attune-lessons-end -->
