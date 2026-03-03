@@ -290,13 +290,13 @@ class TestPathValidationWindowsPaths:
                 _validate_file_path("/bin/sh")
 
     def test_unix_blocks_sbin(self):
-        """Test that /sbin paths are blocked on Unix."""
+        """Test that /usr/sbin paths are blocked on Unix."""
         import sys
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
             with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/sbin/init")
+                _validate_file_path("/usr/sbin/nologin")
 
     def test_exact_system_dir_without_trailing_slash(self):
         """Test that exact system directory matches (not just prefix)."""

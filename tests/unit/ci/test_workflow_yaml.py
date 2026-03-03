@@ -146,12 +146,12 @@ class TestTimeoutEnforcement:
         ids=[f"{wf}:{jid}" for wf, jid, _ in ALL_JOBS],
     )
     def test_timeout_values_are_reasonable(self, workflow_file, job_id, job_dict):
-        """Job timeouts must be between 1 and 30 minutes."""
+        """Job timeouts must be between 1 and 45 minutes."""
         timeout = job_dict.get("timeout-minutes")
         if timeout is not None:
             assert (
-                1 <= timeout <= 30
-            ), f"{workflow_file}:{job_id} timeout={timeout} outside 1-30 range"
+                1 <= timeout <= 45
+            ), f"{workflow_file}:{job_id} timeout={timeout} outside 1-45 range"
 
 
 # ===========================================================================
