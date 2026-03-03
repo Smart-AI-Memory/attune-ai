@@ -207,34 +207,14 @@ nav:
 
   # Security - Critical cross-cutting concern
   - Security:
-      - Overview: SECURITY.md
       - Security Review: SECURITY_REVIEW.md
       - Standards:
           - Coding Standards: CODING_STANDARDS.md
           - Exception Handling: EXCEPTION_HANDLING_GUIDE.md
 
-  # Understanding-oriented
-  - Explanation:
-      - explanation/index.md
-      - Philosophy:
-          - The Attune Philosophy: explanation/ATTUNE_PHILOSOPHY.md
-          - Multi-Agent Philosophy: explanation/multi-agent-philosophy.md
-          - How Claude Learns: explanation/HOW_CLAUDE_LEARNS.md
-      - Concepts:
-          - Teaching AI Your Philosophy: explanation/TEACHING_AI_YOUR_PHILOSOPHY.md
-          - Adaptive Learning: explanation/adaptive-learning.md
-          - Comparison: explanation/COMPARISON.md
-      - Integration:
-          - Using with LLMs: explanation/USING_ATTUNE_WITH_LLMS.md
-          - MemDocs Integration: explanation/MEMDOCS_ATTUNE_INTEGRATION.md
-      - Non-Technical Guide: explanation/ATTUNE_AI_NON_TECHNICAL_GUIDE.md
-
   # Information-oriented
   - Reference:
       - reference/index.md
-      - CLI:
-          - CLI Guide: reference/CLI_GUIDE.md
-          - CLI Cheatsheet: reference/CLI_CHEATSHEET.md
       - API:
           - Overview: reference/API_REFERENCE.md
           - EmpathyOS: reference/empathy-os.md
@@ -248,7 +228,6 @@ nav:
       - Wizards:
           - Getting Started: guides/wizards-getting-started.md
           - Architecture: guides/wizard-architecture.md
-          - Custom Development: guides/wizard-custom-development.md
       - Help:
           - FAQ: reference/FAQ.md
           - Troubleshooting: reference/TROUBLESHOOTING.md
@@ -260,9 +239,7 @@ nav:
 
   # Book section (separate from main docs)
   - Book:
-      - Get the Book: get-the-book.md
       - Cover: book-cover.md
-      - How to Read: guides/how-to-read-this-book.md
       - Preface: guides/preface.md
       - Foreword by Claude: guides/foreword.md
 

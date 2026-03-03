@@ -378,20 +378,19 @@ class TestCheckInstallExtras:
         result = check_install_extras(str(tmp_path))
         assert result.status == "pass"
 
-    def test_warn_when_extra_in_pyproject_missing_from_readme(self, tmp_path):
-        """Returns warn when pyproject extra is absent from README."""
+    def test_pass_when_extra_in_pyproject_missing_from_readme(self, tmp_path):
+        """Returns pass when pyproject extra is absent from README (not all need advertising)."""
         self._write_pyproject(tmp_path, ["developer", "redis"])
         _write(tmp_path / "README.md", "pip install attune-ai[developer]\n")
         result = check_install_extras(str(tmp_path))
-        assert result.status == "warn"
-        assert "redis" in result.details
+        assert result.status == "pass"
 
-    def test_warn_when_readme_mentions_unknown_extra(self, tmp_path):
-        """Returns warn when README references an extra not in pyproject."""
+    def test_fail_when_readme_mentions_unknown_extra(self, tmp_path):
+        """Returns fail when README references an extra not in pyproject (broken install)."""
         self._write_pyproject(tmp_path, ["developer"])
         _write(tmp_path / "README.md", "pip install attune-ai[ghost]\n")
         result = check_install_extras(str(tmp_path))
-        assert result.status == "warn"
+        assert result.status == "fail"
 
     def test_warn_when_pyproject_missing(self, tmp_path):
         """Returns warn when pyproject.toml does not exist."""
@@ -456,7 +455,7 @@ class TestCheckStaleReferences:
         """Returns fail when stale pattern found in .claude/commands/ file."""
         cmd = tmp_path / ".claude" / "commands"
         cmd.mkdir(parents=True)
-        _write(cmd / "old-command.md", "Run HealthCheckCrew to check health.\n")
+        _write(cmd / "old-command.md", "Run EmpathyConfig to check health.\n")
         result = check_stale_references(str(tmp_path))
         assert result.status == "fail"
 

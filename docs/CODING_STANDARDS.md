@@ -83,7 +83,7 @@ def save_config(user_path: str, data: dict):
 
 **Rationale:** User-controlled file paths enable path traversal attacks (CWE-22), allowing attackers to write to system directories.
 
-**See Also:** [Pattern 6 Implementation](../SECURITY.md#security-hardening-pattern-6-implementation)
+**See Also:** [Security Review](./SECURITY_REVIEW.md)
 
 ---
 
@@ -649,7 +649,7 @@ pytest --cov=src --cov-report=term-missing
 ## Additional Resources
 
 - [Exception Handling Guide](./EXCEPTION_HANDLING_GUIDE.md)
-- [Security Policy](../SECURITY.md)
+- [Security Review](./SECURITY_REVIEW.md)
 - [Contributing Guide](contributing.md)
 - [API Reference](./reference/index.md)
 

@@ -295,17 +295,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `runtime` matches the new case and assert `result.status ==
   "success"` before considering the feature done.
 
-- **`from __future__ import annotations` breaks FastAPI route
-  injection**: With PEP 563 lazy annotations, all type hints are
-  stored as strings. FastAPI resolves them with `get_type_hints()`
-  against the function's `__globals__` (module scope), not the
-  local scope where the function was defined. If `Request` or any
-  FastAPI dependency type is only imported inside a helper function
-  (not at module level), every route returns 422 with
-  `"Field required"` for the injected parameter. Fix: either remove
-  `from __future__ import annotations` from server modules, or
-  ensure all FastAPI-injected types are imported at module level.
-
 - **`patch()` requires the target name to exist at module scope at
   patch time**: `unittest.mock.patch("module.Name")` fails with
   `AttributeError` if `Name` is only imported inside a function
