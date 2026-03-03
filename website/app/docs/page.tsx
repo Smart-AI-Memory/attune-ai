@@ -60,7 +60,7 @@ export default function DocsRedirectPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>
-              <span><strong>19 Workflows</strong> - Including multi-stage pipelines with agent composition</span>
+              <span><strong>17 Workflows</strong> - Including multi-stage pipelines with agent composition</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--success)] mt-1">✓</span>

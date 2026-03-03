@@ -169,7 +169,7 @@ class DocumentationOrchestrator(
     """
 
     name = "documentation-orchestrator"
-    description = "End-to-end documentation management: scout gaps, prioritize, generate docs"
+    description = "Coordinate doc-audit + doc-gen into end-to-end documentation maintenance"
     stages = ["scout", "prioritize", "generate", "update"]
     tier_map: dict[str, ModelTier] = {}
 

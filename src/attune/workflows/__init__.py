@@ -64,7 +64,6 @@ if TYPE_CHECKING:
         Validator,
         escalate,
     )
-    from .keyboard_shortcuts import KeyboardShortcutWorkflow
     from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
@@ -77,7 +76,6 @@ if TYPE_CHECKING:
     from .research_synthesis import ResearchSynthesisWorkflow
     from .secure_release import SecureReleasePipeline, SecureReleaseResult
     from .security_audit import SecurityAuditWorkflow
-    from .seo_optimization import SEOOptimizationWorkflow
     from .simplify_code import SimplifyCodeWorkflow
     from .step_config import WorkflowStepConfig
 
@@ -133,7 +131,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "DocumentManagerWorkflow": (".document_manager", "DocumentManagerWorkflow"),
     "DocumentationOrchestrator": (".documentation_orchestrator", "DocumentationOrchestrator"),
     "OrchestratorResult": (".documentation_orchestrator", "OrchestratorResult"),
-    "KeyboardShortcutWorkflow": (".keyboard_shortcuts", "KeyboardShortcutWorkflow"),
     "ManageDocumentationCrew": (".manage_documentation", "ManageDocumentationCrew"),
     "ManageDocumentationCrewResult": (".manage_documentation", "ManageDocumentationCrewResult"),
     "OrchestratedHealthCheckWorkflow": (
@@ -156,7 +153,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "SecureReleasePipeline": (".secure_release", "SecureReleasePipeline"),
     "SecureReleaseResult": (".secure_release", "SecureReleaseResult"),
     "SecurityAuditWorkflow": (".security_audit", "SecurityAuditWorkflow"),
-    "SEOOptimizationWorkflow": (".seo_optimization", "SEOOptimizationWorkflow"),
     "SimplifyCodeWorkflow": (".simplify_code", "SimplifyCodeWorkflow"),
     # TestCoverageBoostCrew removed (deprecated, use ParallelTestGenerationWorkflow)
     "TestAuditWorkflow": (".test_audit", "TestAuditWorkflow"),
@@ -246,7 +242,6 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "doc-audit": "DocAuditWorkflow",
     "doc-gen": "DocumentGenerationWorkflow",
     "doc-orchestrator": "DocumentationOrchestrator",
-    "seo-optimization": "SEOOptimizationWorkflow",
     # Analysis workflows
     "bug-predict": "BugPredictionWorkflow",
     "security-audit": "SecurityAuditWorkflow",
@@ -262,8 +257,6 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "simplify-code": "SimplifyCodeWorkflow",
     # Composite security pipeline (v3.0)
     "secure-release": "SecureReleasePipeline",
-    # Keyboard Conductor (v3.6)
-    "keyboard-shortcuts": "KeyboardShortcutWorkflow",
     # Meta-orchestration workflows (v4.0.0)
     "orchestrated-health-check": "OrchestratedHealthCheckWorkflow",
     # Release preparation (v5.2 — agent team is canonical)
@@ -525,8 +518,6 @@ __all__ = [
     # Health check crew integration (v3.1)
     # Removed deprecated: "HealthCheckWorkflow" (use OrchestratedHealthCheckWorkflow)
     "HealthCheckReport",
-    # Keyboard Conductor (v3.6)
-    "KeyboardShortcutWorkflow",
     "ManageDocumentationCrew",
     "ManageDocumentationCrewResult",
     "ModelConfig",
@@ -545,7 +536,6 @@ __all__ = [
     "SecureReleasePipeline",
     "SecureReleaseResult",
     "SecurityAuditWorkflow",
-    "SEOOptimizationWorkflow",
     "SimplifyCodeWorkflow",
     "TestAuditWorkflow",
     "TestGenerationWorkflow",

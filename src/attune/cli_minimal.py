@@ -76,6 +76,7 @@ from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_signals,
 )
 from attune.cli_commands.utility_commands import (
+    cmd_doctor,
     cmd_features,
     cmd_setup,
     cmd_validate,
@@ -324,6 +325,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
     # --- Utility commands ---
+    subparsers.add_parser("doctor", help="Run comprehensive environment health check")
     subparsers.add_parser("features", help="Show available features and dependencies")
     subparsers.add_parser("validate", help="Validate configuration")
 
@@ -405,6 +407,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "setup":
         return cmd_setup(args)
+
+    if args.command == "doctor":
+        return cmd_doctor(args)
 
     if args.command == "features":
         return cmd_features(args)

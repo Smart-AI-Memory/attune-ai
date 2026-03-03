@@ -76,7 +76,7 @@ export default function Home() {
                 <TestsBadge />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--border)] text-sm font-medium">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  v3.8.0 Stable
+                  v3.9.0 Stable
                 </span>
               </div>
 
@@ -90,7 +90,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
-                  href="/framework-docs/tutorials/quickstart/"
+                  href="/framework-docs/getting-started/"
                   className="btn btn-primary text-lg px-8 py-4"
                   aria-label="Get started with the framework"
                 >
@@ -176,7 +176,7 @@ export default function Home() {
                     suggests capabilities, and generates production-ready agents and teams automatically.
                   </p>
                   <Link
-                    href="/framework-docs/tutorials/quickstart/"
+                    href="/framework-docs/getting-started/"
                     className="inline-flex items-center gap-2 bg-white text-[var(--primary)] px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors"
                   >
                     Try It Now
@@ -208,7 +208,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/framework-docs/tutorials/quickstart/"
+                  href="/framework-docs/getting-started/"
                   className="btn btn-primary text-lg px-8 py-4"
                 >
                   Read the Docs

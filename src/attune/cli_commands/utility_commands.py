@@ -318,3 +318,127 @@ def cmd_features(args: Namespace) -> int:
 
     print("\n" + "=" * 70 + "\n")
     return 0
+
+
+def cmd_doctor(args: Namespace) -> int:
+    """Run comprehensive environment health check.
+
+    Combines validation, feature detection, and connectivity
+    checks into a single diagnostic command.
+
+    Args:
+        args: Parsed CLI arguments (unused).
+
+    Returns:
+        0 if no failures, 1 if any critical check fails.
+
+    """
+    print("\n" + "=" * 60)
+    print("  ATTUNE AI DOCTOR")
+    print("=" * 60 + "\n")
+
+    passed = 0
+    optional = 0
+    failed = 0
+
+    def _ok(label: str, detail: str = "") -> None:
+        nonlocal passed
+        passed += 1
+        suffix = f" ({detail})" if detail else ""
+        print(f"  [OK]   {label}{suffix}")
+
+    def _warn(label: str, detail: str = "") -> None:
+        nonlocal optional
+        optional += 1
+        suffix = f" ({detail})" if detail else ""
+        print(f"  [--]   {label}{suffix}")
+
+    def _fail(label: str, detail: str = "") -> None:
+        nonlocal failed
+        failed += 1
+        suffix = f" ({detail})" if detail else ""
+        print(f"  [FAIL] {label}{suffix}")
+
+    # 1. Python version
+    version_str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    _ok(f"Python {version_str}")
+
+    # 2. Package version
+    try:
+        from attune import __version__
+
+        _ok(f"attune-ai {__version__}")
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: version check is non-critical
+        _warn("attune-ai version unknown")
+
+    # 3. API key
+    if _has_env_key("ANTHROPIC_API_KEY"):
+        _ok("ANTHROPIC_API_KEY set")
+    else:
+        _fail("ANTHROPIC_API_KEY not set")
+
+    # 4. Optional extras
+    _extras = {
+        "redis": "redis",
+        "jinja2": "jinja2",
+        "sentence_transformers": "sentence-transformers",
+    }
+    for mod_name, pkg_name in _extras.items():
+        try:
+            __import__(mod_name)
+            _ok(f"{pkg_name} installed")
+        except ImportError:
+            _warn(f"{pkg_name} not installed", "optional")
+
+    # 5. Redis connectivity
+    try:
+        import redis as _redis_mod
+
+        client = _redis_mod.Redis(socket_connect_timeout=2)
+        client.ping()
+        _ok("Redis server reachable")
+    except ImportError:
+        _warn("Redis connectivity", "redis package not installed")
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: Redis is optional
+        _warn("Redis server not reachable", "optional")
+
+    # 6. Workflows
+    try:
+        from attune.workflows import discover_workflows
+
+        wfs = discover_workflows()
+        _ok(f"{len(wfs)} workflows registered")
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Workflow discovery is non-critical
+        _fail(f"Workflow discovery failed: {e}")
+
+    # 7. Wizards
+    try:
+        from attune.wizards import list_wizards
+
+        wizards = list_wizards()
+        _ok(f"{len(wizards)} wizards registered")
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Wizard discovery is non-critical
+        _warn(f"Wizard discovery: {e}")
+
+    # 8. MCP server
+    try:
+        from attune.mcp.server import EmpathyMCPServer
+
+        server = EmpathyMCPServer()
+        tool_count = len(server.tools)
+        _ok(f"MCP server: {tool_count} tools")
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: MCP is optional
+        _warn(f"MCP server: {e}")
+
+    # Summary
+    total = passed + optional + failed
+    print("\n" + "-" * 60)
+    print(f"  {passed}/{total} passed, {optional} optional, {failed} failures")
+    print("=" * 60 + "\n")
+
+    return 1 if failed > 0 else 0

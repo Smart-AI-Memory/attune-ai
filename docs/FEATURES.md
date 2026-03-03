@@ -30,7 +30,7 @@ These features work without any additional dependencies beyond the base install 
 
 | Feature | Description |
 |---------|-------------|
-| **All 19 workflows** | Work with core memory only (file-based fallback) |
+| **All 17 workflows** | Work with core memory only (file-based fallback) |
 | **Multi-tier routing** | Cost optimization across CHEAP/CAPABLE/PREMIUM tiers |
 | **XML-enhanced prompts** | Structured prompt templates and parsing |
 
@@ -196,7 +196,7 @@ pip install attune-ai
 ```
 
 **Includes:**
-- All 19 workflows
+- All 17 workflows
 - File-based memory (session + long-term)
 - Local usage tracking
 - CLI commands

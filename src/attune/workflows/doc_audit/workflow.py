@@ -31,7 +31,7 @@ class DocAuditWorkflow(BaseWorkflow):
     """
 
     name = "doc-audit"
-    description = "Documentation accuracy audit and gap filling"
+    description = "Audit existing docs for staleness, broken links, and drift (validation)"
     stages = ["audit", "plan", "execute", "verify"]
     tier_map = {
         "audit": ModelTier.CHEAP,

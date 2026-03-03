@@ -32,7 +32,7 @@ class TestDocumentGenerationWorkflowInitialization:
     def test_workflow_basic_initialization(self, workflow):
         """Test workflow initializes with correct defaults."""
         assert workflow.name == "doc-gen"
-        assert workflow.description == "Cost-optimized documentation generation pipeline"
+        assert workflow.description == "Generate new documentation from source code (creation)"
         assert workflow.stages == ["outline", "write", "polish"]
 
     def test_workflow_tier_map(self, workflow):

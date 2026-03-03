@@ -47,6 +47,19 @@ Developer tools for daily coding workflows.
 /dev pr                 # Create PR
 ```
 
+## Fast-Path Detection
+
+When explicit args satisfy scoping, skip questions:
+
+- `/dev commit --auto` → stage all + commit
+- `/dev review ./src/auth` → review that path
+- `/dev commit` → ask what to stage
+- `/dev` → ask what to do
+
+**Rule:** If input contains BOTH an action AND a
+target (or `--auto` flag), proceed to execution.
+If either is missing, use `AskUserQuestion`.
+
 ## Behavior
 
 ### Plan Detection (all routes)

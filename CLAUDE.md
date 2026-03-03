@@ -31,7 +31,7 @@ integration and spends most time in code.
 
 | Name | What |
 |------|------|
-| **attune-ai** | AI dev workflows, v3.8.0 |
+| **attune-ai** | AI dev workflows, v3.9.0 |
 | **Phase 2** | Profiling, caching, generators |
 
 ## Preferences

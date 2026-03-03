@@ -445,7 +445,7 @@ class TestKeywordMappings:
     def test_workflow_commands(self):
         """Test workflow-related keyword mappings."""
         router = HybridRouter()
-        workflow_keywords = ["security", "bugs", "seo"]
+        workflow_keywords = ["security", "bugs"]
         for kw in workflow_keywords:
             result = router._infer_command(kw)
             assert result is not None, f"Keyword '{kw}' should be mapped"

@@ -33,7 +33,7 @@ and performance.
 | `run bug-predict` | Bug prediction analysis |
 | `run perf-audit` | Performance audit |
 | `run code-review` | Code review workflow |
-| `run seo-optimization` | SEO analysis |
+
 | `list` | List available workflows |
 
 ## Usage
@@ -46,11 +46,29 @@ and performance.
 /workflows list                  # List all workflows
 ```
 
+## Fast-Path Detection
+
+When the user provides a workflow name AND a path,
+skip `AskUserQuestion` and execute directly:
+
+- `/workflows run security-audit ./src` → execute
+- `/workflows run bug-predict src/auth` → execute
+- `/workflows run security-audit` → ask for path
+- `/workflows` → ask which workflow
+
+**Rule:** If both workflow and target are provided,
+proceed to execution. If either is missing, use
+`AskUserQuestion`.
+
 ## Behavior
 
 ### run security-audit
 
-Use `AskUserQuestion` to scope:
+If a path argument was provided (e.g.,
+`/workflows run security-audit ./src`), skip
+`AskUserQuestion` and execute immediately.
+
+Otherwise, use `AskUserQuestion` to scope:
 
 - Which path? `src/`, specific module, or full project?
 
@@ -96,18 +114,6 @@ Then run:
 
 ```bash
 uv run attune workflow run code-review --path <target>
-```
-
-### run seo-optimization
-
-Use `AskUserQuestion` to scope:
-
-- Which path or URL to analyze?
-
-Then run:
-
-```bash
-uv run attune workflow run seo-optimization --path <target>
 ```
 
 ### list

@@ -227,9 +227,7 @@ class WorkflowBatchRunner:
             "release-prep",
             "research-synthesis",
             "orchestrated-health-check",
-            "seo-optimization",
             "secure-release",
-            "keyboard-shortcuts",
             "test-maintenance",
         },
     )

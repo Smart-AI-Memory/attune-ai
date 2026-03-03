@@ -23,24 +23,30 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.8.0
+## What's New in v3.9.0
 
-- **TestAuditWorkflow** — 4-stage workflow that parses
-  coverage JSON, prioritizes modules by test gap, generates
-  batch task specs, and verifies results.
-- **DocAuditWorkflow** — 4-stage workflow that runs 10
-  documentation checks with auto-fix capabilities.
-- **1,636 new unit tests** — Comprehensive audit covering
-  30+ modules across patterns, MCP handlers, wizards,
-  agents, memory, hooks, and both new workflows.
-- **`/testing` and `/docs` skills v2** — New `audit`,
-  `quick`, and `deep` routes for module-level analysis.
-- **Dashboard fully removed** — Deleted all dashboard
-  source code, MCP tools, intent patterns, and tests.
-- **16,676 tests passing** at 84% coverage.
+- **33 MCP tools** — All 17 workflows now exposed as MCP
+  tools (was 6). Includes doc-audit, test-audit,
+  dependency-check, health-check, and more.
+- **`attune doctor`** — Single command to check Python
+  version, API key, workflows, wizards, MCP, and optional
+  deps.
+- **Fast-path slash commands** — Power users who provide
+  both action and target skip Socratic scoping questions.
+- **Clearer workflow descriptions** — Overlapping workflows
+  (test-gen vs test-gen-parallel, doc-audit vs doc-gen)
+  now have distinct descriptions.
+- **Removed 2 outlier workflows** — keyboard-shortcuts and
+  seo-optimization removed (17 workflows, down from 19).
 
 <details>
 <summary>Previous releases</summary>
+
+### v3.8.0
+
+- **TestAuditWorkflow** — 4-stage coverage audit pipeline.
+- **DocAuditWorkflow** — 10-check documentation audit.
+- **1,636 new unit tests** at 84% coverage.
 
 - **v3.7.0** — Mixin MRO fix, dashboard removal began,
   CI test coverage expanded
@@ -59,7 +65,7 @@ pip install 'attune-ai[developer]'
 
 | | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 19 built-in | Build from scratch | None | PR review only |
+| **Ready-to-use workflows** | 17 built-in | Build from scratch | None | PR review only |
 | **Cost optimization** | 3-tier auto-routing | None | None | None |
 | **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
 | **Multi-agent teams** | 4 strategies | Yes | No | No |
@@ -170,6 +176,27 @@ attune workflow run security-audit --path ./src
 attune workflow run test-audit             # Coverage-driven test gap analysis
 attune workflow run doc-audit              # 10-check documentation audit
 attune telemetry show
+```
+
+### What Does It Look Like?
+
+```text
+$ attune workflow run security-audit --path src/
+
+[security-audit] Stage 1/3: scan (haiku) ... done (0.8s)
+[security-audit] Stage 2/3: analyze (sonnet) ... done (2.1s)
+[security-audit] Stage 3/3: report (sonnet) ... done (1.4s)
+
+Security Audit Results
+Score: 95/100
+
+| Severity | Count | Example                       |
+|----------|-------|-------------------------------|
+| High     | 1     | Broad except in cli.py:42     |
+| Medium   | 3     | Missing type hints            |
+| Low      | 2     | TODO comments                 |
+
+Total cost: $0.025 (saved 78% via tier routing)
 ```
 
 ### Optional Features
