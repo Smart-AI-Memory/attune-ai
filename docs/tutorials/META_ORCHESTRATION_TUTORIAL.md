@@ -919,12 +919,9 @@ The meta-orchestration system is designed to work with agents from *any* domain.
 
 ### Additional Resources
 
-- [User Guide](../ORCHESTRATION_USER_GUIDE.md) - Complete reference
-- [API Documentation](../ORCHESTRATION_API.md) - All classes and methods
-- [Examples](../../examples/orchestration/) - Working code samples
-- [Architecture](../META_ORCHESTRATION_ARCHITECTURE.md) - Deep dive into design
+- [API Reference](../reference/API_REFERENCE.md) - API overview
+- [Multi-Agent Reference](../reference/multi-agent.md) - Agent coordination
 - Healthcare Wizards - HIPAA compliance and clinical workflows (see `attune wizard --help`)
-- Code Analysis Tools - Static analysis and SARIF reports (see `attune inspect --help`)
 
 ---
 

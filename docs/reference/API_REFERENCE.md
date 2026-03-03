@@ -32,7 +32,7 @@ description: Attune AI API Reference API reference: **Version:** 3.8.0 **License
   - [OpenAIProvider](#openaiprovider)
   - [LocalProvider](#localprovider)
 - [Configuration](#configuration)
-  - [AttuneConfig](#empathyconfig)
+  - [AttuneConfig](#attuneconfig)
 - [Coach Wizards](#coach-wizards)
   - [BaseCoachWizard](#basecoachwizard)
   - [SecurityWizard](#securitywizard)

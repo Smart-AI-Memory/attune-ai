@@ -613,10 +613,8 @@ agents fall back to rule-based responses.
 
 ## Next Steps
 
-- [Agent Coordination Demo](../../../examples/agent_coordination_demo.py) —
-  Working demo of CoordinationSignals
-- [Orchestration](../../../src/attune/orchestration/) —
+- [Orchestration](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/orchestration) —
   DynamicTeam and MetaOrchestrator for automatic team
   composition
-- [Agent State](../../../src/attune/agents/state/) —
+- [Agent State](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/agents/state) —
   Persistent state and recovery for long-running agents
