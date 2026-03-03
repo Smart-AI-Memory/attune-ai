@@ -343,6 +343,7 @@ bug-predict = "attune.workflows.bug_predict:BugPredictionWorkflow"
 security-audit = "attune.workflows.security_audit:SecurityAuditWorkflow"
 perf-audit = "attune.workflows.perf_audit:PerformanceAuditWorkflow"
 test-gen = "attune.workflows.test_gen:TestGenerationWorkflow"
+test-audit = "attune.workflows.test_audit:TestAuditWorkflow"
 refactor-plan = "attune.workflows.refactor_plan:RefactorPlanWorkflow"
 dependency-check = "attune.workflows.dependency_check:DependencyCheckWorkflow"
 # v5.2 Agent team (replaces CrewAI-based crew)
@@ -352,6 +353,7 @@ release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
 # Legacy entry points removed - handled by migration system
 # (release-prep-legacy → release-prep, health-check-legacy → health-check)
 # Other workflows
+doc-audit = "attune.workflows.doc_audit:DocAuditWorkflow"
 secure-release = "attune.workflows.secure_release:SecureReleasePipeline"
 pro-review = "attune.workflows.code_review_pipeline:CodeReviewPipeline"
 pr-review = "attune.workflows.pr_review:PRReviewWorkflow"

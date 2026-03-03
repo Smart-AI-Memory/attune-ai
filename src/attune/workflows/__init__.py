@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from .code_review_pipeline import CodeReviewPipeline, CodeReviewPipelineResult
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
     from .dependency_check import DependencyCheckWorkflow
+    from .doc_audit import DocAuditWorkflow
     from .document_gen import DocumentGenerationWorkflow
     from .document_manager import DocumentManagerWorkflow
     from .documentation_orchestrator import DocumentationOrchestrator, OrchestratorResult
@@ -81,6 +82,7 @@ if TYPE_CHECKING:
     from .step_config import WorkflowStepConfig
 
     # test_coverage_boost_crew removed (deprecated, use test-gen-parallel)
+    from .test_audit import TestAuditWorkflow
     from .test_gen import TestGenerationWorkflow
     from .test_gen_parallel import ParallelTestGenerationWorkflow
     from .xml_enhanced_crew import XMLAgent, XMLTask
@@ -122,6 +124,7 @@ from .step_config import WorkflowStepConfig, steps_from_tier_map, validate_step_
 _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # Core workflows
     "BugPredictionWorkflow": (".bug_predict", "BugPredictionWorkflow"),
+    "DocAuditWorkflow": (".doc_audit", "DocAuditWorkflow"),
     "CodeReviewWorkflow": (".code_review", "CodeReviewWorkflow"),
     "CodeReviewPipeline": (".code_review_pipeline", "CodeReviewPipeline"),
     "CodeReviewPipelineResult": (".code_review_pipeline", "CodeReviewPipelineResult"),
@@ -156,6 +159,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "SEOOptimizationWorkflow": (".seo_optimization", "SEOOptimizationWorkflow"),
     "SimplifyCodeWorkflow": (".simplify_code", "SimplifyCodeWorkflow"),
     # TestCoverageBoostCrew removed (deprecated, use ParallelTestGenerationWorkflow)
+    "TestAuditWorkflow": (".test_audit", "TestAuditWorkflow"),
     "TestGenerationWorkflow": (".test_gen", "TestGenerationWorkflow"),
     "ParallelTestGenerationWorkflow": (".test_gen_parallel", "ParallelTestGenerationWorkflow"),
     # Additional workflows (restored to registry)
@@ -239,6 +243,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # Core workflows
     "code-review": "CodeReviewWorkflow",
     # Documentation workflows
+    "doc-audit": "DocAuditWorkflow",
     "doc-gen": "DocumentGenerationWorkflow",
     "doc-orchestrator": "DocumentationOrchestrator",
     "seo-optimization": "SEOOptimizationWorkflow",
@@ -247,6 +252,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "security-audit": "SecurityAuditWorkflow",
     "perf-audit": "PerformanceAuditWorkflow",
     # Generation workflows
+    "test-audit": "TestAuditWorkflow",
     "test-gen": "TestGenerationWorkflow",
     "test-gen-parallel": "ParallelTestGenerationWorkflow",
     "refactor-plan": "RefactorPlanWorkflow",
@@ -511,6 +517,7 @@ __all__ = [
     "CodeReviewWorkflow",
     "CostReport",
     "DependencyCheckWorkflow",
+    "DocAuditWorkflow",
     "DocumentGenerationWorkflow",
     "DocumentManagerWorkflow",
     # Documentation management (v3.5)
@@ -540,6 +547,7 @@ __all__ = [
     "SecurityAuditWorkflow",
     "SEOOptimizationWorkflow",
     "SimplifyCodeWorkflow",
+    "TestAuditWorkflow",
     "TestGenerationWorkflow",
     "ParallelTestGenerationWorkflow",
     # Configuration
