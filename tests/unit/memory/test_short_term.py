@@ -783,6 +783,405 @@ class TestConflictContext:
 
 
 # ============================================================================
+# Phase 4A: BaseOperations coverage boost
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestBaseOperationsDirectly:
+    """Tests for BaseOperations class in isolation to boost line coverage."""
+
+    @pytest.fixture
+    def base(self):
+        """Create a BaseOperations instance in mock mode."""
+        from attune.memory.short_term.base import BaseOperations
+
+        return BaseOperations(use_mock=True)
+
+    # --- client and metrics properties ---
+
+    def test_client_property_is_none_in_mock_mode(self, base):
+        """Test that client property returns None in mock mode."""
+        assert base.client is None
+
+    def test_metrics_property_returns_redis_metrics(self, base):
+        """Test that metrics property returns a RedisMetrics instance."""
+        from attune.memory.types import RedisMetrics
+
+        assert isinstance(base.metrics, RedisMetrics)
+
+    # --- _get with TTL expiry ---
+
+    def test_get_returns_none_for_expired_key(self, base):
+        """Test that _get returns None and removes expired key."""
+        import time
+
+        # Manually insert an already-expired entry
+        base._mock_storage["expired_key"] = ("value", time.time() - 1)
+        result = base._get("expired_key")
+        assert result is None
+        assert "expired_key" not in base._mock_storage
+
+    def test_get_returns_value_for_valid_key(self, base):
+        """Test that _get returns value for a key with future expiry."""
+        import time
+
+        base._mock_storage["live_key"] = ("hello", time.time() + 3600)
+        result = base._get("live_key")
+        assert result == "hello"
+
+    def test_get_returns_none_for_missing_key(self, base):
+        """Test that _get returns None when key not in storage."""
+        assert base._get("missing") is None
+
+    def test_get_handles_none_expiry(self, base):
+        """Test that _get handles None expiry (no-TTL keys)."""
+        base._mock_storage["no_ttl"] = ("forever", None)
+        assert base._get("no_ttl") == "forever"
+
+    # --- _set ---
+
+    def test_set_stores_value_with_default_ttl(self, base):
+        """Test that _set stores value with default 24h TTL."""
+        import time
+
+        result = base._set("k1", "v1")
+        assert result is True
+        assert "k1" in base._mock_storage
+        _, expires = base._mock_storage["k1"]
+        # Should expire roughly 24h from now
+        assert expires > time.time() + 86000
+
+    def test_set_stores_value_with_custom_ttl(self, base):
+        """Test that _set stores value with explicit TTL."""
+        import time
+
+        result = base._set("k2", "v2", ttl=60)
+        assert result is True
+        _, expires = base._mock_storage["k2"]
+        assert expires < time.time() + 120
+
+    def test_set_returns_false_when_no_client_and_not_mock(self, base):
+        """Test that _set returns False when real client is None."""
+        base.use_mock = False
+        base._client = None
+        result = base._set("k3", "v3")
+        assert result is False
+
+    # --- _delete ---
+
+    def test_delete_returns_true_for_existing_key(self, base):
+        """Test that _delete returns True when key existed."""
+        base._mock_storage["del_me"] = ("val", None)
+        result = base._delete("del_me")
+        assert result is True
+        assert "del_me" not in base._mock_storage
+
+    def test_delete_returns_false_for_missing_key(self, base):
+        """Test that _delete returns False when key not present."""
+        result = base._delete("nope")
+        assert result is False
+
+    def test_delete_returns_false_when_no_client_and_not_mock(self, base):
+        """Test that _delete returns False when real client is None."""
+        base.use_mock = False
+        base._client = None
+        result = base._delete("k")
+        assert result is False
+
+    # --- _keys ---
+
+    def test_keys_returns_matching_keys(self, base):
+        """Test that _keys returns keys matching the glob pattern."""
+        base._mock_storage["prefix:a"] = ("1", None)
+        base._mock_storage["prefix:b"] = ("2", None)
+        base._mock_storage["other:c"] = ("3", None)
+        result = base._keys("prefix:*")
+        assert set(result) == {"prefix:a", "prefix:b"}
+
+    def test_keys_returns_empty_when_no_match(self, base):
+        """Test that _keys returns empty list when nothing matches."""
+        result = base._keys("nonexistent:*")
+        assert result == []
+
+    def test_keys_returns_empty_when_no_client_and_not_mock(self, base):
+        """Test that _keys returns empty list when real client is None."""
+        base.use_mock = False
+        base._client = None
+        result = base._keys("*")
+        assert result == []
+
+    # --- ping ---
+
+    def test_ping_returns_true_in_mock_mode(self, base):
+        """Test that ping returns True in mock mode."""
+        assert base.ping() is True
+
+    def test_ping_returns_false_when_no_client_and_not_mock(self, base):
+        """Test that ping returns False when real client is None."""
+        base.use_mock = False
+        base._client = None
+        assert base.ping() is False
+
+    def test_ping_returns_false_when_client_raises(self, base):
+        """Test that ping returns False when client.ping() raises."""
+        from unittest.mock import MagicMock
+
+        base.use_mock = False
+        mock_client = MagicMock()
+        mock_client.ping.side_effect = Exception("connection lost")
+        base._client = mock_client
+        assert base.ping() is False
+
+    # --- get_stats ---
+
+    def test_get_stats_in_mock_mode(self, base):
+        """Test that get_stats returns correct structure in mock mode."""
+        base._set("empathy:working:k1", "v1")
+        base._set("empathy:staged:k2", "v2")
+        stats = base.get_stats()
+        assert stats["mode"] == "mock"
+        assert stats["total_keys"] >= 2
+        assert "working_keys" in stats
+
+    def test_get_stats_no_client_not_mock(self, base):
+        """Test that get_stats returns disconnected mode when no client."""
+        base.use_mock = False
+        base._client = None
+        stats = base.get_stats()
+        assert stats["mode"] == "disconnected"
+
+    # --- get_metrics and reset_metrics ---
+
+    def test_get_metrics_returns_dict(self, base):
+        """Test that get_metrics returns a dict."""
+        metrics = base.get_metrics()
+        assert isinstance(metrics, dict)
+
+    def test_reset_metrics_clears_counts(self, base):
+        """Test that reset_metrics resets operation counters."""
+        base._metrics.retries_total = 5
+        base.reset_metrics()
+        assert base._metrics.retries_total == 0
+
+    # --- close ---
+
+    def test_close_sets_client_to_none(self, base):
+        """Test that close() sets _client to None."""
+        from unittest.mock import MagicMock
+
+        base._client = MagicMock()
+        base.close()
+        assert base._client is None
+
+    def test_close_is_safe_when_client_already_none(self, base):
+        """Test that close() is safe when _client is already None."""
+        base._client = None
+        base.close()  # Should not raise
+        assert base._client is None
+
+
+@pytest.mark.unit
+class TestBaseOperationsRedisEnabledEnv:
+    """Test BaseOperations initialization with REDIS_ENABLED env var."""
+
+    def test_redis_enabled_true_skips_auto_detect(self, monkeypatch):
+        """Test that REDIS_ENABLED=true bypasses auto-detection."""
+        from unittest.mock import patch
+
+        monkeypatch.setenv("REDIS_ENABLED", "true")
+        monkeypatch.delenv("REDIS_MODE", raising=False)
+
+        with patch("attune.memory.short_term.base.REDIS_AVAILABLE", False):
+            from attune.memory.short_term.base import BaseOperations
+
+            ops = BaseOperations()
+        # REDIS_AVAILABLE=False forces mock regardless of env
+        assert ops.use_mock is True
+
+    def test_redis_enabled_false_sets_mock_mode(self, monkeypatch):
+        """Test that REDIS_ENABLED=false forces mock mode."""
+        monkeypatch.setenv("REDIS_ENABLED", "false")
+        from attune.memory.short_term.base import BaseOperations
+
+        ops = BaseOperations()
+        assert ops.use_mock is True
+
+    def test_redis_enabled_0_sets_mock_mode(self, monkeypatch):
+        """Test that REDIS_ENABLED=0 forces mock mode."""
+        monkeypatch.setenv("REDIS_ENABLED", "0")
+        from attune.memory.short_term.base import BaseOperations
+
+        ops = BaseOperations()
+        assert ops.use_mock is True
+
+
+@pytest.mark.unit
+class TestBaseOperationsCallerOverride:
+    """Test BaseOperations with non-default host/port/db/password args."""
+
+    def test_caller_override_host_uses_provided_args(self, monkeypatch):
+        """Test that non-default host arg creates config from args."""
+        from unittest.mock import patch
+
+        monkeypatch.delenv("REDIS_ENABLED", raising=False)
+        monkeypatch.delenv("REDIS_MODE", raising=False)
+
+        from attune.memory.short_term.base import BaseOperations
+
+        # With custom host — auto-detect is bypassed (caller_overrode=True)
+        # But REDIS_AVAILABLE may be True (redis installed), so we patch
+        # the connection to fail immediately and fall to mock
+        with patch("attune.memory.short_term.base.REDIS_AVAILABLE", False):
+            ops = BaseOperations(host="custom-host", port=6380)
+
+        assert ops.use_mock is True
+
+    def test_no_override_uses_auto_detect(self, monkeypatch):
+        """Test that default args trigger auto-detect path."""
+        from unittest.mock import patch
+
+        monkeypatch.delenv("REDIS_ENABLED", raising=False)
+        monkeypatch.delenv("REDIS_MODE", raising=False)
+
+        from attune.memory.short_term.base import BaseOperations
+
+        # Auto-detect returns unavailable → mock mode
+        with patch("attune.memory.redis_auto_detect.RedisAutoDetector.detect") as mock_detect:
+            mock_detect.return_value = type(
+                "R",
+                (),
+                {"available": False, "reason": "test"},
+            )()
+            ops = BaseOperations()
+
+        assert ops.use_mock is True
+
+
+@pytest.mark.unit
+class TestBaseOperationsCreateClientRetry:
+    """Test _create_client_with_retry retry logic."""
+
+    def test_create_client_retries_on_connection_error(self):
+        """Test that connection errors trigger retries and succeed on retry."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.memory.types import RedisConfig
+
+        config = RedisConfig(
+            use_mock=False,
+            retry_max_attempts=3,
+            retry_base_delay=0.001,
+            retry_max_delay=0.01,
+        )
+
+        from attune.memory.short_term.base import (
+            BaseOperations,
+            RedisConnectionError,
+        )
+
+        attempt = [0]
+        mock_client = MagicMock()
+
+        def fake_ping():
+            attempt[0] += 1
+            if attempt[0] < 2:
+                # Raise the Redis-specific exception to trigger retry
+                raise RedisConnectionError("refused")
+            return True
+
+        mock_client.ping = fake_ping
+
+        with patch("redis.Redis", return_value=mock_client):
+            with patch("time.sleep"):  # Don't actually sleep during retries
+                base = BaseOperations.__new__(BaseOperations)
+                base._config = config
+                base._metrics = MagicMock()
+                base._metrics.retries_total = 0
+                base._client = None
+
+                client = base._create_client_with_retry()
+
+        assert client is mock_client
+
+    def test_create_client_raises_after_max_retries(self):
+        """Test that all retries failing raises ConnectionError."""
+        from unittest.mock import MagicMock, patch
+
+        import pytest
+
+        from attune.memory.types import RedisConfig
+
+        config = RedisConfig(
+            use_mock=False,
+            retry_max_attempts=2,
+            retry_base_delay=0.001,
+            retry_max_delay=0.01,
+        )
+
+        mock_client = MagicMock()
+        mock_client.ping.side_effect = ConnectionError("always refused")
+
+        with patch("redis.Redis", return_value=mock_client):
+            from attune.memory.short_term.base import BaseOperations
+
+            base = BaseOperations.__new__(BaseOperations)
+            base._config = config
+            base._metrics = MagicMock()
+            base._metrics.retries_total = 0
+
+            with pytest.raises((ConnectionError, Exception)):
+                base._create_client_with_retry()
+
+
+@pytest.mark.unit
+class TestBaseOperationsExecuteWithRetry:
+    """Test _execute_with_retry logic."""
+
+    def test_execute_with_retry_success(self):
+        """Test that successful operation returns result."""
+        from attune.memory.short_term.base import BaseOperations
+        from attune.memory.types import RedisConfig, RedisMetrics
+
+        base = BaseOperations.__new__(BaseOperations)
+        base._config = RedisConfig(
+            use_mock=False,
+            retry_max_attempts=3,
+            retry_base_delay=0.001,
+            retry_max_delay=0.01,
+        )
+        base._metrics = RedisMetrics()
+
+        result = base._execute_with_retry(lambda: "success_value", "test_op")
+        assert result == "success_value"
+
+    def test_execute_with_retry_raises_after_all_failures(self):
+        """Test that all retries failing raises."""
+        import pytest
+
+        from attune.memory.short_term.base import (
+            BaseOperations,
+            RedisConnectionError,
+        )
+        from attune.memory.types import RedisConfig, RedisMetrics
+
+        base = BaseOperations.__new__(BaseOperations)
+        base._config = RedisConfig(
+            use_mock=False,
+            retry_max_attempts=2,
+            retry_base_delay=0.001,
+            retry_max_delay=0.01,
+        )
+        base._metrics = RedisMetrics()
+
+        def always_fail():
+            raise RedisConnectionError("fail")
+
+        with pytest.raises((RedisConnectionError, Exception)):
+            base._execute_with_retry(always_fail, "bad_op")
+
+
+# ============================================================================
 # SUMMARY: What We Learned
 # ============================================================================
 """

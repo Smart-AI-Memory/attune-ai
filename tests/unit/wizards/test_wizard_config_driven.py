@@ -616,3 +616,462 @@ class TestToYamlErrorPaths:
 
         with pytest.raises(RuntimeError, match="session not initialized"):
             wizard.process_step_result(step, {"key": "value"})
+
+
+# =========================================================================
+# Additional uncovered paths
+# =========================================================================
+
+
+class TestFromDictEdgeCases:
+    """Test _from_dict with edge cases."""
+
+    def test_from_dict_minimal_required_fields(self):
+        """Test _from_dict with only required fields."""
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "minimal",
+            "name": "Minimal Wizard",
+            "steps": [{"id": "s1", "step_type": "question"}],
+        }
+        wizard = ConfigDrivenWizard._from_dict(data)
+
+        assert wizard.config.wizard_id == "minimal"
+        assert wizard.config.description == ""
+        assert wizard.config.domain == "development"
+        assert wizard.config.version == "1.0.0"
+        assert wizard.config.source == "custom"
+        assert len(wizard.steps) == 1
+
+    def test_from_dict_with_all_optional_fields(self):
+        """Test _from_dict with all optional fields populated."""
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "full",
+            "name": "Full Wizard",
+            "description": "A complete wizard",
+            "domain": "security",
+            "version": "2.5.0",
+            "estimated_cost_range": [0.05, 1.00],
+            "estimated_duration_minutes": 15,
+            "steps": [
+                {"id": "q1", "step_type": "question"},
+                {"id": "a1", "step_type": "llm_call"},
+            ],
+        }
+        wizard = ConfigDrivenWizard._from_dict(data)
+
+        assert wizard.config.domain == "security"
+        assert wizard.config.version == "2.5.0"
+        assert wizard.config.estimated_cost_range == (0.05, 1.00)
+        assert wizard.config.estimated_duration_minutes == 15
+        assert len(wizard.steps) == 2
+
+    def test_from_dict_with_extra_fields_ignored(self):
+        """Test _from_dict ignores unrecognized fields without error."""
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "extra-fields",
+            "name": "Extra Fields Wizard",
+            "steps": [{"id": "q1", "step_type": "question"}],
+            "unknown_field": "ignored",
+            "another_extra": 42,
+        }
+        # Should not raise
+        wizard = ConfigDrivenWizard._from_dict(data)
+
+        assert wizard.config.wizard_id == "extra-fields"
+
+    def test_from_dict_default_cost_range(self):
+        """Test _from_dict uses default cost range when not specified."""
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "default-cost",
+            "name": "Default Cost Wizard",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+        wizard = ConfigDrivenWizard._from_dict(data)
+
+        assert wizard.config.estimated_cost_range == (0.01, 0.50)
+
+    def test_from_dict_all_step_types(self):
+        """Test _from_dict parses all valid step types."""
+        from attune.wizards.base import StepType
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "all-types",
+            "name": "All Types",
+            "steps": [
+                {"id": "s_question", "step_type": "question"},
+                {"id": "s_llm", "step_type": "llm_call"},
+                {"id": "s_decompose", "step_type": "task_decompose"},
+                {"id": "s_review", "step_type": "review"},
+                {"id": "s_preview", "step_type": "preview"},
+                {"id": "s_confirm", "step_type": "confirm"},
+            ],
+        }
+        wizard = ConfigDrivenWizard._from_dict(data)
+
+        type_map = {s.id: s.step_type for s in wizard.steps}
+        assert type_map["s_question"] == StepType.QUESTION
+        assert type_map["s_llm"] == StepType.LLM_CALL
+        assert type_map["s_decompose"] == StepType.TASK_DECOMPOSE
+        assert type_map["s_review"] == StepType.REVIEW
+        assert type_map["s_preview"] == StepType.PREVIEW
+        assert type_map["s_confirm"] == StepType.CONFIRM
+
+
+class TestToYamlRoundTripComplex:
+    """Test to_yaml round-trip with complex wizard definitions."""
+
+    def test_round_trip_with_llm_and_question_steps(self, tmp_path):
+        """Test round-trip preserves LLM step with prompt_context."""
+        yaml_content = {
+            "schema_version": "1.0",
+            "wizard_id": "complex-rt",
+            "name": "Complex Round-trip",
+            "description": "Tests complex round-trip",
+            "domain": "security",
+            "version": "1.2.0",
+            "steps": [
+                {
+                    "id": "gather",
+                    "name": "Gather Info",
+                    "step_type": "question",
+                    "questions": [
+                        {
+                            "id": "target",
+                            "text": "Target?",
+                            "type": "text_input",
+                            "help_text": "Path to file",
+                        },
+                        {
+                            "id": "mode",
+                            "text": "Mode?",
+                            "type": "single_select",
+                            "options": ["fast", "thorough"],
+                            "default": "fast",
+                        },
+                    ],
+                },
+                {
+                    "id": "analyze",
+                    "name": "Analyze",
+                    "step_type": "llm_call",
+                    "tier": "premium",
+                    "prompt_context": {
+                        "role": "analyst",
+                        "goal": "Analyze {session.target}",
+                        "instructions": ["Check thoroughly"],
+                        "constraints": ["No breaking changes"],
+                    },
+                },
+                {
+                    "id": "preview",
+                    "name": "Preview",
+                    "step_type": "preview",
+                },
+            ],
+        }
+        original_path = tmp_path / "complex.yaml"
+        with original_path.open("w") as f:
+            import yaml
+
+            yaml.safe_dump(yaml_content, f)
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        wizard = ConfigDrivenWizard.from_yaml(str(original_path))
+        output_path = tmp_path / "complex_out.yaml"
+        wizard.to_yaml(str(output_path))
+
+        wizard2 = ConfigDrivenWizard.from_yaml(str(output_path))
+        assert wizard2.config.wizard_id == "complex-rt"
+        assert wizard2.config.domain == "security"
+        assert wizard2.config.version == "1.2.0"
+        assert len(wizard2.steps) == 3
+        assert wizard2.steps[0].id == "gather"
+        assert wizard2.steps[1].id == "analyze"
+        assert wizard2.steps[1].tier == "premium"
+
+    def test_to_yaml_non_capable_tier_preserved(self, tmp_path):
+        """Test non-default tier (premium) is written to YAML."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "tier-test",
+            "name": "Tier Test",
+            "steps": [{"id": "analyze", "step_type": "llm_call", "tier": "premium"}],
+        }
+        path = tmp_path / "tier.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        out = tmp_path / "tier_out.yaml"
+        wizard.to_yaml(str(out))
+
+        with out.open() as f:
+            saved = yaml.safe_load(f)
+
+        # Premium tier should be in output (non-default)
+        step = saved["steps"][0]
+        assert step.get("tier") == "premium"
+
+    def test_to_yaml_capable_tier_omitted(self, tmp_path):
+        """Test default capable tier is omitted from YAML output."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "capable-test",
+            "name": "Capable Test",
+            "steps": [{"id": "analyze", "step_type": "llm_call", "tier": "capable"}],
+        }
+        path = tmp_path / "capable.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        out = tmp_path / "capable_out.yaml"
+        wizard.to_yaml(str(out))
+
+        with out.open() as f:
+            saved = yaml.safe_load(f)
+
+        # Default tier should be omitted (to reduce noise)
+        step = saved["steps"][0]
+        assert "tier" not in step
+
+
+class TestToDictSerializationFidelity:
+    """Test _to_dict serializes all wizard data correctly."""
+
+    def test_to_dict_includes_estimated_cost_range_as_list(self, tmp_path):
+        """Test estimated_cost_range is serialized as a list (not tuple)."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "cost-test",
+            "name": "Cost Test",
+            "estimated_cost_range": [0.05, 2.00],
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+        path = tmp_path / "cost.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        d = wizard._to_dict()
+
+        assert isinstance(d["estimated_cost_range"], list)
+        assert d["estimated_cost_range"] == [0.05, 2.00]
+
+    def test_to_dict_schema_version_is_string(self, tmp_path):
+        """Test schema_version in _to_dict is always '1.0'."""
+        import yaml
+
+        from attune.wizards.config_driven import SCHEMA_VERSION, ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "schema-test",
+            "name": "Schema Test",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+        path = tmp_path / "schema.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        d = wizard._to_dict()
+
+        assert d["schema_version"] == SCHEMA_VERSION
+
+    def test_to_dict_step_description_omitted_when_empty(self, tmp_path):
+        """Test step description is omitted from dict when empty string."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "desc-test",
+            "name": "Desc Test",
+            "steps": [{"id": "q1", "step_type": "question"}],
+        }
+        path = tmp_path / "desc.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        d = wizard._to_dict()
+
+        step = d["steps"][0]
+        assert "description" not in step  # Empty string should be omitted
+
+    def test_to_dict_step_with_description_included(self, tmp_path):
+        """Test step description is included when non-empty."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "desc-full",
+            "name": "Desc Full",
+            "steps": [
+                {
+                    "id": "q1",
+                    "step_type": "question",
+                    "description": "Please answer this",
+                }
+            ],
+        }
+        path = tmp_path / "desc_full.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        d = wizard._to_dict()
+
+        step = d["steps"][0]
+        assert step.get("description") == "Please answer this"
+
+
+class TestProcessStepResultVariousSteps:
+    """Test process_step_result with various step IDs."""
+
+    def _make_wizard(self, tmp_path):
+        """Create a ConfigDrivenWizard for testing."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+
+        data = {
+            "wizard_id": "proc-test",
+            "name": "Proc Test",
+            "steps": [
+                {"id": "analyze", "step_type": "llm_call"},
+                {"id": "check", "step_type": "llm_call"},
+                {"id": "plan", "step_type": "task_decompose"},
+            ],
+        }
+        path = tmp_path / "proc.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+        return ConfigDrivenWizard.from_yaml(str(path))
+
+    def test_process_stores_each_step_under_own_key(self, tmp_path):
+        """Test each step stores result under {step_id}_result key."""
+        from attune.wizards.session import WizardSession
+
+        wizard = self._make_wizard(tmp_path)
+        wizard._session = WizardSession(wizard_id="proc-test")
+
+        for step in wizard.steps:
+            wizard.process_step_result(step, {"data": f"result_for_{step.id}"})
+
+        assert wizard._session.get("analyze_result") == {"data": "result_for_analyze"}
+        assert wizard._session.get("check_result") == {"data": "result_for_check"}
+        assert wizard._session.get("plan_result") == {"data": "result_for_plan"}
+
+    def test_process_overwrites_prior_result_for_same_step(self, tmp_path):
+        """Test process_step_result overwrites prior result for same step."""
+        from attune.wizards.session import WizardSession
+
+        wizard = self._make_wizard(tmp_path)
+        wizard._session = WizardSession(wizard_id="proc-test")
+
+        analyze_step = wizard.steps[0]
+        wizard.process_step_result(analyze_step, {"v": 1})
+        wizard.process_step_result(analyze_step, {"v": 2})
+
+        assert wizard._session.get("analyze_result") == {"v": 2}
+
+
+class TestSessionVariableInterpolationNested:
+    """Test session variable interpolation in nested dict structures."""
+
+    def test_nested_dict_interpolation_in_build_context(self, tmp_path):
+        """Test nested dict values in prompt_context are interpolated."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+        from attune.wizards.session import WizardSession
+
+        data = {
+            "wizard_id": "nested-interp",
+            "name": "Nested Interp",
+            "steps": [
+                {
+                    "id": "analyze",
+                    "step_type": "llm_call",
+                    "prompt_context": {
+                        "role": "analyst",
+                        "goal": "Analyze {session.target}",
+                        "nested": {"inner_key": "For {session.mode} analysis"},
+                    },
+                }
+            ],
+        }
+        path = tmp_path / "nested.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        wizard._session = WizardSession(wizard_id="nested-interp")
+        wizard._session.set("target", "main.py")
+        wizard._session.set("mode", "thorough")
+
+        ctx = wizard.build_prompt_context(wizard.steps[0])
+
+        assert ctx.goal == "Analyze main.py"
+
+    def test_list_interpolation_in_instructions(self, tmp_path):
+        """Test list items in instructions are interpolated."""
+        import yaml
+
+        from attune.wizards.config_driven import ConfigDrivenWizard
+        from attune.wizards.session import WizardSession
+
+        data = {
+            "wizard_id": "list-interp",
+            "name": "List Interp",
+            "steps": [
+                {
+                    "id": "check",
+                    "step_type": "llm_call",
+                    "prompt_context": {
+                        "role": "checker",
+                        "goal": "Check code",
+                        "instructions": [
+                            "Review {session.target}",
+                            "Focus on {session.focus}",
+                            "Plain instruction",
+                        ],
+                    },
+                }
+            ],
+        }
+        path = tmp_path / "list.yaml"
+        with path.open("w") as f:
+            yaml.safe_dump(data, f)
+
+        wizard = ConfigDrivenWizard.from_yaml(str(path))
+        wizard._session = WizardSession(wizard_id="list-interp")
+        wizard._session.set("target", "auth.py")
+        wizard._session.set("focus", "security")
+
+        ctx = wizard.build_prompt_context(wizard.steps[0])
+
+        assert "Review auth.py" in ctx.instructions
+        assert "Focus on security" in ctx.instructions
+        assert "Plain instruction" in ctx.instructions

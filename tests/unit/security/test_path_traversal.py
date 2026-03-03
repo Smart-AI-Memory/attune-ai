@@ -140,3 +140,172 @@ class TestPathTraversalInPatternAPI:
         """
         # Path validation is called in the API endpoint
         assert True  # Placeholder - add FastAPI test if available
+
+
+class TestPathValidationOSErrorHandling:
+    """Tests for OSError/RuntimeError path resolution edge cases (lines 38-39)."""
+
+    def test_raises_value_error_on_resolution_oserror(self):
+        """Test that OSError during path resolution raises ValueError."""
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with patch.object(Path, "resolve", side_effect=OSError("resolution failed")):
+            with pytest.raises(ValueError, match="Invalid path"):
+                _validate_file_path("some_path.txt")
+
+    def test_raises_value_error_on_resolution_runtime_error(self):
+        """Test that RuntimeError during path resolution raises ValueError."""
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with patch.object(Path, "resolve", side_effect=RuntimeError("runtime error")):
+            with pytest.raises(ValueError, match="Invalid path"):
+                _validate_file_path("some_path.txt")
+
+    def test_raises_value_error_on_allowed_dir_outside(self, tmp_path):
+        """Test ValueError when path is outside allowed_dir."""
+        allowed_dir = tmp_path / "allowed"
+        allowed_dir.mkdir()
+        outside_path = tmp_path / "outside.txt"
+
+        with pytest.raises(ValueError, match="must be within"):
+            _validate_file_path(str(outside_path), allowed_dir=str(allowed_dir))
+
+    def test_non_string_type_raises_value_error(self):
+        """Test that non-string input raises ValueError."""
+        with pytest.raises(ValueError, match="non-empty string"):
+            _validate_file_path(123)  # type: ignore[arg-type]
+
+    def test_returns_path_object(self, tmp_path):
+        """Test that a valid path returns a Path object."""
+        valid = str(tmp_path / "file.txt")
+        result = _validate_file_path(valid)
+        assert isinstance(result, Path)
+
+
+class TestPathValidationWindowsPaths:
+    """Tests for Windows system directory blocking (lines 54-69).
+
+    These tests mock sys.platform to simulate Windows behavior
+    on non-Windows platforms.
+    """
+
+    def test_blocks_windows_system32(self):
+        """Test that Windows system32 paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "win32"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Windows\\System32\\config.txt")
+
+    def test_blocks_windows_syswow64(self):
+        """Test that Windows SysWOW64 paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "win32"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Windows\\SysWOW64\\file.txt")
+
+    def test_blocks_windows_system(self):
+        """Test that Windows System directory paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "win32"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Windows\\System\\file.txt")
+
+    def test_blocks_windows_program_files(self):
+        """Test that Windows Program Files paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "win32"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Program Files\\app\\config.txt")
+
+    def test_blocks_windows_program_files_x86(self):
+        """Test that Windows Program Files (x86) paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "win32"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("C:\\Program Files (x86)\\app\\config.txt")
+
+    def test_windows_allows_safe_user_path(self, tmp_path):
+        """Test that safe user paths are allowed on Windows."""
+        import sys
+        from unittest.mock import patch
+
+        safe_path = str(tmp_path / "config.txt")
+
+        with patch.object(sys, "platform", "win32"):
+            result = _validate_file_path(safe_path)
+
+        assert result is not None
+
+    def test_windows_blocks_unix_etc_marker(self, tmp_path):
+        """Test that Unix-style /etc markers are blocked on Windows paths."""
+        import sys
+        from pathlib import Path
+        from unittest.mock import patch
+
+        # Create a mock resolved path that looks like a Windows etc path
+        resolved_path = Path("C:\\etc\\passwd")
+
+        with patch.object(sys, "platform", "win32"):
+            with patch.object(Path, "resolve", return_value=resolved_path):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("C:\\etc\\passwd")
+
+    def test_unix_blocks_etc(self):
+        """Test that Unix /etc paths are blocked."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "linux"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("/etc/passwd")
+
+    def test_unix_blocks_usr_bin(self):
+        """Test that /usr/bin paths are blocked on Unix."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "linux"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("/usr/bin/myapp")
+
+    def test_unix_blocks_bin(self):
+        """Test that /bin paths are blocked on Unix."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "linux"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("/bin/sh")
+
+    def test_unix_blocks_sbin(self):
+        """Test that /sbin paths are blocked on Unix."""
+        import sys
+        from unittest.mock import patch
+
+        with patch.object(sys, "platform", "linux"):
+            with pytest.raises(ValueError, match="Cannot write to system directory"):
+                _validate_file_path("/sbin/init")
+
+    def test_exact_system_dir_without_trailing_slash(self):
+        """Test that exact system directory matches (not just prefix)."""
+        import sys
+        from pathlib import Path
+        from unittest.mock import patch
+
+        # Test the exact match case (resolved_str == dangerous)
+        with patch.object(sys, "platform", "linux"):
+            with patch.object(Path, "resolve", return_value=Path("/etc")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/etc")

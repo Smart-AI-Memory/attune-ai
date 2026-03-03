@@ -409,3 +409,484 @@ class TestBaseOperationsBackwardCompat:
 
             ops = BaseOperations()
             assert ops._config.use_mock is True
+
+
+# =============================================================================
+# ADDITIONAL COVERAGE: uncovered paths
+# =============================================================================
+
+
+class TestLoadConfigErrorPaths:
+    """Test _load_config error handling."""
+
+    def test_load_config_yaml_error_returns_empty_dict(self, tmp_path):
+        """Test that YAML parse error in config returns empty dict."""
+        config_path = tmp_path / "bad.yml"
+        config_path.write_text(": : invalid: yaml: content: !!!")
+        detector = RedisAutoDetector(config_path=config_path)
+        assert detector.config == {}
+
+    def test_load_config_oserror_returns_empty_dict(self, tmp_path):
+        """Test that OSError reading config returns empty dict."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("redis:\n  key: value\n", encoding="utf-8")
+        with up("builtins.open", side_effect=OSError("permission denied")):
+            detector = RedisAutoDetector(config_path=config_path)
+        assert detector.config == {}
+
+    def test_load_config_nonexistent_file_returns_empty_dict(self, tmp_path):
+        """Test that missing config file returns empty dict."""
+        config_path = tmp_path / "nonexistent.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+        assert detector.config == {}
+
+
+class TestSaveConfigErrorPath:
+    """Test _save_config error handling."""
+
+    def test_save_config_oserror_logs_error(self, tmp_path, caplog):
+        """Test that OSError during config save logs an error."""
+        import logging
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+        detector.config = {"redis": {"test": True}}
+
+        with up("builtins.open", side_effect=OSError("disk full")):
+            with caplog.at_level(logging.ERROR):
+                detector._save_config()
+        # Should log an error instead of raising
+        assert any("Failed to save config" in r.message for r in caplog.records)
+
+
+class TestCheckPythonPackageImportError:
+    """Test _check_python_package when redis not importable."""
+
+    def test_check_python_package_returns_false_when_not_installed(self, tmp_path):
+        """Test that ImportError leads to _check_python_package returning False."""
+        import builtins
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "redis":
+                raise ImportError("No module named redis")
+            return original_import(name, *args, **kwargs)
+
+        with up("builtins.__import__", side_effect=fake_import):
+            result = detector._check_python_package()
+
+        assert result is False
+
+
+class TestCheckServerReachable:
+    """Test _check_server_reachable paths."""
+
+    def test_check_server_reachable_returns_false_on_exception(self, tmp_path):
+        """Test that any exception during ping returns False."""
+        from unittest.mock import MagicMock
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        mock_client = MagicMock()
+        mock_client.ping.side_effect = Exception("connection refused")
+
+        mock_redis_mod = MagicMock()
+        mock_redis_mod.Redis.return_value = mock_client
+
+        # redis is imported inside the method body, patch at redis module level
+        with up("redis.Redis", return_value=mock_client):
+            result = detector._check_server_reachable()
+
+        assert result is False
+
+    def test_check_server_reachable_returns_true_on_success(self, tmp_path):
+        """Test that a successful ping returns True."""
+        from unittest.mock import MagicMock
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        mock_client = MagicMock()
+        mock_client.ping.return_value = True
+
+        with up("redis.Redis", return_value=mock_client):
+            result = detector._check_server_reachable()
+
+        assert result is True
+
+
+class TestPromptInstall:
+    """Test prompt_install flow."""
+
+    @pytest.fixture(autouse=True)
+    def reset_cache(self):
+        """Reset module-level cache before each test."""
+        import attune.memory.redis_auto_detect as mod
+
+        mod._cached_result = None
+        mod._cached_at = 0.0
+        yield
+        mod._cached_result = None
+        mod._cached_at = 0.0
+
+    def test_prompt_install_already_available_returns_true(self, tmp_path):
+        """Test prompt_install returns True when Redis is already available."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up.object(detector, "_check_python_package", return_value=True),
+            up.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            result = detector.prompt_install()
+
+        assert result is True
+
+    def test_prompt_install_no_package_calls_python_prompt(self, tmp_path):
+        """Test prompt_install calls _prompt_python_package when no package."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up.object(detector, "_check_python_package", return_value=False),
+            up.object(detector, "_prompt_python_package", return_value=False) as mock_pp,
+        ):
+            result = detector.prompt_install()
+
+        mock_pp.assert_called_once()
+        assert result is False
+
+    def test_prompt_install_no_server_calls_server_prompt(self, tmp_path):
+        """Test prompt_install calls _prompt_server_install when server not reachable."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up.object(detector, "_check_python_package", return_value=True),
+            up.object(detector, "_check_server_reachable", return_value=False),
+            up.object(detector, "_prompt_server_install", return_value=False) as mock_sp,
+        ):
+            result = detector.prompt_install()
+
+        mock_sp.assert_called_once()
+        assert result is False
+
+
+class TestPromptPythonPackage:
+    """Test _prompt_python_package interactive flow."""
+
+    @pytest.fixture(autouse=True)
+    def reset_cache(self):
+        """Reset module-level cache before each test."""
+        import attune.memory.redis_auto_detect as mod
+
+        mod._cached_result = None
+        mod._cached_at = 0.0
+        yield
+        mod._cached_result = None
+        mod._cached_at = 0.0
+
+    def test_prompt_python_package_decline_returns_false(self, tmp_path):
+        """Test declining the python package prompt saves preference."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with up("builtins.input", return_value="d"):
+            result = detector._prompt_python_package()
+
+        assert result is False
+        assert detector.config.get("redis", {}).get("install_declined") is True
+
+    def test_prompt_python_package_skip_returns_false(self, tmp_path):
+        """Test skipping the python package prompt returns False."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with up("builtins.input", return_value="s"):
+            result = detector._prompt_python_package()
+
+        assert result is False
+
+    def test_prompt_python_package_eof_returns_false(self, tmp_path):
+        """Test EOF during python package prompt returns False."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with up("builtins.input", side_effect=EOFError):
+            result = detector._prompt_python_package()
+
+        assert result is False
+
+    def test_prompt_python_package_install_success(self, tmp_path):
+        """Test that a successful pip install triggers server check."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("builtins.input", return_value="y"),
+            up("subprocess.check_call", return_value=0),
+            up.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            result = detector._prompt_python_package()
+
+        assert result is True
+
+    def test_prompt_python_package_install_failure(self, tmp_path):
+        """Test that a failed pip install returns False."""
+        import subprocess
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("builtins.input", return_value="y"),
+            up(
+                "subprocess.check_call",
+                side_effect=subprocess.CalledProcessError(1, "pip"),
+            ),
+        ):
+            result = detector._prompt_python_package()
+
+        assert result is False
+
+    def test_prompt_python_package_install_then_prompt_server(self, tmp_path):
+        """Test that successful pip install but no server triggers server prompt."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("builtins.input", return_value="y"),
+            up("subprocess.check_call", return_value=0),
+            up.object(detector, "_check_server_reachable", return_value=False),
+            up.object(detector, "_prompt_server_install", return_value=True),
+        ):
+            result = detector._prompt_python_package()
+
+        assert result is True
+
+
+class TestGetInstallCommandLinuxYum:
+    """Test _get_install_command for Linux with yum."""
+
+    def test_platform_install_command_linux_yum(self, tmp_path):
+        """Test Linux yum install command when apt not available."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        def fake_which(cmd):
+            return None if cmd == "apt" else "/usr/bin/yum"
+
+        with (
+            up("attune.memory.redis_auto_detect.IS_MACOS", False),
+            up("attune.memory.redis_auto_detect.IS_LINUX", True),
+            up("shutil.which", side_effect=fake_which),
+        ):
+            cmd = detector._get_install_command()
+
+        assert "yum" in cmd
+
+    def test_platform_install_command_linux_no_pkg_manager(self, tmp_path):
+        """Test Linux fallback when neither apt nor yum is available."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("attune.memory.redis_auto_detect.IS_MACOS", False),
+            up("attune.memory.redis_auto_detect.IS_LINUX", True),
+            up("shutil.which", return_value=None),
+        ):
+            cmd = detector._get_install_command()
+
+        assert "apt" in cmd
+
+
+class TestRunServerInstall:
+    """Test _run_server_install paths."""
+
+    @pytest.fixture(autouse=True)
+    def reset_cache(self):
+        """Reset module-level cache before each test."""
+        import attune.memory.redis_auto_detect as mod
+
+        mod._cached_result = None
+        mod._cached_at = 0.0
+        yield
+        mod._cached_result = None
+        mod._cached_at = 0.0
+
+    def test_run_server_install_success(self, tmp_path):
+        """Test successful server install invalidates cache and returns True."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("subprocess.check_call", return_value=0),
+            up("time.sleep"),
+            up.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            result = detector._run_server_install("brew install redis")
+
+        assert result is True
+        assert detector.config.get("redis", {}).get("installed") is True
+
+    def test_run_server_install_failure_called_process_error(self, tmp_path):
+        """Test that CalledProcessError returns False."""
+        import subprocess
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with up(
+            "subprocess.check_call",
+            side_effect=subprocess.CalledProcessError(1, "brew"),
+        ):
+            result = detector._run_server_install("brew install redis")
+
+        assert result is False
+
+    def test_run_server_install_timeout_returns_false(self, tmp_path):
+        """Test that TimeoutExpired returns False."""
+        import subprocess
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with up(
+            "subprocess.check_call",
+            side_effect=subprocess.TimeoutExpired("brew", 120),
+        ):
+            result = detector._run_server_install("brew install redis")
+
+        assert result is False
+
+    def test_run_server_install_installed_but_not_responding(self, tmp_path):
+        """Test that install succeeds but server not responding returns False."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("subprocess.check_call", return_value=0),
+            up("time.sleep"),
+            up.object(detector, "_check_server_reachable", return_value=False),
+        ):
+            result = detector._run_server_install("brew install redis")
+
+        assert result is False
+
+    def test_run_server_install_compound_command(self, tmp_path):
+        """Test that compound commands split on && are executed sequentially."""
+        from unittest.mock import patch as up
+
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+
+        with (
+            up("subprocess.check_call", return_value=0) as mock_call,
+            up("time.sleep"),
+            up.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            detector._run_server_install("brew install redis && brew services start redis")
+
+        # Should have been called twice (one per && part)
+        assert mock_call.call_count == 2
+
+
+class TestSavePreference:
+    """Test _save_preference initializes redis dict."""
+
+    def test_save_preference_creates_redis_dict_if_missing(self, tmp_path):
+        """Test that _save_preference creates 'redis' key if absent."""
+        config_path = tmp_path / "config.yml"
+        detector = RedisAutoDetector(config_path=config_path)
+        assert "redis" not in detector.config
+
+        detector._save_preference("my_key", "my_value")
+
+        assert detector.config["redis"]["my_key"] == "my_value"
+
+
+class TestAutoDetectRedisTriggerPrompt:
+    """Test auto_detect_redis when prompt triggers and install succeeds."""
+
+    @pytest.fixture(autouse=True)
+    def reset_cache(self):
+        """Reset module-level cache before each test."""
+        import attune.memory.redis_auto_detect as mod
+
+        mod._cached_result = None
+        mod._cached_at = 0.0
+        yield
+        mod._cached_result = None
+        mod._cached_at = 0.0
+
+    def test_auto_detect_returns_updated_result_after_install(self):
+        """Test auto_detect_redis re-detects after successful install."""
+        from unittest.mock import patch as up
+
+        available_result = RedisDetectionResult(
+            available=True,
+            has_python_package=True,
+            server_reachable=True,
+            reason="Redis server is running",
+        )
+        unavailable_result = RedisDetectionResult(
+            available=False,
+            has_python_package=True,
+            server_reachable=False,
+            reason="Redis server not reachable",
+        )
+
+        call_count = {"n": 0}
+
+        def detect_side_effect(self_):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                return unavailable_result
+            return available_result
+
+        with (
+            up.object(RedisAutoDetector, "detect", detect_side_effect),
+            up.object(RedisAutoDetector, "should_prompt", return_value=True),
+            up.object(RedisAutoDetector, "prompt_install", return_value=True),
+        ):
+            result = auto_detect_redis()
+
+        assert result.available is True

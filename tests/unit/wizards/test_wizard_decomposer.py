@@ -395,3 +395,372 @@ class TestTaskDecomposerDecompose:
         call_args = mock_workflow._call_llm.call_args
         prompt = call_args[0][0]
         assert "Codebase context:" not in prompt
+
+
+# =========================================================================
+# Additional uncovered paths
+# =========================================================================
+
+
+class TestDecomposedTaskToXml:
+    """Additional to_xml() edge cases."""
+
+    def test_to_xml_file_without_description_key(self):
+        """Test to_xml when file dict lacks 'description' key."""
+        task = DecomposedTask(
+            task_id="1",
+            name="edge",
+            objective="Edge case",
+            files_to_create=[{"path": "src/foo.py"}],  # No 'description' key
+        )
+        xml = task.to_xml()
+
+        # Should not raise; description should be empty string
+        assert '<file path="src/foo.py"></file>' in xml
+
+    def test_to_xml_multiple_risks_different_severities(self):
+        """Test to_xml with multiple risks across different severity levels."""
+        task = DecomposedTask(
+            task_id="2",
+            name="multi-risk",
+            objective="Many risks",
+            risks=[
+                {"severity": "critical", "description": "Data loss possible"},
+                {"severity": "low", "description": "Minor performance"},
+            ],
+        )
+        xml = task.to_xml()
+
+        assert '<risk severity="critical">Data loss possible</risk>' in xml
+        assert '<risk severity="low">Minor performance</risk>' in xml
+
+    def test_to_xml_risk_missing_severity_defaults_to_medium(self):
+        """Test to_xml risk dict missing 'severity' uses 'medium' default."""
+        task = DecomposedTask(
+            task_id="3",
+            name="default-sev",
+            objective="Test",
+            risks=[{"description": "Unknown severity"}],
+        )
+        xml = task.to_xml()
+
+        assert '<risk severity="medium">Unknown severity</risk>' in xml
+
+    def test_to_xml_risk_missing_description_uses_empty(self):
+        """Test to_xml risk dict missing 'description' uses empty string."""
+        task = DecomposedTask(
+            task_id="4",
+            name="empty-desc",
+            objective="Test",
+            risks=[{"severity": "low"}],
+        )
+        xml = task.to_xml()
+
+        assert '<risk severity="low"></risk>' in xml
+
+    def test_to_xml_full_task_roundtrip(self):
+        """Test full task XML can be parsed back by TaskDecomposer."""
+        from unittest.mock import MagicMock
+
+        task = DecomposedTask(
+            task_id="7",
+            name="complete-task",
+            objective="Complete implementation",
+            files_to_create=[{"path": "src/new.py", "description": "New module"}],
+            files_to_modify=[{"path": "src/old.py", "description": "Update old"}],
+            validation_checks=["All tests pass", "No lint errors"],
+            risks=[{"severity": "medium", "description": "API change"}],
+            dependencies=["6"],
+        )
+        xml = task.to_xml()
+
+        # Wrap in <tasks> so the parser can find it
+        wrapped = f"<tasks>{xml}</tasks>"
+        decomposer = TaskDecomposer(workflow=MagicMock())
+        parsed = decomposer._parse_tasks_from_xml(wrapped)
+
+        assert len(parsed) == 1
+        roundtripped = parsed[0]
+        assert roundtripped.task_id == "7"
+        assert roundtripped.name == "complete-task"
+        assert roundtripped.objective == "Complete implementation"
+        assert len(roundtripped.files_to_create) == 1
+        assert len(roundtripped.files_to_modify) == 1
+        assert len(roundtripped.validation_checks) == 2
+        assert len(roundtripped.risks) == 1
+        assert roundtripped.dependencies == ["6"]
+
+    def test_to_xml_modify_only_no_create(self):
+        """Test XML renders files-to-modify without files-to-create."""
+        task = DecomposedTask(
+            task_id="5",
+            name="modify-only",
+            objective="Only modifies",
+            files_to_modify=[{"path": "src/update.py", "description": "Update it"}],
+        )
+        xml = task.to_xml()
+
+        assert "<files-to-create>" not in xml
+        assert "<files-to-modify>" in xml
+        assert '<file path="src/update.py">Update it</file>' in xml
+
+
+class TestExtractTagEdgeCases:
+    """Test _extract_tag with edge cases."""
+
+    def setup_method(self):
+        """Set up decomposer."""
+        from unittest.mock import MagicMock
+
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def test_extract_tag_multiline_content(self):
+        """Test extraction of multiline tag content."""
+        xml = "<objective>\n  Line one\n  Line two\n</objective>"
+        result = self.decomposer._extract_tag(xml, "objective")
+        assert "Line one" in result
+        assert "Line two" in result
+
+    def test_extract_tag_strips_whitespace(self):
+        """Test extracted content has leading/trailing whitespace stripped."""
+        xml = "<tag>   content with spaces   </tag>"
+        result = self.decomposer._extract_tag(xml, "tag")
+        assert result == "content with spaces"
+
+    def test_extract_tag_empty_content(self):
+        """Test extraction of tag with empty content."""
+        xml = "<objective></objective>"
+        result = self.decomposer._extract_tag(xml, "objective")
+        assert result == ""
+
+    def test_extract_tag_missing_returns_empty_string(self):
+        """Test extraction of missing tag returns empty string, not None."""
+        result = self.decomposer._extract_tag("<other>data</other>", "missing")
+        assert result == ""
+        assert isinstance(result, str)
+
+
+class TestExtractFilesEdgeCases:
+    """Test _extract_files with edge cases."""
+
+    def setup_method(self):
+        """Set up decomposer."""
+        from unittest.mock import MagicMock
+
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def test_extract_files_single_file_no_description(self):
+        """Test extracting a file with empty description."""
+        xml = """
+        <files-to-create>
+          <file path="src/foo.py"></file>
+        </files-to-create>
+        """
+        files = self.decomposer._extract_files(xml, "files-to-create")
+        assert len(files) == 1
+        assert files[0]["path"] == "src/foo.py"
+        assert files[0]["description"] == ""
+
+    def test_extract_files_multiline_description(self):
+        """Test file with multiline description is stripped."""
+        xml = """
+        <files-to-create>
+          <file path="src/auth.py">
+            Auth module
+          </file>
+        </files-to-create>
+        """
+        files = self.decomposer._extract_files(xml, "files-to-create")
+        assert len(files) == 1
+        assert files[0]["description"] == "Auth module"
+
+    def test_extract_files_modify_section(self):
+        """Test extracting files-to-modify section."""
+        xml = """
+        <files-to-modify>
+          <file path="src/main.py">Update imports</file>
+          <file path="src/utils.py">Add helper</file>
+        </files-to-modify>
+        """
+        files = self.decomposer._extract_files(xml, "files-to-modify")
+        assert len(files) == 2
+        assert files[0]["path"] == "src/main.py"
+        assert files[1]["path"] == "src/utils.py"
+
+
+class TestExtractRisksEdgeCases:
+    """Test _extract_risks with edge cases."""
+
+    def setup_method(self):
+        """Set up decomposer."""
+        from unittest.mock import MagicMock
+
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def test_extract_risks_critical_severity(self):
+        """Test extracting critical severity risk."""
+        xml = """
+        <risks>
+          <risk severity="critical">Data loss</risk>
+        </risks>
+        """
+        risks = self.decomposer._extract_risks(xml)
+        assert len(risks) == 1
+        assert risks[0]["severity"] == "critical"
+        assert risks[0]["description"] == "Data loss"
+
+    def test_extract_risks_all_severity_levels(self):
+        """Test extracting multiple risks with all severity levels."""
+        xml = """
+        <risks>
+          <risk severity="critical">Critical issue</risk>
+          <risk severity="high">High issue</risk>
+          <risk severity="medium">Medium issue</risk>
+          <risk severity="low">Low issue</risk>
+        </risks>
+        """
+        risks = self.decomposer._extract_risks(xml)
+        assert len(risks) == 4
+        severities = [r["severity"] for r in risks]
+        assert "critical" in severities
+        assert "low" in severities
+
+
+class TestExtractListEdgeCases:
+    """Test _extract_list with edge cases."""
+
+    def setup_method(self):
+        """Set up decomposer."""
+        from unittest.mock import MagicMock
+
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def test_extract_list_single_item(self):
+        """Test extracting list with a single item."""
+        xml = "<validation><check>Run tests</check></validation>"
+        items = self.decomposer._extract_list(xml, "validation", "check")
+        assert items == ["Run tests"]
+
+    def test_extract_list_empty_section(self):
+        """Test extracting list with no items in section."""
+        xml = "<validation></validation>"
+        items = self.decomposer._extract_list(xml, "validation", "check")
+        assert items == []
+
+    def test_extract_list_dependencies(self):
+        """Test extracting dependencies list."""
+        xml = """
+        <dependencies>
+          <dep>task-1</dep>
+          <dep>task-2</dep>
+          <dep>task-3</dep>
+        </dependencies>
+        """
+        items = self.decomposer._extract_list(xml, "dependencies", "dep")
+        assert items == ["task-1", "task-2", "task-3"]
+
+
+class TestDecomposeWithParams:
+    """Test decompose() with various parameter combinations."""
+
+    @pytest.mark.asyncio
+    async def test_decompose_with_constraints_appear_in_prompt(self):
+        """Test that constraints appear in the constructed prompt."""
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Add tests",
+            codebase_context="Python app",
+            constraints=["No breaking changes", "Keep coverage > 80%"],
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        prompt = call_args[0][0]
+        assert "No breaking changes" in prompt
+        assert "Keep coverage > 80%" in prompt
+
+    @pytest.mark.asyncio
+    async def test_decompose_with_codebase_context_appears_in_prompt(self):
+        """Test that codebase_context appears in the prompt."""
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Add tests",
+            codebase_context="Flask app with Postgres",
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        prompt = call_args[0][0]
+        assert "Flask app with Postgres" in prompt
+        assert "Codebase context:" in prompt
+
+    @pytest.mark.asyncio
+    async def test_decompose_none_constraints_treated_as_empty(self):
+        """Test that None constraints do not add a constraints section."""
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Fix bug",
+            codebase_context="Context",
+            constraints=None,
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        prompt = call_args[0][0]
+        assert "Constraints:" not in prompt
+
+    @pytest.mark.asyncio
+    async def test_decompose_problem_description_in_prompt(self):
+        """Test that problem_description appears in the prompt."""
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Implement OAuth2 login flow",
+            codebase_context="",
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        prompt = call_args[0][0]
+        assert "Implement OAuth2 login flow" in prompt
+
+    @pytest.mark.asyncio
+    async def test_decompose_uses_capable_tier(self):
+        """Test that decompose calls LLM with ModelTier.CAPABLE."""
+        from attune.workflows.compat import ModelTier
+
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Test",
+            codebase_context="",
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        tier_arg = call_args[0][1]
+        assert tier_arg == ModelTier.CAPABLE
+
+    @pytest.mark.asyncio
+    async def test_decompose_uses_decompose_step_id(self):
+        """Test that decompose calls LLM with 'decompose' as step_id."""
+        mock_workflow = MagicMock()
+        mock_workflow._call_llm = AsyncMock(return_value=("<tasks></tasks>", 0, 0))
+        decomposer = TaskDecomposer(workflow=mock_workflow)
+
+        await decomposer.decompose(
+            problem_description="Test",
+            codebase_context="",
+        )
+
+        call_args = mock_workflow._call_llm.call_args
+        step_id_arg = call_args[0][2]
+        assert step_id_arg == "decompose"

@@ -919,3 +919,551 @@ class TestWizardAbort:
         """Test _WizardAbort can be raised and caught."""
         with pytest.raises(_WizardAbort):
             raise _WizardAbort()
+
+
+# =========================================================================
+# Additional uncovered paths
+# =========================================================================
+
+
+class TestQuestionStepEdgeCases:
+    """Test _run_question_step with various question types and response shapes."""
+
+    @pytest.mark.asyncio
+    async def test_question_step_stores_all_responses(self):
+        """Test that all response keys from form engine are stored in session."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="gather",
+                name="Gather",
+                step_type=StepType.QUESTION,
+                questions=[
+                    FormQuestion(id="name", text="Name?", type=QuestionType.TEXT_INPUT),
+                    FormQuestion(
+                        id="mode",
+                        text="Mode?",
+                        type=QuestionType.SINGLE_SELECT,
+                        options=["fast", "slow"],
+                        default="fast",
+                    ),
+                ],
+            ),
+        ]
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(
+            template_id="gather",
+            responses={"name": "Alice", "mode": "fast"},
+        )
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert result.collected_data.get("name") == "Alice"
+        assert result.collected_data.get("mode") == "fast"
+
+    @pytest.mark.asyncio
+    async def test_question_step_completes_with_empty_responses(self):
+        """Test question step completes even when form returns empty responses."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="q_empty",
+                name="Empty Responses",
+                step_type=StepType.QUESTION,
+                questions=[
+                    FormQuestion(id="optional", text="Optional?", type=QuestionType.TEXT_INPUT),
+                ],
+            ),
+        ]
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="q_empty", responses={})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "q_empty" in result.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_question_step_calls_form_engine_with_template_id(self):
+        """Test question step passes step ID as template_id to form engine."""
+        wizard = ConcreteWizard()
+        step_id = "my_specific_step"
+        wizard.steps = [
+            WizardStep(
+                id=step_id,
+                name="My Step",
+                step_type=StepType.QUESTION,
+                questions=[
+                    FormQuestion(id="x", text="X?", type=QuestionType.TEXT_INPUT),
+                ],
+            ),
+        ]
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id=step_id, responses={"x": "val"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+
+        await wizard.run()
+
+        call_kwargs = wizard._form_engine.ask_questions.call_args
+        assert call_kwargs[1].get("template_id") == step_id or (
+            len(call_kwargs[0]) > 1 and call_kwargs[0][1] == step_id
+        )
+
+
+class TestConfirmStepEdgeCases:
+    """Test _run_confirm_step rejection and step abort behavior."""
+
+    @pytest.mark.asyncio
+    async def test_confirm_step_reject_with_no_word(self):
+        """Test that 'no' in answer triggers abort."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="confirm", responses={"confirm": "No, cancel"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="confirm",
+                name="Confirm",
+                description="Proceed?",
+                step_type=StepType.CONFIRM,
+            ),
+            WizardStep(
+                id="after_confirm",
+                name="After",
+                step_type=StepType.PREVIEW,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        # Wizard aborts but still succeeds (abort is graceful)
+        assert result.success is True
+        assert "after_confirm" not in result.steps_completed
+        assert "confirm" in result.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_confirm_step_reject_with_cancel_word(self):
+        """Test that 'cancel' in answer triggers abort."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="confirm", responses={"confirm": "cancel"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="confirm_step",
+                name="Confirm",
+                step_type=StepType.CONFIRM,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        confirmed_result = wizard._session.step_results.get("confirm_step")
+        assert confirmed_result == {"confirmed": False}
+
+    @pytest.mark.asyncio
+    async def test_confirm_step_proceed_yes(self):
+        """Test that 'yes' in answer does not abort."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="confirm", responses={"confirm": "Yes, proceed"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="conf2",
+                name="Confirm",
+                step_type=StepType.CONFIRM,
+            ),
+        ]
+
+        await wizard.run()
+
+        confirmed_result = wizard._session.step_results.get("conf2")
+        assert confirmed_result == {"confirmed": True}
+
+    @pytest.mark.asyncio
+    async def test_confirm_step_stores_confirmed_false_before_abort(self):
+        """Test confirm step stores confirmed=False before raising _WizardAbort."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="confirm", responses={"confirm": "No"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="final_confirm",
+                name="Final",
+                description="Last chance",
+                step_type=StepType.CONFIRM,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        # Session step result should reflect user cancellation
+        assert wizard._session.step_results["final_confirm"]["confirmed"] is False
+        assert result.success is True  # Abort is not an error
+
+
+class TestPreviewStepEdgeCases:
+    """Test _run_preview_step with various session states."""
+
+    @pytest.mark.asyncio
+    async def test_preview_empty_state_produces_minimal_output(self):
+        """Test preview with completely empty session produces a heading."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(id="preview", name="Preview", step_type=StepType.PREVIEW),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        # Should at least contain the wizard name in the preview
+        assert wizard.config.name in result.generated_output
+
+    @pytest.mark.asyncio
+    async def test_preview_excludes_result_suffixed_keys(self):
+        """Test preview skips collected_data keys ending with _result."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(
+            template_id="q1",
+            responses={
+                "target": "src/main.py",
+                "analyze_result": "internal data - should not appear",
+            },
+        )
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="q1",
+                name="Q",
+                step_type=StepType.QUESTION,
+                questions=[FormQuestion(id="target", text="Target?", type=QuestionType.TEXT_INPUT)],
+            ),
+            WizardStep(id="preview", name="Preview", step_type=StepType.PREVIEW),
+        ]
+
+        result = await wizard.run()
+
+        output = result.generated_output
+        assert "target" in output
+        assert "analyze_result" not in output
+
+    @pytest.mark.asyncio
+    async def test_preview_includes_step_results_with_raw_response(self):
+        """Test preview shows raw_response when summary is absent."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="llm_step",
+                name="LLM Step",
+                step_type=StepType.LLM_CALL,
+            ),
+            WizardStep(id="preview", name="Preview", step_type=StepType.PREVIEW),
+        ]
+        wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("raw output here", 10, 5))
+        wizard._workflow._parse_xml_response = MagicMock(
+            return_value={"raw_response": "raw output here"}
+        )
+
+        result = await wizard.run()
+
+        assert "raw output here" in result.generated_output
+
+    @pytest.mark.asyncio
+    async def test_preview_step_raises_without_session(self):
+        """Test _run_preview_step raises RuntimeError without session."""
+        wizard = ConcreteWizard()
+        wizard._session = None
+        step = WizardStep(id="p", name="P", step_type=StepType.PREVIEW)
+        with pytest.raises(RuntimeError, match="session not initialized"):
+            await wizard._run_preview_step(step)
+
+
+class TestConditionEvaluationWithSessionState:
+    """Test step condition callbacks that examine session state."""
+
+    @pytest.mark.asyncio
+    async def test_condition_receives_session_with_prior_data(self):
+        """Test that condition callback receives populated session state."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        captured_sessions = []
+
+        def condition_capture(session):
+            captured_sessions.append(dict(session.collected_data))
+            return False  # Skip this step
+
+        mock_response = FormResponse(template_id="q1", responses={"user_input": "hello"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="q1",
+                name="Q",
+                step_type=StepType.QUESTION,
+                questions=[
+                    FormQuestion(id="user_input", text="Input?", type=QuestionType.TEXT_INPUT)
+                ],
+            ),
+            WizardStep(
+                id="conditional",
+                name="Conditional Step",
+                step_type=StepType.PREVIEW,
+                condition=condition_capture,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "conditional" not in result.steps_completed
+        # Condition was called with session that has the prior q1 data
+        assert len(captured_sessions) == 1
+        assert captured_sessions[0].get("user_input") == "hello"
+
+    @pytest.mark.asyncio
+    async def test_condition_true_does_not_skip(self):
+        """Test that condition returning True runs the step normally."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="always_run",
+                name="Always Run",
+                step_type=StepType.PREVIEW,
+                condition=lambda session: True,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "always_run" in result.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_multiple_conditions_some_skipped(self):
+        """Test mix of skipped and non-skipped conditional steps."""
+        wizard = ConcreteWizard()
+        wizard.steps = [
+            WizardStep(
+                id="step_skip",
+                name="Skip Me",
+                step_type=StepType.PREVIEW,
+                condition=lambda s: False,
+            ),
+            WizardStep(
+                id="step_run",
+                name="Run Me",
+                step_type=StepType.PREVIEW,
+                condition=lambda s: True,
+            ),
+            WizardStep(
+                id="step_skip2",
+                name="Skip Me Too",
+                step_type=StepType.PREVIEW,
+                condition=lambda s: False,
+            ),
+        ]
+
+        result = await wizard.run()
+
+        assert result.success is True
+        assert "step_skip" not in result.steps_completed
+        assert "step_run" in result.steps_completed
+        assert "step_skip2" not in result.steps_completed
+        assert len(wizard._session.steps_skipped) == 2
+
+
+class TestDispatchStep:
+    """Test _dispatch_step routes correctly to each handler."""
+
+    @pytest.mark.asyncio
+    async def test_dispatch_question_step(self):
+        """Test QUESTION step dispatch calls _run_question_step."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        mock_response = FormResponse(template_id="q", responses={"k": "v"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+
+        # Initialize session manually
+        from attune.wizards.session import WizardSession
+
+        wizard._session = WizardSession(wizard_id="test-wizard")
+
+        step = WizardStep(
+            id="q",
+            name="Q",
+            step_type=StepType.QUESTION,
+            questions=[FormQuestion(id="k", text="K?", type=QuestionType.TEXT_INPUT)],
+        )
+        await wizard._dispatch_step(step)
+
+        assert "q" in wizard._session.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_dispatch_preview_step(self):
+        """Test PREVIEW step dispatch calls _run_preview_step."""
+        wizard = ConcreteWizard()
+        from attune.wizards.session import WizardSession
+
+        wizard._session = WizardSession(wizard_id="test-wizard")
+
+        step = WizardStep(id="prev", name="Prev", step_type=StepType.PREVIEW)
+        await wizard._dispatch_step(step)
+
+        assert "prev" in wizard._session.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_dispatch_confirm_step(self):
+        """Test CONFIRM step dispatch calls _run_confirm_step."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+        from attune.wizards.session import WizardSession
+
+        mock_response = FormResponse(template_id="conf", responses={"confirm": "Yes, proceed"})
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard._session = WizardSession(wizard_id="test-wizard")
+
+        step = WizardStep(id="conf", name="Conf", step_type=StepType.CONFIRM)
+        await wizard._dispatch_step(step)
+
+        assert "conf" in wizard._session.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_dispatch_llm_step(self):
+        """Test LLM_CALL step dispatch calls _run_llm_step."""
+        wizard = ConcreteWizard()
+        wizard._workflow._render_xml_prompt = MagicMock(return_value="<p/>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("result", 10, 5))
+        wizard._workflow._parse_xml_response = MagicMock(return_value={"key": "val"})
+
+        from attune.wizards.session import WizardSession
+
+        wizard._session = WizardSession(wizard_id="test-wizard")
+
+        step = WizardStep(id="llm", name="LLM", step_type=StepType.LLM_CALL)
+        await wizard._dispatch_step(step)
+
+        assert "llm" in wizard._session.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_dispatch_decompose_step(self):
+        """Test TASK_DECOMPOSE step dispatch calls _run_decompose_step."""
+        from attune.wizards.decomposer import DecomposedTask
+        from attune.wizards.session import WizardSession
+
+        wizard = ConcreteWizard()
+        wizard._session = WizardSession(wizard_id="test-wizard")
+
+        mock_tasks = [DecomposedTask(task_id="1", name="t1", objective="Do it")]
+
+        with patch("attune.wizards.decomposer.TaskDecomposer") as MockDecomposer:
+            mock_instance = MagicMock()
+            mock_instance.decompose = AsyncMock(return_value=mock_tasks)
+            MockDecomposer.return_value = mock_instance
+
+            step = WizardStep(id="decomp", name="Decomp", step_type=StepType.TASK_DECOMPOSE)
+            await wizard._dispatch_step(step)
+
+        assert "decomp" in wizard._session.steps_completed
+
+    @pytest.mark.asyncio
+    async def test_dispatch_review_step(self):
+        """Test REVIEW step dispatch calls _run_review_step."""
+        from attune.meta_workflows.models import FormResponse
+        from attune.wizards.session import WizardSession
+
+        wizard = ConcreteWizard()
+        wizard._session = WizardSession(wizard_id="test-wizard")
+        # Pre-populate source step result
+        wizard._session.step_results["source_step"] = {"summary": "Analysis done"}
+
+        mock_response = FormResponse(
+            template_id="review", responses={"review_approval": "Yes, continue"}
+        )
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+
+        step = WizardStep(
+            id="review",
+            name="Review",
+            step_type=StepType.REVIEW,
+            review_source_step_id="source_step",
+        )
+        await wizard._dispatch_step(step)
+
+        assert "review" in wizard._session.steps_completed
+
+
+class TestRunWithInitialContext:
+    """Test run() with initial_context parameter."""
+
+    @pytest.mark.asyncio
+    async def test_initial_context_available_in_session(self):
+        """Test initial_context values are accessible via session.get()."""
+        wizard = ConcreteWizard()
+        wizard.steps = []  # No steps needed
+
+        result = await wizard.run(initial_context={"file": "auth.py", "mode": "strict"})
+
+        assert result.success is True
+        # Session should have captured initial context
+        assert wizard._session.initial_context.get("file") == "auth.py"
+        assert wizard._session.initial_context.get("mode") == "strict"
+
+    @pytest.mark.asyncio
+    async def test_run_none_initial_context_is_empty_dict(self):
+        """Test run() with None initial_context results in empty initial_context."""
+        wizard = ConcreteWizard()
+        wizard.steps = []
+
+        await wizard.run(initial_context=None)
+
+        assert wizard._session.initial_context == {}
+
+    @pytest.mark.asyncio
+    async def test_run_initial_context_does_not_override_collected_data(self):
+        """Test that session.set() overrides initial_context values."""
+        wizard = ConcreteWizard()
+        from attune.meta_workflows.models import FormResponse
+
+        # Form engine will return "new_value" for "key"
+        mock_response = FormResponse(
+            template_id="q1",
+            responses={"user_input": "from_form"},
+        )
+        wizard._form_engine.ask_questions = MagicMock(return_value=mock_response)
+        wizard.steps = [
+            WizardStep(
+                id="q1",
+                name="Q",
+                step_type=StepType.QUESTION,
+                questions=[
+                    FormQuestion(id="user_input", text="Input?", type=QuestionType.TEXT_INPUT)
+                ],
+            ),
+        ]
+
+        # Initial context has "user_input" = "from_context"
+        await wizard.run(initial_context={"user_input": "from_context"})
+
+        # collected_data should have the form value
+        assert wizard._session.collected_data.get("user_input") == "from_form"
+        # But initial_context is unchanged
+        assert wizard._session.initial_context.get("user_input") == "from_context"
+        # Session.get() prefers collected_data
+        assert wizard._session.get("user_input") == "from_form"

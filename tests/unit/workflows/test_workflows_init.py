@@ -167,3 +167,282 @@ class TestRefreshWorkflowRegistry:
 
         assert isinstance(WORKFLOW_REGISTRY, dict)
         assert len(WORKFLOW_REGISTRY) > 0
+
+
+class TestLoadCliCommands:
+    """Tests for _load_cli_commands lazy loading (lines 218-233)."""
+
+    def test_load_cli_commands_sets_loaded_flag(self):
+        """_load_cli_commands sets _cli_loaded to True."""
+
+        import attune.workflows as wf_module
+
+        # Reset state
+        wf_module._cli_loaded = False
+
+        wf_module._load_cli_commands()
+
+        assert wf_module._cli_loaded is True
+
+    def test_load_cli_commands_idempotent(self):
+        """_load_cli_commands does nothing when already loaded."""
+        import attune.workflows as wf_module
+
+        wf_module._cli_loaded = True
+        # Calling again should be a no-op (no error)
+        wf_module._load_cli_commands()
+
+        assert wf_module._cli_loaded is True
+
+    def test_getattr_cli_command_triggers_load(self):
+        """Accessing cmd_morning via __getattr__ triggers _load_cli_commands."""
+        from unittest.mock import patch
+
+        import attune.workflows as wf_module
+
+        with patch.object(wf_module, "_load_cli_commands") as mock_load:
+            # Reset so getattr can be triggered
+            wf_module._cli_loaded = False
+            try:
+                _ = wf_module.__getattr__("cmd_morning")
+            except Exception:
+                pass
+            mock_load.assert_called_once()
+
+
+class TestDiscoverWorkflowsWithConfig:
+    """Tests for discover_workflows with config (lines 335-375)."""
+
+    def test_discover_with_hipaa_mode_config(self):
+        """discover_workflows with HIPAA config includes opt-in workflows."""
+        from attune.workflows import discover_workflows
+        from attune.workflows.config import WorkflowConfig
+
+        config = WorkflowConfig(compliance_mode="hipaa")
+
+        # Should run without error even with empty _OPT_IN_WORKFLOW_NAMES
+        result = discover_workflows(config=config)
+
+        assert isinstance(result, dict)
+
+    def test_discover_with_enabled_workflows_in_config(self):
+        """discover_workflows with enabled_workflows processes them."""
+        from attune.workflows import discover_workflows
+        from attune.workflows.config import WorkflowConfig
+
+        # enabled_workflows only apply to _OPT_IN_WORKFLOW_NAMES entries
+        config = WorkflowConfig(enabled_workflows=["nonexistent-opt-in"])
+
+        result = discover_workflows(config=config)
+
+        assert isinstance(result, dict)
+
+    def test_discover_with_disabled_workflows_in_config(self):
+        """discover_workflows removes disabled workflows from result."""
+        from attune.workflows import discover_workflows
+        from attune.workflows.config import WorkflowConfig
+
+        config = WorkflowConfig(disabled_workflows=["code-review", "bug-predict"])
+        result = discover_workflows(config=config)
+
+        assert "code-review" not in result
+        assert "bug-predict" not in result
+
+    def test_discover_entry_points_exception_swallowed(self):
+        """discover_workflows handles entry_points() exceptions silently."""
+        from unittest.mock import patch
+
+        from attune.workflows import discover_workflows
+
+        with patch(
+            "importlib.metadata.entry_points",
+            side_effect=Exception("ep error"),
+        ):
+            result = discover_workflows()
+
+        assert isinstance(result, dict)
+
+    def test_discover_entry_point_load_failure_skipped(self):
+        """discover_workflows skips entry points that fail to load."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows import discover_workflows
+
+        mock_ep = MagicMock()
+        mock_ep.name = "failing-workflow"
+        mock_ep.load.side_effect = Exception("load failed")
+
+        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
+            result = discover_workflows()
+
+        assert "failing-workflow" not in result
+
+    def test_discover_entry_point_not_type_skipped(self):
+        """discover_workflows skips entry points that are not types."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows import discover_workflows
+
+        mock_ep = MagicMock()
+        mock_ep.name = "not-a-type"
+        mock_ep.load.return_value = "just a string"  # Not a type
+
+        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
+            result = discover_workflows()
+
+        assert "not-a-type" not in result
+
+    def test_discover_entry_point_with_execute_added(self):
+        """discover_workflows adds entry points that are types with execute attr."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows import discover_workflows
+
+        class FakeWorkflow:
+            execute = lambda self: None  # noqa: E731
+
+        mock_ep = MagicMock()
+        mock_ep.name = "fake-ep-workflow"
+        mock_ep.load.return_value = FakeWorkflow
+
+        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
+            result = discover_workflows(include_defaults=False)
+
+        assert "fake-ep-workflow" in result
+
+    def test_discover_entry_point_disabled_not_added(self):
+        """discover_workflows respects config.disabled_workflows for entry points."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.workflows import discover_workflows
+        from attune.workflows.config import WorkflowConfig
+
+        class FakeWorkflow:
+            execute = lambda self: None  # noqa: E731
+
+        mock_ep = MagicMock()
+        mock_ep.name = "disabled-ep-workflow"
+        mock_ep.load.return_value = FakeWorkflow
+
+        config = WorkflowConfig(disabled_workflows=["disabled-ep-workflow"])
+
+        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
+            result = discover_workflows(include_defaults=False, config=config)
+
+        assert "disabled-ep-workflow" not in result
+
+
+class TestGetOptInWorkflows:
+    """Tests for get_opt_in_workflows (lines 402-408)."""
+
+    def test_get_opt_in_returns_dict(self):
+        """get_opt_in_workflows returns a dict."""
+        from attune.workflows import get_opt_in_workflows
+
+        result = get_opt_in_workflows()
+
+        assert isinstance(result, dict)
+
+    def test_get_opt_in_empty_when_no_opt_in(self):
+        """get_opt_in_workflows returns empty dict when no opt-in workflows."""
+        from attune.workflows import _OPT_IN_WORKFLOW_NAMES, get_opt_in_workflows
+
+        # _OPT_IN_WORKFLOW_NAMES is empty by default
+        result = get_opt_in_workflows()
+
+        if not _OPT_IN_WORKFLOW_NAMES:
+            assert result == {}
+
+
+class TestGetWorkflowErrorMessage:
+    """Tests for get_workflow error message (line 430-431)."""
+
+    def test_unknown_workflow_error_includes_available(self):
+        """KeyError message for unknown workflow includes available workflows."""
+        from attune.workflows import get_workflow
+
+        with pytest.raises(KeyError) as exc_info:
+            get_workflow("totally-unknown-xyz")
+
+        # Error message should include "Available:"
+        assert "Available" in str(exc_info.value)
+
+
+class TestListWorkflowsTierMap:
+    """Tests for list_workflows tier_map serialization."""
+
+    def test_list_workflows_tier_map_serialized(self):
+        """list_workflows serializes tier_map values to strings."""
+        from attune.workflows import list_workflows
+
+        workflows = list_workflows()
+
+        for wf in workflows:
+            assert "tier_map" in wf
+            # All tier_map values should be strings (enum.value)
+            for key, val in wf["tier_map"].items():
+                assert isinstance(val, str), f"tier_map[{key}] should be str, got {type(val)}"
+
+    def test_list_workflows_description_field(self):
+        """list_workflows includes description for each workflow."""
+        from attune.workflows import list_workflows
+
+        workflows = list_workflows()
+
+        for wf in workflows:
+            assert "description" in wf
+            assert isinstance(wf["description"], str)
+
+
+class TestGetatttrMigrationExports:
+    """Tests for __getattr__ migration module exports (lines 480-483)."""
+
+    def test_getattr_resolve_workflow_migration(self):
+        """__getattr__ resolves migration module exports."""
+        import attune.workflows as wf_module
+
+        # resolve_workflow_migration should be accessible via __getattr__
+        func = wf_module.__getattr__("resolve_workflow_migration")
+        assert callable(func)
+
+    def test_getattr_workflow_aliases(self):
+        """__getattr__ resolves WORKFLOW_ALIASES."""
+        import attune.workflows as wf_module
+
+        aliases = wf_module.__getattr__("WORKFLOW_ALIASES")
+        assert aliases is not None
+
+    def test_getattr_list_migrations(self):
+        """__getattr__ resolves list_migrations."""
+        import attune.workflows as wf_module
+
+        func = wf_module.__getattr__("list_migrations")
+        assert callable(func)
+
+    def test_getattr_lazy_workflow_class(self):
+        """__getattr__ triggers lazy import for known workflow class."""
+        import attune.workflows as wf_module
+
+        cls = wf_module.__getattr__("SecurityAuditWorkflow")
+        assert cls is not None
+
+    def test_getattr_unknown_raises_attribute_error(self):
+        """__getattr__ raises AttributeError for unknown names."""
+        import attune.workflows as wf_module
+
+        with pytest.raises(AttributeError, match="has no attribute"):
+            wf_module.__getattr__("AbsolutelyFakeWorkflow999")
+
+
+class TestLazyCacheHit:
+    """Tests for lazy import caching (lines 188-200)."""
+
+    def test_lazy_import_caches_result(self):
+        """Second call to _lazy_import_workflow returns cached result."""
+        from attune.workflows import _lazy_import_workflow
+
+        # Call twice - second call should hit cache
+        cls1 = _lazy_import_workflow("SecurityAuditWorkflow")
+        cls2 = _lazy_import_workflow("SecurityAuditWorkflow")
+
+        assert cls1 is cls2

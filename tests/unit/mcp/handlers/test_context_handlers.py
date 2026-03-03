@@ -1,0 +1,220 @@
+"""Unit tests for attune.mcp.handlers.context_handlers."""
+
+from __future__ import annotations
+
+from unittest.mock import MagicMock
+
+import pytest
+
+from attune.mcp.handlers.context_handlers import (
+    handle_attune_get_level,
+    handle_attune_set_level,
+    handle_context_get,
+    handle_context_set,
+)
+
+
+def _make_server(context: dict | None = None, attune_level: int = 3) -> MagicMock:
+    """Build a minimal server mock with _context and _attune_level."""
+    server = MagicMock()
+    server._context = context if context is not None else {}
+    server._attune_level = attune_level
+    return server
+
+
+class TestHandleContextGet:
+    """Tests for handle_context_get()."""
+
+    @pytest.mark.asyncio
+    async def test_context_get_existing_key_returns_value(self):
+        """Returns found=True and correct value for a key that exists."""
+        server = _make_server(context={"my_key": "hello"})
+        result = await handle_context_get(server, {"key": "my_key"})
+
+        assert result["success"] is True
+        assert result["key"] == "my_key"
+        assert result["value"] == "hello"
+        assert result["found"] is True
+
+    @pytest.mark.asyncio
+    async def test_context_get_missing_key_returns_none(self):
+        """Returns found=False and value=None for a key that does not exist."""
+        server = _make_server(context={})
+        result = await handle_context_get(server, {"key": "ghost"})
+
+        assert result["success"] is True
+        assert result["key"] == "ghost"
+        assert result["value"] is None
+        assert result["found"] is False
+
+    @pytest.mark.asyncio
+    async def test_context_get_dict_value(self):
+        """Works correctly when stored value is a dict."""
+        server = _make_server(context={"cfg": {"level": 2}})
+        result = await handle_context_get(server, {"key": "cfg"})
+
+        assert result["value"] == {"level": 2}
+        assert result["found"] is True
+
+    @pytest.mark.asyncio
+    async def test_context_get_integer_value(self):
+        """Works correctly when stored value is an integer."""
+        server = _make_server(context={"count": 42})
+        result = await handle_context_get(server, {"key": "count"})
+
+        assert result["value"] == 42
+        assert result["found"] is True
+
+
+class TestHandleContextSet:
+    """Tests for handle_context_set()."""
+
+    @pytest.mark.asyncio
+    async def test_context_set_stores_value(self):
+        """Stores the value in server._context under the given key."""
+        server = _make_server()
+        result = await handle_context_set(server, {"key": "token", "value": "abc123"})
+
+        assert result["success"] is True
+        assert result["key"] == "token"
+        assert result["value"] == "abc123"
+        assert server._context["token"] == "abc123"
+
+    @pytest.mark.asyncio
+    async def test_context_set_overwrites_existing(self):
+        """Overwrites a previously set key."""
+        server = _make_server(context={"k": "old"})
+        await handle_context_set(server, {"key": "k", "value": "new"})
+
+        assert server._context["k"] == "new"
+
+    @pytest.mark.asyncio
+    async def test_context_set_none_value(self):
+        """Stores None as a valid value."""
+        server = _make_server()
+        result = await handle_context_set(server, {"key": "nullish", "value": None})
+
+        assert result["value"] is None
+        assert server._context["nullish"] is None
+
+    @pytest.mark.asyncio
+    async def test_context_set_dict_value(self):
+        """Stores a nested dict as the value."""
+        server = _make_server()
+        payload = {"a": 1, "b": [1, 2, 3]}
+        result = await handle_context_set(server, {"key": "nested", "value": payload})
+
+        assert result["value"] == payload
+        assert server._context["nested"] == payload
+
+
+class TestHandleAttuneGetLevel:
+    """Tests for handle_attune_get_level()."""
+
+    @pytest.mark.asyncio
+    async def test_get_level_returns_all_keys(self):
+        """Result contains success, level, name, description."""
+        server = _make_server(attune_level=3)
+        result = await handle_attune_get_level(server)
+
+        assert result["success"] is True
+        assert "level" in result
+        assert "name" in result
+        assert "description" in result
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "level, expected_name",
+        [
+            (1, "Reactive"),
+            (2, "Guided"),
+            (3, "Proactive"),
+            (4, "Anticipatory"),
+            (5, "Systems"),
+        ],
+    )
+    async def test_get_level_name_for_each_level(self, level: int, expected_name: str):
+        """Returns the correct name for each valid level 1–5."""
+        server = _make_server(attune_level=level)
+        result = await handle_attune_get_level(server)
+
+        assert result["level"] == level
+        assert result["name"] == expected_name
+
+    @pytest.mark.asyncio
+    async def test_get_level_unknown_level(self):
+        """Out-of-range level returns 'Unknown' name and empty description."""
+        server = _make_server(attune_level=99)
+        result = await handle_attune_get_level(server)
+
+        assert result["name"] == "Unknown"
+        assert result["description"] == ""
+
+    @pytest.mark.asyncio
+    async def test_get_level_description_not_empty_for_valid_levels(self):
+        """Each valid level has a non-empty description."""
+        for level in range(1, 6):
+            server = _make_server(attune_level=level)
+            result = await handle_attune_get_level(server)
+            assert result["description"], f"Expected non-empty description for level {level}"
+
+
+class TestHandleAttuneSetLevel:
+    """Tests for handle_attune_set_level()."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("level", [1, 2, 3, 4, 5])
+    async def test_set_level_valid_levels_succeed(self, level: int):
+        """All integer levels 1–5 are accepted."""
+        server = _make_server(attune_level=1)
+        result = await handle_attune_set_level(server, {"level": level})
+
+        assert result["success"] is True
+        assert result["current_level"] == level
+        assert server._attune_level == level
+
+    @pytest.mark.asyncio
+    async def test_set_level_returns_previous_level(self):
+        """previous_level reflects the level before the update."""
+        server = _make_server(attune_level=2)
+        result = await handle_attune_set_level(server, {"level": 4})
+
+        assert result["previous_level"] == 2
+        assert result["current_level"] == 4
+
+    @pytest.mark.asyncio
+    async def test_set_level_returns_name(self):
+        """Result includes the name of the new level."""
+        server = _make_server(attune_level=1)
+        result = await handle_attune_set_level(server, {"level": 3})
+
+        assert result["name"] == "Proactive"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("bad_level", [0, 6, -1, 100])
+    async def test_set_level_out_of_range_returns_error(self, bad_level: int):
+        """Integers outside 1–5 return success=False with error message."""
+        server = _make_server(attune_level=3)
+        result = await handle_attune_set_level(server, {"level": bad_level})
+
+        assert result["success"] is False
+        assert "error" in result
+        assert server._attune_level == 3  # unchanged
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("bad_value", ["3", 3.5, None, [], {}])
+    async def test_set_level_non_integer_returns_error(self, bad_value):
+        """Non-integer values return success=False."""
+        server = _make_server(attune_level=2)
+        result = await handle_attune_set_level(server, {"level": bad_value})
+
+        assert result["success"] is False
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_set_level_missing_level_key_returns_error(self):
+        """Missing level key (returns None from .get()) returns error."""
+        server = _make_server(attune_level=1)
+        result = await handle_attune_set_level(server, {})
+
+        assert result["success"] is False
