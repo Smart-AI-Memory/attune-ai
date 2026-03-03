@@ -402,7 +402,15 @@ class TestAuditWorkflow(BaseWorkflow):
 
 
 def _module_to_dict(m: ModuleCoverage) -> dict:
-    """Serialize a ModuleCoverage to a plain dict."""
+    """Serialize a ModuleCoverage to a plain dict.
+
+    Args:
+        m: ModuleCoverage object to serialize.
+
+    Returns:
+        Dict with keys: path, stmts, covered, missing_lines, pct, priority.
+
+    """
     return {
         "path": m.path,
         "stmts": m.stmts,
@@ -414,7 +422,15 @@ def _module_to_dict(m: ModuleCoverage) -> dict:
 
 
 def _dict_to_module(d: dict) -> ModuleCoverage:
-    """Deserialize a plain dict to a ModuleCoverage."""
+    """Deserialize a plain dict to a ModuleCoverage.
+
+    Args:
+        d: Dict with keys: path, stmts, covered, missing_lines, pct, priority.
+
+    Returns:
+        Reconstructed ModuleCoverage object.
+
+    """
     return ModuleCoverage(
         path=d.get("path", ""),
         stmts=d.get("stmts", 0),
@@ -472,13 +488,14 @@ def _build_batch_result(batch: dict) -> dict:
     """Build an execute-stage result for a batch.
 
     This produces the spec for what tests should be written.
-    Actual test writing is delegated to the agent/user.
+    Actual test writing is delegated to the agent or user.
 
     Args:
         batch: Batch spec dict from the plan stage.
 
     Returns:
-        Dict describing the planned test additions.
+        Dict with keys: batch_id, subsystem, tests_added, files_created,
+        task_xml, status.
 
     """
     return {
@@ -516,10 +533,11 @@ def _parse_coverage_total(data: dict) -> float | None:
     """Extract overall coverage percentage from coverage.json data.
 
     Args:
-        data: Parsed coverage.json dict.
+        data: Parsed coverage.json dict with 'totals' key.
 
     Returns:
-        Coverage percentage as float, or None if unavailable.
+        Coverage percentage (0-100) as float, or None if unavailable
+        or unparseable.
 
     """
     totals = data.get("totals", {})
@@ -539,7 +557,7 @@ def _load_json_safe(path: str) -> dict:
         path: File path to read.
 
     Returns:
-        Parsed JSON dict, or empty dict on any error.
+        Parsed JSON dict, or empty dict on OSError or JSONDecodeError.
 
     """
     try:

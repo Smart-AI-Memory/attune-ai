@@ -1,12 +1,12 @@
 ---
-description: Attune AI API Reference API reference: **Version:** 3.1.0 **License:** Apache License 2.0 **Copyright:** 2025 Smart AI Memory, LLC --- ## Tabl
+description: Attune AI API Reference API reference: **Version:** 3.8.0 **License:** Apache License 2.0 **Copyright:** 2025-2026 Smart AI Memory, LLC --- ## Tabl
 ---
 
 # Attune AI API Reference
 
-**Version:** 3.1.0
+**Version:** 3.8.0
 **License:** Apache License 2.0
-**Copyright:** 2025 Smart AI Memory, LLC
+**Copyright:** 2025-2026 Smart AI Memory, LLC
 
 ---
 
@@ -38,6 +38,9 @@ description: Attune AI API Reference API reference: **Version:** 3.1.0 **License
   - [SecurityWizard](#securitywizard)
   - [PerformanceWizard](#performancewizard)
   - [All Available Wizards](#all-available-wizards)
+- [Workflows](#workflows)
+  - [TestAuditWorkflow](#testauditworkflow)
+  - [DocAuditWorkflow](#docauditworkflow)
 - [Plugin System](#plugin-system)
   - [BasePlugin](#baseplugin)
   - [SoftwarePlugin](#softwareplugin)
@@ -1189,6 +1192,196 @@ from coach_wizards import (
     # ... import others as needed
 )
 ```
+
+---
+
+## Workflows
+
+Attune AI workflows are multi-stage pipelines built on
+`BaseWorkflow`. Each workflow defines named stages, a
+model tier map, and an async `run_stage()` dispatcher.
+
+```python
+from attune.workflows import list_workflows
+
+# List all registered workflows
+for wf in list_workflows():
+    print(wf["name"], "-", wf["description"])
+```
+
+### TestAuditWorkflow
+
+Autonomous test coverage audit and generation workflow.
+Runs `pytest --cov`, prioritizes modules by coverage gap,
+generates batch task specs, and verifies results.
+
+**Module:** `attune.workflows.test_audit`
+
+#### Constructor
+
+```python
+from attune.workflows.test_audit import TestAuditWorkflow
+
+workflow = TestAuditWorkflow(
+    target_coverage: float = 90.0,
+    min_module_coverage: float = 50.0,
+    max_batches: int = 5,
+    batch_parallelism: int = 3,
+    mode: str = "deep",
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `target_coverage` | `float` | `90.0` | Overall coverage target percentage |
+| `min_module_coverage` | `float` | `50.0` | Modules below this % are included in the plan |
+| `max_batches` | `int` | `5` | Maximum number of test-gen batches |
+| `batch_parallelism` | `int` | `3` | Concurrent batches in execute stage |
+| `mode` | `str` | `"deep"` | `"deep"` (all 4 stages) or `"quick"` (audit + verify only) |
+
+#### Stages
+
+| Stage | Tier | Description |
+|-------|------|-------------|
+| `audit` | CHEAP | Run `pytest --cov`, parse coverage JSON, prioritize modules |
+| `plan` | CAPABLE | Group modules into batches, generate XML task specs |
+| `execute` | CAPABLE | Produce test generation specs per batch (skipped in quick mode) |
+| `verify` | CHEAP | Re-run test suite, compare before/after coverage |
+
+#### Usage
+
+```python
+workflow = TestAuditWorkflow(target_coverage=85.0, mode="quick")
+result = await workflow.execute(src_path="src/attune")
+
+# Result includes:
+# - coverage_before / coverage_after / delta
+# - modules_below_threshold
+# - batches (in deep mode)
+# - tests_total, regressions
+```
+
+#### Supporting Classes
+
+**ModuleCoverage** — Coverage data for a single module.
+
+```python
+from attune.workflows.test_audit.coverage_parser import (
+    ModuleCoverage,
+    parse_coverage_json,
+    prioritize_modules,
+    group_into_batches,
+)
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `path` | `str` | File path of the module |
+| `stmts` | `int` | Total statements |
+| `covered` | `int` | Covered statements |
+| `missing_lines` | `list[int]` | Uncovered line numbers |
+| `pct` | `float` | Coverage percentage (0-100) |
+| `priority` | `float` | `(1 - pct/100) * stmts` — higher = more urgent |
+
+**Functions:**
+
+| Function | Description |
+|----------|-------------|
+| `parse_coverage_json(path)` | Parse pytest-cov's coverage.json output |
+| `prioritize_modules(modules, min_threshold)` | Filter and sort modules by coverage gap |
+| `group_into_batches(modules, max_batches)` | Group modules by subsystem into batches |
+
+---
+
+### DocAuditWorkflow
+
+Documentation accuracy audit and gap-filling workflow.
+Runs 10 programmatic checks, plans fixes, applies
+auto-fixable changes, and verifies results.
+
+**Module:** `attune.workflows.doc_audit`
+
+#### Constructor
+
+```python
+from attune.workflows.doc_audit import DocAuditWorkflow
+
+workflow = DocAuditWorkflow(
+    auto_fix: bool = True,
+    build_docs: bool = True,
+    strict: bool = True,
+    project_root: str = ".",
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `auto_fix` | `bool` | `True` | Apply safe auto-fixable changes |
+| `build_docs` | `bool` | `True` | Run `mkdocs build --strict` to verify links |
+| `strict` | `bool` | `True` | Treat warnings as failures when scoring |
+| `project_root` | `str` | `"."` | Root directory to audit |
+
+#### Stages
+
+| Stage | Tier | Description |
+|-------|------|-------------|
+| `audit` | CHEAP | Run all 10 checks, compute 0-100 health score |
+| `plan` | CAPABLE | Generate fix plans for failing/warning checks |
+| `execute` | CAPABLE | Apply auto-fixable changes (badge counts in README) |
+| `verify` | CHEAP | Re-run all checks, compare before/after scores |
+
+#### Usage
+
+```python
+workflow = DocAuditWorkflow(project_root=".", strict=True)
+result = await workflow.execute()
+
+# Result includes:
+# - before_score / after_score / improved
+# - applied (auto-fixed count) / manual (needs human)
+# - mkdocs_build (True/False/None)
+# - checks (list of CheckResult dicts)
+```
+
+#### Audit Checks
+
+The workflow runs these 10 checks via `run_all_checks()`:
+
+| Check ID | Description |
+|----------|-------------|
+| `test-count` | README test badge matches `pytest --collect-only` |
+| `workflow-count` | README workflow count matches registry |
+| `skill-count` | README skill count matches `.claude/commands/` |
+| `mcp-tool-count` | README MCP tool count matches `@server.tool()` decorators |
+| `file-line-limits` | No Python file in `src/` exceeds 1000 lines |
+| `install-extras` | Extras match between `pyproject.toml` and README |
+| `stale-references` | No references to removed features in docs |
+| `version-consistency` | Version matches across pyproject.toml, `__init__.py`, CHANGELOG |
+| `cross-doc-numbers` | Numeric claims consistent across all docs |
+| `documentation-links` | Local markdown links resolve to existing files |
+
+**CheckResult** — Result of a single audit check.
+
+```python
+from attune.workflows.doc_audit.checks import (
+    CheckResult,
+    run_all_checks,
+)
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `str` | Check identifier (e.g. `"test-count"`) |
+| `name` | `str` | Human-readable name |
+| `status` | `str` | `"pass"`, `"fail"`, or `"warn"` |
+| `details` | `str` | Explanation of what was found |
+| `file` | `str \| None` | Relevant file path |
+| `line` | `int \| None` | Line number in the file |
+| `auto_fixable` | `bool` | Whether the check can be fixed automatically |
 
 ---
 

@@ -102,7 +102,10 @@ class DocAuditWorkflow(BaseWorkflow):
     # ------------------------------------------------------------------
 
     async def _audit(self, input_data: dict) -> tuple[dict, int, int]:
-        """Run all 10 checks and compute a score.
+        """Run all 10 documentation checks and compute a score.
+
+        Checks cover test counts, workflow counts, version consistency,
+        broken links, and other documentation accuracy metrics.
 
         Args:
             input_data: Workflow input dict. May contain "project_root"
@@ -110,7 +113,8 @@ class DocAuditWorkflow(BaseWorkflow):
 
         Returns:
             Tuple of (output, input_tokens, output_tokens).
-            Output keys: checks (list[dict]), score (int 0-100).
+            Output keys: checks (list[dict]), score (int 0-100),
+            project_root (str).
 
         """
         root = input_data.get("project_root", self.project_root)
@@ -135,14 +139,17 @@ class DocAuditWorkflow(BaseWorkflow):
         return output, input_tokens, output_tokens
 
     async def _plan(self, input_data: dict) -> tuple[dict, int, int]:
-        """For each failing check generate a fix plan dict.
+        """Generate fix plans for each failing or warning check.
+
+        For each check with status "fail" or "warn", collects metadata
+        about the issue and whether it can be auto-fixed.
 
         Args:
             input_data: Output from the audit stage; must contain "checks".
 
         Returns:
             Tuple of (output, input_tokens, output_tokens).
-            Output keys: fixes (list[dict]).
+            Output keys: fixes (list[dict]), plus all keys from input_data.
 
         """
         checks = input_data.get("checks", [])
@@ -171,13 +178,14 @@ class DocAuditWorkflow(BaseWorkflow):
         return output, input_tokens, output_tokens
 
     async def _execute(self, input_data: dict) -> tuple[dict, int, int]:
-        """Apply auto-fixable changes.
+        """Apply auto-fixable documentation changes to disk.
 
-        Currently handles:
-        - Updating numeric count badges in README.md (test-count,
-          workflow-count, skill-count, mcp-tool-count).
+        Currently handles updating numeric count badges in README.md
+        for test-count, workflow-count, skill-count, and mcp-tool-count.
+        Manual-review items are identified but not modified.
 
-        Manual-review items are collected but not modified.
+        Respects the auto_fix instance flag; if False, no changes
+        are applied.
 
         Args:
             input_data: Output from the plan stage.
@@ -185,7 +193,7 @@ class DocAuditWorkflow(BaseWorkflow):
         Returns:
             Tuple of (output, input_tokens, output_tokens).
             Output keys: applied (int), manual (int),
-                         files_modified (list[str]).
+            files_modified (list[str]), plus all keys from input_data.
 
         """
         fixes = input_data.get("fixes", [])
@@ -240,9 +248,10 @@ class DocAuditWorkflow(BaseWorkflow):
         return output, input_tokens, output_tokens
 
     async def _verify(self, input_data: dict) -> tuple[dict, int, int]:
-        """Re-run all checks and compare scores.
+        """Re-run all checks and compare before/after scores.
 
-        Optionally runs mkdocs build to verify no broken links.
+        Optionally runs mkdocs build to verify documentation builds
+        without errors. Includes all check results from both audit rounds.
 
         Args:
             input_data: Output from the execute stage.
@@ -250,7 +259,8 @@ class DocAuditWorkflow(BaseWorkflow):
         Returns:
             Tuple of (output, input_tokens, output_tokens).
             Output keys: before_score (int), after_score (int),
-                         improved (bool), mkdocs_build (bool|None).
+            improved (bool), mkdocs_build (bool|None),
+            after_checks (list[dict]), plus all keys from input_data.
 
         """
         root = input_data.get("project_root", self.project_root)
@@ -286,15 +296,16 @@ class DocAuditWorkflow(BaseWorkflow):
     # ------------------------------------------------------------------
 
     def _compute_score(self, results: list[CheckResult]) -> int:
-        """Compute a 0-100 score from check results.
+        """Compute a 0-100 documentation health score.
 
-        In strict mode, warnings also count as failures.
+        Calculated as (passed_checks / total_checks) * 100.
+        In strict mode, warnings count as failures.
 
         Args:
             results: List of CheckResult objects.
 
         Returns:
-            Integer score 0-100.
+            Integer score 0-100, or 100 if results is empty.
 
         """
         if not results:
@@ -306,13 +317,14 @@ class DocAuditWorkflow(BaseWorkflow):
 
     @staticmethod
     def _serialise_check(result: CheckResult) -> dict:
-        """Convert a CheckResult dataclass to a plain dict.
+        """Convert a CheckResult dataclass to a JSON-serializable dict.
 
         Args:
             result: CheckResult instance.
 
         Returns:
-            Dict with id, name, status, details, file, line, auto_fixable.
+            Dict with keys: id, name, status, details, file, line,
+            auto_fixable.
 
         """
         return {
@@ -331,18 +343,20 @@ class DocAuditWorkflow(BaseWorkflow):
         checks_by_id: dict[str, dict],
         root: Path,
     ) -> str | None:
-        """Apply a count-update fix to README.md for the given check.
+        """Update numeric count badges in README.md.
 
-        Supported check IDs: test-count, workflow-count,
-        skill-count, mcp-tool-count.
+        Supports: test-count, workflow-count, skill-count, mcp-tool-count.
+        Extracts the actual count from the check details and replaces
+        the stale badge value with the correct one using regex.
 
         Args:
-            check_id: The check identifier.
-            checks_by_id: Dict of check data keyed by id.
+            check_id: The check identifier (e.g. "test-count").
+            checks_by_id: Dict of check data keyed by check id.
             root: Project root Path.
 
         Returns:
-            File path that was modified, or None if no change was made.
+            Path to README.md if modified, None if no change was made
+            or file does not exist.
 
         """
         readme_path = root / "README.md"
@@ -395,17 +409,17 @@ class DocAuditWorkflow(BaseWorkflow):
             return None
 
     def _run_mkdocs_build(self, project_root: str) -> bool | None:
-        """Run mkdocs build to verify no broken links.
+        """Run mkdocs build to verify documentation completeness.
 
-        Returns True on success, False on failure, None if mkdocs is
-        not installed.
+        Builds the documentation site in a temporary directory with
+        strict mode enabled to catch missing references.
 
         Args:
             project_root: Root directory of the project.
 
         Returns:
-            True if build succeeded, False if it failed, None if mkdocs
-            is not available.
+            True if build succeeded, False if it failed (exit code != 0),
+            None if mkdocs is not installed.
 
         """
         import subprocess

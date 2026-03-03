@@ -39,13 +39,16 @@ class CheckResult:
 
 
 def check_test_count(project_root: str = ".") -> CheckResult:
-    """Count tests via pytest --collect-only and compare to README badge.
+    """Verify test count badge in README matches actual pytest count.
+
+    Runs pytest --collect-only to get the actual test count and
+    searches README.md for badge patterns like "tests-146-" or "146 tests".
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and file path if applicable.
 
     """
     root = Path(project_root)
@@ -130,16 +133,16 @@ def check_test_count(project_root: str = ".") -> CheckResult:
 
 
 def check_workflow_count(project_root: str = ".") -> CheckResult:
-    """Count workflows in _DEFAULT_WORKFLOW_NAMES and compare to docs.
+    """Verify workflow count in docs matches registered workflows.
 
-    Parses src/attune/workflows/__init__.py for the dict literal rather
-    than importing the module.
+    Parses _DEFAULT_WORKFLOW_NAMES dict from workflows/__init__.py
+    (without importing) and compares to README.md claims.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and file paths if applicable.
 
     """
     root = Path(project_root)
@@ -208,13 +211,15 @@ def check_workflow_count(project_root: str = ".") -> CheckResult:
 
 
 def check_skill_count(project_root: str = ".") -> CheckResult:
-    """Count .md files in .claude/commands/ and compare to docs.
+    """Verify skill count in docs matches .claude/commands/ files.
+
+    Counts .md files in .claude/commands/ and compares to README.md.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and file paths if applicable.
 
     """
     root = Path(project_root)
@@ -267,13 +272,16 @@ def check_skill_count(project_root: str = ".") -> CheckResult:
 
 
 def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
-    """Count @server.tool() decorators in src/ and compare to docs.
+    """Verify MCP tool count in docs matches @server.tool() decorators.
+
+    Searches all .py files in src/ for @server.tool() decorators
+    and compares count to README.md.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and file paths if applicable.
 
     """
     root = Path(project_root)
@@ -341,13 +349,15 @@ def check_mcp_tool_count(project_root: str = ".") -> CheckResult:
 
 
 def check_file_line_limits(project_root: str = ".") -> CheckResult:
-    """Check that no Python file in src/ exceeds 1000 lines.
+    """Verify no Python file in src/ exceeds 1000 lines.
+
+    Scans all .py files recursively and flags violations.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and violating files if any.
 
     """
     root = Path(project_root)
@@ -397,13 +407,16 @@ def check_file_line_limits(project_root: str = ".") -> CheckResult:
 
 
 def check_install_extras(project_root: str = ".") -> CheckResult:
-    """Compare [project.optional-dependencies] in pyproject.toml to README.
+    """Verify install extras match between pyproject.toml and README.
+
+    Extracts [project.optional-dependencies] from pyproject.toml and
+    searches for corresponding extras in README.md install examples.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and file paths if applicable.
 
     """
     root = Path(project_root)
@@ -488,16 +501,16 @@ def check_install_extras(project_root: str = ".") -> CheckResult:
 
 
 def check_stale_references(project_root: str = ".") -> CheckResult:
-    """Grep docs and .claude/ for removed/renamed patterns.
+    """Detect references to removed or deprecated features in docs.
 
-    Looks for references to removed features such as "dashboard",
-    "empathy_framework", or other deprecated names.
+    Searches docs/, .claude/commands/, and README.md for patterns
+    like "dashboard", "empathy_framework", and other removed names.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and files with stale refs.
 
     """
     root = Path(project_root)
@@ -555,13 +568,15 @@ def check_stale_references(project_root: str = ".") -> CheckResult:
 
 
 def check_version_consistency(project_root: str = ".") -> CheckResult:
-    """Compare version strings across pyproject.toml, __init__.py, CHANGELOG.md.
+    """Verify version is consistent across pyproject.toml, __init__.py, CHANGELOG.md.
+
+    Extracts version strings from all three files and confirms they match.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and version mismatches if any.
 
     """
     root = Path(project_root)
@@ -622,16 +637,16 @@ def check_version_consistency(project_root: str = ".") -> CheckResult:
 
 
 def check_cross_doc_numbers(project_root: str = ".") -> CheckResult:
-    """Find numeric claims in docs that contradict each other.
+    """Detect contradictory numeric claims across documentation.
 
-    Scans README.md and docs/ for sentences containing numbers adjacent
-    to common nouns (tests, workflows, skills) and flags contradictions.
+    Scans README.md and docs/ for numeric patterns adjacent to nouns
+    (tests, workflows, skills, etc.) and flags inconsistencies.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and contradictions if found.
 
     """
     root = Path(project_root)
@@ -691,17 +706,17 @@ def check_cross_doc_numbers(project_root: str = ".") -> CheckResult:
 
 
 def check_documentation_links(project_root: str = ".") -> CheckResult:
-    """Verify that local links in .md files resolve to existing files.
+    """Verify local links in markdown files resolve to existing files.
 
-    Scans all .md files under docs/ and .claude/commands/ for
-    Markdown links like [text](path) where path does not start with
-    http:// or https://.
+    Scans all .md files in docs/, .claude/commands/, and README.md for
+    Markdown links [text](path) where path is not an http(s) URL or anchor,
+    and checks that target files exist.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        CheckResult with pass/fail/warn status.
+        CheckResult with pass/fail/warn status and broken links if any.
 
     """
     root = Path(project_root)
@@ -780,7 +795,8 @@ def _find_numeric_claim(path: Path, pattern: str) -> int | None:
         pattern: Regex pattern with one numeric capture group.
 
     Returns:
-        Matched integer or None.
+        Matched integer or None if path does not exist or pattern
+        is not found.
 
     """
     if not path.exists():
@@ -796,13 +812,16 @@ def _find_numeric_claim(path: Path, pattern: str) -> int | None:
 
 
 def run_all_checks(project_root: str = ".") -> list[CheckResult]:
-    """Run all 10 documentation audit checks.
+    """Run all 10 documentation audit checks in sequence.
+
+    Checks cover test counts, workflow counts, version consistency,
+    broken links, stale references, and other accuracy metrics.
 
     Args:
         project_root: Root directory of the project.
 
     Returns:
-        List of CheckResult objects, one per check.
+        List of 10 CheckResult objects, one per check function.
 
     """
     check_functions = [

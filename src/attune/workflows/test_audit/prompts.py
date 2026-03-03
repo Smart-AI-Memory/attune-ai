@@ -1,5 +1,12 @@
 """Prompt templates for TestAuditWorkflow.
 
+Contains system prompts and XML task templates used by the test audit
+workflow stages:
+
+- ``AUDIT_SYSTEM_PROMPT``: System prompt for the audit stage.
+- ``PLAN_SYSTEM_PROMPT``: System prompt for the plan stage.
+- ``BATCH_TASK_TEMPLATE``: XML task template for test generation batches.
+
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """

@@ -383,4 +383,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `pytest tests/unit/module/ --cov=attune.module --no-cov-on-fail`
   to measure specific modules in seconds.
 
+- **Bandit B108 blocks hardcoded `/tmp` paths**: Using a literal
+  `/tmp/...` string in `subprocess.run` or `open()` triggers
+  bandit B108 (insecure temp file usage). Fix: use
+  `tempfile.TemporaryDirectory(prefix="...")` instead. This came
+  up in `doc_audit/workflow.py` which used `/tmp/doc-audit-site`
+  for mkdocs builds.
+
+- **Tests for optional-dep code need `pytest.importorskip()`
+  guards in CI**: Tests that import `redis`, `jinja2`, or other
+  optional dependencies fail with `ModuleNotFoundError` in CI
+  where only core deps are installed. Add
+  `pytest.importorskip("redis")` at the top of the test module
+  or use `@pytest.mark.skipif` to skip gracefully. This caused
+  5 failures in PR #98 (3 redis, 1 jinja2, 1 redis auto-detect).
+
+- **CI timeout tests enforce the range you set**: The test
+  `test_timeout_values_are_reasonable` in `tests/unit/ci/`
+  asserts that all workflow job timeouts fall within an
+  allowed range. When bumping `timeout-minutes` in a workflow
+  YAML, also update the test's upper bound or it fails on
+  every platform.
+
+- **`/sbin` is a symlink to `/usr/sbin` on modern Ubuntu**:
+  `Path("/sbin/init").resolve()` does NOT follow the `/sbin`
+  symlink when the target file doesn't exist (Python 3.10+
+  `strict=False`). Tests asserting that `/sbin/...` is blocked
+  by path validation fail on Ubuntu CI because the resolved
+  path stays as `/sbin/init` which doesn't match the
+  `/usr/sbin` entry in the blocklist. Use `/usr/sbin/...`
+  directly in tests.
+
 <!-- attune-lessons-end -->

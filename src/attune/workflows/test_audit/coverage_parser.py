@@ -116,12 +116,12 @@ def prioritize_modules(
 
     Args:
         modules: List of ModuleCoverage objects.
-        min_threshold: Minimum coverage percentage below which
-            a module is included. Modules at or above this
-            threshold are excluded.
+        min_threshold: Minimum coverage percentage. Modules below
+            this threshold are included; modules at or above are
+            excluded. Default: 50.0.
 
     Returns:
-        Sorted and filtered list of ModuleCoverage objects,
+        Sorted list of ModuleCoverage objects below threshold,
         highest priority first.
 
     """
