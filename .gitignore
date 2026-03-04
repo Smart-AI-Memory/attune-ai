@@ -122,6 +122,7 @@ anthropic-cookbook/
 # Generated book files
 dist/empathy-book.*
 ebook-site/
+book-indesign/
 
 # MkDocs build output
 site/
