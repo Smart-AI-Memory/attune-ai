@@ -13,7 +13,7 @@ const navItems = [
 const docsItems = [
   {
     label: 'Getting Started',
-    href: '/framework-docs/tutorials/quickstart/',
+    href: '/framework-docs/getting-started/',
     description: 'Quick start guide',
   },
   {

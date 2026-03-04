@@ -43,7 +43,7 @@ export default function WorkflowsPage() {
                 Docs
               </Link>
               <Link
-                href="/framework-docs/tutorials/quickstart/"
+                href="/framework-docs/getting-started/"
                 className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium"
               >
                 Get Started
@@ -95,7 +95,7 @@ export default function WorkflowsPage() {
               Browse Workflows
             </Link>
             <Link
-              href="/framework-docs/tutorials/quickstart/"
+              href="/framework-docs/getting-started/"
               className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:border-gray-400 transition-colors"
             >
               Quick Start Guide

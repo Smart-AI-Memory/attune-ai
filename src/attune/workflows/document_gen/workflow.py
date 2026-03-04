@@ -52,7 +52,7 @@ class DocumentGenerationWorkflow(
     """
 
     name = "doc-gen"
-    description = "Cost-optimized documentation generation pipeline"
+    description = "Generate new documentation from source code (creation)"
     stages = ["outline", "write", "polish"]
     tier_map = {
         "outline": ModelTier.CHEAP,

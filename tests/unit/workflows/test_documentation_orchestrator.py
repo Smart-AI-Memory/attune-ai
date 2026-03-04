@@ -31,7 +31,7 @@ class TestDocumentationOrchestratorInitialization:
         assert orchestrator.name == "documentation-orchestrator"
         assert (
             orchestrator.description
-            == "End-to-end documentation management: scout gaps, prioritize, generate docs"
+            == "Coordinate doc-audit + doc-gen into end-to-end documentation maintenance"
         )
         assert orchestrator.project_root == tmp_path
         assert orchestrator.max_items == 5

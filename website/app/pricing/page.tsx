@@ -259,7 +259,7 @@ export default function PricingPage() {
                   Star on GitHub
                 </a>
                 <Link
-                  href="/framework-docs/tutorials/quickstart/"
+                  href="/framework-docs/getting-started/"
                   className="btn btn-outline-white text-lg px-8 py-4"
                 >
                   View Documentation

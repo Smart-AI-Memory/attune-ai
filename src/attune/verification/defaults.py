@@ -27,7 +27,6 @@ DEFAULT_VERIFICATION_STRATEGIES: dict[str, str] = {
     # Documentation workflows -> none (no meaningful verification)
     "doc-gen": "none",
     "doc-orchestrator": "none",
-    "seo-optimization": "none",
     # Research workflows -> none
     "research-synthesis": "none",
 }

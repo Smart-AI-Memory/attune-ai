@@ -54,7 +54,7 @@ exclude_docs: |
   blog-posts/
   quickstart/
   api-reference/
-  examples/
+  examples/*.md
 
   # --- Orphaned files in mixed directories ---
   # blog/ (keep only interactive-agent-creation-tutorial.md)
@@ -82,14 +82,13 @@ exclude_docs: |
   guides/trust-circuit-breaker.md
   guides/xml-enhanced-prompts.md
 
-  # tutorials/ (keep index.md, quickstart.md, examples/)
-  tutorials/META_ORCHESTRATION_TUTORIAL.md
+  # tutorials/ (keep index.md, build-a-workflow.md,
+  # META_ORCHESTRATION_TUTORIAL.md, and examples/)
   tutorials/QUICKSTART_GUIDE.md
   tutorials/campaign-metrics-tracking.md
   tutorials/installation.md
 
-  # reference/ and how-to/ orphans
-  reference/cli-reference.md
+  # how-to/ orphans
   how-to/multi-agent-coordination.md
 
   # --- Top-level orphaned files ---
@@ -120,7 +119,7 @@ exclude_docs: |
   INTEGRATION_*.md
   ISSUE_*.md
   LLM_*.md
-  META_*.md
+  META_ORCHESTRATION_ARCHITECTURE.md
   OOP_*.md
   ORCHESTRATION_*.md
   PATTERN*.md
@@ -145,7 +144,6 @@ exclude_docs: |
   WORKFLOW_*.md
   about-the-author.md
   caching.md
-  cli-reference.md
   commands.md
   comparison.md
   configuration-architecture.md
@@ -183,6 +181,13 @@ nav:
   - Tutorials:
       - tutorials/index.md
       - Build a Workflow: tutorials/build-a-workflow.md
+      - Meta-Orchestration: tutorials/META_ORCHESTRATION_TUTORIAL.md
+      - Examples:
+          - Code Review Assistant: tutorials/examples/simple-chatbot.md
+          - Multi-Agent Teams: tutorials/examples/multi-agent-team-coordination.md
+          - SBAR Clinical Handoff: tutorials/examples/sbar-clinical-handoff.md
+          - Adaptive Learning: tutorials/examples/adaptive-learning-system.md
+          - Webhook Integration: tutorials/examples/webhook-event-integration.md
 
   # Task-oriented
   - How-to:
@@ -228,6 +233,7 @@ nav:
       - Wizards:
           - Getting Started: guides/wizards-getting-started.md
           - Architecture: guides/wizard-architecture.md
+      - CLI Reference: reference/cli-reference.md
       - Help:
           - FAQ: reference/FAQ.md
           - Troubleshooting: reference/TROUBLESHOOTING.md

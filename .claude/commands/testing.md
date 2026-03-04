@@ -53,6 +53,21 @@ Full suite reserved for release verification and deep audits.
 /testing gen            # Generate tests
 ```
 
+## Fast-Path Detection
+
+When explicit args satisfy scoping, skip questions:
+
+- `/testing run --all` → full suite immediately
+- `/testing gen src/auth` → generate for that module
+- `/testing coverage --full` → full codebase coverage
+- `/testing run` → ask which tests
+- `/testing` → ask what to do
+
+**Rule:** If input contains BOTH an action AND a
+target (or `--all`/`--full` flag), proceed to
+execution. If either is missing, use
+`AskUserQuestion`.
+
 ## Behavior
 
 ### run

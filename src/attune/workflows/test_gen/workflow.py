@@ -32,7 +32,7 @@ class TestGenerationWorkflow(BaseWorkflow):
     """
 
     name = "test-gen"
-    description = "Generate tests targeting areas with historical bugs"
+    description = "Generate tests for modules with low coverage (sequential, single module)"
     stages = ["identify", "analyze", "generate", "review"]
     tier_map = {
         "identify": ModelTier.CHEAP,

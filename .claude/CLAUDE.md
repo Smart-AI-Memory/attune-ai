@@ -1,4 +1,4 @@
-# Attune AI Framework v3.8.0
+# Attune AI Framework v3.9.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -144,7 +144,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 3.8.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 3.9.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -417,5 +417,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Aborted with N warnings in strict mode!" Move stale docs
   to `docs/archive/` (excluded by mkdocs `exclude_docs`
   config) rather than fixing every dead link.
+
+- **dist/ can contain stale artifacts after version bumps**: The
+  `dist/` directory is not automatically rebuilt when
+  `pyproject.toml` version changes. Always run
+  `rm -rf dist/ && uv run python -m build` before publishing
+  and verify `ls dist/` shows the correct version. Publishing
+  stale artifacts uploads the old version to PyPI.
+
+- **MCP tool count tests are hardcoded**: When adding new MCP
+  tools to `server.py`, grep tests for the old tool count
+  (e.g., `assert len(tools) == 22`). The assertion in
+  `test_mcp_memory_tools.py` is the main one but others may
+  exist. Also check workflow description assertions if
+  descriptions were changed.
+
+- **`list_wizards()` is a function, not a class method**:
+  The wizard registry exposes `from attune.wizards import
+  list_wizards` as a module-level function, not
+  `WizardRegistry().list_wizards()`. The class
+  `WizardRegistry` is not exported from `attune.wizards`.
 
 <!-- attune-lessons-end -->

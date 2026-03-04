@@ -7,7 +7,7 @@
 
 export const FEATURE_COUNTS = {
   wizards: 5,
-  workflows: 19,
+  workflows: 17,
   agentTemplates: 14,
   compositionPatterns: 6,
 } as const;
@@ -61,11 +61,11 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'workflows',
-    name: '19 AI Workflows',
+    name: '17 AI Workflows',
     icon: '⚡',
     benefitDescription: 'Security audit, code review, bug prediction, test generation, documentation, refactoring, dependency check, release prep, and more — all non-interactive, CI/CD-ready.',
-    technicalDescription: '19 multi-stage pipelines with automatic tier escalation (Haiku → Sonnet → Opus). Structured JSON output. Run via CLI or CI/CD. Wizards wrap these same workflows in an interactive guided experience.',
-    pricingDescription: '19 AI workflows (CLI + CI/CD)',
+    technicalDescription: '17 multi-stage pipelines with automatic tier escalation (Haiku → Sonnet → Opus). Structured JSON output. Run via CLI or CI/CD. Wizards wrap these same workflows in an interactive guided experience.',
+    pricingDescription: '17 AI workflows (CLI + CI/CD)',
   },
   {
     id: 'agent-templates',

@@ -39,7 +39,6 @@ BASEWORKFLOW_NAMES = [
     "test-gen",
     "refactor-plan",
     "dependency-check",
-    "keyboard-shortcuts",
     "research-synthesis",
 ]
 
@@ -125,7 +124,6 @@ EXPECTED_WORKFLOWS = [
     "code-review",
     "doc-gen",
     "doc-orchestrator",
-    "seo-optimization",
     "bug-predict",
     "security-audit",
     "perf-audit",
@@ -134,7 +132,6 @@ EXPECTED_WORKFLOWS = [
     "refactor-plan",
     "dependency-check",
     "secure-release",
-    "keyboard-shortcuts",
     "orchestrated-health-check",
     "release-prep",
     "research-synthesis",

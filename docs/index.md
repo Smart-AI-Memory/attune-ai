@@ -7,7 +7,7 @@ description: Production-ready AI framework with Level 4 Anticipatory Intelligenc
 **Production-ready Level 4 Anticipatory Intelligence for AI-human collaboration**
 
 [![PyPI version](https://badge.fury.io/py/attune-ai.svg)](https://pypi.org/project/attune-ai/)
-[![License: Apache License 2.0](https://img.shields.io/badge/License-Fair%20Source%200.9-blue.svg)](LICENSE)
+[![License: Apache License 2.0](https://img.shields.io/badge/License-Fair%20Source%200.9-blue.svg)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 ---

@@ -36,6 +36,31 @@ Type `/attune` and I'll guide you through questions to find the right workflow.
 /attune debug                        # Direct shortcut
 ```
 
+## Fast-Path Detection
+
+When the user provides sufficient context inline,
+**skip scoping questions and execute directly**.
+This satisfies the Socratic requirement because the
+user's explicit args provide the scoping context.
+
+**Fast-path triggers (execute immediately):**
+
+- Specific subcommand + target path:
+  `/attune security-audit ./src`
+- Natural language with clear scope:
+  `/attune "review src/auth"`
+- Explicit `--auto` flag:
+  `/attune commit --auto`
+
+**Socratic flow (ask questions first):**
+
+- `/attune` (no args)
+- `/attune "fix something"` (vague)
+
+**Rule:** If input contains BOTH an action AND a target,
+proceed to execution. If either is missing or ambiguous,
+use `AskUserQuestion`.
+
 ## Workflows by Goal
 
 ### 🔧 Fix or Improve Something

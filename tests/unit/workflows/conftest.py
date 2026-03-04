@@ -127,19 +127,6 @@ def research_synthesis_workflow(cost_tracker):
 
 
 @pytest.fixture
-def seo_optimization_workflow():
-    """Create SEOOptimizationWorkflow for testing.
-
-    Returns:
-        SEOOptimizationWorkflow instance ready for testing
-
-    """
-    from attune.workflows.seo_optimization import SEOOptimizationWorkflow
-
-    return SEOOptimizationWorkflow()
-
-
-@pytest.fixture
 def test_maintenance_workflow(tmp_path):
     """Create TestMaintenanceWorkflow with isolated project root.
 

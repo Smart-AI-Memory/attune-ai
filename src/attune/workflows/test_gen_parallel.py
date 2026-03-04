@@ -59,7 +59,7 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
     """
 
     name = "parallel-test-generation"
-    description = "Generate behavioral tests in parallel with AI completion"
+    description = "Batch-generate tests for 10-50 modules in parallel"
     stages = ["discover", "generate_templates", "complete_tests", "validate"]
     tier_map = {
         "discover": ModelTier.CHEAP,
