@@ -204,16 +204,15 @@ class TestLongTermMemoryPersistence:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.temp_dir = Path("/tmp/attune_test_memory")
-        self.temp_dir.mkdir(exist_ok=True)
+        import tempfile
+
+        self._tmp_obj = tempfile.TemporaryDirectory(prefix="attune_test_memory_")
+        self.temp_dir = Path(self._tmp_obj.name)
         self.memory = LongTermMemory(storage_path=str(self.temp_dir))
 
     def teardown_method(self):
         """Clean up test files."""
-        import shutil
-
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+        self._tmp_obj.cleanup()
 
     def test_data_persists_across_instances(self):
         """Test that data survives memory instance restart."""
@@ -414,10 +413,10 @@ class TestFailureScenarios:
         assert result is not None
         assert result["data"] == "value"
 
-    def test_disk_full_error_handling(self):
+    def test_disk_full_error_handling(self, tmp_path):
         """Test that disk full errors are handled gracefully."""
-        temp_dir = Path("/tmp/attune_test_disk_full")
-        temp_dir.mkdir(exist_ok=True)
+        temp_dir = tmp_path / "attune_test_disk_full"
+        temp_dir.mkdir()
 
         memory = LongTermMemory(storage_path=str(temp_dir))
 
@@ -430,11 +429,6 @@ class TestFailureScenarios:
                 memory.store("test_key", {"data": "value"})
             except OSError:
                 pass  # Expected
-
-        # Cleanup
-        import shutil
-
-        shutil.rmtree(temp_dir)
 
     def test_corrupted_data_recovery(self):
         """Test that corrupted data is handled without crashing."""
