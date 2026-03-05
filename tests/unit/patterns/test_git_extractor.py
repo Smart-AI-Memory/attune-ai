@@ -595,7 +595,7 @@ class TestGitHelperExceptionBranches:
             "author": "@dev",
         }
 
-        with patch("builtins.open", side_effect=OSError("disk full")):
+        with patch.object(Path, "open", side_effect=OSError("disk full")):
             result = extractor.save_pattern(pattern)
 
         assert result is None
