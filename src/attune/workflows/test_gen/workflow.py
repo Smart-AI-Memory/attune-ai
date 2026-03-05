@@ -7,6 +7,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,8 @@ from .test_templates import (
     generate_test_for_class,
     generate_test_for_function,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TestGenerationWorkflow(BaseWorkflow):
@@ -163,16 +166,11 @@ class TestGenerationWorkflow(BaseWorkflow):
         # === AUTH STRATEGY INTEGRATION ===
         if self.enable_auth_strategy:
             try:
-                import logging
-                from pathlib import Path
-
                 from attune.models import (
                     count_lines_of_code,
                     get_auth_strategy,
                     get_module_size_category,
                 )
-
-                logger = logging.getLogger(__name__)
 
                 # Calculate total LOC for the project/path
                 target = Path(target_path)
@@ -194,22 +192,21 @@ class TestGenerationWorkflow(BaseWorkflow):
 
                     size_category = get_module_size_category(total_lines)
                     logger.info(
-                        f"Test generation target: {target_path} "
-                        f"({total_lines:,} LOC, {size_category})",
+                        "Test generation target: %s (%s LOC, %s)",
+                        target_path,
+                        f"{total_lines:,}",
+                        size_category,
                     )
-                    logger.info(f"Recommended auth mode: {recommended_mode.value}")
+                    logger.info("Recommended auth mode: %s", recommended_mode.value)
 
                     cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
                     if recommended_mode.value == "subscription":
-                        logger.info(f"Cost: {cost_estimate['quota_cost']}")
+                        logger.info("Cost: %s", cost_estimate["quota_cost"])
                     else:
-                        logger.info(f"Cost: ~${cost_estimate['monetary_cost']:.4f}")
+                        logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
 
             except Exception as e:
-                import logging
-
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Auth strategy detection failed: {e}")
+                logger.warning("Auth strategy detection failed: %s", e)
 
         # Parse configurable limits with sensible defaults
         max_files_to_scan = input_data.get("max_files_to_scan", 1000)

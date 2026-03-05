@@ -81,7 +81,7 @@ class ProjectIndex:
 
         """
         if not self._index_path.exists():
-            logger.info(f"No index found at {self._index_path}")
+            logger.info("No index found at %s", self._index_path)
             return False
 
         try:
@@ -110,11 +110,11 @@ class ProjectIndex:
             if data.get("generated_at"):
                 self._generated_at = datetime.fromisoformat(data["generated_at"])
 
-            logger.info(f"Loaded index with {len(self._records)} files")
+            logger.info("Loaded index with %d files", len(self._records))
             return True
 
         except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.error(f"Failed to load index: {e}")
+            logger.error("Failed to load index: %s", e)
             return False
 
     def save(self) -> bool:
@@ -141,7 +141,7 @@ class ProjectIndex:
             with open(validated_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
 
-            logger.info(f"Saved index with {len(self._records)} files to {validated_path}")
+            logger.info("Saved index with %d files to %s", len(self._records), validated_path)
 
             # Sync to Redis if enabled
             if self.redis_client and self.config.use_redis:
@@ -150,7 +150,7 @@ class ProjectIndex:
             return True
 
         except OSError as e:
-            logger.error(f"Failed to save index: {e}")
+            logger.error("Failed to save index: %s", e)
             return False
 
     def _sync_to_redis(self) -> None:
@@ -186,10 +186,10 @@ class ProjectIndex:
                 ),
             )
 
-            logger.info(f"Synced index to Redis with prefix {prefix}")
+            logger.info("Synced index to Redis with prefix %s", prefix)
 
         except Exception as e:
-            logger.error(f"Failed to sync to Redis: {e}")
+            logger.error("Failed to sync to Redis: %s", e)
 
     # ===== Index Operations =====
 
@@ -209,11 +209,11 @@ class ProjectIndex:
             - Parallel without deps: ~1.0s for 3,472 files
 
         """
-        logger.info(f"Refreshing index for {self.project_root}")
+        logger.info("Refreshing index for %s", self.project_root)
 
         # Use parallel scanner by default for better performance
         if self.use_parallel and (self.workers is None or self.workers > 1):
-            logger.info(f"Using parallel scanner (workers: {self.workers or 'auto'})")
+            logger.info("Using parallel scanner (workers: %s)", self.workers or "auto")
             scanner = ParallelProjectScanner(
                 str(self.project_root),
                 self.config,
@@ -234,8 +234,9 @@ class ProjectIndex:
         self.save()
 
         logger.info(
-            f"Index refreshed: {len(self._records)} files, "
-            f"{summary.files_needing_attention} need attention",
+            "Index refreshed: %d files, %d need attention",
+            len(self._records),
+            summary.files_needing_attention,
         )
 
     def refresh_incremental(
@@ -345,7 +346,9 @@ class ProjectIndex:
                 changed_paths.append(file_path)
 
         logger.info(
-            f"Incremental refresh: {len(changed_paths)} changed, {len(deleted_files)} deleted",
+            "Incremental refresh: %d changed, %d deleted",
+            len(changed_paths),
+            len(deleted_files),
         )
 
         # If no changes, nothing to do
@@ -400,7 +403,9 @@ class ProjectIndex:
 
         files_updated = len(changed_paths)
         logger.info(
-            f"Incremental refresh complete: {files_updated} updated, {files_removed} removed",
+            "Incremental refresh complete: %d updated, %d removed",
+            files_updated,
+            files_removed,
         )
 
         return files_updated, files_removed
@@ -424,7 +429,7 @@ class ProjectIndex:
 
         """
         if path not in self._records:
-            logger.warning(f"File not in index: {path}")
+            logger.warning("File not in index: %s", path)
             return False
 
         record = self._records[path]
@@ -469,7 +474,7 @@ class ProjectIndex:
             self._recalculate_summary()
             self.save()
 
-        logger.info(f"Updated coverage for {updated} files")
+        logger.info("Updated coverage for %d files", updated)
         return updated
 
     def _recalculate_summary(self) -> None:
