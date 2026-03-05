@@ -77,9 +77,14 @@ class TestEmpathyMCPWiring:
     def _dispatched_tools(self) -> set[str]:
         from attune.mcp.server import EmpathyMCPServer
 
-        source = inspect.getsource(EmpathyMCPServer.call_tool)
-        # Each branch is  tool_name == "..."  or  tool_name == "..."
-        return set(re.findall(r'tool_name\s*==\s*"(\w+)"', source))
+        # _build_dispatch_table returns {tool_name: handler}
+        server = EmpathyMCPServer.__new__(EmpathyMCPServer)
+        server._memory = None
+        server._attune_level = 3
+        server._context = {}
+        server._plugin_handlers = {}
+        table = server._build_dispatch_table()
+        return set(table.keys())
 
     def test_every_registered_tool_has_dispatch(self):
         registered = self._registered_tools()
