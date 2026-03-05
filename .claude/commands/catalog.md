@@ -45,86 +45,80 @@ and `AskUserQuestion` entirely. Route directly:
 - If no match → show error: "Unknown item: `<name>`.
   Run `/catalog` to see available options."
 
-## CRITICAL: Two-Step Interactive Flow
+## CRITICAL: Three-Step Interactive Flow
+
+`AskUserQuestion` supports max 4 options per question.
+Use a two-tier picker: domain first, then item.
 
 ### Step 1: Display the catalog immediately
 
 Do NOT ask questions first. Show the full table grouped
-by domain. Then immediately proceed to Step 2.
+by domain (see Catalog Display below). Then proceed to
+Step 2.
 
-### Step 2: Ask what to run
+### Step 2: Pick a domain
 
-After displaying the catalog, use `AskUserQuestion` to
-let the user pick an item to launch:
+Use `AskUserQuestion` with these 4 domain groups:
 
 ```yaml
-question: "What would you like to run?"
-header: "Launch from catalog"
-multiSelect: false
+question: "Which area interests you?"
 options:
-  - label: "test-gen (workflow)"
-    description: "Generate tests for low-coverage files"
-  - label: "test-audit (workflow)"
-    description: "Measure coverage gaps and verify improvement"
-  - label: "test-gen (wizard)"
-    description: "Interactive guided test generation"
-  - label: "security-audit (workflow)"
-    description: "OWASP-focused security scan"
-  - label: "secure-release (workflow)"
-    description: "Security gate before publishing"
-  - label: "security (wizard)"
-    description: "Guided vulnerability scanning"
-  - label: "code-review (workflow)"
-    description: "Tiered code analysis with architect review"
-  - label: "bug-predict (workflow)"
-    description: "Predict bugs from code patterns"
-  - label: "perf-audit (workflow)"
-    description: "Performance bottleneck detection"
-  - label: "simplify-code (workflow)"
-    description: "Identify refactoring opportunities"
-  - label: "refactor-plan (workflow)"
-    description: "Prioritize tech debt by impact"
-  - label: "refactor (wizard)"
-    description: "Guided safe refactoring"
-  - label: "debug (wizard)"
-    description: "Guided error investigation"
-  - label: "doc-gen (workflow)"
-    description: "Generate documentation for modules"
-  - label: "doc-audit (workflow)"
-    description: "Validate docs for staleness and links"
-  - label: "doc-orchestrator (workflow)"
-    description: "End-to-end doc maintenance"
-  - label: "release-prep (workflow)"
-    description: "Multi-agent release readiness"
-  - label: "release-prep (wizard)"
-    description: "Guided release checklist"
-  - label: "dependency-check (workflow)"
-    description: "Audit dependencies for vulnerabilities"
-  - label: "research-synthesis (workflow)"
-    description: "Multi-tier research and comparison"
-  - label: "brainstorm"
-    description: "Conversational thinking partner"
-  - label: "plan"
-    description: "Feature planning and architecture"
-  - label: "orchestrated-health-check (workflow)"
-    description: "Meta-orchestration health check"
-  - label: "batch"
-    description: "Batch API processing (50% cost savings)"
-  - label: "Just browsing"
-    description: "No action needed"
+  - "Testing & Security" (test-gen, test-audit, security-audit, secure-release, security wizard)
+  - "Code Quality" (code-review, bug-predict, perf-audit, simplify-code, refactor-plan, refactor wizard, debug wizard)
+  - "Docs & Release" (doc-gen, doc-audit, doc-orchestrator, release-prep, dependency-check)
+  - "Research & Ops" (research-synthesis, brainstorm, plan, batch, orchestrated-health-check)
 ```
 
-### Step 3: Execute the selection
+If the user picks "Other" and names a specific item,
+skip Step 3 and route directly.
+
+### Step 3: Pick an item
+
+Show a second `AskUserQuestion` with items from the
+chosen domain (max 4 options per question). For domains
+with more than 4 items, pick the 4 most commonly used
+and let the user type "Other" for the rest.
+
+**Testing & Security:**
+
+- test-gen — Generate tests
+- security-audit — OWASP scan
+- test-audit — Coverage gaps
+- secure-release — Security gate
+
+**Code Quality:**
+
+- code-review — Tiered analysis
+- bug-predict — Pattern detection
+- debug (wizard) — Error investigation
+- refactor (wizard) — Safe refactoring
+
+**Docs & Release:**
+
+- doc-gen — Generate docs
+- release-prep — Release readiness
+- doc-audit — Staleness check
+- dependency-check — Vulnerability audit
+
+**Research & Ops:**
+
+- brainstorm — Thinking partner
+- plan — Architecture planning
+- batch — 50% cost savings
+- research-synthesis — Multi-tier research
+
+### Step 4: Execute the selection
 
 When the user picks an item, invoke it with the Skill
 tool:
 
-- Items ending in `(workflow)` → invoke `/workflows`
+- Items tagged `(workflow)` → invoke `/workflows`
   skill with `run <name>` as the argument
-- Items ending in `(wizard)` → invoke `/wizard` skill
+- Items tagged `(wizard)` → invoke `/wizard` skill
   with `run <name>` as the argument
 - `brainstorm` → invoke `/brainstorm` skill
-- `Just browsing` → end, no action
+- `plan` → invoke `/plan` skill
+- `batch` → invoke `/batch` skill
 
 ## Catalog Display
 
