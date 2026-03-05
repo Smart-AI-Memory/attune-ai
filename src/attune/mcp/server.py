@@ -24,6 +24,15 @@ ATTUNE_LEVEL_NAMES: dict[int, str] = {
     5: "Systems",
 }
 
+ATTUNE_LEVEL_DESCRIPTIONS: dict[int, str] = {
+    1: "Responds to explicit requests only",
+    2: "Asks clarifying questions before acting",
+    3: "Suggests next steps and improvements",
+    4: "Predicts needs based on context and history",
+    5: "Considers systemic impacts and cross-cutting concerns",
+}
+
+
 class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     """MCP server for Attune AI workflows.
 
@@ -236,180 +245,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 param_desc="Project root to check",
             ),
             "research_synthesis": {
-                "description": "Synthesize insights from multiple documents. Summarizes, analyzes patterns, and produces a unified answer.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "sources": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "List of document texts to synthesize (minimum 2)",
-                        },
-                        "question": {
-                            "type": "string",
-                            "description": "Research question to answer",
-                        },
-                    },
-                    "required": ["sources", "question"],
-                },
-            },
-            "doc_audit": {
-                "name": "doc_audit",
-                "description": "Audit existing documentation for staleness, broken links, and drift from source code.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "doc_gen": {
-                "name": "doc_gen",
-                "description": "Generate new documentation from source code. Produces API references, guides, or READMEs.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "source_path": {
-                            "type": "string",
-                            "description": "Path to source file to document",
-                        },
-                        "doc_type": {
-                            "type": "string",
-                            "description": "Type of documentation (api_reference, guide, readme)",
-                            "default": "api_reference",
-                        },
-                        "audience": {
-                            "type": "string",
-                            "description": "Target audience (developers, users, contributors)",
-                            "default": "developers",
-                        },
-                    },
-                    "required": ["source_path"],
-                },
-            },
-            "doc_orchestrator": {
-                "name": "doc_orchestrator",
-                "description": "End-to-end documentation maintenance: scout gaps, prioritize, generate, and update docs.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "test_audit": {
-                "name": "test_audit",
-                "description": "Deep test coverage audit with prioritized test generation. Runs audit, plan, execute, and verify stages.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Source directory to audit",
-                            "default": "src/",
-                        },
-                    },
-                },
-            },
-            "test_gen_parallel": {
-                "name": "test_gen_parallel",
-                "description": "Batch-generate tests for 10-50 modules in parallel using multi-tier LLM orchestration.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "top": {
-                            "type": "integer",
-                            "description": "Number of low-coverage modules to process",
-                            "default": 200,
-                        },
-                        "batch_size": {
-                            "type": "integer",
-                            "description": "Modules to process concurrently per batch",
-                            "default": 10,
-                        },
-                    },
-                },
-            },
-            "refactor_plan": {
-                "name": "refactor_plan",
-                "description": "Scan for tech debt, analyze trends, and generate a prioritized refactoring plan.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Directory to scan for refactoring opportunities",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "dependency_check": {
-                "name": "dependency_check",
-                "description": "Inventory dependencies, assess vulnerabilities, and report risk with recommendations.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root to check dependencies",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "simplify_code": {
-                "name": "simplify_code",
-                "description": "Find complex code hotspots and suggest simplifications to reduce cognitive load.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Directory to scan for complexity",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "secure_release": {
-                "name": "secure_release",
-                "description": "Full secure release pipeline: security audit, code review, and go/no-go decision.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "health_check": {
-                "name": "health_check",
-                "description": "Orchestrated project health check with score, grade, and recommendations across multiple categories.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "project_root": {
-                            "type": "string",
-                            "description": "Project root to check",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "research_synthesis": {
-                "name": "research_synthesis",
                 "description": "Synthesize insights from multiple documents. Summarizes, analyzes patterns, and produces a unified answer.",
                 "input_schema": {
                     "type": "object",
