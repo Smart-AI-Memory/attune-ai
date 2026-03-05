@@ -25,11 +25,11 @@ ATTUNE_LEVEL_NAMES: dict[int, str] = {
 }
 
 ATTUNE_LEVEL_DESCRIPTIONS: dict[int, str] = {
-    1: "Respond when asked. Minimal proactive guidance.",
-    2: "Collaborative exploration with clarifying questions.",
-    3: "Act before being asked. Suggest improvements.",
-    4: "Predict future needs. Prepare for likely next steps.",
-    5: "Build structures that help at scale.",
+    1: "Responds to explicit requests only",
+    2: "Asks clarifying questions before acting",
+    3: "Suggests next steps and improvements",
+    4: "Predicts needs based on context and history",
+    5: "Considers systemic impacts and cross-cutting concerns",
 }
 
 
@@ -629,16 +629,67 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         """
         try:
-            handler = self._tool_handlers.get(tool_name)
-            if handler is None:
-                handler = self._plugin_handlers.get(tool_name)
-                if handler is not None:
-                    return await handler(self, arguments)
-            if handler is None:
-                return {"success": False, "error": f"Unknown tool: {tool_name}"}
-            return await handler(arguments)
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Top-level MCP handler must not crash the server
+            if tool_name == "security_audit":
+                return await self._run_security_audit(arguments)
+            if tool_name == "bug_predict":
+                return await self._run_bug_predict(arguments)
+            if tool_name == "code_review":
+                return await self._run_code_review(arguments)
+            if tool_name == "test_generation":
+                return await self._run_test_generation(arguments)
+            if tool_name == "performance_audit":
+                return await self._run_performance_audit(arguments)
+            if tool_name == "release_prep":
+                return await self._run_release_prep(arguments)
+            if tool_name == "doc_audit":
+                return await self._run_doc_audit(arguments)
+            if tool_name == "doc_gen":
+                return await self._run_doc_gen(arguments)
+            if tool_name == "doc_orchestrator":
+                return await self._run_doc_orchestrator(arguments)
+            if tool_name == "test_audit":
+                return await self._run_test_audit(arguments)
+            if tool_name == "test_gen_parallel":
+                return await self._run_test_gen_parallel(arguments)
+            if tool_name == "refactor_plan":
+                return await self._run_refactor_plan(arguments)
+            if tool_name == "dependency_check":
+                return await self._run_dependency_check(arguments)
+            if tool_name == "simplify_code":
+                return await self._run_simplify_code(arguments)
+            if tool_name == "secure_release":
+                return await self._run_secure_release(arguments)
+            if tool_name == "health_check":
+                return await self._run_health_check(arguments)
+            if tool_name == "research_synthesis":
+                return await self._run_research_synthesis(arguments)
+            if tool_name == "auth_status":
+                return await self._get_auth_status()
+            if tool_name == "auth_recommend":
+                return await self._get_auth_recommend(arguments)
+            if tool_name == "telemetry_stats":
+                return await self._get_telemetry_stats(arguments)
+            if tool_name == "memory_store":
+                return await self._handle_memory_store(arguments)
+            if tool_name == "memory_retrieve":
+                return await self._handle_memory_retrieve(arguments)
+            if tool_name == "memory_search":
+                return await self._handle_memory_search(arguments)
+            if tool_name == "memory_forget":
+                return await self._handle_memory_forget(arguments)
+            if tool_name == "attune_get_level":
+                return await self._handle_attune_get_level()
+            if tool_name == "attune_set_level":
+                return await self._handle_attune_set_level(arguments)
+            if tool_name == "context_get":
+                return await self._handle_context_get(arguments)
+            if tool_name == "context_set":
+                return await self._handle_context_set(arguments)
+            if tool_name in self._plugin_handlers:
+                handler = self._plugin_handlers[tool_name]
+                return await handler(self, arguments)
+            return {"success": False, "error": f"Unknown tool: {tool_name}"}
+        except Exception as e:
             logger.exception(f"Tool execution failed: {tool_name}")
             return {"success": False, "error": str(e)}
 
