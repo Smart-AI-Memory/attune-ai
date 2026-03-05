@@ -354,8 +354,8 @@ release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
 # Other workflows
 doc-audit = "attune.workflows.doc_audit:DocAuditWorkflow"
 secure-release = "attune.workflows.secure_release:SecureReleasePipeline"
-pro-review = "attune.workflows.code_review_pipeline:CodeReviewPipeline"
-pr-review = "attune.workflows.pr_review:PRReviewWorkflow"
+# pro-review: Consolidated into code-review (migration.py)
+# pr-review: Consolidated into code-review (migration.py)
 
 # Wizard entry points for auto-discovery
 [project.entry-points."attune.wizards"]

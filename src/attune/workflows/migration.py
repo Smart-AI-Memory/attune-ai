@@ -42,8 +42,9 @@ WORKFLOW_ALIASES: dict[str, tuple[str, dict[str, Any]]] = {
     # Test Generation consolidation
     "test-gen-behavioral": ("test-gen", {"style": "behavioral"}),
     "test-coverage-boost": ("test-gen", {"target": "coverage"}),
-    "autonomous-test-gen": ("test-gen-parallel", {"autonomous": True}),
-    "progressive-test-gen": ("test-gen-parallel", {"progressive": True}),
+    "test-gen-parallel": ("test-gen", {"parallel": True}),
+    "autonomous-test-gen": ("test-gen", {"autonomous": True}),
+    "progressive-test-gen": ("test-gen", {"progressive": True}),
     # Release consolidation
     "secure-release": ("release-prep", {"mode": "secure"}),
     "orchestrated-release-prep": ("release-prep", {"mode": "full"}),
@@ -67,8 +68,7 @@ WORKFLOW_ALIASES: dict[str, tuple[str, dict[str, Any]]] = {
 # Human-readable descriptions for the dialog
 WORKFLOW_DESCRIPTIONS: dict[str, str] = {
     "code-review": "Comprehensive code analysis with optional premium mode",
-    "test-gen": "Generate tests with style (standard/behavioral) and target (gaps/coverage) options",
-    "test-gen-parallel": "Batch test generation with autonomous and progressive modes",
+    "test-gen": "Generate tests with style, target, parallel, and autonomous options",
     "release-prep": "Release readiness with modes: standard, secure, or full",
     "doc-gen": "Generate documentation for code",
 }
@@ -93,7 +93,12 @@ class MigrationConfig:
 
     @classmethod
     def load(cls) -> "MigrationConfig":
-        """Load migration config from .attune/migration.json"""
+        """Load migration config from .attune/migration.json.
+
+        Returns:
+            MigrationConfig with saved preferences, or defaults.
+
+        """
         config_path = Path.cwd() / ".attune" / "migration.json"
 
         if config_path.exists():
@@ -112,7 +117,7 @@ class MigrationConfig:
         return cls()
 
     def save(self) -> None:
-        """Save migration config to .attune/migration.json"""
+        """Save migration config to .attune/migration.json."""
         config_dir = Path.cwd() / ".attune"
         config_dir.mkdir(exist_ok=True)
         config_path = config_dir / "migration.json"
@@ -133,7 +138,13 @@ class MigrationConfig:
             logger.warning(f"Failed to save migration config: {e}")
 
     def remember_choice(self, old_name: str, choice: str) -> None:
-        """Remember user's migration choice for a workflow."""
+        """Remember user's migration choice for a workflow.
+
+        Args:
+            old_name: The deprecated workflow name
+            choice: Either "new" or "legacy"
+
+        """
         self.remembered_choices[old_name] = choice
         self.save()
 
@@ -141,7 +152,9 @@ class MigrationConfig:
 def is_interactive() -> bool:
     """Check if we're running in an interactive terminal.
 
-    Returns False in CI environments or when stdin is not a TTY.
+    Returns:
+        False in CI environments or when stdin is not a TTY.
+
     """
     # Check common CI environment variables
     ci_vars = ["CI", "GITHUB_ACTIONS", "GITLAB_CI", "JENKINS_URL", "CIRCLECI", "TRAVIS"]
@@ -229,7 +242,13 @@ def show_migration_dialog(
 
 
 def show_removed_workflow_error(old_name: str, message: str) -> None:
-    """Show error for removed workflows with migration guidance."""
+    """Show error for removed workflows with migration guidance.
+
+    Args:
+        old_name: The removed workflow name
+        message: Explanation of why it was removed and alternatives
+
+    """
     print()
     print("┌" + "─" * 68 + "┐")
     print("│" + " Workflow Removed ".center(68) + "│")
@@ -254,7 +273,14 @@ def show_removed_workflow_error(old_name: str, message: str) -> None:
 
 
 def show_deprecation_warning(old_name: str, new_name: str, kwargs: dict[str, Any]) -> None:
-    """Show deprecation warning (non-blocking)."""
+    """Show deprecation warning via logger (non-blocking).
+
+    Args:
+        old_name: The deprecated workflow name
+        new_name: The canonical replacement name
+        kwargs: Default kwargs for the new workflow
+
+    """
     flag_parts = []
     for key, value in kwargs.items():
         if key.startswith("_"):
@@ -369,7 +395,14 @@ def resolve_workflow_migration(
 def show_migration_tip(old_name: str, new_name: str, kwargs: dict[str, Any]) -> None:
     """Show a migration tip after workflow completion.
 
-    Called at the end of a workflow run to educate users.
+    Prints a one-line tip to stdout in interactive terminals.
+    Respects the ``show_tips`` config setting.
+
+    Args:
+        old_name: The deprecated workflow name used
+        new_name: The canonical replacement name
+        kwargs: Default kwargs for the new workflow
+
     """
     config = MigrationConfig.load()
     if not config.show_tips:
@@ -402,7 +435,12 @@ def show_migration_tip(old_name: str, new_name: str, kwargs: dict[str, Any]) -> 
 def get_canonical_workflow_name(workflow_name: str) -> str:
     """Get the canonical (new) name for a workflow.
 
-    Useful for documentation and help text.
+    Args:
+        workflow_name: Any workflow name (old or new)
+
+    Returns:
+        The canonical name, or the input unchanged if not aliased.
+
     """
     if workflow_name in WORKFLOW_ALIASES:
         new_name, _ = WORKFLOW_ALIASES[workflow_name]
@@ -414,7 +452,8 @@ def list_migrations() -> list[dict[str, Any]]:
     """List all workflow migrations for documentation.
 
     Returns:
-        List of migration info dicts
+        List of dicts with keys: old_name, new_name, status
+        (consolidated/deprecated/removed), kwargs, and message.
 
     """
     migrations = []
