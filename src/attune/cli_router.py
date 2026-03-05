@@ -104,11 +104,9 @@ class HybridRouter:
             "release": ("release", "prep"),
             "ship": ("release", "prep"),
             # Authentication strategy commands (CLI)
-            "auth-setup": ("utilities", "uv run attune provider setup"),
-            "auth-status": ("utilities", "uv run attune provider status"),
-            "auth-recommend": ("utilities", "uv run attune provider recommend"),
-            "auth-reset": ("utilities", "uv run attune provider reset"),
-            "auth": ("utilities", "uv run attune provider status"),
+            "auth-show": ("utilities", "uv run attune provider show"),
+            "auth-set": ("utilities", "uv run attune provider set"),
+            "auth": ("utilities", "uv run attune provider show"),
             # Dependency and research workflows
             "deps": ("workflows", "run dependency-check"),
             "dependency-check": ("workflows", "run dependency-check"),
@@ -167,7 +165,7 @@ class HybridRouter:
             "wizard": "Guided multi-step wizards with XML task decomposition",
             "agent": "Create and manage custom AI agents and teams",
             "batch": "Batch API processing (50% cost savings)",
-            "utilities": "Utility tools (profiling, dependencies)",
+            "utilities": "Authentication and provider management",
             "brainstorm": "Guided brainstorming with structured discovery and plan output",
         }
 

@@ -31,7 +31,7 @@ Use `/hub-name` to access organized workflows:
 | `/attune` | Socratic discovery | Natural language routing to all workflows |
 | `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
 | `/testing` | run, coverage, generate, benchmark | Test runner and generation |
-| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, seo, list | Automated analysis |
+| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, list | Automated analysis |
 | `/plan` | feature, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |
@@ -437,5 +437,34 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   list_wizards` as a module-level function, not
   `WizardRegistry().list_wizards()`. The class
   `WizardRegistry` is not exported from `attune.wizards`.
+
+- **mkdocs `exclude_docs` globs match at any directory depth**:
+  A pattern like `META_*.md` in `exclude_docs` matches files in
+  subdirectories too (e.g. `tutorials/META_ORCHESTRATION_TUTORIAL.md`),
+  not just `docs/META_*.md`. Use specific filenames (e.g.
+  `META_ORCHESTRATION_ARCHITECTURE.md`) instead of wildcards when
+  subdirectories contain files you want to keep in the build.
+
+- **Cross-doc number checkers need context-aware filtering**:
+  A naive regex like `(\d+)\s+tests` matches historical
+  comparisons ("up from 14 tests"), fraction patterns
+  ("5/6 tests"), and qualified nouns ("12 workflow mixins").
+  Fix: skip counts below a noun-specific threshold (tests
+  need 100+), strip fenced code blocks before scanning,
+  check preceding text for "from/had/was" context, and
+  exclude fraction patterns like `\d+/\d+`.
+
+- **Archiving docs creates cascading broken links**: Moving
+  a doc to `docs/archive/` fixes one checker but breaks
+  links in other active docs that referenced it. Always
+  grep for references to a file before archiving, and fix
+  or remove those links in the same pass. Otherwise you
+  play whack-a-mole across multiple audit runs.
+
+- **Doc-audit link checker must strip code blocks**: Markdown
+  link patterns inside fenced code blocks (examples, output
+  templates) are not real navigable links. The checker must
+  remove ` ```...``` ` blocks before scanning with the link
+  regex, or it reports false positives from example output.
 
 <!-- attune-lessons-end -->
