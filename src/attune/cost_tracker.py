@@ -597,9 +597,7 @@ def cmd_costs(args):
     days = getattr(args, "days", 7)
 
     if getattr(args, "json", False):
-        import json as json_mod
-
-        print(json_mod.dumps(tracker.get_summary(days), indent=2))
+        print(json.dumps(tracker.get_summary(days), indent=2))
     else:
         print(tracker.get_report(days))
 
