@@ -1,94 +1,123 @@
-"""Unit tests for attune.mcp.handlers.telemetry_handlers module.
+"""Unit tests for telemetry handler method on EmpathyMCPServer.
 
-Tests cover:
-- get_telemetry_stats returns success=True
-- get_telemetry_stats uses default days=30 when not provided
-- get_telemetry_stats uses custom days when provided
-- get_telemetry_stats returns expected zero values for cost/savings/cache_hit_rate
+Tests cover _get_telemetry_stats() which delegates to UsageTracker.
 
 Copyright 2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-from unittest.mock import MagicMock
+import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.handlers.telemetry_handlers import get_telemetry_stats
+from attune.mcp.server import EmpathyMCPServer
 
 
-def _make_server() -> MagicMock:
-    """Build a minimal MagicMock server for telemetry handler tests.
+def _make_server() -> EmpathyMCPServer:
+    """Build a minimal server instance."""
+    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+        with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
+            return EmpathyMCPServer()
 
-    Returns:
-        MagicMock server instance.
 
-    """
-    return MagicMock()
+_FAKE_STATS = {
+    "total_calls": 42,
+    "total_cost": 1.25,
+    "total_tokens_input": 5000,
+    "total_tokens_output": 2000,
+    "cache_hits": 10,
+    "cache_misses": 32,
+    "cache_hit_rate": 23.8,
+    "by_tier": {},
+    "by_workflow": {},
+    "by_provider": {},
+}
 
 
 @pytest.mark.unit
 class TestGetTelemetryStats:
-    """Tests for get_telemetry_stats handler function."""
+    """Tests for _get_telemetry_stats handler method."""
 
-    async def test_returns_success_true(self) -> None:
-        """Test that get_telemetry_stats always returns success=True."""
+    async def test_returns_success_with_real_tracker(self) -> None:
+        """Test that result includes success=True when tracker works."""
         server = _make_server()
-        result = await get_telemetry_stats(server, {})
+        mock_tracker = MagicMock()
+        mock_tracker.get_stats.return_value = _FAKE_STATS.copy()
+
+        with patch(
+            "attune.mcp.server.UsageTracker",
+            return_value=mock_tracker,
+            create=True,
+        ):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "attune.telemetry.usage_tracker": MagicMock(
+                        UsageTracker=MagicMock(return_value=mock_tracker)
+                    )
+                },
+            ):
+                result = await server._get_telemetry_stats({})
+
+        assert result["success"] is True
+        assert result["total_cost"] == 1.25
+        assert result["total_calls"] == 42
+
+    async def test_default_days_passed_to_tracker(self) -> None:
+        """Test that days=30 is passed when not provided."""
+        server = _make_server()
+        mock_tracker = MagicMock()
+        mock_tracker.get_stats.return_value = _FAKE_STATS.copy()
+
+        with patch(
+            "attune.telemetry.usage_tracker.UsageTracker",
+            return_value=mock_tracker,
+        ):
+            result = await server._get_telemetry_stats({})
+
+        mock_tracker.get_stats.assert_called_once_with(days=30)
         assert result["success"] is True
 
-    async def test_default_days_is_30(self) -> None:
-        """Test that days defaults to 30 when not provided in args."""
+    async def test_custom_days_passed_to_tracker(self) -> None:
+        """Test that custom days value is forwarded."""
         server = _make_server()
-        result = await get_telemetry_stats(server, {})
-        assert result["days"] == 30
+        mock_tracker = MagicMock()
+        mock_tracker.get_stats.return_value = _FAKE_STATS.copy()
 
-    async def test_custom_days_value_is_used(self) -> None:
-        """Test that a provided days value overrides the default."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {"days": 7})
-        assert result["days"] == 7
+        with patch(
+            "attune.telemetry.usage_tracker.UsageTracker",
+            return_value=mock_tracker,
+        ):
+            result = await server._get_telemetry_stats({"days": 7})
 
-    async def test_total_cost_is_zero(self) -> None:
-        """Test that total_cost is 0.0 (placeholder implementation)."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {})
-        assert result["total_cost"] == 0.0
-
-    async def test_savings_is_zero(self) -> None:
-        """Test that savings is 0.0 (placeholder implementation)."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {})
-        assert result["savings"] == 0.0
-
-    async def test_cache_hit_rate_is_zero(self) -> None:
-        """Test that cache_hit_rate is 0.0 (placeholder implementation)."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {})
-        assert result["cache_hit_rate"] == 0.0
-
-    async def test_result_contains_all_expected_keys(self) -> None:
-        """Test that result dict contains all expected keys."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {})
-        expected_keys = {"success", "days", "total_cost", "savings", "cache_hit_rate"}
-        assert expected_keys.issubset(result.keys())
-
-    async def test_custom_days_90(self) -> None:
-        """Test with 90 days to ensure arbitrary values are forwarded."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {"days": 90})
-        assert result["days"] == 90
-
-    async def test_server_argument_is_accepted(self) -> None:
-        """Test that the server argument is accepted without error."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {"days": 14})
-        assert isinstance(result, dict)
-
-    async def test_extra_args_do_not_affect_result(self) -> None:
-        """Test that extra unknown keys in args are ignored gracefully."""
-        server = _make_server()
-        result = await get_telemetry_stats(server, {"days": 30, "unknown_key": "x"})
+        mock_tracker.get_stats.assert_called_once_with(days=7)
         assert result["success"] is True
-        assert result["days"] == 30
+
+    async def test_import_error_returns_failure(self) -> None:
+        """Test graceful handling when telemetry module unavailable."""
+        server = _make_server()
+
+        with patch.dict(
+            "sys.modules",
+            {"attune.telemetry.usage_tracker": None},
+        ):
+            # Force fresh import attempt by clearing any cached import
+            result = await server._get_telemetry_stats({})
+
+        assert result["success"] is False
+        assert "error" in result
+
+    async def test_extra_args_ignored(self) -> None:
+        """Test that extra args don't break the handler."""
+        server = _make_server()
+        mock_tracker = MagicMock()
+        mock_tracker.get_stats.return_value = _FAKE_STATS.copy()
+
+        with patch(
+            "attune.telemetry.usage_tracker.UsageTracker",
+            return_value=mock_tracker,
+        ):
+            result = await server._get_telemetry_stats({"days": 30, "unknown": "x"})
+
+        assert result["success"] is True

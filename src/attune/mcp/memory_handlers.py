@@ -10,6 +10,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_MEMORY_NOT_INSTALLED = "attune-ai memory module not installed. " "Run: pip install attune-ai"
+
 
 class MemoryHandlersMixin:
     """Mixin providing memory tool handlers for EmpathyMCPServer.
@@ -17,6 +19,8 @@ class MemoryHandlersMixin:
     Expects the host class to have a ``_memory`` attribute
     (initialised to ``None``).
     """
+
+    _memory: Any  # Set by host __init__
 
     # ------------------------------------------------------------------
     # Lazy initialiser
@@ -94,7 +98,7 @@ class MemoryHandlersMixin:
             logger.error(f"Memory module not available: {e}")
             return {
                 "success": False,
-                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+                "error": _MEMORY_NOT_INSTALLED,
             }
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_store failed")
@@ -136,7 +140,7 @@ class MemoryHandlersMixin:
             logger.error(f"Memory module not available: {e}")
             return {
                 "success": False,
-                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+                "error": _MEMORY_NOT_INSTALLED,
             }
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_retrieve failed")
@@ -166,10 +170,15 @@ class MemoryHandlersMixin:
                 results = memory.search_patterns(query, pattern_type=pattern_type)
             elif hasattr(memory, "list_patterns"):
                 all_patterns = memory.list_patterns()
+                query_lower = query.lower()
                 results = [
                     p
                     for p in all_patterns
-                    if query.lower() in str(p).lower()
+                    if (
+                        query_lower in p.get("content", "").lower()
+                        or query_lower in p.get("pattern_type", "").lower()
+                        or query_lower in p.get("key", "").lower()
+                    )
                     and (pattern_type is None or p.get("pattern_type") == pattern_type)
                 ]
 
@@ -179,7 +188,7 @@ class MemoryHandlersMixin:
             logger.error(f"Memory module not available: {e}")
             return {
                 "success": False,
-                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+                "error": _MEMORY_NOT_INSTALLED,
             }
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_search failed")
@@ -229,7 +238,7 @@ class MemoryHandlersMixin:
             logger.error(f"Memory module not available: {e}")
             return {
                 "success": False,
-                "error": "attune-ai memory module not installed. Run: pip install attune-ai",
+                "error": _MEMORY_NOT_INSTALLED,
             }
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_forget failed")
