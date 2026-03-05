@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 import asyncio
 import importlib
 import logging
+import shlex
 import time
 from collections.abc import Callable
 from typing import Any
@@ -151,9 +152,10 @@ class HookExecutor:
 
         logger.debug("Executing command: %s", formatted_command)
 
-        # Run command asynchronously
-        process = await asyncio.create_subprocess_shell(
-            formatted_command,
+        # Run command asynchronously (use exec to prevent shell injection)
+        cmd_args = shlex.split(formatted_command)
+        process = await asyncio.create_subprocess_exec(
+            *cmd_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

@@ -187,10 +187,13 @@ class GitPatternExtractor:
         output_file = self.debugging_dir / f"{pattern['pattern_id']}.json"
 
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
+            from attune.security.path_validation import _validate_file_path
+
+            validated = _validate_file_path(str(output_file))
+            with validated.open("w", encoding="utf-8") as f:
                 json.dump(pattern_data, f, indent=2, default=str)
-            return output_file
-        except OSError as e:
+            return validated
+        except (OSError, ValueError) as e:
             logger.error("Failed to save pattern: %s", e)
             return None
 

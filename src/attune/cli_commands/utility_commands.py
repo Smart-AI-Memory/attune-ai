@@ -250,7 +250,9 @@ def cmd_version(args: Namespace) -> int:
 
             reqs = requires("attune-ai") or []
             print(f"\nDependencies: {len(reqs)}")
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Dependency metadata is optional;
+            # failure should not break the info command.
             pass
 
     return 0

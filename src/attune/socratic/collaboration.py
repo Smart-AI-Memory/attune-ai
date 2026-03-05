@@ -599,7 +599,10 @@ class CollaborationManager:
 
     def _save_session(self, session: CollaborativeSession):
         """Save a session to storage."""
-        path = self.storage_path / f"{session.session_id}.json"
+        from attune.security.path_validation import _validate_file_path
+
+        raw = self.storage_path / f"{session.session_id}.json"
+        path = _validate_file_path(str(raw))
         with path.open("w") as f:
             json.dump(session.to_dict(), f, indent=2)
 

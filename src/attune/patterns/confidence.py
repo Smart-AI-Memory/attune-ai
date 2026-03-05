@@ -136,9 +136,12 @@ class PatternConfidenceTracker:
         }
 
         try:
-            with open(self.stats_file, "w", encoding="utf-8") as f:
+            from attune.security.path_validation import _validate_file_path
+
+            validated = _validate_file_path(str(self.stats_file))
+            with validated.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
-        except OSError as e:
+        except (OSError, ValueError) as e:
             logger.error("Failed to save usage stats: %s", e)
 
     def _get_or_create_stats(self, pattern_id: str) -> PatternUsageStats:
