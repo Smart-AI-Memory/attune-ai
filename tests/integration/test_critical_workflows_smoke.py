@@ -526,12 +526,12 @@ class TestAgentRecovery:
 class TestAgentTemplates:
     """Test agent template registry."""
 
-    def test_thirteen_templates_registered(self):
-        """Test that 13 pre-built templates are available."""
+    def test_fourteen_templates_registered(self):
+        """Test that 14 pre-built templates are available."""
         from attune.orchestration.agent_templates import get_all_templates
 
         templates = get_all_templates()
-        assert len(templates) == 13
+        assert len(templates) == 14
 
     def test_get_template_by_id(self):
         """Test retrieving a template by ID."""
@@ -585,7 +585,7 @@ class TestAgentTemplates:
         assert len(cheap) > 0
         assert len(capable) > 0
         assert len(premium) > 0
-        assert len(cheap) + len(capable) + len(premium) == 13
+        assert len(cheap) + len(capable) + len(premium) == 14
 
     def test_get_templates_by_capability(self):
         """Test filtering templates by capability."""
@@ -628,7 +628,7 @@ class TestAgentTemplates:
 
         registry = get_registry()
         assert isinstance(registry, dict)
-        assert len(registry) == 13
+        assert len(registry) == 14
 
 
 # ===========================================================================
@@ -932,7 +932,7 @@ class TestDynamicTeamBuilder:
         builder = DynamicTeamBuilder()
         team = builder.build_from_spec(spec)
 
-        assert len(team.agents) == 13
+        assert len(team.agents) == 14
 
 
 # ===========================================================================

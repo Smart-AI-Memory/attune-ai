@@ -1,6 +1,6 @@
 """Built-in agent template definitions.
 
-Provides 13 pre-built agent templates covering common roles:
+Provides 14 pre-built agent templates covering common roles:
 test analysis, security auditing, code review, documentation,
 performance optimization, architecture analysis, refactoring,
 test generation/validation, reporting, documentation analysis,
