@@ -10,11 +10,17 @@ Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import sys
 from pathlib import Path
 
 import pytest
 
 from attune.security.path_validation import _validate_file_path
+
+_skip_on_windows = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Unix path separators don't work with Path on Windows",
+)
 
 
 class TestPathTraversalPrevention:
@@ -262,42 +268,51 @@ class TestPathValidationWindowsPaths:
                 with pytest.raises(ValueError, match="Cannot write to system directory"):
                     _validate_file_path("C:\\etc\\passwd")
 
+    @_skip_on_windows
     def test_unix_blocks_etc(self):
         """Test that Unix /etc paths are blocked."""
         import sys
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/etc/passwd")
+            with patch.object(Path, "resolve", return_value=Path("/etc/passwd")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/etc/passwd")
 
+    @_skip_on_windows
     def test_unix_blocks_usr_bin(self):
         """Test that /usr/bin paths are blocked on Unix."""
         import sys
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/usr/bin/myapp")
+            with patch.object(Path, "resolve", return_value=Path("/usr/bin/myapp")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/usr/bin/myapp")
 
+    @_skip_on_windows
     def test_unix_blocks_bin(self):
         """Test that /bin paths are blocked on Unix."""
         import sys
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/bin/sh")
+            with patch.object(Path, "resolve", return_value=Path("/bin/sh")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/bin/sh")
 
+    @_skip_on_windows
     def test_unix_blocks_sbin(self):
         """Test that /usr/sbin paths are blocked on Unix."""
         import sys
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/usr/sbin/nologin")
+            with patch.object(Path, "resolve", return_value=Path("/usr/sbin/nologin")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/usr/sbin/nologin")
 
+    @_skip_on_windows
     def test_exact_system_dir_without_trailing_slash(self):
         """Test that exact system directory matches (not just prefix)."""
         import sys

@@ -10,14 +10,10 @@ question:
   question: "What do you need?"
   multiSelect: false
   options:
-    - label: "Provider setup"
-      description: "Configure API provider authentication"
-    - label: "Provider status"
-      description: "Check current authentication status"
-    - label: "Provider recommend"
-      description: "Get provider recommendation"
-    - label: "Provider reset"
-      description: "Reset provider configuration"
+    - label: "Show provider"
+      description: "Show current provider configuration"
+    - label: "Set provider"
+      description: "Change the active LLM provider"
 ---
 
 # utilities
@@ -28,62 +24,41 @@ Authentication and provider management utilities.
 
 | Subcommand | Action |
 | ---------- | ------ |
-| `auth-setup` | Configure API provider |
-| `auth-status` | Check auth status |
-| `auth-recommend` | Get provider recommendation |
-| `auth-reset` | Reset provider config |
+| `show` | Show current provider configuration |
+| `set` | Set the active LLM provider |
 
 ## Usage
 
 ```bash
 /utilities                # Ask what to do
-/utilities auth-setup     # Configure provider
-/utilities auth-status    # Check status
+/utilities show           # Show current provider
+/utilities set            # Set provider
 ```
 
-Or use natural language: "auth", "auth-setup",
-"auth-status", "auth-recommend", "auth-reset".
+Or use natural language: "auth", "provider",
+"show provider", "set provider".
 
 ## Behavior
 
-### auth-setup
+### show
 
-Run the provider setup command:
-
-```bash
-uv run attune provider setup
-```
-
-Guide the user through provider configuration
-if they need help choosing.
-
-### auth-status
-
-Run the provider status command:
+Run the provider show command:
 
 ```bash
-uv run attune provider status
+uv run attune provider show
 ```
 
-Display results and suggest fixes if
-authentication is not configured.
+Display the current provider mode, primary provider,
+and available providers.
 
-### auth-recommend
-
-Run the provider recommendation command:
-
-```bash
-uv run attune provider recommend
-```
-
-### auth-reset
+### set
 
 Use `AskUserQuestion` to confirm:
 
-- Are you sure you want to reset provider config?
+- Which provider? (anthropic, openai, hybrid)
 
 Then run:
 
 ```bash
-uv run attune provider reset
+uv run attune provider set <provider>
 ```

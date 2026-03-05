@@ -296,12 +296,12 @@ class HookConfig(BaseModel):
             yaml_path: Path to write YAML configuration
 
         """
-        from pathlib import Path
-
         import yaml
 
-        config_file = Path(yaml_path)
+        from attune.security.path_validation import _validate_file_path
+
+        config_file = _validate_file_path(str(yaml_path))
         config_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(config_file, "w") as f:
+        with config_file.open("w") as f:
             yaml.dump(self.model_dump(), f, default_flow_style=False)

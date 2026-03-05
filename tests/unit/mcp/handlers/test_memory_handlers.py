@@ -1,4 +1,12 @@
-"""Unit tests for attune.mcp.handlers.memory_handlers."""
+"""Unit tests for memory handler methods on EmpathyMCPServer.
+
+Tests cover _get_memory(), _handle_memory_store/retrieve/search/forget()
+via the server methods (previously tested via standalone functions in
+the deleted attune.mcp.handlers.memory_handlers module).
+
+Copyright 2026 Smart AI Memory, LLC
+Licensed under the Apache License, Version 2.0
+"""
 
 from __future__ import annotations
 
@@ -8,27 +16,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.handlers.memory_handlers import (
-    get_memory,
-    handle_memory_forget,
-    handle_memory_retrieve,
-    handle_memory_search,
-    handle_memory_store,
-)
+from attune.mcp.server import EmpathyMCPServer
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_server(memory: object = None) -> MagicMock:
-    """Return a minimal server mock.
-
-    Set _memory to an existing object to skip lazy-init,
-    or leave None to trigger lazy-import path.
-    """
-    server = MagicMock()
-    server._memory = memory
+def _make_server(memory: object = None) -> EmpathyMCPServer:
+    """Return a server instance with optional pre-set memory."""
+    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+        with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
+            server = EmpathyMCPServer()
+    if memory is not None:
+        server._memory = memory
     return server
 
 
@@ -54,50 +55,50 @@ def _fake_attune_memory_module(mem_instance: MagicMock) -> ModuleType:
 
 
 # ---------------------------------------------------------------------------
-# get_memory
+# _get_memory
 # ---------------------------------------------------------------------------
 
 
 class TestGetMemory:
-    """Tests for get_memory() lazy-init helper."""
+    """Tests for _get_memory() lazy-init helper."""
 
     def test_get_memory_returns_existing_memory_when_set(self):
         """Returns server._memory without importing when already initialised."""
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = get_memory(server)
+        result = server._get_memory()
 
         assert result is mem
 
     def test_get_memory_initialises_and_assigns_when_none(self):
         """Lazily creates UnifiedMemory and assigns it to server._memory."""
         mem = _make_unified_memory()
-        server = _make_server(memory=None)
         fake_mod = _fake_attune_memory_module(mem)
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": fake_mod}):
-            result = get_memory(server)
+            result = server._get_memory()
 
         assert result is mem
         assert server._memory is mem
 
     def test_get_memory_raises_import_error_when_unavailable(self):
         """Propagates ImportError when attune.memory is not installed."""
-        server = _make_server(memory=None)
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": None}):
             with pytest.raises(ImportError):
-                get_memory(server)
+                server._get_memory()
 
 
 # ---------------------------------------------------------------------------
-# handle_memory_store
+# _handle_memory_store
 # ---------------------------------------------------------------------------
 
 
 class TestHandleMemoryStore:
-    """Tests for handle_memory_store()."""
+    """Tests for _handle_memory_store()."""
 
     @pytest.mark.asyncio
     async def test_store_basic_key_value_returns_success(self):
@@ -105,7 +106,7 @@ class TestHandleMemoryStore:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(server, {"key": "my_key", "value": "my_value"})
+        result = await server._handle_memory_store({"key": "my_key", "value": "my_value"})
 
         assert result["success"] is True
         assert result["key"] == "my_key"
@@ -117,7 +118,7 @@ class TestHandleMemoryStore:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(server, {"key": "k", "value": "v"})
+        result = await server._handle_memory_store({"key": "k", "value": "v"})
 
         assert result["classification"] == "PUBLIC"
 
@@ -127,8 +128,8 @@ class TestHandleMemoryStore:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(
-            server, {"key": "k", "value": "v", "classification": "PRIVATE"}
+        result = await server._handle_memory_store(
+            {"key": "k", "value": "v", "classification": "PRIVATE"}
         )
 
         assert result["classification"] == "PRIVATE"
@@ -139,8 +140,7 @@ class TestHandleMemoryStore:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(
-            server,
+        result = await server._handle_memory_store(
             {"key": "k", "value": "v", "pattern_type": "bug_fix"},
         )
 
@@ -154,7 +154,7 @@ class TestHandleMemoryStore:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        await handle_memory_store(server, {"key": "k", "value": "v"})
+        await server._handle_memory_store({"key": "k", "value": "v"})
 
         mem.persist_pattern.assert_not_called()
 
@@ -165,8 +165,7 @@ class TestHandleMemoryStore:
         mem.persist_pattern.side_effect = RuntimeError("persist failed")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(
-            server,
+        result = await server._handle_memory_store(
             {"key": "k", "value": "v", "pattern_type": "foo"},
         )
 
@@ -174,11 +173,11 @@ class TestHandleMemoryStore:
 
     @pytest.mark.asyncio
     async def test_store_import_error_returns_error_dict(self):
-        """ImportError from get_memory returns a structured error dict."""
-        server = _make_server(memory=None)
+        """ImportError from _get_memory returns a structured error dict."""
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": None}):
-            result = await handle_memory_store(server, {"key": "k", "value": "v"})
+            result = await server._handle_memory_store({"key": "k", "value": "v"})
 
         assert result["success"] is False
         assert "error" in result
@@ -190,19 +189,19 @@ class TestHandleMemoryStore:
         mem.stash.side_effect = ValueError("boom")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_store(server, {"key": "k", "value": "v"})
+        result = await server._handle_memory_store({"key": "k", "value": "v"})
 
         assert result["success"] is False
         assert "boom" in result["error"]
 
 
 # ---------------------------------------------------------------------------
-# handle_memory_retrieve
+# _handle_memory_retrieve
 # ---------------------------------------------------------------------------
 
 
 class TestHandleMemoryRetrieve:
-    """Tests for handle_memory_retrieve()."""
+    """Tests for _handle_memory_retrieve()."""
 
     @pytest.mark.asyncio
     async def test_retrieve_found_in_short_term(self):
@@ -211,7 +210,7 @@ class TestHandleMemoryRetrieve:
         mem.retrieve.return_value = {"value": "stored", "classification": "PUBLIC"}
         server = _make_server(memory=mem)
 
-        result = await handle_memory_retrieve(server, {"key": "k"})
+        result = await server._handle_memory_retrieve({"key": "k"})
 
         assert result["success"] is True
         assert result["source"] == "short_term"
@@ -225,7 +224,7 @@ class TestHandleMemoryRetrieve:
         mem.recall_pattern.return_value = {"content": "pattern-data"}
         server = _make_server(memory=mem)
 
-        result = await handle_memory_retrieve(server, {"key": "pat-id"})
+        result = await server._handle_memory_retrieve({"key": "pat-id"})
 
         assert result["success"] is True
         assert result["source"] == "long_term"
@@ -239,7 +238,7 @@ class TestHandleMemoryRetrieve:
         mem.recall_pattern.return_value = None
         server = _make_server(memory=mem)
 
-        result = await handle_memory_retrieve(server, {"key": "missing"})
+        result = await server._handle_memory_retrieve({"key": "missing"})
 
         assert result["success"] is True
         assert result["data"] is None
@@ -253,30 +252,30 @@ class TestHandleMemoryRetrieve:
         mem.recall_pattern.side_effect = RuntimeError("recall error")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_retrieve(server, {"key": "k"})
+        result = await server._handle_memory_retrieve({"key": "k"})
 
         assert result["success"] is True
         assert result["data"] is None
 
     @pytest.mark.asyncio
     async def test_retrieve_import_error_returns_error_dict(self):
-        """ImportError from get_memory returns a structured error dict."""
-        server = _make_server(memory=None)
+        """ImportError from _get_memory returns a structured error dict."""
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": None}):
-            result = await handle_memory_retrieve(server, {"key": "k"})
+            result = await server._handle_memory_retrieve({"key": "k"})
 
         assert result["success"] is False
         assert "error" in result
 
 
 # ---------------------------------------------------------------------------
-# handle_memory_search
+# _handle_memory_search
 # ---------------------------------------------------------------------------
 
 
 class TestHandleMemorySearch:
-    """Tests for handle_memory_search()."""
+    """Tests for _handle_memory_search()."""
 
     @pytest.mark.asyncio
     async def test_search_uses_search_patterns_when_available(self):
@@ -285,7 +284,7 @@ class TestHandleMemorySearch:
         mem.search_patterns.return_value = [{"id": "p1"}, {"id": "p2"}]
         server = _make_server(memory=mem)
 
-        result = await handle_memory_search(server, {"query": "login"})
+        result = await server._handle_memory_search({"query": "login"})
 
         assert result["success"] is True
         assert result["count"] == 2
@@ -298,14 +297,13 @@ class TestHandleMemorySearch:
         mem = _make_unified_memory()
         del mem.search_patterns  # Remove so hasattr returns False
 
-        # list_patterns returns two entries; only one matches the query
         mem.list_patterns.return_value = [
             {"content": "login flow", "pattern_type": "feature"},
             {"content": "logout flow", "pattern_type": "feature"},
         ]
         server = _make_server(memory=mem)
 
-        result = await handle_memory_search(server, {"query": "login"})
+        result = await server._handle_memory_search({"query": "login"})
 
         assert result["success"] is True
         assert result["count"] == 1
@@ -317,7 +315,7 @@ class TestHandleMemorySearch:
         mem.search_patterns.return_value = []
         server = _make_server(memory=mem)
 
-        await handle_memory_search(server, {"query": "q", "pattern_type": "bug_fix"})
+        await server._handle_memory_search({"query": "q", "pattern_type": "bug_fix"})
 
         mem.search_patterns.assert_called_once_with("q", pattern_type="bug_fix")
 
@@ -328,18 +326,18 @@ class TestHandleMemorySearch:
         mem.search_patterns.return_value = []
         server = _make_server(memory=mem)
 
-        result = await handle_memory_search(server, {"query": "nothing"})
+        result = await server._handle_memory_search({"query": "nothing"})
 
         assert result["count"] == 0
         assert result["results"] == []
 
     @pytest.mark.asyncio
     async def test_search_import_error_returns_error_dict(self):
-        """ImportError from get_memory returns a structured error dict."""
-        server = _make_server(memory=None)
+        """ImportError from _get_memory returns a structured error dict."""
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": None}):
-            result = await handle_memory_search(server, {"query": "q"})
+            result = await server._handle_memory_search({"query": "q"})
 
         assert result["success"] is False
         assert "error" in result
@@ -351,19 +349,19 @@ class TestHandleMemorySearch:
         mem.search_patterns.side_effect = RuntimeError("search failed")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_search(server, {"query": "q"})
+        result = await server._handle_memory_search({"query": "q"})
 
         assert result["success"] is False
         assert "search failed" in result["error"]
 
 
 # ---------------------------------------------------------------------------
-# handle_memory_forget
+# _handle_memory_forget
 # ---------------------------------------------------------------------------
 
 
 class TestHandleMemoryForget:
-    """Tests for handle_memory_forget()."""
+    """Tests for _handle_memory_forget()."""
 
     @pytest.mark.asyncio
     async def test_forget_all_scope_clears_both_stores(self):
@@ -371,7 +369,7 @@ class TestHandleMemoryForget:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "all"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "all"})
 
         assert result["success"] is True
         assert "session" in result["removed_from"]
@@ -383,7 +381,7 @@ class TestHandleMemoryForget:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "session"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "session"})
 
         assert result["success"] is True
         assert "session" in result["removed_from"]
@@ -396,7 +394,7 @@ class TestHandleMemoryForget:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "persistent"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "persistent"})
 
         assert result["success"] is True
         assert "persistent" in result["removed_from"]
@@ -409,7 +407,7 @@ class TestHandleMemoryForget:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k"})
+        result = await server._handle_memory_forget({"key": "k"})
 
         assert "session" in result["removed_from"]
         assert "persistent" in result["removed_from"]
@@ -421,7 +419,7 @@ class TestHandleMemoryForget:
         mem.stash.side_effect = RuntimeError("stash error")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "session"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "session"})
 
         assert result["success"] is True
         assert "session" not in result["removed_from"]
@@ -433,7 +431,7 @@ class TestHandleMemoryForget:
         mem.delete_pattern.side_effect = RuntimeError("delete error")
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "persistent"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "persistent"})
 
         assert result["success"] is True
         assert "persistent" not in result["removed_from"]
@@ -442,22 +440,21 @@ class TestHandleMemoryForget:
     async def test_forget_no_delete_pattern_attr_skips_gracefully(self):
         """If memory lacks delete_pattern, persistent scope is silently skipped."""
         mem = _make_unified_memory()
-        del mem.delete_pattern  # Simulate memory without delete_pattern
+        del mem.delete_pattern
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "k", "scope": "persistent"})
+        result = await server._handle_memory_forget({"key": "k", "scope": "persistent"})
 
         assert result["success"] is True
-        # delete_pattern not present, so nothing added to removed_from
         assert "persistent" not in result["removed_from"]
 
     @pytest.mark.asyncio
     async def test_forget_import_error_returns_error_dict(self):
-        """ImportError from get_memory returns a structured error dict."""
-        server = _make_server(memory=None)
+        """ImportError from _get_memory returns a structured error dict."""
+        server = _make_server()
 
         with patch.dict(sys.modules, {"attune.memory": None}):
-            result = await handle_memory_forget(server, {"key": "k"})
+            result = await server._handle_memory_forget({"key": "k"})
 
         assert result["success"] is False
         assert "error" in result
@@ -468,6 +465,6 @@ class TestHandleMemoryForget:
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
-        result = await handle_memory_forget(server, {"key": "target_key"})
+        result = await server._handle_memory_forget({"key": "target_key"})
 
         assert result["key"] == "target_key"

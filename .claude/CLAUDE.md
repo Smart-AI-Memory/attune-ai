@@ -31,7 +31,7 @@ Use `/hub-name` to access organized workflows:
 | `/attune` | Socratic discovery | Natural language routing to all workflows |
 | `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
 | `/testing` | run, coverage, generate, benchmark | Test runner and generation |
-| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, seo, list | Automated analysis |
+| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, list | Automated analysis |
 | `/plan` | feature, refactor, architecture | Planning and strategy |
 | `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
 | `/release` | prep, security, health, publish | Release preparation |

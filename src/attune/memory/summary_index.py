@@ -146,19 +146,32 @@ class ConversationSummaryIndex:
 
     # === Low-level Redis operations ===
 
+    def _mock_get(self, key: str) -> tuple[Any, bool]:
+        """Get mock data for key, returning (data, found).
+
+        Handles TTL expiration. Returns ({}/[]/set(), False) if expired
+        or missing.
+        """
+        if key not in self._memory._mock_storage:
+            return None, False
+        data, expires = self._memory._mock_storage[key]
+        if expires and time.time() > expires:
+            del self._memory._mock_storage[key]
+            return None, False
+        return data, True
+
+    def _mock_set(self, key: str, data: Any) -> None:
+        """Store mock data with TTL."""
+        self._memory._mock_storage[key] = (data, time.time() + self._ttl)
+
     def _hset(self, key: str, mapping: dict[str, str]) -> bool:
         """Set multiple hash fields."""
         if self._memory.use_mock:
-            # Mock: store as dict
-            if key not in self._memory._mock_storage:
-                self._memory._mock_storage[key] = ({}, None)
-            existing, expires = self._memory._mock_storage[key]
-            if isinstance(existing, dict):
-                existing.update(mapping)
-            else:
-                existing = dict(mapping)
-            expires = time.time() + self._ttl
-            self._memory._mock_storage[key] = (existing, expires)
+            data, found = self._mock_get(key)
+            if not found or not isinstance(data, dict):
+                data = {}
+            data.update(mapping)
+            self._mock_set(key, data)
             return True
         if self._memory._client is None:
             return False
@@ -167,13 +180,9 @@ class ConversationSummaryIndex:
     def _hget(self, key: str, field: str) -> str | None:
         """Get single hash field."""
         if self._memory.use_mock:
-            if key in self._memory._mock_storage:
-                data, expires = self._memory._mock_storage[key]
-                if expires and time.time() > expires:
-                    del self._memory._mock_storage[key]
-                    return None
-                if isinstance(data, dict):
-                    return data.get(field)
+            data, found = self._mock_get(key)
+            if found and isinstance(data, dict):
+                return data.get(field)
             return None
         if self._memory._client is None:
             return None
@@ -183,13 +192,9 @@ class ConversationSummaryIndex:
     def _hgetall(self, key: str) -> dict[str, str]:
         """Get all hash fields."""
         if self._memory.use_mock:
-            if key in self._memory._mock_storage:
-                data, expires = self._memory._mock_storage[key]
-                if expires and time.time() > expires:
-                    del self._memory._mock_storage[key]
-                    return {}
-                if isinstance(data, dict):
-                    return data
+            data, found = self._mock_get(key)
+            if found and isinstance(data, dict):
+                return data
             return {}
         if self._memory._client is None:
             return {}
@@ -199,17 +204,14 @@ class ConversationSummaryIndex:
     def _zadd(self, key: str, score: float, member: str) -> bool:
         """Add to sorted set with score."""
         if self._memory.use_mock:
-            if key not in self._memory._mock_storage:
-                self._memory._mock_storage[key] = ([], None)
-            data, _ = self._memory._mock_storage[key]
-            if not isinstance(data, list):
+            data, found = self._mock_get(key)
+            if not found or not isinstance(data, list):
                 data = []
             # Remove existing entry with same member
             data = [(s, m) for s, m in data if m != member]
             data.append((score, member))
-            data.sort(key=lambda x: x[0], reverse=True)  # Highest score first
-            expires = time.time() + self._ttl
-            self._memory._mock_storage[key] = (data, expires)
+            data.sort(key=lambda x: x[0], reverse=True)
+            self._mock_set(key, data)
             return True
         if self._memory._client is None:
             return False
@@ -218,15 +220,9 @@ class ConversationSummaryIndex:
     def _zrevrange(self, key: str, start: int, stop: int) -> list[str]:
         """Get range from sorted set (highest scores first)."""
         if self._memory.use_mock:
-            if key in self._memory._mock_storage:
-                data, expires = self._memory._mock_storage[key]
-                if expires and time.time() > expires:
-                    del self._memory._mock_storage[key]
-                    return []
-                if isinstance(data, list):
-                    # Data is list of (score, member) tuples
-                    members = [m for _, m in data[start : stop + 1]]
-                    return members
+            data, found = self._mock_get(key)
+            if found and isinstance(data, list):
+                return [m for _, m in data[start : stop + 1]]
             return []
         if self._memory._client is None:
             return []
@@ -236,18 +232,15 @@ class ConversationSummaryIndex:
     def _sadd(self, key: str, *members: str) -> int:
         """Add members to set."""
         if self._memory.use_mock:
-            if key not in self._memory._mock_storage:
-                self._memory._mock_storage[key] = (set(), None)
-            data, _ = self._memory._mock_storage[key]
-            if not isinstance(data, set):
+            data, found = self._mock_get(key)
+            if not found or not isinstance(data, set):
                 data = set()
             added = 0
             for member in members:
                 if member not in data:
                     data.add(member)
                     added += 1
-            expires = time.time() + self._ttl
-            self._memory._mock_storage[key] = (data, expires)
+            self._mock_set(key, data)
             return added
         if self._memory._client is None:
             return 0
@@ -256,13 +249,9 @@ class ConversationSummaryIndex:
     def _smembers(self, key: str) -> set[str]:
         """Get all members of set."""
         if self._memory.use_mock:
-            if key in self._memory._mock_storage:
-                data, expires = self._memory._mock_storage[key]
-                if expires and time.time() > expires:
-                    del self._memory._mock_storage[key]
-                    return set()
-                if isinstance(data, set):
-                    return data
+            data, found = self._mock_get(key)
+            if found and isinstance(data, set):
+                return data
             return set()
         if self._memory._client is None:
             return set()

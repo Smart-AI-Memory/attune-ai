@@ -15,7 +15,10 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import json
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from .data_classes import NextAction
@@ -392,19 +395,16 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
         List of NextAction based on project health signals
 
     """
-    import json as _json
-    from pathlib import Path as _Path
-
     suggestions: list[NextAction] = []
-    index_path = _Path(".attune/project_index.json")
+    index_path = Path(".attune/project_index.json")
 
     if not index_path.exists():
         return suggestions
 
     try:
         with open(index_path) as f:
-            index_data = _json.load(f)
-    except (OSError, _json.JSONDecodeError) as e:
+            index_data = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
         logger.debug("Could not load project index: %s", e)
         return suggestions
 
@@ -570,18 +570,15 @@ def _load_suggestion_state() -> dict[str, Any]:
         State dict with 'dismissed' mapping of workflow_name to ISO timestamp
 
     """
-    import json as _json
-    from pathlib import Path as _Path
-
-    state_path = _Path(_SUGGESTION_STATE_FILE)
+    state_path = Path(_SUGGESTION_STATE_FILE)
     if not state_path.exists():
         return {"dismissed": {}}
 
     try:
         with open(state_path) as f:
-            data: dict[str, Any] = _json.load(f)
+            data: dict[str, Any] = json.load(f)
             return data
-    except (OSError, _json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError):
         return {"dismissed": {}}
 
 
@@ -592,15 +589,12 @@ def _save_suggestion_state(state: dict[str, Any]) -> None:
         state: State dict to persist
 
     """
-    import json as _json
-    from pathlib import Path as _Path
-
-    state_path = _Path(_SUGGESTION_STATE_FILE)
+    state_path = Path(_SUGGESTION_STATE_FILE)
     state_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         with open(state_path, "w") as f:
-            _json.dump(state, f, indent=2)
+            json.dump(state, f, indent=2)
     except OSError as e:
         logger.debug("Could not save suggestion state: %s", e)
 
@@ -618,22 +612,20 @@ def _filter_recently_shown(suggestions: list[NextAction]) -> list[NextAction]:
         Filtered list with recently-shown suggestions removed
 
     """
-    from datetime import datetime as _dt
-
     state = _load_suggestion_state()
     dismissed = state.get("dismissed", {})
 
     if not dismissed:
         return suggestions
 
-    now = _dt.now()
+    now = datetime.now()
     filtered: list[NextAction] = []
 
     for s in suggestions:
         dismiss_time_str = dismissed.get(s.workflow_name)
         if dismiss_time_str:
             try:
-                dismiss_time = _dt.fromisoformat(dismiss_time_str)
+                dismiss_time = datetime.fromisoformat(dismiss_time_str)
                 hours_ago = (now - dismiss_time).total_seconds() / 3600
                 if hours_ago < _DISMISS_HOURS:
                     continue  # Skip — too recent
@@ -655,13 +647,11 @@ def record_suggestions_shown(suggestions: list[NextAction]) -> None:
         suggestions: List of suggestions that were displayed
 
     """
-    from datetime import datetime as _dt
-
     if not suggestions:
         return
 
     state = _load_suggestion_state()
-    now_str = _dt.now().isoformat()
+    now_str = datetime.now().isoformat()
 
     for s in suggestions:
         state.setdefault("dismissed", {})[s.workflow_name] = now_str

@@ -41,7 +41,6 @@ For interactive development, use Claude Code skills:
     /workflows  AI-powered workflows (security, bug prediction)
     /docs       Documentation generation
     /release    Release preparation
-    /learning   Session evaluation and improvement
 """
 
 from __future__ import annotations
@@ -120,7 +119,8 @@ use Claude Code skills in VSCode or Claude Desktop:
     /dev        Developer tools (commit, review, debug, refactor)
     /testing    Run tests, coverage, generate tests
     /workflows  AI-powered workflows (security, bug prediction)
-    /learning   Session evaluation
+    /docs       Documentation generation
+    /release    Release preparation
 
 Documentation: https://smartaimemory.com/framework-docs/
         """,

@@ -17,7 +17,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from attune.mcp.request_handler import handle_request
+from attune.mcp.server import handle_request
 
 
 def _make_server(

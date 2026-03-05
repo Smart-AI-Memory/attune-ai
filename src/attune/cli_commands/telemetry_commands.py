@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -52,7 +53,7 @@ def cmd_telemetry_show(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Telemetry error: {e}")
+        logger.exception("Telemetry error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -106,7 +107,7 @@ def cmd_telemetry_savings(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Telemetry error: {e}")
+        logger.exception("Telemetry error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -163,7 +164,7 @@ def cmd_telemetry_export(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Export error: {e}")
+        logger.exception("Export error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -177,9 +178,9 @@ def cmd_telemetry_routing_stats(args: Namespace) -> int:
         tracker = UsageTracker.get_instance()
         router = AdaptiveModelRouter(telemetry=tracker)
 
-        workflow = args.workflow if hasattr(args, "workflow") and args.workflow else None
-        stage = args.stage if hasattr(args, "stage") and args.stage else None
-        days = args.days if hasattr(args, "days") else 7
+        workflow = getattr(args, "workflow", None)
+        stage = getattr(args, "stage", None)
+        days = getattr(args, "days", 7)
 
         print("\n📊 Adaptive Routing Statistics\n")
         print("-" * 70)
@@ -250,7 +251,7 @@ def cmd_telemetry_routing_stats(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Routing stats error: {e}")
+        logger.exception("Routing stats error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -264,8 +265,8 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
         tracker = UsageTracker.get_instance()
         router = AdaptiveModelRouter(telemetry=tracker)
 
-        workflow = args.workflow if hasattr(args, "workflow") and args.workflow else None
-        check_all = args.all if hasattr(args, "all") else False
+        workflow = getattr(args, "workflow", None)
+        check_all = getattr(args, "all", False)
 
         print("\n🔍 Adaptive Routing Tier Upgrade Checks\n")
         print("-" * 70)
@@ -334,7 +335,7 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Routing check error: {e}")
+        logger.exception("Routing check error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -345,8 +346,8 @@ def cmd_telemetry_models(args: Namespace) -> int:
         from attune.telemetry import UsageTracker
 
         tracker = UsageTracker.get_instance()
-        provider = args.provider if hasattr(args, "provider") else None
-        days = args.days if hasattr(args, "days") else 7
+        provider = getattr(args, "provider", None)
+        days = getattr(args, "days", 7)
 
         stats = tracker.get_stats(days=days)
 
@@ -420,7 +421,7 @@ def cmd_telemetry_models(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Models error: {e}")
+        logger.exception("Models error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -445,10 +446,12 @@ def cmd_telemetry_agents(args: Namespace) -> int:
 
         for agent in sorted(active_agents, key=lambda a: a.last_beat, reverse=True):
             # Calculate time since last beat
-            from datetime import datetime
-
+            # Use naive UTC to match agent.last_beat which may be naive
             now = datetime.utcnow()
-            time_since = (now - agent.last_beat).total_seconds()
+            last_beat = (
+                agent.last_beat.replace(tzinfo=None) if agent.last_beat.tzinfo else agent.last_beat
+            )
+            time_since = (now - last_beat).total_seconds()
 
             # Status indicator
             if agent.status in ("completed", "failed", "cancelled"):
@@ -479,7 +482,7 @@ def cmd_telemetry_agents(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Agents error: {e}")
+        logger.exception("Agents error: %s", e)
         print(f"❌ Error: {e}")
         return 1
 
@@ -489,7 +492,7 @@ def cmd_telemetry_signals(args: Namespace) -> int:
     try:
         from attune.telemetry import CoordinationSignals
 
-        agent_id = args.agent if hasattr(args, "agent") else None
+        agent_id = getattr(args, "agent", None)
 
         if not agent_id:
             print("❌ Error: --agent <id> required to view signals")
@@ -509,10 +512,13 @@ def cmd_telemetry_signals(args: Namespace) -> int:
 
         for signal in sorted(signals, key=lambda s: s.timestamp, reverse=True):
             # Calculate age
-            from datetime import datetime
-
             now = datetime.utcnow()
-            age = (now - signal.timestamp).total_seconds()
+            ts = (
+                signal.timestamp.replace(tzinfo=None)
+                if signal.timestamp.tzinfo
+                else signal.timestamp
+            )
+            age = (now - ts).total_seconds()
 
             # Signal type indicator
             type_icons = {
@@ -546,6 +552,6 @@ def cmd_telemetry_signals(args: Namespace) -> int:
         return 1
     except Exception as e:
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Signals error: {e}")
+        logger.exception("Signals error: %s", e)
         print(f"❌ Error: {e}")
         return 1
