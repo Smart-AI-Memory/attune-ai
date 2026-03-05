@@ -436,7 +436,7 @@ def ensure_redis(
                     return status
         except Exception as e:
             # INTENTIONAL: Each start method is best-effort — try next method on failure
-            logger.debug(f"{method.value}_failed", error=str(e))
+            logger.debug("start_method_failed", method=method.value, error=str(e))
             continue
 
     # All methods failed — offer interactive install if in a TTY
@@ -498,6 +498,39 @@ def ensure_redis(
     )
 
 
+def _stop_via_systemd() -> bool:
+    """Stop Redis via systemd, trying both service names."""
+    success, _ = _run_silent(["systemctl", "stop", "redis"])
+    if not success:
+        success, _ = _run_silent(["systemctl", "stop", "redis-server"])
+    return success
+
+
+def _stop_via_direct() -> bool:
+    """Stop Redis via redis-cli shutdown."""
+    if IS_WINDOWS:
+        redis_cli = _find_command("redis-cli.exe") or _find_command("redis-cli")
+    else:
+        redis_cli = _find_command("redis-cli")
+
+    if redis_cli:
+        success, _ = _run_silent([redis_cli, "shutdown", "nosave"])
+        return success
+    return False
+
+
+# Dispatch table for stop methods
+_STOP_DISPATCH: dict[RedisStartMethod, Callable[[], bool]] = {
+    RedisStartMethod.HOMEBREW: lambda: _run_silent(["brew", "services", "stop", "redis"])[0],
+    RedisStartMethod.SYSTEMD: _stop_via_systemd,
+    RedisStartMethod.WINDOWS_SERVICE: lambda: _run_silent(["net", "stop", "Redis"])[0],
+    RedisStartMethod.CHOCOLATEY: lambda: _run_silent(["net", "stop", "Redis"])[0],
+    RedisStartMethod.WSL: lambda: _run_silent(["wsl", "redis-cli", "shutdown", "nosave"])[0],
+    RedisStartMethod.DOCKER: lambda: _run_silent(["docker", "stop", "empathy-redis"])[0],
+    RedisStartMethod.DIRECT: _stop_via_direct,
+}
+
+
 def stop_redis(method: RedisStartMethod) -> bool:
     """Stop Redis if we started it.
 
@@ -508,44 +541,9 @@ def stop_redis(method: RedisStartMethod) -> bool:
         True if stopped successfully
 
     """
-    if method == RedisStartMethod.HOMEBREW:
-        success, _ = _run_silent(["brew", "services", "stop", "redis"])
-        return success
-
-    if method == RedisStartMethod.SYSTEMD:
-        success, _ = _run_silent(["systemctl", "stop", "redis"])
-        if not success:
-            success, _ = _run_silent(["systemctl", "stop", "redis-server"])
-        return success
-
-    if method == RedisStartMethod.WINDOWS_SERVICE:
-        success, _ = _run_silent(["net", "stop", "Redis"])
-        return success
-
-    if method == RedisStartMethod.CHOCOLATEY:
-        # Chocolatey uses Windows Service
-        success, _ = _run_silent(["net", "stop", "Redis"])
-        return success
-
-    if method == RedisStartMethod.WSL:
-        success, _ = _run_silent(["wsl", "redis-cli", "shutdown", "nosave"])
-        return success
-
-    if method == RedisStartMethod.DOCKER:
-        success, _ = _run_silent(["docker", "stop", "empathy-redis"])
-        return success
-
-    if method == RedisStartMethod.DIRECT:
-        # Try redis-cli shutdown
-        if IS_WINDOWS:
-            redis_cli = _find_command("redis-cli.exe") or _find_command("redis-cli")
-        else:
-            redis_cli = _find_command("redis-cli")
-
-        if redis_cli:
-            success, _ = _run_silent([redis_cli, "shutdown", "nosave"])
-            return success
-
+    stop_func = _STOP_DISPATCH.get(method)
+    if stop_func:
+        return stop_func()
     return False
 
 
