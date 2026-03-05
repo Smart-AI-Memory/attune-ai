@@ -37,7 +37,7 @@ Use `/hub-name` to access organized workflows:
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | "topic", plan | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
-| `/batch` | submit, status, results, wait | Batch API processing (50% cost savings) |
+| `/bulk` | submit, status, results, wait | Batch API processing (50% cost savings) |
 | `/wizard` | run, create, list, edit | Guided multi-step wizards |
 | `/utilities` | auth-setup, auth-status, auth-reset | Auth and provider management |
 | `/help` | (navigation) | Help navigating workflows |
@@ -437,5 +437,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   list_wizards` as a module-level function, not
   `WizardRegistry().list_wizards()`. The class
   `WizardRegistry` is not exported from `attune.wizards`.
+
+- **Attune skill names must not collide with Claude Code built-in
+  commands**: Claude Code's built-in `/batch` command (parallel code
+  changes) shadows any Attune skill named `batch`. The user types
+  `/batch submit` expecting Attune's Batch API workflow but gets
+  Claude Code's orchestrator instead. Renamed to `/bulk` to avoid
+  the collision. When naming new skills, check Claude Code's
+  built-in slash commands first: `/batch`, `/compact`, `/config`,
+  `/cost`, `/help`, `/init`, `/login`, `/logout`, `/memory`,
+  `/permissions`, `/review`, `/status`, `/vim`.
+
+- **`CostReport` is a dataclass, not a dict**: The
+  `WorkflowBatchRunner._execute_one()` method used
+  `result.cost_report.get("total_cost", cost)` which fails with
+  `AttributeError: 'CostReport' object has no attribute 'get'`.
+  Fix: use `getattr(result.cost_report, "total_cost", cost)`.
+  Always check whether a result attribute is a dataclass or dict
+  before choosing `.get()` vs `getattr()`.
+
+- **Bug-predict `dangerous_eval` flags `subprocess_exec`**: The
+  scanner's regex matches `create_subprocess_exec` as containing
+  `exec`, producing a false positive for `dangerous_eval` in
+  `hooks/executor.py`. There is no actual `eval()` or `exec()`
+  usage. Always verify HIGH severity scanner findings against
+  the source before treating them as real vulnerabilities.
 
 <!-- attune-lessons-end -->

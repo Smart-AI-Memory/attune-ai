@@ -181,7 +181,8 @@ Write the documentation now in complete Markdown format. Be specific and technic
             try:
                 content = path.read_text()[:5000]  # First 5000 chars
                 return f"File: {path.name}\n\n```\n{content}\n```"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: File reading is best-effort for doc generation
                 return f"Error reading file: {e}"
 
         # If it's a directory, scan the structure
@@ -195,7 +196,7 @@ Write the documentation now in complete Markdown format. Be specific and technic
                     structure.append("**README.md (excerpt):**\n```markdown")
                     structure.append(readme_content)
                     structure.append("```\n")
-                except Exception:
+                except (OSError, UnicodeDecodeError):
                     pass
 
             # Read pyproject.toml if it exists
@@ -206,7 +207,7 @@ Write the documentation now in complete Markdown format. Be specific and technic
                     structure.append("**pyproject.toml (excerpt):**\n```toml")
                     structure.append(pyproject_content)
                     structure.append("```\n")
-                except Exception:
+                except (OSError, UnicodeDecodeError):
                     pass
 
             # Get Python files in src directory with sample content
@@ -227,7 +228,7 @@ Write the documentation now in complete Markdown format. Be specific and technic
                             if end != -1:
                                 docstring = content[start + 3 : end].strip()
                                 structure.append(f"  {docstring[:200]}")
-                    except Exception:
+                    except (OSError, UnicodeDecodeError):
                         pass
 
             # Get directory structure
@@ -245,5 +246,6 @@ Write the documentation now in complete Markdown format. Be specific and technic
                     structure.append(f"- {item.name}")
 
             return "\n".join(structure)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Directory scanning is best-effort for doc generation
             return f"Error scanning directory: {e}"

@@ -5,6 +5,27 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.2] - 2026-03-05
+
+### Fixed
+
+- **WorkflowBatchRunner cost extraction crash** — `CostReport`
+  is a dataclass, not a dict. Changed `.get("total_cost")`
+  to `getattr(cost_report, "total_cost")` in
+  `workflow_batch_runner.py`.
+- **Narrowed 9 overly-broad exception catches** — Replaced
+  `except Exception` with specific types in `count_lines_of_code`
+  calls (`OSError, UnicodeDecodeError`) and auth strategy
+  fallbacks (`AttributeError, ImportError, TypeError`) across
+  `code_review_classify.py`, `perf_audit_stages_mixin.py`,
+  `release_prep_stages.py`, and `document_manager.py`.
+- **Added logging to silent exception** in
+  `template_defs_web.py` — Empathy init failure was swallowed
+  with no log output.
+- **Added `# noqa: BLE001` + `# INTENTIONAL` annotations** to
+  25 justified broad exception catches across 12 files, per
+  coding standards compliance.
+
 ## [3.8.0] - 2026-03-02
 
 ### Added

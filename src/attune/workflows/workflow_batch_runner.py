@@ -380,7 +380,7 @@ class WorkflowBatchRunner:
             duration = time.monotonic() - start_time
             cost = getattr(result, "total_cost", 0.0)
             if hasattr(result, "cost_report") and result.cost_report:
-                cost = result.cost_report.get("total_cost", cost)
+                cost = getattr(result.cost_report, "total_cost", cost)
 
             return WorkflowBatchResult(
                 workflow_id=spec.workflow_id,

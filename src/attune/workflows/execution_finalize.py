@@ -87,8 +87,8 @@ class ExecutionFinalizeMixin:
         if self._rich_reporter:
             try:
                 self._rich_reporter.stop()
-            except Exception:
-                pass  # Best effort cleanup
+            except Exception:  # noqa: BLE001
+                pass  # INTENTIONAL: Best effort cleanup
             self._rich_reporter = None
 
         # Save to workflow history
@@ -100,7 +100,7 @@ class ExecutionFinalizeMixin:
         except (ValueError, TypeError, KeyError):
             # Data serialization errors - log but don't crash workflow
             logger.warning("Failed to save workflow history (serialization error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: History save is optional diagnostics - never crash workflow
             logger.exception("Unexpected error saving workflow history")
 
@@ -128,7 +128,8 @@ class ExecutionFinalizeMixin:
                     status=final_status,
                     message="Agent heartbeat tracking stopped",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Heartbeat cleanup is best-effort
                 logger.warning(f"Failed to stop heartbeat tracking: {e}")
 
         # Auto-save tier progression
@@ -175,7 +176,8 @@ class ExecutionFinalizeMixin:
                 bug_type=bug_type,
                 tier_progression=tier_progression_data,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Tier progression save is optional diagnostics
             logger.debug(f"Failed to save tier progression: {e}")
 
 
@@ -223,5 +225,6 @@ def _update_routing_record(workflow: Any, routing_record: Any, result: Any) -> N
     try:
         if workflow._telemetry_backend is not None:
             workflow._telemetry_backend.log_task_routing(routing_record)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Telemetry logging is optional diagnostics
         logger.debug(f"Failed to log task routing completion: {e}")

@@ -266,7 +266,7 @@ def _run_auth_strategy(
                         continue
                     try:
                         total_lines += count_lines_of_code(file_path)
-                    except Exception:
+                    except (OSError, UnicodeDecodeError):
                         pass
 
         if total_lines > 0:
@@ -295,7 +295,7 @@ def _run_auth_strategy(
 
         logger = logging.getLogger(__name__)
         logger.debug(f"Auth strategy not available: {e}")
-    except Exception as e:
+    except (AttributeError, TypeError) as e:
         import logging
 
         logger = logging.getLogger(__name__)

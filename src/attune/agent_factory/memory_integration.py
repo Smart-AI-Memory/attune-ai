@@ -80,7 +80,8 @@ class MemoryAwareAgent(BaseAgent):
             logger.debug(f"Memory graph loaded from {self._graph_path}")
         except ImportError:
             logger.warning("attune.memory not available, memory integration disabled")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Memory graph is optional — agent works without it
             logger.warning(f"Failed to load memory graph: {e}")
 
     async def invoke(self, input_data: str | dict, context: dict | None = None) -> dict:
@@ -192,7 +193,8 @@ class MemoryAwareAgent(BaseAgent):
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Finding queries are best-effort — return empty on failure
             logger.warning(f"Error querying similar findings: {e}")
             return []
 
@@ -253,7 +255,8 @@ class MemoryAwareAgent(BaseAgent):
             if findings:
                 self._graph._save()
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Storing findings is best-effort — don't crash agent
             logger.warning(f"Error storing findings: {e}")
 
     def _contains_finding_patterns(self, text: str) -> bool:
@@ -322,7 +325,7 @@ class MemoryAwareAgent(BaseAgent):
                 "edge_count": len(self._graph.edges),
                 "path": str(self._graph.path),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Stats are optional, don't crash on errors
             logger.debug(f"Could not get graph stats: {e}")
             return {"enabled": True, "error": "Could not get stats"}

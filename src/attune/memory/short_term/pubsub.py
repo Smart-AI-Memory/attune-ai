@@ -138,7 +138,8 @@ class PubSubManager:
             for handler in handlers:
                 try:
                     handler(payload)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
+                    # INTENTIONAL: Individual handler failures must not block other handlers
                     logger.warning("pubsub_handler_error", channel=channel, error=str(e))
             latency_ms = (time.perf_counter() - start_time) * 1000
             self._base._metrics.record_operation("publish", latency_ms)
@@ -205,7 +206,8 @@ class PubSubManager:
                 kwargs = self._base._config.to_redis_kwargs()
                 self._pubsub_client = redis.Redis(**kwargs)  # type: ignore[assignment]
                 self._pubsub = self._pubsub_client.pubsub()  # type: ignore[attr-defined]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Connection failure is recoverable — return False
                 logger.error("pubsub_connection_failed", error=str(e))
                 return False
 
@@ -243,7 +245,8 @@ class PubSubManager:
         for handler in handlers:
             try:
                 handler(payload)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Individual handler failures must not block other handlers
                 logger.warning("pubsub_handler_error", channel=channel, error=str(e))
 
     def _pubsub_listener(self) -> None:
@@ -290,7 +293,7 @@ class PubSubManager:
                     if self._pubsub_client:
                         try:
                             self._pubsub_client.close()
-                        except Exception:
+                        except Exception:  # noqa: BLE001
                             # INTENTIONAL: Best-effort cleanup before reconnect
                             pass
 
@@ -302,13 +305,14 @@ class PubSubManager:
                     for channel in self._subscriptions:
                         self._pubsub.subscribe(**{channel: self._pubsub_message_handler})
                     logger.info("pubsub_reconnected", channels=list(self._subscriptions.keys()))
-                except Exception as reconnect_err:
+                except Exception as reconnect_err:  # noqa: BLE001
+                    # INTENTIONAL: Reconnection failure is logged — will retry
                     logger.warning(
                         "pubsub_reconnect_failed",
                         attempt=reconnect_attempts,
                         error=str(reconnect_err),
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Listener thread must not crash on unexpected errors
                 logger.warning("pubsub_listener_error", error=str(e))
                 time.sleep(1)

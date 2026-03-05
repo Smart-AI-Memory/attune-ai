@@ -97,7 +97,8 @@ class HookExecutor:
                 "duration_ms": round(duration_ms, 2),
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Hooks must not crash the caller — return error dict
             duration_ms = (time.time() - start_time) * 1000
             logger.error("Hook execution failed: %s - %s", hook.command, e)
             return {
@@ -261,7 +262,8 @@ class HookExecutor:
 
             try:
                 return await response.json()
-            except Exception:
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Graceful fallback when response isn't valid JSON
                 return {"status": response.status, "text": await response.text()}
 
 

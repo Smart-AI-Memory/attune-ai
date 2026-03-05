@@ -23,7 +23,21 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.9.0
+## What's New in v3.9.2
+
+- **CostReport bug fix** — `WorkflowBatchRunner` crashed
+  when accessing `CostReport` dataclass as a dict.
+- **Exception handling hardened** — Narrowed broad
+  `except Exception` to specific types across 16 files.
+- **Logging gaps closed** — Added missing `logger.warning()`
+  calls to silent exception handlers.
+- **Batch API rename** — `/batch` renamed to `/bulk` to
+  avoid collision with Claude Code's built-in `/batch`.
+
+<details>
+<summary>Previous releases</summary>
+
+### v3.9.0
 
 - **33 MCP tools** — All 17 workflows now exposed as MCP
   tools (was 6). Includes doc-audit, test-audit,
@@ -33,14 +47,6 @@ pip install 'attune-ai[developer]'
   deps.
 - **Fast-path slash commands** — Power users who provide
   both action and target skip Socratic scoping questions.
-- **Clearer workflow descriptions** — Overlapping workflows
-  (test-gen vs test-gen-parallel, doc-audit vs doc-gen)
-  now have distinct descriptions.
-- **Removed 2 outlier workflows** — keyboard-shortcuts and
-  seo-optimization removed (17 workflows, down from 19).
-
-<details>
-<summary>Previous releases</summary>
 
 ### v3.8.0
 

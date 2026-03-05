@@ -58,7 +58,7 @@ def safe_agent_operation(operation_name: str):
 
                 return result
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 elapsed = time.time() - start_time
                 logger.error(f"[{agent_name}] {operation_name} failed after {elapsed:.2f}s: {e}")
 
@@ -80,7 +80,7 @@ def safe_agent_operation(operation_name: str):
                                 "elapsed_seconds": elapsed,
                             },
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         # INTENTIONAL: Audit trail is optional - don't fail the main operation
                         pass
 
@@ -277,7 +277,8 @@ def graceful_degradation(fallback_value: Any = None, log_level: str = "warning")
         async def wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: @fallback decorator — graceful degradation by design
                 log_func = getattr(logger, log_level.lower(), logger.warning)
                 log_func(f"{func.__name__} failed, using fallback: {e}")
                 return fallback_value

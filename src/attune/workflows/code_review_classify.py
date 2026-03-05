@@ -97,7 +97,7 @@ class ClassifyMixin:
                             for py_file in target_obj.rglob("*.py"):
                                 try:
                                     total_lines += count_lines_of_code(py_file)
-                                except Exception:
+                                except (OSError, UnicodeDecodeError):
                                     pass
 
                 if total_lines > 0:
@@ -117,7 +117,7 @@ class ClassifyMixin:
                     else:
                         logger.info(f"Cost: ~${cost_estimate['monetary_cost']:.4f}")
 
-            except Exception as e:
+            except (AttributeError, ImportError, TypeError) as e:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Auth strategy detection failed: {e}")
 

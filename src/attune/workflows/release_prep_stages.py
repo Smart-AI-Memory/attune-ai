@@ -61,7 +61,7 @@ class ReleasePrepStagesMixin:
                     for py_file in target.rglob("*.py"):
                         try:
                             total_lines += count_lines_of_code(py_file)
-                        except Exception:
+                        except (OSError, UnicodeDecodeError):
                             pass
 
                 if total_lines > 0:
@@ -81,7 +81,7 @@ class ReleasePrepStagesMixin:
                     else:
                         logger.info(f"Cost: ~${cost_estimate['monetary_cost']:.4f}")
 
-            except Exception as e:
+            except (AttributeError, ImportError, TypeError) as e:
                 import logging
 
                 logger = logging.getLogger(__name__)
