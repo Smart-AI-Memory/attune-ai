@@ -1,4 +1,9 @@
-"""Unit tests for attune.mcp.handlers.auth_handlers."""
+"""Unit tests for auth handler methods on EmpathyMCPServer.
+
+Tests cover get_auth_status() and get_auth_recommend() via
+the server methods (previously tested via standalone functions
+in the deleted attune.mcp.handlers.auth_handlers module).
+"""
 
 from __future__ import annotations
 
@@ -8,15 +13,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
-def _make_server() -> MagicMock:
-    """Return a minimal server mock."""
-    return MagicMock()
+from attune.mcp.server import EmpathyMCPServer
 
 
-# ---------------------------------------------------------------------------
-# Helpers — build fake attune.models module trees for lazy-import patching
-# ---------------------------------------------------------------------------
+def _make_server() -> EmpathyMCPServer:
+    """Return a server instance with plugin/version-check init suppressed."""
+    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+        with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
+            return EmpathyMCPServer()
 
 
 def _make_models_module(strategy: MagicMock | None = None) -> ModuleType:
@@ -29,13 +33,12 @@ def _make_models_module(strategy: MagicMock | None = None) -> ModuleType:
 
 
 class TestGetAuthStatus:
-    """Tests for get_auth_status()."""
+    """Tests for _get_auth_status()."""
 
     @pytest.mark.asyncio
     async def test_get_auth_status_returns_success_dict(self):
         """Happy path: strategy loaded, returns expected keys."""
-        from attune.mcp.handlers.auth_handlers import get_auth_status
-
+        server = _make_server()
         strategy = MagicMock()
         strategy.subscription_tier.value = "FREE"
         strategy.default_mode.value = "subscription"
@@ -44,7 +47,7 @@ class TestGetAuthStatus:
         fake_models = _make_models_module(strategy)
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_status(_make_server())
+            result = await server._get_auth_status()
 
         assert result["success"] is True
         assert result["subscription_tier"] == "FREE"
@@ -54,8 +57,7 @@ class TestGetAuthStatus:
     @pytest.mark.asyncio
     async def test_get_auth_status_setup_completed_false(self):
         """Returns setup_completed=False when not yet configured."""
-        from attune.mcp.handlers.auth_handlers import get_auth_status
-
+        server = _make_server()
         strategy = MagicMock()
         strategy.subscription_tier.value = "FREE"
         strategy.default_mode.value = "api"
@@ -64,15 +66,14 @@ class TestGetAuthStatus:
         fake_models = _make_models_module(strategy)
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_status(_make_server())
+            result = await server._get_auth_status()
 
         assert result["setup_completed"] is False
 
     @pytest.mark.asyncio
     async def test_get_auth_status_different_tier_values(self):
         """Tier and mode values are read from the strategy enum .value."""
-        from attune.mcp.handlers.auth_handlers import get_auth_status
-
+        server = _make_server()
         strategy = MagicMock()
         strategy.subscription_tier.value = "PRO"
         strategy.default_mode.value = "hybrid"
@@ -81,32 +82,14 @@ class TestGetAuthStatus:
         fake_models = _make_models_module(strategy)
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_status(_make_server())
+            result = await server._get_auth_status()
 
         assert result["subscription_tier"] == "PRO"
         assert result["default_mode"] == "hybrid"
 
-    @pytest.mark.asyncio
-    async def test_get_auth_status_ignores_server_argument(self):
-        """Server argument is accepted but not used by get_auth_status."""
-        from attune.mcp.handlers.auth_handlers import get_auth_status
-
-        strategy = MagicMock()
-        strategy.subscription_tier.value = "FREE"
-        strategy.default_mode.value = "api"
-        strategy.setup_completed = False
-
-        fake_models = _make_models_module(strategy)
-        server = _make_server()
-
-        with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_status(server)
-
-        assert result["success"] is True
-
 
 class TestGetAuthRecommend:
-    """Tests for get_auth_recommend()."""
+    """Tests for _get_auth_recommend()."""
 
     def _make_models_for_recommend(
         self, lines: int = 200, category: str = "medium", recommended_mode: str = "subscription"
@@ -125,14 +108,13 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_returns_success_dict(self, tmp_path):
         """Happy path: returns all expected keys."""
-        from attune.mcp.handlers.auth_handlers import get_auth_recommend
-
+        server = _make_server()
         target = tmp_path / "sample.py"
         target.write_text("x = 1\n", encoding="utf-8")
         fake_models = self._make_models_for_recommend(lines=50, category="small")
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_recommend(_make_server(), {"file_path": str(target)})
+            result = await server._get_auth_recommend({"file_path": str(target)})
 
         assert result["success"] is True
         assert result["lines_of_code"] == 50
@@ -143,8 +125,7 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_large_module(self, tmp_path):
         """Large module returns api recommended mode."""
-        from attune.mcp.handlers.auth_handlers import get_auth_recommend
-
+        server = _make_server()
         target = tmp_path / "big.py"
         target.write_text("pass\n", encoding="utf-8")
         fake_models = self._make_models_for_recommend(
@@ -152,7 +133,7 @@ class TestGetAuthRecommend:
         )
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_recommend(_make_server(), {"file_path": str(target)})
+            result = await server._get_auth_recommend({"file_path": str(target)})
 
         assert result["lines_of_code"] == 5000
         assert result["category"] == "large"
@@ -161,28 +142,25 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_file_path_in_result(self, tmp_path):
         """file_path key in result matches the input path string."""
-        from attune.mcp.handlers.auth_handlers import get_auth_recommend
-
+        server = _make_server()
         target = tmp_path / "mod.py"
         target.write_text("", encoding="utf-8")
         fake_models = self._make_models_for_recommend()
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            result = await get_auth_recommend(_make_server(), {"file_path": str(target)})
+            result = await server._get_auth_recommend({"file_path": str(target)})
 
-        # file_path is str(Path(args["file_path"]))
         assert result["file_path"] == str(target)
 
     @pytest.mark.asyncio
     async def test_get_auth_recommend_calls_count_lines(self, tmp_path):
         """count_lines_of_code is called with the resolved Path."""
-        from attune.mcp.handlers.auth_handlers import get_auth_recommend
-
+        server = _make_server()
         target = tmp_path / "mod.py"
         target.write_text("", encoding="utf-8")
         fake_models = self._make_models_for_recommend(lines=10)
 
         with patch.dict(sys.modules, {"attune.models": fake_models}):
-            await get_auth_recommend(_make_server(), {"file_path": str(target)})
+            await server._get_auth_recommend({"file_path": str(target)})
 
         fake_models.count_lines_of_code.assert_called_once()

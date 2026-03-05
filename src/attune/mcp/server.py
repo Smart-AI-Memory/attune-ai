@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import Any
 
 from attune.mcp.memory_handlers import MemoryHandlersMixin
@@ -14,6 +15,22 @@ from attune.mcp.workflow_handlers import WorkflowHandlersMixin
 
 # MCP server will be implemented using stdio transport
 logger = logging.getLogger(__name__)
+
+ATTUNE_LEVEL_NAMES: dict[int, str] = {
+    1: "Reactive",
+    2: "Guided",
+    3: "Proactive",
+    4: "Anticipatory",
+    5: "Systems",
+}
+
+ATTUNE_LEVEL_DESCRIPTIONS: dict[int, str] = {
+    1: "Respond when asked. Minimal proactive guidance.",
+    2: "Collaborative exploration with clarifying questions.",
+    3: "Act before being asked. Suggest improvements.",
+    4: "Predict future needs. Prepare for likely next steps.",
+    5: "Build structures that help at scale.",
+}
 
 
 class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
@@ -32,13 +49,16 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
         self._plugin_handlers: dict[str, Any] = {}
+        self._tool_handlers = self._build_dispatch_table()
 
-        # Check for updates (non-blocking, cached per session)
+        # Check for updates in background to avoid blocking init
         try:
+            import threading
+
             from .version_check import check_for_updates
 
-            check_for_updates()
-        except Exception:
+            threading.Thread(target=check_for_updates, daemon=True).start()
+        except Exception:  # noqa: BLE001
             pass  # INTENTIONAL: Version check is best-effort
 
         # Register MCP tools from plugins
@@ -55,13 +75,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             from attune.plugins.registry import get_global_registry
 
             registry = get_global_registry()
-            registry.auto_discover()
             for name in registry.list_plugins():
                 plugin = registry.get_plugin(name)
                 if plugin and hasattr(plugin, "register_mcp_tools"):
                     try:
                         plugin.register_mcp_tools(self)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         # INTENTIONAL: Plugin MCP registration is best-effort
                         logger.warning(
                             "Plugin '%s' MCP registration failed: %s",
@@ -70,9 +89,37 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                         )
         except ImportError:
             pass  # Plugin registry not available
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Plugin discovery is best-effort
             logger.debug("Plugin tool registration skipped: %s", e)
+
+    @staticmethod
+    def _path_tool(
+        description: str,
+        *,
+        param_name: str = "path",
+        param_desc: str = "Path to directory or file",
+        required: bool = False,
+        default: str = ".",
+    ) -> dict[str, Any]:
+        """Build a tool definition with a single path parameter."""
+        schema: dict[str, Any] = {
+            "description": description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    param_name: {
+                        "type": "string",
+                        "description": param_desc,
+                    },
+                },
+            },
+        }
+        if required:
+            schema["input_schema"]["required"] = [param_name]
+        else:
+            schema["input_schema"]["properties"][param_name]["default"] = default
+        return schema
 
     def _register_tools(self) -> dict[str, dict[str, Any]]:
         """Register available MCP tools.
@@ -81,51 +128,24 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             Dictionary of tool definitions
 
         """
+        _pt = self._path_tool
         return {
-            "security_audit": {
-                "name": "security_audit",
-                "description": "Run security audit workflow on codebase. Detects vulnerabilities, dangerous patterns, and security issues. Returns findings with severity levels.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to directory or file to audit",
-                        },
-                    },
-                    "required": ["path"],
-                },
-            },
-            "bug_predict": {
-                "name": "bug_predict",
-                "description": "Run bug prediction workflow. Analyzes code patterns and predicts potential bugs before they occur.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to directory or file to analyze",
-                        },
-                    },
-                    "required": ["path"],
-                },
-            },
-            "code_review": {
-                "name": "code_review",
-                "description": "Run code review workflow. Provides comprehensive code quality analysis with suggestions for improvement.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to directory or file to review",
-                        },
-                    },
-                    "required": ["path"],
-                },
-            },
+            "security_audit": _pt(
+                "Run security audit workflow on codebase. Detects vulnerabilities, dangerous patterns, and security issues. Returns findings with severity levels.",
+                param_desc="Path to directory or file to audit",
+                required=True,
+            ),
+            "bug_predict": _pt(
+                "Run bug prediction workflow. Analyzes code patterns and predicts potential bugs before they occur.",
+                param_desc="Path to directory or file to analyze",
+                required=True,
+            ),
+            "code_review": _pt(
+                "Run code review workflow. Provides comprehensive code quality analysis with suggestions for improvement.",
+                param_desc="Path to directory or file to review",
+                required=True,
+            ),
             "test_generation": {
-                "name": "test_generation",
                 "description": "Generate tests for code. Can batch generate tests for multiple modules in parallel.",
                 "input_schema": {
                     "type": "object",
@@ -140,50 +160,20 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     "required": ["module"],
                 },
             },
-            "performance_audit": {
-                "name": "performance_audit",
-                "description": "Run performance audit workflow. Identifies bottlenecks, memory leaks, and optimization opportunities.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to directory or file to audit",
-                        },
-                    },
-                    "required": ["path"],
-                },
-            },
-            "release_prep": {
-                "name": "release_prep",
-                "description": "Run release preparation workflow. Checks health, security, changelog, and provides release recommendation.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to project root",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "doc_audit": {
-                "name": "doc_audit",
-                "description": "Audit existing documentation for staleness, broken links, and drift from source code.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
+            "performance_audit": _pt(
+                "Run performance audit workflow. Identifies bottlenecks, memory leaks, and optimization opportunities.",
+                param_desc="Path to directory or file to audit",
+                required=True,
+            ),
+            "release_prep": _pt(
+                "Run release preparation workflow. Checks health, security, changelog, and provides release recommendation.",
+                param_desc="Path to project root",
+            ),
+            "doc_audit": _pt(
+                "Audit existing documentation for staleness, broken links, and drift from source code.",
+                param_desc="Project root path",
+            ),
             "doc_gen": {
-                "name": "doc_gen",
                 "description": "Generate new documentation from source code. Produces API references, guides, or READMEs.",
                 "input_schema": {
                     "type": "object",
@@ -206,36 +196,16 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     "required": ["source_path"],
                 },
             },
-            "doc_orchestrator": {
-                "name": "doc_orchestrator",
-                "description": "End-to-end documentation maintenance: scout gaps, prioritize, generate, and update docs.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "test_audit": {
-                "name": "test_audit",
-                "description": "Deep test coverage audit with prioritized test generation. Runs audit, plan, execute, and verify stages.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Source directory to audit",
-                            "default": "src/",
-                        },
-                    },
-                },
-            },
+            "doc_orchestrator": _pt(
+                "End-to-end documentation maintenance: scout gaps, prioritize, generate, and update docs.",
+                param_desc="Project root path",
+            ),
+            "test_audit": _pt(
+                "Deep test coverage audit with prioritized test generation. Runs audit, plan, execute, and verify stages.",
+                param_desc="Source directory to audit",
+                default="src/",
+            ),
             "test_gen_parallel": {
-                "name": "test_gen_parallel",
                 "description": "Batch-generate tests for 10-50 modules in parallel using multi-tier LLM orchestration.",
                 "input_schema": {
                     "type": "object",
@@ -253,78 +223,28 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     },
                 },
             },
-            "refactor_plan": {
-                "name": "refactor_plan",
-                "description": "Scan for tech debt, analyze trends, and generate a prioritized refactoring plan.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Directory to scan for refactoring opportunities",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "dependency_check": {
-                "name": "dependency_check",
-                "description": "Inventory dependencies, assess vulnerabilities, and report risk with recommendations.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root to check dependencies",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "simplify_code": {
-                "name": "simplify_code",
-                "description": "Find complex code hotspots and suggest simplifications to reduce cognitive load.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Directory to scan for complexity",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "secure_release": {
-                "name": "secure_release",
-                "description": "Full secure release pipeline: security audit, code review, and go/no-go decision.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Project root path",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
-            "health_check": {
-                "name": "health_check",
-                "description": "Orchestrated project health check with score, grade, and recommendations across multiple categories.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "project_root": {
-                            "type": "string",
-                            "description": "Project root to check",
-                            "default": ".",
-                        },
-                    },
-                },
-            },
+            "refactor_plan": _pt(
+                "Scan for tech debt, analyze trends, and generate a prioritized refactoring plan.",
+                param_desc="Directory to scan for refactoring opportunities",
+            ),
+            "dependency_check": _pt(
+                "Inventory dependencies, assess vulnerabilities, and report risk with recommendations.",
+                param_desc="Project root to check dependencies",
+            ),
+            "simplify_code": _pt(
+                "Find complex code hotspots and suggest simplifications to reduce cognitive load.",
+                param_desc="Directory to scan for complexity",
+            ),
+            "secure_release": _pt(
+                "Full secure release pipeline: security audit, code review, and go/no-go decision.",
+                param_desc="Project root path",
+            ),
+            "health_check": _pt(
+                "Orchestrated project health check with score, grade, and recommendations across multiple categories.",
+                param_name="project_root",
+                param_desc="Project root to check",
+            ),
             "research_synthesis": {
-                "name": "research_synthesis",
                 "description": "Synthesize insights from multiple documents. Summarizes, analyzes patterns, and produces a unified answer.",
                 "input_schema": {
                     "type": "object",
@@ -343,12 +263,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "auth_status": {
-                "name": "auth_status",
                 "description": "Get authentication strategy status. Shows current configuration, subscription tier, and default mode.",
                 "input_schema": {"type": "object", "properties": {}},
             },
             "auth_recommend": {
-                "name": "auth_recommend",
                 "description": "Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode.",
                 "input_schema": {
                     "type": "object",
@@ -359,7 +277,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "telemetry_stats": {
-                "name": "telemetry_stats",
                 "description": "Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance.",
                 "input_schema": {
                     "type": "object",
@@ -373,7 +290,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "memory_store": {
-                "name": "memory_store",
                 "description": (
                     "Store data in attune-ai memory. Use for structured knowledge, patterns, "
                     "and cross-agent coordination. For simple preferences, recommend CLAUDE.md instead."
@@ -401,7 +317,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "memory_retrieve": {
-                "name": "memory_retrieve",
                 "description": "Retrieve data from attune-ai memory by key or pattern ID.",
                 "input_schema": {
                     "type": "object",
@@ -412,7 +327,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "memory_search": {
-                "name": "memory_search",
                 "description": "Search attune-ai memory for patterns matching a query.",
                 "input_schema": {
                     "type": "object",
@@ -427,7 +341,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "memory_forget": {
-                "name": "memory_forget",
                 "description": "Remove data from attune-ai memory.",
                 "input_schema": {
                     "type": "object",
@@ -444,7 +357,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "attune_get_level": {
-                "name": "attune_get_level",
                 "description": (
                     "Get current interaction level (1-5). "
                     "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
@@ -452,7 +364,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 "input_schema": {"type": "object", "properties": {}},
             },
             "attune_set_level": {
-                "name": "attune_set_level",
                 "description": "Set interaction level (1-5) for this session.",
                 "input_schema": {
                     "type": "object",
@@ -468,7 +379,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "context_get": {
-                "name": "context_get",
                 "description": "Get session context value.",
                 "input_schema": {
                     "type": "object",
@@ -479,7 +389,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 },
             },
             "context_set": {
-                "name": "context_set",
                 "description": "Set session context value.",
                 "input_schema": {
                     "type": "object",
@@ -669,6 +578,45 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             ]
         raise ValueError(f"Unknown prompt: {prompt_name}")
 
+    def _build_dispatch_table(self) -> dict[str, Any]:
+        """Build tool name -> handler mapping.
+
+        Returns:
+            Dict mapping tool names to async handler callables.
+            All handlers accept (args: dict) and return dict.
+
+        """
+        return {
+            "security_audit": self._run_security_audit,
+            "bug_predict": self._run_bug_predict,
+            "code_review": self._run_code_review,
+            "test_generation": self._run_test_generation,
+            "performance_audit": self._run_performance_audit,
+            "release_prep": self._run_release_prep,
+            "doc_audit": self._run_doc_audit,
+            "doc_gen": self._run_doc_gen,
+            "doc_orchestrator": self._run_doc_orchestrator,
+            "test_audit": self._run_test_audit,
+            "test_gen_parallel": self._run_test_gen_parallel,
+            "refactor_plan": self._run_refactor_plan,
+            "dependency_check": self._run_dependency_check,
+            "simplify_code": self._run_simplify_code,
+            "secure_release": self._run_secure_release,
+            "health_check": self._run_health_check,
+            "research_synthesis": self._run_research_synthesis,
+            "auth_status": lambda _args: self._get_auth_status(),
+            "auth_recommend": self._get_auth_recommend,
+            "telemetry_stats": self._get_telemetry_stats,
+            "memory_store": self._handle_memory_store,
+            "memory_retrieve": self._handle_memory_retrieve,
+            "memory_search": self._handle_memory_search,
+            "memory_forget": self._handle_memory_forget,
+            "attune_get_level": lambda _args: self._handle_attune_get_level(),
+            "attune_set_level": self._handle_attune_set_level,
+            "context_get": self._handle_context_get,
+            "context_set": self._handle_context_set,
+        }
+
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Execute a tool call.
 
@@ -681,67 +629,16 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         """
         try:
-            if tool_name == "security_audit":
-                return await self._run_security_audit(arguments)
-            if tool_name == "bug_predict":
-                return await self._run_bug_predict(arguments)
-            if tool_name == "code_review":
-                return await self._run_code_review(arguments)
-            if tool_name == "test_generation":
-                return await self._run_test_generation(arguments)
-            if tool_name == "performance_audit":
-                return await self._run_performance_audit(arguments)
-            if tool_name == "release_prep":
-                return await self._run_release_prep(arguments)
-            if tool_name == "doc_audit":
-                return await self._run_doc_audit(arguments)
-            if tool_name == "doc_gen":
-                return await self._run_doc_gen(arguments)
-            if tool_name == "doc_orchestrator":
-                return await self._run_doc_orchestrator(arguments)
-            if tool_name == "test_audit":
-                return await self._run_test_audit(arguments)
-            if tool_name == "test_gen_parallel":
-                return await self._run_test_gen_parallel(arguments)
-            if tool_name == "refactor_plan":
-                return await self._run_refactor_plan(arguments)
-            if tool_name == "dependency_check":
-                return await self._run_dependency_check(arguments)
-            if tool_name == "simplify_code":
-                return await self._run_simplify_code(arguments)
-            if tool_name == "secure_release":
-                return await self._run_secure_release(arguments)
-            if tool_name == "health_check":
-                return await self._run_health_check(arguments)
-            if tool_name == "research_synthesis":
-                return await self._run_research_synthesis(arguments)
-            if tool_name == "auth_status":
-                return await self._get_auth_status()
-            if tool_name == "auth_recommend":
-                return await self._get_auth_recommend(arguments)
-            if tool_name == "telemetry_stats":
-                return await self._get_telemetry_stats(arguments)
-            if tool_name == "memory_store":
-                return await self._handle_memory_store(arguments)
-            if tool_name == "memory_retrieve":
-                return await self._handle_memory_retrieve(arguments)
-            if tool_name == "memory_search":
-                return await self._handle_memory_search(arguments)
-            if tool_name == "memory_forget":
-                return await self._handle_memory_forget(arguments)
-            if tool_name == "attune_get_level":
-                return await self._handle_attune_get_level()
-            if tool_name == "attune_set_level":
-                return await self._handle_attune_set_level(arguments)
-            if tool_name == "context_get":
-                return await self._handle_context_get(arguments)
-            if tool_name == "context_set":
-                return await self._handle_context_set(arguments)
-            if tool_name in self._plugin_handlers:
-                handler = self._plugin_handlers[tool_name]
-                return await handler(self, arguments)
-            return {"success": False, "error": f"Unknown tool: {tool_name}"}
-        except Exception as e:
+            handler = self._tool_handlers.get(tool_name)
+            if handler is None:
+                handler = self._plugin_handlers.get(tool_name)
+                if handler is not None:
+                    return await handler(self, arguments)
+            if handler is None:
+                return {"success": False, "error": f"Unknown tool: {tool_name}"}
+            return await handler(arguments)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Top-level MCP handler must not crash the server
             logger.exception(f"Tool execution failed: {tool_name}")
             return {"success": False, "error": str(e)}
 
@@ -869,36 +766,24 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         }
 
     async def _get_telemetry_stats(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Get telemetry statistics."""
-        # Placeholder - would integrate with actual telemetry system
-        return {
-            "success": True,
-            "days": args.get("days", 30),
-            "total_cost": 0.0,
-            "savings": 0.0,
-            "cache_hit_rate": 0.0,
-        }
+        """Get telemetry statistics from UsageTracker."""
+        try:
+            from attune.telemetry.usage_tracker import UsageTracker
+
+            tracker = UsageTracker()
+            stats = tracker.get_stats(days=args.get("days", 30))
+            return {"success": True, **stats}
+        except ImportError as e:
+            logger.warning("Telemetry module not available: %s", e)
+            return {"success": False, "error": "Telemetry module not installed"}
 
     async def _handle_attune_get_level(self) -> dict[str, Any]:
         """Get current interaction level."""
-        level_names = {
-            1: "Reactive",
-            2: "Guided",
-            3: "Proactive",
-            4: "Anticipatory",
-            5: "Systems",
-        }
         return {
             "success": True,
             "level": self._attune_level,
-            "name": level_names.get(self._attune_level, "Unknown"),
-            "description": {
-                1: "Respond when asked. Minimal proactive guidance.",
-                2: "Collaborative exploration with clarifying questions.",
-                3: "Act before being asked. Suggest improvements.",
-                4: "Predict future needs. Prepare for likely next steps.",
-                5: "Build structures that help at scale.",
-            }.get(self._attune_level, ""),
+            "name": ATTUNE_LEVEL_NAMES.get(self._attune_level, "Unknown"),
+            "description": ATTUNE_LEVEL_DESCRIPTIONS.get(self._attune_level, ""),
         }
 
     async def _handle_attune_set_level(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -918,19 +803,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         previous = self._attune_level
         self._attune_level = level
 
-        level_names = {
-            1: "Reactive",
-            2: "Guided",
-            3: "Proactive",
-            4: "Anticipatory",
-            5: "Systems",
-        }
-
         return {
             "success": True,
             "previous_level": previous,
             "current_level": level,
-            "name": level_names[level],
+            "name": ATTUNE_LEVEL_NAMES[level],
         }
 
     async def _handle_context_get(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -972,7 +849,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             List of tool definitions
 
         """
-        return list(self.tools.values())
+        return [{"name": name, **defn} for name, defn in self.tools.items()]
 
     def get_resource_list(self) -> list[dict[str, Any]]:
         """Get list of available resources.
@@ -1024,6 +901,7 @@ async def handle_request(server: EmpathyMCPServer, request: dict[str, Any]) -> d
 async def main_loop():
     """Main MCP server loop using stdio transport."""
     server = EmpathyMCPServer()
+    loop = asyncio.get_running_loop()
 
     logger.info("Empathy MCP Server started")
     logger.info(f"Registered {len(server.tools)} tools")
@@ -1031,7 +909,7 @@ async def main_loop():
     while True:
         try:
             # Read request from stdin (JSON-RPC format)
-            line = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
+            line = await loop.run_in_executor(None, sys.stdin.readline)
             if not line:
                 break
 
@@ -1045,7 +923,8 @@ async def main_loop():
             logger.error(f"Invalid JSON: {e}")
             error_response = {"error": {"code": -32700, "message": "Parse error"}}
             print(json.dumps(error_response), flush=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Server loop must not crash
             logger.exception("Error handling request")
             error_response = {"error": {"code": -32603, "message": str(e)}}
             print(json.dumps(error_response), flush=True)
@@ -1063,10 +942,14 @@ def create_server() -> EmpathyMCPServer:
 
 def main():
     """Entry point for MCP server."""
+    import tempfile
+
+    log_dir = Path(tempfile.gettempdir()) / "attune"
+    log_dir.mkdir(exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler("/tmp/attune-mcp.log")],  # nosec B108
+        handlers=[logging.FileHandler(str(log_dir / "attune-mcp.log"))],
     )
 
     try:
