@@ -85,10 +85,9 @@ class TestKeywordRoutingV5_1:
 
         # Test auth keywords
         auth_keywords = {
-            "auth-setup": "auth_cli setup",
-            "auth-status": "auth_cli status",
-            "auth-recommend": "auth_cli recommend",
-            "auth": "auth_cli status",  # Default to status
+            "auth-show": "provider show",
+            "auth-set": "provider set",
+            "auth": "provider show",  # Default to show
         }
 
         for keyword, _expected_command in auth_keywords.items():
@@ -182,9 +181,8 @@ def test_keyword_mappings_registered():
     router = HybridRouter()
 
     # Check auth keywords
-    assert "auth-setup" in router._keyword_to_skill
-    assert "auth-status" in router._keyword_to_skill
-    assert "auth-recommend" in router._keyword_to_skill
+    assert "auth-show" in router._keyword_to_skill
+    assert "auth-set" in router._keyword_to_skill
     assert "auth" in router._keyword_to_skill
 
     # Check batch test keywords
