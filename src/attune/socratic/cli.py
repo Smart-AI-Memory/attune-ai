@@ -334,9 +334,12 @@ def cmd_export(args: argparse.Namespace) -> int:
     data = blueprint.to_dict()
 
     if args.output:
-        with open(args.output, "w") as f:
+        from attune.security.path_validation import _validate_file_path
+
+        validated = _validate_file_path(args.output)
+        with validated.open("w") as f:
             json.dump(data, f, indent=2, default=str)
-        console.success(f"Exported to {args.output}")
+        console.success(f"Exported to {validated}")
     else:
         print(json.dumps(data, indent=2, default=str))
 

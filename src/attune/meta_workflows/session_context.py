@@ -357,7 +357,9 @@ class SessionContext:
             # No specific validation - assume valid
             return True
 
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Validation is best-effort;
+            # return False for any unexpected input shape.
             return False
 
 
