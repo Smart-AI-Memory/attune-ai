@@ -7,9 +7,11 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+import logging
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from .backend import _parse_timestamp
 from .data_models import (
@@ -21,6 +23,10 @@ from .data_models import (
     TestExecutionRecord,
     WorkflowRunRecord,
 )
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class TelemetryStore:
@@ -55,15 +61,103 @@ class TelemetryStore:
         # Per-file test tracking
         self.file_tests_file = self.storage_dir / "file_tests.jsonl"
 
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _append_record(self, file: Path, record: Any) -> None:
+        """Append a single record to a JSONL file."""
+        with open(file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record.to_dict()) + "\n")
+
+    def _read_jsonl(
+        self,
+        file: Path,
+        record_cls: type[T],
+        *,
+        since: datetime | None = None,
+        timestamp_field: str = "timestamp",
+        limit: int = 1000,
+        extra_filter: Callable[[T], bool] | None = None,
+    ) -> list[T]:
+        """Read and filter records from a JSONL file.
+
+        Args:
+            file: Path to the JSONL file
+            record_cls: Record class with a from_dict() classmethod
+            since: Only return records after this time
+            timestamp_field: Name of the timestamp attribute on the record
+            limit: Maximum records to return
+            extra_filter: Optional predicate — return True to include
+
+        Returns:
+            List of parsed and filtered records
+
+        """
+        if not file.exists():
+            return []
+
+        records: list[T] = []
+        with open(file, encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    data = json.loads(line)
+                    record = record_cls.from_dict(data)
+
+                    if since:
+                        ts = getattr(record, timestamp_field, "")
+                        if _parse_timestamp(ts) < since:
+                            continue
+
+                    if extra_filter and not extra_filter(record):
+                        continue
+
+                    records.append(record)
+                    if len(records) >= limit:
+                        break
+                except (json.JSONDecodeError, KeyError):
+                    logger.debug("Skipping malformed record in %s", file.name)
+                    continue
+
+        return records
+
+    # ------------------------------------------------------------------
+    # Log methods
+    # ------------------------------------------------------------------
+
     def log_call(self, record: LLMCallRecord) -> None:
         """Log an LLM call record."""
-        with open(self.calls_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
+        self._append_record(self.calls_file, record)
 
     def log_workflow(self, record: WorkflowRunRecord) -> None:
         """Log a workflow run record."""
-        with open(self.workflows_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
+        self._append_record(self.workflows_file, record)
+
+    def log_task_routing(self, record: TaskRoutingRecord) -> None:
+        """Log a task routing decision."""
+        self._append_record(self.task_routing_file, record)
+
+    def log_test_execution(self, record: TestExecutionRecord) -> None:
+        """Log a test execution."""
+        self._append_record(self.test_executions_file, record)
+
+    def log_coverage(self, record: CoverageRecord) -> None:
+        """Log coverage metrics."""
+        self._append_record(self.coverage_history_file, record)
+
+    def log_agent_assignment(self, record: AgentAssignmentRecord) -> None:
+        """Log an agent assignment."""
+        self._append_record(self.agent_assignments_file, record)
+
+    def log_file_test(self, record: FileTestRecord) -> None:
+        """Log a per-file test execution record."""
+        self._append_record(self.file_tests_file, record)
+
+    # ------------------------------------------------------------------
+    # Read methods
+    # ------------------------------------------------------------------
 
     def get_calls(
         self,
@@ -82,35 +176,13 @@ class TelemetryStore:
             List of LLMCallRecord
 
         """
-        records: list[LLMCallRecord] = []
-        if not self.calls_file.exists():
-            return records
-
-        with open(self.calls_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = LLMCallRecord.from_dict(data)
-
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    if workflow_name and record.workflow_name != workflow_name:
-                        continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
+        return self._read_jsonl(
+            self.calls_file,
+            LLMCallRecord,
+            since=since,
+            limit=limit,
+            extra_filter=((lambda r: r.workflow_name == workflow_name) if workflow_name else None),
+        )
 
     def get_workflows(
         self,
@@ -129,35 +201,152 @@ class TelemetryStore:
             List of WorkflowRunRecord
 
         """
-        records: list[WorkflowRunRecord] = []
-        if not self.workflows_file.exists():
-            return records
+        return self._read_jsonl(
+            self.workflows_file,
+            WorkflowRunRecord,
+            since=since,
+            timestamp_field="started_at",
+            limit=limit,
+            extra_filter=((lambda r: r.workflow_name == workflow_name) if workflow_name else None),
+        )
 
-        with open(self.workflows_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = WorkflowRunRecord.from_dict(data)
+    def get_task_routings(
+        self,
+        since: datetime | None = None,
+        status: str | None = None,
+        limit: int = 1000,
+    ) -> list[TaskRoutingRecord]:
+        """Get task routing records.
 
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.started_at)
-                        if record_time < since:
-                            continue
+        Args:
+            since: Only return records after this time
+            status: Filter by status (pending, running, completed, failed)
+            limit: Maximum records to return
 
-                    if workflow_name and record.workflow_name != workflow_name:
-                        continue
+        Returns:
+            List of TaskRoutingRecord
 
-                    records.append(record)
+        """
+        return self._read_jsonl(
+            self.task_routing_file,
+            TaskRoutingRecord,
+            since=since,
+            limit=limit,
+            extra_filter=((lambda r: r.status == status) if status else None),
+        )
 
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
+    def get_test_executions(
+        self,
+        since: datetime | None = None,
+        success_only: bool = False,
+        limit: int = 100,
+    ) -> list[TestExecutionRecord]:
+        """Get test execution records.
 
-        return records
+        Args:
+            since: Only return records after this time
+            success_only: Only return successful test runs
+            limit: Maximum records to return
+
+        Returns:
+            List of TestExecutionRecord
+
+        """
+        return self._read_jsonl(
+            self.test_executions_file,
+            TestExecutionRecord,
+            since=since,
+            limit=limit,
+            extra_filter=(lambda r: r.success) if success_only else None,
+        )
+
+    def get_coverage_history(
+        self,
+        since: datetime | None = None,
+        limit: int = 100,
+    ) -> list[CoverageRecord]:
+        """Get coverage history records.
+
+        Args:
+            since: Only return records after this time
+            limit: Maximum records to return
+
+        Returns:
+            List of CoverageRecord
+
+        """
+        return self._read_jsonl(
+            self.coverage_history_file,
+            CoverageRecord,
+            since=since,
+            limit=limit,
+        )
+
+    def get_agent_assignments(
+        self,
+        since: datetime | None = None,
+        automated_only: bool = True,
+        limit: int = 1000,
+    ) -> list[AgentAssignmentRecord]:
+        """Get agent assignment records.
+
+        Args:
+            since: Only return records after this time
+            automated_only: Only return Tier 1 automation eligible
+            limit: Maximum records to return
+
+        Returns:
+            List of AgentAssignmentRecord
+
+        """
+        return self._read_jsonl(
+            self.agent_assignments_file,
+            AgentAssignmentRecord,
+            since=since,
+            limit=limit,
+            extra_filter=((lambda r: r.automated_eligible) if automated_only else None),
+        )
+
+    def get_file_tests(
+        self,
+        file_path: str | None = None,
+        since: datetime | None = None,
+        result_filter: str | None = None,
+        limit: int = 1000,
+    ) -> list[FileTestRecord]:
+        """Get per-file test records with optional filters.
+
+        Args:
+            file_path: Filter by specific file path
+            since: Only return records after this time
+            result_filter: Filter by result (passed, failed, error,
+                skipped, no_tests)
+            limit: Maximum records to return
+
+        Returns:
+            List of FileTestRecord
+
+        """
+
+        def _filter(r: FileTestRecord) -> bool:
+            if file_path and r.file_path != file_path:
+                return False
+            if result_filter and r.last_test_result != result_filter:
+                return False
+            return True
+
+        has_extra = file_path is not None or result_filter is not None
+        return self._read_jsonl(
+            self.file_tests_file,
+            FileTestRecord,
+            since=since,
+            limit=limit,
+            extra_filter=_filter if has_extra else None,
+        )
+
+    # ------------------------------------------------------------------
+    # Aggregation methods
+    # ------------------------------------------------------------------
 
     def get_summary(
         self,
@@ -165,15 +354,16 @@ class TelemetryStore:
     ) -> dict[str, Any]:
         """Get aggregated telemetry summary in a single JSONL pass.
 
-        Streams records from JSONL files and computes totals without loading
-        all records into memory. Prefers workflow records; falls back to
-        LLM call records if no workflows exist.
+        Streams records from JSONL files and computes totals without
+        loading all records into memory. Prefers workflow records;
+        falls back to LLM call records if no workflows exist.
 
         Args:
             since: Only include records after this time
 
         Returns:
-            Dict with workflow_count, call_count, total_cost, total_tokens, source
+            Dict with workflow_count, call_count, total_cost,
+            total_tokens, source
 
         """
         # Try workflows first
@@ -182,21 +372,25 @@ class TelemetryStore:
         total_tokens = 0
 
         if self.workflows_file.exists():
-            with open(self.workflows_file) as f:
+            with open(self.workflows_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
                     try:
                         data = json.loads(line)
                         if since:
-                            record_time = _parse_timestamp(data.get("started_at", ""))
-                            if record_time < since:
+                            ts = data.get("started_at", "")
+                            if _parse_timestamp(ts) < since:
                                 continue
                         wf_count += 1
                         total_cost += data.get("total_cost", 0.0)
                         total_tokens += data.get("total_input_tokens", 0)
                         total_tokens += data.get("total_output_tokens", 0)
-                    except (json.JSONDecodeError, KeyError, ValueError):
+                    except (
+                        json.JSONDecodeError,
+                        KeyError,
+                        ValueError,
+                    ):
                         continue
 
         if wf_count > 0:
@@ -214,21 +408,25 @@ class TelemetryStore:
         total_tokens = 0
 
         if self.calls_file.exists():
-            with open(self.calls_file) as f:
+            with open(self.calls_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
                     try:
                         data = json.loads(line)
                         if since:
-                            record_time = _parse_timestamp(data.get("timestamp", ""))
-                            if record_time < since:
+                            ts = data.get("timestamp", "")
+                            if _parse_timestamp(ts) < since:
                                 continue
                         call_count += 1
                         total_cost += data.get("estimated_cost", 0.0)
                         total_tokens += data.get("input_tokens", 0)
                         total_tokens += data.get("output_tokens", 0)
-                    except (json.JSONDecodeError, KeyError, ValueError):
+                    except (
+                        json.JSONDecodeError,
+                        KeyError,
+                        ValueError,
+                    ):
                         continue
 
         if call_count > 0:
@@ -248,277 +446,11 @@ class TelemetryStore:
             "source": "none",
         }
 
-    # Tier 1 automation monitoring methods
-
-    def log_task_routing(self, record: TaskRoutingRecord) -> None:
-        """Log a task routing decision."""
-        with open(self.task_routing_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
-
-    def log_test_execution(self, record: TestExecutionRecord) -> None:
-        """Log a test execution."""
-        with open(self.test_executions_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
-
-    def log_coverage(self, record: CoverageRecord) -> None:
-        """Log coverage metrics."""
-        with open(self.coverage_history_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
-
-    def log_agent_assignment(self, record: AgentAssignmentRecord) -> None:
-        """Log an agent assignment."""
-        with open(self.agent_assignments_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
-
-    def get_task_routings(
-        self,
-        since: datetime | None = None,
-        status: str | None = None,
-        limit: int = 1000,
-    ) -> list[TaskRoutingRecord]:
-        """Get task routing records.
-
-        Args:
-            since: Only return records after this time
-            status: Filter by status (pending, running, completed, failed)
-            limit: Maximum records to return
-
-        Returns:
-            List of TaskRoutingRecord
-
-        """
-        records: list[TaskRoutingRecord] = []
-        if not self.task_routing_file.exists():
-            return records
-
-        with open(self.task_routing_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = TaskRoutingRecord.from_dict(data)
-
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    if status and record.status != status:
-                        continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
-
-    def get_test_executions(
-        self,
-        since: datetime | None = None,
-        success_only: bool = False,
-        limit: int = 100,
-    ) -> list[TestExecutionRecord]:
-        """Get test execution records.
-
-        Args:
-            since: Only return records after this time
-            success_only: Only return successful test runs
-            limit: Maximum records to return
-
-        Returns:
-            List of TestExecutionRecord
-
-        """
-        records: list[TestExecutionRecord] = []
-        if not self.test_executions_file.exists():
-            return records
-
-        with open(self.test_executions_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = TestExecutionRecord.from_dict(data)
-
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    if success_only and not record.success:
-                        continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
-
-    def get_coverage_history(
-        self,
-        since: datetime | None = None,
-        limit: int = 100,
-    ) -> list[CoverageRecord]:
-        """Get coverage history records.
-
-        Args:
-            since: Only return records after this time
-            limit: Maximum records to return
-
-        Returns:
-            List of CoverageRecord
-
-        """
-        records: list[CoverageRecord] = []
-        if not self.coverage_history_file.exists():
-            return records
-
-        with open(self.coverage_history_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = CoverageRecord.from_dict(data)
-
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
-
-    def get_agent_assignments(
-        self,
-        since: datetime | None = None,
-        automated_only: bool = True,
-        limit: int = 1000,
-    ) -> list[AgentAssignmentRecord]:
-        """Get agent assignment records.
-
-        Args:
-            since: Only return records after this time
-            automated_only: Only return assignments eligible for Tier 1 automation
-            limit: Maximum records to return
-
-        Returns:
-            List of AgentAssignmentRecord
-
-        """
-        records: list[AgentAssignmentRecord] = []
-        if not self.agent_assignments_file.exists():
-            return records
-
-        with open(self.agent_assignments_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = AgentAssignmentRecord.from_dict(data)
-
-                    # Apply filters
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    if automated_only and not record.automated_eligible:
-                        continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
-
-    # Per-file test tracking methods
-
-    def log_file_test(self, record: "FileTestRecord") -> None:
-        """Log a per-file test execution record.
-
-        Args:
-            record: FileTestRecord to log
-
-        """
-        with open(self.file_tests_file, "a") as f:
-            f.write(json.dumps(record.to_dict()) + "\n")
-
-    def get_file_tests(
-        self,
-        file_path: str | None = None,
-        since: datetime | None = None,
-        result_filter: str | None = None,
-        limit: int = 1000,
-    ) -> list["FileTestRecord"]:
-        """Get per-file test records with optional filters.
-
-        Args:
-            file_path: Filter by specific file path
-            since: Only return records after this time
-            result_filter: Filter by result (passed, failed, error, skipped, no_tests)
-            limit: Maximum records to return
-
-        Returns:
-            List of FileTestRecord
-
-        """
-        records: list[FileTestRecord] = []
-        if not self.file_tests_file.exists():
-            return records
-
-        with open(self.file_tests_file) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    record = FileTestRecord.from_dict(data)
-
-                    # Apply filters
-                    if file_path and record.file_path != file_path:
-                        continue
-
-                    if since:
-                        record_time = _parse_timestamp(record.timestamp)
-                        if record_time < since:
-                            continue
-
-                    if result_filter and record.last_test_result != result_filter:
-                        continue
-
-                    records.append(record)
-
-                    if len(records) >= limit:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    continue
-
-        return records
-
-    def get_latest_file_test(self, file_path: str) -> "FileTestRecord | None":
+    def get_latest_file_test(self, file_path: str) -> FileTestRecord | None:
         """Get the most recent test record for a specific file.
+
+        Streams the JSONL file keeping only the last match,
+        avoiding loading all records into memory.
 
         Args:
             file_path: Path to the source file
@@ -527,19 +459,32 @@ class TelemetryStore:
             Most recent FileTestRecord or None if not found
 
         """
-        records = self.get_file_tests(file_path=file_path, limit=10000)
-        if not records:
+        if not self.file_tests_file.exists():
             return None
 
-        # Return the most recent record (last one since we read in chronological order)
-        return records[-1]
+        latest: FileTestRecord | None = None
+        with open(self.file_tests_file, encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    data = json.loads(line)
+                    record = FileTestRecord.from_dict(data)
+                    if record.file_path == file_path:
+                        latest = record
+                except (json.JSONDecodeError, KeyError):
+                    continue
+        return latest
 
     def get_files_needing_tests(
         self,
         stale_only: bool = False,
         failed_only: bool = False,
-    ) -> list["FileTestRecord"]:
+    ) -> list[FileTestRecord]:
         """Get files that need test attention.
+
+        Streams the JSONL file and keeps only the latest record
+        per file path, then filters by the requested criteria.
 
         Args:
             stale_only: Only return files with stale tests
@@ -549,29 +494,30 @@ class TelemetryStore:
             List of FileTestRecord for files needing attention
 
         """
-        all_records = self.get_file_tests(limit=100000)
-
-        # Get latest record per file
+        # Stream file, keeping only latest record per path
         latest_by_file: dict[str, FileTestRecord] = {}
-        for record in all_records:
-            existing = latest_by_file.get(record.file_path)
-            if existing is None or record.timestamp > existing.timestamp:
-                latest_by_file[record.file_path] = record
+        if self.file_tests_file.exists():
+            with open(self.file_tests_file, encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        record = FileTestRecord.from_dict(data)
+                        existing = latest_by_file.get(record.file_path)
+                        if existing is None or record.timestamp > existing.timestamp:
+                            latest_by_file[record.file_path] = record
+                    except (json.JSONDecodeError, KeyError):
+                        continue
 
-        # Filter based on criteria
-        results = []
-        for record in latest_by_file.values():
-            if stale_only and not record.is_stale:
-                continue
-            if failed_only and record.last_test_result not in ("failed", "error"):
-                continue
-            if not stale_only and not failed_only:
-                # Return all files needing attention (stale OR failed OR no_tests)
-                if (
-                    record.last_test_result not in ("failed", "error", "no_tests")
-                    and not record.is_stale
-                ):
-                    continue
-            results.append(record)
+        _NEEDS_ATTENTION = ("failed", "error", "no_tests")
 
-        return results
+        def _needs_attention(record: FileTestRecord) -> bool:
+            if stale_only:
+                return record.is_stale
+            if failed_only:
+                return record.last_test_result in ("failed", "error")
+            # Default: stale OR failed OR no_tests
+            return record.is_stale or record.last_test_result in _NEEDS_ATTENTION
+
+        return [r for r in latest_by_file.values() if _needs_attention(r)]
