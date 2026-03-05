@@ -267,9 +267,11 @@ class TestPathValidationWindowsPaths:
         import sys
         from unittest.mock import patch
 
+        # Mock both platform and resolve so this works on Windows too
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/etc/passwd")
+            with patch.object(Path, "resolve", return_value=Path("/etc/passwd")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/etc/passwd")
 
     def test_unix_blocks_usr_bin(self):
         """Test that /usr/bin paths are blocked on Unix."""
@@ -277,8 +279,9 @@ class TestPathValidationWindowsPaths:
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/usr/bin/myapp")
+            with patch.object(Path, "resolve", return_value=Path("/usr/bin/myapp")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/usr/bin/myapp")
 
     def test_unix_blocks_bin(self):
         """Test that /bin paths are blocked on Unix."""
@@ -286,8 +289,9 @@ class TestPathValidationWindowsPaths:
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/bin/sh")
+            with patch.object(Path, "resolve", return_value=Path("/bin/sh")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/bin/sh")
 
     def test_unix_blocks_sbin(self):
         """Test that /usr/sbin paths are blocked on Unix."""
@@ -295,8 +299,9 @@ class TestPathValidationWindowsPaths:
         from unittest.mock import patch
 
         with patch.object(sys, "platform", "linux"):
-            with pytest.raises(ValueError, match="Cannot write to system directory"):
-                _validate_file_path("/usr/sbin/nologin")
+            with patch.object(Path, "resolve", return_value=Path("/usr/sbin/nologin")):
+                with pytest.raises(ValueError, match="Cannot write to system directory"):
+                    _validate_file_path("/usr/sbin/nologin")
 
     def test_exact_system_dir_without_trailing_slash(self):
         """Test that exact system directory matches (not just prefix)."""
