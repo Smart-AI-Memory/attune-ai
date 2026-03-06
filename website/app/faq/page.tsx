@@ -60,7 +60,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'Which LLM providers are supported?',
-        answer: 'Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This enables automatic prompt caching (up to 90% cost savings on cached tokens), extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.',
+        answer: "Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This leverages Anthropic's automatic prompt caching, extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.",
       },
       {
         question: 'What are agent templates?',
@@ -169,6 +169,12 @@ export default function FAQPage() {
       }))
     ),
   });
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'FAQ', url: 'https://smartaimemory.com/faq' },
+    ],
+  });
 
   return (
     <>
@@ -177,6 +183,10 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData),
         }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">

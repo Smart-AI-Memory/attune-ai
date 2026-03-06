@@ -3,18 +3,29 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { generateMetadata } from '@/lib/metadata';
+import { generateMetadata, generateStructuredData } from '@/lib/metadata';
 import { getPricingSummary } from '@/lib/features';
 
 export const metadata: Metadata = generateMetadata({
-  title: 'Open Source - Apache 2.0',
-  description: 'Attune AI is now fully open source under Apache 2.0. Free for everyone, commercial use included.',
+  title: 'Free & Open Source AI Workflows for Claude Code — Apache 2.0',
+  description: 'Attune AI is fully open source under Apache 2.0. 17 AI workflows, multi-agent orchestration, and cost-optimized tier routing — free for everyone.',
   url: 'https://smartaimemory.com/pricing',
 });
 
 export default function PricingPage() {
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'Open Source', url: 'https://smartaimemory.com/pricing' },
+    ],
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
@@ -125,7 +136,7 @@ export default function PricingPage() {
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Anthropic auto-caching (up to 90% API token savings, zero config)</span>
+                    <span className="text-sm">Anthropic auto-caching on cached tokens (Anthropic built-in, zero config)</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-white mt-1">✓</span>

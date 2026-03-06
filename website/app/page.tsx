@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { FEATURES } from '@/lib/features';
+import { generateStructuredData } from '@/lib/metadata';
 
 // Map canonical features to homepage display with links
 const featureLinks: Record<string, string> = {
@@ -59,8 +60,16 @@ print(f"Total cost: \${result.total_cost:.2f}")`;
 
 
 export default function Home() {
+  const softwareSchema = generateStructuredData('product');
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(softwareSchema),
+        }}
+      />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
@@ -81,7 +90,7 @@ export default function Home() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-                Power Tools for{' '}
+                AI Workflows & Agent Orchestration for{' '}
                 <span className="text-gradient">Claude Code</span>
               </h1>
               <p className="text-xl text-[var(--text-secondary)] mb-8 max-w-3xl mx-auto">
@@ -113,7 +122,7 @@ export default function Home() {
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-2xl font-bold text-center mb-8">
-                Get Started in 5 Lines of Code
+                Get Started in 5 Lines of Python
               </h2>
               <div className="bg-[#1e1e1e] rounded-xl overflow-hidden shadow-2xl">
                 <div className="flex items-center gap-2 px-4 py-3 bg-[#2d2d2d] border-b border-[#3d3d3d]">
@@ -134,7 +143,7 @@ export default function Home() {
         <section className="py-20" aria-label="Features">
           <div className="container">
             <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-              Power User Features
+              Built-in AI Workflow Features
             </h2>
             <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
               Advanced capabilities for developers who want more from Claude Code.
@@ -201,7 +210,7 @@ export default function Home() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Ready to Level Up?
+                Start Building AI Workflows Today
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
                 Join power users enhancing their Claude Code workflow.

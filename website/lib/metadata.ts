@@ -15,9 +15,9 @@ export interface SEOConfig {
 
 const defaultMetadata = {
   siteName: 'Attune AI',
-  title: 'Attune AI — AI Workflows & Agent Orchestration for Claude Code',
+  title: 'AI Workflows for Claude Code: 17 Built-in Workflows & Agent Orchestration — Attune AI',
   description:
-    'Open source AI developer workflows for Claude Code. Multi-agent orchestration, 10 built-in workflows, 10 code wizards, and 90% cost savings via prompt caching.',
+    'Build AI-powered developer workflows for Claude Code. 17 built-in workflows, multi-agent orchestration, and cost-optimized tier routing. Free and open source.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',
@@ -115,8 +115,7 @@ export function generateMetadata(config?: SEOConfig): Metadata {
     },
     manifest: '/site.webmanifest',
     verification: {
-      // Add when available
-      // google: 'google-verification-code',
+      google: 'YOUR_VERIFICATION_CODE_HERE', // TODO: Replace with Google Search Console code
       // yandex: 'yandex-verification-code',
       // bing: 'bing-verification-code',
     },

@@ -24,7 +24,7 @@ const frameworks = [
     tagline: 'Claude-native developer workflows',
     strengths: [
       'First-class Claude Code integration',
-      '90% cost savings via prompt caching',
+      'Cost-optimized tier routing (CHEAP → CAPABLE → PREMIUM)',
       '10 built-in code wizards',
       'Workflow-first design (low learning curve)',
     ],
