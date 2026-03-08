@@ -224,15 +224,17 @@ class BugPredictionWorkflow(BaseWorkflow):
 
                     # Log recommendation
                     logger.info(
-                        f"Auth Strategy: {size_category.value} codebase ({codebase_lines} lines) "
-                        f"-> {recommended_mode.value}",
+                        "Auth Strategy: %s codebase (%s lines) -> %s",
+                        size_category.value,
+                        codebase_lines,
+                        recommended_mode.value,
                     )
             except ImportError:
                 # Auth strategy module not available - continue without it
                 logger.debug("Auth strategy module not available")
             except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Auth strategy is optional; don't fail the workflow
-                logger.warning(f"Auth strategy detection failed: {e}")
+                logger.warning("Auth strategy detection failed: %s", e)
         # === END AUTH STRATEGY ===/
 
         # Walk directory and collect file info
@@ -517,7 +519,7 @@ Provide detailed recommendations for preventing bugs."""
                 )
             except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Graceful fallback to legacy _call_llm if executor fails
-                logger.warning(f"Executor failed, falling back to legacy LLM call: {e}")
+                logger.warning("Executor failed, falling back to legacy LLM call: %s", e)
                 response, input_tokens, output_tokens = await self._call_llm(
                     tier,
                     system or "",

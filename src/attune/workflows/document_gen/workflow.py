@@ -146,18 +146,3 @@ class DocumentGenerationWorkflow(
                 self.tier_map["polish"] = ModelTier.CAPABLE
                 return False, None
         return False, None
-
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Execute a document generation stage."""
-        if stage_name == "outline":
-            return await self._outline(input_data, tier)
-        if stage_name == "write":
-            return await self._write(input_data, tier)
-        if stage_name == "polish":
-            return await self._polish(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")

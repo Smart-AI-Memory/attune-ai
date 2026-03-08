@@ -32,7 +32,6 @@ from .fallback import (
     FallbackStrategy,
     ResilientExecutor,
     RetryPolicy,
-    TierFallbackHelper,
 )
 from .provider_config import (
     ProviderConfig,
@@ -82,13 +81,6 @@ from .telemetry import (
     log_llm_call,
     log_workflow_run,
 )
-from .validation import (
-    ConfigValidator,
-    ValidationError,
-    ValidationResult,
-    validate_config,
-    validate_yaml_file,
-)
 
 __all__ = [
     "CAPABLE_TASKS",
@@ -106,7 +98,6 @@ __all__ = [
     "AuthStrategy",
     "CircuitBreaker",
     "CircuitBreakerState",
-    "ConfigValidator",
     "CoverageRecord",
     "EmpathyLLMExecutor",
     "ExecutionContext",
@@ -134,7 +125,6 @@ __all__ = [
     "RetryPolicy",
     "SubscriptionTier",
     "TaskInfo",
-    "TierFallbackHelper",
     # Task exports
     "TaskRoutingRecord",
     "TaskType",
@@ -142,9 +132,6 @@ __all__ = [
     "TelemetryBackend",
     "TelemetryStore",
     "TestExecutionRecord",
-    # Validation exports
-    "ValidationError",
-    "ValidationResult",
     "WorkflowRunRecord",
     "WorkflowStageRecord",
     "configure_auth_interactive",
@@ -167,6 +154,4 @@ __all__ = [
     "normalize_task_type",
     "reset_provider_config",
     "set_provider_config",
-    "validate_config",
-    "validate_yaml_file",
 ]

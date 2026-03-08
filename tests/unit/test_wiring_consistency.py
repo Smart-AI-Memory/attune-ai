@@ -180,6 +180,8 @@ class TestCLIRouterWiring:
         "wizard",
         "agent",
         "batch",
+        "bulk",
+        "pipeline",
         "utilities",
         "brainstorm",
     }

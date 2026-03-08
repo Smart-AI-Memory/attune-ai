@@ -330,7 +330,9 @@ class TestWorkflowExecution:
 
             workflow._needs_architect_review = False
 
-            result = await workflow.execute(diff=sample_diff, files_changed=["src/utils.py"])
+            result = await workflow.execute(
+                path="src/", diff=sample_diff, files_changed=["src/utils.py"]
+            )
 
             # Result is a WorkflowResult object
             assert result is not None
@@ -342,7 +344,7 @@ class TestWorkflowExecution:
         # No diff or target provided - mock _call_llm to avoid real API calls
         with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = ("No issues found.", 100, 50)
-            result = await workflow.execute(files_changed=[])
+            result = await workflow.execute(path="src/", files_changed=[])
 
             # Should handle gracefully - returns WorkflowResult
             assert result is not None

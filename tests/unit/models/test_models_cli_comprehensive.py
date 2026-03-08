@@ -26,7 +26,6 @@ from attune.models.cli import (
     print_telemetry_fallbacks,
     print_telemetry_providers,
     print_telemetry_summary,
-    validate_file,
 )
 from attune.models.provider_config import ProviderConfig, ProviderMode
 from attune.models.registry import get_all_models
@@ -265,74 +264,6 @@ class TestPrintCostsRealData:
             print_costs(provider="invalid_provider_xyz")
 
         assert exc_info.value.code == 1
-
-
-@pytest.mark.unit
-class TestValidateFileRealData:
-    """Test validate_file with real validation logic."""
-
-    def test_validate_valid_yaml_file(self, tmp_path):
-        """Test validating a valid workflow YAML config file."""
-        config_file = tmp_path / "valid_config.yaml"
-        config_file.write_text(
-            """
-name: test-workflow
-description: Test workflow for validation
-default_provider: anthropic
-""",
-        )
-
-        result = validate_file(str(config_file))
-
-        # Valid file should return 0
-        assert result == 0
-
-    @pytest.mark.skip(
-        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)",
-    )
-    def test_validate_invalid_yaml_syntax(self, tmp_path, capsys):
-        """Test validating a YAML file with syntax errors."""
-        config_file = tmp_path / "invalid_syntax.yaml"
-        config_file.write_text(
-            """
-mode: [
-  invalid: yaml: syntax
-""",
-        )
-
-        with pytest.raises(Exception):
-            # Invalid YAML should raise exception
-            validate_file(str(config_file))
-
-    @pytest.mark.skip(
-        reason="Test expectations need update - validate_file prints errors instead of raising (fix in v4.0.3)",
-    )
-    def test_validate_nonexistent_file(self, capsys):
-        """Test validating a file that doesn't exist."""
-        with pytest.raises(FileNotFoundError):
-            validate_file("/nonexistent/path/config.yaml")
-
-    def test_validate_file_json_format(self, tmp_path, capsys):
-        """Test validation output in JSON format."""
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text(
-            """
-mode: single
-primary_provider: anthropic
-""",
-        )
-
-        validate_file(str(config_file), format="json")
-
-        captured = capsys.readouterr()
-        output = json.loads(captured.out)
-
-        assert "valid" in output
-        assert "errors" in output
-        assert "warnings" in output
-        assert isinstance(output["valid"], bool)
-        assert isinstance(output["errors"], list)
-        assert isinstance(output["warnings"], list)
 
 
 @pytest.mark.unit
@@ -713,28 +644,6 @@ class TestMainCLIRealData:
         captured = capsys.readouterr()
         output = json.loads(captured.out)
         assert isinstance(output, dict)
-
-    def test_main_validate_command(self, tmp_path, capsys):
-        """Test validate command."""
-        config_file = tmp_path / "test_config.yaml"
-        config_file.write_text("name: test_config\nmode: single\nprimary_provider: anthropic\n")
-
-        with patch.object(sys, "argv", ["cli", "validate", str(config_file)]):
-            result = main()
-
-        assert result == 0
-
-    def test_main_validate_json_format(self, tmp_path, capsys):
-        """Test validate command with JSON format."""
-        config_file = tmp_path / "test_config.yaml"
-        config_file.write_text("mode: single\n")
-
-        with patch.object(sys, "argv", ["cli", "validate", str(config_file), "--format", "json"]):
-            main()
-
-        captured = capsys.readouterr()
-        output = json.loads(captured.out)
-        assert "valid" in output
 
     def test_main_effective_command(self, capsys):
         """Test effective command."""

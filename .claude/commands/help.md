@@ -27,7 +27,7 @@ hubs and how to access them:
 | `/release` | Release prep, security scan, publish | `/release` |
 | `/brainstorm` | Guided brainstorming sessions | `/brainstorm` |
 | `/agent` | Create and manage custom agents | `/agent` |
-| `/batch` | Batch API processing (50% cost savings) | `/batch` |
+| `/bulk` | Batch API processing (50% cost savings) | `/bulk` |
 | `/wizard` | Guided multi-step wizards | `/wizard` |
 | `/utilities` | Auth and provider management | `/utilities` |
 

@@ -78,17 +78,6 @@ class DocumentManagerWorkflow(BaseWorkflow):
             parsing=ParsingService(xml_config=xml_config),
         )
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Execute the single processing stage."""
-        if stage_name == "process":
-            return await self._process(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     async def _process(
         self,
         input_data: Any,

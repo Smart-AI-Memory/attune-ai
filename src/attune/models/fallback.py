@@ -12,13 +12,12 @@ from .circuit_breaker import CircuitBreaker, CircuitBreakerState
 from .fallback_policy import FallbackPolicy, FallbackStep, FallbackStrategy
 from .resilient_executor import AllProvidersFailedError, ResilientExecutor
 from .retry import RetryPolicy
-from .tier_helper import TierFallbackHelper
 
 # Default policies
 DEFAULT_FALLBACK_POLICY = FallbackPolicy(
     primary_provider="anthropic",
     primary_tier="capable",
-    strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+    strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
     max_retries=2,
 )
 
@@ -57,5 +56,4 @@ __all__ = [
     "ResilientExecutor",
     "RetryPolicy",
     "SONNET_TO_OPUS_FALLBACK",
-    "TierFallbackHelper",
 ]

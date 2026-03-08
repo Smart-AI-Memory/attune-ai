@@ -502,9 +502,11 @@ class TestExecuteOne:
 
     async def test_success_uses_cost_report_when_present(self) -> None:
         """_execute_one prefers cost_report.total_cost over result.total_cost."""
+        mock_cost_report = MagicMock()
+        mock_cost_report.total_cost = 0.009
         mock_result = MagicMock()
         mock_result.total_cost = 0.001
-        mock_result.cost_report = {"total_cost": 0.009}
+        mock_result.cost_report = mock_cost_report
 
         runner = self._make_runner()
         spec = WorkflowSpec(workflow_id="bug-predict", input_data={"path": "src/"})

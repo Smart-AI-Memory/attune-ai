@@ -39,6 +39,7 @@ Use `/hub-name` to access organized workflows:
 | `/agent` | create, list, run, release-prep | Agent management |
 | `/bulk` | submit, status, results, wait | Batch API processing (50% cost savings) |
 | `/wizard` | run, create, list, edit | Guided multi-step wizards |
+| `/pipeline` | full, dev, eval, release | Spec-driven development lifecycle |
 | `/utilities` | auth-setup, auth-status, auth-reset | Auth and provider management |
 | `/help` | (navigation) | Help navigating workflows |
 
@@ -462,5 +463,39 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `hooks/executor.py`. There is no actual `eval()` or `exec()`
   usage. Always verify HIGH severity scanner findings against
   the source before treating them as real vulnerabilities.
+
+- **`_run_simplify` catches per-file errors internally**: The
+  pipeline orchestrator's `_run_simplify()` wraps each file in
+  its own try/except, so even if `SimplifyCodeWorkflow()` raises,
+  the method returns normally. The outer caller sets
+  `result.simplified = True` regardless. Tests must match this
+  behavior — the outer try/except only fires if `_run_simplify`
+  itself raises, not if individual files fail.
+
+- **Pre-commit auto-fix requires re-stage before retry**: When
+  black/ruff auto-fix staged files during `git commit`, the
+  commit fails but the fixes are applied to the working tree.
+  The files must be `git add`-ed again before retrying the
+  commit. This is different from the stash conflict issue —
+  here there are no unstaged siblings, just the hook modifying
+  staged files.
+
+- **`datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
+  through the entire codebase**: Replacing `utcnow()` (naive) with
+  `now(timezone.utc)` (aware) in source code causes `TypeError:
+  can't compare offset-naive and offset-aware datetimes` everywhere
+  that stored/parsed timestamps interact with the new aware values.
+  This includes `_parse_timestamp()` helpers, `fromisoformat()`
+  calls that strip `Z`, and test fixtures that create naive
+  datetimes. Plan for a full sweep of both src/ and tests/ — not
+  just the files you initially changed.
+
+- **Don't append `+ "Z"` to timezone-aware `.isoformat()`**:
+  `datetime.now(timezone.utc).isoformat()` already produces
+  `2026-03-08T12:00:00+00:00`. Appending `+ "Z"` creates
+  `+00:00Z` which, when passed through `.replace("Z", "+00:00")`,
+  becomes the invalid `+00:00+00:00`. After migrating to
+  timezone-aware datetimes, grep for `.isoformat() + "Z"` and
+  remove the suffix.
 
 <!-- attune-lessons-end -->
