@@ -19,6 +19,7 @@ from attune.workflows.base import (
     StageQualityMetrics,
     WorkflowResult,
     WorkflowStage,
+    estimate_tokens,
 )
 
 
@@ -340,3 +341,35 @@ class TestModelProvider:
 
         unified = ModelProvider.GOOGLE.to_unified()
         assert unified == UnifiedModelProvider.ANTHROPIC
+
+
+@pytest.mark.unit
+class TestEstimateTokens:
+    """Tests for estimate_tokens utility function."""
+
+    def test_short_string(self):
+        """Test token estimate for short string."""
+        assert estimate_tokens("hello world") == len("hello world") // 4
+
+    def test_empty_string(self):
+        """Test token estimate for empty string."""
+        assert estimate_tokens("") == 0
+
+    def test_dict_input(self):
+        """Test token estimate converts dict to string."""
+        data = {"key": "value", "n": 42}
+        expected = len(str(data)) // 4
+        assert estimate_tokens(data) == expected
+
+    def test_list_input(self):
+        """Test token estimate for list input."""
+        data = [1, 2, 3, 4, 5]
+        expected = len(str(data)) // 4
+        assert estimate_tokens(data) == expected
+
+    def test_large_input(self):
+        """Test token estimate scales with input size."""
+        small = estimate_tokens("a" * 100)
+        large = estimate_tokens("a" * 1000)
+        assert large > small
+        assert large == 1000 // 4

@@ -11,7 +11,7 @@ import logging
 import re
 from pathlib import Path
 
-from .base import ModelTier
+from .base import ModelTier, estimate_tokens
 from .security_audit_patterns import (
     SECURITY_EXAMPLE_PATHS,
     SECURITY_PATTERNS,
@@ -139,8 +139,8 @@ class TriageStageMixin:
         # Auth strategy integration
         self._apply_auth_strategy(target, input_data)
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(findings)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(findings)
 
         return (
             {
@@ -182,7 +182,8 @@ class TriageStageMixin:
             )
         except ImportError:
             logger.debug("Phase 3 module not available, skipping AST-based filtering")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Phase 3 filtering is optional refinement
             logger.warning(f"Phase 3 filtering failed: {e}")
 
         return findings
@@ -215,8 +216,8 @@ class TriageStageMixin:
                     for py_file in target.rglob("*.py"):
                         try:
                             codebase_lines += count_lines_of_code(py_file)
-                        except Exception:
-                            pass
+                        except Exception:  # noqa: BLE001
+                            pass  # INTENTIONAL: Best-effort LOC counting
 
             if codebase_lines > 0:
                 # Get auth strategy (first-time setup if needed)
@@ -246,6 +247,6 @@ class TriageStageMixin:
                         f"Cost: ~${cost_estimate['monetary_cost']:.4f} (1M context window)",
                     )
 
-        except Exception as e:
-            # Don't fail workflow if auth strategy fails
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Auth strategy is optional; don't fail workflow
             logger.warning(f"Auth strategy detection failed: {e}")

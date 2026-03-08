@@ -11,9 +11,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseWorkflow, ModelTier
+from ..base import BaseWorkflow, ModelTier, estimate_tokens
 from ..context import WorkflowContext
 from ..services import ParsingService, PromptService
+from ..validation import InputSchema
 from .ast_analyzer import ASTFunctionAnalyzer
 from .config import DEFAULT_SKIP_PATTERNS
 from .test_templates import (
@@ -43,6 +44,9 @@ class TestGenerationWorkflow(BaseWorkflow):
         "generate": ModelTier.CAPABLE,
         "review": ModelTier.PREMIUM,
     }
+    input_schema = InputSchema(
+        required_fields={"path": str},
+    )
 
     def __init__(
         self,
@@ -130,23 +134,6 @@ class TestGenerationWorkflow(BaseWorkflow):
                 return False, None
         return False, None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation."""
-        if stage_name == "identify":
-            return await self._identify(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "generate":
-            return await self._generate(input_data, tier)
-        if stage_name == "review":
-            return await self._review(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     async def _identify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Identify files needing tests.
 
@@ -182,8 +169,8 @@ class TestGenerationWorkflow(BaseWorkflow):
                     for py_file in target.rglob("*.py"):
                         try:
                             total_lines += count_lines_of_code(py_file)
-                        except Exception:
-                            pass
+                        except Exception:  # noqa: BLE001
+                            pass  # INTENTIONAL: Best-effort LOC counting
 
                 if total_lines > 0:
                     strategy = get_auth_strategy()
@@ -205,7 +192,8 @@ class TestGenerationWorkflow(BaseWorkflow):
                     else:
                         logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Auth strategy is optional; don't fail workflow
                 logger.warning("Auth strategy detection failed: %s", e)
 
         # Parse configurable limits with sensible defaults
@@ -312,8 +300,8 @@ class TestGenerationWorkflow(BaseWorkflow):
         # Sort by priority
         candidates.sort(key=lambda x: -x["priority"])
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(candidates)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(candidates)
 
         # Calculate scope metrics for enterprise reporting
         analyzed_count = min(max_candidates, len(candidates))
@@ -426,8 +414,8 @@ class TestGenerationWorkflow(BaseWorkflow):
             except OSError:
                 continue
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(analysis)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(analysis)
 
         return (
             {
@@ -608,7 +596,9 @@ class TestGenerationWorkflow(BaseWorkflow):
         written_files: list[str] = []
 
         if write_tests and generated_tests:
-            output_path = Path(output_dir)
+            from attune.security.path_validation import _validate_file_path
+
+            output_path = Path(str(_validate_file_path(str(output_dir))))
             output_path.mkdir(parents=True, exist_ok=True)
 
             for test_item in generated_tests:
@@ -635,8 +625,8 @@ class TestGenerationWorkflow(BaseWorkflow):
                 written_files.append(str(test_file_path))
                 test_item["written_to"] = str(test_file_path)
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = sum(len(str(t)) for t in generated_tests) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(generated_tests)
 
         return (
             {

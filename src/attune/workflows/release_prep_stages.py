@@ -11,7 +11,7 @@ import json
 import subprocess
 from datetime import datetime
 
-from .base import ModelTier
+from .base import ModelTier, estimate_tokens
 
 
 class ReleasePrepStagesMixin:
@@ -37,6 +37,11 @@ class ReleasePrepStagesMixin:
         Executes lint, type checking, and tests.
         """
         target_path = input_data.get("path", ".")
+
+        # Validate target path to prevent path traversal
+        from attune.security.path_validation import _validate_file_path
+
+        target_path = str(_validate_file_path(target_path))
 
         # === AUTH STRATEGY INTEGRATION ===
         if self.enable_auth_strategy:
@@ -81,7 +86,7 @@ class ReleasePrepStagesMixin:
                     else:
                         logger.info(f"Cost: ~${cost_estimate['monetary_cost']:.4f}")
 
-            except (AttributeError, ImportError, TypeError) as e:
+            except (AttributeError, ImportError, TypeError, RuntimeError) as e:
                 import logging
 
                 logger = logging.getLogger(__name__)
@@ -163,8 +168,8 @@ class ReleasePrepStagesMixin:
             "passed": len(failed_checks) == 0,
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(health_result)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(health_result)
 
         return (
             {
@@ -250,8 +255,8 @@ class ReleasePrepStagesMixin:
             "tool": "bandit",
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(security_result)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(security_result)
 
         return (
             {
@@ -357,8 +362,8 @@ class ReleasePrepStagesMixin:
         }
 
         # Estimate tokens (crew uses internal LLM calls)
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(crew_security_result)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(crew_security_result)
 
         return (
             {
@@ -439,8 +444,8 @@ class ReleasePrepStagesMixin:
             "period": since,
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(changelog)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(changelog)
 
         return (
             {

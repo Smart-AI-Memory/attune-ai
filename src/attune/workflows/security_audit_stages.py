@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0
 import json
 import logging
 
-from .base import ModelTier
+from .base import ModelTier, estimate_tokens
 from .security_audit_report import format_security_report
 from .step_config import WorkflowStepConfig
 
@@ -73,8 +73,8 @@ class AnalyzeStageMixin:
         false_positives = [f for f in analyzed if f["status"] == "false_positive"]
         accepted = [f for f in analyzed if f["status"] == "accepted_risk"]
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(analyzed)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(analyzed)
 
         return (
             {
@@ -170,7 +170,8 @@ class AssessStageMixin:
                         + severity_counts["low"] * 1
                     )
                     risk_score = min(100, risk_score)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Crew assessment is optional enrichment
                 logger.warning(f"Crew assessment failed: {e}")
 
         # Merge crew findings with pattern-based findings
@@ -195,8 +196,8 @@ class AssessStageMixin:
             "crew_findings_count": len(crew_findings) if crew_enhanced else 0,
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(assessment)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(assessment)
 
         # Build output with assessment
         output = {
@@ -286,8 +287,8 @@ Severity Breakdown: {json.dumps(assessment.get("severity_breakdown", {}), indent
                     prompt=user_message,
                     system=system,
                 )
-            except Exception:
-                # Fall back to legacy _call_llm if executor fails
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Fall back to legacy _call_llm if executor fails
                 response, input_tokens, output_tokens = await self._call_llm(
                     tier,
                     system or "",
@@ -457,7 +458,8 @@ Provide a detailed remediation plan with specific fixes."""
                 return crew_report_to_workflow_format(report)
             return None
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Crew remediation is optional; fall back to LLM-only
             import logging
 
             logging.getLogger(__name__).warning(f"Crew remediation failed: {e}")

@@ -17,6 +17,7 @@ import time
 from typing import Any
 
 from attune.agents.state.store import AgentStateStore
+from attune.models.registry import TIER_PRICING
 
 from .release_models import (
     ANTHROPIC_AVAILABLE,
@@ -179,12 +180,7 @@ class ReleaseAgent:
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens
 
-            pricing = {
-                "cheap": {"input": 0.80, "output": 4.00},
-                "capable": {"input": 3.00, "output": 15.00},
-                "premium": {"input": 15.00, "output": 75.00},
-            }
-            tier_pricing = pricing[tier.value]
+            tier_pricing = TIER_PRICING[tier.value]
             cost = (
                 input_tokens * tier_pricing["input"] / 1_000_000
                 + output_tokens * tier_pricing["output"] / 1_000_000
@@ -206,7 +202,8 @@ class ReleaseAgent:
                 "cost": cost,
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: LLM calls may fail for many reasons; graceful fallback
             logger.error(f"LLM call failed for {self.role}: {e}")
             return "", {"model": "fallback", "cost": 0.0, "error": str(e)}
 

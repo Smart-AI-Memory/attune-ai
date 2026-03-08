@@ -173,10 +173,6 @@ class DocumentationOrchestrator(
     stages = ["scout", "prioritize", "generate", "update"]
     tier_map: dict[str, ModelTier] = {}
 
-    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
-        """Not used — this workflow overrides execute() directly."""
-        raise NotImplementedError("DocumentationOrchestrator uses execute(), not run_stage()")
-
     # Patterns to exclude from SCANNING - things we don't want to analyze for documentation gaps
     # Note: The ALLOWED_OUTPUT_EXTENSIONS whitelist is the primary safety mechanism for writes
     DEFAULT_EXCLUDE_PATTERNS = [
@@ -336,7 +332,8 @@ class DocumentationOrchestrator(
                 self._project_index = ProjectIndex(str(self.project_root))
                 if not self._project_index.load():
                     self._project_index.refresh()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: ProjectIndex is optional enrichment
                 logger.warning(f"Could not initialize ProjectIndex: {e}")
 
     def describe(self) -> str:
@@ -586,7 +583,8 @@ class DocumentationOrchestrator(
                         },
                     )
                     total_cost += cost
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Continue generating docs for remaining files
                 failed.append({"file": file_path, "error": str(e)})
                 success = False
 
@@ -627,7 +625,8 @@ class DocumentationOrchestrator(
         if source_path.exists():
             try:
                 source_content = source_path.read_text(encoding="utf-8")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Graceful degradation when file cannot be read
                 return {"error": f"Could not read file: {e}"}
 
         result: dict = await self._writer.execute(

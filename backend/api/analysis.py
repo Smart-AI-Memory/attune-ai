@@ -131,7 +131,8 @@ async def create_session(
             "session_id": session_id,
             "message": "Analysis session created successfully",
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Catch-all for API error reporting
         raise HTTPException(status_code=500, detail=f"Failed to create session: {e!s}") from e
 
 
@@ -176,12 +177,16 @@ async def analyze_project(
 
     """
     try:
+        from attune.security.path_validation import _validate_file_path
+
+        validated_path = str(_validate_file_path(request.project_path))
         result = await service.analyze_project(
-            project_path=request.project_path,
+            project_path=validated_path,
             file_patterns=request.file_patterns,
         )
         return result
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Catch-all for API error reporting
         raise HTTPException(status_code=500, detail=f"Project analysis failed: {e!s}") from e
 
 
@@ -258,7 +263,8 @@ async def analyze_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be valid UTF-8 text",
         ) from None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Catch-all for API error reporting
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"File analysis failed: {e!s}",

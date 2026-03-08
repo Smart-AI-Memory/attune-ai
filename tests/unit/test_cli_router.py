@@ -483,3 +483,34 @@ preferences:
         assert "oldkey" in router.preferences
         assert router.preferences["oldkey"].skill == "dev"
         assert router.preferences["oldkey"].args == "commit"
+
+
+@pytest.mark.unit
+class TestPipelineRouteAliases:
+    """Test pipeline-related keyword routing aliases."""
+
+    @pytest.mark.parametrize(
+        "keyword,expected_skill,expected_args",
+        [
+            ("pipeline", "pipeline", ""),
+            ("pipeline-dev", "pipeline", "dev"),
+            ("pipeline-release", "pipeline", "release"),
+            ("sdlc", "pipeline", ""),
+            ("lifecycle", "pipeline", ""),
+            ("end-to-end", "pipeline", ""),
+            ("full-lifecycle", "pipeline", ""),
+        ],
+    )
+    def test_pipeline_aliases_route_correctly(self, keyword, expected_skill, expected_args):
+        """Test pipeline aliases map to /pipeline skill."""
+        router = HybridRouter()
+        result = router._infer_command(keyword)
+        assert result is not None, f"Keyword {keyword!r} not routed"
+        assert result["skill"] == expected_skill
+        assert result["args"] == expected_args
+        assert result["source"] == "builtin"
+
+    def test_pipeline_hub_description_exists(self):
+        """Test pipeline has a hub description."""
+        router = HybridRouter()
+        assert "pipeline" in router._hub_descriptions
