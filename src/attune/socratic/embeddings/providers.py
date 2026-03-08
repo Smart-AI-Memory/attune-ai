@@ -78,6 +78,7 @@ class TFIDFEmbeddingProvider(EmbeddingProvider):
 
     @property
     def dimension(self) -> int:
+        """Return the embedding vector dimension."""
         return self._dimension
 
     def _tokenize(self, text: str) -> list[str]:
@@ -179,6 +180,7 @@ class AnthropicEmbeddingProvider(EmbeddingProvider):
 
     @property
     def dimension(self) -> int:
+        """Return the embedding vector dimension."""
         return self._dimension
 
     def _get_client(self):
@@ -252,6 +254,7 @@ class SentenceTransformerProvider(EmbeddingProvider):
 
     @property
     def dimension(self) -> int:
+        """Return the embedding vector dimension."""
         if self._dimension is None:
             self._load_model()
         return self._dimension or 384

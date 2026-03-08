@@ -90,6 +90,11 @@ class PatternConfidenceTracker:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the confidence tracker.
+
+        Args:
+            patterns_dir: Directory containing pattern files.
+        """
         self.patterns_dir = Path(patterns_dir)
         self.confidence_dir = self.patterns_dir / "confidence"
         self.stats_file = self.confidence_dir / "usage_stats.json"

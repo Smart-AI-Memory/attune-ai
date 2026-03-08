@@ -262,6 +262,7 @@ class WizardAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "wizard"
 
     def is_available(self) -> bool:

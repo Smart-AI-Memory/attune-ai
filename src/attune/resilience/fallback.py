@@ -85,8 +85,11 @@ def fallback(
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """Wrap the target function with fallback chain logic."""
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Async wrapper that tries primary then fallback functions."""
             # Try primary function
             try:
                 if asyncio.iscoroutinefunction(func):
@@ -117,6 +120,7 @@ def fallback(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Sync wrapper that tries primary then fallback functions."""
             try:
                 return func(*args, **kwargs)
             except Exception as e:
@@ -173,6 +177,7 @@ def with_fallback(
         fb.add(f)
 
     async def wrapper(*args: Any, **kwargs: Any) -> T:
+        """Execute the fallback chain with the given arguments."""
         result: T = await fb.execute(*args, **kwargs)
         return result
 

@@ -65,6 +65,7 @@ class TestPlanItem:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
         return {
             "file_path": self.file_path,
             "action": self.action.value,
@@ -87,6 +88,7 @@ class TestMaintenancePlan:
     options: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
         return {
             "generated_at": self.generated_at.isoformat(),
             "items": [item.to_dict() for item in self.items],
@@ -95,12 +97,15 @@ class TestMaintenancePlan:
         }
 
     def get_items_by_action(self, action: TestAction) -> list[TestPlanItem]:
+        """Return plan items filtered by the given action type."""
         return [item for item in self.items if item.action == action]
 
     def get_items_by_priority(self, priority: TestPriority) -> list[TestPlanItem]:
+        """Return plan items filtered by the given priority level."""
         return [item for item in self.items if item.priority == priority]
 
     def get_auto_executable_items(self) -> list[TestPlanItem]:
+        """Return plan items that can be executed automatically."""
         return [item for item in self.items if item.auto_executable]
 
 
@@ -118,6 +123,12 @@ class TestMaintenanceWorkflow:
     """
 
     def __init__(self, project_root: str, index: ProjectIndex | None = None):
+        """Initialize test maintenance workflow.
+
+        Args:
+            project_root: Root directory of the project.
+            index: Optional ProjectIndex instance; created if not provided.
+        """
         self.name = "test_maintenance"
         self.description = "Automatic test lifecycle management"
         self.project_root = Path(project_root)
@@ -233,6 +244,7 @@ class TestMaintenanceWorkflow:
         }
 
         def get_sort_key(item: TestPlanItem) -> tuple[int, float]:
+            """Return sort key as (priority_rank, negative_impact_score)."""
             file_rec = self.index.get_file(item.file_path)
             impact = float(-file_rec.impact_score) if file_rec else 0.0
             return (priority_order[item.priority], impact)

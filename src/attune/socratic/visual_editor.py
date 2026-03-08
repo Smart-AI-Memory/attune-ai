@@ -158,6 +158,7 @@ class VisualWorkflowEditor:
         visited: set[str] = set()
 
         def check_cycle(node_id: str, path: set[str]) -> bool:
+            """Return True if a cycle is detected from node_id."""
             if node_id in path:
                 return True
             if node_id in visited:

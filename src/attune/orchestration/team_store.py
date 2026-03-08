@@ -165,6 +165,13 @@ class TeamStore:
     DEFAULT_DIR = ".attune/orchestration/teams"
 
     def __init__(self, storage_dir: str | None = None) -> None:
+        """Initialize TeamStore with a storage directory.
+
+        Args:
+            storage_dir: Directory for team spec JSON files.
+                Defaults to ``.attune/orchestration/teams``.
+
+        """
         self._storage_dir = storage_dir or self.DEFAULT_DIR
         self._dir = Path(self._storage_dir)
         self._dir.mkdir(parents=True, exist_ok=True)

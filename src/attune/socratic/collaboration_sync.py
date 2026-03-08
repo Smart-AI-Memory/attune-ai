@@ -33,6 +33,7 @@ class SyncEvent:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert the collaboration event to a dictionary."""
         return {
             "event_id": self.event_id,
             "session_id": self.session_id,

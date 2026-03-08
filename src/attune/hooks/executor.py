@@ -274,6 +274,11 @@ class HookExecutorSync:
     """
 
     def __init__(self, python_handlers: dict[str, Callable] | None = None):
+        """Initialize synchronous hook executor wrapper.
+
+        Args:
+            python_handlers: Optional mapping of handler names to callables.
+        """
         self._executor = HookExecutor(python_handlers)
 
     def execute(

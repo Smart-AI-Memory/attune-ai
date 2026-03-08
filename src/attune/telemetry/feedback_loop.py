@@ -51,6 +51,7 @@ class _InMemoryStore:
     """
 
     def __init__(self) -> None:
+        """Initialize the in-memory store with an empty data dict."""
         # value -> (data, expires_at_monotonic | None)
         self._data: dict[str, tuple[Any, float | None]] = {}
         self._lock = threading.Lock()
@@ -95,18 +96,23 @@ class _InMemoryStore:
             return [k for k in self._data if fnmatch.fnmatch(k, pattern)]
 
     def is_connected(self) -> bool:
+        """Return True; in-memory store is always connected."""
         return True
 
     def get_stats(self) -> dict:
+        """Return store statistics including entry count."""
         return {"entries": len(self._data), "backend": "in-memory"}
 
     def close(self) -> None:
+        """No-op; in-memory store has no resources to release."""
         pass
 
     def supports_realtime(self) -> bool:
+        """Return False; in-memory store does not support pub/sub."""
         return False
 
     def supports_distributed(self) -> bool:
+        """Return False; in-memory store is single-process only."""
         return False
 
 

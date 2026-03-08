@@ -178,6 +178,13 @@ class TrustCircuitBreaker:
         config: TrustConfig | None = None,
         domain: str = "general",
     ):
+        """Initialize the trust circuit breaker.
+
+        Args:
+            user_id: User identifier for trust tracking.
+            config: Optional trust configuration overrides.
+            domain: Trust domain (e.g. 'general', 'security').
+        """
         self.user_id = user_id
         self.config = config or TrustConfig()
         self.domain = domain

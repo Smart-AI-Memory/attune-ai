@@ -46,6 +46,14 @@ class CacheService:
         cache: BaseCache | None = None,
         enable: bool = True,
     ) -> None:
+        """Initialize CacheService for a workflow.
+
+        Args:
+            workflow_name: Name of the workflow using the cache.
+            cache: Optional pre-configured cache backend.
+            enable: Whether caching is enabled.
+
+        """
         self._workflow_name = workflow_name
         self._cache: BaseCache | None = cache
         self._enable: bool = enable

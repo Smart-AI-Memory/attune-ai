@@ -284,6 +284,7 @@ def watch(interval: int, daemon: bool, once: bool):
     running = True
 
     def signal_handler(sig, frame):
+        """Handle shutdown signals for graceful exit."""
         nonlocal running
         running = False
         click.echo("\n✓ Alert watcher stopped")

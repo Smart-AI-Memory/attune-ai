@@ -38,6 +38,11 @@ class GitPatternExtractor:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the git pattern extractor.
+
+        Args:
+            patterns_dir: Directory for storing extracted patterns.
+        """
         self.patterns_dir = Path(patterns_dir)
         self.debugging_dir = self.patterns_dir / "debugging"
 

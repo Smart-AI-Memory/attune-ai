@@ -47,6 +47,12 @@ class SecurityAuditorAgent(ReleaseAgent):
         redis_client: Any | None = None,
         state_store: AgentStateStore | None = None,
     ) -> None:
+        """Initialize the security audit agent.
+
+        Args:
+            redis_client: Optional Redis connection for coordination.
+            state_store: Optional persistent state store.
+        """
         super().__init__(
             agent_id=f"security-auditor-{uuid4().hex[:8]}",
             role="Security Auditor",

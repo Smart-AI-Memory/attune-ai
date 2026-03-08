@@ -48,6 +48,12 @@ class ProjectScanner(FileAnalysisMixin, CodeMetricsMixin, DependencyAnalysisMixi
     SOURCE_SUFFIXES = FileAnalysisMixin.SOURCE_SUFFIXES
 
     def __init__(self, project_root: str, config: IndexConfig | None = None):
+        """Initialize the project scanner.
+
+        Args:
+            project_root: Root directory of the project to scan.
+            config: Optional index configuration overrides.
+        """
         self.project_root = Path(project_root)
         self.config = config or IndexConfig()
         self._test_file_map: dict[str, str] = {}  # source -> test mapping

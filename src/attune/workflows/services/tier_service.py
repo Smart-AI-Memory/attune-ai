@@ -43,6 +43,15 @@ class TierService:
         routing_strategy: Any = None,
         enable_adaptive: bool = False,
     ) -> None:
+        """Initialize the tier service.
+
+        Args:
+            workflow_name: Name of the workflow.
+            stages: List of stage names.
+            tier_map: Static mapping of stage names to ModelTier.
+            routing_strategy: Optional dynamic routing strategy.
+            enable_adaptive: Whether to enable adaptive tier upgrades.
+        """
         self._workflow_name = workflow_name
         self._stages = stages
         self._tier_map = tier_map

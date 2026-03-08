@@ -20,7 +20,9 @@ class AuditReportMixin:
 
     if TYPE_CHECKING:
 
-        def query(self, **kwargs: Any) -> list[dict[str, Any]]: ...
+        def query(self, **kwargs: Any) -> list[dict[str, Any]]:
+            """Query audit log entries."""
+            ...
 
     def get_violation_summary(
         self,

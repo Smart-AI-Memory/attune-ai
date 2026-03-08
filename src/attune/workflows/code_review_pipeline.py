@@ -541,6 +541,7 @@ def main():
     args = parser.parse_args()
 
     async def run():
+        """Run the code review analysis stage."""
         pipeline = CodeReviewPipeline(mode=args.mode, parallel_crew=args.parallel)
 
         diff = args.diff or ""

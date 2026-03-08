@@ -45,6 +45,14 @@ class LangChainAgent(BaseAgent):
     """Agent wrapping a LangChain chain or agent."""
 
     def __init__(self, config: AgentConfig, chain=None, agent_executor=None):
+        """Initialize LangChain agent.
+
+        Args:
+            config: Agent configuration
+            chain: Optional LangChain chain (prompt | llm)
+            agent_executor: Optional LangChain AgentExecutor
+
+        """
         super().__init__(config)
         self._chain = chain
         self._agent_executor = agent_executor
@@ -135,6 +143,14 @@ class LangChainWorkflow(BaseWorkflow):
     """Workflow using LangChain's SequentialChain or custom routing."""
 
     def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], chain=None):
+        """Initialize LangChain workflow.
+
+        Args:
+            config: Workflow configuration
+            agents: List of agents in the workflow
+            chain: Optional pre-built LangChain chain
+
+        """
         super().__init__(config, agents)
         self._chain = chain
 
@@ -201,6 +217,7 @@ class LangChainAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "langchain"
 
     def is_available(self) -> bool:

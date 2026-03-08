@@ -85,6 +85,12 @@ class TestAnalystAgent:
     """
 
     def __init__(self, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test analyst agent.
+
+        Args:
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.index = index
         self.config = config
         self.name = "Test Analyst"
@@ -199,6 +205,13 @@ class TestGeneratorAgent:
     """
 
     def __init__(self, project_root: Path, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test generator agent.
+
+        Args:
+            project_root: Root directory of the project.
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.project_root = project_root
         self.index = index
         self.config = config
@@ -382,6 +395,12 @@ class TestValidatorAgent:
     """
 
     def __init__(self, project_root: Path, config: CrewConfig):
+        """Initialize the test validator agent.
+
+        Args:
+            project_root: Root directory of the project.
+            config: Crew configuration settings.
+        """
         self.project_root = project_root
         self.config = config
         self.name = "Test Validator"
@@ -524,6 +543,12 @@ class TestReporterAgent:
     """
 
     def __init__(self, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test reporter agent.
+
+        Args:
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.index = index
         self.config = config
         self.name = "Test Reporter"

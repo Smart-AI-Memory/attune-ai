@@ -60,6 +60,11 @@ class ProgressServer:
     """
 
     def __init__(self, config: ProgressServerConfig | None = None):
+        """Initialize the progress server.
+
+        Args:
+            config: Server configuration; uses defaults if not provided.
+        """
         if not WEBSOCKETS_AVAILABLE:
             raise ImportError(
                 "websockets package is required for ProgressServer. "
@@ -218,6 +223,7 @@ class ProgressServer:
 
         # Add async callback to broadcast updates
         async def broadcast_callback(update: ProgressUpdate) -> None:
+            """Broadcast a progress update to all connected clients."""
             await self.broadcast(update)
 
         tracker.add_async_callback(broadcast_callback)
@@ -235,6 +241,7 @@ class ProgressServer:
         """
 
         def callback(update: ProgressUpdate) -> None:
+            """Queue a broadcast in the event loop for sync callers."""
             # Schedule broadcast in event loop
             try:
                 loop = asyncio.get_event_loop()

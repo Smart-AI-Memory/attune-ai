@@ -255,6 +255,7 @@ class CrewAIAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "crewai"
 
     def is_available(self) -> bool:
@@ -367,6 +368,8 @@ class CrewAIAdapter(BaseAdapter):
 
             # Create dynamic tool class
             class DynamicTool(BaseTool):
+                """Dynamically created CrewAI tool wrapping a callable."""
+
                 name: str = tool_name
                 description: str = tool_description
 

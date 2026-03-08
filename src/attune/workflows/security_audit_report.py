@@ -134,6 +134,7 @@ def main():
     from .security_audit import SecurityAuditWorkflow
 
     async def run():
+        """Run the security audit analysis stage."""
         workflow = SecurityAuditWorkflow()
         result = await workflow.execute(path=".", file_types=[".py"])
 

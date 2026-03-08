@@ -121,6 +121,7 @@ class OrchestratorResult:
     summary: str = ""
 
     def to_dict(self) -> dict:
+        """Convert to dictionary for serialization."""
         return {
             "success": self.success,
             "phase": self.phase,
@@ -649,6 +650,7 @@ if __name__ == "__main__":
     import sys
 
     async def main():
+        """CLI entry point for the documentation orchestrator."""
         path = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else "."
         dry_run = "--dry-run" in sys.argv
         auto_approve = "--auto" in sys.argv

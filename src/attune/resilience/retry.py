@@ -82,8 +82,11 @@ def retry(
     )
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """Wrap the target function with retry logic."""
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Async wrapper that retries with exponential backoff."""
             last_exception: Exception | None = None
 
             for attempt in range(1, config.max_attempts + 1):
@@ -117,6 +120,7 @@ def retry(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Sync wrapper that retries with exponential backoff."""
             import time
 
             last_exception: Exception | None = None

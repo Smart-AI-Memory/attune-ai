@@ -37,6 +37,7 @@ class PluginRegistry:
     """
 
     def __init__(self):
+        """Initialize the plugin registry."""
         self._plugins: dict[str, BasePlugin] = {}
         self._auto_discovered = False
         self.logger = logging.getLogger("attune.plugins.registry")

@@ -177,6 +177,11 @@ class TaskDecomposer:
     """
 
     def __init__(self, workflow: Any) -> None:
+        """Initialize the task decomposer.
+
+        Args:
+            workflow: Workflow instance providing LLM access.
+        """
         self._workflow = workflow
 
     async def decompose(

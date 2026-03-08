@@ -45,6 +45,14 @@ class LangGraphAgent(BaseAgent):
     """Agent wrapping a LangGraph node/runnable."""
 
     def __init__(self, config: AgentConfig, runnable=None, node_func=None):
+        """Initialize LangGraph agent.
+
+        Args:
+            config: Agent configuration
+            runnable: LangChain runnable (chain or agent)
+            node_func: Optional node function for direct graph usage
+
+        """
         super().__init__(config)
         self._runnable = runnable
         self._node_func = node_func
@@ -118,6 +126,14 @@ class LangGraphWorkflow(BaseWorkflow):
     """Workflow using LangGraph's StateGraph."""
 
     def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], graph=None):
+        """Initialize LangGraph workflow.
+
+        Args:
+            config: Workflow configuration
+            agents: List of agents in the workflow
+            graph: Optional pre-built LangGraph StateGraph
+
+        """
         super().__init__(config, agents)
         self._graph = graph
         self._compiled = None
@@ -197,6 +213,13 @@ class LangGraphAdapter(BaseAdapter):
     """Adapter for LangGraph framework."""
 
     def __init__(self, provider: str = "anthropic", api_key: str | None = None):
+        """Initialize LangGraph adapter.
+
+        Args:
+            provider: LLM provider (anthropic, openai)
+            api_key: API key (uses env var if not provided)
+
+        """
         self.provider = provider
         self.api_key = api_key or os.getenv(
             "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY",
@@ -204,9 +227,11 @@ class LangGraphAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "langgraph"
 
     def is_available(self) -> bool:
+        """Check if the framework dependencies are installed."""
         return bool(_check_langgraph())
 
     def _get_llm(self, config: AgentConfig) -> Any:
@@ -273,6 +298,8 @@ class LangGraphAdapter(BaseAdapter):
 
         # Define state schema
         class WorkflowState(TypedDict):
+            """State schema for LangGraph workflow execution."""
+
             messages: list
             current_agent: str
             iteration: int
@@ -284,6 +311,7 @@ class LangGraphAdapter(BaseAdapter):
         for agent in agents:
 
             async def agent_node(state, a=agent):
+                """Execute a single agent node in the graph."""
                 result = await a.invoke(state)
                 messages = state.get("messages", [])
                 messages.append({"role": "assistant", "content": result["output"], "agent": a.name})

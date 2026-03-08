@@ -23,6 +23,12 @@ class ReportGenerator:
     """
 
     def __init__(self, summary: ProjectSummary, records: list[FileRecord]):
+        """Initialize the report generator.
+
+        Args:
+            summary: Project summary with aggregated metrics.
+            records: List of file records from the scan.
+        """
         self.summary = summary
         self.records = records
         self._source_records = [r for r in records if r.category.value == "source"]

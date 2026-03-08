@@ -25,6 +25,12 @@ class StateManager:
     """
 
     def __init__(self, storage_path: str = "./attune_state"):
+        """Initialize StateManager with a storage directory.
+
+        Args:
+            storage_path: Directory for persisting user state JSON files.
+
+        """
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True, parents=True)
 

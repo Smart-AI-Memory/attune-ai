@@ -135,6 +135,7 @@ def apply_user_preferences(
     """
 
     def score(finding: RefactoringFinding) -> float:
+        """Calculate preference-adjusted priority score for a finding."""
         # Base score from impact
         impact_scores = {Impact.HIGH: 3.0, Impact.MEDIUM: 2.0, Impact.LOW: 1.0}
         base = impact_scores.get(finding.estimated_impact, 2.0)

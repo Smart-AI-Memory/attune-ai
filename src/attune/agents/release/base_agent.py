@@ -90,6 +90,14 @@ class ReleaseAgent:
         redis_client: Any | None = None,
         state_store: AgentStateStore | None = None,
     ) -> None:
+        """Initialize the release agent.
+
+        Args:
+            agent_id: Unique identifier for this agent instance.
+            role: Human-readable role name.
+            redis_client: Optional Redis connection for coordination.
+            state_store: Optional persistent state store.
+        """
         self.agent_id = agent_id
         self.role = role
         self.redis = redis_client

@@ -170,6 +170,13 @@ class JsonLinesProgressReporter:
     """JSON Lines progress reporter for machine parsing."""
 
     def __init__(self, output_file: str | None = None):
+        """Initialize JsonLinesProgressReporter.
+
+        Args:
+            output_file: Optional file path for JSON lines output.
+                Defaults to stdout if None.
+
+        """
         self.output_file = output_file
 
     def report(self, update: ProgressUpdate) -> None:

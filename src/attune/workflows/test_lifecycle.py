@@ -45,6 +45,7 @@ class TestTask:
     result: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
         return {
             "id": self.id,
             "file_path": self.file_path,
@@ -75,6 +76,14 @@ class TestLifecycleManager:
         auto_execute: bool = False,
         queue_file: str | None = None,
     ):
+        """Initialize the test lifecycle manager.
+
+        Args:
+            project_root: Root directory of the project.
+            index: Optional ProjectIndex; created if not provided.
+            auto_execute: If True, execute tasks immediately on queue.
+            queue_file: Path to persist the task queue.
+        """
         self.project_root = Path(project_root)
         self.index = index or ProjectIndex(str(project_root))
         self.auto_execute = auto_execute

@@ -35,6 +35,11 @@ class PatternSummaryGenerator:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the summary generator.
+
+        Args:
+            patterns_dir: Directory containing pattern files.
+        """
         self.patterns_dir = Path(patterns_dir)
         self._bug_patterns: list[dict[str, Any]] = []
         self._security_decisions: list[dict[str, Any]] = []

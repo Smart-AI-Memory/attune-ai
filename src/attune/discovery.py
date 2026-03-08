@@ -229,6 +229,7 @@ class DiscoveryEngine:
 
         # Sort by priority and limit - ensure we get an int for sorting
         def get_priority(x: dict) -> int:
+            """Extract and coerce tip priority to int for sorting."""
             p = x.get("priority", 3)
             return int(p) if isinstance(p, int | float | str) else 3
 

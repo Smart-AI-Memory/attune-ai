@@ -185,6 +185,7 @@ class BasePlugin(ABC):
     """
 
     def __init__(self):
+        """Initialize the domain plugin and register its workflows."""
         self.logger = logging.getLogger(f"plugin.{self.get_metadata().domain}")
         self._workflows: dict[str, type[BaseWorkflow]] = {}
         self._initialized = False

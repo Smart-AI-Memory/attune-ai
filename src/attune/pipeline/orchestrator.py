@@ -54,6 +54,14 @@ class PipelineOrchestrator:
         skip_tests: bool = False,
         skip_simplify: bool = False,
     ) -> None:
+        """Initialize the pipeline orchestrator.
+
+        Args:
+            spec_path: Path to the pipeline spec markdown file.
+            skip_gates: Skip quality gate checks.
+            skip_tests: Skip test generation/execution.
+            skip_simplify: Skip code simplification pass.
+        """
         self.spec_path = spec_path
         self.tasks = read_spec(spec_path)
         self.skip_gates = skip_gates

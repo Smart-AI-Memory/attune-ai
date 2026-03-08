@@ -21,6 +21,12 @@ class MetricsCollector:
     """
 
     def __init__(self, db_path: str = "./metrics.db"):
+        """Initialize MetricsCollector with a SQLite database.
+
+        Args:
+            db_path: Path to the SQLite database file.
+
+        """
         self.db_path = db_path
         self._init_database()
 

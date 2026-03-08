@@ -157,6 +157,7 @@ def main() -> None:
     import asyncio
 
     async def run() -> None:
+        """Run the release preparation analysis stage."""
         from .release_prep import ReleasePreparationWorkflow
 
         workflow = ReleasePreparationWorkflow()

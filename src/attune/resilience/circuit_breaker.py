@@ -37,6 +37,12 @@ class CircuitOpenError(Exception):
     """Raised when circuit breaker is open."""
 
     def __init__(self, name: str, reset_time: float):
+        """Initialize with circuit breaker name and time until reset.
+
+        Args:
+            name: Name of the circuit breaker that is open
+            reset_time: Seconds until the circuit breaker resets
+        """
         self.name = name
         self.reset_time = reset_time
         super().__init__(f"Circuit breaker '{name}' is open. Resets in {reset_time:.1f}s")
@@ -209,6 +215,7 @@ def circuit_breaker(
         excluded_exceptions = ()
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """Wrap the target function with circuit breaker protection."""
         cb_name = name or func.__name__
 
         # Create or get existing circuit breaker
@@ -225,6 +232,7 @@ def circuit_breaker(
 
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Async wrapper that checks circuit state before calling."""
             if cb.is_open:
                 if fallback:
                     logger.info(f"Circuit '{cb_name}' open, using fallback")
@@ -244,6 +252,7 @@ def circuit_breaker(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Sync wrapper that checks circuit state before calling."""
             if cb.is_open:
                 if fallback:
                     logger.info(f"Circuit '{cb_name}' open, using fallback")

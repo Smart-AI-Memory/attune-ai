@@ -394,6 +394,8 @@ class MockLLMExecutor:
 
         @dataclass
         class MockResponse:
+            """Mock LLM response for testing."""
+
             content: str = "{}"
 
         return MockResponse()

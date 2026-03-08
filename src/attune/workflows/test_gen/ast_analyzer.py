@@ -25,6 +25,7 @@ class ASTFunctionAnalyzer(ast.NodeVisitor):
     """
 
     def __init__(self):
+        """Initialize the analyzer with empty function and class lists."""
         self.functions: list[FunctionSignature] = []
         self.classes: list[ClassSignature] = []
         self._current_class: str | None = None

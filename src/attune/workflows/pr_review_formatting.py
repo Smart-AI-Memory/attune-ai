@@ -181,6 +181,7 @@ def main() -> None:
     args = parser.parse_args()
 
     async def run() -> None:
+        """Run the PR review formatting stage."""
         if args.code_only:
             workflow = PRReviewWorkflow.for_code_quality_focused()
         elif args.security_only:

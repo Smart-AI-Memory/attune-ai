@@ -48,6 +48,16 @@ class WorkflowAgentAdapter:
         role: str | None = None,
         state_store: Any | None = None,
     ) -> None:
+        """Initialize WorkflowAgentAdapter wrapping a BaseWorkflow class.
+
+        Args:
+            workflow_class: The BaseWorkflow subclass to wrap.
+            workflow_kwargs: Optional kwargs for the workflow constructor.
+            agent_id: Optional agent identifier. Auto-generated if None.
+            role: Human-readable role name. Defaults to the workflow's name.
+            state_store: Optional AgentStateStore forwarded to the workflow.
+
+        """
         self.workflow_class = workflow_class
         self.workflow_kwargs = workflow_kwargs or {}
         self.agent_id = agent_id or f"wf-adapter-{uuid4().hex[:8]}"

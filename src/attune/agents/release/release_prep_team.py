@@ -88,6 +88,12 @@ class ReleasePrepTeam:
         quality_gates: dict[str, Any] | None = None,
         redis_url: str | None = None,
     ) -> None:
+        """Initialize the release preparation team.
+
+        Args:
+            quality_gates: Custom quality gate thresholds.
+            redis_url: Optional Redis URL for agent coordination.
+        """
         self.quality_gates = {**DEFAULT_QUALITY_GATES}
         if quality_gates:
             self.quality_gates.update(quality_gates)

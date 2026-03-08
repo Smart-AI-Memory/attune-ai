@@ -111,6 +111,14 @@ class LessonsManager:
         sync_to_claude_md: bool = True,
         claude_md_path: Path | None = None,
     ) -> None:
+        """Initialize the lessons manager.
+
+        Args:
+            project_path: Override for project lessons file path.
+            global_path: Override for global lessons file path.
+            sync_to_claude_md: If True, sync lessons to CLAUDE.md.
+            claude_md_path: Override for CLAUDE.md file path.
+        """
         self._project_path = project_path or _get_project_lessons_path()
         self._global_path = global_path or _get_global_lessons_path()
         self._sync_to_claude_md = sync_to_claude_md

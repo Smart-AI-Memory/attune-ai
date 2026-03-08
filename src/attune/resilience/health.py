@@ -92,6 +92,11 @@ class HealthCheck:
     """
 
     def __init__(self, version: str = "unknown"):
+        """Initialize the health check manager.
+
+        Args:
+            version: Application version string for status reports
+        """
         self.version = version
         self.start_time = time.time()
         self._checks: dict[str, Callable] = {}
@@ -119,6 +124,7 @@ class HealthCheck:
         """
 
         def decorator(func: Callable) -> Callable:
+            """Register the decorated function as a health check."""
             self._checks[name] = func
             self._timeouts[name] = timeout
             return func

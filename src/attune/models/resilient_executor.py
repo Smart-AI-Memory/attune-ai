@@ -20,6 +20,12 @@ class AllProvidersFailedError(Exception):
     """Raised when all fallback providers have failed."""
 
     def __init__(self, message: str, attempts: list[dict[str, Any]]):
+        """Initialize with error message and attempt history.
+
+        Args:
+            message: Error description.
+            attempts: List of dicts describing each failed attempt.
+        """
         super().__init__(message)
         self.attempts = attempts
 

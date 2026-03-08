@@ -59,6 +59,16 @@ class SDKAgent:
         redis_client: Any | None = None,
         state_store: AgentStateStore | None = None,
     ) -> None:
+        """Initialize the SDK agent.
+
+        Args:
+            agent_id: Unique agent identifier (auto-generated if None).
+            role: Human-readable role name.
+            system_prompt: System prompt for the agent.
+            mode: SDK execution mode (TOOLS_ONLY or FULL_SDK).
+            redis_client: Optional Redis connection for coordination.
+            state_store: Optional persistent state store.
+        """
         self.agent_id = agent_id or f"sdk-agent-{uuid4().hex[:8]}"
         self.role = role
         self.system_prompt = system_prompt

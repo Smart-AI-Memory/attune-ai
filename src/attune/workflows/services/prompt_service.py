@@ -44,6 +44,13 @@ class PromptService:
         workflow_name: str,
         xml_config: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize PromptService for building workflow prompts.
+
+        Args:
+            workflow_name: Name of the workflow using the prompts.
+            xml_config: Optional XML prompt configuration dict.
+
+        """
         self._workflow_name = workflow_name
         self._xml_config = xml_config or {}
 

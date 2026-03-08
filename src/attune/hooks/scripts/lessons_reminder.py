@@ -50,6 +50,7 @@ def has_session_work() -> bool:
 
 
 def main() -> int:
+    """Check if a lessons reminder should be shown and print it."""
     if already_reminded() or not has_session_work():
         return 0
 

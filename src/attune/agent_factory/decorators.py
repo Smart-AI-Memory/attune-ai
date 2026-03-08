@@ -43,8 +43,11 @@ def safe_agent_operation(operation_name: str):
     """
 
     def decorator(func: F) -> F:
+        """Wrap the agent method with error handling and audit logging."""
+
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
+            """Execute the operation with logging, timing, and error capture."""
             start_time = time.time()
             agent_name = getattr(self, "name", self.__class__.__name__)
 
@@ -114,8 +117,11 @@ def retry_on_failure(
     """
 
     def decorator(func: F) -> F:
+        """Wrap the function with retry and backoff logic."""
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """Retry the function up to max_attempts with exponential backoff."""
             last_exception = None
             current_delay = delay
 
@@ -156,8 +162,11 @@ def log_performance(threshold_seconds: float = 1.0):
     """
 
     def decorator(func: F) -> F:
+        """Wrap the function with performance timing."""
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """Time the function and log a warning if it exceeds the threshold."""
             start_time = time.time()
 
             result = await func(*args, **kwargs)
@@ -195,8 +204,11 @@ def validate_input(required_fields: list[str]):
     """
 
     def decorator(func: F) -> F:
+        """Wrap the function with input validation."""
+
         @wraps(func)
         async def wrapper(self, input_data, *args, **kwargs):
+            """Validate required fields exist in input_data before calling."""
             if not isinstance(input_data, dict):
                 raise ValueError(f"Input must be a dict, got {type(input_data).__name__}")
 
@@ -226,8 +238,11 @@ def with_cost_tracking(operation_type: str = "agent_call"):
     """
 
     def decorator(func: F) -> F:
+        """Wrap the function with cost tracking."""
+
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
+            """Track API cost metadata after execution."""
             # Record start
             operation_id = f"{operation_type}_{time.time_ns()}"
 
@@ -273,8 +288,11 @@ def graceful_degradation(fallback_value: Any = None, log_level: str = "warning")
     """
 
     def decorator(func: F) -> F:
+        """Wrap the function with graceful degradation."""
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """Return fallback_value instead of raising on failure."""
             try:
                 return await func(*args, **kwargs)
             except Exception as e:  # noqa: BLE001

@@ -31,6 +31,13 @@ class NativeAgent(BaseAgent):
     """Agent using Empathy's native EmpathyLLM."""
 
     def __init__(self, config: AgentConfig, llm=None):
+        """Initialize native Empathy agent.
+
+        Args:
+            config: Agent configuration
+            llm: Optional EmpathyLLM instance
+
+        """
         super().__init__(config)
         self._llm = llm
         self._tools = {tool["name"]: tool for tool in config.tools if isinstance(tool, dict)}
@@ -185,6 +192,7 @@ class NativeAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "native"
 
     def is_available(self) -> bool:

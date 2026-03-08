@@ -42,6 +42,11 @@ class AgentRecoveryManager:
     """
 
     def __init__(self, state_store: AgentStateStore) -> None:
+        """Initialize the recovery manager.
+
+        Args:
+            state_store: State store to query for interrupted agents.
+        """
         self._store = state_store
 
     def find_interrupted_agents(self) -> list[AgentStateRecord]:

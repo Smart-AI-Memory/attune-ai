@@ -189,6 +189,7 @@ def main() -> None:
     import asyncio
 
     async def run() -> None:
+        """Run the refactoring plan analysis stage."""
         from .refactor_plan import RefactorPlanWorkflow
 
         workflow = RefactorPlanWorkflow()

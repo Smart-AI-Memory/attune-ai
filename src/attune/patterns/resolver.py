@@ -48,6 +48,11 @@ class PatternResolver:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the bug pattern resolver.
+
+        Args:
+            patterns_dir: Directory containing pattern files.
+        """
         self.patterns_dir = Path(patterns_dir)
         self._debugging_dirs = ["debugging", "debugging_demo", "repo_test/debugging"]
 

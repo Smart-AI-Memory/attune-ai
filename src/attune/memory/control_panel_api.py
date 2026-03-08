@@ -373,6 +373,7 @@ def run_api_server(
 
     # Graceful shutdown handler
     def shutdown_handler(signum, frame):
+        """Handle shutdown signals for graceful server stop."""
         print("\n\nReceived shutdown signal...")
         print("Stopping API server...")
         server.shutdown()

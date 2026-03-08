@@ -22,6 +22,12 @@ class TimeoutError(Exception):
     """Raised when an operation times out."""
 
     def __init__(self, operation: str, timeout: float):
+        """Initialize with the operation name and timeout duration.
+
+        Args:
+            operation: Name of the operation that timed out
+            timeout: Timeout duration in seconds
+        """
         self.operation = operation
         self.timeout = timeout
         super().__init__(f"Operation '{operation}' timed out after {timeout}s")
@@ -51,8 +57,11 @@ def timeout(
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """Wrap the target function with timeout logic."""
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Async wrapper that enforces timeout via asyncio.wait_for."""
             try:
                 coro = func(*args, **kwargs)
                 result: T = await asyncio.wait_for(coro, timeout=seconds)  # type: ignore[arg-type]
@@ -72,6 +81,7 @@ def timeout(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Sync wrapper that enforces timeout via SIGALRM (Unix only)."""
             # For sync functions, use signal-based timeout (Unix only)
             import platform
 
@@ -83,6 +93,7 @@ def timeout(
                 return func(*args, **kwargs)
 
             def timeout_handler(signum: int, frame: Any) -> None:
+                """Signal handler that raises TimeoutError."""
                 raise TimeoutError(func.__name__, seconds)
 
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)

@@ -30,6 +30,12 @@ class ParsingService:
     """
 
     def __init__(self, xml_config: dict[str, Any] | None = None) -> None:
+        """Initialize ParsingService with optional XML configuration.
+
+        Args:
+            xml_config: Optional XML parsing configuration dict.
+
+        """
         self._xml_config = xml_config or {}
 
     def parse_xml_response(self, response: str) -> dict[str, Any]:

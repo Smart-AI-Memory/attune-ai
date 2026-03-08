@@ -44,6 +44,14 @@ class HaystackAgent(BaseAgent):
     """Agent wrapping a Haystack Pipeline or Component."""
 
     def __init__(self, config: AgentConfig, pipeline=None, generator=None):
+        """Initialize Haystack agent.
+
+        Args:
+            config: Agent configuration
+            pipeline: Optional Haystack Pipeline instance
+            generator: Optional Haystack generator component
+
+        """
         super().__init__(config)
         self._pipeline = pipeline
         self._generator = generator
@@ -105,6 +113,14 @@ class HaystackWorkflow(BaseWorkflow):
     """Workflow using Haystack Pipeline."""
 
     def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], pipeline=None):
+        """Initialize Haystack workflow.
+
+        Args:
+            config: Workflow configuration
+            agents: List of agents in the workflow
+            pipeline: Optional pre-built Haystack Pipeline
+
+        """
         super().__init__(config, agents)
         self._pipeline = pipeline
 
@@ -163,6 +179,13 @@ class HaystackAdapter(BaseAdapter):
     """Adapter for deepset Haystack framework."""
 
     def __init__(self, provider: str = "anthropic", api_key: str | None = None):
+        """Initialize Haystack adapter.
+
+        Args:
+            provider: LLM provider (anthropic, openai)
+            api_key: API key (uses env var if not provided)
+
+        """
         self.provider = provider
         self.api_key = api_key or os.getenv(
             "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY",
@@ -170,9 +193,11 @@ class HaystackAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "haystack"
 
     def is_available(self) -> bool:
+        """Check if the framework dependencies are installed."""
         return bool(_check_haystack())
 
     def _get_generator(self, config: AgentConfig):

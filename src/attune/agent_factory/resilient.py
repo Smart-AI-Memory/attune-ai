@@ -218,6 +218,7 @@ class ResilientAgent(BaseAgent):
 
         @functools.wraps(func)
         async def wrapper():
+            """Execute the wrapped function with a timeout."""
             return await asyncio.wait_for(func(), timeout=timeout_seconds)
 
         return wrapper
@@ -236,6 +237,7 @@ class ResilientAgent(BaseAgent):
 
         @functools.wraps(func)
         async def wrapper():
+            """Execute the wrapped function with retry and exponential backoff."""
             last_exception = None
             delay = initial_delay
 
@@ -270,6 +272,7 @@ class ResilientAgent(BaseAgent):
 
         @functools.wraps(func)
         async def wrapper():
+            """Execute the wrapped function with circuit breaker protection."""
             from attune.resilience import CircuitOpenError
 
             # Check if circuit is open (failing fast)

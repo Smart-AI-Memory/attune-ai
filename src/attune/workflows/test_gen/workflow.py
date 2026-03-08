@@ -646,6 +646,7 @@ def main():
     import asyncio
 
     async def run():
+        """Run test generation workflow and print results."""
         workflow = TestGenerationWorkflow()
         result = await workflow.execute(path=".", file_types=[".py"])
 

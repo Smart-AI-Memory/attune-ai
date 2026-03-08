@@ -147,6 +147,7 @@ def main() -> None:
     import asyncio
 
     async def run() -> None:
+        """Run the performance audit analysis stage."""
         workflow = PerformanceAuditWorkflow()
         result = await workflow.execute(path=".", file_types=[".py"])
 

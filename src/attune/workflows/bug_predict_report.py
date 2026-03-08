@@ -133,6 +133,7 @@ def main():
     import asyncio
 
     async def run():
+        """Run the bug prediction analysis stage."""
         from .bug_predict import BugPredictionWorkflow
 
         workflow = BugPredictionWorkflow()

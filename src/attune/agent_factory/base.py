@@ -134,6 +134,12 @@ class BaseAgent(ABC):
     """
 
     def __init__(self, config: AgentConfig):
+        """Initialize base agent with configuration.
+
+        Args:
+            config: Agent configuration defining identity, model, and behavior
+
+        """
         self.config = config
         self.name = config.name
         self.role = config.role
@@ -184,6 +190,13 @@ class BaseWorkflow(ABC):
     """
 
     def __init__(self, config: WorkflowConfig, agents: list[BaseAgent]):
+        """Initialize base workflow with configuration and agents.
+
+        Args:
+            config: Workflow configuration defining execution mode and limits
+            agents: List of agents to orchestrate
+
+        """
         self.config = config
         self.agents = {agent.name: agent for agent in agents}
         self._state: dict = {}

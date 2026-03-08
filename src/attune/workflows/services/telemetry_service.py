@@ -57,6 +57,13 @@ class TelemetryService:
         provider: str = "unknown",
         backend: TelemetryBackend | None = None,
     ) -> None:
+        """Initialize the telemetry service.
+
+        Args:
+            workflow_name: Name of the workflow to track.
+            provider: Provider identifier (e.g., "anthropic").
+            backend: Optional telemetry backend; defaults to JSONL store.
+        """
         self._workflow_name = workflow_name
         self._provider = provider
         self._backend = backend

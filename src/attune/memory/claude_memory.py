@@ -76,6 +76,11 @@ class ClaudeMemoryLoader:
     """
 
     def __init__(self, config: ClaudeMemoryConfig | None = None):
+        """Initialize the Claude memory manager.
+
+        Args:
+            config: Optional memory configuration overrides.
+        """
         self.config = config or ClaudeMemoryConfig()
         self._memory_cache: dict[str, MemoryFile] = {}
         self._import_stack: list[str] = []  # Track imports to detect cycles

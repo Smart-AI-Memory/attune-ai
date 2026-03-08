@@ -315,6 +315,7 @@ class WorkflowBatchRunner:
             semaphore = asyncio.Semaphore(self.max_parallel)
 
             async def run_with_semaphore(spec: WorkflowSpec) -> WorkflowBatchResult:
+                """Execute a workflow spec while respecting the concurrency semaphore."""
                 async with semaphore:
                     return await self._execute_one(spec)
 

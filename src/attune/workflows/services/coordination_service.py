@@ -40,6 +40,15 @@ class CoordinationService:
         enable_heartbeat: bool = False,
         enable_coordination: bool = False,
     ) -> None:
+        """Initialize CoordinationService for inter-agent communication.
+
+        Args:
+            workflow_name: Name of the owning workflow.
+            agent_id: Optional agent identifier for signal routing.
+            enable_heartbeat: Whether to enable heartbeat monitoring.
+            enable_coordination: Whether to enable coordination signals.
+
+        """
         self._workflow_name = workflow_name
         self._agent_id = agent_id
         self._enable_heartbeat = enable_heartbeat
