@@ -16,7 +16,7 @@ Tests cover:
 
 import argparse
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
@@ -50,7 +50,7 @@ def populated_store(temp_dir):
     """Create a TelemetryStore with sample Tier 1 data."""
     store = TelemetryStore(storage_dir=str(temp_dir))
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Add routing data
     store.log_task_routing(

@@ -16,7 +16,7 @@ Tests cover:
 """
 
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -67,7 +67,7 @@ class TestTaskRoutingAccuracy:
         """Test analytics with single successful routing."""
         record = TaskRoutingRecord(
             routing_id="routing-1",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             task_description="Test task",
             task_type="code_review",
             task_complexity="simple",
@@ -93,7 +93,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-1",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Task 1",
                 task_type="code_review",
                 task_complexity="simple",
@@ -110,7 +110,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-2",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Task 2",
                 task_type="bug_fix",
                 task_complexity="moderate",
@@ -127,7 +127,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-3",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Task 3",
                 task_type="testing",
                 task_complexity="simple",
@@ -153,7 +153,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-1",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Review 1",
                 task_type="code_review",
                 task_complexity="simple",
@@ -168,7 +168,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-2",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Review 2",
                 task_type="code_review",
                 task_complexity="moderate",
@@ -185,7 +185,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-3",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Bug 1",
                 task_type="bug_fix",
                 task_complexity="simple",
@@ -214,7 +214,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-1",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Task 1",
                 task_type="test",
                 task_complexity="simple",
@@ -231,7 +231,7 @@ class TestTaskRoutingAccuracy:
         store.log_task_routing(
             TaskRoutingRecord(
                 routing_id="routing-2",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 task_description="Task 2",
                 task_type="test",
                 task_complexity="moderate",
@@ -254,7 +254,7 @@ class TestTaskRoutingAccuracy:
 
     def test_date_filtering(self, store, analytics):
         """Test that since parameter filters by date correctly."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         old_timestamp = (now - timedelta(days=10)).isoformat()
         recent_timestamp = (now - timedelta(hours=1)).isoformat()
 
@@ -318,7 +318,7 @@ class TestTestExecutionTrends:
         """Test analytics with single successful test execution."""
         record = TestExecutionRecord(
             execution_id="test-1",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             test_suite="unit",
             triggered_by="manual",
             command="pytest tests/unit/",
@@ -348,7 +348,7 @@ class TestTestExecutionTrends:
         store.log_test_execution(
             TestExecutionRecord(
                 execution_id="test-1",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 test_suite="unit",
                 triggered_by="manual",
                 command="pytest",
@@ -368,7 +368,7 @@ class TestTestExecutionTrends:
         store.log_test_execution(
             TestExecutionRecord(
                 execution_id="test-2",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 test_suite="integration",
                 triggered_by="ci",
                 command="pytest",
@@ -400,7 +400,7 @@ class TestTestExecutionTrends:
             store.log_test_execution(
                 TestExecutionRecord(
                     execution_id=f"test-{i}",
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                     test_suite="unit",
                     triggered_by="ci",
                     command="pytest",
@@ -445,7 +445,7 @@ class TestCoverageProgress:
         """Test analytics with single coverage record."""
         record = CoverageRecord(
             record_id="cov-1",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             overall_percentage=85.5,
             lines_total=1000,
             lines_covered=855,
@@ -468,7 +468,7 @@ class TestCoverageProgress:
 
     def test_improving_trend(self, store, analytics):
         """Test detection of improving coverage trend."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Older coverage
         store.log_coverage(
@@ -516,7 +516,7 @@ class TestCoverageProgress:
 
     def test_declining_trend(self, store, analytics):
         """Test detection of declining coverage trend."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Older higher coverage
         store.log_coverage(
@@ -577,7 +577,7 @@ class TestAgentPerformance:
         """Test analytics with single agent assignment."""
         record = AgentAssignmentRecord(
             assignment_id="assign-1",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             task_id="task-1",
             task_title="Fix bug",
             task_description="Fix authentication bug",
@@ -607,7 +607,7 @@ class TestAgentPerformance:
             store.log_agent_assignment(
                 AgentAssignmentRecord(
                     assignment_id=f"assign-1-{i}",
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                     task_id=f"task-1-{i}",
                     task_title=f"Task {i}",
                     task_description="Description",
@@ -626,7 +626,7 @@ class TestAgentPerformance:
             store.log_agent_assignment(
                 AgentAssignmentRecord(
                     assignment_id=f"assign-2-{i}",
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                     task_id=f"task-2-{i}",
                     task_title=f"Task {i}",
                     task_description="Description",
@@ -668,7 +668,7 @@ class TestTier1Summary:
 
     def test_comprehensive_summary(self, store, analytics):
         """Test summary with all types of data."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Add routing data
         store.log_task_routing(
@@ -754,7 +754,7 @@ class TestTier1Summary:
 
     def test_summary_with_date_filtering(self, store, analytics):
         """Test that summary respects since parameter."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         old_timestamp = (now - timedelta(days=10)).isoformat()
         recent_timestamp = (now - timedelta(hours=1)).isoformat()
 

@@ -84,7 +84,7 @@ class DocOrchScoutMixin:
                 if idx_item.file_path not in existing_paths:
                     items.append(idx_item)
 
-        logger.info(f"Scout phase found {len(items)} items (cost: ${cost:.4f})")
+        logger.info("Scout phase found %s items (cost: $%.4f)", len(items), cost)
         return items, cost
 
     def _items_from_index(self) -> list:
@@ -137,7 +137,7 @@ class DocOrchScoutMixin:
                             ),
                         )
         except Exception as e:
-            logger.warning(f"Error extracting items from index: {e}")
+            logger.warning("Error extracting items from index: %s", e)
 
         return items
 

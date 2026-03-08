@@ -14,7 +14,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import concurrent.futures
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -242,7 +242,7 @@ class PatternPipelineMixin:
         return PatternMetadata(
             pattern_id=pattern_id,
             created_by=user_id,
-            created_at=datetime.utcnow().isoformat() + "Z",
+            created_at=datetime.now(timezone.utc).isoformat(),
             classification=classification.value,
             retention_days=rules.retention_days,
             encrypted=encrypted,
@@ -349,11 +349,11 @@ class PatternPipelineMixin:
             ValueError: If the retention period has expired
 
         """
-        created_at = datetime.fromisoformat(metadata["created_at"].rstrip("Z"))
+        created_at = datetime.fromisoformat(metadata["created_at"].replace("Z", "+00:00"))
         retention_days = metadata["retention_days"]
         expiration = created_at + timedelta(days=retention_days)
 
-        if datetime.utcnow() > expiration:
+        if datetime.now(timezone.utc) > expiration:
             logger.warning(
                 "pattern_retention_expired",
                 pattern_id=pattern_id,

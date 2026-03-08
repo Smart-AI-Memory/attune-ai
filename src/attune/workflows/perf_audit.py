@@ -30,6 +30,7 @@ from .perf_audit_report import (
 )
 from .perf_audit_stages_mixin import PerfAuditAnalysisMixin
 from .services import ParsingService, PromptService
+from .validation import InputSchema
 
 # Re-export public API for backward compatibility
 __all__ = [
@@ -62,6 +63,9 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
         "hotspots": ModelTier.CAPABLE,
         "optimize": ModelTier.PREMIUM,
     }
+    input_schema = InputSchema(
+        required_fields={"path": str},
+    )
 
     def __init__(
         self,
@@ -123,36 +127,6 @@ class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, B
                 self.tier_map["optimize"] = ModelTier.CAPABLE
                 return False, None
         return False, None
-
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation.
-
-        Args:
-            stage_name: Name of the stage to run
-            tier: Model tier for this stage
-            input_data: Input data for the stage
-
-        Returns:
-            Tuple of (result, input_tokens, output_tokens)
-
-        Raises:
-            ValueError: If stage_name is unknown
-
-        """
-        if stage_name == "profile":
-            return await self._profile(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "hotspots":
-            return await self._hotspots(input_data, tier)
-        if stage_name == "optimize":
-            return await self._optimize(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
 
     def _get_optimization_action(self, concern: str) -> dict | None:
         """Generate specific optimization action for a concern type.

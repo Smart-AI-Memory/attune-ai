@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseWorkflow, ModelTier
+from ..base import BaseWorkflow, ModelTier, estimate_tokens
 from .checks import CheckResult, run_all_checks
 
 
@@ -67,41 +67,13 @@ class DocAuditWorkflow(BaseWorkflow):
         self.project_root = project_root
         self._audit_score: int = 0
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Dispatch to the appropriate stage implementation.
-
-        Args:
-            stage_name: One of "audit", "plan", "execute", "verify".
-            tier: ModelTier for this stage (unused — stages are file-based).
-            input_data: Dict passed between stages.
-
-        Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
-        Raises:
-            ValueError: If stage_name is not recognised.
-
-        """
-        if stage_name == "audit":
-            return await self._audit(input_data)
-        if stage_name == "plan":
-            return await self._plan(input_data)
-        if stage_name == "execute":
-            return await self._execute(input_data)
-        if stage_name == "verify":
-            return await self._verify(input_data)
-        raise ValueError(f"Unknown stage: {stage_name!r}")
-
     # ------------------------------------------------------------------
     # Stage implementations
     # ------------------------------------------------------------------
 
-    async def _audit(self, input_data: dict) -> tuple[dict, int, int]:
+    async def _audit(
+        self, input_data: dict, tier: ModelTier = ModelTier.CHEAP
+    ) -> tuple[dict, int, int]:
         """Run all 10 documentation checks and compute a score.
 
         Checks cover test counts, workflow counts, version consistency,
@@ -129,8 +101,8 @@ class DocAuditWorkflow(BaseWorkflow):
             "project_root": root,
             **input_data,
         }
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(output)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(output)
         self.logger.info(
             "doc-audit audit stage complete: score=%d, checks=%d",
             score,
@@ -138,7 +110,9 @@ class DocAuditWorkflow(BaseWorkflow):
         )
         return output, input_tokens, output_tokens
 
-    async def _plan(self, input_data: dict) -> tuple[dict, int, int]:
+    async def _plan(
+        self, input_data: dict, tier: ModelTier = ModelTier.CAPABLE
+    ) -> tuple[dict, int, int]:
         """Generate fix plans for each failing or warning check.
 
         For each check with status "fail" or "warn", collects metadata
@@ -172,12 +146,14 @@ class DocAuditWorkflow(BaseWorkflow):
             "fixes": fixes,
             **input_data,
         }
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(output)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(output)
         self.logger.info("doc-audit plan stage complete: %d fix(es) planned", len(fixes))
         return output, input_tokens, output_tokens
 
-    async def _execute(self, input_data: dict) -> tuple[dict, int, int]:
+    async def _execute(
+        self, input_data: dict, tier: ModelTier = ModelTier.CAPABLE
+    ) -> tuple[dict, int, int]:
         """Apply auto-fixable documentation changes to disk.
 
         Currently handles updating numeric count badges in README.md
@@ -215,7 +191,7 @@ class DocAuditWorkflow(BaseWorkflow):
                 "files_modified": [],
                 **input_data,
             }
-            return output, len(str(input_data)) // 4, 0
+            return output, estimate_tokens(input_data), 0
 
         for fix in fixes:
             if not fix.get("auto_fixable", False):
@@ -237,8 +213,8 @@ class DocAuditWorkflow(BaseWorkflow):
             "files_modified": files_modified,
             **input_data,
         }
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(output)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(output)
         self.logger.info(
             "doc-audit execute stage: applied=%d, manual=%d, files=%s",
             applied,
@@ -247,7 +223,9 @@ class DocAuditWorkflow(BaseWorkflow):
         )
         return output, input_tokens, output_tokens
 
-    async def _verify(self, input_data: dict) -> tuple[dict, int, int]:
+    async def _verify(
+        self, input_data: dict, tier: ModelTier = ModelTier.CHEAP
+    ) -> tuple[dict, int, int]:
         """Re-run all checks and compare before/after scores.
 
         Optionally runs mkdocs build to verify documentation builds
@@ -281,8 +259,8 @@ class DocAuditWorkflow(BaseWorkflow):
             "after_checks": [self._serialise_check(r) for r in after_results],
             **input_data,
         }
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(output)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(output)
         self.logger.info(
             "doc-audit verify stage: before=%d, after=%d, mkdocs=%s",
             before_score,

@@ -150,7 +150,7 @@ class WorkflowHistoryStore:
         )
 
         self.conn.commit()
-        logger.debug(f"History store initialized: {self.db_path}")
+        logger.debug("History store initialized: %s", self.db_path)
 
     def record_run(
         self,
@@ -239,15 +239,15 @@ class WorkflowHistoryStore:
                 )
 
             self.conn.commit()
-            logger.debug(f"Recorded workflow run: {run_id} ({workflow_name})")
+            logger.debug("Recorded workflow run: %s (%s)", run_id, workflow_name)
 
         except sqlite3.IntegrityError as e:
             self.conn.rollback()
-            logger.warning(f"Run ID already exists: {run_id}")
+            logger.warning("Run ID already exists: %s", run_id)
             raise ValueError(f"Duplicate run_id: {run_id}") from e
         except sqlite3.OperationalError as e:
             self.conn.rollback()
-            logger.error(f"Database error recording run: {e}")
+            logger.error("Database error recording run: %s", e)
             raise
 
     def query_runs(
@@ -482,7 +482,7 @@ class WorkflowHistoryStore:
         self.conn.commit()
 
         if deleted:
-            logger.debug(f"Deleted workflow run: {run_id}")
+            logger.debug("Deleted workflow run: %s", run_id)
 
         return deleted
 
@@ -528,7 +528,7 @@ class WorkflowHistoryStore:
         )
 
         self.conn.commit()
-        logger.info(f"Cleaned up {len(run_ids)} runs older than {keep_days} days")
+        logger.info("Cleaned up %s runs older than %s days", len(run_ids), keep_days)
 
         return len(run_ids)
 

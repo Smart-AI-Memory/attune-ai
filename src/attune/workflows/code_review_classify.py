@@ -107,19 +107,22 @@ class ClassifyMixin:
 
                     size_category = get_module_size_category(total_lines)
                     logger.info(
-                        f"Code review target: {target_path} ({total_lines:,} LOC, {size_category})",
+                        "Code review target: %s (%s LOC, %s)",
+                        target_path,
+                        f"{total_lines:,}",
+                        size_category,
                     )
-                    logger.info(f"Recommended auth mode: {recommended_mode.value}")
+                    logger.info("Recommended auth mode: %s", recommended_mode.value)
 
                     cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
                     if recommended_mode.value == "subscription":
-                        logger.info(f"Cost: {cost_estimate['quota_cost']}")
+                        logger.info("Cost: %s", cost_estimate["quota_cost"])
                     else:
-                        logger.info(f"Cost: ~${cost_estimate['monetary_cost']:.4f}")
+                        logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
 
             except (AttributeError, ImportError, TypeError) as e:
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Auth strategy detection failed: {e}")
+                logger.warning("Auth strategy detection failed: %s", e)
 
         system = """You are a code review classifier. Analyze the code and classify:
 1. Change type: bug_fix, feature, refactor, docs, test, config, or security

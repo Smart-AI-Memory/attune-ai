@@ -3,7 +3,7 @@
 import json
 import os
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -253,7 +253,7 @@ def pytest_sessionfinish(session, exitstatus):
         from attune.models.telemetry import FileTestRecord, get_telemetry_store
 
         store = get_telemetry_store()
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         for test_file, results in results_to_store.items():
             # Map test file to source file

@@ -18,7 +18,7 @@ from typing import Any
 
 from attune.models import ModelTier
 
-from ..base import BaseWorkflow
+from ..base import BaseWorkflow, estimate_tokens
 from .coverage_parser import (
     ModuleCoverage,
     group_into_batches,
@@ -92,37 +92,6 @@ class TestAuditWorkflow(BaseWorkflow):
         # Stored by audit stage for verify stage comparison
         self._coverage_before: float | None = None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to the stage implementation.
-
-        Args:
-            stage_name: One of ``"audit"``, ``"plan"``,
-                ``"execute"``, ``"verify"``.
-            tier: Model tier assigned to this stage.
-            input_data: Output from the previous stage.
-
-        Returns:
-            Tuple of (stage_output, input_tokens, output_tokens).
-
-        Raises:
-            ValueError: If stage_name is not recognized.
-
-        """
-        if stage_name == "audit":
-            return await self._audit(input_data, tier)
-        if stage_name == "plan":
-            return await self._plan(input_data, tier)
-        if stage_name == "execute":
-            return await self._execute_stage(input_data, tier)
-        if stage_name == "verify":
-            return await self._verify(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     # ------------------------------------------------------------------
     # Stage: audit
     # ------------------------------------------------------------------
@@ -173,8 +142,8 @@ class TestAuditWorkflow(BaseWorkflow):
             **input_data,
         }
 
-        in_tok = len(str(input_data)) // 4
-        out_tok = len(str(output)) // 4
+        in_tok = estimate_tokens(input_data)
+        out_tok = estimate_tokens(output)
         return output, in_tok, out_tok
 
     def _run_coverage(self, src_path: str, cov_report_path: str) -> list[ModuleCoverage]:
@@ -258,15 +227,15 @@ class TestAuditWorkflow(BaseWorkflow):
             **input_data,
         }
 
-        in_tok = len(PLAN_SYSTEM_PROMPT) // 4 + len(str(raw_modules)) // 4
-        out_tok = len(str(batch_specs)) // 4
+        in_tok = estimate_tokens(PLAN_SYSTEM_PROMPT) + estimate_tokens(raw_modules)
+        out_tok = estimate_tokens(batch_specs)
         return output, in_tok, out_tok
 
     # ------------------------------------------------------------------
     # Stage: execute
     # ------------------------------------------------------------------
 
-    async def _execute_stage(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
+    async def _execute(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Produce test generation specs for each batch.
 
         In ``"quick"`` mode this stage is a no-op.
@@ -306,8 +275,8 @@ class TestAuditWorkflow(BaseWorkflow):
             **input_data,
         }
 
-        in_tok = len(str(batches)) // 4
-        out_tok = len(str(results)) // 4
+        in_tok = estimate_tokens(batches)
+        out_tok = estimate_tokens(results)
         return output, in_tok, out_tok
 
     # ------------------------------------------------------------------
@@ -391,8 +360,8 @@ class TestAuditWorkflow(BaseWorkflow):
             **input_data,
         }
 
-        in_tok = len(str(input_data)) // 4
-        out_tok = len(str(output)) // 4
+        in_tok = estimate_tokens(input_data)
+        out_tok = estimate_tokens(output)
         return output, in_tok, out_tok
 
 

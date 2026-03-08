@@ -37,7 +37,7 @@ import json
 import time
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -134,7 +134,7 @@ class MemoryControlPanel:
         redis_running = _check_redis_running(self.config.redis_host, self.config.redis_port)
 
         result = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "redis": {
                 "status": "running" if redis_running else "stopped",
                 "host": self.config.redis_host,
@@ -193,7 +193,7 @@ class MemoryControlPanel:
 
         """
         start_time = time.perf_counter()
-        stats = MemoryStats(collected_at=datetime.utcnow().isoformat() + "Z")
+        stats = MemoryStats(collected_at=datetime.now(timezone.utc).isoformat())
 
         # Redis stats
         redis_running = _check_redis_running(self.config.redis_host, self.config.redis_port)
@@ -371,7 +371,7 @@ class MemoryControlPanel:
         patterns = self.list_patterns(classification=classification)
 
         export_data = {
-            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "classification_filter": classification,
             "pattern_count": len(patterns),
             "patterns": patterns,

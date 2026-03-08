@@ -90,7 +90,7 @@ class AuditReportMixin:
         Example:
             >>> from datetime import datetime, timedelta
             >>> report = logger.get_compliance_report(
-            ...     start_date=datetime.utcnow()
+            ...     start_date=datetime.now(timezone.utc)
             ...         - timedelta(days=30),
             ... )
             >>> print(

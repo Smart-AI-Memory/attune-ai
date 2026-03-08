@@ -12,7 +12,7 @@ Tests the core telemetry tracking functionality including:
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -458,10 +458,10 @@ def test_timestamp_format(tracker):
     assert len(entries) == 1
 
     ts = entries[0]["ts"]
-    assert ts.endswith("Z")
+    assert ts.endswith("+00:00") or ts.endswith("Z")
 
     # Should be parseable as ISO 8601
-    dt = datetime.fromisoformat(ts.rstrip("Z"))
+    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
     assert isinstance(dt, datetime)
 
 
@@ -665,7 +665,7 @@ class TestAtomicWrites:
         """Test that write uses atomic rename when file doesn't exist."""
         entry = {
             "v": "1.0",
-            "ts": datetime.utcnow().isoformat() + "Z",
+            "ts": datetime.now(timezone.utc).isoformat(),
             "workflow": "test",
             "tier": "CAPABLE",
             "model": "model",
@@ -723,7 +723,7 @@ class TestDataRetrieval:
         # Track an old entry (mock timestamp)
         old_entry = {
             "v": "1.0",
-            "ts": (datetime.utcnow() - timedelta(days=45)).isoformat() + "Z",
+            "ts": (datetime.now(timezone.utc) - timedelta(days=45)).isoformat(),
             "workflow": "old",
             "tier": "CAPABLE",
             "cost": 0.01,
@@ -736,7 +736,7 @@ class TestDataRetrieval:
         # Track a recent entry
         recent_entry = {
             "v": "1.0",
-            "ts": datetime.utcnow().isoformat() + "Z",
+            "ts": datetime.now(timezone.utc).isoformat(),
             "workflow": "recent",
             "tier": "CAPABLE",
             "cost": 0.01,
@@ -825,7 +825,7 @@ class TestStatisticsCalculation:
         # Write entry with missing optional fields
         entry = {
             "v": "1.0",
-            "ts": datetime.utcnow().isoformat() + "Z",
+            "ts": datetime.now(timezone.utc).isoformat(),
             # Missing: workflow, tier, provider, tokens, cache
         }
         tracker._write_entry(entry)

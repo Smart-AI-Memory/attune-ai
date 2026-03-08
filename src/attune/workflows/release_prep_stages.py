@@ -11,6 +11,8 @@ import json
 import subprocess
 from datetime import datetime
 
+from attune.security.path_validation import _validate_file_path
+
 from .base import ModelTier, estimate_tokens
 
 
@@ -39,8 +41,6 @@ class ReleasePrepStagesMixin:
         target_path = input_data.get("path", ".")
 
         # Validate target path to prevent path traversal
-        from attune.security.path_validation import _validate_file_path
-
         target_path = str(_validate_file_path(target_path))
 
         # === AUTH STRATEGY INTEGRATION ===

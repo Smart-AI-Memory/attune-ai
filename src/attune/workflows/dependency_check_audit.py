@@ -49,11 +49,11 @@ def _load_cached_advisories() -> dict[str, list[dict]]:
     try:
         age_days = (time.time() - cache_path.stat().st_mtime) / 86400
         if age_days > 7:
-            logger.warning(f"Advisory cache is {age_days:.0f} days old - consider updating")
+            logger.warning("Advisory cache is %.0f days old - consider updating", age_days)
 
         return json.loads(cache_path.read_text())
     except Exception as e:
-        logger.warning(f"Could not load advisory cache: {e}")
+        logger.warning("Could not load advisory cache: %s", e)
         return {}
 
 
@@ -63,9 +63,9 @@ def _save_advisory_cache(advisories: dict[str, list[dict]]) -> None:
         cache_path = _get_cache_path()
         validated_path = _validate_file_path(str(cache_path))
         validated_path.write_text(json.dumps(advisories, indent=2))
-        logger.info(f"Advisory cache updated: {len(advisories)} packages")
+        logger.info("Advisory cache updated: %s packages", len(advisories))
     except Exception as e:
-        logger.warning(f"Could not save advisory cache: {e}")
+        logger.warning("Could not save advisory cache: %s", e)
 
 
 def _run_pip_audit(target_path: Path) -> list[dict]:
@@ -135,9 +135,9 @@ def _run_pip_audit(target_path: Path) -> list[dict]:
     except subprocess.TimeoutExpired:
         logger.warning("pip-audit timed out after 120s")
     except json.JSONDecodeError as e:
-        logger.warning(f"pip-audit returned invalid JSON: {e}")
+        logger.warning("pip-audit returned invalid JSON: %s", e)
     except Exception as e:
-        logger.warning(f"pip-audit failed: {e}")
+        logger.warning("pip-audit failed: %s", e)
 
     return []
 
@@ -189,6 +189,6 @@ def _run_npm_audit(target_path: Path) -> list[dict]:
     except subprocess.TimeoutExpired:
         logger.warning("npm audit timed out")
     except Exception as e:
-        logger.warning(f"npm audit failed: {e}")
+        logger.warning("npm audit failed: %s", e)
 
     return []

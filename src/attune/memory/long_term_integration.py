@@ -18,7 +18,7 @@ Licensed under the Apache License, Version 2.0
 
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import structlog
@@ -405,7 +405,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
 
     def _generate_pattern_id(self, user_id: str, pattern_type: str) -> str:
         """Generate unique pattern ID (pat_{timestamp}_{hash})."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         hash_input = f"{user_id}:{pattern_type}:{timestamp}:{os.urandom(8).hex()}"
         hash_digest = hashlib.sha256(hash_input.encode()).hexdigest()[:12]
         return f"pat_{timestamp}_{hash_digest}"

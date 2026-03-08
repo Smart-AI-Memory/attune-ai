@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -86,7 +86,7 @@ class CoordinationSignal:
         if isinstance(timestamp, str):
             timestamp = datetime.fromisoformat(timestamp)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         return cls(
             signal_id=data["signal_id"],
@@ -218,7 +218,7 @@ class CoordinationSignals:
             source_agent=source,
             target_agent=target_agent,
             payload=payload or {},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             ttl_seconds=ttl,
         )
 

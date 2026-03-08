@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 import types
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -91,7 +91,7 @@ def _make_agent(
         status=status,
         progress=progress,
         current_task=current_task,
-        last_beat=last_beat or datetime.utcnow(),
+        last_beat=last_beat or datetime.now(timezone.utc),
         metadata=metadata,
     )
 
@@ -109,7 +109,7 @@ def _make_signal(
         signal_type=signal_type,
         source_agent=source_agent,
         target_agent=target_agent,
-        timestamp=timestamp or datetime.utcnow(),
+        timestamp=timestamp or datetime.now(timezone.utc),
         ttl_seconds=ttl_seconds,
         payload=payload,
     )
@@ -1198,7 +1198,7 @@ class TestCmdTelemetryAgents:
 
     def test_agents_with_active_agents(self, capsys: pytest.CaptureFixture) -> None:
         """Test agents display with active agents of different statuses."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         agents = [
             _make_agent(
                 agent_id="agent-alpha",
@@ -1242,7 +1242,7 @@ class TestCmdTelemetryAgents:
 
     def test_agents_stale_heartbeat(self, capsys: pytest.CaptureFixture) -> None:
         """Test agent display with stale heartbeat (>30s since last beat)."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         agents = [
             _make_agent(
                 agent_id="stale-agent",
@@ -1382,7 +1382,7 @@ class TestCmdTelemetrySignals:
 
     def test_signals_with_pending_signals(self, capsys: pytest.CaptureFixture) -> None:
         """Test signals display with various signal types."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         signals = [
             _make_signal(
                 signal_type="task_complete",
@@ -1544,7 +1544,7 @@ class TestCmdTelemetrySignals:
 
     def test_signals_all_known_type_icons(self, capsys: pytest.CaptureFixture) -> None:
         """Test that all known signal type icons are mapped correctly."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         known_types = ["task_complete", "abort", "ready", "checkpoint", "error"]
         signals = [
             _make_signal(

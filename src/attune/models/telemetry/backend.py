@@ -6,7 +6,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Protocol
 
 from .data_models import (
@@ -27,17 +27,17 @@ def _parse_timestamp(timestamp_str: str) -> datetime:
         timestamp_str: ISO format timestamp string, possibly with 'Z' suffix
 
     Returns:
-        Parsed datetime object (timezone-naive UTC)
+        Parsed datetime object (timezone-aware UTC)
 
     """
     # Python 3.10's fromisoformat() doesn't handle 'Z' suffix
-    timestamp_str = timestamp_str.removesuffix("Z")
+    timestamp_str = timestamp_str.replace("Z", "+00:00")
 
     dt = datetime.fromisoformat(timestamp_str)
 
-    # Convert to naive UTC if timezone-aware
-    if dt.tzinfo is not None:
-        dt = dt.replace(tzinfo=None)
+    # Ensure timezone-aware (assume UTC for naive timestamps)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
 
     return dt
 
@@ -178,16 +178,16 @@ def _parse_timestamp(timestamp_str: str) -> datetime:
         timestamp_str: ISO format timestamp string, possibly with 'Z' suffix
 
     Returns:
-        Parsed datetime object (timezone-naive UTC)
+        Parsed datetime object (timezone-aware UTC)
 
     """
     # Python 3.10's fromisoformat() doesn't handle 'Z' suffix
-    timestamp_str = timestamp_str.removesuffix("Z")
+    timestamp_str = timestamp_str.replace("Z", "+00:00")
 
     dt = datetime.fromisoformat(timestamp_str)
 
-    # Convert to naive UTC if timezone-aware
-    if dt.tzinfo is not None:
-        dt = dt.replace(tzinfo=None)
+    # Ensure timezone-aware (assume UTC for naive timestamps)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
 
     return dt

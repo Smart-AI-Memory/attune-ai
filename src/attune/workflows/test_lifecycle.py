@@ -108,7 +108,7 @@ class TestLifecycleManager:
             return None
 
         if record.test_requirement.value != "required":
-            logger.debug(f"File {file_path} does not require tests")
+            logger.debug("File %s does not require tests", file_path)
             return None
 
         # Queue test creation
@@ -118,7 +118,7 @@ class TestLifecycleManager:
             priority=self._determine_priority(record),
         )
 
-        logger.info(f"Queued test creation for new file: {file_path}")
+        logger.info("Queued test creation for new file: %s", file_path)
         return task
 
     async def on_file_modified(self, file_path: str) -> TestTask | None:
@@ -140,7 +140,7 @@ class TestLifecycleManager:
                 action=TestAction.REVIEW,
                 priority=self._determine_priority(record),
             )
-            logger.info(f"Queued test review for modified file: {file_path}")
+            logger.info("Queued test review for modified file: %s", file_path)
         else:
             # Queue test creation
             task = self._create_task(
@@ -148,7 +148,7 @@ class TestLifecycleManager:
                 action=TestAction.CREATE,
                 priority=self._determine_priority(record),
             )
-            logger.info(f"Queued test creation for modified file: {file_path}")
+            logger.info("Queued test creation for modified file: %s", file_path)
 
         return task
 
@@ -165,7 +165,7 @@ class TestLifecycleManager:
             priority=TestPriority.LOW,
         )
 
-        logger.info(f"Queued orphan test check for deleted file: {file_path}")
+        logger.info("Queued orphan test check for deleted file: %s", file_path)
 
         # Refresh index
         self.index.refresh()
@@ -214,7 +214,7 @@ class TestLifecycleManager:
         # Check for duplicate
         existing = self._find_pending_task(file_path, action)
         if existing:
-            logger.debug(f"Task already queued for {file_path}")
+            logger.debug("Task already queued for %s", file_path)
             return existing
 
         self._queue.append(task)
@@ -278,7 +278,7 @@ class TestLifecycleManager:
             return True
 
         except Exception as e:
-            logger.error(f"Task {task.id} failed: {e}")
+            logger.error("Task %s failed: %s", task.id, e)
             task.status = "failed"
             task.result = {"error": str(e)}
             return False
@@ -379,7 +379,7 @@ class TestLifecycleManager:
                 json.dump(data, f, indent=2)
 
         except Exception as e:
-            logger.error(f"Failed to save queue: {e}")
+            logger.error("Failed to save queue: %s", e)
 
     def _load_queue(self) -> None:
         """Load queue from file."""
@@ -404,10 +404,10 @@ class TestLifecycleManager:
                 )
                 self._queue.append(task)
 
-            logger.info(f"Loaded {len(self._queue)} tasks from queue")
+            logger.info("Loaded %s tasks from queue", len(self._queue))
 
         except Exception as e:
-            logger.error(f"Failed to load queue: {e}")
+            logger.error("Failed to load queue: %s", e)
 
     # ===== Scheduling =====
 

@@ -16,7 +16,7 @@ import ssl
 import sys
 import time  # noqa: F401 - used by MemoryAPIHandler indirectly
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -197,7 +197,7 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
             patterns = self.panel.list_patterns(classification=classification)
             export_data = {
-                "exported_at": datetime.utcnow().isoformat() + "Z",
+                "exported_at": datetime.now(timezone.utc).isoformat(),
                 "classification_filter": classification,
                 "patterns": patterns,
             }

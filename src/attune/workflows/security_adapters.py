@@ -64,10 +64,10 @@ async def _get_crew_audit(
         return report
 
     except asyncio.TimeoutError:
-        logger.warning(f"SecurityAuditCrew audit timed out after {timeout}s")
+        logger.warning("SecurityAuditCrew audit timed out after %ss", timeout)
         return None
     except Exception as e:
-        logger.warning(f"SecurityAuditCrew audit failed: {e}")
+        logger.warning("SecurityAuditCrew audit failed: %s", e)
         return None
 
 

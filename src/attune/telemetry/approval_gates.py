@@ -42,7 +42,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -85,9 +85,13 @@ class ApprovalRequest:
         """Create from dictionary."""
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
-            timestamp = datetime.fromisoformat(timestamp)
+            timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
+        elif timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         return cls(
             request_id=data["request_id"],
@@ -111,7 +115,7 @@ class ApprovalResponse:
     approved: bool
     responder: str  # User who approved/rejected
     reason: str = ""
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -132,9 +136,13 @@ class ApprovalResponse:
         """Create from dictionary."""
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
-            timestamp = datetime.fromisoformat(timestamp)
+            timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
+        elif timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         return cls(
             request_id=data["request_id"],
@@ -239,7 +247,7 @@ class ApprovalGate:
             approval_type=approval_type,
             agent_id=self.agent_id,
             context=context or {},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             timeout_seconds=timeout,
             status="pending",
         )
@@ -390,7 +398,7 @@ class ApprovalGate:
             approved=approved,
             responder=responder,
             reason=reason,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         # Store approval response and update request status
@@ -526,7 +534,7 @@ class ApprovalGate:
 
         try:
             keys = list(self.memory._client.scan_iter(match="approval_request:*", count=100))
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             cleared = 0
 
             for key in keys:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -446,10 +446,12 @@ def cmd_telemetry_agents(args: Namespace) -> int:
 
         for agent in sorted(active_agents, key=lambda a: a.last_beat, reverse=True):
             # Calculate time since last beat
-            # Use naive UTC to match agent.last_beat which may be naive
-            now = datetime.utcnow()
+            # Ensure both datetimes are UTC-aware for comparison
+            now = datetime.now(timezone.utc)
             last_beat = (
-                agent.last_beat.replace(tzinfo=None) if agent.last_beat.tzinfo else agent.last_beat
+                agent.last_beat
+                if agent.last_beat.tzinfo
+                else agent.last_beat.replace(tzinfo=timezone.utc)
             )
             time_since = (now - last_beat).total_seconds()
 
@@ -512,11 +514,11 @@ def cmd_telemetry_signals(args: Namespace) -> int:
 
         for signal in sorted(signals, key=lambda s: s.timestamp, reverse=True):
             # Calculate age
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             ts = (
-                signal.timestamp.replace(tzinfo=None)
+                signal.timestamp
                 if signal.timestamp.tzinfo
-                else signal.timestamp
+                else signal.timestamp.replace(tzinfo=timezone.utc)
             )
             age = (now - ts).total_seconds()
 

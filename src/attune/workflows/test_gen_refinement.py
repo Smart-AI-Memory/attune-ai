@@ -82,7 +82,7 @@ class TestGenRefinementMixin:
                             in_failure = False
                 failures = "\n".join(failure_lines[:100])  # Limit to 100 lines
 
-            logger.info(f"Pytest validation: passed={passed}, errors={error_count}")
+            logger.info("Pytest validation: passed=%s, errors=%s", passed, error_count)
 
             return ValidationResult(
                 passed=passed,
@@ -92,7 +92,7 @@ class TestGenRefinementMixin:
             )
 
         except subprocess.TimeoutExpired:
-            logger.error(f"Pytest validation timeout for {test_file}")
+            logger.error("Pytest validation timeout for %s", test_file)
             return ValidationResult(
                 passed=False,
                 failures="Validation timeout after 60 seconds",
@@ -100,7 +100,7 @@ class TestGenRefinementMixin:
                 output="Timeout",
             )
         except Exception as e:
-            logger.error(f"Pytest validation exception: {e}")
+            logger.error("Pytest validation exception: %s", e)
             return ValidationResult(
                 passed=False,
                 failures=f"Validation exception: {e}",
@@ -162,7 +162,7 @@ class TestGenRefinementMixin:
             return test_content
 
         except Exception as e:
-            logger.error(f"LLM refinement error: {e}", exc_info=True)
+            logger.error("LLM refinement error: %s", e, exc_info=True)
             return None
 
     def _generate_with_refinement(
@@ -200,7 +200,9 @@ class TestGenRefinementMixin:
             return None
 
         logger.info(
-            f"🔄 Phase 2: Multi-turn refinement enabled for {module_name} (max {self.max_refinement_iterations} iterations)",
+            "Phase 2: Multi-turn refinement enabled for %s (max %s iterations)",
+            module_name,
+            self.max_refinement_iterations,
         )
 
         # Step 1: Generate initial tests
@@ -250,7 +252,10 @@ SOURCE CODE:
         # Step 2: Iterative refinement loop
         for iteration in range(self.max_refinement_iterations):
             logger.info(
-                f"📝 Refinement iteration {iteration + 1}/{self.max_refinement_iterations} for {module_name}",
+                "Refinement iteration %s/%s for %s",
+                iteration + 1,
+                self.max_refinement_iterations,
+                module_name,
             )
 
             # Write current version to temp file
@@ -262,13 +267,15 @@ SOURCE CODE:
             validation_result = self._run_pytest_validation(temp_test_file)
 
             if validation_result.passed:
-                logger.info(f"✅ Tests passed on iteration {iteration + 1} for {module_name}")
+                logger.info("Tests passed on iteration %s for %s", iteration + 1, module_name)
                 temp_test_file.unlink()  # Clean up
                 return test_content
 
             # Tests failed - ask Claude to fix
             logger.warning(
-                f"⚠️  Tests failed on iteration {iteration + 1}: {validation_result.error_count} errors",
+                "Tests failed on iteration %s: %s errors",
+                iteration + 1,
+                validation_result.error_count,
             )
 
             refinement_prompt = f"""The tests you generated have failures. Please fix these specific issues:
@@ -292,7 +299,7 @@ Return ONLY the complete Python test file, no explanations."""
             refined_content = self._call_llm_with_history(conversation_history, api_key)
 
             if not refined_content:
-                logger.error(f"❌ Refinement failed on iteration {iteration + 1}")
+                logger.error("Refinement failed on iteration %s", iteration + 1)
                 temp_test_file.unlink()
                 break
 
@@ -300,10 +307,11 @@ Return ONLY the complete Python test file, no explanations."""
             test_content = refined_content
             conversation_history.append({"role": "assistant", "content": test_content})
 
-            logger.info(f"🔄 Refinement iteration {iteration + 1} complete, retrying validation...")
+            logger.info("Refinement iteration %s complete, retrying validation...", iteration + 1)
 
         # Max iterations reached
         logger.warning(
-            f"⚠️  Max refinement iterations reached for {module_name} - returning best attempt",
+            "Max refinement iterations reached for %s - returning best attempt",
+            module_name,
         )
         return test_content

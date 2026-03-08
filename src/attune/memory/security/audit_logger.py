@@ -25,7 +25,7 @@ Licensed under the Apache License, Version 2.0
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -183,7 +183,7 @@ class AuditLogger(
         file.
         """
         try:
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             rotated_name = f"{self.log_filename}.{timestamp}"
             rotated_path = self.log_dir / rotated_name
 
@@ -200,13 +200,15 @@ class AuditLogger(
     def _cleanup_old_logs(self) -> None:
         """Remove audit logs older than retention period."""
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.retention_days)
 
             for log_file in self.log_dir.glob(f"{self.log_filename}.*"):
                 try:
                     # Extract timestamp from filename
                     timestamp_str = log_file.suffix[1:]
-                    file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                    file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S").replace(
+                        tzinfo=timezone.utc
+                    )
 
                     if file_date < cutoff_date:
                         log_file.unlink()

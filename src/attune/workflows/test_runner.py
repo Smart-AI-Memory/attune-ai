@@ -11,7 +11,7 @@ import logging
 import shlex
 import subprocess
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -60,8 +60,8 @@ def run_tests_with_tracking(
 
     """
     execution_id = f"test-{uuid.uuid4()}"
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    started_at = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
 
     # Build command
     if command is None:
@@ -114,7 +114,7 @@ def run_tests_with_tracking(
         failed_tests = [{"name": "execution_error", "file": "unknown", "error": str(e)}]
 
     # Calculate duration
-    completed_at = datetime.utcnow()
+    completed_at = datetime.now(timezone.utc)
     duration_seconds = (completed_at - started_at).total_seconds()
 
     # Create test execution record
@@ -169,7 +169,7 @@ def track_coverage(
 
     """
     record_id = f"cov-{uuid.uuid4()}"
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     coverage_path = Path(coverage_file)
     if not coverage_path.exists():
@@ -279,8 +279,8 @@ def track_file_tests(
         >>> print(f"Tests for config.py: {result.last_test_result}")
 
     """
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    started_at = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
 
     source_path = Path(source_file)
 
@@ -364,7 +364,7 @@ def track_file_tests(
         execution_id = f"file-{uuid.uuid4()}"
 
     # Calculate duration
-    completed_at = datetime.utcnow()
+    completed_at = datetime.now(timezone.utc)
     duration_seconds = (completed_at - started_at).total_seconds()
 
     # Check staleness (source modified after tests last modified)

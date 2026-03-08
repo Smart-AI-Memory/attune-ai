@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .base import ModelTier
+from .base import ModelTier, estimate_tokens
 from .perf_audit_patterns import PERF_PATTERNS
 
 # Directories to skip during file scanning
@@ -76,8 +76,8 @@ class PerfAuditAnalysisMixin:
             impact = f.get("impact", "low")
             by_impact[impact].append(f)
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(findings)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(findings)
 
         return (
             {
@@ -137,8 +137,8 @@ class PerfAuditAnalysisMixin:
         # Sort by complexity score
         analysis.sort(key=lambda x: -x["complexity_score"])
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(analysis)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(analysis)
 
         return (
             {
@@ -190,8 +190,8 @@ class PerfAuditAnalysisMixin:
             ),
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(hotspot_result)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(hotspot_result)
 
         return (
             {

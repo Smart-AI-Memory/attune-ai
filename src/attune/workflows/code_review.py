@@ -28,6 +28,7 @@ from .code_review_scan import ScanMixin
 from .context import WorkflowContext
 from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
+from .validation import InputSchema, StageContract
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,14 @@ class CodeReviewWorkflow(
         "quality_check": ModelTier.CHEAP,
         "quality_check_deep": ModelTier.CAPABLE,
         "architect_review": ModelTier.PREMIUM,
+    }
+    input_schema = InputSchema(
+        required_fields={"path": str},
+        optional_fields={"files_changed": list, "diff": str},
+    )
+    stage_contracts = {
+        "classify": StageContract(required_keys={"risk_level"}),
+        "scan": StageContract(required_keys={"findings"}),
     }
 
     def __init__(
@@ -213,30 +222,3 @@ class CodeReviewWorkflow(
         if stage_name == "architect_review" and not self._needs_architect_review:
             return True, "Simple change - architectural review not needed"
         return False, None
-
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Execute a code review stage."""
-        if stage_name == "classify":
-            return await self._classify(input_data, tier)
-        if stage_name == "crew_review":
-            return await self._crew_review(input_data, tier)
-        if stage_name == "scan":
-            return await self._scan(input_data, tier)
-        if stage_name == "perf_check":
-            return await self._perf_check(input_data, tier)
-        if stage_name == "perf_check_deep":
-            return await self._perf_check_deep(input_data, tier)
-        if stage_name == "health_monitor":
-            return await self._health_monitor(input_data, tier)
-        if stage_name == "quality_check":
-            return await self._quality_check(input_data, tier)
-        if stage_name == "quality_check_deep":
-            return await self._quality_check_deep(input_data, tier)
-        if stage_name == "architect_review":
-            return await self._architect_review(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")

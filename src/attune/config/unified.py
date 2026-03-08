@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from attune.config.sections.analysis import AnalysisConfig
 from attune.config.sections.auth import AuthConfig
@@ -50,7 +50,7 @@ class UnifiedConfig:
 
     def __post_init__(self) -> None:
         """Set timestamps if not provided."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         if not self._created:
             self._created = now
         if not self._modified:
@@ -58,7 +58,7 @@ class UnifiedConfig:
 
     def touch(self) -> None:
         """Update the modified timestamp."""
-        self._modified = datetime.utcnow().isoformat()
+        self._modified = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""

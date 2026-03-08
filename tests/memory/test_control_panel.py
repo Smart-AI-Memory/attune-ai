@@ -164,7 +164,9 @@ class TestMemoryControlPanelStatus:
         status = panel.status()
 
         assert "timestamp" in status
-        assert status["timestamp"].endswith("Z")
+        # timezone-aware isoformat ends with +00:00, not Z
+        ts = status["timestamp"]
+        assert ts.endswith("+00:00") or ts.endswith("Z")
 
 
 class TestMemoryControlPanelRedis:

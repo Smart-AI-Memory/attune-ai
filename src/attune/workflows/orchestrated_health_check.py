@@ -45,7 +45,6 @@ from typing import Any
 from ..orchestration.agent_templates import AgentTemplate, get_template
 from ..orchestration.execution_strategies import ParallelStrategy, StrategyResult
 from .base import BaseWorkflow
-from .compat import ModelTier
 from .health_check_models import CategoryScore, HealthCheckReport
 from .health_check_scoring import (
     CATEGORY_WEIGHTS,
@@ -106,10 +105,6 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
 
     name = "orchestrated-health-check"
     description = "Comprehensive project health assessment using meta-orchestration"
-
-    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
-        """Not used — this workflow overrides execute() directly."""
-        raise NotImplementedError("OrchestratedHealthCheckWorkflow uses execute(), not run_stage()")
 
     # Category weights for overall score
     CATEGORY_WEIGHTS = CATEGORY_WEIGHTS
@@ -174,7 +169,9 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         self.tracking_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"OrchestratedHealthCheckWorkflow initialized: mode={mode}, root={project_root}",
+            "OrchestratedHealthCheckWorkflow initialized: mode=%s, root=%s",
+            mode,
+            project_root,
         )
 
     async def execute(
@@ -209,7 +206,7 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         if not self.project_root.exists():
             raise ValueError(f"Project root does not exist: {self.project_root}")
 
-        logger.info(f"Starting health check: mode={self.mode}, root={self.project_root}")
+        logger.info("Starting health check: mode=%s, root=%s", self.mode, self.project_root)
         start_time = asyncio.get_event_loop().time()
 
         # Prepare context
@@ -227,12 +224,12 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             if template:
                 agents.append(template)
             else:
-                logger.warning(f"Agent template not found: {agent_id}")
+                logger.warning("Agent template not found: %s", agent_id)
 
         if not agents:
             raise ValueError(f"No agents available for mode: {self.mode}")
 
-        logger.info(f"Selected {len(agents)} agents: {[a.id for a in agents]}")
+        logger.info("Selected %s agents: %s", len(agents), [a.id for a in agents])
 
         # Execute agents using parallel strategy
         strategy = ParallelStrategy()
@@ -252,10 +249,10 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         self._save_health_json(report)
 
         logger.info(
-            f"Health check completed: "
-            f"score={report.overall_health_score:.1f}, "
-            f"grade={report.grade}, "
-            f"duration={report.execution_time:.2f}s",
+            "Health check completed: score=%.1f, grade=%s, duration=%.2fs",
+            report.overall_health_score,
+            report.grade,
+            report.execution_time,
         )
 
         return report

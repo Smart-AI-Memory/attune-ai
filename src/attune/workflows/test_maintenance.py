@@ -454,7 +454,7 @@ class TestMaintenanceWorkflow:
                 )
 
             except Exception as e:
-                logger.error(f"Error processing {item.file_path}: {e}")
+                logger.error("Error processing %s: %s", item.file_path, e)
                 failed += 1
                 details.append(
                     {
@@ -477,22 +477,22 @@ class TestMaintenanceWorkflow:
         """Create tests for a file using test-gen workflow."""
         # This would integrate with the test-gen workflow
         # For now, return True as placeholder
-        logger.info(f"Would create tests for: {item.file_path}")
+        logger.info("Would create tests for: %s", item.file_path)
         return True
 
     async def _update_tests_for_file(self, item: TestPlanItem) -> bool:
         """Update existing tests for a file."""
-        logger.info(f"Would update tests for: {item.file_path}")
+        logger.info("Would update tests for: %s", item.file_path)
         return True
 
     async def _review_tests_for_file(self, item: TestPlanItem) -> bool:
         """Review and possibly regenerate tests."""
-        logger.info(f"Would review tests for: {item.file_path}")
+        logger.info("Would review tests for: %s", item.file_path)
         return True
 
     async def _delete_orphaned_tests(self, item: TestPlanItem) -> bool:
         """Delete orphaned test files."""
-        logger.info(f"Would delete orphaned tests for: {item.file_path}")
+        logger.info("Would delete orphaned tests for: %s", item.file_path)
         return True
 
     def _generate_report(self) -> dict[str, Any]:

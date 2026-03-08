@@ -29,7 +29,7 @@ Licensed under the Apache License, Version 2.0
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -104,7 +104,7 @@ class SessionContext:
             key = self._make_choice_key(template_id, question_id)
             value = {
                 "choice": choice,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "template_id": template_id,
                 "question_id": question_id,
             }
@@ -254,7 +254,7 @@ class SessionContext:
                 "success": success,
                 "cost": cost,
                 "duration": duration,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             self.memory.stash(key, value, ttl_seconds=ttl or self.default_ttl)

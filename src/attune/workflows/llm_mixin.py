@@ -28,6 +28,14 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
+from .validation import (
+    InputSchema,
+    StageContract,
+    WorkflowValidationError,
+    validate_against_contract,
+    validate_against_input_schema,
+)
+
 if TYPE_CHECKING:
     from .compat import ModelTier
 
@@ -40,6 +48,10 @@ class LLMMixin:
     # Expected attributes (set by BaseWorkflow.__init__)
     name: str
     stages: list[str]
+
+    # Validation schemas (override in subclasses to enable)
+    input_schema: InputSchema | None = None
+    stage_contracts: dict[str, StageContract] = {}  # noqa: RUF012
 
     def get_model_for_tier(self, tier: ModelTier) -> str:
         """Get the model for a tier based on configured provider and config."""
@@ -153,19 +165,19 @@ class LLMMixin:
             return content, in_tokens, out_tokens
         except (ValueError, TypeError, KeyError) as e:
             # Invalid input or configuration errors
-            logger.warning(f"LLM call failed (invalid input): {e}")
+            logger.warning("LLM call failed (invalid input): %s", e)
             return f"Error calling LLM (invalid input): {e}", 0, 0
         except (TimeoutError, RuntimeError, ConnectionError) as e:
             # Timeout, API errors, or connection failures
-            logger.warning(f"LLM call failed (timeout/API/connection error): {e}")
+            logger.warning("LLM call failed (timeout/API/connection error): %s", e)
             return f"Error calling LLM (timeout/API error): {e}", 0, 0
         except (OSError, PermissionError) as e:
             # File system or permission errors
-            logger.warning(f"LLM call failed (file system error): {e}")
+            logger.warning("LLM call failed (file system error): %s", e)
             return f"Error calling LLM (file system error): {e}", 0, 0
         except Exception as e:
             # INTENTIONAL: Graceful degradation - return error message rather than crashing workflow
-            logger.exception(f"Unexpected error calling LLM: {e}")
+            logger.exception("Unexpected error calling LLM: %s", e)
             return f"Error calling LLM: {type(e).__name__}", 0, 0
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
@@ -222,6 +234,53 @@ class LLMMixin:
 
         # Output is valid by default
         return True, None
+
+    def validate_input(self, kwargs: dict[str, Any]) -> None:
+        """Validate workflow input against input_schema.
+
+        Called at the top of execute() before any stage runs.
+        Raises WorkflowValidationError if required fields are
+        missing or have wrong types.
+
+        Args:
+            kwargs: The input keyword arguments to validate.
+
+        Raises:
+            WorkflowValidationError: If validation fails.
+        """
+        if self.input_schema is None:
+            return
+        errors = validate_against_input_schema(kwargs, self.input_schema)
+        if errors:
+            raise WorkflowValidationError(
+                workflow_name=self.name,
+                stage="input",
+                errors=errors,
+            )
+
+    def validate_contract(self, stage_name: str, stage_output: dict[str, Any]) -> None:
+        """Validate stage output against its declared contract.
+
+        Called after validate_output() succeeds. Checks that the
+        stage output contains all required keys with correct types.
+
+        Args:
+            stage_name: Name of the stage that produced the output.
+            stage_output: The output dict from run_stage().
+
+        Raises:
+            WorkflowValidationError: If contract validation fails.
+        """
+        contract = self.stage_contracts.get(stage_name)
+        if contract is None:
+            return
+        errors = validate_against_contract(stage_output, contract)
+        if errors:
+            raise WorkflowValidationError(
+                workflow_name=self.name,
+                stage=stage_name,
+                errors=errors,
+            )
 
     def _assess_complexity(self, input_data: dict[str, Any]) -> str:
         """Assess task complexity based on workflow stages and input.

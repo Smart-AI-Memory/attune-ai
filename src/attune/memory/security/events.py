@@ -15,7 +15,7 @@ Licensed under the Apache License, Version 2.0
 
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -29,7 +29,7 @@ class AuditEvent:
 
     # Core identification
     event_id: str = field(default_factory=lambda: f"evt_{uuid.uuid4().hex[:12]}")
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     version: str = "1.0"
 
     # Event classification

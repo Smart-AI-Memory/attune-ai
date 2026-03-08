@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class AgentHeartbeat:
         if isinstance(last_beat, str):
             last_beat = datetime.fromisoformat(last_beat)
         elif not isinstance(last_beat, datetime):
-            last_beat = datetime.utcnow()
+            last_beat = datetime.now(timezone.utc)
 
         return cls(
             agent_id=data["agent_id"],
@@ -238,7 +238,7 @@ class HeartbeatCoordinator:
             status=status,
             progress=progress,
             current_task=current_task,
-            last_beat=datetime.utcnow(),
+            last_beat=datetime.now(timezone.utc),
             metadata=metadata,
             display_name=display_name,
         )
@@ -377,7 +377,7 @@ class HeartbeatCoordinator:
 
         """
         active = self.get_active_agents()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         stale = []
 
         for agent in active:

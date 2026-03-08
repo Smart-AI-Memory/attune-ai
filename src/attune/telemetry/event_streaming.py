@@ -34,7 +34,7 @@ import json
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ class StreamEvent:
         try:
             timestamp = datetime.fromisoformat(timestamp_str)
         except (ValueError, AttributeError):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         # Parse data field (JSON)
         data_str = decoded.get("data", "{}")
@@ -185,7 +185,7 @@ class EventStreamer:
         # Prepare entry data
         entry = {
             "event_type": event_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "data": json.dumps(data),
             "source": source,
         }

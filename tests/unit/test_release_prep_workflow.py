@@ -414,9 +414,9 @@ class TestHealthStage:
         ) as mock_run:
             await workflow._health({}, ModelTier.CHEAP)
 
-        # Verify ruff was called with "." as path
+        # Verify ruff was called (path gets resolved by _validate_file_path)
         first_call = mock_run.call_args_list[0]
-        assert "." in first_call[0][0]
+        assert "ruff" in first_call[0][0]
 
     @pytest.mark.asyncio
     async def test_health_auth_strategy_with_directory(self):

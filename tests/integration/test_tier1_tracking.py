@@ -10,7 +10,7 @@ These tests verify that the complete Tier 1 system works together.
 """
 
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -386,7 +386,7 @@ class TestCoverageTracking:
 
         old_record = CoverageRecord(
             record_id="cov-old",
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat(),
             overall_percentage=85.0,
             lines_total=1000,
             lines_covered=850,

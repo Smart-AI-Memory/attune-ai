@@ -166,7 +166,7 @@ def _parse_deep_enrichment(
                     sev_key = "severity" if "severity" in enriched[idx] else "impact"
                     enriched[idx][sev_key] = item["severity"]
     except (ValueError, KeyError, TypeError) as e:
-        logger.warning(f"Could not parse deep enrichment response: {e}")
+        logger.warning("Could not parse deep enrichment response: %s", e)
         # Return originals with validated=True (assume valid if can't parse)
         for f in enriched:
             f["validated"] = True

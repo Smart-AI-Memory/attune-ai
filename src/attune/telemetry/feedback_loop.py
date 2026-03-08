@@ -18,7 +18,7 @@ import fnmatch
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -207,7 +207,7 @@ class FeedbackLoop:
             stage_name=stage_name,
             tier=tier,
             quality_score=quality_score,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata=metadata or {},
         )
 
