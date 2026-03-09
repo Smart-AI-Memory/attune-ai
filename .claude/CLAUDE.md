@@ -498,4 +498,24 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   timezone-aware datetimes, grep for `.isoformat() + "Z"` and
   remove the suffix.
 
+- **`PurePosixPath.match()` doesn't support `**` in Python 3.10**:
+  `PurePosixPath("a/b/c.py").match("a/**")` returns `False` because
+  `match()` treats `*` as single-segment only (no recursive globbing).
+  For `**` glob patterns, convert to fnmatch: replace `**` with `*`,
+  then use `fnmatch.fnmatch()`. Python 3.13+ adds recursive support
+  but 3.10 does not.
+
+- **Adding `logger` before eager imports triggers E402 in
+  `__init__.py`**: Placing `logger = logging.getLogger(__name__)`
+  between stdlib imports and eager `from .module import ...` lines
+  makes ruff flag all subsequent relative imports as E402 (module-level
+  import not at top). Move the logger assignment after ALL imports,
+  just before the first non-import statement.
+
+- **SDK agent MODEL_CONFIG uses stale model names**: The `MODEL_CONFIG`
+  dict in `agents/release/release_models.py` references
+  `claude-3-5-haiku-latest` which returns 404. The current Haiku model
+  ID is `claude-haiku-4-5-20251001`. Check model IDs against the
+  Anthropic API when tier escalation fails at CHEAP.
+
 <!-- attune-lessons-end -->

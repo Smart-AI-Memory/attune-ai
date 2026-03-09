@@ -12,16 +12,6 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.fixture(autouse=True)
-def _reset_perf_audit_tier_map():
-    """Reset the shared class-level tier_map before each test."""
-    from attune.workflows.perf_audit import PerformanceAuditWorkflow
-
-    original = PerformanceAuditWorkflow.tier_map.copy()
-    yield
-    PerformanceAuditWorkflow.tier_map.update(original)
-
-
 @pytest.mark.unit
 class TestPerfAuditAttributes:
     """Test workflow class attributes."""

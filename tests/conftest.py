@@ -49,6 +49,32 @@ except ImportError:
     pass  # python-dotenv not installed
 
 # =============================================================================
+# Workflow tier_map reset - prevent cross-test pollution
+# tier_map is a mutable class-level dict shared across instances.
+# Tests calling should_skip_stage() mutate it, affecting later tests.
+# =============================================================================
+
+# Snapshot original tier_maps at import time (before any test mutates them)
+_ORIGINAL_TIER_MAPS: dict[type, dict] = {}
+try:
+    from attune.workflows.base import BaseWorkflow
+
+    for _cls in BaseWorkflow.__subclasses__():
+        if hasattr(_cls, "tier_map") and isinstance(getattr(_cls, "tier_map", None), dict):
+            _ORIGINAL_TIER_MAPS[_cls] = _cls.tier_map.copy()
+except Exception:  # noqa: BLE001
+    pass
+
+
+@pytest.fixture(autouse=True)
+def _reset_workflow_tier_maps():
+    """Restore all workflow tier_maps after each test."""
+    yield
+    for cls, original in _ORIGINAL_TIER_MAPS.items():
+        cls.tier_map.update(original)
+
+
+# =============================================================================
 # File Test Tracking - Automatic per-file test result recording
 # Supports both single-process and xdist parallel execution
 # =============================================================================

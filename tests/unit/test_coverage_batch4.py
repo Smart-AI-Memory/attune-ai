@@ -41,14 +41,6 @@ from attune.workflows.test_gen.workflow import TestGenerationWorkflow
 # ============================================================================
 
 
-@pytest.fixture(autouse=True)
-def _reset_perf_audit_tier_map():
-    """Reset the shared class-level tier_map before each test."""
-    original = PerformanceAuditWorkflow.tier_map.copy()
-    yield
-    PerformanceAuditWorkflow.tier_map.update(original)
-
-
 @pytest.fixture
 def cost_tracker(tmp_path: Path) -> Any:
     """Create isolated CostTracker for testing.
