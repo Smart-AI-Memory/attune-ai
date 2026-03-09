@@ -73,7 +73,7 @@ def cmd_auth_setup(args: Any) -> int:
     except KeyboardInterrupt:
         print("\n\nSetup cancelled.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"\n❌ Error during setup: {e}")
         return 1
 
@@ -195,7 +195,7 @@ def cmd_auth_status(args: Any) -> int:
         print("❌ No authentication strategy configured.")
         print("Run 'attune auth setup' to configure your strategy.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"❌ Error reading configuration: {e}")
         return 1
 
@@ -229,7 +229,7 @@ def cmd_auth_reset(args: Any) -> int:
         print("ℹ️  No configuration file found - nothing to reset.")
         return 0
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"❌ Error resetting configuration: {e}")
         return 1
 
@@ -375,7 +375,7 @@ def cmd_auth_recommend(args: Any) -> int:
         print("\n❌ No authentication strategy configured.")
         print("Run 'attune auth setup' to configure your strategy first.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"\n❌ Error analyzing file: {e}")
         return 1
 

@@ -394,7 +394,7 @@ def live_progress(
             reporter = RichProgressReporter(workflow_name, stage_names)
             tracker.add_callback(reporter.report)
             reporter.start()
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Rich display is optional - fall back to console output
             reporter = None
             simple_reporter = ConsoleProgressReporter(verbose=False)

@@ -329,7 +329,7 @@ class PatternConfidenceTracker:
             logger.info("Updated patterns_summary.md with confidence scores")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to update summary: %s", e)
             return False
 

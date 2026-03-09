@@ -127,7 +127,7 @@ def cmd_workflow_run(args: Namespace) -> int:
 
         return 0
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Workflow failed: {e}")
         print(f"\n❌ Workflow failed: {e}")

@@ -130,7 +130,7 @@ def show_analytics(
 
         console.print()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -200,7 +200,7 @@ def list_runs(
                 try:
                     ts = datetime.fromisoformat(result.timestamp)
                     timestamp = ts.strftime("%Y-%m-%d %H:%M")
-                except Exception:
+                except Exception:  # noqa: BLE001
                     timestamp = result.timestamp[:16]
 
                 table.add_row(
@@ -214,7 +214,7 @@ def list_runs(
 
                 count += 1
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 console.print(f"[yellow]Warning:[/yellow] Failed to load {run_id}: {e}")
                 continue
 
@@ -228,7 +228,7 @@ def list_runs(
         console.print(table)
         console.print("\n[dim]View details: empathy meta-workflow show <run_id>[/dim]\n")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -311,7 +311,7 @@ def show_execution(
         console.print(f"[red]Execution not found:[/red] {run_id}")
         console.print("\n[dim]List available runs: empathy meta-workflow list-runs[/dim]")
         raise typer.Exit(code=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -371,7 +371,7 @@ def cleanup_executions(
                 if ts < cutoff_date:
                     to_delete.append((run_id, result, ts))
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 console.print(f"[yellow]Warning:[/yellow] Failed to load {run_id}: {e}")
                 continue
 
@@ -422,12 +422,12 @@ def cleanup_executions(
                 if run_dir.exists():
                     shutil.rmtree(run_dir)
                     deleted += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Failed to delete {run_id}:[/red] {e}")
 
         console.print(f"\n[green]✓ Deleted {deleted} execution(s)[/green]\n")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 

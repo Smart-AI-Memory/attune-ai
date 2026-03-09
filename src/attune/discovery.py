@@ -214,7 +214,7 @@ class DiscoveryEngine:
                     condition = tip_config["condition"]
                     if callable(condition) and condition(self.state):
                         should_show = True
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # INTENTIONAL: Discovery tip conditions are optional; log but don't break
                     logger.debug("Discovery condition '%s' failed", tip_id, exc_info=True)
 

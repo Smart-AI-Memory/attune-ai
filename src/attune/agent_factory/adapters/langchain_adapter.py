@@ -106,7 +106,7 @@ class LangChainAgent(BaseAgent):
                 },
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "output": f"Error: {e!s}",
                 "metadata": {"error": str(e), "framework": "langchain"},
@@ -135,7 +135,7 @@ class LangChainAgent(BaseAgent):
                 # Fallback to non-streaming
                 result = await self.invoke(input_data, context)
                 yield result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             yield {"error": str(e)}
 
 
@@ -170,7 +170,7 @@ class LangChainWorkflow(BaseWorkflow):
                     result.get("output", str(result)) if isinstance(result, dict) else str(result)
                 )
                 return {"output": output, "results": [result], "state": self._state}
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 return {"output": f"Error: {e}", "error": str(e)}
         else:
             # Fallback to sequential agent execution

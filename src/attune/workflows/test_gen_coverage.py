@@ -122,7 +122,7 @@ class TestGenCoverageMixin:
                 total_statements=0,
                 covered_statements=0,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Coverage analysis error: {e}", exc_info=True)
             return CoverageResult(
                 coverage=0.0,
@@ -178,7 +178,7 @@ class TestGenCoverageMixin:
 
             return "\n\n".join(uncovered_sections)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error extracting uncovered lines: {e}")
             return f"Error extracting lines: {e}"
 
@@ -337,7 +337,7 @@ Return ONLY the complete Python test file with additions, no explanations."""
                 test_content = refined_content
                 logger.info(f"🔄 Coverage iteration {iteration + 1} complete, retrying analysis...")
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Coverage refinement error on iteration {iteration + 1}: {e}")
                 break
 

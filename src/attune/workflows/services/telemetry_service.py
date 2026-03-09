@@ -210,7 +210,7 @@ class TelemetryService:
             logger.debug("Failed to log call telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log call telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
@@ -269,6 +269,6 @@ class TelemetryService:
             logger.debug("Failed to log workflow telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log workflow telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging workflow telemetry")

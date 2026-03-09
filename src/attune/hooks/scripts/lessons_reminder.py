@@ -44,7 +44,7 @@ def has_session_work() -> bool:
             timeout=5,
         )
         return bool(result.stdout.strip())
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback — always remind if we can't check
         return True
 

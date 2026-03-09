@@ -104,7 +104,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
                 aggregated_output=result["output"],
                 total_duration=duration,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Tool-enhanced execution failed: {e}")
             duration = asyncio.get_event_loop().time() - start_time
             return StrategyResult(
@@ -225,7 +225,7 @@ Your role: {agent.role}"""
                 outputs.append(result)
                 current_output = response.get("content", "")
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.exception(f"Agent {agent.agent_id} failed: {e}")
                 result = AgentResult(
                     agent_id=agent.agent_id,
@@ -365,7 +365,7 @@ class DelegationChainStrategy(ExecutionStrategy):
                 total_duration=duration,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Delegation chain failed: {e}")
             duration = asyncio.get_event_loop().time() - start_time
             return StrategyResult(
@@ -454,7 +454,7 @@ Return JSON:
                 confidence=1.0,
                 duration_seconds=duration,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Specialist {specialist.agent_id} failed: {e}")
             duration = asyncio.get_event_loop().time() - start_time
             return AgentResult(
@@ -513,7 +513,7 @@ Provide cohesive final analysis."""
                 "specialist_reports": [r.output for r in results],
                 "delegation_depth": len(results),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Synthesis failed: {e}")
             return {
                 "synthesis": "Synthesis failed",

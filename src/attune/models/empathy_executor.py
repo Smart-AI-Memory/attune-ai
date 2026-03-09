@@ -79,7 +79,7 @@ class EmpathyLLMExecutor:
             if config.custom_models and "hybrid" in config.custom_models:
                 self._hybrid_config = config.custom_models["hybrid"]
                 logger.info(f"Loaded hybrid config: {self._hybrid_config}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to load hybrid config: {e}")
 
     def _get_provider_for_model(self, model_id: str) -> str:
@@ -298,7 +298,7 @@ class EmpathyLLMExecutor:
                     success=True,
                 )
                 self._telemetry.log_call(record)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("Failed to record telemetry: %s", e)
 
         return response

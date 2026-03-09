@@ -87,7 +87,7 @@ class AutoGenAgent(BaseAgent):
 
             return {"output": output, "metadata": {"framework": "autogen", "model": self.model}}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
     async def stream(self, input_data: str | dict, context: dict | None = None):
@@ -177,7 +177,7 @@ class AutoGenWorkflow(BaseWorkflow):
                 "metadata": {"framework": "autogen"},
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "error": str(e)}
 
     async def _run_sequential(self, input_data: str | dict) -> dict:

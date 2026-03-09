@@ -104,7 +104,7 @@ Form Responses:
 
             return None
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store execution in memory: {e}")
             return None
 
@@ -177,7 +177,7 @@ Form Responses:
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Memory search failed: {e}")
             return self._search_executions_files(query, template_id, limit)
 
@@ -202,7 +202,7 @@ Form Responses:
                 if query.lower() in result_json:
                     results.append(result)
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to load result {run_id}: {e}")
                 continue
 
@@ -268,7 +268,7 @@ Form Responses:
                     most_common_tier = max(tier_usage.items(), key=lambda x: x[1])[0]
                     base_recs.append(f"Similar workflows typically use '{most_common_tier}' tier")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to enhance recommendations with memory: {e}")
 
         return base_recs

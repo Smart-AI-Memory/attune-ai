@@ -293,7 +293,7 @@ class ProgressTracker:
         for callback in self._callbacks:
             try:
                 callback(update)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Callbacks are optional - never fail workflow
                 # on callback error
                 logger.warning("Progress callback error", exc_info=True)

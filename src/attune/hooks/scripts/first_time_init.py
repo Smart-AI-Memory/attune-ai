@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from attune.security.path_validation import _validate_file_path
+
 logger = logging.getLogger(__name__)
 
 # Default configuration template
@@ -95,7 +97,7 @@ def should_skip_init(project_root: Path) -> bool:
 
 def mark_never_ask(project_root: Path) -> None:
     """Mark project to never ask about init again."""
-    marker = get_never_ask_file(project_root)
+    marker = _validate_file_path(str(get_never_ask_file(project_root)))
     marker.write_text(f"Created: {datetime.now().isoformat()}\n")
 
 
@@ -132,7 +134,8 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
     if not config_path.exists():
         try:
             config_content = DEFAULT_CONFIG.format(timestamp=datetime.now().isoformat())
-            config_path.write_text(config_content)
+            validated_config = _validate_file_path(str(config_path))
+            validated_config.write_text(config_content)
             result["created_files"].append("attune.config.yaml")
             logger.info("Created config file: attune.config.yaml")
         except OSError as e:
@@ -147,7 +150,8 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
 .attune/sessions/
 .attune/learned_skills/
 """
-        gitignore_additions.write_text(gitignore_content)
+        validated_gitignore = _validate_file_path(str(gitignore_additions))
+        validated_gitignore.write_text(gitignore_content)
         result["created_files"].append(".attune/.gitignore_additions")
     except OSError:
         pass  # Non-critical

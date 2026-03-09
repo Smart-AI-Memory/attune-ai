@@ -185,7 +185,7 @@ class PatternResolver:
             generator.write_to_file("./.claude/patterns_summary.md")
             logger.info("Regenerated patterns_summary.md")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to regenerate summary: %s", e)
             return False
 

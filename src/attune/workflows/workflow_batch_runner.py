@@ -403,7 +403,7 @@ class WorkflowBatchRunner:
                 duration_seconds=duration,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             duration = time.monotonic() - start_time
             logger.exception(f"Workflow '{spec.workflow_id}' failed: {e}")
             return WorkflowBatchResult(

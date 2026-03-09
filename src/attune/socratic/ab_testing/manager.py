@@ -378,5 +378,5 @@ class ExperimentManager:
                 if exp.status == ExperimentStatus.RUNNING:
                     self._allocators[exp.experiment_id] = TrafficAllocator(exp)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to load experiments: {e}")

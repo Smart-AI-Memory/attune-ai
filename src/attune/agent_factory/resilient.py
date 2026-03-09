@@ -177,7 +177,7 @@ class ResilientAgent(BaseAgent):
                     "timeout_enabled": config.enable_timeout,
                 }
             return dict(result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             if config.enable_fallback:
                 logger.warning(f"Agent {self.name} failed, using fallback: {e}")
                 fallback = config.fallback_value
@@ -247,7 +247,7 @@ class ResilientAgent(BaseAgent):
                 except asyncio.TimeoutError:
                     # Don't retry timeouts by default
                     raise
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     last_exception = e
                     if attempt < max_attempts - 1:
                         actual_delay = delay
@@ -287,7 +287,7 @@ class ResilientAgent(BaseAgent):
                 result = await func()
                 self._circuit_breaker.record_success()
                 return result
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self._circuit_breaker.record_failure(e)
                 raise
 

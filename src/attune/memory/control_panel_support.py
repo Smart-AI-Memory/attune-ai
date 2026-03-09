@@ -8,6 +8,7 @@ Licensed under the Apache License, Version 2.0
 
 import hashlib
 import hmac
+import os
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -89,20 +90,26 @@ class APIKeyAuth:
         from attune.config.env_compat import get_attune_env
 
         self.api_key = api_key or get_attune_env("MEMORY_API_KEY")
-        self.enabled = bool(self.api_key)
         self._key_hash: bytes | None = None
-        self._salt = b"empathy-api-key-auth-salt"
-        if self.enabled and self.api_key:
-            # Store PBKDF2 derived key for secure comparison
-            self._key_hash = hashlib.pbkdf2_hmac(
-                "sha256",
-                self.api_key.encode(),
-                self._salt,
-                iterations=100_000,
+
+        if not self.api_key:
+            import secrets
+
+            self.api_key = secrets.token_urlsafe(32)
+            logger.warning(
+                "api_key_auto_generated",
+                message="No ATTUNE_MEMORY_API_KEY set. " "Generated random key for this session.",
             )
-            logger.info("api_key_auth_enabled")
-        else:
-            logger.info("api_key_auth_disabled", reason="no_key_configured")
+
+        self.enabled = True
+        self._salt = os.urandom(32)
+        self._key_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            self.api_key.encode(),
+            self._salt,
+            iterations=100_000,
+        )
+        logger.info("api_key_auth_enabled")
 
     def is_valid(self, provided_key: str | None) -> bool:
         """Check if provided API key is valid.

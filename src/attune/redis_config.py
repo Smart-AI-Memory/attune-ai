@@ -384,7 +384,7 @@ def check_redis_connection() -> dict:
             stats = memory.get_stats()
             result["memory_used"] = stats.get("used_memory")
             result["total_keys"] = stats.get("total_keys")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         result["error"] = str(e)
 
     return result

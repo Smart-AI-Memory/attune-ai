@@ -94,7 +94,7 @@ class PatternLearner(PatternMemoryMixin):
                 result = load_execution_result(run_id, storage_dir=str(self.executions_dir))
                 if template_id is None or result.template_id == template_id:
                     results.append(result)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to load result {run_id}: {e}")
 
         if not results:
@@ -373,7 +373,7 @@ class PatternLearner(PatternMemoryMixin):
                 result = load_execution_result(run_id, storage_dir=str(self.executions_dir))
                 if template_id is None or result.template_id == template_id:
                     results.append(result)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
 
         total_runs = len(results)

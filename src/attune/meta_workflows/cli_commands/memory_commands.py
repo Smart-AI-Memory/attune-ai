@@ -93,7 +93,7 @@ def search_memory(
             "[red]Error:[/red] UnifiedMemory not available. Ensure memory module is installed.",
         )
         raise typer.Exit(code=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -174,6 +174,6 @@ def show_session_stats(
             "Ensure memory and session modules are installed.",
         )
         raise typer.Exit(code=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)

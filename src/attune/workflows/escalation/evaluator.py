@@ -198,7 +198,7 @@ Respond with JSON only:
         except json.JSONDecodeError:
             logger.warning("SemanticEvaluator: evaluator response was not valid JSON")
             return True, None  # Don't block on evaluator failure
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Evaluator errors should not block the chain.
             logger.exception("SemanticEvaluator: evaluation call failed")
             return True, None

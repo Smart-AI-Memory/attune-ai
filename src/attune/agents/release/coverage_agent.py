@@ -118,7 +118,7 @@ class TestCoverageAgent(ReleaseAgent):
             # The quality gate evaluation handles pass/fail threshold.
             return True, findings
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Test coverage analysis failed: {e}")
             return False, {
                 "error": str(e),

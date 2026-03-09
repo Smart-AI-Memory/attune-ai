@@ -158,7 +158,7 @@ class EmpathyXMLConfig:
                 i18n=I18nConfig(**data.get("i18n", {})),
                 metrics=MetricsConfig(**data.get("metrics", {})),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Return default config on error
             print(f"Warning: Failed to load config from {config_file}: {e}")
             return cls()

@@ -66,7 +66,7 @@ class WorkflowFileHandler(FileSystemEventHandler):
                 logger.info(f"Detected change in {workflow_id} ({file_path})")
                 self.reload_callback(workflow_id, file_path)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error processing file change {file_path}: {e}")
         finally:
             self._processing.discard(file_path)

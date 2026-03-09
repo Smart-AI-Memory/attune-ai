@@ -99,7 +99,7 @@ class TestGenRefinementMixin:
                 error_count=1,
                 output="Timeout",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Pytest validation exception: %s", e)
             return ValidationResult(
                 passed=False,
@@ -161,7 +161,7 @@ class TestGenRefinementMixin:
 
             return test_content
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("LLM refinement error: %s", e, exc_info=True)
             return None
 

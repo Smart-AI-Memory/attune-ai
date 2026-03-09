@@ -13,7 +13,7 @@ import json
 import logging
 import sys
 from dataclasses import asdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -120,15 +120,16 @@ def _configure_logging(verbose: bool = False):
     )
 
 
-def main():
-    """CLI entry point."""
-    from . import control_panel as _cp
-    from .control_panel_api import run_api_server
+def _build_parser(version: str) -> argparse.ArgumentParser:
+    """Build the argument parser for the memory control panel CLI.
 
-    ControlPanelConfig = _cp.ControlPanelConfig
-    MemoryControlPanel = _cp.MemoryControlPanel
-    __version__ = _cp.__version__
+    Args:
+        version: Package version string for --version flag
 
+    Returns:
+        Configured ArgumentParser
+
+    """
     parser = argparse.ArgumentParser(
         description="Empathy Memory Control Panel - Manage Redis and pattern storage",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -171,7 +172,7 @@ Quick Start:
         "-V",
         "--version",
         action="version",
-        version=f"attune-memory {__version__}",
+        version=f"attune-memory {version}",
     )
     parser.add_argument(
         "--host",
@@ -217,31 +218,50 @@ Quick Start:
         "--cors-origins",
         help="Comma-separated list of allowed CORS origins (default: localhost)",
     )
+    return parser
 
-    args = parser.parse_args()
 
-    # Configure logging (quiet by default)
-    _configure_logging(verbose=args.verbose)
+def _parse_cors_origins(args: argparse.Namespace) -> list[str] | None:
+    """Parse CORS origins from CLI args.
 
-    # If no command specified, show help
-    if args.command is None:
-        parser.print_help()
-        sys.exit(0)
+    Args:
+        args: Parsed CLI arguments
 
-    config = ControlPanelConfig(
-        redis_host=args.host,
-        redis_port=args.port,
-        storage_dir=args.storage,
-    )
-    panel = MemoryControlPanel(config)
+    Returns:
+        List of origin strings or None
 
-    if args.command == "status":
+    """
+    if args.cors_origins:
+        return [o.strip() for o in args.cors_origins.split(",")]
+    return None
+
+
+def _dispatch_data_commands(
+    command: str,
+    args: argparse.Namespace,
+    panel: MemoryControlPanel,
+    _cp: Any,
+) -> bool:
+    """Handle status, start, stop, stats, health, patterns, and export commands.
+
+    Args:
+        command: The CLI command string
+        args: Parsed CLI arguments
+        panel: MemoryControlPanel instance
+        _cp: The control_panel module (for display functions)
+
+    Returns:
+        True if command was handled, False otherwise
+
+    """
+    if command == "status":
         if args.json:
             print(json.dumps(panel.status(), indent=2))
         else:
             _cp.print_status(panel)
+        return True
 
-    elif args.command == "start":
+    if command == "start":
         status = panel.start_redis(verbose=not args.json)
         if args.json:
             print(json.dumps({"available": status.available, "method": status.method.value}))
@@ -250,26 +270,30 @@ Quick Start:
         else:
             print(f"\n✗ Failed to start Redis: {status.message}")
             sys.exit(1)
+        return True
 
-    elif args.command == "stop":
+    if command == "stop":
         if panel.stop_redis():
             print("✓ Redis stopped")
         else:
             print("⚠ Could not stop Redis (may not have been started by us)")
+        return True
 
-    elif args.command == "stats":
+    if command == "stats":
         if args.json:
             print(json.dumps(asdict(panel.get_statistics()), indent=2))
         else:
             _cp.print_stats(panel)
+        return True
 
-    elif args.command == "health":
+    if command == "health":
         if args.json:
             print(json.dumps(panel.health_check(), indent=2))
         else:
             _cp.print_health(panel)
+        return True
 
-    elif args.command == "patterns":
+    if command == "patterns":
         patterns = panel.list_patterns(classification=args.classification)
         if args.json:
             print(json.dumps(patterns, indent=2))
@@ -279,18 +303,37 @@ Quick Start:
                 print(
                     f"  [{p.get('classification', '?')}] {p.get('pattern_id', '?')} ({p.get('pattern_type', '?')})",
                 )
+        return True
 
-    elif args.command == "export":
+    if command == "export":
         output = args.output or "patterns_export.json"
         count = panel.export_patterns(output, classification=args.classification)
         print(f"✓ Exported {count} patterns to {output}")
+        return True
 
-    elif args.command == "api":
-        # Parse CORS origins
-        cors_origins = None
-        if args.cors_origins:
-            cors_origins = [o.strip() for o in args.cors_origins.split(",")]
+    return False
 
+
+def _dispatch_server_commands(
+    command: str,
+    args: argparse.Namespace,
+    panel: MemoryControlPanel,
+    run_api_server: Any,
+) -> bool:
+    """Handle api and serve commands.
+
+    Args:
+        command: The CLI command string
+        args: Parsed CLI arguments
+        panel: MemoryControlPanel instance
+        run_api_server: The API server runner function
+
+    Returns:
+        True if command was handled, False otherwise
+
+    """
+    if command == "api":
+        cors_origins = _parse_cors_origins(args)
         run_api_server(
             panel,
             host=args.host,
@@ -302,9 +345,9 @@ Quick Start:
             ssl_keyfile=args.ssl_key,
             allowed_origins=cors_origins,
         )
+        return True
 
-    elif args.command == "serve":
-        # Start Redis first
+    if command == "serve":
         print("\n" + "=" * 50)
         print("EMPATHY MEMORY - STARTING SERVICES")
         print("=" * 50)
@@ -317,10 +360,7 @@ Quick Start:
             print(f"  ⚠ Redis not available: {redis_status.message}")
             print("      (Continuing with mock memory)")
 
-        # Parse CORS origins
-        cors_origins = None
-        if args.cors_origins:
-            cors_origins = [o.strip() for o in args.cors_origins.split(",")]
+        cors_origins = _parse_cors_origins(args)
 
         print("\n[2/2] Starting API server...")
         run_api_server(
@@ -334,6 +374,39 @@ Quick Start:
             ssl_keyfile=args.ssl_key,
             allowed_origins=cors_origins,
         )
+        return True
+
+    return False
+
+
+def main():
+    """CLI entry point."""
+    from . import control_panel as _cp
+    from .control_panel_api import run_api_server
+
+    ControlPanelConfig = _cp.ControlPanelConfig
+    MemoryControlPanel = _cp.MemoryControlPanel
+
+    parser = _build_parser(_cp.__version__)
+    args = parser.parse_args()
+
+    _configure_logging(verbose=args.verbose)
+
+    if args.command is None:
+        parser.print_help()
+        sys.exit(0)
+
+    config = ControlPanelConfig(
+        redis_host=args.host,
+        redis_port=args.port,
+        storage_dir=args.storage,
+    )
+    panel = MemoryControlPanel(config)
+
+    if _dispatch_data_commands(args.command, args, panel, _cp):
+        return
+
+    _dispatch_server_commands(args.command, args, panel, run_api_server)
 
 
 if __name__ == "__main__":

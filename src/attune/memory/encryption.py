@@ -50,6 +50,11 @@ class EncryptionManager:
 
         """
         if not HAS_ENCRYPTION:
+            if master_key is not None:
+                raise RuntimeError(
+                    "cryptography library required when master_key is provided. "
+                    "Install with: pip install cryptography"
+                )
             logger.warning("Encryption not available - install cryptography library")
             self.enabled = False
             return

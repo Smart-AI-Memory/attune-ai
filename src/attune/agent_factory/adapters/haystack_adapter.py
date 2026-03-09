@@ -99,7 +99,7 @@ class HaystackAgent(BaseAgent):
                 },
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
     async def stream(self, input_data: str | dict, context: dict | None = None):
@@ -156,7 +156,7 @@ class HaystackWorkflow(BaseWorkflow):
             # Fallback to sequential agent execution
             return await self._run_sequential(input_data)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "error": str(e)}
 
     async def _run_sequential(self, input_data: str | dict) -> dict:

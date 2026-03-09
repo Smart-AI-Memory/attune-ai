@@ -160,7 +160,7 @@ Output the formatted section EXACTLY as shown in system prompt. Use **Args:** (n
 
             return response
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to generate API section for {func_name}: {e}")
             # Return minimal fallback
             return f"""### `{func_name}()`

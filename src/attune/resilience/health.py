@@ -183,7 +183,7 @@ class HealthCheck:
                 message=f"Check timed out after {timeout}s",
                 latency_ms=timeout * 1000,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             latency = (time.time() - start) * 1000
             return HealthCheckResult(
                 name=name,
@@ -248,7 +248,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "workflow_count": workflow_count,
                 "message": f"{workflow_count} workflows registered",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("memory_graph")
@@ -271,7 +271,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "edge_count": 0,
                 "message": "Graph file not yet created",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("smart_router")
@@ -287,7 +287,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "healthy": decision is not None,
                 "primary_workflow": decision.primary_workflow,
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("chain_executor")
@@ -302,5 +302,5 @@ def register_default_checks(health: HealthCheck) -> None:
                 "healthy": True,
                 "template_count": len(templates),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}

@@ -85,7 +85,7 @@ class HotReloadIntegration:
         """
         try:
             return self.register_callback(workflow_id, workflow_class)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error registering workflow {workflow_id}: {e}")
             return False
 
@@ -107,7 +107,7 @@ class HotReloadIntegration:
 
             except WebSocketDisconnect:
                 await manager.disconnect(websocket)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"WebSocket error: {e}")
                 await manager.disconnect(websocket)
 
@@ -197,7 +197,7 @@ def register_workflow(workflow_id: str, workflow_class: type, *args, **kwargs) -
         WORKFLOWS[workflow_id] = workflow_class(*args, **kwargs)
         logger.info(f"✓ Registered workflow: {workflow_id}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Failed to register {workflow_id}: {e}")
         return False
 

@@ -45,7 +45,7 @@ def load_user_profile(profile_path: str) -> UserProfile:
         except (KeyError, ValueError, TypeError) as e:
             # Profile data validation errors
             logger.warning(f"Failed to load user profile (data error): {e}")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: User profile is optional - start with default
             logger.exception("Unexpected error loading user profile")
     return UserProfile()
@@ -74,7 +74,7 @@ def save_user_profile(user_profile: UserProfile, profile_path: str) -> None:
     except (TypeError, ValueError) as e:
         # JSON serialization errors
         logger.warning(f"Failed to save user profile (serialization error): {e}")
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: User profile save is optional - don't crash on failure
         logger.exception("Unexpected error saving user profile")
 

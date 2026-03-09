@@ -138,7 +138,7 @@ class ClaudeMemoryLoader:
 
             return combined
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("claude_memory_load_failed", error=str(e))
             if self.config.validate_files:
                 raise
@@ -268,7 +268,7 @@ class ClaudeMemoryLoader:
 
             return memory_file
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("memory_file_load_error", file_path=file_path, error=str(e))
             if self.config.validate_files:
                 raise

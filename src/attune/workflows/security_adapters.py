@@ -66,7 +66,7 @@ async def _get_crew_audit(
     except asyncio.TimeoutError:
         logger.warning("SecurityAuditCrew audit timed out after %ss", timeout)
         return None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("SecurityAuditCrew audit failed: %s", e)
         return None
 

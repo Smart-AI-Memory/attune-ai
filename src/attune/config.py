@@ -303,7 +303,7 @@ class AttuneConfig:
         # No config file found - return default
         return cls()
 
-    def to_yaml(self, filepath: str):
+    def to_yaml(self, filepath: str) -> None:
         """Save configuration to YAML file
 
         Args:
@@ -325,7 +325,7 @@ class AttuneConfig:
         with open(validated_path, "w") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
-    def to_json(self, filepath: str, indent: int = 2):
+    def to_json(self, filepath: str, indent: int = 2) -> None:
         """Save configuration to JSON file
 
         Args:
@@ -347,7 +347,7 @@ class AttuneConfig:
         """Convert configuration to dictionary"""
         return asdict(self)
 
-    def update(self, **kwargs):
+    def update(self, **kwargs: Any) -> None:
         """Update configuration fields
 
         Args:

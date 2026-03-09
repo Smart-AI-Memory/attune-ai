@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from attune.commands.models import CommandCategory, CommandConfig, CommandMetadata
+from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -84,15 +85,15 @@ class CommandParser:
             ValueError: If file format is invalid
 
         """
-        file_path = Path(file_path)
+        validated_path = _validate_file_path(str(file_path))
 
-        if not file_path.exists():
-            raise FileNotFoundError(f"Command file not found: {file_path}")
+        if not validated_path.exists():
+            raise FileNotFoundError(f"Command file not found: {validated_path}")
 
-        with open(file_path, encoding="utf-8") as f:
+        with open(validated_path, encoding="utf-8") as f:
             content = f.read()
 
-        return self.parse_content(content, source=file_path)
+        return self.parse_content(content, source=validated_path)
 
     def parse_content(
         self,
@@ -166,7 +167,7 @@ class CommandParser:
         except ImportError:
             logger.warning("PyYAML not installed, using basic parsing")
             data = self._basic_yaml_parse(yaml_content)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise ValueError(f"Invalid YAML frontmatter in {source}: {e}")
 
         return CommandMetadata.from_dict(data)
@@ -357,7 +358,7 @@ class CommandParser:
 
             except ImportError:
                 pass  # Skip YAML validation if not installed
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 errors.append(f"Invalid YAML frontmatter: {e}")
 
         # Check body has content

@@ -291,7 +291,7 @@ class CodeReviewAnalysisMixin:
         """Static code quality checks on reviewed files.
 
         Lightweight regex/line-based checks (no AST parsing):
-        - Bare ``except:`` or ``except Exception:`` without ``# noqa``
+        - Bare ``except:`` or ``except Exception:`` without ``# noqa``  # noqa: BLE001
         - TODO/FIXME comment counts
         - Files exceeding 500 lines (complexity warning)
         - Public functions missing return type hints
@@ -349,7 +349,7 @@ class CodeReviewAnalysisMixin:
                             "type": "bare_except",
                             "file": str(file_path),
                             "line": line_num,
-                            "description": "Bare except or broad except Exception without # noqa",
+                            "description": "Bare except or broad except Exception without # noqa",  # noqa: BLE001
                             "severity": "high",
                         },
                     )

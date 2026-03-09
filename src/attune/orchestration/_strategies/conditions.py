@@ -294,7 +294,7 @@ class ConditionEvaluator:
         # Try LLM evaluation first
         try:
             return self._evaluate_with_llm(condition_text, context)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Fallback to keyword matching if any LLM error
             logger.warning(f"LLM evaluation failed, using keyword fallback: {e}")
             return self._keyword_fallback(condition_text, context)

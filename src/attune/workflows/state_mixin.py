@@ -72,7 +72,7 @@ class StatePersistenceMixin:
             self._state_stage_costs = {}
             self._state_last_output = None
             return exec_id
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: State persistence is best-effort; must not crash workflow
             logger.debug("State persistence: failed to record workflow start: %s", e)
             return None
@@ -119,7 +119,7 @@ class StatePersistenceMixin:
                         execution_id=exec_id,
                         error=error or "Unknown workflow error",
                     )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Best-effort persistence
             logger.debug("State persistence: failed to record workflow completion: %s", e)
 
@@ -152,7 +152,7 @@ class StatePersistenceMixin:
                 "started_at": datetime.now().isoformat(),
             }
             self._state_store.save_checkpoint(agent_id, checkpoint)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Best-effort persistence
             logger.debug(
                 "State persistence: failed to save stage-start checkpoint for %s: %s",
@@ -202,7 +202,7 @@ class StatePersistenceMixin:
                 "updated_at": datetime.now().isoformat(),
             }
             self._state_store.save_checkpoint(agent_id, checkpoint)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Best-effort persistence
             logger.debug(
                 "State persistence: failed to save stage-complete checkpoint for %s: %s",
@@ -229,7 +229,7 @@ class StatePersistenceMixin:
 
         try:
             return self._state_store.get_last_checkpoint(agent_id)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Best-effort persistence
             logger.debug("State persistence: failed to get recovery checkpoint: %s", e)
             return None

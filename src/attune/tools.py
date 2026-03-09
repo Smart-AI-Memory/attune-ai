@@ -140,12 +140,14 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
     import time
     import uuid
 
+    from attune.security.path_validation import _validate_file_path
+
     request_id = str(uuid.uuid4())
     ipc_dir = Path(tempfile.gettempdir()) / ".claude-code-ipc"
-    ipc_dir.mkdir(exist_ok=True)
+    ipc_dir.mkdir(mode=0o700, exist_ok=True)
 
-    request_file = ipc_dir / f"ask-request-{request_id}.json"
-    response_file = ipc_dir / f"ask-response-{request_id}.json"
+    request_file = _validate_file_path(str(ipc_dir / f"ask-request-{request_id}.json"))
+    response_file = _validate_file_path(str(ipc_dir / f"ask-response-{request_id}.json"))
 
     try:
         # Write request
@@ -181,7 +183,7 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
             "User may have cancelled or Claude Code IPC is not active.",
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # Cleanup on error
         request_file.unlink(missing_ok=True)
         response_file.unlink(missing_ok=True)

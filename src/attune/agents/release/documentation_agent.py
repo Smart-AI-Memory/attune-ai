@@ -110,7 +110,7 @@ class DocumentationAgent(ReleaseAgent):
             # check
             return True, findings
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Documentation analysis failed: {e}")
             return False, {
                 "error": str(e),

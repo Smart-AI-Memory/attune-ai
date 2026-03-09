@@ -213,11 +213,11 @@ def _discover_wizards() -> None:
                 if hasattr(wizard_class, "config"):
                     _WIZARD_REGISTRY[wizard_class.config.wizard_id] = wizard_class
                     logger.debug("Discovered wizard via entry point: %s", ep.name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Entry point loading is best-effort
                 logger.warning("Failed to load wizard entry point %s: %s", ep.name, e)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Entry point discovery is optional
         logger.debug("Entry point discovery failed: %s", e)
 
@@ -263,6 +263,6 @@ def _load_custom_wizards() -> None:
                 _WIZARD_REGISTRY[wizard_id] = type(wizard)
                 _CUSTOM_WIZARD_INSTANCES[wizard_id] = wizard
                 logger.debug("Loaded custom wizard: %s from %s", wizard_id, yaml_path)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Custom wizard loading is best-effort
             logger.warning("Failed to load custom wizard from %s: %s", yaml_path, e)

@@ -227,7 +227,7 @@ class TaskDecomposer:
                 response_text = result[0]
             else:
                 response_text = str(result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Task decomposition LLM call failed: %s", e)
             return []
 

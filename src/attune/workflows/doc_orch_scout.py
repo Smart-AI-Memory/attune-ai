@@ -136,7 +136,7 @@ class DocOrchScoutMixin:
                                 days_stale=d.get("days_since_doc_update", 0),
                             ),
                         )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("Error extracting items from index: %s", e)
 
         return items

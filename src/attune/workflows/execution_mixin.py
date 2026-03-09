@@ -69,41 +69,18 @@ class ExecutionMixin:
     _enable_heartbeat_tracking: bool
     _agent_id: str | None
 
-    async def execute(self, **kwargs: Any) -> WorkflowResult:
-        """Execute the full workflow.
+    def _create_routing_record(self, kwargs: dict[str, Any]) -> Any:
+        """Create a TaskRoutingRecord and log it to telemetry.
 
         Args:
-            **kwargs: Initial input data for the workflow
+            kwargs: Workflow input kwargs for complexity assessment
 
         Returns:
-            WorkflowResult with stages, output, and cost report
+            TaskRoutingRecord instance
 
         """
         from attune.models import TaskRoutingRecord
 
-        from .compat import ModelTier
-        from .data_classes import WorkflowResult, WorkflowStage
-        from .history_utils import _save_workflow_run
-        from .progress import (
-            RICH_AVAILABLE,
-            ConsoleProgressReporter,
-            ProgressTracker,
-            RichProgressReporter,
-        )
-
-        # Set up cache (one-time setup with user prompt if needed)
-        self._maybe_setup_cache()
-
-        # Validate inputs against schema (strict by default)
-        self.validate_input(kwargs)
-
-        # Set run ID for telemetry correlation
-        self._run_id = str(uuid.uuid4())
-
-        # Record workflow start in state store (Phase 4 - state persistence)
-        self._state_record_workflow_start()
-
-        # Log task routing (Tier 1 automation monitoring)
         routing_id = f"routing-{self._run_id}"
         routing_record = TaskRoutingRecord(
             routing_id=routing_id,
@@ -119,7 +96,6 @@ class ExecutionMixin:
             started_at=datetime.now(timezone.utc).isoformat(),
         )
 
-        # Log routing start
         try:
             if self._telemetry_backend is not None:
                 self._telemetry_backend.log_task_routing(routing_record)
@@ -127,54 +103,37 @@ class ExecutionMixin:
             # INTENTIONAL: Telemetry logging is optional diagnostics
             logger.debug("Failed to log task routing: %s", e)
 
-        # Auto tier recommendation
-        if self._enable_tier_tracking:
-            try:
-                from .tier_tracking import WorkflowTierTracker
+        return routing_record
 
-                self._tier_tracker = WorkflowTierTracker(self.name, self.description)
-                files_affected = kwargs.get("files_affected") or kwargs.get("path")
-                if files_affected and not isinstance(files_affected, list):
-                    files_affected = [str(files_affected)]
-                self._tier_tracker.show_recommendation(files_affected)
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Tier tracking is optional diagnostics
-                logger.debug("Tier tracking disabled: %s", e)
-                self._enable_tier_tracking = False
+    def _setup_tier_tracking(self, kwargs: dict[str, Any]) -> None:
+        """Initialize tier tracking and show recommendation if available.
 
-        # Initialize agent ID for heartbeat/coordination (Pattern 1 & 2)
-        if self._agent_id is None:
-            self._agent_id = f"{self.name}-{self._run_id[:8]}"
+        Args:
+            kwargs: Workflow input kwargs
 
-        # Start heartbeat tracking (Pattern 1)
-        heartbeat_coordinator = self._get_heartbeat_coordinator()
-        if heartbeat_coordinator:
-            try:
-                heartbeat_coordinator.start_heartbeat(
-                    agent_id=self._agent_id,
-                    metadata={
-                        "workflow": self.name,
-                        "run_id": self._run_id,
-                        "provider": getattr(self, "_provider_str", "unknown"),
-                        "stages": len(self.stages),
-                    },
-                )
-                logger.debug(
-                    "heartbeat_started: workflow=%s agent_id=%s",
-                    self.name,
-                    self._agent_id,
-                )
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Heartbeat tracking is optional
-                logger.warning("Failed to start heartbeat tracking: %s", e)
-                self._enable_heartbeat_tracking = False
+        """
+        try:
+            from .tier_tracking import WorkflowTierTracker
 
-        started_at = datetime.now()
-        self._stages_run: list[WorkflowStage] = []
-        current_data = kwargs
-        error = None
+            self._tier_tracker = WorkflowTierTracker(self.name, self.description)
+            files_affected = kwargs.get("files_affected") or kwargs.get("path")
+            if files_affected and not isinstance(files_affected, list):
+                files_affected = [str(files_affected)]
+            self._tier_tracker.show_recommendation(files_affected)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Tier tracking is optional diagnostics
+            logger.debug("Tier tracking disabled: %s", e)
+            self._enable_tier_tracking = False
 
-        # Initialize progress tracker
+    def _setup_progress_tracking(self) -> None:
+        """Initialize progress tracker with rich or console reporter."""
+        from .progress import (
+            RICH_AVAILABLE,
+            ConsoleProgressReporter,
+            ProgressTracker,
+            RichProgressReporter,
+        )
+
         self._progress_tracker = ProgressTracker(
             workflow_name=self.name,
             workflow_id=self._run_id,
@@ -184,7 +143,6 @@ class ExecutionMixin:
         if self._progress_callback:
             self._progress_tracker.add_callback(self._progress_callback)
 
-        # Rich progress: only when explicitly enabled AND in a TTY
         if self._enable_rich_progress and RICH_AVAILABLE and sys.stdout.isatty():
             try:
                 self._rich_reporter = RichProgressReporter(self.name, self.stages)
@@ -201,6 +159,80 @@ class ExecutionMixin:
             self._progress_tracker.add_callback(console_reporter.report)
 
         self._progress_tracker.start_workflow()
+
+    def _start_heartbeat(self, heartbeat_coordinator: Any) -> None:
+        """Start heartbeat tracking if coordinator is available.
+
+        Args:
+            heartbeat_coordinator: Heartbeat coordinator instance or None
+
+        """
+        if not heartbeat_coordinator:
+            return
+        try:
+            heartbeat_coordinator.start_heartbeat(
+                agent_id=self._agent_id,
+                metadata={
+                    "workflow": self.name,
+                    "run_id": self._run_id,
+                    "provider": getattr(self, "_provider_str", "unknown"),
+                    "stages": len(self.stages),
+                },
+            )
+            logger.debug(
+                "heartbeat_started: workflow=%s agent_id=%s",
+                self.name,
+                self._agent_id,
+            )
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Heartbeat tracking is optional
+            logger.warning("Failed to start heartbeat tracking: %s", e)
+            self._enable_heartbeat_tracking = False
+
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the full workflow.
+
+        Args:
+            **kwargs: Initial input data for the workflow
+
+        Returns:
+            WorkflowResult with stages, output, and cost report
+
+        """
+        from .compat import ModelTier
+        from .data_classes import WorkflowResult, WorkflowStage
+        from .history_utils import _save_workflow_run
+
+        # Set up cache (one-time setup with user prompt if needed)
+        self._maybe_setup_cache()
+
+        # Validate inputs against schema (strict by default)
+        self.validate_input(kwargs)
+
+        # Set run ID for telemetry correlation
+        self._run_id = str(uuid.uuid4())
+
+        # Record workflow start in state store (Phase 4 - state persistence)
+        self._state_record_workflow_start()
+
+        routing_record = self._create_routing_record(kwargs)
+
+        if self._enable_tier_tracking:
+            self._setup_tier_tracking(kwargs)
+
+        # Initialize agent ID for heartbeat/coordination (Pattern 1 & 2)
+        if self._agent_id is None:
+            self._agent_id = f"{self.name}-{self._run_id[:8]}"
+
+        heartbeat_coordinator = self._get_heartbeat_coordinator()
+        self._start_heartbeat(heartbeat_coordinator)
+
+        started_at = datetime.now(timezone.utc)
+        self._stages_run: list[WorkflowStage] = []
+        current_data = kwargs
+        error = None
+
+        self._setup_progress_tracking()
 
         try:
             if self._enable_tier_fallback:
@@ -231,7 +263,7 @@ class ExecutionMixin:
             logger.error(error)
             if self._progress_tracker:
                 self._progress_tracker.fail_workflow(error)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Workflow orchestration - catch all to report failure
             logger.exception("Unexpected error in workflow execution: %s", type(e).__name__)
             error = f"Workflow execution failed: {type(e).__name__}: {e}"
@@ -261,7 +293,7 @@ class ExecutionMixin:
             from .suggestions import generate_suggestions
 
             result.suggestions = generate_suggestions(self.name, result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Suggestions are optional -- never crash workflow
             logger.debug("Suggestion generation skipped: %s", e)
 
@@ -296,7 +328,7 @@ class ExecutionMixin:
                 current_data if isinstance(current_data, dict) else {},
                 budget_remaining,
             )
-            stage_start = datetime.now()
+            stage_start = datetime.now(timezone.utc)
 
             should_skip, skip_reason = self.should_skip_stage(stage_name, current_data)
 
@@ -333,7 +365,7 @@ class ExecutionMixin:
                 config=_retry_cfg,
             )
 
-            stage_end = datetime.now()
+            stage_end = datetime.now(timezone.utc)
             duration_ms = int((stage_end - stage_start).total_seconds() * 1000)
             cost = self._calculate_cost(tier, input_tokens, output_tokens)
 
@@ -419,7 +451,7 @@ class ExecutionMixin:
             stage_succeeded = False
 
             for tier_index, tier in enumerate(tier_chain):
-                stage_start = datetime.now()
+                stage_start = datetime.now(timezone.utc)
                 model_id = self.get_model_for_tier(tier)
 
                 self._report_stage_progress(stage_name, tier, tier_index, tier_chain, model_id)
@@ -432,7 +464,9 @@ class ExecutionMixin:
                         current_data,
                     )
 
-                    duration_ms = int((datetime.now() - stage_start).total_seconds() * 1000)
+                    duration_ms = int(
+                        (datetime.now(timezone.utc) - stage_start).total_seconds() * 1000
+                    )
                     cost = self._calculate_cost(tier, input_tokens, output_tokens)
                     stage_output = output if isinstance(output, dict) else {"result": output}
 
@@ -657,7 +691,7 @@ class ExecutionMixin:
             WorkflowResult instance
 
         """
-        completed_at = datetime.now()
+        completed_at = datetime.now(timezone.utc)
         total_duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         final_output = None

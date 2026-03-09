@@ -241,7 +241,7 @@ class PRReviewWorkflow(PRReviewAnalysisMixin):
             result.metadata["formatted_report"] = format_pr_review_report(result)
             return result
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"PRReviewWorkflow failed: {e}")
             duration = time.time() - start_time
             return PRReviewResult(

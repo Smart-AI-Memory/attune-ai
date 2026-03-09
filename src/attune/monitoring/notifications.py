@@ -45,7 +45,7 @@ def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
             return deliver_stdout(event)
         logger.warning("unknown_alert_channel", channel=alert.channel.value)
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(
             "alert_delivery_failed",
             alert_id=alert.alert_id,

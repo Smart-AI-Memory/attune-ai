@@ -104,7 +104,7 @@ def run_workflow(
                 pattern_learner = PatternLearner(memory=memory)
                 if not json_output:
                     console.print("[green]✓[/green] Memory enabled")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 if not json_output:
                     console.print(f"[yellow]Warning:[/yellow] Memory initialization failed: {e}")
                     console.print("[yellow]Continuing without memory integration[/yellow]")
@@ -197,7 +197,7 @@ def run_workflow(
         console.print(f"\n[dim]View details: empathy meta-workflow show {result.run_id}[/dim]")
         console.print()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         if json_output:
             print(json.dumps({"success": False, "error": str(e)}))
         else:
@@ -312,7 +312,7 @@ def natural_language_run(
                 f'[dim]Example: empathy meta-workflow ask "{request}" --auto --real[/dim]\n',
             )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -369,7 +369,7 @@ def detect_intent(
         console.print(table)
         console.print()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 

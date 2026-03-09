@@ -199,7 +199,7 @@ class TelemetryMixin:
         except OSError:
             # File system errors - log but don't crash workflow
             logger.debug("Failed to log call telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
@@ -260,7 +260,7 @@ class TelemetryMixin:
         except OSError:
             # File system errors - log but don't crash workflow
             logger.debug("Failed to log workflow telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging workflow telemetry")
 

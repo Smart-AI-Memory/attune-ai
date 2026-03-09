@@ -431,7 +431,7 @@ class BaseOperations:
             return False
         try:
             return bool(self._client.ping())
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Health check should not raise, just return False
             return False
 

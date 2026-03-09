@@ -136,7 +136,7 @@ class AuditLogger(
             # Set restrictive permissions (owner read/write)
             os.chmod(self.log_dir, 0o700)
             logger.info(f"Audit log directory initialized: {self.log_dir}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Fallback to local directory on
             # any init error (permissions, disk, etc.)
             logger.error(f"Failed to initialize audit log directory: {e}")
@@ -169,7 +169,7 @@ class AuditLogger(
             if self.enable_console_logging:
                 logger.debug(f"Audit event: {event.event_type} - {event.status}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Audit logging failure should not
             # crash the application
             logger.error(f"Failed to write audit event: {e}")
@@ -193,7 +193,7 @@ class AuditLogger(
             # Clean up old logs beyond retention period
             self._cleanup_old_logs()
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Rotation failure is non-fatal
             logger.error(f"Failed to rotate audit log: {e}")
 
@@ -217,7 +217,7 @@ class AuditLogger(
                     # Skip files that don't match format
                     continue
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Cleanup failure is non-fatal
             logger.error(f"Failed to cleanup old audit logs: {e}")
 

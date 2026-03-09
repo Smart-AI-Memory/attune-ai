@@ -374,7 +374,7 @@ class LessonsManager:
             validated_path.write_text(content)
             logger.debug("Lesson synced to CLAUDE.md")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: CLAUDE.md sync is best-effort, never crash
             logger.debug("CLAUDE.md sync failed: %s", e)
 
@@ -541,7 +541,7 @@ class LessonsManager:
             validated_path.write_text(new_content)
             logger.debug("Lesson removed from CLAUDE.md")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: CLAUDE.md sync is best-effort, never crash
             logger.debug("CLAUDE.md removal sync failed: %s", e)
 

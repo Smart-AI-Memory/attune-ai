@@ -384,6 +384,6 @@ class AgentStateStore:
                     "tier_used": execution.tier_used,
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Pattern learning is optional; don't fail agent operations
             logger.warning("Failed to contribute to pattern learner: %s", e)

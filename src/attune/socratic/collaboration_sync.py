@@ -69,7 +69,7 @@ class SyncAdapter:
         for handler in self._event_handlers:
             try:
                 handler(event)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Handler failure should not prevent other handlers.
                 # Event propagation must continue for sync reliability.
                 pass

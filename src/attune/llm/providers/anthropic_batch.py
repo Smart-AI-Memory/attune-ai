@@ -118,7 +118,7 @@ class AnthropicBatchProvider:
             self._batch_jobs[batch.id] = batch
             logger.info(f"Created batch {batch.id} with {len(formatted_requests)} requests")
             return batch.id
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to create batch: {e}")
             raise RuntimeError(f"Batch creation failed: {e}") from e
 
@@ -146,7 +146,7 @@ class AnthropicBatchProvider:
             batch = self.client.messages.batches.retrieve(batch_id)
             self._batch_jobs[batch_id] = batch
             return batch
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get batch status for {batch_id}: {e}")
             raise RuntimeError(f"Failed to get batch status: {e}") from e
 
@@ -189,7 +189,7 @@ class AnthropicBatchProvider:
             # results() returns an iterator, convert to list
             results_iterator = self.client.messages.batches.results(batch_id)
             return list(results_iterator)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get batch results for {batch_id}: {e}")
             raise RuntimeError(f"Failed to get batch results: {e}") from e
 

@@ -24,6 +24,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from attune.security.path_validation import _validate_file_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -306,7 +308,7 @@ class PatternSummaryGenerator:
             output_path: Path to write the summary
 
         """
-        output = Path(output_path)
+        output = _validate_file_path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
 
         content = self.generate_markdown()

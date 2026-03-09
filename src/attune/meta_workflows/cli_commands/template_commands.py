@@ -103,7 +103,7 @@ def list_templates(
                 )
                 console.print()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -196,7 +196,7 @@ def inspect_template(
         )
         console.print()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 
@@ -340,7 +340,7 @@ def generate_plan_cmd(
         console.print("[red]Plan generator not available.[/red]")
         console.print("This feature requires the plan_generator module.")
         raise typer.Exit(code=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error generating plan:[/red] {e}")
         raise typer.Exit(code=1)
 

@@ -113,7 +113,7 @@ class AuditQueryMixin:
                         logger.warning("Skipping malformed audit log line")
                         continue
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Query should not crash on I/O errors
             logger.error(f"Failed to query audit logs: {e}")
 

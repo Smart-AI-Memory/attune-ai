@@ -224,7 +224,7 @@ Example: [0.8, 0.2, 0.5, ...]"""
             if isinstance(scores, list) and len(scores) >= self._dimension:
                 return [float(s) for s in scores[: self._dimension]]
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Anthropic embedding failed: {e}")
 
         fallback = TFIDFEmbeddingProvider(dimension=self._dimension)

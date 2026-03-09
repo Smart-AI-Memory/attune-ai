@@ -165,7 +165,7 @@ class ResilientExecutor:
 
                     return response
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     last_error = e
                     error_type = self._classify_error(e)
                     total_retries += 1
@@ -295,7 +295,7 @@ class ResilientExecutor:
 
                     return result, metadata
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     last_error = e
                     error_type = self._classify_error(e)
 

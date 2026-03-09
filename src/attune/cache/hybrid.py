@@ -138,7 +138,7 @@ class HybridCache(BaseCache):
                 "Install with: pip install attune-ai[cache]",
             )
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful fallback — model loading is optional
             logger.warning("Failed to load model %s: %s", self.model_name, e)
             logger.warning("Falling back to hash-only mode")
@@ -169,7 +169,7 @@ class HybridCache(BaseCache):
                 # This is acceptable since semantic matching is secondary to hash matching
                 logger.debug("Semantic cache will be populated on-demand from hash hits")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful fallback — start with empty cache if storage fails
             logger.warning("Failed to load cache from storage: %s, starting with empty cache", e)
 
@@ -350,7 +350,7 @@ class HybridCache(BaseCache):
                 f"semantic_entries: {len(self._semantic_cache)}, "
                 f"persisted: True)",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful fallback — disk persistence is best-effort
             logger.warning("Failed to persist cache entry to disk: %s", e)
             logger.debug(
@@ -378,7 +378,7 @@ class HybridCache(BaseCache):
                 f"Cache cleared (hash: {hash_count}, semantic: {semantic_count}, "
                 f"storage: {storage_count} entries)",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful fallback — cleanup is best-effort
             logger.warning("Failed to clear persistent storage: %s", e)
             logger.info(

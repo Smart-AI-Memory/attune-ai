@@ -183,7 +183,7 @@ def save_health_json(
         logger.warning("Failed to save health.json (file system error): %s", e)
     except (TypeError, ValueError) as e:
         logger.error("Failed to save health.json (serialization error): %s", e)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Saving health data should never crash
         # a health check
         logger.warning("Failed to save health.json (unexpected error): %s", e)

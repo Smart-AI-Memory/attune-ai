@@ -89,7 +89,7 @@ def _get_previous_coverage() -> float | None:
             return records[0].overall_percentage
         return None
 
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -221,5 +221,5 @@ def _log_file_test(record: FileTestRecord) -> None:
         store = get_telemetry_store()
         store.log_file_test(record)
         logger.info(f"File test tracked: {record.file_path} ({record.last_test_result})")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"Failed to log file test: {e}")

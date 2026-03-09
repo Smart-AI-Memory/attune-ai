@@ -107,7 +107,7 @@ Format as markdown with clear sections."""
                 messages=[{"role": "user", "content": prompt}],
             )
             return response.content[0].text if response.content else ""
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Fallback (lazy import to avoid circular)
             from .explainer import WorkflowExplainer
 

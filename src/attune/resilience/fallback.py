@@ -44,7 +44,7 @@ class Fallback:
                 if asyncio.iscoroutinefunction(func):
                     return await func(*args, **kwargs)
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 last_exception = e
                 logger.warning(f"Fallback '{self.name}': function {i + 1} failed: {e}")
                 continue
@@ -96,7 +96,7 @@ def fallback(
                     result: T = await func(*args, **kwargs)
                     return result
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 if log_failures:
                     logger.warning(f"Primary function {func.__name__} failed: {e}")
 
@@ -107,7 +107,7 @@ def fallback(
                         result = await fallback_func(*args, **kwargs)
                         return result
                     return fallback_func(*args, **kwargs)  # type: ignore[no-any-return]
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     if log_failures:
                         logger.warning(f"Fallback {fallback_func.__name__} failed: {e}")
                     continue
@@ -123,14 +123,14 @@ def fallback(
             """Sync wrapper that tries primary then fallback functions."""
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 if log_failures:
                     logger.warning(f"Primary function {func.__name__} failed: {e}")
 
             for fallback_func in fallback_funcs:
                 try:
                     return fallback_func(*args, **kwargs)  # type: ignore[no-any-return]
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     if log_failures:
                         logger.warning(f"Fallback {fallback_func.__name__} failed: {e}")
                     continue

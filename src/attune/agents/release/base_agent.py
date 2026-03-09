@@ -134,7 +134,7 @@ class ReleaseAgent:
                 },
             )
             self.redis.expire(key, 60)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Redis is optional, don't fail on connection issues
             logger.debug(f"Heartbeat failed (non-fatal): {e}")
 
@@ -156,7 +156,7 @@ class ReleaseAgent:
                 f"release:signals:{self.agent_id}",
                 json.dumps(signal),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Redis is optional
             logger.debug(f"Signal failed (non-fatal): {e}")
 

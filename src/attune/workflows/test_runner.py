@@ -106,7 +106,7 @@ def run_tests_with_tracking(
         exit_code = 124  # Timeout exit code
         failed_tests = [{"name": "timeout", "file": "unknown", "error": "Test execution timed out"}]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Test execution failed: {e}")
         total_tests, passed, failed, skipped, errors = 0, 0, 0, 0, 1
         success = False
@@ -143,7 +143,7 @@ def run_tests_with_tracking(
         store = get_telemetry_store()
         store.log_test_execution(record)
         logger.info(f"Test execution tracked: {execution_id}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"Failed to log test execution: {e}")
 
     return record
@@ -235,7 +235,7 @@ def track_coverage(
             store = get_telemetry_store()
             store.log_coverage(record)
             logger.info(f"Coverage tracked: {record_id} ({overall_percentage:.1f}%)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to log coverage: {e}")
 
         return record
@@ -356,7 +356,7 @@ def track_file_tests(
         failed_tests = [{"name": "timeout", "file": test_file, "error": "Timed out"}]
         execution_id = f"file-{uuid.uuid4()}"
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Test execution failed for {source_file}: {e}")
         total_tests, passed, failed, skipped, errors = 0, 0, 0, 0, 1
         last_test_result = "error"

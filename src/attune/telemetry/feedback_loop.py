@@ -219,7 +219,7 @@ class FeedbackLoop:
 
         try:
             self.memory.stash(key, entry.to_dict(), ttl=self.FEEDBACK_TTL)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store feedback: {e}")
             return ""
 
@@ -265,7 +265,7 @@ class FeedbackLoop:
                 if data:
                     try:
                         entries.append(FeedbackEntry.from_dict(data))
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         logger.error(f"Failed to parse feedback entry {key}: {e}")
                         continue
                 if len(entries) >= limit:
@@ -273,7 +273,7 @@ class FeedbackLoop:
 
             entries.sort(key=lambda e: e.timestamp, reverse=True)
             return entries[:limit]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get feedback history: {e}")
             return []
 
@@ -281,7 +281,7 @@ class FeedbackLoop:
         """Retrieve a single feedback entry dict by key."""
         try:
             return self.memory.retrieve(key)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to retrieve feedback: {e}")
             return None
 
@@ -470,7 +470,7 @@ class FeedbackLoop:
 
             underperforming.sort(key=lambda x: x[1].avg_quality)
             return underperforming
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get underperforming stages: {e}")
             return []
 
@@ -493,6 +493,6 @@ class FeedbackLoop:
             )
             keys = self.memory.keys(pattern)
             return sum(1 for k in keys if self.memory.delete(k))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to clear feedback: {e}")
             return 0

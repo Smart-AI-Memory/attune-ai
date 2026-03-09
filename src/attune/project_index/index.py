@@ -188,7 +188,7 @@ class ProjectIndex:
 
             logger.info("Synced index to Redis with prefix %s", prefix)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to sync to Redis: %s", e)
 
     # ===== Index Operations =====

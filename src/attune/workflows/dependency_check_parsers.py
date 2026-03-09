@@ -73,7 +73,7 @@ class DependencyParserMixin:
                             "ecosystem": "python",
                         },
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.debug(f"Skipping unparseable requirement '{line}': {e}")
 
         except OSError as e:
@@ -150,7 +150,7 @@ class DependencyParserMixin:
                                 "ecosystem": "python",
                             },
                         )
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         logger.debug(f"Skipping unparseable dependency '{dep_str}': {e}")
                 else:
                     # Basic extraction without packaging
@@ -201,7 +201,7 @@ class DependencyParserMixin:
                     },
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Cannot parse {path}: {e}")
 
         return deps
@@ -289,7 +289,7 @@ class DependencyParserMixin:
                     },
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Cannot parse poetry.lock: {e}")
 
         return deps

@@ -134,6 +134,168 @@ class TestGenerationWorkflow(BaseWorkflow):
                 return False, None
         return False, None
 
+    def _check_auth_strategy(self, target_path: str) -> None:
+        """Log auth strategy recommendation for the target path.
+
+        Sets ``self._auth_mode_used`` as a side effect when successful.
+
+        Args:
+            target_path: Directory or file path to check
+
+        """
+        try:
+            from attune.models import (
+                count_lines_of_code,
+                get_auth_strategy,
+                get_module_size_category,
+            )
+
+            target = Path(target_path)
+            total_lines = 0
+            if target.is_file():
+                total_lines = count_lines_of_code(target)
+            elif target.is_dir():
+                for py_file in target.rglob("*.py"):
+                    try:
+                        total_lines += count_lines_of_code(py_file)
+                    except Exception:  # noqa: BLE001
+                        pass  # INTENTIONAL: Best-effort LOC counting
+
+            if total_lines > 0:
+                strategy = get_auth_strategy()
+                recommended_mode = strategy.get_recommended_mode(total_lines)
+                self._auth_mode_used = recommended_mode.value
+
+                size_category = get_module_size_category(total_lines)
+                logger.info(
+                    "Test generation target: %s (%s LOC, %s)",
+                    target_path,
+                    f"{total_lines:,}",
+                    size_category,
+                )
+                logger.info("Recommended auth mode: %s", recommended_mode.value)
+
+                cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
+                if recommended_mode.value == "subscription":
+                    logger.info("Cost: %s", cost_estimate["quota_cost"])
+                else:
+                    logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
+
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Auth strategy is optional; don't fail workflow
+            logger.warning("Auth strategy detection failed: %s", e)
+
+    def _scan_candidate_files(
+        self,
+        target: Path,
+        file_types: list[str],
+        max_files_to_scan: int,
+        max_file_size_kb: int,
+        skip_patterns: list[str],
+        include_all_files: bool,
+    ) -> tuple[list[dict], int, int, dict, str | None]:
+        """Scan the target path for test generation candidates.
+
+        Args:
+            target: Root path to scan
+            file_types: File extensions to include
+            max_files_to_scan: Scan limit
+            max_file_size_kb: Skip files larger than this
+            skip_patterns: Directory patterns to skip
+            include_all_files: Include zero-priority files
+
+        Returns:
+            Tuple of (candidates, total_source_files,
+            existing_test_files, scan_counts, early_exit_reason)
+
+        """
+        candidates: list[dict] = []
+        total_source_files = 0
+        existing_test_files = 0
+        scan_counts = {
+            "files_scanned": 0,
+            "files_too_large": 0,
+            "files_read_error": 0,
+            "files_excluded_by_pattern": 0,
+        }
+        early_exit_reason: str | None = None
+        max_file_size_bytes = max_file_size_kb * 1024
+        scan_limit_reached = False
+
+        if not target.exists():
+            return (
+                candidates,
+                total_source_files,
+                existing_test_files,
+                scan_counts,
+                early_exit_reason,
+            )
+
+        for ext in file_types:
+            if scan_limit_reached:
+                break
+
+            for file_path in target.rglob(f"*{ext}"):
+                if scan_counts["files_scanned"] >= max_files_to_scan:
+                    early_exit_reason = f"max_files_to_scan ({max_files_to_scan}) reached"
+                    scan_limit_reached = True
+                    break
+
+                file_str = str(file_path)
+                if any(skip in file_str for skip in skip_patterns):
+                    scan_counts["files_excluded_by_pattern"] += 1
+                    continue
+
+                if "test_" in file_str or "_test." in file_str or "/tests/" in file_str:
+                    existing_test_files += 1
+                    continue
+
+                try:
+                    file_size = file_path.stat().st_size
+                    if file_size > max_file_size_bytes:
+                        scan_counts["files_too_large"] += 1
+                        continue
+                except OSError:
+                    scan_counts["files_read_error"] += 1
+                    continue
+
+                total_source_files += 1
+                scan_counts["files_scanned"] += 1
+
+                try:
+                    content = file_path.read_text(errors="ignore")
+                    lines = len(content.splitlines())
+
+                    is_hotspot = any(hotspot in file_str for hotspot in self._bug_hotspots)
+                    test_file = self._find_test_file(file_path)
+                    has_tests = test_file.exists() if test_file else False
+
+                    priority = 0
+                    if is_hotspot:
+                        priority += 50
+                    if not has_tests:
+                        priority += 30
+                    if lines > 100:
+                        priority += 10
+                    if lines > 300:
+                        priority += 10
+
+                    if priority > 0 or include_all_files:
+                        candidates.append(
+                            {
+                                "file": file_str,
+                                "lines": lines,
+                                "is_hotspot": is_hotspot,
+                                "has_tests": has_tests,
+                                "priority": priority,
+                            },
+                        )
+                except OSError:
+                    scan_counts["files_read_error"] += 1
+                    continue
+
+        return candidates, total_source_files, existing_test_files, scan_counts, early_exit_reason
+
     async def _identify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Identify files needing tests.
 
@@ -150,160 +312,31 @@ class TestGenerationWorkflow(BaseWorkflow):
         target_path = input_data.get("path", ".")
         file_types = input_data.get("file_types", [".py"])
 
-        # === AUTH STRATEGY INTEGRATION ===
         if self.enable_auth_strategy:
-            try:
-                from attune.models import (
-                    count_lines_of_code,
-                    get_auth_strategy,
-                    get_module_size_category,
-                )
+            self._check_auth_strategy(target_path)
 
-                # Calculate total LOC for the project/path
-                target = Path(target_path)
-                total_lines = 0
-                if target.is_file():
-                    total_lines = count_lines_of_code(target)
-                elif target.is_dir():
-                    # Estimate total lines for directory
-                    for py_file in target.rglob("*.py"):
-                        try:
-                            total_lines += count_lines_of_code(py_file)
-                        except Exception:  # noqa: BLE001
-                            pass  # INTENTIONAL: Best-effort LOC counting
-
-                if total_lines > 0:
-                    strategy = get_auth_strategy()
-                    recommended_mode = strategy.get_recommended_mode(total_lines)
-                    self._auth_mode_used = recommended_mode.value
-
-                    size_category = get_module_size_category(total_lines)
-                    logger.info(
-                        "Test generation target: %s (%s LOC, %s)",
-                        target_path,
-                        f"{total_lines:,}",
-                        size_category,
-                    )
-                    logger.info("Recommended auth mode: %s", recommended_mode.value)
-
-                    cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
-                    if recommended_mode.value == "subscription":
-                        logger.info("Cost: %s", cost_estimate["quota_cost"])
-                    else:
-                        logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
-
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Auth strategy is optional; don't fail workflow
-                logger.warning("Auth strategy detection failed: %s", e)
-
-        # Parse configurable limits with sensible defaults
         max_files_to_scan = input_data.get("max_files_to_scan", 1000)
         max_file_size_kb = input_data.get("max_file_size_kb", 200)
         max_candidates = input_data.get("max_candidates", 50)
         skip_patterns = input_data.get("skip_patterns", DEFAULT_SKIP_PATTERNS)
         include_all_files = input_data.get("include_all_files", False)
 
-        target = Path(target_path)
-        candidates: list[dict] = []
+        candidates, total_source_files, existing_test_files, scan_counts, early_exit_reason = (
+            self._scan_candidate_files(
+                Path(target_path),
+                file_types,
+                max_files_to_scan,
+                max_file_size_kb,
+                skip_patterns,
+                include_all_files,
+            )
+        )
 
-        # Track project scope for enterprise reporting
-        total_source_files = 0
-        existing_test_files = 0
-
-        # Track scan summary for debugging/visibility
-        # Use separate counters for type safety
-        scan_counts = {
-            "files_scanned": 0,
-            "files_too_large": 0,
-            "files_read_error": 0,
-            "files_excluded_by_pattern": 0,
-        }
-        early_exit_reason: str | None = None
-
-        max_file_size_bytes = max_file_size_kb * 1024
-        scan_limit_reached = False
-
-        if target.exists():
-            for ext in file_types:
-                if scan_limit_reached:
-                    break
-
-                for file_path in target.rglob(f"*{ext}"):
-                    # Check if we've hit the scan limit
-                    if scan_counts["files_scanned"] >= max_files_to_scan:
-                        early_exit_reason = f"max_files_to_scan ({max_files_to_scan}) reached"
-                        scan_limit_reached = True
-                        break
-
-                    # Skip non-code directories using configurable patterns
-                    file_str = str(file_path)
-                    if any(skip in file_str for skip in skip_patterns):
-                        scan_counts["files_excluded_by_pattern"] += 1
-                        continue
-
-                    # Count test files separately for scope awareness
-                    if "test_" in file_str or "_test." in file_str or "/tests/" in file_str:
-                        existing_test_files += 1
-                        continue
-
-                    # Check file size before reading
-                    try:
-                        file_size = file_path.stat().st_size
-                        if file_size > max_file_size_bytes:
-                            scan_counts["files_too_large"] += 1
-                            continue
-                    except OSError:
-                        scan_counts["files_read_error"] += 1
-                        continue
-
-                    # Count source files and increment scan counter
-                    total_source_files += 1
-                    scan_counts["files_scanned"] += 1
-
-                    try:
-                        content = file_path.read_text(errors="ignore")
-                        lines = len(content.splitlines())
-
-                        # Check if in bug hotspots
-                        is_hotspot = any(hotspot in file_str for hotspot in self._bug_hotspots)
-
-                        # Check for existing tests
-                        test_file = self._find_test_file(file_path)
-                        has_tests = test_file.exists() if test_file else False
-
-                        # Calculate priority
-                        priority = 0
-                        if is_hotspot:
-                            priority += 50
-                        if not has_tests:
-                            priority += 30
-                        if lines > 100:
-                            priority += 10
-                        if lines > 300:
-                            priority += 10
-
-                        # Include if priority > 0 OR include_all_files is set
-                        if priority > 0 or include_all_files:
-                            candidates.append(
-                                {
-                                    "file": file_str,
-                                    "lines": lines,
-                                    "is_hotspot": is_hotspot,
-                                    "has_tests": has_tests,
-                                    "priority": priority,
-                                },
-                            )
-                    except OSError:
-                        scan_counts["files_read_error"] += 1
-                        continue
-
-        # Sort by priority
         candidates.sort(key=lambda x: -x["priority"])
 
         input_tokens = estimate_tokens(input_data)
         output_tokens = estimate_tokens(candidates)
 
-        # Calculate scope metrics for enterprise reporting
         analyzed_count = min(max_candidates, len(candidates))
         coverage_pct = (analyzed_count / len(candidates) * 100) if candidates else 100
 
@@ -313,14 +346,11 @@ class TestGenerationWorkflow(BaseWorkflow):
                 "total_candidates": len(candidates),
                 "hotspot_count": sum(1 for c in candidates if c["is_hotspot"]),
                 "untested_count": sum(1 for c in candidates if not c["has_tests"]),
-                # Scope awareness fields for enterprise reporting
                 "total_source_files": total_source_files,
                 "existing_test_files": existing_test_files,
                 "large_project_warning": len(candidates) > 100,
                 "analysis_coverage_percent": coverage_pct,
-                # Scan summary for debugging/visibility
                 "scan_summary": {**scan_counts, "early_exit_reason": early_exit_reason},
-                # Pass through config for subsequent stages
                 "config": {
                     "max_files_to_analyze": input_data.get("max_files_to_analyze", 20),
                     "max_functions_per_file": input_data.get("max_functions_per_file", 30),

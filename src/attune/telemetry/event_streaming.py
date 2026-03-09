@@ -206,7 +206,7 @@ class EventStreamer:
             logger.debug(f"Published event {event_type}: {event_id}")
             return event_id
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to publish event {event_type}: {e}")
             return ""
 
@@ -292,7 +292,7 @@ class EventStreamer:
 
         except KeyboardInterrupt:
             logger.info("Event consumption interrupted")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error consuming events: {e}")
 
     def get_recent_events(
@@ -340,7 +340,7 @@ class EventStreamer:
 
             return events
 
-        except Exception:
+        except Exception:  # noqa: BLE001
             logger.error("Failed to get recent events for %s", event_type, exc_info=True)
             return []
 
@@ -373,7 +373,7 @@ class EventStreamer:
 
             return decoded_info
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to get stream info for {event_type}: {e}")
             return {}
 
@@ -395,7 +395,7 @@ class EventStreamer:
         try:
             result = self.memory._client.delete(stream_key)
             return result > 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to delete stream {event_type}: {e}")
             return False
 
@@ -423,6 +423,6 @@ class EventStreamer:
                 approximate=True,
             )
             return trimmed
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to trim stream {event_type}: {e}")
             return 0

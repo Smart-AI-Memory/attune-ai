@@ -282,7 +282,7 @@ Return the refactored code as after_code."""
             except OSError as e:
                 # File system errors accessing memory graph
                 logger.warning(f"Memory Graph query error (file system): {e}")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Memory Graph is optional - continue without it
                 logger.exception("Unexpected error querying Memory Graph")
 
@@ -322,7 +322,7 @@ Return the refactored code as after_code."""
                 memory_graph_hits=memory_hits,
                 metadata={"error": str(e)},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation - return empty report rather than crashing
             logger.exception("Unexpected error in refactoring analysis")
             return RefactoringReport(
@@ -369,7 +369,7 @@ Return the refactored code as after_code."""
             except (OSError, PermissionError) as e:
                 # File system errors saving memory graph
                 logger.warning(f"Error storing in Memory Graph (file system): {e}")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Memory Graph storage is optional - continue without it
                 logger.exception("Unexpected error storing in Memory Graph")
 
@@ -406,7 +406,7 @@ Return the refactored code as after_code."""
             # Agent invocation errors (invalid input, API errors, etc.)
             logger.error(f"Refactor generation failed (invocation error): {e}")
             finding.metadata["generation_error"] = f"Agent error: {e}"
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation - finding without after_code is still useful
             logger.exception("Unexpected error in refactor generation")
             finding.metadata["generation_error"] = "Unexpected error"

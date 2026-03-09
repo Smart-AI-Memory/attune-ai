@@ -111,7 +111,7 @@ class CrewAIAgent(BaseAgent):
                 },
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "output": f"Error: {e!s}",
                 "metadata": {"error": str(e), "framework": "crewai"},
@@ -131,7 +131,7 @@ class CrewAIAgent(BaseAgent):
 
             crew = Crew(agents=[self._crewai_agent], tasks=[task], verbose=False)
             return crew.kickoff()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return f"Task execution error: {e}"
 
     async def stream(self, input_data: str | dict, context: dict | None = None):
@@ -195,7 +195,7 @@ class CrewAIWorkflow(BaseWorkflow):
                 "metadata": {"framework": "crewai"},
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "output": f"Crew execution error: {e}",
                 "error": str(e),

@@ -98,7 +98,7 @@ class LearningStore:
             )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse learning data: {e}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Failed to load learning data: {e}")
 
     def save(self) -> None:

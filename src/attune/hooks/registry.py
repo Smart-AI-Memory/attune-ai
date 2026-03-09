@@ -209,7 +209,7 @@ class HookRegistry:
                 if self.config.log_executions:
                     self._execution_log.append(execution_record)
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 error_record = {
                     "event": event.value,
                     "hook": hook.command,

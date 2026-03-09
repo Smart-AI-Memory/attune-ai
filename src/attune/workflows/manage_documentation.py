@@ -137,7 +137,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
                         provider="anthropic",
                         api_key=api_key,
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # INTENTIONAL: executor init is best-effort
                     pass
 
@@ -149,7 +149,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
                 if not self._project_index.load():
                     print("  [ProjectIndex] Building index (first run)...")
                     self._project_index.refresh()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: index init is best-effort
                 print(f"  [ProjectIndex] Warning: Could not load index: {e}")
 
@@ -310,7 +310,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
                     response.tokens_output,
                     response.cost_estimate or 0.0,
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: fallback to mock on LLM error
                 return self._mock_response(agent, task, context, str(e))
         else:
@@ -435,7 +435,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
             return {}
         try:
             return self._project_index.get_context_for_workflow("documentation")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: index query is best-effort
             print(f"  [ProjectIndex] Warning: Could not get context: {e}")
             return {}

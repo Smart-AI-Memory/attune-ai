@@ -95,5 +95,9 @@ class SecurityError(Exception):
     """Raised when security policy is violated"""
 
 
-class PermissionError(Exception):
-    """Raised when access is denied"""
+class MemoryPermissionError(Exception):
+    """Raised when access is denied."""
+
+
+# Backward-compat alias (deprecated)
+PermissionError = MemoryPermissionError

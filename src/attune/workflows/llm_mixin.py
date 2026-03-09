@@ -175,7 +175,7 @@ class LLMMixin:
             # File system or permission errors
             logger.warning("LLM call failed (file system error): %s", e)
             return f"Error calling LLM (file system error): {e}", 0, 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation - return error message rather than crashing workflow
             logger.exception("Unexpected error calling LLM: %s", e)
             return f"Error calling LLM: {type(e).__name__}", 0, 0

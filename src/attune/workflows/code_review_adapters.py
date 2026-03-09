@@ -71,7 +71,7 @@ async def _get_crew_review(
     except asyncio.TimeoutError:
         logger.warning(f"CodeReviewCrew review timed out after {timeout}s")
         return None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"CodeReviewCrew review failed: {e}")
         return None
 
@@ -244,10 +244,10 @@ def merge_code_review_results(
     crew_severity = crew_report.get("assessment", {}).get("severity_breakdown", {})
     wf_severity = workflow_findings.get("assessment", {}).get("severity_breakdown", {})
     merged_severity = {
-        "critical": max(crew_severity.get("critical", 0), wf_severity.get("critical", 0)),
-        "high": max(crew_severity.get("high", 0), wf_severity.get("high", 0)),
-        "medium": max(crew_severity.get("medium", 0), wf_severity.get("medium", 0)),
-        "low": max(crew_severity.get("low", 0), wf_severity.get("low", 0)),
+        "critical": crew_severity.get("critical", 0) + wf_severity.get("critical", 0),
+        "high": crew_severity.get("high", 0) + wf_severity.get("high", 0),
+        "medium": crew_severity.get("medium", 0) + wf_severity.get("medium", 0),
+        "low": crew_severity.get("low", 0) + wf_severity.get("low", 0),
     }
 
     return {

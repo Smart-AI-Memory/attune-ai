@@ -236,7 +236,7 @@ class TestGeneratorAgent:
                     succeeded += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Failed to generate tests for {item.file_path}: {e}")
                 failed += 1
                 results.append(
@@ -293,7 +293,7 @@ class TestGeneratorAgent:
         # Read source file
         try:
             source_code = source_path.read_text(encoding="utf-8")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "file": item.file_path,
                 "success": False,
@@ -308,7 +308,7 @@ class TestGeneratorAgent:
             validated_path = _validate_file_path(str(full_test_path))
             validated_path.parent.mkdir(parents=True, exist_ok=True)
             validated_path.write_text(test_code, encoding="utf-8")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "file": item.file_path,
                 "success": False,
@@ -424,7 +424,7 @@ class TestValidatorAgent:
                     passed += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Validation error for {test_file}: {e}")
                 results.append(
                     {
@@ -523,7 +523,7 @@ class TestValidatorAgent:
                 "passed": False,
                 "error": f"Test timeout after {timeout}s",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Validation error for {test_file}: {e}")
             return {
                 "file": test_file,
@@ -791,7 +791,7 @@ class TestMaintenanceCrew:
                 try:
                     val_result = await self.validator.validate_tests(generated_test_files)
                     results.append(val_result)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Validation failed with error: {e}")
                     if not self.config.validation_optional:
                         raise

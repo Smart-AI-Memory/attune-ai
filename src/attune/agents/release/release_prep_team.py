@@ -105,7 +105,7 @@ class ReleasePrepTeam:
                 self.redis = redis_lib.from_url(redis_url)
                 self.redis.ping()
                 logger.info("Release team connected to Redis")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Redis is optional for local development
                 logger.info(f"Redis not available (non-fatal): {e}")
                 self.redis = None
@@ -115,7 +115,7 @@ class ReleasePrepTeam:
                 self.redis = redis_lib.Redis(host="localhost", port=6379, decode_responses=True)
                 self.redis.ping()
                 logger.info("Release team connected to local Redis")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Redis is optional
                 self.redis = None
 

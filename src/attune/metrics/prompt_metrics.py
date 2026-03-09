@@ -153,7 +153,7 @@ class MetricsTracker:
                             continue
 
                         metrics.append(metric)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to read metrics: {e}")
 
         return metrics

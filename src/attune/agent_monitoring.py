@@ -136,7 +136,7 @@ class AgentMonitor:
         self,
         agent_id: str,
         response_time_ms: float = 0.0,
-    ):
+    ) -> None:
         """Record an agent interaction.
 
         Args:

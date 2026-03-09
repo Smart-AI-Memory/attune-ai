@@ -36,16 +36,8 @@ class PIIDetection:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for logging/auditing"""
-        return {
-            "pii_type": self.pii_type,
-            "matched_text": self.matched_text,  # Be careful logging this
-            "start_pos": self.start_pos,
-            "end_pos": self.end_pos,
-            "replacement": self.replacement,
-            "confidence": self.confidence,
-            "metadata": self.metadata,
-        }
+        """Convert to audit-safe dictionary (delegates to to_audit_safe_dict)."""
+        return self.to_audit_safe_dict()
 
     def to_audit_safe_dict(self) -> dict[str, Any]:
         """Convert to dictionary safe for audit logs (no PII values)"""

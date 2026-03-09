@@ -204,7 +204,7 @@ def cmd_file_test_status(args: Any) -> int:
             records.sort(key=lambda r: r.file_path)
             records = records[:limit]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving file test status: {e}")
         return 1
 

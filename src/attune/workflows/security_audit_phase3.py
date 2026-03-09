@@ -103,7 +103,7 @@ def analyze_file_for_eval_exec(file_path: str | Path) -> list[dict[str, Any]]:
     except SyntaxError as e:
         logger.debug(f"Syntax error parsing {file_path}: {e}")
         return []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.debug(f"Error analyzing {file_path}: {e}")
         return []
 
@@ -281,7 +281,7 @@ def enhanced_command_injection_detection(
 
             return filtered
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"AST analysis failed for {file_path}, falling back to regex: {e}")
             # Fall back to original findings if AST fails
 
@@ -305,7 +305,7 @@ def enhanced_command_injection_detection(
 
         return filtered
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.debug(f"Enhanced filtering failed for {file_path}: {e}")
         return original_findings
 

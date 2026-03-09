@@ -66,7 +66,7 @@ def _load_model_config() -> dict[str, str]:
                 defaults["capable"] = config.routing.capable_model
             if config.routing.premium_model:
                 defaults["premium"] = config.routing.premium_model
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.debug(f"Could not load config, using defaults: {e}")
 
     # Environment overrides (highest priority)
@@ -406,7 +406,7 @@ class ProgressiveWorkflow:
                 duration=duration,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Error executing tier {tier.value}: {e}")
             # Return failed result
             duration = (datetime.now() - start_time).total_seconds()

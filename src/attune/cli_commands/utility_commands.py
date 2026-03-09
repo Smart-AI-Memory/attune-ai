@@ -75,16 +75,18 @@ def cmd_setup(args: Namespace) -> int:
 
     def _copy_md_files(src: Path, dst: Path) -> int:
         """Copy .md files from src to dst, return count."""
+        from attune.security.path_validation import _validate_file_path
+
         count = 0
         if hasattr(src, "iterdir"):
             for item in src.iterdir():
                 if hasattr(item, "is_file") and item.is_file() and str(item.name).endswith(".md"):
-                    dst_file = dst / item.name
+                    dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
                     shutil.copy2(item, dst_file)
                     print(f"  ✅ Installed: {item.name}")
                     count += 1
                 elif hasattr(item, "read_text") and str(item.name).endswith(".md"):
-                    dst_file = dst / item.name
+                    dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
                     dst_file.write_text(item.read_text())
                     print(f"  ✅ Installed: {item.name}")
                     count += 1

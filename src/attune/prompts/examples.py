@@ -54,7 +54,7 @@ CODE_REVIEW_EXAMPLES: list[dict[str, str]] = [
             "def risky_operation():\n"
             "    try:\n"
             "        do_something()\n"
-            "    except:\n"
+            "    except:\n"  # noqa: BLE001
             "        pass"
         ),
         "output": (
@@ -92,7 +92,7 @@ BUG_PREDICT_EXAMPLES: list[dict[str, str]] = [
             "Pattern: broad_exception\n"
             "File: src/handler.py\n"
             "Line: 45\n"
-            "Match: except:\n"
+            "Match: except:\n"  # noqa: BLE001
             "Impact: medium"
         ),
         "output": (

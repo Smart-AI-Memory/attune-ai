@@ -148,7 +148,7 @@ class RefactorWizard(BaseWizard):
         except ImportError:
             logger.warning("RefactorPlanWorkflow not available, using LLM fallback")
             return None
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Workflow is optional enhancement, not required
             logger.exception("Failed to initialize RefactorPlanWorkflow")
             return None
@@ -167,7 +167,7 @@ class RefactorWizard(BaseWizard):
             try:
                 await self._run_analysis_via_workflow()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow analysis failed, falling back to LLM")
 

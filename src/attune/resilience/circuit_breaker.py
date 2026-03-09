@@ -246,7 +246,7 @@ def circuit_breaker(
                 result: T = await func(*args, **kwargs)  # type: ignore[misc]
                 cb.record_success()
                 return result
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 cb.record_failure(e)
                 raise
 
@@ -263,7 +263,7 @@ def circuit_breaker(
                 result = func(*args, **kwargs)
                 cb.record_success()
                 return result
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 cb.record_failure(e)
                 raise
 

@@ -104,7 +104,7 @@ class LangGraphAgent(BaseAgent):
                 "metadata": {"framework": "langgraph", "model": self.model},
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
     async def stream(self, input_data: str | dict, context: dict | None = None):
@@ -181,7 +181,7 @@ class LangGraphWorkflow(BaseWorkflow):
 
             return {"output": output, "state": self._state, "metadata": {"framework": "langgraph"}}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "error": str(e)}
 
     async def _run_sequential(self, input_data: str | dict) -> dict:

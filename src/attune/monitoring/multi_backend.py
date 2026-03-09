@@ -99,7 +99,7 @@ class MultiBackend:
         try:
             jsonl_backend = TelemetryStore(storage_dir)
             backends.append(jsonl_backend)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to initialize JSONL backend: {e}")
 
         # Add OTEL backend if configured
@@ -112,7 +112,7 @@ class MultiBackend:
         except ImportError:
             # OTEL dependencies not installed
             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to initialize OTEL backend: {e}")
 
         return cls(backends)
@@ -157,7 +157,7 @@ class MultiBackend:
 
             try:
                 backend.log_call(record)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 backend_name = type(backend).__name__
                 print(f"⚠️  Failed to log call to {backend_name}: {e}")
                 # Mark backend as failed to reduce log spam
@@ -179,7 +179,7 @@ class MultiBackend:
 
             try:
                 backend.log_workflow(record)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 backend_name = type(backend).__name__
                 print(f"⚠️  Failed to log workflow to {backend_name}: {e}")
                 # Mark backend as failed to reduce log spam
@@ -225,7 +225,7 @@ class MultiBackend:
             if hasattr(backend, "flush"):
                 try:
                     backend.flush()
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     backend_name = type(backend).__name__
                     print(f"⚠️  Failed to flush {backend_name}: {e}")
 

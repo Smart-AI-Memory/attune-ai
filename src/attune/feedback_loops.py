@@ -354,7 +354,7 @@ class FeedbackLoopDetector:
                 return loop
         return None
 
-    def register_custom_loop(self, loop: FeedbackLoop):
+    def register_custom_loop(self, loop: FeedbackLoop) -> None:
         """Register a custom feedback loop for detection
 
         Args:
@@ -367,7 +367,7 @@ class FeedbackLoopDetector:
         """Get all registered feedback loops"""
         return self.detected_loops
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset detector and reinitialize standard loops"""
         self.detected_loops = []
         self._initialize_standard_loops()

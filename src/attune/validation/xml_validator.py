@@ -164,7 +164,7 @@ class XMLValidator:
             try:
                 schema_doc = lxml_etree.parse(str(schema_path))
                 self._schema_cache[schema_name] = lxml_etree.XMLSchema(schema_doc)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 return ValidationResult(
                     is_valid=False,
                     error_message=f"Schema loading failed: {e}",
@@ -186,7 +186,7 @@ class XMLValidator:
 
             return ValidationResult(is_valid=True)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return ValidationResult(
                 is_valid=False,
                 error_message=f"Validation error: {e}",

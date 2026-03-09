@@ -266,7 +266,7 @@ class ApprovalGate:
                 )
             else:
                 logger.warning("Cannot store approval request: no Redis backend available")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store approval request: {e}")
             return ApprovalResponse(
                 request_id=request_id,
@@ -287,7 +287,7 @@ class ApprovalGate:
                 payload=request.to_dict(),
                 ttl_seconds=int(timeout) + 60,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to send approval_request signal: {e}")
 
         # Wait for approval response (blocking with timeout)
@@ -319,7 +319,7 @@ class ApprovalGate:
                 import json
 
                 self.memory._client.setex(request_key, 60, json.dumps(request.to_dict()))
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         return ApprovalResponse(
@@ -357,7 +357,7 @@ class ApprovalGate:
             if data:
                 return ApprovalResponse.from_dict(data)
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to check for approval response: {e}")
             return None
 
@@ -433,7 +433,7 @@ class ApprovalGate:
                 pipe.setex(request_key, 300, json.dumps(request.to_dict()))
 
             pipe.execute()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store approval response: {e}")
             return False
 
@@ -449,7 +449,7 @@ class ApprovalGate:
                 payload=response.to_dict(),
                 ttl_seconds=300,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to send approval_response signal: {e}")
 
         logger.info(
@@ -518,7 +518,7 @@ class ApprovalGate:
             requests.sort(key=lambda r: r.timestamp)
 
             return requests
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get pending approvals: {e}")
             return []
 
@@ -571,6 +571,6 @@ class ApprovalGate:
                     cleared += 1
 
             return cleared
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to clear expired requests: {e}")
             return 0

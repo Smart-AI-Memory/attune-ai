@@ -83,7 +83,7 @@ class ProviderConfig:
                                 value = value.strip().strip("'\"")
                                 if key and value:
                                     env_keys[key] = value
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
         return env_keys
@@ -168,7 +168,7 @@ class ProviderConfig:
                 with open(path) as f:
                     data = json.load(f)
                 return cls.from_dict(data)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
         # Auto-detect if no config exists

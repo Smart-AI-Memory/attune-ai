@@ -96,7 +96,7 @@ def get_version() -> str:
         from importlib.metadata import version
 
         return version("attune-ai")
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback for dev installs without metadata
         return "dev"
 
@@ -104,6 +104,214 @@ def get_version() -> str:
 # =============================================================================
 # Main Entry Point
 # =============================================================================
+
+
+def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add workflow subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    workflow_parser = subparsers.add_parser("workflow", help="Workflow management")
+    workflow_sub = workflow_parser.add_subparsers(dest="workflow_command")
+
+    workflow_sub.add_parser("list", help="List available workflows")
+
+    info_parser = workflow_sub.add_parser("info", help="Show workflow details")
+    info_parser.add_argument("name", help="Workflow name")
+
+    run_parser = workflow_sub.add_parser("run", help="Run a workflow")
+    run_parser.add_argument("name", help="Workflow name")
+    run_parser.add_argument("--input", "-i", help="JSON input data")
+    run_parser.add_argument("--path", "-p", help="Target path")
+    run_parser.add_argument("--target", "-t", help="Target value (e.g., coverage target)")
+    run_parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
+
+
+def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add telemetry subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    telemetry_parser = subparsers.add_parser("telemetry", help="Usage telemetry")
+    telemetry_sub = telemetry_parser.add_subparsers(dest="telemetry_command")
+
+    show_parser = telemetry_sub.add_parser("show", help="Display usage summary")
+    show_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
+    )
+
+    savings_parser = telemetry_sub.add_parser("savings", help="Show cost savings")
+    savings_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
+    )
+
+    export_parser = telemetry_sub.add_parser("export", help="Export telemetry data")
+    export_parser.add_argument("--output", "-o", required=True, help="Output file path")
+    export_parser.add_argument(
+        "--format",
+        "-f",
+        choices=["csv", "json"],
+        default="json",
+        help="Output format",
+    )
+    export_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
+    )
+
+    routing_stats_parser = telemetry_sub.add_parser(
+        "routing-stats",
+        help="Show adaptive routing statistics",
+    )
+    routing_stats_parser.add_argument("--workflow", "-w", help="Workflow name")
+    routing_stats_parser.add_argument("--stage", "-s", help="Stage name")
+    routing_stats_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
+    )
+
+    routing_check_parser = telemetry_sub.add_parser(
+        "routing-check",
+        help="Check for tier upgrade recommendations",
+    )
+    routing_check_parser.add_argument("--workflow", "-w", help="Workflow name")
+    routing_check_parser.add_argument(
+        "--all",
+        "-a",
+        action="store_true",
+        help="Check all workflows",
+    )
+
+    models_parser = telemetry_sub.add_parser("models", help="Show model performance by provider")
+    models_parser.add_argument(
+        "--provider",
+        "-p",
+        choices=["anthropic"],
+        help="Filter by provider",
+    )
+    models_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
+    )
+
+    telemetry_sub.add_parser("agents", help="Show active agents and their status")
+
+    signals_parser = telemetry_sub.add_parser("signals", help="Show coordination signals")
+    signals_parser.add_argument("--agent", "-a", required=True, help="Agent ID to view signals for")
+
+
+def _add_costs_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add cost tracking subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
+    costs_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
+    )
+    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
+
+    costs_sub = costs_parser.add_subparsers(dest="costs_command")
+
+    costs_sub.add_parser("today", help="Show today's costs")
+
+    costs_export = costs_sub.add_parser("export", help="Export cost data")
+    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
+    costs_export.add_argument(
+        "--format",
+        "-f",
+        choices=["csv", "json"],
+        default="json",
+        help="Output format",
+    )
+    costs_export.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
+    )
+
+    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
+    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
+
+
+def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add provider, memory, setup, and utility subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    # Provider commands
+    provider_parser = subparsers.add_parser("provider", help="LLM provider configuration")
+    provider_sub = provider_parser.add_subparsers(dest="provider_command")
+    provider_sub.add_parser("show", help="Show current provider")
+    set_parser = provider_sub.add_parser("set", help="Set provider")
+    set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
+
+    # Memory commands (quick lessons)
+    remember_parser = subparsers.add_parser(
+        "remember",
+        help='Save a lesson: attune remember "lesson text"',
+    )
+    remember_parser.add_argument("lesson_text", help="Lesson to remember")
+    remember_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Save to global ~/.attune/lessons.md instead of project",
+    )
+
+    forget_parser = subparsers.add_parser("forget", help="Remove a lesson by number or keyword")
+    forget_parser.add_argument("identifier", help="Line number or keyword to match")
+
+    lessons_parser = subparsers.add_parser("lessons", help="List current lessons")
+    lessons_parser.add_argument(
+        "--global",
+        action="store_true",
+        dest="global",
+        help="Show only global lessons",
+    )
+
+    # Setup command
+    subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
+
+    # Utility commands
+    subparsers.add_parser("doctor", help="Run comprehensive environment health check")
+    subparsers.add_parser("features", help="Show available features and dependencies")
+    subparsers.add_parser("validate", help="Validate configuration")
+
+    version_parser = subparsers.add_parser("version", help="Show version")
+    version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -135,202 +343,11 @@ Documentation: https://smartaimemory.com/framework-docs/
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # --- Workflow commands ---
-    workflow_parser = subparsers.add_parser("workflow", help="Workflow management")
-    workflow_sub = workflow_parser.add_subparsers(dest="workflow_command")
+    _add_workflow_subparsers(subparsers)
+    _add_telemetry_subparsers(subparsers)
+    _add_costs_subparsers(subparsers)
+    _add_misc_subparsers(subparsers)
 
-    # workflow list
-    workflow_sub.add_parser("list", help="List available workflows")
-
-    # workflow info
-    info_parser = workflow_sub.add_parser("info", help="Show workflow details")
-    info_parser.add_argument("name", help="Workflow name")
-
-    # workflow run
-    run_parser = workflow_sub.add_parser("run", help="Run a workflow")
-    run_parser.add_argument("name", help="Workflow name")
-    run_parser.add_argument("--input", "-i", help="JSON input data")
-    run_parser.add_argument("--path", "-p", help="Target path")
-    run_parser.add_argument("--target", "-t", help="Target value (e.g., coverage target)")
-    run_parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
-
-    # --- Telemetry commands ---
-    telemetry_parser = subparsers.add_parser("telemetry", help="Usage telemetry")
-    telemetry_sub = telemetry_parser.add_subparsers(dest="telemetry_command")
-
-    # telemetry show
-    show_parser = telemetry_sub.add_parser("show", help="Display usage summary")
-    show_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=30,
-        help="Number of days (default: 30)",
-    )
-
-    # telemetry savings
-    savings_parser = telemetry_sub.add_parser("savings", help="Show cost savings")
-    savings_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=30,
-        help="Number of days (default: 30)",
-    )
-
-    # telemetry export
-    export_parser = telemetry_sub.add_parser("export", help="Export telemetry data")
-    export_parser.add_argument("--output", "-o", required=True, help="Output file path")
-    export_parser.add_argument(
-        "--format",
-        "-f",
-        choices=["csv", "json"],
-        default="json",
-        help="Output format",
-    )
-    export_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=30,
-        help="Number of days (default: 30)",
-    )
-
-    # telemetry routing-stats
-    routing_stats_parser = telemetry_sub.add_parser(
-        "routing-stats",
-        help="Show adaptive routing statistics",
-    )
-    routing_stats_parser.add_argument("--workflow", "-w", help="Workflow name")
-    routing_stats_parser.add_argument("--stage", "-s", help="Stage name")
-    routing_stats_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=7,
-        help="Number of days (default: 7)",
-    )
-
-    # telemetry routing-check
-    routing_check_parser = telemetry_sub.add_parser(
-        "routing-check",
-        help="Check for tier upgrade recommendations",
-    )
-    routing_check_parser.add_argument("--workflow", "-w", help="Workflow name")
-    routing_check_parser.add_argument(
-        "--all",
-        "-a",
-        action="store_true",
-        help="Check all workflows",
-    )
-
-    # telemetry models
-    models_parser = telemetry_sub.add_parser("models", help="Show model performance by provider")
-    models_parser.add_argument(
-        "--provider",
-        "-p",
-        choices=["anthropic"],
-        help="Filter by provider",
-    )
-    models_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=7,
-        help="Number of days (default: 7)",
-    )
-
-    # telemetry agents
-    telemetry_sub.add_parser("agents", help="Show active agents and their status")
-
-    # telemetry signals
-    signals_parser = telemetry_sub.add_parser("signals", help="Show coordination signals")
-    signals_parser.add_argument("--agent", "-a", required=True, help="Agent ID to view signals for")
-
-    # --- Provider commands ---
-    provider_parser = subparsers.add_parser("provider", help="LLM provider configuration")
-    provider_sub = provider_parser.add_subparsers(dest="provider_command")
-
-    # provider show
-    provider_sub.add_parser("show", help="Show current provider")
-
-    # provider set
-    set_parser = provider_sub.add_parser("set", help="Set provider")
-    set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
-
-    # --- Memory commands (quick lessons) ---
-    remember_parser = subparsers.add_parser(
-        "remember",
-        help='Save a lesson: attune remember "lesson text"',
-    )
-    remember_parser.add_argument("lesson_text", help="Lesson to remember")
-    remember_parser.add_argument(
-        "--global",
-        action="store_true",
-        dest="global",
-        help="Save to global ~/.attune/lessons.md instead of project",
-    )
-
-    forget_parser = subparsers.add_parser("forget", help="Remove a lesson by number or keyword")
-    forget_parser.add_argument("identifier", help="Line number or keyword to match")
-
-    lessons_parser = subparsers.add_parser("lessons", help="List current lessons")
-    lessons_parser.add_argument(
-        "--global",
-        action="store_true",
-        dest="global",
-        help="Show only global lessons",
-    )
-
-    # --- Cost tracking commands ---
-    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
-    costs_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=7,
-        help="Number of days (default: 7)",
-    )
-    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
-    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
-
-    costs_sub = costs_parser.add_subparsers(dest="costs_command")
-
-    # costs today
-    costs_sub.add_parser("today", help="Show today's costs")
-
-    # costs export
-    costs_export = costs_sub.add_parser("export", help="Export cost data")
-    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
-    costs_export.add_argument(
-        "--format",
-        "-f",
-        choices=["csv", "json"],
-        default="json",
-        help="Output format",
-    )
-    costs_export.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=30,
-        help="Number of days (default: 30)",
-    )
-
-    # costs reset
-    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
-    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
-
-    # --- Setup command ---
-    subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
-
-    # --- Utility commands ---
-    subparsers.add_parser("doctor", help="Run comprehensive environment health check")
-    subparsers.add_parser("features", help="Show available features and dependencies")
-    subparsers.add_parser("validate", help="Validate configuration")
-
-    version_parser = subparsers.add_parser("version", help="Show version")
-    version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
     return parser
 
 

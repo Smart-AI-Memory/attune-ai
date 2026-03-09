@@ -402,6 +402,6 @@ TASK:
                 f"Pattern detection complete. Detected {len(state.detected_patterns)} patterns.",
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Pattern detection should never break the main flow
             logger.warning(f"Pattern detection error (non-critical): {e}")

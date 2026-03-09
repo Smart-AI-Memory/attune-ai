@@ -92,7 +92,7 @@ class CodeQualityAgent(ReleaseAgent):
                 findings,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Code quality analysis failed: {e}")
             return False, {
                 "error": str(e),

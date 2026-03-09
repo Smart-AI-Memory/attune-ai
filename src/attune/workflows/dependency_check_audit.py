@@ -52,7 +52,7 @@ def _load_cached_advisories() -> dict[str, list[dict]]:
             logger.warning("Advisory cache is %.0f days old - consider updating", age_days)
 
         return json.loads(cache_path.read_text())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Could not load advisory cache: %s", e)
         return {}
 
@@ -64,7 +64,7 @@ def _save_advisory_cache(advisories: dict[str, list[dict]]) -> None:
         validated_path = _validate_file_path(str(cache_path))
         validated_path.write_text(json.dumps(advisories, indent=2))
         logger.info("Advisory cache updated: %s packages", len(advisories))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Could not save advisory cache: %s", e)
 
 
@@ -136,7 +136,7 @@ def _run_pip_audit(target_path: Path) -> list[dict]:
         logger.warning("pip-audit timed out after 120s")
     except json.JSONDecodeError as e:
         logger.warning("pip-audit returned invalid JSON: %s", e)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("pip-audit failed: %s", e)
 
     return []
@@ -188,7 +188,7 @@ def _run_npm_audit(target_path: Path) -> list[dict]:
         logger.debug("npm not installed, skipping npm audit")
     except subprocess.TimeoutExpired:
         logger.warning("npm audit timed out")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("npm audit failed: %s", e)
 
     return []

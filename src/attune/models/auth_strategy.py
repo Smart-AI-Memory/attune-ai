@@ -288,7 +288,7 @@ class AuthStrategy:
                 with open(path) as f:
                     data = json.load(f)
                 return cls.from_dict(data)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
         # Return default if no config exists
@@ -426,12 +426,12 @@ def count_lines_of_code(file_path: str | Path) -> int:
                 # Skip blank lines and comments
                 if stripped and not stripped.startswith("#"):
                     lines += 1
-    except Exception:
+    except Exception:  # noqa: BLE001
         # If we can't read the file, estimate from total lines
         try:
             with open(path, encoding="utf-8") as f:
                 return len(f.readlines())
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
     return lines

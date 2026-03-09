@@ -214,7 +214,7 @@ class MemoryAwareAgent(BaseAgent):
                 }
                 for r in related
             ]
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation when graph unavailable
             logger.debug(f"Could not get resolutions for node {node_id}")
             return []

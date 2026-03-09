@@ -259,7 +259,7 @@ Return the complete, polished documentation with all API reference sections pres
                     system=system,
                 )
                 return response, input_tokens, output_tokens
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass  # Fall through to legacy path
 
         response, input_tokens, output_tokens = await self._call_llm(

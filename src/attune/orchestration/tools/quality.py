@@ -88,7 +88,7 @@ class RealCodeQualityAnalyzer:
                 passed=passed,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Quality analysis failed: {e}")
             raise RuntimeError(f"Quality analysis failed: {e}") from e
 
@@ -116,7 +116,7 @@ class RealCodeQualityAnalyzer:
         except FileNotFoundError:
             logger.warning("Ruff not installed, skipping")
             return 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Ruff check failed: {e}")
             return 0
 
@@ -140,7 +140,7 @@ class RealCodeQualityAnalyzer:
         except FileNotFoundError:
             logger.warning("Mypy not installed, skipping")
             return 0
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Mypy check failed: {e}")
             return 0
 
@@ -224,7 +224,7 @@ class RealDocumentationAnalyzer:
                                     f"{py_file.relative_to(self.project_root)}:{node.lineno} - class {node.name}",
                                 )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to parse {py_file}: {e}")
                 continue
 

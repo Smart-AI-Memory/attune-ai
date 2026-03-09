@@ -129,7 +129,7 @@ class AgentLoader:
                 yield config
             except ValueError as e:
                 logger.warning("Skipping invalid agent file %s: %s", file_path, e)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Error loading agent file %s: %s", file_path, e)
 
     def validate_directory(

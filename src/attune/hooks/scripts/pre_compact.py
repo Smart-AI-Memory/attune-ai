@@ -123,7 +123,7 @@ def run_pre_compact(context: dict[str, Any]) -> dict[str, Any]:
             "message": " | ".join(message_parts),
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception(f"Pre-compact hook failed: {e}")
         return {
             "state_saved": False,

@@ -121,11 +121,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             schema["input_schema"]["properties"][param_name]["default"] = default
         return schema
 
-    def _register_tools(self) -> dict[str, dict[str, Any]]:
-        """Register available MCP tools.
+    def _register_workflow_tools(self) -> dict[str, dict[str, Any]]:
+        """Register workflow-related MCP tools.
 
         Returns:
-            Dictionary of tool definitions
+            Tool definitions for workflow execution tools
 
         """
         _pt = self._path_tool
@@ -262,6 +262,16 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     "required": ["sources", "question"],
                 },
             },
+        }
+
+    def _register_utility_tools(self) -> dict[str, dict[str, Any]]:
+        """Register auth, telemetry, and session management tools.
+
+        Returns:
+            Tool definitions for utility tools
+
+        """
+        return {
             "auth_status": {
                 "description": "Get authentication strategy status. Shows current configuration, subscription tier, and default mode.",
                 "input_schema": {"type": "object", "properties": {}},
@@ -289,6 +299,59 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     },
                 },
             },
+            "attune_get_level": {
+                "description": (
+                    "Get current interaction level (1-5). "
+                    "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
+                ),
+                "input_schema": {"type": "object", "properties": {}},
+            },
+            "attune_set_level": {
+                "description": "Set interaction level (1-5) for this session.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "level": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "description": "Interaction level (1-5)",
+                        },
+                    },
+                    "required": ["level"],
+                },
+            },
+            "context_get": {
+                "description": "Get session context value.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Context key to retrieve"},
+                    },
+                    "required": ["key"],
+                },
+            },
+            "context_set": {
+                "description": "Set session context value.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string", "description": "Context key"},
+                        "value": {"type": "string", "description": "Context value"},
+                    },
+                    "required": ["key", "value"],
+                },
+            },
+        }
+
+    def _register_memory_tools(self) -> dict[str, dict[str, Any]]:
+        """Register memory operation tools.
+
+        Returns:
+            Tool definitions for memory store/retrieve/search/forget
+
+        """
+        return {
             "memory_store": {
                 "description": (
                     "Store data in attune-ai memory. Use for structured knowledge, patterns, "
@@ -356,50 +419,20 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     "required": ["key"],
                 },
             },
-            "attune_get_level": {
-                "description": (
-                    "Get current interaction level (1-5). "
-                    "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
-                ),
-                "input_schema": {"type": "object", "properties": {}},
-            },
-            "attune_set_level": {
-                "description": "Set interaction level (1-5) for this session.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "level": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 5,
-                            "description": "Interaction level (1-5)",
-                        },
-                    },
-                    "required": ["level"],
-                },
-            },
-            "context_get": {
-                "description": "Get session context value.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "key": {"type": "string", "description": "Context key to retrieve"},
-                    },
-                    "required": ["key"],
-                },
-            },
-            "context_set": {
-                "description": "Set session context value.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "key": {"type": "string", "description": "Context key"},
-                        "value": {"type": "string", "description": "Context value"},
-                    },
-                    "required": ["key", "value"],
-                },
-            },
         }
+
+    def _register_tools(self) -> dict[str, dict[str, Any]]:
+        """Register available MCP tools.
+
+        Returns:
+            Dictionary of tool definitions
+
+        """
+        tools: dict[str, dict[str, Any]] = {}
+        tools.update(self._register_workflow_tools())
+        tools.update(self._register_memory_tools())
+        tools.update(self._register_utility_tools())
+        return tools
 
     def _register_resources(self) -> dict[str, dict[str, Any]]:
         """Register available MCP resources.
@@ -689,16 +722,18 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 handler = self._plugin_handlers[tool_name]
                 return await handler(self, arguments)
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Tool execution failed: {tool_name}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": f"Tool execution failed: {type(e).__name__}"}
 
     async def _run_security_audit(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run security audit workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.security_audit import SecurityAuditWorkflow
 
+        validated_path = str(_validate_file_path(args["path"]))
         workflow = SecurityAuditWorkflow()
-        result = await workflow.execute(path=args["path"])
+        result = await workflow.execute(path=validated_path)
 
         return {
             "success": result.success,
@@ -710,10 +745,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _run_bug_predict(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run bug prediction workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.bug_predict import BugPredictWorkflow
 
+        validated_path = str(_validate_file_path(args["path"]))
         workflow = BugPredictWorkflow()
-        result = await workflow.execute(path=args["path"])
+        result = await workflow.execute(path=validated_path)
 
         return {
             "success": result.success,
@@ -723,10 +760,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _run_code_review(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run code review workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.code_review import CodeReviewWorkflow
 
+        validated_path = str(_validate_file_path(args["path"]))
         workflow = CodeReviewWorkflow()
-        result = await workflow.execute(target_path=args["path"])
+        result = await workflow.execute(target_path=validated_path)
 
         return {
             "success": result.success,
@@ -751,10 +790,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _run_performance_audit(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run performance audit workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.perf_audit import PerformanceAuditWorkflow
 
+        validated_path = str(_validate_file_path(args["path"]))
         workflow = PerformanceAuditWorkflow()
-        result = await workflow.execute(path=args["path"])
+        result = await workflow.execute(path=validated_path)
 
         return {
             "success": result.success,
@@ -765,10 +806,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _run_release_prep(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run release preparation workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.release_prep import ReleasePreparationWorkflow
 
+        validated_path = str(_validate_file_path(args.get("path", ".")))
         workflow = ReleasePreparationWorkflow(skip_approve_if_clean=True)
-        result = await workflow.execute(path=args.get("path", "."))
+        result = await workflow.execute(path=validated_path)
 
         return {
             "success": result.success,
@@ -793,15 +836,14 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _get_auth_recommend(self, args: dict[str, Any]) -> dict[str, Any]:
         """Get authentication recommendation."""
-        from pathlib import Path
-
         from attune.models import (
             count_lines_of_code,
             get_auth_strategy,
             get_module_size_category,
         )
+        from attune.security.path_validation import _validate_file_path
 
-        file_path = Path(args["file_path"])
+        file_path = _validate_file_path(args["file_path"])
         lines = count_lines_of_code(file_path)
         category = get_module_size_category(lines)
 

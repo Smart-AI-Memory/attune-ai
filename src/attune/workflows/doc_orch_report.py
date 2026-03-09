@@ -88,7 +88,7 @@ class DocOrchReportMixin:
                 if source_path.exists():
                     try:
                         source_content = source_path.read_text(encoding="utf-8")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         logger.warning(f"Could not read {source_path}: {e}")
 
                 # Run documentation generation
@@ -116,7 +116,7 @@ class DocOrchReportMixin:
                 else:
                     skipped.append(item.file_path)
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error generating docs for {item.file_path}: {e}")
                 skipped.append(item.file_path)
 
@@ -145,7 +145,7 @@ class DocOrchReportMixin:
             logger.info(
                 f"ProjectIndex updated with {len(generated) + len(updated)} documented files",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Could not update ProjectIndex: {e}")
 
     def _generate_summary(

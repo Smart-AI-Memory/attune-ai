@@ -162,7 +162,7 @@ class ASTFunctionAnalyzer(ast.NodeVisitor):
             if default_idx >= 0:
                 try:
                     default_val = ast.unparse(defaults[default_idx])
-                except Exception:
+                except Exception:  # noqa: BLE001
                     default_val = "..."
 
             params.append((param_name, param_type, default_val))

@@ -286,7 +286,7 @@ Be precise with ID references. Verify CWE/CVE mappings are accurate."""
                         for node, score in similar
                     ]
                     logger.info(f"Found {memory_hits} similar past audits in Memory Graph")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Error querying Memory Graph: {e}")
 
         # Build audit task for the crew
@@ -299,7 +299,7 @@ Be precise with ID references. Verify CWE/CVE mappings are accurate."""
             # Parse findings from result
             findings = parse_findings(result)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Security audit failed: {e}")
             # Return partial report with error
             return SecurityReport(
@@ -342,7 +342,7 @@ Be precise with ID references. Verify CWE/CVE mappings are accurate."""
                     },
                 )
                 self._graph._save()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Error storing audit in Memory Graph: {e}")
 
         return report

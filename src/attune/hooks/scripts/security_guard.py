@@ -220,7 +220,7 @@ if __name__ == "__main__":
         # Block: print reason to stderr, exit 2
         reason = result.get("reason", "Blocked by security guard")
         print(reason, file=sys.stderr)
-        sys.exit(0)
+        sys.exit(2)
 
     # Allow: exit 0
     sys.exit(0)

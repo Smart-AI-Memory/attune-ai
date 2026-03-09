@@ -161,7 +161,7 @@ class MemDocsStorage:
 
                     pattern_ids.append(data.get("pattern_id"))
 
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
 
         return pattern_ids

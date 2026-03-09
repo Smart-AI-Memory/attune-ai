@@ -236,7 +236,7 @@ class RedisStorageBase:
             return False
         try:
             return bool(self._client.ping())
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Health check is best-effort. Connection
             # failure is non-fatal. Consumers will handle
             # disconnection gracefully.

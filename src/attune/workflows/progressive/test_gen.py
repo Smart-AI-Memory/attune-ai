@@ -354,7 +354,7 @@ class ProgressiveTestGenWorkflow(ProgressiveWorkflow):
             tree = ast.parse(test_code)
             assertion_count = sum(1 for node in ast.walk(tree) if isinstance(node, ast.Assert))
             analysis.assertion_depth = assertion_count
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to count assertions: {e}")
             analysis.assertion_depth = 0
 
@@ -460,7 +460,7 @@ def execute_test_file(test_file: Path) -> dict[str, Any]:
             "output": "Test execution timed out",
             "returncode": -1,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Failed to execute tests: {e}")
         return {
             "passed": 0,
@@ -523,6 +523,6 @@ def calculate_coverage(test_file: Path, source_file: Path) -> float:
 
         return 0.0
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Failed to calculate coverage: {e}")
         return 0.0

@@ -465,7 +465,7 @@ class TestMaintenanceWorkflow:
                     },
                 )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Error processing %s: %s", item.file_path, e)
                 failed += 1
                 details.append(

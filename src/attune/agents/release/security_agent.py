@@ -98,7 +98,7 @@ class SecurityAuditorAgent(ReleaseAgent):
             critical = findings.get("critical_issues", 0)
             return critical == 0, findings
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Security audit failed: {e}")
             return False, {"error": str(e), "critical_issues": -1}
 

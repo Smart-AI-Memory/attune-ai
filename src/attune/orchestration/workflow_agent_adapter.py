@@ -99,7 +99,7 @@ class WorkflowAgentAdapter:
             except RuntimeError:
                 # No running loop - safe to call asyncio.run() directly
                 result = asyncio.run(workflow.execute(**input_data))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("WorkflowAgentAdapter: %s failed: %s", self.role, e)
             return SDKAgentResult(
                 agent_id=self.agent_id,

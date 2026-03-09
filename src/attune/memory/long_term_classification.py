@@ -144,7 +144,12 @@ def check_access(
     # INTERNAL: Check project team membership
     # Simplified: Grant access (production would check team membership)
     if classification == Classification.INTERNAL:
-        logger.debug("internal_access_check", user_id=user_id, granted=True)
+        logger.warning(
+            "internal_access_stub",
+            user_id=user_id,
+            message="INTERNAL stub always grants access; "
+            "replace with team membership check in production",
+        )
         return True
 
     # SENSITIVE: Require explicit permission

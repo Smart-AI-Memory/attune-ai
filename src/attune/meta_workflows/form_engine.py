@@ -151,7 +151,7 @@ class SocraticFormEngine:
                 result = self._ask_user_callback(questions)
                 logger.debug(f"Received {len(result)} responses from callback")
                 return result
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"AskUserQuestion callback failed: {e}")
                 if self._use_defaults_when_no_callback:
                     logger.warning("Falling back to default values")

@@ -270,7 +270,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
 
         except SecurityError:
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(
                 "pattern_storage_failed",
                 user_id=user_id,
@@ -369,7 +369,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
 
         except (PermissionError, ValueError, SecurityError):
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(
                 "pattern_retrieval_failed",
                 pattern_id=pattern_id,

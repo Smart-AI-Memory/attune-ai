@@ -75,7 +75,7 @@ class CoordinationService:
             except ImportError as e:
                 logger.warning(f"HeartbeatCoordinator import failed: {e}")
                 self._enable_heartbeat = False
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Redis unavailable shouldn't crash workflow
                 logger.warning(f"HeartbeatCoordinator init failed: {e}")
                 self._enable_heartbeat = False
@@ -113,7 +113,7 @@ class CoordinationService:
                 payload=payload or {},
                 ttl_seconds=ttl_seconds,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to send coordination signal: {e}")
             return ""
@@ -148,7 +148,7 @@ class CoordinationService:
                 timeout=timeout,
                 poll_interval=poll_interval,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to wait for signal: {e}")
             return None
@@ -180,7 +180,7 @@ class CoordinationService:
                 source_agent=source_agent,
                 consume=consume,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Signal failure shouldn't crash workflow
             logger.warning(f"Failed to check signal: {e}")
             return None
@@ -199,7 +199,7 @@ class CoordinationService:
             except ImportError as e:
                 logger.warning(f"CoordinationSignals import failed: {e}")
                 self._enable_coordination = False
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Redis unavailable shouldn't crash workflow
                 logger.warning(f"CoordinationSignals init failed: {e}")
                 self._enable_coordination = False

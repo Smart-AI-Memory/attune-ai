@@ -286,7 +286,7 @@ class TestLifecycleManager:
 
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Task %s failed: %s", task.id, e)
             task.status = "failed"
             task.result = {"error": str(e)}
@@ -387,7 +387,7 @@ class TestLifecycleManager:
             with open(self._queue_file, "w") as f:
                 json.dump(data, f, indent=2)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to save queue: %s", e)
 
     def _load_queue(self) -> None:
@@ -415,7 +415,7 @@ class TestLifecycleManager:
 
             logger.info("Loaded %s tasks from queue", len(self._queue))
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to load queue: %s", e)
 
     # ===== Scheduling =====

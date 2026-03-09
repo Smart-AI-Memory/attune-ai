@@ -106,7 +106,7 @@ def suggest_defaults_cmd(
             "Ensure memory and session modules are installed.",
         )
         raise typer.Exit(code=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 

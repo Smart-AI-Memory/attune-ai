@@ -191,6 +191,6 @@ class TransactionManager:
         finally:
             try:
                 self._base._client.unwatch()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Best effort cleanup - don't fail on unwatch errors
                 pass

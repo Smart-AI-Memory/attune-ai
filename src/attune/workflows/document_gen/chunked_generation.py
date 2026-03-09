@@ -188,7 +188,7 @@ Generate complete sections now, ensuring both phases are complete."""
                     logger.warning(error_message)
                     break
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 error_message = f"Error generating chunk {chunk_idx + 1}: {e}"
                 logger.error(error_message)
                 if not self.graceful_degradation:
@@ -324,7 +324,7 @@ Make all code examples complete and executable."""
                     polished_chunks.extend(sections[chunk_idx + 1 :])
                     break
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error polishing chunk {chunk_idx + 1}: {e}")
                 if self.graceful_degradation:
                     # Keep original section on error

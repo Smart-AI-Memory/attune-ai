@@ -116,7 +116,7 @@ class SessionContext:
             )
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to record choice: {e}")
             return False
 
@@ -147,7 +147,7 @@ class SessionContext:
 
             return None
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to get recent choice: {e}")
             return None
 
@@ -176,7 +176,7 @@ class SessionContext:
             logger.debug(f"Pattern matching not yet implemented: {pattern}")
             return {}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get recent choices: {e}")
             return {}
 
@@ -216,7 +216,7 @@ class SessionContext:
 
             return recent_choices
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to suggest defaults: {e}")
             return {}
 
@@ -262,7 +262,7 @@ class SessionContext:
             logger.debug(f"Recorded execution: run_id={run_id}, success={success}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to record execution: {e}")
             return False
 
@@ -291,7 +291,7 @@ class SessionContext:
             # For now, return basic stats
             return stats
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get session stats: {e}")
             return {"session_id": self.session_id, "error": str(e)}
 
@@ -312,7 +312,7 @@ class SessionContext:
             # Implementation would require pattern delete support
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to clear session: {e}")
             return False
 

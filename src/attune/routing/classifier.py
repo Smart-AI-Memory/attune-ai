@@ -8,11 +8,14 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any
 
 from .workflow_registry import WorkflowRegistry
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -143,10 +146,11 @@ Classify this request."""
                         extracted_context=data.get("extracted_context", {}),
                     )
                 except json.JSONDecodeError:
-                    pass
+                    logger.warning("llm_classification_json_error", exc_info=True)
 
-            except Exception as e:
-                print(f"LLM classification error: {e}")
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: LLM classification is optional; fall back to keywords
+                logger.exception("llm_classification_error: %s", e)
 
         # Fallback to keyword-based classification
         return self._keyword_classify(request, available_workflows)

@@ -46,7 +46,7 @@ def cmd_provider_show(args: Namespace) -> int:
     except ImportError:
         print("❌ Provider module not available")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Provider error: {e}")
         print(f"❌ Error: {e}")
@@ -79,7 +79,7 @@ def cmd_provider_set(args: Namespace) -> int:
     except ImportError:
         print("❌ Provider module not available")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Provider error: {e}")
         print(f"❌ Error: {e}")

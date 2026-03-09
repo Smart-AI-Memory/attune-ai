@@ -84,7 +84,7 @@ class ReloadNotificationManager:
         for websocket in connections:
             try:
                 await self._send_to_client(websocket, message)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error sending to client: {e}")
                 disconnected.append(websocket)
 
@@ -111,7 +111,7 @@ class ReloadNotificationManager:
         """
         try:
             await websocket.send_json(message)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send message to client: {e}")
             raise
 
@@ -171,7 +171,7 @@ def create_notification_callback() -> Callable[[dict[str, Any]], None]:
         except RuntimeError:
             # No event loop, log warning
             logger.warning("No event loop available for notification")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error in notification callback: {e}")
 
     return notification_callback
