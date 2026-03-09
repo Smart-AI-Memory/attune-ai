@@ -1,0 +1,257 @@
+"""Agent SDK Code Review Workflow.
+
+Delegates a full code review to the Claude Agent SDK, using four
+specialized subagents (security, quality, performance, architecture)
+and synthesizing their findings into a unified WorkflowResult.
+
+Copyright 2026 Smart-AI-Memory
+Licensed under Apache 2.0
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from .agent_sdk_adapter import AgentSDKResultAdapter
+from .base import BaseWorkflow, ModelTier
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
+
+logger = logging.getLogger(__name__)
+
+# Module-level availability guard for claude_agent_sdk
+_SDK_AVAILABLE = False
+try:
+    import claude_agent_sdk  # type: ignore[import-untyped]
+
+    _SDK_AVAILABLE = True
+except ImportError:
+    claude_agent_sdk = None  # type: ignore[assignment]
+
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "security-reviewer",
+    "quality-reviewer",
+    "perf-reviewer",
+    "architect-reviewer",
+]
+
+_MAIN_PROMPT_TEMPLATE = """\
+You are a senior code review orchestrator. Review the codebase at {path} \
+using the four specialized subagents below. Each subagent should focus on \
+its domain and report findings as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall code health score (0-100) and a 2-3 sentence executive summary.
+
+## Security
+Findings from the security reviewer.
+
+## Quality
+Findings from the quality reviewer.
+
+## Performance
+Findings from the performance reviewer.
+
+## Architecture
+Findings from the architecture reviewer.
+
+## Suggestions
+Actionable next steps ordered by priority.
+
+Be thorough but concise. Cite file paths and line numbers when possible.\
+"""
+
+
+class AgentCodeReviewWorkflow(BaseWorkflow):
+    """Code review workflow powered by the Claude Agent SDK.
+
+    Delegates all analysis to four Agent SDK subagents rather
+    than using the mixin stage system. Each subagent focuses on
+    a specific review domain (security, quality, performance,
+    architecture). The orchestrator synthesizes findings into a
+    unified report.
+
+    Usage::
+
+        workflow = AgentCodeReviewWorkflow()
+        result = await workflow.execute(path="src/", depth="standard")
+    """
+
+    name = "code-review-sdk"
+    description = "Agent SDK-powered code review with 4 specialized subagents"
+    stages = ["agent-review"]
+    tier_map = {"agent-review": ModelTier.CAPABLE}
+
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK code review.
+
+        Args:
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to review.
+                depth (str): Review depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
+
+        Returns:
+            WorkflowResult with findings, suggestions, and metadata.
+        """
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
+
+        if not path_arg:
+            return self._error_result("path argument is required")
+
+        if not _SDK_AVAILABLE:
+            return self._error_result(
+                "claude-agent-sdk not installed. " "Install with: pip install claude-agent-sdk"
+            )
+
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+
+        started_at = datetime.now()
+
+        try:
+            result_text = await self._run_agent_review(resolved_path, max_turns)
+
+            completed_at = datetime.now()
+
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+            )
+
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK code review failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_review(self, resolved_path: str, max_turns: int) -> str:
+        """Run the Agent SDK review and return result text.
+
+        Args:
+            resolved_path: Absolute path to review.
+            max_turns: Maximum agent turns.
+
+        Returns:
+            The agent's final result text.
+        """
+        result_parts: list[str] = []
+        async for message in claude_agent_sdk.query(
+            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                cwd=resolved_path,
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "security-reviewer": claude_agent_sdk.AgentDefinition(
+                        description="Security reviewer that finds vulnerabilities.",
+                        prompt=(
+                            "You are a security reviewer. Focus on: "
+                            "eval/exec usage, injection vulnerabilities, "
+                            "path traversal, hardcoded secrets, and "
+                            "authentication issues. Report each finding "
+                            "with file path, line number, severity, and "
+                            "remediation advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "quality-reviewer": claude_agent_sdk.AgentDefinition(
+                        description="Code quality reviewer for standards and patterns.",
+                        prompt=(
+                            "You are a code quality reviewer. Focus on: "
+                            "code complexity, error handling patterns, "
+                            "naming conventions, duplication, and test "
+                            "coverage gaps. Report each finding with "
+                            "file path, severity, and improvement advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "perf-reviewer": claude_agent_sdk.AgentDefinition(
+                        description="Performance reviewer for bottlenecks and inefficiencies.",
+                        prompt=(
+                            "You are a performance reviewer. Focus on: "
+                            "N+1 patterns, unnecessary list copies, "
+                            "blocking I/O in async code, and missing "
+                            "caching opportunities. Report each finding "
+                            "with file path, estimated impact, and fix."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "architect-reviewer": claude_agent_sdk.AgentDefinition(
+                        description="Architecture reviewer for design and coupling issues.",
+                        prompt=(
+                            "You are an architecture reviewer. Focus on: "
+                            "coupling between modules, SOLID violations, "
+                            "circular dependencies, API design issues, "
+                            "and abstraction level mismatches. Report "
+                            "each finding with affected modules and "
+                            "refactoring suggestions."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result)
+
+        return "\n".join(result_parts) if result_parts else "No results returned."
+
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-review",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK code review",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
+        )
