@@ -106,7 +106,12 @@ class HybridRouter:
             # Authentication strategy commands (CLI)
             "auth-show": ("utilities", "uv run attune provider show"),
             "auth-set": ("utilities", "uv run attune provider set"),
-            "auth": ("utilities", "uv run attune provider show"),
+            "auth": ("utilities", "uv run attune auth status"),
+            "auth-status": ("utilities", "uv run attune auth status"),
+            "subscription": ("utilities", "uv run attune auth status"),
+            "subscription-status": ("utilities", "uv run attune auth status"),
+            "my-subscription": ("utilities", "uv run attune auth status"),
+            "auth-setup": ("utilities", "uv run attune auth setup"),
             # Dependency and research workflows
             "deps": ("workflows", "run dependency-check"),
             "dependency-check": ("workflows", "run dependency-check"),

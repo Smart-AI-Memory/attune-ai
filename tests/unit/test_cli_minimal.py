@@ -255,6 +255,11 @@ class TestMainEdgeCases:
         captured = capsys.readouterr()
         assert "attune" in captured.out.lower()
 
+    def test_no_args_includes_auth_status_hint(self, capsys: pytest.CaptureFixture) -> None:
+        assert main([]) == 0
+        captured = capsys.readouterr()
+        assert "auth status" in captured.out
+
     def test_none_argv(self, capsys: pytest.CaptureFixture) -> None:
         with patch("sys.argv", ["attune"]):
             assert main(None) == 0
@@ -268,3 +273,77 @@ class TestMainEdgeCases:
     @patch(f"{_CLI}.cmd_workflow_list", return_value=1)
     def test_propagates_nonzero(self, mock_fn: MagicMock) -> None:
         assert main(["workflow", "list"]) == 1
+
+
+class TestCreateParserAuth:
+    """Tests for create_parser() — auth subcommands."""
+
+    @pytest.fixture
+    def parser(self) -> argparse.ArgumentParser:
+        return create_parser()
+
+    def test_auth_status(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "status"])
+        assert args.command == "auth"
+        assert args.auth_command == "status"
+        assert args.json is False
+
+    def test_auth_status_json(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "status", "--json"])
+        assert args.auth_command == "status"
+        assert args.json is True
+
+    def test_auth_setup(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "setup"])
+        assert args.command == "auth"
+        assert args.auth_command == "setup"
+
+    def test_auth_reset(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "reset"])
+        assert args.command == "auth"
+        assert args.auth_command == "reset"
+        assert args.confirm is False
+
+    def test_auth_reset_confirm(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "reset", "--confirm"])
+        assert args.auth_command == "reset"
+        assert args.confirm is True
+
+    def test_auth_recommend(self, parser: argparse.ArgumentParser) -> None:
+        args = parser.parse_args(["auth", "recommend", "src/foo.py"])
+        assert args.auth_command == "recommend"
+        assert args.file_path == "src/foo.py"
+
+
+class TestMainAuthRouting:
+    """Tests that main() routes auth subcommands correctly."""
+
+    @patch(f"{_CLI}.cmd_auth_status", return_value=0)
+    def test_auth_status(self, mock_fn: MagicMock) -> None:
+        assert main(["auth", "status"]) == 0
+        mock_fn.assert_called_once()
+
+    @patch(f"{_CLI}.cmd_auth_status", return_value=0)
+    def test_auth_status_json(self, mock_fn: MagicMock) -> None:
+        assert main(["auth", "status", "--json"]) == 0
+        mock_fn.assert_called_once()
+
+    @patch(f"{_CLI}.cmd_auth_setup", return_value=0)
+    def test_auth_setup(self, mock_fn: MagicMock) -> None:
+        assert main(["auth", "setup"]) == 0
+        mock_fn.assert_called_once()
+
+    @patch(f"{_CLI}.cmd_auth_reset", return_value=0)
+    def test_auth_reset(self, mock_fn: MagicMock) -> None:
+        assert main(["auth", "reset", "--confirm"]) == 0
+        mock_fn.assert_called_once()
+
+    @patch(f"{_CLI}.cmd_auth_recommend", return_value=0)
+    def test_auth_recommend(self, mock_fn: MagicMock) -> None:
+        assert main(["auth", "recommend", "src/foo.py"]) == 0
+        mock_fn.assert_called_once()
+
+    def test_auth_no_subcommand(self, capsys: pytest.CaptureFixture) -> None:
+        assert main(["auth"]) == 1
+        captured = capsys.readouterr()
+        assert "auth" in captured.out.lower()
