@@ -112,9 +112,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def estimate_tokens(obj: Any) -> int:
-    """Rough token estimate: ~4 characters per token."""
-    return len(str(obj)) // 4
+def estimate_tokens(obj: Any, max_chars: int = 1_000_000) -> int:
+    """Rough token estimate: ~4 characters per token.
+
+    Args:
+        obj: Object to estimate tokens for.
+        max_chars: Upper bound on characters to inspect (default 1M).
+
+    Returns:
+        Estimated token count (capped at max_chars // 4).
+
+    """
+    if isinstance(obj, str):
+        return min(len(obj), max_chars) // 4
+    # Fallback: cap str() conversion to avoid unbounded allocation
+    s = str(obj)[:max_chars]
+    return len(s) // 4
 
 
 class BaseWorkflow(

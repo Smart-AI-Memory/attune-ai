@@ -81,21 +81,25 @@ def _should_exclude_file(file_path: str, exclude_patterns: list[str]) -> bool:
         True if the file matches any exclusion pattern.
 
     """
+    # Normalise to forward slashes for consistent matching
+    normalised = file_path.replace("\\", "/")
+
     for pattern in exclude_patterns:
-        # Handle ** patterns for recursive matching
         if "**" in pattern:
-            # Convert ** glob to fnmatch-compatible pattern
-            parts = pattern.split("**")
-            if len(parts) == 2:
-                prefix, suffix = parts
-                # Check if file path contains the pattern structure
-                if prefix and not file_path.startswith(prefix.rstrip("/")):
-                    continue
-                if suffix and fnmatch.fnmatch(file_path, f"*{suffix}"):
-                    return True
-                if not suffix and fnmatch.fnmatch(file_path, f"*{prefix}*"):
-                    return True
-        elif fnmatch.fnmatch(file_path, pattern) or fnmatch.fnmatch(
+            # Convert ** glob to fnmatch: replace ** with multi-segment wildcard
+            # e.g. "**/test_*.py" -> "*test_*.py" (matches any depth)
+            # e.g. "tests/**" -> "tests/*" (matches anything under tests/)
+            # Convert ** globs to fnmatch patterns
+            # "tests/**" should match "tests/unit/test_foo.py" (any depth)
+            fn_pattern = pattern.replace("**", "*")
+            # Also try with PurePosixPath.match semantics for recursive globs
+            from pathlib import PurePosixPath
+
+            if PurePosixPath(normalised).match(pattern):
+                return True
+            if fnmatch.fnmatch(normalised, fn_pattern):
+                return True
+        elif fnmatch.fnmatch(normalised, pattern) or fnmatch.fnmatch(
             Path(file_path).name,
             pattern,
         ):
@@ -203,7 +207,7 @@ def _has_problematic_exception_handlers(
     for i, line in enumerate(lines):
         stripped = line.strip()
 
-        # Check for broad exception patterns
+        # Check for broad exception patterns (string search, not code execution)
         if stripped.startswith("except:") or stripped.startswith("except Exception"):
             context_before = lines[max(0, i - 5) : i]
             context_after = lines[i + 1 : min(len(lines), i + 6)]

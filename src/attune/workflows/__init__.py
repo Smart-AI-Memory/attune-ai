@@ -31,6 +31,7 @@ Licensed under the Apache License, Version 2.0
 
 import importlib.metadata
 import importlib.util
+import logging
 import os
 from typing import TYPE_CHECKING
 
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
     from .code_review import CodeReviewWorkflow
     from .code_review_pipeline import CodeReviewPipeline, CodeReviewPipelineResult
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
+    from .deep_review_agent_sdk import DeepReviewAgentSDKWorkflow
     from .dependency_check import DependencyCheckWorkflow
     from .doc_audit import DocAuditWorkflow
     from .document_gen import DocumentGenerationWorkflow
@@ -118,6 +120,8 @@ from .routing import (
 )
 from .step_config import WorkflowStepConfig, steps_from_tier_map, validate_step_config
 
+logger = logging.getLogger(__name__)
+
 # Lazy import mapping for workflow classes
 _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # Core workflows
@@ -163,6 +167,8 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "BatchProcessingWorkflow": (".batch_processing", "BatchProcessingWorkflow"),
     "ProgressiveTestGenWorkflow": (".progressive.test_gen", "ProgressiveTestGenWorkflow"),
     "AutonomousTestGenerator": (".autonomous_test_gen", "AutonomousTestGenerator"),
+    "AgentCodeReviewWorkflow": (".code_review_agent_sdk", "AgentCodeReviewWorkflow"),
+    "DeepReviewAgentSDKWorkflow": (".deep_review_agent_sdk", "DeepReviewAgentSDKWorkflow"),
     "XMLAgent": (".xml_enhanced_crew", "XMLAgent"),
     "XMLTask": (".xml_enhanced_crew", "XMLTask"),
     "parse_xml_response": (".xml_enhanced_crew", "parse_xml_response"),
@@ -178,7 +184,19 @@ _loaded_workflow_modules: dict[str, object] = {}
 
 
 def _lazy_import_workflow(name: str) -> object:
-    """Import a workflow class lazily."""
+    """Import a workflow class lazily.
+
+    Args:
+        name: Class name to import (must be in _LAZY_WORKFLOW_IMPORTS).
+
+    Returns:
+        The imported class or object.
+
+    Raises:
+        AttributeError: If name is not a known lazy import.
+        ImportError: If the module cannot be loaded.
+
+    """
     if name not in _LAZY_WORKFLOW_IMPORTS:
         raise AttributeError(f"module 'attune.workflows' has no attribute '{name}'")
 
@@ -192,8 +210,12 @@ def _lazy_import_workflow(name: str) -> object:
     # Import the module and get the attribute
     import importlib
 
-    module = importlib.import_module(module_path, package="attune.workflows")
-    attr = getattr(module, attr_name)
+    try:
+        module = importlib.import_module(module_path, package="attune.workflows")
+        attr = getattr(module, attr_name)
+    except (ImportError, AttributeError) as e:
+        logger.debug(f"Failed to lazy-import {name} from {module_path}: {e}")
+        raise
 
     # Cache and return
     _loaded_workflow_modules[cache_key] = attr
@@ -263,6 +285,10 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "release-prep": "ReleasePrepTeamWorkflow",
     # Research and synthesis workflows
     "research-synthesis": "ResearchSynthesisWorkflow",
+    # Agent SDK code review (v3.9)
+    "code-review-sdk": "AgentCodeReviewWorkflow",
+    # Multi-pass deep review (v3.9)
+    "deep-review-sdk": "DeepReviewAgentSDKWorkflow",
     # test-maintenance: Removed — utility class, not a BaseWorkflow.
     # Import directly: from attune.workflows.test_maintenance import TestMaintenanceWorkflow
     # batch-processing: Removed — batch API client with execute_batch().
@@ -368,9 +394,9 @@ def discover_workflows(
                 if isinstance(workflow_cls, type) and hasattr(workflow_cls, "execute"):
                     if config is None or ep.name not in config.disabled_workflows:
                         discovered[ep.name] = workflow_cls
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     return discovered
@@ -580,6 +606,8 @@ __all__ = [
     "BatchProcessingWorkflow",
     "ProgressiveTestGenWorkflow",
     "AutonomousTestGenerator",
+    # Multi-pass deep review (Agent SDK)
+    "DeepReviewAgentSDKWorkflow",
     # XML-enhanced prompting
     "XMLAgent",
     "XMLTask",

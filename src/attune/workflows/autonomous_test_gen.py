@@ -122,13 +122,15 @@ class AutonomousTestGenerator(
             self.coordinator = HeartbeatCoordinator(memory=self.memory, enable_streaming=True)
             self.event_streamer = EventStreamer(memory=self.memory)
             self.feedback_loop = FeedbackLoop(memory=self.memory)
-        except Exception as e:
+        except (ConnectionError, ImportError, OSError) as e:
             logger.warning(f"Failed to initialize memory backend: {e}")
             self.coordinator = HeartbeatCoordinator()
             self.event_streamer = None
             self.feedback_loop = None
 
-        self.output_dir = Path(f"tests/behavioral/generated/batch{batch_num}")
+        # Validate batch_num to prevent path traversal
+        validated_dir = _validate_file_path(f"tests/behavioral/generated/batch{int(batch_num)}")
+        self.output_dir = validated_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
@@ -224,7 +226,7 @@ class AutonomousTestGenerator(
                                 },
                             )
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     results["failed"] += 1
                     logger.error(f"❌ Error generating tests for {module_name}: {e}")
 
@@ -252,7 +254,7 @@ class AutonomousTestGenerator(
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Error tracking
             self.coordinator.beat(status="failed", progress=0.0, current_task=f"Failed: {e!s}")
             raise
@@ -284,7 +286,7 @@ class AutonomousTestGenerator(
         # Read source to understand what needs testing
         try:
             source_code = source_file.read_text()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Cannot read {source_file}: {e}")
             return None
 
@@ -527,7 +529,7 @@ Return ONLY the complete Python test file content, no explanations."""
             logger.info(f"Test content cleaned, final size: {len(test_content)} bytes")
             return test_content
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"LLM generation error for {module_name}: {e}", exc_info=True)
             return None
 
@@ -551,7 +553,7 @@ Return ONLY the complete Python test file content, no explanations."""
         except SyntaxError as e:
             logger.error(f"❌ Syntax error in {test_file.name} at line {e.lineno}: {e.msg}")
             return False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"❌ Cannot parse {test_file.name}: {e}")
             return False
 
@@ -575,7 +577,7 @@ Return ONLY the complete Python test file content, no explanations."""
         except subprocess.TimeoutExpired:
             logger.error(f"❌ Validation timeout for {test_file.name}")
             return False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"❌ Validation exception for {test_file}: {e}")
             return False
 
@@ -598,7 +600,7 @@ Return ONLY the complete Python test file content, no explanations."""
                 if "tests collected" in line:
                     return int(line.split()[0])
             return 0
-        except Exception:
+        except Exception:  # noqa: BLE001
             return 0
 
 
