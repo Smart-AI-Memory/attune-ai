@@ -49,6 +49,14 @@ class TestPerfPatterns:
             assert info["impact"] in valid_impacts
 
 
+@pytest.fixture(autouse=True)
+def _reset_perf_audit_tier_map():
+    """Reset the shared class-level tier_map before each test."""
+    original = PerformanceAuditWorkflow.tier_map.copy()
+    yield
+    PerformanceAuditWorkflow.tier_map.update(original)
+
+
 class TestPerformanceAuditWorkflowInit:
     """Tests for PerformanceAuditWorkflow initialization."""
 

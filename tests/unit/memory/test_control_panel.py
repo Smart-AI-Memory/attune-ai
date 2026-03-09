@@ -393,11 +393,11 @@ class TestAPIKeyAuth:
         assert auth.api_key == "env-key-456"
 
     def test_initialization_no_key(self, monkeypatch):
-        """Test initialization without API key (disabled)."""
+        """Test initialization without API key auto-generates one."""
         monkeypatch.delenv("EMPATHY_MEMORY_API_KEY", raising=False)
         auth = APIKeyAuth()
-        assert auth.enabled is False
-        assert auth._key_hash is None
+        assert auth.enabled is True
+        assert auth._key_hash is not None
 
     def test_is_valid_correct_key(self):
         """Test validation with correct API key."""
@@ -415,13 +415,13 @@ class TestAPIKeyAuth:
         assert auth.is_valid(None) is False
         assert auth.is_valid("") is False
 
-    def test_is_valid_auth_disabled(self):
-        """Test that validation passes when auth is disabled."""
+    def test_auto_generated_key_rejects_wrong_keys(self):
+        """Test that auto-generated key rejects arbitrary keys."""
         auth = APIKeyAuth(api_key=None)
-        assert auth.enabled is False
-        # Should allow any request when disabled
-        assert auth.is_valid(None) is True
-        assert auth.is_valid("any-key") is True
+        assert auth.enabled is True
+        # Auto-generated key rejects None and wrong keys
+        assert auth.is_valid(None) is False
+        assert auth.is_valid("wrong-key") is False
 
 
 # =============================================================================

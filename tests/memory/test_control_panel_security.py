@@ -256,12 +256,12 @@ class TestRateLimiter:
 class TestAPIKeyAuth:
     """Tests for APIKeyAuth class."""
 
-    def test_auth_disabled_when_no_key(self):
-        """Auth should be disabled when no key is provided."""
+    def test_auth_auto_generated_when_no_key(self):
+        """Auth should auto-generate a key when none is provided."""
         auth = APIKeyAuth(api_key=None)
-        assert auth.enabled is False
-        assert auth.is_valid(None) is True
-        assert auth.is_valid("any-key") is True
+        assert auth.enabled is True
+        assert auth._key_hash is not None
+        assert auth.is_valid("wrong-key") is False
 
     def test_auth_enabled_when_key_provided(self):
         """Auth should be enabled when key is provided."""

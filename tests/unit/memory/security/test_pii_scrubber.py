@@ -144,11 +144,11 @@ class TestPIIDetection:
         assert len(detections) >= 1
         detection = detections[0]
 
-        # to_dict should include all fields
+        # to_dict now delegates to audit-safe dict (no PII values)
         detection_dict = detection.to_dict()
         assert "pii_type" in detection_dict
-        assert "matched_text" in detection_dict
-        assert "start_pos" in detection_dict
+        assert "matched_text" not in detection_dict
+        assert "position" in detection_dict
         assert "confidence" in detection_dict
 
     def test_detection_to_audit_safe_dict(self, scrubber):

@@ -41,10 +41,11 @@ class TestPIIDetection:
             metadata={"format": "US"},
         )
         result = detection.to_dict()
+        # to_dict() now delegates to to_audit_safe_dict() (SEC-14)
         assert result["pii_type"] == "phone"
-        assert result["matched_text"] == "555-123-4567"
+        assert "matched_text" not in result
+        assert "position" in result
         assert result["confidence"] == 0.95
-        assert result["metadata"] == {"format": "US"}
 
     def test_pii_detection_to_audit_safe_dict(self):
         """Test audit-safe dictionary (no PII values)"""

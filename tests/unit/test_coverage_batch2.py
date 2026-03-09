@@ -1856,8 +1856,8 @@ class TestMergeCodeReviewResults:
         result = merge_code_review_results(crew, wf)
         assert result["verdict"] == "reject"
 
-    def test_merge_severity_takes_max(self) -> None:
-        """Test merged severity counts take the max from each source."""
+    def test_merge_severity_sums_counts(self) -> None:
+        """Test merged severity counts sum from each source (QLT-05)."""
         from attune.workflows.code_review_adapters import merge_code_review_results
 
         crew = {
@@ -1878,7 +1878,7 @@ class TestMergeCodeReviewResults:
         severity = result["assessment"]["severity_breakdown"]
         assert severity["critical"] == 1
         assert severity["high"] == 3
-        assert severity["medium"] == 2
+        assert severity["medium"] == 3
         assert severity["low"] == 5
 
     def test_merge_has_blocking_issues_with_critical(self) -> None:

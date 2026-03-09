@@ -569,7 +569,7 @@ class TestFileRotation:
             f.write(large_data)
 
         # Create a rotated file with today's date to force counter increment
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         existing_rotated = temp_dir / f"usage.{today}.jsonl"
         existing_rotated.write_text("existing data")
 
@@ -1119,7 +1119,7 @@ class TestEdgeCases:
         large_data = "x" * 1024 * 1024  # 1 MB
         tracker.usage_file.write_text(large_data)
 
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         # Trigger first rotation
         tracker._rotate_if_needed()
