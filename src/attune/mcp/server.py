@@ -6,6 +6,7 @@ Exposes Empathy workflows as MCP tools for Claude Code integration.
 import asyncio
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -40,8 +41,15 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     that can be invoked from Claude Code.
     """
 
-    def __init__(self):
-        """Initialize the MCP server."""
+    def __init__(self, workspace_root: str | None = None):
+        """Initialize the MCP server.
+
+        Args:
+            workspace_root: Root directory for workspace path
+                containment. Defaults to current working directory.
+
+        """
+        self._workspace_root = workspace_root or os.getcwd()
         self.tools = self._register_tools()
         self.resources = self._register_resources()
         self.prompts = self._register_prompts()
@@ -731,7 +739,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         from attune.security.path_validation import _validate_file_path
         from attune.workflows.security_audit import SecurityAuditWorkflow
 
-        validated_path = str(_validate_file_path(args["path"]))
+        validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
         workflow = SecurityAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
@@ -746,10 +754,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     async def _run_bug_predict(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run bug prediction workflow."""
         from attune.security.path_validation import _validate_file_path
-        from attune.workflows.bug_predict import BugPredictWorkflow
 
-        validated_path = str(_validate_file_path(args["path"]))
-        workflow = BugPredictWorkflow()
+        validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
+
+        from attune.workflows.bug_predict import BugPredictionWorkflow
+
+        workflow = BugPredictionWorkflow()
         result = await workflow.execute(path=validated_path)
 
         return {
@@ -763,7 +773,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         from attune.security.path_validation import _validate_file_path
         from attune.workflows.code_review import CodeReviewWorkflow
 
-        validated_path = str(_validate_file_path(args["path"]))
+        validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
         workflow = CodeReviewWorkflow()
         result = await workflow.execute(target_path=validated_path)
 
@@ -793,7 +803,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         from attune.security.path_validation import _validate_file_path
         from attune.workflows.perf_audit import PerformanceAuditWorkflow
 
-        validated_path = str(_validate_file_path(args["path"]))
+        validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
         workflow = PerformanceAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
@@ -809,7 +819,9 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         from attune.security.path_validation import _validate_file_path
         from attune.workflows.release_prep import ReleasePreparationWorkflow
 
-        validated_path = str(_validate_file_path(args.get("path", ".")))
+        validated_path = str(
+            _validate_file_path(args.get("path", "."), allowed_dir=self._workspace_root)
+        )
         workflow = ReleasePreparationWorkflow(skip_approve_if_clean=True)
         result = await workflow.execute(path=validated_path)
 
@@ -843,7 +855,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         )
         from attune.security.path_validation import _validate_file_path
 
-        file_path = _validate_file_path(args["file_path"])
+        file_path = _validate_file_path(args["file_path"], allowed_dir=self._workspace_root)
         lines = count_lines_of_code(file_path)
         category = get_module_size_category(lines)
 
