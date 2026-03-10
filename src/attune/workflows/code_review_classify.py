@@ -89,16 +89,19 @@ class ClassifyMixin:
                 target_path = target or diff
                 total_lines = 0
                 if target_path:
-                    target_obj = Path(target_path)
-                    if target_obj.exists():
-                        if target_obj.is_file():
-                            total_lines = count_lines_of_code(target_obj)
-                        elif target_obj.is_dir():
-                            for py_file in target_obj.rglob("*.py"):
-                                try:
-                                    total_lines += count_lines_of_code(py_file)
-                                except (OSError, UnicodeDecodeError):
-                                    pass
+                    try:
+                        target_obj = Path(target_path)
+                        if target_obj.exists():
+                            if target_obj.is_file():
+                                total_lines = count_lines_of_code(target_obj)
+                            elif target_obj.is_dir():
+                                for py_file in target_obj.rglob("*.py"):
+                                    try:
+                                        total_lines += count_lines_of_code(py_file)
+                                    except (OSError, UnicodeDecodeError):
+                                        pass
+                    except OSError:
+                        pass  # Invalid path (e.g. "..." on Windows)
 
                 if total_lines > 0:
                     strategy = get_auth_strategy()

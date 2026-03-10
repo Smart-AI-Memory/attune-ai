@@ -39,6 +39,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -207,7 +208,7 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             raise ValueError(f"Project root does not exist: {self.project_root}")
 
         logger.info("Starting health check: mode=%s, root=%s", self.mode, self.project_root)
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.perf_counter()
 
         # Prepare context
         full_context = {
@@ -239,8 +240,7 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         report = await self._create_report(strategy_result, agents)
 
         # Set execution time
-        end_time = asyncio.get_event_loop().time()
-        report.execution_time = end_time - start_time
+        report.execution_time = time.perf_counter() - start_time
 
         # Save to tracking history
         self._save_tracking_history(report)
