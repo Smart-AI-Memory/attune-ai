@@ -92,6 +92,13 @@ jobs:
             echo "scan_status=failed" >> $GITHUB_OUTPUT
           fi
 
+      - name: Ensure results file exists
+        if: always()
+        run: |
+          if [ ! -f security_results.json ]; then
+            echo '{"findings": [], "error": "Security scan produced no output"}' > security_results.json
+          fi
+
       - name: Parse and analyze results
         id: analyze
         run: |
