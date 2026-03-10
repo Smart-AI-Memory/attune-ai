@@ -28,6 +28,7 @@ class TestRegistryConsolidation:
         "autonomous-test-gen",
         "progressive-test-gen",
         "test-coverage-boost",
+        "test-gen-parallel",
     ]
 
     CANONICAL_SLUGS = [
@@ -36,7 +37,6 @@ class TestRegistryConsolidation:
         "doc-orchestrator",
         "release-prep",
         "test-gen",
-        "test-gen-parallel",
         "secure-release",
         "bug-predict",
         "security-audit",
@@ -99,8 +99,9 @@ class TestMigrationAliases:
             ("pr-review", "code-review"),
             ("document-manager", "doc-gen"),
             ("orchestrated-release-prep", "release-prep"),
-            ("autonomous-test-gen", "test-gen-parallel"),
-            ("progressive-test-gen", "test-gen-parallel"),
+            ("test-gen-parallel", "test-gen"),
+            ("autonomous-test-gen", "test-gen"),
+            ("progressive-test-gen", "test-gen"),
             ("test-coverage-boost", "test-gen"),
             ("secure-release", "release-prep"),
         ],
@@ -200,6 +201,7 @@ class TestListMigrations:
             "pr-review",
             "document-manager",
             "orchestrated-release-prep",
+            "test-gen-parallel",
             "autonomous-test-gen",
             "progressive-test-gen",
             "test-coverage-boost",

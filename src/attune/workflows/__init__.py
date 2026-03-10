@@ -304,7 +304,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # Generation workflows
     "test-audit": "TestAuditWorkflow",
     "test-gen": "TestGenerationWorkflow",
-    "test-gen-parallel": "ParallelTestGenerationWorkflow",
+    # test-gen-parallel: Consolidated into test-gen (migration.py)
     "refactor-plan": "RefactorPlanWorkflow",
     # Operational workflows
     "dependency-check": "DependencyCheckWorkflow",
@@ -345,8 +345,9 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # "pr-review" -> code-review (migration.py)
     # "document-manager" -> doc-gen (migration.py)
     # "orchestrated-release-prep" -> release-prep (migration.py)
-    # "autonomous-test-gen" -> test-gen-parallel (migration.py)
-    # "progressive-test-gen" -> test-gen-parallel (migration.py)
+    # "test-gen-parallel" -> test-gen (migration.py)
+    # "autonomous-test-gen" -> test-gen (migration.py)
+    # "progressive-test-gen" -> test-gen (migration.py)
     # "test-coverage-boost" -> test-gen (migration.py)
 }
 
