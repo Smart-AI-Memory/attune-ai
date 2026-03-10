@@ -5,6 +5,50 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.3] - 2026-03-09
+
+### Added
+
+- **Anthropic Agent SDK adapters** — Code review and deep
+  review workflows now have Agent SDK adapter layers
+  (`code_review_agent_sdk.py`, `deep_review_agent_sdk.py`),
+  beginning native SDK integration.
+- **Workflow validation framework** — `validation.py`
+  provides input/output contract validation for all
+  workflow executions.
+- **`/bulk` and `/pipeline` command specs** — Documented
+  command specifications for batch API and spec-driven
+  development lifecycle.
+- **290 new tests** — Comprehensive suites for pipeline
+  models, validation framework, behavioral tests for
+  secure release and test-audit workflows, and SDK adapter
+  coverage.
+
+### Fixed
+
+- **Deprecated `datetime.utcnow()` replaced** — Migrated
+  to `datetime.now(timezone.utc)` across the entire
+  codebase, including timestamp parsers and test fixtures.
+- **F-string logger calls replaced** — Converted
+  `logger.info(f"...")` to `logger.info("...", ...)` lazy
+  formatting across affected modules.
+- **SDK agent security hardening** — Addressed code review
+  findings: error handling, input validation, and
+  performance improvements in agent SDK modules.
+- **Dead module cleanup** — Removed unused modules and
+  updated lesson references from simplify sweep.
+
+### Changed
+
+- **100% public API docstrings** — Added missing docstrings
+  and cleaned up formatting across 197 source files.
+- **BLE001 annotations** — Added `# noqa: BLE001` +
+  `# INTENTIONAL` to remaining justified broad exception
+  catches from deep review.
+- **Test and config cleanups** — Security guard, PII
+  scrubber, control panel, and wiring consistency test
+  improvements.
+
 ## [3.9.2] - 2026-03-05
 
 ### Fixed
