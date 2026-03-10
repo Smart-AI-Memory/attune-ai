@@ -2502,6 +2502,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#attune.persistence.StateManager.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#attune.persistence.StateManager.delete_state" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2567,6 +2578,17 @@
     <span class="md-ellipsis">
       
         MetricsCollector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attune.persistence.MetricsCollector.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
       
     </span>
   </a>
@@ -3556,6 +3578,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#attune.persistence.StateManager.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#attune.persistence.StateManager.delete_state" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3621,6 +3654,17 @@
     <span class="md-ellipsis">
       
         MetricsCollector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attune.persistence.MetricsCollector.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
       
     </span>
   </a>
@@ -4380,6 +4424,55 @@ PatternPersistence.save_to_sqlite(library, "patterns.db")</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="attune.persistence.StateManager.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">storage_path</span><span class="o">=</span><span class="s1">&#39;./attune_state&#39;</span><span class="p">)</span></code>
+
+<a href="#attune.persistence.StateManager.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize StateManager with a storage directory.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>storage_path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Directory for persisting user state JSON files.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;./attune_state&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="attune.persistence.StateManager.delete_state" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">delete_state</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span></code>
 
@@ -4754,6 +4847,55 @@ manager.save_state("user123", empathy.collaboration_state)</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="attune.persistence.MetricsCollector.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="s1">&#39;./metrics.db&#39;</span><span class="p">)</span></code>
+
+<a href="#attune.persistence.MetricsCollector.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize MetricsCollector with a SQLite database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db_path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the SQLite database file.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;./metrics.db&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 

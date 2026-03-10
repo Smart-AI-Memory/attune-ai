@@ -2359,6 +2359,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#attune.levels.EmpathyLevel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#attune.levels.EmpathyLevel.get_action_history" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3323,6 +3334,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#attune.levels.EmpathyLevel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#attune.levels.EmpathyLevel.get_action_history" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3917,7 +3939,8 @@ level of empathy sophistication.</p>
 <span class="normal"><a href="#__codelineno-0-108">108</a></span>
 <span class="normal"><a href="#__codelineno-0-109">109</a></span>
 <span class="normal"><a href="#__codelineno-0-110">110</a></span>
-<span class="normal"><a href="#__codelineno-0-111">111</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">class</span><span class="w"> </span><span class="nc">EmpathyLevel</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">class</span><span class="w"> </span><span class="nc">EmpathyLevel</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for empathy levels</span>
 <a id="__codelineno-0-40" name="__codelineno-0-40"></a>
 <a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    Each level implements specific behaviors appropriate to that</span>
@@ -3928,69 +3951,70 @@ level of empathy sophistication.</p>
 <a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">level_name</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-0-47" name="__codelineno-0-47"></a>
 <a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="nd">@abstractmethod</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Respond to a situation at this empathy level.</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        This abstract method defines the core behavior for each empathy level.</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        Subclasses must implement level-specific response logic that corresponds</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        to their empathy sophistication.</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">            context: dict[str, Any]</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">                Dictionary containing situation-specific context. The structure</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">                varies by level but typically includes fields like &#39;request&#39;,</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">                &#39;observed_need&#39;, &#39;current_state&#39;, &#39;trajectory&#39;, or &#39;problem_class&#39;.</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">            dict[str, Any]</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">                A response dictionary containing:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">                - &#39;level&#39;: int - The empathy level (1-5)</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">                - &#39;level_name&#39;: str - Human-readable level name</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">                - &#39;action&#39;: str - Type of action taken</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">                - &#39;description&#39;: str - Description of the response</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">                - &#39;initiative&#39;: str - Level (&#39;none&#39;|&#39;guided&#39;|&#39;proactive&#39;|&#39;anticipatory&#39;|&#39;systems&#39;)</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">                - &#39;reasoning&#39;: str - Explanation of why this level&#39;s approach was used</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">                - Additional fields specific to the level implementation</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        Raises:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">            KeyError: If required context keys are missing</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">            ValueError: If context values are invalid or insufficient</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">        Note:</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">            - Level 1 (Reactive): Only provide what was explicitly requested</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">            - Level 2 (Guided): Ask clarifying questions and suggest options</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">            - Level 3 (Proactive): Identify and offer help for observed needs</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">            - Level 4 (Anticipatory): Predict future needs and prepare solutions</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">            - Level 5 (Systems): Design solutions that help at scale</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">            Implementations should record actions via self.record_action() and</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">            maintain consistency in the response format across levels.</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">record_action</span><span class="p">(</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">action_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="p">):</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Record an action taken at this level&quot;&quot;&quot;</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="n">action</span> <span class="o">=</span> <span class="n">EmpathyAction</span><span class="p">(</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>            <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">level_number</span><span class="p">,</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>            <span class="n">action_type</span><span class="o">=</span><span class="n">action_type</span><span class="p">,</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>            <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>            <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="p">)</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_action_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]:</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get history of actions at this level&quot;&quot;&quot;</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize EmpathyLevel with an empty actions history.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="nd">@abstractmethod</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Respond to a situation at this empathy level.</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        This abstract method defines the core behavior for each empathy level.</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        Subclasses must implement level-specific response logic that corresponds</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        to their empathy sophistication.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">            context: dict[str, Any]</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">                Dictionary containing situation-specific context. The structure</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">                varies by level but typically includes fields like &#39;request&#39;,</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">                &#39;observed_need&#39;, &#39;current_state&#39;, &#39;trajectory&#39;, or &#39;problem_class&#39;.</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">            dict[str, Any]</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">                A response dictionary containing:</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">                - &#39;level&#39;: int - The empathy level (1-5)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">                - &#39;level_name&#39;: str - Human-readable level name</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">                - &#39;action&#39;: str - Type of action taken</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">                - &#39;description&#39;: str - Description of the response</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">                - &#39;initiative&#39;: str - Level (&#39;none&#39;|&#39;guided&#39;|&#39;proactive&#39;|&#39;anticipatory&#39;|&#39;systems&#39;)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">                - &#39;reasoning&#39;: str - Explanation of why this level&#39;s approach was used</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">                - Additional fields specific to the level implementation</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        Raises:</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">            KeyError: If required context keys are missing</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">            ValueError: If context values are invalid or insufficient</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        Note:</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">            - Level 1 (Reactive): Only provide what was explicitly requested</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">            - Level 2 (Guided): Ask clarifying questions and suggest options</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">            - Level 3 (Proactive): Identify and offer help for observed needs</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">            - Level 4 (Anticipatory): Predict future needs and prepare solutions</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">            - Level 5 (Systems): Design solutions that help at scale</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">            Implementations should record actions via self.record_action() and</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">            maintain consistency in the response format across levels.</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">record_action</span><span class="p">(</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">action_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="p">):</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Record an action taken at this level&quot;&quot;&quot;</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="n">action</span> <span class="o">=</span> <span class="n">EmpathyAction</span><span class="p">(</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>            <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">level_number</span><span class="p">,</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>            <span class="n">action_type</span><span class="o">=</span><span class="n">action_type</span><span class="p">,</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>            <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>            <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="p">)</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_action_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]:</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get history of actions at this level&quot;&quot;&quot;</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4010,6 +4034,33 @@ level of empathy sophistication.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="attune.levels.EmpathyLevel.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">()</span></code>
+
+<a href="#attune.levels.EmpathyLevel.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize EmpathyLevel with an empty actions history.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/attune/levels.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize EmpathyLevel with an empty actions history.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="attune.levels.EmpathyLevel.get_action_history" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">get_action_history</span><span class="p">()</span></code>
 
@@ -4023,11 +4074,11 @@ level of empathy sophistication.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/attune/levels.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-109">109</a></span>
-<span class="normal"><a href="#__codelineno-0-110">110</a></span>
-<span class="normal"><a href="#__codelineno-0-111">111</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_action_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]:</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get history of actions at this level&quot;&quot;&quot;</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_action_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmpathyAction</span><span class="p">]:</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get history of actions at this level&quot;&quot;&quot;</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4050,8 +4101,7 @@ level of empathy sophistication.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/attune/levels.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
-<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
 <span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
 <span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
 <span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
@@ -4065,22 +4115,23 @@ level of empathy sophistication.</p>
 <span class="normal"><a href="#__codelineno-0-104">104</a></span>
 <span class="normal"><a href="#__codelineno-0-105">105</a></span>
 <span class="normal"><a href="#__codelineno-0-106">106</a></span>
-<span class="normal"><a href="#__codelineno-0-107">107</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="k">def</span><span class="w"> </span><span class="nf">record_action</span><span class="p">(</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="n">action_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="p">):</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Record an action taken at this level&quot;&quot;&quot;</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="n">action</span> <span class="o">=</span> <span class="n">EmpathyAction</span><span class="p">(</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">level_number</span><span class="p">,</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="n">action_type</span><span class="o">=</span><span class="n">action_type</span><span class="p">,</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="p">)</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="k">def</span><span class="w"> </span><span class="nf">record_action</span><span class="p">(</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">action_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="p">):</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Record an action taken at this level&quot;&quot;&quot;</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="n">action</span> <span class="o">=</span> <span class="n">EmpathyAction</span><span class="p">(</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">level_number</span><span class="p">,</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">action_type</span><span class="o">=</span><span class="n">action_type</span><span class="p">,</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="p">)</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">actions_taken</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4221,8 +4272,7 @@ maintain consistency in the response format across levels.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/attune/levels.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
-<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-52">52</a></span>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
@@ -4260,46 +4310,47 @@ maintain consistency in the response format across levels.</p>
 <span class="normal"><a href="#__codelineno-0-87">87</a></span>
 <span class="normal"><a href="#__codelineno-0-88">88</a></span>
 <span class="normal"><a href="#__codelineno-0-89">89</a></span>
-<span class="normal"><a href="#__codelineno-0-90">90</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="nd">@abstractmethod</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Respond to a situation at this empathy level.</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    This abstract method defines the core behavior for each empathy level.</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    Subclasses must implement level-specific response logic that corresponds</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    to their empathy sophistication.</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        context: dict[str, Any]</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">            Dictionary containing situation-specific context. The structure</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">            varies by level but typically includes fields like &#39;request&#39;,</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">            &#39;observed_need&#39;, &#39;current_state&#39;, &#39;trajectory&#39;, or &#39;problem_class&#39;.</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">        dict[str, Any]</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">            A response dictionary containing:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">            - &#39;level&#39;: int - The empathy level (1-5)</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">            - &#39;level_name&#39;: str - Human-readable level name</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">            - &#39;action&#39;: str - Type of action taken</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">            - &#39;description&#39;: str - Description of the response</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">            - &#39;initiative&#39;: str - Level (&#39;none&#39;|&#39;guided&#39;|&#39;proactive&#39;|&#39;anticipatory&#39;|&#39;systems&#39;)</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">            - &#39;reasoning&#39;: str - Explanation of why this level&#39;s approach was used</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">            - Additional fields specific to the level implementation</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        KeyError: If required context keys are missing</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">        ValueError: If context values are invalid or insufficient</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    Note:</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        - Level 1 (Reactive): Only provide what was explicitly requested</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        - Level 2 (Guided): Ask clarifying questions and suggest options</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">        - Level 3 (Proactive): Identify and offer help for observed needs</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        - Level 4 (Anticipatory): Predict future needs and prepare solutions</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        - Level 5 (Systems): Design solutions that help at scale</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        Implementations should record actions via self.record_action() and</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        maintain consistency in the response format across levels.</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="nd">@abstractmethod</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="k">def</span><span class="w"> </span><span class="nf">respond</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Respond to a situation at this empathy level.</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    This abstract method defines the core behavior for each empathy level.</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    Subclasses must implement level-specific response logic that corresponds</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    to their empathy sophistication.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        context: dict[str, Any]</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">            Dictionary containing situation-specific context. The structure</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">            varies by level but typically includes fields like &#39;request&#39;,</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">            &#39;observed_need&#39;, &#39;current_state&#39;, &#39;trajectory&#39;, or &#39;problem_class&#39;.</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">        dict[str, Any]</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">            A response dictionary containing:</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">            - &#39;level&#39;: int - The empathy level (1-5)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">            - &#39;level_name&#39;: str - Human-readable level name</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">            - &#39;action&#39;: str - Type of action taken</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">            - &#39;description&#39;: str - Description of the response</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">            - &#39;initiative&#39;: str - Level (&#39;none&#39;|&#39;guided&#39;|&#39;proactive&#39;|&#39;anticipatory&#39;|&#39;systems&#39;)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">            - &#39;reasoning&#39;: str - Explanation of why this level&#39;s approach was used</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">            - Additional fields specific to the level implementation</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">        KeyError: If required context keys are missing</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        ValueError: If context values are invalid or insufficient</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        - Level 1 (Reactive): Only provide what was explicitly requested</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">        - Level 2 (Guided): Ask clarifying questions and suggest options</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        - Level 3 (Proactive): Identify and offer help for observed needs</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        - Level 4 (Anticipatory): Predict future needs and prepare solutions</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        - Level 5 (Systems): Design solutions that help at scale</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        Implementations should record actions via self.record_action() and</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        maintain consistency in the response format across levels.</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
