@@ -44,7 +44,7 @@ def collect_metrics(telemetry_dir: Path) -> dict[str, float]:
     usage_file = telemetry_dir / "usage.jsonl"
 
     if not usage_file.exists():
-        logger.debug("telemetry_file_not_found", path=str(usage_file))
+        logger.debug("telemetry_file_not_found: path=%s", str(usage_file))
         return dict(_EMPTY_METRICS)
 
     # Read last 24 hours of data
@@ -76,7 +76,7 @@ def collect_metrics(telemetry_dir: Path) -> dict[str, float]:
                 except (json.JSONDecodeError, KeyError):
                     continue
     except (OSError, PermissionError) as e:
-        logger.warning("telemetry_read_error", error=str(e))
+        logger.warning("telemetry_read_error: error=%s", str(e))
         return dict(_EMPTY_METRICS)
 
     return {

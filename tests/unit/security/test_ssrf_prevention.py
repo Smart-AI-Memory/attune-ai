@@ -159,3 +159,41 @@ class TestPrivateIPBlocking:
         """Test that link-local addresses (169.254.x.x) are blocked."""
         with pytest.raises(ValueError):
             _validate_webhook_url("http://169.254.1.1/webhook")
+
+
+class TestSSRFBypassPrevention:
+    """Test that SSRF bypass techniques are blocked."""
+
+    def test_blocks_url_encoded_localhost(self):
+        """Test that URL-encoded localhost (127.0.0.1) is blocked."""
+        encoded_urls = [
+            "http://%31%32%37%2e%30%2e%30%2e%31/",  # 127.0.0.1
+            "http://%6c%6f%63%61%6c%68%6f%73%74/",  # localhost
+        ]
+        for url in encoded_urls:
+            with pytest.raises(ValueError):
+                _validate_webhook_url(url)
+
+    def test_blocks_url_encoded_metadata(self):
+        """Test that URL-encoded metadata IP is blocked."""
+        # 169.254.169.254 URL-encoded
+        url = "http://%31%36%39%2e%32%35%34%2e%31%36%39%2e%32%35%34/latest/"
+        with pytest.raises(ValueError):
+            _validate_webhook_url(url)
+
+    def test_blocks_ipv6_zone_id_bypass(self):
+        """Test that IPv6 zone ID cannot bypass loopback check."""
+        zone_id_urls = [
+            "http://[::1%25eth0]/",
+            "http://[fe80::1%25lo]/",
+        ]
+        for url in zone_id_urls:
+            with pytest.raises(ValueError):
+                _validate_webhook_url(url)
+
+    def test_blocks_url_encoded_private_ip(self):
+        """Test that URL-encoded private IPs are blocked."""
+        # 10.0.0.1 URL-encoded
+        url = "http://%31%30%2e%30%2e%30%2e%31/webhook"
+        with pytest.raises(ValueError, match="private"):
+            _validate_webhook_url(url)

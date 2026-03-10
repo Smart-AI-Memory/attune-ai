@@ -70,9 +70,16 @@ def _validate_webhook_url(url: str) -> str:
     if not url or not isinstance(url, str):
         raise ValueError("webhook_url must be a non-empty string")
 
-    # Parse URL
+    # Decode URL-encoded characters to prevent encoding bypasses
+    # (e.g., http://%31%32%37%2e%30%2e%30%2e%31/ → http://127.0.0.1/)
     try:
-        parsed = urllib.parse.urlparse(url)
+        decoded_url = urllib.parse.unquote(url)
+    except Exception as e:  # noqa: BLE001
+        raise ValueError(f"Invalid URL encoding: {e}") from e
+
+    # Parse the decoded URL
+    try:
+        parsed = urllib.parse.urlparse(decoded_url)
     except Exception as e:  # noqa: BLE001
         raise ValueError(f"Invalid URL format: {e}") from e
 
@@ -86,6 +93,11 @@ def _validate_webhook_url(url: str) -> str:
     hostname = parsed.hostname
     if not hostname:
         raise ValueError("Webhook URL must contain a valid hostname")
+
+    # Strip IPv6 zone IDs (e.g., "fe80::1%25eth0" → "fe80::1")
+    # Zone IDs can bypass IP validation checks
+    if "%" in hostname:
+        hostname = hostname.split("%")[0]
 
     # Blocked hostnames (localhost, metadata services)
     blocked_hosts = {
