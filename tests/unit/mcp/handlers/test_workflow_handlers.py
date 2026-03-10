@@ -12,12 +12,32 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import sys
+from pathlib import PurePosixPath
 from types import ModuleType
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from attune.mcp.server import EmpathyMCPServer
+
+
+@pytest.fixture(autouse=True)
+def _bypass_path_validation():
+    """Skip path resolution so tests work on Windows too.
+
+    _validate_file_path resolves paths via Path.resolve(), which on
+    Windows turns "/code" into "D:\\code".  These tests verify handler
+    logic, not path validation, so we stub it out.
+    """
+
+    def _passthrough(path, **_kwargs):
+        return PurePosixPath(path)
+
+    with patch(
+        "attune.security.path_validation._validate_file_path",
+        side_effect=_passthrough,
+    ):
+        yield
 
 
 def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:

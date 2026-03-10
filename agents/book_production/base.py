@@ -292,7 +292,7 @@ class BaseAgent(ABC):
         try:
             import anthropic
         except ImportError:
-            raise ImportError("anthropic package required: pip install anthropic")
+            raise ImportError("anthropic package required: pip install anthropic") from None
 
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
