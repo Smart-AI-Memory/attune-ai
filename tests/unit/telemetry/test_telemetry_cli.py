@@ -89,7 +89,7 @@ class TestValidateFilePath:
 
         outside_file = tmp_path / "outside.csv"
 
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside_file), allowed_dir=str(allowed_dir))
 
     def test_validate_file_path_rejects_path_traversal(self, tmp_path):

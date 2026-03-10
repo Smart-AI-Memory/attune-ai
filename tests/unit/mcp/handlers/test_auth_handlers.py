@@ -16,11 +16,11 @@ import pytest
 from attune.mcp.server import EmpathyMCPServer
 
 
-def _make_server() -> EmpathyMCPServer:
+def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:
     """Return a server instance with plugin/version-check init suppressed."""
     with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer()
+            return EmpathyMCPServer(workspace_root=workspace_root)
 
 
 def _make_models_module(strategy: MagicMock | None = None) -> ModuleType:

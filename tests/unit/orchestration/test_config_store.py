@@ -848,7 +848,7 @@ class TestPathValidation:
         # Try to access parent directory
         outside_path = tmp_path / "outside.json"
 
-        with pytest.raises(ValueError, match="path must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside_path), allowed_dir=str(allowed_dir))
 
     @pytest.mark.skipif(not Path("/proc").exists(), reason="Test requires Linux /proc filesystem")

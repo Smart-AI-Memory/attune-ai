@@ -20,11 +20,11 @@ import pytest
 from attune.mcp.server import EmpathyMCPServer
 
 
-def _make_server() -> EmpathyMCPServer:
+def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:
     """Return a server instance with plugin/version-check init suppressed."""
     with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer()
+            return EmpathyMCPServer(workspace_root=workspace_root)
 
 
 def _make_result(
@@ -122,7 +122,7 @@ class TestRunBugPredict:
             final_output={"predictions": ["pred-a", "pred-b"]},
             total_cost=0.02,
         )
-        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictWorkflow", result)
+        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictionWorkflow", result)
 
         with patch.dict(sys.modules, {"attune.workflows.bug_predict": mod}):
             out = await server._run_bug_predict({"path": "/src"})
@@ -136,7 +136,7 @@ class TestRunBugPredict:
         """Missing predictions key defaults to empty list."""
         server = _make_server()
         result = _make_result(success=False, final_output={})
-        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictWorkflow", result)
+        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictionWorkflow", result)
 
         with patch.dict(sys.modules, {"attune.workflows.bug_predict": mod}):
             out = await server._run_bug_predict({"path": "."})
@@ -148,12 +148,12 @@ class TestRunBugPredict:
         """execute() receives path kwarg."""
         server = _make_server()
         result = _make_result()
-        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictWorkflow", result)
+        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictionWorkflow", result)
 
         with patch.dict(sys.modules, {"attune.workflows.bug_predict": mod}):
             await server._run_bug_predict({"path": "/code"})
 
-        mod.BugPredictWorkflow.return_value.execute.assert_awaited_once_with(path="/code")
+        mod.BugPredictionWorkflow.return_value.execute.assert_awaited_once_with(path="/code")
 
 
 class TestRunCodeReview:

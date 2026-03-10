@@ -66,12 +66,6 @@ from attune.cli_commands.memory_commands import (
     cmd_lessons,
     cmd_remember,
 )
-from attune.models.auth_cli import (
-    cmd_auth_recommend,
-    cmd_auth_reset,
-    cmd_auth_setup,
-    cmd_auth_status,
-)
 from attune.cli_commands.provider_commands import (
     cmd_provider_set,
     cmd_provider_show,
@@ -97,6 +91,12 @@ from attune.cli_commands.workflow_commands import (
     cmd_workflow_info,
     cmd_workflow_list,
     cmd_workflow_run,
+)
+from attune.models.auth_cli import (
+    cmd_auth_recommend,
+    cmd_auth_reset,
+    cmd_auth_setup,
+    cmd_auth_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -322,7 +322,9 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     auth_sub = auth_parser.add_subparsers(dest="auth_command")
 
     # auth status
-    auth_status_parser = auth_sub.add_parser("status", help="Show subscription/auth strategy status")
+    auth_status_parser = auth_sub.add_parser(
+        "status", help="Show subscription/auth strategy status"
+    )
     auth_status_parser.add_argument(
         "--json",
         action="store_true",

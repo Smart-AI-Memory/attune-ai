@@ -44,7 +44,7 @@ def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
             return deliver_email(alert, event)
         if alert.channel in (AlertChannel.VSCODE_OUTPUT, AlertChannel.STDOUT):
             return deliver_stdout(event)
-        logger.warning("unknown_alert_channel", channel=alert.channel.value)
+        logger.warning("unknown_alert_channel: channel=%s", alert.channel.value)
         return False
     except Exception as e:  # noqa: BLE001
         logger.error(
@@ -137,24 +137,24 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
     try:
         with opener.open(req, timeout=10) as response:  # nosec B310
             if response.status == 200:
-                logger.info("webhook_delivered", url=validated_url)
+                logger.info("webhook_delivered: url=%s", validated_url)
                 return True
             logger.warning(
-                "webhook_unexpected_status",
-                url=validated_url,
-                status=response.status,
+                "webhook_unexpected_status: url=%s status=%s",
+                validated_url,
+                response.status,
             )
             return False
     except urllib.error.HTTPError as e:
         logger.warning(
-            "webhook_http_error",
-            url=validated_url,
-            status=e.code,
-            error=str(e),
+            "webhook_http_error: url=%s status=%s error=%s",
+            validated_url,
+            e.code,
+            e,
         )
         return False
     except urllib.error.URLError as e:
-        logger.error("webhook_delivery_failed", url=validated_url, error=str(e))
+        logger.error("webhook_delivery_failed: url=%s error=%s", validated_url, e)
         return False
 
 
@@ -202,7 +202,7 @@ Attune AI Monitoring
             server.sendmail(from_email, alert.email, msg.as_string())
         return True
     except (smtplib.SMTPException, OSError) as e:
-        logger.error("email_delivery_failed", email=alert.email, error=str(e))
+        logger.error("email_delivery_failed: email=%s error=%s", alert.email, e)
         return False
 
 

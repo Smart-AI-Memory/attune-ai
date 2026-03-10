@@ -420,14 +420,16 @@ class TestAlertEngineTriggering:
 class TestWebhookDelivery:
     """Tests for webhook notification delivery."""
 
-    @patch("urllib.request.urlopen")
-    def test_deliver_webhook_success(self, mock_urlopen, temp_db):
+    @patch("attune.monitoring.notifications.build_opener")
+    def test_deliver_webhook_success(self, mock_build_opener, temp_db):
         """Test successful webhook delivery."""
         mock_response = MagicMock()
         mock_response.status = 200
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
+        mock_opener = MagicMock()
+        mock_opener.open.return_value = mock_response
+        mock_build_opener.return_value = mock_opener
 
         engine = AlertEngine(db_path=temp_db)
 
@@ -454,7 +456,7 @@ class TestWebhookDelivery:
         result = engine._deliver_webhook(alert, event)
 
         assert result is True
-        mock_urlopen.assert_called_once()
+        mock_opener.open.assert_called_once()
 
 
 class TestGetAlertEngine:

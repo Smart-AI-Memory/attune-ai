@@ -10,6 +10,26 @@ from attune.pipeline.orchestrator import PipelineOrchestrator
 from attune.wizards.decomposer import DecomposedTask
 
 
+@pytest.fixture(autouse=True)
+def _mock_read_spec():
+    """Patch read_spec so tests don't need the local plan file."""
+    tasks = [
+        DecomposedTask(
+            task_id=str(i),
+            name=f"task-{i}",
+            objective="Test objective",
+            files_to_create=[{"path": f"src/attune/t{i}.py", "description": "f"}],
+            files_to_modify=[],
+            validation_checks=["check"],
+            risks=[],
+            dependencies=[],
+        )
+        for i in range(1, 6)
+    ]
+    with patch("attune.pipeline.orchestrator.read_spec", return_value=tasks):
+        yield
+
+
 def _make_task(
     task_id: str = "1",
     name: str = "test-task",

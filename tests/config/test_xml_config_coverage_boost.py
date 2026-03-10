@@ -14,7 +14,6 @@ Licensed under Apache 2.0
 
 import json
 import os
-import re
 from pathlib import Path
 
 import pytest
@@ -54,7 +53,7 @@ class TestValidateFilePathErrors:
 
         config_file = tmp_path / "outside" / "config.json"
 
-        with pytest.raises(ValueError, match=re.escape(f"path must be within {allowed_dir}")):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(config_file), allowed_dir=str(allowed_dir))
 
     def test_validate_path_inside_allowed_dir_succeeds(self, tmp_path):
