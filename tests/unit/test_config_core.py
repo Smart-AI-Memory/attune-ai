@@ -105,7 +105,7 @@ class TestValidateFilePath:
     def test_allowed_dir_rejects_outside(self, tmp_path: Path) -> None:
         """Path outside allowed_dir is rejected."""
         outside = tmp_path.parent / "other.txt"
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside), allowed_dir=str(tmp_path))
 
 

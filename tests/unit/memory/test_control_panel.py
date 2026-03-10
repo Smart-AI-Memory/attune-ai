@@ -245,7 +245,7 @@ class TestValidateFilePath:
         allowed.mkdir()
         outside = tmp_path / "outside" / "file.json"
 
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside), allowed_dir=str(allowed))
 
 

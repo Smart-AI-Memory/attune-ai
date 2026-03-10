@@ -11,6 +11,9 @@ Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import socket
+from unittest.mock import patch
+
 import pytest
 
 from attune.monitoring.alerts import _validate_webhook_url
@@ -102,8 +105,12 @@ class TestSSRFPrevention:
             with pytest.raises(ValueError, match="port"):
                 _validate_webhook_url(url)
 
-    def test_allows_valid_webhooks(self):
+    @patch("attune.monitoring.validators.socket.getaddrinfo")
+    def test_allows_valid_webhooks(self, mock_dns):
         """Test that legitimate webhook URLs are allowed."""
+        mock_dns.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0)),
+        ]
         valid_urls = [
             "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXX",
             "https://discord.com/api/webhooks/123456789/abcdef",

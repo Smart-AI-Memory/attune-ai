@@ -286,7 +286,7 @@ class AlertEngine:
         conn.close()
 
         if deleted:
-            logger.info("alert_deleted", alert_id=alert_id)
+            logger.info("alert_deleted: alert_id=%s", alert_id)
 
         return deleted
 

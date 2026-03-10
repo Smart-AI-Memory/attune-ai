@@ -203,7 +203,7 @@ class TestAllowedDirectoryRestriction:
 
         outside_path = tmp_path / "forbidden" / "config.json"
 
-        with pytest.raises(ValueError, match="path must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside_path), allowed_dir=str(allowed_dir))
 
     def test_blocks_traversal_out_of_allowed_dir(self, tmp_path):
@@ -213,7 +213,7 @@ class TestAllowedDirectoryRestriction:
 
         traversal_path = allowed_dir / ".." / "forbidden" / "config.json"
 
-        with pytest.raises(ValueError, match="path must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(traversal_path), allowed_dir=str(allowed_dir))
 
 
