@@ -510,7 +510,7 @@ def _suggestions_from_history(workflow_name: str) -> list[NextAction]:
 
         # Get recent successful runs (last 50)
         recent_runs = store.query_runs(success_only=True, limit=50)
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: History is optional — don't crash if unavailable
         logger.debug("Workflow history unavailable for suggestions")
         return suggestions
@@ -696,21 +696,21 @@ def generate_suggestions(
     if transition_fn:
         try:
             suggestions.extend(transition_fn(result))
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Suggestion generation is optional — never crash workflow
             logger.debug("Suggestion transition failed for %s", workflow_name)
 
     # Source 2: Project index signals
     try:
         suggestions.extend(_suggestions_from_project_index(workflow_name))
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Project index is optional
         logger.debug("Project index suggestions failed for %s", workflow_name)
 
     # Source 3: Workflow history patterns
     try:
         suggestions.extend(_suggestions_from_history(workflow_name))
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: History is optional
         logger.debug("History suggestions failed for %s", workflow_name)
 

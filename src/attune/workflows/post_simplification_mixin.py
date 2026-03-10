@@ -137,7 +137,7 @@ class PostSimplificationMixin:
             logger.debug("SimplifyCodeWorkflow not available for post-simplification")
         except (ValueError, TypeError, KeyError) as e:
             logger.debug("Post-simplification scan failed (data error): %s", e)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Post-simplification is optional, never crash workflow
             logger.debug("Post-simplification failed: %s", e)
 

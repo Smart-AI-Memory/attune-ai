@@ -37,7 +37,7 @@ import json
 import time
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -134,7 +134,7 @@ class MemoryControlPanel:
         redis_running = _check_redis_running(self.config.redis_host, self.config.redis_port)
 
         result = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "redis": {
                 "status": "running" if redis_running else "stopped",
                 "host": self.config.redis_host,
@@ -193,7 +193,7 @@ class MemoryControlPanel:
 
         """
         start_time = time.perf_counter()
-        stats = MemoryStats(collected_at=datetime.utcnow().isoformat() + "Z")
+        stats = MemoryStats(collected_at=datetime.now(timezone.utc).isoformat())
 
         # Redis stats
         redis_running = _check_redis_running(self.config.redis_host, self.config.redis_port)
@@ -213,7 +213,7 @@ class MemoryControlPanel:
                 stats.redis_keys_working = redis_stats.get("working_keys", 0)
                 stats.redis_keys_staged = redis_stats.get("staged_keys", 0)
                 stats.redis_memory_used = redis_stats.get("used_memory", "0")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("redis_stats_failed", error=str(e))
 
         # Long-term stats
@@ -226,7 +226,7 @@ class MemoryControlPanel:
                 stats.storage_bytes = sum(
                     f.stat().st_size for f in storage_path.glob("**/*") if f.is_file()
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug("storage_size_calculation_failed", error=str(e))
                 stats.storage_bytes = 0
 
@@ -238,7 +238,7 @@ class MemoryControlPanel:
                 stats.patterns_internal = lt_stats.get("by_classification", {}).get("INTERNAL", 0)
                 stats.patterns_sensitive = lt_stats.get("by_classification", {}).get("SENSITIVE", 0)
                 stats.patterns_encrypted = lt_stats.get("encrypted_count", 0)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("long_term_stats_failed", error=str(e))
 
         # Total collection time
@@ -317,7 +317,7 @@ class MemoryControlPanel:
         long_term = self._get_long_term()
         try:
             return long_term.delete_pattern(pattern_id, user_id)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("delete_pattern_failed", pattern_id=pattern_id, error=str(e))
             return (
                 False  # Graceful degradation - validation errors raise, storage errors return False
@@ -371,7 +371,7 @@ class MemoryControlPanel:
         patterns = self.list_patterns(classification=classification)
 
         export_data = {
-            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "classification_filter": classification,
             "pattern_count": len(patterns),
             "patterns": patterns,

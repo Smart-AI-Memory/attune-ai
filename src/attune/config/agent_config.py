@@ -44,6 +44,12 @@ class AgentOperationError(Exception):
     """Error during agent operation with context."""
 
     def __init__(self, operation: str, cause: Exception):
+        """Initialize with operation name and root cause.
+
+        Args:
+            operation: Name of the failed agent operation.
+            cause: Original exception that caused the failure.
+        """
         self.operation = operation
         self.cause = cause
         super().__init__(f"Agent operation '{operation}' failed: {cause}")

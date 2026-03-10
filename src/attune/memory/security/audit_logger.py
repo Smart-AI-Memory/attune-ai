@@ -25,7 +25,7 @@ Licensed under the Apache License, Version 2.0
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -136,7 +136,7 @@ class AuditLogger(
             # Set restrictive permissions (owner read/write)
             os.chmod(self.log_dir, 0o700)
             logger.info(f"Audit log directory initialized: {self.log_dir}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Fallback to local directory on
             # any init error (permissions, disk, etc.)
             logger.error(f"Failed to initialize audit log directory: {e}")
@@ -169,7 +169,7 @@ class AuditLogger(
             if self.enable_console_logging:
                 logger.debug(f"Audit event: {event.event_type} - {event.status}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Audit logging failure should not
             # crash the application
             logger.error(f"Failed to write audit event: {e}")
@@ -183,7 +183,7 @@ class AuditLogger(
         file.
         """
         try:
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             rotated_name = f"{self.log_filename}.{timestamp}"
             rotated_path = self.log_dir / rotated_name
 
@@ -193,20 +193,22 @@ class AuditLogger(
             # Clean up old logs beyond retention period
             self._cleanup_old_logs()
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Rotation failure is non-fatal
             logger.error(f"Failed to rotate audit log: {e}")
 
     def _cleanup_old_logs(self) -> None:
         """Remove audit logs older than retention period."""
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.retention_days)
 
             for log_file in self.log_dir.glob(f"{self.log_filename}.*"):
                 try:
                     # Extract timestamp from filename
                     timestamp_str = log_file.suffix[1:]
-                    file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                    file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S").replace(
+                        tzinfo=timezone.utc
+                    )
 
                     if file_date < cutoff_date:
                         log_file.unlink()
@@ -215,7 +217,7 @@ class AuditLogger(
                     # Skip files that don't match format
                     continue
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Cleanup failure is non-fatal
             logger.error(f"Failed to cleanup old audit logs: {e}")
 

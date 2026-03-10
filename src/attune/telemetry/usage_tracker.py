@@ -8,6 +8,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import hashlib
+import hmac
 import json
 import logging
 import threading
@@ -367,16 +368,22 @@ class UsageTracker:
         return len(entries)
 
     def _hash_user_id(self, user_id: str) -> str:
-        """Hash user ID with SHA256 for privacy.
+        """Hash user ID with HMAC-SHA256 for privacy.
+
+        Uses a deployment-specific secret to prevent rainbow table
+        attacks. Falls back to a default key if no secret is configured.
 
         Args:
             user_id: User identifier to hash
 
         Returns:
-            First 16 characters of SHA256 hash
+            First 16 characters of HMAC-SHA256 hex digest
 
         """
-        return hashlib.sha256(user_id.encode()).hexdigest()[:16]
+        from attune.config.env_compat import get_attune_env
+
+        secret = (get_attune_env("TELEMETRY_SECRET") or "attune-default-telemetry-key").encode()
+        return hmac.new(secret, user_id.encode(), hashlib.sha256).hexdigest()[:16]
 
     def _write_entry(self, entry: dict[str, Any]) -> None:
         """Write a single entry directly to disk (bypasses buffer).
@@ -409,7 +416,7 @@ class UsageTracker:
 
         with self._lock:
             # Rotate: usage.jsonl -> usage.YYYY-MM-DD.jsonl
-            timestamp = datetime.now().strftime("%Y-%m-%d")
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             rotated_file = self.telemetry_dir / f"usage.{timestamp}.jsonl"
 
             # If rotated file already exists, append a counter
@@ -426,12 +433,12 @@ class UsageTracker:
 
     def _cleanup_old_files(self) -> None:
         """Remove files older than retention_days."""
-        cutoff = datetime.now() - timedelta(days=self.retention_days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.retention_days)
 
         for file in self.telemetry_dir.glob("usage.*.jsonl"):
             try:
                 # Get file modification time
-                mtime = datetime.fromtimestamp(file.stat().st_mtime)
+                mtime = datetime.fromtimestamp(file.stat().st_mtime, tz=timezone.utc)
                 if mtime < cutoff:
                     file.unlink()
                     logger.debug("Deleted old telemetry file: %s", file.name)
@@ -467,9 +474,7 @@ class UsageTracker:
             for entry in self._iter_jsonl(file):
                 if cutoff_time:
                     try:
-                        ts = datetime.fromisoformat(entry["ts"].rstrip("Z")).replace(
-                            tzinfo=timezone.utc
-                        )
+                        ts = datetime.fromisoformat(entry["ts"].replace("Z", "+00:00"))
                         if ts < cutoff_time:
                             continue
                     except (KeyError, ValueError):
@@ -555,7 +560,7 @@ class UsageTracker:
         # Include buffered entries not yet reflected in the summary
         for entry in buffer_snapshot:
             try:
-                ts = datetime.fromisoformat(entry["ts"].rstrip("Z")).replace(tzinfo=timezone.utc)
+                ts = datetime.fromisoformat(entry["ts"].replace("Z", "+00:00"))
             except (KeyError, ValueError):
                 continue
             if ts < cutoff_dt:

@@ -121,7 +121,7 @@ Generate an outline that covers all these aspects comprehensively."""
             try:
                 content = target_path.read_text(encoding="utf-8")
                 return f"# File: {target}\n\n{content}"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Could not read file {target}: {e}")
         elif target_path.suffix in (
             ".py",
@@ -186,7 +186,7 @@ Generate an outline that covers all these aspects comprehensively."""
                         f"Cost: ~${cost_estimate['monetary_cost']:.4f} (1M context window)",
                     )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Auth strategy detection failed: {e}")
 
     def _parse_outline_sections(self, outline: str) -> list[str]:

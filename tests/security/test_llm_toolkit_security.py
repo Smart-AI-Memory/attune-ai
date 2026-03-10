@@ -39,13 +39,12 @@ class TestPIIDetection:
 
         result = detection.to_dict()
 
+        # to_dict() now delegates to to_audit_safe_dict() (SEC-14)
         assert result["pii_type"] == "email"
-        assert result["matched_text"] == "test@example.com"
-        assert result["start_pos"] == 0
-        assert result["end_pos"] == 16
+        assert "matched_text" not in result
+        assert "position" in result
         assert result["replacement"] == "[EMAIL]"
         assert result["confidence"] == 1.0
-        assert result["metadata"]["source"] == "test"
 
     def test_to_audit_safe_dict(self):
         """Test audit-safe dictionary conversion (no PII values)."""

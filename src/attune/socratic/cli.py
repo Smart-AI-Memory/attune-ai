@@ -433,7 +433,7 @@ def main(argv: list[str] | None = None) -> int:
             print()
             console.info("Interrupted")
             return 130
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             console.error(f"Error: {e}")
             return 1
 

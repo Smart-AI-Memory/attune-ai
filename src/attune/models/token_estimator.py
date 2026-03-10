@@ -79,7 +79,7 @@ def estimate_tokens(text: str, model_id: str = "claude-sonnet-4-6") -> int:
                 encoding = _get_encoding(model_id)
                 if encoding:
                     return len(encoding.encode(text))
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass  # Fall through to heuristic
 
         # Last resort: heuristic fallback
@@ -219,7 +219,7 @@ def _calculate_stage_costs(
 
         try:
             model_info = get_model(provider, tier)
-        except Exception:
+        except Exception:  # noqa: BLE001
             model_info = get_model(provider, "capable")
 
         if model_info is None:

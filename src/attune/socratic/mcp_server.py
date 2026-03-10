@@ -114,7 +114,7 @@ class SocraticMCPServer:
 
         try:
             return await handler(arguments)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Error handling {name}")
             return {"error": str(e)}
 
@@ -157,7 +157,7 @@ class SocraticMCPServer:
         if self._llm_analyzer:
             try:
                 analysis = await self._llm_analyzer.analyze_goal(goal)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"LLM analysis failed, using fallback: {e}")
 
         session = self._builder.set_goal(session, goal)
@@ -411,7 +411,7 @@ class SocraticMCPServer:
                     "suggested_agents": analysis.suggested_agents,
                     "analysis_method": "llm",
                 }
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"LLM analysis failed: {e}")
 
         # Fallback to keyword-based analysis
@@ -550,7 +550,7 @@ async def run_mcp_server():
 
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON: {e}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Error processing message: {e}")
 
 

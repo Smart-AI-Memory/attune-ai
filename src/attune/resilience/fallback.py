@@ -44,7 +44,7 @@ class Fallback:
                 if asyncio.iscoroutinefunction(func):
                     return await func(*args, **kwargs)
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 last_exception = e
                 logger.warning(f"Fallback '{self.name}': function {i + 1} failed: {e}")
                 continue
@@ -85,15 +85,18 @@ def fallback(
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        """Wrap the target function with fallback chain logic."""
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Async wrapper that tries primary then fallback functions."""
             # Try primary function
             try:
                 if asyncio.iscoroutinefunction(func):
                     result: T = await func(*args, **kwargs)
                     return result
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 if log_failures:
                     logger.warning(f"Primary function {func.__name__} failed: {e}")
 
@@ -104,7 +107,7 @@ def fallback(
                         result = await fallback_func(*args, **kwargs)
                         return result
                     return fallback_func(*args, **kwargs)  # type: ignore[no-any-return]
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     if log_failures:
                         logger.warning(f"Fallback {fallback_func.__name__} failed: {e}")
                     continue
@@ -117,16 +120,17 @@ def fallback(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            """Sync wrapper that tries primary then fallback functions."""
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 if log_failures:
                     logger.warning(f"Primary function {func.__name__} failed: {e}")
 
             for fallback_func in fallback_funcs:
                 try:
                     return fallback_func(*args, **kwargs)  # type: ignore[no-any-return]
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     if log_failures:
                         logger.warning(f"Fallback {fallback_func.__name__} failed: {e}")
                     continue
@@ -173,6 +177,7 @@ def with_fallback(
         fb.add(f)
 
     async def wrapper(*args: Any, **kwargs: Any) -> T:
+        """Execute the fallback chain with the given arguments."""
         result: T = await fb.execute(*args, **kwargs)
         return result
 

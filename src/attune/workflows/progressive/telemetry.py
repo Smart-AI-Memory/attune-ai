@@ -72,7 +72,7 @@ class ProgressiveTelemetry:
                 f"${tier_result.cost:.3f}, {tokens['total_tokens']} tokens",
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Telemetry failure should not break workflow
             logger.warning(f"Failed to track tier execution: {e}")
 
@@ -142,7 +142,7 @@ class ProgressiveTelemetry:
                 },
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to track workflow completion: {e}")
 
     def track_escalation(
@@ -180,7 +180,7 @@ class ProgressiveTelemetry:
                 f"Escalated {item_count} items from {from_tier.value} → {to_tier.value}: {reason}",
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to track escalation: {e}")
 
     def track_budget_exceeded(
@@ -211,7 +211,7 @@ class ProgressiveTelemetry:
 
             logger.warning(f"Budget exceeded: ${current_cost:.3f} > ${max_budget:.3f} ({action})")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to track budget exceeded: {e}")
 
     def _track_custom_event(self, event_type: str, data: dict[str, Any]) -> None:
@@ -243,7 +243,7 @@ class ProgressiveTelemetry:
             with events_file.open("a") as f:
                 f.write(json.dumps(event) + "\n")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to write custom event: {e}")
 
     @staticmethod

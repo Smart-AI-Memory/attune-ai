@@ -32,9 +32,7 @@ class TestFallbackStrategy:
 
     def test_strategy_values(self):
         """Test all strategy values exist."""
-        assert FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER.value == "same_tier_different_provider"
         assert FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER.value == "cheaper_tier_same_provider"
-        assert FallbackStrategy.DIFFERENT_PROVIDER_ANY_TIER.value == "different_provider_any_tier"
         assert FallbackStrategy.CUSTOM.value == "custom"
 
 
@@ -72,22 +70,8 @@ class TestFallbackPolicy:
 
         assert policy.primary_provider == "anthropic"
         assert policy.primary_tier == "capable"
-        assert policy.strategy == FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER
+        assert policy.strategy == FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER
         assert policy.max_retries == 2
-
-    def test_same_tier_different_provider_chain(self):
-        """Test SAME_TIER_DIFFERENT_PROVIDER strategy (Anthropic-only)."""
-        policy = FallbackPolicy(
-            primary_provider="anthropic",
-            primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
-        )
-
-        chain = policy.get_fallback_chain()
-
-        # In Anthropic-only architecture, there are no different providers at same tier
-        # Chain should be empty or fall back to different tiers
-        assert len(chain) == 0
 
     def test_cheaper_tier_same_provider_chain(self):
         """Test CHEAPER_TIER_SAME_PROVIDER strategy."""
@@ -104,20 +88,6 @@ class TestFallbackPolicy:
         assert chain[0].tier == "capable"
         assert chain[1].tier == "cheap"
         assert all(step.provider == "anthropic" for step in chain)
-
-    def test_different_provider_any_tier_chain(self):
-        """Test DIFFERENT_PROVIDER_ANY_TIER strategy (Anthropic-only)."""
-        policy = FallbackPolicy(
-            primary_provider="anthropic",
-            primary_tier="capable",
-            strategy=FallbackStrategy.DIFFERENT_PROVIDER_ANY_TIER,
-        )
-
-        chain = policy.get_fallback_chain()
-
-        # In Anthropic-only architecture, there are no different providers
-        # Chain should be empty
-        assert len(chain) == 0
 
     def test_custom_chain(self):
         """Test CUSTOM strategy with explicit chain."""
@@ -138,6 +108,8 @@ class TestFallbackPolicy:
         """Test the global default policy."""
         assert DEFAULT_FALLBACK_POLICY.primary_provider == "anthropic"
         assert DEFAULT_FALLBACK_POLICY.primary_tier == "capable"
+        assert DEFAULT_FALLBACK_POLICY.strategy == FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER
+        assert DEFAULT_FALLBACK_POLICY.max_retries == 2
 
 
 class TestCircuitBreaker:

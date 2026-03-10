@@ -196,7 +196,7 @@ class SecurityWizard(BaseWizard):
         except ImportError:
             logger.warning("SecurityAuditWorkflow not available, using LLM fallback")
             return None
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Workflow is optional enhancement, not required
             logger.exception("Failed to initialize SecurityAuditWorkflow")
             return None
@@ -215,7 +215,7 @@ class SecurityWizard(BaseWizard):
             try:
                 await self._run_scan_via_workflow()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow scan failed, falling back to LLM")
 
@@ -223,7 +223,7 @@ class SecurityWizard(BaseWizard):
             try:
                 await self._run_fixes_via_workflow()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Graceful fallback to independent LLM call
                 logger.exception("Workflow remediation failed, falling back to LLM")
 

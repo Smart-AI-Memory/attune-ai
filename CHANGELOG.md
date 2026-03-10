@@ -5,6 +5,107 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-03-10
+
+### Fixed
+
+- **README updated for v4.0.0 release** — Updated What's New
+  section, test count badges, and added v3.9.3 to previous
+  releases.
+
+## [4.0.0] - 2026-03-09
+
+### Added
+
+- **Full Agent SDK integration** — 15 workflows now have
+  Agent SDK adapters that delegate analysis to specialized
+  Claude subagents. Each adapter uses 2-6 subagents for
+  parallel, contextual code analysis.
+- **Smart workflow routing** — `get_workflow()` automatically
+  resolves to the SDK variant when `claude-agent-sdk` is
+  installed, with transparent fallback to API versions.
+- **API fallback warning** — CLI warns users when running
+  the API version of a workflow that has an SDK upgrade
+  available (`pip install claude-agent-sdk`).
+- **Deduplicated workflow listing** — `list_workflows()` and
+  `attune workflow list` hide SDK duplicates, showing one
+  entry per task with `[SDK]`/`[API]`/`[native]` tags.
+- **207 new tests** — 174 tests for SDK adapters + 33
+  behavioral tests for smart routing, deduplication, engine
+  tagging, and CLI fallback warnings.
+
+### Changed
+
+- **Major version bump (3.9 → 4.0)** — Reflects the Agent
+  SDK as a platform-level feature: multi-agent subagent
+  execution, smart routing, and transparent SDK/API
+  switching.
+
+## [3.9.3] - 2026-03-09
+
+### Added
+
+- **Anthropic Agent SDK adapters** — Code review and deep
+  review workflows now have Agent SDK adapter layers
+  (`code_review_agent_sdk.py`, `deep_review_agent_sdk.py`),
+  beginning native SDK integration.
+- **Workflow validation framework** — `validation.py`
+  provides input/output contract validation for all
+  workflow executions.
+- **`/bulk` and `/pipeline` command specs** — Documented
+  command specifications for batch API and spec-driven
+  development lifecycle (beta).
+- **290 new tests** — Comprehensive suites for pipeline
+  models, validation framework, behavioral tests for
+  secure release and test-audit workflows, and SDK adapter
+  coverage.
+
+### Fixed
+
+- **Deprecated `datetime.utcnow()` replaced** — Migrated
+  to `datetime.now(timezone.utc)` across the entire
+  codebase, including timestamp parsers and test fixtures.
+- **F-string logger calls replaced** — Converted
+  `logger.info(f"...")` to `logger.info("...", ...)` lazy
+  formatting across affected modules.
+- **SDK agent security hardening** — Addressed code review
+  findings: error handling, input validation, and
+  performance improvements in agent SDK modules.
+- **Dead module cleanup** — Removed unused modules and
+  updated lesson references from simplify sweep.
+
+### Changed
+
+- **100% public API docstrings** — Added missing docstrings
+  and cleaned up formatting across 197 source files.
+- **BLE001 annotations** — Added `# noqa: BLE001` +
+  `# INTENTIONAL` to remaining justified broad exception
+  catches from deep review.
+- **Test and config cleanups** — Security guard, PII
+  scrubber, control panel, and wiring consistency test
+  improvements.
+
+## [3.9.2] - 2026-03-05
+
+### Fixed
+
+- **WorkflowBatchRunner cost extraction crash** — `CostReport`
+  is a dataclass, not a dict. Changed `.get("total_cost")`
+  to `getattr(cost_report, "total_cost")` in
+  `workflow_batch_runner.py`.
+- **Narrowed 9 overly-broad exception catches** — Replaced
+  `except Exception` with specific types in `count_lines_of_code`
+  calls (`OSError, UnicodeDecodeError`) and auth strategy
+  fallbacks (`AttributeError, ImportError, TypeError`) across
+  `code_review_classify.py`, `perf_audit_stages_mixin.py`,
+  `release_prep_stages.py`, and `document_manager.py`.
+- **Added logging to silent exception** in
+  `template_defs_web.py` — Empathy init failure was swallowed
+  with no log output.
+- **Added `# noqa: BLE001` + `# INTENTIONAL` annotations** to
+  25 justified broad exception catches across 12 files, per
+  coding standards compliance.
+
 ## [3.8.0] - 2026-03-02
 
 ### Added

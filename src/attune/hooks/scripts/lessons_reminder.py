@@ -44,12 +44,13 @@ def has_session_work() -> bool:
             timeout=5,
         )
         return bool(result.stdout.strip())
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback — always remind if we can't check
         return True
 
 
 def main() -> int:
+    """Check if a lessons reminder should be shown and print it."""
     if already_reminded() or not has_session_work():
         return 0
 

@@ -136,25 +136,6 @@ class ReleasePreparationWorkflow(
                 return True, "All checks passed - auto-approved"
         return False, None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation."""
-        if stage_name == "health":
-            return await self._health(input_data, tier)
-        if stage_name == "security":
-            return await self._security(input_data, tier)
-        if stage_name == "crew_security":
-            return await self._crew_security(input_data, tier)
-        if stage_name == "changelog":
-            return await self._changelog(input_data, tier)
-        if stage_name == "approve":
-            return await self._approve(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
 
 if __name__ == "__main__":
     main()

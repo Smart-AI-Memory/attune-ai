@@ -82,7 +82,7 @@ class ShortTermOperationsMixin:
 
             try:
                 self._short_term.stash(key, value, self.credentials, ttl_strategy)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug("redis_stash_failed", key=key, error=str(e))
 
         # Return True if at least one backend succeeded
@@ -107,7 +107,7 @@ class ShortTermOperationsMixin:
                 result = self._short_term.retrieve(key, self.credentials)
                 if result is not None:
                     return result
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug("redis_retrieve_failed", key=key, error=str(e))
 
         # Fall back to file session (primary storage)

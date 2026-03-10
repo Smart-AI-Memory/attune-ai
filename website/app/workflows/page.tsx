@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { generateMetadata } from '@/lib/metadata';
+import { generateMetadata, generateStructuredData } from '@/lib/metadata';
 
 export const metadata: Metadata = generateMetadata({
-  title: 'AI Developer Workflows — Non-Interactive CI/CD Pipelines',
+  title: '17 AI Workflows for Claude Code: Security, Code Review, Testing & More',
   description:
-    '10 production-ready AI workflows for security audits, code review, bug prediction, test generation, documentation, and more. Run from CLI or CI/CD with structured JSON output.',
+    '17 production-ready AI workflows for security audits, code review, bug prediction, test generation, documentation, and more. Run from CLI or CI/CD with structured JSON output.',
   url: 'https://smartaimemory.com/workflows',
   keywords: [
     'AI workflow automation',
@@ -151,11 +151,113 @@ const workflows = [
     ],
     useCases: ['Architecture decisions', 'Technology evaluation', 'Best practices research'],
   },
+  {
+    name: 'Doc Audit',
+    command: 'doc-audit',
+    icon: '📋',
+    description: 'Audit existing documentation for staleness, broken links, and drift from source code — audit, plan, execute, and verify stages.',
+    benefits: [
+      'Stale content detection',
+      'Broken link identification',
+      'Code-to-doc drift analysis',
+      'Prioritized update plan',
+    ],
+    useCases: ['Documentation maintenance', 'Pre-release doc checks', 'Content freshness audits'],
+  },
+  {
+    name: 'Doc Orchestrator',
+    command: 'doc-orchestrator',
+    icon: '📚',
+    description: 'End-to-end documentation maintenance coordinating doc-audit and doc-gen into a unified pipeline — scout, prioritize, generate, and update.',
+    benefits: [
+      'Combined audit + generation',
+      'Priority-based doc updates',
+      'Automated content refresh',
+      'Cross-reference validation',
+    ],
+    useCases: ['Full doc overhauls', 'Continuous doc maintenance', 'Release documentation'],
+  },
+  {
+    name: 'Test Audit',
+    command: 'test-audit',
+    icon: '🔬',
+    description: 'Autonomous test coverage audit and generation — audit current coverage, plan improvements, execute generation, and verify results.',
+    benefits: [
+      'Coverage gap identification',
+      'Autonomous test generation',
+      'Quality verification',
+      'Coverage trend tracking',
+    ],
+    useCases: ['Coverage improvement sprints', 'CI quality gates', 'Test debt reduction'],
+  },
+  {
+    name: 'Parallel Test Gen',
+    command: 'test-gen-parallel',
+    icon: '⚡',
+    description: 'Batch-generate tests for 10-50 modules in parallel — discover targets, generate templates, complete tests, and validate output.',
+    benefits: [
+      'Parallel module processing',
+      'Template-based generation',
+      'Bulk coverage improvement',
+      'Validation of generated tests',
+    ],
+    useCases: ['Large-scale test generation', 'Greenfield coverage', 'Module-level testing'],
+  },
+  {
+    name: 'Simplify Code',
+    command: 'simplify-code',
+    icon: '✂️',
+    description: 'Simplify over-engineered code — scan for complexity, analyze abstractions, simplify patterns, and review changes.',
+    benefits: [
+      'Unnecessary abstraction detection',
+      'Dead code removal',
+      'Complexity reduction',
+      'Readability improvement',
+    ],
+    useCases: ['Code cleanup', 'Onboarding improvement', 'Technical debt reduction'],
+  },
+  {
+    name: 'Secure Release',
+    command: 'secure-release',
+    icon: '🛡️',
+    description: 'Comprehensive security pipeline composing multiple workflows into a single release security gate.',
+    benefits: [
+      'Multi-workflow composition',
+      'Security-focused release gate',
+      'Vulnerability aggregation',
+      'Go/no-go security decision',
+    ],
+    useCases: ['Security-critical releases', 'Compliance pipelines', 'Pre-publish validation'],
+  },
+  {
+    name: 'Health Check',
+    command: 'orchestrated-health-check',
+    icon: '🏥',
+    description: 'Comprehensive project health assessment using meta-orchestration to coordinate multiple analysis workflows.',
+    benefits: [
+      'Holistic project assessment',
+      'Multi-dimension health scoring',
+      'Automated workflow coordination',
+      'Actionable health report',
+    ],
+    useCases: ['Project health reviews', 'Sprint retrospectives', 'Stakeholder reporting'],
+  },
 ];
 
 export default function WorkflowsPage() {
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'AI Workflows', url: 'https://smartaimemory.com/workflows' },
+    ],
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero */}
@@ -163,7 +265,7 @@ export default function WorkflowsPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-4">
-                10 AI Developer Workflows
+                17 AI Developer Workflows
               </h1>
               <p className="text-xl mb-4 opacity-90">
                 Non-interactive, multi-stage pipelines designed for CLI and CI/CD use.

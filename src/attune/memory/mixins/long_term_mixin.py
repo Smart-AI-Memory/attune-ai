@@ -83,7 +83,7 @@ class LongTermOperationsMixin:
                 classification=result.get("classification"),
             )
             return result  # type: ignore[no-any-return]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("persist_pattern_failed", error=str(e))
             return None
 
@@ -137,7 +137,7 @@ class LongTermOperationsMixin:
                 self._cache_pattern(pattern_id, pattern)
 
             return pattern  # type: ignore[no-any-return]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("recall_pattern_failed", pattern_id=pattern_id, error=str(e))
             return None
 
@@ -293,7 +293,7 @@ class LongTermOperationsMixin:
             # Return patterns without scores
             return [pattern for _, pattern in scored_patterns]
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("pattern_search_failed", error=str(e))
             return []
 
@@ -353,6 +353,6 @@ class LongTermOperationsMixin:
             except json.JSONDecodeError as e:
                 logger.debug("pattern_json_decode_failed", file=str(pattern_file), error=str(e))
                 continue
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug("pattern_load_failed", file=str(pattern_file), error=str(e))
                 continue

@@ -50,6 +50,7 @@ from .security_audit_stages import (
 )
 from .security_audit_triage import TriageStageMixin
 from .services import ParsingService, PromptService
+from .validation import InputSchema, StageContract
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,13 @@ class SecurityAuditWorkflow(
         "analyze": ModelTier.CAPABLE,
         "assess": ModelTier.CAPABLE,
         "remediate": ModelTier.PREMIUM,
+    }
+    input_schema = InputSchema(
+        required_fields={"path": str},
+    )
+    stage_contracts = {
+        "triage": StageContract(required_keys={"vulnerabilities"}),
+        "assess": StageContract(required_keys={"risk_assessment"}),
     }
 
     def __init__(
@@ -170,7 +178,7 @@ class SecurityAuditWorkflow(
             self._crew_available = True
             logger.info("SecurityAuditCrew initialized successfully")
         except ImportError as e:
-            logger.warning(f"SecurityAuditCrew not available: {e}")
+            logger.warning("SecurityAuditCrew not available: %s", e)
             self._crew_available = False
 
     def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
@@ -191,20 +199,3 @@ class SecurityAuditWorkflow(
                     "No high/critical findings requiring remediation",
                 )
         return False, None
-
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation."""
-        if stage_name == "triage":
-            return await self._triage(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "assess":
-            return await self._assess(input_data, tier)
-        if stage_name == "remediate":
-            return await self._remediate(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")

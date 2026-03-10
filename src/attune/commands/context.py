@@ -242,7 +242,7 @@ class CommandExecutor:
                 )
                 hooks_fired.append(f"pre:{pre_hook}")
                 logger.debug("Pre-command hook fired: %s", pre_hook)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Pre-command hook failed: %s", e)
 
         # Get relevant patterns
@@ -268,7 +268,7 @@ class CommandExecutor:
                 )
                 hooks_fired.append(f"post:{post_hook}")
                 logger.debug("Post-command hook fired: %s", post_hook)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Post-command hook failed: %s", e)
 
         duration_ms = (time.time() - start_time) * 1000

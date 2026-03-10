@@ -42,6 +42,12 @@ class WizardInternalWorkflow(BaseWorkflow):
     tier_map: dict[str, ModelTier] = {}
 
     def __init__(self, provider: str | None = None, **kwargs: Any) -> None:
+        """Initialize the internal wizard-to-workflow bridge.
+
+        Args:
+            provider: Optional LLM provider override.
+            **kwargs: Additional keyword arguments for BaseWorkflow.
+        """
         super().__init__(provider=provider, **kwargs)
 
     async def run_stage(

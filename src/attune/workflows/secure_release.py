@@ -272,7 +272,7 @@ class SecureReleasePipeline(BaseWorkflow):
                 release_result,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Secure release pipeline failed: {e}")
             blockers.append(f"Pipeline failed: {e!s}")
             go_no_go = "NO_GO"

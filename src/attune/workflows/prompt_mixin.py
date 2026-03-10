@@ -142,7 +142,7 @@ class PromptMixin:
 
             manager = LessonsManager()
             return manager.format_for_prompt()
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Lessons are optional; never break a workflow
             logger.debug("Could not load lessons for prompt injection")
             return None

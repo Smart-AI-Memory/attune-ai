@@ -7,6 +7,7 @@ Supports single-provider mode (default) and hybrid mode (multi-provider).
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from enum import Enum
@@ -16,6 +17,8 @@ from typing import Any
 from attune.security.path_validation import _validate_file_path
 
 from .registry import MODEL_REGISTRY, ModelInfo, ModelTier
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderMode(str, Enum):
@@ -83,8 +86,15 @@ class ProviderConfig:
                                 value = value.strip().strip("'\"")
                                 if key and value:
                                     env_keys[key] = value
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001
+                    # INTENTIONAL: .env reading is best-effort.
+                    # Missing or unreadable .env files should
+                    # not block provider detection.
+                    logger.warning(
+                        "env_file_read_failed: %s",
+                        str(env_path),
+                        exc_info=True,
+                    )
 
         return env_keys
 
@@ -168,8 +178,14 @@ class ProviderConfig:
                 with open(path) as f:
                     data = json.load(f)
                 return cls.from_dict(data)
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Graceful fallback to auto_detect()
+                # when saved config is corrupt or unreadable.
+                logger.warning(
+                    "provider_config_load_failed: %s",
+                    str(path),
+                    exc_info=True,
+                )
 
         # Auto-detect if no config exists
         return cls.auto_detect()

@@ -34,6 +34,12 @@ class TestCoverageAgent(ReleaseAgent):
         redis_client: Any | None = None,
         state_store: AgentStateStore | None = None,
     ) -> None:
+        """Initialize the test coverage agent.
+
+        Args:
+            redis_client: Optional Redis connection for coordination.
+            state_store: Optional persistent state store.
+        """
         super().__init__(
             agent_id=f"test-coverage-{uuid4().hex[:8]}",
             role="Test Coverage",
@@ -112,7 +118,7 @@ class TestCoverageAgent(ReleaseAgent):
             # The quality gate evaluation handles pass/fail threshold.
             return True, findings
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Test coverage analysis failed: {e}")
             return False, {
                 "error": str(e),

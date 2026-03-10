@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -111,7 +111,7 @@ class TestSonnetOpusFallback:
         analytics = TelemetryAnalytics(get_telemetry_store())
 
         # Get recent stats
-        since = datetime.utcnow() - timedelta(hours=1)
+        since = datetime.now(timezone.utc) - timedelta(hours=1)
         stats = analytics.sonnet_opus_fallback_analysis(since=since)
 
         # Verify structure
@@ -183,7 +183,7 @@ class TestSonnetOpusAnalytics:
         analytics = TelemetryAnalytics(get_telemetry_store())
 
         # Future date with no data
-        since = datetime.utcnow() + timedelta(days=1)
+        since = datetime.now(timezone.utc) + timedelta(days=1)
         stats = analytics.sonnet_opus_fallback_analysis(since=since)
 
         assert stats["total_calls"] == 0

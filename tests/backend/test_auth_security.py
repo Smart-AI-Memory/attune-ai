@@ -157,8 +157,8 @@ class TestJWTTokens:
             "sub": "test@example.com",
             "user_id": 1,
             "name": "Test User",
-            "exp": datetime.datetime.utcnow() - datetime.timedelta(hours=1),
-            "iat": datetime.datetime.utcnow() - datetime.timedelta(hours=2),
+            "exp": datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1),
+            "iat": datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2),
         }
         expired_token = jwt.encode(expired_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 

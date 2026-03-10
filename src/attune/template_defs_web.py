@@ -67,7 +67,10 @@ app = FastAPI(
 try:
     config = load_config()
     empathy = EmpathyOS(config)
-except Exception:
+except Exception:  # noqa: BLE001
+    # INTENTIONAL: Empathy is optional - app must start even if config fails
+    import logging
+    logging.getLogger(__name__).warning("Empathy initialization failed, running without AI features")
     empathy = None
 
 

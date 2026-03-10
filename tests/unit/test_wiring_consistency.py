@@ -5,12 +5,10 @@ resolves to something real.  These are pure structural checks — no
 execution, no mocks, no I/O.
 """
 
-import ast
 import importlib
 import importlib.metadata
 import inspect
 import re
-import textwrap
 
 # ---------------------------------------------------------------------------
 # 1. Socratic MCP: every tool has a handler
@@ -61,18 +59,13 @@ class TestEmpathyMCPWiring:
     def _registered_tools(self) -> set[str]:
         from attune.mcp.server import EmpathyMCPServer
 
-        source = inspect.getsource(EmpathyMCPServer._register_tools)
-        # Keys are the top-level string literals that serve as dict keys.
-        # They appear as  "tool_name": {  at the start of each entry.
-        tree = ast.parse(textwrap.dedent(source))
-        keys: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Dict):
-                for key in node.keys:
-                    if isinstance(key, ast.Constant) and isinstance(key.value, str):
-                        keys.add(key.value)
-                break  # only the outermost return dict
-        return keys
+        # Instantiate a lightweight server and inspect the registered tools dict
+        server = EmpathyMCPServer.__new__(EmpathyMCPServer)
+        server._memory = None
+        server._attune_level = 3
+        server._context = {}
+        server._plugin_handlers = {}
+        return set(server._register_tools().keys())
 
     def _dispatched_tools(self) -> set[str]:
         from attune.mcp.server import EmpathyMCPServer
@@ -180,6 +173,8 @@ class TestCLIRouterWiring:
         "wizard",
         "agent",
         "batch",
+        "bulk",
+        "pipeline",
         "utilities",
         "brainstorm",
     }

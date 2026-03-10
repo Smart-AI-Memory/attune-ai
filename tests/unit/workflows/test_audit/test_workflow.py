@@ -485,7 +485,7 @@ class TestExecuteStage:
     async def test_quick_mode_skips_execution(self):
         """In 'quick' mode, execute stage returns empty results list."""
         wf = TestAuditWorkflow(mode="quick")
-        result, in_tok, out_tok = await wf._execute_stage(
+        result, in_tok, out_tok = await wf._execute(
             {"batches": [{"batch_id": "batch_0", "modules": []}]},
             ModelTier.CAPABLE,
         )
@@ -512,7 +512,7 @@ class TestExecuteStage:
                 "task_xml": "<task/>",
             },
         ]
-        result, _, _ = await wf._execute_stage({"batches": batches}, ModelTier.CAPABLE)
+        result, _, _ = await wf._execute({"batches": batches}, ModelTier.CAPABLE)
         assert len(result["results"]) == 2
         assert result["batches_processed"] == 2
 
@@ -528,14 +528,14 @@ class TestExecuteStage:
                 "task_xml": "<task/>",
             }
         ]
-        result, _, _ = await wf._execute_stage({"batches": batches}, ModelTier.CAPABLE)
+        result, _, _ = await wf._execute({"batches": batches}, ModelTier.CAPABLE)
         assert result["results"][0]["status"] == "planned"
 
     @pytest.mark.asyncio
     async def test_deep_mode_empty_batches(self):
         """Deep mode with no batches returns empty results."""
         wf = TestAuditWorkflow(mode="deep")
-        result, _, _ = await wf._execute_stage({"batches": []}, ModelTier.CAPABLE)
+        result, _, _ = await wf._execute({"batches": []}, ModelTier.CAPABLE)
         assert result["results"] == []
         assert result["batches_processed"] == 0
 
@@ -543,7 +543,7 @@ class TestExecuteStage:
     async def test_execute_merges_input_data(self):
         """Execute output includes all keys from input_data."""
         wf = TestAuditWorkflow(mode="quick")
-        result, _, _ = await wf._execute_stage(
+        result, _, _ = await wf._execute(
             {"batches": [], "sentinel_key": "hello"},
             ModelTier.CAPABLE,
         )

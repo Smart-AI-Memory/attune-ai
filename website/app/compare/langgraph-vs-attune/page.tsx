@@ -21,7 +21,7 @@ export const metadata: Metadata = generateSEOMetadata({
 const rows = [
   { feature: 'Claude-native integration', attune: '✅ First-class', langgraph: '⚠️ Via LangChain adapter' },
   { feature: 'Orchestration model', attune: 'Workflow-first (linear + parallel)', langgraph: 'Graph-based (nodes + edges)' },
-  { feature: 'Prompt caching (90% cost savings)', attune: '✅ Built-in', langgraph: '❌ Manual setup' },
+  { feature: 'Prompt caching (Anthropic built-in)', attune: '✅ Built-in', langgraph: '❌ Manual setup' },
   { feature: 'Code wizards', attune: '✅ 10 built-in', langgraph: '❌ None' },
   { feature: 'Claude Code CLI integration', attune: '✅ Plugin-native', langgraph: '❌ None' },
   { feature: 'Learning curve', attune: 'Low (workflow DSL)', langgraph: 'Steep (graph theory required)' },

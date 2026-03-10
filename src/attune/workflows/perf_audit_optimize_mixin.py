@@ -231,7 +231,7 @@ async def _execute_optimize_llm(
                 system=system,
             )
             return response, input_tokens, output_tokens
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Fall back to legacy _call_llm if executor fails
             return await workflow._call_llm(
                 tier,

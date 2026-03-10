@@ -5,7 +5,6 @@ Demonstrates the unified multi-model architecture including:
 - Task-based routing
 - Telemetry collection and analysis
 - Fallback policies and resilient execution
-- Configuration validation
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -18,7 +17,6 @@ from datetime import datetime
 # Model Registry imports
 from attune.models import (  # Registry; Validation; Fallback; Telemetry; Executor; Tasks
     CircuitBreaker,
-    ConfigValidator,
     ExecutionContext,
     FallbackPolicy,
     FallbackStrategy,
@@ -236,10 +234,10 @@ def demo_fallback_policies():
     policy1 = FallbackPolicy(
         primary_provider="anthropic",
         primary_tier="capable",
-        strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+        strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
     )
 
-    print("\nStrategy: SAME_TIER_DIFFERENT_PROVIDER")
+    print("\nStrategy: CHEAPER_TIER_SAME_PROVIDER")
     print("Primary: anthropic/capable")
     print("Fallback chain:")
     for step in policy1.get_fallback_chain():
@@ -290,7 +288,7 @@ def demo_resilient_executor():
             fallback_policy=FallbackPolicy(
                 primary_provider="anthropic",
                 primary_tier="capable",
-                strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+                strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
             ),
             retry_policy=RetryPolicy(
                 max_retries=2,
@@ -331,48 +329,6 @@ def demo_resilient_executor():
     asyncio.run(run_resilient())
 
 
-def demo_config_validation():
-    """Demonstrate configuration validation."""
-    print("\n" + "=" * 60)
-    print("DEMO: Configuration Validation")
-    print("=" * 60)
-
-    validator = ConfigValidator()
-
-    # Valid config
-    valid_config = {
-        "name": "code_review_workflow",
-        "description": "Multi-stage code review",
-        "default_provider": "anthropic",
-        "stages": [
-            {"name": "triage", "tier": "cheap", "timeout_ms": 30000},
-            {"name": "analysis", "tier": "capable", "max_retries": 3},
-            {"name": "synthesis", "tier": "premium"},
-        ],
-    }
-
-    print("\nValidating correct config:")
-    result = validator.validate_workflow_config(valid_config)
-    print(f"  Valid: {result.valid}")
-
-    # Invalid config
-    invalid_config = {
-        "description": "Missing name field",
-        "default_provider": "invalid_provider",
-        "stages": [
-            {"name": "step1", "tier": "super_premium"},
-            {"tier": "capable"},  # Missing name
-        ],
-    }
-
-    print("\nValidating invalid config:")
-    result = validator.validate_workflow_config(invalid_config)
-    print(f"  Valid: {result.valid}")
-    print("  Errors:")
-    for error in result.errors:
-        print(f"    - {error}")
-
-
 def main():
     """Run all demos."""
     print("\n" + "=" * 60)
@@ -385,7 +341,6 @@ def main():
     demo_telemetry()
     demo_fallback_policies()
     demo_resilient_executor()
-    demo_config_validation()
 
     print("\n" + "=" * 60)
     print("All demos completed successfully!")

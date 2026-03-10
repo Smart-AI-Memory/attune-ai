@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -86,7 +86,7 @@ class CoordinationSignal:
         if isinstance(timestamp, str):
             timestamp = datetime.fromisoformat(timestamp)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         return cls(
             signal_id=data["signal_id"],
@@ -153,7 +153,7 @@ class CoordinationSignals:
                 from attune.telemetry.event_streaming import EventStreamer
 
                 self._event_streamer = EventStreamer(memory=self.memory)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to initialize EventStreamer: {e}")
                 self._enable_streaming = False
 
@@ -218,7 +218,7 @@ class CoordinationSignals:
             source_agent=source,
             target_agent=target_agent,
             payload=payload or {},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             ttl_seconds=ttl,
         )
 
@@ -235,7 +235,7 @@ class CoordinationSignals:
                 self.memory._client.setex(key, ttl, json.dumps(signal.to_dict()))
             else:
                 logger.warning("Cannot send signal: no Redis backend available")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send signal {signal_id}: {e}")
 
         # Publish to event stream (Pattern 4 - optional)
@@ -247,7 +247,7 @@ class CoordinationSignals:
                     data=signal.to_dict(),
                     source="attune",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug(f"Failed to publish coordination signal event to stream: {e}")
 
         return signal_id
@@ -382,7 +382,7 @@ class CoordinationSignals:
                     return signal
 
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to check signal: {e}")
             return None
 
@@ -430,7 +430,7 @@ class CoordinationSignals:
                     signals.append(signal)
 
             return signals
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get pending signals: {e}")
             return []
 
@@ -475,7 +475,7 @@ class CoordinationSignals:
                         data = data.decode("utf-8")
                     return json.loads(data)
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to retrieve signal {key}: {e}")
             return None
 
@@ -488,6 +488,6 @@ class CoordinationSignals:
             if hasattr(self.memory, "_client"):
                 return self.memory._client.delete(key) > 0
             return False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to delete signal {key}: {e}")
             return False

@@ -76,7 +76,7 @@ def _run_command(cmd: list, capture: bool = True) -> tuple:
         return False, "Command timed out"
     except FileNotFoundError:
         return False, f"Command not found: {cmd[0]}"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return False, str(e)
 
 

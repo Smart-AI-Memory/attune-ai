@@ -43,6 +43,13 @@ class AutoGenAgent(BaseAgent):
     """Agent wrapping an AutoGen AssistantAgent or UserProxyAgent."""
 
     def __init__(self, config: AgentConfig, autogen_agent=None):
+        """Initialize AutoGen agent wrapper.
+
+        Args:
+            config: Agent configuration
+            autogen_agent: The underlying AutoGen agent instance
+
+        """
         super().__init__(config)
         self._autogen_agent = autogen_agent
         self._last_response = None
@@ -63,6 +70,7 @@ class AutoGenAgent(BaseAgent):
             loop = asyncio.get_event_loop()
 
             def sync_chat():
+                """Run AutoGen generate_reply synchronously."""
                 # For single agent invocation, we use generate_reply
                 if hasattr(self._autogen_agent, "generate_reply"):
                     messages = [{"role": "user", "content": message}]
@@ -79,7 +87,7 @@ class AutoGenAgent(BaseAgent):
 
             return {"output": output, "metadata": {"framework": "autogen", "model": self.model}}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
     async def stream(self, input_data: str | dict, context: dict | None = None):
@@ -102,6 +110,15 @@ class AutoGenWorkflow(BaseWorkflow):
         group_chat=None,
         manager=None,
     ):
+        """Initialize AutoGen workflow.
+
+        Args:
+            config: Workflow configuration
+            agents: List of agents in the workflow
+            group_chat: Optional AutoGen GroupChat instance
+            manager: Optional AutoGen GroupChatManager instance
+
+        """
         super().__init__(config, agents)
         self._group_chat = group_chat
         self._manager = manager
@@ -121,6 +138,7 @@ class AutoGenWorkflow(BaseWorkflow):
             loop = asyncio.get_event_loop()
 
             def sync_chat():
+                """Run AutoGen group chat synchronously."""
                 # Get first agent to initiate
                 first_agent = list(self.agents.values())[0]
                 ag_agent = (
@@ -159,7 +177,7 @@ class AutoGenWorkflow(BaseWorkflow):
                 "metadata": {"framework": "autogen"},
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "error": str(e)}
 
     async def _run_sequential(self, input_data: str | dict) -> dict:
@@ -182,6 +200,13 @@ class AutoGenAdapter(BaseAdapter):
     """Adapter for Microsoft AutoGen framework."""
 
     def __init__(self, provider: str = "anthropic", api_key: str | None = None):
+        """Initialize AutoGen adapter.
+
+        Args:
+            provider: LLM provider (anthropic, openai)
+            api_key: API key (uses env var if not provided)
+
+        """
         self.provider = provider
         self.api_key = api_key or os.getenv(
             "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY",
@@ -189,9 +214,11 @@ class AutoGenAdapter(BaseAdapter):
 
     @property
     def framework_name(self) -> str:
+        """Return the framework name identifier."""
         return "autogen"
 
     def is_available(self) -> bool:
+        """Check if the framework dependencies are installed."""
         return bool(_check_autogen())
 
     def _get_llm_config(self, config: AgentConfig) -> dict:

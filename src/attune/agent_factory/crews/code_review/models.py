@@ -42,6 +42,7 @@ class Verdict(Enum):
     APPROVE_WITH_SUGGESTIONS = "approve_with_suggestions"
     REQUEST_CHANGES = "request_changes"
     REJECT = "reject"
+    ERROR = "error"
 
 
 @dataclass

@@ -82,7 +82,7 @@ class SequentialStrategy(ExecutionStrategy):
                     # Continue or stop based on error handling policy
                     # For now: continue to next agent
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.exception(f"Error executing agent {agent.id}: {e}")
                 results.append(
                     AgentResult(
@@ -139,7 +139,7 @@ class ParallelStrategy(ExecutionStrategy):
 
         try:
             results = await asyncio.gather(*tasks, return_exceptions=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception(f"Error in parallel execution: {e}")
             raise
 

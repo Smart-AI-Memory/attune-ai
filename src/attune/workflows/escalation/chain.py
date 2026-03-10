@@ -280,7 +280,7 @@ class EscalationChain:
                 output_tokens=response.tokens_output,
             )
 
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             # INTENTIONAL: API errors keep the chain alive for escalation.
             logger.warning(
                 "EscalationChain: API error on %s attempt %d: %s",

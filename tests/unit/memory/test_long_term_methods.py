@@ -18,7 +18,7 @@ Purpose: Address critical security gap in method-level testing
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -650,7 +650,7 @@ class TestSecureMemDocsErrorHandling:
 
         # Manually modify created_at to be expired
         pattern_data = integration.storage.retrieve(result["pattern_id"])
-        old_date = (datetime.utcnow() - timedelta(days=100)).isoformat() + "Z"
+        old_date = (datetime.now(timezone.utc) - timedelta(days=100)).isoformat()
         pattern_data["metadata"]["created_at"] = old_date
         integration.storage.store(
             result["pattern_id"],

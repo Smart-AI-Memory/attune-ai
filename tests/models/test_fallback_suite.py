@@ -27,7 +27,7 @@ import json
 import sys
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from attune.models.empathy_executor import EmpathyLLMExecutor
 from attune.models.fallback import SONNET_TO_OPUS_FALLBACK, ResilientExecutor
@@ -104,7 +104,7 @@ class FallbackTestSuite:
         """
         self.verbose = verbose
         self.console = Console() if RICH_AVAILABLE else None
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self.test_run_id = f"fallback_test_{int(time.time())}"
         self.results: list[TestResult] = []
 
@@ -403,7 +403,7 @@ class FallbackTestSuite:
             TestReport with analysis
 
         """
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - self.start_time).total_seconds()
 
         # Calculate metrics

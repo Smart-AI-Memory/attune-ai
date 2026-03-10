@@ -315,6 +315,7 @@ class WorkflowBatchRunner:
             semaphore = asyncio.Semaphore(self.max_parallel)
 
             async def run_with_semaphore(spec: WorkflowSpec) -> WorkflowBatchResult:
+                """Execute a workflow spec while respecting the concurrency semaphore."""
                 async with semaphore:
                     return await self._execute_one(spec)
 
@@ -380,7 +381,7 @@ class WorkflowBatchRunner:
             duration = time.monotonic() - start_time
             cost = getattr(result, "total_cost", 0.0)
             if hasattr(result, "cost_report") and result.cost_report:
-                cost = result.cost_report.get("total_cost", cost)
+                cost = getattr(result.cost_report, "total_cost", cost)
 
             return WorkflowBatchResult(
                 workflow_id=spec.workflow_id,
@@ -402,7 +403,7 @@ class WorkflowBatchRunner:
                 duration_seconds=duration,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             duration = time.monotonic() - start_time
             logger.exception(f"Workflow '{spec.workflow_id}' failed: {e}")
             return WorkflowBatchResult(
@@ -430,7 +431,7 @@ class WorkflowBatchRunner:
         try:
             workflow_class = get_workflow(spec.workflow_id)
         except KeyError:
-            raise ValueError(f"Workflow '{spec.workflow_id}' not found in registry")
+            raise ValueError(f"Workflow '{spec.workflow_id}' not found in registry") from None
 
         # Filter config to only valid constructor params
         try:

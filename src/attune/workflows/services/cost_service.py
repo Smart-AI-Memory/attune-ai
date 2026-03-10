@@ -38,6 +38,12 @@ class CostService:
         self,
         cache_stats_fn: Any = None,
     ) -> None:
+        """Initialize CostService for tracking workflow costs.
+
+        Args:
+            cache_stats_fn: Optional callable returning cache hit/miss stats.
+
+        """
         self._cache_stats_fn = cache_stats_fn
 
     def calculate_cost(self, tier: Any, input_tokens: int, output_tokens: int) -> float:

@@ -35,7 +35,7 @@ def check_for_updates() -> dict[str, Any] | None:
         import attune
 
         current = attune.__version__
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Can't determine current version — skip check
         return None
 
@@ -60,7 +60,7 @@ def check_for_updates() -> dict[str, Any] | None:
         }
         return _cached_status
 
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Network failures silently skip — version check is best-effort
         return None
 

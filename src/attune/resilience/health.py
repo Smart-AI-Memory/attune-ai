@@ -11,7 +11,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -37,7 +37,7 @@ class HealthCheckResult:
     message: str = ""
     latency_ms: float = 0.0
     details: dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -48,7 +48,7 @@ class SystemHealth:
     checks: list[HealthCheckResult]
     version: str = "unknown"
     uptime_seconds: float = 0.0
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -92,6 +92,11 @@ class HealthCheck:
     """
 
     def __init__(self, version: str = "unknown"):
+        """Initialize the health check manager.
+
+        Args:
+            version: Application version string for status reports
+        """
         self.version = version
         self.start_time = time.time()
         self._checks: dict[str, Callable] = {}
@@ -119,6 +124,7 @@ class HealthCheck:
         """
 
         def decorator(func: Callable) -> Callable:
+            """Register the decorated function as a health check."""
             self._checks[name] = func
             self._timeouts[name] = timeout
             return func
@@ -177,7 +183,7 @@ class HealthCheck:
                 message=f"Check timed out after {timeout}s",
                 latency_ms=timeout * 1000,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             latency = (time.time() - start) * 1000
             return HealthCheckResult(
                 name=name,
@@ -242,7 +248,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "workflow_count": workflow_count,
                 "message": f"{workflow_count} workflows registered",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("memory_graph")
@@ -265,7 +271,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "edge_count": 0,
                 "message": "Graph file not yet created",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("smart_router")
@@ -281,7 +287,7 @@ def register_default_checks(health: HealthCheck) -> None:
                 "healthy": decision is not None,
                 "primary_workflow": decision.primary_workflow,
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}
 
     @health.register("chain_executor")
@@ -296,5 +302,5 @@ def register_default_checks(health: HealthCheck) -> None:
                 "healthy": True,
                 "template_count": len(templates),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}

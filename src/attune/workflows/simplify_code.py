@@ -23,7 +23,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from .base import BaseWorkflow, ModelTier
+from .base import BaseWorkflow, ModelTier, estimate_tokens
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,9 @@ class SimplifyCodeWorkflow(BaseWorkflow):
         "simplify": ModelTier.CAPABLE,
         "review": ModelTier.PREMIUM,
     }
+    input_schema = InputSchema(
+        required_fields={"path": str},
+    )
 
     def __init__(
         self,
@@ -142,36 +146,6 @@ class SimplifyCodeWorkflow(BaseWorkflow):
                     f"below threshold of {self.min_findings_for_review}"
                 )
         return False, None
-
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation.
-
-        Args:
-            stage_name: Current stage name.
-            tier: Model tier for this stage.
-            input_data: Data from previous stages.
-
-        Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
-        Raises:
-            ValueError: If stage_name is unknown.
-
-        """
-        if stage_name == "scan":
-            return await self._scan(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "simplify":
-            return await self._simplify(input_data, tier)
-        if stage_name == "review":
-            return await self._review(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
 
     # ------------------------------------------------------------------
     # Stage 1: Scan
@@ -251,8 +225,8 @@ class SimplifyCodeWorkflow(BaseWorkflow):
             key=lambda h: h["complexity"],
         )
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(hotspots)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(hotspots)
 
         return (
             {
@@ -380,8 +354,8 @@ class SimplifyCodeWorkflow(BaseWorkflow):
 
         self._findings_count = len(findings)
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(findings)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(findings)
 
         return (
             {
@@ -480,8 +454,8 @@ class SimplifyCodeWorkflow(BaseWorkflow):
             cat = simp.get("category", "simplify")
             categories_found[cat] = categories_found.get(cat, 0) + 1
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(simplifications)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(simplifications)
 
         return (
             {

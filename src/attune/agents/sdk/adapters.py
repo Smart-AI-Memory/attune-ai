@@ -55,7 +55,7 @@ class SDKToolsMixin:
 
                 result = claude_agent_sdk.tools.read(file_path)
                 return str(result)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Fall back to stdlib on any SDK error
                 logger.debug(f"SDK read failed, using fallback: {e}")
 
@@ -84,7 +84,7 @@ class SDKToolsMixin:
                 if isinstance(result, list):
                     return [str(p) for p in result]
                 return [str(result)]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Fall back to stdlib on any SDK error
                 logger.debug(f"SDK glob failed, using fallback: {e}")
 
@@ -117,7 +117,7 @@ class SDKToolsMixin:
                     timeout=timeout * 1000,
                 )
                 return 0, str(result), ""
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Fall back to subprocess on any SDK error
                 logger.debug(f"SDK bash failed, using fallback: {e}")
 

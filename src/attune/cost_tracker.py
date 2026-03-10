@@ -122,7 +122,7 @@ class CostTracker:
         try:
             if self._buffer:
                 self.flush()
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Best-effort flush, don't break shutdown
             pass
 
@@ -591,7 +591,7 @@ class CostTracker:
         return totals
 
 
-def cmd_costs(args):
+def cmd_costs(args: Any) -> int:
     """CLI command handler for costs."""
     tracker = CostTracker(storage_dir=getattr(args, "attune_dir", ".attune"))
     days = getattr(args, "days", 7)

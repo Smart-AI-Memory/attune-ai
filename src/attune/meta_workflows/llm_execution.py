@@ -61,7 +61,7 @@ def execute_agents_real(agents: list[AgentSpec]) -> list[AgentExecutionResult]:
                 f"success={result.success}",
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Agent {agent.role} failed with error: {e}")
 
             # Create error result
@@ -207,7 +207,7 @@ def _execute_at_tier(
 
         return result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"LLM execution failed at tier {tier.value}: {e}")
 
         # Return error result
@@ -293,7 +293,7 @@ def execute_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[st
         logger.warning("Anthropic client not available, using simulation")
         return simulate_llm_call(prompt, model_config, tier)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"LLM call failed: {e}")
         # Return failure result
         return {

@@ -2640,6 +2640,10 @@ class TestReleasePreparationWorkflowHealthAuthStrategy:
             patch("attune.models.count_lines_of_code", return_value=500),
             patch("attune.models.get_auth_strategy", return_value=mock_strategy),
             patch("attune.models.get_module_size_category", return_value="small"),
+            patch(
+                "attune.workflows.release_prep_stages._validate_file_path",
+                side_effect=lambda p: p,
+            ),
             patch("pathlib.Path") as mock_path_cls,
         ):
             mock_path = MagicMock()
@@ -2674,6 +2678,10 @@ class TestReleasePreparationWorkflowHealthAuthStrategy:
             patch("attune.models.count_lines_of_code", return_value=100),
             patch("attune.models.get_auth_strategy", return_value=mock_strategy),
             patch("attune.models.get_module_size_category", return_value="medium"),
+            patch(
+                "attune.workflows.release_prep_stages._validate_file_path",
+                side_effect=lambda p: p,
+            ),
             patch("pathlib.Path") as mock_path_cls,
         ):
             mock_path = MagicMock()

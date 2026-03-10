@@ -20,7 +20,9 @@ class AuditReportMixin:
 
     if TYPE_CHECKING:
 
-        def query(self, **kwargs: Any) -> list[dict[str, Any]]: ...
+        def query(self, **kwargs: Any) -> list[dict[str, Any]]:
+            """Query audit log entries."""
+            ...
 
     def get_violation_summary(
         self,
@@ -90,7 +92,7 @@ class AuditReportMixin:
         Example:
             >>> from datetime import datetime, timedelta
             >>> report = logger.get_compliance_report(
-            ...     start_date=datetime.utcnow()
+            ...     start_date=datetime.now(timezone.utc)
             ...         - timedelta(days=30),
             ... )
             >>> print(

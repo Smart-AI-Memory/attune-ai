@@ -33,6 +33,17 @@ class AnthropicProvider(BaseLLMProvider):
         use_batch: bool = False,
         **kwargs,
     ):
+        """Initialize the Anthropic LLM provider.
+
+        Args:
+            api_key: Anthropic API key (falls back to env var).
+            model: Model identifier to use.
+            use_prompt_caching: Enable prompt caching for cost savings.
+            use_thinking: Enable extended thinking mode.
+            thinking_budget: Max tokens for thinking budget.
+            use_batch: Enable batch processing mode.
+            **kwargs: Additional provider configuration.
+        """
         super().__init__(api_key, **kwargs)
         self.model = model
         self.use_prompt_caching = use_prompt_caching

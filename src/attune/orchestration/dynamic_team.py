@@ -104,6 +104,16 @@ class DynamicTeam:
         quality_gates: list[QualityGate] | None = None,
         phases: list[dict[str, Any]] | None = None,
     ) -> None:
+        """Initialize DynamicTeam with agents and execution strategy.
+
+        Args:
+            team_name: Human-readable name for the team.
+            agents: List of SDK agents to execute.
+            strategy: Execution strategy (parallel, sequential, two_phase).
+            quality_gates: Optional quality gate thresholds.
+            phases: Optional phase definitions for two_phase strategy.
+
+        """
         self.team_name = team_name
         self.agents = agents
         self.strategy = strategy

@@ -112,6 +112,14 @@ class SDKAgentTeam:
         quality_gates: list[QualityGate] | None = None,
         parallel: bool = True,
     ) -> None:
+        """Initialize the SDK agent team.
+
+        Args:
+            team_name: Name identifying this team.
+            agents: List of SDKAgent instances.
+            quality_gates: Optional quality gate thresholds.
+            parallel: If True, agents run concurrently.
+        """
         self.team_name = team_name
         self.agents = agents
         self.quality_gates = quality_gates or []

@@ -16,7 +16,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -112,6 +112,24 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def estimate_tokens(obj: Any, max_chars: int = 1_000_000) -> int:
+    """Rough token estimate: ~4 characters per token.
+
+    Args:
+        obj: Object to estimate tokens for.
+        max_chars: Upper bound on characters to inspect (default 1M).
+
+    Returns:
+        Estimated token count (capped at max_chars // 4).
+
+    """
+    if isinstance(obj, str):
+        return min(len(obj), max_chars) // 4
+    # Fallback: cap str() conversion to avoid unbounded allocation
+    s = str(obj)[:max_chars]
+    return len(s) // 4
+
+
 class BaseWorkflow(
     ContextProxyMixin,
     ExecutionMixin,
@@ -136,21 +154,26 @@ class BaseWorkflow(
     plus PromptMixin, ExecutorMixin, CachingMixin, TelemetryMixin,
     ResponseParsingMixin, and CostTrackingMixin.
 
-    Subclasses define stages and tier mappings:
+    Subclasses define stages, tier mappings, and handler methods.
+    The default ``run_stage`` dispatches by convention: stage
+    ``"scan"`` calls ``self._scan(input_data, tier)``.
 
         class MyWorkflow(BaseWorkflow):
             name = "my-workflow"
             description = "Does something useful"
-            stages = ["stage1", "stage2", "stage3"]
+            stages = ["scan", "analyze", "report"]
             tier_map = {
-                "stage1": ModelTier.CHEAP,
-                "stage2": ModelTier.CAPABLE,
-                "stage3": ModelTier.PREMIUM,
+                "scan": ModelTier.CHEAP,
+                "analyze": ModelTier.CAPABLE,
+                "report": ModelTier.PREMIUM,
             }
 
-            async def run_stage(self, stage_name, tier, input_data):
-                # Implement stage logic
-                return output_data
+            async def _scan(self, input_data, tier):
+                ...
+            async def _analyze(self, input_data, tier):
+                ...
+            async def _report(self, input_data, tier):
+                ...
     """
 
     name: str = "base-workflow"
@@ -366,7 +389,6 @@ class BaseWorkflow(
     # tier routing, and coordination proxies) are inherited from
     # ContextProxyMixin -- see context_proxy_mixin.py
 
-    @abstractmethod
     async def run_stage(
         self,
         stage_name: str,
@@ -374,6 +396,10 @@ class BaseWorkflow(
         input_data: Any,
     ) -> tuple[Any, int, int]:
         """Execute a single workflow stage.
+
+        Default implementation dispatches by convention: stage ``"X"``
+        calls ``self._X(input_data, tier)``.  Subclasses may override
+        for non-standard dispatch.
 
         Args:
             stage_name: Name of the stage to run
@@ -383,7 +409,14 @@ class BaseWorkflow(
         Returns:
             Tuple of (output_data, input_tokens, output_tokens)
 
+        Raises:
+            ValueError: If no handler method exists for stage_name
+
         """
+        handler = getattr(self, f"_{stage_name}", None)
+        if handler is None:
+            raise ValueError(f"Unknown stage: {stage_name}")
+        return await handler(input_data, tier)
 
     # Execution methods (execute, _execute_tier_fallback, _execute_standard,
     # _finalize_execution) are inherited from ExecutionMixin

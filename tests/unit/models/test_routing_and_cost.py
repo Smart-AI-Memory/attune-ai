@@ -248,7 +248,7 @@ class TestFallbackActivation:
         policy = FallbackPolicy(
             primary_provider="anthropic",
             primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
         # Mock executor that raises rate limit error
@@ -279,7 +279,7 @@ class TestFallbackActivation:
         policy = FallbackPolicy(
             primary_provider="anthropic",
             primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
         # Mock executor that times out
@@ -310,7 +310,7 @@ class TestFallbackActivation:
         policy = FallbackPolicy(
             primary_provider="anthropic",
             primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
         # Mock executor that returns 500 error
@@ -720,7 +720,7 @@ class TestRoutingDecisions:
         policy = FallbackPolicy(
             primary_provider="anthropic",
             primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
         # Get fallback chain with descriptions
@@ -784,7 +784,7 @@ class TestRoutingDecisions:
         policy = FallbackPolicy(
             primary_provider="anthropic",
             primary_tier="capable",
-            strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
         # Get fallback chain

@@ -215,31 +215,6 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
             return False, None
         return False, None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Execute a research workflow stage.
-
-        Args:
-            stage_name: Stage to run
-            tier: Model tier to use
-            input_data: Input data
-
-        Returns:
-            (output, input_tokens, output_tokens)
-
-        """
-        if stage_name == "summarize":
-            return await self._summarize(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "synthesize":
-            return await self._synthesize(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     async def _summarize(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Summarize each source document.
 

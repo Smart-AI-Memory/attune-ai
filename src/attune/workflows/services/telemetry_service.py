@@ -57,6 +57,13 @@ class TelemetryService:
         provider: str = "unknown",
         backend: TelemetryBackend | None = None,
     ) -> None:
+        """Initialize the telemetry service.
+
+        Args:
+            workflow_name: Name of the workflow to track.
+            provider: Provider identifier (e.g., "anthropic").
+            backend: Optional telemetry backend; defaults to JSONL store.
+        """
         self._workflow_name = workflow_name
         self._provider = provider
         self._backend = backend
@@ -203,7 +210,7 @@ class TelemetryService:
             logger.debug("Failed to log call telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log call telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
@@ -262,6 +269,6 @@ class TelemetryService:
             logger.debug("Failed to log workflow telemetry (backend error)")
         except OSError:
             logger.debug("Failed to log workflow telemetry (file system error)")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging workflow telemetry")

@@ -145,7 +145,7 @@ class BatchProcessingWorkflow:
                 timeout=timeout,
             )
         except TimeoutError:
-            logger.error(f"Batch {batch_id} timed out after {timeout}s")
+            logger.exception(f"Batch {batch_id} timed out after {timeout}s")
             return [
                 BatchResult(
                     task_id=req.task_id,
@@ -155,7 +155,7 @@ class BatchProcessingWorkflow:
                 for req in requests
             ]
         except RuntimeError as e:
-            logger.error(f"Batch {batch_id} failed: {e}")
+            logger.exception(f"Batch {batch_id} failed: {e}")
             return [
                 BatchResult(task_id=req.task_id, success=False, error=f"Batch failed: {e}")
                 for req in requests

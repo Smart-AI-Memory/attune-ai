@@ -41,6 +41,11 @@ class Console:
     }
 
     def __init__(self, use_color: bool = True):
+        """Initialize the CLI console renderer.
+
+        Args:
+            use_color: Enable ANSI color output (auto-disabled if not a TTY).
+        """
         self.use_color = use_color and sys.stdout.isatty()
 
     def _c(self, color: str, text: str) -> str:

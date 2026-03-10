@@ -43,6 +43,13 @@ class DynamicTeamBuilder:
         state_store: AgentStateStore | None = None,
         redis_client: Any | None = None,
     ) -> None:
+        """Initialize TeamBuilder with optional shared state and Redis.
+
+        Args:
+            state_store: Optional persistent state store shared by agents.
+            redis_client: Optional Redis client shared by agents.
+
+        """
         self.state_store = state_store
         self.redis_client = redis_client
 

@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 try:
@@ -41,7 +41,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
     analytics = TelemetryAnalytics(store)
 
     days = getattr(args, "days", 30)
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
 
     stats = analytics.sonnet_opus_fallback_analysis(since=since)
 
@@ -204,7 +204,7 @@ def cmd_file_test_status(args: Any) -> int:
             records.sort(key=lambda r: r.file_path)
             records = records[:limit]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving file test status: {e}")
         return 1
 

@@ -12,7 +12,7 @@ Licensed under the Apache License, Version 2.0
 import json
 import tempfile
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -33,7 +33,7 @@ class TestLLMCallRecord:
         """Test creating an LLM call record."""
         record = LLMCallRecord(
             call_id=str(uuid.uuid4()),
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             workflow_name="test_workflow",
             step_name="analysis",
             task_type="summarize",
@@ -52,7 +52,7 @@ class TestLLMCallRecord:
 
     def test_to_dict(self):
         """Test converting record to dictionary."""
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         record = LLMCallRecord(
             call_id="test-123",
             timestamp=now,
@@ -99,7 +99,7 @@ class TestLLMCallRecord:
         """Test record with optional metadata."""
         record = LLMCallRecord(
             call_id="test-789",
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             workflow_name="test",
             step_name="step1",
             task_type="fix_bug",
@@ -129,8 +129,8 @@ class TestWorkflowRunRecord:
         record = WorkflowRunRecord(
             run_id="run-001",
             workflow_name="code_review",
-            started_at=datetime.now().isoformat(),
-            completed_at=datetime.now().isoformat(),
+            started_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(timezone.utc).isoformat(),
             total_cost=0.05,
             total_input_tokens=5000,
             total_output_tokens=1500,
@@ -145,8 +145,8 @@ class TestWorkflowRunRecord:
         record = WorkflowRunRecord(
             run_id="run-002",
             workflow_name="deploy",
-            started_at=datetime.now().isoformat(),
-            completed_at=datetime.now().isoformat(),
+            started_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(timezone.utc).isoformat(),
             total_cost=0.02,
             total_input_tokens=2000,
             total_output_tokens=400,
@@ -159,7 +159,7 @@ class TestWorkflowRunRecord:
 
     def test_workflow_to_dict(self):
         """Test workflow record serialization."""
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         record = WorkflowRunRecord(
             run_id="run-003",
             workflow_name="test",
@@ -190,7 +190,7 @@ class TestWorkflowRunRecord:
         record = WorkflowRunRecord(
             run_id="run-004",
             workflow_name="test",
-            started_at=datetime.now().isoformat(),
+            started_at=datetime.now(timezone.utc).isoformat(),
             stages=[stage],
             total_cost=0.005,
         )
@@ -213,7 +213,7 @@ class TestTelemetryStore:
         """Test storing an LLM call record."""
         record = LLMCallRecord(
             call_id="call-001",
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             workflow_name="test",
             step_name="step1",
             task_type="summarize",
@@ -243,8 +243,8 @@ class TestTelemetryStore:
         record = WorkflowRunRecord(
             run_id="run-001",
             workflow_name="analysis",
-            started_at=datetime.now().isoformat(),
-            completed_at=datetime.now().isoformat(),
+            started_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(timezone.utc).isoformat(),
             total_cost=0.03,
             total_input_tokens=3000,
             total_output_tokens=600,
@@ -263,7 +263,7 @@ class TestTelemetryStore:
         for i, workflow in enumerate(["workflow_a", "workflow_b", "workflow_a"]):
             record = LLMCallRecord(
                 call_id=f"call-{i}",
-                timestamp=datetime.now().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 workflow_name=workflow,
                 step_name=f"step{i}",
                 task_type="summarize",
@@ -283,7 +283,7 @@ class TestTelemetryStore:
 
     def test_get_calls_by_time_range(self, temp_store):
         """Test retrieving calls within time range."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         timestamps = [
             now - timedelta(hours=2),
             now - timedelta(hours=1),
@@ -318,8 +318,8 @@ class TestTelemetryStore:
             record = WorkflowRunRecord(
                 run_id=f"run-{i}",
                 workflow_name=f"workflow_{i}",
-                started_at=datetime.now().isoformat(),
-                completed_at=datetime.now().isoformat(),
+                started_at=datetime.now(timezone.utc).isoformat(),
+                completed_at=datetime.now(timezone.utc).isoformat(),
                 total_cost=0.01 * (i + 1),
                 total_input_tokens=1000,
                 total_output_tokens=200,
@@ -351,7 +351,7 @@ class TestTelemetryAnalytics:
             ):
                 record = LLMCallRecord(
                     call_id=f"call-{i}",
-                    timestamp=datetime.now().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                     workflow_name=wf,
                     step_name=f"step{i}",
                     task_type="fix_bug" if tier == "capable" else "summarize",
@@ -373,8 +373,8 @@ class TestTelemetryAnalytics:
                 run = WorkflowRunRecord(
                     run_id=f"run-{i}",
                     workflow_name=wf,
-                    started_at=datetime.now().isoformat(),
-                    completed_at=datetime.now().isoformat(),
+                    started_at=datetime.now(timezone.utc).isoformat(),
+                    completed_at=datetime.now(timezone.utc).isoformat(),
                     total_cost=cost,
                     baseline_cost=cost * 2,  # Pretend premium would cost 2x
                     savings=cost,

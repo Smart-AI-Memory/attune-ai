@@ -236,5 +236,5 @@ class VectorStore:
                 goal = EmbeddedGoal.from_dict(goal_data)
                 self._goals[goal.goal_id] = goal
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to load vector store: {e}")

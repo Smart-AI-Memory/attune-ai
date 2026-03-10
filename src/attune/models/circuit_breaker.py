@@ -36,7 +36,7 @@ class CircuitBreaker:
         ...     try:
         ...         response = call_llm(...)
         ...         breaker.record_success("anthropic", "capable")
-        ...     except Exception as e:
+        ...     except Exception as e:  # noqa: BLE001
         ...         breaker.record_failure("anthropic", "capable")
 
     """

@@ -20,7 +20,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .base import BaseWorkflow, ModelTier
+from .base import BaseWorkflow, ModelTier, estimate_tokens
 from .context import WorkflowContext
 from .refactor_plan_report import (
     format_refactor_plan_report,
@@ -164,23 +164,6 @@ class RefactorPlanWorkflow(BaseWorkflow):
                 return False, None
         return False, None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation."""
-        if stage_name == "scan":
-            return await self._scan(input_data, tier)
-        if stage_name == "analyze":
-            return await self._analyze(input_data, tier)
-        if stage_name == "prioritize":
-            return await self._prioritize(input_data, tier)
-        if stage_name == "plan":
-            return await self._plan(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     async def _scan(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Scan codebase for tech debt markers.
 
@@ -237,8 +220,8 @@ class RefactorPlanWorkflow(BaseWorkflow):
             m = item["marker"]
             by_marker[m] = by_marker.get(m, 0) + 1
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(debt_items)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(debt_items)
 
         return (
             {
@@ -298,8 +281,8 @@ class RefactorPlanWorkflow(BaseWorkflow):
             "hotspots": hotspots,
         }
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(analysis)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(analysis)
 
         return (
             {
@@ -394,7 +377,8 @@ class RefactorPlanWorkflow(BaseWorkflow):
                                         "source": "crew",
                                     },
                                 )
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
+                        # INTENTIONAL: Crew analysis is optional enrichment
                         logger.debug(f"Crew analysis failed for {hotspot}: {e}")
                         continue
 
@@ -403,11 +387,12 @@ class RefactorPlanWorkflow(BaseWorkflow):
                     for cf in crew_findings:
                         if cf["priority_score"] >= 10:
                             high_priority.append(cf)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Crew analysis is optional; continue without it
                 logger.warning(f"Crew analysis failed: {e}")
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(prioritized)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(prioritized)
 
         return (
             {

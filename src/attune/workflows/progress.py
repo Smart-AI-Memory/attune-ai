@@ -54,6 +54,14 @@ class ProgressTracker:
         workflow_id: str,
         stage_names: list[str],
     ):
+        """Initialize ProgressTracker for a workflow run.
+
+        Args:
+            workflow_name: Human-readable workflow name.
+            workflow_id: Unique identifier for this execution.
+            stage_names: Ordered list of stage names to track.
+
+        """
         self.workflow = workflow_name
         self.workflow_id = workflow_id
         self.stage_names = stage_names
@@ -285,7 +293,7 @@ class ProgressTracker:
         for callback in self._callbacks:
             try:
                 callback(update)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Callbacks are optional - never fail workflow
                 # on callback error
                 logger.warning("Progress callback error", exc_info=True)

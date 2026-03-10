@@ -108,7 +108,7 @@ def get_version() -> str:
         from importlib.metadata import version
 
         return version("attune-ai")
-    except Exception:
+    except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback for dev installs without metadata
         return "dev"
 
@@ -118,47 +118,21 @@ def get_version() -> str:
 # =============================================================================
 
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create the argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="attune",
-        description="Attune AI CLI (automation interface - for git hooks, scripts, CI/CD)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-NOTE: This CLI is for automation only. For interactive development,
-use Claude Code skills in VSCode or Claude Desktop:
+def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add workflow subcommand parsers.
 
-    /dev        Developer tools (commit, review, debug, refactor)
-    /testing    Run tests, coverage, generate tests
-    /workflows  AI-powered workflows (security, bug prediction)
-    /docs       Documentation generation
-    /release    Release preparation
+    Args:
+        subparsers: Parent subparsers action to attach to
 
-Documentation: https://smartaimemory.com/framework-docs/
-        """,
-    )
-
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output",
-    )
-
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # --- Workflow commands ---
+    """
     workflow_parser = subparsers.add_parser("workflow", help="Workflow management")
     workflow_sub = workflow_parser.add_subparsers(dest="workflow_command")
 
-    # workflow list
     workflow_sub.add_parser("list", help="List available workflows")
 
-    # workflow info
     info_parser = workflow_sub.add_parser("info", help="Show workflow details")
     info_parser.add_argument("name", help="Workflow name")
 
-    # workflow run
     run_parser = workflow_sub.add_parser("run", help="Run a workflow")
     run_parser.add_argument("name", help="Workflow name")
     run_parser.add_argument("--input", "-i", help="JSON input data")
@@ -166,11 +140,17 @@ Documentation: https://smartaimemory.com/framework-docs/
     run_parser.add_argument("--target", "-t", help="Target value (e.g., coverage target)")
     run_parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
 
-    # --- Telemetry commands ---
+
+def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add telemetry subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
     telemetry_parser = subparsers.add_parser("telemetry", help="Usage telemetry")
     telemetry_sub = telemetry_parser.add_subparsers(dest="telemetry_command")
 
-    # telemetry show
     show_parser = telemetry_sub.add_parser("show", help="Display usage summary")
     show_parser.add_argument(
         "--days",
@@ -180,7 +160,6 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Number of days (default: 30)",
     )
 
-    # telemetry savings
     savings_parser = telemetry_sub.add_parser("savings", help="Show cost savings")
     savings_parser.add_argument(
         "--days",
@@ -190,7 +169,6 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Number of days (default: 30)",
     )
 
-    # telemetry export
     export_parser = telemetry_sub.add_parser("export", help="Export telemetry data")
     export_parser.add_argument("--output", "-o", required=True, help="Output file path")
     export_parser.add_argument(
@@ -208,7 +186,6 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Number of days (default: 30)",
     )
 
-    # telemetry routing-stats
     routing_stats_parser = telemetry_sub.add_parser(
         "routing-stats",
         help="Show adaptive routing statistics",
@@ -223,7 +200,6 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Number of days (default: 7)",
     )
 
-    # telemetry routing-check
     routing_check_parser = telemetry_sub.add_parser(
         "routing-check",
         help="Check for tier upgrade recommendations",
@@ -236,7 +212,6 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Check all workflows",
     )
 
-    # telemetry models
     models_parser = telemetry_sub.add_parser("models", help="Show model performance by provider")
     models_parser.add_argument(
         "--provider",
@@ -252,25 +227,70 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Number of days (default: 7)",
     )
 
-    # telemetry agents
     telemetry_sub.add_parser("agents", help="Show active agents and their status")
 
-    # telemetry signals
     signals_parser = telemetry_sub.add_parser("signals", help="Show coordination signals")
     signals_parser.add_argument("--agent", "-a", required=True, help="Agent ID to view signals for")
 
-    # --- Provider commands ---
+
+def _add_costs_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add cost tracking subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
+    costs_parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=7,
+        help="Number of days (default: 7)",
+    )
+    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
+
+    costs_sub = costs_parser.add_subparsers(dest="costs_command")
+
+    costs_sub.add_parser("today", help="Show today's costs")
+
+    costs_export = costs_sub.add_parser("export", help="Export cost data")
+    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
+    costs_export.add_argument(
+        "--format",
+        "-f",
+        choices=["csv", "json"],
+        default="json",
+        help="Output format",
+    )
+    costs_export.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=30,
+        help="Number of days (default: 30)",
+    )
+
+    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
+    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
+
+
+def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add provider, memory, setup, and utility subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    # Provider commands
     provider_parser = subparsers.add_parser("provider", help="LLM provider configuration")
     provider_sub = provider_parser.add_subparsers(dest="provider_command")
-
-    # provider show
     provider_sub.add_parser("show", help="Show current provider")
-
-    # provider set
     set_parser = provider_sub.add_parser("set", help="Set provider")
     set_parser.add_argument("name", choices=["anthropic"], help="Provider name")
 
-    # --- Memory commands (quick lessons) ---
+    # Memory commands (quick lessons)
     remember_parser = subparsers.add_parser(
         "remember",
         help='Save a lesson: attune remember "lesson text"',
@@ -294,46 +314,7 @@ Documentation: https://smartaimemory.com/framework-docs/
         help="Show only global lessons",
     )
 
-    # --- Cost tracking commands ---
-    costs_parser = subparsers.add_parser("costs", help="View API cost tracking and savings")
-    costs_parser.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=7,
-        help="Number of days (default: 7)",
-    )
-    costs_parser.add_argument("--json", action="store_true", help="Output as JSON")
-    costs_parser.add_argument("--workflow", "-w", help="Filter by workflow name")
-
-    costs_sub = costs_parser.add_subparsers(dest="costs_command")
-
-    # costs today
-    costs_sub.add_parser("today", help="Show today's costs")
-
-    # costs export
-    costs_export = costs_sub.add_parser("export", help="Export cost data")
-    costs_export.add_argument("--output", "-o", required=True, help="Output file path")
-    costs_export.add_argument(
-        "--format",
-        "-f",
-        choices=["csv", "json"],
-        default="json",
-        help="Output format",
-    )
-    costs_export.add_argument(
-        "--days",
-        "-d",
-        type=int,
-        default=30,
-        help="Number of days (default: 30)",
-    )
-
-    # costs reset
-    costs_reset = costs_sub.add_parser("reset", help="Clear all cost data")
-    costs_reset.add_argument("--confirm", action="store_true", help="Confirm deletion (required)")
-
-    # --- Setup command ---
+    # Setup command
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
     # --- Auth / subscription commands ---
@@ -373,6 +354,42 @@ Documentation: https://smartaimemory.com/framework-docs/
 
     version_parser = subparsers.add_parser("version", help="Show version")
     version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
+
+
+def create_parser() -> argparse.ArgumentParser:
+    """Create the argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="attune",
+        description="Attune AI CLI (automation interface - for git hooks, scripts, CI/CD)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+NOTE: This CLI is for automation only. For interactive development,
+use Claude Code skills in VSCode or Claude Desktop:
+
+    /dev        Developer tools (commit, review, debug, refactor)
+    /testing    Run tests, coverage, generate tests
+    /workflows  AI-powered workflows (security, bug prediction)
+    /docs       Documentation generation
+    /release    Release preparation
+
+Documentation: https://smartaimemory.com/framework-docs/
+        """,
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    _add_workflow_subparsers(subparsers)
+    _add_telemetry_subparsers(subparsers)
+    _add_costs_subparsers(subparsers)
+    _add_misc_subparsers(subparsers)
+
     return parser
 
 

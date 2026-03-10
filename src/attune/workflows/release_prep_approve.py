@@ -147,8 +147,8 @@ Provide a comprehensive release readiness assessment."""
                     prompt=user_message,
                     system=system,
                 )
-            except Exception:
-                # Fall back to legacy _call_llm if executor fails
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Fall back to legacy _call_llm if executor fails
                 response, input_tokens, output_tokens = await self._call_llm(
                     tier,
                     system or "",

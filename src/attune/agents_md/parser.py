@@ -119,7 +119,7 @@ class MarkdownAgentParser:
 
             frontmatter = yaml.safe_load(frontmatter_yaml) or {}
         except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML frontmatter in {source}: {e}")
+            raise ValueError(f"Invalid YAML frontmatter in {source}: {e}") from e
 
         return self._create_config(frontmatter, body, source)
 

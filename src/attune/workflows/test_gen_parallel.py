@@ -68,10 +68,6 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
         "validate": ModelTier.CHEAP,
     }
 
-    async def run_stage(self, stage_name: str, tier: ModelTier, input_data: Any) -> Any:
-        """Not used — this workflow overrides execute() directly."""
-        raise NotImplementedError("ParallelTestGenerationWorkflow uses execute(), not run_stage()")
-
     @classmethod
     def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
         """Create a WorkflowContext pre-configured for parallel test generation.
@@ -107,15 +103,17 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
         try:
             # Get coverage data
             import subprocess
+            import tempfile
 
-            subprocess.run(
-                ["coverage", "json", "-o", "/tmp/coverage_batch.json"],  # nosec B108
-                capture_output=True,
-                check=True,
-            )
-
-            with open("/tmp/coverage_batch.json") as f:  # nosec B108
-                data = json.load(f)
+            with tempfile.TemporaryDirectory(prefix="attune-cov-") as tmpdir:
+                cov_path = Path(tmpdir) / "coverage_batch.json"
+                subprocess.run(
+                    ["coverage", "json", "-o", str(cov_path)],
+                    capture_output=True,
+                    check=True,
+                )
+                with open(cov_path) as f:
+                    data = json.load(f)
 
             coverage_by_file = []
             for file_path, info in data.get("files", {}).items():
@@ -132,7 +130,8 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
 
             return [(path, cov) for path, cov, _ in sorted_modules[:top_n]]
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Coverage data is optional; return empty list
             self.logger.warning(f"Could not get coverage data: {e}")
             return []
 
@@ -168,7 +167,8 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
 
             return {"file": file_path, "classes": classes, "functions": functions}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation when AST parsing fails
             return {"file": file_path, "error": str(e)}
 
     async def generate_test_template_with_ai(

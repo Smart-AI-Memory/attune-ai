@@ -178,7 +178,7 @@ class RedisAutoDetector:
 
             client = redis.Redis(host=host, port=port, socket_connect_timeout=0.5)
             return bool(client.ping())
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Any failure means server is not reachable
             return False
 

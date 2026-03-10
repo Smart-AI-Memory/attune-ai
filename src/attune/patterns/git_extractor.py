@@ -38,6 +38,11 @@ class GitPatternExtractor:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the git pattern extractor.
+
+        Args:
+            patterns_dir: Directory for storing extracted patterns.
+        """
         self.patterns_dir = Path(patterns_dir)
         self.debugging_dir = self.patterns_dir / "debugging"
 
@@ -220,7 +225,7 @@ class GitPatternExtractor:
                 "author": lines[2],
                 "date": lines[3],
             }
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Git commands may fail for various reasons (not a repo, detached HEAD, etc.)
             return None
 
@@ -235,7 +240,7 @@ class GitPatternExtractor:
                 timeout=10,
             )
             return result.stdout if result.returncode == 0 else ""
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Git commands may fail for various reasons (not a repo, no commits, etc.)
             return ""
 
@@ -250,7 +255,7 @@ class GitPatternExtractor:
                 timeout=10,
             )
             return result.stdout if result.returncode == 0 else ""
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Git commands may fail for various reasons (not a repo, nothing staged, etc.)
             return ""
 
@@ -265,7 +270,7 @@ class GitPatternExtractor:
                 timeout=5,
             )
             return result.stdout.strip() if result.returncode == 0 else None
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Git config may fail (not a repo, key not set, etc.)
             return None
 

@@ -148,7 +148,7 @@ class WorkflowTierTracker:
 
             return result.tier
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Could not get tier recommendation: {e}")
             # Fallback to CHEAP if recommendation fails
             self.recommended_tier = "CHEAP"
@@ -312,7 +312,7 @@ class WorkflowTierTracker:
 
             return pattern_file
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to save tier progression: {e}")
             return None
 

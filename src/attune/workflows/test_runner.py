@@ -11,7 +11,7 @@ import logging
 import shlex
 import subprocess
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -60,8 +60,8 @@ def run_tests_with_tracking(
 
     """
     execution_id = f"test-{uuid.uuid4()}"
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    started_at = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
 
     # Build command
     if command is None:
@@ -106,7 +106,7 @@ def run_tests_with_tracking(
         exit_code = 124  # Timeout exit code
         failed_tests = [{"name": "timeout", "file": "unknown", "error": "Test execution timed out"}]
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Test execution failed: {e}")
         total_tests, passed, failed, skipped, errors = 0, 0, 0, 0, 1
         success = False
@@ -114,7 +114,7 @@ def run_tests_with_tracking(
         failed_tests = [{"name": "execution_error", "file": "unknown", "error": str(e)}]
 
     # Calculate duration
-    completed_at = datetime.utcnow()
+    completed_at = datetime.now(timezone.utc)
     duration_seconds = (completed_at - started_at).total_seconds()
 
     # Create test execution record
@@ -143,7 +143,7 @@ def run_tests_with_tracking(
         store = get_telemetry_store()
         store.log_test_execution(record)
         logger.info(f"Test execution tracked: {execution_id}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"Failed to log test execution: {e}")
 
     return record
@@ -169,7 +169,7 @@ def track_coverage(
 
     """
     record_id = f"cov-{uuid.uuid4()}"
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     coverage_path = Path(coverage_file)
     if not coverage_path.exists():
@@ -235,13 +235,13 @@ def track_coverage(
             store = get_telemetry_store()
             store.log_coverage(record)
             logger.info(f"Coverage tracked: {record_id} ({overall_percentage:.1f}%)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to log coverage: {e}")
 
         return record
 
     except ET.ParseError as e:
-        raise ValueError(f"Invalid coverage.xml format: {e}")
+        raise ValueError(f"Invalid coverage.xml format: {e}") from e
 
 
 # Helper functions (extracted to test_runner_helpers.py)
@@ -279,8 +279,8 @@ def track_file_tests(
         >>> print(f"Tests for config.py: {result.last_test_result}")
 
     """
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    started_at = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
 
     source_path = Path(source_file)
 
@@ -356,7 +356,7 @@ def track_file_tests(
         failed_tests = [{"name": "timeout", "file": test_file, "error": "Timed out"}]
         execution_id = f"file-{uuid.uuid4()}"
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Test execution failed for {source_file}: {e}")
         total_tests, passed, failed, skipped, errors = 0, 0, 0, 0, 1
         last_test_result = "error"
@@ -364,7 +364,7 @@ def track_file_tests(
         execution_id = f"file-{uuid.uuid4()}"
 
     # Calculate duration
-    completed_at = datetime.utcnow()
+    completed_at = datetime.now(timezone.utc)
     duration_seconds = (completed_at - started_at).total_seconds()
 
     # Check staleness (source modified after tests last modified)

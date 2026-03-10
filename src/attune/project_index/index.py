@@ -188,7 +188,7 @@ class ProjectIndex:
 
             logger.info("Synced index to Redis with prefix %s", prefix)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to sync to Redis: %s", e)
 
     # ===== Index Operations =====
@@ -329,9 +329,9 @@ class ProjectIndex:
             )
 
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Git command failed: {e}. Are you in a git repository?")
+            raise RuntimeError(f"Git command failed: {e}. Are you in a git repository?") from e
         except FileNotFoundError:
-            raise RuntimeError("Git not found. Incremental refresh requires git.")
+            raise RuntimeError("Git not found. Incremental refresh requires git.") from None
 
         # Combine untracked and modified
         changed_files = untracked_files | modified_files

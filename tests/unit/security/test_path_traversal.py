@@ -65,7 +65,7 @@ class TestPathTraversalPrevention:
         ]
 
         for path in traversal_paths:
-            with pytest.raises(ValueError, match="must be within"):
+            with pytest.raises(ValueError, match="outside allowed directory"):
                 _validate_file_path(path, allowed_dir=str(allowed_dir))
 
     def test_blocks_null_byte_injection(self):
@@ -113,7 +113,7 @@ class TestPathTraversalPrevention:
 
         # Invalid path outside allowed directory
         invalid_path = str(tmp_path / "outside.txt")
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(invalid_path, allowed_dir=str(allowed_dir))
 
     def test_blocks_traversal_with_allowed_dir(self, tmp_path):
@@ -122,7 +122,7 @@ class TestPathTraversalPrevention:
         allowed_dir.mkdir()
 
         traversal_path = str(allowed_dir / ".." / "outside.txt")
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(traversal_path, allowed_dir=str(allowed_dir))
 
 
@@ -175,7 +175,7 @@ class TestPathValidationOSErrorHandling:
         allowed_dir.mkdir()
         outside_path = tmp_path / "outside.txt"
 
-        with pytest.raises(ValueError, match="must be within"):
+        with pytest.raises(ValueError, match="outside allowed directory"):
             _validate_file_path(str(outside_path), allowed_dir=str(allowed_dir))
 
     def test_non_string_type_raises_value_error(self):

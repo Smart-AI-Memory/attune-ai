@@ -120,9 +120,9 @@ export const FEATURES: Feature[] = [
     id: 'prompt-caching',
     name: 'Automatic Prompt Caching',
     icon: '⚡',
-    benefitDescription: 'Up to 90% cost savings on API tokens via Anthropic auto-caching. Zero configuration required.',
+    benefitDescription: "Anthropic's built-in prompt caching reduces cached token costs by up to 90%. Attune's Claude-native architecture maximizes cache hit rates automatically.",
     technicalDescription: 'Claude-native architecture designed around prompt caching. System prompts, tool definitions, and conversation history are automatically cached and reused.',
-    pricingDescription: 'Automatic prompt caching (90% savings)',
+    pricingDescription: 'Anthropic prompt caching (up to 90% on cached tokens)',
     isNew: true,
   },
   {

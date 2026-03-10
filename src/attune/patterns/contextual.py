@@ -39,6 +39,11 @@ class ContextualPatternInjector:
     """
 
     def __init__(self, patterns_dir: str = "./patterns"):
+        """Initialize the contextual pattern injector.
+
+        Args:
+            patterns_dir: Directory containing pattern files.
+        """
         self.patterns_dir = Path(patterns_dir)
         self._debugging_dirs = ["debugging", "debugging_demo", "repo_test/debugging"]
         self._security_dirs = ["security", "security_demo", "repo_test/security"]
@@ -274,7 +279,7 @@ class ContextualPatternInjector:
                 return [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
         except subprocess.SubprocessError as e:
             logger.debug(f"Git command failed: {e}")
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Git availability detection - don't crash on git errors
             logger.debug("Could not get git changed files (expected in non-git directories)")
         return []

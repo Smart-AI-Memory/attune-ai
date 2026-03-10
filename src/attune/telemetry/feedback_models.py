@@ -13,7 +13,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -64,7 +64,7 @@ class FeedbackEntry:
         if isinstance(timestamp, str):
             timestamp = datetime.fromisoformat(timestamp)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         # Handle missing feedback_id (legacy entries)
         feedback_id = data.get("feedback_id")

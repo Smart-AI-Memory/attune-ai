@@ -177,6 +177,11 @@ class TaskDecomposer:
     """
 
     def __init__(self, workflow: Any) -> None:
+        """Initialize the task decomposer.
+
+        Args:
+            workflow: Workflow instance providing LLM access.
+        """
         self._workflow = workflow
 
     async def decompose(
@@ -222,7 +227,7 @@ class TaskDecomposer:
                 response_text = result[0]
             else:
                 response_text = str(result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Task decomposition LLM call failed: %s", e)
             return []
 

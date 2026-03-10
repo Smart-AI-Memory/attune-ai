@@ -18,14 +18,8 @@ from .registry import get_model
 class FallbackStrategy(Enum):
     """Strategies for selecting fallback models."""
 
-    # Try same tier with different provider
-    SAME_TIER_DIFFERENT_PROVIDER = "same_tier_different_provider"
-
     # Try cheaper tier with same provider
     CHEAPER_TIER_SAME_PROVIDER = "cheaper_tier_same_provider"
-
-    # Try different provider, any tier
-    DIFFERENT_PROVIDER_ANY_TIER = "different_provider_any_tier"
 
     # Custom fallback chain
     CUSTOM = "custom"
@@ -54,10 +48,9 @@ class FallbackPolicy:
         >>> policy = FallbackPolicy(
         ...     primary_provider="anthropic",
         ...     primary_tier="capable",
-        ...     strategy=FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER,
+        ...     strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         ... )
         >>> chain = policy.get_fallback_chain()
-        >>> # Returns: [("anthropic", "premium")]
 
     """
 
@@ -66,7 +59,7 @@ class FallbackPolicy:
     primary_tier: str = "capable"
 
     # Fallback configuration
-    strategy: FallbackStrategy = FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER
+    strategy: FallbackStrategy = FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER
     custom_chain: list[FallbackStep] = field(default_factory=list)
 
     # Retry configuration
@@ -87,57 +80,16 @@ class FallbackPolicy:
         if self.strategy == FallbackStrategy.CUSTOM:
             return self.custom_chain
 
-        chain: list[FallbackStep] = []
-        # Anthropic-only as of v5.0.0
-        all_providers = ["anthropic"]
+        # CHEAPER_TIER_SAME_PROVIDER: try cheaper tiers
         all_tiers = ["premium", "capable", "cheap"]
-        # Cache tier index for O(1) lookup
         tier_index_map = {tier: i for i, tier in enumerate(all_tiers)}
         tier_index = tier_index_map.get(self.primary_tier, 1)
 
-        if self.strategy == FallbackStrategy.SAME_TIER_DIFFERENT_PROVIDER:
-            # Try same tier with other providers
-            for provider in all_providers:
-                if provider != self.primary_provider:
-                    chain.append(
-                        FallbackStep(
-                            provider=provider,
-                            tier=self.primary_tier,
-                            description=(f"Same tier ({self.primary_tier}) on {provider}"),
-                        ),
-                    )
-
-        elif self.strategy == FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER:
-            # Try cheaper tiers with same provider
-            for tier in all_tiers[tier_index + 1 :]:
-                chain.append(
-                    FallbackStep(
-                        provider=self.primary_provider,
-                        tier=tier,
-                        description=(f"Cheaper tier ({tier}) on {self.primary_provider}"),
-                    ),
-                )
-
-        elif self.strategy == FallbackStrategy.DIFFERENT_PROVIDER_ANY_TIER:
-            # Try other providers, preferring same tier then cheaper
-            for provider in all_providers:
-                if provider != self.primary_provider:
-                    # Try same tier first
-                    chain.append(
-                        FallbackStep(
-                            provider=provider,
-                            tier=self.primary_tier,
-                            description=(f"{self.primary_tier} on {provider}"),
-                        ),
-                    )
-                    # Then cheaper tiers
-                    for tier in all_tiers[tier_index + 1 :]:
-                        chain.append(
-                            FallbackStep(
-                                provider=provider,
-                                tier=tier,
-                                description=(f"{tier} on {provider}"),
-                            ),
-                        )
-
-        return chain
+        return [
+            FallbackStep(
+                provider=self.primary_provider,
+                tier=tier,
+                description=f"Cheaper tier ({tier}) on {self.primary_provider}",
+            )
+            for tier in all_tiers[tier_index + 1 :]
+        ]

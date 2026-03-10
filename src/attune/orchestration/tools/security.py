@@ -136,8 +136,8 @@ class RealSecurityAuditor:
             )
 
         except subprocess.TimeoutExpired:
-            raise RuntimeError("Security audit timed out after 5 minutes")
-        except Exception as e:
+            raise RuntimeError("Security audit timed out after 5 minutes") from None
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Security audit failed: {e}")
             raise RuntimeError(f"Security audit failed: {e}") from e
 

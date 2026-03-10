@@ -253,3 +253,43 @@ class TestConstants:
 
     def test_dangerous_patterns_not_empty(self) -> None:
         assert len(DANGEROUS_BASH_PATTERNS) > 0
+
+
+# ---------------------------------------------------------------------------
+# __main__ exit code wiring
+# ---------------------------------------------------------------------------
+
+
+class TestMainEntryPointExitCodes:
+    """Tests for the __main__ block exit code behavior."""
+
+    def test_blocked_tool_exits_with_code_2(self) -> None:
+        """When main() returns allowed=False, the script must exit(2)."""
+        import subprocess
+        import sys
+
+        blocked_input = json.dumps(
+            {"tool_name": "Bash", "tool_input": {"command": "python -c 'eval(x)'"}}
+        )
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/security_guard.py"],
+            input=blocked_input,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 2
+        assert "eval()" in result.stderr
+
+    def test_allowed_tool_exits_with_code_0(self) -> None:
+        """When main() returns allowed=True, the script must exit(0)."""
+        import subprocess
+        import sys
+
+        safe_input = json.dumps({"tool_name": "Bash", "tool_input": {"command": "ls -la"}})
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/security_guard.py"],
+            input=safe_input,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0

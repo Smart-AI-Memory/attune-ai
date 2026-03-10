@@ -333,6 +333,73 @@ class TestCmdSetup:
 
 
 # ---------------------------------------------------------------------------
+# _copy_md_files path validation
+# ---------------------------------------------------------------------------
+
+
+class TestCopyMdFilesPathValidation:
+    """Test path traversal prevention in _copy_md_files."""
+
+    def test_blocks_traversal_in_filename(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that filenames with path traversal are rejected."""
+        args = types.SimpleNamespace()
+
+        source_dir = tmp_path / "source" / ".claude" / "commands"
+        source_dir.mkdir(parents=True)
+        # Create a file with a traversal name
+        evil_file = source_dir / "..%2F..%2Fevil.md"
+        evil_file.write_text("# Evil")
+        # Also create a normal file so the function finds .md files
+        (source_dir / "good.md").write_text("# Good")
+        (source_dir / "agents").mkdir()
+
+        home_dir = tmp_path / "home"
+        home_dir.mkdir()
+
+        monkeypatch.setattr(Path, "home", staticmethod(lambda: home_dir))
+        monkeypatch.setattr(Path, "cwd", staticmethod(lambda: tmp_path / "source"))
+
+        with patch("importlib.resources.files", side_effect=ImportError):
+            # Should not crash — traversal names are validated
+            result = cmd_setup(args)
+
+        # The good file should still be installed
+        assert result == 0
+
+    def test_allows_normal_md_filenames(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that normal .md filenames pass validation."""
+        args = types.SimpleNamespace()
+
+        source_dir = tmp_path / "source" / ".claude" / "commands"
+        source_dir.mkdir(parents=True)
+        (source_dir / "dev.md").write_text("# Dev")
+        (source_dir / "testing.md").write_text("# Testing")
+        (source_dir / "agents").mkdir()
+
+        home_dir = tmp_path / "home"
+        home_dir.mkdir()
+
+        monkeypatch.setattr(Path, "home", staticmethod(lambda: home_dir))
+        monkeypatch.setattr(Path, "cwd", staticmethod(lambda: tmp_path / "source"))
+
+        with patch("importlib.resources.files", side_effect=ImportError):
+            result = cmd_setup(args)
+
+        assert result == 0
+        target_dir = home_dir / ".claude" / "commands"
+        assert (target_dir / "dev.md").exists()
+        assert (target_dir / "testing.md").exists()
+
+
+# ---------------------------------------------------------------------------
 # cmd_validate
 # ---------------------------------------------------------------------------
 

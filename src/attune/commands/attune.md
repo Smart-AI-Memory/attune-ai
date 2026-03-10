@@ -112,14 +112,22 @@ Your AI-powered developer workflow assistant with Socratic discovery.
 | [Create Wizard](src/attune/commands/wizard.md) `/wizard create` | Define a new custom guided workflow via YAML |
 | [Edit Wizard](src/attune/commands/wizard.md) `/wizard edit <id>` | Modify an existing custom wizard |
 
-### Batch API — [/batch](src/attune/commands/batch.md)
+### Pipeline — [/pipeline](src/attune/commands/pipeline.md)
 
 | Command | Description |
 | ------- | ----------- |
-| [Submit Batch](src/attune/commands/batch.md) `/batch submit` | Queue tasks for async processing (50% savings) |
-| [Batch Status](src/attune/commands/batch.md) `/batch status <id>` | Check progress of a running batch |
-| [Batch Results](src/attune/commands/batch.md) `/batch results <id>` | Retrieve completed batch results |
-| [Wait for Batch](src/attune/commands/batch.md) `/batch wait <id>` | Block until a batch completes |
+| [Full Pipeline](src/attune/commands/pipeline.md) `/pipeline` | Brainstorm to release — full SDLC flow |
+| [Development](src/attune/commands/pipeline.md) `/pipeline dev` | Execute an XML spec with agent teams |
+| [Release](src/attune/commands/pipeline.md) `/pipeline release` | Full test suite + version bump, changelog, publish |
+
+### Batch API — [/bulk](src/attune/commands/bulk.md)
+
+| Command | Description |
+| ------- | ----------- |
+| [Submit Batch](src/attune/commands/bulk.md) `/bulk submit` | Queue tasks for async processing (50% savings) |
+| [Batch Status](src/attune/commands/bulk.md) `/bulk status <id>` | Check progress of a running batch |
+| [Batch Results](src/attune/commands/bulk.md) `/bulk results <id>` | Retrieve completed batch results |
+| [Wait for Batch](src/attune/commands/bulk.md) `/bulk wait <id>` | Block until a batch completes |
 
 ### Utilities — [/utilities](src/attune/commands/utilities.md)
 
@@ -220,7 +228,7 @@ When the user provides natural language, **use AskUserQuestion to scope**, then 
 | "dependency", "deps", "outdated" | `uv run attune workflow run dependency-check` |
 | "research", "investigate", "explore" | `uv run attune workflow run research` |
 | "brainstorm", "think through" | Route to `/brainstorm` |
-| "batch", "bulk process" | Route to `/batch` |
+| "batch", "bulk process" | Route to `/bulk` |
 | "create", "build", "new wizard", "new agent" | Route to `/wizard create` or `/agent create` |
 
 **IMPORTANT:** When arguments are provided, DO NOT just display documentation. Use `AskUserQuestion` to scope, THEN execute the CLI command.

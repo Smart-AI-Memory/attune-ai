@@ -199,7 +199,7 @@ class OTELBackend:
             # Get tracer
             self.tracer = trace.get_tracer("empathy.llm.telemetry", "3.8.0-alpha")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to initialize OTEL: {e}")
             self._available = False
 
@@ -276,7 +276,7 @@ class OTELBackend:
                     if record.error_message:
                         span.set_attribute("llm.error.message", record.error_message)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to export LLM call to OTEL: {e}")
 
     def log_workflow(self, record: WorkflowRunRecord) -> None:
@@ -348,7 +348,7 @@ class OTELBackend:
                         if stage.error:
                             stage_span.set_attribute("stage.error", stage.error)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to export workflow to OTEL: {e}")
 
     def flush(self) -> None:
@@ -366,7 +366,7 @@ class OTELBackend:
             provider = trace.get_tracer_provider()
             if hasattr(provider, "force_flush"):
                 provider.force_flush()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️  Failed to flush OTEL data: {e}")
 
     def __del__(self) -> None:

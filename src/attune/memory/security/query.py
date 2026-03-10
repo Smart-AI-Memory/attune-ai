@@ -60,7 +60,7 @@ class AuditQueryMixin:
             ... )
             >>> events = logger.query(
             ...     event_type="security_violation",
-            ...     start_date=datetime.utcnow()
+            ...     start_date=datetime.now(timezone.utc)
             ...         - timedelta(days=1),
             ... )
             >>> events = logger.query(
@@ -92,8 +92,10 @@ class AuditQueryMixin:
 
                         # Date range filtering
                         if start_date or end_date:
+                            ts_raw = event.get("timestamp", "")
+                            # Handle both Z and +00:00 suffixes
                             event_time = datetime.fromisoformat(
-                                event.get("timestamp", "").rstrip("Z"),
+                                ts_raw.replace("Z", "+00:00"),
                             )
                             if start_date and event_time < start_date:
                                 continue
@@ -111,7 +113,7 @@ class AuditQueryMixin:
                         logger.warning("Skipping malformed audit log line")
                         continue
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Query should not crash on I/O errors
             logger.error(f"Failed to query audit logs: {e}")
 

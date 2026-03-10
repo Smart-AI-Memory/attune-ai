@@ -85,6 +85,12 @@ class TestAnalystAgent:
     """
 
     def __init__(self, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test analyst agent.
+
+        Args:
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.index = index
         self.config = config
         self.name = "Test Analyst"
@@ -199,6 +205,13 @@ class TestGeneratorAgent:
     """
 
     def __init__(self, project_root: Path, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test generator agent.
+
+        Args:
+            project_root: Root directory of the project.
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.project_root = project_root
         self.index = index
         self.config = config
@@ -223,7 +236,7 @@ class TestGeneratorAgent:
                     succeeded += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Failed to generate tests for {item.file_path}: {e}")
                 failed += 1
                 results.append(
@@ -280,7 +293,7 @@ class TestGeneratorAgent:
         # Read source file
         try:
             source_code = source_path.read_text(encoding="utf-8")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "file": item.file_path,
                 "success": False,
@@ -295,7 +308,7 @@ class TestGeneratorAgent:
             validated_path = _validate_file_path(str(full_test_path))
             validated_path.parent.mkdir(parents=True, exist_ok=True)
             validated_path.write_text(test_code, encoding="utf-8")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "file": item.file_path,
                 "success": False,
@@ -382,6 +395,12 @@ class TestValidatorAgent:
     """
 
     def __init__(self, project_root: Path, config: CrewConfig):
+        """Initialize the test validator agent.
+
+        Args:
+            project_root: Root directory of the project.
+            config: Crew configuration settings.
+        """
         self.project_root = project_root
         self.config = config
         self.name = "Test Validator"
@@ -405,7 +424,7 @@ class TestValidatorAgent:
                     passed += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Validation error for {test_file}: {e}")
                 results.append(
                     {
@@ -504,7 +523,7 @@ class TestValidatorAgent:
                 "passed": False,
                 "error": f"Test timeout after {timeout}s",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Validation error for {test_file}: {e}")
             return {
                 "file": test_file,
@@ -524,6 +543,12 @@ class TestReporterAgent:
     """
 
     def __init__(self, index: ProjectIndex, config: CrewConfig):
+        """Initialize the test reporter agent.
+
+        Args:
+            index: ProjectIndex for querying file metadata.
+            config: Crew configuration settings.
+        """
         self.index = index
         self.config = config
         self.name = "Test Reporter"
@@ -766,7 +791,7 @@ class TestMaintenanceCrew:
                 try:
                     val_result = await self.validator.validate_tests(generated_test_files)
                     results.append(val_result)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(f"Validation failed with error: {e}")
                     if not self.config.validation_optional:
                         raise

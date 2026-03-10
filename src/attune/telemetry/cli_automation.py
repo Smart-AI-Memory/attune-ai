@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 try:
@@ -42,10 +42,10 @@ def cmd_tier1_status(args: Any) -> int:
         analytics = TelemetryAnalytics(store)
 
         hours = getattr(args, "hours", 24)
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         summary = analytics.tier1_summary(since=since)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving Tier 1 status: {e}")
         return 1
 
@@ -137,10 +137,10 @@ def cmd_task_routing_report(args: Any) -> int:
         analytics = TelemetryAnalytics(store)
 
         hours = getattr(args, "hours", 24)
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         stats = analytics.task_routing_accuracy(since=since)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving task routing report: {e}")
         return 1
 
@@ -216,11 +216,11 @@ def cmd_test_status(args: Any) -> int:
         analytics = TelemetryAnalytics(store)
 
         hours = getattr(args, "hours", 24)
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         stats = analytics.test_execution_trends(since=since)
         coverage = analytics.coverage_progress(since=since)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving test status: {e}")
         return 1
 
@@ -294,10 +294,10 @@ def cmd_agent_performance(args: Any) -> int:
         analytics = TelemetryAnalytics(store)
 
         hours = getattr(args, "hours", 168)  # Default 7 days for agent performance
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         stats = analytics.agent_performance(since=since)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error retrieving agent performance: {e}")
         return 1
 

@@ -6,7 +6,7 @@ Licensed under the Apache License, Version 2.0
 
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -70,7 +70,7 @@ class TestCoordinationSignal:
             "source_agent": "orchestrator",
             "target_agent": None,  # Broadcast
             "payload": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         signal = CoordinationSignal.from_dict(data)
@@ -195,7 +195,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "producer",
             "target_agent": "test-agent",
             "payload": {"data": "value"},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "ttl_seconds": 60,
         }
 
@@ -224,7 +224,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "worker",
             "target_agent": "test-agent",
             "payload": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "ttl_seconds": 60,
         }
 
@@ -251,7 +251,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "other-agent",
             "target_agent": "test-agent",
             "payload": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "ttl_seconds": 60,
         }
 
@@ -280,7 +280,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "orchestrator",
             "target_agent": None,  # Broadcast
             "payload": {"reason": "test"},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "ttl_seconds": 60,
         }
 
@@ -308,7 +308,7 @@ class TestCoordinationSignalsWithMemory:
                 "source_agent": "a",
                 "target_agent": "test-agent",
                 "payload": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "ttl_seconds": 60,
             },
             {
@@ -317,7 +317,7 @@ class TestCoordinationSignalsWithMemory:
                 "source_agent": "b",
                 "target_agent": "test-agent",
                 "payload": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "ttl_seconds": 60,
             },
             {
@@ -326,7 +326,7 @@ class TestCoordinationSignalsWithMemory:
                 "source_agent": "orchestrator",
                 "target_agent": None,
                 "payload": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "ttl_seconds": 60,
             },
         ]
@@ -354,7 +354,7 @@ class TestCoordinationSignalsWithMemory:
                 "source_agent": "a",
                 "target_agent": "test-agent",
                 "payload": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             {
                 "signal_id": "sig2",
@@ -362,7 +362,7 @@ class TestCoordinationSignalsWithMemory:
                 "source_agent": "b",
                 "target_agent": "test-agent",
                 "payload": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         ]
 
@@ -386,7 +386,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "a",
             "target_agent": "test-agent",
             "payload": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         mock_memory._client.get.return_value = json.dumps(signal_data).encode()
@@ -425,7 +425,7 @@ class TestCoordinationSignalsWithMemory:
             "source_agent": "producer",
             "target_agent": "test-agent",
             "payload": {"data": "value"},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         mock_memory._client.get.return_value = json.dumps(signal_data).encode()

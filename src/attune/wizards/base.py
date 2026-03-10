@@ -146,7 +146,7 @@ class BaseWizard(ABC):
 
         except _WizardAbort:
             logger.info("Wizard aborted by user at step confirmation")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Wizard %s failed: %s", self.config.wizard_id, e)
             duration_ms = (time.time() - start) * 1000
             return WizardResult(

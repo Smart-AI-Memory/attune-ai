@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 
-from .base import ModelTier
+from .base import ModelTier, estimate_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +148,8 @@ class CrewMixin:
         }
 
         # Estimate tokens (crew uses internal LLM calls)
-        input_tokens = len(diff) // 4
-        output_tokens = len(str(crew_review_result)) // 4
+        input_tokens = estimate_tokens(diff)
+        output_tokens = estimate_tokens(crew_review_result)
 
         return (
             {

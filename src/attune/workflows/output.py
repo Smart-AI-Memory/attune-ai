@@ -163,7 +163,7 @@ class WorkflowReport:
                 console.print(
                     Panel(section.content, title=section.title, border_style=border_style),
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Graceful fallback for unknown content types
                 console.print(f"\n[bold]{section.title}[/bold]")
                 console.print(str(section.content))

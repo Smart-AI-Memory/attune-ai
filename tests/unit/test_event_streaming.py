@@ -16,7 +16,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from attune.telemetry.event_streaming import EventStreamer, StreamEvent
@@ -65,7 +65,7 @@ class TestStreamEvent:
         event = StreamEvent(
             event_id="1-0",
             event_type="test",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data={},
         )
         assert event.source == "attune"
@@ -107,9 +107,9 @@ class TestStreamEvent:
             b"timestamp": b"not-a-date",
             b"data": b"{}",
         }
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         event = StreamEvent.from_redis_entry("300-0", entry_data)
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
 
         assert before <= event.timestamp <= after
 
@@ -119,9 +119,9 @@ class TestStreamEvent:
             b"event_type": b"test",
             b"data": b"{}",
         }
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         event = StreamEvent.from_redis_entry("400-0", entry_data)
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
 
         assert before <= event.timestamp <= after
 

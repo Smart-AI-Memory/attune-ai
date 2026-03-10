@@ -66,7 +66,7 @@ def _get_tiktoken_encoding(model: str) -> Any:
     try:
         # Claude uses cl100k_base encoding (similar to GPT-4)
         return tiktoken.get_encoding("cl100k_base")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"Failed to get tiktoken encoding: {e}")
         return None
 
@@ -82,7 +82,7 @@ def _count_tokens_tiktoken(text: str, model: str) -> int:
 
     try:
         return len(encoding.encode(text))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"tiktoken encoding failed: {e}")
         return 0
 
@@ -132,7 +132,7 @@ def count_tokens(text: str, model: str = "claude-sonnet-4-6", use_api: bool = Fa
                 messages=[{"role": "user", "content": text}],
             )
             return int(result.input_tokens)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"API token counting failed, using fallback: {e}")
             # Continue to fallback methods
 
@@ -205,7 +205,7 @@ def count_message_tokens(
                 "messages": message_tokens,
                 "total": total_tokens,
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"API token counting failed, using fallback: {e}")
             # Continue to fallback method
 

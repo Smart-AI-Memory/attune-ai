@@ -87,6 +87,12 @@ class AgentStateStore:
         storage_dir: str | None = None,
         pattern_learner: Any | None = None,
     ) -> None:
+        """Initialize the agent state store.
+
+        Args:
+            storage_dir: Directory for persisting agent state.
+            pattern_learner: Optional pattern learner for insights.
+        """
         self._storage_dir = Path(storage_dir or self.DEFAULT_DIR)
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._pattern_learner = pattern_learner
@@ -378,6 +384,6 @@ class AgentStateStore:
                     "tier_used": execution.tier_used,
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Pattern learning is optional; don't fail agent operations
             logger.warning("Failed to contribute to pattern learner: %s", e)

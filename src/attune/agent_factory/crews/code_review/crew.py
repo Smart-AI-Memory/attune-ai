@@ -306,7 +306,7 @@ Provide optimization suggestions with expected impact."""
                         for node, score in similar
                     ]
                     logger.info(f"Found {memory_hits} similar past reviews")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Error querying Memory Graph: {e}")
 
         # Build review task for the crew
@@ -323,13 +323,13 @@ Provide optimization suggestions with expected impact."""
             # Determine verdict
             verdict = determine_verdict(findings)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Code review failed: {e}")
             # Return partial report with error
             return CodeReviewReport(
                 target=target,
                 findings=findings,
-                verdict=Verdict.REQUEST_CHANGES,
+                verdict=Verdict.ERROR,
                 summary=f"Review failed with error: {e}",
                 review_duration_seconds=time.time() - start_time,
                 agents_used=list(self._agents.keys()),
@@ -369,7 +369,7 @@ Provide optimization suggestions with expected impact."""
                     },
                 )
                 self._graph._save()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Error storing review in Memory Graph: {e}")
 
         return report

@@ -592,7 +592,7 @@ class CollaborationManager:
         for listener in self._change_listeners:
             try:
                 listener(change)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Listener failure should not break change tracking.
                 # One bad listener shouldn't prevent others from executing.
                 pass
@@ -614,7 +614,7 @@ class CollaborationManager:
                     data = json.load(f)
                 session = CollaborativeSession.from_dict(data)
                 self._sessions[session.session_id] = session
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Skip corrupted session files gracefully.
                 # Loading should not fail due to one malformed file.
                 pass

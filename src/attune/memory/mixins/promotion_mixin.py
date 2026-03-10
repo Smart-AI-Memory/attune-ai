@@ -28,9 +28,13 @@ class PatternPromotionMixin:
     if TYPE_CHECKING:
 
         @property
-        def credentials(self) -> "AgentCredentials": ...
+        def credentials(self) -> "AgentCredentials":
+            """Return agent credentials for memory operations."""
+            ...
 
-        def get_staged_patterns(self) -> list[dict]: ...
+        def get_staged_patterns(self) -> list[dict]:
+            """Return patterns staged for promotion."""
+            ...
 
     def persist_pattern(
         self,

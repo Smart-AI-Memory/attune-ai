@@ -134,7 +134,7 @@ class TestAutonomousTestGeneratorInit:
 
     @patch(
         "attune.workflows.autonomous_test_gen.RedisShortTermMemory",
-        side_effect=Exception("No Redis"),
+        side_effect=ConnectionError("No Redis"),
     )
     @patch("attune.workflows.autonomous_test_gen.HeartbeatCoordinator")
     def test_init_graceful_redis_failure(self, mock_coord, mock_redis):

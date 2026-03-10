@@ -64,7 +64,7 @@ class VerificationMixin:
                 workflow_name,
                 verification_data,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Verification init is optional, never crash
             logger.debug("Verification init failed: %s", e)
             self._verification_config = None
@@ -220,7 +220,7 @@ class VerificationMixin:
 
             return workflow_result, last_result
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Verification is best-effort, never crash
             logger.exception("Verification loop error: %s", e)
             return workflow_result, None
@@ -305,7 +305,7 @@ class VerificationMixin:
             )
             return content, cost
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Correction is best-effort, never crash
             logger.warning("Correction request failed: %s", e)
             return None, 0.0

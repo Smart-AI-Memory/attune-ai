@@ -35,6 +35,12 @@ class DocumentationAgent(ReleaseAgent):
         redis_client: Any | None = None,
         state_store: AgentStateStore | None = None,
     ) -> None:
+        """Initialize the documentation audit agent.
+
+        Args:
+            redis_client: Optional Redis connection for coordination.
+            state_store: Optional persistent state store.
+        """
         super().__init__(
             agent_id=f"documentation-{uuid4().hex[:8]}",
             role="Documentation",
@@ -104,7 +110,7 @@ class DocumentationAgent(ReleaseAgent):
             # check
             return True, findings
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Documentation analysis failed: {e}")
             return False, {
                 "error": str(e),

@@ -34,7 +34,8 @@ class TestAuditEvent:
         assert event.status == "success"
         assert event.event_id.startswith("evt_")
         assert len(event.event_id) == 16  # evt_ + 12 hex chars
-        assert event.timestamp.endswith("Z")  # UTC timezone
+        # timezone-aware isoformat ends with +00:00
+        assert event.timestamp.endswith("+00:00") or event.timestamp.endswith("Z")
 
     def test_audit_event_to_dict(self):
         """Test audit event serialization"""
@@ -486,11 +487,11 @@ class TestAuditLogger:
         events = logger.query()
         timestamp = events[0]["timestamp"]
 
-        # Should end with Z (UTC)
-        assert timestamp.endswith("Z")
+        # Should end with UTC indicator (+00:00 or Z)
+        assert timestamp.endswith("+00:00") or timestamp.endswith("Z")
 
         # Should be parseable as ISO-8601
-        dt = datetime.fromisoformat(timestamp.rstrip("Z"))
+        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         assert isinstance(dt, datetime)
 
     def test_unique_event_ids(self, logger):

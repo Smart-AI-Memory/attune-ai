@@ -24,7 +24,6 @@ from attune.models.cli import (
     print_telemetry_fallbacks,
     print_telemetry_providers,
     print_telemetry_summary,
-    validate_file,
 )
 from attune.models.registry import ModelInfo
 from attune.models.tasks import ModelTier
@@ -293,59 +292,6 @@ class TestPrintCosts:
             print_costs(provider="unknown")
 
         assert exc_info.value.code == 1
-
-
-@pytest.mark.unit
-class TestValidateFile:
-    """Test validate_file function."""
-
-    @patch("attune.models.cli.validate_yaml_file")
-    def test_validate_file_valid(self, mock_validate, capsys):
-        """Test validating a valid file."""
-        mock_result = MagicMock()
-        mock_result.valid = True
-        mock_result.errors = []
-        mock_result.warnings = []
-        mock_validate.return_value = mock_result
-
-        result = validate_file("test.yaml")
-
-        assert result == 0
-        captured = capsys.readouterr()
-        assert "Validating: test.yaml" in captured.out
-
-    @patch("attune.models.cli.validate_yaml_file")
-    def test_validate_file_invalid(self, mock_validate, capsys):
-        """Test validating an invalid file."""
-        mock_result = MagicMock()
-        mock_result.valid = False
-        mock_error = MagicMock()
-        mock_error.path = "config.mode"
-        mock_error.message = "Invalid mode"
-        mock_result.errors = [mock_error]
-        mock_result.warnings = []
-        mock_validate.return_value = mock_result
-
-        result = validate_file("test.yaml")
-
-        assert result == 1
-
-    @patch("attune.models.cli.validate_yaml_file")
-    def test_validate_file_json_format(self, mock_validate, capsys):
-        """Test validating file with JSON output."""
-        mock_result = MagicMock()
-        mock_result.valid = True
-        mock_result.errors = []
-        mock_result.warnings = []
-        mock_validate.return_value = mock_result
-
-        result = validate_file("test.yaml", format="json")
-
-        assert result == 0
-        captured = capsys.readouterr()
-        output = json.loads(captured.out)
-        assert output["valid"] is True
-        assert output["errors"] == []
 
 
 @pytest.mark.unit
@@ -742,17 +688,6 @@ class TestMainCLI:
 
         assert result == 0
         mock_print_costs.assert_called_once()
-
-    @patch("attune.models.cli.validate_file")
-    def test_main_validate_command(self, mock_validate):
-        """Test validate command."""
-        mock_validate.return_value = 0
-
-        with patch.object(sys, "argv", ["cli", "validate", "test.yaml"]):
-            result = main()
-
-        assert result == 0
-        mock_validate.assert_called_once_with("test.yaml", "table")
 
     @patch("attune.models.cli.print_effective_config")
     def test_main_effective_command(self, mock_print_effective):

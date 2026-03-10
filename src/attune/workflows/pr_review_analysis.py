@@ -54,7 +54,8 @@ class PRReviewAnalysisMixin:
             if not diff:
                 diff = "(No diff available - no changes detected)"
             return diff
-        except Exception:
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Git diff is best-effort — return fallback message
             return "(Could not generate diff from git)"
 
     @staticmethod

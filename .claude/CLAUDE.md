@@ -1,4 +1,4 @@
-# Attune AI Framework v3.9.0
+# Attune AI Framework v4.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -37,8 +37,9 @@ Use `/hub-name` to access organized workflows:
 | `/release` | prep, security, health, publish | Release preparation |
 | `/brainstorm` | "topic", plan | Guided brainstorming and ideation |
 | `/agent` | create, list, run, release-prep | Agent management |
-| `/batch` | submit, status, results, wait | Batch API processing (50% cost savings) |
+| `/bulk` | submit, status, results, wait | Batch API processing (50% cost savings) |
 | `/wizard` | run, create, list, edit | Guided multi-step wizards |
+| `/pipeline` | full, dev, eval, release | Spec-driven development lifecycle |
 | `/utilities` | auth-setup, auth-status, auth-reset | Auth and provider management |
 | `/help` | (navigation) | Help navigating workflows |
 
@@ -144,7 +145,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 3.9.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 4.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -437,5 +438,111 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   list_wizards` as a module-level function, not
   `WizardRegistry().list_wizards()`. The class
   `WizardRegistry` is not exported from `attune.wizards`.
+
+- **Attune skill names must not collide with Claude Code built-in
+  commands**: Claude Code's built-in `/batch` command (parallel code
+  changes) shadows any Attune skill named `batch`. The user types
+  `/batch submit` expecting Attune's Batch API workflow but gets
+  Claude Code's orchestrator instead. Renamed to `/bulk` to avoid
+  the collision. When naming new skills, check Claude Code's
+  built-in slash commands first: `/batch`, `/compact`, `/config`,
+  `/cost`, `/help`, `/init`, `/login`, `/logout`, `/memory`,
+  `/permissions`, `/review`, `/status`, `/vim`.
+
+- **`CostReport` is a dataclass, not a dict**: The
+  `WorkflowBatchRunner._execute_one()` method used
+  `result.cost_report.get("total_cost", cost)` which fails with
+  `AttributeError: 'CostReport' object has no attribute 'get'`.
+  Fix: use `getattr(result.cost_report, "total_cost", cost)`.
+  Always check whether a result attribute is a dataclass or dict
+  before choosing `.get()` vs `getattr()`.
+
+- **Bug-predict `dangerous_eval` flags `subprocess_exec`**: The
+  scanner's regex matches `create_subprocess_exec` as containing
+  `exec`, producing a false positive for `dangerous_eval` in
+  `hooks/executor.py`. There is no actual `eval()` or `exec()`
+  usage. Always verify HIGH severity scanner findings against
+  the source before treating them as real vulnerabilities.
+
+- **`_run_simplify` catches per-file errors internally**: The
+  pipeline orchestrator's `_run_simplify()` wraps each file in
+  its own try/except, so even if `SimplifyCodeWorkflow()` raises,
+  the method returns normally. The outer caller sets
+  `result.simplified = True` regardless. Tests must match this
+  behavior — the outer try/except only fires if `_run_simplify`
+  itself raises, not if individual files fail.
+
+- **Pre-commit auto-fix requires re-stage before retry**: When
+  black/ruff auto-fix staged files during `git commit`, the
+  commit fails but the fixes are applied to the working tree.
+  The files must be `git add`-ed again before retrying the
+  commit. This is different from the stash conflict issue —
+  here there are no unstaged siblings, just the hook modifying
+  staged files.
+
+- **`datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
+  through the entire codebase**: Replacing `utcnow()` (naive) with
+  `now(timezone.utc)` (aware) in source code causes `TypeError:
+  can't compare offset-naive and offset-aware datetimes` everywhere
+  that stored/parsed timestamps interact with the new aware values.
+  This includes `_parse_timestamp()` helpers, `fromisoformat()`
+  calls that strip `Z`, and test fixtures that create naive
+  datetimes. Plan for a full sweep of both src/ and tests/ — not
+  just the files you initially changed.
+
+- **Don't append `+ "Z"` to timezone-aware `.isoformat()`**:
+  `datetime.now(timezone.utc).isoformat()` already produces
+  `2026-03-08T12:00:00+00:00`. Appending `+ "Z"` creates
+  `+00:00Z` which, when passed through `.replace("Z", "+00:00")`,
+  becomes the invalid `+00:00+00:00`. After migrating to
+  timezone-aware datetimes, grep for `.isoformat() + "Z"` and
+  remove the suffix.
+
+- **`PurePosixPath.match()` doesn't support `**` in Python 3.10**:
+  `PurePosixPath("a/b/c.py").match("a/**")` returns `False` because
+  `match()` treats `*` as single-segment only (no recursive globbing).
+  For `**` glob patterns, convert to fnmatch: replace `**` with `*`,
+  then use `fnmatch.fnmatch()`. Python 3.13+ adds recursive support
+  but 3.10 does not.
+
+- **Adding `logger` before eager imports triggers E402 in
+  `__init__.py`**: Placing `logger = logging.getLogger(__name__)`
+  between stdlib imports and eager `from .module import ...` lines
+  makes ruff flag all subsequent relative imports as E402 (module-level
+  import not at top). Move the logger assignment after ALL imports,
+  just before the first non-import statement.
+
+- **SDK agent MODEL_CONFIG uses stale model names**: The `MODEL_CONFIG`
+  dict in `agents/release/release_models.py` references
+  `claude-3-5-haiku-latest` which returns 404. The current Haiku model
+  ID is `claude-haiku-4-5-20251001`. Check model IDs against the
+  Anthropic API when tier escalation fails at CHEAP.
+
+- **MyPy "437 errors" was stale — actual count was 2**: The
+  pre-commit comment said "437 pre-existing errors" but running
+  mypy with the configured settings found only 2 unused
+  `type: ignore` comments. Always re-run the tool before assuming
+  old error counts are still accurate — they may have been fixed
+  as a side effect of other refactors.
+
+- **B904 (`raise X from e`) is not auto-fixable by ruff**: Despite
+  `ruff check --fix`, B904 violations require manual edits. Use
+  `from e` when the exception variable is captured, `from None`
+  when suppressing the original. After fixing all violations,
+  remove B904 from the ruff ignore list to enforce going forward.
+
+- **`claude-agent-sdk` is a standalone PyPI package, not bundled
+  with Claude Code**: The Agent SDK (`pip install claude-agent-sdk`)
+  is independently versioned and published on PyPI. It is not part
+  of the `anthropic` package or the Claude Code CLI. The optional
+  extra `attune-ai[agent-sdk]` installs it. Check availability at
+  runtime with `import claude_agent_sdk` and the `_SDK_AVAILABLE`
+  module-level guard pattern.
+
+- **`list_workflows()` deduplication must keep base names visible**:
+  When hiding SDK duplicates, only skip entries in `_SDK_REVERSE_MAP`
+  (the explicit `-sdk` suffixed names). Do NOT also skip base names
+  that have an SDK variant — those are the names users see and type.
+  The resolver routes base names to SDK implementations transparently.
 
 <!-- attune-lessons-end -->

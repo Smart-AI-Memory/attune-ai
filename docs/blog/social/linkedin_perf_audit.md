@@ -2,62 +2,83 @@
 
 ---
 
-We ran a performance audit on our own codebase. One command. Here's what happened.
+I almost shipped code with a triple-nested loop making
+individual Redis calls. Tests passed. CI was green. I had
+no idea.
 
-Tests passed. CI was green. But nobody was checking if the code was actually fast.
+I only caught it because I ran a one-line performance audit
+on the codebase before pushing. Not a profiler. Not a
+manual review. Just this:
 
-Turns out we had triple-nested loops generating test data — O(n^3) with individual Redis calls inside. Functional, sure. Efficient, no.
-
-One command found it:
-
-```
-/attune perf
-```
+--- CODE START ---
+/workflows perf
+--- CODE END ---
 
 Score: 67/100 (Needs Optimization)
 
-→ `dashboard_demo.py:195` — Triple nested loop (O(n^3))
-→ `populate_redis_direct.py:169` — Triple nested loop + unbatched Redis writes
+- dashboard_demo.py:195 -- Triple nested loop (O(n^3))
+- populate_redis_direct.py:169 -- Triple nested loop +
+  unbatched Redis writes
+
+Honestly expected a clean bill of health. I was wrong.
 
 The fix took 10 minutes:
 
 Before:
-```python
+
+--- CODE START ---
 for workflow in workflows:
     for stage in stages:
         for tier in tiers:
-            r.setex(key, 604800, value)  # One network call per write
-```
+            r.setex(key, 604800, value)
+            # One network call per write
+--- CODE END ---
 
 After:
-```python
+
+--- CODE START ---
 pipe = r.pipeline()
-for workflow, stage, tier in itertools.product(workflows, stages, tiers):
+for workflow, stage, tier in itertools.product(
+    workflows, stages, tiers
+):
     pipe.setex(key, 604800, value)
 pipe.execute()  # One network call total
-```
+--- CODE END ---
 
-Two changes: `itertools.product()` to flatten the nesting, Redis pipelining to batch the writes.
+Two changes: itertools.product() to flatten the nesting,
+Redis pipelining to batch the writes.
 
-Re-ran the audit:
+Re-ran the audit. Score: 100/100. Zero findings.
 
-Score: 100/100. Zero findings.
+The whole loop -- scan, fix, validate -- took under
+5 minutes. The part that surprised me most: it resolved
+entirely on the cheap model tier. Under $0.01 in total
+API cost.
 
-The whole thing — scan, fix, validate — took under 5 minutes. No profiler setup. No manual review. Just a scored report with file:line references and concrete fix patterns.
+Performance reviews shouldn't require a dedicated sprint.
+They should be one command you run before you ship.
 
-The part that surprised me: this resolved entirely on the cheap model tier. Under $0.01 in total API cost.
+This is Attune AI -- an open-source CLI plugin for Claude
+Code that adds workflows like perf audits, security scans,
+and test generation.
 
-Performance reviews shouldn't require a dedicated sprint. They should be one command you run before you ship.
+pip install attune-ai
 
-What's your team's approach to catching performance issues before production?
+What's your team's approach to catching performance issues
+before they hit production?
 
-#SoftwareEngineering #Performance #Python #DeveloperTools #OpenSource
+#SoftwareEngineering #Performance #Python #DeveloperTools
+#OpenSource
 
 ---
 
 ## Notes
 
-- ~1,750 characters (well within 3,000 limit)
-- Code blocks render on LinkedIn (use "Code" post type or paste as-is)
-- Consider adding a screenshot of the before/after score for visual impact
-- Link to GitHub repo in first comment, not in the post body
+- ~1,550 characters (well within 3,000 limit)
+- Uses ASCII code block markers (--- CODE START --- /
+  --- CODE END ---) per LinkedIn formatting rules
+- No Unicode arrows or special characters
+- Link to GitHub repo in first comment, not in the post
+  body
+- Consider adding a screenshot of the before/after score
+  for visual impact

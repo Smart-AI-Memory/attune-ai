@@ -73,7 +73,8 @@ class BackendInitMixin:
                     base_dir=self.config.file_session_dir,
                     session_id=self._file_session._state.session_id,
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: File session is optional — degrade gracefully
                 logger.error("file_session_memory_failed", error=str(e))
                 self._file_session = None
 
@@ -139,7 +140,8 @@ class BackendInitMixin:
                                 method=RedisStartMethod.MOCK,
                                 message="Redis not available, using file-based storage",
                             )
-                    except Exception:
+                    except Exception:  # noqa: BLE001
+                        # INTENTIONAL: Redis is optional — fall back to file storage
                         self._short_term = None
                         self._redis_status = RedisStatus(
                             available=False,
@@ -168,7 +170,8 @@ class BackendInitMixin:
 
             except RuntimeError:
                 raise  # Re-raise required Redis error
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Redis init is optional — degrade to file storage
                 logger.warning("redis_initialization_failed", error=str(e))
                 self._short_term = None
                 self._redis_status = None
@@ -192,7 +195,8 @@ class BackendInitMixin:
                 storage_dir=self.config.storage_dir,
                 encryption=self.config.encryption_enabled,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Long-term memory is optional — degrade gracefully
             logger.error("long_term_memory_failed", error=str(e))
             self._long_term = None
 
@@ -200,7 +204,8 @@ class BackendInitMixin:
         try:
             self._simple_long_term = LongTermMemory(storage_path=self.config.storage_dir)
             logger.debug("simple_long_term_memory_initialized")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Simple long-term memory is optional
             logger.error("simple_long_term_memory_failed", error=str(e))
             self._simple_long_term = None
 

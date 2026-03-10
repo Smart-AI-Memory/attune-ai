@@ -6,7 +6,7 @@ Licensed under the Apache License, Version 2.0
 
 import csv
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -1156,7 +1156,7 @@ class TestCmdTelemetryShowEdgeCases:
         log_file = tracker.usage_file
         with open(log_file, "a", encoding="utf-8") as f:
             entry = {
-                "ts": datetime.utcnow().isoformat() + "Z",
+                "ts": datetime.now(timezone.utc).isoformat(),
                 "workflow": "minimal",
                 # Missing: stage, cache, duration_ms
                 "tier": "CHEAP",
@@ -1369,7 +1369,7 @@ class TestCmdTelemetryExportEdgeCases:
         log_file = tracker.usage_file
         with open(log_file, "a", encoding="utf-8") as f:
             entry = {
-                "ts": datetime.utcnow().isoformat() + "Z",
+                "ts": datetime.now(timezone.utc).isoformat(),
                 "workflow": "incomplete",
                 "stage": "test",
                 "tier": "CHEAP",
@@ -1433,7 +1433,7 @@ class TestCmdTelemetryExportEdgeCases:
         log_file = tracker.usage_file
         with open(log_file, "a", encoding="utf-8") as f:
             entry = {
-                "ts": datetime.utcnow().isoformat() + "Z",
+                "ts": datetime.now(timezone.utc).isoformat(),
                 "workflow": "",
                 "stage": "",
                 "tier": "CHEAP",

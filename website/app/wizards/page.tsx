@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+import { generateMetadata as generateSEOMetadata, generateStructuredData } from '@/lib/metadata';
 import { wizards, tierColors, tierLabels } from '@/lib/wizards';
 
 export const metadata: Metadata = generateSEOMetadata({
@@ -23,8 +23,19 @@ export const metadata: Metadata = generateSEOMetadata({
 
 
 export default function WizardsPage() {
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'AI Wizards', url: 'https://smartaimemory.com/wizards' },
+    ],
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero */}

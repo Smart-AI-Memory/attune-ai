@@ -20,7 +20,7 @@ export const metadata: Metadata = generateSEOMetadata({
 
 const rows = [
   { feature: 'Claude-native integration', attune: '✅ First-class', crewai: '⚠️ Via LangChain adapter' },
-  { feature: 'Prompt caching (90% cost savings)', attune: '✅ Built-in', crewai: '❌ Manual setup' },
+  { feature: 'Prompt caching (Anthropic built-in)', attune: '✅ Built-in', crewai: '❌ Manual setup' },
   { feature: 'Multi-agent orchestration', attune: '✅ 6 strategies', crewai: '✅ Role-based crews' },
   { feature: 'Code wizards', attune: '✅ 10 built-in', crewai: '❌ None' },
   { feature: 'Semantic caching', attune: '✅ Built-in', crewai: '❌ None' },
@@ -64,7 +64,7 @@ export default function CrewAIVsAttunePage() {
               <p className="text-xl text-[var(--text-secondary)]">
                 CrewAI is the most widely adopted multi-agent Python framework with
                 100K+ developers. Attune AI is purpose-built for Claude Code developers,
-                with native prompt caching, 10 code wizards, and 90% cost savings built in.
+                with 17 AI workflows, 10 code wizards, and cost-optimized tier routing built in.
                 Here&apos;s how they compare.
               </p>
             </div>
@@ -106,7 +106,7 @@ export default function CrewAIVsAttunePage() {
                   <h3 className="text-lg font-bold mb-3">Choose Attune AI if...</h3>
                   <ul className="space-y-2 text-[var(--text-secondary)]">
                     <li>• You use Claude Code as your primary AI development environment</li>
-                    <li>• Reducing API costs is a priority (90% savings via prompt caching)</li>
+                    <li>• Reducing API costs is a priority (tier routing + Anthropic caching)</li>
                     <li>• You want built-in code wizards for security, testing, and review</li>
                     <li>• You need a Claude-native, workflow-first development experience</li>
                   </ul>

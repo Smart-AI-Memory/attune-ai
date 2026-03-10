@@ -3,7 +3,7 @@
 import json
 import os
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -47,6 +47,32 @@ try:
         load_dotenv(test_env_path, override=True)
 except ImportError:
     pass  # python-dotenv not installed
+
+# =============================================================================
+# Workflow tier_map reset - prevent cross-test pollution
+# tier_map is a mutable class-level dict shared across instances.
+# Tests calling should_skip_stage() mutate it, affecting later tests.
+# =============================================================================
+
+# Snapshot original tier_maps at import time (before any test mutates them)
+_ORIGINAL_TIER_MAPS: dict[type, dict] = {}
+try:
+    from attune.workflows.base import BaseWorkflow
+
+    for _cls in BaseWorkflow.__subclasses__():
+        if hasattr(_cls, "tier_map") and isinstance(getattr(_cls, "tier_map", None), dict):
+            _ORIGINAL_TIER_MAPS[_cls] = _cls.tier_map.copy()
+except Exception:  # noqa: BLE001
+    pass
+
+
+@pytest.fixture(autouse=True)
+def _reset_workflow_tier_maps():
+    """Restore all workflow tier_maps after each test."""
+    yield
+    for cls, original in _ORIGINAL_TIER_MAPS.items():
+        cls.tier_map.update(original)
+
 
 # =============================================================================
 # File Test Tracking - Automatic per-file test result recording
@@ -253,7 +279,7 @@ def pytest_sessionfinish(session, exitstatus):
         from attune.models.telemetry import FileTestRecord, get_telemetry_store
 
         store = get_telemetry_store()
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         for test_file, results in results_to_store.items():
             # Map test file to source file

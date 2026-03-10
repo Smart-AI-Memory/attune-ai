@@ -180,8 +180,11 @@ def cached_pattern_query(cache: PatternMatchCache) -> Callable:
     """
 
     def decorator(func: Callable) -> Callable:
+        """Wrap a function with pattern match caching."""
+
         @wraps(func)
         def wrapper(self, context: dict[str, Any], **kwargs) -> Any:
+            """Look up cached result or compute and cache it."""
             # Include kwargs in cache key for correctness
             cache_context = {"context": context, "kwargs": kwargs}
             return cache.get_or_compute(

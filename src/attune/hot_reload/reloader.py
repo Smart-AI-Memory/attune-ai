@@ -157,7 +157,7 @@ class WorkflowReloader:
                 error=error_msg,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = f"Unexpected error reloading {workflow_id}: {e}"
             logger.exception(error_msg)
             self._notify_reload_failed(workflow_id, str(e))
@@ -205,7 +205,7 @@ class WorkflowReloader:
             module_name = ".".join(module_parts)
             return module_name
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting module name from {file_path}: {e}")
             return None
 
@@ -263,7 +263,7 @@ class WorkflowReloader:
                         "reload_count": self._reload_count,
                     },
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error sending reload notification: {e}")
 
     def _notify_reload_failed(self, workflow_id: str, error: str) -> None:
@@ -284,7 +284,7 @@ class WorkflowReloader:
                         "error": error,
                     },
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error sending failure notification: {e}")
 
     def get_reload_count(self) -> int:

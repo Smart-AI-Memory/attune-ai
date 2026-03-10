@@ -223,7 +223,7 @@ class MetaWorkflow:
 
             return result
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Meta-workflow execution failed: {e}")
 
             # Create error result
@@ -241,7 +241,7 @@ class MetaWorkflow:
             # Try to save error result
             try:
                 self._save_execution(error_result)
-            except Exception as save_error:
+            except Exception as save_error:  # noqa: BLE001
                 logger.error(f"Failed to save error result: {save_error}")
 
             raise ValueError(f"Meta-workflow execution failed: {e}") from e

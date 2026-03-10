@@ -153,7 +153,10 @@ class CodeMetricsMixin:
 
         # Use inner class to maintain state during traversal
         class MetricsVisitor(ast.NodeVisitor):
+            """Single-pass AST visitor that collects code metrics."""
+
             def __init__(self) -> None:
+                """Initialize metrics result dict and function depth tracker."""
                 self.result: dict[str, Any] = {
                     "has_docstrings": False,
                     "has_type_hints": False,
@@ -164,19 +167,23 @@ class CodeMetricsMixin:
                 self.function_depth = 0  # Track if we're inside a function
 
             def visit_Module(self, node: ast.Module) -> None:
+                """Check module-level docstring presence."""
                 if ast.get_docstring(node):
                     self.result["has_docstrings"] = True
                 self.generic_visit(node)
 
             def visit_ClassDef(self, node: ast.ClassDef) -> None:
+                """Check class-level docstring presence."""
                 if ast.get_docstring(node):
                     self.result["has_docstrings"] = True
                 self.generic_visit(node)
 
             def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+                """Delegate to _handle_function for sync functions."""
                 self._handle_function(node)
 
             def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+                """Delegate to _handle_function for async functions."""
                 self._handle_function(node)
 
             def _handle_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
@@ -198,36 +205,43 @@ class CodeMetricsMixin:
                 self.function_depth -= 1
 
             def visit_If(self, node: ast.If) -> None:
+                """Increment complexity for if-statements inside functions."""
                 if self.function_depth > 0:
                     self.result["complexity"] += 1.0
                 self.generic_visit(node)
 
             def visit_For(self, node: ast.For) -> None:
+                """Increment complexity for for-loops inside functions."""
                 if self.function_depth > 0:
                     self.result["complexity"] += 1.0
                 self.generic_visit(node)
 
             def visit_While(self, node: ast.While) -> None:
+                """Increment complexity for while-loops inside functions."""
                 if self.function_depth > 0:
                     self.result["complexity"] += 1.0
                 self.generic_visit(node)
 
             def visit_Try(self, node: ast.Try) -> None:
+                """Increment complexity for try blocks inside functions."""
                 if self.function_depth > 0:
                     self.result["complexity"] += 1.0
                 self.generic_visit(node)
 
             def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+                """Increment complexity for except handlers inside functions."""
                 if self.function_depth > 0:
                     self.result["complexity"] += 1.0
                 self.generic_visit(node)
 
             def visit_Import(self, node: ast.Import) -> None:
+                """Record import names."""
                 for alias in node.names:
                     self.result["imports"].append(alias.name)
                 self.generic_visit(node)
 
             def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+                """Record from-import module names."""
                 if node.module:
                     self.result["imports"].append(node.module)
                 self.generic_visit(node)

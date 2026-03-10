@@ -4,7 +4,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -57,7 +57,7 @@ class TestAgentHeartbeat:
 
     def test_from_dict_with_datetime(self):
         """Test from_dict with datetime object."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         data = {
             "agent_id": "test",
             "status": "running",
@@ -178,7 +178,7 @@ class TestHeartbeatCoordinatorWithMemory:
             "status": "running",
             "progress": 0.5,
             "current_task": "task1",
-            "last_beat": datetime.utcnow().isoformat(),
+            "last_beat": datetime.now(timezone.utc).isoformat(),
             "metadata": {},
         }
         heartbeat2 = {
@@ -186,7 +186,7 @@ class TestHeartbeatCoordinatorWithMemory:
             "status": "starting",
             "progress": 0.0,
             "current_task": "init",
-            "last_beat": datetime.utcnow().isoformat(),
+            "last_beat": datetime.now(timezone.utc).isoformat(),
             "metadata": {},
         }
 
@@ -211,7 +211,7 @@ class TestHeartbeatCoordinatorWithMemory:
             "status": "running",
             "progress": 0.5,
             "current_task": "test",
-            "last_beat": datetime.utcnow().isoformat(),
+            "last_beat": datetime.now(timezone.utc).isoformat(),
             "metadata": {},
         }
 
@@ -232,7 +232,7 @@ class TestHeartbeatCoordinatorWithMemory:
             "status": "running",
             "progress": 0.75,
             "current_task": "processing",
-            "last_beat": datetime.utcnow().isoformat(),
+            "last_beat": datetime.now(timezone.utc).isoformat(),
             "metadata": {"key": "value"},
         }
 
@@ -248,7 +248,7 @@ class TestHeartbeatCoordinatorWithMemory:
     def test_get_stale_agents(self, coordinator, mock_memory):
         """Test detecting stale agents."""
         # Create one fresh and one stale heartbeat
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         fresh_time = now - timedelta(seconds=10)
         stale_time = now - timedelta(seconds=120)
 
@@ -349,7 +349,7 @@ class TestHeartbeatCoordinatorIntegration:
             "status": "running",
             "progress": 0.5,
             "current_task": "test",
-            "last_beat": datetime.utcnow().isoformat(),
+            "last_beat": datetime.now(timezone.utc).isoformat(),
             "metadata": {},
         }
 

@@ -129,7 +129,7 @@ class LLMGoalAnalyzer:
                     messages=[{"role": "user", "content": prompt}],
                 )
                 return response.content[0].text if response.content else "{}"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Direct API call failed: {e}")
 
         # Fall back to executor
@@ -171,7 +171,7 @@ class LLMGoalAnalyzer:
                 raw_response=content,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"LLM analysis failed, using fallback: {e}")
             return self._fallback_analysis(goal)
 
@@ -222,7 +222,7 @@ class LLMGoalAnalyzer:
                 reasoning=data.get("reasoning", ""),
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"LLM question generation failed: {e}")
             return LLMQuestionResult(
                 questions=[],
@@ -269,7 +269,7 @@ class LLMGoalAnalyzer:
                 estimated_duration=data.get("estimated_duration", "moderate"),
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"LLM agent recommendation failed: {e}")
             return self._fallback_agent_recommendation(session)
 
@@ -394,6 +394,8 @@ class MockLLMExecutor:
 
         @dataclass
         class MockResponse:
+            """Mock LLM response for testing."""
+
             content: str = "{}"
 
         return MockResponse()

@@ -258,7 +258,7 @@ class CodeReviewPipeline:
             result.metadata["formatted_report"] = format_code_review_pipeline_report(result)
             return result
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("CodeReviewPipeline failed: %s", e)
             duration = time.time() - start_time
             return CodeReviewPipelineResult(
@@ -541,6 +541,7 @@ def main():
     args = parser.parse_args()
 
     async def run():
+        """Run the code review analysis stage."""
         pipeline = CodeReviewPipeline(mode=args.mode, parallel_crew=args.parallel)
 
         diff = args.diff or ""

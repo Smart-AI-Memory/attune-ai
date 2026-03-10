@@ -6,7 +6,7 @@ Generated with XML-enhanced task prompts.
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -29,7 +29,7 @@ class TestGetSummaryWorkflows:
             record = {
                 "run_id": f"run-{i}",
                 "workflow_name": f"wf-{i}",
-                "started_at": datetime.utcnow().isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
                 "total_cost": 0.10 * (i + 1),
                 "total_input_tokens": 1000 * (i + 1),
                 "total_output_tokens": 200 * (i + 1),
@@ -55,7 +55,7 @@ class TestGetSummaryWorkflows:
         # Write LLM call records (no workflow records)
         for i in range(3):
             record = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "estimated_cost": 0.05 * (i + 1),
                 "input_tokens": 500 * (i + 1),
                 "output_tokens": 100 * (i + 1),
@@ -89,7 +89,7 @@ class TestGetSummaryWorkflows:
         """Only includes records after the 'since' cutoff."""
         store = TelemetryStore(storage_dir=str(tmp_path))
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         old_time = (now - timedelta(days=10)).isoformat()
         recent_time = (now - timedelta(hours=1)).isoformat()
 
@@ -122,7 +122,7 @@ class TestGetSummaryWorkflows:
             f.write("not json\n")
             f.write(
                 '{"run_id":"r1","workflow_name":"w","started_at":"'
-                + datetime.utcnow().isoformat()
+                + datetime.now(timezone.utc).isoformat()
                 + '","total_cost":1.0,"total_input_tokens":100,"total_output_tokens":50}\n',
             )
             f.write("\n")  # blank line

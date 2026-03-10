@@ -25,6 +25,7 @@ class ASTFunctionAnalyzer(ast.NodeVisitor):
     """
 
     def __init__(self):
+        """Initialize the analyzer with empty function and class lists."""
         self.functions: list[FunctionSignature] = []
         self.classes: list[ClassSignature] = []
         self._current_class: str | None = None
@@ -161,7 +162,7 @@ class ASTFunctionAnalyzer(ast.NodeVisitor):
             if default_idx >= 0:
                 try:
                     default_val = ast.unparse(defaults[default_idx])
-                except Exception:
+                except Exception:  # noqa: BLE001
                     default_val = "..."
 
             params.append((param_name, param_type, default_val))

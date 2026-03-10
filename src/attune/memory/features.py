@@ -97,7 +97,7 @@ class MemoryFeatures:
         except ImportError:
             logger.debug("redis module not installed")
             return False
-        except Exception:
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Redis availability is optional; any failure means unavailable
             logger.debug("Redis ping failed", exc_info=True)
             return False

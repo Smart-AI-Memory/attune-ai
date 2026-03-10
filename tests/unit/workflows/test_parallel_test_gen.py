@@ -41,7 +41,7 @@ class TestParallelTestGenInit:
     @pytest.mark.asyncio
     async def test_run_stage_raises(self, parallel_test_gen_workflow):
         """run_stage is not used — execute() overrides the pipeline."""
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError, match="Unknown stage"):
             await parallel_test_gen_workflow.run_stage("discover", ModelTier.CHEAP, {})
 
 

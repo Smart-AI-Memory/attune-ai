@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from .base import BaseWorkflow, ModelTier
+from .base import BaseWorkflow, ModelTier, estimate_tokens
 
 # Re-export extracted modules for backward compatibility
 from .bug_predict_patterns import (  # noqa: F401
@@ -162,33 +162,6 @@ class BugPredictionWorkflow(BaseWorkflow):
                 return False, None
         return False, None
 
-    async def run_stage(
-        self,
-        stage_name: str,
-        tier: ModelTier,
-        input_data: Any,
-    ) -> tuple[Any, int, int]:
-        """Route to specific stage implementation.
-
-        Args:
-            stage_name: Name of the stage to run
-            tier: Model tier to use
-            input_data: Input data for the stage
-
-        Returns:
-            Tuple of (output_data, input_tokens, output_tokens)
-
-        """
-        if stage_name == "scan":
-            return await self._scan(input_data, tier)
-        if stage_name == "correlate":
-            return await self._correlate(input_data, tier)
-        if stage_name == "predict":
-            return await self._predict(input_data, tier)
-        if stage_name == "recommend":
-            return await self._recommend(input_data, tier)
-        raise ValueError(f"Unknown stage: {stage_name}")
-
     async def _scan(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Scan codebase for code patterns and structures.
 
@@ -251,15 +224,17 @@ class BugPredictionWorkflow(BaseWorkflow):
 
                     # Log recommendation
                     logger.info(
-                        f"Auth Strategy: {size_category.value} codebase ({codebase_lines} lines) "
-                        f"-> {recommended_mode.value}",
+                        "Auth Strategy: %s codebase (%s lines) -> %s",
+                        size_category.value,
+                        codebase_lines,
+                        recommended_mode.value,
                     )
             except ImportError:
                 # Auth strategy module not available - continue without it
                 logger.debug("Auth strategy module not available")
-            except Exception as e:
-                # Don't fail the workflow if auth strategy detection fails
-                logger.warning(f"Auth strategy detection failed: {e}")
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Auth strategy is optional; don't fail the workflow
+                logger.warning("Auth strategy detection failed: %s", e)
         # === END AUTH STRATEGY ===/
 
         # Walk directory and collect file info
@@ -320,8 +295,8 @@ class BugPredictionWorkflow(BaseWorkflow):
                     except OSError:
                         continue
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(scanned_files)) // 4 + len(str(patterns_found)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(scanned_files) + estimate_tokens(patterns_found)
 
         return (
             {
@@ -375,8 +350,8 @@ class BugPredictionWorkflow(BaseWorkflow):
                     },
                 )
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(correlations)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(correlations)
 
         return (
             {
@@ -439,8 +414,8 @@ class BugPredictionWorkflow(BaseWorkflow):
             else sum(float(p["risk_score"]) for p in predictions) / max(len(predictions), 1)
         )
 
-        input_tokens = len(str(input_data)) // 4
-        output_tokens = len(str(predictions)) // 4
+        input_tokens = estimate_tokens(input_data)
+        output_tokens = estimate_tokens(predictions)
 
         return (
             {
@@ -542,9 +517,9 @@ Provide detailed recommendations for preventing bugs."""
                     prompt=user_message,
                     system=system,
                 )
-            except Exception as e:
-                # Graceful fallback to legacy _call_llm if executor fails
-                logger.warning(f"Executor failed, falling back to legacy LLM call: {e}")
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Graceful fallback to legacy _call_llm if executor fails
+                logger.warning("Executor failed, falling back to legacy LLM call: %s", e)
                 response, input_tokens, output_tokens = await self._call_llm(
                     tier,
                     system or "",

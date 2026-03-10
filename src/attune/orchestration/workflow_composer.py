@@ -48,6 +48,12 @@ class WorkflowComposer:
     """
 
     def __init__(self, state_store: Any | None = None) -> None:
+        """Initialize WorkflowComposer with optional shared state.
+
+        Args:
+            state_store: Optional AgentStateStore shared by all adapters.
+
+        """
         self.state_store = state_store
 
     def compose(

@@ -16,7 +16,7 @@ import ssl
 import sys
 import time  # noqa: F401 - used by MemoryAPIHandler indirectly
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -50,14 +50,17 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
         logger.debug("api_request", message=format % args)
 
     def _get_client_ip(self) -> str:
-        """Get client IP address, handling proxies."""
-        # Check for X-Forwarded-For header (behind proxy)
-        forwarded = self.headers.get("X-Forwarded-For")
-        if forwarded:
-            # Take the first IP in the chain
-            return forwarded.split(",")[0].strip()
-        # Fall back to direct connection
-        return self.client_address[0]
+        """Get client IP address, handling proxies.
+
+        Only trusts X-Forwarded-For when the direct connection
+        originates from localhost (behind a local reverse proxy).
+        """
+        direct_ip = self.client_address[0]
+        if direct_ip in ("127.0.0.1", "::1"):
+            forwarded = self.headers.get("X-Forwarded-For")
+            if forwarded:
+                return forwarded.split(",")[0].strip()
+        return direct_ip
 
     def _check_rate_limit(self) -> bool:
         """Check if request should be rate limited."""
@@ -197,7 +200,7 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
             patterns = self.panel.list_patterns(classification=classification)
             export_data = {
-                "exported_at": datetime.utcnow().isoformat() + "Z",
+                "exported_at": datetime.now(timezone.utc).isoformat(),
                 "classification_filter": classification,
                 "patterns": patterns,
             }
@@ -373,6 +376,7 @@ def run_api_server(
 
     # Graceful shutdown handler
     def shutdown_handler(signum, frame):
+        """Handle shutdown signals for graceful server stop."""
         print("\n\nReceived shutdown signal...")
         print("Stopping API server...")
         server.shutdown()

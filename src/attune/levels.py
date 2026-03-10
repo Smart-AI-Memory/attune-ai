@@ -46,6 +46,7 @@ class EmpathyLevel(ABC):
     level_name: str
 
     def __init__(self):
+        """Initialize EmpathyLevel with an empty actions history."""
         self.actions_taken: list[EmpathyAction] = []
 
     @abstractmethod

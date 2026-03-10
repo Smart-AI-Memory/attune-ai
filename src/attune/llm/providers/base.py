@@ -27,6 +27,12 @@ class BaseLLMProvider(ABC):
     """
 
     def __init__(self, api_key: str | None = None, **kwargs):
+        """Initialize the LLM provider.
+
+        Args:
+            api_key: API key for authentication.
+            **kwargs: Additional provider-specific configuration.
+        """
         self.api_key = api_key
         self.config = kwargs
 

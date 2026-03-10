@@ -33,6 +33,7 @@ class SyncEvent:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert the collaboration event to a dictionary."""
         return {
             "event_id": self.event_id,
             "session_id": self.session_id,
@@ -68,7 +69,7 @@ class SyncAdapter:
         for handler in self._event_handlers:
             try:
                 handler(event)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Handler failure should not prevent other handlers.
                 # Event propagation must continue for sync reliability.
                 pass

@@ -187,7 +187,7 @@ class BackgroundService:
                     self._cleanup_stale_sessions()
                     last_cleanup = time.time()
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.exception("service_loop_error", error=str(e))
 
     def _cleanup_stale_sessions(self) -> None:

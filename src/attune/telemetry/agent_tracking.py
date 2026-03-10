@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class AgentHeartbeat:
         if isinstance(last_beat, str):
             last_beat = datetime.fromisoformat(last_beat)
         elif not isinstance(last_beat, datetime):
-            last_beat = datetime.utcnow()
+            last_beat = datetime.now(timezone.utc)
 
         return cls(
             agent_id=data["agent_id"],
@@ -146,7 +146,7 @@ class HeartbeatCoordinator:
                 from attune.telemetry.event_streaming import EventStreamer
 
                 self._event_streamer = EventStreamer(memory=self.memory)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to initialize EventStreamer: {e}")
                 self._enable_streaming = False
 
@@ -238,7 +238,7 @@ class HeartbeatCoordinator:
             status=status,
             progress=progress,
             current_task=current_task,
-            last_beat=datetime.utcnow(),
+            last_beat=datetime.now(timezone.utc),
             metadata=metadata,
             display_name=display_name,
         )
@@ -254,7 +254,7 @@ class HeartbeatCoordinator:
                 self.memory._client.setex(key, self.HEARTBEAT_TTL, json.dumps(heartbeat.to_dict()))
             else:
                 logger.warning("Cannot publish heartbeat: no Redis backend available")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to publish heartbeat for {self.agent_id}: {e}")
 
         # Publish to event stream (Pattern 4 - optional)
@@ -266,7 +266,7 @@ class HeartbeatCoordinator:
                     data=heartbeat.to_dict(),
                     source="attune",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.debug(f"Failed to publish heartbeat event to stream: {e}")
 
     def get_active_agents(self) -> list[AgentHeartbeat]:
@@ -297,7 +297,7 @@ class HeartbeatCoordinator:
                     heartbeats.append(AgentHeartbeat.from_dict(data))
 
             return heartbeats
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get active agents: {e}")
             return []
 
@@ -360,7 +360,7 @@ class HeartbeatCoordinator:
                     result = json.loads(data)
                     return result if isinstance(result, dict) else None
             return None
-        except Exception:
+        except Exception:  # noqa: BLE001
             logger.debug("Failed to retrieve heartbeat %s", key, exc_info=True)
             return None
 
@@ -377,7 +377,7 @@ class HeartbeatCoordinator:
 
         """
         active = self.get_active_agents()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         stale = []
 
         for agent in active:

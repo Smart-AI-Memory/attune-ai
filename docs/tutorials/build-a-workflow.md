@@ -288,7 +288,7 @@ attune workflow list
 
 - Chain workflows: lint, then test, then docs, then
   commit
-- Use `/batch` for 50% savings on non-interactive runs
+- Use `/bulk` for 50% savings on non-interactive runs
 - Add custom mixins for shared logic across workflows
 
 ## Recap

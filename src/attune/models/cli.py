@@ -23,7 +23,7 @@ Licensed under the Apache License, Version 2.0
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from .provider_config import (
     configure_provider_cli,
@@ -33,7 +33,6 @@ from .provider_config import (
 from .registry import get_all_models
 from .tasks import get_all_tasks, get_tier_for_task
 from .telemetry import TelemetryAnalytics, TelemetryStore
-from .validation import validate_yaml_file
 
 
 def print_registry(provider: str | None = None, format: str = "table") -> None:
@@ -187,34 +186,6 @@ def print_costs(
         print("\n" + "=" * 70)
 
 
-def validate_file(file_path: str, format: str = "table") -> int:
-    """Validate a configuration file.
-
-    Args:
-        file_path: Path to YAML config file
-        format: Output format
-
-    Returns:
-        Exit code (0 = valid, 1 = errors)
-
-    """
-    result = validate_yaml_file(file_path)
-
-    if format == "json":
-        output = {
-            "valid": result.valid,
-            "errors": [{"path": e.path, "message": e.message} for e in result.errors],
-            "warnings": [{"path": w.path, "message": w.message} for w in result.warnings],
-        }
-        print(json.dumps(output, indent=2))
-    else:
-        print(f"\nValidating: {file_path}")
-        print("-" * 60)
-        print(result)
-
-    return 0 if result.valid else 1
-
-
 def print_effective_config(provider: str = "anthropic") -> None:
     """Print the effective configuration for a provider.
 
@@ -273,7 +244,7 @@ def print_telemetry_summary(
     store = TelemetryStore(storage_dir)
     analytics = TelemetryAnalytics(store)
 
-    since = datetime.now() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     calls = store.get_calls(since=since, limit=10000)
     workflows = store.get_workflows(since=since, limit=1000)
 
@@ -325,7 +296,7 @@ def print_telemetry_costs(
     store = TelemetryStore(storage_dir)
     analytics = TelemetryAnalytics(store)
 
-    since = datetime.now() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     report = analytics.cost_savings_report(since)
 
     if format == "json":
@@ -369,7 +340,7 @@ def print_telemetry_providers(
     store = TelemetryStore(storage_dir)
     analytics = TelemetryAnalytics(store)
 
-    since = datetime.now() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     summary = analytics.provider_usage_summary(since)
 
     if format == "json":
@@ -406,7 +377,7 @@ def print_telemetry_fallbacks(
     store = TelemetryStore(storage_dir)
     analytics = TelemetryAnalytics(store)
 
-    since = datetime.now() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     stats = analytics.fallback_stats(since)
 
     if format == "json":
@@ -564,11 +535,6 @@ Examples:
     costs_parser.add_argument("--provider", "-p", help="Filter by provider")
     costs_parser.add_argument("--format", "-f", choices=["table", "json"], default="table")
 
-    # Validate command
-    val_parser = subparsers.add_parser("validate", help="Validate config file")
-    val_parser.add_argument("file", help="Path to YAML config file")
-    val_parser.add_argument("--format", "-f", choices=["table", "json"], default="table")
-
     # Effective command
     eff_parser = subparsers.add_parser("effective", help="Show effective config")
     eff_parser.add_argument("--provider", "-p", default="anthropic", help="Provider to show")
@@ -621,9 +587,6 @@ Examples:
     if args.command == "costs":
         print_costs(args.input_tokens, args.output_tokens, args.provider, args.format)
         return 0
-
-    if args.command == "validate":
-        return validate_file(args.file, args.format)
 
     if args.command == "effective":
         print_effective_config(args.provider)

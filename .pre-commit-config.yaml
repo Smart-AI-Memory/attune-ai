@@ -36,14 +36,14 @@ repos:
         # Prevents bare except clauses from being committed
         # See docs/EXCEPTION_HANDLING_GUIDE.md for best practices
 
-  # MyPy - Disabled (437 pre-existing errors, re-enable after type sprint)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.15.0
-  #   hooks:
-  #     - id: mypy
-  #       additional_dependencies: [types-pyyaml, types-requests]
-  #       args: ['--ignore-missing-imports', '--no-strict-optional']
-  #       files: ^(src|attune_software)/
+  # MyPy - Re-enabled (0 errors with current settings)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-pyyaml, types-requests]
+        args: ['--ignore-missing-imports', '--no-strict-optional']
+        files: ^(src|attune_software)/
 
   # Bandit - Security linter
   - repo: https://github.com/PyCQA/bandit

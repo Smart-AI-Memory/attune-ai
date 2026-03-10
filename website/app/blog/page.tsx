@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { generateMetadata } from '@/lib/metadata';
+import { generateMetadata, generateStructuredData } from '@/lib/metadata';
 import { getAllPosts } from '@/lib/blog';
 
 export const metadata: Metadata = generateMetadata({
@@ -23,9 +23,19 @@ export const metadata: Metadata = generateMetadata({
 
 export default function BlogPage() {
   const posts = getAllPosts();
+  const breadcrumbSchema = generateStructuredData('breadcrumb', {
+    items: [
+      { name: 'Home', url: 'https://smartaimemory.com' },
+      { name: 'Blog', url: 'https://smartaimemory.com/blog' },
+    ],
+  });
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}

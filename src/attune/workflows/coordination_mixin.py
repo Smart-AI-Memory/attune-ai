@@ -121,7 +121,7 @@ class CoordinationMixin:
                     message="Failed to import HeartbeatCoordinator",
                 )
                 self._enable_heartbeat_tracking = False
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "heartbeat_tracking_init_error",
                     workflow=self.name,
@@ -161,7 +161,7 @@ class CoordinationMixin:
                     message="Failed to import CoordinationSignals",
                 )
                 self._enable_coordination = False
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "coordination_init_error",
                     workflow=self.name,
@@ -263,7 +263,7 @@ class CoordinationMixin:
                 payload=payload or {},
                 ttl_seconds=ttl_seconds,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to send coordination signal: {e}")
             return ""
 
@@ -309,7 +309,7 @@ class CoordinationMixin:
                 timeout=timeout,
                 poll_interval=poll_interval,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to wait for coordination signal: {e}")
             return None
 
@@ -348,6 +348,6 @@ class CoordinationMixin:
                 source_agent=source_agent,
                 consume=consume,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to check coordination signal: {e}")
             return None

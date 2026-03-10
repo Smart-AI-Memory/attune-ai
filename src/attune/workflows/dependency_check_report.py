@@ -147,6 +147,7 @@ def main():
     import asyncio
 
     async def run():
+        """Run the dependency check analysis stage."""
         from .dependency_check import DependencyCheckWorkflow
 
         workflow = DependencyCheckWorkflow()

@@ -132,15 +132,24 @@ class HybridRouter:
             "wizard-run": ("wizard", "run"),
             "create-wizard": ("wizard", "create"),
             "new-wizard": ("wizard", "create"),
-            # Batch API commands → /batch skill
-            "batch": ("batch", ""),
-            "batch-submit": ("batch", "submit"),
-            "submit-batch": ("batch", "submit"),
-            "batch-status": ("batch", "status"),
-            "batch-results": ("batch", "results"),
-            "batch-wait": ("batch", "wait"),
-            "bulk-process": ("batch", "submit"),
-            "batch-api": ("batch", ""),
+            # Batch API commands → /bulk skill
+            "bulk": ("bulk", ""),
+            "bulk-submit": ("bulk", "submit"),
+            "submit-bulk": ("bulk", "submit"),
+            "bulk-status": ("bulk", "status"),
+            "bulk-results": ("bulk", "results"),
+            "bulk-wait": ("bulk", "wait"),
+            "bulk-process": ("bulk", "submit"),
+            "batch-api": ("bulk", ""),
+            "batch": ("bulk", ""),
+            # Pipeline commands → /pipeline skill
+            "pipeline": ("pipeline", ""),
+            "pipeline-dev": ("pipeline", "dev"),
+            "pipeline-release": ("pipeline", "release"),
+            "sdlc": ("pipeline", ""),
+            "lifecycle": ("pipeline", ""),
+            "end-to-end": ("pipeline", ""),
+            "full-lifecycle": ("pipeline", ""),
             # Brainstorm commands → /brainstorm skill
             "brainstorm": ("brainstorm", ""),
             "think": ("brainstorm", ""),
@@ -169,9 +178,10 @@ class HybridRouter:
             "release": "Release preparation and publishing",
             "wizard": "Guided multi-step wizards with XML task decomposition",
             "agent": "Create and manage custom AI agents and teams",
-            "batch": "Batch API processing (50% cost savings)",
+            "bulk": "Batch API processing (50% cost savings)",
             "utilities": "Authentication and provider management",
             "brainstorm": "Guided brainstorming with structured discovery and plan output",
+            "pipeline": "Spec-driven development lifecycle (brainstorm to release)",
         }
 
         self._load_preferences()
@@ -205,7 +215,7 @@ class HybridRouter:
                     usage_count=pref_data.get("usage_count", 0),
                     confidence=pref_data.get("confidence", 1.0),
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Routing preferences are optional, never fail init
             print(f"Warning: Could not load routing preferences: {e}")
 

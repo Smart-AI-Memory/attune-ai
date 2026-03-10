@@ -214,7 +214,7 @@ class DiscoveryEngine:
                     condition = tip_config["condition"]
                     if callable(condition) and condition(self.state):
                         should_show = True
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # INTENTIONAL: Discovery tip conditions are optional; log but don't break
                     logger.debug("Discovery condition '%s' failed", tip_id, exc_info=True)
 
@@ -229,6 +229,7 @@ class DiscoveryEngine:
 
         # Sort by priority and limit - ensure we get an int for sorting
         def get_priority(x: dict) -> int:
+            """Extract and coerce tip priority to int for sorting."""
             p = x.get("priority", 3)
             return int(p) if isinstance(p, int | float | str) else 3
 

@@ -150,7 +150,7 @@ class RealCoverageAnalyzer:
                 missing_lines=missing_lines,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Coverage analysis failed: {e}")
             raise RuntimeError(f"Coverage analysis failed: {e}") from e
 
@@ -216,7 +216,7 @@ class RealTestGenerator:
         except ImportError as e:
             logger.warning(f"Required package not installed: {e}. Falling back to templates")
             self.use_llm = False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to initialize LLM: {e}. Falling back to templates")
             self.use_llm = False
 
@@ -246,7 +246,7 @@ class RealTestGenerator:
 
         try:
             source_code = source_path.read_text()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise RuntimeError(f"Cannot read source file: {e}") from e
 
         # Create unique test name from full path to avoid collisions
@@ -368,7 +368,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
                     )
                     logger.info(f"✓ Using Sonnet model: {model_name}")
                     break
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     last_error = e
                     logger.debug(f"Model {model_name} not available: {e}")
                     continue
@@ -389,7 +389,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
             logger.info(f"✓ LLM generated {len(test_code)} chars of test code")
             return test_code
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"LLM test generation failed: {e}, falling back to template")
             return self._generate_basic_test_template(source_file, source_code, missing_lines)
 
@@ -416,7 +416,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 
             classes, functions = extract_api_signatures(source_code)
             return format_api_docs(classes, functions)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"AST extraction failed: {e}, proceeding without API docs")
             return "# API extraction failed - use source code carefully"
 
@@ -550,8 +550,8 @@ class RealTestValidator:
             }
 
         except subprocess.TimeoutExpired:
-            raise RuntimeError("Test validation timed out after 5 minutes")
-        except Exception as e:
+            raise RuntimeError("Test validation timed out after 5 minutes") from None
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Test validation failed: {e}")
             raise RuntimeError(f"Test validation failed: {e}") from e
 

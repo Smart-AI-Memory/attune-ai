@@ -202,7 +202,7 @@ class ExecutionStrategy(ABC):
                 duration_seconds=duration,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             duration = time.perf_counter() - start_time
             logger.error(f"Agent {agent.id} failed: {e}")
 

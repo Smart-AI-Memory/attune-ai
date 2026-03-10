@@ -42,7 +42,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -85,9 +85,13 @@ class ApprovalRequest:
         """Create from dictionary."""
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
-            timestamp = datetime.fromisoformat(timestamp)
+            timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
+        elif timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         return cls(
             request_id=data["request_id"],
@@ -111,7 +115,7 @@ class ApprovalResponse:
     approved: bool
     responder: str  # User who approved/rejected
     reason: str = ""
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -132,9 +136,13 @@ class ApprovalResponse:
         """Create from dictionary."""
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
-            timestamp = datetime.fromisoformat(timestamp)
+            timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
         elif not isinstance(timestamp, datetime):
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
+        elif timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         return cls(
             request_id=data["request_id"],
@@ -239,7 +247,7 @@ class ApprovalGate:
             approval_type=approval_type,
             agent_id=self.agent_id,
             context=context or {},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             timeout_seconds=timeout,
             status="pending",
         )
@@ -258,7 +266,7 @@ class ApprovalGate:
                 )
             else:
                 logger.warning("Cannot store approval request: no Redis backend available")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store approval request: {e}")
             return ApprovalResponse(
                 request_id=request_id,
@@ -279,7 +287,7 @@ class ApprovalGate:
                 payload=request.to_dict(),
                 ttl_seconds=int(timeout) + 60,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to send approval_request signal: {e}")
 
         # Wait for approval response (blocking with timeout)
@@ -311,7 +319,7 @@ class ApprovalGate:
                 import json
 
                 self.memory._client.setex(request_key, 60, json.dumps(request.to_dict()))
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         return ApprovalResponse(
@@ -349,7 +357,7 @@ class ApprovalGate:
             if data:
                 return ApprovalResponse.from_dict(data)
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to check for approval response: {e}")
             return None
 
@@ -390,7 +398,7 @@ class ApprovalGate:
             approved=approved,
             responder=responder,
             reason=reason,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         # Store approval response and update request status
@@ -425,7 +433,7 @@ class ApprovalGate:
                 pipe.setex(request_key, 300, json.dumps(request.to_dict()))
 
             pipe.execute()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to store approval response: {e}")
             return False
 
@@ -441,7 +449,7 @@ class ApprovalGate:
                 payload=response.to_dict(),
                 ttl_seconds=300,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to send approval_response signal: {e}")
 
         logger.info(
@@ -510,7 +518,7 @@ class ApprovalGate:
             requests.sort(key=lambda r: r.timestamp)
 
             return requests
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to get pending approvals: {e}")
             return []
 
@@ -526,7 +534,7 @@ class ApprovalGate:
 
         try:
             keys = list(self.memory._client.scan_iter(match="approval_request:*", count=100))
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             cleared = 0
 
             for key in keys:
@@ -563,6 +571,6 @@ class ApprovalGate:
                     cleared += 1
 
             return cleared
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to clear expired requests: {e}")
             return 0

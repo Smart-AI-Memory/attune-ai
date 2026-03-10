@@ -14,7 +14,7 @@ Licensed under the Apache License, Version 2.0
 
 import shutil
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -31,7 +31,7 @@ class TestAuditEventExtended:
         event = AuditEvent()
 
         assert event.event_id.startswith("evt_")
-        assert event.timestamp.endswith("Z")
+        assert event.timestamp.endswith("+00:00") or event.timestamp.endswith("Z")
         assert event.version == "1.0"
         assert event.event_type == ""
         assert event.user_id == ""
@@ -143,12 +143,14 @@ class TestAuditLoggerRotation:
         )
 
         # Create old rotated log file
-        old_timestamp = (datetime.utcnow() - timedelta(days=60)).strftime("%Y%m%d_%H%M%S")
+        old_timestamp = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y%m%d_%H%M%S")
         old_log_file = Path(temp_log_dir) / f"audit.jsonl.{old_timestamp}"
         old_log_file.write_text('{"old": "log"}')
 
         # Create recent rotated log file
-        recent_timestamp = (datetime.utcnow() - timedelta(days=10)).strftime("%Y%m%d_%H%M%S")
+        recent_timestamp = (datetime.now(timezone.utc) - timedelta(days=10)).strftime(
+            "%Y%m%d_%H%M%S"
+        )
         recent_log_file = Path(temp_log_dir) / f"audit.jsonl.{recent_timestamp}"
         recent_log_file.write_text('{"recent": "log"}')
 
@@ -221,15 +223,15 @@ class TestAuditLoggerQueries:
         )
 
         # Query with date range
-        start = datetime.utcnow() - timedelta(hours=1)
-        end = datetime.utcnow() + timedelta(hours=1)
+        start = datetime.now(timezone.utc) - timedelta(hours=1)
+        end = datetime.now(timezone.utc) + timedelta(hours=1)
 
         events = logger.query(start_date=start, end_date=end)
         assert len(events) == 1
 
         # Query outside date range
-        old_start = datetime.utcnow() - timedelta(days=30)
-        old_end = datetime.utcnow() - timedelta(days=29)
+        old_start = datetime.now(timezone.utc) - timedelta(days=30)
+        old_end = datetime.now(timezone.utc) - timedelta(days=29)
 
         events = logger.query(start_date=old_start, end_date=old_end)
         assert len(events) == 0
@@ -244,7 +246,7 @@ class TestAuditLoggerQueries:
             memory_sources=[],
         )
 
-        start = datetime.utcnow() - timedelta(hours=1)
+        start = datetime.now(timezone.utc) - timedelta(hours=1)
         events = logger.query(start_date=start)
         assert len(events) == 1
 
@@ -258,7 +260,7 @@ class TestAuditLoggerQueries:
             memory_sources=[],
         )
 
-        end = datetime.utcnow() + timedelta(hours=1)
+        end = datetime.now(timezone.utc) + timedelta(hours=1)
         events = logger.query(end_date=end)
         assert len(events) == 1
 
@@ -526,8 +528,8 @@ class TestAuditLoggerCompliance:
             memory_sources=[],
         )
 
-        start = datetime.utcnow() - timedelta(hours=1)
-        end = datetime.utcnow() + timedelta(hours=1)
+        start = datetime.now(timezone.utc) - timedelta(hours=1)
+        end = datetime.now(timezone.utc) + timedelta(hours=1)
 
         report = logger.get_compliance_report(start_date=start, end_date=end)
         assert report["llm_requests"]["total"] == 1

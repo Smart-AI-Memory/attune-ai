@@ -18,7 +18,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -125,8 +125,8 @@ class LongTermMemory:
                 "key": key,
                 "data": data,
                 "classification": classification_str,
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "updated_at": datetime.utcnow().isoformat() + "Z",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             }
 
             # Store to JSON file

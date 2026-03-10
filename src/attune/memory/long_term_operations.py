@@ -99,7 +99,8 @@ class PatternOperationsMixin:
                         },
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: Pattern metadata retrieval is best-effort
                 logger.warning(
                     "failed_to_load_pattern_metadata",
                     pattern_id=pattern_id,
@@ -211,7 +212,7 @@ class PatternOperationsMixin:
                 if metadata.get("pii_removed", 0) > 0:
                     stats["with_pii_scrubbed"] += 1
 
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # INTENTIONAL: Log but continue aggregating stats
                 logger.warning(
                     "Failed to retrieve pattern for stats",

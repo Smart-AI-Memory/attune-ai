@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ def cmd_telemetry_show(args: Namespace) -> int:
     except ImportError:
         print("❌ Telemetry module not available")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Telemetry error: %s", e)
         print(f"❌ Error: {e}")
@@ -105,7 +105,7 @@ def cmd_telemetry_savings(args: Namespace) -> int:
     except ImportError:
         print("❌ Telemetry module not available")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Telemetry error: %s", e)
         print(f"❌ Error: {e}")
@@ -162,7 +162,7 @@ def cmd_telemetry_export(args: Namespace) -> int:
     except ValueError as e:
         print(f"❌ Invalid path: {e}")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Export error: %s", e)
         print(f"❌ Error: {e}")
@@ -249,7 +249,7 @@ def cmd_telemetry_routing_stats(args: Namespace) -> int:
         print(f"❌ Adaptive routing not available: {e}")
         print("   Ensure attune-ai is installed with telemetry support")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Routing stats error: %s", e)
         print(f"❌ Error: {e}")
@@ -296,7 +296,7 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
                                 "reason": reason,
                             },
                         )
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # INTENTIONAL: Skip workflows without enough data
                     continue
 
@@ -333,7 +333,7 @@ def cmd_telemetry_routing_check(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Adaptive routing not available: {e}")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Routing check error: %s", e)
         print(f"❌ Error: {e}")
@@ -419,7 +419,7 @@ def cmd_telemetry_models(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Telemetry not available: {e}")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Models error: %s", e)
         print(f"❌ Error: {e}")
@@ -446,10 +446,12 @@ def cmd_telemetry_agents(args: Namespace) -> int:
 
         for agent in sorted(active_agents, key=lambda a: a.last_beat, reverse=True):
             # Calculate time since last beat
-            # Use naive UTC to match agent.last_beat which may be naive
-            now = datetime.utcnow()
+            # Ensure both datetimes are UTC-aware for comparison
+            now = datetime.now(timezone.utc)
             last_beat = (
-                agent.last_beat.replace(tzinfo=None) if agent.last_beat.tzinfo else agent.last_beat
+                agent.last_beat
+                if agent.last_beat.tzinfo
+                else agent.last_beat.replace(tzinfo=timezone.utc)
             )
             time_since = (now - last_beat).total_seconds()
 
@@ -480,7 +482,7 @@ def cmd_telemetry_agents(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Agent tracking not available: {e}")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Agents error: %s", e)
         print(f"❌ Error: {e}")
@@ -512,11 +514,11 @@ def cmd_telemetry_signals(args: Namespace) -> int:
 
         for signal in sorted(signals, key=lambda s: s.timestamp, reverse=True):
             # Calculate age
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             ts = (
-                signal.timestamp.replace(tzinfo=None)
+                signal.timestamp
                 if signal.timestamp.tzinfo
-                else signal.timestamp
+                else signal.timestamp.replace(tzinfo=timezone.utc)
             )
             age = (now - ts).total_seconds()
 
@@ -550,7 +552,7 @@ def cmd_telemetry_signals(args: Namespace) -> int:
     except ImportError as e:
         print(f"❌ Coordination signals not available: {e}")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception("Signals error: %s", e)
         print(f"❌ Error: {e}")

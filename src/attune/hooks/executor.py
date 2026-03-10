@@ -97,7 +97,8 @@ class HookExecutor:
                 "duration_ms": round(duration_ms, 2),
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Hooks must not crash the caller — return error dict
             duration_ms = (time.time() - start_time) * 1000
             logger.error("Hook execution failed: %s - %s", hook.command, e)
             return {
@@ -148,7 +149,7 @@ class HookExecutor:
         try:
             formatted_command = command.format(**context)
         except KeyError as e:
-            raise ValueError(f"Missing context variable for command: {e}")
+            raise ValueError(f"Missing context variable for command: {e}") from e
 
         logger.debug("Executing command: %s", formatted_command)
 
@@ -243,7 +244,7 @@ class HookExecutor:
         try:
             import aiohttp
         except ImportError:
-            raise ImportError("aiohttp required for webhook hooks: pip install aiohttp")
+            raise ImportError("aiohttp required for webhook hooks: pip install aiohttp") from None
 
         logger.debug("Calling webhook: %s", url)
 
@@ -261,7 +262,8 @@ class HookExecutor:
 
             try:
                 return await response.json()
-            except Exception:
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Graceful fallback when response isn't valid JSON
                 return {"status": response.status, "text": await response.text()}
 
 
@@ -272,6 +274,11 @@ class HookExecutorSync:
     """
 
     def __init__(self, python_handlers: dict[str, Callable] | None = None):
+        """Initialize synchronous hook executor wrapper.
+
+        Args:
+            python_handlers: Optional mapping of handler names to callables.
+        """
         self._executor = HookExecutor(python_handlers)
 
     def execute(

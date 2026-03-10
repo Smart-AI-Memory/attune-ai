@@ -57,7 +57,7 @@ def get_trend_comparison(
             return f"Declining ({delta:.1f} from {previous_score:.1f})"
 
     except (json.JSONDecodeError, KeyError, IndexError) as e:
-        logger.warning(f"Error reading tracking history: {e}")
+        logger.warning("Error reading tracking history: %s", e)
         return "Unable to determine trend"
 
 
@@ -89,10 +89,10 @@ def save_tracking_history(
             }
             f.write(json.dumps(entry) + "\n")
 
-        logger.info(f"Saved health check to tracking history: {history_file}")
+        logger.info("Saved health check to tracking history: %s", history_file)
 
     except OSError as e:
-        logger.error(f"Failed to save tracking history: {e}")
+        logger.error("Failed to save tracking history: %s", e)
 
 
 def save_health_json(
@@ -177,13 +177,13 @@ def save_health_json(
         with validated_health_file.open("w") as f:
             json.dump(health_data, f, indent=2)
 
-        logger.info(f"Saved health data to {validated_health_file} for VS Code extension")
+        logger.info("Saved health data to %s for VS Code extension", validated_health_file)
 
     except OSError as e:
-        logger.warning(f"Failed to save health.json (file system error): {e}")
+        logger.warning("Failed to save health.json (file system error): %s", e)
     except (TypeError, ValueError) as e:
-        logger.error(f"Failed to save health.json (serialization error): {e}")
-    except Exception as e:
+        logger.error("Failed to save health.json (serialization error): %s", e)
+    except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Saving health data should never crash
         # a health check
-        logger.warning(f"Failed to save health.json (unexpected error): {e}")
+        logger.warning("Failed to save health.json (unexpected error): %s", e)

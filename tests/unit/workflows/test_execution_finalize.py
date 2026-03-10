@@ -1,6 +1,6 @@
 """Tests for execution_finalize module.
 
-Tests _classify_error, _update_routing_record, and ExecutionFinalizeMixin.
+Tests _classify_error, _update_routing_record, and ExecutionMixin.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -12,8 +12,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from attune.workflows.execution_finalize import (
-    ExecutionFinalizeMixin,
+from attune.workflows.execution_mixin import (
+    ExecutionMixin,
     _classify_error,
     _update_routing_record,
 )
@@ -180,16 +180,16 @@ class TestUpdateRoutingRecord:
 
 
 # ---------------------------------------------------------------------------
-# Tests for ExecutionFinalizeMixin._save_tier_progression
+# Tests for ExecutionMixin._save_tier_progression
 # ---------------------------------------------------------------------------
 
 
 class TestSaveTierProgression:
-    """Tests for ExecutionFinalizeMixin._save_tier_progression."""
+    """Tests for ExecutionMixin._save_tier_progression."""
 
     def _make_mixin(self, enable_tracking=False, enable_fallback=False):
         """Create a mixin instance with required attributes."""
-        obj = ExecutionFinalizeMixin()
+        obj = ExecutionMixin()
         obj._enable_tier_tracking = enable_tracking
         obj._tier_tracker = MagicMock() if enable_tracking else None
         obj._enable_tier_fallback = enable_fallback

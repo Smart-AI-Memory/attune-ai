@@ -117,7 +117,7 @@ def run_evaluate_session(context: dict[str, Any]) -> dict[str, Any]:
 
         return result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception(f"Session evaluation failed: {e}")
         return {
             "evaluated": False,
@@ -147,7 +147,7 @@ def get_learning_summary(context: dict[str, Any]) -> dict[str, Any]:
         storage = LearnedSkillsStorage(storage_dir=storage_dir)
         return storage.get_summary(user_id)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception(f"Failed to get learning summary: {e}")
         return {"error": str(e)}
 
@@ -184,7 +184,7 @@ def apply_learned_patterns(context: dict[str, Any]) -> str:
             categories=categories,
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception(f"Failed to apply learned patterns: {e}")
         return ""
 
