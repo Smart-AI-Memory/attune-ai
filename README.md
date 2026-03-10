@@ -10,8 +10,8 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-16%2C966%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-84%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-11%2C862%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-80%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -23,7 +23,26 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v3.9.3
+## What's New in v4.0.0
+
+- **Full Agent SDK integration** — 15 workflows now have
+  Agent SDK adapters that delegate analysis to specialized
+  Claude subagents with parallel, contextual code analysis.
+- **Smart workflow routing** — `get_workflow()` automatically
+  resolves to the SDK variant when `claude-agent-sdk` is
+  installed, with transparent fallback to API versions.
+- **Deduplicated workflow listing** — `list_workflows()` and
+  `attune workflow list` hide SDK duplicates, showing one
+  entry per task with `[SDK]`/`[API]`/`[native]` tags.
+- **Bug fixes and hardening** — Security, hooks, resilience,
+  and meta-workflow CLI improvements across 18 modules.
+- **11,800+ tests** — 207 new tests for SDK adapters and
+  behavioral routing.
+
+<details>
+<summary>Previous releases</summary>
+
+### v3.9.3
 
 - **Anthropic Agent SDK adapters** — Code review and deep
   review workflows now have Agent SDK adapter layers,
@@ -31,15 +50,10 @@ pip install 'attune-ai[developer]'
 - **Workflow validation framework** — Input/output contract
   validation for all workflows.
 - **100% public API docstrings** — Added missing docstrings
-  across source files.
+  across 197 source files.
 - **`datetime.utcnow()` migration** — Replaced deprecated
   naive datetimes with timezone-aware `datetime.now(UTC)`
   across the codebase.
-- **16,900+ tests** — 290 new tests covering pipeline,
-  validation, behavioral, and SDK adapter modules.
-
-<details>
-<summary>Previous releases</summary>
 
 ### v3.9.2
 
@@ -124,7 +138,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **16,900+ tests** - Security, unit, integration, and behavioral test coverage
+- **11,800+ tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
