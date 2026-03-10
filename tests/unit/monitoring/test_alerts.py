@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import socket
 import sqlite3
 import tempfile
 from datetime import datetime
@@ -423,6 +424,9 @@ class TestWebhookDelivery:
     @patch("attune.monitoring.notifications.build_opener")
     def test_deliver_webhook_success(self, mock_build_opener, temp_db):
         """Test successful webhook delivery."""
+        mock_dns.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0)),
+        ]
         mock_response = MagicMock()
         mock_response.status = 200
         mock_response.__enter__ = MagicMock(return_value=mock_response)

@@ -108,7 +108,7 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_returns_success_dict(self, tmp_path):
         """Happy path: returns all expected keys."""
-        server = _make_server()
+        server = _make_server(workspace_root=str(tmp_path))
         target = tmp_path / "sample.py"
         target.write_text("x = 1\n", encoding="utf-8")
         fake_models = self._make_models_for_recommend(lines=50, category="small")
@@ -125,7 +125,7 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_large_module(self, tmp_path):
         """Large module returns api recommended mode."""
-        server = _make_server()
+        server = _make_server(workspace_root=str(tmp_path))
         target = tmp_path / "big.py"
         target.write_text("pass\n", encoding="utf-8")
         fake_models = self._make_models_for_recommend(
@@ -142,7 +142,7 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_file_path_in_result(self, tmp_path):
         """file_path key in result matches the input path string."""
-        server = _make_server()
+        server = _make_server(workspace_root=str(tmp_path))
         target = tmp_path / "mod.py"
         target.write_text("", encoding="utf-8")
         fake_models = self._make_models_for_recommend()
@@ -155,7 +155,7 @@ class TestGetAuthRecommend:
     @pytest.mark.asyncio
     async def test_get_auth_recommend_calls_count_lines(self, tmp_path):
         """count_lines_of_code is called with the resolved Path."""
-        server = _make_server()
+        server = _make_server(workspace_root=str(tmp_path))
         target = tmp_path / "mod.py"
         target.write_text("", encoding="utf-8")
         fake_models = self._make_models_for_recommend(lines=10)

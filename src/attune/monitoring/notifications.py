@@ -48,10 +48,10 @@ def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
         return False
     except Exception as e:  # noqa: BLE001
         logger.error(
-            "alert_delivery_failed",
-            alert_id=alert.alert_id,
-            channel=alert.channel.value,
-            error=str(e),
+            "alert_delivery_failed: alert_id=%s channel=%s error=%s",
+            alert.alert_id,
+            alert.channel.value,
+            str(e),
         )
         return False
 
@@ -71,9 +71,9 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
         validated_url = _validate_webhook_url(alert.webhook_url)
     except ValueError as e:
         logger.warning(
-            "invalid_webhook_url",
-            url=alert.webhook_url,
-            error=str(e),
+            "invalid_webhook_url: url=%s error=%s",
+            alert.webhook_url,
+            str(e),
         )
         return False
 

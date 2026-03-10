@@ -189,11 +189,11 @@ class AlertEngine:
         conn.close()
 
         logger.info(
-            "alert_created",
-            alert_id=alert_id,
-            metric=metric.value,
-            threshold=threshold,
-            channel=channel.value,
+            "alert_created: alert_id=%s metric=%s threshold=%s channel=%s",
+            alert_id,
+            metric.value,
+            threshold,
+            channel.value,
         )
 
         return AlertConfig(
@@ -286,7 +286,7 @@ class AlertEngine:
         conn.close()
 
         if deleted:
-            logger.info("alert_deleted", alert_id=alert_id)
+            logger.info("alert_deleted: alert_id=%s", alert_id)
 
         return deleted
 
@@ -341,9 +341,9 @@ class AlertEngine:
             last_triggered = self._cooldown_cache.get(alert.alert_id, 0)
             if time.time() - last_triggered < alert.cooldown_seconds:
                 logger.debug(
-                    "alert_in_cooldown",
-                    alert_id=alert.alert_id,
-                    remaining=alert.cooldown_seconds - (time.time() - last_triggered),
+                    "alert_in_cooldown: alert_id=%s remaining=%s",
+                    alert.alert_id,
+                    alert.cooldown_seconds - (time.time() - last_triggered),
                 )
                 continue
 
@@ -375,12 +375,12 @@ class AlertEngine:
                 triggered_events.append(event)
 
                 logger.info(
-                    "alert_triggered",
-                    alert_id=alert.alert_id,
-                    metric=alert.metric.value,
-                    current_value=current_value,
-                    threshold=alert.threshold,
-                    delivered=success,
+                    "alert_triggered: alert_id=%s metric=%s current_value=%s threshold=%s delivered=%s",
+                    alert.alert_id,
+                    alert.metric.value,
+                    current_value,
+                    alert.threshold,
+                    success,
                 )
 
         return triggered_events
