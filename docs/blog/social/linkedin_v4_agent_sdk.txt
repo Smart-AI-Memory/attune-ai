@@ -1,0 +1,43 @@
+Your AI security audit just got a team.
+
+One model can't be a security expert, a performance specialist, and a documentation reviewer at the same time.
+
+So we stopped asking it to be.
+
+Attune AI v4.0 gives every workflow its own team of Claude subagents. A security audit now runs 4 specialists in parallel:
+
+  attune workflow run security-audit
+
+Behind the scenes:
+
+  Dependency checker scans your requirements
+  Injection detector reviews your code paths
+  Secrets scanner catches leaked credentials
+  Report writer synthesizes everything
+
+Same command you already know. Same output format. The only difference: depth.
+
+15 workflows now have Agent SDK adapters. Each one assembles 2-6 specialist subagents depending on the task.
+
+The best part: zero configuration.
+
+If you have claude-agent-sdk installed, you get the multi-agent version. If not, you get the single-model version. Attune picks the right one automatically.
+
+  pip install 'attune-ai[developer]'
+  pip install claude-agent-sdk
+
+One install and your next run uses the full agent team.
+
+Other things that shipped in v4.0:
+
+  Smart workflow routing with transparent SDK/API fallback
+  Deduplicated workflow listing with [SDK]/[API] tags
+  Bug fixes across 18 modules
+  11,800+ tests at 80% coverage
+
+Full changelog: https://github.com/Smart-AI-Memory/attune-ai
+PyPI: https://pypi.org/project/attune-ai/
+
+What workflows do you wish had specialist AI teams?
+
+#AIDevelopment #ClaudeAI #AgentSDK #DeveloperTools #Python #OpenSource

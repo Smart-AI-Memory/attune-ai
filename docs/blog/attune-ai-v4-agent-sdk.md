@@ -1,0 +1,157 @@
+# Attune AI v4.0: Your Workflows Now Have Their Own AI Teams
+
+*15 workflows just got smarter. Each one now delegates to
+specialized Claude subagents that work in parallel.*
+
+---
+
+## The Big Idea
+
+Every Attune AI workflow used to work the same way: send
+your code to one model, get a result back. It worked, but
+it meant a security audit and a code review used the same
+single-pass approach.
+
+v4.0 changes that. Each workflow can now assemble its own
+team of Claude subagents — each one a specialist.
+
+```bash
+pip install 'attune-ai[developer]'
+```
+
+A security audit doesn't just scan anymore. It sends your
+code to a dependency checker, an injection detector, a
+secrets scanner, and a report writer — all running in
+parallel through the Anthropic Agent SDK.
+
+## What Changed
+
+### 15 Agent SDK Adapters
+
+Every major workflow now has an SDK-powered variant:
+
+| Workflow | What the Agents Do |
+|----------|--------------------|
+| security-audit | Dependency checker + injection detector + secrets scanner + report writer |
+| code-review | Style analyzer + bug finder + architecture reviewer |
+| test-gen | Coverage analyzer + test case designer + assertion writer |
+| perf-audit | Hotspot profiler + complexity analyzer + optimization planner |
+| bug-predict | Pattern matcher + history analyzer + risk scorer |
+| doc-audit | Coverage checker + style validator + link verifier |
+| doc-gen | API extractor + example generator + formatter |
+| health-check | Dependency auditor + config validator + security checker |
+| dependency-check | Version scanner + vulnerability matcher + upgrade planner |
+| refactor-plan | Complexity analyzer + dependency mapper + migration planner |
+| release-prep | Security auditor + test coverage checker + changelog validator + quality gate |
+| research-synthesis | Source gatherer + fact checker + synthesizer |
+| simplify-code | Redundancy finder + abstraction flattener + dead code remover |
+| test-audit | Gap finder + coverage analyzer + priority ranker |
+
+Each adapter uses 2-6 subagents depending on the task.
+
+### Smart Routing (Zero Config)
+
+You don't pick between the old and new versions. Attune
+does it for you:
+
+```bash
+attune workflow run security-audit
+```
+
+If `claude-agent-sdk` is installed, you get the multi-agent
+version. If not, you get the API version. Same command,
+same output format. The only difference is depth and
+quality.
+
+```bash
+# Install the SDK to unlock multi-agent workflows
+pip install claude-agent-sdk
+```
+
+### Deduplicated Workflow Listing
+
+`attune workflow list` now shows one entry per workflow
+with clear engine tags:
+
+```text
+security-audit        [SDK]     Multi-agent security analysis
+code-review           [SDK]     Parallel code review
+perf-audit            [API]     Performance audit (SDK upgrade available)
+test-gen              [native]  Test generation
+```
+
+No more duplicate entries. No confusion about which
+version to run.
+
+### CLI Tells You When an Upgrade Is Available
+
+If you run a workflow that has an SDK variant but you
+don't have the SDK installed, the CLI tells you:
+
+```text
+[security-audit] Running API version.
+Tip: pip install claude-agent-sdk for multi-agent analysis.
+```
+
+One install command and your next run uses the full agent
+team.
+
+## Why This Matters
+
+Single-model workflows hit a ceiling. One model can't be
+a security expert, a performance specialist, and a
+documentation reviewer at the same time. Multi-agent
+workflows break that ceiling by giving each concern its
+own specialist.
+
+The result:
+
+- **Deeper analysis** — Each subagent focuses on one thing
+  and does it well
+- **Faster execution** — Subagents run in parallel, not
+  sequentially
+- **Better reports** — A dedicated report writer
+  synthesizes findings from all specialists
+- **Same cost** — Smart tier routing still applies. Most
+  subagents run on Haiku or Sonnet
+
+## What Else Shipped in v4.0
+
+- **Bug fixes across 18 modules** — Security, hooks,
+  resilience, path validation, meta-workflow CLI
+- **pip-audit CI workflow** — Automated dependency
+  vulnerability scanning in GitHub Actions
+- **207 new tests** — Full coverage for all 13 SDK
+  adapters plus behavioral tests for routing, dedup,
+  and engine tagging
+- **11,800+ tests total** at 80% coverage
+
+## Try It
+
+```bash
+# Install with agent support
+pip install 'attune-ai[developer]'
+pip install claude-agent-sdk
+
+# Run a multi-agent security audit
+attune workflow run security-audit --path ./src
+
+# See all available workflows
+attune workflow list
+```
+
+Or in Claude Code:
+
+```bash
+/attune security
+```
+
+Socratic discovery guides you through scoping, then the
+agent team handles the rest.
+
+---
+
+**Links:**
+[PyPI](https://pypi.org/project/attune-ai/) |
+[GitHub](https://github.com/Smart-AI-Memory/attune-ai) |
+[Changelog](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md)
