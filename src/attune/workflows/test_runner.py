@@ -241,7 +241,7 @@ def track_coverage(
         return record
 
     except ET.ParseError as e:
-        raise ValueError(f"Invalid coverage.xml format: {e}")
+        raise ValueError(f"Invalid coverage.xml format: {e}") from e
 
 
 # Helper functions (extracted to test_runner_helpers.py)

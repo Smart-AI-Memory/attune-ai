@@ -77,7 +77,7 @@ def timeout(
                         return result
                     return fallback(*args, **kwargs)
 
-                raise TimeoutError(operation, seconds)
+                raise TimeoutError(operation, seconds) from None
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
@@ -143,4 +143,4 @@ async def with_timeout(
     except asyncio.TimeoutError:
         if fallback_value is not None:
             return fallback_value
-        raise TimeoutError("coroutine", seconds)
+        raise TimeoutError("coroutine", seconds) from None

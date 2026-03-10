@@ -44,12 +44,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .base import BaseWorkflow
     from .bug_predict import BugPredictionWorkflow
+    from .bug_predict_agent_sdk import BugPredictAgentSDKWorkflow
     from .code_review import CodeReviewWorkflow
     from .code_review_pipeline import CodeReviewPipeline, CodeReviewPipelineResult
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
     from .deep_review_agent_sdk import DeepReviewAgentSDKWorkflow
     from .dependency_check import DependencyCheckWorkflow
+    from .dependency_check_agent_sdk import DependencyCheckAgentSDKWorkflow
     from .doc_audit import DocAuditWorkflow
+    from .doc_audit_agent_sdk import DocAuditAgentSDKWorkflow
+    from .doc_gen_agent_sdk import DocGenAgentSDKWorkflow
     from .document_gen import DocumentGenerationWorkflow
     from .document_manager import DocumentManagerWorkflow
     from .documentation_orchestrator import DocumentationOrchestrator, OrchestratorResult
@@ -66,24 +70,33 @@ if TYPE_CHECKING:
         Validator,
         escalate,
     )
+    from .health_check_agent_sdk import HealthCheckAgentSDKWorkflow
     from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
     from .perf_audit import PerformanceAuditWorkflow
+    from .perf_audit_agent_sdk import PerfAuditAgentSDKWorkflow
     from .pr_review import PRReviewResult, PRReviewWorkflow
     from .refactor_plan import RefactorPlanWorkflow
+    from .refactor_plan_agent_sdk import RefactorPlanAgentSDKWorkflow
     from .release_prep import ReleasePreparationWorkflow
+    from .release_prep_agent_sdk import ReleasePrepAgentSDKWorkflow
 
     # release_prep_crew removed (deprecated, use agents.release)
     from .research_synthesis import ResearchSynthesisWorkflow
+    from .research_synthesis_agent_sdk import ResearchSynthesisAgentSDKWorkflow
     from .secure_release import SecureReleasePipeline, SecureReleaseResult
     from .security_audit import SecurityAuditWorkflow
+    from .security_audit_agent_sdk import SecurityAuditAgentSDKWorkflow
     from .simplify_code import SimplifyCodeWorkflow
+    from .simplify_code_agent_sdk import SimplifyCodeAgentSDKWorkflow
     from .step_config import WorkflowStepConfig
 
     # test_coverage_boost_crew removed (deprecated, use test-gen-parallel)
     from .test_audit import TestAuditWorkflow
+    from .test_audit_agent_sdk import TestAuditAgentSDKWorkflow
     from .test_gen import TestGenerationWorkflow
+    from .test_gen_agent_sdk import TestGenAgentSDKWorkflow
     from .test_gen_parallel import ParallelTestGenerationWorkflow
     from .xml_enhanced_crew import XMLAgent, XMLTask
 
@@ -169,6 +182,26 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "AutonomousTestGenerator": (".autonomous_test_gen", "AutonomousTestGenerator"),
     "AgentCodeReviewWorkflow": (".code_review_agent_sdk", "AgentCodeReviewWorkflow"),
     "DeepReviewAgentSDKWorkflow": (".deep_review_agent_sdk", "DeepReviewAgentSDKWorkflow"),
+    # Agent SDK adapters (v3.9.3)
+    "SecurityAuditAgentSDKWorkflow": (".security_audit_agent_sdk", "SecurityAuditAgentSDKWorkflow"),
+    "PerfAuditAgentSDKWorkflow": (".perf_audit_agent_sdk", "PerfAuditAgentSDKWorkflow"),
+    "ReleasePrepAgentSDKWorkflow": (".release_prep_agent_sdk", "ReleasePrepAgentSDKWorkflow"),
+    "TestAuditAgentSDKWorkflow": (".test_audit_agent_sdk", "TestAuditAgentSDKWorkflow"),
+    "BugPredictAgentSDKWorkflow": (".bug_predict_agent_sdk", "BugPredictAgentSDKWorkflow"),
+    "RefactorPlanAgentSDKWorkflow": (".refactor_plan_agent_sdk", "RefactorPlanAgentSDKWorkflow"),
+    "TestGenAgentSDKWorkflow": (".test_gen_agent_sdk", "TestGenAgentSDKWorkflow"),
+    "DocAuditAgentSDKWorkflow": (".doc_audit_agent_sdk", "DocAuditAgentSDKWorkflow"),
+    "DocGenAgentSDKWorkflow": (".doc_gen_agent_sdk", "DocGenAgentSDKWorkflow"),
+    "SimplifyCodeAgentSDKWorkflow": (".simplify_code_agent_sdk", "SimplifyCodeAgentSDKWorkflow"),
+    "DependencyCheckAgentSDKWorkflow": (
+        ".dependency_check_agent_sdk",
+        "DependencyCheckAgentSDKWorkflow",
+    ),
+    "ResearchSynthesisAgentSDKWorkflow": (
+        ".research_synthesis_agent_sdk",
+        "ResearchSynthesisAgentSDKWorkflow",
+    ),
+    "HealthCheckAgentSDKWorkflow": (".health_check_agent_sdk", "HealthCheckAgentSDKWorkflow"),
     "XMLAgent": (".xml_enhanced_crew", "XMLAgent"),
     "XMLTask": (".xml_enhanced_crew", "XMLTask"),
     "parse_xml_response": (".xml_enhanced_crew", "parse_xml_response"),
@@ -289,6 +322,20 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "code-review-sdk": "AgentCodeReviewWorkflow",
     # Multi-pass deep review (v3.9)
     "deep-review-sdk": "DeepReviewAgentSDKWorkflow",
+    # Agent SDK adapters (v3.9.3)
+    "security-audit-sdk": "SecurityAuditAgentSDKWorkflow",
+    "perf-audit-sdk": "PerfAuditAgentSDKWorkflow",
+    "release-prep-sdk": "ReleasePrepAgentSDKWorkflow",
+    "test-audit-sdk": "TestAuditAgentSDKWorkflow",
+    "bug-predict-sdk": "BugPredictAgentSDKWorkflow",
+    "refactor-plan-sdk": "RefactorPlanAgentSDKWorkflow",
+    "test-gen-sdk": "TestGenAgentSDKWorkflow",
+    "doc-audit-sdk": "DocAuditAgentSDKWorkflow",
+    "doc-gen-sdk": "DocGenAgentSDKWorkflow",
+    "simplify-code-sdk": "SimplifyCodeAgentSDKWorkflow",
+    "dependency-check-sdk": "DependencyCheckAgentSDKWorkflow",
+    "research-synthesis-sdk": "ResearchSynthesisAgentSDKWorkflow",
+    "health-check-sdk": "HealthCheckAgentSDKWorkflow",
     # test-maintenance: Removed — utility class, not a BaseWorkflow.
     # Import directly: from attune.workflows.test_maintenance import TestMaintenanceWorkflow
     # batch-processing: Removed — batch API client with execute_batch().
@@ -309,6 +356,28 @@ _OPT_IN_WORKFLOW_NAMES: dict[str, str] = {}
 # Workflow registry - populated lazily on first access
 WORKFLOW_REGISTRY: dict[str, type[BaseWorkflow]] = {}
 _registry_initialized = False
+
+# Maps base workflow names to their SDK equivalents.
+# When a user requests a base name (e.g. "security-audit"), the resolver
+# checks whether the SDK variant is available and routes to it automatically.
+_SDK_WORKFLOW_MAP: dict[str, str] = {
+    "code-review": "code-review-sdk",
+    "security-audit": "security-audit-sdk",
+    "perf-audit": "perf-audit-sdk",
+    "release-prep": "release-prep-sdk",
+    "test-audit": "test-audit-sdk",
+    "bug-predict": "bug-predict-sdk",
+    "refactor-plan": "refactor-plan-sdk",
+    "test-gen": "test-gen-sdk",
+    "doc-audit": "doc-audit-sdk",
+    "doc-gen": "doc-gen-sdk",
+    "simplify-code": "simplify-code-sdk",
+    "dependency-check": "dependency-check-sdk",
+    "research-synthesis": "research-synthesis-sdk",
+}
+
+# Reverse map: SDK name -> base name (for display purposes)
+_SDK_REVERSE_MAP: dict[str, str] = {v: k for k, v in _SDK_WORKFLOW_MAP.items()}
 
 
 def _get_workflow_class(class_name: str) -> type[BaseWorkflow]:
@@ -437,40 +506,100 @@ def get_opt_in_workflows() -> dict[str, type]:
 # Do NOT call discover_workflows() here - it defeats lazy loading
 
 
+def _is_sdk_available() -> bool:
+    """Check if claude_agent_sdk is installed and importable."""
+    try:
+        import claude_agent_sdk  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
 def get_workflow(name: str) -> type[BaseWorkflow]:
-    """Get a workflow class by name.
+    """Get a workflow class by name, preferring SDK variant when available.
+
+    When the user requests a base workflow (e.g. ``"security-audit"``),
+    this function automatically routes to the SDK variant
+    (``"security-audit-sdk"``) if ``claude_agent_sdk`` is installed.
+    If the user explicitly requests an ``-sdk`` suffix, it is used
+    directly without re-mapping.
 
     Args:
         name: Workflow name (e.g., "research", "code-review", "doc-gen")
 
     Returns:
-        Workflow class
+        Workflow class (SDK variant when available, API otherwise)
 
     Raises:
         KeyError: If workflow not found
 
     """
     _ensure_registry_initialized()
+
+    # Auto-resolve to SDK variant when available
+    sdk_variant = _SDK_WORKFLOW_MAP.get(name)
+    if sdk_variant and sdk_variant in WORKFLOW_REGISTRY and _is_sdk_available():
+        logger.debug("Routing %s → %s (Agent SDK available)", name, sdk_variant)
+        return WORKFLOW_REGISTRY[sdk_variant]
+
     if name not in WORKFLOW_REGISTRY:
-        available = ", ".join(WORKFLOW_REGISTRY.keys())
+        available = ", ".join(sorted(WORKFLOW_REGISTRY.keys()))
         raise KeyError(f"Unknown workflow: {name}. Available: {available}")
     return WORKFLOW_REGISTRY[name]
 
 
-def list_workflows() -> list[dict]:
-    """List all available workflows with descriptions.
+def is_using_api_fallback(name: str) -> bool:
+    """Check if a workflow name would use the API fallback (not SDK).
+
+    Args:
+        name: Workflow name the user requested.
+
+    Returns:
+        True if the name has an SDK variant but will use the API
+        version because the SDK is not installed.
+
+    """
+    return name in _SDK_WORKFLOW_MAP and not _is_sdk_available()
+
+
+def list_workflows(*, show_all: bool = False) -> list[dict]:
+    """List available workflows with descriptions.
+
+    By default, hides SDK duplicates and shows only the best variant
+    per task (SDK when available, API otherwise). Pass ``show_all=True``
+    to include every registered workflow.
+
+    Args:
+        show_all: If True, return every registered workflow including
+            SDK duplicates.
 
     Returns:
         List of workflow info dicts
 
     """
     _ensure_registry_initialized()
+    sdk_available = _is_sdk_available()
+
     workflows = []
     for name, cls in WORKFLOW_REGISTRY.items():
-        # Handle both BaseWorkflow subclasses and composite pipelines
+        # When hiding duplicates, only skip the explicit -sdk entries.
+        # Users see base names (e.g. "security-audit") and the resolver
+        # routes to the SDK variant transparently when available.
+        if not show_all and name in _SDK_REVERSE_MAP:
+            continue
+
         stages = getattr(cls, "stages", [])
         tier_map = getattr(cls, "tier_map", {})
         description = getattr(cls, "description", "No description")
+
+        # Determine which engine is active for display
+        if name in _SDK_WORKFLOW_MAP and sdk_available:
+            engine = "sdk"
+        elif name in _SDK_WORKFLOW_MAP:
+            engine = "api"
+        else:
+            engine = "native"
 
         workflows.append(
             {
@@ -479,6 +608,7 @@ def list_workflows() -> list[dict]:
                 "description": description,
                 "stages": stages,
                 "tier_map": {k: v.value for k, v in tier_map.items()} if tier_map else {},
+                "engine": engine,
             },
         )
     return workflows
@@ -608,6 +738,20 @@ __all__ = [
     "AutonomousTestGenerator",
     # Multi-pass deep review (Agent SDK)
     "DeepReviewAgentSDKWorkflow",
+    # Agent SDK adapters (v3.9.3)
+    "SecurityAuditAgentSDKWorkflow",
+    "PerfAuditAgentSDKWorkflow",
+    "ReleasePrepAgentSDKWorkflow",
+    "TestAuditAgentSDKWorkflow",
+    "BugPredictAgentSDKWorkflow",
+    "RefactorPlanAgentSDKWorkflow",
+    "TestGenAgentSDKWorkflow",
+    "DocAuditAgentSDKWorkflow",
+    "DocGenAgentSDKWorkflow",
+    "SimplifyCodeAgentSDKWorkflow",
+    "DependencyCheckAgentSDKWorkflow",
+    "ResearchSynthesisAgentSDKWorkflow",
+    "HealthCheckAgentSDKWorkflow",
     # XML-enhanced prompting
     "XMLAgent",
     "XMLTask",

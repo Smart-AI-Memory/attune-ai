@@ -431,7 +431,7 @@ class WorkflowBatchRunner:
         try:
             workflow_class = get_workflow(spec.workflow_id)
         except KeyError:
-            raise ValueError(f"Workflow '{spec.workflow_id}' not found in registry")
+            raise ValueError(f"Workflow '{spec.workflow_id}' not found in registry") from None
 
         # Filter config to only valid constructor params
         try:

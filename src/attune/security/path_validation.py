@@ -36,7 +36,7 @@ def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
     try:
         resolved = Path(path).resolve()
     except (OSError, RuntimeError) as e:
-        raise ValueError(f"Invalid path: {e}")
+        raise ValueError(f"Invalid path: {e}") from e
 
     # Check if within allowed directory
     if allowed_dir:
@@ -44,7 +44,7 @@ def _validate_file_path(path: str, allowed_dir: str | None = None) -> Path:
             allowed = Path(allowed_dir).resolve()
             resolved.relative_to(allowed)
         except ValueError:
-            raise ValueError(f"path must be within {allowed_dir}")
+            raise ValueError(f"path must be within {allowed_dir}") from None
 
     # Check for dangerous system paths (cross-platform)
     resolved_str = str(resolved)

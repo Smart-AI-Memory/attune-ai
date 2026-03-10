@@ -205,7 +205,7 @@ def run_workflow(
             import traceback
 
             traceback.print_exc()
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @meta_workflow_app.command("ask")
@@ -314,7 +314,7 @@ def natural_language_run(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @meta_workflow_app.command("detect")
@@ -371,7 +371,7 @@ def detect_intent(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================

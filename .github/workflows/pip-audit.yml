@@ -1,0 +1,49 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+  schedule:
+    # Run weekly on Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Install project (core deps only)
+        run: pip install -e .
+
+      - name: Audit core dependencies
+        run: pip-audit --strict --desc on
+
+      - name: Audit with optional deps
+        continue-on-error: true
+        run: |
+          pip install -e ".[agents,backend]" 2>/dev/null || true
+          pip-audit --strict --desc on

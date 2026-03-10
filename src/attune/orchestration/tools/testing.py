@@ -550,7 +550,7 @@ class RealTestValidator:
             }
 
         except subprocess.TimeoutExpired:
-            raise RuntimeError("Test validation timed out after 5 minutes")
+            raise RuntimeError("Test validation timed out after 5 minutes") from None
         except Exception as e:  # noqa: BLE001
             logger.error(f"Test validation failed: {e}")
             raise RuntimeError(f"Test validation failed: {e}") from e

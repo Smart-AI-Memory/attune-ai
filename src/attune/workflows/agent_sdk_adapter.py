@@ -26,6 +26,17 @@ _CATEGORY_PATTERNS: dict[str, re.Pattern[str]] = {
     "performance": re.compile(r"##\s*performance", re.IGNORECASE),
     "architecture": re.compile(r"##\s*architecture", re.IGNORECASE),
     "test_gaps": re.compile(r"##\s*test\s*gaps?", re.IGNORECASE),
+    "dependencies": re.compile(r"##\s*dependenc(?:y|ies)", re.IGNORECASE),
+    "coverage": re.compile(r"##\s*(?:test\s+)?coverage", re.IGNORECASE),
+    "refactoring": re.compile(r"##\s*refactor(?:ing)?", re.IGNORECASE),
+    "bugs": re.compile(r"##\s*bugs?(?:\s+predict)?", re.IGNORECASE),
+    "documentation": re.compile(r"##\s*documentation", re.IGNORECASE),
+    "changelog": re.compile(r"##\s*changelog", re.IGNORECASE),
+    "health": re.compile(r"##\s*health", re.IGNORECASE),
+    "optimization": re.compile(r"##\s*optimiz(?:ation|e)", re.IGNORECASE),
+    "complexity": re.compile(r"##\s*complexity", re.IGNORECASE),
+    "outline": re.compile(r"##\s*outline", re.IGNORECASE),
+    "research": re.compile(r"##\s*research", re.IGNORECASE),
 }
 
 # Pattern for suggestion-like bullet points

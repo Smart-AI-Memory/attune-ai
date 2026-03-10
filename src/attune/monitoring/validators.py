@@ -42,7 +42,7 @@ def _validate_webhook_url(url: str) -> str:
     try:
         parsed = urllib.parse.urlparse(url)
     except Exception as e:  # noqa: BLE001
-        raise ValueError(f"Invalid URL format: {e}")
+        raise ValueError(f"Invalid URL format: {e}") from e
 
     # Only allow http and https schemes
     if parsed.scheme not in ("http", "https"):

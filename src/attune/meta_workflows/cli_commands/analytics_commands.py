@@ -132,7 +132,7 @@ def show_analytics(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================
@@ -230,7 +230,7 @@ def list_runs(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @meta_workflow_app.command("show")
@@ -310,10 +310,10 @@ def show_execution(
     except FileNotFoundError:
         console.print(f"[red]Execution not found:[/red] {run_id}")
         console.print("\n[dim]List available runs: empathy meta-workflow list-runs[/dim]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================
@@ -429,7 +429,7 @@ def cleanup_executions(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================

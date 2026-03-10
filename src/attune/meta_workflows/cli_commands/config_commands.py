@@ -105,10 +105,10 @@ def suggest_defaults_cmd(
             "[red]Error:[/red] Session context not available. "
             "Ensure memory and session modules are installed.",
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================

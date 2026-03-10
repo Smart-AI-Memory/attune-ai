@@ -47,13 +47,13 @@ def _validate_team_path(path: str, allowed_dir: str) -> Path:
     try:
         resolved = Path(path).resolve()
     except (OSError, RuntimeError) as e:
-        raise ValueError(f"Invalid path: {e}")
+        raise ValueError(f"Invalid path: {e}") from e
 
     try:
         allowed = Path(allowed_dir).resolve()
         resolved.relative_to(allowed)
     except ValueError:
-        raise ValueError(f"path must be within {allowed_dir}")
+        raise ValueError(f"path must be within {allowed_dir}") from None
 
     return resolved
 

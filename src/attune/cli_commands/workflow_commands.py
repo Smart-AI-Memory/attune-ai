@@ -20,9 +20,10 @@ logger = logging.getLogger(__name__)
 
 def cmd_workflow_list(args: Namespace) -> int:
     """List available workflows."""
-    from attune.workflows import discover_workflows
+    from attune.workflows import list_workflows
 
-    workflows = discover_workflows()
+    show_all = getattr(args, "all", False)
+    workflows = list_workflows(show_all=show_all)
 
     print("\n📋 Available Workflows\n")
     print("-" * 60)
@@ -31,11 +32,16 @@ def cmd_workflow_list(args: Namespace) -> int:
         print("No workflows registered.")
         return 0
 
-    for name, workflow_cls in sorted(workflows.items()):
-        doc = workflow_cls.__doc__ or "No description"
-        # Get first line of docstring
-        description = doc.split("\n")[0].strip()
-        print(f"  {name:25} {description}")
+    for wf in sorted(workflows, key=lambda w: w["name"]):
+        name = wf["name"]
+        description = wf["description"]
+        engine = wf.get("engine", "")
+        tag = ""
+        if engine == "sdk":
+            tag = " [SDK]"
+        elif engine == "api":
+            tag = " [API]"
+        print(f"  {name:25} {description}{tag}")
 
     print("-" * 60)
     print(f"\nTotal: {len(workflows)} workflows")
@@ -45,18 +51,14 @@ def cmd_workflow_list(args: Namespace) -> int:
 
 def cmd_workflow_info(args: Namespace) -> int:
     """Show workflow details."""
-    from attune.workflows import discover_workflows
+    from attune.workflows import get_workflow
 
-    workflows = discover_workflows()
     name = args.name
-    if name not in workflows:
+    try:
+        workflow_cls = get_workflow(name)
+    except KeyError:
         print(f"❌ Workflow not found: {name}")
-        print("\nAvailable workflows:")
-        for wf_name in sorted(workflows.keys()):
-            print(f"  - {wf_name}")
         return 1
-
-    workflow_cls = workflows[name]
     print(f"\n📋 Workflow: {name}\n")
     print("-" * 60)
 
@@ -78,13 +80,23 @@ def cmd_workflow_run(args: Namespace) -> int:
     import asyncio
 
     from attune.security.path_validation import _validate_file_path
-    from attune.workflows import discover_workflows
+    from attune.workflows import get_workflow, is_using_api_fallback
 
-    workflows = discover_workflows()
     name = args.name
-    if name not in workflows:
+
+    try:
+        workflow_cls = get_workflow(name)
+    except KeyError:
         print(f"❌ Workflow not found: {name}")
         return 1
+
+    # Warn if falling back to API version
+    if is_using_api_fallback(name):
+        print(
+            f"⚠️  Using API version of '{name}'. "
+            "Install claude-agent-sdk for the enhanced Agent SDK version:\n"
+            "    pip install claude-agent-sdk\n"
+        )
 
     # Parse input if provided
     input_data = {}
@@ -110,7 +122,6 @@ def cmd_workflow_run(args: Namespace) -> int:
     print(f"\n🚀 Running workflow: {name}\n")
 
     try:
-        workflow_cls = workflows[name]
         workflow = workflow_cls()
 
         # Run the workflow

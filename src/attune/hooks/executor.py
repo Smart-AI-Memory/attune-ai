@@ -149,7 +149,7 @@ class HookExecutor:
         try:
             formatted_command = command.format(**context)
         except KeyError as e:
-            raise ValueError(f"Missing context variable for command: {e}")
+            raise ValueError(f"Missing context variable for command: {e}") from e
 
         logger.debug("Executing command: %s", formatted_command)
 
@@ -244,7 +244,7 @@ class HookExecutor:
         try:
             import aiohttp
         except ImportError:
-            raise ImportError("aiohttp required for webhook hooks: pip install aiohttp")
+            raise ImportError("aiohttp required for webhook hooks: pip install aiohttp") from None
 
         logger.debug("Calling webhook: %s", url)
 

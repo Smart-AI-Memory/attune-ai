@@ -1,4 +1,4 @@
-# Attune AI Framework v3.9.0
+# Attune AI Framework v4.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -145,7 +145,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 3.9.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 4.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -517,5 +517,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `claude-3-5-haiku-latest` which returns 404. The current Haiku model
   ID is `claude-haiku-4-5-20251001`. Check model IDs against the
   Anthropic API when tier escalation fails at CHEAP.
+
+- **MyPy "437 errors" was stale — actual count was 2**: The
+  pre-commit comment said "437 pre-existing errors" but running
+  mypy with the configured settings found only 2 unused
+  `type: ignore` comments. Always re-run the tool before assuming
+  old error counts are still accurate — they may have been fixed
+  as a side effect of other refactors.
+
+- **B904 (`raise X from e`) is not auto-fixable by ruff**: Despite
+  `ruff check --fix`, B904 violations require manual edits. Use
+  `from e` when the exception variable is captured, `from None`
+  when suppressing the original. After fixing all violations,
+  remove B904 from the ruff ignore list to enforce going forward.
+
+- **`claude-agent-sdk` is a standalone PyPI package, not bundled
+  with Claude Code**: The Agent SDK (`pip install claude-agent-sdk`)
+  is independently versioned and published on PyPI. It is not part
+  of the `anthropic` package or the Claude Code CLI. The optional
+  extra `attune-ai[agent-sdk]` installs it. Check availability at
+  runtime with `import claude_agent_sdk` and the `_SDK_AVAILABLE`
+  module-level guard pattern.
+
+- **`list_workflows()` deduplication must keep base names visible**:
+  When hiding SDK duplicates, only skip entries in `_SDK_REVERSE_MAP`
+  (the explicit `-sdk` suffixed names). Do NOT also skip base names
+  that have an SDK variant — those are the names users see and type.
+  The resolver routes base names to SDK implementations transparently.
 
 <!-- attune-lessons-end -->

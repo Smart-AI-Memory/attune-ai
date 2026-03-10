@@ -105,7 +105,7 @@ def list_templates(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @meta_workflow_app.command("inspect")
@@ -198,7 +198,7 @@ def inspect_template(
 
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================
@@ -339,10 +339,10 @@ def generate_plan_cmd(
     except ImportError:
         console.print("[red]Plan generator not available.[/red]")
         console.print("This feature requires the plan_generator module.")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     except Exception as e:  # noqa: BLE001
         console.print(f"[red]Error generating plan:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 # =============================================================================

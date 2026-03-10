@@ -329,9 +329,9 @@ class ProjectIndex:
             )
 
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Git command failed: {e}. Are you in a git repository?")
+            raise RuntimeError(f"Git command failed: {e}. Are you in a git repository?") from e
         except FileNotFoundError:
-            raise RuntimeError("Git not found. Incremental refresh requires git.")
+            raise RuntimeError("Git not found. Incremental refresh requires git.") from None
 
         # Combine untracked and modified
         changed_files = untracked_files | modified_files

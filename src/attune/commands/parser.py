@@ -168,7 +168,7 @@ class CommandParser:
             logger.warning("PyYAML not installed, using basic parsing")
             data = self._basic_yaml_parse(yaml_content)
         except Exception as e:  # noqa: BLE001
-            raise ValueError(f"Invalid YAML frontmatter in {source}: {e}")
+            raise ValueError(f"Invalid YAML frontmatter in {source}: {e}") from e
 
         return CommandMetadata.from_dict(data)
 

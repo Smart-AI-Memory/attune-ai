@@ -5,6 +5,34 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-03-09
+
+### Added
+
+- **Full Agent SDK integration** — 15 workflows now have
+  Agent SDK adapters that delegate analysis to specialized
+  Claude subagents. Each adapter uses 2-6 subagents for
+  parallel, contextual code analysis.
+- **Smart workflow routing** — `get_workflow()` automatically
+  resolves to the SDK variant when `claude-agent-sdk` is
+  installed, with transparent fallback to API versions.
+- **API fallback warning** — CLI warns users when running
+  the API version of a workflow that has an SDK upgrade
+  available (`pip install claude-agent-sdk`).
+- **Deduplicated workflow listing** — `list_workflows()` and
+  `attune workflow list` hide SDK duplicates, showing one
+  entry per task with `[SDK]`/`[API]`/`[native]` tags.
+- **207 new tests** — 174 tests for SDK adapters + 33
+  behavioral tests for smart routing, deduplication, engine
+  tagging, and CLI fallback warnings.
+
+### Changed
+
+- **Major version bump (3.9 → 4.0)** — Reflects the Agent
+  SDK as a platform-level feature: multi-agent subagent
+  execution, smart routing, and transparent SDK/API
+  switching.
+
 ## [3.9.3] - 2026-03-09
 
 ### Added
@@ -18,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   workflow executions.
 - **`/bulk` and `/pipeline` command specs** — Documented
   command specifications for batch API and spec-driven
-  development lifecycle.
+  development lifecycle (beta).
 - **290 new tests** — Comprehensive suites for pipeline
   models, validation framework, behavioral tests for
   secure release and test-audit workflows, and SDK adapter
