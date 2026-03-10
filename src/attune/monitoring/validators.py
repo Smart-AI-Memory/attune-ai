@@ -11,7 +11,39 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import ipaddress
+import socket
 import urllib.parse
+
+
+def _resolve_and_check_ip(hostname: str) -> None:
+    """Resolve hostname via DNS and reject unsafe IPs.
+
+    Args:
+        hostname: The hostname to resolve
+
+    Raises:
+        ValueError: If any resolved IP is private, loopback,
+            link-local, reserved, multicast, or unspecified
+
+    """
+    try:
+        addrinfo = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        raise ValueError(f"Cannot resolve hostname '{hostname}': {e}") from e
+
+    for _family, _type, _proto, _canonname, sockaddr in addrinfo:
+        ip_str = sockaddr[0]
+        ip = ipaddress.ip_address(ip_str)
+        for attr in (
+            "is_loopback",
+            "is_link_local",
+            "is_multicast",
+            "is_unspecified",
+            "is_reserved",
+            "is_private",
+        ):
+            if getattr(ip, attr):
+                raise ValueError(f"Webhook URL resolves to unsafe IP {ip_str} ({attr})")
 
 
 def _validate_webhook_url(url: str) -> str:
@@ -72,16 +104,21 @@ def _validate_webhook_url(url: str) -> str:
         raise ValueError(f"Webhook URL cannot target local or metadata address: {hostname}")
 
     # Check for private/internal IPs
+    # Order: specific checks first, then broad is_private last
     try:
         ip = ipaddress.ip_address(hostname)
-        if ip.is_private:
-            raise ValueError(f"Webhook URL cannot target private IP: {hostname}")
         if ip.is_loopback:
             raise ValueError(f"Webhook URL cannot target loopback address: {hostname}")
         if ip.is_link_local:
             raise ValueError(f"Webhook URL cannot target link-local address: {hostname}")
+        if ip.is_multicast:
+            raise ValueError(f"Webhook URL cannot target multicast address: {hostname}")
+        if ip.is_unspecified:
+            raise ValueError(f"Webhook URL cannot target unspecified address: {hostname}")
         if ip.is_reserved:
             raise ValueError(f"Webhook URL cannot target reserved IP: {hostname}")
+        if ip.is_private:
+            raise ValueError(f"Webhook URL cannot target private IP: {hostname}")
     except ValueError as e:
         # Check if this is our own validation error
         if "cannot target" in str(e):
@@ -106,5 +143,13 @@ def _validate_webhook_url(url: str) -> str:
                 f"Webhook URL cannot target internal service port {parsed.port}. "
                 "Use standard HTTP (80) or HTTPS (443) ports.",
             )
+
+    # Resolve hostname and check all resolved IPs
+    try:
+        ipaddress.ip_address(hostname)
+        # Already validated as IP literal above
+    except ValueError:
+        # It's a hostname — resolve via DNS and check
+        _resolve_and_check_ip(hostname)
 
     return url

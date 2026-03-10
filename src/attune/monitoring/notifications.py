@@ -18,6 +18,7 @@ import urllib.error
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from urllib.request import HTTPRedirectHandler, build_opener
 
 from attune.monitoring.models import AlertChannel, AlertConfig, AlertEvent
 from attune.monitoring.validators import _validate_webhook_url
@@ -117,8 +118,24 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
         headers={"Content-Type": "application/json"},
     )
 
+    # Block redirects — webhook endpoints must respond
+    # directly. Redirect chains are an SSRF vector.
+    class _NoRedirect(HTTPRedirectHandler):
+        """Raise on any redirect attempt."""
+
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise urllib.error.HTTPError(
+                newurl,
+                code,
+                f"Redirect blocked (SSRF protection): {code} -> {newurl}",
+                headers,
+                fp,
+            )
+
+    opener = build_opener(_NoRedirect)
+
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:  # nosec B310
+        with opener.open(req, timeout=10) as response:  # nosec B310
             if response.status == 200:
                 logger.info("webhook_delivered", url=validated_url)
                 return True
@@ -191,7 +208,7 @@ Attune AI Monitoring
 
 def deliver_stdout(event: AlertEvent) -> bool:
     """Deliver alert to stdout/console."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(event.message)
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
     return True
