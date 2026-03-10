@@ -289,7 +289,13 @@ class AuthStrategy:
                     data = json.load(f)
                 return cls.from_dict(data)
             except Exception:  # noqa: BLE001
-                pass
+                # INTENTIONAL: Graceful fallback to default config
+                # when saved state is corrupt or unreadable.
+                logger.warning(
+                    "auth_strategy_load_failed: %s",
+                    str(path),
+                    exc_info=True,
+                )
 
         # Return default if no config exists
         return cls()
