@@ -32,6 +32,12 @@ Utility commands:
     attune provider show              Show current provider config
     attune provider set <name>        Set provider (anthropic)
 
+    attune auth status                Show subscription/auth strategy status
+    attune auth status --json         Output subscription status as JSON
+    attune auth setup                 Configure auth strategy interactively
+    attune auth reset --confirm       Clear auth strategy configuration
+    attune auth recommend <file>      Get auth recommendation for a file
+
     attune validate                   Validate configuration
     attune version                    Show version
 
@@ -85,6 +91,12 @@ from attune.cli_commands.workflow_commands import (
     cmd_workflow_info,
     cmd_workflow_list,
     cmd_workflow_run,
+)
+from attune.models.auth_cli import (
+    cmd_auth_recommend,
+    cmd_auth_reset,
+    cmd_auth_setup,
+    cmd_auth_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -305,7 +317,39 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     # Setup command
     subparsers.add_parser("setup", help="Install slash commands to ~/.claude/commands/")
 
-    # Utility commands
+    # --- Auth / subscription commands ---
+    auth_parser = subparsers.add_parser("auth", help="Subscription and authentication management")
+    auth_sub = auth_parser.add_subparsers(dest="auth_command")
+
+    # auth status
+    auth_status_parser = auth_sub.add_parser(
+        "status", help="Show subscription/auth strategy status"
+    )
+    auth_status_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output as JSON instead of formatted table",
+    )
+
+    # auth setup
+    auth_sub.add_parser("setup", help="Configure auth strategy interactively")
+
+    # auth reset
+    auth_reset_parser = auth_sub.add_parser("reset", help="Clear auth strategy configuration")
+    auth_reset_parser.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Confirm deletion of configuration",
+    )
+
+    # auth recommend
+    auth_rec_parser = auth_sub.add_parser(
+        "recommend",
+        help="Get auth recommendation for a file",
+    )
+    auth_rec_parser.add_argument("file_path", help="Path to the file to analyze")
+
+    # --- Utility commands ---
     subparsers.add_parser("doctor", help="Run comprehensive environment health check")
     subparsers.add_parser("features", help="Show available features and dependencies")
     subparsers.add_parser("validate", help="Validate configuration")
@@ -403,6 +447,18 @@ def main(argv: list[str] | None = None) -> int:
         print("Usage: attune provider {show|set}")
         return 1
 
+    if args.command == "auth":
+        if args.auth_command == "status":
+            return cmd_auth_status(args)
+        if args.auth_command == "setup":
+            return cmd_auth_setup(args)
+        if args.auth_command == "reset":
+            return cmd_auth_reset(args)
+        if args.auth_command == "recommend":
+            return cmd_auth_recommend(args)
+        print("Usage: attune auth {status|setup|reset|recommend}")
+        return 1
+
     if args.command == "remember":
         return cmd_remember(args)
 
@@ -451,6 +507,7 @@ def main(argv: list[str] | None = None) -> int:
 Get started:
   attune workflow list        See all available workflows
   attune workflow run <name>  Run a workflow (requires ANTHROPIC_API_KEY)
+  attune auth status          Check your subscription/auth status
   attune validate             Check your configuration
 
 For interactive development in Claude Code:

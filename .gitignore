@@ -32,21 +32,17 @@ wheels/
 *~
 .DS_Store
 
-# Testing
+# Testing and Coverage
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
+coverage.json
 htmlcov/
 htmlcov_logging/
 
 # Healthcare Wizards (top-level only - keep plugin wizards)
 /wizards/
-
-# Test and Coverage
-coverage.xml
-htmlcov/
-.pytest_cache/
-*.pyc
-__pycache__/
 
 # Root-level test files (should be in tests/)
 /test_*.py
@@ -56,7 +52,6 @@ test*.json
 
 # Redis dumps
 *.rdb
-dump*.rdb
 
 # Security
 security_scan_results.json
@@ -67,6 +62,7 @@ pip_audit_results.json
 **/tests/.env
 *.env.local
 *.env.*.local
+.env.test
 
 # MemDocs
 .memdocs/
@@ -94,9 +90,8 @@ OUTREACH_EMAILS.md
 TODO_BADGES.md
 COMPREHENSIVE_COMPLETION_PLAN.md
 COMMERCIAL_READINESS.md
-coverage.json
 
-# Pitch Deck Materials (generated/working files, not for version control)
+# Pitch Deck Materials (generated/working files)
 PITCH_DECK.md
 PITCH_DECK_README.md
 pitch_deck_assets/
@@ -105,9 +100,6 @@ convert_pitch_deck.sh
 
 # Logs
 logs/
-
-# Redis dump
-dump.rdb
 
 # MCP Registry tokens (credentials)
 .mcpregistry_*
@@ -123,19 +115,14 @@ anthropic-cookbook/
 dist/empathy-book.*
 ebook-site/
 book-indesign/
-
-# Tech spec plans (ephemeral working docs)
-.claude/plans/
+book-indesign alias*
 
 # MkDocs build output
 site/
 
-# Book production files (large binaries - InDesign, PDFs, DOCX)
-book-indesign/
-book-indesign alias*
-
-# Local runtime data (Empathy session state)
+# Local runtime data (session state)
 .empathy/
+.attune/
 
 # Pattern storage (generated runtime data)
 patterns/debugging_demo/
@@ -144,9 +131,10 @@ patterns/security/
 patterns/security_demo/
 patterns/tech_debt/
 patterns/tech_debt_demo/
-
-# Auto-generated workflow tracking files
 patterns/debugging/workflow_*.json
+patterns/code_review_memory.json
+patterns/debugging/all_patterns.json
+patterns/refactoring_memory.json
 
 # Word temp files
 ~$*
@@ -170,7 +158,7 @@ FALLBACK_TEST_REPORT.md
 TIER_FALLBACK_TEST_REPORT.md
 .vercel
 
-# macOS Finder duplicate files (created when copying files in Finder)
+# macOS Finder duplicate files
 * 2.py
 * 2.ts
 * 2.tsx
@@ -182,9 +170,13 @@ TIER_FALLBACK_TEST_REPORT.md
 * 2.yaml
 * 2.yml
 * 2/
-
-# Coverage parallel test files
-.coverage.*
+* 3.json
+* 3.md
+* 3.yaml
+* 3.yml
+* 3.py
+* 3.txt
+* 4.template
 
 # Example applications (not part of framework distribution)
 examples/craps-dice-tracker/
@@ -194,28 +186,10 @@ memdocs_storage/
 metrics.db
 benchmarks/profiles/*.prof
 benchmarks/profiles/*.dat
-.env.test
-
-# Attune runtime data (all session state, not source code)
-.attune/
-
-# Pattern memory (auto-generated during sessions)
-patterns/code_review_memory.json
-patterns/debugging/all_patterns.json
-patterns/refactoring_memory.json
 
 # Test artifacts
 test_wizard_risk_analysis.json
 test.json
-
-# macOS Finder duplicate files (additional patterns)
-* 3.json
-* 3.md
-* 3.yaml
-* 3.yml
-* 3.py
-* 3.txt
-* 4.template
 
 # Profiling output (root level)
 /profiles/
@@ -229,23 +203,17 @@ test.json
 plugin/evals/
 docs/internal/evals/
 
-# Local plugin configuration (un-ignored for Claude Code plugin distribution)
-# /plugin/
-
-# Duplicate rules (use .claude/rules/empathy/)
-.claude/rules/attune/
-
 # Claude Code local settings (user-specific, not shared)
 .claude/settings.local.json
 
-# UV lock file (use pip-tools or poetry for prod)
-uv.lock
+# Claude Code worktrees (session temp state)
+.claude/worktrees/
 
 # Dev scripts (local only)
 /scripts/profile_workflows.py
 planning/
 
-# Healthcare plugin (moved to separate fork - attune-healthcare-fork/)
+# Healthcare plugin (moved to separate fork)
 attune_healthcare/
 attune-healthcare-plugin/
 attune-healthcare-fork/
@@ -261,7 +229,7 @@ vscode-memory-panel/
 # Workflow scaffolding (code generation templates)
 workflow_scaffolding/
 
-# PhysioNet / clinical data (large binary datasets, not for VCS)
+# PhysioNet / clinical data (large binary datasets)
 data/
 
 # Compiled binaries (MCP publisher, etc.)

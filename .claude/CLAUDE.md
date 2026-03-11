@@ -1,4 +1,4 @@
-# Attune AI Framework v4.0.0
+# Attune AI Framework v4.0.3
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -145,7 +145,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 4.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 4.0.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -544,5 +544,88 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (the explicit `-sdk` suffixed names). Do NOT also skip base names
   that have an SDK variant — those are the names users see and type.
   The resolver routes base names to SDK implementations transparently.
+
+- **Push specific tags, not `--tags`**: `git push origin main --tags`
+  pushes ALL local tags, causing "already exists" rejections for old
+  tags. Use `git push origin main v4.0.0` to push only the intended
+  tag.
+
+- **Pull `main` before merging `develop` to avoid merge commits**:
+  If `origin/main` has commits not in local `main`, merging `develop`
+  creates a merge commit. Always `git pull origin main` first, then
+  `git merge develop`. This also avoids the GitHub "no merge commits"
+  rule violation.
+
+- **GitHub protected tags cannot be force-updated**: Once a tag is
+  pushed, `git push --force` fails if repository rules protect tags.
+  Tag the correct commit before pushing — there's no easy fix after.
+
+- **Rebuild dist after README changes**: PyPI uses `README.md` as the
+  package description. If you update the README after the initial
+  build, run `rm -rf dist/ && uv run python -m build` again before
+  publishing or PyPI will show the old README.
+
+- **MCP handler: validate paths before importing workflows**: In
+  `server.py`, `_validate_file_path()` must run before the lazy
+  `from attune.workflows.X import XWorkflow` import. If the import
+  fails (wrong class name, missing dep), the path validation never
+  fires and the security check is bypassed. Always: validate first,
+  import second.
+
+- **`BugPredictionWorkflow` not `BugPredictWorkflow`**: The class in
+  `attune.workflows.bug_predict` is `BugPredictionWorkflow`. The
+  MCP server had `BugPredictWorkflow` which caused `ImportError`.
+  Always verify the actual class name with `grep` before writing
+  an import.
+
+- **`is_private` is a superset in Python `ipaddress`**: Loopback
+  (`127.0.0.1`), link-local (`169.254.x.x`), and unspecified
+  (`0.0.0.0`) all have `is_private=True`. When checking IP safety,
+  test specific attributes (`is_loopback`, `is_link_local`, etc.)
+  before `is_private` so error messages are precise. The same
+  ordering matters in both IP literal checks and DNS resolution
+  checks.
+
+
+- **Changing error messages breaks tests across the codebase**:
+  Updating `_validate_file_path()`'s error from `"path must be
+  within"` to `"outside allowed directory"` broke 10 test files.
+  Before changing any error message in a shared function, grep the
+  entire test suite for `match="<old message>"` and update all
+  callers in the same commit.
+
+- **Adding DNS resolution to `_validate_webhook_url` breaks tests
+  that pass real hostnames**: Any test calling `_validate_webhook_url`
+  with a non-IP hostname (e.g. `example.com`) now needs
+  `@patch("attune.monitoring.validators.socket.getaddrinfo")` to
+  mock DNS resolution. Grep for all callers when adding network
+  validation to an existing function.
+
+- **MCP `workspace_root` defaults to `os.getcwd()` — tests with
+  `tmp_path` fail**: Tests that create files in `tmp_path` and pass
+  them to MCP handlers will get "outside allowed directory" errors
+  because the server defaults to the repo root. Fix: pass
+  `workspace_root=str(tmp_path)` when constructing the server in
+  tests.
+
+- **SSRF: always decode URLs before validating hostnames**:
+  `urllib.parse.urlparse` does NOT decode percent-encoded
+  characters. `http://%31%32%37%2e%30%2e%30%2e%31/` parses with
+  hostname `%31%32%37%2e%30%2e%30%2e%31` which bypasses blocklist
+  checks for `127.0.0.1`. Always `urllib.parse.unquote(url)` before
+  parsing and validating.
+
+- **SSRF: strip IPv6 zone IDs before IP validation**: IPv6 zone
+  IDs (e.g., `fe80::1%25eth0`) can bypass `ipaddress.ip_address()`
+  checks because the `%` suffix makes parsing fail or return
+  unexpected results. Strip zone IDs with `hostname.split("%")[0]`
+  before any IP validation.
+
+- **structlog kwargs vs stdlib Logger**: `logger.info("msg",
+  key=value)` is structlog syntax. stdlib `logging.Logger` raises
+  `TypeError: info() got an unexpected keyword argument`. Use
+  `logger.info("msg: key=%s", value)` instead. When fixing, grep
+  the entire module — partial fixes leave runtime crashes in
+  untouched calls.
 
 <!-- attune-lessons-end -->

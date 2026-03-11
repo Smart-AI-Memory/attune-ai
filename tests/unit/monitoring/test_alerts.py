@@ -421,9 +421,9 @@ class TestAlertEngineTriggering:
 class TestWebhookDelivery:
     """Tests for webhook notification delivery."""
 
-    @patch("attune.monitoring.validators.socket.getaddrinfo")
     @patch("attune.monitoring.notifications.build_opener")
-    def test_deliver_webhook_success(self, mock_build_opener, mock_dns, temp_db):
+    @patch("attune.monitoring.validators.socket.getaddrinfo")
+    def test_deliver_webhook_success(self, mock_dns, mock_build_opener, temp_db):
         """Test successful webhook delivery."""
         mock_dns.return_value = [
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0)),

@@ -44,7 +44,7 @@ def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
             return deliver_email(alert, event)
         if alert.channel in (AlertChannel.VSCODE_OUTPUT, AlertChannel.STDOUT):
             return deliver_stdout(event)
-        logger.warning("unknown_alert_channel: %s", alert.channel.value)
+        logger.warning("unknown_alert_channel: channel=%s", alert.channel.value)
         return False
     except Exception as e:  # noqa: BLE001
         logger.error(
@@ -150,15 +150,11 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
             "webhook_http_error: url=%s status=%s error=%s",
             validated_url,
             e.code,
-            str(e),
+            e,
         )
         return False
     except urllib.error.URLError as e:
-        logger.error(
-            "webhook_delivery_failed: url=%s error=%s",
-            validated_url,
-            str(e),
-        )
+        logger.error("webhook_delivery_failed: url=%s error=%s", validated_url, e)
         return False
 
 
@@ -206,11 +202,7 @@ Attune AI Monitoring
             server.sendmail(from_email, alert.email, msg.as_string())
         return True
     except (smtplib.SMTPException, OSError) as e:
-        logger.error(
-            "email_delivery_failed: email=%s error=%s",
-            alert.email,
-            str(e),
-        )
+        logger.error("email_delivery_failed: email=%s error=%s", alert.email, e)
         return False
 
 
