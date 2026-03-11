@@ -1,4 +1,4 @@
-# Attune AI Framework v4.0.3
+# Attune AI Framework v4.1.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -94,6 +94,11 @@ abstraction.
 - Type hints and docstrings required on all public APIs
 - Minimum 80% test coverage
 - Security tests required for file operations
+- When creating a detailed plan with 3+ tasks or touching
+  3+ files, use XML-enhanced prompt format (see
+  `.claude/rules/attune/xml-enhanced-prompts.md`). For
+  simpler work (single-file edits, config changes, bug
+  fixes), plain descriptions are fine.
 
 ---
 
@@ -627,5 +632,38 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `logger.info("msg: key=%s", value)` instead. When fixing, grep
   the entire module — partial fixes leave runtime crashes in
   untouched calls.
+
+- **Windows `Path.resolve()` prepends the drive letter to Unix
+  paths**: `Path("/code").resolve()` on Windows returns
+  `D:\code`, not `/code`. Tests that assert exact path strings
+  passed through `_validate_file_path` fail on Windows CI. Fix:
+  patch `_validate_file_path` in tests that verify handler logic
+  (not path validation) so paths pass through unchanged.
+
+- **Stacked `@patch` decorators inject args bottom-up**: When a
+  test has `@patch("A") @patch("B") def test(self, mock_b,
+  mock_a)`, the innermost (bottom) decorator's mock is the first
+  positional arg. Forgetting a decorator while referencing its
+  mock variable causes `NameError` at runtime, not import time.
+  Always count decorators vs method params.
+
+- **`.gitignore` exclusions break CI tests that read those
+  files**: If tests call `read_spec(".claude/plans/foo.md")` but
+  `.gitignore` excludes `.claude/plans/`, CI will never have the
+  file. Either track the files or skip the tests when absent.
+
+- **Windows `time.time()` can return 0.0 duration for fast
+  operations**: On Windows 3.10-3.12, `time.time()` has ~15ms
+  resolution. Tests asserting `execution_time > 0` fail when
+  the operation completes within one tick. Use
+  `time.perf_counter()` for sub-millisecond timing, or assert
+  `>= 0` if the operation may be instant.
+
+- **`config.py` alongside `config/` creates a mypy duplicate
+  module**: Having both `src/attune/config.py` and
+  `src/attune/config/__init__.py` causes mypy to report
+  "Duplicate module named attune.config". This blocks mypy in
+  pre-commit. Either rename one or exclude the module from mypy.
+  We removed mypy from pre-commit entirely for now.
 
 <!-- attune-lessons-end -->

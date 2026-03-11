@@ -12,6 +12,8 @@ question:
   options:
     - label: "Run tests"
       description: "Execute pytest test suite"
+    - label: "Smart test"
+      description: "Run only tests affected by changes"
     - label: "Check coverage"
       description: "Run tests with coverage report"
     - label: "Generate tests"
@@ -28,6 +30,8 @@ Test runner, coverage analysis, and test generation hub.
 | -------- | ------ |
 | `/testing run` | Run full test suite |
 | `/testing run <path>` | Run tests at specific path |
+| `/testing smart` | Run only tests affected by changes |
+| `/testing fix` | Auto-fix failing tests and re-run |
 | `/testing coverage` | Run tests with coverage report |
 | `/testing generate <module>` | Generate behavioral tests for module |
 
@@ -62,6 +66,10 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | `/testing run` | `uv run pytest -v` |
 | `/testing run <path>` | `uv run pytest <path> -v` |
 | `/testing run -k <pattern>` | `uv run pytest -k "<pattern>" -v` |
+| `/testing smart` | Invoke `/smart-test` — run only tests for changed files |
+| `/testing smart --fix` | Invoke `/smart-test --fix` — smart select + auto-fix failures |
+| `/testing fix <path>` | Invoke `/fix-test <path>` — diagnose and fix failing tests |
+| `/testing fix --lf` | Invoke `/fix-test --lf` — fix last failed tests |
 | `/testing coverage` | `uv run pytest --cov=src --cov-report=term-missing` |
 | `/testing coverage <target>` | `uv run pytest --cov=<target> --cov-report=term-missing` |
 | `/testing generate <module>` | Run Test-Gen wizard: select target → analyze coverage gaps → decompose test tasks → preview → confirm |
@@ -72,6 +80,8 @@ Use this context to inform your actions (e.g., which files changed, how many tes
 | Pattern | Action |
 | ------- | ------ |
 | "run tests", "pytest", "test suite" | `uv run pytest -v` |
+| "smart test", "changed files", "affected tests" | Invoke `/smart-test` |
+| "fix test", "auto fix", "repair test" | Invoke `/fix-test` |
 | "coverage", "how much is covered" | `uv run pytest --cov=src --cov-report=term-missing` |
 | "generate tests", "write tests for" | Run Test-Gen wizard flow |
 | "failing", "broken test", "why does this fail" | Debug the failing test |

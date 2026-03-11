@@ -40,6 +40,7 @@ coverage.xml
 coverage.json
 htmlcov/
 htmlcov_logging/
+.testmondata
 
 # Healthcare Wizards (top-level only - keep plugin wizards)
 /wizards/
