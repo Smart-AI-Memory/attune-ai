@@ -10,7 +10,7 @@ The easiest way to run code review, debugging, testing, and release workflows fr
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-17%2C239%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-17%2C282%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -23,24 +23,36 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v4.0.0
+## What's New in v4.1.0
 
-- **Full Agent SDK integration** — 15 workflows now have
-  Agent SDK adapters that delegate analysis to specialized
-  Claude subagents with parallel, contextual code analysis.
-- **Smart workflow routing** — `get_workflow()` automatically
-  resolves to the SDK variant when `claude-agent-sdk` is
-  installed, with transparent fallback to API versions.
-- **Deduplicated workflow listing** — `list_workflows()` and
-  `attune workflow list` hide SDK duplicates, showing one
-  entry per task with `[SDK]`/`[API]`/`[native]` tags.
-- **Bug fixes and hardening** — Security, hooks, resilience,
-  and meta-workflow CLI improvements across 18 modules.
-- **11,800+ tests** — 207 new tests for SDK adapters and
-  behavioral routing.
+- **Smart test selection** — `/smart-test` runs only tests
+  affected by your changes using git-diff file mapping.
+  No more waiting for the full 17k+ suite.
+- **Auto-fix failing tests** — `/fix-test` diagnoses
+  failures, applies fixes (to tests or source), and
+  re-runs automatically with up to 3 retries.
+- **Testing hub upgrade** — `/testing smart` and
+  `/testing fix` routes added with natural language
+  routing ("smart test", "fix test", "affected tests").
+- **43 new behavioral tests** — Full coverage for
+  `HaystackAdapter` (25 tests) and `ProjectAnalysisRequest`
+  validators (18 tests).
+- **17,200+ tests** — Comprehensive test suite across
+  security, unit, integration, and behavioral coverage.
 
 <details>
 <summary>Previous releases</summary>
+
+### v4.0.0
+
+- **Full Agent SDK integration** — 15 workflows now have
+  Agent SDK adapters for parallel, contextual code analysis.
+- **Smart workflow routing** — `get_workflow()` resolves to
+  SDK variant when available, with transparent fallback.
+- **Deduplicated workflow listing** — One entry per task
+  with `[SDK]`/`[API]`/`[native]` tags.
+- **Security hardening** — Deep review fixes across 18
+  modules.
 
 ### v3.9.3
 
@@ -138,7 +150,7 @@ Clean, maintainable codebase built for extensibility:
 
 - **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
 - **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **11,800+ tests** - Security, unit, integration, and behavioral test coverage
+- **17,200+ tests** - Security, unit, integration, and behavioral test coverage
 
 ### Intelligent Cost Optimization
 
@@ -194,6 +206,7 @@ Socratic discovery guides you to the right workflow.
 ```bash
 /attune debug      # Debug an issue
 /attune test       # Run tests
+/testing smart     # Run only tests affected by changes
 /attune security   # Security audit
 /attune commit     # Create commit
 /attune pr         # Create pull request
@@ -264,7 +277,7 @@ Workflows are organized into hubs for easy discovery:
 | Hub               | Command       | Description                                  |
 | ----------------- | ------------- | -------------------------------------------- |
 | **Developer**     | `/dev`        | Debug, commit, PR, code review, quality      |
-| **Testing**       | `/testing`    | Run tests, coverage audit, test generation   |
+| **Testing**       | `/testing`    | Run tests, smart test, coverage, test gen    |
 | **Documentation** | `/docs`       | Generate docs, changelog, doc audit          |
 | **Release**       | `/release`    | Release prep, security scan, publishing      |
 | **Workflows**     | `/workflows`  | Automated analysis (security, bugs, perf)    |

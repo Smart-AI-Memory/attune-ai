@@ -5,6 +5,59 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.1] - 2026-03-11
+
+### Fixed
+
+- **README updated for v4.1.0** — Updated What's New section,
+  test count badges, command hub descriptions, and added
+  `/testing smart` to shortcuts.
+- **CHANGELOG backfill** — Added missing entries for v4.0.2,
+  v4.0.3, and v4.1.0.
+
+## [4.1.0] - 2026-03-10
+
+### Added
+
+- **Smart test selection** — `/smart-test` skill runs only
+  tests affected by recent changes using git-diff file
+  mapping. No more waiting for the full 17k+ suite.
+- **Auto-fix failing tests** — `/fix-test` skill diagnoses
+  failures, applies fixes (to tests or source), and re-runs
+  automatically with up to 3 retries.
+- **Testing hub upgrade** — `/testing smart` and
+  `/testing fix` routes with natural language routing.
+- **43 new behavioral tests** — Full coverage for
+  `HaystackAdapter` (25 tests) and `ProjectAnalysisRequest`
+  validators (18 tests).
+- **LinkedIn tutorial article** — Smart testing workflow
+  tutorial for social sharing.
+
+## [4.0.3] - 2026-03-10
+
+### Fixed
+
+- **structlog kwargs vs stdlib Logger** — Replaced
+  `logger.info("msg", key=value)` structlog syntax with
+  `logger.info("msg: key=%s", value)` for stdlib
+  compatibility.
+- **SSRF bypass fixes** — Percent-encoded URL decoding
+  before hostname validation; IPv6 zone ID stripping before
+  IP validation.
+
+## [4.0.2] - 2026-03-10
+
+### Fixed
+
+- **MCP workspace path containment** — Enforced workspace
+  root path validation in MCP handlers.
+- **Webhook SSRF hardening** — Added DNS resolution checks
+  and redirect blocking to webhook URL validation.
+- **Corrupt config and .env warnings** — Added warning logs
+  for corrupt config file loads and unreadable .env files.
+- **Test updates** — Updated tests for security hardening
+  changes.
+
 ## [4.0.1] - 2026-03-10
 
 ### Fixed
