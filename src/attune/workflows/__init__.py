@@ -44,7 +44,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .base import BaseWorkflow
     from .bug_predict import BugPredictionWorkflow
-    from .bug_predict_agent_sdk import BugPredictAgentSDKWorkflow
     from .code_review import CodeReviewWorkflow
     from .code_review_pipeline import CodeReviewPipeline, CodeReviewPipelineResult
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
@@ -75,7 +74,6 @@ if TYPE_CHECKING:
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
     from .perf_audit import PerformanceAuditWorkflow
-    from .perf_audit_agent_sdk import PerfAuditAgentSDKWorkflow
     from .pr_review import PRReviewResult, PRReviewWorkflow
     from .refactor_plan import RefactorPlanWorkflow
     from .refactor_plan_agent_sdk import RefactorPlanAgentSDKWorkflow
@@ -87,7 +85,6 @@ if TYPE_CHECKING:
     from .research_synthesis_agent_sdk import ResearchSynthesisAgentSDKWorkflow
     from .secure_release import SecureReleasePipeline, SecureReleaseResult
     from .security_audit import SecurityAuditWorkflow
-    from .security_audit_agent_sdk import SecurityAuditAgentSDKWorkflow
     from .simplify_code import SimplifyCodeWorkflow
     from .simplify_code_agent_sdk import SimplifyCodeAgentSDKWorkflow
     from .step_config import WorkflowStepConfig
@@ -183,11 +180,11 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
     "DeepReviewAgentSDKWorkflow": (".deep_review_agent_sdk", "DeepReviewAgentSDKWorkflow"),
     # Agent SDK adapters (v3.9.3)
-    "SecurityAuditAgentSDKWorkflow": (".security_audit_agent_sdk", "SecurityAuditAgentSDKWorkflow"),
-    "PerfAuditAgentSDKWorkflow": (".perf_audit_agent_sdk", "PerfAuditAgentSDKWorkflow"),
+    # SecurityAuditAgentSDKWorkflow: Merged into SecurityAuditWorkflow (v4.2.0)
+    # PerfAuditAgentSDKWorkflow: Merged into PerformanceAuditWorkflow (v4.2.0)
     "ReleasePrepAgentSDKWorkflow": (".release_prep_agent_sdk", "ReleasePrepAgentSDKWorkflow"),
     "TestAuditAgentSDKWorkflow": (".test_audit_agent_sdk", "TestAuditAgentSDKWorkflow"),
-    "BugPredictAgentSDKWorkflow": (".bug_predict_agent_sdk", "BugPredictAgentSDKWorkflow"),
+    # BugPredictAgentSDKWorkflow: Merged into BugPredictionWorkflow (v4.2.0)
     "RefactorPlanAgentSDKWorkflow": (".refactor_plan_agent_sdk", "RefactorPlanAgentSDKWorkflow"),
     "TestGenAgentSDKWorkflow": (".test_gen_agent_sdk", "TestGenAgentSDKWorkflow"),
     "DocAuditAgentSDKWorkflow": (".doc_audit_agent_sdk", "DocAuditAgentSDKWorkflow"),
@@ -322,11 +319,11 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # Multi-pass deep review (v3.9)
     "deep-review-sdk": "DeepReviewAgentSDKWorkflow",
     # Agent SDK adapters (v3.9.3)
-    "security-audit-sdk": "SecurityAuditAgentSDKWorkflow",
-    "perf-audit-sdk": "PerfAuditAgentSDKWorkflow",
+    # security-audit-sdk: Merged into security-audit (v4.2.0)
+    # perf-audit-sdk: Merged into perf-audit (v4.2.0)
     "release-prep-sdk": "ReleasePrepAgentSDKWorkflow",
     "test-audit-sdk": "TestAuditAgentSDKWorkflow",
-    "bug-predict-sdk": "BugPredictAgentSDKWorkflow",
+    # bug-predict-sdk: Merged into bug-predict (v4.2.0)
     "refactor-plan-sdk": "RefactorPlanAgentSDKWorkflow",
     "test-gen-sdk": "TestGenAgentSDKWorkflow",
     "doc-audit-sdk": "DocAuditAgentSDKWorkflow",
@@ -362,11 +359,11 @@ _registry_initialized = False
 # checks whether the SDK variant is available and routes to it automatically.
 _SDK_WORKFLOW_MAP: dict[str, str] = {
     # code-review: Merged — CodeReviewWorkflow is now SDK-native (v4.2.0)
-    "security-audit": "security-audit-sdk",
-    "perf-audit": "perf-audit-sdk",
+    # security-audit: Merged — SecurityAuditWorkflow is now SDK-native (v4.2.0)
+    # perf-audit: Merged — PerformanceAuditWorkflow is now SDK-native (v4.2.0)
     "release-prep": "release-prep-sdk",
     "test-audit": "test-audit-sdk",
-    "bug-predict": "bug-predict-sdk",
+    # bug-predict: Merged — BugPredictionWorkflow is now SDK-native (v4.2.0)
     "refactor-plan": "refactor-plan-sdk",
     "test-gen": "test-gen-sdk",
     "doc-audit": "doc-audit-sdk",
@@ -383,6 +380,9 @@ _SDK_REVERSE_MAP: dict[str, str] = {v: k for k, v in _SDK_WORKFLOW_MAP.items()}
 # (no longer in _SDK_WORKFLOW_MAP because they ARE the SDK version).
 _SDK_NATIVE_WORKFLOWS: set[str] = {
     "code-review",
+    "security-audit",
+    "bug-predict",
+    "perf-audit",
 }
 
 
@@ -733,11 +733,11 @@ __all__ = [
     # Multi-pass deep review (Agent SDK)
     "DeepReviewAgentSDKWorkflow",
     # Agent SDK adapters (v3.9.3)
-    "SecurityAuditAgentSDKWorkflow",
-    "PerfAuditAgentSDKWorkflow",
+    # SecurityAuditAgentSDKWorkflow: Merged (v4.2.0)
+    # PerfAuditAgentSDKWorkflow: Merged (v4.2.0)
     "ReleasePrepAgentSDKWorkflow",
     "TestAuditAgentSDKWorkflow",
-    "BugPredictAgentSDKWorkflow",
+    # BugPredictAgentSDKWorkflow: Merged (v4.2.0)
     "RefactorPlanAgentSDKWorkflow",
     "TestGenAgentSDKWorkflow",
     "DocAuditAgentSDKWorkflow",

@@ -279,14 +279,8 @@ class TestLLMMixinValidation:
 class TestWorkflowSchemas:
     """Test that key workflows have schemas declared."""
 
-    def test_security_audit_has_input_schema(self):
-        """SecurityAuditWorkflow declares input_schema."""
-        from attune.workflows.security_audit import (
-            SecurityAuditWorkflow,
-        )
-
-        assert SecurityAuditWorkflow.input_schema is not None
-        assert "path" in SecurityAuditWorkflow.input_schema.required_fields
+    # test_security_audit_has_input_schema: Removed — SDK-native
+    # workflow validates path in execute(), not via input_schema.
 
     def test_test_gen_has_input_schema(self):
         """TestGenerationWorkflow declares input_schema."""
@@ -297,14 +291,8 @@ class TestWorkflowSchemas:
         assert TestGenerationWorkflow.input_schema is not None
         assert "path" in TestGenerationWorkflow.input_schema.required_fields
 
-    def test_perf_audit_has_input_schema(self):
-        """PerformanceAuditWorkflow declares input_schema."""
-        from attune.workflows.perf_audit import (
-            PerformanceAuditWorkflow,
-        )
-
-        assert PerformanceAuditWorkflow.input_schema is not None
-        assert "path" in PerformanceAuditWorkflow.input_schema.required_fields
+    # test_perf_audit_has_input_schema: Removed — SDK-native
+    # workflow validates path in execute(), not via input_schema.
 
     def test_simplify_code_has_input_schema(self):
         """SimplifyCodeWorkflow declares input_schema."""

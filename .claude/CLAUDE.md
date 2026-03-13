@@ -674,4 +674,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   pre-commit. Either rename one or exclude the module from mypy.
   We removed mypy from pre-commit entirely for now.
 
+- **Replacing a mixin-based class scatters test failures across many
+  files**: When merging `CodeReviewWorkflow` from 5 mixins into an
+  SDK-native class, tests for old internal methods (`_classify`,
+  `_scan`, `_gather_project_context`, `should_skip_stage`) were spread
+  across 6+ test files (unit, workflow, integration, coverage batches).
+  Grep for ALL method names being removed across the entire test tree
+  before considering the migration done — `pytest -k "code_review"`
+  catches failures that file-specific runs miss.
+
+- **Registry count assertions are scattered across test files**: When
+  merging SDK workflow variants (reducing `_SDK_WORKFLOW_MAP` from
+  12→9 entries), hardcoded count assertions like
+  `assert len(_SDK_WORKFLOW_MAP) == 12` and expected-set assertions
+  exist in routing behavioral tests, validation framework tests, and
+  coverage batch tests. Always grep for the old count and old class
+  names (e.g. `SecurityAuditAgentSDKWorkflow`) across all test files
+  when changing registry size.
+
+- **SDK-native workflows validate in `execute()`, not `input_schema`**:
+  After merging to SDK-native, workflows no longer declare
+  `input_schema` as a class attribute — path validation happens inside
+  `execute()`. Tests asserting `Workflow.input_schema is not None`
+  must be removed or updated.
+
 <!-- attune-lessons-end -->

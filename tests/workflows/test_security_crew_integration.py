@@ -428,83 +428,8 @@ class TestSecureReleasePipeline:
 # ============================================================================
 
 
-class TestSecurityAuditCrewRemediation:
-    """Test Option 4: SecurityAuditWorkflow with crew-enhanced remediation."""
-
-    def test_workflow_init_without_crew_remediation(self):
-        """Test workflow initializes without crew remediation by default."""
-        from attune.workflows import SecurityAuditWorkflow
-
-        workflow = SecurityAuditWorkflow()
-
-        assert workflow.use_crew_for_remediation is False
-
-    def test_workflow_init_with_crew_remediation(self):
-        """Test workflow initializes with crew remediation when enabled."""
-        from attune.workflows import SecurityAuditWorkflow
-
-        workflow = SecurityAuditWorkflow(use_crew_for_remediation=True)
-
-        assert workflow.use_crew_for_remediation is True
-
-    def test_crew_config_passed(self):
-        """Test crew config is passed correctly."""
-        from attune.workflows import SecurityAuditWorkflow
-
-        config = {"scan_depth": "thorough", "timeout_seconds": 600}
-        workflow = SecurityAuditWorkflow(use_crew_for_remediation=True, crew_config=config)
-
-        assert workflow.crew_config == config
-
-    def test_get_crew_remediation_method_exists(self):
-        """Test _get_crew_remediation helper exists."""
-        from attune.workflows import SecurityAuditWorkflow
-
-        workflow = SecurityAuditWorkflow(use_crew_for_remediation=True)
-        assert hasattr(workflow, "_get_crew_remediation")
-        assert callable(workflow._get_crew_remediation)
-
-    def test_merge_crew_remediation_method_exists(self):
-        """Test _merge_crew_remediation helper exists."""
-        from attune.workflows import SecurityAuditWorkflow
-
-        workflow = SecurityAuditWorkflow(use_crew_for_remediation=True)
-        assert hasattr(workflow, "_merge_crew_remediation")
-        assert callable(workflow._merge_crew_remediation)
-
-    @pytest.mark.asyncio
-    async def test_remediate_fallback_without_crew(self):
-        """Test remediation works without crew when disabled."""
-        from attune.workflows import SecurityAuditWorkflow
-        from attune.workflows.base import ModelTier
-
-        workflow = SecurityAuditWorkflow(use_crew_for_remediation=False)
-
-        input_data = {
-            "path": "./src",
-            "assessment": {
-                "critical_findings": [{"title": "Test Issue", "severity": "critical"}],
-                "high_findings": [],
-                "risk_score": 50,
-                "risk_level": "medium",
-            },
-        }
-
-        with patch.object(
-            workflow,
-            "_call_llm",
-            new_callable=AsyncMock,
-            return_value=("Fix: Update the code", 100, 50),
-        ):
-            result, input_tokens, output_tokens = await workflow._remediate(
-                input_data,
-                ModelTier.CAPABLE,
-            )
-
-            # Check for correct result key
-            assert "remediation_plan" in result
-            # Should not have crew remediation
-            assert result.get("crew_enhanced") is False
+# TestSecurityAuditCrewRemediation: Removed — SecurityAuditWorkflow
+# is now SDK-native and no longer has crew mixin methods.
 
 
 # ============================================================================
@@ -560,7 +485,7 @@ class TestEndToEndIntegration:
 
         security_audit = SecurityAuditWorkflow()
         assert security_audit is not None
-        assert security_audit.use_crew_for_remediation is False
+        assert security_audit.name == "security-audit"
 
 
 if __name__ == "__main__":

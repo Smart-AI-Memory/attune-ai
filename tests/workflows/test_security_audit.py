@@ -15,13 +15,9 @@ Licensed under the Apache License, Version 2.0
 """
 
 import re
-import tempfile
-from pathlib import Path
-from unittest.mock import AsyncMock
 
 import pytest
 
-from attune.workflows.base import ModelTier
 from attune.workflows.security_audit import (
     DETECTION_PATTERNS,
     FAKE_CREDENTIAL_PATTERNS,
@@ -37,33 +33,6 @@ from attune.workflows.security_audit import (
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def workflow():
-    """Create a SecurityAuditWorkflow instance for testing."""
-    return SecurityAuditWorkflow(
-        patterns_dir="./patterns",
-        skip_remediate_if_clean=True,
-    )
-
-
-@pytest.fixture
-def workflow_with_crew():
-    """Create a SecurityAuditWorkflow with crew enabled."""
-    return SecurityAuditWorkflow(
-        patterns_dir="./patterns",
-        skip_remediate_if_clean=True,
-        use_crew_for_remediation=True,
-        crew_config={"scan_depth": "quick"},
-    )
-
-
-@pytest.fixture
-def temp_dir():
-    """Create a temporary directory for test files."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
 
 
 @pytest.fixture
@@ -89,34 +58,6 @@ def sample_findings():
             "is_test": False,
         },
     ]
-
-
-@pytest.fixture
-def mock_team_decisions(temp_dir):
-    """Create mock team decisions file."""
-    security_dir = temp_dir / "security"
-    security_dir.mkdir(parents=True, exist_ok=True)
-    decisions_file = security_dir / "team_decisions.json"
-    decisions_file.write_text(
-        """
-    {
-        "decisions": [
-            {
-                "finding_hash": "insecure_random",
-                "decision": "false_positive",
-                "reason": "Only used for UI animations",
-                "decided_by": "@mike"
-            },
-            {
-                "finding_hash": "sql_injection",
-                "decision": "accepted",
-                "reason": "Legacy code, scheduled for refactor"
-            }
-        ]
-    }
-    """,
-    )
-    return temp_dir
 
 
 # =============================================================================
@@ -675,84 +616,6 @@ class TestWorkflowClassAttributes:
         """Workflow should have correct name."""
         assert SecurityAuditWorkflow.name == "security-audit"
 
-    def test_workflow_description(self):
-        """Workflow should have description."""
-        assert len(SecurityAuditWorkflow.description) > 0
-        assert "OWASP" in SecurityAuditWorkflow.description
-
-    def test_workflow_stages(self):
-        """Workflow should have four stages."""
-        assert SecurityAuditWorkflow.stages == ["triage", "analyze", "assess", "remediate"]
-
-    def test_workflow_tier_map_triage(self):
-        """Triage should use CHEAP tier."""
-        assert SecurityAuditWorkflow.tier_map["triage"] == ModelTier.CHEAP
-
-    def test_workflow_tier_map_analyze(self):
-        """Analyze should use CAPABLE tier."""
-        assert SecurityAuditWorkflow.tier_map["analyze"] == ModelTier.CAPABLE
-
-    def test_workflow_tier_map_assess(self):
-        """Assess should use CAPABLE tier."""
-        assert SecurityAuditWorkflow.tier_map["assess"] == ModelTier.CAPABLE
-
-    def test_workflow_tier_map_remediate(self):
-        """Remediate should use PREMIUM tier."""
-        assert SecurityAuditWorkflow.tier_map["remediate"] == ModelTier.PREMIUM
-
-
-# =============================================================================
-# TestWorkflowInit - Test initialization
-# =============================================================================
-
-
-class TestWorkflowInit:
-    """Test SecurityAuditWorkflow initialization."""
-
-    def test_default_initialization(self):
-        """Should initialize with default values."""
-        workflow = SecurityAuditWorkflow()
-        assert workflow.patterns_dir == "./patterns"
-        assert workflow.skip_remediate_if_clean is True
-        assert workflow.use_crew_for_assessment is True
-        assert workflow.use_crew_for_remediation is False  # Default is False
-        assert workflow.crew_config == {}
-
-    def test_custom_patterns_dir(self):
-        """Should accept custom patterns directory."""
-        workflow = SecurityAuditWorkflow(patterns_dir="/custom/patterns")
-        assert workflow.patterns_dir == "/custom/patterns"
-
-    def test_skip_remediate_flag(self):
-        """Should accept skip_remediate_if_clean flag."""
-        workflow = SecurityAuditWorkflow(skip_remediate_if_clean=False)
-        assert workflow.skip_remediate_if_clean is False
-
-    def test_crew_config(self):
-        """Should accept crew configuration."""
-        workflow = SecurityAuditWorkflow(
-            use_crew_for_remediation=True,
-            crew_config={"scan_depth": "deep"},
-        )
-        assert workflow.use_crew_for_remediation is True
-        assert workflow.crew_config == {"scan_depth": "deep"}
-
-    def test_has_critical_flag_initialized(self):
-        """_has_critical should be initialized to False."""
-        workflow = SecurityAuditWorkflow()
-        assert workflow._has_critical is False
-
-    def test_team_decisions_initialized(self):
-        """_team_decisions should be initialized as empty dict."""
-        workflow = SecurityAuditWorkflow()
-        assert isinstance(workflow._team_decisions, dict)
-
-    def test_loads_team_decisions_from_file(self, mock_team_decisions):
-        """Should load team decisions from file."""
-        workflow = SecurityAuditWorkflow(patterns_dir=str(mock_team_decisions))
-        assert "insecure_random" in workflow._team_decisions
-        assert workflow._team_decisions["insecure_random"]["decision"] == "false_positive"
-
 
 # =============================================================================
 # TestPatternMatching - Test regex matching
@@ -843,155 +706,6 @@ class TestPatternMatching:
 class TestIntegration:
     """Integration tests for workflow scenarios."""
 
-    def test_is_detection_code_returns_true_for_detection(self, workflow):
-        """_is_detection_code should return True for detection code."""
-        assert workflow._is_detection_code('if "eval(" in content:', "eval(")
-        assert workflow._is_detection_code("pattern = re.compile(r'eval')", "eval")
-
-    def test_is_detection_code_returns_false_for_real_code(self, workflow):
-        """_is_detection_code should return False for real vulnerable code."""
-        assert not workflow._is_detection_code("result = eval(user_input)", "eval(user_input)")
-
-    def test_is_fake_credential_returns_true_for_example(self, workflow):
-        """_is_fake_credential should return True for example credentials."""
-        assert workflow._is_fake_credential("AKIAIOSFODNN7EXAMPLE")
-        assert workflow._is_fake_credential("test-api-key")
-        assert workflow._is_fake_credential("FAKE_SECRET")
-
-    def test_is_fake_credential_returns_false_for_real(self, workflow):
-        """_is_fake_credential should return False for potentially real credentials."""
-        assert not workflow._is_fake_credential("AKIAIOSFODNN7ABCDEF")
-
-    def test_is_documentation_or_string_returns_true_for_comments(self, workflow):
-        """_is_documentation_or_string should return True for comments."""
-        assert workflow._is_documentation_or_string("# This is dangerous: eval()", "eval")
-        assert workflow._is_documentation_or_string("// eval is dangerous", "eval")
-
-    def test_is_documentation_or_string_returns_true_for_docstring(self, workflow):
-        """_is_documentation_or_string should return True for docstrings."""
-        assert workflow._is_documentation_or_string('"""This uses eval()', "eval")
-
-    def test_is_documentation_or_string_returns_false_for_real_code(self, workflow):
-        """_is_documentation_or_string should return False for real code."""
-        assert not workflow._is_documentation_or_string("result = eval(user_input)", "eval")
-
-    def test_should_skip_stage_returns_true_for_clean_remediate(self, workflow):
-        """should_skip_stage should return True for remediate when clean."""
-        workflow._has_critical = False
-        should_skip, reason = workflow.should_skip_stage("remediate", {})
-        assert should_skip is True
-        assert "No high/critical findings" in reason
-
-    def test_should_skip_stage_returns_false_for_critical_findings(self, workflow):
-        """should_skip_stage should return False when critical findings exist."""
-        workflow._has_critical = True
-        should_skip, reason = workflow.should_skip_stage("remediate", {})
-        assert should_skip is False
-        assert reason is None
-
-    def test_should_skip_stage_returns_false_for_other_stages(self, workflow):
-        """should_skip_stage should return False for non-remediate stages."""
-        should_skip, reason = workflow.should_skip_stage("triage", {})
-        assert should_skip is False
-
-    def test_analyze_finding_returns_correct_analysis(self, workflow):
-        """_analyze_finding should return correct analysis text."""
-        finding = {"type": "sql_injection"}
-        analysis = workflow._analyze_finding(finding)
-        assert "SQL injection" in analysis
-
-        finding = {"type": "xss"}
-        analysis = workflow._analyze_finding(finding)
-        assert "XSS" in analysis
-
-    def test_get_remediation_action_returns_correct_action(self, workflow):
-        """_get_remediation_action should return correct action text."""
-        finding = {"type": "sql_injection"}
-        action = workflow._get_remediation_action(finding)
-        assert "parameterized" in action
-
-        finding = {"type": "insecure_random"}
-        action = workflow._get_remediation_action(finding)
-        assert "secrets" in action.lower()
-
-    @pytest.mark.asyncio
-    async def test_triage_scans_files(self, workflow, temp_dir):
-        """Triage stage should scan files and find vulnerabilities."""
-        # Create a test file with a vulnerability
-        test_file = temp_dir / "vulnerable.py"
-        test_file.write_text('password = "hardcoded123"')
-
-        result, in_tokens, out_tokens = await workflow._triage(
-            {"path": str(temp_dir), "file_types": [".py"]},
-            ModelTier.CHEAP,
-        )
-
-        assert "findings" in result
-        assert result["files_scanned"] >= 1
-
-    @pytest.mark.asyncio
-    async def test_triage_skips_directories(self, workflow, temp_dir):
-        """Triage stage should skip directories in SKIP_DIRECTORIES."""
-        # Create a node_modules directory with a file
-        node_modules = temp_dir / "node_modules"
-        node_modules.mkdir()
-        (node_modules / "vulnerable.py").write_text('password = "secret123"')
-
-        result, _, _ = await workflow._triage(
-            {"path": str(temp_dir), "file_types": [".py"]},
-            ModelTier.CHEAP,
-        )
-
-        # The file in node_modules should be skipped
-        for finding in result.get("findings", []):
-            assert "node_modules" not in finding.get("file", "")
-
-    @pytest.mark.asyncio
-    async def test_analyze_applies_team_decisions(self, mock_team_decisions):
-        """Analyze stage should apply team decisions."""
-        workflow = SecurityAuditWorkflow(patterns_dir=str(mock_team_decisions))
-
-        input_data = {
-            "findings": [
-                {"type": "insecure_random", "file": "test.py", "line": 1, "severity": "medium"},
-            ],
-        }
-
-        result, _, _ = await workflow._analyze(input_data, ModelTier.CAPABLE)
-
-        analyzed = result["analyzed_findings"][0]
-        assert analyzed["status"] == "false_positive"
-        assert analyzed["decided_by"] == "@mike"
-
-    @pytest.mark.asyncio
-    async def test_assess_calculates_risk_score(self, workflow):
-        """Assess stage should calculate risk score."""
-        input_data = {
-            "needs_review": [
-                {"type": "sql_injection", "severity": "critical", "owasp": "A03:2021 Injection"},
-                {"type": "xss", "severity": "high", "owasp": "A03:2021 Injection"},
-            ],
-        }
-
-        result, _, _ = await workflow._assess(input_data, ModelTier.CAPABLE)
-
-        assert "assessment" in result
-        assert result["assessment"]["risk_score"] > 0
-        assert result["assessment"]["severity_breakdown"]["critical"] == 1
-        assert result["assessment"]["severity_breakdown"]["high"] == 1
-
-    @pytest.mark.asyncio
-    async def test_assess_sets_has_critical_flag(self, workflow):
-        """Assess stage should set _has_critical flag."""
-        input_data = {
-            "needs_review": [
-                {"type": "sql_injection", "severity": "critical", "owasp": "A03:2021 Injection"},
-            ],
-        }
-
-        await workflow._assess(input_data, ModelTier.CAPABLE)
-        assert workflow._has_critical is True
-
     def test_format_security_report_generates_output(self, sample_findings):
         """format_security_report should generate formatted output."""
         output = {
@@ -1028,56 +742,3 @@ class TestIntegration:
         report = format_security_report(output)
 
         assert "All clear" in report
-
-    def test_merge_crew_remediation_adds_crew_section(self, workflow_with_crew):
-        """_merge_crew_remediation should add crew section."""
-        llm_response = "Base remediation plan"
-        crew_remediation = {
-            "findings": [
-                {
-                    "title": "SQL Injection",
-                    "severity": "critical",
-                    "remediation": "Use parameterized queries",
-                    "cwe_id": "CWE-89",
-                },
-            ],
-            "agents_used": ["vulnerability_scanner", "remediation_expert"],
-        }
-
-        result = workflow_with_crew._merge_crew_remediation(llm_response, crew_remediation)
-
-        assert "Enhanced Remediation" in result
-        assert "SecurityAuditCrew" in result
-        assert "SQL Injection" in result
-        assert "CWE-89" in result
-
-    def test_merge_crew_remediation_handles_empty_findings(self, workflow_with_crew):
-        """_merge_crew_remediation should handle empty crew findings."""
-        llm_response = "Base remediation plan"
-        crew_remediation = {"findings": [], "agents_used": []}
-
-        result = workflow_with_crew._merge_crew_remediation(llm_response, crew_remediation)
-
-        assert result == llm_response
-
-    @pytest.mark.asyncio
-    async def test_run_stage_routes_correctly(self, workflow):
-        """run_stage should route to correct stage implementation."""
-        # Mock the stage methods
-        workflow._triage = AsyncMock(return_value=({"stage": "triage"}, 100, 50))
-        workflow._analyze = AsyncMock(return_value=({"stage": "analyze"}, 100, 50))
-        workflow._assess = AsyncMock(return_value=({"stage": "assess"}, 100, 50))
-        workflow._remediate = AsyncMock(return_value=({"stage": "remediate"}, 100, 50))
-
-        result, _, _ = await workflow.run_stage("triage", ModelTier.CHEAP, {})
-        assert result["stage"] == "triage"
-        workflow._triage.assert_called_once()
-
-        result, _, _ = await workflow.run_stage("analyze", ModelTier.CAPABLE, {})
-        assert result["stage"] == "analyze"
-
-    @pytest.mark.asyncio
-    async def test_run_stage_raises_for_unknown_stage(self, workflow):
-        """run_stage should raise ValueError for unknown stage."""
-        with pytest.raises(ValueError, match="Unknown stage"):
-            await workflow.run_stage("unknown_stage", ModelTier.CAPABLE, {})

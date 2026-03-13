@@ -1,36 +1,40 @@
-"""Performance Audit Workflow
+"""Performance Audit Workflow — Agent SDK Native.
 
-Identifies performance bottlenecks and optimization opportunities
-through static analysis.
+Delegates performance auditing to three specialized Claude Agent SDK
+subagents (complexity-analyzer, bottleneck-finder, optimization-advisor)
+and synthesizes their findings into a unified WorkflowResult.
 
-Stages:
-1. profile (CHEAP) - Static analysis for common perf anti-patterns
-2. analyze (CAPABLE) - Deep analysis of algorithmic complexity
-3. hotspots (CAPABLE) - Identify performance hotspots
-4. optimize (PREMIUM) - Generate optimization recommendations (conditional)
+Prior to v4.2.0 this was a mixin-based multi-stage pipeline. The
+SDK-native implementation replaces that with `claude_agent_sdk.query()`
+and `AgentDefinition` subagents while preserving the same public
+interface (`PerformanceAuditWorkflow`, `perf-audit` slug) and
+re-exports used by downstream code.
 
-Copyright 2025 Smart-AI-Memory
+Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import claude_agent_sdk
+
+from .agent_sdk_adapter import AgentSDKResultAdapter
 from .base import BaseWorkflow, ModelTier
-from .context import WorkflowContext
-from .output import get_console
-from .perf_audit_optimize_mixin import PerfAuditOptimizeMixin
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .perf_audit_patterns import (
-    OPTIMIZATION_ACTIONS,
-    PERF_AUDIT_STEPS,
-    PERF_PATTERNS,
+    OPTIMIZATION_ACTIONS,  # noqa: F401 — re-exported
+    PERF_AUDIT_STEPS,  # noqa: F401 — re-exported
+    PERF_PATTERNS,  # noqa: F401 — re-exported
 )
 from .perf_audit_report import (
-    create_perf_audit_workflow_report,
-    format_perf_audit_report,
+    create_perf_audit_workflow_report,  # noqa: F401 — re-exported
+    format_perf_audit_report,  # noqa: F401 — re-exported
 )
-from .perf_audit_stages_mixin import PerfAuditAnalysisMixin
-from .services import ParsingService, PromptService
-from .validation import InputSchema
+
+logger = logging.getLogger(__name__)
 
 # Re-export public API for backward compatibility
 __all__ = [
@@ -42,104 +46,240 @@ __all__ = [
     "main",
 ]
 
+# Depth → max agent turns mapping
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
 
-class PerformanceAuditWorkflow(PerfAuditOptimizeMixin, PerfAuditAnalysisMixin, BaseWorkflow):
-    """Identify performance bottlenecks and optimization opportunities.
+_SUBAGENT_NAMES = [
+    "complexity-analyzer",
+    "bottleneck-finder",
+    "optimization-advisor",
+]
 
-    Uses static analysis to find common performance anti-patterns
-    and algorithmic complexity issues.
+_MAIN_PROMPT_TEMPLATE = """\
+You are a senior performance audit orchestrator. Audit the codebase at \
+{path} using the three specialized subagents below. Each subagent should \
+focus on its domain and report findings as structured markdown.
 
-    Supports composition via ``WorkflowContext`` -- use
-    ``default_context()`` to get a pre-configured context with
-    prompt and parsing services.
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall performance health score (0-100) and a 2-3 sentence executive \
+summary.
+
+## Performance
+Key performance findings across the codebase.
+
+## Complexity
+Findings from the complexity analyzer — cyclomatic complexity, nesting \
+depth, and oversized functions.
+
+## Optimization
+Findings from the bottleneck finder and optimization advisor — N+1 \
+patterns, unnecessary list copies, blocking I/O, missing caching, and \
+prioritized suggestions with estimated impact.
+
+## Suggestions
+Actionable next steps ordered by estimated performance impact.
+
+Be thorough but concise. Cite file paths and line numbers when possible.\
+"""
+
+
+class PerformanceAuditWorkflow(BaseWorkflow):
+    """SDK-native performance audit with three specialized subagents.
+
+    Delegates all analysis to Claude Agent SDK subagents:
+    - **complexity-analyzer** — cyclomatic complexity, nesting depth,
+      oversized functions
+    - **bottleneck-finder** — N+1 patterns, list copies, blocking I/O,
+      missing caching
+    - **optimization-advisor** — prioritized fixes with effort estimates
+
+    The orchestrator synthesizes findings into a unified report.
+
+    Usage::
+
+        workflow = PerformanceAuditWorkflow()
+        result = await workflow.execute(path="src/", depth="standard")
     """
 
     name = "perf-audit"
-    description = "Identify performance bottlenecks and optimization opportunities"
-    stages = ["profile", "analyze", "hotspots", "optimize"]
-    tier_map = {
-        "profile": ModelTier.CHEAP,
-        "analyze": ModelTier.CAPABLE,
-        "hotspots": ModelTier.CAPABLE,
-        "optimize": ModelTier.PREMIUM,
-    }
-    input_schema = InputSchema(
-        required_fields={"path": str},
-    )
+    description = "Agent SDK-powered performance audit with 3 specialized " "subagents"
+    stages = ["agent-audit"]
+    tier_map = {"agent-audit": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        min_hotspots_for_premium: int = 3,
-        enable_auth_strategy: bool = True,
-        **kwargs: Any,
-    ):
-        """Initialize performance audit workflow.
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize workflow.
 
         Args:
-            min_hotspots_for_premium: Minimum hotspots to
-                trigger premium optimization
-            enable_auth_strategy: Enable intelligent auth
-                routing (default: True)
-            **kwargs: Additional arguments passed to
-                BaseWorkflow
-
+            **kwargs: Passed to BaseWorkflow.__init__().
         """
         super().__init__(**kwargs)
-        self.min_hotspots_for_premium = min_hotspots_for_premium
-        self.enable_auth_strategy = enable_auth_strategy
-        self._hotspot_count: int = 0
-        self._auth_mode_used: str | None = None
 
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for performance auditing.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK performance audit.
 
         Args:
-            xml_config: Optional XML prompt configuration dict.
-                Defaults to XML disabled -- benchmarks on
-                Claude 4.x show +30% cost overhead with no
-                quality improvement for perf audit.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to audit.
+                depth (str): Audit depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        if xml_config is None:
-            xml_config = {"enabled": False}
-        return WorkflowContext(
-            prompt=PromptService("perf-audit", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
+
+        if not path_arg:
+            return self._error_result("path argument is required")
+
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+
+        started_at = datetime.now()
+
+        try:
+            result_text = await self._run_agent_audit(resolved_path, max_turns)
+            completed_at = datetime.now()
+
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+            )
+
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to
+            # return a structured WorkflowResult rather than
+            # crashing the CLI.
+            logger.exception(
+                "Agent SDK perf audit failed: %s",
+                type(exc).__name__,
+            )
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_audit(self, resolved_path: str, max_turns: int) -> str:
+        """Run the Agent SDK audit and return result text.
+
+        Args:
+            resolved_path: Absolute path to audit.
+            max_turns: Maximum agent turns.
+
+        Returns:
+            The agent's final result text.
+        """
+        result_parts: list[str] = []
+        async for message in claude_agent_sdk.query(
+            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                cwd=resolved_path,
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "complexity-analyzer": claude_agent_sdk.AgentDefinition(
+                        description=(
+                            "Complexity analyzer that measures " "code complexity metrics."
+                        ),
+                        prompt=(
+                            "You are a complexity analyzer. Focus "
+                            "on: cyclomatic complexity, nesting "
+                            "depth, large functions (>50 lines), "
+                            "overly complex conditionals, and deep "
+                            "class hierarchies. Report each finding "
+                            "with file path, line number, metric "
+                            "value, and simplification advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "bottleneck-finder": claude_agent_sdk.AgentDefinition(
+                        description=("Bottleneck finder that identifies " "performance issues."),
+                        prompt=(
+                            "You are a bottleneck finder. Focus "
+                            "on: N+1 query patterns, unnecessary "
+                            "list copies, blocking I/O in async "
+                            "code, missing caching opportunities, "
+                            "and inefficient data structures. "
+                            "Report each finding with file path, "
+                            "estimated performance impact, and a "
+                            "concrete fix."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "optimization-advisor": claude_agent_sdk.AgentDefinition(
+                        description=(
+                            "Optimization advisor that prioritizes " "and recommends fixes."
+                        ),
+                        prompt=(
+                            "You are an optimization advisor. "
+                            "Review the findings from the "
+                            "complexity analyzer and bottleneck "
+                            "finder. Prioritize them by estimated "
+                            "impact (high/medium/low), suggest "
+                            "concrete optimizations with code "
+                            "examples, and estimate the effort "
+                            "required for each fix."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result)
+
+        return "\n".join(result_parts) if result_parts else "No results returned."
+
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-audit",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK performance audit",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )
-
-    def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
-        """Downgrade optimize stage if few hotspots.
-
-        Args:
-            stage_name: Name of the stage to check
-            input_data: Current workflow data
-
-        Returns:
-            Tuple of (should_skip, reason)
-
-        """
-        if stage_name == "optimize":
-            if self._hotspot_count < self.min_hotspots_for_premium:
-                self.tier_map["optimize"] = ModelTier.CAPABLE
-                return False, None
-        return False, None
-
-    def _get_optimization_action(self, concern: str) -> dict | None:
-        """Generate specific optimization action for a concern type.
-
-        Args:
-            concern: The concern type identifier
-
-        Returns:
-            Action dict with action, description, and
-            estimated_impact, or None if unknown concern.
-
-        """
-        return OPTIMIZATION_ACTIONS.get(concern)
 
 
 def main() -> None:
@@ -147,46 +287,18 @@ def main() -> None:
     import asyncio
 
     async def run() -> None:
-        """Run the performance audit analysis stage."""
+        """Run the performance audit."""
         workflow = PerformanceAuditWorkflow()
-        result = await workflow.execute(path=".", file_types=[".py"])
+        result = await workflow.execute(path=".", depth="standard")
+        output = result.final_output or {}
 
-        output = result.final_output
-
-        # Try Rich output first
-        console = get_console()
-        workflow_report = output.get("workflow_report")
-
-        if console and workflow_report:
-            # Render with Rich
-            workflow_report.render(console, use_rich=True)
-            console.print()
-            console.print(f"[dim]Provider: {result.provider}[/dim]")
-            console.print("[dim]Cost: " f"${result.cost_report.total_cost:.4f}" "[/dim]")
-            savings = result.cost_report.savings
-            pct = result.cost_report.savings_percent
-            console.print(f"[dim]Savings: ${savings:.4f} ({pct:.1f}%)[/dim]")
-        else:
-            # Fallback to plain text
-            print("\nPerformance Audit Results")
-            print("=" * 50)
-            print(f"Provider: {result.provider}")
-            print(f"Success: {result.success}")
-
-            print("Performance Level: " f"{output.get('perf_level', 'N/A')}")
-            print("Performance Score: " f"{output.get('perf_score', 0)}/100")
-            print("Recommendations: " f"{output.get('recommendation_count', 0)}")
-
-            if output.get("top_issues"):
-                print("\nTop Issues:")
-                for issue in output["top_issues"]:
-                    print(f"  - {issue['type']}: {issue['count']} occurrences")
-
-            print("\nCost Report:")
-            print("  Total Cost: " f"${result.cost_report.total_cost:.4f}")
-            savings = result.cost_report.savings
-            pct = result.cost_report.savings_percent
-            print(f"  Savings: ${savings:.4f} ({pct:.1f}%)")
+        print("\nPerformance Audit Results")
+        print("=" * 50)
+        print(f"Success: {result.success}")
+        if result.error:
+            print(f"Error: {result.error}")
+        elif output:
+            print(output)
 
     asyncio.run(run())
 
