@@ -1,12 +1,10 @@
 """Anthropic Agent SDK integration.
 
-Provides ``SDKAgent`` and ``SDKAgentTeam`` that wrap the optional
-``claude-agent-sdk`` package while preserving attune's tier escalation,
+Provides ``SDKAgent`` and ``SDKAgentTeam`` that wrap
+``claude-agent-sdk`` while preserving attune's tier escalation,
 heartbeats, and persistent state patterns.
 
-Install the SDK extra to enable::
-
-    pip install attune-ai[agent-sdk]
+The SDK is a core dependency as of v4.2.0.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0

@@ -46,38 +46,6 @@ class TestRefactorPlanAgentSDKWorkflowAttributes:
 
 
 @pytest.mark.unit
-class TestRefactorPlanAgentSDKWorkflowSdkUnavailable:
-    """Test behavior when claude_agent_sdk is not installed."""
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_sdk_unavailable(self) -> None:
-        """Given SDK unavailable, execute returns WorkflowResult with success=False."""
-        from attune.workflows.refactor_plan_agent_sdk import RefactorPlanAgentSDKWorkflow
-
-        wf = RefactorPlanAgentSDKWorkflow()
-
-        with patch("attune.workflows.refactor_plan_agent_sdk._SDK_AVAILABLE", False):
-            result = await wf.execute(path="src/")
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "claude-agent-sdk not installed" in (result.error or "")
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_path_missing(self) -> None:
-        """Given no path argument, execute returns WorkflowResult with error."""
-        from attune.workflows.refactor_plan_agent_sdk import RefactorPlanAgentSDKWorkflow
-
-        wf = RefactorPlanAgentSDKWorkflow()
-
-        result = await wf.execute()
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "path" in (result.error or "").lower()
-
-
-@pytest.mark.unit
 class TestRefactorPlanAgentSDKWorkflowExecution:
     """Test successful execution with mocked SDK."""
 
@@ -104,7 +72,6 @@ class TestRefactorPlanAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.refactor_plan_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.refactor_plan_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -133,7 +100,6 @@ class TestRefactorPlanAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.refactor_plan_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.refactor_plan_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -172,7 +138,6 @@ class TestRefactorPlanAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.refactor_plan_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.refactor_plan_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -199,7 +164,6 @@ class TestRefactorPlanAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.refactor_plan_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.refactor_plan_agent_sdk.claude_agent_sdk",
                 mock_sdk,

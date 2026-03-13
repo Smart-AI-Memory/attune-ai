@@ -1,8 +1,7 @@
 """Data models for Anthropic Agent SDK integration.
 
-Defines result types, execution modes, and SDK availability detection.
-The SDK is an optional dependency; all code gracefully degrades when
-it is not installed.
+Defines result types, execution modes, and constants.
+The SDK is a core dependency as of v4.2.0.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -14,16 +13,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-# ---------------------------------------------------------------------------
-# Optional SDK import
-# ---------------------------------------------------------------------------
-SDK_AVAILABLE = False
-try:
-    import claude_agent_sdk  # noqa: F401
+import claude_agent_sdk  # noqa: F401
 
-    SDK_AVAILABLE = True
-except ImportError:
-    pass
+# Kept for backward compatibility — always True since v4.2.0
+SDK_AVAILABLE = True
 
 
 # ---------------------------------------------------------------------------

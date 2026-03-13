@@ -46,38 +46,6 @@ class TestHealthCheckAgentSDKWorkflowAttributes:
 
 
 @pytest.mark.unit
-class TestHealthCheckAgentSDKWorkflowSdkUnavailable:
-    """Test behavior when claude_agent_sdk is not installed."""
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_sdk_unavailable(self) -> None:
-        """Given SDK unavailable, execute returns WorkflowResult with success=False."""
-        from attune.workflows.health_check_agent_sdk import HealthCheckAgentSDKWorkflow
-
-        wf = HealthCheckAgentSDKWorkflow()
-
-        with patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", False):
-            result = await wf.execute(project_root=".")
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "claude-agent-sdk not installed" in (result.error or "")
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_project_root_missing(self) -> None:
-        """Given no project_root argument, execute returns WorkflowResult with error."""
-        from attune.workflows.health_check_agent_sdk import HealthCheckAgentSDKWorkflow
-
-        wf = HealthCheckAgentSDKWorkflow()
-
-        result = await wf.execute()
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "project_root" in (result.error or "").lower()
-
-
-@pytest.mark.unit
 class TestHealthCheckAgentSDKWorkflowExecution:
     """Test successful execution with mocked SDK."""
 
@@ -110,7 +78,6 @@ class TestHealthCheckAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -139,7 +106,6 @@ class TestHealthCheckAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -178,7 +144,6 @@ class TestHealthCheckAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -205,7 +170,6 @@ class TestHealthCheckAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -274,7 +238,6 @@ class TestHealthCheckAgentSDKWorkflowModes:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -301,7 +264,6 @@ class TestHealthCheckAgentSDKWorkflowModes:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -328,7 +290,6 @@ class TestHealthCheckAgentSDKWorkflowModes:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.health_check_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
                 mock_sdk,

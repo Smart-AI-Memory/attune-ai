@@ -46,38 +46,6 @@ class TestTestAuditAgentSDKWorkflowAttributes:
 
 
 @pytest.mark.unit
-class TestTestAuditAgentSDKWorkflowSdkUnavailable:
-    """Test behavior when claude_agent_sdk is not installed."""
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_sdk_unavailable(self) -> None:
-        """Given SDK unavailable, execute returns WorkflowResult with success=False."""
-        from attune.workflows.test_audit_agent_sdk import TestAuditAgentSDKWorkflow
-
-        wf = TestAuditAgentSDKWorkflow()
-
-        with patch("attune.workflows.test_audit_agent_sdk._SDK_AVAILABLE", False):
-            result = await wf.execute(src_path="src/")
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "claude-agent-sdk not installed" in (result.error or "")
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_src_path_missing(self) -> None:
-        """Given no src_path argument, execute returns WorkflowResult with error."""
-        from attune.workflows.test_audit_agent_sdk import TestAuditAgentSDKWorkflow
-
-        wf = TestAuditAgentSDKWorkflow()
-
-        result = await wf.execute()
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "src_path" in (result.error or "").lower()
-
-
-@pytest.mark.unit
 class TestTestAuditAgentSDKWorkflowExecution:
     """Test successful execution with mocked SDK."""
 
@@ -107,7 +75,6 @@ class TestTestAuditAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.test_audit_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.test_audit_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -136,7 +103,6 @@ class TestTestAuditAgentSDKWorkflowExecution:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.test_audit_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.test_audit_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -175,7 +141,6 @@ class TestTestAuditAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.test_audit_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.test_audit_agent_sdk.claude_agent_sdk",
                 mock_sdk,
@@ -202,7 +167,6 @@ class TestTestAuditAgentSDKWorkflowDepth:
         mock_sdk.AgentDefinition = MagicMock()
 
         with (
-            patch("attune.workflows.test_audit_agent_sdk._SDK_AVAILABLE", True),
             patch(
                 "attune.workflows.test_audit_agent_sdk.claude_agent_sdk",
                 mock_sdk,

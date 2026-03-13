@@ -546,13 +546,11 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   when suppressing the original. After fixing all violations,
   remove B904 from the ruff ignore list to enforce going forward.
 
-- **`claude-agent-sdk` is a standalone PyPI package, not bundled
-  with Claude Code**: The Agent SDK (`pip install claude-agent-sdk`)
-  is independently versioned and published on PyPI. It is not part
-  of the `anthropic` package or the Claude Code CLI. The optional
-  extra `attune-ai[agent-sdk]` installs it. Check availability at
-  runtime with `import claude_agent_sdk` and the `_SDK_AVAILABLE`
-  module-level guard pattern.
+- **`claude-agent-sdk` is now a core dependency of attune-ai**:
+  As of v4.2.0, the Agent SDK is included in core dependencies.
+  No need for `pip install 'attune-ai[agent-sdk]'` — a plain
+  `pip install attune-ai` includes it. The `[agent-sdk]` extra
+  is kept as an empty placeholder for backward compatibility.
 
 - **`list_workflows()` deduplication must keep base names visible**:
   When hiding SDK duplicates, only skip entries in `_SDK_REVERSE_MAP`

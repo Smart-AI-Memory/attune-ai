@@ -21,8 +21,10 @@ heartbeats, and persistent state patterns.
 
 ## Installation
 
+The Agents SDK is included with attune-ai:
+
 ```bash
-pip install attune-ai[agent-sdk]
+pip install attune-ai
 ```
 
 ## Usage

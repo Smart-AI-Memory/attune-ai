@@ -15,20 +15,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import claude_agent_sdk
+
 from .agent_sdk_adapter import AgentSDKResultAdapter
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
 
 logger = logging.getLogger(__name__)
 
-# Module-level availability guard for claude_agent_sdk
-_SDK_AVAILABLE = False
-try:
-    import claude_agent_sdk  # type: ignore[import-untyped]
-
-    _SDK_AVAILABLE = True
-except ImportError:
-    claude_agent_sdk = None  # type: ignore[assignment]
 
 _DEPTH_MAX_TURNS: dict[str, int] = {
     "quick": 10,
@@ -105,11 +99,6 @@ class ResearchSynthesisAgentSDKWorkflow(BaseWorkflow):
 
         if not path_arg:
             return self._error_result("path argument is required")
-
-        if not _SDK_AVAILABLE:
-            return self._error_result(
-                "claude-agent-sdk not installed. " "Install with: pip install claude-agent-sdk"
-            )
 
         resolved_path = str(Path(path_arg).resolve())
         max_turns = _DEPTH_MAX_TURNS.get(depth, 20)

@@ -507,30 +507,19 @@ def get_opt_in_workflows() -> dict[str, type]:
 # Do NOT call discover_workflows() here - it defeats lazy loading
 
 
-def _is_sdk_available() -> bool:
-    """Check if claude_agent_sdk is installed and importable."""
-    try:
-        import claude_agent_sdk  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
 def get_workflow(name: str) -> type[BaseWorkflow]:
-    """Get a workflow class by name, preferring SDK variant when available.
+    """Get a workflow class by name, routing to SDK variant automatically.
 
     When the user requests a base workflow (e.g. ``"security-audit"``),
     this function automatically routes to the SDK variant
-    (``"security-audit-sdk"``) if ``claude_agent_sdk`` is installed.
-    If the user explicitly requests an ``-sdk`` suffix, it is used
-    directly without re-mapping.
+    (``"security-audit-sdk"``). If the user explicitly requests an
+    ``-sdk`` suffix, it is used directly without re-mapping.
 
     Args:
         name: Workflow name (e.g., "research", "code-review", "doc-gen")
 
     Returns:
-        Workflow class (SDK variant when available, API otherwise)
+        Workflow class (SDK variant for mapped workflows)
 
     Raises:
         KeyError: If workflow not found
@@ -538,10 +527,10 @@ def get_workflow(name: str) -> type[BaseWorkflow]:
     """
     _ensure_registry_initialized()
 
-    # Auto-resolve to SDK variant when available
+    # Auto-resolve to SDK variant
     sdk_variant = _SDK_WORKFLOW_MAP.get(name)
-    if sdk_variant and sdk_variant in WORKFLOW_REGISTRY and _is_sdk_available():
-        logger.debug("Routing %s → %s (Agent SDK available)", name, sdk_variant)
+    if sdk_variant and sdk_variant in WORKFLOW_REGISTRY:
+        logger.debug("Routing %s → %s", name, sdk_variant)
         return WORKFLOW_REGISTRY[sdk_variant]
 
     if name not in WORKFLOW_REGISTRY:
@@ -553,15 +542,18 @@ def get_workflow(name: str) -> type[BaseWorkflow]:
 def is_using_api_fallback(name: str) -> bool:
     """Check if a workflow name would use the API fallback (not SDK).
 
+    .. deprecated::
+        Always returns False since claude-agent-sdk is now a core
+        dependency. Kept for backward compatibility.
+
     Args:
         name: Workflow name the user requested.
 
     Returns:
-        True if the name has an SDK variant but will use the API
-        version because the SDK is not installed.
+        Always False — SDK is always available.
 
     """
-    return name in _SDK_WORKFLOW_MAP and not _is_sdk_available()
+    return False
 
 
 def list_workflows(*, show_all: bool = False) -> list[dict]:
@@ -580,13 +572,12 @@ def list_workflows(*, show_all: bool = False) -> list[dict]:
 
     """
     _ensure_registry_initialized()
-    sdk_available = _is_sdk_available()
 
     workflows = []
     for name, cls in WORKFLOW_REGISTRY.items():
         # When hiding duplicates, only skip the explicit -sdk entries.
         # Users see base names (e.g. "security-audit") and the resolver
-        # routes to the SDK variant transparently when available.
+        # routes to the SDK variant transparently.
         if not show_all and name in _SDK_REVERSE_MAP:
             continue
 
@@ -594,13 +585,8 @@ def list_workflows(*, show_all: bool = False) -> list[dict]:
         tier_map = getattr(cls, "tier_map", {})
         description = getattr(cls, "description", "No description")
 
-        # Determine which engine is active for display
-        if name in _SDK_WORKFLOW_MAP and sdk_available:
-            engine = "sdk"
-        elif name in _SDK_WORKFLOW_MAP:
-            engine = "api"
-        else:
-            engine = "native"
+        # Determine engine for display
+        engine = "sdk" if name in _SDK_WORKFLOW_MAP else "native"
 
         workflows.append(
             {

@@ -1,11 +1,11 @@
 """Adapter mixin for SDK tool integration.
 
-Provides ``SDKToolsMixin`` that existing agents can mix in to optionally
-use Agent SDK-style tools (Read, Bash, Glob) instead of
+Provides ``SDKToolsMixin`` that existing agents can mix in to use
+Agent SDK-style tools (Read, Bash, Glob) instead of
 ``subprocess.run()`` for file operations.
 
-When the SDK is not installed the mixin methods fall back to the
-standard-library equivalents.
+The SDK is a core dependency as of v4.2.0. Methods try SDK first
+and fall back to standard-library equivalents on errors.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -16,8 +16,6 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-
-from .sdk_models import SDK_AVAILABLE
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +32,9 @@ class SDKToolsMixin:
                 rc, out, err = self._sdk_bash(["pytest", "-v"])
                 ...
 
-    When the Agent SDK is available the mixin delegates to the SDK's
-    native file-system tools.  Otherwise it falls back to built-in
-    Python (``Path.read_text``, ``Path.glob``, ``subprocess.run``).
+    Delegates to the SDK's native file-system tools, falling back
+    to built-in Python (``Path.read_text``, ``Path.glob``,
+    ``subprocess.run``) on errors.
     """
 
     def _sdk_read_file(self, file_path: str) -> str:
@@ -49,15 +47,14 @@ class SDKToolsMixin:
             File contents as a string, or empty string on failure.
 
         """
-        if SDK_AVAILABLE:
-            try:
-                import claude_agent_sdk  # type: ignore[import-untyped]
+        try:
+            import claude_agent_sdk  # type: ignore[import-untyped]
 
-                result = claude_agent_sdk.tools.read(file_path)
-                return str(result)
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Fall back to stdlib on any SDK error
-                logger.debug(f"SDK read failed, using fallback: {e}")
+            result = claude_agent_sdk.tools.read(file_path)
+            return str(result)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Fall back to stdlib on any SDK error
+            logger.debug(f"SDK read failed, using fallback: {e}")
 
         try:
             return Path(file_path).read_text(encoding="utf-8")
@@ -76,17 +73,16 @@ class SDKToolsMixin:
             List of matching file paths as strings.
 
         """
-        if SDK_AVAILABLE:
-            try:
-                import claude_agent_sdk  # type: ignore[import-untyped]
+        try:
+            import claude_agent_sdk  # type: ignore[import-untyped]
 
-                result = claude_agent_sdk.tools.glob(pattern, path=root)
-                if isinstance(result, list):
-                    return [str(p) for p in result]
-                return [str(result)]
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Fall back to stdlib on any SDK error
-                logger.debug(f"SDK glob failed, using fallback: {e}")
+            result = claude_agent_sdk.tools.glob(pattern, path=root)
+            if isinstance(result, list):
+                return [str(p) for p in result]
+            return [str(result)]
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Fall back to stdlib on any SDK error
+            logger.debug(f"SDK glob failed, using fallback: {e}")
 
         try:
             matches = sorted(Path(root).glob(pattern))
@@ -107,19 +103,18 @@ class SDKToolsMixin:
             Tuple of (return_code, stdout, stderr).
 
         """
-        if SDK_AVAILABLE:
-            try:
-                import claude_agent_sdk  # type: ignore[import-untyped]
+        try:
+            import claude_agent_sdk  # type: ignore[import-untyped]
 
-                result = claude_agent_sdk.tools.bash(
-                    " ".join(cmd),
-                    cwd=cwd,
-                    timeout=timeout * 1000,
-                )
-                return 0, str(result), ""
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Fall back to subprocess on any SDK error
-                logger.debug(f"SDK bash failed, using fallback: {e}")
+            result = claude_agent_sdk.tools.bash(
+                " ".join(cmd),
+                cwd=cwd,
+                timeout=timeout * 1000,
+            )
+            return 0, str(result), ""
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Fall back to subprocess on any SDK error
+            logger.debug(f"SDK bash failed, using fallback: {e}")
 
         try:
             result = subprocess.run(

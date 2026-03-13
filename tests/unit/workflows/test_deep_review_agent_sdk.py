@@ -1,8 +1,8 @@
 """Behavioral tests for DeepReviewAgentSDKWorkflow.
 
 Tests the multi-pass deep review workflow covering attributes,
-SDK unavailability, successful execution, depth configuration,
-focus filtering, and subagent definitions.
+successful execution, depth configuration, focus filtering,
+and subagent definitions.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -71,44 +71,6 @@ class TestDeepReviewAttributes:
 
 
 @pytest.mark.unit
-class TestDeepReviewSdkUnavailable:
-    """Test behavior when claude_agent_sdk is not installed."""
-
-    @pytest.mark.asyncio
-    async def test_returns_failure_when_sdk_unavailable(self) -> None:
-        """Given SDK unavailable, execute returns success=False."""
-        from attune.workflows.deep_review_agent_sdk import (
-            DeepReviewAgentSDKWorkflow,
-        )
-
-        wf = DeepReviewAgentSDKWorkflow()
-
-        with patch(
-            "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-            False,
-        ):
-            result = await wf.execute(path="src/")
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "claude-agent-sdk not installed" in (result.error or "")
-
-    @pytest.mark.asyncio
-    async def test_returns_failure_when_path_missing(self) -> None:
-        """Given no path argument, execute returns error."""
-        from attune.workflows.deep_review_agent_sdk import (
-            DeepReviewAgentSDKWorkflow,
-        )
-
-        wf = DeepReviewAgentSDKWorkflow()
-        result = await wf.execute()
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "path" in (result.error or "").lower()
-
-
-@pytest.mark.unit
 class TestDeepReviewExecution:
     """Test successful execution with mocked SDK."""
 
@@ -120,15 +82,9 @@ class TestDeepReviewExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -152,15 +108,9 @@ class TestDeepReviewExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -179,15 +129,9 @@ class TestDeepReviewExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -208,15 +152,9 @@ class TestDeepReviewExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -249,15 +187,9 @@ class TestDeepReviewDepth:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -278,15 +210,9 @@ class TestDeepReviewDepth:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -312,15 +238,9 @@ class TestDeepReviewFocus:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -341,15 +261,9 @@ class TestDeepReviewFocus:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch(
-                "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-                True,
-            ),
-            patch(
-                "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.deep_review_agent_sdk.claude_agent_sdk",
+            mock_sdk,
         ):
             from attune.workflows.deep_review_agent_sdk import (
                 DeepReviewAgentSDKWorkflow,
@@ -368,12 +282,8 @@ class TestDeepReviewFocus:
             DeepReviewAgentSDKWorkflow,
         )
 
-        with patch(
-            "attune.workflows.deep_review_agent_sdk._SDK_AVAILABLE",
-            True,
-        ):
-            wf = DeepReviewAgentSDKWorkflow()
-            result = await wf.execute(path="src/", focus=["invalid"])
+        wf = DeepReviewAgentSDKWorkflow()
+        result = await wf.execute(path="src/", focus=["invalid"])
 
         assert result.success is False
         assert "Invalid focus" in (result.error or "")

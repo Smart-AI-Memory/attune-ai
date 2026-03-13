@@ -290,9 +290,8 @@ class TestCmdWorkflowInfo:
 class TestCmdWorkflowRunNotFound:
     """Tests for cmd_workflow_run when workflow is not found."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_not_found_returns_one(self, mock_get, _mock_fallback, capsys):
+    def test_run_not_found_returns_one(self, mock_get, capsys):
         """Test that running a nonexistent workflow returns 1."""
         mock_get.side_effect = KeyError("Unknown workflow: missing-workflow")
 
@@ -309,9 +308,8 @@ class TestCmdWorkflowRunNotFound:
 class TestCmdWorkflowRunInputParsing:
     """Tests for JSON input parsing in cmd_workflow_run."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_valid_json_input(self, mock_get, _mock_fallback, capsys):
+    def test_run_valid_json_input(self, mock_get, capsys):
         """Test that valid JSON input is parsed and passed to execute."""
         call_kwargs = {}
 
@@ -333,9 +331,8 @@ class TestCmdWorkflowRunInputParsing:
         assert call_kwargs["key"] == "value"
         assert call_kwargs["count"] == 42
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_invalid_json_returns_one(self, mock_get, _mock_fallback, capsys):
+    def test_run_invalid_json_returns_one(self, mock_get, capsys):
         """Test that invalid JSON input returns 1 with error message."""
         mock_get.return_value = _make_workflow_class()
 
@@ -348,9 +345,8 @@ class TestCmdWorkflowRunInputParsing:
         captured = capsys.readouterr()
         assert "Invalid JSON input" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_empty_json_object_input(self, mock_get, _mock_fallback, capsys):
+    def test_run_empty_json_object_input(self, mock_get, capsys):
         """Test that '{}' is accepted as valid empty JSON input."""
         mock_get.return_value = _make_workflow_class()
 
@@ -361,9 +357,8 @@ class TestCmdWorkflowRunInputParsing:
 
         assert result == 0
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_no_input_uses_empty_dict(self, mock_get, _mock_fallback, capsys):
+    def test_run_no_input_uses_empty_dict(self, mock_get, capsys):
         """Test that when args.input is None, an empty dict is used."""
         call_kwargs = {}
 
@@ -389,14 +384,12 @@ class TestCmdWorkflowRunInputParsing:
 class TestCmdWorkflowRunPathValidation:
     """Tests for path validation in cmd_workflow_run."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
     def test_run_valid_path_is_validated_and_passed(
         self,
         mock_get,
         mock_validate,
-        _mock_fallback,
         capsys,
         tmp_path,
     ):
@@ -423,10 +416,9 @@ class TestCmdWorkflowRunPathValidation:
         mock_validate.assert_called_once_with(str(valid_path))
         assert call_kwargs["path"] == str(valid_path)
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
-    def test_run_path_traversal_rejected(self, mock_get, mock_validate, _mock_fallback, capsys):
+    def test_run_path_traversal_rejected(self, mock_get, mock_validate, capsys):
         """Test that path traversal is caught and returns 1."""
         mock_validate.side_effect = ValueError("Cannot write to system directory: /etc")
         mock_get.return_value = _make_workflow_class()
@@ -441,10 +433,9 @@ class TestCmdWorkflowRunPathValidation:
         assert "Invalid path" in captured.out
         assert "Cannot write to system directory" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
-    def test_run_null_byte_path_rejected(self, mock_get, mock_validate, _mock_fallback, capsys):
+    def test_run_null_byte_path_rejected(self, mock_get, mock_validate, capsys):
         """Test that null bytes in path are rejected."""
         mock_validate.side_effect = ValueError("path contains null bytes")
         mock_get.return_value = _make_workflow_class()
@@ -458,12 +449,9 @@ class TestCmdWorkflowRunPathValidation:
         captured = capsys.readouterr()
         assert "Invalid path" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
-    def test_run_system_directory_path_rejected(
-        self, mock_get, mock_validate, _mock_fallback, capsys
-    ):
+    def test_run_system_directory_path_rejected(self, mock_get, mock_validate, capsys):
         """Test that system directory paths are rejected."""
         mock_validate.side_effect = ValueError("Cannot write to system directory: /sys")
         mock_get.return_value = _make_workflow_class()
@@ -481,9 +469,8 @@ class TestCmdWorkflowRunPathValidation:
 class TestCmdWorkflowRunTarget:
     """Tests for target argument handling in cmd_workflow_run."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_target_passed_in_input_data(self, mock_get, _mock_fallback, capsys):
+    def test_run_target_passed_in_input_data(self, mock_get, capsys):
         """Test that args.target is added to input_data."""
         call_kwargs = {}
 
@@ -504,9 +491,8 @@ class TestCmdWorkflowRunTarget:
         assert result == 0
         assert call_kwargs["target"] == "src/attune/config.py"
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_no_target_omits_key(self, mock_get, _mock_fallback, capsys):
+    def test_run_no_target_omits_key(self, mock_get, capsys):
         """Test that when target is None, it is not included in input_data."""
         call_kwargs = {}
 
@@ -531,9 +517,8 @@ class TestCmdWorkflowRunTarget:
 class TestCmdWorkflowRunSyncExecution:
     """Tests for synchronous workflow execution."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_sync_workflow_dict_result_formatted(self, mock_get, _mock_fallback, capsys):
+    def test_run_sync_workflow_dict_result_formatted(self, mock_get, capsys):
         """Test that a dict result from a sync workflow is formatted correctly."""
         mock_get.return_value = _make_workflow_class(execute_return={"score": 95, "issues": 2})
 
@@ -548,9 +533,8 @@ class TestCmdWorkflowRunSyncExecution:
         assert "score: 95" in captured.out
         assert "issues: 2" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_sync_workflow_non_dict_result(self, mock_get, _mock_fallback, capsys):
+    def test_run_sync_workflow_non_dict_result(self, mock_get, capsys):
         """Test that a non-dict result is printed with Result: prefix."""
         mock_get.return_value = _make_workflow_class(execute_return="All tests passed")
 
@@ -563,9 +547,8 @@ class TestCmdWorkflowRunSyncExecution:
         captured = capsys.readouterr()
         assert "Result: All tests passed" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_sync_workflow_none_result(self, mock_get, _mock_fallback, capsys):
+    def test_run_sync_workflow_none_result(self, mock_get, capsys):
         """Test that a None result is handled without error."""
 
         class NoneWorkflow:
@@ -589,9 +572,8 @@ class TestCmdWorkflowRunSyncExecution:
 class TestCmdWorkflowRunAsyncExecution:
     """Tests for async workflow execution."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_async_workflow_succeeds(self, mock_get, _mock_fallback, capsys):
+    def test_run_async_workflow_succeeds(self, mock_get, capsys):
         """Test that an async workflow is executed correctly via asyncio.run."""
         mock_get.return_value = _make_workflow_class(
             docstring="Async workflow.",
@@ -609,9 +591,8 @@ class TestCmdWorkflowRunAsyncExecution:
         assert "Workflow completed" in captured.out
         assert "async_result: True" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_async_workflow_with_input(self, mock_get, _mock_fallback, capsys):
+    def test_run_async_workflow_with_input(self, mock_get, capsys):
         """Test that input_data is passed to async workflow execute."""
         received_kwargs = {}
 
@@ -636,9 +617,8 @@ class TestCmdWorkflowRunAsyncExecution:
 class TestCmdWorkflowRunJsonOutput:
     """Tests for JSON output mode in cmd_workflow_run."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_json_output_mode_dict(self, mock_get, _mock_fallback, capsys):
+    def test_run_json_output_mode_dict(self, mock_get, capsys):
         """Test that --json flag outputs result as JSON."""
         mock_get.return_value = _make_workflow_class(execute_return={"status": "ok", "count": 5})
 
@@ -665,9 +645,8 @@ class TestCmdWorkflowRunJsonOutput:
         assert parsed["status"] == "ok"
         assert parsed["count"] == 5
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_json_output_mode_non_dict(self, mock_get, _mock_fallback, capsys):
+    def test_run_json_output_mode_non_dict(self, mock_get, capsys):
         """Test JSON output with a non-dict result uses default=str."""
         mock_get.return_value = _make_workflow_class(execute_return="plain string result")
 
@@ -680,9 +659,8 @@ class TestCmdWorkflowRunJsonOutput:
         captured = capsys.readouterr()
         assert "plain string result" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_non_json_output_does_not_dump_json(self, mock_get, _mock_fallback, capsys):
+    def test_run_non_json_output_does_not_dump_json(self, mock_get, capsys):
         """Test that without --json, output is formatted, not raw JSON."""
         mock_get.return_value = _make_workflow_class(execute_return={"key": "val"})
 
@@ -700,9 +678,8 @@ class TestCmdWorkflowRunJsonOutput:
 class TestCmdWorkflowRunExceptionHandling:
     """Tests for exception handling in cmd_workflow_run."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_workflow_raises_runtime_error(self, mock_get, _mock_fallback, capsys):
+    def test_run_workflow_raises_runtime_error(self, mock_get, capsys):
         """Test that a RuntimeError during execute returns 1."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=RuntimeError("Something broke"),
@@ -718,9 +695,8 @@ class TestCmdWorkflowRunExceptionHandling:
         assert "Workflow failed" in captured.out
         assert "Something broke" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_workflow_raises_value_error(self, mock_get, _mock_fallback, capsys):
+    def test_run_workflow_raises_value_error(self, mock_get, capsys):
         """Test that a ValueError during execute returns 1."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=ValueError("Invalid value"),
@@ -735,9 +711,8 @@ class TestCmdWorkflowRunExceptionHandling:
         captured = capsys.readouterr()
         assert "Workflow failed" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_workflow_raises_key_error(self, mock_get, _mock_fallback, capsys):
+    def test_run_workflow_raises_key_error(self, mock_get, capsys):
         """Test that a KeyError during execute returns 1."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=KeyError("missing_key"),
@@ -752,9 +727,8 @@ class TestCmdWorkflowRunExceptionHandling:
         captured = capsys.readouterr()
         assert "Workflow failed" in captured.out
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_async_workflow_raises_exception(self, mock_get, _mock_fallback, capsys):
+    def test_run_async_workflow_raises_exception(self, mock_get, capsys):
         """Test that an exception from an async workflow is caught."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=ConnectionError("API unreachable"),
@@ -775,14 +749,12 @@ class TestCmdWorkflowRunExceptionHandling:
 class TestCmdWorkflowRunCombinedInputs:
     """Tests for combining JSON input with path and target."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
     def test_run_json_input_plus_path_and_target(
         self,
         mock_get,
         mock_validate,
-        _mock_fallback,
         capsys,
         tmp_path,
     ):
@@ -815,9 +787,8 @@ class TestCmdWorkflowRunCombinedInputs:
         assert call_kwargs["path"] == str(validated)
         assert call_kwargs["target"] == "main.py"
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_no_optional_args(self, mock_get, _mock_fallback, capsys):
+    def test_run_no_optional_args(self, mock_get, capsys):
         """Test execution with no input, path, or target."""
         call_kwargs = {}
 
@@ -844,9 +815,8 @@ class TestCmdWorkflowRunCombinedInputs:
 class TestCmdWorkflowRunOutputHeader:
     """Tests for the running header message."""
 
-    @patch("attune.workflows.is_using_api_fallback", return_value=False)
     @patch("attune.workflows.get_workflow")
-    def test_run_prints_running_header(self, mock_get, _mock_fallback, capsys):
+    def test_run_prints_running_header(self, mock_get, capsys):
         """Test that the 'Running workflow' header is always printed."""
         mock_get.return_value = _make_workflow_class()
 

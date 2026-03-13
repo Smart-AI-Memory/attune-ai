@@ -29,7 +29,7 @@ from attune.agents.release.release_models import (
 from attune.agents.state.store import AgentStateStore
 from attune.models.registry import TIER_PRICING
 
-from .sdk_models import SDK_AVAILABLE, SDKAgentResult, SDKExecutionMode
+from .sdk_models import SDKAgentResult, SDKExecutionMode
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class SDKAgent:
         model = MODEL_CONFIG[tier.value]
 
         # --- Full SDK path ---
-        if SDK_AVAILABLE and self.mode == SDKExecutionMode.FULL_SDK:
+        if self.mode == SDKExecutionMode.FULL_SDK:
             try:
                 import claude_agent_sdk  # type: ignore[import-untyped]
 
