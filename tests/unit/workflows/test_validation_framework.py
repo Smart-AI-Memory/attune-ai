@@ -282,14 +282,8 @@ class TestWorkflowSchemas:
     # test_security_audit_has_input_schema: Removed — SDK-native
     # workflow validates path in execute(), not via input_schema.
 
-    def test_test_gen_has_input_schema(self):
-        """TestGenerationWorkflow declares input_schema."""
-        from attune.workflows.test_gen.workflow import (
-            TestGenerationWorkflow,
-        )
-
-        assert TestGenerationWorkflow.input_schema is not None
-        assert "path" in TestGenerationWorkflow.input_schema.required_fields
+    # test_test_gen_has_input_schema: Removed — SDK-native
+    # workflow validates in execute(), not via input_schema.
 
     # test_perf_audit_has_input_schema: Removed — SDK-native
     # workflow validates path in execute(), not via input_schema.

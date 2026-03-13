@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from attune.models import ModelTier
 from attune.workflows import (
     _SDK_NATIVE_WORKFLOWS,
     _SDK_REVERSE_MAP,
@@ -26,7 +27,6 @@ from attune.workflows import (
     is_using_api_fallback,
     list_workflows,
 )
-from attune.workflows.base import ModelTier
 from attune.workflows.data_classes import CostReport, WorkflowResult, WorkflowStage
 
 # ---------------------------------------------------------------------------
@@ -38,14 +38,14 @@ from attune.workflows.data_classes import CostReport, WorkflowResult, WorkflowSt
 class TestSDKWorkflowMapConstants:
     """Test the mapping constants are correctly defined."""
 
-    def test_sdk_workflow_map_has_nine_entries(self) -> None:
-        """Given the map, it contains exactly 9 base-to-SDK mappings.
+    def test_sdk_workflow_map_has_six_entries(self) -> None:
+        """Given the map, it contains exactly 6 base-to-SDK mappings.
 
-        code-review, security-audit, bug-predict, and perf-audit were
-        merged into SDK-native implementations and removed from the
-        routing map.
+        code-review, security-audit, bug-predict, perf-audit, test-gen,
+        doc-audit, and doc-gen were merged into SDK-native implementations
+        and removed from the routing map.
         """
-        assert len(_SDK_WORKFLOW_MAP) == 9
+        assert len(_SDK_WORKFLOW_MAP) == 6
 
     def test_sdk_workflow_map_values_end_with_sdk(self) -> None:
         """Given each SDK mapping, the value ends with '-sdk'."""
@@ -65,9 +65,6 @@ class TestSDKWorkflowMapConstants:
             "release-prep",
             "test-audit",
             "refactor-plan",
-            "test-gen",
-            "doc-audit",
-            "doc-gen",
             "simplify-code",
             "dependency-check",
             "research-synthesis",
@@ -76,7 +73,15 @@ class TestSDKWorkflowMapConstants:
 
     def test_merged_workflows_not_in_sdk_workflow_map(self) -> None:
         """Given the map, merged workflows are NOT in it."""
-        for name in ("code-review", "security-audit", "bug-predict", "perf-audit"):
+        for name in (
+            "code-review",
+            "security-audit",
+            "bug-predict",
+            "perf-audit",
+            "test-gen",
+            "doc-audit",
+            "doc-gen",
+        ):
             assert name not in _SDK_WORKFLOW_MAP
 
 
@@ -91,7 +96,15 @@ class TestSDKNativeWorkflows:
 
     def test_merged_workflows_are_sdk_native(self) -> None:
         """Given the set, merged workflows are listed as SDK-native."""
-        for name in ("code-review", "security-audit", "bug-predict", "perf-audit"):
+        for name in (
+            "code-review",
+            "security-audit",
+            "bug-predict",
+            "perf-audit",
+            "test-gen",
+            "doc-audit",
+            "doc-gen",
+        ):
             assert name in _SDK_NATIVE_WORKFLOWS
 
     def test_sdk_native_workflows_not_in_routing_map(self) -> None:
@@ -132,7 +145,7 @@ class TestGetWorkflowSmartRouting:
             get_workflow("nonexistent-workflow")
 
     def test_all_mapped_workflows_route_to_sdk(self) -> None:
-        """Given all 9 mapped workflows, each resolves to its SDK class."""
+        """Given all 6 mapped workflows, each resolves to its SDK class."""
         for base_name in _SDK_WORKFLOW_MAP:
             cls = get_workflow(base_name)
             assert (
@@ -146,6 +159,9 @@ class TestGetWorkflowSmartRouting:
             "security-audit": "SecurityAuditWorkflow",
             "bug-predict": "BugPredictionWorkflow",
             "perf-audit": "PerformanceAuditWorkflow",
+            "test-gen": "TestGenerationWorkflow",
+            "doc-audit": "DocAuditWorkflow",
+            "doc-gen": "DocumentGenerationWorkflow",
         }
         for name, class_name in expected.items():
             cls = get_workflow(name)
@@ -196,7 +212,7 @@ class TestListWorkflowsDeduplication:
                 assert sdk_name not in names, f"Both '{base_name}' and '{sdk_name}' are visible"
 
     def test_deduplicated_list_keeps_base_names_visible(self) -> None:
-        """Given default listing, all 9 mapped base workflow names are present."""
+        """Given default listing, all 6 mapped base workflow names are present."""
         workflows = list_workflows()
         names = {wf["name"] for wf in workflows}
         for base_name in _SDK_WORKFLOW_MAP:

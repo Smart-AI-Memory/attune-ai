@@ -81,38 +81,25 @@ class DocOrchReportMixin:
             print(f"  [{i + 1}/{len(items)}] {item.issue_type}: {item.file_path}")
 
             try:
-                # Read source file content
                 source_path = self.project_root / item.file_path
-                source_content = ""
+                file_path_arg = str(source_path) if source_path.exists() else item.file_path
+                result = await self._writer.execute(path=file_path_arg)
 
-                if source_path.exists():
-                    try:
-                        source_content = source_path.read_text(encoding="utf-8")
-                    except Exception as e:  # noqa: BLE001
-                        logger.warning(f"Could not read {source_path}: {e}")
-
-                # Run documentation generation
-                result = await self._writer.execute(
-                    source_code=source_content,
-                    target=item.file_path,
-                    doc_type=self.doc_type,
-                    audience=self.audience,
-                )
-
-                # Track cost from result
+                # Track cost from result (handles both WorkflowResult and dict)
                 if isinstance(result, dict):
                     step_cost = result.get("accumulated_cost", 0.0)
-                    cost += step_cost
+                    result_ok = bool(result.get("document") or result.get("success"))
+                else:
+                    step_cost = getattr(getattr(result, "cost_report", None), "total_cost", 0.0)
+                    result_ok = getattr(result, "success", False)
+                cost += step_cost
 
+                if result_ok:
                     # Categorize result
                     if item.issue_type == "stale_doc":
                         updated.append(item.file_path)
                     else:
                         generated.append(item.file_path)
-
-                    export_path = result.get("export_path")
-                    if export_path:
-                        print(f"      -> Saved to: {export_path}")
                 else:
                     skipped.append(item.file_path)
 

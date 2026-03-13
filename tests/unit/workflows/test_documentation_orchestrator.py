@@ -1176,10 +1176,10 @@ class TestGenerateForFilesMethods:
 
         await orchestrator.generate_for_file("nonexistent.py")
 
-        # Should call writer with empty content
+        # Should still call writer with the path argument
         mock_writer.execute.assert_called_once()
         call_args = mock_writer.execute.call_args
-        assert call_args.kwargs["source_code"] == ""
+        assert "path" in call_args.kwargs
 
     async def test_generate_for_file_success(self, tmp_path):
         """Test successful generate_for_file execution."""
@@ -1415,7 +1415,7 @@ class TestErrorHandlingPaths:
         mock_writer = MagicMock()
 
         async def mock_execute(**kwargs):
-            if "bad" in kwargs.get("target", ""):
+            if "bad" in kwargs.get("path", ""):
                 raise ValueError("Simulated error")
             return {"document": "# Doc", "accumulated_cost": 0.1}
 

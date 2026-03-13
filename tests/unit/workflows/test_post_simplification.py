@@ -226,24 +226,6 @@ class TestRefactorPlanOptIn:
         assert wf._enable_post_simplification is False
 
 
-class TestTestGenOptIn:
-    """Test that TestGenerationWorkflow opts in to simplification."""
-
-    def test_test_gen_enables_simplification(self) -> None:
-        """Test TestGenerationWorkflow sets enable_post_simplification."""
-        from attune.workflows.test_gen.workflow import TestGenerationWorkflow
-
-        wf = TestGenerationWorkflow()
-        assert wf._enable_post_simplification is True
-
-    def test_test_gen_can_disable_simplification(self) -> None:
-        """Test TestGenerationWorkflow simplification can be disabled."""
-        from attune.workflows.test_gen.workflow import TestGenerationWorkflow
-
-        wf = TestGenerationWorkflow(enable_post_simplification=False)
-        assert wf._enable_post_simplification is False
-
-
 class TestBaseWorkflowIntegration:
     """Test BaseWorkflow integration with PostSimplificationMixin."""
 

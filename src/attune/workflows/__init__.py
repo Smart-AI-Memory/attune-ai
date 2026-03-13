@@ -51,8 +51,9 @@ if TYPE_CHECKING:
     from .dependency_check import DependencyCheckWorkflow
     from .dependency_check_agent_sdk import DependencyCheckAgentSDKWorkflow
     from .doc_audit import DocAuditWorkflow
-    from .doc_audit_agent_sdk import DocAuditAgentSDKWorkflow
-    from .doc_gen_agent_sdk import DocGenAgentSDKWorkflow
+
+    # DocAuditAgentSDKWorkflow: Merged into DocAuditWorkflow (v4.2.0)
+    # DocGenAgentSDKWorkflow: Merged into DocumentGenerationWorkflow (v4.2.0)
     from .document_gen import DocumentGenerationWorkflow
     from .document_manager import DocumentManagerWorkflow
     from .documentation_orchestrator import DocumentationOrchestrator, OrchestratorResult
@@ -93,7 +94,8 @@ if TYPE_CHECKING:
     from .test_audit import TestAuditWorkflow
     from .test_audit_agent_sdk import TestAuditAgentSDKWorkflow
     from .test_gen import TestGenerationWorkflow
-    from .test_gen_agent_sdk import TestGenAgentSDKWorkflow
+
+    # TestGenAgentSDKWorkflow: Merged into TestGenerationWorkflow (v4.2.0)
     from .test_gen_parallel import ParallelTestGenerationWorkflow
     from .xml_enhanced_crew import XMLAgent, XMLTask
 
@@ -186,9 +188,9 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "TestAuditAgentSDKWorkflow": (".test_audit_agent_sdk", "TestAuditAgentSDKWorkflow"),
     # BugPredictAgentSDKWorkflow: Merged into BugPredictionWorkflow (v4.2.0)
     "RefactorPlanAgentSDKWorkflow": (".refactor_plan_agent_sdk", "RefactorPlanAgentSDKWorkflow"),
-    "TestGenAgentSDKWorkflow": (".test_gen_agent_sdk", "TestGenAgentSDKWorkflow"),
-    "DocAuditAgentSDKWorkflow": (".doc_audit_agent_sdk", "DocAuditAgentSDKWorkflow"),
-    "DocGenAgentSDKWorkflow": (".doc_gen_agent_sdk", "DocGenAgentSDKWorkflow"),
+    # TestGenAgentSDKWorkflow: Merged into TestGenerationWorkflow (v4.2.0)
+    # DocAuditAgentSDKWorkflow: Merged into DocAuditWorkflow (v4.2.0)
+    # DocGenAgentSDKWorkflow: Merged into DocumentGenerationWorkflow (v4.2.0)
     "SimplifyCodeAgentSDKWorkflow": (".simplify_code_agent_sdk", "SimplifyCodeAgentSDKWorkflow"),
     "DependencyCheckAgentSDKWorkflow": (
         ".dependency_check_agent_sdk",
@@ -325,9 +327,9 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "test-audit-sdk": "TestAuditAgentSDKWorkflow",
     # bug-predict-sdk: Merged into bug-predict (v4.2.0)
     "refactor-plan-sdk": "RefactorPlanAgentSDKWorkflow",
-    "test-gen-sdk": "TestGenAgentSDKWorkflow",
-    "doc-audit-sdk": "DocAuditAgentSDKWorkflow",
-    "doc-gen-sdk": "DocGenAgentSDKWorkflow",
+    # test-gen-sdk: Merged into test-gen (v4.2.0)
+    # doc-audit-sdk: Merged into doc-audit (v4.2.0)
+    # doc-gen-sdk: Merged into doc-gen (v4.2.0)
     "simplify-code-sdk": "SimplifyCodeAgentSDKWorkflow",
     "dependency-check-sdk": "DependencyCheckAgentSDKWorkflow",
     "research-synthesis-sdk": "ResearchSynthesisAgentSDKWorkflow",
@@ -365,9 +367,9 @@ _SDK_WORKFLOW_MAP: dict[str, str] = {
     "test-audit": "test-audit-sdk",
     # bug-predict: Merged — BugPredictionWorkflow is now SDK-native (v4.2.0)
     "refactor-plan": "refactor-plan-sdk",
-    "test-gen": "test-gen-sdk",
-    "doc-audit": "doc-audit-sdk",
-    "doc-gen": "doc-gen-sdk",
+    # test-gen: Merged — TestGenerationWorkflow is now SDK-native (v4.2.0)
+    # doc-audit: Merged — DocAuditWorkflow is now SDK-native (v4.2.0)
+    # doc-gen: Merged — DocumentGenerationWorkflow is now SDK-native (v4.2.0)
     "simplify-code": "simplify-code-sdk",
     "dependency-check": "dependency-check-sdk",
     "research-synthesis": "research-synthesis-sdk",
@@ -383,6 +385,9 @@ _SDK_NATIVE_WORKFLOWS: set[str] = {
     "security-audit",
     "bug-predict",
     "perf-audit",
+    "test-gen",
+    "doc-audit",
+    "doc-gen",
 }
 
 
@@ -739,9 +744,9 @@ __all__ = [
     "TestAuditAgentSDKWorkflow",
     # BugPredictAgentSDKWorkflow: Merged (v4.2.0)
     "RefactorPlanAgentSDKWorkflow",
-    "TestGenAgentSDKWorkflow",
-    "DocAuditAgentSDKWorkflow",
-    "DocGenAgentSDKWorkflow",
+    # TestGenAgentSDKWorkflow: Merged (v4.2.0)
+    # DocAuditAgentSDKWorkflow: Merged (v4.2.0)
+    # DocGenAgentSDKWorkflow: Merged (v4.2.0)
     "SimplifyCodeAgentSDKWorkflow",
     "DependencyCheckAgentSDKWorkflow",
     "ResearchSynthesisAgentSDKWorkflow",
