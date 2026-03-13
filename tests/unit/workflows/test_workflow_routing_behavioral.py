@@ -1,7 +1,8 @@
 """Behavioral tests for workflow smart routing and SDK variant resolution.
 
 Tests the get_workflow() smart routing, list_workflows() deduplication,
-and CLI command integration. SDK is now a core dependency.
+and CLI command integration. SDK is now a core dependency. code-review
+has been merged into a single SDK-native implementation.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -17,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.workflows import (
+    _SDK_NATIVE_WORKFLOWS,
     _SDK_REVERSE_MAP,
     _SDK_WORKFLOW_MAP,
     get_workflow,
@@ -35,9 +37,13 @@ from attune.workflows.data_classes import CostReport, WorkflowResult, WorkflowSt
 class TestSDKWorkflowMapConstants:
     """Test the mapping constants are correctly defined."""
 
-    def test_sdk_workflow_map_has_thirteen_entries(self) -> None:
-        """Given the map, it contains exactly 13 base-to-SDK mappings."""
-        assert len(_SDK_WORKFLOW_MAP) == 13
+    def test_sdk_workflow_map_has_twelve_entries(self) -> None:
+        """Given the map, it contains exactly 12 base-to-SDK mappings.
+
+        code-review was merged into a single SDK-native implementation
+        and removed from the routing map.
+        """
+        assert len(_SDK_WORKFLOW_MAP) == 12
 
     def test_sdk_workflow_map_values_end_with_sdk(self) -> None:
         """Given each SDK mapping, the value ends with '-sdk'."""
@@ -54,7 +60,6 @@ class TestSDKWorkflowMapConstants:
     def test_sdk_workflow_map_contains_core_workflows(self) -> None:
         """Given the map, it includes all expected base workflow names."""
         expected = {
-            "code-review",
             "security-audit",
             "perf-audit",
             "release-prep",
@@ -70,6 +75,31 @@ class TestSDKWorkflowMapConstants:
         }
         assert set(_SDK_WORKFLOW_MAP.keys()) == expected
 
+    def test_code_review_not_in_sdk_workflow_map(self) -> None:
+        """Given the map, code-review is NOT in it (merged into SDK-native)."""
+        assert "code-review" not in _SDK_WORKFLOW_MAP
+
+
+# ---------------------------------------------------------------------------
+# _SDK_NATIVE_WORKFLOWS set
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestSDKNativeWorkflows:
+    """Test the _SDK_NATIVE_WORKFLOWS set for merged workflows."""
+
+    def test_code_review_is_sdk_native(self) -> None:
+        """Given the set, code-review is listed as SDK-native."""
+        assert "code-review" in _SDK_NATIVE_WORKFLOWS
+
+    def test_sdk_native_workflows_not_in_routing_map(self) -> None:
+        """Given SDK-native workflows, none are in _SDK_WORKFLOW_MAP."""
+        for name in _SDK_NATIVE_WORKFLOWS:
+            assert (
+                name not in _SDK_WORKFLOW_MAP
+            ), f"{name} is in both _SDK_NATIVE_WORKFLOWS and _SDK_WORKFLOW_MAP"
+
 
 # ---------------------------------------------------------------------------
 # get_workflow() smart routing
@@ -78,7 +108,7 @@ class TestSDKWorkflowMapConstants:
 
 @pytest.mark.unit
 class TestGetWorkflowSmartRouting:
-    """Test get_workflow() always routes to SDK variant for mapped workflows."""
+    """Test get_workflow() routing."""
 
     def test_routes_to_sdk_variant(self) -> None:
         """Given a mapped workflow, requesting base name returns the SDK class."""
@@ -101,12 +131,17 @@ class TestGetWorkflowSmartRouting:
             get_workflow("nonexistent-workflow")
 
     def test_all_mapped_workflows_route_to_sdk(self) -> None:
-        """Given all 13 mapped workflows, each resolves to its SDK class."""
+        """Given all 12 mapped workflows, each resolves to its SDK class."""
         for base_name in _SDK_WORKFLOW_MAP:
             cls = get_workflow(base_name)
             assert (
                 "AgentSDK" in cls.__name__ or "Agent" in cls.__name__
             ), f"{base_name} resolved to {cls.__name__}, expected SDK variant"
+
+    def test_code_review_returns_sdk_native_class(self) -> None:
+        """Given code-review (merged), returns CodeReviewWorkflow directly."""
+        cls = get_workflow("code-review")
+        assert cls.__name__ == "CodeReviewWorkflow"
 
 
 # ---------------------------------------------------------------------------
@@ -153,11 +188,17 @@ class TestListWorkflowsDeduplication:
                 assert sdk_name not in names, f"Both '{base_name}' and '{sdk_name}' are visible"
 
     def test_deduplicated_list_keeps_base_names_visible(self) -> None:
-        """Given default listing, all 13 base workflow names are present."""
+        """Given default listing, all 12 mapped base workflow names are present."""
         workflows = list_workflows()
         names = {wf["name"] for wf in workflows}
         for base_name in _SDK_WORKFLOW_MAP:
             assert base_name in names, f"Base workflow '{base_name}' is missing"
+
+    def test_code_review_visible_in_default_listing(self) -> None:
+        """Given default listing, code-review (merged SDK-native) is visible."""
+        workflows = list_workflows()
+        names = {wf["name"] for wf in workflows}
+        assert "code-review" in names
 
     def test_show_all_includes_sdk_variants(self) -> None:
         """Given show_all=True, SDK-suffixed entries are included."""
@@ -196,6 +237,13 @@ class TestListWorkflowsEngineTag:
         by_name = {wf["name"]: wf for wf in workflows}
         for base_name in _SDK_WORKFLOW_MAP:
             assert by_name[base_name]["engine"] == "sdk", f"{base_name} should be tagged 'sdk'"
+
+    def test_merged_sdk_native_workflows_tagged_sdk(self) -> None:
+        """Given merged SDK-native workflows, they have engine='sdk'."""
+        workflows = list_workflows()
+        by_name = {wf["name"]: wf for wf in workflows}
+        for name in _SDK_NATIVE_WORKFLOWS:
+            assert by_name[name]["engine"] == "sdk", f"{name} should be tagged 'sdk'"
 
     def test_native_workflows_tagged_native(self) -> None:
         """Given a workflow with no SDK variant, engine='native'."""
@@ -333,6 +381,17 @@ class TestCmdWorkflowInfo:
         from attune.cli_commands.workflow_commands import cmd_workflow_info
 
         args = Namespace(name="security-audit")
+        result = cmd_workflow_info(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Agent SDK" in captured.out
+
+    def test_info_code_review_shows_sdk(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Given code-review (merged), info shows SDK in description."""
+        from attune.cli_commands.workflow_commands import cmd_workflow_info
+
+        args = Namespace(name="code-review")
         result = cmd_workflow_info(args)
 
         assert result == 0

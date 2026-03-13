@@ -180,7 +180,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "BatchProcessingWorkflow": (".batch_processing", "BatchProcessingWorkflow"),
     "ProgressiveTestGenWorkflow": (".progressive.test_gen", "ProgressiveTestGenWorkflow"),
     "AutonomousTestGenerator": (".autonomous_test_gen", "AutonomousTestGenerator"),
-    "AgentCodeReviewWorkflow": (".code_review_agent_sdk", "AgentCodeReviewWorkflow"),
+    # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
     "DeepReviewAgentSDKWorkflow": (".deep_review_agent_sdk", "DeepReviewAgentSDKWorkflow"),
     # Agent SDK adapters (v3.9.3)
     "SecurityAuditAgentSDKWorkflow": (".security_audit_agent_sdk", "SecurityAuditAgentSDKWorkflow"),
@@ -318,8 +318,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "release-prep": "ReleasePrepTeamWorkflow",
     # Research and synthesis workflows
     "research-synthesis": "ResearchSynthesisWorkflow",
-    # Agent SDK code review (v3.9)
-    "code-review-sdk": "AgentCodeReviewWorkflow",
+    # code-review-sdk: Merged into code-review (v4.2.0)
     # Multi-pass deep review (v3.9)
     "deep-review-sdk": "DeepReviewAgentSDKWorkflow",
     # Agent SDK adapters (v3.9.3)
@@ -362,7 +361,7 @@ _registry_initialized = False
 # When a user requests a base name (e.g. "security-audit"), the resolver
 # checks whether the SDK variant is available and routes to it automatically.
 _SDK_WORKFLOW_MAP: dict[str, str] = {
-    "code-review": "code-review-sdk",
+    # code-review: Merged — CodeReviewWorkflow is now SDK-native (v4.2.0)
     "security-audit": "security-audit-sdk",
     "perf-audit": "perf-audit-sdk",
     "release-prep": "release-prep-sdk",
@@ -379,6 +378,12 @@ _SDK_WORKFLOW_MAP: dict[str, str] = {
 
 # Reverse map: SDK name -> base name (for display purposes)
 _SDK_REVERSE_MAP: dict[str, str] = {v: k for k, v in _SDK_WORKFLOW_MAP.items()}
+
+# Workflows that have been merged into SDK-native implementations
+# (no longer in _SDK_WORKFLOW_MAP because they ARE the SDK version).
+_SDK_NATIVE_WORKFLOWS: set[str] = {
+    "code-review",
+}
 
 
 def _get_workflow_class(class_name: str) -> type[BaseWorkflow]:
@@ -586,7 +591,9 @@ def list_workflows(*, show_all: bool = False) -> list[dict]:
         description = getattr(cls, "description", "No description")
 
         # Determine engine for display
-        engine = "sdk" if name in _SDK_WORKFLOW_MAP else "native"
+        # Merged SDK-native workflows are no longer in _SDK_WORKFLOW_MAP
+        # but are still SDK-powered.
+        engine = "sdk" if (name in _SDK_WORKFLOW_MAP or name in _SDK_NATIVE_WORKFLOWS) else "native"
 
         workflows.append(
             {

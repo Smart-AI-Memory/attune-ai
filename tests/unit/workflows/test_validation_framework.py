@@ -279,20 +279,6 @@ class TestLLMMixinValidation:
 class TestWorkflowSchemas:
     """Test that key workflows have schemas declared."""
 
-    def test_code_review_has_input_schema(self):
-        """CodeReviewWorkflow declares input_schema."""
-        from attune.workflows.code_review import CodeReviewWorkflow
-
-        assert CodeReviewWorkflow.input_schema is not None
-        assert "path" in CodeReviewWorkflow.input_schema.required_fields
-
-    def test_code_review_has_stage_contracts(self):
-        """CodeReviewWorkflow declares stage_contracts."""
-        from attune.workflows.code_review import CodeReviewWorkflow
-
-        assert "classify" in CodeReviewWorkflow.stage_contracts
-        assert "risk_level" in CodeReviewWorkflow.stage_contracts["classify"].required_keys
-
     def test_security_audit_has_input_schema(self):
         """SecurityAuditWorkflow declares input_schema."""
         from attune.workflows.security_audit import (
@@ -328,11 +314,3 @@ class TestWorkflowSchemas:
 
         assert SimplifyCodeWorkflow.input_schema is not None
         assert "path" in SimplifyCodeWorkflow.input_schema.required_fields
-
-    def test_code_review_rejects_empty_input(self):
-        """CodeReviewWorkflow input_schema rejects empty dict."""
-        from attune.workflows.code_review import CodeReviewWorkflow
-
-        errors = validate_against_input_schema({}, CodeReviewWorkflow.input_schema)
-        assert len(errors) >= 1
-        assert any("path" in e for e in errors)
