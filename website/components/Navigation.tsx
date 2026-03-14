@@ -8,7 +8,6 @@ const navItems = [
   { label: 'Plugins', href: '/attune-plugin' },
   { label: 'Wizards', href: '/wizards' },
   { label: 'Open Source', href: '/pricing' },
-  { label: 'Docs', href: '/framework-docs/' },
 ];
 
 const docsItems = [
