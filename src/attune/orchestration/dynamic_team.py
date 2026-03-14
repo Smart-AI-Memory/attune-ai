@@ -17,9 +17,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from attune.agents.sdk.sdk_agent import SDKAgent
-from attune.agents.sdk.sdk_models import SDKAgentResult
-from attune.agents.sdk.sdk_team import QualityGate
+from attune.orchestration.agent_models import AgentLike, QualityGate, SDKAgentResult
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +97,7 @@ class DynamicTeam:
     def __init__(
         self,
         team_name: str,
-        agents: list[SDKAgent],
+        agents: list[AgentLike],
         strategy: str = "parallel",
         quality_gates: list[QualityGate] | None = None,
         phases: list[dict[str, Any]] | None = None,

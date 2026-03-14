@@ -2,15 +2,19 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
-**AI-powered developer workflows with cost optimization and intelligent routing.**
+**Production-ready AI workflows for Claude Code, aligned with
+Anthropic best practices.**
 
-The easiest way to run code review, debugging, testing, and release workflows from your terminal or Claude Code. Just type `/attune` and let Socratic discovery guide you. Smart tier routing saves 34-86% on LLM costs.
+15 multi-agent workflows for code review, security, testing,
+and release — each backed by specialized Claude subagents with
+intelligent model routing, budget controls, and structured
+output. Just type `/attune` and go.
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-17%2C282%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-10%2C860%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -23,25 +27,34 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v4.1.0
+## What's New in v5.0.0 — Anthropic Best Practices Release
 
-- **Smart test selection** — `/smart-test` runs only tests
-  affected by your changes using git-diff file mapping.
-  No more waiting for the full 17k+ suite.
-- **Auto-fix failing tests** — `/fix-test` diagnoses
-  failures, applies fixes (to tests or source), and
-  re-runs automatically with up to 3 retries.
-- **Testing hub upgrade** — `/testing smart` and
-  `/testing fix` routes added with natural language
-  routing ("smart test", "fix test", "affected tests").
-- **43 new behavioral tests** — Full coverage for
-  `HaystackAdapter` (25 tests) and `ProjectAnalysisRequest`
-  validators (18 tests).
-- **17,200+ tests** — Comprehensive test suite across
-  security, unit, integration, and behavioral coverage.
+v5.0.0 aligns all 15 SDK-native workflows with Anthropic's
+recommended patterns for the Claude Agent SDK. Every workflow
+now uses proper system prompts, per-agent model routing,
+budget safety nets, cost/usage tracking, and structured output.
+
+**5 features across all 15 workflows:**
+
+| Feature | What It Does | Why It Matters |
+| --- | --- | --- |
+| **System Prompt Separation** | Persona in `system_prompt`, task in user message | How Anthropic designed the API — better agent behavior |
+| **Cost & Usage Tracking** | Surfaces `total_cost_usd`, tokens, turns, session ID | Full visibility into what each workflow costs |
+| **Budget Safety Nets** | `max_budget_usd` caps per depth (quick/standard/deep) | Prevents runaway costs; override with `ATTUNE_MAX_BUDGET_USD` |
+| **Per-Agent Model Routing** | Opus for security/architecture, Haiku for scanning | Right model for each task; override with env vars |
+| **Structured Output** | JSON schema output with text-parsing fallback | Reliable extraction instead of regex; piloting on 2 workflows |
 
 <details>
 <summary>Previous releases</summary>
+
+### v4.1.0
+
+- **Smart test selection** — `/smart-test` runs only tests
+  affected by your changes using git-diff file mapping.
+- **Auto-fix failing tests** — `/fix-test` diagnoses
+  failures, applies fixes, and re-runs with up to 3 retries.
+- **Testing hub upgrade** — `/testing smart` and
+  `/testing fix` routes with natural language routing.
 
 ### v4.0.0
 
@@ -49,129 +62,88 @@ pip install 'attune-ai[developer]'
   Agent SDK adapters for parallel, contextual code analysis.
 - **Smart workflow routing** — `get_workflow()` resolves to
   SDK variant when available, with transparent fallback.
-- **Deduplicated workflow listing** — One entry per task
-  with `[SDK]`/`[API]`/`[native]` tags.
-- **Security hardening** — Deep review fixes across 18
-  modules.
 
-### v3.9.3
+### v3.9.x
 
-- **Anthropic Agent SDK adapters** — Code review and deep
-  review workflows now have Agent SDK adapter layers,
-  beginning native SDK integration.
-- **Workflow validation framework** — Input/output contract
-  validation for all workflows.
-- **100% public API docstrings** — Added missing docstrings
-  across 197 source files.
-- **`datetime.utcnow()` migration** — Replaced deprecated
-  naive datetimes with timezone-aware `datetime.now(UTC)`
-  across the codebase.
-
-### v3.9.2
-
-- **CostReport bug fix** — `WorkflowBatchRunner` crashed
-  when accessing `CostReport` dataclass as a dict.
-- **Exception handling hardened** — Narrowed broad
-  `except Exception` to specific types across 16 files.
-- **Batch API rename** — `/batch` renamed to `/bulk` to
-  avoid collision with Claude Code's built-in `/batch`.
-
-### v3.9.0
-
-- **33 MCP tools** — All 17 workflows now exposed as MCP
-  tools (was 6). Includes doc-audit, test-audit,
-  dependency-check, health-check, and more.
-- **`attune doctor`** — Single command to check Python
-  version, API key, workflows, wizards, MCP, and optional
-  deps.
-- **Fast-path slash commands** — Power users who provide
-  both action and target skip Socratic scoping questions.
-
-### v3.8.0
-
-- **TestAuditWorkflow** — 4-stage coverage audit pipeline.
-- **DocAuditWorkflow** — 10-check documentation audit.
-- **1,636 new unit tests** at 84% coverage.
-
-- **v3.7.0** — Mixin MRO fix, dashboard removal began,
-  CI test coverage expanded
-- **v3.6.6** — Wizard REVIEW step, 82 new workflow tests,
-  BEP middleware removed
-- **v3.6.5** — Dashboard module removed
-- **v3.6.4** — EscalationChain retry-with-feedback wrapper
-- **v3.6.0** — attune-redis plugin, FeedbackLoop, in-memory
-  fallback
+- **33 MCP tools** — All workflows exposed as MCP tools.
+- **`attune doctor`** — Health check for your install.
+- **TestAuditWorkflow** and **DocAuditWorkflow** added.
+- **Exception handling hardened** across 16 files.
 
 </details>
 
 ---
 
-## Why Attune?
+## Workflows
 
-| | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
-| --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 17 built-in | Build from scratch | None | PR review only |
-| **Cost optimization** | 3-tier auto-routing | None | None | None |
-| **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
-| **Multi-agent teams** | 4 strategies | Yes | No | No |
-| **MCP integration** | 17 native tools | No | No | No |
+Every workflow runs as a multi-agent team. Each agent is a
+specialist — it reads your code with `Read`, `Glob`, and
+`Grep` tools and reports findings to an orchestrator that
+synthesizes a unified result.
 
-Attune is a **workflow operating system for Claude** — it sits above coding agents and below general orchestration frameworks, providing production-ready developer workflows with intelligent cost routing. [Full comparison](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/comparison.md)
+| Workflow | Agents | What It Does | When to Use |
+| --- | --- | --- | --- |
+| **code-review** | security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer | 4-perspective code review covering security, quality, performance, and architecture | Before merging a PR or after significant changes |
+| **security-audit** | vuln-scanner, secret-detector, auth-reviewer, remediation-planner | Finds vulnerabilities, leaked secrets, auth issues, and generates fix plans | Pre-release security gate, compliance checks |
+| **deep-review** | security-reviewer, quality-reviewer, test-gap-reviewer | Multi-pass deep analysis with configurable focus areas | Complex modules needing thorough inspection |
+| **perf-audit** | complexity-analyzer, bottleneck-finder, optimization-advisor | Identifies O(n^2) patterns, bottlenecks, and optimization opportunities | Slow endpoints, large data processing |
+| **bug-predict** | pattern-scanner, risk-correlator, prevention-advisor | Scans for bug-prone patterns and predicts likely failure points | Proactive quality — find bugs before users do |
+| **health-check** | test-checker, dep-checker, lint-checker, ci-checker, doc-checker, security-checker | Dynamic agent team (2-6 agents based on mode) for project health | Daily health monitoring, onboarding to a new repo |
+| **test-gen** | function-identifier, test-designer, test-writer | Identifies untested functions, designs test cases, writes pytest code | Boosting coverage on undertested modules |
+| **test-audit** | coverage-auditor, gap-analyzer, test-planner | Audits test coverage, finds gaps, and prioritizes what to test next | Coverage-driven test improvement |
+| **doc-gen** | outline-planner, content-writer, polish-reviewer | Generates documentation from source code with structured outlines | Creating docs for undocumented modules |
+| **doc-audit** | staleness-checker, accuracy-reviewer, gap-finder | Checks for stale docs, broken links, and documentation drift | Keeping docs accurate after refactors |
+| **dependency-check** | inventory-assessor, update-advisor | Audits dependencies for outdated packages and security advisories | Pre-release dependency review |
+| **refactor-plan** | debt-scanner, impact-analyzer, plan-generator | Scans tech debt, analyzes refactoring impact, generates migration plans | Planning large-scale refactors |
+| **simplify-code** | complexity-scanner, simplification-designer, safety-reviewer | Finds over-engineered code and proposes simplifications with safety review | Reducing complexity after feature sprints |
+| **release-prep** | health-checker, security-scanner, changelog-generator, release-assessor | 4-agent readiness check: health, security, changelog, and go/no-go | Before cutting a release |
+| **research-synthesis** | source-summarizer, pattern-analyst, synthesis-writer | Multi-source research synthesis with pattern extraction | Technical research, RFC preparation |
 
----
+### Model Routing
 
-## Key Features
+Each agent is assigned a model based on task complexity:
 
-### Claude-Native Architecture
+| Model | Agents | Rationale |
+| --- | --- | --- |
+| **Opus** | security, vuln, architect | Deep reasoning for security and architecture |
+| **Sonnet** | quality, plan, research | Balanced analysis for synthesis and planning |
+| **Haiku** | complexity, lint, coverage, dep | Fast scanning for detection tasks |
+| **Inherited** | All others | Uses the parent orchestrator's model |
 
-Attune AI is built exclusively for Anthropic/Claude, unlocking features impossible with multi-provider abstraction:
+Override any assignment with environment variables:
 
-- **Automatic Prompt Caching** - Built on Anthropic's auto-caching: cached tokens cost 10% of standard price, delivering up to 90% cost savings and 85% faster responses. Zero configuration required.
-- **Semantic Caching** - Optional HybridCache (via sentence-transformers) detects similar prompts and reuses cached responses, avoiding redundant API calls entirely. ~57% measured hit rate on workflows.
-- **Flexible Context** - 200K via subscription, up to 1M via API for large codebases
-- **Extended Thinking** - Access Claude's internal reasoning process
-- **Advanced Tool Use** - Optimized for agentic workflows
+```bash
+# Override security agents to use sonnet (save cost)
+export ATTUNE_AGENT_MODEL_SECURITY=sonnet
 
-### Multi-Agent Orchestration
+# Override all agents to use opus (max quality)
+export ATTUNE_AGENT_MODEL_DEFAULT=opus
 
-Full support for custom agents, dynamic teams, and Anthropic Agent SDK:
+# Let lint agents inherit parent model
+export ATTUNE_AGENT_MODEL_LINT=inherit
+```
 
-- **Dynamic Team Composition** - Build agent teams from templates, specs, or MetaOrchestrator plans with 4 execution strategies (parallel, sequential, two-phase, delegation)
-- **14 Agent Templates** - Pre-built archetypes (security auditor, code reviewer, test coverage, etc.) with custom template registration
-- **Agent State Persistence** - `AgentStateStore` records execution history, saves checkpoints, and enables recovery from interruptions
-- **Workflow Composition** - Compose entire workflows into `DynamicTeam` instances for orchestrated parallel/sequential execution
-- **Progressive Tier Escalation** - Agents start cheap and escalate only when needed (CHEAP -> CAPABLE -> PREMIUM)
-- **Inter-Agent Communication** - Heartbeats, signals, events, approval gates, and 6 coordination patterns
-- **Quality Gates** - Per-agent and cross-team quality thresholds with required/optional gate enforcement
+### Budget Controls
 
-### Modular Architecture
+Every workflow enforces a budget cap based on depth:
 
-Clean, maintainable codebase built for extensibility:
+| Depth | Budget | Use Case |
+| --- | --- | --- |
+| `quick` | $0.50 | Fast checks, smoke tests |
+| `standard` | $2.00 | Normal analysis (default) |
+| `deep` | $5.00 | Thorough multi-pass review |
 
-- **Small, Focused Files** - Most files under 700 lines; logic extracted into mixins and utilities
-- **Cross-Platform CI** - Tested on Ubuntu, macOS, and Windows with Python 3.10-3.13
-- **17,200+ tests** - Security, unit, integration, and behavioral test coverage
+```bash
+# Override budget for all workflows
+export ATTUNE_MAX_BUDGET_USD=10.0
 
-### Intelligent Cost Optimization
+# Disable budget caps entirely
+export ATTUNE_MAX_BUDGET_USD=0
+```
 
-- **$0 for most Claude Code tasks** - Standard workflows run as skills through Claude's Task tool at no extra cost
-- **API costs for large contexts** - Tasks requiring extended context (>200K tokens) or programmatic/CI usage route through the Anthropic API
-- **Smart Tier Routing** - Automatically selects the right model for each task
-- **Authentication Strategy** - Routes between subscription and API based on codebase size
-
-### Socratic Workflows
-
-Workflows guide you through discovery instead of requiring upfront configuration:
-
-- **Interactive Discovery** - Asks targeted questions to understand your needs
-- **Context Gathering** - Collects relevant code, errors, and constraints
-- **Dynamic Agent Creation** - Assembles the right team based on your answers
-
----
-
-## Claude Code Plugin
-
-Install the attune-ai plugin in Claude Code for integrated workflow, memory, and orchestration access. The plugin provides the `/attune` command, 17 MCP tools, and 17 skills. See the `plugin/` directory.
+For **subscription users**, budget caps act as complexity
+bounds (the SDK limits resource usage even without per-token
+billing). For **API-key users**, they're hard dollar caps.
 
 ---
 
@@ -189,7 +161,8 @@ pip install 'attune-ai[developer]'
 attune setup
 ```
 
-This installs `/attune` to `~/.claude/commands/` for Claude Code.
+This installs `/attune` to `~/.claude/commands/` for Claude
+Code.
 
 ### 3. Use in Claude Code
 
@@ -217,10 +190,10 @@ Socratic discovery guides you to the right workflow.
 Run workflows directly from terminal:
 
 ```bash
-attune workflow run release-prep           # 4-agent release readiness check
+attune workflow run code-review --path ./src
 attune workflow run security-audit --path ./src
-attune workflow run test-audit             # Coverage-driven test gap analysis
-attune workflow run doc-audit              # 10-check documentation audit
+attune workflow run release-prep
+attune workflow run test-audit
 attune telemetry show
 ```
 
@@ -229,44 +202,90 @@ attune telemetry show
 ```text
 $ attune workflow run security-audit --path src/
 
-[security-audit] Stage 1/3: scan (haiku) ... done (0.8s)
-[security-audit] Stage 2/3: analyze (sonnet) ... done (2.1s)
-[security-audit] Stage 3/3: report (sonnet) ... done (1.4s)
+[security-audit] vuln-scanner (opus) ........... done
+[security-audit] secret-detector (opus) ........ done
+[security-audit] auth-reviewer (opus) .......... done
+[security-audit] remediation-planner (opus) .... done
 
 Security Audit Results
-Score: 95/100
+Score: 95/100 | Cost: $0.03 | Turns: 12
 
 | Severity | Count | Example                       |
 |----------|-------|-------------------------------|
 | High     | 1     | Broad except in cli.py:42     |
 | Medium   | 3     | Missing type hints            |
 | Low      | 2     | TODO comments                 |
-
-Total cost: $0.025 (saved 78% via tier routing)
 ```
 
-### Optional Features
+---
 
-**Redis-enhanced memory** (auto-detected when installed):
+## Why Attune?
 
-```bash
-pip install 'attune-ai[memory]'
-# Redis is automatically detected and enabled — no env vars needed
-```
+| | Attune AI | Agent Frameworks (LangGraph, AutoGen) | Coding CLIs (Aider, Codex) | Review Bots (CodeRabbit) |
+| --- | --- | --- | --- | --- |
+| **Ready-to-use workflows** | 15 built-in | Build from scratch | None | PR review only |
+| **Per-agent model routing** | Opus/Sonnet/Haiku per role | Manual | None | None |
+| **Budget controls** | Depth-based caps | None | None | SaaS pricing |
+| **Cost in Claude Code** | $0 for most tasks | API costs | API costs | SaaS pricing |
+| **Multi-agent teams** | 2-6 agents per workflow | Yes | No | No |
+| **MCP integration** | 17 native tools | No | No | No |
+| **Structured output** | JSON schema with fallback | Manual | No | No |
 
-**All features** (includes memory, agents, semantic caching):
+Attune is a **workflow operating system for Claude** — it
+sits above coding agents and below general orchestration
+frameworks, providing production-ready developer workflows
+with intelligent cost routing.
 
-```bash
-pip install 'attune-ai[all]'
-```
+---
 
-**Check what's available:**
+## Key Features
 
-```bash
-attune features
-```
+### Anthropic Best Practices (v5.0.0)
 
-See [Feature Availability Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/FEATURES.md) for detailed information about core vs optional features.
+All 15 workflows follow Anthropic's recommended patterns:
+
+- **System Prompt Separation** — Persona/behavior preamble
+  in `system_prompt`, task instructions in user message
+- **Per-Agent Model Selection** — Each subagent gets the
+  right model for its role via `AgentDefinition.model`
+- **Budget Safety Nets** — `max_budget_usd` on every
+  `ClaudeAgentOptions` call, configurable per depth
+- **Cost/Usage Extraction** — `AgentRunResult` captures
+  `total_cost_usd`, `usage`, `num_turns`, `session_id`
+- **Structured Output** — JSON schema via `output_format`
+  with text-parsing fallback (piloting on code-review and
+  security-audit)
+
+### Claude-Native Architecture
+
+Built exclusively for Anthropic/Claude:
+
+- **Automatic Prompt Caching** — Cached tokens cost 10% of
+  standard price, delivering up to 90% savings
+- **Flexible Context** — 200K via subscription, up to 1M
+  via API for large codebases
+- **Extended Thinking** — Access Claude's internal reasoning
+- **Advanced Tool Use** — Optimized for agentic workflows
+
+### Multi-Agent Orchestration
+
+- **Dynamic Team Composition** — 4 execution strategies
+  (parallel, sequential, two-phase, delegation)
+- **14 Agent Templates** — Pre-built archetypes with custom
+  template registration
+- **Agent State Persistence** — Execution history,
+  checkpoints, and recovery from interruptions
+- **Progressive Tier Escalation** — Start cheap, escalate
+  only when needed
+
+### Socratic Workflows
+
+Workflows guide you through discovery instead of requiring
+upfront configuration:
+
+- **Interactive Discovery** — Asks targeted questions
+- **Context Gathering** — Collects relevant code and errors
+- **Dynamic Agent Creation** — Assembles the right team
 
 ---
 
@@ -274,22 +293,22 @@ See [Feature Availability Guide](https://github.com/Smart-AI-Memory/attune-ai/bl
 
 Workflows are organized into hubs for easy discovery:
 
-| Hub               | Command       | Description                                  |
-| ----------------- | ------------- | -------------------------------------------- |
-| **Developer**     | `/dev`        | Debug, commit, PR, code review, quality      |
-| **Testing**       | `/testing`    | Run tests, smart test, coverage, test gen    |
-| **Documentation** | `/docs`       | Generate docs, changelog, doc audit          |
-| **Release**       | `/release`    | Release prep, security scan, publishing      |
-| **Workflows**     | `/workflows`  | Automated analysis (security, bugs, perf)    |
-| **Plan**          | `/plan`       | Feature planning, brainstorm, refactoring    |
-| **Agent**         | `/agent`      | Create and manage custom agents              |
+| Hub | Command | Description |
+| --- | --- | --- |
+| **Developer** | `/dev` | Debug, commit, PR, code review, quality |
+| **Testing** | `/testing` | Run tests, smart test, coverage, test gen |
+| **Documentation** | `/docs` | Generate docs, changelog, doc audit |
+| **Release** | `/release` | Release prep, security scan, publishing |
+| **Workflows** | `/workflows` | Automated analysis (security, bugs, perf) |
+| **Plan** | `/plan` | Feature planning, brainstorm, refactoring |
+| **Agent** | `/agent` | Create and manage custom agents |
 
 **Natural Language Routing:**
 
 ```bash
-/workflows "find security vulnerabilities"  # → security-audit
-/workflows "check code performance"         # → perf-audit
-/plan "review my code"                      # → code-review
+/workflows "find security vulnerabilities"  # -> security-audit
+/workflows "check code performance"         # -> perf-audit
+/plan "review my code"                      # -> code-review
 ```
 
 ---
@@ -298,8 +317,8 @@ Workflows are organized into hubs for easy discovery:
 
 ### Skills in Claude Code
 
-Most workflows run as skills through the Task tool using your
-Claude subscription — no additional API costs:
+Most workflows run as skills through the Task tool using
+your Claude subscription — no additional API costs:
 
 ```bash
 /dev           # Uses your Claude subscription
@@ -307,20 +326,17 @@ Claude subscription — no additional API costs:
 /release       # Uses your Claude subscription
 ```
 
-**When API costs apply:** Tasks that exceed your subscription's
-context window (e.g., large codebases >2000 LOC), or
-programmatic/CI usage, route through the Anthropic API.
-The auth strategy automatically handles this routing.
+**When API costs apply:** Tasks that exceed your
+subscription's context window or programmatic/CI usage route
+through the Anthropic API.
 
 ### API Mode (CI/CD, Automation)
 
-For programmatic use, smart tier routing saves 34-86%:
-
-| Tier    | Model         | Use Case                     | Cost    |
-| ------- | ------------- | ---------------------------- | ------- |
-| CHEAP   | Haiku         | Formatting, simple tasks     | ~$0.005 |
-| CAPABLE | Sonnet        | Bug fixes, code review       | ~$0.08  |
-| PREMIUM | Opus          | Architecture, complex design | ~$0.45  |
+| Tier | Model | Use Case | Cost |
+| --- | --- | --- | --- |
+| CHEAP | Haiku | Formatting, simple tasks | ~$0.005 |
+| CAPABLE | Sonnet | Bug fixes, code review | ~$0.08 |
+| PREMIUM | Opus | Architecture, complex design | ~$0.45 |
 
 ```bash
 # Track API usage and savings
@@ -329,40 +345,12 @@ attune telemetry savings --days 30
 
 ---
 
-## MCP Server Integration
+## Claude Code Plugin
 
-Attune AI includes a Model Context Protocol (MCP) server that exposes all workflows as native Claude Code tools:
-
-- **17 Tools Available** - Workflow tools (security_audit, bug_predict, code_review, test_generation, performance_audit, release_prep) plus utility, memory, and context tools
-- **Automatic Discovery** - Claude Code finds tools via `.claude/mcp.json`
-- **Natural Language Access** - Describe your need and Claude invokes the appropriate tool
-
-```bash
-# Verify MCP integration
-echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.mcp.server
-```
-
----
-
-## Authentication Strategy
-
-Intelligent routing between Claude subscription and Anthropic API:
-
-```bash
-# Interactive setup
-python -m attune.models.auth_cli setup
-
-# View current configuration
-python -m attune.models.auth_cli status
-
-# Get recommendation for a file
-python -m attune.models.auth_cli recommend src/module.py
-```
-
-**Automatic routing:**
-
-- Small/medium modules (<2000 LOC) → Claude subscription (free)
-- Large modules (>2000 LOC) → Anthropic API (pay for what you need)
+Install the attune-ai plugin in Claude Code for integrated
+workflow, memory, and orchestration access. The plugin
+provides the `/attune` command, 17 MCP tools, and 17 skills.
+See the `plugin/` directory.
 
 ---
 
@@ -401,30 +389,40 @@ skills using your Claude subscription. Just type `/attune`.
 **For CLI usage** (`attune workflow run ...`):
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."  # Required for CLI workflows
-export REDIS_URL="redis://localhost:6379"  # Optional: memory features
+export ANTHROPIC_API_KEY="sk-ant-..."  # Required for CLI
+export REDIS_URL="redis://localhost:6379"  # Optional: memory
 ```
 
-**How to tell which you need:**
+**Optional features:**
 
-- Using Claude Code interactively? No key needed.
-- Running `attune workflow run` from terminal/CI? Set
-  `ANTHROPIC_API_KEY`.
+```bash
+pip install 'attune-ai[memory]'   # Redis-enhanced memory
+attune features                   # Check what's available
+```
+
+---
+
+## MCP Server Integration
+
+Attune AI includes a Model Context Protocol (MCP) server
+that exposes all workflows as native Claude Code tools:
+
+- **17 Tools Available** — Workflow, utility, memory, and
+  context tools
+- **Automatic Discovery** — Claude Code finds tools via
+  `.claude/mcp.json`
+- **Natural Language Access** — Describe your need and
+  Claude invokes the appropriate tool
 
 ---
 
 ## Security
 
-- Path traversal protection on all file operations (`_validate_file_path()` — single source in `security/path_validation.py`)
+- Path traversal protection on all file operations
 - JWT authentication with rate limiting
 - PII scrubbing in telemetry
 - GDPR compliance options
-- Automated security scanning with continuous remediation
-
-```bash
-# Run security audit
-attune workflow run security-audit --path ./src
-```
+- Automated security scanning
 
 See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability reporting.
 
@@ -436,7 +434,6 @@ See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURIT
 - [CLI Reference](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/cli-reference.md)
 - [Authentication Strategy Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/AUTH_STRATEGY_GUIDE.md)
 - [Orchestration API Reference](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/ORCHESTRATION_API.md)
-- [Workflow Coordination Guide](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/WORKFLOW_COORDINATION.md)
 - [Architecture Overview](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/ARCHITECTURE.md)
 - [Full Documentation](https://smartaimemory.com/framework-docs/)
 
@@ -450,7 +447,9 @@ See [CONTRIBUTING.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CON
 
 ## License
 
-**Apache License 2.0** - Free and open source. Use it, modify it, build commercial products with it. [Details →](LICENSE)
+**Apache License 2.0** — Free and open source. Use it,
+modify it, build commercial products with it.
+[Details](LICENSE)
 
 ---
 
@@ -458,16 +457,22 @@ See [CONTRIBUTING.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CON
 
 Special thanks to:
 
-- **[Anthropic](https://www.anthropic.com/)** — For Claude AI, the Model Context Protocol, and the documentation that shaped our workflow patterns
-- **[Boris Cherny](https://x.com/bcherny)** — Creator of Claude Code, whose candid workflow posts validated and refined Attune's approach to plan-first execution, verification loops, and multi-agent orchestration
-- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations that inspired our hook system and markdown agent format
-- **[LangChain](https://github.com/langchain-ai/langchain)** — Agent framework foundations
-- **[FastAPI](https://github.com/tiangolo/fastapi)** — Modern Python web framework
+- **[Anthropic](https://www.anthropic.com/)** — For Claude
+  AI, the Model Context Protocol, and the Agent SDK patterns
+  that shaped v5.0.0
+- **[Boris Cherny](https://x.com/bcherny)** — Creator of
+  Claude Code, whose workflow posts validated Attune's
+  approach to plan-first execution and multi-agent
+  orchestration
+- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations
+  that inspired our hook system
 
-[View Full Acknowledgements →](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
+[View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
 
 ---
 
-**Built by [Smart AI Memory](https://smartaimemory.com)** · [Docs](https://smartaimemory.com/framework-docs/) · [Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)
+**Built by [Smart AI Memory](https://smartaimemory.com)** ·
+[Docs](https://smartaimemory.com/framework-docs/) ·
+[Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->

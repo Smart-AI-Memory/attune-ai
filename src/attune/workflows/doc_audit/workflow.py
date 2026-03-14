@@ -1,421 +1,259 @@
 """DocAuditWorkflow — Documentation accuracy audit and gap filling.
 
-Runs 10 programmatic checks on the project's documentation, plans
-fixes, applies auto-fixable changes, and verifies results.
+Delegates a full documentation audit to the Claude Agent SDK, using three
+specialized subagents (staleness-checker, accuracy-reviewer, gap-finder)
+and synthesizing their findings into a unified WorkflowResult.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import re
+from __future__ import annotations
+
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseWorkflow, ModelTier, estimate_tokens
-from .checks import CheckResult, run_all_checks
+import claude_agent_sdk
+
+from ..agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
+from ..base import BaseWorkflow, ModelTier
+from ..data_classes import CostReport, WorkflowResult, WorkflowStage
+from .checks import CheckResult, run_all_checks  # noqa: F401  # re-export
+
+logger = logging.getLogger(__name__)
+
+
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "staleness-checker",
+    "accuracy-reviewer",
+    "gap-finder",
+]
+
+_SYSTEM_PROMPT = """\
+You are a senior documentation audit orchestrator. Coordinate three \
+specialized subagents to audit documentation and synthesize their \
+findings into a single structured report. Be thorough but concise. \
+Cite file paths and line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Audit the documentation at {path} using the three specialized \
+subagents below. Each subagent should focus on its domain and report \
+findings as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall documentation health score (0-100) and a 2-3 sentence executive summary.
+
+## Documentation
+Consolidated findings from all three reviewers organized by severity.
+
+## Suggestions
+Actionable next steps ordered by priority.\
+"""
 
 
 class DocAuditWorkflow(BaseWorkflow):
     """Documentation accuracy audit and gap filling workflow.
 
-    Stages:
-        audit:   Run all 10 check functions; return score + results.
-        plan:    For each failing check, generate a fix plan dict.
-        execute: Apply auto-fixable changes to files on disk.
-        verify:  Re-run all checks; compare before/after scores.
+    Delegates all analysis to three Agent SDK subagents rather
+    than using the mixin stage system. Each subagent focuses on
+    a specific audit domain (staleness, accuracy, gaps). The
+    orchestrator synthesizes findings into a unified report.
 
-    Example:
-        workflow = DocAuditWorkflow(project_root=".")
-        result = await workflow.execute()
+    Usage::
+
+        workflow = DocAuditWorkflow()
+        result = await workflow.execute(path="docs/", depth="standard")
 
     """
 
     name = "doc-audit"
     description = "Audit existing docs for staleness, broken links, and drift (validation)"
-    stages = ["audit", "plan", "execute", "verify"]
-    tier_map = {
-        "audit": ModelTier.CHEAP,
-        "plan": ModelTier.CAPABLE,
-        "execute": ModelTier.CAPABLE,
-        "verify": ModelTier.CHEAP,
-    }
+    stages = ["agent-audit"]
+    tier_map = {"agent-audit": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        auto_fix: bool = True,
-        build_docs: bool = True,
-        strict: bool = True,
-        project_root: str = ".",
-        **kwargs: Any,
-    ):
-        """Initialize the documentation audit workflow.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK documentation audit.
 
         Args:
-            auto_fix: Apply safe auto-fixable changes (default True).
-            build_docs: Run mkdocs build to verify no broken links
-                (default True). Skipped gracefully if mkdocs is absent.
-            strict: Treat warnings as failures when computing score
-                (default True).
-            project_root: Root directory of the project to audit.
-            **kwargs: Additional arguments passed to BaseWorkflow.
-
-        """
-        super().__init__(**kwargs)
-        self.auto_fix = auto_fix
-        self.build_docs = build_docs
-        self.strict = strict
-        self.project_root = project_root
-        self._audit_score: int = 0
-
-    # ------------------------------------------------------------------
-    # Stage implementations
-    # ------------------------------------------------------------------
-
-    async def _audit(
-        self, input_data: dict, tier: ModelTier = ModelTier.CHEAP
-    ) -> tuple[dict, int, int]:
-        """Run all 10 documentation checks and compute a score.
-
-        Checks cover test counts, workflow counts, version consistency,
-        broken links, and other documentation accuracy metrics.
-
-        Args:
-            input_data: Workflow input dict. May contain "project_root"
-                to override the instance default.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to audit.
+                depth (str): Audit depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            Tuple of (output, input_tokens, output_tokens).
-            Output keys: checks (list[dict]), score (int 0-100),
-            project_root (str).
+            WorkflowResult with findings, suggestions, and metadata.
 
         """
-        root = input_data.get("project_root", self.project_root)
-        results = run_all_checks(root)
-        score = self._compute_score(results)
-        self._audit_score = score
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-        serialised = [self._serialise_check(r) for r in results]
-        output = {
-            "checks": serialised,
-            "score": score,
-            "project_root": root,
-            **input_data,
-        }
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(output)
-        self.logger.info(
-            "doc-audit audit stage complete: score=%d, checks=%d",
-            score,
-            len(results),
-        )
-        return output, input_tokens, output_tokens
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-    async def _plan(
-        self, input_data: dict, tier: ModelTier = ModelTier.CAPABLE
-    ) -> tuple[dict, int, int]:
-        """Generate fix plans for each failing or warning check.
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
-        For each check with status "fail" or "warn", collects metadata
-        about the issue and whether it can be auto-fixed.
+        started_at = datetime.now()
 
-        Args:
-            input_data: Output from the audit stage; must contain "checks".
+        try:
+            run_result = await self._run_agent_audit(resolved_path, max_turns, depth=depth)
 
-        Returns:
-            Tuple of (output, input_tokens, output_tokens).
-            Output keys: fixes (list[dict]), plus all keys from input_data.
+            completed_at = datetime.now()
 
-        """
-        checks = input_data.get("checks", [])
-        fixes: list[dict] = []
-
-        for check in checks:
-            status = check.get("status", "pass")
-            if status not in ("fail", "warn"):
-                continue
-            fixes.append(
-                {
-                    "check_id": check["id"],
-                    "description": check["details"],
-                    "auto_fixable": check.get("auto_fixable", False),
-                    "file": check.get("file"),
-                }
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+                agent_run_result=run_result,
             )
 
-        output = {
-            "fixes": fixes,
-            **input_data,
-        }
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(output)
-        self.logger.info("doc-audit plan stage complete: %d fix(es) planned", len(fixes))
-        return output, input_tokens, output_tokens
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK doc audit failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-    async def _execute(
-        self, input_data: dict, tier: ModelTier = ModelTier.CAPABLE
-    ) -> tuple[dict, int, int]:
-        """Apply auto-fixable documentation changes to disk.
-
-        Currently handles updating numeric count badges in README.md
-        for test-count, workflow-count, skill-count, and mcp-tool-count.
-        Manual-review items are identified but not modified.
-
-        Respects the auto_fix instance flag; if False, no changes
-        are applied.
+    async def _run_agent_audit(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK audit and return result text.
 
         Args:
-            input_data: Output from the plan stage.
+            resolved_path: Absolute path to audit.
+            max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            Tuple of (output, input_tokens, output_tokens).
-            Output keys: applied (int), manual (int),
-            files_modified (list[str]), plus all keys from input_data.
+            AgentRunResult with findings and SDK metadata.
 
         """
-        fixes = input_data.get("fixes", [])
-        checks: list[dict] = input_data.get("checks", [])
-        root = Path(input_data.get("project_root", self.project_root))
-
-        # Index checks by id for quick lookup
-        checks_by_id: dict[str, dict] = {c["id"]: c for c in checks}
-
-        applied = 0
-        manual = 0
-        files_modified: list[str] = []
-
-        if not self.auto_fix:
-            manual = len([f for f in fixes if f.get("auto_fixable")])
-            output = {
-                "applied": 0,
-                "manual": manual,
-                "files_modified": [],
-                **input_data,
-            }
-            return output, estimate_tokens(input_data), 0
-
-        for fix in fixes:
-            if not fix.get("auto_fixable", False):
-                manual += 1
-                continue
-
-            check_id = fix["check_id"]
-            modified = self._apply_count_fix(check_id, checks_by_id, root)
-            if modified:
-                applied += 1
-                if modified not in files_modified:
-                    files_modified.append(modified)
-            else:
-                manual += 1
-
-        output = {
-            "applied": applied,
-            "manual": manual,
-            "files_modified": files_modified,
-            **input_data,
-        }
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(output)
-        self.logger.info(
-            "doc-audit execute stage: applied=%d, manual=%d, files=%s",
-            applied,
-            manual,
-            files_modified,
-        )
-        return output, input_tokens, output_tokens
-
-    async def _verify(
-        self, input_data: dict, tier: ModelTier = ModelTier.CHEAP
-    ) -> tuple[dict, int, int]:
-        """Re-run all checks and compare before/after scores.
-
-        Optionally runs mkdocs build to verify documentation builds
-        without errors. Includes all check results from both audit rounds.
-
-        Args:
-            input_data: Output from the execute stage.
-
-        Returns:
-            Tuple of (output, input_tokens, output_tokens).
-            Output keys: before_score (int), after_score (int),
-            improved (bool), mkdocs_build (bool|None),
-            after_checks (list[dict]), plus all keys from input_data.
-
-        """
-        root = input_data.get("project_root", self.project_root)
-        before_score = input_data.get("score", self._audit_score)
-
-        after_results = run_all_checks(root)
-        after_score = self._compute_score(after_results)
-
-        mkdocs_result: bool | None = None
-        if self.build_docs:
-            mkdocs_result = self._run_mkdocs_build(root)
-
-        output = {
-            "before_score": before_score,
-            "after_score": after_score,
-            "improved": after_score >= before_score,
-            "mkdocs_build": mkdocs_result,
-            "after_checks": [self._serialise_check(r) for r in after_results],
-            **input_data,
-        }
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(output)
-        self.logger.info(
-            "doc-audit verify stage: before=%d, after=%d, mkdocs=%s",
-            before_score,
-            after_score,
-            mkdocs_result,
-        )
-        return output, input_tokens, output_tokens
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-
-    def _compute_score(self, results: list[CheckResult]) -> int:
-        """Compute a 0-100 documentation health score.
-
-        Calculated as (passed_checks / total_checks) * 100.
-        In strict mode, warnings count as failures.
-
-        Args:
-            results: List of CheckResult objects.
-
-        Returns:
-            Integer score 0-100, or 100 if results is empty.
-
-        """
-        if not results:
-            return 100
-        passed = sum(
-            1 for r in results if r.status == "pass" or (not self.strict and r.status == "warn")
-        )
-        return int(passed / len(results) * 100)
-
-    @staticmethod
-    def _serialise_check(result: CheckResult) -> dict:
-        """Convert a CheckResult dataclass to a JSON-serializable dict.
-
-        Args:
-            result: CheckResult instance.
-
-        Returns:
-            Dict with keys: id, name, status, details, file, line,
-            auto_fixable.
-
-        """
-        return {
-            "id": result.id,
-            "name": result.name,
-            "status": result.status,
-            "details": result.details,
-            "file": result.file,
-            "line": result.line,
-            "auto_fixable": result.auto_fixable,
-        }
-
-    def _apply_count_fix(
-        self,
-        check_id: str,
-        checks_by_id: dict[str, dict],
-        root: Path,
-    ) -> str | None:
-        """Update numeric count badges in README.md.
-
-        Supports: test-count, workflow-count, skill-count, mcp-tool-count.
-        Extracts the actual count from the check details and replaces
-        the stale badge value with the correct one using regex.
-
-        Args:
-            check_id: The check identifier (e.g. "test-count").
-            checks_by_id: Dict of check data keyed by check id.
-            root: Project root Path.
-
-        Returns:
-            Path to README.md if modified, None if no change was made
-            or file does not exist.
-
-        """
-        readme_path = root / "README.md"
-        if not readme_path.exists():
-            return None
-
-        check = checks_by_id.get(check_id, {})
-        details = check.get("details", "")
-
-        # Extract "actual N" from details like
-        # "README badge says 100 tests but pytest collected 146."
-        actual_match = re.search(r"(\d+)[^\d]*$", details)
-        if not actual_match:
-            return None
-        actual = actual_match.group(1)
-
-        # Map check id to replacement patterns
-        patterns = {
-            "test-count": (
-                r"(tests[-_]?)(\d+)([-_])",
-                lambda m: f"{m.group(1)}{actual}{m.group(3)}",
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "staleness-checker": claude_agent_sdk.AgentDefinition(
+                        description="Staleness checker that finds outdated documentation.",
+                        prompt=(
+                            "You are a documentation staleness checker. "
+                            "Focus on: outdated docs, stale version "
+                            "references, dead links, and obsolete "
+                            "examples. Report each finding with file "
+                            "path, line number, severity, and "
+                            "remediation advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("staleness-checker"),
+                    ),
+                    "accuracy-reviewer": claude_agent_sdk.AgentDefinition(
+                        description="Accuracy reviewer that verifies docs match code.",
+                        prompt=(
+                            "You are a documentation accuracy reviewer. "
+                            "Focus on: verifying docs match current code "
+                            "behavior, API signatures, and config "
+                            "options. Report each finding with file "
+                            "path, severity, and correction advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("accuracy-reviewer"),
+                    ),
+                    "gap-finder": claude_agent_sdk.AgentDefinition(
+                        description="Gap finder that identifies missing documentation.",
+                        prompt=(
+                            "You are a documentation gap finder. Focus "
+                            "on: identifying missing docs for public "
+                            "APIs, undocumented features, and missing "
+                            "examples. Report each finding with the "
+                            "affected module, severity, and what "
+                            "documentation should be added."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("gap-finder"),
+                    ),
+                },
             ),
-            "workflow-count": (
-                r"(\d+)(\s+workflows?\b)",
-                lambda m: f"{actual}{m.group(2)}",
-            ),
-            "skill-count": (
-                r"(\d+)(\s+(?:skills?|commands?)\b)",
-                lambda m: f"{actual}{m.group(2)}",
-            ),
-            "mcp-tool-count": (
-                r"(\d+)(\s+MCP\s+tools?\b)",
-                lambda m: f"{actual}{m.group(2)}",
-            ),
-        }
-
-        if check_id not in patterns:
-            return None
-
-        pattern, repl = patterns[check_id]
-        try:
-            content = readme_path.read_text(encoding="utf-8")
-            new_content, n_subs = re.subn(pattern, repl, content, flags=re.IGNORECASE)
-            if n_subs == 0 or new_content == content:
-                return None
-            readme_path.write_text(new_content, encoding="utf-8")
-            return str(readme_path)
-        except OSError as e:
-            self.logger.warning("Could not update README.md: %s", e)
-            return None
-
-    def _run_mkdocs_build(self, project_root: str) -> bool | None:
-        """Run mkdocs build to verify documentation completeness.
-
-        Builds the documentation site in a temporary directory with
-        strict mode enabled to catch missing references.
-
-        Args:
-            project_root: Root directory of the project.
-
-        Returns:
-            True if build succeeded, False if it failed (exit code != 0),
-            None if mkdocs is not installed.
-
-        """
-        import subprocess
-        import tempfile
-
-        try:
-            with tempfile.TemporaryDirectory(prefix="doc-audit-site-") as tmpdir:
-                result = subprocess.run(
-                    ["mkdocs", "build", "--strict", "--site-dir", tmpdir],
-                    capture_output=True,
-                    text=True,
-                    timeout=300,
-                    cwd=project_root,
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
                 )
-            return result.returncode == 0
-        except FileNotFoundError:
-            self.logger.info("mkdocs not installed; skipping build check.")
-            return None
-        except (subprocess.TimeoutExpired, OSError) as e:
-            self.logger.warning("mkdocs build failed: %s", e)
-            return False
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
+
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-audit",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK doc audit",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
+        )

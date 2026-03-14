@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from attune.agents.sdk.sdk_team import QualityGate
+from attune.orchestration.agent_models import QualityGate
 from attune.orchestration.dynamic_team import DynamicTeam
 
 from .workflow_agent_adapter import WorkflowAgentAdapter

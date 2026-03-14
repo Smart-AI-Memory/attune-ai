@@ -1,8 +1,7 @@
-"""Behavioral tests for AgentCodeReviewWorkflow.
+"""Behavioral tests for CodeReviewWorkflow (SDK-native).
 
-Tests the Agent SDK code review workflow covering attributes,
-SDK unavailability, successful execution, depth configuration,
-and subagent definitions.
+Tests the merged SDK-native code review workflow covering attributes,
+successful execution, depth configuration, and subagent definitions.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -18,67 +17,42 @@ from attune.workflows.data_classes import WorkflowResult
 
 
 @pytest.mark.unit
-class TestAgentCodeReviewWorkflowAttributes:
+class TestCodeReviewWorkflowAttributes:
     """Test workflow class attributes."""
 
     def test_workflow_has_correct_name(self) -> None:
-        """Given the workflow class, name is 'code-review-sdk'."""
-        from attune.workflows.code_review_agent_sdk import AgentCodeReviewWorkflow
+        """Given the workflow class, name is 'code-review'."""
+        from attune.workflows.code_review import CodeReviewWorkflow
 
-        wf = AgentCodeReviewWorkflow()
-        assert wf.name == "code-review-sdk"
+        wf = CodeReviewWorkflow()
+        assert wf.name == "code-review"
 
     def test_workflow_has_description(self) -> None:
         """Given the workflow class, description is a non-empty string."""
-        from attune.workflows.code_review_agent_sdk import AgentCodeReviewWorkflow
+        from attune.workflows.code_review import CodeReviewWorkflow
 
-        wf = AgentCodeReviewWorkflow()
+        wf = CodeReviewWorkflow()
         assert isinstance(wf.description, str)
         assert len(wf.description) > 0
 
+    def test_workflow_description_mentions_agent_sdk(self) -> None:
+        """Given the workflow class, description mentions Agent SDK."""
+        from attune.workflows.code_review import CodeReviewWorkflow
+
+        wf = CodeReviewWorkflow()
+        assert "Agent SDK" in wf.description
+
     def test_workflow_has_stages_list(self) -> None:
         """Given the workflow class, stages list contains 'agent-review'."""
-        from attune.workflows.code_review_agent_sdk import AgentCodeReviewWorkflow
+        from attune.workflows.code_review import CodeReviewWorkflow
 
-        wf = AgentCodeReviewWorkflow()
+        wf = CodeReviewWorkflow()
         assert isinstance(wf.stages, list)
         assert "agent-review" in wf.stages
 
 
 @pytest.mark.unit
-class TestAgentCodeReviewWorkflowSdkUnavailable:
-    """Test behavior when claude_agent_sdk is not installed."""
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_sdk_unavailable(self) -> None:
-        """Given SDK unavailable, execute returns WorkflowResult with success=False."""
-        from attune.workflows.code_review_agent_sdk import AgentCodeReviewWorkflow
-
-        wf = AgentCodeReviewWorkflow()
-
-        with patch("attune.workflows.code_review_agent_sdk._SDK_AVAILABLE", False):
-            result = await wf.execute(path="src/")
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "claude-agent-sdk not installed" in (result.error or "")
-
-    @pytest.mark.asyncio
-    async def test_execute_returns_failure_when_path_missing(self) -> None:
-        """Given no path argument, execute returns WorkflowResult with error."""
-        from attune.workflows.code_review_agent_sdk import AgentCodeReviewWorkflow
-
-        wf = AgentCodeReviewWorkflow()
-
-        result = await wf.execute()
-
-        assert isinstance(result, WorkflowResult)
-        assert result.success is False
-        assert "path" in (result.error or "").lower()
-
-
-@pytest.mark.unit
-class TestAgentCodeReviewWorkflowExecution:
+class TestCodeReviewWorkflowExecution:
     """Test successful execution with mocked SDK."""
 
     @pytest.mark.asyncio
@@ -108,18 +82,13 @@ class TestAgentCodeReviewWorkflowExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch("attune.workflows.code_review_agent_sdk._SDK_AVAILABLE", True),
-            patch(
-                "attune.workflows.code_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.code_review.claude_agent_sdk",
+            mock_sdk,
         ):
-            from attune.workflows.code_review_agent_sdk import (
-                AgentCodeReviewWorkflow,
-            )
+            from attune.workflows.code_review import CodeReviewWorkflow
 
-            wf = AgentCodeReviewWorkflow()
+            wf = CodeReviewWorkflow()
             result = await wf.execute(path="src/")
 
         assert isinstance(result, WorkflowResult)
@@ -137,27 +106,34 @@ class TestAgentCodeReviewWorkflowExecution:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch("attune.workflows.code_review_agent_sdk._SDK_AVAILABLE", True),
-            patch(
-                "attune.workflows.code_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.code_review.claude_agent_sdk",
+            mock_sdk,
         ):
-            from attune.workflows.code_review_agent_sdk import (
-                AgentCodeReviewWorkflow,
-            )
+            from attune.workflows.code_review import CodeReviewWorkflow
 
-            wf = AgentCodeReviewWorkflow()
+            wf = CodeReviewWorkflow()
             result = await wf.execute(path="src/")
 
         assert isinstance(result, WorkflowResult)
         assert result.success is False
         assert "RuntimeError" in (result.error or "")
 
+    @pytest.mark.asyncio
+    async def test_execute_without_path_returns_error(self) -> None:
+        """Given no path argument, execute returns error result."""
+        from attune.workflows.code_review import CodeReviewWorkflow
+
+        wf = CodeReviewWorkflow()
+        result = await wf.execute()
+
+        assert isinstance(result, WorkflowResult)
+        assert result.success is False
+        assert "path" in (result.error or "").lower()
+
 
 @pytest.mark.unit
-class TestAgentCodeReviewWorkflowDepth:
+class TestCodeReviewWorkflowDepth:
     """Test depth configuration affects max_turns."""
 
     @pytest.mark.asyncio
@@ -176,18 +152,13 @@ class TestAgentCodeReviewWorkflowDepth:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch("attune.workflows.code_review_agent_sdk._SDK_AVAILABLE", True),
-            patch(
-                "attune.workflows.code_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.code_review.claude_agent_sdk",
+            mock_sdk,
         ):
-            from attune.workflows.code_review_agent_sdk import (
-                AgentCodeReviewWorkflow,
-            )
+            from attune.workflows.code_review import CodeReviewWorkflow
 
-            wf = AgentCodeReviewWorkflow()
+            wf = CodeReviewWorkflow()
             await wf.execute(path="src/", depth=depth)
 
         # Verify max_turns was passed to ClaudeAgentOptions
@@ -203,18 +174,13 @@ class TestAgentCodeReviewWorkflowDepth:
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
-        with (
-            patch("attune.workflows.code_review_agent_sdk._SDK_AVAILABLE", True),
-            patch(
-                "attune.workflows.code_review_agent_sdk.claude_agent_sdk",
-                mock_sdk,
-            ),
+        with patch(
+            "attune.workflows.code_review.claude_agent_sdk",
+            mock_sdk,
         ):
-            from attune.workflows.code_review_agent_sdk import (
-                AgentCodeReviewWorkflow,
-            )
+            from attune.workflows.code_review import CodeReviewWorkflow
 
-            wf = AgentCodeReviewWorkflow()
+            wf = CodeReviewWorkflow()
             await wf.execute(path="src/", depth="unknown_depth")
 
         options_call = mock_sdk.ClaudeAgentOptions.call_args
@@ -223,18 +189,18 @@ class TestAgentCodeReviewWorkflowDepth:
 
 
 @pytest.mark.unit
-class TestAgentCodeReviewWorkflowSubagents:
+class TestCodeReviewWorkflowSubagents:
     """Test subagent definitions."""
 
     def test_four_subagents_defined(self) -> None:
         """Given the module constants, exactly 4 subagents are defined."""
-        from attune.workflows.code_review_agent_sdk import _SUBAGENT_NAMES
+        from attune.workflows.code_review import _SUBAGENT_NAMES
 
         assert len(_SUBAGENT_NAMES) == 4
 
     def test_subagent_names_match_expected(self) -> None:
         """Given the module constants, subagent names match expected set."""
-        from attune.workflows.code_review_agent_sdk import _SUBAGENT_NAMES
+        from attune.workflows.code_review import _SUBAGENT_NAMES
 
         expected = {
             "security-reviewer",
@@ -243,3 +209,34 @@ class TestAgentCodeReviewWorkflowSubagents:
             "architect-reviewer",
         }
         assert set(_SUBAGENT_NAMES) == expected
+
+
+@pytest.mark.unit
+class TestCodeReviewWorkflowReExports:
+    """Test backward-compatible re-exports from code_review module."""
+
+    def test_code_review_steps_accessible(self) -> None:
+        """Given the module, CODE_REVIEW_STEPS is importable."""
+        from attune.workflows.code_review import CODE_REVIEW_STEPS
+
+        assert "architect_review" in CODE_REVIEW_STEPS
+
+    def test_format_code_review_report_accessible(self) -> None:
+        """Given the module, format_code_review_report is importable."""
+        from attune.workflows.code_review import format_code_review_report
+
+        assert callable(format_code_review_report)
+
+    def test_analysis_helpers_accessible(self) -> None:
+        """Given the module, analysis helpers are importable."""
+        from attune.workflows.code_review import (
+            _format_findings_for_prompt,
+            _gather_file_snippets,
+            _parse_deep_enrichment,
+            _recount_by_key,
+        )
+
+        assert callable(_format_findings_for_prompt)
+        assert callable(_gather_file_snippets)
+        assert callable(_parse_deep_enrichment)
+        assert callable(_recount_by_key)

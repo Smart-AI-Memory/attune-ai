@@ -17,10 +17,12 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from .dynamic_team import DynamicTeam
 
-from attune.agents.sdk.sdk_agent import SDKAgent
-from attune.agents.sdk.sdk_models import SDKExecutionMode
-from attune.agents.sdk.sdk_team import QualityGate
 from attune.agents.state.store import AgentStateStore
+from attune.orchestration.agent_models import (
+    QualityGate,
+    SDKExecutionMode,
+    StubAgent,
+)
 from attune.orchestration.agent_templates import get_template
 
 from .config_store import AgentConfiguration
@@ -138,8 +140,8 @@ class DynamicTeamBuilder:
     # Agent instantiation
     # ------------------------------------------------------------------
 
-    def _instantiate_agent(self, agent_spec: dict[str, Any]) -> SDKAgent:
-        """Create an SDKAgent from an agent specification dict.
+    def _instantiate_agent(self, agent_spec: dict[str, Any]) -> StubAgent:
+        """Create a StubAgent from an agent specification dict.
 
         The spec may reference a template by ``template_id``, in which case
         the template's defaults are used for any missing fields.
@@ -149,7 +151,7 @@ class DynamicTeamBuilder:
                 ``system_prompt``, ``mode``.
 
         Returns:
-            Configured SDKAgent instance.
+            Configured StubAgent instance.
 
         """
         template_id = agent_spec.get("template_id")
@@ -167,13 +169,13 @@ class DynamicTeamBuilder:
         except ValueError:
             mode = SDKExecutionMode.TOOLS_ONLY
 
-        return SDKAgent(
+        return StubAgent(
             agent_id=agent_spec.get("agent_id"),
             role=role,
             system_prompt=system_prompt,
             mode=mode,
-            redis_client=self.redis_client,
             state_store=self.state_store,
+            redis=self.redis_client,
         )
 
     def _build_quality_gates(self, gates_spec: dict[str, Any]) -> list[QualityGate]:

@@ -80,7 +80,7 @@ def cmd_workflow_run(args: Namespace) -> int:
     import asyncio
 
     from attune.security.path_validation import _validate_file_path
-    from attune.workflows import get_workflow, is_using_api_fallback
+    from attune.workflows import get_workflow
 
     name = args.name
 
@@ -89,14 +89,6 @@ def cmd_workflow_run(args: Namespace) -> int:
     except KeyError:
         print(f"❌ Workflow not found: {name}")
         return 1
-
-    # Warn if falling back to API version
-    if is_using_api_fallback(name):
-        print(
-            f"⚠️  Using API version of '{name}'. "
-            "Install claude-agent-sdk for the enhanced Agent SDK version:\n"
-            "    pip install claude-agent-sdk\n"
-        )
 
     # Parse input if provided
     input_data = {}

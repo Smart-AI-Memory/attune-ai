@@ -1,4 +1,4 @@
-# Attune AI Framework v4.1.1
+# Attune AI Framework v5.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -134,13 +134,13 @@ This rule applies to ALL workflow interactions, not just `/attune`.
 
 ```text
 src/attune/
-├── agents/            # Agent SDK, state persistence, recovery
-│   ├── sdk/           # SDKAgent, SDKAgentTeam, adapters
+├── agents/            # Release agents, state persistence, recovery
+│   ├── release/       # ReleaseAgent, ReleasePrepTeam
 │   └── state/         # AgentStateStore, AgentRecoveryManager
-├── workflows/         # AI-powered workflows with state & multi-agent mixins
+├── workflows/         # AI-powered workflows (all SDK-native)
 ├── models/            # Authentication strategy and LLM providers
 ├── meta_workflows/    # Intent detection and natural language routing
-├── orchestration/     # Dynamic teams, workflow composition, pattern learning
+├── orchestration/     # Dynamic teams, workflow composition, agent models
 ├── plugins/           # BasePlugin + register_mcp_tools() hook
 ├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
@@ -150,7 +150,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 4.0.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 5.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -546,13 +546,11 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   when suppressing the original. After fixing all violations,
   remove B904 from the ruff ignore list to enforce going forward.
 
-- **`claude-agent-sdk` is a standalone PyPI package, not bundled
-  with Claude Code**: The Agent SDK (`pip install claude-agent-sdk`)
-  is independently versioned and published on PyPI. It is not part
-  of the `anthropic` package or the Claude Code CLI. The optional
-  extra `attune-ai[agent-sdk]` installs it. Check availability at
-  runtime with `import claude_agent_sdk` and the `_SDK_AVAILABLE`
-  module-level guard pattern.
+- **`claude-agent-sdk` is now a core dependency of attune-ai**:
+  As of v4.2.0, the Agent SDK is included in core dependencies.
+  No need for `pip install 'attune-ai[agent-sdk]'` — a plain
+  `pip install attune-ai` includes it. The `[agent-sdk]` extra
+  is kept as an empty placeholder for backward compatibility.
 
 - **`list_workflows()` deduplication must keep base names visible**:
   When hiding SDK duplicates, only skip entries in `_SDK_REVERSE_MAP`
@@ -675,5 +673,51 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Duplicate module named attune.config". This blocks mypy in
   pre-commit. Either rename one or exclude the module from mypy.
   We removed mypy from pre-commit entirely for now.
+
+- **Replacing a mixin-based class scatters test failures across many
+  files**: When merging `CodeReviewWorkflow` from 5 mixins into an
+  SDK-native class, tests for old internal methods (`_classify`,
+  `_scan`, `_gather_project_context`, `should_skip_stage`) were spread
+  across 6+ test files (unit, workflow, integration, coverage batches).
+  Grep for ALL method names being removed across the entire test tree
+  before considering the migration done — `pytest -k "code_review"`
+  catches failures that file-specific runs miss.
+
+- **Registry count assertions are scattered across test files**: When
+  merging SDK workflow variants (reducing `_SDK_WORKFLOW_MAP` from
+  12→9 entries), hardcoded count assertions like
+  `assert len(_SDK_WORKFLOW_MAP) == 12` and expected-set assertions
+  exist in routing behavioral tests, validation framework tests, and
+  coverage batch tests. Always grep for the old count and old class
+  names (e.g. `SecurityAuditAgentSDKWorkflow`) across all test files
+  when changing registry size.
+
+- **SDK-native workflows validate in `execute()`, not `input_schema`**:
+  After merging to SDK-native, workflows no longer declare
+  `input_schema` as a class attribute — path validation happens inside
+  `execute()`. Tests asserting `Workflow.input_schema is not None`
+  must be removed or updated.
+
+- **Hardcoded strings in method bodies survive class attribute
+  renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
+  on the class didn't fix a hardcoded `"workflow": "deep-review-sdk"`
+  string inside `execute()`. After renaming a class attribute, always
+  grep for the old value across the entire source file to catch
+  hardcoded duplicates in method bodies and metadata dicts.
+
+- **GPG signing fails in non-interactive terminals (VSCode
+  extension, Claude Code)**: `gpg` tries to open `/dev/tty` for
+  passphrase input, which doesn't exist in spawned subprocesses.
+  Fix: install `pinentry-mac` (`brew install pinentry-mac`), set
+  `pinentry-program /opt/homebrew/bin/pinentry-mac` in
+  `~/.gnupg/gpg-agent.conf` (remove any earlier `pinentry-tty`
+  lines — GPG uses the first match), then `gpgconf --kill
+  gpg-agent`. The passphrase must still be cached first by
+  running `echo "unlock" | gpg --clearsign` in a real terminal.
+
+- **Multiple `pinentry-program` lines in gpg-agent.conf — first
+  wins**: GPG uses the first `pinentry-program` directive it
+  finds. Appending a new line doesn't override earlier ones.
+  Always replace, don't append.
 
 <!-- attune-lessons-end -->

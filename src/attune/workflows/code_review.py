@@ -1,46 +1,98 @@
-"""Code Review Workflow
+"""Code Review Workflow — Agent SDK Native.
 
-A tiered code analysis pipeline:
-1. Haiku: Classify change type (cheap, fast)
-2. Sonnet: Security scan + bug pattern matching
-3. Opus: Architectural review (conditional on complexity)
+Delegates code review to four specialized Claude Agent SDK subagents
+(security, quality, performance, architecture) and synthesizes their
+findings into a unified WorkflowResult.
 
-Copyright 2025 Smart-AI-Memory
+Prior to v4.2.0 this was a mixin-based multi-stage pipeline that made
+direct LLM calls. The SDK-native implementation replaces that with
+`claude_agent_sdk.query()` and `AgentDefinition` subagents while
+preserving the same public interface (`CodeReviewWorkflow`, `code-review`
+slug) and re-exports used by downstream code.
+
+Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import claude_agent_sdk
+
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from .base import BaseWorkflow, ModelTier
-from .code_review_analysis_helpers import (  # noqa: F401
+from .code_review_analysis_helpers import (  # noqa: F401 — re-exported
     _format_findings_for_prompt,
     _gather_file_snippets,
     _parse_deep_enrichment,
     _recount_by_key,
 )
-from .code_review_analysis_mixin import CodeReviewAnalysisMixin
-from .code_review_architect import ArchitectMixin
-from .code_review_classify import ClassifyMixin
-from .code_review_crew_mixin import CrewMixin
 from .code_review_report import format_code_review_report  # noqa: F401
-from .code_review_scan import ScanMixin
-from .context import WorkflowContext
-from .services import ParsingService, PromptService
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
+from .output_schemas import WORKFLOW_OUTPUT_SCHEMA
 from .step_config import WorkflowStepConfig
-from .validation import InputSchema, StageContract
 
 logger = logging.getLogger(__name__)
 
-# Quality check thresholds
-MAX_FILE_LINES = 500
-CHARS_PER_TOKEN_ESTIMATE = 4
+# Depth → max agent turns mapping
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
 
-# Define step configurations for executor-based execution
+_SUBAGENT_NAMES = [
+    "security-reviewer",
+    "quality-reviewer",
+    "perf-reviewer",
+    "architect-reviewer",
+]
+
+_SYSTEM_PROMPT = """\
+You are a senior code review orchestrator. You coordinate four \
+specialized subagents to produce a unified code review report. \
+Be thorough but concise. Cite file paths and line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Review the codebase at {path} using the four specialized subagents \
+below. Each subagent should focus on its domain and report findings \
+as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall code health score (0-100) and a 2-3 sentence executive summary.
+
+## Security
+Findings from the security reviewer.
+
+## Quality
+Findings from the quality reviewer.
+
+## Performance
+Findings from the performance reviewer.
+
+## Architecture
+Findings from the architecture reviewer.
+
+## Suggestions
+Actionable next steps ordered by priority.\
+"""
+
+# Kept for backward compatibility — consumed by tests and step executor
 CODE_REVIEW_STEPS = {
     "architect_review": WorkflowStepConfig(
         name="architect_review",
-        task_type="architectural_decision",  # Premium tier task
+        task_type="architectural_decision",
         tier_hint="premium",
         description="Comprehensive architectural code review",
         max_tokens=3000,
@@ -48,177 +100,219 @@ CODE_REVIEW_STEPS = {
 }
 
 
-class CodeReviewWorkflow(
-    ClassifyMixin,
-    ScanMixin,
-    ArchitectMixin,
-    CrewMixin,
-    CodeReviewAnalysisMixin,
-    BaseWorkflow,
-):
-    """Multi-tier code review workflow.
+class CodeReviewWorkflow(BaseWorkflow):
+    """SDK-native code review with four specialized subagents.
 
-    Uses cheap models for classification, capable models for security
-    and bug scanning, and premium models only for complex architectural
-    reviews (10+ files or core module changes).
+    Delegates all analysis to Claude Agent SDK subagents:
+    - **security-reviewer** — injection, path traversal, secrets
+    - **quality-reviewer** — complexity, error handling, duplication
+    - **perf-reviewer** — N+1, blocking I/O, unnecessary copies
+    - **architect-reviewer** — coupling, SOLID, circular deps
 
-    Supports composition via ``WorkflowContext`` -- use ``default_context()``
-    to get a pre-configured context with prompt and parsing services.
+    The orchestrator synthesizes findings into a unified report.
 
-    Usage:
+    Usage::
+
         workflow = CodeReviewWorkflow()
-        result = await workflow.execute(
-            diff="...",
-            files_changed=["src/main.py", "tests/test_main.py"],
-            is_core_module=False
-        )
+        result = await workflow.execute(path="src/", depth="standard")
     """
 
     name = "code-review"
-    description = "Tiered code analysis with conditional premium review"
-    stages = [
-        "classify",
-        "scan",
-        "perf_check",
-        "perf_check_deep",
-        "health_monitor",
-        "quality_check",
-        "quality_check_deep",
-        "architect_review",
-    ]
-    tier_map = {
-        "classify": ModelTier.CHEAP,
-        "scan": ModelTier.CAPABLE,
-        "perf_check": ModelTier.CHEAP,
-        "perf_check_deep": ModelTier.CAPABLE,
-        "health_monitor": ModelTier.CHEAP,
-        "quality_check": ModelTier.CHEAP,
-        "quality_check_deep": ModelTier.CAPABLE,
-        "architect_review": ModelTier.PREMIUM,
-    }
-    input_schema = InputSchema(
-        required_fields={"path": str},
-        optional_fields={"files_changed": list, "diff": str},
-    )
-    stage_contracts = {
-        "classify": StageContract(required_keys={"risk_level"}),
-        "scan": StageContract(required_keys={"findings"}),
-    }
+    description = "Agent SDK-powered code review with 4 specialized subagents"
+    stages = ["agent-review"]
+    tier_map = {"agent-review": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        file_threshold: int = 10,
-        core_modules: list[str] | None = None,
-        use_crew: bool = True,
-        crew_config: dict | None = None,
-        enable_auth_strategy: bool = True,
-        **kwargs: Any,
-    ):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize workflow.
 
         Args:
-            file_threshold: Number of files above which premium review is used.
-            core_modules: List of module paths considered "core" (trigger premium).
-            use_crew: Enable CodeReviewCrew for comprehensive 5-agent analysis (default: True).
-            crew_config: Configuration dict for CodeReviewCrew.
-            enable_auth_strategy: If True, use intelligent subscription vs API routing
-                based on module size (default True).
-
+            **kwargs: Passed to BaseWorkflow.__init__().
         """
         super().__init__(**kwargs)
-        self.file_threshold = file_threshold
-        self.core_modules = core_modules or [
-            "src/core/",
-            "src/security/",
-            "src/auth/",
-            "empathy_os/core.py",
-            "empathy_os/security/",
-        ]
-        self.use_crew = use_crew
-        self.crew_config = crew_config or {}
-        self.enable_auth_strategy = enable_auth_strategy
-        self._needs_architect_review: bool = False
-        self._change_type: str = "unknown"
-        self._crew: Any = None
-        self._crew_available = False
-        self._auth_mode_used: str | None = None
 
-        # Dynamically configure stages based on crew setting
-        if use_crew:
-            self.stages = [
-                "classify",
-                "crew_review",
-                "scan",
-                "perf_check",
-                "perf_check_deep",
-                "health_monitor",
-                "quality_check",
-                "quality_check_deep",
-                "architect_review",
-            ]
-            self.tier_map = {
-                "classify": ModelTier.CHEAP,
-                "crew_review": ModelTier.CAPABLE,
-                "scan": ModelTier.CAPABLE,
-                "perf_check": ModelTier.CHEAP,
-                "perf_check_deep": ModelTier.CAPABLE,
-                "health_monitor": ModelTier.CHEAP,
-                "quality_check": ModelTier.CHEAP,
-                "quality_check_deep": ModelTier.CAPABLE,
-                "architect_review": ModelTier.PREMIUM,
-            }
-
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for code review.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK code review.
 
         Args:
-            xml_config: Optional XML prompt configuration dict.
-                Defaults to XML disabled --- benchmarks on Claude 4.x show
-                +56% cost overhead with no quality improvement for code review.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to review.
+                depth (str): Review depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        if xml_config is None:
-            xml_config = {"enabled": False}
-        return WorkflowContext(
-            prompt=PromptService("code-review", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
-        )
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-    def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
-        """Skip stages when appropriate."""
-        # Skip all stages after classify if there was an input error
-        if isinstance(input_data, dict) and input_data.get("error"):
-            if stage_name != "classify":
-                return True, "Skipped due to input validation error"
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-        # Skip crew review if crew is not available
-        if stage_name == "crew_review" and not self._crew_available:
-            return True, "CodeReviewCrew not available"
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
-        # Skip perf_check and quality_check if no files to analyze
-        if stage_name in ("perf_check", "quality_check"):
-            files = input_data.get("files_changed", []) if isinstance(input_data, dict) else []
-            if not files:
-                return True, f"No files_changed provided for {stage_name}"
+        started_at = datetime.now()
 
-        # Skip deep stages if their CHEAP counterpart found nothing
-        if stage_name == "perf_check_deep":
-            count = input_data.get("perf_finding_count", 0) if isinstance(input_data, dict) else 0
-            if count == 0:
-                return True, "No perf findings to enrich"
+        try:
+            run_result = await self._run_agent_review(resolved_path, max_turns, depth)
+            completed_at = datetime.now()
 
-        if stage_name == "quality_check_deep":
-            count = (
-                input_data.get("quality_finding_count", 0) if isinstance(input_data, dict) else 0
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+                agent_run_result=run_result,
             )
-            if count == 0:
-                return True, "No quality findings to enrich"
 
-        # Skip architectural review if change is simple
-        if stage_name == "architect_review" and not self._needs_architect_review:
-            return True, "Simple change - architectural review not needed"
-        return False, None
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to
+            # return a structured WorkflowResult rather than
+            # crashing the CLI.
+            logger.exception(
+                "Agent SDK code review failed: %s",
+                type(exc).__name__,
+            )
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_review(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK review and return result text.
+
+        Args:
+            resolved_path: Absolute path to review.
+            max_turns: Maximum agent turns.
+
+        Returns:
+            AgentRunResult with findings and SDK metadata.
+        """
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                output_format=WORKFLOW_OUTPUT_SCHEMA,
+                agents={
+                    "security-reviewer": claude_agent_sdk.AgentDefinition(
+                        description=("Security reviewer that finds " "vulnerabilities."),
+                        prompt=(
+                            "You are a security reviewer. Focus on: "
+                            "eval/exec usage, injection "
+                            "vulnerabilities, path traversal, "
+                            "hardcoded secrets, and authentication "
+                            "issues. Report each finding with file "
+                            "path, line number, severity, and "
+                            "remediation advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("security-reviewer"),
+                    ),
+                    "quality-reviewer": claude_agent_sdk.AgentDefinition(
+                        description=("Code quality reviewer for standards " "and patterns."),
+                        prompt=(
+                            "You are a code quality reviewer. Focus "
+                            "on: code complexity, error handling "
+                            "patterns, naming conventions, "
+                            "duplication, and test coverage gaps. "
+                            "Report each finding with file path, "
+                            "severity, and improvement advice."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("quality-reviewer"),
+                    ),
+                    "perf-reviewer": claude_agent_sdk.AgentDefinition(
+                        description=("Performance reviewer for bottlenecks " "and inefficiencies."),
+                        prompt=(
+                            "You are a performance reviewer. Focus "
+                            "on: N+1 patterns, unnecessary list "
+                            "copies, blocking I/O in async code, "
+                            "and missing caching opportunities. "
+                            "Report each finding with file path, "
+                            "estimated impact, and fix."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("perf-reviewer"),
+                    ),
+                    "architect-reviewer": claude_agent_sdk.AgentDefinition(
+                        description=("Architecture reviewer for design and " "coupling issues."),
+                        prompt=(
+                            "You are an architecture reviewer. "
+                            "Focus on: coupling between modules, "
+                            "SOLID violations, circular "
+                            "dependencies, API design issues, and "
+                            "abstraction level mismatches. Report "
+                            "each finding with affected modules "
+                            "and refactoring suggestions."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("architect-reviewer"),
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    structured_output=message.structured_output,
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
+
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-review",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK code review",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
+        )

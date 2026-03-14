@@ -321,11 +321,7 @@ class DocumentationOrchestrator(
 
         # Initialize writer if available
         if HAS_WRITER and DocumentGenerationWorkflow is not None:
-            self._writer = DocumentGenerationWorkflow(
-                export_path=str(self.export_path),
-                max_cost=max_cost / 2,  # Reserve half budget for generation
-                graceful_degradation=True,
-            )
+            self._writer = DocumentGenerationWorkflow()
 
         # Initialize project index if available
         if HAS_PROJECT_INDEX and ProjectIndex is not None:
@@ -621,24 +617,17 @@ class DocumentationOrchestrator(
             return {"error": "DocumentGenerationWorkflow not available"}
 
         source_path = self.project_root / file_path
-        source_content = ""
-
-        if source_path.exists():
-            try:
-                source_content = source_path.read_text(encoding="utf-8")
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Graceful degradation when file cannot be read
-                return {"error": f"Could not read file: {e}"}
-
-        result: dict = await self._writer.execute(
-            source_code=source_content,
-            target=file_path,
-            doc_type=kwargs.get("doc_type", self.doc_type),
-            audience=kwargs.get("audience", self.audience),
+        result = await self._writer.execute(
+            path=str(source_path) if source_path.exists() else file_path,
         )
 
-        # Update index
-        if isinstance(result, dict) and result.get("document"):
+        # Update index on success (result may be WorkflowResult or dict from mocks)
+        success = (
+            result.get("document")
+            if isinstance(result, dict)
+            else getattr(result, "success", False)
+        )
+        if success:
             self._update_project_index([file_path], [])
 
         return result

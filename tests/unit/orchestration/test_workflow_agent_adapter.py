@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from attune.agents.sdk.sdk_models import SDKAgentResult
 from attune.cost_tracker import CostTracker
+from attune.orchestration.agent_models import SDKAgentResult
 from attune.orchestration.workflow_agent_adapter import WorkflowAgentAdapter
 from attune.workflows.base import BaseWorkflow
 from attune.workflows.compat import ModelTier

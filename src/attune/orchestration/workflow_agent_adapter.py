@@ -19,7 +19,7 @@ import time
 from typing import Any
 from uuid import uuid4
 
-from attune.agents.sdk.sdk_models import SDKAgentResult
+from attune.orchestration.agent_models import SDKAgentResult
 
 logger = logging.getLogger(__name__)
 

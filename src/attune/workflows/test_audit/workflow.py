@@ -1,8 +1,9 @@
 """Test Audit Workflow.
 
-Autonomous test coverage audit and generation workflow.
-Audits current test coverage, plans where to add tests,
-executes test generation, and verifies results.
+Autonomous test coverage audit with Agent SDK subagents.
+Three specialized subagents (coverage-auditor, gap-analyzer,
+test-planner) analyze the codebase and synthesize findings
+into a unified WorkflowResult.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -10,526 +11,257 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import json
-import subprocess
-import tempfile
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from attune.models import ModelTier
+import claude_agent_sdk
 
-from ..base import BaseWorkflow, estimate_tokens
-from .coverage_parser import (
-    ModuleCoverage,
-    group_into_batches,
-    parse_coverage_json,
-    prioritize_modules,
+from ..agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
 )
-from .prompts import BATCH_TASK_TEMPLATE, PLAN_SYSTEM_PROMPT
+from ..base import BaseWorkflow, ModelTier
+from ..data_classes import CostReport, WorkflowResult, WorkflowStage
+
+# Backward-compatibility re-exports — subpackage modules still exist.
+from .coverage_parser import ModuleCoverage, parse_coverage_json  # noqa: F401
+from .prompts import BATCH_TASK_TEMPLATE  # noqa: F401
+
+logger = logging.getLogger(__name__)
+
+
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "coverage-auditor",
+    "gap-analyzer",
+    "test-planner",
+]
+
+_SYSTEM_PROMPT = """\
+You are a senior test audit orchestrator. Coordinate three specialized \
+subagents to audit the test suite and synthesize their findings into a \
+single structured report. Be thorough but concise. Cite file paths and \
+line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Audit the test suite for the codebase at {src_path} using the three \
+specialized subagents below. Each subagent should focus on its domain \
+and report findings as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall test health score (0-100) and a 2-3 sentence executive summary.
+
+## Coverage
+Findings from the coverage auditor including line, branch, and function \
+coverage metrics.
+
+## Test Gaps
+Findings from the gap analyzer including untested code paths, missing \
+edge cases, and untested error handling.
+
+## Suggestions
+Prioritized test plan from the test planner with estimated effort for \
+each suggested test.\
+"""
 
 
 class TestAuditWorkflow(BaseWorkflow):
-    """Autonomous test coverage audit and generation workflow.
+    """Autonomous test coverage audit with Agent SDK subagents.
 
-    Runs a four-stage pipeline:
-
-    1. **audit** — Run ``pytest --cov`` and parse the coverage
-       report to produce a prioritized module list.
-    2. **plan** — Group modules into batches by subsystem and
-       generate XML-enhanced task prompts.
-    3. **execute** — For each batch, produce test generation
-       specs. Skipped in ``"quick"`` mode.
-    4. **verify** — Run the full test suite and compare
-       coverage before and after.
+    Delegates all analysis to three Agent SDK subagents rather
+    than using the mixin stage system. Each subagent focuses on
+    a specific audit domain (coverage, gaps, planning). The
+    orchestrator synthesizes findings into a unified report.
 
     Usage::
 
         workflow = TestAuditWorkflow()
-        result = await workflow.execute(src_path="src/attune")
-
+        result = await workflow.execute(src_path="src/", depth="standard")
     """
 
     name = "test-audit"
-    description = "Autonomous test coverage audit and generation"
-    stages = ["audit", "plan", "execute", "verify"]
-    tier_map = {
-        "audit": ModelTier.CHEAP,
-        "plan": ModelTier.CAPABLE,
-        "execute": ModelTier.CAPABLE,
-        "verify": ModelTier.CHEAP,
-    }
+    description = "Autonomous test coverage audit with Agent SDK subagents"
+    stages = ["agent-audit"]
+    tier_map = {"agent-audit": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        target_coverage: float = 90.0,
-        min_module_coverage: float = 50.0,
-        max_batches: int = 5,
-        batch_parallelism: int = 3,
-        mode: str = "deep",
-        **kwargs: Any,
-    ):
-        """Initialize the TestAuditWorkflow.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK test audit.
 
         Args:
-            target_coverage: Overall coverage target percentage.
-            min_module_coverage: Modules below this coverage
-                percentage are included in the plan.
-            max_batches: Maximum number of test-gen batches.
-            batch_parallelism: Number of batches to process
-                concurrently in execute stage.
-            mode: ``"deep"`` (all 4 stages) or ``"quick"``
-                (audit + verify only, skips execute).
-            **kwargs: Additional arguments forwarded to
-                BaseWorkflow.
-
-        """
-        super().__init__(**kwargs)
-        self.target_coverage = target_coverage
-        self.min_module_coverage = min_module_coverage
-        self.max_batches = max_batches
-        self.batch_parallelism = batch_parallelism
-        self.mode = mode
-        # Stored by audit stage for verify stage comparison
-        self._coverage_before: float | None = None
-
-    # ------------------------------------------------------------------
-    # Stage: audit
-    # ------------------------------------------------------------------
-
-    async def _audit(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Run pytest --cov and parse coverage.json.
-
-        Produces a prioritized list of modules sorted by
-        ``(1 - coverage%) * total_stmts`` descending.
-
-        Args:
-            input_data: Workflow input dict. Recognized keys:
-                - ``src_path`` (str): Path passed to
-                  ``--cov``. Default: ``"src/attune"``.
-                - ``cov_report_path`` (str): Where to write
-                  ``coverage.json``. Default: temp file.
-            tier: Model tier (unused in this stage).
+            **kwargs: Keyword arguments.
+                src_path (str): Required. Directory or file to audit.
+                depth (str): Audit depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        src_path = input_data.get("src_path", "src/attune")
+        src_path_arg: str = kwargs.get("src_path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False, prefix="attune_cov_") as tmp:
-            cov_report_path = tmp.name
+        if not src_path_arg:
+            return self._error_result("src_path argument is required")
+
+        resolved_path = str(Path(src_path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+
+        started_at = datetime.now()
 
         try:
-            modules = self._run_coverage(src_path, cov_report_path)
-        except (FileNotFoundError, ValueError, subprocess.SubprocessError) as exc:
-            self.logger.warning("Coverage collection failed: %s", exc)
-            modules = []
+            run_result = await self._run_agent_audit(resolved_path, max_turns, depth=depth)
 
-        prioritized = prioritize_modules(modules, self.min_module_coverage)
+            completed_at = datetime.now()
 
-        # Store overall coverage for verify stage
-        if modules:
-            total_stmts = sum(m.stmts for m in modules)
-            total_covered = sum(m.covered for m in modules)
-            if total_stmts > 0:
-                self._coverage_before = (total_covered / total_stmts) * 100.0
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "src_path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+                agent_run_result=run_result,
+            )
 
-        output = {
-            "modules": [_module_to_dict(m) for m in prioritized],
-            "total_modules": len(modules),
-            "modules_below_threshold": len(prioritized),
-            "coverage_before": self._coverage_before,
-            **input_data,
-        }
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK test audit failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-        in_tok = estimate_tokens(input_data)
-        out_tok = estimate_tokens(output)
-        return output, in_tok, out_tok
-
-    def _run_coverage(self, src_path: str, cov_report_path: str) -> list[ModuleCoverage]:
-        """Execute pytest --cov and return parsed modules.
+    async def _run_agent_audit(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK audit and return result text.
 
         Args:
-            src_path: Path to pass to ``--cov``.
-            cov_report_path: File path for coverage.json output.
+            resolved_path: Absolute path to audit.
+            max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            List of ModuleCoverage objects.
-
-        Raises:
-            subprocess.SubprocessError: If pytest fails to run.
-            FileNotFoundError: If coverage.json is not produced.
-            ValueError: If coverage.json cannot be parsed.
-
+            AgentRunResult with findings and SDK metadata.
         """
-        cmd = [
-            "python",
-            "-m",
-            "pytest",
-            f"--cov={src_path}",
-            f"--cov-report=json:{cov_report_path}",
-            "-m",
-            "not network",
-            "-q",
-            "--tb=no",
-        ]
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(src_path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "coverage-auditor": claude_agent_sdk.AgentDefinition(
+                        description="Coverage auditor that analyzes test coverage metrics.",
+                        prompt=(
+                            "You are a test coverage auditor. Focus on: "
+                            "running pytest --cov to collect coverage data, "
+                            "analyzing line, branch, and function coverage, "
+                            "identifying modules with low coverage, and "
+                            "reporting coverage percentages per module. "
+                            "Use Bash to run coverage commands when possible."
+                        ),
+                        tools=["Read", "Glob", "Grep", "Bash"],
+                        model=get_subagent_model("coverage-auditor"),
+                    ),
+                    "gap-analyzer": claude_agent_sdk.AgentDefinition(
+                        description="Gap analyzer that finds untested code paths.",
+                        prompt=(
+                            "You are a test gap analyzer. Focus on: "
+                            "untested code paths, missing edge cases, "
+                            "untested error handling branches, uncovered "
+                            "exception handlers, and missing boundary "
+                            "condition tests. Report each gap with file "
+                            "path, line number, and risk assessment."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("gap-analyzer"),
+                    ),
+                    "test-planner": claude_agent_sdk.AgentDefinition(
+                        description="Test planner that creates prioritized test plans.",
+                        prompt=(
+                            "You are a test planner. Based on coverage "
+                            "gaps and untested paths, create a prioritized "
+                            "test plan. For each suggested test include: "
+                            "test name, target file and function, test "
+                            "type (unit/integration/e2e), estimated effort "
+                            "(small/medium/large), and priority (high/"
+                            "medium/low). Order by priority then effort."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("test-planner"),
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
-        self.logger.info("Running coverage: %s", " ".join(cmd))
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300,
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-audit",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK test audit",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )
-
-        if result.returncode not in (0, 1):
-            # Exit code 1 means tests ran but some failed — coverage
-            # JSON is still produced. Anything else is a runner error.
-            self.logger.warning(
-                "pytest exited with code %d: %s",
-                result.returncode,
-                result.stderr[:500],
-            )
-
-        return parse_coverage_json(cov_report_path)
-
-    # ------------------------------------------------------------------
-    # Stage: plan
-    # ------------------------------------------------------------------
-
-    async def _plan(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Group modules into batches and build task specs.
-
-        Args:
-            input_data: Output from the audit stage.
-            tier: Model tier (unused; planning is deterministic).
-
-        Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
-        """
-        raw_modules = input_data.get("modules", [])
-        modules = [_dict_to_module(m) for m in raw_modules]
-
-        batches = group_into_batches(modules, self.max_batches)
-
-        batch_specs = []
-        for batch in batches:
-            spec = _build_batch_spec(
-                batch,
-                target_pct=self.target_coverage,
-            )
-            batch_specs.append(spec)
-
-        output = {
-            "batches": batch_specs,
-            "total_batches": len(batch_specs),
-            **input_data,
-        }
-
-        in_tok = estimate_tokens(PLAN_SYSTEM_PROMPT) + estimate_tokens(raw_modules)
-        out_tok = estimate_tokens(batch_specs)
-        return output, in_tok, out_tok
-
-    # ------------------------------------------------------------------
-    # Stage: execute
-    # ------------------------------------------------------------------
-
-    async def _execute(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Produce test generation specs for each batch.
-
-        In ``"quick"`` mode this stage is a no-op.
-
-        Args:
-            input_data: Output from the plan stage.
-            tier: Model tier for this stage.
-
-        Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
-        """
-        if self.mode == "quick":
-            self.logger.info("Quick mode: skipping execute stage")
-            output = {
-                "results": [],
-                "mode": "quick",
-                **input_data,
-            }
-            return output, 0, 0
-
-        batches = input_data.get("batches", [])
-        results = []
-
-        for batch in batches:
-            result = _build_batch_result(batch)
-            results.append(result)
-            self.logger.info(
-                "Batch %s planned: %d modules",
-                batch.get("batch_id"),
-                len(batch.get("modules", [])),
-            )
-
-        output = {
-            "results": results,
-            "batches_processed": len(results),
-            **input_data,
-        }
-
-        in_tok = estimate_tokens(batches)
-        out_tok = estimate_tokens(results)
-        return output, in_tok, out_tok
-
-    # ------------------------------------------------------------------
-    # Stage: verify
-    # ------------------------------------------------------------------
-
-    async def _verify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Run pytest and compare coverage before and after.
-
-        Args:
-            input_data: Output from the execute stage.
-            tier: Model tier (unused in this stage).
-
-        Returns:
-            Tuple of (output_dict, input_tokens, output_tokens).
-
-        """
-        src_path = input_data.get("src_path", "src/attune")
-
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", delete=False, prefix="attune_cov_after_"
-        ) as tmp:
-            cov_report_path = tmp.name
-
-        coverage_after: float | None = None
-        tests_total: int = 0
-        regressions: int = 0
-
-        try:
-            cmd = [
-                "python",
-                "-m",
-                "pytest",
-                f"--cov={src_path}",
-                f"--cov-report=json:{cov_report_path}",
-                "-q",
-                "--tb=no",
-            ]
-            self.logger.info("Running verify: %s", " ".join(cmd))
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
-            regressions = 1 if result.returncode not in (0, 1) else 0
-
-            # Parse test counts from pytest output
-            for line in result.stdout.splitlines():
-                if "passed" in line or "failed" in line:
-                    parts = line.split()
-                    for i, part in enumerate(parts):
-                        stripped = part.rstrip(",")
-                        if stripped in ("passed", "failed", "error") and i > 0:
-                            try:
-                                tests_total += int(parts[i - 1])
-                            except ValueError:
-                                pass
-
-            modules = parse_coverage_json(cov_report_path)
-            if modules:
-                total_stmts = sum(m.stmts for m in modules)
-                total_covered = sum(m.covered for m in modules)
-                if total_stmts > 0:
-                    coverage_after = (total_covered / total_stmts) * 100.0
-
-        except (FileNotFoundError, ValueError, subprocess.SubprocessError) as exc:
-            self.logger.warning("Verify coverage run failed: %s", exc)
-
-        coverage_before = input_data.get("coverage_before", self._coverage_before)
-        delta: float | None = None
-        if coverage_before is not None and coverage_after is not None:
-            delta = coverage_after - coverage_before
-
-        output = {
-            "before": coverage_before,
-            "after": coverage_after,
-            "delta": delta,
-            "tests_total": tests_total,
-            "regressions": regressions,
-            **input_data,
-        }
-
-        in_tok = estimate_tokens(input_data)
-        out_tok = estimate_tokens(output)
-        return output, in_tok, out_tok
-
-
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
-
-
-def _module_to_dict(m: ModuleCoverage) -> dict:
-    """Serialize a ModuleCoverage to a plain dict.
-
-    Args:
-        m: ModuleCoverage object to serialize.
-
-    Returns:
-        Dict with keys: path, stmts, covered, missing_lines, pct, priority.
-
-    """
-    return {
-        "path": m.path,
-        "stmts": m.stmts,
-        "covered": m.covered,
-        "missing_lines": m.missing_lines,
-        "pct": m.pct,
-        "priority": m.priority,
-    }
-
-
-def _dict_to_module(d: dict) -> ModuleCoverage:
-    """Deserialize a plain dict to a ModuleCoverage.
-
-    Args:
-        d: Dict with keys: path, stmts, covered, missing_lines, pct, priority.
-
-    Returns:
-        Reconstructed ModuleCoverage object.
-
-    """
-    return ModuleCoverage(
-        path=d.get("path", ""),
-        stmts=d.get("stmts", 0),
-        covered=d.get("covered", 0),
-        missing_lines=d.get("missing_lines", []),
-        pct=d.get("pct", 0.0),
-        priority=d.get("priority", 0.0),
-    )
-
-
-def _build_batch_spec(batch: dict, target_pct: float) -> dict:
-    """Build a task spec dict for a batch.
-
-    Args:
-        batch: Batch dict from group_into_batches().
-        target_pct: Coverage percentage to target.
-
-    Returns:
-        Dict with batch_id, subsystem, modules, and task_xml.
-
-    """
-    batch_id = batch["batch_id"]
-    subsystem = batch["subsystem"]
-    modules: list[ModuleCoverage] = batch["modules"]
-
-    module_paths = [m.path for m in modules]
-    missing_summary = _summarize_missing(modules)
-
-    # Build a simple test path from the subsystem
-    safe_subsystem = subsystem.replace("/", "_").replace(".", "_")
-    test_path = f"tests/unit/{safe_subsystem}/test_generated.py"
-
-    task_xml = BATCH_TASK_TEMPLATE.format(
-        batch_id=batch_id,
-        subsystem=subsystem,
-        target_pct=int(target_pct),
-        missing_lines_summary=missing_summary,
-        source_path=subsystem,
-        key_signatures="(see source files)",
-        test_path=test_path,
-        test_class_specs="(to be generated)",
-        module=subsystem,
-    )
-
-    return {
-        "batch_id": batch_id,
-        "subsystem": subsystem,
-        "modules": [m.path for m in modules],
-        "module_paths": module_paths,
-        "task_xml": task_xml,
-    }
-
-
-def _build_batch_result(batch: dict) -> dict:
-    """Build an execute-stage result for a batch.
-
-    This produces the spec for what tests should be written.
-    Actual test writing is delegated to the agent or user.
-
-    Args:
-        batch: Batch spec dict from the plan stage.
-
-    Returns:
-        Dict with keys: batch_id, subsystem, tests_added, files_created,
-        task_xml, status.
-
-    """
-    return {
-        "batch_id": batch.get("batch_id"),
-        "subsystem": batch.get("subsystem"),
-        "tests_added": 0,
-        "files_created": [],
-        "task_xml": batch.get("task_xml", ""),
-        "status": "planned",
-    }
-
-
-def _summarize_missing(modules: list[ModuleCoverage]) -> str:
-    """Produce a short summary of missing line counts.
-
-    Args:
-        modules: List of ModuleCoverage objects.
-
-    Returns:
-        Compact string like ``"module_a: 12 lines, module_b: 5 lines"``.
-
-    """
-    parts = []
-    for m in modules[:5]:
-        name = Path(m.path).name
-        count = len(m.missing_lines)
-        parts.append(f"{name}: {count} lines")
-    summary = ", ".join(parts)
-    if len(modules) > 5:
-        summary += f" (+{len(modules) - 5} more)"
-    return summary
-
-
-def _parse_coverage_total(data: dict) -> float | None:
-    """Extract overall coverage percentage from coverage.json data.
-
-    Args:
-        data: Parsed coverage.json dict with 'totals' key.
-
-    Returns:
-        Coverage percentage (0-100) as float, or None if unavailable
-        or unparseable.
-
-    """
-    totals = data.get("totals", {})
-    pct = totals.get("percent_covered")
-    if pct is not None:
-        try:
-            return float(pct)
-        except (TypeError, ValueError):
-            pass
-    return None
-
-
-def _load_json_safe(path: str) -> dict:
-    """Load JSON from path, returning empty dict on failure.
-
-    Args:
-        path: File path to read.
-
-    Returns:
-        Parsed JSON dict, or empty dict on OSError or JSONDecodeError.
-
-    """
-    try:
-        return json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}

@@ -1,70 +1,23 @@
-"""Tests for CodeReviewWorkflow main functionality.
+"""Tests for CodeReviewWorkflow (SDK-native).
 
 This test suite covers:
-- Stage execution flow
-- Classification logic
-- Conditional stage skipping
-- Crew integration (mocked)
-- Security scan integration
-- Architect review triggering
+- Initialization and class attributes
+- SDK-native execution with mocked SDK
+- Depth configuration
+- Error handling
+- Re-exported utilities
+
+Copyright 2026 Smart-AI-Memory
+Licensed under the Apache License, Version 2.0
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from attune.workflows.base import ModelTier
 from attune.workflows.code_review import CodeReviewWorkflow
-
-# ============================================================================
-# Test Fixtures
-# ============================================================================
-
-
-@pytest.fixture
-def workflow(cost_tracker):
-    """Create CodeReviewWorkflow with isolated storage."""
-    return CodeReviewWorkflow(cost_tracker=cost_tracker, use_crew=False)
-
-
-@pytest.fixture
-def workflow_with_crew(cost_tracker):
-    """Create CodeReviewWorkflow with crew enabled."""
-    return CodeReviewWorkflow(cost_tracker=cost_tracker, use_crew=True)
-
-
-@pytest.fixture
-def sample_diff():
-    """Simple code diff for testing."""
-    return """
-diff --git a/src/utils.py b/src/utils.py
-index 1234567..abcdefg 100644
---- a/src/utils.py
-+++ b/src/utils.py
-@@ -10,6 +10,10 @@ def helper():
-     return "hello"
-+
-+def new_function():
-+    '''A new utility function.'''
-+    return 42
-"""
-
-
-@pytest.fixture
-def security_diff():
-    """Diff with potential security issues for testing."""
-    return """
-diff --git a/src/auth.py b/src/auth.py
---- a/src/auth.py
-+++ b/src/auth.py
-@@ -1,3 +1,8 @@
-+import os
-+
-+def get_secret():
-+    password = "hardcoded_secret"  # Security issue
-+    return eval(os.getenv("CMD"))  # Another issue
-"""
-
+from attune.workflows.data_classes import WorkflowResult
 
 # ============================================================================
 # Test: Workflow Initialization
@@ -75,289 +28,156 @@ diff --git a/src/auth.py b/src/auth.py
 class TestWorkflowInitialization:
     """Tests for workflow initialization and configuration."""
 
-    def test_default_initialization(self, cost_tracker):
-        """Test workflow initializes with default settings."""
-        workflow = CodeReviewWorkflow(cost_tracker=cost_tracker)
+    def test_default_initialization(self):
+        """Test workflow initializes with correct defaults."""
+        wf = CodeReviewWorkflow()
+        assert wf.name == "code-review"
 
-        assert workflow.name == "code-review"
-        assert workflow.file_threshold == 10
-        assert workflow.use_crew is True
+    def test_stages_is_single_agent_review(self):
+        """Test stages list contains only 'agent-review'."""
+        wf = CodeReviewWorkflow()
+        assert wf.stages == ["agent-review"]
 
-    def test_custom_file_threshold(self, cost_tracker):
-        """Test workflow respects custom file threshold."""
-        workflow = CodeReviewWorkflow(cost_tracker=cost_tracker, file_threshold=5)
+    def test_tier_map_is_capable(self):
+        """Test tier map assigns CAPABLE to agent-review."""
+        wf = CodeReviewWorkflow()
+        assert wf.tier_map["agent-review"] == ModelTier.CAPABLE
 
-        assert workflow.file_threshold == 5
-
-    def test_custom_core_modules(self, cost_tracker):
-        """Test workflow respects custom core modules list."""
-        custom_modules = ["src/critical/", "lib/secure/"]
-        workflow = CodeReviewWorkflow(cost_tracker=cost_tracker, core_modules=custom_modules)
-
-        assert workflow.core_modules == custom_modules
-
-    def test_crew_disabled(self, cost_tracker):
-        """Test workflow can be initialized with crew disabled."""
-        workflow = CodeReviewWorkflow(cost_tracker=cost_tracker, use_crew=False)
-
-        assert workflow.use_crew is False
+    def test_description_mentions_agent_sdk(self):
+        """Test description mentions Agent SDK."""
+        wf = CodeReviewWorkflow()
+        assert "Agent SDK" in wf.description
 
 
 # ============================================================================
-# Test: Stage Configuration
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestStageConfiguration:
-    """Tests for stage and tier configuration."""
-
-    def test_stages_without_crew(self, workflow):
-        """Test stages when crew is disabled."""
-        # When crew is disabled, crew_review stage should not be in stages
-        assert "classify" in workflow.stages
-        assert "scan" in workflow.stages
-        assert "architect_review" in workflow.stages
-
-    def test_tier_mapping(self, workflow):
-        """Test tier assignments for stages."""
-        assert workflow.tier_map["classify"] == ModelTier.CHEAP
-        assert workflow.tier_map["scan"] == ModelTier.CAPABLE
-        assert workflow.tier_map["architect_review"] == ModelTier.PREMIUM
-
-
-# ============================================================================
-# Test: Classification Stage
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestClassifyStage:
-    """Tests for the classification stage logic."""
-
-    @pytest.mark.asyncio
-    async def test_classify_simple_change(self, workflow, sample_diff):
-        """Test classification of a simple code change."""
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            # _call_llm returns (response, input_tokens, output_tokens)
-            mock_llm.return_value = (
-                "Classification: Simple utility addition\nChange Type: feature\nComplexity: low",
-                100,  # input_tokens
-                50,  # output_tokens
-            )
-
-            input_data = {"diff": sample_diff, "files_changed": ["src/utils.py"]}
-            result, _, _ = await workflow._classify(input_data, ModelTier.CHEAP)
-
-            assert "classification" in result
-            mock_llm.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_classify_triggers_architect_for_many_files(self, cost_tracker):
-        """Test that many file changes trigger architect review."""
-        workflow = CodeReviewWorkflow(cost_tracker=cost_tracker, file_threshold=3, use_crew=False)
-
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            mock_llm.return_value = (
-                "Classification: Large refactor\nChange Type: refactor",
-                100,
-                50,
-            )
-
-            # Provide more files than threshold
-            many_files = ["file1.py", "file2.py", "file3.py", "file4.py"]
-            input_data = {"diff": "...", "files_changed": many_files}
-            result, _, _ = await workflow._classify(input_data, ModelTier.CHEAP)
-
-            assert result.get("file_count", 0) >= 3
-
-    @pytest.mark.asyncio
-    async def test_classify_core_module_detection(self, cost_tracker):
-        """Test that core module changes are detected."""
-        workflow = CodeReviewWorkflow(
-            cost_tracker=cost_tracker,
-            core_modules=["src/security/"],
-            use_crew=False,
-        )
-
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            mock_llm.return_value = ("Classification: Security update", 100, 50)
-
-            input_data = {"diff": "...", "files_changed": ["src/security/auth.py"]}
-            result, _, _ = await workflow._classify(input_data, ModelTier.CHEAP)
-
-            # Core module should influence review decision
-            assert "classification" in result
-
-
-# ============================================================================
-# Test: Stage Skipping Logic
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestShouldSkipStage:
-    """Tests for conditional stage skipping."""
-
-    def test_never_skip_classify(self, workflow):
-        """Classify stage should never be skipped."""
-        should_skip, reason = workflow.should_skip_stage("classify", {})
-
-        assert should_skip is False
-
-    def test_skip_architect_for_simple_changes(self, workflow):
-        """Architect review should be skipped for simple changes."""
-        workflow._needs_architect_review = False
-
-        should_skip, reason = workflow.should_skip_stage("architect_review", {})
-
-        assert should_skip is True
-        assert reason is not None
-
-    def test_dont_skip_architect_when_needed(self, workflow):
-        """Architect review should not be skipped when flagged."""
-        workflow._needs_architect_review = True
-
-        should_skip, reason = workflow.should_skip_stage("architect_review", {})
-
-        assert should_skip is False
-
-
-# ============================================================================
-# Test: Security Scan Stage
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestScanStage:
-    """Tests for the security scan stage."""
-
-    @pytest.mark.asyncio
-    async def test_scan_detects_issues(self, workflow, security_diff):
-        """Test that scan stage can detect security issues."""
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            # _call_llm returns (response, input_tokens, output_tokens)
-            mock_llm.return_value = (
-                "Security Issues Found:\n"
-                "1. Hardcoded credential detected\n"
-                "2. Use of eval() with user input\n"
-                "Severity: HIGH",
-                150,
-                80,
-            )
-
-            input_data = {
-                "code_to_review": security_diff,
-                "classification": "Security-sensitive change",
-            }
-            result, _, _ = await workflow._scan(input_data, ModelTier.CAPABLE)
-
-            assert "scan_results" in result
-            mock_llm.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_scan_returns_findings(self, workflow, sample_diff):
-        """Test that scan returns structured findings."""
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            mock_llm.return_value = (
-                "No security issues found. Code looks clean.",
-                100,
-                40,
-            )
-
-            input_data = {
-                "code_to_review": sample_diff,
-                "classification": "Simple change",
-            }
-            result, _, _ = await workflow._scan(input_data, ModelTier.CAPABLE)
-
-            assert "scan_results" in result
-
-
-# ============================================================================
-# Test: Architect Review Stage
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestArchitectReviewStage:
-    """Tests for the architect review stage."""
-
-    @pytest.mark.asyncio
-    async def test_architect_review_generates_verdict(self, workflow):
-        """Test that architect review produces a verdict."""
-        workflow._needs_architect_review = True
-
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            # _call_llm returns (response, input_tokens, output_tokens)
-            mock_llm.return_value = (
-                "Architectural Assessment:\n"
-                "The changes are well-structured.\n"
-                "Verdict: APPROVE\n"
-                "Recommendations: None",
-                200,
-                100,
-            )
-
-            input_data = {
-                "code_to_review": "def example(): pass",
-                "scan_results": "No issues found",
-            }
-            result, _, _ = await workflow._architect_review(input_data, ModelTier.PREMIUM)
-
-            assert "architectural_review" in result
-            mock_llm.assert_called_once()
-
-
-# ============================================================================
-# Test: Full Workflow Execution
+# Test: SDK-Native Execution
 # ============================================================================
 
 
 @pytest.mark.unit
 class TestWorkflowExecution:
-    """Tests for end-to-end workflow execution."""
+    """Tests for end-to-end workflow execution with mocked SDK."""
 
     @pytest.mark.asyncio
-    async def test_execute_simple_review(self, workflow, sample_diff):
-        """Test executing a simple code review."""
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            # Mock responses for each stage - returns (response, input_tokens, output_tokens)
-            mock_llm.side_effect = [
-                ("Classification: Simple change\nChange Type: feature\nComplexity: low", 100, 50),
-                ("No security issues found.", 100, 40),
-            ]
+    async def test_execute_returns_workflow_result(self):
+        """Test execute returns a WorkflowResult on success."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nScore: 90/100"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
 
-            workflow._needs_architect_review = False
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            result = await wf.execute(path="src/")
 
-            result = await workflow.execute(
-                path="src/", diff=sample_diff, files_changed=["src/utils.py"]
-            )
-
-            # Result is a WorkflowResult object
-            assert result is not None
-            assert hasattr(result, "success") or hasattr(result, "output")
+        assert isinstance(result, WorkflowResult)
+        assert result.success is True
 
     @pytest.mark.asyncio
-    async def test_execute_with_validation_error(self, workflow):
-        """Test execution with invalid input."""
-        # No diff or target provided - mock _call_llm to avoid real API calls
-        with patch.object(workflow, "_call_llm", new_callable=AsyncMock) as mock_llm:
-            mock_llm.return_value = ("No issues found.", 100, 50)
-            result = await workflow.execute(path="src/", files_changed=[])
+    async def test_execute_without_path_returns_error(self):
+        """Test execute with no path returns error result."""
+        wf = CodeReviewWorkflow()
+        result = await wf.execute()
 
-            # Should handle gracefully - returns WorkflowResult
-            assert result is not None
+        assert isinstance(result, WorkflowResult)
+        assert result.success is False
+        assert "path" in (result.error or "").lower()
+
+    @pytest.mark.asyncio
+    async def test_execute_with_empty_path_returns_error(self):
+        """Test execute with empty path returns error result."""
+        wf = CodeReviewWorkflow()
+        result = await wf.execute(path="")
+
+        assert isinstance(result, WorkflowResult)
+        assert result.success is False
+
+    @pytest.mark.asyncio
+    async def test_execute_handles_runtime_error(self):
+        """Test execute catches RuntimeError from SDK."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(side_effect=RuntimeError("boom"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
+
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            result = await wf.execute(path="src/")
+
+        assert isinstance(result, WorkflowResult)
+        assert result.success is False
+        assert "RuntimeError" in (result.error or "")
+
+    @pytest.mark.asyncio
+    async def test_execute_handles_connection_error(self):
+        """Test execute catches ConnectionError from SDK."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(side_effect=ConnectionError("no network"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
+
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            result = await wf.execute(path="src/")
+
+        assert isinstance(result, WorkflowResult)
+        assert result.success is False
+        assert "connection" in (result.error or "").lower()
+
+    @pytest.mark.asyncio
+    async def test_execute_passes_depth_to_sdk(self):
+        """Test execute passes depth-based max_turns to SDK."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
+
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            await wf.execute(path="src/", depth="deep")
+
+        options_call = mock_sdk.ClaudeAgentOptions.call_args
+        assert options_call.kwargs.get("max_turns") == 40
+
+    @pytest.mark.asyncio
+    async def test_execute_result_has_four_stages(self):
+        """Test successful result has 4 stages (one per subagent)."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
+
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            result = await wf.execute(path="src/")
+
+        assert len(result.stages) == 4
+
+    @pytest.mark.asyncio
+    async def test_execute_result_has_metadata(self):
+        """Test successful result includes path and depth metadata."""
+        mock_sdk = MagicMock()
+        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.ClaudeAgentOptions = MagicMock()
+        mock_sdk.AgentDefinition = MagicMock()
+
+        with patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk):
+            wf = CodeReviewWorkflow()
+            result = await wf.execute(path="src/", depth="quick")
+
+        assert result.metadata is not None
+        assert result.metadata.get("depth") == "quick"
+        assert result.metadata.get("max_turns") == 10
 
 
 # ============================================================================
-# Test: Report Formatting
+# Test: Report Formatting (re-exported)
 # ============================================================================
 
 
 @pytest.mark.unit
 class TestReportFormatting:
-    """Tests for report generation."""
+    """Tests for report generation (re-exported from code_review_report)."""
 
     def test_format_code_review_report_exists(self):
         """Test that report formatting function exists."""
@@ -369,7 +189,5 @@ class TestReportFormatting:
         """Test formatting with minimal results."""
         from attune.workflows.code_review import format_code_review_report
 
-        # Function takes (results: dict, input_data: dict)
         report = format_code_review_report({}, {})
-
         assert isinstance(report, str)

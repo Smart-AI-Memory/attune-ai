@@ -1,690 +1,308 @@
-"""Test Generation Workflow.
+"""Test Generation Workflow — Agent SDK Native.
 
-Main workflow orchestration for test generation.
+Delegates test generation to three specialized Claude Agent SDK
+subagents (function-identifier, test-designer, test-writer) and
+synthesizes their output into a unified WorkflowResult.
 
-Copyright 2025 Smart-AI-Memory
+Prior to v4.2.0 this was a mixin-based multi-stage pipeline. The
+SDK-native implementation replaces that with `claude_agent_sdk.query()`
+and `AgentDefinition` subagents while preserving the same public
+interface (`TestGenerationWorkflow`, `test-gen` slug) and
+re-exports used by downstream code.
+
+Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import json
+from __future__ import annotations
+
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseWorkflow, ModelTier, estimate_tokens
-from ..context import WorkflowContext
-from ..services import ParsingService, PromptService
-from ..validation import InputSchema
-from .ast_analyzer import ASTFunctionAnalyzer
-from .config import DEFAULT_SKIP_PATTERNS
-from .test_templates import (
-    generate_test_for_class,
-    generate_test_for_function,
+import claude_agent_sdk
+
+from ..agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
 )
+from ..base import BaseWorkflow, ModelTier
+from ..data_classes import CostReport, WorkflowResult, WorkflowStage
+from .config import DEFAULT_SKIP_PATTERNS  # noqa: F401 — re-exported
 
 logger = logging.getLogger(__name__)
 
+# Depth → max agent turns mapping
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "function-identifier",
+    "test-designer",
+    "test-writer",
+]
+
+_SYSTEM_PROMPT = """\
+You are a test generation orchestrator. Coordinate three specialized \
+subagents to analyze the codebase and synthesize their output into a \
+single structured report. Be thorough but concise. Cite file paths and \
+line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Analyze the codebase at {path} using the three specialized subagents \
+below. Each subagent should focus on its domain and produce structured \
+markdown output.
+
+After all subagents finish, synthesize their output into a single \
+report with these sections:
+
+## Summary
+Overall test generation summary — how many functions were analyzed, \
+how many test cases were designed, and how many test files were written.
+
+## Coverage
+Current coverage analysis and areas that need testing.
+
+## Test Gaps
+Functions and modules that lack adequate test coverage.
+
+## Suggestions
+Actionable next steps for improving test coverage, ordered by priority.\
+"""
+
 
 class TestGenerationWorkflow(BaseWorkflow):
-    """Generate tests targeting areas with historical bugs.
+    """SDK-native test generation with three specialized subagents.
 
-    Prioritizes test generation for files that have historically
-    been bug-prone and have low test coverage.
+    Delegates all analysis to Claude Agent SDK subagents:
+    - **function-identifier** — scans the codebase for untested or
+      under-tested functions, prioritising public API and complex logic
+    - **test-designer** — designs comprehensive test cases covering
+      happy paths, edge cases, and error handling
+    - **test-writer** — writes pytest code following project conventions
 
-    Supports composition via ``WorkflowContext`` -- use ``default_context()``
-    to get a pre-configured context with prompt and parsing services.
+    The orchestrator synthesizes findings into a unified report.
+
+    Usage::
+
+        workflow = TestGenerationWorkflow()
+        result = await workflow.execute(path="src/", depth="standard")
     """
 
     name = "test-gen"
-    description = "Generate tests for modules with low coverage (sequential, single module)"
-    stages = ["identify", "analyze", "generate", "review"]
-    tier_map = {
-        "identify": ModelTier.CHEAP,
-        "analyze": ModelTier.CAPABLE,
-        "generate": ModelTier.CAPABLE,
-        "review": ModelTier.PREMIUM,
-    }
-    input_schema = InputSchema(
-        required_fields={"path": str},
-    )
+    description = "Agent SDK-powered test generation with 3 specialized subagents"
+    stages = ["agent-gen"]
+    tier_map = {"agent-gen": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        patterns_dir: str = "./patterns",
-        min_tests_for_review: int = 10,
-        write_tests: bool = False,
-        output_dir: str = "tests/generated",
-        enable_auth_strategy: bool = True,
-        **kwargs: Any,
-    ):
-        """Initialize test generation workflow.
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize workflow.
 
         Args:
-            patterns_dir: Directory containing learned patterns
-            min_tests_for_review: Minimum tests generated to trigger premium review
-            write_tests: If True, write generated tests to output_dir
-            output_dir: Directory to write generated test files
-            enable_auth_strategy: Enable intelligent auth routing (default: True)
-            **kwargs: Additional arguments passed to BaseWorkflow
-
+            **kwargs: Passed to BaseWorkflow.__init__().
         """
-        # Opt in to post-simplification by default for test generation
-        kwargs.setdefault("enable_post_simplification", True)
         super().__init__(**kwargs)
-        self.patterns_dir = patterns_dir
-        self.min_tests_for_review = min_tests_for_review
-        self.write_tests = write_tests
-        self.output_dir = output_dir
-        self.enable_auth_strategy = enable_auth_strategy
-        self._test_count: int = 0
-        self._bug_hotspots: list[str] = []
-        self._auth_mode_used: str | None = None
-        self._load_bug_hotspots()
 
-    def _load_bug_hotspots(self) -> None:
-        """Load files with historical bugs from pattern library."""
-        debugging_file = Path(self.patterns_dir) / "debugging.json"
-        if debugging_file.exists():
-            try:
-                with open(debugging_file) as fh:
-                    data = json.load(fh)
-                    patterns = data.get("patterns", [])
-                    # Extract files from bug patterns
-                    files = set()
-                    for p in patterns:
-                        for file_entry in p.get("files_affected", []):
-                            if file_entry is None:
-                                continue
-                            files.add(str(file_entry))
-                    self._bug_hotspots = list(files)
-            except (json.JSONDecodeError, OSError):
-                pass
-
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for test generation.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK test generation.
 
         Args:
-            xml_config: Optional XML prompt configuration dict.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to generate
+                    tests for.
+                depth (str): Generation depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with generated tests, coverage info,
+            and metadata.
         """
-        return WorkflowContext(
-            prompt=PromptService("test-gen", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
-        )
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-    def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
-        """Downgrade review stage if few tests generated.
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-        Args:
-            stage_name: Name of the stage to check
-            input_data: Current workflow data
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
-        Returns:
-            Tuple of (should_skip, reason)
+        started_at = datetime.now()
 
-        """
-        if stage_name == "review":
-            if self._test_count < self.min_tests_for_review:
-                # Downgrade to CAPABLE
-                self.tier_map["review"] = ModelTier.CAPABLE
-                return False, None
-        return False, None
-
-    def _check_auth_strategy(self, target_path: str) -> None:
-        """Log auth strategy recommendation for the target path.
-
-        Sets ``self._auth_mode_used`` as a side effect when successful.
-
-        Args:
-            target_path: Directory or file path to check
-
-        """
         try:
-            from attune.models import (
-                count_lines_of_code,
-                get_auth_strategy,
-                get_module_size_category,
-            )
+            run_result = await self._run_agent_gen(resolved_path, max_turns, depth=depth)
+            completed_at = datetime.now()
 
-            target = Path(target_path)
-            total_lines = 0
-            if target.is_file():
-                total_lines = count_lines_of_code(target)
-            elif target.is_dir():
-                for py_file in target.rglob("*.py"):
-                    try:
-                        total_lines += count_lines_of_code(py_file)
-                    except Exception:  # noqa: BLE001
-                        pass  # INTENTIONAL: Best-effort LOC counting
-
-            if total_lines > 0:
-                strategy = get_auth_strategy()
-                recommended_mode = strategy.get_recommended_mode(total_lines)
-                self._auth_mode_used = recommended_mode.value
-
-                size_category = get_module_size_category(total_lines)
-                logger.info(
-                    "Test generation target: %s (%s LOC, %s)",
-                    target_path,
-                    f"{total_lines:,}",
-                    size_category,
-                )
-                logger.info("Recommended auth mode: %s", recommended_mode.value)
-
-                cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
-                if recommended_mode.value == "subscription":
-                    logger.info("Cost: %s", cost_estimate["quota_cost"])
-                else:
-                    logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
-
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Auth strategy is optional; don't fail workflow
-            logger.warning("Auth strategy detection failed: %s", e)
-
-    def _scan_candidate_files(
-        self,
-        target: Path,
-        file_types: list[str],
-        max_files_to_scan: int,
-        max_file_size_kb: int,
-        skip_patterns: list[str],
-        include_all_files: bool,
-    ) -> tuple[list[dict], int, int, dict, str | None]:
-        """Scan the target path for test generation candidates.
-
-        Args:
-            target: Root path to scan
-            file_types: File extensions to include
-            max_files_to_scan: Scan limit
-            max_file_size_kb: Skip files larger than this
-            skip_patterns: Directory patterns to skip
-            include_all_files: Include zero-priority files
-
-        Returns:
-            Tuple of (candidates, total_source_files,
-            existing_test_files, scan_counts, early_exit_reason)
-
-        """
-        candidates: list[dict] = []
-        total_source_files = 0
-        existing_test_files = 0
-        scan_counts = {
-            "files_scanned": 0,
-            "files_too_large": 0,
-            "files_read_error": 0,
-            "files_excluded_by_pattern": 0,
-        }
-        early_exit_reason: str | None = None
-        max_file_size_bytes = max_file_size_kb * 1024
-        scan_limit_reached = False
-
-        if not target.exists():
-            return (
-                candidates,
-                total_source_files,
-                existing_test_files,
-                scan_counts,
-                early_exit_reason,
-            )
-
-        for ext in file_types:
-            if scan_limit_reached:
-                break
-
-            for file_path in target.rglob(f"*{ext}"):
-                if scan_counts["files_scanned"] >= max_files_to_scan:
-                    early_exit_reason = f"max_files_to_scan ({max_files_to_scan}) reached"
-                    scan_limit_reached = True
-                    break
-
-                file_str = str(file_path)
-                if any(skip in file_str for skip in skip_patterns):
-                    scan_counts["files_excluded_by_pattern"] += 1
-                    continue
-
-                if "test_" in file_str or "_test." in file_str or "/tests/" in file_str:
-                    existing_test_files += 1
-                    continue
-
-                try:
-                    file_size = file_path.stat().st_size
-                    if file_size > max_file_size_bytes:
-                        scan_counts["files_too_large"] += 1
-                        continue
-                except OSError:
-                    scan_counts["files_read_error"] += 1
-                    continue
-
-                total_source_files += 1
-                scan_counts["files_scanned"] += 1
-
-                try:
-                    content = file_path.read_text(errors="ignore")
-                    lines = len(content.splitlines())
-
-                    is_hotspot = any(hotspot in file_str for hotspot in self._bug_hotspots)
-                    test_file = self._find_test_file(file_path)
-                    has_tests = test_file.exists() if test_file else False
-
-                    priority = 0
-                    if is_hotspot:
-                        priority += 50
-                    if not has_tests:
-                        priority += 30
-                    if lines > 100:
-                        priority += 10
-                    if lines > 300:
-                        priority += 10
-
-                    if priority > 0 or include_all_files:
-                        candidates.append(
-                            {
-                                "file": file_str,
-                                "lines": lines,
-                                "is_hotspot": is_hotspot,
-                                "has_tests": has_tests,
-                                "priority": priority,
-                            },
-                        )
-                except OSError:
-                    scan_counts["files_read_error"] += 1
-                    continue
-
-        return candidates, total_source_files, existing_test_files, scan_counts, early_exit_reason
-
-    async def _identify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Identify files needing tests.
-
-        Finds files with low coverage, historical bugs, or
-        no existing tests.
-
-        Configurable options via input_data:
-            max_files_to_scan: Maximum files to scan before stopping (default: 1000)
-            max_file_size_kb: Skip files larger than this (default: 200)
-            max_candidates: Maximum candidates to return (default: 50)
-            skip_patterns: List of directory patterns to skip (default: DEFAULT_SKIP_PATTERNS)
-            include_all_files: Include files with priority=0 (default: False)
-        """
-        target_path = input_data.get("path", ".")
-        file_types = input_data.get("file_types", [".py"])
-
-        if self.enable_auth_strategy:
-            self._check_auth_strategy(target_path)
-
-        max_files_to_scan = input_data.get("max_files_to_scan", 1000)
-        max_file_size_kb = input_data.get("max_file_size_kb", 200)
-        max_candidates = input_data.get("max_candidates", 50)
-        skip_patterns = input_data.get("skip_patterns", DEFAULT_SKIP_PATTERNS)
-        include_all_files = input_data.get("include_all_files", False)
-
-        candidates, total_source_files, existing_test_files, scan_counts, early_exit_reason = (
-            self._scan_candidate_files(
-                Path(target_path),
-                file_types,
-                max_files_to_scan,
-                max_file_size_kb,
-                skip_patterns,
-                include_all_files,
-            )
-        )
-
-        candidates.sort(key=lambda x: -x["priority"])
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(candidates)
-
-        analyzed_count = min(max_candidates, len(candidates))
-        coverage_pct = (analyzed_count / len(candidates) * 100) if candidates else 100
-
-        return (
-            {
-                "candidates": candidates[:max_candidates],
-                "total_candidates": len(candidates),
-                "hotspot_count": sum(1 for c in candidates if c["is_hotspot"]),
-                "untested_count": sum(1 for c in candidates if not c["has_tests"]),
-                "total_source_files": total_source_files,
-                "existing_test_files": existing_test_files,
-                "large_project_warning": len(candidates) > 100,
-                "analysis_coverage_percent": coverage_pct,
-                "scan_summary": {**scan_counts, "early_exit_reason": early_exit_reason},
-                "config": {
-                    "max_files_to_analyze": input_data.get("max_files_to_analyze", 20),
-                    "max_functions_per_file": input_data.get("max_functions_per_file", 30),
-                    "max_classes_per_file": input_data.get("max_classes_per_file", 15),
-                    "max_files_to_generate": input_data.get("max_files_to_generate", 15),
-                    "max_functions_to_generate": input_data.get("max_functions_to_generate", 8),
-                    "max_classes_to_generate": input_data.get("max_classes_to_generate", 4),
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
                 },
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    def _find_test_file(self, source_file: Path) -> Path | None:
-        """Find corresponding test file for a source file."""
-        name = source_file.stem
-        parent = source_file.parent
-
-        # Check common test locations
-        possible = [
-            parent / f"test_{name}.py",
-            parent / "tests" / f"test_{name}.py",
-            parent.parent / "tests" / f"test_{name}.py",
-        ]
-
-        for p in possible:
-            if p.exists():
-                return p
-
-        return possible[0]  # Return expected location even if doesn't exist
-
-    async def _analyze(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Analyze code structure for test generation.
-
-        Examines functions, classes, and patterns to determine
-        what tests should be generated.
-
-        Uses config from _identify stage for limits:
-            max_files_to_analyze: Maximum files to analyze (default: 20)
-            max_functions_per_file: Maximum functions per file (default: 30)
-            max_classes_per_file: Maximum classes per file (default: 15)
-        """
-        # Get config from previous stage or use defaults
-        config = input_data.get("config", {})
-        max_files_to_analyze = config.get("max_files_to_analyze", 20)
-        max_functions_per_file = config.get("max_functions_per_file", 30)
-        max_classes_per_file = config.get("max_classes_per_file", 15)
-
-        candidates = input_data.get("candidates", [])[:max_files_to_analyze]
-        analysis: list[dict] = []
-        parse_errors: list[str] = []  # Track files that failed to parse
-
-        for candidate in candidates:
-            file_path = Path(candidate["file"])
-            if not file_path.exists():
-                continue
-
-            try:
-                content = file_path.read_text(errors="ignore")
-
-                # Extract testable items with configurable limits and error tracking
-                functions, func_error = self._extract_functions(
-                    content,
-                    candidate["file"],
-                    max_functions_per_file,
-                )
-                classes, class_error = self._extract_classes(
-                    content,
-                    candidate["file"],
-                    max_classes_per_file,
-                )
-
-                # Track parse errors for visibility
-                if func_error:
-                    parse_errors.append(func_error)
-                if class_error and class_error != func_error:
-                    parse_errors.append(class_error)
-
-                analysis.append(
-                    {
-                        "file": candidate["file"],
-                        "priority": candidate["priority"],
-                        "functions": functions,
-                        "classes": classes,
-                        "function_count": len(functions),
-                        "class_count": len(classes),
-                        "test_suggestions": self._generate_suggestions(functions, classes),
-                    },
-                )
-            except OSError:
-                continue
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(analysis)
-
-        return (
-            {
-                "analysis": analysis,
-                "total_functions": sum(a["function_count"] for a in analysis),
-                "total_classes": sum(a["class_count"] for a in analysis),
-                "parse_errors": parse_errors,  # Expose errors for debugging
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    def _extract_functions(
-        self,
-        content: str,
-        file_path: str = "",
-        max_functions: int = 30,
-    ) -> tuple[list[dict], str | None]:
-        """Extract function definitions from Python code using AST analysis.
-
-        Args:
-            content: Python source code
-            file_path: File path for error reporting
-            max_functions: Maximum functions to extract (configurable)
-
-        Returns:
-            Tuple of (functions list, error message or None)
-
-        """
-        analyzer = ASTFunctionAnalyzer()
-        functions, _ = analyzer.analyze(content, file_path)
-
-        result = []
-        for sig in functions[:max_functions]:
-            if not sig.name.startswith("_") or sig.name.startswith("__"):
-                result.append(
-                    {
-                        "name": sig.name,
-                        "params": [(p[0], p[1], p[2]) for p in sig.params],
-                        "param_names": [p[0] for p in sig.params],
-                        "is_async": sig.is_async,
-                        "return_type": sig.return_type,
-                        "raises": list(sig.raises),
-                        "has_side_effects": sig.has_side_effects,
-                        "complexity": sig.complexity,
-                        "docstring": sig.docstring,
-                    },
-                )
-        return result, analyzer.last_error
-
-    def _extract_classes(
-        self,
-        content: str,
-        file_path: str = "",
-        max_classes: int = 15,
-    ) -> tuple[list[dict], str | None]:
-        """Extract class definitions from Python code using AST analysis.
-
-        Args:
-            content: Python source code
-            file_path: File path for error reporting
-            max_classes: Maximum classes to extract (configurable)
-
-        Returns:
-            Tuple of (classes list, error message or None)
-
-        """
-        analyzer = ASTFunctionAnalyzer()
-        _, classes = analyzer.analyze(content, file_path)
-
-        result = []
-        for sig in classes[:max_classes]:
-            # Skip enums - they don't need traditional class tests
-            if sig.is_enum:
-                continue
-
-            methods = [
-                {
-                    "name": m.name,
-                    "params": [(p[0], p[1], p[2]) for p in m.params],
-                    "is_async": m.is_async,
-                    "raises": list(m.raises),
-                }
-                for m in sig.methods
-                if not m.name.startswith("_") or m.name == "__init__"
-            ]
-            result.append(
-                {
-                    "name": sig.name,
-                    "init_params": [(p[0], p[1], p[2]) for p in sig.init_params],
-                    "methods": methods,
-                    "base_classes": sig.base_classes,
-                    "docstring": sig.docstring,
-                    "is_dataclass": sig.is_dataclass,
-                    "required_init_params": sig.required_init_params,
-                },
+                agent_run_result=run_result,
             )
-        return result, analyzer.last_error
 
-    def _generate_suggestions(self, functions: list[dict], classes: list[dict]) -> list[str]:
-        """Generate test suggestions based on code structure."""
-        suggestions = []
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to
+            # return a structured WorkflowResult rather than
+            # crashing the CLI.
+            logger.exception(
+                "Agent SDK test generation failed: %s",
+                type(exc).__name__,
+            )
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-        for func in functions[:5]:
-            if func["params"]:
-                suggestions.append(f"Test {func['name']} with valid inputs")
-                suggestions.append(f"Test {func['name']} with edge cases")
-            if func["is_async"]:
-                suggestions.append(f"Test {func['name']} async behavior")
+    async def _run_agent_gen(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK test generation and return result text.
 
-        for cls in classes[:3]:
-            suggestions.append(f"Test {cls['name']} initialization")
-            suggestions.append(f"Test {cls['name']} methods")
+        Args:
+            resolved_path: Absolute path to generate tests for.
+            max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
-        return suggestions
-
-    async def _generate(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Generate test cases.
-
-        Creates test code targeting identified functions
-        and classes, focusing on edge cases.
-
-        Uses config from _identify stage for limits:
-            max_files_to_generate: Maximum files to generate tests for (default: 15)
-            max_functions_to_generate: Maximum functions per file (default: 8)
-            max_classes_to_generate: Maximum classes per file (default: 4)
+        Returns:
+            AgentRunResult with findings and SDK metadata.
         """
-        # Get config from previous stages or use defaults
-        config = input_data.get("config", {})
-        max_files_to_generate = config.get("max_files_to_generate", 15)
-        max_functions_to_generate = config.get("max_functions_to_generate", 8)
-        max_classes_to_generate = config.get("max_classes_to_generate", 4)
-
-        analysis = input_data.get("analysis", [])
-        generated_tests: list[dict] = []
-
-        for item in analysis[:max_files_to_generate]:
-            file_path = item["file"]
-            module_name = Path(file_path).stem
-
-            tests = []
-            for func in item.get("functions", [])[:max_functions_to_generate]:
-                test_code = generate_test_for_function(module_name, func)
-                tests.append(
-                    {
-                        "target": func["name"],
-                        "type": "function",
-                        "code": test_code,
-                    },
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "function-identifier": claude_agent_sdk.AgentDefinition(
+                        description="Identifies untested or under-tested functions.",
+                        prompt=(
+                            "You are a function identifier. Scan the "
+                            "codebase and identify functions that are "
+                            "untested or under-tested. For each function, "
+                            "report: file path, function name, signature, "
+                            "current test coverage status, and complexity "
+                            "level. Prioritize public API functions and "
+                            "functions with complex logic."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("function-identifier"),
+                    ),
+                    "test-designer": claude_agent_sdk.AgentDefinition(
+                        description="Designs test cases for identified functions.",
+                        prompt=(
+                            "You are a test designer. For each function "
+                            "identified by the function-identifier, design "
+                            "comprehensive test cases covering: happy path "
+                            "scenarios, edge cases (empty input, boundary "
+                            "values, None/null), error handling paths, and "
+                            "integration points. Report each test case with "
+                            "a descriptive name, input values, and expected "
+                            "outcome."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("test-designer"),
+                    ),
+                    "test-writer": claude_agent_sdk.AgentDefinition(
+                        description="Writes pytest test code following project conventions.",
+                        prompt=(
+                            "You are a test writer. Using the test cases "
+                            "designed by the test-designer, write pytest "
+                            "test code that follows project conventions: "
+                            "use pytest fixtures, parametrize where "
+                            "appropriate, include type hints, add "
+                            "docstrings, and follow the naming convention "
+                            "test_{function}_{scenario}_{expected}. Group "
+                            "related tests in classes."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("test-writer"),
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
                 )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
-            for cls in item.get("classes", [])[:max_classes_to_generate]:
-                test_code = generate_test_for_class(module_name, cls)
-                tests.append(
-                    {
-                        "target": cls["name"],
-                        "type": "class",
-                        "code": test_code,
-                    },
-                )
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
 
-            if tests:
-                generated_tests.append(
-                    {
-                        "source_file": file_path,
-                        "test_file": f"test_{module_name}.py",
-                        "tests": tests,
-                        "test_count": len(tests),
-                    },
-                )
+        Args:
+            message: Human-readable error description.
 
-        self._test_count = sum(t["test_count"] for t in generated_tests)
-
-        # Write tests to files if enabled (via input_data or instance config)
-        write_tests = input_data.get("write_tests", self.write_tests)
-        output_dir = input_data.get("output_dir", self.output_dir)
-        written_files: list[str] = []
-
-        if write_tests and generated_tests:
-            from attune.security.path_validation import _validate_file_path
-
-            output_path = Path(str(_validate_file_path(str(output_dir))))
-            output_path.mkdir(parents=True, exist_ok=True)
-
-            for test_item in generated_tests:
-                test_filename = test_item["test_file"]
-                test_file_path = output_path / test_filename
-
-                # Combine all test code for this file
-                combined_code = []
-                imports_added = set()
-
-                for test in test_item["tests"]:
-                    code = test["code"]
-                    # Extract and dedupe imports
-                    for line in code.split("\n"):
-                        if line.startswith("import ") or line.startswith("from "):
-                            if line not in imports_added:
-                                imports_added.add(line)
-                        elif line.strip():
-                            combined_code.append(line)
-
-                # Write the combined test file
-                final_code = "\n".join(sorted(imports_added)) + "\n\n" + "\n".join(combined_code)
-                test_file_path.write_text(final_code)
-                written_files.append(str(test_file_path))
-                test_item["written_to"] = str(test_file_path)
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(generated_tests)
-
-        return (
-            {
-                "generated_tests": generated_tests,
-                "total_tests_generated": self._test_count,
-                "written_files": written_files,
-                "tests_written": len(written_files) > 0,
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
+        Returns:
+            WorkflowResult with success=False.
+        """
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-gen",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK test generation",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )
 
 
-def main():
+def main() -> None:
     """CLI entry point for test generation workflow."""
     import asyncio
 
-    async def run():
+    async def run() -> None:
         """Run test generation workflow and print results."""
         workflow = TestGenerationWorkflow()
-        result = await workflow.execute(path=".", file_types=[".py"])
+        result = await workflow.execute(path=".", depth="standard")
 
         print("\nTest Generation Results")
         print("=" * 50)
         print(f"Provider: {result.provider}")
         print(f"Success: {result.success}")
-        print(f"Tests Generated: {result.final_output.get('total_tests', 0)}")
+        if result.final_output:
+            print(f"\nOutput:\n{result.final_output}")
         print("\nCost Report:")
         print(f"  Total Cost: ${result.cost_report.total_cost:.4f}")
         savings = result.cost_report.savings

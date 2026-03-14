@@ -1,23 +1,30 @@
 """Dependency Check Workflow
 
 Audits dependencies for vulnerabilities, updates, and licensing issues.
-Parses lockfiles and checks against known vulnerability patterns.
-
-Stages:
-1. inventory (CHEAP) - Parse requirements.txt, package.json, pyproject.toml, lockfiles
-2. assess (CAPABLE) - Check for known vulnerabilities using pip-audit/npm audit
-3. report (CAPABLE) - Generate risk assessment and recommendations
+Delegates analysis to Agent SDK subagents (inventory-assessor,
+update-advisor) and synthesizes their findings into a unified report.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+from __future__ import annotations
+
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .base import BaseWorkflow, ModelTier, estimate_tokens
-from .context import WorkflowContext
+import claude_agent_sdk
+
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
+from .base import BaseWorkflow, ModelTier
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .dependency_check_audit import (  # noqa: F401
     CACHE_DIR,
     _get_cache_path,
@@ -26,12 +33,10 @@ from .dependency_check_audit import (  # noqa: F401
     _run_pip_audit,
     _save_advisory_cache,
 )
-from .dependency_check_parsers import DependencyParserMixin
-from .dependency_check_report import (
+from .dependency_check_report import (  # noqa: F401
     format_dependency_check_report,
     main,
 )
-from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 logger = logging.getLogger(__name__)
@@ -47,456 +52,220 @@ DEPENDENCY_CHECK_STEPS = {
     ),
 }
 
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
 
-class DependencyCheckWorkflow(DependencyParserMixin, BaseWorkflow):
-    """Audit dependencies for security and updates.
+_SUBAGENT_NAMES = [
+    "inventory-assessor",
+    "update-advisor",
+]
 
-    Scans dependency files to identify vulnerable, outdated,
-    or potentially problematic packages.
+_SYSTEM_PROMPT = """\
+You are a dependency check orchestrator. You coordinate two specialized \
+subagents to produce a unified dependency audit report. Be thorough but \
+concise. Cite package names and version numbers.\
+"""
 
-    Supports composition via ``WorkflowContext`` -- use ``default_context()``
-    to get a pre-configured context with prompt and parsing services.
+_TASK_PROMPT_TEMPLATE = """\
+Analyze the project at {path} using the two specialized subagents \
+below. Each subagent should focus on its domain and report findings \
+as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall dependency health score (0-100) and a 2-3 sentence executive summary.
+
+## Dependencies
+Full inventory of direct and transitive dependencies with current versions, \
+latest available versions, and vulnerability status.
+
+## Suggestions
+Prioritized update plan ordered by urgency — security patches first, then \
+breaking-change-free updates, then major upgrades with migration notes.\
+"""
+
+
+class DependencyCheckWorkflow(BaseWorkflow):
+    """Audit dependencies with Agent SDK subagents.
+
+    Delegates all analysis to two Agent SDK subagents rather than using
+    the mixin stage system. The inventory-assessor inventories all
+    dependencies and checks for outdated or vulnerable packages. The
+    update-advisor assesses update urgency and creates a prioritized
+    update plan.
+
+    Usage::
+
+        workflow = DependencyCheckWorkflow()
+        result = await workflow.execute(path=".", depth="standard")
     """
 
     name = "dependency-check"
-    description = "Audit dependencies for vulnerabilities and updates"
-    stages = ["inventory", "assess", "report"]
-    tier_map = {
-        "inventory": ModelTier.CHEAP,
-        "assess": ModelTier.CAPABLE,
-        "report": ModelTier.CAPABLE,
-    }
+    description = "Audit dependencies with Agent SDK subagents"
+    stages = ["agent-check"]
+    tier_map = {"agent-check": ModelTier.CAPABLE}
 
-    def __init__(self, **kwargs: Any):
-        """Initialize dependency check workflow.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK dependency check.
 
         Args:
-            **kwargs: Additional arguments passed to BaseWorkflow
-
-        """
-        super().__init__(**kwargs)
-
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for dependency checking.
-
-        Args:
-            xml_config: Optional XML prompt configuration dict.
+            **kwargs: Keyword arguments.
+                path (str): Required. Project directory to check.
+                depth (str): Check depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        return WorkflowContext(
-            prompt=PromptService("dependency-check", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
-        )
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-    async def _inventory(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Parse dependency files to build inventory.
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-        Supports requirements.txt, pyproject.toml, package.json,
-        and their lockfiles.
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+
+        started_at = datetime.now()
+
+        try:
+            run_result = await self._run_agent_check(resolved_path, max_turns, depth)
+
+            completed_at = datetime.now()
+
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+                agent_run_result=run_result,
+            )
+
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK dependency check failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_check(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK dependency check and return result text.
+
+        Args:
+            resolved_path: Absolute path to the project.
+            max_turns: Maximum agent turns.
+
+        Returns:
+            AgentRunResult with findings and SDK metadata.
         """
-        target_path = input_data.get("path", ".")
-        target = Path(target_path)
-
-        dependencies: dict[str, list[dict]] = {
-            "python": [],
-            "node": [],
-        }
-        files_found: list[str] = []
-
-        # Parse Python dependencies
-        req_files = ["requirements.txt", "requirements-dev.txt", "requirements-test.txt"]
-        for req_file in req_files:
-            req_path = target / req_file
-            if req_path.exists():
-                files_found.append(str(req_path))
-                deps = self._parse_requirements(req_path)
-                dependencies["python"].extend(deps)
-
-        # Parse pyproject.toml
-        pyproject_path = target / "pyproject.toml"
-        if pyproject_path.exists():
-            files_found.append(str(pyproject_path))
-            deps = self._parse_pyproject(pyproject_path)
-            dependencies["python"].extend(deps)
-
-        # Parse package.json
-        package_json = target / "package.json"
-        if package_json.exists():
-            files_found.append(str(package_json))
-            deps = self._parse_package_json(package_json)
-            dependencies["node"].extend(deps)
-
-        # Parse lockfiles for exact versions (more reliable for vuln checking)
-        poetry_lock = target / "poetry.lock"
-        if poetry_lock.exists():
-            files_found.append(str(poetry_lock))
-            lockfile_deps = self._parse_poetry_lock(poetry_lock)
-            # Lockfile deps have pinned=True and override manifest versions
-            dependencies["python"].extend(lockfile_deps)
-
-        package_lock = target / "package-lock.json"
-        if package_lock.exists():
-            files_found.append(str(package_lock))
-            lockfile_deps = self._parse_package_lock_json(package_lock)
-            dependencies["node"].extend(lockfile_deps)
-
-        # Deduplicate
-        for ecosystem in dependencies:
-            seen = set()
-            unique = []
-            for dep in dependencies[ecosystem]:
-                name = dep["name"].lower()
-                if name not in seen:
-                    seen.add(name)
-                    unique.append(dep)
-            dependencies[ecosystem] = unique
-
-        total_count = sum(len(deps) for deps in dependencies.values())
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(dependencies)
-
-        return (
-            {
-                "dependencies": dependencies,
-                "files_found": files_found,
-                "total_dependencies": total_count,
-                "python_count": len(dependencies["python"]),
-                "node_count": len(dependencies["node"]),
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    async def _assess(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Check dependencies for vulnerabilities using real advisory sources.
-
-        Uses pip-audit for Python and npm audit for Node.js packages.
-        Falls back to cached advisories if tools are unavailable.
-        """
-        target_path = Path(input_data.get("path", "."))
-        dependencies = input_data.get("dependencies", {})
-
-        vulnerabilities: list[dict] = []
-        outdated: list[dict] = []
-        data_source = "none"
-
-        # Run pip-audit for Python vulnerabilities
-        pip_audit_results = _run_pip_audit(target_path)
-        if pip_audit_results:
-            data_source = "pip-audit"
-            for result in pip_audit_results:
-                for vuln in result.get("vulns", []):
-                    vulnerabilities.append(
-                        {
-                            "package": result.get("name", "unknown"),
-                            "current_version": result.get("version", "unknown"),
-                            "fixed_versions": vuln.get("fix_versions", []),
-                            "severity": self._map_severity(vuln.get("id", "")),
-                            "cve": vuln.get("id", ""),
-                            "description": vuln.get("description", "")[:200],
-                            "ecosystem": "python",
-                            "source": "pip-audit",
-                        },
-                    )
-
-        # Run npm audit for Node.js vulnerabilities
-        npm_audit_results = _run_npm_audit(target_path)
-        if npm_audit_results:
-            data_source = "pip-audit+npm" if data_source == "pip-audit" else "npm-audit"
-            for vuln in npm_audit_results:
-                severity = vuln.get("severity", "unknown")
-                vulnerabilities.append(
-                    {
-                        "package": vuln.get("name", "unknown"),
-                        "current_version": vuln.get("range", "unknown"),
-                        "fixed_versions": [],
-                        "severity": severity,
-                        "cve": "",
-                        "description": str(vuln.get("via", []))[:200],
-                        "ecosystem": "node",
-                        "source": "npm-audit",
-                        "fixAvailable": vuln.get("fixAvailable", False),
-                    },
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "inventory-assessor": claude_agent_sdk.AgentDefinition(
+                        description=("Dependency inventory assessor that catalogs all packages."),
+                        prompt=(
+                            "You are a dependency inventory assessor. "
+                            "Inventory all dependencies from pyproject.toml, "
+                            "requirements.txt, setup.cfg, and lock files. "
+                            "Use Bash to run pip list, pip show, and "
+                            "pip-audit (if available) to check for outdated "
+                            "or vulnerable packages. Report each dependency "
+                            "with name, installed version, latest version, "
+                            "and any known CVEs."
+                        ),
+                        tools=["Read", "Glob", "Grep", "Bash"],
+                        model=get_subagent_model("inventory-assessor"),
+                    ),
+                    "update-advisor": claude_agent_sdk.AgentDefinition(
+                        description=("Update advisor that prioritizes dependency updates."),
+                        prompt=(
+                            "You are a dependency update advisor. "
+                            "Assess update urgency for each outdated "
+                            "dependency. Evaluate breaking change risk "
+                            "by reading changelogs and migration guides. "
+                            "Create a prioritized update plan: security "
+                            "patches first, then compatible updates, then "
+                            "major version upgrades with migration notes."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("update-advisor"),
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
                 )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
-        # If no real audit data, try cached advisories
-        if not vulnerabilities:
-            cached = _load_cached_advisories()
-            if cached:
-                data_source = "cached"
-                for ecosystem, deps in dependencies.items():
-                    for dep in deps:
-                        name_lower = dep["name"].lower()
-                        if name_lower in cached:
-                            for vuln in cached[name_lower]:
-                                vulnerabilities.append(
-                                    {
-                                        "package": dep["name"],
-                                        "current_version": dep["version"],
-                                        "severity": self._map_severity(vuln.get("id", "")),
-                                        "cve": vuln.get("id", ""),
-                                        "ecosystem": ecosystem,
-                                        "source": "cached",
-                                    },
-                                )
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
 
-        # Check for potentially outdated packages (heuristic)
-        for ecosystem, deps in dependencies.items():
-            for dep in deps:
-                version = dep.get("version", "")
-                # Flag pre-release and very old-looking versions
-                if version.startswith("^0.") or version.startswith("~0."):
-                    outdated.append(
-                        {
-                            "package": dep["name"],
-                            "current_version": version,
-                            "status": "potentially_outdated",
-                            "ecosystem": ecosystem,
-                        },
-                    )
+        Args:
+            message: Human-readable error description.
 
-        # Categorize by severity
-        critical = [v for v in vulnerabilities if v.get("severity") == "critical"]
-        high = [v for v in vulnerabilities if v.get("severity") == "high"]
-        medium = [v for v in vulnerabilities if v.get("severity") == "medium"]
-        low = [v for v in vulnerabilities if v.get("severity") == "low"]
-
-        assessment = {
-            "vulnerabilities": vulnerabilities,
-            "outdated": outdated,
-            "vulnerability_count": len(vulnerabilities),
-            "critical_count": len(critical),
-            "high_count": len(high),
-            "medium_count": len(medium),
-            "low_count": len(low),
-            "outdated_count": len(outdated),
-            "data_source": data_source,
-        }
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(assessment)
-
-        return (
-            {
-                "assessment": assessment,
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    def _map_severity(self, vuln_id: str) -> str:
-        """Map vulnerability ID to severity level.
-
-        Uses heuristics based on CVE/GHSA patterns.
+        Returns:
+            WorkflowResult with success=False.
         """
-        vuln_id_lower = vuln_id.lower()
-
-        # GHSA typically includes severity in metadata, but we can't get it from ID alone
-        # CVEs don't encode severity in the ID
-        # Default to "medium" as a conservative estimate
-        # In practice, pip-audit provides severity in the response
-
-        if "critical" in vuln_id_lower:
-            return "critical"
-        if "high" in vuln_id_lower:
-            return "high"
-
-        # Default to medium - actual severity should come from the audit tool
-        return "medium"
-
-    async def _report(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Generate risk assessment and recommendations using LLM.
-
-        Creates actionable report with remediation steps.
-
-        Supports XML-enhanced prompts when enabled in workflow config.
-        """
-        assessment = input_data.get("assessment", {})
-        vulnerabilities = assessment.get("vulnerabilities", [])
-        outdated = assessment.get("outdated", [])
-        target = input_data.get("path", "")
-
-        # Calculate risk score
-        risk_score = (
-            assessment.get("critical_count", 0) * 25
-            + assessment.get("high_count", 0) * 10
-            + assessment.get("medium_count", 0) * 3
-            + assessment.get("outdated_count", 0) * 1
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-check",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK dependency check",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )
-        risk_score = min(100, risk_score)
-
-        risk_level = (
-            "critical"
-            if risk_score >= 75
-            else "high" if risk_score >= 50 else "medium" if risk_score >= 25 else "low"
-        )
-
-        # Build vulnerability summary for LLM
-        vuln_summary = []
-        for v in vulnerabilities[:15]:
-            vuln_summary.append(
-                f"- {v.get('package')}@{v.get('current_version')}: "
-                f"{v.get('cve')} ({v.get('severity')})",
-            )
-
-        # Build input payload for prompt
-        input_payload = f"""Target: {target or "codebase"}
-
-Total Dependencies: {input_data.get("total_dependencies", 0)}
-Risk Score: {risk_score}/100
-Risk Level: {risk_level}
-
-Vulnerabilities ({len(vulnerabilities)}):
-{chr(10).join(vuln_summary) if vuln_summary else "None found"}
-
-Outdated Packages: {len(outdated)}
-
-Severity Summary:
-- Critical: {assessment.get("critical_count", 0)}
-- High: {assessment.get("high_count", 0)}
-- Medium: {assessment.get("medium_count", 0)}"""
-
-        # Check if XML prompts are enabled
-        if self._is_xml_enabled():
-            # Use XML-enhanced prompt
-            from attune.prompts.examples import DEPENDENCY_CHECK_EXAMPLES
-
-            user_message = self._render_xml_prompt(
-                role="security engineer specializing in dependency management",
-                goal="Generate a comprehensive dependency security report with remediation steps",
-                instructions=[
-                    "Analyze the vulnerability findings and their severity",
-                    "Prioritize remediation actions by risk level",
-                    "Provide specific upgrade recommendations",
-                    "Identify potential breaking changes from upgrades",
-                    "Suggest a remediation timeline",
-                ],
-                constraints=[
-                    "Focus on actionable recommendations",
-                    "Prioritize critical and high severity issues",
-                    "Include version upgrade targets where possible",
-                ],
-                input_type="dependency_vulnerabilities",
-                input_payload=input_payload,
-                examples=DEPENDENCY_CHECK_EXAMPLES,
-                extra={
-                    "risk_score": risk_score,
-                    "risk_level": risk_level,
-                },
-            )
-            system = None  # XML prompt includes all context
-        else:
-            # Use legacy plain text prompts
-            system = """You are a security engineer specializing in dependency management.
-Analyze the vulnerability findings and generate a comprehensive remediation report.
-
-Focus on:
-1. Prioritizing by severity
-2. Specific upgrade recommendations
-3. Potential breaking changes
-4. Remediation timeline"""
-
-            user_message = f"""Generate a dependency security report:
-
-{input_payload}
-
-Provide actionable remediation recommendations."""
-
-        # Try executor-based execution first (Phase 3 pattern)
-        if self._executor is not None or self._api_key:
-            try:
-                step = DEPENDENCY_CHECK_STEPS["report"]
-                response, input_tokens, output_tokens, cost = await self.run_step_with_executor(
-                    step=step,
-                    prompt=user_message,
-                    system=system,
-                )
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: Fall back to legacy _call_llm if executor fails
-                response, input_tokens, output_tokens = await self._call_llm(
-                    tier,
-                    system or "",
-                    user_message,
-                    max_tokens=3000,
-                )
-        else:
-            # Legacy path for backward compatibility
-            response, input_tokens, output_tokens = await self._call_llm(
-                tier,
-                system or "",
-                user_message,
-                max_tokens=3000,
-            )
-
-        # Parse XML response if enforcement is enabled
-        parsed_data = self._parse_xml_response(response)
-
-        # Generate basic recommendations for backwards compatibility
-        recommendations: list[dict] = []
-
-        for vuln in vulnerabilities:
-            recommendations.append(
-                {
-                    "priority": 1 if vuln["severity"] == "critical" else 2,
-                    "action": "upgrade",
-                    "package": vuln["package"],
-                    "reason": f"Fix {vuln['cve']} ({vuln['severity']} severity)",
-                    "suggestion": f"Upgrade {vuln['package']} to latest version",
-                },
-            )
-
-        for dep in outdated[:10]:  # Top 10 outdated
-            recommendations.append(
-                {
-                    "priority": 3,
-                    "action": "review",
-                    "package": dep["package"],
-                    "reason": "Potentially outdated version",
-                    "suggestion": f"Review and update {dep['package']}",
-                },
-            )
-
-        # Sort by priority
-        recommendations.sort(key=lambda x: x["priority"])
-
-        result = {
-            "risk_score": risk_score,
-            "risk_level": risk_level,
-            "total_dependencies": input_data.get("total_dependencies", 0),
-            "vulnerability_count": len(vulnerabilities),
-            "outdated_count": len(outdated),
-            "recommendations": recommendations[:20],
-            "security_report": response,
-            "summary": {
-                "critical": assessment.get("critical_count", 0),
-                "high": assessment.get("high_count", 0),
-                "medium": assessment.get("medium_count", 0),
-            },
-            "model_tier_used": tier.value,
-        }
-
-        # Merge parsed XML data if available
-        if parsed_data.get("xml_parsed"):
-            result.update(
-                {
-                    "xml_parsed": True,
-                    "report_summary": parsed_data.get("summary"),
-                    "findings": parsed_data.get("findings", []),
-                    "checklist": parsed_data.get("checklist", []),
-                },
-            )
-
-        # Add formatted report for human readability
-        result["formatted_report"] = format_dependency_check_report(result, input_data)
-
-        return (result, input_tokens, output_tokens)
 
 
 if __name__ == "__main__":

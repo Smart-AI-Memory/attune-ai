@@ -5,6 +5,86 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-03-14
+
+### Anthropic Best Practices Release
+
+All 15 SDK-native workflows now follow Anthropic's
+recommended patterns for the Claude Agent SDK. This release
+aligns every workflow with how the SDK is designed to be
+used — system prompt separation, per-agent model routing,
+budget controls, cost tracking, and structured output.
+
+### Added
+
+- **System prompt separation** — Split each workflow's
+  monolithic prompt into `_SYSTEM_PROMPT` (persona/behavior)
+  and `_TASK_PROMPT_TEMPLATE` (task instructions). Passed via
+  `system_prompt=` on `ClaudeAgentOptions`. Applied to all
+  15 workflows: code-review, security-audit, deep-review,
+  perf-audit, health-check, bug-predict, simplify-code,
+  refactor-plan, dependency-check, release-prep,
+  research-synthesis, doc-gen, doc-audit, test-gen,
+  test-audit.
+
+- **Cost and usage extraction** — New `AgentRunResult`
+  dataclass captures `total_cost_usd`, `usage` (input/output
+  tokens), `duration_ms`, `duration_api_ms`, `num_turns`,
+  `session_id`, and `is_error` from `ResultMessage`. All 15
+  workflows now return this data through the adapter,
+  populating `CostReport` and `WorkflowStage` fields.
+
+- **Budget safety nets** — `get_max_budget_usd()` helper
+  returns depth-based budget caps ($0.50 quick, $2.00
+  standard, $5.00 deep). All 15 workflows pass
+  `max_budget_usd=` to `ClaudeAgentOptions`. Override with
+  `ATTUNE_MAX_BUDGET_USD` env var (set to 0 to disable).
+  Acts as a cost cap for API-key users and a complexity
+  bound for subscription users.
+
+- **Per-agent model routing** — `get_subagent_model()` maps
+  agent roles to models: security/vuln/architect to opus,
+  quality/plan/research to sonnet, complexity/lint/coverage/dep
+  to haiku. All 15 workflows set `model=` on each
+  `AgentDefinition`. Override with `ATTUNE_AGENT_MODEL_<KEYWORD>`
+  or `ATTUNE_AGENT_MODEL_DEFAULT` env vars. Set to `inherit`
+  to use the parent model.
+
+- **Structured output pilot** — `WORKFLOW_OUTPUT_SCHEMA` JSON
+  schema in new `output_schemas.py`. `AgentRunResult` gains
+  `structured_output` field. Adapter dual-path: prefers
+  structured JSON when available, falls back to text parsing.
+  Piloting on code-review and security-audit workflows.
+  `_from_structured_output()` produces findings, suggestions
+  (confidence 0.9), and summary from JSON.
+
+- **26 new tests** — `TestAgentRunResultDataclass` (1 test),
+  `TestAgentSDKResultAdapterCostExtraction` (5 tests),
+  `TestGetMaxBudgetUsd` (7 tests),
+  `TestGetSubagentModel` (13 tests),
+  `TestAgentSDKResultAdapterStructuredOutput` (6 tests).
+  Total adapter tests: 50 (was 24).
+
+### Changed
+
+- **AgentSDKResultAdapter.from_agent_output()** — New
+  optional `agent_run_result` parameter (backward
+  compatible). When provided, populates cost report with
+  actual costs and distributes token counts across stages.
+
+- **_build_cost_report()** — Accepts `total_cost_usd`
+  parameter. Uses actual cost when available (API-key
+  users), defaults to 0.0 (subscription users).
+
+- **_build_stages()** — Accepts `usage` parameter.
+  Distributes `input_tokens` and `output_tokens` evenly
+  across subagent stages.
+
+- **README rewritten** — Workflow reference table with all
+  15 workflows, their agents, use cases, and capabilities.
+  Model routing and budget control documentation. Updated
+  comparison table.
+
 ## [4.1.1] - 2026-03-11
 
 ### Fixed

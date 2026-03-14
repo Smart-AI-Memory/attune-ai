@@ -10,7 +10,9 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
+import os
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +20,114 @@ from .base import ModelTier
 from .data_classes import CostReport, NextAction, WorkflowResult, WorkflowStage
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AgentRunResult:
+    """Data extracted from Agent SDK execution.
+
+    Carries cost, usage, and timing data from ResultMessage
+    alongside the text output. Passed to
+    ``AgentSDKResultAdapter.from_agent_output()`` so it can
+    populate CostReport and WorkflowStage fields.
+    """
+
+    result_text: str
+    structured_output: Any = None
+    total_cost_usd: float | None = None
+    usage: dict[str, Any] | None = None
+    duration_ms: int = 0
+    duration_api_ms: int = 0
+    num_turns: int = 0
+    session_id: str | None = None
+    is_error: bool = False
+
+
+# Budget defaults by depth level
+_DEFAULT_BUDGET_USD: dict[str, float] = {
+    "quick": 0.50,
+    "standard": 2.00,
+    "deep": 5.00,
+}
+
+
+def get_max_budget_usd(depth: str = "standard") -> float | None:
+    """Get budget cap for a workflow depth.
+
+    Acts as a cost cap for API-key users and a complexity
+    bound for subscription users. Priority:
+
+    1. ``ATTUNE_MAX_BUDGET_USD`` env var (set to 0 to disable)
+    2. Depth-based default from ``_DEFAULT_BUDGET_USD``
+
+    Args:
+        depth: Analysis depth — "quick", "standard", or "deep".
+
+    Returns:
+        Budget cap in USD, or None if caps are disabled.
+    """
+    override = os.environ.get("ATTUNE_MAX_BUDGET_USD")
+    if override is not None:
+        val = float(override)
+        return val if val > 0 else None
+    return _DEFAULT_BUDGET_USD.get(depth, 2.00)
+
+
+# Role-keyword to model mapping for subagents
+_SUBAGENT_MODEL_MAP: dict[str, str] = {
+    # Deep reasoning agents → opus
+    "security": "opus",
+    "vuln": "opus",
+    "architect": "opus",
+    # Synthesis/planning agents → sonnet (balanced)
+    "quality": "sonnet",
+    "plan": "sonnet",
+    "research": "sonnet",
+    # Scanning/detection agents → haiku (fast, cheap)
+    "complexity": "haiku",
+    "lint": "haiku",
+    "coverage": "haiku",
+    "dep": "haiku",
+}
+
+
+def get_subagent_model(agent_name: str) -> str | None:
+    """Get model for a subagent based on role keywords.
+
+    Priority:
+
+    1. ``ATTUNE_AGENT_MODEL_<KEYWORD>`` env var (exact keyword match)
+    2. ``ATTUNE_AGENT_MODEL_DEFAULT`` env var (global override)
+    3. ``_SUBAGENT_MODEL_MAP`` dict (built-in defaults)
+    4. ``None`` (inherit parent model)
+
+    Valid model values: ``"opus"``, ``"sonnet"``, ``"haiku"``,
+    ``"inherit"``.
+
+    Args:
+        agent_name: Name of the subagent (e.g. ``"security-reviewer"``).
+
+    Returns:
+        Model name string, or None to inherit the parent model.
+    """
+    name_lower = agent_name.lower()
+
+    # Check keyword-specific env var override
+    for keyword in _SUBAGENT_MODEL_MAP:
+        if keyword in name_lower:
+            env_key = f"ATTUNE_AGENT_MODEL_{keyword.upper()}"
+            env_val = os.environ.get(env_key)
+            if env_val:
+                return env_val if env_val != "inherit" else None
+            return _SUBAGENT_MODEL_MAP[keyword]
+
+    # Check global default override
+    default = os.environ.get("ATTUNE_AGENT_MODEL_DEFAULT")
+    if default:
+        return default if default != "inherit" else None
+
+    return None
+
 
 # Section headers mapped to finding categories
 _CATEGORY_PATTERNS: dict[str, re.Pattern[str]] = {
@@ -63,6 +173,7 @@ class AgentSDKResultAdapter:
         started_at: datetime,
         completed_at: datetime,
         metadata: dict[str, Any] | None = None,
+        agent_run_result: AgentRunResult | None = None,
     ) -> WorkflowResult:
         """Build a WorkflowResult from raw agent text output.
 
@@ -72,10 +183,13 @@ class AgentSDKResultAdapter:
             started_at: When the agent execution began.
             completed_at: When the agent execution finished.
             metadata: Optional extra metadata to attach to the result.
+            agent_run_result: Optional rich result data from the SDK
+                including cost, usage, and timing. When provided,
+                populates CostReport and WorkflowStage fields.
 
         Returns:
             A WorkflowResult populated with parsed findings,
-            suggestions, stages, and a zero-cost report.
+            suggestions, stages, and cost/usage data.
         """
         if not result_text:
             logger.warning("Empty result_text passed to AgentSDKResultAdapter")
@@ -83,17 +197,42 @@ class AgentSDKResultAdapter:
         text = result_text or ""
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
-        stages = cls._build_stages(subagent_names, duration_ms)
-        cost_report = cls._build_cost_report(subagent_names)
-        findings = cls._parse_findings(text)
-        suggestions = cls._extract_suggestions(text)
-        summary = cls._extract_summary(text)
+        # Extract cost and usage from AgentRunResult if available
+        total_cost: float | None = None
+        usage: dict[str, Any] | None = None
+        if agent_run_result:
+            total_cost = agent_run_result.total_cost_usd
+            usage = agent_run_result.usage
+
+        stages = cls._build_stages(subagent_names, duration_ms, usage=usage)
+        cost_report = cls._build_cost_report(
+            subagent_names,
+            total_cost_usd=total_cost,
+        )
+
+        # Prefer structured output when available; fall back to text parsing
+        if (
+            agent_run_result
+            and agent_run_result.structured_output
+            and isinstance(agent_run_result.structured_output, dict)
+        ):
+            findings, suggestions, summary = cls._from_structured_output(
+                agent_run_result.structured_output,
+            )
+        else:
+            findings = cls._parse_findings(text)
+            suggestions = cls._extract_suggestions(text)
+            summary = cls._extract_summary(text)
 
         result_metadata: dict[str, Any] = {
             "source": "agent_sdk",
             "subagent_count": len(subagent_names),
             "findings": findings,
         }
+        if agent_run_result:
+            result_metadata["num_turns"] = agent_run_result.num_turns
+            result_metadata["session_id"] = agent_run_result.session_id
+            result_metadata["duration_api_ms"] = agent_run_result.duration_api_ms
         if metadata:
             result_metadata.update(metadata)
 
@@ -116,37 +255,59 @@ class AgentSDKResultAdapter:
         cls,
         subagent_names: list[str],
         total_duration_ms: int,
+        usage: dict[str, Any] | None = None,
     ) -> list[WorkflowStage]:
         """Create a WorkflowStage for each subagent.
 
-        Splits total duration evenly across subagents as a rough
-        approximation (actual per-agent timing is not available).
+        Splits total duration and token counts evenly across
+        subagents as a rough approximation (actual per-agent
+        timing is not available).
         """
         if not subagent_names:
             return []
 
-        per_agent_ms = total_duration_ms // len(subagent_names)
+        count = len(subagent_names)
+        per_agent_ms = total_duration_ms // count
+
+        # Distribute tokens evenly if usage data is available
+        per_input = 0
+        per_output = 0
+        if usage:
+            per_input = usage.get("input_tokens", 0) // count
+            per_output = usage.get("output_tokens", 0) // count
+
         return [
             WorkflowStage(
                 name=name,
                 tier=ModelTier.CAPABLE,
                 description=f"Agent SDK subagent: {name}",
                 duration_ms=per_agent_ms,
+                input_tokens=per_input,
+                output_tokens=per_output,
             )
             for name in subagent_names
         ]
 
     @classmethod
-    def _build_cost_report(cls, subagent_names: list[str]) -> CostReport:
-        """Build a zero-cost report (subscription-based execution)."""
+    def _build_cost_report(
+        cls,
+        subagent_names: list[str],
+        total_cost_usd: float | None = None,
+    ) -> CostReport:
+        """Build a cost report from SDK execution data.
+
+        Uses actual cost when available (API-key users).
+        Falls back to zero for subscription users (None).
+        """
+        cost = total_cost_usd if total_cost_usd is not None else 0.0
         by_stage = dict.fromkeys(subagent_names, 0.0)
         return CostReport(
-            total_cost=0.0,
-            baseline_cost=0.0,
+            total_cost=cost,
+            baseline_cost=cost,
             savings=0.0,
             savings_percent=0.0,
             by_stage=by_stage,
-            by_tier={"capable": 0.0},
+            by_tier={"capable": cost},
         )
 
     @classmethod
@@ -297,3 +458,37 @@ class AgentSDKResultAdapter:
                     )
 
         return suggestions
+
+    @classmethod
+    def _from_structured_output(
+        cls,
+        data: dict[str, Any],
+    ) -> tuple[dict[str, Any], list[NextAction], str]:
+        """Extract findings, suggestions, and summary from structured JSON.
+
+        Called when the SDK returns ``structured_output`` instead of
+        free-form markdown. Produces the same triple that the text-
+        parsing path yields so the caller can use either transparently.
+
+        Args:
+            data: Parsed JSON dict from ``ResultMessage.structured_output``.
+
+        Returns:
+            Tuple of (findings dict, suggestions list, summary string).
+        """
+        findings: dict[str, Any] = data.get("findings", {})
+        summary_data = data.get("summary", {})
+        summary = summary_data.get("text", "") if isinstance(summary_data, dict) else ""
+
+        suggestions = [
+            NextAction(
+                workflow_name="agent-followup",
+                description=item.get("description", ""),
+                reasoning="Structured agent output",
+                priority=item.get("priority", "medium"),
+                confidence=0.9,
+            )
+            for item in data.get("suggestions", [])
+            if isinstance(item, dict) and item.get("description")
+        ]
+        return findings, suggestions, summary

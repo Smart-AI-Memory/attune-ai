@@ -5,9 +5,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/lib/theme-provider';
 
 const navItems = [
+  { label: 'Plugins', href: '/attune-plugin' },
   { label: 'Wizards', href: '/wizards' },
   { label: 'Open Source', href: '/pricing' },
-  { label: 'Docs', href: '/framework-docs/' },
 ];
 
 const docsItems = [
@@ -19,7 +19,12 @@ const docsItems = [
   {
     label: 'Workflows',
     href: '/workflows',
-    description: '10 AI workflows',
+    description: '17 AI workflows',
+  },
+  {
+    label: 'Attune Lite',
+    href: '/attune-lite',
+    description: 'Free 5-skill Claude Code plugin',
   },
   {
     label: 'MkDocs',
@@ -85,7 +90,7 @@ export default function Navigation() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? 'bg-[var(--background)] backdrop-blur-md bg-opacity-90 border-b border-[var(--border)] shadow-sm'
-          : 'bg-transparent'
+          : 'backdrop-blur-sm bg-[var(--background)] bg-opacity-60'
       }`}
       role="navigation"
       aria-label="Main navigation"

@@ -279,60 +279,20 @@ class TestLLMMixinValidation:
 class TestWorkflowSchemas:
     """Test that key workflows have schemas declared."""
 
-    def test_code_review_has_input_schema(self):
-        """CodeReviewWorkflow declares input_schema."""
-        from attune.workflows.code_review import CodeReviewWorkflow
+    # test_security_audit_has_input_schema: Removed — SDK-native
+    # workflow validates path in execute(), not via input_schema.
 
-        assert CodeReviewWorkflow.input_schema is not None
-        assert "path" in CodeReviewWorkflow.input_schema.required_fields
+    # test_test_gen_has_input_schema: Removed — SDK-native
+    # workflow validates in execute(), not via input_schema.
 
-    def test_code_review_has_stage_contracts(self):
-        """CodeReviewWorkflow declares stage_contracts."""
-        from attune.workflows.code_review import CodeReviewWorkflow
+    # test_perf_audit_has_input_schema: Removed — SDK-native
+    # workflow validates path in execute(), not via input_schema.
 
-        assert "classify" in CodeReviewWorkflow.stage_contracts
-        assert "risk_level" in CodeReviewWorkflow.stage_contracts["classify"].required_keys
-
-    def test_security_audit_has_input_schema(self):
-        """SecurityAuditWorkflow declares input_schema."""
-        from attune.workflows.security_audit import (
-            SecurityAuditWorkflow,
-        )
-
-        assert SecurityAuditWorkflow.input_schema is not None
-        assert "path" in SecurityAuditWorkflow.input_schema.required_fields
-
-    def test_test_gen_has_input_schema(self):
-        """TestGenerationWorkflow declares input_schema."""
-        from attune.workflows.test_gen.workflow import (
-            TestGenerationWorkflow,
-        )
-
-        assert TestGenerationWorkflow.input_schema is not None
-        assert "path" in TestGenerationWorkflow.input_schema.required_fields
-
-    def test_perf_audit_has_input_schema(self):
-        """PerformanceAuditWorkflow declares input_schema."""
-        from attune.workflows.perf_audit import (
-            PerformanceAuditWorkflow,
-        )
-
-        assert PerformanceAuditWorkflow.input_schema is not None
-        assert "path" in PerformanceAuditWorkflow.input_schema.required_fields
-
-    def test_simplify_code_has_input_schema(self):
-        """SimplifyCodeWorkflow declares input_schema."""
+    def test_simplify_code_is_sdk_native(self):
+        """SimplifyCodeWorkflow is SDK-native (no input_schema)."""
         from attune.workflows.simplify_code import (
             SimplifyCodeWorkflow,
         )
 
-        assert SimplifyCodeWorkflow.input_schema is not None
-        assert "path" in SimplifyCodeWorkflow.input_schema.required_fields
-
-    def test_code_review_rejects_empty_input(self):
-        """CodeReviewWorkflow input_schema rejects empty dict."""
-        from attune.workflows.code_review import CodeReviewWorkflow
-
-        errors = validate_against_input_schema({}, CodeReviewWorkflow.input_schema)
-        assert len(errors) >= 1
-        assert any("path" in e for e in errors)
+        # SDK-native workflows validate in execute(), not via input_schema
+        assert SimplifyCodeWorkflow.stages == ["agent-simplify"]

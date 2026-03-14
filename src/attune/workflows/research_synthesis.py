@@ -1,28 +1,38 @@
 """Research Synthesis Workflow
 
-A cost-optimized pipeline for research and analysis tasks:
-1. Haiku: Summarize each source (cheap, parallel)
-2. Sonnet: Identify patterns across summaries
-3. Opus: Synthesize final insights (conditional on complexity)
+Multi-source research synthesis using Agent SDK subagents:
+1. source-summarizer: Reads and extracts key findings from each source
+2. pattern-analyst: Identifies themes and connections across sources
+3. synthesis-writer: Produces a cohesive synthesis report
 
-Integration with attune.models:
-- Supports LLMExecutor for unified execution (optional)
-- WorkflowStepConfig for declarative step definitions
-- Automatic telemetry emission when executor is used
-- Falls back to direct API calls when executor not provided
+Module-level step configs (SUMMARIZE_STEP, ANALYZE_STEP, SYNTHESIZE_STEP,
+SYNTHESIZE_STEP_CAPABLE) are preserved for backward compatibility with
+any importers that reference them directly.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import claude_agent_sdk
+
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from .base import BaseWorkflow, ModelTier
-from .context import WorkflowContext
-from .services import ParsingService, PromptService
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .step_config import WorkflowStepConfig
 
-# Step configurations for executor-based execution
+# Step configurations preserved for backward compatibility
 SUMMARIZE_STEP = WorkflowStepConfig(
     name="summarize",
     task_type="summarize",  # Routes to cheap tier
@@ -52,346 +62,234 @@ SYNTHESIZE_STEP_CAPABLE = WorkflowStepConfig(
     max_tokens=4096,
 )
 
+logger = logging.getLogger(__name__)
+
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "source-summarizer",
+    "pattern-analyst",
+    "synthesis-writer",
+]
+
+_SYSTEM_PROMPT = """\
+You are a research synthesis orchestrator. Coordinate three specialized \
+subagents to analyze source documents and combine their outputs into a \
+single cohesive report. Be thorough but concise. Cite source documents \
+and specific passages when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Analyze the source documents at {path} using the three specialized \
+subagents below. Each subagent should focus on its domain and report \
+findings as structured markdown.
+
+After all subagents finish, combine their outputs into a single \
+cohesive report with these sections:
+
+## Summary
+A 2-3 sentence executive summary of the key findings and their \
+significance.
+
+## Research
+Detailed findings organized by theme, with citations to specific \
+source documents and data points.
+
+## Suggestions
+Actionable recommendations and areas for further investigation, \
+ordered by priority.\
+"""
+
 
 class ResearchSynthesisWorkflow(BaseWorkflow):
-    """Multi-tier research synthesis workflow for comparing multiple documents.
+    """Multi-source research synthesis with Agent SDK subagents.
 
-    Uses cheap models for initial summarization, capable models for
-    pattern analysis, and optionally premium models for final synthesis
-    when the analysis reveals high complexity.
+    Delegates all analysis to three Agent SDK subagents rather than
+    using the mixin stage system. Each subagent focuses on a specific
+    synthesis task (summarization, pattern analysis, report writing).
+    The orchestrator produces a cohesive synthesis report.
 
-    IMPORTANT: This workflow requires at least 2 source documents.
-    For single research questions without sources, use a direct LLM call instead.
+    Usage::
 
-    Usage (legacy - direct API calls):
         workflow = ResearchSynthesisWorkflow()
-        result = await workflow.execute(
-            sources=["doc1.md", "doc2.md"],
-            question="What are the key patterns?"
-        )
-
-    Usage (executor-based - unified execution with telemetry):
-        from attune.models import MockLLMExecutor
-
-        executor = MockLLMExecutor()  # or EmpathyLLMExecutor for real calls
-        workflow = ResearchSynthesisWorkflow(executor=executor)
-        result = await workflow.execute(
-            sources=["doc1.md", "doc2.md"],
-            question="What are the key patterns?"
-        )
-
-    When using executor:
-    - Automatic task-based routing via WorkflowStepConfig
-    - Automatic telemetry emission (LLMCallRecord per call)
-    - Automatic workflow telemetry (WorkflowRunRecord at end)
-    - Fallback and retry policies applied automatically
-
-    Raises:
-        ValueError: If fewer than 2 sources are provided
-
+        result = await workflow.execute(path="docs/research/", depth="standard")
     """
 
-    name = "research"
-    description = "Cost-optimized research synthesis for multi-document analysis"
-    MIN_SOURCES = 2  # Minimum required sources
-    stages = ["summarize", "analyze", "synthesize"]
-    tier_map = {
-        "summarize": ModelTier.CHEAP,
-        "analyze": ModelTier.CAPABLE,
-        "synthesize": ModelTier.PREMIUM,
-    }
+    name = "research-synthesis"
+    description = "Multi-source research synthesis with Agent SDK subagents"
+    stages = ["agent-synthesis"]
+    tier_map = {"agent-synthesis": ModelTier.CAPABLE}
 
-    def __init__(self, complexity_threshold: float = 0.7, **kwargs: Any):
-        """Initialize workflow.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK research synthesis.
 
         Args:
-            complexity_threshold: Threshold (0-1) above which premium
-                synthesis is used. Below this, capable tier is used.
-
-        """
-        super().__init__(**kwargs)
-        self.complexity_threshold = complexity_threshold
-        self._detected_complexity: float = 0.0
-
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for research synthesis.
-
-        Args:
-            xml_config: Optional XML prompt configuration dict.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to analyze.
+                depth (str): Synthesis depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        return WorkflowContext(
-            prompt=PromptService("research", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
-        )
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-    async def _call_with_step(
-        self,
-        step: WorkflowStepConfig,
-        system: str,
-        user_message: str,
-    ) -> tuple[str, int, int]:
-        """Make an LLM call using WorkflowStepConfig and executor (if available).
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-        This is the recommended approach for new workflows. It provides:
-        - Automatic task-based routing
-        - Automatic telemetry emission
-        - Fallback and retry policies
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
-        If no executor is configured, falls back to direct API call.
+        started_at = datetime.now()
+
+        try:
+            run_result = await self._run_agent_synthesis(resolved_path, max_turns, depth=depth)
+
+            completed_at = datetime.now()
+
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=run_result.result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+                agent_run_result=run_result,
+            )
+
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK research synthesis failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_synthesis(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
+        """Run the Agent SDK synthesis and return result text.
 
         Args:
-            step: WorkflowStepConfig defining the step
-            system: System prompt
-            user_message: User message
+            resolved_path: Absolute path to analyze.
+            max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            (response_text, input_tokens, output_tokens)
-
+            AgentRunResult with findings and SDK metadata.
         """
-        if self._executor is not None:
-            # Use executor-based execution with telemetry
-            prompt = f"{system}\n\n{user_message}" if system else user_message
-            content, input_tokens, output_tokens, _cost = await self.run_step_with_executor(
-                step=step,
-                prompt=prompt,
-                system=system,
-            )
-            return content, input_tokens, output_tokens
-        # Fall back to direct API call
-        tier_value = step.effective_tier
-        tier = ModelTier(tier_value)
-        return await self._call_llm(
-            tier,
-            system,
-            user_message,
-            max_tokens=step.max_tokens or 4096,
-        )
+        result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
+        async for message in claude_agent_sdk.query(
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
+                cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "source-summarizer": claude_agent_sdk.AgentDefinition(
+                        description="Source summarizer that reads and extracts key findings.",
+                        prompt=(
+                            "You are a source summarizer. Read and "
+                            "summarize source documents, extracting "
+                            "key findings and data points. For each "
+                            "source, report the document title, main "
+                            "arguments, supporting evidence, and "
+                            "notable data points. Organize by source."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("source-summarizer"),
+                    ),
+                    "pattern-analyst": claude_agent_sdk.AgentDefinition(
+                        description="Pattern analyst that identifies themes and connections.",
+                        prompt=(
+                            "You are a pattern analyst. Identify "
+                            "patterns, themes, and connections across "
+                            "summarized sources. Look for recurring "
+                            "arguments, contradictions, complementary "
+                            "findings, and emerging trends. Report "
+                            "each pattern with supporting citations "
+                            "from multiple sources."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("pattern-analyst"),
+                    ),
+                    "synthesis-writer": claude_agent_sdk.AgentDefinition(
+                        description="Synthesis writer that produces a cohesive report.",
+                        prompt=(
+                            "You are a synthesis writer. Write a "
+                            "cohesive synthesis report combining all "
+                            "findings with citations. Integrate "
+                            "source summaries and identified patterns "
+                            "into a narrative that highlights key "
+                            "insights, resolves contradictions, and "
+                            "suggests areas for further investigation."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("synthesis-writer"),
+                    ),
+                },
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
-    def validate_sources(self, sources: list) -> None:
-        """Validate that sufficient sources are provided.
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
 
         Args:
-            sources: List of source documents/content
-
-        Raises:
-            ValueError: If fewer than MIN_SOURCES are provided
-
-        """
-        if not sources or len(sources) < self.MIN_SOURCES:
-            raise ValueError(
-                f"ResearchSynthesisWorkflow requires at least {self.MIN_SOURCES} source documents. "
-                f"Got {len(sources) if sources else 0}. "
-                "For single research questions without sources, use a direct LLM call instead.",
-            )
-
-    async def execute(self, **kwargs: Any) -> Any:
-        """Execute the research synthesis workflow.
-
-        Args:
-            sources: List of source documents (required, minimum 2)
-            question: Research question to answer
+            message: Human-readable error description.
 
         Returns:
-            WorkflowResult with synthesis output
-
-        Raises:
-            ValueError: If fewer than 2 sources are provided
-
+            WorkflowResult with success=False.
         """
-        sources = kwargs.get("sources", [])
-        self.validate_sources(sources)
-        return await super().execute(**kwargs)
-
-    def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
-        """Skip premium synthesis if complexity is low."""
-        if stage_name == "synthesize" and self._detected_complexity < self.complexity_threshold:
-            # Downgrade to capable tier instead of skipping
-            self.tier_map["synthesize"] = ModelTier.CAPABLE
-            return False, None
-        return False, None
-
-    async def _summarize(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Summarize each source document.
-
-        Note: Sources are validated in execute() before this method is called.
-        """
-        sources = input_data.get("sources", [])
-        question = input_data.get("question", "Summarize the content")
-
-        total_input = 0
-        total_output = 0
-
-        # Process each source
-        summaries = []
-        system = """You are a research assistant. Summarize the given content,
-extracting key points relevant to the research question. Be thorough but concise."""
-
-        for source in sources:
-            user_message = f"Research question: {question}\n\nSource content:\n{source}"
-
-            response, inp_tokens, out_tokens = await self._call_llm(
-                tier,
-                system,
-                user_message,
-                max_tokens=1024,
-            )
-
-            summaries.append(
-                {
-                    "source": str(source)[:100],
-                    "summary": response,
-                    "key_points": [],
-                },
-            )
-
-            total_input += inp_tokens
-            total_output += out_tokens
-
-        return (
-            {
-                "summaries": summaries,
-                "question": question,
-                "source_count": len(sources),
-            },
-            total_input,
-            total_output,
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-synthesis",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK research synthesis",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )
-
-    async def _analyze(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Analyze patterns across summaries from multiple sources."""
-        summaries = input_data.get("summaries", [])
-        question = input_data.get("question", "")
-
-        # Combine summaries for analysis
-        combined = "\n\n".join(
-            [f"Source: {s.get('source', 'unknown')}\n{s.get('summary', '')}" for s in summaries],
-        )
-
-        system = """You are a research analyst. Analyze the summaries to identify:
-1. Common patterns and themes
-2. Contradictions or disagreements
-3. Key insights
-4. Complexity level (simple, moderate, complex)
-
-Provide a structured analysis."""
-
-        user_message = f"Research question: {question}\n\nSummaries to analyze:\n{combined}"
-
-        response, input_tokens, output_tokens = await self._call_llm(
-            tier,
-            system,
-            user_message,
-            max_tokens=2048,
-        )
-
-        # Estimate complexity from response length and content
-        self._detected_complexity = min(len(response) / 2000, 1.0)
-
-        return (
-            {
-                "patterns": [{"pattern": response, "sources": [], "confidence": 0.85}],
-                "complexity": self._detected_complexity,
-                "question": question,
-                "summary_count": len(summaries),
-                "analysis": response,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    async def _synthesize(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Synthesize final insights from multi-source analysis.
-
-        Supports XML-enhanced prompts when enabled in workflow config.
-        """
-        _patterns = input_data.get("patterns", [])
-        complexity = input_data.get("complexity", 0.5)
-        question = input_data.get("question", "")
-        analysis = input_data.get("analysis", "")
-
-        # Build input payload
-        input_payload = f"""Research question: {question}
-
-Analysis to synthesize:
-{analysis}
-
-Complexity level: {complexity:.2f}"""
-
-        # Check if XML prompts are enabled
-        if self._is_xml_enabled():
-            user_message = self._render_xml_prompt(
-                role="expert research synthesizer",
-                goal="Synthesize analysis into comprehensive answer with key insights",
-                instructions=[
-                    "Provide a comprehensive answer to the research question",
-                    "Highlight key insights and takeaways",
-                    "Note any caveats or areas needing further research",
-                    "Structure your response clearly with sections if appropriate",
-                    "Provide 1-2 concrete next steps or decisions",
-                ],
-                constraints=[
-                    "Be thorough, insightful, and actionable",
-                    "Focus on practical implications",
-                    "3-5 paragraphs for main answer",
-                ],
-                input_type="research_analysis",
-                input_payload=input_payload,
-                extra={
-                    "complexity_score": complexity,
-                },
-            )
-            system = None
-        else:
-            system = """You are an expert synthesizer. Based on the analysis provided:
-1. Provide a comprehensive answer to the research question
-2. Highlight key insights and takeaways
-3. Note any caveats or areas needing further research
-4. Structure your response clearly with sections if appropriate
-
-Be thorough, insightful, and actionable."""
-
-            user_message = f"""{input_payload}
-
-Provide a comprehensive synthesis and answer."""
-
-        response, input_tokens, output_tokens = await self._call_llm(
-            tier,
-            system or "",
-            user_message,
-            max_tokens=4096,
-        )
-
-        # Parse XML response if enforcement is enabled
-        parsed_data = self._parse_xml_response(response)
-
-        synthesis = {
-            "answer": response,
-            "key_insights": [],
-            "confidence": 0.85,
-            "model_tier_used": tier.value,
-            "complexity_score": complexity,
-        }
-
-        # Merge parsed XML data if available
-        if parsed_data.get("xml_parsed"):
-            synthesis.update(
-                {
-                    "xml_parsed": True,
-                    "summary": parsed_data.get("summary"),
-                    "findings": parsed_data.get("findings", []),
-                    "checklist": parsed_data.get("checklist", []),
-                },
-            )
-            # Extract key insights from parsed response
-            extra = parsed_data.get("_parsed_response")
-            if extra and hasattr(extra, "extra"):
-                key_insights = extra.extra.get("key_insights", [])
-                if key_insights:
-                    synthesis["key_insights"] = key_insights
-
-        return synthesis, input_tokens, output_tokens

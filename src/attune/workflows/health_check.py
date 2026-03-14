@@ -16,20 +16,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .agent_sdk_adapter import AgentSDKResultAdapter
+import claude_agent_sdk
+
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
 
 logger = logging.getLogger(__name__)
 
-# Module-level availability guard for claude_agent_sdk
-_SDK_AVAILABLE = False
-try:
-    import claude_agent_sdk  # type: ignore[import-untyped]
-
-    _SDK_AVAILABLE = True
-except ImportError:
-    claude_agent_sdk = None  # type: ignore[assignment]
 
 _DEPTH_MAX_TURNS: dict[str, int] = {
     "quick": 10,
@@ -103,11 +102,17 @@ _MODE_SUBAGENTS: dict[str, list[str]] = {
     "full": list(_ALL_SUBAGENT_DEFS.keys()),
 }
 
-_MAIN_PROMPT_TEMPLATE = """\
-You are a project health check orchestrator. Assess the health of the \
-project at {project_root} using the specialized subagents below. Each \
-subagent should focus on its domain and report findings as structured \
-markdown.
+_SYSTEM_PROMPT = """\
+You are a project health check orchestrator. Coordinate specialized \
+subagents to assess project health and synthesize their findings into \
+a single structured report. Be thorough but concise. Cite file paths \
+and line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Assess the health of the project at {project_root} using the \
+specialized subagents below. Each subagent should focus on its domain \
+and report findings as structured markdown.
 
 After all subagents finish, synthesize their findings into a single \
 report with these sections:
@@ -134,9 +139,7 @@ Findings from the doc checker (if included).
 Findings from the security checker (if included).
 
 ## Recommendations
-Actionable next steps ordered by priority.
-
-Be thorough but concise. Cite file paths and line numbers when possible.\
+Actionable next steps ordered by priority.\
 """
 
 
@@ -154,7 +157,7 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
         result = await workflow.execute(project_root=".", mode="standard")
     """
 
-    name = "health-check-sdk"
+    name = "health-check"
     description = "Agent SDK-powered health check with dynamic subagents based on mode"
     stages = ["agent-check"]
     tier_map = {"agent-check": ModelTier.CAPABLE}
@@ -180,11 +183,6 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
         if not project_root:
             return self._error_result("project_root argument is required")
 
-        if not _SDK_AVAILABLE:
-            return self._error_result(
-                "claude-agent-sdk not installed. " "Install with: pip install claude-agent-sdk"
-            )
-
         resolved_root = str(Path(project_root).resolve())
         max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
@@ -195,14 +193,14 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
-            result_text = await self._run_agent_check(
-                resolved_root, max_turns, subagent_names, active_defs
+            run_result = await self._run_agent_check(
+                resolved_root, max_turns, subagent_names, active_defs, depth=depth
             )
 
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
-                result_text=result_text,
+                result_text=run_result.result_text,
                 subagent_names=subagent_names,
                 started_at=started_at,
                 completed_at=completed_at,
@@ -213,6 +211,7 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
                     "max_turns": max_turns,
                     "subagents": subagent_names,
                 },
+                agent_run_result=run_result,
             )
 
         except ImportError as exc:
@@ -233,7 +232,8 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
         max_turns: int,
         subagent_names: list[str],
         active_defs: dict[str, dict[str, str]],
-    ) -> str:
+        depth: str = "standard",
+    ) -> AgentRunResult:
         """Run the Agent SDK health check and return result text.
 
         Args:
@@ -241,9 +241,10 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
             max_turns: Maximum agent turns.
             subagent_names: List of subagent names to activate.
             active_defs: Subagent definitions for active agents.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            The agent's final result text.
+            AgentRunResult with findings and SDK metadata.
         """
         agents = {}
         for agent_name in subagent_names:
@@ -252,13 +253,17 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
                 description=defn["description"],
                 prompt=defn["prompt"],
                 tools=["Read", "Glob", "Grep", "Bash"],
+                model=get_subagent_model(agent_name),
             )
 
         result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
-            prompt=_MAIN_PROMPT_TEMPLATE.format(project_root=resolved_root),
+            prompt=_TASK_PROMPT_TEMPLATE.format(project_root=resolved_root),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
                 cwd=resolved_root,
+                max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,
@@ -266,9 +271,19 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
             ),
         ):
             if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result)
-
-        return "\n".join(result_parts) if result_parts else "No results returned."
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.
