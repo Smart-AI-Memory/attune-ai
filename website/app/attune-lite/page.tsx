@@ -209,7 +209,7 @@ export default function AttuneLitePage() {
       <section className="py-20 bg-[var(--border)] bg-opacity-30">
         <div className="container">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-[var(--primary)] bg-opacity-10 border-l-4 border-[var(--primary)] p-6 rounded-r-lg">
+            <div className="bg-[var(--background)] border-l-4 border-[var(--accent)] p-6 rounded-r-lg shadow-sm">
               <h3 className="text-xl font-bold mb-2">
                 Want the Full Experience?
               </h3>
