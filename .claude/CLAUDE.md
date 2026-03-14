@@ -134,13 +134,13 @@ This rule applies to ALL workflow interactions, not just `/attune`.
 
 ```text
 src/attune/
-├── agents/            # Agent SDK, state persistence, recovery
-│   ├── sdk/           # SDKAgent, SDKAgentTeam, adapters
+├── agents/            # Release agents, state persistence, recovery
+│   ├── release/       # ReleaseAgent, ReleasePrepTeam
 │   └── state/         # AgentStateStore, AgentRecoveryManager
-├── workflows/         # AI-powered workflows with state & multi-agent mixins
+├── workflows/         # AI-powered workflows (all SDK-native)
 ├── models/            # Authentication strategy and LLM providers
 ├── meta_workflows/    # Intent detection and natural language routing
-├── orchestration/     # Dynamic teams, workflow composition, pattern learning
+├── orchestration/     # Dynamic teams, workflow composition, agent models
 ├── plugins/           # BasePlugin + register_mcp_tools() hook
 ├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing

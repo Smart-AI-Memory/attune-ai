@@ -23,6 +23,7 @@ from .agent_sdk_adapter import AgentSDKResultAdapter
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .refactor_plan_report import (
+    format_refactor_plan_report,  # noqa: F401 - re-exported
     main,  # noqa: F401 - re-exported
 )
 from .step_config import WorkflowStepConfig

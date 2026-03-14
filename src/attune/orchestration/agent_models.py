@@ -1,8 +1,7 @@
 """Agent result and quality gate models for orchestration.
 
-These dataclasses were originally in ``attune.agents.sdk`` but are
-now owned by the orchestration layer. They define the interface
-contract between agents and the DynamicTeam executor.
+These define the interface contract between agents and the
+DynamicTeam executor.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
