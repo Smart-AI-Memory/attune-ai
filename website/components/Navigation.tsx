@@ -91,7 +91,7 @@ export default function Navigation() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? 'bg-[var(--background)] backdrop-blur-md bg-opacity-90 border-b border-[var(--border)] shadow-sm'
-          : 'bg-transparent'
+          : 'backdrop-blur-sm bg-[var(--background)] bg-opacity-60'
       }`}
       role="navigation"
       aria-label="Main navigation"

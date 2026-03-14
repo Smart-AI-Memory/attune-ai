@@ -54,7 +54,7 @@ export default function AttuneLitePage() {
               </a>
               <Link
                 href="#skills"
-                className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)] text-lg px-8 py-4"
+                className="btn bg-white bg-opacity-20 text-white hover:bg-opacity-40 text-lg px-8 py-4 backdrop-blur-sm"
               >
                 See All 5 Skills
               </Link>
