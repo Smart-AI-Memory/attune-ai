@@ -8,7 +8,7 @@ import { liteSkills } from '@/lib/attune-lite-skills';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Attune Lite — Free Claude Code Plugin',
   description:
-    '5 AI-powered developer workflows for Claude Code. Code review, security audit, smart testing, bug prediction, and doc generation. Zero config, no dependencies. Available on the Anthropic plugin marketplace.',
+    '5 AI-powered developer workflows for Claude Code. Code review, security audit, smart testing, bug prediction, and doc generation. Zero config, no dependencies.',
   url: 'https://smartaimemory.com/attune-lite',
   keywords: [
     'Claude Code plugin',
@@ -18,7 +18,7 @@ export const metadata: Metadata = generateSEOMetadata({
     'AI test generation',
     'bug prediction tool',
     'free Claude Code plugin',
-    'Anthropic plugin marketplace',
+    'Claude Code plugin free',
   ],
 });
 
@@ -32,7 +32,7 @@ export default function AttuneLitePage() {
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-sm font-semibold uppercase tracking-wider mb-4 opacity-80">
-              Free on the Anthropic Plugin Marketplace
+              Free Claude Code Plugin
             </p>
             <h1 className="text-5xl font-bold mb-6">Attune Lite</h1>
             <p className="text-xl mb-4 opacity-90">
@@ -76,7 +76,7 @@ export default function AttuneLitePage() {
                 <div className="text-4xl mb-4">1</div>
                 <h3 className="text-xl font-bold mb-2">Install</h3>
                 <p className="text-[var(--text-secondary)]">
-                  Add from the Anthropic plugin marketplace. No pip install,
+                  Add the plugin to Claude Code. No pip install,
                   no API keys, no config files.
                 </p>
               </div>

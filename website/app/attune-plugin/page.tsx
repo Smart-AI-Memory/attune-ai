@@ -8,7 +8,7 @@ import { liteSkills } from '@/lib/attune-lite-skills';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Attune Plugins for Claude Code',
   description:
-    'Free Claude Code plugins by Smart AI Memory. Attune Lite: 5 AI-powered workflows for the plugin marketplace. Attune AI: the full developer workflow OS with 17 workflows, wizards, and agents.',
+    'Free Claude Code plugins by Smart AI Memory. Attune Lite: 5 AI-powered workflows. Attune AI: the full developer workflow OS with 17 workflows, wizards, and agents.',
   url: 'https://smartaimemory.com/attune-plugin',
   keywords: [
     'Claude Code plugin',
@@ -42,7 +42,7 @@ export default function AttunePluginPage() {
               Two plugins, one mission: make every dev workflow faster.
             </p>
             <p className="text-lg mb-8 opacity-75">
-              Start with Attune Lite from the marketplace, or install the
+              Start with Attune Lite for the essentials, or install the
               full Attune AI plugin for the complete experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -73,7 +73,7 @@ export default function AttunePluginPage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <p className="text-sm font-semibold uppercase tracking-wider text-[var(--secondary)] mb-2">
-                Plugin Marketplace
+                Lightweight Plugin
               </p>
               <h2 className="text-4xl font-bold mb-4">
                 <Link href="/attune-lite" className="hover:text-[var(--primary)] transition-colors">
@@ -82,7 +82,7 @@ export default function AttunePluginPage() {
               </h2>
               <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
                 5 curated AI workflows, zero dependencies. Designed for the
-                Anthropic plugin marketplace &mdash; install and go.{' '}
+                Claude Code &mdash; install and go.{' '}
                 <Link href="/attune-lite" className="text-[var(--primary)] hover:underline">
                   Learn more
                 </Link>
@@ -95,7 +95,7 @@ export default function AttunePluginPage() {
                 <div className="text-4xl mb-4">1</div>
                 <h3 className="text-xl font-bold mb-2">Install</h3>
                 <p className="text-[var(--text-secondary)]">
-                  Add from the plugin marketplace. No pip install, no API
+                  Add the plugin to Claude Code. No pip install, no API
                   keys, no config files.
                 </p>
               </div>
@@ -156,7 +156,7 @@ export default function AttunePluginPage() {
                 Each skill is a self-contained prompt with agent orchestration
                 instructions baked in. Claude Code executes them natively
                 &mdash; no Python runtime, no subprocess calls, no external
-                dependencies. Perfect for the plugin marketplace.
+                dependencies. Just install and start using.
               </p>
             </div>
           </div>
@@ -325,7 +325,7 @@ export default function AttunePluginPage() {
                     <td className="py-3 pl-4 text-center">14</td>
                   </tr>
                   <tr className="border-b border-[var(--border)]">
-                    <td className="py-3 pr-4">Plugin marketplace</td>
+                    <td className="py-3 pr-4">Claude Code plugin</td>
                     <td className="py-3 px-4 text-center text-[var(--success)]">&#10003;</td>
                     <td className="py-3 pl-4 text-center text-[var(--success)]">&#10003;</td>
                   </tr>
