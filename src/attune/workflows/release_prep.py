@@ -16,7 +16,12 @@ from typing import Any
 
 import claude_agent_sdk
 
-from .agent_sdk_adapter import AgentSDKResultAdapter
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .release_prep_approve import RELEASE_PREP_STEPS  # noqa: F401
@@ -44,11 +49,17 @@ _SUBAGENT_NAMES = [
     "release-assessor",
 ]
 
-_MAIN_PROMPT_TEMPLATE = """\
-You are a release preparation orchestrator. Assess release readiness \
-for the codebase at {path} using the four specialized subagents below. \
-Each subagent should focus on its domain and report findings as \
-structured markdown.
+_SYSTEM_PROMPT = """\
+You are a release preparation orchestrator. Coordinate four specialized \
+subagents to assess release readiness and synthesize their findings \
+into a single structured report. Be thorough but concise. Cite file \
+paths and line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Assess release readiness for the codebase at {path} using the four \
+specialized subagents below. Each subagent should focus on its domain \
+and report findings as structured markdown.
 
 After all subagents finish, synthesize their findings into a single \
 report with these sections:
@@ -71,9 +82,7 @@ since last release.
 
 ## Suggestions
 Actionable next steps ordered by priority, including any blockers \
-that must be resolved before release.
-
-Be thorough but concise. Cite file paths and line numbers when possible.\
+that must be resolved before release.\
 """
 
 
@@ -120,12 +129,12 @@ class ReleasePreparationWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
-            result_text = await self._run_agent_prep(resolved_path, max_turns)
+            run_result = await self._run_agent_prep(resolved_path, max_turns, depth=depth)
 
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
-                result_text=result_text,
+                result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,
                 completed_at=completed_at,
@@ -134,6 +143,7 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                     "depth": depth,
                     "max_turns": max_turns,
                 },
+                agent_run_result=run_result,
             )
 
         except ImportError as exc:
@@ -148,21 +158,27 @@ class ReleasePreparationWorkflow(BaseWorkflow):
             logger.exception("Agent SDK release prep failed: %s", type(exc).__name__)
             return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-    async def _run_agent_prep(self, resolved_path: str, max_turns: int) -> str:
+    async def _run_agent_prep(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
         """Run the Agent SDK release prep and return result text.
 
         Args:
             resolved_path: Absolute path to assess.
             max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            The agent's final result text.
+            AgentRunResult with findings and SDK metadata.
         """
         result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
-            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
                 cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,
@@ -178,6 +194,7 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                             "(pass/fail), details, and remediation if needed."
                         ),
                         tools=["Read", "Glob", "Grep", "Bash"],
+                        model=get_subagent_model("health-checker"),
                     ),
                     "security-scanner": claude_agent_sdk.AgentDefinition(
                         description="Security scanner for vulnerabilities and secret leaks.",
@@ -190,6 +207,7 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                             "severity, file path, and remediation advice."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("security-scanner"),
                     ),
                     "changelog-generator": claude_agent_sdk.AgentDefinition(
                         description="Changelog generator from git history.",
@@ -202,6 +220,7 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                             "Changelog format."
                         ),
                         tools=["Read", "Glob", "Grep", "Bash"],
+                        model=get_subagent_model("changelog-generator"),
                     ),
                     "release-assessor": claude_agent_sdk.AgentDefinition(
                         description="Release assessor for overall readiness and go/no-go.",
@@ -214,14 +233,25 @@ class ReleasePreparationWorkflow(BaseWorkflow):
                             "recommendation with justification."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("release-assessor"),
                     ),
                 },
             ),
         ):
             if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result)
-
-        return "\n".join(result_parts) if result_parts else "No results returned."
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.

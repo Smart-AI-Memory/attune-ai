@@ -18,7 +18,12 @@ from typing import Any
 
 import claude_agent_sdk
 
-from ..agent_sdk_adapter import AgentSDKResultAdapter
+from ..agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from ..base import BaseWorkflow, ModelTier
 from ..data_classes import CostReport, WorkflowResult, WorkflowStage
 
@@ -41,10 +46,17 @@ _SUBAGENT_NAMES = [
     "test-planner",
 ]
 
-_MAIN_PROMPT_TEMPLATE = """\
-You are a senior test audit orchestrator. Audit the test suite for the \
-codebase at {src_path} using the three specialized subagents below. Each \
-subagent should focus on its domain and report findings as structured markdown.
+_SYSTEM_PROMPT = """\
+You are a senior test audit orchestrator. Coordinate three specialized \
+subagents to audit the test suite and synthesize their findings into a \
+single structured report. Be thorough but concise. Cite file paths and \
+line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Audit the test suite for the codebase at {src_path} using the three \
+specialized subagents below. Each subagent should focus on its domain \
+and report findings as structured markdown.
 
 After all subagents finish, synthesize their findings into a single \
 report with these sections:
@@ -62,9 +74,7 @@ edge cases, and untested error handling.
 
 ## Suggestions
 Prioritized test plan from the test planner with estimated effort for \
-each suggested test.
-
-Be thorough but concise. Cite file paths and line numbers when possible.\
+each suggested test.\
 """
 
 
@@ -111,12 +121,12 @@ class TestAuditWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
-            result_text = await self._run_agent_audit(resolved_path, max_turns)
+            run_result = await self._run_agent_audit(resolved_path, max_turns, depth=depth)
 
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
-                result_text=result_text,
+                result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,
                 completed_at=completed_at,
@@ -125,6 +135,7 @@ class TestAuditWorkflow(BaseWorkflow):
                     "depth": depth,
                     "max_turns": max_turns,
                 },
+                agent_run_result=run_result,
             )
 
         except ImportError as exc:
@@ -139,21 +150,27 @@ class TestAuditWorkflow(BaseWorkflow):
             logger.exception("Agent SDK test audit failed: %s", type(exc).__name__)
             return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-    async def _run_agent_audit(self, resolved_path: str, max_turns: int) -> str:
+    async def _run_agent_audit(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
         """Run the Agent SDK audit and return result text.
 
         Args:
             resolved_path: Absolute path to audit.
             max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            The agent's final result text.
+            AgentRunResult with findings and SDK metadata.
         """
         result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
-            prompt=_MAIN_PROMPT_TEMPLATE.format(src_path=resolved_path),
+            prompt=_TASK_PROMPT_TEMPLATE.format(src_path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
                 cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,
@@ -169,6 +186,7 @@ class TestAuditWorkflow(BaseWorkflow):
                             "Use Bash to run coverage commands when possible."
                         ),
                         tools=["Read", "Glob", "Grep", "Bash"],
+                        model=get_subagent_model("coverage-auditor"),
                     ),
                     "gap-analyzer": claude_agent_sdk.AgentDefinition(
                         description="Gap analyzer that finds untested code paths.",
@@ -181,6 +199,7 @@ class TestAuditWorkflow(BaseWorkflow):
                             "path, line number, and risk assessment."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("gap-analyzer"),
                     ),
                     "test-planner": claude_agent_sdk.AgentDefinition(
                         description="Test planner that creates prioritized test plans.",
@@ -194,14 +213,25 @@ class TestAuditWorkflow(BaseWorkflow):
                             "medium/low). Order by priority then effort."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("test-planner"),
                     ),
                 },
             ),
         ):
             if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result)
-
-        return "\n".join(result_parts) if result_parts else "No results returned."
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.

@@ -1,4 +1,4 @@
-# Attune AI Framework v4.1.1
+# Attune AI Framework v5.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -150,7 +150,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 4.0.3 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 5.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -697,5 +697,27 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `input_schema` as a class attribute — path validation happens inside
   `execute()`. Tests asserting `Workflow.input_schema is not None`
   must be removed or updated.
+
+- **Hardcoded strings in method bodies survive class attribute
+  renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
+  on the class didn't fix a hardcoded `"workflow": "deep-review-sdk"`
+  string inside `execute()`. After renaming a class attribute, always
+  grep for the old value across the entire source file to catch
+  hardcoded duplicates in method bodies and metadata dicts.
+
+- **GPG signing fails in non-interactive terminals (VSCode
+  extension, Claude Code)**: `gpg` tries to open `/dev/tty` for
+  passphrase input, which doesn't exist in spawned subprocesses.
+  Fix: install `pinentry-mac` (`brew install pinentry-mac`), set
+  `pinentry-program /opt/homebrew/bin/pinentry-mac` in
+  `~/.gnupg/gpg-agent.conf` (remove any earlier `pinentry-tty`
+  lines — GPG uses the first match), then `gpgconf --kill
+  gpg-agent`. The passphrase must still be cached first by
+  running `echo "unlock" | gpg --clearsign` in a real terminal.
+
+- **Multiple `pinentry-program` lines in gpg-agent.conf — first
+  wins**: GPG uses the first `pinentry-program` directive it
+  finds. Appending a new line doesn't override earlier ones.
+  Always replace, don't append.
 
 <!-- attune-lessons-end -->

@@ -16,7 +16,12 @@ from typing import Any
 
 import claude_agent_sdk
 
-from ..agent_sdk_adapter import AgentSDKResultAdapter
+from ..agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from ..base import BaseWorkflow, ModelTier
 from ..context import WorkflowContext
 from ..data_classes import CostReport, WorkflowResult, WorkflowStage
@@ -37,11 +42,17 @@ _SUBAGENT_NAMES = [
     "polish-reviewer",
 ]
 
-_MAIN_PROMPT_TEMPLATE = """\
-You are a documentation generation orchestrator. Generate comprehensive \
-documentation for the codebase at {path} using the three specialized \
-subagents below. Each subagent should focus on its domain and produce \
-structured markdown output.
+_SYSTEM_PROMPT = """\
+You are a documentation generation orchestrator. Coordinate three \
+specialized subagents to generate comprehensive documentation and \
+synthesize their output into a single structured document. Be thorough \
+but concise. Cite file paths when referencing source code.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Generate comprehensive documentation for the codebase at {path} using \
+the three specialized subagents below. Each subagent should focus on \
+its domain and produce structured markdown output.
 
 After all subagents finish, synthesize their output into a single \
 document with these sections:
@@ -59,9 +70,7 @@ code examples and API references for each section.
 
 ## Suggestions
 Recommendations for improving documentation coverage, clarity, or \
-organization.
-
-Be thorough but concise. Cite file paths when referencing source code.\
+organization.\
 """
 
 
@@ -127,12 +136,12 @@ class DocumentGenerationWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
-            result_text = await self._run_agent_gen(resolved_path, max_turns)
+            run_result = await self._run_agent_gen(resolved_path, max_turns, depth=depth)
 
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
-                result_text=result_text,
+                result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,
                 completed_at=completed_at,
@@ -141,6 +150,7 @@ class DocumentGenerationWorkflow(BaseWorkflow):
                     "depth": depth,
                     "max_turns": max_turns,
                 },
+                agent_run_result=run_result,
             )
 
         except ImportError as exc:
@@ -155,21 +165,27 @@ class DocumentGenerationWorkflow(BaseWorkflow):
             logger.exception("Agent SDK doc generation failed: %s", type(exc).__name__)
             return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-    async def _run_agent_gen(self, resolved_path: str, max_turns: int) -> str:
+    async def _run_agent_gen(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
         """Run the Agent SDK doc generation and return result text.
 
         Args:
             resolved_path: Absolute path to document.
             max_turns: Maximum agent turns.
+            depth: Agent depth for budget calculation.
 
         Returns:
-            The agent's final result text.
+            AgentRunResult with findings and SDK metadata.
         """
         result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
-            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
                 cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,
@@ -186,6 +202,7 @@ class DocumentGenerationWorkflow(BaseWorkflow):
                             "outline with sections and subsections."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("outline-planner"),
                     ),
                     "content-writer": claude_agent_sdk.AgentDefinition(
                         description="Content writer that produces documentation text.",
@@ -200,6 +217,7 @@ class DocumentGenerationWorkflow(BaseWorkflow):
                             "docstring format for API references."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("content-writer"),
                     ),
                     "polish-reviewer": claude_agent_sdk.AgentDefinition(
                         description="Polish reviewer that checks docs for quality.",
@@ -213,14 +231,25 @@ class DocumentGenerationWorkflow(BaseWorkflow):
                             "improvements."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("polish-reviewer"),
                     ),
                 },
             ),
         ):
             if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result)
-
-        return "\n".join(result_parts) if result_parts else "No results returned."
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.

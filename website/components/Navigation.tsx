@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/lib/theme-provider';
 
 const navItems = [
+  { label: 'Plugins', href: '/attune-plugin' },
   { label: 'Wizards', href: '/wizards' },
   { label: 'Open Source', href: '/pricing' },
   { label: 'Docs', href: '/framework-docs/' },

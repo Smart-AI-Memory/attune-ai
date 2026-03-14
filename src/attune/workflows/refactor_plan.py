@@ -19,7 +19,12 @@ from typing import Any
 
 import claude_agent_sdk
 
-from .agent_sdk_adapter import AgentSDKResultAdapter
+from .agent_sdk_adapter import (
+    AgentRunResult,
+    AgentSDKResultAdapter,
+    get_max_budget_usd,
+    get_subagent_model,
+)
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .refactor_plan_report import (
@@ -64,10 +69,16 @@ _SUBAGENT_NAMES = [
     "plan-generator",
 ]
 
-_MAIN_PROMPT_TEMPLATE = """\
-You are a senior refactoring plan orchestrator. Analyze the codebase at {path} \
-using the three specialized subagents below. Each subagent should focus on \
-its domain and report findings as structured markdown.
+_SYSTEM_PROMPT = """\
+You are a senior refactoring plan orchestrator. You coordinate three \
+specialized subagents to produce a unified refactoring roadmap. \
+Be thorough but concise. Cite file paths and line numbers when possible.\
+"""
+
+_TASK_PROMPT_TEMPLATE = """\
+Analyze the codebase at {path} using the three specialized subagents \
+below. Each subagent should focus on its domain and report findings \
+as structured markdown.
 
 After all subagents finish, synthesize their findings into a single \
 report with these sections:
@@ -82,9 +93,7 @@ Prioritized list of refactoring opportunities with effort estimates \
 
 ## Suggestions
 Actionable next steps ordered by priority, including quick wins and \
-longer-term improvements.
-
-Be thorough but concise. Cite file paths and line numbers when possible.\
+longer-term improvements.\
 """
 
 
@@ -142,12 +151,12 @@ class RefactorPlanWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
-            result_text = await self._run_agent_plan(resolved_path, max_turns)
+            run_result = await self._run_agent_plan(resolved_path, max_turns, depth)
 
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
-                result_text=result_text,
+                result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,
                 completed_at=completed_at,
@@ -156,6 +165,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
                     "depth": depth,
                     "max_turns": max_turns,
                 },
+                agent_run_result=run_result,
             )
 
         except ImportError as exc:
@@ -170,7 +180,9 @@ class RefactorPlanWorkflow(BaseWorkflow):
             logger.exception("Agent SDK refactor plan failed: %s", type(exc).__name__)
             return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
-    async def _run_agent_plan(self, resolved_path: str, max_turns: int) -> str:
+    async def _run_agent_plan(
+        self, resolved_path: str, max_turns: int, depth: str = "standard"
+    ) -> AgentRunResult:
         """Run the Agent SDK refactoring plan and return result text.
 
         Args:
@@ -178,13 +190,16 @@ class RefactorPlanWorkflow(BaseWorkflow):
             max_turns: Maximum agent turns.
 
         Returns:
-            The agent's final result text.
+            AgentRunResult with findings and SDK metadata.
         """
         result_parts: list[str] = []
+        run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
-            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                system_prompt=_SYSTEM_PROMPT,
                 cwd=resolved_path,
+                max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,
@@ -202,6 +217,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
                             "description of the issue."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("debt-scanner"),
                     ),
                     "impact-analyzer": claude_agent_sdk.AgentDefinition(
                         description=("Impact analyzer for refactoring risk assessment."),
@@ -213,6 +229,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
                             "on tests, dependencies, and public interfaces."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("impact-analyzer"),
                     ),
                     "plan-generator": claude_agent_sdk.AgentDefinition(
                         description=(
@@ -227,14 +244,25 @@ class RefactorPlanWorkflow(BaseWorkflow):
                             "expected benefit, and suggested implementation order."
                         ),
                         tools=["Read", "Glob", "Grep"],
+                        model=get_subagent_model("plan-generator"),
                     ),
                 },
             ),
         ):
             if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result)
-
-        return "\n".join(result_parts) if result_parts else "No results returned."
+                result_parts.append(message.result or "")
+                run_result = AgentRunResult(
+                    result_text="",
+                    total_cost_usd=message.total_cost_usd,
+                    usage=message.usage,
+                    duration_ms=message.duration_ms,
+                    duration_api_ms=message.duration_api_ms,
+                    num_turns=message.num_turns,
+                    session_id=message.session_id,
+                    is_error=message.is_error,
+                )
+        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+        return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.

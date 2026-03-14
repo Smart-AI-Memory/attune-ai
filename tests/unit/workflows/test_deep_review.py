@@ -41,7 +41,7 @@ class TestDeepReviewAttributes:
     """Test workflow class attributes."""
 
     def test_workflow_has_correct_name(self) -> None:
-        """Given the workflow class, name is 'deep-review-sdk'."""
+        """Given the workflow class, name is 'deep-review'."""
         from attune.workflows.deep_review import (
             DeepReviewAgentSDKWorkflow,
         )

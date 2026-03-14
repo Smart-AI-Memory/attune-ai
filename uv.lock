@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "4.1.1"
+version = "5.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },

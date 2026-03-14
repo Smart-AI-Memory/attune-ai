@@ -204,7 +204,7 @@ class TestListWorkflowsDeduplication:
         default = list_workflows()
         full = list_workflows(show_all=True)
         # With _SDK_REVERSE_MAP empty, the only difference is
-        # standalone SDK workflows (deep-review-sdk, health-check-sdk)
+        # standalone SDK workflows (deep-review, health-check)
         # which are not hidden anyway.
         assert len(full) >= len(default)
 
