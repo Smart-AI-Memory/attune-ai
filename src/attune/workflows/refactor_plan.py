@@ -1,32 +1,30 @@
 """Refactor Planning Workflow
 
-Prioritizes tech debt based on trajectory analysis and impact assessment.
-Uses historical tech debt data to identify trends and hotspots.
+Prioritizes tech debt with Agent SDK subagents.
 
 Stages:
-1. scan (CHEAP) - Scan for TODOs, FIXMEs, HACKs, complexity
-2. analyze (CAPABLE) - Analyze debt trajectory from patterns
-3. prioritize (CAPABLE) - Score by impact, effort, and risk
-4. plan (PREMIUM) - Generate prioritized refactoring roadmap (conditional)
+1. agent-plan (CAPABLE) - Three specialized subagents scan, analyze,
+   and generate a prioritized refactoring roadmap.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import heapq
-import json
+from __future__ import annotations
+
 import logging
-import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .base import BaseWorkflow, ModelTier, estimate_tokens
-from .context import WorkflowContext
+import claude_agent_sdk
+
+from .agent_sdk_adapter import AgentSDKResultAdapter
+from .base import BaseWorkflow, ModelTier
+from .data_classes import CostReport, WorkflowResult, WorkflowStage
 from .refactor_plan_report import (
-    format_refactor_plan_report,
     main,  # noqa: F401 - re-exported
 )
-from .services import ParsingService, PromptService
 from .step_config import WorkflowStepConfig
 
 logger = logging.getLogger(__name__)
@@ -53,502 +51,219 @@ DEBT_MARKERS = {
     "REFACTOR": {"severity": "medium", "weight": 3},
 }
 
+_DEPTH_MAX_TURNS: dict[str, int] = {
+    "quick": 10,
+    "standard": 20,
+    "deep": 40,
+}
+
+_SUBAGENT_NAMES = [
+    "debt-scanner",
+    "impact-analyzer",
+    "plan-generator",
+]
+
+_MAIN_PROMPT_TEMPLATE = """\
+You are a senior refactoring plan orchestrator. Analyze the codebase at {path} \
+using the three specialized subagents below. Each subagent should focus on \
+its domain and report findings as structured markdown.
+
+After all subagents finish, synthesize their findings into a single \
+report with these sections:
+
+## Summary
+Overall tech debt score (0-100) and a 2-3 sentence executive summary of \
+the refactoring opportunities found.
+
+## Refactoring
+Prioritized list of refactoring opportunities with effort estimates \
+(small/medium/large) and risk levels (low/medium/high) for each item.
+
+## Suggestions
+Actionable next steps ordered by priority, including quick wins and \
+longer-term improvements.
+
+Be thorough but concise. Cite file paths and line numbers when possible.\
+"""
+
 
 class RefactorPlanWorkflow(BaseWorkflow):
-    """Prioritize tech debt with trajectory analysis.
+    """Prioritize tech debt with Agent SDK subagents.
 
-    Analyzes tech debt trends over time to identify growing
-    problem areas and generate prioritized refactoring plans.
+    Delegates all analysis to three Agent SDK subagents rather
+    than using the mixin stage system. Each subagent focuses on
+    a specific refactoring domain (debt scanning, impact analysis,
+    plan generation). The orchestrator synthesizes findings into a
+    unified report.
 
-    Supports composition via ``WorkflowContext`` -- use ``default_context()``
-    to get a pre-configured context with prompt and parsing services.
+    Usage::
+
+        workflow = RefactorPlanWorkflow()
+        result = await workflow.execute(path="src/", depth="standard")
     """
 
     name = "refactor-plan"
-    description = "Prioritize tech debt based on trajectory and impact"
-    stages = ["scan", "analyze", "prioritize", "plan"]
-    tier_map = {
-        "scan": ModelTier.CHEAP,
-        "analyze": ModelTier.CAPABLE,
-        "prioritize": ModelTier.CAPABLE,
-        "plan": ModelTier.PREMIUM,
-    }
+    description = "Prioritize tech debt with Agent SDK subagents"
+    stages = ["agent-plan"]
+    tier_map = {"agent-plan": ModelTier.CAPABLE}
 
-    def __init__(
-        self,
-        patterns_dir: str = "./patterns",
-        min_debt_for_premium: int = 50,
-        use_crew_for_analysis: bool = True,
-        crew_config: dict | None = None,
-        **kwargs: Any,
-    ):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize refactor planning workflow.
 
         Args:
-            patterns_dir: Directory containing tech debt history
-            min_debt_for_premium: Minimum debt items to use premium planning
-            use_crew_for_analysis: Use RefactoringCrew for enhanced code analysis (default: True)
-            crew_config: Configuration dict for RefactoringCrew
-            **kwargs: Additional arguments passed to BaseWorkflow
+            **kwargs: Additional arguments passed to BaseWorkflow.
 
         """
-        # Opt in to post-simplification by default for refactoring
         kwargs.setdefault("enable_post_simplification", True)
         super().__init__(**kwargs)
-        self.patterns_dir = patterns_dir
-        self.min_debt_for_premium = min_debt_for_premium
-        self.use_crew_for_analysis = use_crew_for_analysis
-        self.crew_config = crew_config or {}
-        self._total_debt: int = 0
-        self._debt_history: list[dict] = []
-        self._crew: Any = None
-        self._crew_available = False
-        self._load_debt_history()
 
-    @classmethod
-    def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:
-        """Create a WorkflowContext pre-configured for refactor planning.
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        """Execute the Agent SDK refactoring plan.
 
         Args:
-            xml_config: Optional XML prompt configuration dict.
+            **kwargs: Keyword arguments.
+                path (str): Required. Directory or file to analyze.
+                depth (str): Analysis depth — "quick", "standard",
+                    or "deep". Defaults to "standard".
 
         Returns:
-            WorkflowContext with prompt and parsing services.
-
+            WorkflowResult with findings, suggestions, and metadata.
         """
-        return WorkflowContext(
-            prompt=PromptService("refactor-plan", xml_config=xml_config),
-            parsing=ParsingService(xml_config=xml_config),
-        )
+        path_arg: str = kwargs.get("path", "")
+        depth: str = kwargs.get("depth", "standard")
 
-    def _load_debt_history(self) -> None:
-        """Load tech debt history from pattern library."""
-        debt_file = Path(self.patterns_dir) / "tech_debt.json"
-        if debt_file.exists():
-            try:
-                with open(debt_file) as f:
-                    data = json.load(f)
-                    self._debt_history = data.get("snapshots", [])
-            except (json.JSONDecodeError, OSError):
-                pass
+        if not path_arg:
+            return self._error_result("path argument is required")
 
-    async def _initialize_crew(self) -> None:
-        """Initialize the RefactoringCrew."""
-        if self._crew is not None:
-            return
+        resolved_path = str(Path(path_arg).resolve())
+        max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+
+        started_at = datetime.now()
 
         try:
-            from attune.agent_factory.crews.refactoring import RefactoringCrew
+            result_text = await self._run_agent_plan(resolved_path, max_turns)
 
-            self._crew = RefactoringCrew()
-            self._crew_available = True
-            logger.info("RefactoringCrew initialized successfully")
-        except ImportError as e:
-            logger.warning(f"RefactoringCrew not available: {e}")
-            self._crew_available = False
+            completed_at = datetime.now()
 
-    def should_skip_stage(self, stage_name: str, input_data: Any) -> tuple[bool, str | None]:
-        """Downgrade plan stage if debt is low.
+            return AgentSDKResultAdapter.from_agent_output(
+                result_text=result_text,
+                subagent_names=_SUBAGENT_NAMES,
+                started_at=started_at,
+                completed_at=completed_at,
+                metadata={
+                    "path": resolved_path,
+                    "depth": depth,
+                    "max_turns": max_turns,
+                },
+            )
+
+        except ImportError as exc:
+            logger.error("Agent SDK import failed: %s", exc)
+            return self._error_result(f"Agent SDK unavailable: {exc}")
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error("Agent SDK network error: %s", exc)
+            return self._error_result(f"Agent SDK connection failed: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: Catch-all for unknown SDK errors to return
+            # a structured WorkflowResult rather than crashing.
+            logger.exception("Agent SDK refactor plan failed: %s", type(exc).__name__)
+            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+
+    async def _run_agent_plan(self, resolved_path: str, max_turns: int) -> str:
+        """Run the Agent SDK refactoring plan and return result text.
 
         Args:
-            stage_name: Name of the stage to check
-            input_data: Current workflow data
+            resolved_path: Absolute path to analyze.
+            max_turns: Maximum agent turns.
 
         Returns:
-            Tuple of (should_skip, reason)
-
+            The agent's final result text.
         """
-        if stage_name == "plan":
-            if self._total_debt < self.min_debt_for_premium:
-                self.tier_map["plan"] = ModelTier.CAPABLE
-                return False, None
-        return False, None
-
-    async def _scan(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Scan codebase for tech debt markers.
-
-        Finds TODOs, FIXMEs, HACKs and other debt indicators.
-        """
-        target_path = input_data.get("path", ".")
-        file_types = input_data.get("file_types", [".py", ".ts", ".tsx", ".js"])
-
-        debt_items: list[dict] = []
-        files_scanned = 0
-
-        target = Path(target_path)
-        if target.exists():
-            for ext in file_types:
-                for file_path in target.rglob(f"*{ext}"):
-                    if any(
-                        skip in str(file_path)
-                        for skip in [".git", "node_modules", "__pycache__", "venv"]
-                    ):
-                        continue
-
-                    try:
-                        content = file_path.read_text(errors="ignore")
-                        files_scanned += 1
-
-                        for marker, info in DEBT_MARKERS.items():
-                            pattern = rf"#\s*{marker}[:\s]*(.*?)(?:\n|$)"
-                            for match in re.finditer(pattern, content, re.IGNORECASE):
-                                line_num = content[: match.start()].count("\n") + 1
-                                debt_items.append(
-                                    {
-                                        "file": str(file_path),
-                                        "line": line_num,
-                                        "marker": marker,
-                                        "message": match.group(1).strip()[:100],
-                                        "severity": info["severity"],
-                                        "weight": info["weight"],
-                                    },
-                                )
-                    except OSError:
-                        continue
-
-        self._total_debt = len(debt_items)
-
-        # Group by file
-        by_file: dict[str, int] = {}
-        for item in debt_items:
-            f = item["file"]
-            by_file[f] = by_file.get(f, 0) + 1
-
-        # By marker type
-        by_marker: dict[str, int] = {}
-        for item in debt_items:
-            m = item["marker"]
-            by_marker[m] = by_marker.get(m, 0) + 1
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(debt_items)
-
-        return (
-            {
-                "debt_items": debt_items,
-                "total_debt": self._total_debt,
-                "files_scanned": files_scanned,
-                "by_file": dict(heapq.nlargest(20, by_file.items(), key=lambda x: x[1])),
-                "by_marker": by_marker,
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    async def _analyze(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Analyze debt trajectory from historical data.
-
-        Compares current debt with historical snapshots to
-        identify trends and growing problem areas.
-        """
-        current_total = input_data.get("total_debt", 0)
-        by_file = input_data.get("by_file", {})
-
-        # Analyze trajectory
-        trajectory = "stable"
-        velocity = 0.0
-
-        if self._debt_history and len(self._debt_history) >= 2:
-            oldest = self._debt_history[0].get("total_items", 0)
-            newest = self._debt_history[-1].get("total_items", 0)
-
-            change = newest - oldest
-            if change > 10:
-                trajectory = "increasing"
-            elif change < -10:
-                trajectory = "decreasing"
-
-            # Calculate velocity (items per snapshot)
-            velocity = change / len(self._debt_history)
-
-        # Identify hotspots (files with most debt and increasing)
-        hotspots: list[dict] = []
-        for file_path, count in list(by_file.items())[:10]:
-            hotspots.append(
-                {
-                    "file": file_path,
-                    "debt_count": count,
-                    "trend": "stable",  # Would compare with history
+        result_parts: list[str] = []
+        async for message in claude_agent_sdk.query(
+            prompt=_MAIN_PROMPT_TEMPLATE.format(path=resolved_path),
+            options=claude_agent_sdk.ClaudeAgentOptions(
+                cwd=resolved_path,
+                allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                permission_mode="default",
+                max_turns=max_turns,
+                agents={
+                    "debt-scanner": claude_agent_sdk.AgentDefinition(
+                        description=(
+                            "Tech debt scanner that finds code smells" " and duplication."
+                        ),
+                        prompt=(
+                            "You are a tech debt scanner. Focus on: "
+                            "code smells, duplication, complex conditionals, "
+                            "dead code, overly long functions, and deeply "
+                            "nested logic. Report each finding with file "
+                            "path, line number, severity, and a brief "
+                            "description of the issue."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "impact-analyzer": claude_agent_sdk.AgentDefinition(
+                        description=("Impact analyzer for refactoring risk assessment."),
+                        prompt=(
+                            "You are a refactoring impact analyzer. Focus on: "
+                            "test coverage of affected code, dependency chains, "
+                            "API surface changes, and downstream consumers. "
+                            "For each refactoring candidate, report the impact "
+                            "on tests, dependencies, and public interfaces."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
+                    "plan-generator": claude_agent_sdk.AgentDefinition(
+                        description=(
+                            "Plan generator that creates prioritized" " refactoring plans."
+                        ),
+                        prompt=(
+                            "You are a refactoring plan generator. Using "
+                            "findings from the debt scanner and impact "
+                            "analyzer, create a prioritized refactoring plan. "
+                            "For each item include: effort estimate "
+                            "(small/medium/large), risk level (low/medium/high), "
+                            "expected benefit, and suggested implementation order."
+                        ),
+                        tools=["Read", "Glob", "Grep"],
+                    ),
                 },
-            )
+            ),
+        ):
+            if isinstance(message, claude_agent_sdk.ResultMessage):
+                result_parts.append(message.result)
 
-        analysis = {
-            "trajectory": trajectory,
-            "velocity": round(velocity, 2),
-            "current_total": current_total,
-            "historical_snapshots": len(self._debt_history),
-            "hotspots": hotspots,
-        }
+        return "\n".join(result_parts) if result_parts else "No results returned."
 
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(analysis)
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
 
-        return (
-            {
-                "analysis": analysis,
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
+        Args:
+            message: Human-readable error description.
 
-    async def _prioritize(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Score debt items by impact, effort, and risk.
-
-        Calculates priority scores considering multiple factors.
-        When use_crew_for_analysis=True, uses RefactoringCrew for
-        enhanced refactoring opportunity detection.
+        Returns:
+            WorkflowResult with success=False.
         """
-        await self._initialize_crew()
-
-        debt_items = input_data.get("debt_items", [])
-        analysis = input_data.get("analysis", {})
-        hotspots = {h["file"] for h in analysis.get("hotspots", [])}
-
-        prioritized: list[dict] = []
-        for item in debt_items:
-            # Calculate priority score
-            base_weight = item.get("weight", 1)
-
-            # Bonus for hotspot files
-            hotspot_bonus = 2 if item["file"] in hotspots else 0
-
-            # Severity factor
-            severity_factor = {
-                "high": 3,
-                "medium": 2,
-                "low": 1,
-            }.get(item.get("severity", "low"), 1)
-
-            priority_score = (base_weight * severity_factor) + hotspot_bonus
-
-            prioritized.append(
-                {
-                    **item,
-                    "priority_score": priority_score,
-                    "is_hotspot": item["file"] in hotspots,
-                },
-            )
-
-        # Sort by priority
-        prioritized.sort(key=lambda x: -x["priority_score"])
-
-        # Group into priority tiers (single pass instead of 3 scans)
-        high_priority: list[dict] = []
-        medium_priority: list[dict] = []
-        low_priority: list[dict] = []
-        for p in prioritized:
-            score = p["priority_score"]
-            if score >= 10:
-                high_priority.append(p)
-            elif score >= 5:
-                medium_priority.append(p)
-            else:
-                low_priority.append(p)
-
-        # Use crew for enhanced refactoring analysis if available
-        crew_enhanced = False
-        crew_findings = []
-        if self.use_crew_for_analysis and self._crew_available:
-            try:
-                # Analyze hotspot files with the crew
-                for hotspot in list(hotspots)[:5]:  # Analyze top 5 hotspots
-                    try:
-                        code_content = Path(hotspot).read_text(errors="ignore")
-                        crew_result = await self._crew.analyze(code=code_content, file_path=hotspot)
-                        if crew_result and crew_result.findings:
-                            crew_enhanced = True
-                            # Convert crew findings to workflow format
-                            for finding in crew_result.findings:
-                                crew_findings.append(
-                                    {
-                                        "file": finding.file_path or hotspot,
-                                        "line": finding.start_line or 0,
-                                        "marker": "REFACTOR",
-                                        "message": finding.title,
-                                        "description": finding.description,
-                                        "severity": finding.severity.value,
-                                        "category": finding.category.value,
-                                        "priority_score": (
-                                            15 if finding.severity.value == "high" else 10
-                                        ),
-                                        "is_hotspot": True,
-                                        "source": "crew",
-                                    },
-                                )
-                    except Exception as e:  # noqa: BLE001
-                        # INTENTIONAL: Crew analysis is optional enrichment
-                        logger.debug(f"Crew analysis failed for {hotspot}: {e}")
-                        continue
-
-                # Add crew findings to high priority if they're high severity
-                if crew_findings:
-                    for cf in crew_findings:
-                        if cf["priority_score"] >= 10:
-                            high_priority.append(cf)
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Crew analysis is optional; continue without it
-                logger.warning(f"Crew analysis failed: {e}")
-
-        input_tokens = estimate_tokens(input_data)
-        output_tokens = estimate_tokens(prioritized)
-
-        return (
-            {
-                "prioritized_items": prioritized[:50],  # Top 50
-                "high_priority": high_priority[:20],
-                "medium_priority": medium_priority[:20],
-                "low_priority_count": len(low_priority),
-                "crew_enhanced": crew_enhanced,
-                "crew_findings_count": len(crew_findings),
-                **input_data,
-            },
-            input_tokens,
-            output_tokens,
-        )
-
-    async def _plan(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Generate prioritized refactoring roadmap using LLM.
-
-        Creates actionable refactoring plan based on priorities.
-
-        Supports XML-enhanced prompts when enabled in workflow config.
-        """
-        high_priority = input_data.get("high_priority", [])
-        medium_priority = input_data.get("medium_priority", [])
-        analysis = input_data.get("analysis", {})
-        target = input_data.get("target", "")
-
-        # Build high priority summary for LLM
-        high_summary = []
-        for item in high_priority[:15]:
-            high_summary.append(
-                f"- {item.get('file')}:{item.get('line')} [{item.get('marker')}] "
-                f"{item.get('message', '')[:50]}",
-            )
-
-        # Build input payload for prompt
-        input_payload = f"""Target: {target or "codebase"}
-
-Total Debt Items: {input_data.get("total_debt", 0)}
-Trajectory: {analysis.get("trajectory", "unknown")}
-Velocity: {analysis.get("velocity", 0)} items/snapshot
-
-High Priority Items ({len(high_priority)}):
-{chr(10).join(high_summary) if high_summary else "None"}
-
-Medium Priority Items: {len(medium_priority)}
-Hotspot Files: {json.dumps([h.get("file") for h in analysis.get("hotspots", [])[:5]], indent=2)}"""
-
-        # Check if XML prompts are enabled
-        if self._is_xml_enabled():
-            # Use XML-enhanced prompt
-            from attune.prompts.examples import REFACTOR_PLAN_EXAMPLES
-
-            user_message = self._render_xml_prompt(
-                role="software architect specializing in technical debt management",
-                goal="Generate a prioritized refactoring roadmap to reduce technical debt",
-                instructions=[
-                    "Analyze the debt trajectory and identify root causes",
-                    "Create a phased roadmap with clear milestones",
-                    "Prioritize items by impact and effort",
-                    "Provide specific refactoring strategies for each phase",
-                    "Include prevention measures to stop new debt accumulation",
-                ],
-                constraints=[
-                    "Be specific about which files to refactor",
-                    "Include effort estimates (high/medium/low)",
-                    "Focus on sustainable debt reduction",
-                ],
-                input_type="tech_debt_analysis",
-                input_payload=input_payload,
-                examples=REFACTOR_PLAN_EXAMPLES,
-                extra={
-                    "total_debt": input_data.get("total_debt", 0),
-                    "trajectory": analysis.get("trajectory", "unknown"),
-                },
-            )
-            system = None  # XML prompt includes all context
-        else:
-            # Use legacy plain text prompts
-            system = """You are a software architect specializing in technical debt management.
-Create a prioritized refactoring roadmap based on the debt analysis.
-
-For each phase:
-1. Define clear goals and milestones
-2. Prioritize by impact and effort
-3. Provide specific refactoring strategies
-4. Include prevention measures
-
-Be specific and actionable."""
-
-            user_message = f"""Generate a refactoring roadmap for this tech debt:
-
-{input_payload}
-
-Create a phased approach to reduce debt sustainably."""
-
-        # Try executor-based execution first (Phase 3 pattern)
-        if self._executor is not None or self._api_key:
-            try:
-                step = REFACTOR_PLAN_STEPS["plan"]
-                response, input_tokens, output_tokens, cost = await self.run_step_with_executor(
-                    step=step,
-                    prompt=user_message,
-                    system=system,
-                )
-            except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
-                # INTENTIONAL: Graceful fallback to legacy _call_llm if executor fails
-                # Catches executor/API/parsing errors during new execution path
-                logger.warning(f"Executor failed, falling back to legacy path: {e}")
-                response, input_tokens, output_tokens = await self._call_llm(
-                    tier,
-                    system or "",
-                    user_message,
-                    max_tokens=3000,
-                )
-        else:
-            # Legacy path for backward compatibility
-            response, input_tokens, output_tokens = await self._call_llm(
-                tier,
-                system or "",
-                user_message,
-                max_tokens=3000,
-            )
-
-        # Parse XML response if enforcement is enabled
-        parsed_data = self._parse_xml_response(response)
-
-        # Summary
-        summary = {
-            "total_debt": input_data.get("total_debt", 0),
-            "trajectory": analysis.get("trajectory", "unknown"),
-            "high_priority_count": len(high_priority),
-        }
-
-        result: dict = {
-            "refactoring_plan": response,
-            "summary": summary,
-            "model_tier_used": tier.value,
-        }
-
-        # Merge parsed XML data if available
-        if parsed_data.get("xml_parsed"):
-            result.update(
-                {
-                    "xml_parsed": True,
-                    "plan_summary": parsed_data.get("summary"),
-                    "findings": parsed_data.get("findings", []),
-                    "checklist": parsed_data.get("checklist", []),
-                },
-            )
-
-        # Add formatted report for human readability
-        result["formatted_report"] = format_refactor_plan_report(result, input_data)
-
-        return (
-            result,
-            input_tokens,
-            output_tokens,
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name="agent-plan",
+                    tier=ModelTier.CAPABLE,
+                    description="Agent SDK refactor plan",
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
         )

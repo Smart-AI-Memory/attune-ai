@@ -103,33 +103,56 @@ class PostSimplificationMixin:
             return result
 
         try:
-            from .simplify_code import SimplifyCodeWorkflow
+            import ast
+            from pathlib import Path
 
-            simplifier = SimplifyCodeWorkflow(
-                min_complexity=self._simplification_min_complexity,
-                max_files=10,
-            )
+            scan_path = Path(target_path)
+            hotspots: list[dict[str, Any]] = []
+            files_scanned = 0
 
-            # Run scan + analyze stages (lightweight, no code changes)
-            scan_result, _, _ = await simplifier._scan(
-                {"path": target_path},
-                simplifier.tier_map["scan"],
-            )
+            py_files = list(scan_path.rglob("*.py"))[:10]
+            for py_file in py_files:
+                try:
+                    source = py_file.read_text(encoding="utf-8")
+                    tree = ast.parse(source)
+                    files_scanned += 1
+                except (SyntaxError, UnicodeDecodeError, OSError):
+                    continue
+
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                        complexity = sum(
+                            1
+                            for child in ast.walk(node)
+                            if isinstance(
+                                child,
+                                ast.If | ast.For | ast.While | ast.ExceptHandler | ast.With,
+                            )
+                        )
+                        if complexity >= self._simplification_min_complexity:
+                            hotspots.append(
+                                {
+                                    "file": str(py_file),
+                                    "function": node.name,
+                                    "complexity": complexity,
+                                    "line": node.lineno,
+                                },
+                            )
 
             self._simplification_result = {
-                "files_scanned": scan_result.get("files_scanned", 0),
-                "hotspots_found": scan_result.get("total_hotspots", 0),
-                "hotspots": scan_result.get("hotspots", [])[:5],
+                "files_scanned": files_scanned,
+                "hotspots_found": len(hotspots),
+                "hotspots": hotspots[:5],
             }
 
             # Attach simplification metadata to result
             if result.final_output and isinstance(result.final_output, dict):
                 result.final_output["_simplification"] = self._simplification_result
 
-            if scan_result.get("total_hotspots", 0) > 0:
+            if hotspots:
                 logger.info(
                     "Post-simplification scan found %d hotspots in %s",
-                    scan_result["total_hotspots"],
+                    len(hotspots),
                     target_path,
                 )
 

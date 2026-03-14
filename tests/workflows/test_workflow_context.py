@@ -539,56 +539,38 @@ class TestIsXmlEnabledProxy:
 # no longer has default_context() classmethod.
 
 
-class TestDependencyCheckDefaultContext:
-    """Tests for DependencyCheckWorkflow.default_context()."""
+class TestDependencyCheckSDKNative:
+    """Tests for DependencyCheckWorkflow (SDK-native, no default_context)."""
 
-    def test_default_context_has_prompt_and_parsing(self):
-        """Test default_context returns ctx with prompt and parsing services."""
+    def test_is_sdk_native(self):
+        """DependencyCheckWorkflow is SDK-native with agent-check stage."""
         from attune.workflows.dependency_check import DependencyCheckWorkflow
 
-        ctx = DependencyCheckWorkflow.default_context()
-        assert ctx.prompt is not None
-        assert ctx.parsing is not None
-        assert ctx.prompt._workflow_name == "dependency-check"
+        assert DependencyCheckWorkflow.stages == ["agent-check"]
 
-    @patch("attune.workflows.base.CostTracker")
-    @patch("attune.workflows.config.WorkflowConfig.load")
-    def test_constructed_with_default_context(self, mock_config, mock_tracker):
-        """Test DependencyCheckWorkflow can be constructed with default_context."""
+    def test_default_construction(self):
+        """DependencyCheckWorkflow can be constructed with no args."""
         from attune.workflows.dependency_check import DependencyCheckWorkflow
 
-        mock_config.return_value = MagicMock()
-        mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
-
-        ctx = DependencyCheckWorkflow.default_context()
-        wf = DependencyCheckWorkflow(ctx=ctx)
-        assert wf._ctx is ctx
+        wf = DependencyCheckWorkflow()
+        assert wf.name == "dependency-check"
 
 
-class TestResearchSynthesisDefaultContext:
-    """Tests for ResearchSynthesisWorkflow.default_context()."""
+class TestResearchSynthesisSDKNative:
+    """Tests for ResearchSynthesisWorkflow (SDK-native, no default_context)."""
 
-    def test_default_context_has_prompt_and_parsing(self):
-        """Test default_context returns ctx with prompt and parsing services."""
+    def test_is_sdk_native(self):
+        """ResearchSynthesisWorkflow is SDK-native with agent-synthesis stage."""
         from attune.workflows.research_synthesis import ResearchSynthesisWorkflow
 
-        ctx = ResearchSynthesisWorkflow.default_context()
-        assert ctx.prompt is not None
-        assert ctx.parsing is not None
-        assert ctx.prompt._workflow_name == "research"
+        assert ResearchSynthesisWorkflow.stages == ["agent-synthesis"]
 
-    @patch("attune.workflows.base.CostTracker")
-    @patch("attune.workflows.config.WorkflowConfig.load")
-    def test_constructed_with_default_context(self, mock_config, mock_tracker):
-        """Test ResearchSynthesisWorkflow can be constructed with default_context."""
+    def test_default_construction(self):
+        """ResearchSynthesisWorkflow can be constructed with no args."""
         from attune.workflows.research_synthesis import ResearchSynthesisWorkflow
 
-        mock_config.return_value = MagicMock()
-        mock_config.return_value.get_provider_for_workflow.return_value = "anthropic"
-
-        ctx = ResearchSynthesisWorkflow.default_context()
-        wf = ResearchSynthesisWorkflow(ctx=ctx)
-        assert wf._ctx is ctx
+        wf = ResearchSynthesisWorkflow()
+        assert wf.name == "research-synthesis"
 
 
 class TestCompositionEndToEnd:

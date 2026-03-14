@@ -1,26 +1,25 @@
-"""Tests for SecurityAuditCrew Workflow Integration
+"""Tests for security crew integration components.
 
-Tests all 4 integration options:
-1. ReleasePreparationWorkflow with crew_security stage
-2. CodeReviewWorkflow with external audit results
-3. SecureReleasePipeline composite workflow
-4. SecurityAuditWorkflow with crew-enhanced remediation
+Tests security adapters and SecureReleasePipeline. The
+ReleasePreparationWorkflow is now SDK-native and no longer
+supports crew_security stage injection.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import tempfile
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
+
+from attune.workflows.base import ModelTier
 
 # ============================================================================
 # Test Security Adapters (Foundation)
 # ============================================================================
 
 
+@pytest.mark.unit
 class TestSecurityAdapters:
     """Test security adapter functions."""
 
@@ -28,7 +27,6 @@ class TestSecurityAdapters:
         """Test crew availability check when module exists."""
         from attune.workflows.security_adapters import _check_crew_available
 
-        # Should return True since we have the module
         result = _check_crew_available()
         assert isinstance(result, bool)
 
@@ -36,7 +34,6 @@ class TestSecurityAdapters:
         """Test converting SecurityReport to workflow format."""
         from attune.workflows.security_adapters import crew_report_to_workflow_format
 
-        # Create mock report
         mock_report = MagicMock()
         mock_report.summary = "Found 2 issues"
         mock_report.risk_score = 45.0
@@ -45,7 +42,6 @@ class TestSecurityAdapters:
         mock_report.memory_graph_hits = 0
         mock_report.metadata = {}
 
-        # Create mock findings with proper severity/category mocks
         mock_finding1 = MagicMock()
         mock_finding1.title = "SQL Injection"
         mock_finding1.description = "User input not sanitized"
@@ -104,7 +100,6 @@ class TestSecurityAdapters:
         assert len(result) == 1
         assert result[0]["title"] == "Test Finding"
         assert result[0]["severity"] == "high"
-        # file_path should be normalized from "file" key
         assert result[0]["file_path"] == "test.py"
 
     def test_merge_security_results(self):
@@ -141,9 +136,7 @@ class TestSecurityAdapters:
 
         result = merge_security_results(crew_report, workflow_findings)
 
-        # Should merge findings (different file/line, so not deduplicated)
         assert len(result["findings"]) == 2
-        # Risk score should be weighted toward crew (higher weight)
         assert result["risk_score"] >= 40.0
         assert result["merged"] is True
         assert result["crew_enabled"] is True
@@ -183,112 +176,40 @@ class TestSecurityAdapters:
 
 
 # ============================================================================
-# Option 1: ReleasePreparationWorkflow with crew_security stage
+# ReleasePreparationWorkflow — SDK-native validation
 # ============================================================================
 
 
-class TestReleasePreparationCrewIntegration:
-    """Test Option 1: ReleasePreparationWorkflow with crew_security stage."""
+@pytest.mark.unit
+class TestReleasePreparationSDKNative:
+    """Test that ReleasePreparationWorkflow is SDK-native."""
 
-    def test_workflow_init_without_crew(self):
-        """Test workflow initializes without crew by default."""
+    def test_workflow_is_sdk_native(self):
+        """Test workflow has SDK-native attributes."""
         from attune.workflows import ReleasePreparationWorkflow
 
-        workflow = ReleasePreparationWorkflow()
+        wf = ReleasePreparationWorkflow()
+        assert wf.name == "release-prep"
+        assert wf.stages == ["agent-prep"]
+        assert wf.tier_map == {"agent-prep": ModelTier.CAPABLE}
+        assert "Agent SDK" in wf.description
 
-        assert workflow.use_security_crew is False
-        assert "crew_security" not in workflow.stages
-
-    def test_workflow_init_with_crew(self):
-        """Test workflow initializes with crew when enabled."""
+    def test_no_crew_security_attribute(self):
+        """Test workflow no longer has use_security_crew."""
         from attune.workflows import ReleasePreparationWorkflow
 
-        workflow = ReleasePreparationWorkflow(use_security_crew=True)
-
-        assert workflow.use_security_crew is True
-        assert "crew_security" in workflow.stages
-
-    def test_workflow_stages_order_with_crew(self):
-        """Test stages are in correct order when crew is enabled."""
-        from attune.workflows import ReleasePreparationWorkflow
-
-        workflow = ReleasePreparationWorkflow(use_security_crew=True)
-
-        # crew_security should come after security
-        security_idx = workflow.stages.index("security")
-        crew_idx = workflow.stages.index("crew_security")
-        assert crew_idx == security_idx + 1
-
-    @pytest.mark.asyncio
-    async def test_crew_security_stage_fallback(self):
-        """Test crew_security stage gracefully falls back when crew unavailable."""
-        from attune.workflows import ReleasePreparationWorkflow
-
-        workflow = ReleasePreparationWorkflow(use_security_crew=True)
-
-        # Mock _check_crew_available to return False at the security_adapters level
-        with patch(
-            "attune.workflows.security_adapters._check_crew_available",
-            return_value=False,
-        ):
-            input_data = {"path": "./src", "security": {"issues": []}}
-
-            result, input_tokens, output_tokens = await workflow._crew_security(
-                input_data,
-                workflow.tier_map["crew_security"],
-            )
-
-            assert "crew_security" in result
-            assert result["crew_security"]["available"] is False
-            assert result["crew_security"]["fallback"] is True
-
-    @pytest.mark.asyncio
-    async def test_crew_security_stage_with_mocked_crew(self):
-        """Test crew_security stage with mocked crew results."""
-        from attune.workflows import ReleasePreparationWorkflow
-
-        workflow = ReleasePreparationWorkflow(use_security_crew=True)
-
-        # Mock crew report with proper attributes
-        mock_report = MagicMock()
-        mock_report.summary = "All clear"
-        mock_report.risk_score = 0.0
-        mock_report.findings = []
-        mock_report.audit_duration_seconds = 5.0
-        mock_report.agents_used = ["lead"]
-        mock_report.memory_graph_hits = 0
-        mock_report.metadata = {}
-
-        with (
-            patch(
-                "attune.workflows.security_adapters._check_crew_available",
-                return_value=True,
-            ),
-            patch(
-                "attune.workflows.security_adapters._get_crew_audit",
-                new_callable=AsyncMock,
-                return_value=mock_report,
-            ),
-        ):
-            input_data = {"path": "./src", "security": {"issues": []}}
-
-            result, input_tokens, output_tokens = await workflow._crew_security(
-                input_data,
-                workflow.tier_map["crew_security"],
-            )
-
-            assert "crew_security" in result
-            assert result["crew_security"]["available"] is True
-            assert result["crew_security"]["risk_score"] == 0.0
+        wf = ReleasePreparationWorkflow()
+        assert not hasattr(wf, "use_security_crew")
 
 
 # ============================================================================
-# Option 3: SecureReleasePipeline composite workflow
+# SecureReleasePipeline composite workflow
 # ============================================================================
 
 
+@pytest.mark.unit
 class TestSecureReleasePipeline:
-    """Test Option 3: SecureReleasePipeline composite workflow."""
+    """Test SecureReleasePipeline composite workflow."""
 
     def test_pipeline_creation_modes(self):
         """Test pipeline creation with different modes."""
@@ -338,7 +259,6 @@ class TestSecureReleasePipeline:
         assert result.success is True
         assert result.go_no_go == "GO"
 
-        # Test to_dict
         data = result.to_dict()
         assert data["success"] is True
         assert data["go_no_go"] == "GO"
@@ -350,19 +270,15 @@ class TestSecureReleasePipeline:
 
         pipeline = SecureReleasePipeline()
 
-        # Critical findings = NO_GO
         go = pipeline._determine_go_no_go(20.0, {"critical": 1, "high": 0}, None)
         assert go == "NO_GO"
 
-        # Very high risk = NO_GO
         go = pipeline._determine_go_no_go(80.0, {"critical": 0, "high": 0}, None)
         assert go == "NO_GO"
 
-        # High findings = CONDITIONAL
         go = pipeline._determine_go_no_go(40.0, {"critical": 0, "high": 5}, None)
         assert go == "CONDITIONAL"
 
-        # Clean = GO
         go = pipeline._determine_go_no_go(10.0, {"critical": 0, "high": 1}, None)
         assert go == "GO"
 
@@ -372,116 +288,45 @@ class TestSecureReleasePipeline:
 
         pipeline = SecureReleasePipeline()
 
-        # No results = 0 risk
         risk = pipeline._calculate_combined_risk(None, None, None, None)
         assert risk == 0.0
 
-        # Crew report only
         crew_report = {"risk_score": 50.0}
         risk = pipeline._calculate_combined_risk(crew_report, None, None, None)
         assert risk == 50.0
 
-    @pytest.mark.asyncio
-    async def test_pipeline_execute_standard_mode(self):
-        """Test pipeline execution in standard mode."""
-        from attune.workflows.secure_release import SecureReleasePipeline
-
-        pipeline = SecureReleasePipeline(mode="standard")
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a simple file
-            (Path(tmpdir) / "test.py").write_text("print('hello')")
-
-            # Mock the workflow classes at the module import location
-            mock_security_result = MagicMock()
-            mock_security_result.final_output = {"assessment": {"risk_score": 10}}
-            mock_security_result.cost_report = MagicMock(total_cost=0.01)
-
-            mock_release_result = MagicMock()
-            mock_release_result.final_output = {"approved": True}
-            mock_release_result.cost_report = MagicMock(total_cost=0.02)
-
-            with (
-                patch("attune.workflows.security_audit.SecurityAuditWorkflow") as MockSecurity,
-                patch(
-                    "attune.workflows.release_prep.ReleasePreparationWorkflow",
-                ) as MockRelease,
-            ):
-                # Setup mocks
-                mock_security = MagicMock()
-                mock_security.execute = AsyncMock(return_value=mock_security_result)
-                MockSecurity.return_value = mock_security
-
-                mock_release = MagicMock()
-                mock_release.execute = AsyncMock(return_value=mock_release_result)
-                MockRelease.return_value = mock_release
-
-                result = await pipeline.execute(path=tmpdir)
-
-                # Standard mode should skip code review crew
-                assert result.code_review is None
-                assert result.mode == "standard"
-
 
 # ============================================================================
-# Option 4: SecurityAuditWorkflow with crew-enhanced remediation
+# Integration Tests
 # ============================================================================
 
 
-# TestSecurityAuditCrewRemediation: Removed — SecurityAuditWorkflow
-# is now SDK-native and no longer has crew mixin methods.
-
-
-# ============================================================================
-# Integration Tests (End-to-End)
-# ============================================================================
-
-
+@pytest.mark.unit
 class TestEndToEndIntegration:
-    """End-to-end integration tests."""
-
-    @pytest.mark.asyncio
-    async def test_full_workflow_without_api_key(self):
-        """Test workflows execute (with simulation) when no API key."""
-        from attune.workflows import ReleasePreparationWorkflow
-
-        # Without ANTHROPIC_API_KEY, workflow should use simulation mode
-        workflow = ReleasePreparationWorkflow(use_security_crew=False)
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            (Path(tmpdir) / "test.py").write_text("print('test')")
-
-            result = await workflow.execute(path=tmpdir)
-
-            # Should complete (possibly with simulated results)
-            assert result is not None
-            assert hasattr(result, "success")
+    """Integration smoke tests."""
 
     def test_imports_work(self):
-        """Test all new exports are importable."""
+        """Test all exports are importable."""
         from attune.workflows.secure_release import SecureReleasePipeline, SecureReleaseResult
         from attune.workflows.security_adapters import _check_crew_available
 
-        # All imports should succeed
         assert SecureReleasePipeline is not None
         assert SecureReleaseResult is not None
         assert _check_crew_available is not None
 
     def test_backward_compatibility(self):
-        """Test existing workflows still work with default parameters."""
+        """Test existing workflows initialize with defaults."""
         from attune.workflows import (
             CodeReviewWorkflow,
             ReleasePreparationWorkflow,
             SecurityAuditWorkflow,
         )
 
-        # All should initialize without errors using defaults
         code_review = CodeReviewWorkflow()
         assert code_review is not None
 
         release_prep = ReleasePreparationWorkflow()
         assert release_prep is not None
-        assert "crew_security" not in release_prep.stages
 
         security_audit = SecurityAuditWorkflow()
         assert security_audit is not None

@@ -288,11 +288,11 @@ class TestWorkflowSchemas:
     # test_perf_audit_has_input_schema: Removed — SDK-native
     # workflow validates path in execute(), not via input_schema.
 
-    def test_simplify_code_has_input_schema(self):
-        """SimplifyCodeWorkflow declares input_schema."""
+    def test_simplify_code_is_sdk_native(self):
+        """SimplifyCodeWorkflow is SDK-native (no input_schema)."""
         from attune.workflows.simplify_code import (
             SimplifyCodeWorkflow,
         )
 
-        assert SimplifyCodeWorkflow.input_schema is not None
-        assert "path" in SimplifyCodeWorkflow.input_schema.required_fields
+        # SDK-native workflows validate in execute(), not via input_schema
+        assert SimplifyCodeWorkflow.stages == ["agent-simplify"]
