@@ -28,7 +28,7 @@ export default function AttuneLitePage() {
       <Navigation />
 
       {/* Hero */}
-      <section className="pt-32 pb-20 gradient-primary text-white">
+      <section className="pt-32 pb-20 gradient-accent text-white">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-sm font-semibold uppercase tracking-wider mb-4 opacity-80">
@@ -231,7 +231,7 @@ export default function AttuneLitePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 gradient-primary text-white">
+      <section className="py-20 gradient-accent text-white">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-4xl font-bold mb-6">Get Started in Seconds</h2>
