@@ -20,7 +20,12 @@ const docsItems = [
   {
     label: 'Workflows',
     href: '/workflows',
-    description: '10 AI workflows',
+    description: '17 AI workflows',
+  },
+  {
+    label: 'Attune Lite',
+    href: '/attune-lite',
+    description: 'Free 5-skill Claude Code plugin',
   },
   {
     label: 'MkDocs',

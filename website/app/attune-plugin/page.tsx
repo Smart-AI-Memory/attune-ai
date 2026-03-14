@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
+import { liteSkills } from '@/lib/attune-lite-skills';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Attune Plugins for Claude Code',
@@ -21,74 +23,6 @@ export const metadata: Metadata = generateSEOMetadata({
     'free Claude Code plugin',
   ],
 });
-
-const liteSkills = [
-  {
-    command: '/code-review',
-    title: 'Code Review',
-    icon: '🔍',
-    description:
-      'Multi-agent code review with architecture, quality, security, and performance analysis.',
-    features: [
-      'Architecture and design review',
-      'Code quality and maintainability',
-      'Security vulnerability detection',
-      'Performance bottleneck analysis',
-    ],
-  },
-  {
-    command: '/security-audit',
-    title: 'Security Audit',
-    icon: '🛡️',
-    description:
-      'OWASP-aligned security analysis with vulnerability scanning and attack surface mapping.',
-    features: [
-      'OWASP pattern detection',
-      'Dependency vulnerability check',
-      'Configuration review',
-      'Attack surface analysis',
-    ],
-  },
-  {
-    command: '/smart-test',
-    title: 'Smart Test',
-    icon: '🧪',
-    description:
-      'Identifies test gaps and generates tests for uncovered code paths.',
-    features: [
-      'Test gap analysis',
-      'Test generation for uncovered code',
-      'Coverage estimation',
-      'Recently changed file targeting',
-    ],
-  },
-  {
-    command: '/bug-predict',
-    title: 'Bug Prediction',
-    icon: '🐛',
-    description:
-      'Predicts likely bug locations based on code complexity, patterns, and change history.',
-    features: [
-      'Complexity hotspot detection',
-      'Pattern-based risk scoring',
-      'Change frequency analysis',
-      'Prioritized risk report',
-    ],
-  },
-  {
-    command: '/doc-gen',
-    title: 'Doc Generation',
-    icon: '📝',
-    description:
-      'Generates and maintains documentation automatically from your codebase.',
-    features: [
-      'API documentation generation',
-      'README scaffolding',
-      'Docstring auditing',
-      'Module-level overviews',
-    ],
-  },
-];
 
 export default function AttunePluginPage() {
   return (
@@ -141,10 +75,17 @@ export default function AttunePluginPage() {
               <p className="text-sm font-semibold uppercase tracking-wider text-[var(--secondary)] mb-2">
                 Plugin Marketplace
               </p>
-              <h2 className="text-4xl font-bold mb-4">Attune Lite</h2>
+              <h2 className="text-4xl font-bold mb-4">
+                <Link href="/attune-lite" className="hover:text-[var(--primary)] transition-colors">
+                  Attune Lite
+                </Link>
+              </h2>
               <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
                 5 curated AI workflows, zero dependencies. Designed for the
-                Anthropic plugin marketplace &mdash; install and go.
+                Anthropic plugin marketplace &mdash; install and go.{' '}
+                <Link href="/attune-lite" className="text-[var(--primary)] hover:underline">
+                  Learn more
+                </Link>
               </p>
             </div>
 
