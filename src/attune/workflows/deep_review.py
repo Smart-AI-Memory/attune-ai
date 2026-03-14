@@ -153,7 +153,7 @@ class DeepReviewAgentSDKWorkflow(BaseWorkflow):
         result = await workflow.execute(path="src/", depth="standard")
     """
 
-    name = "deep-review-sdk"
+    name = "deep-review"
     description = (
         "Multi-pass deep review with 3 specialized subagents (security, quality, test gaps)"
     )
@@ -215,7 +215,7 @@ class DeepReviewAgentSDKWorkflow(BaseWorkflow):
                     "depth": depth,
                     "max_turns": max_turns,
                     "focus": focus or ["security", "quality", "test-gaps"],
-                    "workflow": "deep-review-sdk",
+                    "workflow": "deep-review",
                 },
             )
 

@@ -23,14 +23,14 @@ class TestHealthCheckAgentSDKWorkflowAttributes:
 
     def test_workflow_has_correct_name(self) -> None:
         """Given the workflow class, name is 'health-check-sdk'."""
-        from attune.workflows.health_check_agent_sdk import HealthCheckAgentSDKWorkflow
+        from attune.workflows.health_check import HealthCheckAgentSDKWorkflow
 
         wf = HealthCheckAgentSDKWorkflow()
-        assert wf.name == "health-check-sdk"
+        assert wf.name == "health-check"
 
     def test_workflow_has_description(self) -> None:
         """Given the workflow class, description is a non-empty string."""
-        from attune.workflows.health_check_agent_sdk import HealthCheckAgentSDKWorkflow
+        from attune.workflows.health_check import HealthCheckAgentSDKWorkflow
 
         wf = HealthCheckAgentSDKWorkflow()
         assert isinstance(wf.description, str)
@@ -38,7 +38,7 @@ class TestHealthCheckAgentSDKWorkflowAttributes:
 
     def test_workflow_has_stages_list(self) -> None:
         """Given the workflow class, stages list contains 'agent-check'."""
-        from attune.workflows.health_check_agent_sdk import HealthCheckAgentSDKWorkflow
+        from attune.workflows.health_check import HealthCheckAgentSDKWorkflow
 
         wf = HealthCheckAgentSDKWorkflow()
         assert isinstance(wf.stages, list)
@@ -79,11 +79,11 @@ class TestHealthCheckAgentSDKWorkflowExecution:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -107,11 +107,11 @@ class TestHealthCheckAgentSDKWorkflowExecution:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -145,11 +145,11 @@ class TestHealthCheckAgentSDKWorkflowDepth:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -171,11 +171,11 @@ class TestHealthCheckAgentSDKWorkflowDepth:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -193,7 +193,7 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
     def test_quick_mode_uses_three_subagents(self) -> None:
         """Given mode='quick', three subagents are selected."""
-        from attune.workflows.health_check_agent_sdk import _MODE_SUBAGENTS
+        from attune.workflows.health_check import _MODE_SUBAGENTS
 
         assert len(_MODE_SUBAGENTS["quick"]) == 3
         assert set(_MODE_SUBAGENTS["quick"]) == {
@@ -204,7 +204,7 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
     def test_standard_mode_uses_five_subagents(self) -> None:
         """Given mode='standard', five subagents are selected."""
-        from attune.workflows.health_check_agent_sdk import _MODE_SUBAGENTS
+        from attune.workflows.health_check import _MODE_SUBAGENTS
 
         assert len(_MODE_SUBAGENTS["standard"]) == 5
         assert set(_MODE_SUBAGENTS["standard"]) == {
@@ -217,7 +217,7 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
     def test_full_mode_uses_six_subagents(self) -> None:
         """Given mode='full', all six subagents are selected."""
-        from attune.workflows.health_check_agent_sdk import _MODE_SUBAGENTS
+        from attune.workflows.health_check import _MODE_SUBAGENTS
 
         assert len(_MODE_SUBAGENTS["full"]) == 6
         assert set(_MODE_SUBAGENTS["full"]) == {
@@ -239,11 +239,11 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -265,11 +265,11 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 
@@ -291,11 +291,11 @@ class TestHealthCheckAgentSDKWorkflowModes:
 
         with (
             patch(
-                "attune.workflows.health_check_agent_sdk.claude_agent_sdk",
+                "attune.workflows.health_check.claude_agent_sdk",
                 mock_sdk,
             ),
         ):
-            from attune.workflows.health_check_agent_sdk import (
+            from attune.workflows.health_check import (
                 HealthCheckAgentSDKWorkflow,
             )
 

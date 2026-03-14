@@ -12,8 +12,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 
-from attune.agents.sdk.sdk_models import SDKAgentResult
-from attune.agents.sdk.sdk_team import QualityGate
+from attune.orchestration.agent_models import QualityGate, SDKAgentResult
 from attune.orchestration.dynamic_team import DynamicTeam, DynamicTeamResult
 
 # ---------------------------------------------------------------------------

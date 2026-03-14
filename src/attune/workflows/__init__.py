@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from .code_review import CodeReviewWorkflow
     from .code_review_pipeline import CodeReviewPipeline, CodeReviewPipelineResult
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
-    from .deep_review_agent_sdk import DeepReviewAgentSDKWorkflow
+    from .deep_review import DeepReviewAgentSDKWorkflow
     from .dependency_check import DependencyCheckWorkflow
 
     # DependencyCheckAgentSDKWorkflow: Merged into DependencyCheckWorkflow (v4.2.0)
@@ -71,7 +71,7 @@ if TYPE_CHECKING:
         Validator,
         escalate,
     )
-    from .health_check_agent_sdk import HealthCheckAgentSDKWorkflow
+    from .health_check import HealthCheckAgentSDKWorkflow
     from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
@@ -185,7 +185,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "ProgressiveTestGenWorkflow": (".progressive.test_gen", "ProgressiveTestGenWorkflow"),
     "AutonomousTestGenerator": (".autonomous_test_gen", "AutonomousTestGenerator"),
     # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
-    "DeepReviewAgentSDKWorkflow": (".deep_review_agent_sdk", "DeepReviewAgentSDKWorkflow"),
+    "DeepReviewAgentSDKWorkflow": (".deep_review", "DeepReviewAgentSDKWorkflow"),
     # Agent SDK adapters (v3.9.3)
     # SecurityAuditAgentSDKWorkflow: Merged into SecurityAuditWorkflow (v4.2.0)
     # PerfAuditAgentSDKWorkflow: Merged into PerformanceAuditWorkflow (v4.2.0)
@@ -199,7 +199,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # SimplifyCodeAgentSDKWorkflow: Merged into SimplifyCodeWorkflow (v4.2.0)
     # DependencyCheckAgentSDKWorkflow: Merged into DependencyCheckWorkflow (v4.2.0)
     # ResearchSynthesisAgentSDKWorkflow: Merged into ResearchSynthesisWorkflow (v4.2.0)
-    "HealthCheckAgentSDKWorkflow": (".health_check_agent_sdk", "HealthCheckAgentSDKWorkflow"),
+    "HealthCheckAgentSDKWorkflow": (".health_check", "HealthCheckAgentSDKWorkflow"),
     "XMLAgent": (".xml_enhanced_crew", "XMLAgent"),
     "XMLTask": (".xml_enhanced_crew", "XMLTask"),
     "parse_xml_response": (".xml_enhanced_crew", "parse_xml_response"),
@@ -318,7 +318,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "research-synthesis": "ResearchSynthesisWorkflow",
     # code-review-sdk: Merged into code-review (v4.2.0)
     # Multi-pass deep review (v3.9)
-    "deep-review-sdk": "DeepReviewAgentSDKWorkflow",
+    "deep-review": "DeepReviewAgentSDKWorkflow",
     # Agent SDK adapters (v3.9.3)
     # security-audit-sdk: Merged into security-audit (v4.2.0)
     # perf-audit-sdk: Merged into perf-audit (v4.2.0)
@@ -332,7 +332,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # simplify-code-sdk: Merged into simplify-code (v4.2.0)
     # dependency-check-sdk: Merged into dependency-check (v4.2.0)
     # research-synthesis-sdk: Merged into research-synthesis (v4.2.0)
-    "health-check-sdk": "HealthCheckAgentSDKWorkflow",
+    "health-check": "HealthCheckAgentSDKWorkflow",
     # test-maintenance: Removed — utility class, not a BaseWorkflow.
     # Import directly: from attune.workflows.test_maintenance import TestMaintenanceWorkflow
     # batch-processing: Removed — batch API client with execute_batch().
@@ -382,6 +382,8 @@ _SDK_NATIVE_WORKFLOWS: set[str] = {
     "simplify-code",
     "dependency-check",
     "research-synthesis",
+    "deep-review",
+    "health-check",
 }
 
 

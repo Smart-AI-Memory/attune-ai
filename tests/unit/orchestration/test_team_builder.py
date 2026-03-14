@@ -13,8 +13,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
-from attune.agents.sdk.sdk_agent import SDKAgent
-from attune.agents.sdk.sdk_models import SDKExecutionMode
+from attune.orchestration.agent_models import SDKExecutionMode, StubAgent
 from attune.orchestration.config_store import AgentConfiguration
 from attune.orchestration.dynamic_team import DynamicTeam
 from attune.orchestration.team_builder import DynamicTeamBuilder
@@ -44,7 +43,7 @@ class TestBuildFromSpec:
         assert len(team.agents) == 2
 
     def test_agents_are_sdk_agents(self) -> None:
-        """Test that instantiated agents are SDKAgent instances."""
+        """Test that instantiated agents are StubAgent instances."""
         spec = TeamSpecification(
             name="sdk-team",
             agents=[{"role": "Agent-A"}],
@@ -53,7 +52,7 @@ class TestBuildFromSpec:
         team = builder.build_from_spec(spec)
 
         assert len(team.agents) == 1
-        assert isinstance(team.agents[0], SDKAgent)
+        assert isinstance(team.agents[0], StubAgent)
         assert team.agents[0].role == "Agent-A"
 
     def test_spec_with_quality_gates(self) -> None:
@@ -263,7 +262,7 @@ class TestInstantiateAgent:
         builder = DynamicTeamBuilder()
         agent = builder._instantiate_agent({"role": "Custom Agent"})
 
-        assert isinstance(agent, SDKAgent)
+        assert isinstance(agent, StubAgent)
         assert agent.role == "Custom Agent"
 
     def test_agent_with_unknown_template(self) -> None:

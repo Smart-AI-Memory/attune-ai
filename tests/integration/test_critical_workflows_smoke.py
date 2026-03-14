@@ -256,75 +256,12 @@ class TestReleaseAgents:
         assert agent.state_store is None
 
 
-class TestSDKAgent:
-    """Test SDK agent classes (Phase 2)."""
-
-    def test_sdk_agent_instantiate(self):
-        """Test SDKAgent can be created with defaults."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-
-        agent = SDKAgent()
-        assert agent.agent_id.startswith("sdk-agent-")
-        assert agent.role == "SDK Agent"
-
-    def test_sdk_agent_custom_params(self):
-        """Test SDKAgent with custom parameters."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_models import SDKExecutionMode
-
-        agent = SDKAgent(
-            agent_id="custom-agent",
-            role="Custom Role",
-            system_prompt="You are a test agent.",
-            mode=SDKExecutionMode.TOOLS_ONLY,
-        )
-        assert agent.agent_id == "custom-agent"
-        assert agent.role == "Custom Role"
-        assert agent.mode == SDKExecutionMode.TOOLS_ONLY
-
-    def test_sdk_agent_process_returns_result(self):
-        """Test SDKAgent.process() returns SDKAgentResult."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_models import SDKAgentResult
-
-        agent = SDKAgent(agent_id="test-process")
-        result = agent.process({"task": "test"})
-
-        assert isinstance(result, SDKAgentResult)
-        assert result.agent_id == "test-process"
-        assert result.tier_used in ("cheap", "capable", "premium")
-
-    def test_sdk_agent_tier_execution(self):
-        """Test SDKAgent processes input and returns valid tier info."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-
-        agent = SDKAgent(agent_id="test-tier")
-        result = agent.process({"task": "tier-test"})
-
-        # Tier should be one of the valid values regardless of escalation
-        assert result.tier_used in ("cheap", "capable", "premium")
-        assert result.execution_time_ms > 0
-
-    def test_sdk_available_flag(self):
-        """Test SDK_AVAILABLE flag is a boolean."""
-        from attune.agents.sdk.sdk_models import SDK_AVAILABLE
-
-        assert isinstance(SDK_AVAILABLE, bool)
-
-    def test_sdk_execution_modes(self):
-        """Test SDKExecutionMode enum values."""
-        from attune.agents.sdk.sdk_models import SDKExecutionMode
-
-        assert SDKExecutionMode.TOOLS_ONLY.value == "tools_only"
-        assert SDKExecutionMode.FULL_SDK.value == "full_sdk"
-
-
 class TestSDKAgentResult:
     """Test SDKAgentResult serialization."""
 
     def test_to_dict_roundtrip(self):
         """Test SDKAgentResult serialization/deserialization."""
-        from attune.agents.sdk.sdk_models import SDKAgentResult, SDKExecutionMode
+        from attune.orchestration.agent_models import SDKAgentResult, SDKExecutionMode
 
         original = SDKAgentResult(
             agent_id="test-rt",
@@ -658,63 +595,34 @@ class TestReleasePrepTeam:
         assert "Documentation" in roles
 
 
-class TestSDKAgentTeam:
-    """Test SDKAgentTeam (Phase 2)."""
+def _make_stub_agent(agent_id: str, role: str) -> Any:
+    """Create a StubAgent with a mocked process() that returns a valid result.
 
-    def test_sdk_team_instantiate(self):
-        """Test SDKAgentTeam can be created."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_team import SDKAgentTeam
+    StubAgent.process() raises NotImplementedError by default, so we
+    patch it with a lambda that returns a synthetic SDKAgentResult.
+    """
+    from attune.orchestration.agent_models import (
+        SDKAgentResult,
+        SDKExecutionMode,
+        StubAgent,
+    )
 
-        agents = [
-            SDKAgent(agent_id="a1", role="Agent 1"),
-            SDKAgent(agent_id="a2", role="Agent 2"),
-        ]
-        team = SDKAgentTeam(
-            team_name="test-team",
-            agents=agents,
-            parallel=True,
-        )
-        assert team.team_name == "test-team"
-        assert len(team.agents) == 2
-
-    def test_sdk_team_execute_parallel(self):
-        """Test SDKAgentTeam parallel execution."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_team import SDKAgentTeam
-
-        agents = [
-            SDKAgent(agent_id="p1", role="Parallel 1"),
-            SDKAgent(agent_id="p2", role="Parallel 2"),
-        ]
-        team = SDKAgentTeam(
-            team_name="parallel-test",
-            agents=agents,
-            parallel=True,
-        )
-        result = asyncio.run(team.execute({"task": "test"}))
-
-        assert result.team_name == "parallel-test"
-        assert len(result.agent_results) == 2
-
-    def test_sdk_team_execute_sequential(self):
-        """Test SDKAgentTeam sequential execution."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_team import SDKAgentTeam
-
-        agents = [
-            SDKAgent(agent_id="s1", role="Seq 1"),
-            SDKAgent(agent_id="s2", role="Seq 2"),
-        ]
-        team = SDKAgentTeam(
-            team_name="sequential-test",
-            agents=agents,
-            parallel=False,
-        )
-        result = asyncio.run(team.execute({"task": "test"}))
-
-        assert result.team_name == "sequential-test"
-        assert len(result.agent_results) == 2
+    agent = StubAgent(agent_id=agent_id, role=role)
+    agent.process = lambda input_data: SDKAgentResult(
+        agent_id=agent.agent_id,
+        role=agent.role,
+        success=True,
+        tier_used="cheap",
+        mode=SDKExecutionMode.TOOLS_ONLY,
+        findings={},
+        score=75.0,
+        confidence=0.8,
+        cost=0.01,
+        execution_time_ms=10.0,
+        escalated=False,
+        sdk_used=False,
+    )
+    return agent
 
 
 class TestDynamicTeam:
@@ -722,12 +630,11 @@ class TestDynamicTeam:
 
     def test_dynamic_team_parallel(self):
         """Test DynamicTeam with parallel strategy."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
         from attune.orchestration.dynamic_team import DynamicTeam
 
         agents = [
-            SDKAgent(agent_id="dp1", role="Agent A"),
-            SDKAgent(agent_id="dp2", role="Agent B"),
+            _make_stub_agent("dp1", "Agent A"),
+            _make_stub_agent("dp2", "Agent B"),
         ]
         team = DynamicTeam(
             team_name="dynamic-parallel",
@@ -743,12 +650,11 @@ class TestDynamicTeam:
 
     def test_dynamic_team_sequential(self):
         """Test DynamicTeam with sequential strategy."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
         from attune.orchestration.dynamic_team import DynamicTeam
 
         agents = [
-            SDKAgent(agent_id="ds1", role="Seq A"),
-            SDKAgent(agent_id="ds2", role="Seq B"),
+            _make_stub_agent("ds1", "Seq A"),
+            _make_stub_agent("ds2", "Seq B"),
         ]
         team = DynamicTeam(
             team_name="dynamic-seq",
@@ -762,13 +668,12 @@ class TestDynamicTeam:
 
     def test_dynamic_team_two_phase(self):
         """Test DynamicTeam with two_phase strategy."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
         from attune.orchestration.dynamic_team import DynamicTeam
 
         agents = [
-            SDKAgent(agent_id="g1", role="Gatherer"),
-            SDKAgent(agent_id="g2", role="Gatherer 2"),
-            SDKAgent(agent_id="r1", role="Reasoner"),
+            _make_stub_agent("g1", "Gatherer"),
+            _make_stub_agent("g2", "Gatherer 2"),
+            _make_stub_agent("r1", "Reasoner"),
         ]
         team = DynamicTeam(
             team_name="two-phase-test",
@@ -783,13 +688,12 @@ class TestDynamicTeam:
 
     def test_dynamic_team_delegation(self):
         """Test DynamicTeam with delegation strategy."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
         from attune.orchestration.dynamic_team import DynamicTeam
 
         agents = [
-            SDKAgent(agent_id="coord", role="Coordinator"),
-            SDKAgent(agent_id="del1", role="Delegate 1"),
-            SDKAgent(agent_id="del2", role="Delegate 2"),
+            _make_stub_agent("coord", "Coordinator"),
+            _make_stub_agent("del1", "Delegate 1"),
+            _make_stub_agent("del2", "Delegate 2"),
         ]
         team = DynamicTeam(
             team_name="delegation-test",
@@ -803,11 +707,10 @@ class TestDynamicTeam:
 
     def test_dynamic_team_quality_gates(self):
         """Test DynamicTeam quality gate evaluation."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
-        from attune.agents.sdk.sdk_team import QualityGate
+        from attune.orchestration.agent_models import QualityGate
         from attune.orchestration.dynamic_team import DynamicTeam
 
-        agents = [SDKAgent(agent_id="qg1", role="Gated Agent")]
+        agents = [_make_stub_agent("qg1", "Gated Agent")]
         gates = [
             QualityGate(
                 name="min_score",
@@ -829,10 +732,9 @@ class TestDynamicTeam:
 
     def test_dynamic_team_result_serialization(self):
         """Test DynamicTeamResult.to_dict()."""
-        from attune.agents.sdk.sdk_agent import SDKAgent
         from attune.orchestration.dynamic_team import DynamicTeam
 
-        agents = [SDKAgent(agent_id="ser1", role="Serializer")]
+        agents = [_make_stub_agent("ser1", "Serializer")]
         team = DynamicTeam(team_name="ser-test", agents=agents)
         result = asyncio.run(team.execute({"task": "test"}))
 
@@ -1245,9 +1147,8 @@ class TestEndToEndAgentTeamExecution:
             assert len(result.agent_results) == 2
             assert result.execution_time_ms > 0
 
-            # Phase 1: Verify state was persisted for each agent
-            all_agents = store.get_all_agents()
-            assert len(all_agents) >= 2
+            # Note: StubAgent doesn't persist state — state integration
+            # is tested separately in agent state store tests.
 
     def test_team_result_aggregation(self):
         """Test that team results correctly aggregate costs and times."""

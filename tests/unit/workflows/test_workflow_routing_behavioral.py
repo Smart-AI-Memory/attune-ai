@@ -212,9 +212,9 @@ class TestListWorkflowsDeduplication:
         """Given SDK-only workflows (no base), they appear in default list."""
         workflows = list_workflows()
         names = {wf["name"] for wf in workflows}
-        # deep-review-sdk and health-check-sdk have no base counterpart
-        assert "deep-review-sdk" in names
-        assert "health-check-sdk" in names
+        # deep-review and health-check are SDK-native workflows
+        assert "deep-review" in names
+        assert "health-check" in names
 
 
 # ---------------------------------------------------------------------------

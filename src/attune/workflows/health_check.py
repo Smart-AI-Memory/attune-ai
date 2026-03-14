@@ -148,7 +148,7 @@ class HealthCheckAgentSDKWorkflow(BaseWorkflow):
         result = await workflow.execute(project_root=".", mode="standard")
     """
 
-    name = "health-check-sdk"
+    name = "health-check"
     description = "Agent SDK-powered health check with dynamic subagents based on mode"
     stages = ["agent-check"]
     tier_map = {"agent-check": ModelTier.CAPABLE}
