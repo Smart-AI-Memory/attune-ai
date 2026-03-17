@@ -82,12 +82,13 @@ class StateManager:
 
         """
         filepath = self.storage_path / f"{user_id}.json"
+        validated_path = _validate_file_path(str(filepath), allowed_dir=str(self.storage_path))
 
-        if not filepath.exists():
+        if not validated_path.exists():
             return None
 
         try:
-            with open(filepath) as f:
+            with open(validated_path) as f:
                 data = json.load(f)
 
             state = CollaborationState()
@@ -134,8 +135,9 @@ class StateManager:
 
         """
         filepath = self.storage_path / f"{user_id}.json"
+        validated_path = _validate_file_path(str(filepath), allowed_dir=str(self.storage_path))
 
-        if filepath.exists():
-            filepath.unlink()
+        if validated_path.exists():
+            validated_path.unlink()
             return True
         return False

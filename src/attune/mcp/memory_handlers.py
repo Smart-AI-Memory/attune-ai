@@ -21,6 +21,7 @@ class MemoryHandlersMixin:
     """
 
     _memory: Any  # Set by host __init__
+    _user_id: str  # Set by host __init__
 
     # ------------------------------------------------------------------
     # Lazy initialiser
@@ -40,7 +41,7 @@ class MemoryHandlersMixin:
             from attune.memory import UnifiedMemory
 
             self._memory = UnifiedMemory(
-                user_id="mcp-session",
+                user_id=getattr(self, "_user_id", "mcp-session"),
                 environment="development",
             )
         return self._memory
@@ -105,6 +106,22 @@ class MemoryHandlersMixin:
             return {"success": False, "error": str(e)}
 
     # ------------------------------------------------------------------
+    # Ownership check
+    # ------------------------------------------------------------------
+
+    def _check_ownership(self, metadata: dict[str, Any]) -> bool:
+        """Check if the current user owns a pattern.
+
+        Returns True if ownership cannot be determined (no
+        ``created_by`` field) so that legacy data remains
+        accessible.
+        """
+        created_by = metadata.get("created_by", "")
+        if not created_by:
+            return True  # Legacy data without ownership info
+        return str(created_by) == getattr(self, "_user_id", "mcp-session")
+
+    # ------------------------------------------------------------------
     # Retrieve
     # ------------------------------------------------------------------
 
@@ -129,6 +146,14 @@ class MemoryHandlersMixin:
             try:
                 pattern = memory.recall_pattern(key)
                 if pattern:
+                    if not self._check_ownership(pattern if isinstance(pattern, dict) else {}):
+                        logger.warning("memory_retrieve_denied", key=key)
+                        return {
+                            "success": True,
+                            "key": key,
+                            "data": None,
+                            "message": "Key not found",
+                        }
                     return {"success": True, "key": key, "data": pattern, "source": "long_term"}
             except Exception:  # noqa: BLE001
                 # INTENTIONAL: Pattern recall may fail for non-pattern keys
@@ -226,6 +251,16 @@ class MemoryHandlersMixin:
             if scope in ("persistent", "all"):
                 try:
                     if hasattr(memory, "delete_pattern"):
+                        # Ownership check before deletion
+                        if hasattr(memory, "recall_pattern"):
+                            existing = memory.recall_pattern(key)
+                            if existing and not self._check_ownership(
+                                existing if isinstance(existing, dict) else {}
+                            ):
+                                return {
+                                    "success": False,
+                                    "error": "Not authorized to delete this key",
+                                }
                         memory.delete_pattern(key)
                         removed_from.append("persistent")
                 except Exception as e:  # noqa: BLE001

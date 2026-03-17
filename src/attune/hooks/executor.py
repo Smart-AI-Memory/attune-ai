@@ -197,6 +197,15 @@ class HookExecutor:
 
         module_path, func_name = command.rsplit(":", 1)
 
+        # Security: only allow importing from attune.* modules
+        _ALLOWED_MODULE_PREFIXES = ("attune.",)
+        if not any(module_path.startswith(p) for p in _ALLOWED_MODULE_PREFIXES):
+            raise ValueError(
+                f"Module '{module_path}' not in allowed prefixes: "
+                f"{_ALLOWED_MODULE_PREFIXES}. Register it in "
+                f"_python_handlers instead."
+            )
+
         try:
             module = importlib.import_module(module_path)
             handler = getattr(module, func_name)

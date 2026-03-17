@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from attune.mcp.memory_handlers import MemoryHandlersMixin
+from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.workflow_handlers import WorkflowHandlersMixin
 
 # MCP server will be implemented using stdio transport
@@ -34,6 +35,14 @@ ATTUNE_LEVEL_DESCRIPTIONS: dict[int, str] = {
 }
 
 
+def _get_default_user_id() -> str:
+    """Return the OS login name, falling back to 'mcp-session'."""
+    try:
+        return os.getlogin()
+    except OSError:
+        return "mcp-session"
+
+
 class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     """MCP server for Attune AI workflows.
 
@@ -41,15 +50,22 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     that can be invoked from Claude Code.
     """
 
-    def __init__(self, workspace_root: str | None = None):
+    def __init__(
+        self,
+        workspace_root: str | None = None,
+        user_id: str | None = None,
+    ):
         """Initialize the MCP server.
 
         Args:
             workspace_root: Root directory for workspace path
                 containment. Defaults to current working directory.
+            user_id: Identity for memory operations. Defaults
+                to the OS login name or "mcp-session".
 
         """
         self._workspace_root = workspace_root or os.getcwd()
+        self._user_id = user_id or _get_default_user_id()
         self.tools = self._register_tools()
         self.resources = self._register_resources()
         self.prompts = self._register_prompts()
@@ -57,6 +73,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
         self._plugin_handlers: dict[str, Any] = {}
+        self._rate_limiter = RateLimiter(max_calls=60, window_seconds=60.0)
         self._tool_handlers = self._build_dispatch_table()
 
         # Check for updates in background to avoid blocking init
@@ -669,6 +686,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             Tool execution result
 
         """
+        if not self._rate_limiter.check(tool_name):
+            return {
+                "error": f"Rate limit exceeded for '{tool_name}'. " "Try again shortly.",
+            }
+
         try:
             if tool_name == "security_audit":
                 return await self._run_security_audit(arguments)

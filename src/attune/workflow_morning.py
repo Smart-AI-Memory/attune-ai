@@ -11,6 +11,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from attune.security.path_validation import _validate_file_path
+
 
 def _wc():
     """Late-resolve the workflow_commands facade for patchable helper access."""
@@ -90,7 +92,8 @@ def morning_workflow(
     tech_debt_file = Path(patterns_dir) / "tech_debt.json"
     if tech_debt_file.exists():
         try:
-            with open(tech_debt_file) as f:
+            validated_debt_path = _validate_file_path(str(tech_debt_file))
+            with open(validated_debt_path) as f:
                 data = json.load(f)
             snapshots = data.get("snapshots", [])
             if snapshots:

@@ -125,8 +125,8 @@ def check_access(
 
     Access rules:
     - PUBLIC: All users
-    - INTERNAL: Users on project team (simplified: always granted for demo)
-    - SENSITIVE: Explicit permission required (simplified: creator only)
+    - INTERNAL: Same workspace (cross-project isolation)
+    - SENSITIVE: Creator only
 
     Args:
         user_id: User requesting access
@@ -141,15 +141,23 @@ def check_access(
     if classification == Classification.PUBLIC:
         return True
 
-    # INTERNAL: Check project team membership
-    # Simplified: Grant access (production would check team membership)
+    # INTERNAL: Workspace-scoped access.
+    # Patterns created in one project are invisible from another.
+    # When workspace metadata is absent, access is granted for
+    # backward compatibility with legacy patterns.
     if classification == Classification.INTERNAL:
-        logger.warning(
-            "internal_access_stub",
-            user_id=user_id,
-            message="INTERNAL stub always grants access; "
-            "replace with team membership check in production",
-        )
+        workspace = str(metadata.get("workspace", ""))
+        current_workspace = str(metadata.get("current_workspace", ""))
+
+        if workspace and current_workspace and workspace != current_workspace:
+            logger.warning(
+                "internal_access_denied",
+                user_id=user_id,
+                pattern_workspace=workspace,
+                current_workspace=current_workspace,
+            )
+            return False
+
         return True
 
     # SENSITIVE: Require explicit permission
