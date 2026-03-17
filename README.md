@@ -14,7 +14,7 @@ output. Just type `/attune` and go.
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-10%2C860%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-15%2C555%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -27,7 +27,24 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v5.0.0 — Anthropic Best Practices Release
+## What's New in v5.0.1 — Security Hardening
+
+v5.0.1 hardens memory isolation, hook execution, and MCP
+rate limiting across the plugin surface. Built on top of
+v5.0.0's Anthropic best practices alignment.
+
+| Feature | What It Does |
+| --- | --- |
+| **Memory ownership** | Retrieve/delete checks `created_by` before allowing access |
+| **Workspace isolation** | INTERNAL classification enforces cross-project boundaries |
+| **MCP rate limiter** | 60 calls/min per tool prevents abuse |
+| **Hook import guard** | Only `attune.*` modules can be loaded via hooks |
+| **Path validation** | State manager and morning workflow now validate all file paths |
+
+<details>
+<summary>Previous releases</summary>
+
+### v5.0.0 — Anthropic Best Practices Release
 
 v5.0.0 aligns all 15 SDK-native workflows with Anthropic's
 recommended patterns for the Claude Agent SDK. Every workflow
@@ -43,9 +60,6 @@ budget safety nets, cost/usage tracking, and structured output.
 | **Budget Safety Nets** | `max_budget_usd` caps per depth (quick/standard/deep) | Prevents runaway costs; override with `ATTUNE_MAX_BUDGET_USD` |
 | **Per-Agent Model Routing** | Opus for security/architecture, Haiku for scanning | Right model for each task; override with env vars |
 | **Structured Output** | JSON schema output with text-parsing fallback | Reliable extraction instead of regex; piloting on 2 workflows |
-
-<details>
-<summary>Previous releases</summary>
 
 ### v4.1.0
 

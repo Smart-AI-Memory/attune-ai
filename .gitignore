@@ -207,6 +207,9 @@ docs/internal/evals/
 # Claude Code local settings (user-specific, not shared)
 .claude/settings.local.json
 
+# Claude Code auto-memory (personal, not shared)
+/memory/
+
 # Claude Code worktrees (session temp state)
 .claude/worktrees/
 

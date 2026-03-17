@@ -5,6 +5,54 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.1] - 2026-03-17
+
+### Security Hardening
+
+Hardens memory isolation, hook execution, and MCP rate
+limiting across the plugin surface.
+
+### Added
+
+- **MCP rate limiter** — New `RateLimiter` class enforces
+  60 calls/minute per tool to prevent abuse. Returns a
+  clear error when the limit is exceeded.
+
+- **Memory ownership checks** — `MemoryHandlersMixin` now
+  verifies `created_by` metadata before allowing retrieve
+  or delete operations. Legacy data without ownership
+  fields remains accessible.
+
+- **MCP user identity** — `EmpathyMCPServer` accepts a
+  `user_id` parameter (defaults to OS login). Passed
+  through to `UnifiedMemory` for ownership-aware storage.
+
+- **Workspace-scoped access control** — `check_access()`
+  for INTERNAL classification now enforces cross-project
+  isolation via workspace metadata instead of a stub that
+  always granted access.
+
+- **Hook import restriction** — `HookExecutor` only allows
+  importing from `attune.*` modules, preventing arbitrary
+  module execution through hook configuration.
+
+### Fixed
+
+- **Path validation on state operations** —
+  `StateManager.load_state()` and `clear_state()` now
+  validate file paths with `_validate_file_path()` before
+  any I/O.
+
+- **Path validation on morning workflow** — Tech debt file
+  read in `morning_workflow()` now validates the path
+  before opening.
+
+### Changed
+
+- **Marketplace plugin version** bumped to 5.0.1.
+- **TASKS.md** cleaned up — moved completed items to Done,
+  deferred items to Someday.
+
 ## [5.0.0] - 2026-03-14
 
 ### Anthropic Best Practices Release

@@ -720,4 +720,53 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   finds. Appending a new line doesn't override earlier ones.
   Always replace, don't append.
 
+- **`pip-audit` fails on unpublished versions**: `pip-audit --strict`
+  with a local editable install (`pip install -e .`) fails if the
+  version in `pyproject.toml` doesn't exist on PyPI yet. The error
+  is `Dependency not found on PyPI and could not be audited:
+  attune-ai (5.0.0)`. This self-resolves after publishing. Not a
+  blocking CI failure for version bump PRs.
+
+- **`bg-[var(--primary)] bg-opacity-10` is invisible in dark mode**:
+  A 10% opacity tint of dark blue (`#1E40AF`) on a dark background
+  (`#0F172A`) produces near-zero contrast. Use `bg-[var(--background)]`
+  with a colored border instead, or switch to `gradient-accent`
+  (purple) which is brighter. This affected callout boxes and hero
+  sections on the attune-lite page.
+
+- **Claude Code plugins expect `plugin.json` at the repo root**:
+  Placing `plugin.json` inside a subdirectory like `.claude-plugin/`
+  causes install errors. Claude Code looks for `plugin.json` at the
+  top level of the repo, alongside `skills/` and `commands/`.
+
+- **`_validate_file_path` needed on reads too, not just writes**:
+  `load_state(user_id)` and `delete_state(user_id)` built paths
+  from user input without validation. Even though the existing
+  `save_state()` validated, the read and delete paths did not.
+  When adding path validation to a module, grep for ALL `open()`,
+  `.unlink()`, and `.read_text()` calls in the same file — not
+  just write operations.
+
+- **`importlib.import_module()` is an arbitrary code execution
+  vector**: The hook executor's `_execute_python()` fell through
+  to `importlib.import_module(module_path)` for any module not
+  in `_python_handlers`. This allowed importing `os`, `subprocess`,
+  or any installed package. Fix: allowlist module prefixes (e.g.,
+  `("attune.",)`) before the import call. Security boundaries
+  should not be user-configurable.
+
+- **Hardcoded `user_id` defeats ownership checks**: Adding
+  ownership validation to memory handlers is pointless if the
+  MCP server uses `user_id="mcp-session"` for everyone. Fix the
+  identity layer (Fix 5) before or alongside the authorization
+  layer (Fix 4). Use `os.getlogin()` with fallback for
+  non-interactive environments.
+
+- **Pre-commit black + unstaged files: re-stage after failure**:
+  When `git commit` fails because black reformatted staged files,
+  the reformatted files are in the working tree but unstaged. Run
+  `git add <files>` again before retrying the commit. This is
+  distinct from the stash conflict issue — here the hook succeeds
+  at formatting but the commit is rejected because files changed.
+
 <!-- attune-lessons-end -->
