@@ -5,6 +5,36 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.3] - 2026-03-19
+
+### Changed
+
+- **Plugin SDK compliance** — Updated plugin to Claude Code
+  SDK best practices: enhanced skill frontmatter with
+  argument-hint, disable-model-invocation for side-effect
+  skills, richer trigger descriptions for auto-invocation.
+- **Removed 3 legacy shortcut commands** —
+  `attune-review`, `attune-security`, `attune-test`
+  replaced by existing skills with auto-invocation.
+- **Clarified planning vs refactor-plan** — Removed
+  trigger overlap, each skill cross-references the other.
+
+### Added
+
+- **Portable plugin hooks** — `hooks/hooks.json` with
+  `security_guard.py` and `format_on_save.py` using
+  `${CLAUDE_PLUGIN_ROOT}` for distribution.
+- **25 plugin config validation tests** — JSON schema,
+  YAML frontmatter, version consistency, hook structure.
+
+### Fixed
+
+- **Missing h1 headings** in 4 SKILL.md files.
+- **Long lines** in memory-and-context/SKILL.md wrapped
+  to 80 characters.
+- **Incomplete Skills Reference** in attune.md — now
+  lists all 7 skills.
+
 ## [5.0.2] - 2026-03-18
 
 ### Fixed
