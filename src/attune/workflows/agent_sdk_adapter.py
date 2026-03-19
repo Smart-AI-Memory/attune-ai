@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+import claude_agent_sdk
+
 from .base import ModelTier
 from .data_classes import CostReport, NextAction, WorkflowResult, WorkflowStage
 
@@ -41,6 +43,83 @@ class AgentRunResult:
     num_turns: int = 0
     session_id: str | None = None
     is_error: bool = False
+
+
+def collect_agent_output(
+    message: Any,
+    assistant_parts: list[str],
+    result_parts: list[str],
+) -> AgentRunResult | None:
+    """Extract text and metadata from a single SDK message.
+
+    Call this inside ``async for message in claude_agent_sdk.query()``.
+    It collects text from both ``AssistantMessage`` (the actual agent
+    analysis) and ``ResultMessage`` (final metadata + optional summary).
+
+    Args:
+        message: A message yielded by ``claude_agent_sdk.query()``.
+        assistant_parts: Mutable list accumulating AssistantMessage text.
+        result_parts: Mutable list accumulating ResultMessage text.
+
+    Returns:
+        An AgentRunResult with metadata when a ResultMessage is received,
+        or None for other message types. The caller should set
+        ``run_result.result_text`` after the loop completes using
+        ``build_result_text(assistant_parts, result_parts)``.
+    """
+    if isinstance(message, claude_agent_sdk.AssistantMessage):
+        # Only collect top-level messages (not subagent tool calls)
+        if message.parent_tool_use_id is None:
+            for block in message.content:
+                if isinstance(block, claude_agent_sdk.types.TextBlock):
+                    assistant_parts.append(block.text)
+        return None
+
+    if isinstance(message, claude_agent_sdk.ResultMessage):
+        if message.result:
+            result_parts.append(message.result)
+        return AgentRunResult(
+            result_text="",
+            structured_output=message.structured_output,
+            total_cost_usd=message.total_cost_usd,
+            usage=message.usage,
+            duration_ms=message.duration_ms,
+            duration_api_ms=message.duration_api_ms,
+            num_turns=message.num_turns,
+            session_id=message.session_id,
+            is_error=message.is_error,
+        )
+
+    return None
+
+
+def build_result_text(
+    assistant_parts: list[str],
+    result_parts: list[str],
+) -> str:
+    """Combine collected text into the final result string.
+
+    Prefers ``ResultMessage.result`` when available (explicit summary).
+    Falls back to ``AssistantMessage`` text blocks (the full analysis).
+
+    Args:
+        assistant_parts: Text from AssistantMessage TextBlocks.
+        result_parts: Text from ResultMessage.result fields.
+
+    Returns:
+        Combined result text, or a default message if both are empty.
+    """
+    # Prefer ResultMessage.result if it has content
+    result_text = "\n".join(result_parts).strip()
+    if result_text:
+        return result_text
+
+    # Fall back to AssistantMessage text blocks
+    assistant_text = "\n\n".join(assistant_parts).strip()
+    if assistant_text:
+        return assistant_text
+
+    return "No results returned."
 
 
 # Budget defaults by depth level

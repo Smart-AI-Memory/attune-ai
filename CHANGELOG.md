@@ -5,6 +5,26 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.2] - 2026-03-18
+
+### Fixed
+
+- **Empty SDK workflow results** — All 15 Agent SDK workflows
+  now collect text from `AssistantMessage` content blocks in
+  addition to `ResultMessage.result`. Previously, when the SDK
+  returned `None` for `ResultMessage.result`, workflows
+  produced empty output despite successful execution. Added
+  `collect_agent_output()` and `build_result_text()` helpers
+  to `agent_sdk_adapter.py` to centralize message collection
+  across all workflows.
+
+### Added
+
+- **Project overview documentation** —
+  `docs/PROJECT_OVERVIEW.md` covering architecture, workflows,
+  model routing, wizards, plugin structure, CLI reference,
+  security controls, and configuration.
+
 ## [5.0.1] - 2026-03-17
 
 ### Security Hardening

@@ -24,6 +24,8 @@ import claude_agent_sdk
 from .agent_sdk_adapter import (
     AgentRunResult,
     AgentSDKResultAdapter,
+    build_result_text,
+    collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
 )
@@ -197,6 +199,7 @@ class BugPredictionWorkflow(BaseWorkflow):
         Returns:
             AgentRunResult with findings and SDK metadata.
         """
+        assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         async for message in claude_agent_sdk.query(
@@ -257,19 +260,10 @@ class BugPredictionWorkflow(BaseWorkflow):
                 },
             ),
         ):
-            if isinstance(message, claude_agent_sdk.ResultMessage):
-                result_parts.append(message.result or "")
-                run_result = AgentRunResult(
-                    result_text="",
-                    total_cost_usd=message.total_cost_usd,
-                    usage=message.usage,
-                    duration_ms=message.duration_ms,
-                    duration_api_ms=message.duration_api_ms,
-                    num_turns=message.num_turns,
-                    session_id=message.session_id,
-                    is_error=message.is_error,
-                )
-        run_result.result_text = "\n".join(result_parts) if result_parts else "No results returned."
+            sdk_result = collect_agent_output(message, assistant_parts, result_parts)
+            if sdk_result is not None:
+                run_result = sdk_result
+        run_result.result_text = build_result_text(assistant_parts, result_parts)
         return run_result
 
     def _error_result(self, message: str) -> WorkflowResult:
