@@ -1,6 +1,7 @@
 ---
 name: refactor-plan
-description: "Refactoring analysis. Triggers: 'refactor', 'code smell', 'clean up code', 'restructure', 'tech debt', 'improve code structure', 'simplify this', 'reduce complexity', 'modularize', 'extract method', 'DRY'."
+description: "Code-level refactoring analysis and roadmap generation. Detects code smells, duplication, complexity, coupling, and naming issues. For high-level feature or architecture planning, use the planning skill instead. Triggers on: refactor, restructure, code smell, clean up, tech debt, simplify, reduce complexity, modularize, extract method, DRY."
+argument-hint: "<path to analyze>"
 ---
 
 # Refactor Planning

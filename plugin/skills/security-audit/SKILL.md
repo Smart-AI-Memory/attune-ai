@@ -1,7 +1,10 @@
 ---
 name: security-audit
-description: "Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks"
+description: "Scan code for security vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks. Triggers on: security, vulnerability, audit, scan, CVE, CWE, secrets, injection, eval, exec, OWASP."
+argument-hint: "<path or directory to scan>"
 ---
+
+# Security Audit
 
 ## Scoping
 

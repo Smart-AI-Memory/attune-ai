@@ -1,13 +1,21 @@
 ---
 name: memory-and-context
-description: "Store, retrieve, search, and manage persistent memory across sessions"
+description: "Store, retrieve, search, and manage persistent memory across sessions. Includes empathy level modulation and security-classified pattern storage. Triggers on: memory, store, remember, retrieve, forget, pattern, empathy, context, classification."
+argument-hint: "<operation: store|retrieve|search|forget|empathy>"
+disable-model-invocation: true
 ---
 
 # Memory and Context
 
-Structured knowledge management, empathy modulation, and memory operations for attune-ai.
+Structured knowledge management, empathy modulation,
+and memory operations for attune-ai.
 
-attune-ai's memory system sits ABOVE Anthropic's native memory features. It provides security-classified storage, cross-agent pattern sharing, empathy-level modulation, and a structured pattern lifecycle that native memory does not offer. Use the decision table below to determine which system to use for a given task.
+attune-ai's memory system sits ABOVE Anthropic's native
+memory features. It provides security-classified storage,
+cross-agent pattern sharing, empathy-level modulation,
+and a structured pattern lifecycle that native memory
+does not offer. Use the decision table below to determine
+which system to use for a given task.
 
 ## When to Use This Skill
 
@@ -24,7 +32,10 @@ attune-ai's memory system sits ABOVE Anthropic's native memory features. It prov
 | "Adjust response depth based on user context" | -- | Empathy modulation |
 | "Track what this project uses" | Auto Memory | -- |
 
-The rule is simple: if Anthropic's native memory handles it, use that. If you need classification, cross-agent sharing, empathy modulation, or pattern lifecycle management, use attune-ai.
+The rule is simple: if Anthropic's native memory handles
+it, use that. If you need classification, cross-agent
+sharing, empathy modulation, or pattern lifecycle
+management, use attune-ai.
 
 ## Memory Operations
 
@@ -36,14 +47,25 @@ Store structured knowledge in attune-ai memory.
 
 **Parameters:**
 
-- **key** (required): Unique identifier for the stored data.
-- **value** (required): Content to store. Can be a string, dict, or structured object.
-- **classification** (optional): Security classification. One of `PUBLIC` (default), `INTERNAL`, or `SENSITIVE`. See Security Classification below.
-- **pattern_type** (optional): Category string for pattern matching and lifecycle management.
+- **key** (required): Unique identifier for the
+  stored data.
+- **value** (required): Content to store. Can be a
+  string, dict, or structured object.
+- **classification** (optional): Security
+  classification. One of `PUBLIC` (default),
+  `INTERNAL`, or `SENSITIVE`. See Security
+  Classification below.
+- **pattern_type** (optional): Category string for
+  pattern matching and lifecycle management.
 
-**When to use:** Cross-agent patterns, security-classified data, structured knowledge that must persist beyond a single session or be shared across agents.
+**When to use:** Cross-agent patterns,
+security-classified data, structured knowledge that
+must persist beyond a single session or be shared
+across agents.
 
-**When NOT to use:** Simple preferences belong in CLAUDE.md. Conversation history is handled by native Session Memory.
+**When NOT to use:** Simple preferences belong in
+CLAUDE.md. Conversation history is handled by native
+Session Memory.
 
 **Example:**
 
@@ -72,10 +94,13 @@ Search memory for patterns matching a query.
 
 **Parameters:**
 
-- **query** (required): Search string to match against stored keys and values.
-- **pattern_type** (optional): Filter results to a specific pattern type category.
+- **query** (required): Search string to match
+  against stored keys and values.
+- **pattern_type** (optional): Filter results to a
+  specific pattern type category.
 
-**Returns:** A list of matching memory entries, ranked by relevance.
+**Returns:** A list of matching memory entries,
+ranked by relevance.
 
 ### memory_forget
 
@@ -84,14 +109,17 @@ Remove data from memory.
 **Parameters:**
 
 - **key** (required): The key or pattern_id to remove.
-- **scope** (optional): Which storage layer to remove from. One of:
-  - `"session"` -- Remove from short-term session storage only.
-  - `"persistent"` -- Remove from long-term persistent storage only.
-  - `"all"` -- Remove from both layers. This is the default.
+- **scope** (optional): Which storage layer to remove
+  from. One of:
+  - `"session"` -- Short-term session storage only.
+  - `"persistent"` -- Long-term persistent storage only.
+  - `"all"` -- Both layers. This is the default.
 
 ## Empathy Levels
 
-attune-ai uses 5 empathy levels that modulate response depth and proactivity. Each level maps to a named class in the framework.
+attune-ai uses 5 empathy levels that modulate response
+depth and proactivity. Each level maps to a named class
+in the framework.
 
 | Level | Class Name | Behavior |
 |-------|------------|----------|
@@ -101,11 +129,14 @@ attune-ai uses 5 empathy levels that modulate response depth and proactivity. Ea
 | 4 | Level4Anticipatory | Predict future needs. Prepare for likely next steps. Surface relevant context before it is requested. |
 | 5 | Level5Systems | Build structures that help at scale. Design for growth. Create reusable patterns, automation, and frameworks. |
 
-Level 2-3 is appropriate for most development tasks. Reserve Level 4-5 for architecture work, release planning, or explicit user request.
+Level 2-3 is appropriate for most development tasks.
+Reserve Level 4-5 for architecture work, release
+planning, or explicit user request.
 
 ### empathy_get_level
 
-Returns the current empathy level (integer 1-5) for this session.
+Returns the current empathy level (integer 1-5) for
+this session.
 
 **Parameters:** None.
 
@@ -125,7 +156,10 @@ empathy_set_level(level=3)  # Switch to proactive mode
 
 ## Context Operations
 
-Session-scoped key-value store for transient state. Context values are discarded when the session ends. Use these for temporary coordination data that does not need to persist.
+Session-scoped key-value store for transient state.
+Context values are discarded when the session ends.
+Use these for temporary coordination data that does
+not need to persist.
 
 ### context_get
 
@@ -155,13 +189,19 @@ file = context_get(key="current_review_file")
 
 ## Security Classification
 
-When storing data with `memory_store`, choose the appropriate classification level.
+When storing data with `memory_store`, choose the
+appropriate classification level.
 
-- **PUBLIC**: Safe to share across agents and sessions. No special handling. This is the default.
-- **INTERNAL**: Limited to current project or team scope. Not shared externally.
-- **SENSITIVE**: PII is scrubbed before storage. Data is encrypted with AES-256-GCM. All access is audit logged.
+- **PUBLIC**: Safe to share across agents and sessions.
+  No special handling. This is the default.
+- **INTERNAL**: Limited to current project or team
+  scope. Not shared externally.
+- **SENSITIVE**: PII is scrubbed before storage. Data
+  is encrypted with AES-256-GCM. All access is audit
+  logged.
 
-Choose the minimum classification that meets your needs. Over-classifying creates unnecessary overhead.
+Choose the minimum classification that meets your
+needs. Over-classifying creates unnecessary overhead.
 
 **Example -- storing a security finding:**
 
@@ -178,11 +218,19 @@ memory_store(
 
 Patterns progress through three stages:
 
-1. **Staged**: Initial storage, awaiting validation. Created by any `memory_store` call with a `pattern_type`.
-2. **Validated**: Confirmed useful through repeated access (automatic) or explicit promotion. The system tracks access frequency and confidence scores.
-3. **Promoted**: Available in the shared library for cross-agent access. Other agents and sessions can discover and use promoted patterns.
+1. **Staged**: Initial storage, awaiting validation.
+   Created by any `memory_store` call with a
+   `pattern_type`.
+2. **Validated**: Confirmed useful through repeated
+   access (automatic) or explicit promotion. The system
+   tracks access frequency and confidence scores.
+3. **Promoted**: Available in the shared library for
+   cross-agent access. Other agents and sessions can
+   discover and use promoted patterns.
 
-The system handles lifecycle transitions automatically based on confidence thresholds and usage frequency. You do not need to manually promote patterns in most cases.
+The system handles lifecycle transitions automatically
+based on confidence thresholds and usage frequency. You
+do not need to manually promote patterns in most cases.
 
 **Creating a staged pattern:**
 
@@ -194,17 +242,21 @@ memory_store(
 )
 ```
 
-This pattern starts as Staged. After it is retrieved or matched 5+ times with positive outcomes, the system promotes it to Validated, then eventually to Promoted.
+This pattern starts as Staged. After it is retrieved
+or matched 5+ times with positive outcomes, the system
+promotes it to Validated, then eventually to Promoted.
 
 ## Redis Upgrade Path
 
-By default, attune-ai uses in-memory storage. All features described in this skill work without Redis.
+By default, attune-ai uses in-memory storage. All
+features described in this skill work without Redis.
 
 **What Redis adds:**
 
 - Multi-agent coordination via pub/sub channels.
 - Sub-millisecond lookups for large memory stores.
-- Shared state across sessions and agents running in parallel.
+- Shared state across sessions and agents running in
+  parallel.
 - Pattern persistence with configurable TTL.
 
 **Upgrade:**
@@ -213,19 +265,32 @@ By default, attune-ai uses in-memory storage. All features described in this ski
 pip install attune-ai[memory]
 ```
 
-Zero configuration needed -- connects to `localhost:6379` by default. For custom configuration, set the `ATTUNE_REDIS_URL` environment variable:
+Zero configuration needed -- connects to
+`localhost:6379` by default. For custom configuration,
+set the `ATTUNE_REDIS_URL` environment variable:
 
 ```bash
 export ATTUNE_REDIS_URL="redis://custom-host:6380/0"
 ```
 
-If Redis disconnects mid-session, the system falls back to in-memory storage gracefully. No data loss occurs for the current session; cross-agent coordination pauses until reconnection.
+If Redis disconnects mid-session, the system falls
+back to in-memory storage gracefully. No data loss
+occurs for the current session; cross-agent
+coordination pauses until reconnection.
 
 ## Anti-Patterns
 
-- DO NOT use `memory_store` for simple preferences -- use CLAUDE.md instead.
-- DO NOT push Redis on developers who do not need multi-agent coordination.
-- DO NOT store conversation history -- native Session Memory handles this.
-- DO NOT set empathy level higher than needed -- Level 2-3 is appropriate for most development tasks.
-- DO NOT over-classify data as SENSITIVE -- use PUBLIC unless the data genuinely contains PII or credentials.
-- DO NOT bypass the pattern lifecycle by manually marking patterns as Promoted -- let the confidence system validate them.
+- DO NOT use `memory_store` for simple preferences --
+  use CLAUDE.md instead.
+- DO NOT push Redis on developers who do not need
+  multi-agent coordination.
+- DO NOT store conversation history -- native Session
+  Memory handles this.
+- DO NOT set empathy level higher than needed --
+  Level 2-3 is appropriate for most tasks.
+- DO NOT over-classify data as SENSITIVE -- use PUBLIC
+  unless the data genuinely contains PII or
+  credentials.
+- DO NOT bypass the pattern lifecycle by manually
+  marking patterns as Promoted -- let the confidence
+  system validate them.

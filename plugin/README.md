@@ -2,11 +2,11 @@
 
 Developer workflow tools for Claude Code. Run security
 audits, code reviews, test generation, performance
-analysis, and release preparation through a single
-`/attune` command that routes to the right workflow
-based on what you describe.
+analysis, and release preparation through `/attune` or
+let the plugin's skills auto-invoke based on what you
+describe.
 
-**Version:** 3.0.0 | **License:** Apache 2.0
+**Version:** 5.0.2 | **License:** Apache 2.0
 
 ## Installation
 
@@ -16,9 +16,10 @@ pip install attune-ai
 
 ## Usage
 
-Type `/attune` in any Claude Code session. Describe
-what you need and the plugin routes you to the right
-workflow:
+### Via /attune command
+
+Type `/attune` in any Claude Code session for guided
+routing:
 
 ```text
 /attune                    # guided — asks what you need
@@ -29,21 +30,44 @@ workflow:
 /attune release            # release preparation
 ```
 
-Each workflow uses tiered model routing — fast tasks
-run on Claude Haiku, analysis on Claude Sonnet, and
-deep reasoning on Claude Opus — so you spend tokens
-where they matter.
+### Via skill auto-invocation
+
+The plugin's skills trigger automatically based on what
+you describe. Just ask naturally:
+
+- "scan this code for vulnerabilities" — triggers
+  `security-audit`
+- "review the quality of src/" — triggers `code-quality`
+- "generate tests for this module" — triggers
+  `workflow-orchestration`
+- "prepare for release" — triggers `release-prep`
+- "store this pattern" — triggers `memory-and-context`
+
+Skills are namespaced as `/attune-ai:skill-name` when
+invoked directly (e.g., `/attune-ai:security-audit`).
 
 ## What It Does
 
-| Command | What Happens |
-|---------|--------------|
+| Workflow | What Happens |
+| -------- | ------------ |
 | `/attune security` | Scans for eval/exec, path traversal, hardcoded secrets, injection risks |
 | `/attune review` | Reviews code for quality, correctness, and security issues |
 | `/attune tests` | Generates unit tests with edge cases and security coverage |
 | `/attune perf` | Identifies bottlenecks, memory issues, and optimization opportunities |
 | `/attune release` | Runs health checks, changelog validation, and dependency audits |
 | `/attune bugs` | Predicts likely bugs using pattern analysis and complexity metrics |
+
+## Skills
+
+| Skill | Description |
+| ----- | ----------- |
+| `security-audit` | Security vulnerability scanning |
+| `code-quality` | Code review and bug prediction |
+| `planning` | Feature, TDD, refactoring, and architecture planning |
+| `refactor-plan` | Refactoring analysis and roadmap |
+| `release-prep` | Pre-release health checks (manual invocation only) |
+| `memory-and-context` | Persistent memory and empathy modulation (manual invocation only) |
+| `workflow-orchestration` | Routes to the right workflow based on intent |
 
 ## When to Use
 
@@ -76,11 +100,6 @@ pip show attune-ai
 ```
 
 If missing, install it and restart Claude Code.
-
-### Command not found for /attune
-
-Ensure the plugin is installed in your Claude Code
-plugin directory. Run `claude plugin list` to verify.
 
 ### Workflows return empty results
 

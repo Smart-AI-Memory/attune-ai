@@ -1,7 +1,10 @@
 ---
 name: workflow-orchestration
-description: "Run automated analysis workflows — security, reviews, tests, performance, and release prep"
+description: "Run automated analysis workflows including security audits, code reviews, test generation, performance analysis, bug prediction, and release preparation. Routes to the right workflow based on intent. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, predict."
+argument-hint: "<workflow: security, review, tests, perf, release, bugs>"
 ---
+
+# Workflow Orchestration
 
 ## Scoping
 

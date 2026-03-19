@@ -1,11 +1,7 @@
 ---
 name: attune
-description: "Developer workflows for Claude Code — security, reviews, tests, and more"
+description: "Developer workflows for Claude Code — security audits, code reviews, test generation, performance analysis, and release preparation. Triggers on: attune, workflow, security, review, tests, perf, release, bugs, memory, empathy, setup."
 argument-hint: "<what you need help with>"
-category: primary
-aliases: [a]
-tags: [navigation, workflows, security, review, testing]
-version: "3.0.0"
 question:
   header: "attune-ai"
   question: "What are you trying to accomplish?"
@@ -98,6 +94,10 @@ If the MCP server is not responding, trigger the setup-guide agent to diagnose a
 
 | Skill | Triggers |
 | ----- | -------- |
+| security-audit | security, vulnerability, audit, scan, CVE, CWE |
+| code-quality | review, quality, analyze, lint, bugs, predict |
+| planning | plan, feature, architecture, design, TDD, strategy |
+| refactor-plan | refactor, restructure, code smell, tech debt, simplify |
+| release-prep | release, publish, ship, deploy, version bump, changelog |
 | memory-and-context | memory, store, retrieve, empathy, pattern, classification |
-| workflow-orchestration | workflow, run, execute, agent, team, release, security |
-| refactor-plan | refactor, restructure, architecture, plan |
+| workflow-orchestration | workflow, run, execute, security, review, test, perf |

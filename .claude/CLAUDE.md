@@ -769,4 +769,58 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   distinct from the stash conflict issue — here the hook succeeds
   at formatting but the commit is rejected because files changed.
 
+- **New security features need dedicated tests before release**:
+  v5.0.1 shipped with 4 new security controls (rate limiter,
+  ownership checks, module prefix restriction, workspace
+  isolation) — all with zero effective test coverage despite
+  15,555 tests passing. The deep review caught this after
+  publishing to PyPI. Run `/deep-review` on changed files
+  BEFORE `/release prep`, not after.
+
+- **SSRF in webhook handlers is easy to miss**: The
+  `_execute_webhook()` method in `executor.py` accepts
+  arbitrary URLs without IP blocklist, scheme validation, or
+  DNS resolution checks (CWE-918). Webhook endpoints need the
+  same validation rigor as file paths — add
+  `_validate_webhook_url()` alongside `_validate_file_path()`.
+
+- **`ResultMessage.result` is often `None` — capture
+  `AssistantMessage` text too**: All 15 SDK-native workflows
+  only checked `ResultMessage.result` for the agent's output.
+  But `ResultMessage` is a metadata-only final message; its
+  `result` field is `str | None` and frequently `None`. The
+  actual analysis text lives in `AssistantMessage.content`
+  `TextBlock` entries emitted throughout the conversation.
+  Fix: `collect_agent_output()` and `build_result_text()` in
+  `agent_sdk_adapter.py` now collect from both message types,
+  preferring `ResultMessage.result` when present and falling
+  back to `AssistantMessage` text. Filter with
+  `parent_tool_use_id is None` to skip subagent tool-call
+  messages.
+
+- **Exploration agents fabricate names — verify against
+  source**: When generating docs, the Explore agent fabricated
+  10 of 14 agent template names (e.g. "bug_predictor" instead
+  of actual "test_coverage_analyzer"). Always `grep` source
+  files for IDs, class names, and counts before trusting
+  agent-generated inventories. This applies to any generated
+  content that enumerates codebase entities.
+
+- **Skill frontmatter has a strict allowlist**: Claude Code
+  skills only support these YAML frontmatter fields:
+  `name`, `description`, `argument-hint`,
+  `disable-model-invocation`, `user-invocable`,
+  `compatibility`, `license`, `metadata`. Fields like
+  `allowed-tools`, `model`, `context`, `agent`, and `hooks`
+  are NOT valid for skills (they may apply to agents or
+  commands). The IDE linter catches these — always check
+  diagnostics after editing SKILL.md frontmatter.
+
+- **Commands are NOT namespaced in plugins, skills ARE**:
+  A command named `attune` in `commands/attune.md` is
+  invoked as `/attune` directly. A skill named
+  `workflow-orchestration` is invoked as
+  `/attune-ai:workflow-orchestration`. Keep a command as
+  the short entry point when UX matters.
+
 <!-- attune-lessons-end -->

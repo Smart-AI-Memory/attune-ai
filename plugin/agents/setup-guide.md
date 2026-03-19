@@ -1,6 +1,9 @@
 ---
 name: setup-guide
-description: "Detects environment prerequisites and guides installation of attune-ai"
+description: "Detects environment prerequisites and guides installation of attune-ai, Redis, and MCP server configuration."
+tools: Bash, Read
+model: haiku
+maxTurns: 10
 ---
 
 ## Purpose
