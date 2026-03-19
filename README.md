@@ -8,7 +8,7 @@ with Anthropic best practices.**
 15 multi-agent workflows for code review, security,
 testing, and release — each backed by specialized Claude
 subagents with intelligent model routing, budget controls,
-and structured output. 30 MCP tools. 7 auto-invoking
+and structured output. 30 MCP tools. 10 auto-invoking
 skills. Just type `/attune` and go.
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
@@ -38,7 +38,7 @@ pip install 'attune-ai[developer]'
 | --- | --- |
 | **15 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
 | **30 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **7 Auto-Invoking Skills** | Describe what you need and Claude triggers the right skill automatically |
+| **10 Auto-Invoking Skills** | Describe what you need and Claude triggers the right skill automatically |
 | **Anthropic Best Practices** | System prompt separation, per-agent model routing, budget safety nets, structured output |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
 | **Intelligent Cost Routing** | Opus for security, Sonnet for analysis, Haiku for scanning — right model per task |
@@ -59,7 +59,7 @@ documentation, and security hardening across the stack.
 | **Plugin SDK compliance** | Skills use SDK-standard frontmatter (`argument-hint`, `disable-model-invocation`), auto-invocation triggers |
 | **30 MCP tools wired** | Every tool reachable from plugin skills and commands (was 17) |
 | **Portable hooks** | PreToolUse security guard + PostToolUse formatter distributed with plugin via `${CLAUDE_PLUGIN_ROOT}` |
-| **7 auto-invoking skills** | Claude triggers the right skill based on what you describe |
+| **10 auto-invoking skills** | Claude triggers the right skill based on what you describe |
 | **Side-effect protection** | `release-prep` and `memory-and-context` require explicit invocation |
 
 <details>
@@ -67,7 +67,7 @@ documentation, and security hardening across the stack.
 
 ### v5.0.2 — SDK Workflow Fix
 
-Fixed empty results from all 15 Agent SDK workflows.
+Fixed all 15 Agent SDK workflows.
 Added `collect_agent_output()` to centralize message
 collection from `AssistantMessage` content blocks.
 
@@ -105,6 +105,9 @@ need to memorize commands.
 | ----- | ----------- | ------------ |
 | `security-audit` | "security", "vulnerability", "scan" | No |
 | `code-quality` | "review", "quality", "bugs" | No |
+| `doc-gen` | "generate docs", "documentation", "docstrings" | No |
+| `smart-test` | "test gaps", "generate tests", "coverage" | No |
+| `fix-test` | "fix test", "broken test", "test failure" | Yes |
 | `workflow-orchestration` | "workflow", "analyze", "test" | No |
 | `planning` | "plan", "feature", "architecture" | No |
 | `refactor-plan` | "refactor", "tech debt", "simplify" | No |
@@ -309,7 +312,7 @@ Score: 95/100 | Cost: $0.03 | Turns: 12
 | **Budget controls** | Depth-based caps | None | None | SaaS pricing |
 | **Multi-agent teams** | 2-6 agents per workflow | Yes | No | No |
 | **MCP integration** | 30 native tools | No | No | No |
-| **Auto-invoking skills** | 7 with trigger descriptions | No | No | No |
+| **Auto-invoking skills** | 10 with trigger descriptions | No | No | No |
 | **Portable security hooks** | PreToolUse + PostToolUse | No | No | No |
 | **Structured output** | JSON schema with fallback | Manual | No | No |
 

@@ -105,6 +105,9 @@ If the MCP server is not responding, trigger the setup-guide agent to diagnose a
 | ----- | -------- |
 | security-audit | security, vulnerability, audit, scan, CVE, CWE |
 | code-quality | review, quality, analyze, lint, bugs, predict |
+| doc-gen | generate docs, documentation, docstrings, README, API docs |
+| smart-test | generate tests, test gaps, coverage, untested, smart test |
+| fix-test | fix test, broken test, test failure, debug test |
 | planning | plan, feature, architecture, design, TDD, strategy |
 | refactor-plan | refactor, restructure, code smell, tech debt, simplify |
 | release-prep | release, publish, ship, deploy, version bump, changelog |
