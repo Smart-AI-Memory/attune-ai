@@ -1,6 +1,6 @@
 # Attune AI — Project Overview
 
-**Version:** 5.0.3 | **License:** Apache 2.0 |
+**Version:** 5.1.0 | **License:** Apache 2.0 |
 **Python:** 3.10+ | **PyPI:** `attune-ai`
 
 Attune AI is a production-ready AI workflow operating system

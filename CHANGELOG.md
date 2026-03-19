@@ -5,35 +5,68 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.0.3] - 2026-03-19
+## [5.1.0] - 2026-03-19
 
-### Changed
+### Highlights
 
-- **Plugin SDK compliance** — Updated plugin to Claude Code
-  SDK best practices: enhanced skill frontmatter with
-  argument-hint, disable-model-invocation for side-effect
-  skills, richer trigger descriptions for auto-invocation.
-- **Removed 3 legacy shortcut commands** —
-  `attune-review`, `attune-security`, `attune-test`
-  replaced by existing skills with auto-invocation.
-- **Clarified planning vs refactor-plan** — Removed
-  trigger overlap, each skill cross-references the other.
+v5.1.0 completes the Anthropic SDK alignment that began
+in v5.0.0. Full plugin SDK compliance, all 30 MCP tools
+wired through skills, portable security hooks, security
+hardening, and rewritten documentation.
 
 ### Added
 
+- **30 MCP tools fully wired** — Every tool reachable
+  from plugin skills and commands (up from 17). Added
+  `refactor_plan`, `simplify_code`, `health_check`,
+  `dependency_check`, `secure_release`, `test_audit`,
+  `test_gen_parallel`, `doc_audit`, `doc_gen`,
+  `doc_orchestrator`, `auth_status`, `auth_recommend`,
+  `research_synthesis` to existing skills.
 - **Portable plugin hooks** — `hooks/hooks.json` with
   `security_guard.py` and `format_on_save.py` using
   `${CLAUDE_PLUGIN_ROOT}` for distribution.
 - **25 plugin config validation tests** — JSON schema,
   YAML frontmatter, version consistency, hook structure.
+- **Full README rewrite** — Key Features table at top,
+  30 MCP tools, 7 skills, setup commands, updated
+  comparison table.
+
+### Changed
+
+- **Plugin SDK compliance** — Skills use SDK-standard
+  frontmatter (`argument-hint`, `disable-model-invocation`
+  for side-effect skills, richer trigger descriptions for
+  auto-invocation).
+- **Removed 3 legacy shortcut commands** —
+  `attune-review`, `attune-security`, `attune-test`
+  replaced by existing skills with auto-invocation.
+- **Clarified planning vs refactor-plan** — Removed
+  trigger overlap, each skill cross-references the other.
+- **SECURITY.md updated** — Version support 2.0.x to
+  5.x, added v5.0.1–5.1.0 security features, fixed stale
+  `attune_llm` import reference.
+- **Archived 5 stale root-level docs** to docs/archive/.
 
 ### Fixed
 
+- **Empathy tool name mismatch** — `empathy_get_level` /
+  `empathy_set_level` corrected to `attune_get_level` /
+  `attune_set_level` in command and skill docs.
+- **Empty SDK workflow results** (from v5.0.2) — All 15
+  workflows now collect `AssistantMessage` text via
+  `collect_agent_output()`.
 - **Missing h1 headings** in 4 SKILL.md files.
-- **Long lines** in memory-and-context/SKILL.md wrapped
-  to 80 characters.
-- **Incomplete Skills Reference** in attune.md — now
-  lists all 7 skills.
+- **Gitignore blocking plugin/skills/planning/** — Scoped
+  broad `planning/` rule to root-only.
+
+### Security (from v5.0.1)
+
+- Memory ownership checks (`created_by` validation)
+- Workspace isolation for INTERNAL classification
+- MCP rate limiter (60 calls/min per tool)
+- Hook import guard (only `attune.*` modules)
+- Path validation on state operations
 
 ## [5.0.2] - 2026-03-18
 
