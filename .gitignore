@@ -215,7 +215,8 @@ docs/internal/evals/
 
 # Dev scripts (local only)
 /scripts/profile_workflows.py
-planning/
+/planning/
+!plugin/skills/planning/
 
 # Healthcare plugin (moved to separate fork)
 attune_healthcare/
