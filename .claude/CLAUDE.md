@@ -842,4 +842,26 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   unreachable from any skill until explicitly wired into
   existing skill documentation.
 
+- **Mixin classes inherit `self._workspace_root` at runtime,
+  not at definition time**: `WorkflowHandlersMixin` has no
+  `__init__` and no `_workspace_root` attribute, but it works
+  because it's mixed into `EmpathyMCPServer` which sets
+  `_workspace_root` in its constructor. When adding validation
+  to a mixin, use `self._workspace_root` freely — but document
+  the expected host attribute in the mixin docstring.
+
+- **`PurePosixPath` strips trailing slashes**: The test fixture
+  `_passthrough` returns `PurePosixPath(path)`, which strips
+  trailing slashes (`"src/"` → `"src"`). Tests asserting exact
+  path strings passed through `_validate_file_path` must account
+  for this. Use `in ("src/", "src")` or check `call_args.kwargs`
+  instead of `assert_awaited_once_with`.
+
+- **Deep review false positives — verify before acting**: The
+  quality pass reported `summary_index.py` at 0% coverage and
+  `test_runner_helpers.py` missing docstrings. Both were wrong —
+  `summary_index.py` had 25 tests in `tests/memory/`, and all
+  helpers had docstrings. Always re-verify agent findings against
+  the actual codebase before planning fixes.
+
 <!-- attune-lessons-end -->
