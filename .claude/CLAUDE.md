@@ -1,4 +1,4 @@
-# Attune AI Framework v5.1.0
+# Attune AI Framework v5.1.1
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 

@@ -5,14 +5,23 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.1.0] - 2026-03-19
+## [5.1.1] - 2026-03-19
 
 ### Highlights
 
-v5.1.0 completes the Anthropic SDK alignment that began
+v5.1.1 completes the Anthropic SDK alignment that began
 in v5.0.0. Full plugin SDK compliance, all 30 MCP tools
-wired through skills, portable security hooks, security
+wired through 10 skills, portable security hooks, security
 hardening, and rewritten documentation.
+
+### Added (5.1.1)
+
+- **3 new skills from attune-lite** — `doc-gen` (documentation
+  generation), `smart-test` (test gap analysis and generation),
+  `fix-test` (auto-diagnose and fix failing tests). Plugin now
+  has 10 skills total.
+
+## [5.1.0] - 2026-03-19
 
 ### Added
 

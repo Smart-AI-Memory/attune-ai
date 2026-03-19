@@ -47,11 +47,11 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v5.1.0
+## What's New in v5.1.1
 
-v5.1.0 completes the Anthropic SDK alignment that began
+v5.1.1 completes the Anthropic SDK alignment that began
 in v5.0.0 — full plugin SDK compliance, all 30 MCP tools
-wired through skills, portable security hooks, rewritten
+wired through 10 skills, portable security hooks, rewritten
 documentation, and security hardening across the stack.
 
 | Feature | What It Does |

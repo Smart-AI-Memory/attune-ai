@@ -6,7 +6,7 @@ analysis, and release preparation through `/attune` or
 let the plugin's skills auto-invoke based on what you
 describe.
 
-**Version:** 5.1.0 | **License:** Apache 2.0
+**Version:** 5.1.1 | **License:** Apache 2.0
 
 ## Installation
 
