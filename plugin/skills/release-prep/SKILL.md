@@ -18,15 +18,32 @@ Before running, ask:
      versioning)
    - Specific: Single check (e.g., just changelog)
 
+## MCP Tools
+
+| Tool | What It Does |
+| ---- | ------------ |
+| `release_prep` | Full release readiness (4-agent team) |
+| `health_check` | Project health score (tests + lint + coverage) |
+| `dependency_check` | Dependency audit and vulnerability scan |
+| `secure_release` | Full release pipeline with security gates |
+
 ## Execution
 
-Call the `release_prep` MCP tool:
+Call the `release_prep` MCP tool for a full assessment:
 
 ```
 release_prep(path="<project root>")
 ```
 
-This orchestrates a 4-agent team:
+For targeted checks, use individual tools:
+
+```
+health_check(path="<project root>")
+dependency_check(path="<project root>")
+secure_release(path="<project root>")
+```
+
+The full `release_prep` orchestrates a 4-agent team:
 
 - **Security Agent** — runs security_audit, flags
   vulnerabilities that block release

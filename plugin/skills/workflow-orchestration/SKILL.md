@@ -1,7 +1,7 @@
 ---
 name: workflow-orchestration
-description: "Run automated analysis workflows including security audits, code reviews, test generation, performance analysis, bug prediction, and release preparation. Routes to the right workflow based on intent. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, predict."
-argument-hint: "<workflow: security, review, tests, perf, release, bugs>"
+description: "Run automated analysis workflows including security audits, code reviews, test generation, performance analysis, bug prediction, documentation, and release preparation. Routes to the right workflow based on intent. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, predict, docs, documentation, audit."
+argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 ---
 
 # Workflow Orchestration
@@ -17,14 +17,36 @@ Based on the answer, route to the appropriate workflow.
 
 ## Workflows
 
+### Analysis
+
 | Workflow | MCP Tool | What It Does |
-|----------|----------|--------------|
-| Security Audit | security_audit | Scans for vulnerabilities, dangerous patterns, secrets |
-| Code Review | code_review | Quality, correctness, and security analysis |
-| Bug Prediction | bug_predict | Pattern analysis and likely bug detection |
-| Test Generation | test_generation | Generates unit tests with edge cases |
-| Performance Audit | performance_audit | Bottleneck detection and optimization |
-| Release Prep | release_prep | Health checks, changelog, dependency audits |
+| -------- | -------- | ------------ |
+| Security Audit | `security_audit` | Scans for vulnerabilities, dangerous patterns, secrets |
+| Code Review | `code_review` | Quality, correctness, and security analysis |
+| Bug Prediction | `bug_predict` | Pattern analysis and likely bug detection |
+| Performance Audit | `performance_audit` | Bottleneck detection and optimization |
+
+### Testing
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Test Generation | `test_generation` | Generates unit tests with edge cases |
+| Test Audit | `test_audit` | Coverage audit and gap detection |
+| Parallel Test Gen | `test_gen_parallel` | Batch test generation for 10-50 modules |
+
+### Documentation
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Doc Audit | `doc_audit` | Documentation freshness and gap analysis |
+| Doc Generation | `doc_gen` | Generate documentation for a module |
+| Doc Orchestrator | `doc_orchestrator` | Full documentation maintenance pipeline |
+
+### Release
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Release Prep | `release_prep` | Health checks, changelog, dependency audits |
 
 ## Execution
 
@@ -33,6 +55,8 @@ Route to the matching MCP tool with the scoped path:
 ```
 security_audit(path="<user-specified path>")
 code_review(path="<user-specified path>")
+test_audit(path="<user-specified path>")
+doc_audit(path="<user-specified path>")
 ```
 
 ## Output Format

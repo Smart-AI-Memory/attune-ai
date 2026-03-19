@@ -52,9 +52,13 @@ When invoked with arguments, EXECUTE the corresponding action:
 | `retrieve` | Ask for key, then call `memory_retrieve` MCP tool |
 | `search` | Ask for query, then call `memory_search` MCP tool |
 | `forget` | Ask for key, then call `memory_forget` MCP tool |
-| `empathy` | Call `empathy_get_level`, offer to change with `empathy_set_level` |
+| `empathy` | Call `attune_get_level`, offer to change with `attune_set_level` |
 | `setup` | Trigger setup-guide agent |
 | `update` | Check version via `version_check` module, offer upgrade if available |
+| `auth` | Call `auth_status` to show current auth strategy |
+| `docs` | Ask for path, then call `doc_gen` MCP tool |
+| `simplify` | Ask for path, then call `simplify_code` MCP tool |
+| `health` | Call `health_check` MCP tool with current project path |
 
 ## Natural Language Routing
 
@@ -68,11 +72,16 @@ When invoked with arguments, EXECUTE the corresponding action:
 | "bug", "predict", "risk" | bug_predict |
 | "memory", "store", "remember", "pattern" | memory-and-context skill |
 | "forget", "remove", "delete memory" | memory_forget |
-| "empathy", "level", "verbosity" | empathy_get_level / empathy_set_level |
+| "empathy", "level", "verbosity" | attune_get_level / attune_set_level |
 | "setup", "install", "configure", "redis" | setup-guide agent |
 | "version", "update", "upgrade" | version check |
 | "cost", "spend", "usage", "telemetry" | telemetry_stats |
 | "agents", "status" | agent heartbeat status |
+| "auth", "authentication", "provider", "api key" | auth_status / auth_recommend |
+| "docs", "documentation", "generate docs" | doc_gen / doc_audit |
+| "simplify", "reduce complexity" | simplify_code |
+| "health", "project health" | health_check |
+| "dependencies", "deps", "vulnerabilities" | dependency_check |
 
 ## No-Argument Behavior
 

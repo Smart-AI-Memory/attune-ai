@@ -133,14 +133,14 @@ Level 2-3 is appropriate for most development tasks.
 Reserve Level 4-5 for architecture work, release
 planning, or explicit user request.
 
-### empathy_get_level
+### attune_get_level
 
 Returns the current empathy level (integer 1-5) for
 this session.
 
 **Parameters:** None.
 
-### empathy_set_level
+### attune_set_level
 
 Set the empathy level for this session.
 
@@ -151,7 +151,7 @@ Set the empathy level for this session.
 **Example:**
 
 ```python
-empathy_set_level(level=3)  # Switch to proactive mode
+attune_set_level(level=3)  # Switch to proactive mode
 ```
 
 ## Context Operations
