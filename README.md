@@ -5,7 +5,7 @@
 **Production-ready AI workflows for Claude Code, aligned
 with Anthropic best practices.**
 
-15 multi-agent workflows for code review, security,
+18 multi-agent workflows for code review, security,
 testing, and release — each backed by specialized Claude
 subagents with intelligent model routing, budget controls,
 and structured output. 30 MCP tools. 10 auto-invoking
@@ -36,7 +36,7 @@ pip install 'attune-ai[developer]'
 
 | | |
 | --- | --- |
-| **15 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
+| **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
 | **30 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
 | **10 Auto-Invoking Skills** | Describe what you need and Claude triggers the right skill automatically |
 | **Anthropic Best Practices** | System prompt separation, per-agent model routing, budget safety nets, structured output |
@@ -47,7 +47,24 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v5.1.1
+## What's New in v5.1.2
+
+v5.1.2 fixes 3 security vulnerabilities (CWE-22 path
+traversal in MCP workflow handlers and wizard YAML loader,
+CWE-918 SSRF in webhook executor), adds 73 new tests,
+and updates workflow/skill counts to match the registry.
+
+| Feature | What It Does |
+| ------- | ------------ |
+| **MCP path validation** | All 11 workflow handler mixin methods now validate paths via `_validate_file_path()` with workspace containment |
+| **Wizard YAML security** | `ConfigDrivenWizard.from_yaml()` validates paths before opening files |
+| **Webhook SSRF protection** | `_execute_webhook()` validates URLs via `_validate_webhook_url()` before HTTP requests |
+| **73 new tests** | Security tests for path traversal, SSRF, rate limiter, and auth CLI (0% → covered) |
+| **Complexity reduction** | Extracted helpers from 80-line `_gather_project_context()` |
+| **Accurate counts** | README updated: 18 workflows, 10 skills, 30 MCP tools |
+
+<details>
+<summary>v5.1.1</summary>
 
 v5.1.1 completes the Anthropic SDK alignment that began
 in v5.0.0 — full plugin SDK compliance, all 30 MCP tools
@@ -61,6 +78,8 @@ documentation, and security hardening across the stack.
 | **Portable hooks** | PreToolUse security guard + PostToolUse formatter distributed with plugin via `${CLAUDE_PLUGIN_ROOT}` |
 | **10 auto-invoking skills** | Claude triggers the right skill based on what you describe |
 | **Side-effect protection** | `release-prep` and `memory-and-context` require explicit invocation |
+
+</details>
 
 <details>
 <summary>Previous releases</summary>
@@ -95,7 +114,7 @@ and structured JSON output.
 ## Plugin & Skills
 
 The attune-ai plugin integrates with Claude Code via
-the `/attune` command and 7 auto-invoking skills. Skills
+the `/attune` command and 10 auto-invoking skills. Skills
 trigger automatically based on what you describe — no
 need to memorize commands.
 
@@ -193,6 +212,9 @@ that synthesizes a unified result.
 | **refactor-plan** | debt-scanner, impact-analyzer, plan-generator | Scans tech debt, analyzes refactoring impact, generates migration plans | Planning large-scale refactors |
 | **simplify-code** | complexity-scanner, simplification-designer, safety-reviewer | Finds over-engineered code and proposes simplifications with safety review | Reducing complexity after feature sprints |
 | **release-prep** | health-checker, security-scanner, changelog-generator, release-assessor | 4-agent readiness check: health, security, changelog, and go/no-go | Before cutting a release |
+| **doc-orchestrator** | inventory-scanner, outline-planner, content-writer, polish-reviewer | End-to-end documentation orchestration across an entire project | Full-project doc generation or refresh |
+| **orchestrated-health-check** | dynamic team (2-6 based on mode) | Extended health check with dynamic agent team and severity scoring | Comprehensive project health assessment |
+| **secure-release** | security-scanner, health-checker, dep-auditor, release-gater | Go/no-go release pipeline with combined risk scoring and blocker detection | Pre-publish security gate |
 | **research-synthesis** | source-summarizer, pattern-analyst, synthesis-writer | Multi-source research synthesis with pattern extraction | Technical research, RFC preparation |
 
 ### Model Routing
@@ -307,7 +329,7 @@ Score: 95/100 | Cost: $0.03 | Turns: 12
 
 | | Attune AI | Agent Frameworks | Coding CLIs | Review Bots |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 15 built-in | Build from scratch | None | PR review only |
+| **Ready-to-use workflows** | 18 built-in | Build from scratch | None | PR review only |
 | **Per-agent model routing** | Opus/Sonnet/Haiku per role | Manual | None | None |
 | **Budget controls** | Depth-based caps | None | None | SaaS pricing |
 | **Multi-agent teams** | 2-6 agents per workflow | Yes | No | No |

@@ -177,7 +177,9 @@ class ConfigDrivenWizard(BaseWizard):
             FileNotFoundError: If the file does not exist.
 
         """
-        path = Path(yaml_path)
+        from attune.security.path_validation import _validate_file_path
+
+        path = _validate_file_path(yaml_path)
         if not path.exists():
             raise FileNotFoundError(f"Wizard definition not found: {yaml_path}")
 

@@ -250,6 +250,10 @@ class HookExecutor:
             Response data
 
         """
+        from attune.monitoring.validators import _validate_webhook_url
+
+        url = _validate_webhook_url(url)
+
         try:
             import aiohttp
         except ImportError:

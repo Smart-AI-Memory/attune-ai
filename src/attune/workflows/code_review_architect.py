@@ -33,6 +33,72 @@ from .code_review_report import format_code_review_report
 logger = logging.getLogger(__name__)
 
 
+_EXCLUDED_DIRS = frozenset(
+    {
+        "node_modules",
+        "__pycache__",
+        "venv",
+        ".venv",
+        "dist",
+        "build",
+        ".git",
+        ".tox",
+        ".pytest_cache",
+        ".mypy_cache",
+        "htmlcov",
+    }
+)
+
+_KEY_EXTENSIONS = (".py", ".ts", ".js", ".json", ".yaml", ".yml", ".toml", ".md")
+
+
+def _read_file_snippet(path: Path, max_chars: int) -> str:
+    """Read file content up to *max_chars*, empty string on error.
+
+    Args:
+        path: File to read.
+        max_chars: Maximum characters to return.
+
+    Returns:
+        File content truncated to *max_chars*, or ``""`` on I/O error.
+    """
+    try:
+        return path.read_text(encoding="utf-8")[:max_chars]
+    except OSError:
+        return ""
+
+
+def _build_directory_tree(root_dir: Path, max_depth: int = 2) -> str:
+    """Build a text representation of the directory tree.
+
+    Args:
+        root_dir: Directory to walk.
+        max_depth: Maximum depth to descend (default 2).
+
+    Returns:
+        Indented tree string, or error placeholder.
+    """
+    project_name = root_dir.name
+    lines: list[str] = []
+    try:
+        for root, dirs, files in os.walk(root_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in _EXCLUDED_DIRS]
+            level = root.replace(str(root_dir), "").count(os.sep)
+            if level >= max_depth:
+                break
+            indent = "  " * level
+            folder_name = os.path.basename(root) or project_name
+            lines.append(f"{indent}{folder_name}/")
+            key_files = [f for f in files if f.endswith(_KEY_EXTENSIONS) and not f.startswith(".")][
+                :10
+            ]
+            for f in key_files:
+                lines.append(f"{indent}  {f}")
+    except OSError:
+        lines.append("(Unable to read directory structure)")
+    return "\n".join(lines)
+
+
 class ArchitectMixin:
     """Mixin providing the architect review stage for code review."""
 
@@ -40,108 +106,42 @@ class ArchitectMixin:
         """Gather project context for project-level reviews.
 
         Reads project metadata and key files to provide context to the LLM.
-        Returns formatted project context string, or empty string if no context found.
+        Returns formatted project context string, or empty string if no
+        context found.
         """
-        context_parts = []
+        parts: list[str] = []
         cwd = Path.cwd()
-
-        # Get project name from directory or config files
         project_name = cwd.name
-        context_parts.append(f"# Project: {project_name}")
-        context_parts.append(f"# Path: {cwd}")
-        context_parts.append("")
 
-        # Check for pyproject.toml
-        pyproject = cwd / "pyproject.toml"
-        if pyproject.exists():
-            try:
-                content = pyproject.read_text()[:2000]
-                context_parts.append("## pyproject.toml")
-                context_parts.append("```toml")
-                context_parts.append(content)
-                context_parts.append("```")
-                context_parts.append("")
-            except OSError:
-                pass
+        parts.append(f"# Project: {project_name}")
+        parts.append(f"# Path: {cwd}")
+        parts.append("")
 
-        # Check for package.json
-        package_json = cwd / "package.json"
-        if package_json.exists():
-            try:
-                content = package_json.read_text()[:2000]
-                context_parts.append("## package.json")
-                context_parts.append("```json")
-                context_parts.append(content)
-                context_parts.append("```")
-                context_parts.append("")
-            except OSError:
-                pass
+        # Project metadata files
+        for filename, heading, lang, limit in [
+            ("pyproject.toml", "pyproject.toml", "toml", 2000),
+            ("package.json", "package.json", "json", 2000),
+        ]:
+            content = _read_file_snippet(cwd / filename, limit)
+            if content:
+                parts.extend([f"## {heading}", f"```{lang}", content, "```", ""])
 
-        # Check for README
+        # README (first match wins)
         for readme_name in ["README.md", "README.rst", "README.txt", "README"]:
-            readme = cwd / readme_name
-            if readme.exists():
-                try:
-                    content = readme.read_text()[:3000]
-                    context_parts.append(f"## {readme_name}")
-                    context_parts.append(content)
-                    context_parts.append("")
-                    break
-                except OSError:
-                    pass
+            content = _read_file_snippet(cwd / readme_name, 3000)
+            if content:
+                parts.extend([f"## {readme_name}", content, ""])
+                break
 
-        # Get directory structure (top 2 levels)
-        context_parts.append("## Project Structure")
-        context_parts.append("```")
-        try:
-            for root, dirs, files in os.walk(cwd):
-                # Skip hidden and common ignored directories
-                dirs[:] = [
-                    d
-                    for d in dirs
-                    if not d.startswith(".")
-                    and d
-                    not in (
-                        "node_modules",
-                        "__pycache__",
-                        "venv",
-                        ".venv",
-                        "dist",
-                        "build",
-                        ".git",
-                        ".tox",
-                        ".pytest_cache",
-                        ".mypy_cache",
-                        "htmlcov",
-                    )
-                ]
-                level = root.replace(str(cwd), "").count(os.sep)
-                if level < 2:
-                    indent = "  " * level
-                    folder_name = os.path.basename(root) or project_name
-                    context_parts.append(f"{indent}{folder_name}/")
-                    # Show key files at this level
-                    key_files = [
-                        f
-                        for f in files
-                        if f.endswith(
-                            (".py", ".ts", ".js", ".json", ".yaml", ".yml", ".toml", ".md"),
-                        )
-                        and not f.startswith(".")
-                    ][:10]
-                    for f in key_files:
-                        context_parts.append(f"{indent}  {f}")
-                if level >= 2:
-                    break
-        except OSError:
-            context_parts.append("(Unable to read directory structure)")
-        context_parts.append("```")
+        # Directory tree
+        tree = _build_directory_tree(cwd)
+        parts.extend(["## Project Structure", "```", tree, "```"])
 
         # Return empty if we only have the header
-        if len(context_parts) <= 3:
+        if len(parts) <= 3:
             return ""
 
-        return "\n".join(context_parts)
+        return "\n".join(parts)
 
     async def _architect_review(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
         """Deep architectural review.

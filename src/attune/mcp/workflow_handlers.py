@@ -21,6 +21,25 @@ class WorkflowHandlersMixin:
     research-synthesis.
     """
 
+    def _validated_path(self, args: dict[str, Any], key: str = "path", default: str = ".") -> str:
+        """Validate a user-supplied path argument.
+
+        Args:
+            args: Tool arguments dict.
+            key: The key to extract from args.
+            default: Fallback if key is absent.
+
+        Returns:
+            Validated path as a string.
+
+        Raises:
+            ValueError: If path is invalid or outside workspace.
+        """
+        from attune.security.path_validation import _validate_file_path
+
+        raw = args.get(key, default)
+        return str(_validate_file_path(raw, allowed_dir=self._workspace_root))
+
     # ------------------------------------------------------------------
     # Doc Audit
     # ------------------------------------------------------------------
@@ -38,7 +57,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.doc_audit import DocAuditWorkflow
 
         workflow = DocAuditWorkflow()
-        result = await workflow.execute(project_root=args.get("path", "."))
+        result = await workflow.execute(project_root=self._validated_path(args))
 
         return {
             "success": result.success,
@@ -65,8 +84,9 @@ class WorkflowHandlersMixin:
         from attune.workflows.document_gen import DocumentGenerationWorkflow
 
         source_code = ""
-        source_path = args.get("source_path", "")
-        if source_path:
+        raw_source_path = args.get("source_path", "")
+        if raw_source_path:
+            source_path = self._validated_path(args, key="source_path", default="")
             try:
                 from pathlib import Path
 
@@ -108,7 +128,7 @@ class WorkflowHandlersMixin:
 
         workflow = DocumentationOrchestrator()
         result = await workflow.execute(
-            context={"project_root": args.get("path", ".")},
+            context={"project_root": self._validated_path(args)},
         )
 
         return {
@@ -137,7 +157,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.test_audit import TestAuditWorkflow
 
         workflow = TestAuditWorkflow()
-        result = await workflow.execute(src_path=args.get("path", "src/"))
+        result = await workflow.execute(src_path=self._validated_path(args, default="src/"))
 
         return {
             "success": result.success,
@@ -195,7 +215,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.refactor_plan import RefactorPlanWorkflow
 
         workflow = RefactorPlanWorkflow()
-        result = await workflow.execute(path=args.get("path", "."))
+        result = await workflow.execute(path=self._validated_path(args))
 
         return {
             "success": result.success,
@@ -220,7 +240,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.dependency_check import DependencyCheckWorkflow
 
         workflow = DependencyCheckWorkflow()
-        result = await workflow.execute(path=args.get("path", "."))
+        result = await workflow.execute(path=self._validated_path(args))
 
         return {
             "success": result.success,
@@ -245,7 +265,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.simplify_code import SimplifyCodeWorkflow
 
         workflow = SimplifyCodeWorkflow()
-        result = await workflow.execute(path=args.get("path", "."))
+        result = await workflow.execute(path=self._validated_path(args))
 
         return {
             "success": result.success,
@@ -270,7 +290,7 @@ class WorkflowHandlersMixin:
         from attune.workflows.secure_release import SecureReleasePipeline
 
         workflow = SecureReleasePipeline()
-        result = await workflow.execute(path=args.get("path", "."))
+        result = await workflow.execute(path=self._validated_path(args))
 
         return {
             "success": getattr(result, "success", False),
@@ -301,7 +321,7 @@ class WorkflowHandlersMixin:
 
         workflow = OrchestratedHealthCheckWorkflow()
         result = await workflow.execute(
-            project_root=args.get("project_root", "."),
+            project_root=self._validated_path(args, key="project_root"),
         )
 
         return {
