@@ -1,4 +1,4 @@
-# Attune AI Framework v5.0.0
+# Attune AI Framework v5.0.3
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -822,5 +822,24 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `workflow-orchestration` is invoked as
   `/attune-ai:workflow-orchestration`. Keep a command as
   the short entry point when UX matters.
+
+- **MCP tool renames propagate to skill docs**: The empathy
+  tools were renamed from `empathy_get_level`/`empathy_set_level`
+  to `attune_get_level`/`attune_set_level` in the MCP server,
+  but skill docs and command routing still referenced the old
+  names. Always grep plugin/ for old tool names after renaming
+  MCP handlers.
+
+- **Broad gitignore patterns match nested directories**: A
+  root `.gitignore` entry `planning/` (without leading `/`)
+  matches `plugin/skills/planning/` too. Scope patterns with
+  `/planning/` for root-only, and add `!plugin/skills/planning/`
+  exceptions when needed.
+
+- **Verify MCP tool wiring after adding new tools**: After
+  adding tools to `server.py`, grep all plugin skills and
+  commands for references. 15 tools were registered but
+  unreachable from any skill until explicitly wired into
+  existing skill documentation.
 
 <!-- attune-lessons-end -->

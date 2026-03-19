@@ -1,6 +1,6 @@
 # Attune AI — Project Overview
 
-**Version:** 5.0.2 | **License:** Apache 2.0 |
+**Version:** 5.0.3 | **License:** Apache 2.0 |
 **Python:** 3.10+ | **PyPI:** `attune-ai`
 
 Attune AI is a production-ready AI workflow operating system
@@ -48,7 +48,7 @@ src/attune/
 │   ├── release/       # ReleaseAgent, ReleasePrepTeam
 │   └── state/         # AgentStateStore, AgentRecoveryManager
 ├── wizards/           # 5 interactive guided workflows
-├── mcp/               # MCP server (17 tools for Claude Code)
+├── mcp/               # MCP server (30 tools for Claude Code)
 ├── models/            # LLM provider abstraction + auth strategy
 ├── memory/            # Two-tier memory (Redis + MemDocs)
 ├── orchestration/     # Dynamic teams, workflow composition
@@ -202,7 +202,7 @@ attune wizard run debug
 
 ### MCP Server
 
-17 tools exposed via Model Context Protocol (stdio
+30 tools exposed via Model Context Protocol (stdio
 transport). Configured in `.mcp.json`. Rate-limited to 60
 calls/min per tool.
 

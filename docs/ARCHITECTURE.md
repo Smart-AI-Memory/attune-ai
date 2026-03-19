@@ -4,8 +4,8 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 
 # Attune AI - Architecture Overview
 
-**Version:** 3.1.0
-**Last Updated:** February 21, 2026
+**Version:** 5.0.3
+**Last Updated:** March 19, 2026
 **Status:** Living Document
 
 ---
@@ -15,15 +15,18 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 1. [System Overview](#system-overview)
 2. [Module Dependency Map](#module-dependency-map)
 3. [Core Components](#core-components)
-4. [Meta-Orchestration System (v4.0)](#meta-orchestration-system-v40)
+4. [Meta-Orchestration System](#meta-orchestration-system)
 5. [Claude-Native LLM System](#claude-native-llm-system)
-6. [Memory Architecture](#memory-architecture)
-7. [Workflow System](#workflow-system)
-8. [Agent State & Dynamic Teams (v2.5.0)](#agent-state--dynamic-teams-v250)
-9. [Caching Strategy](#caching-strategy)
-10. [Security Model](#security-model)
-11. [Deployment Architecture](#deployment-architecture)
-12. [Performance Characteristics](#performance-characteristics)
+6. [MCP Server Integration](#mcp-server-integration)
+7. [Memory Architecture](#memory-architecture)
+8. [Workflow System](#workflow-system)
+9. [Agent State & Dynamic Teams](#agent-state--dynamic-teams)
+10. [Hook System](#hook-system)
+11. [Pipeline System](#pipeline-system)
+12. [Caching Strategy](#caching-strategy)
+13. [Security Model](#security-model)
+14. [Deployment Architecture](#deployment-architecture)
+15. [Performance Characteristics](#performance-characteristics)
 
 ---
 
@@ -102,20 +105,28 @@ Tier 5 — Entry Points
      cli_router ←── commands ──→ wizards
 ```
 
-### Key Coupling Metrics (v3.1.0)
+### Codebase Metrics (v5.0.2)
+
+| Metric | Value |
+|--------|-------|
+| Python files | 683 |
+| Lines of code | 178,974 |
+| Functions | 4,622 |
+| Classes | 1,188 |
+| Subpackages | 40 |
+| Tests | 10,860+ passing |
+
+### Key Coupling Metrics (v5.0.2)
 
 | Module | Dependents | Role |
 |--------|-----------|------|
-| security/path_validation | 63 | Path traversal guard |
+| security/path_validation | 77+ | Path traversal guard |
 | config | 6 | Legacy config (decoupled) |
 | models | 14 | Model registry, tiers |
 | memory | 23 | Unified storage API |
 | meta_workflows | 25 | Orchestration hub |
 | workflows | 16 | Workflow engine |
-
-**v3.1.0 change:** `_validate_file_path` extracted from
-`config` (59 dependents) into `security/path_validation`
-(zero internal deps), eliminating the config bottleneck.
+| mcp | 25+ tools | Claude Code integration |
 
 ---
 
@@ -174,7 +185,7 @@ Tier 5 — Entry Points
 
 ---
 
-## Meta-Orchestration System (v4.0)
+## Meta-Orchestration System
 
 The meta-orchestration system is the framework's breakthrough feature - it analyzes tasks and composes optimal agent teams automatically.
 
@@ -216,7 +227,7 @@ The meta-orchestration system is the framework's breakthrough feature - it analy
 
 ### Pre-Built Agent Templates
 
-The framework includes 13 specialized agent templates:
+The framework includes 14 specialized agent templates:
 
 1. **Security Auditor** - Vulnerability scanning, OWASP checks, dependency audits
 2. **Test Coverage Analyzer** - Gap analysis, edge case detection, assertion suggestions
@@ -231,6 +242,7 @@ The framework includes 13 specialized agent templates:
 11. **Integration Tester** - API testing, contract verification, compatibility checks
 12. **API Designer** - REST/GraphQL design, schema validation, documentation
 13. **DevOps Engineer** - CI/CD, infrastructure, deployment automation
+14. **Code Simplifier** - Complexity reduction, inline helpers, flatten conditionals
 
 ### Composition Patterns
 
@@ -335,6 +347,49 @@ Retry with exponential backoff
   ↓ (all retries exhausted)
 Raise AllProvidersFailedError
 ```
+
+---
+
+## MCP Server Integration
+
+Attune exposes 25+ tools to Claude Code via the Model
+Context Protocol (MCP).
+
+### Architecture
+
+```text
+Claude Code
+    │
+    ▼
+┌──────────────────────────────────────────────┐
+│          EmpathyMCPServer                    │
+│  ┌────────────────────────────────────────┐  │
+│  │  WorkflowHandlersMixin                │  │
+│  │  - security-audit, code-review        │  │
+│  │  - bug-predict, test-gen, perf-audit  │  │
+│  │  - doc-gen, refactor-plan             │  │
+│  └────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────┐  │
+│  │  MemoryHandlersMixin                  │  │
+│  │  - recall, save, delete patterns      │  │
+│  │  - memory graph queries               │  │
+│  └────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────┐  │
+│  │  Security Guards                      │  │
+│  │  - _validate_file_path() on all I/O   │  │
+│  │  - RateLimiter per tool call          │  │
+│  │  - Workspace isolation                │  │
+│  └────────────────────────────────────────┘  │
+└──────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+1. Claude Code sends MCP tool call (e.g., `code-review`)
+2. Server validates file path via `_validate_file_path()`
+3. Lazy-imports the target workflow class
+4. Executes workflow with validated inputs
+5. Returns structured `WorkflowResult` to Claude Code
 
 ---
 
@@ -450,7 +505,7 @@ class BaseWorkflow:
 
 ---
 
-## Agent State & Dynamic Teams (v2.5.0)
+## Agent State & Dynamic Teams
 
 ### Agent State Persistence
 
@@ -510,6 +565,71 @@ BaseWorkflow MRO (v2.5.0):
 
 - `state_store=AgentStateStore(...)` enables state persistence
 - `multi_agent_configs={...}` enables multi-agent stage delegation
+
+---
+
+## Hook System
+
+Event-driven automation for Claude Code integration.
+
+### Hook Events
+
+| Event | Trigger | Use Case |
+| ----- | ------- | -------- |
+| PreToolUse | Before tool execution | Block dangerous commands |
+| PostToolUse | After tool execution | Log results, validate |
+| SessionStart | Session begins | Load state, set context |
+| SessionEnd | Session ends | Save state, cleanup |
+| Stop | Agent stops | Reminder hooks, save |
+
+### Executor Architecture
+
+```text
+HookRegistry
+    │ (event fires)
+    ▼
+HookExecutor
+    ├── _execute_python()
+    │     └── Module prefix allowlist: ("attune.",)
+    │         └── importlib.import_module → handler()
+    ├── _execute_shell()
+    │     └── shlex.split → asyncio.create_subprocess_exec
+    └── _execute_webhook()
+          └── aiohttp.ClientSession.post(url, json)
+```
+
+**Security:** Python hooks restricted to `attune.*` module
+prefix. Shell hooks use `create_subprocess_exec` (no
+`shell=True`). Rate limiting on all hook invocations.
+
+---
+
+## Pipeline System
+
+Spec-driven development lifecycle — reads XML task
+specifications and executes them with agent teams.
+
+### Flow
+
+```text
+XML Spec → SpecReader → PipelineOrchestrator
+    │
+    ├── Task 1 → Agent Team → Result
+    ├── Task 2 → Agent Team → Result
+    └── Task N → Agent Team → Result
+    │
+    ▼
+PipelineResult (with quality gates)
+```
+
+### Key Features
+
+- XML task decomposition with dependency tracking
+- Quality gates between pipeline stages
+- Parallel execution for independent tasks
+- Error recovery and checkpoint support
+- Integration with orchestration layer for team
+  composition
 
 ---
 
@@ -711,6 +831,6 @@ wizard = HealthcareWizard()
 
 ---
 
-**Last Updated:** February 21, 2026
+**Last Updated:** March 18, 2026
 **Maintained By:** Engineering Team
 **License:** Apache 2.0

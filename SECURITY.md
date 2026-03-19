@@ -6,8 +6,8 @@ We release patches for security vulnerabilities in the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.0.x   | :white_check_mark: |
-| < 2.0   | :x:                |
+| 5.0.x   | :white_check_mark: |
+| < 5.0   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -115,15 +115,12 @@ Security hooks include:
 ### Built-in Security Tools
 
 ```python
-from attune_llm.security import SecretsDetector, PIIScrubber
+from attune.security.path_validation import _validate_file_path
 
-# Detect secrets in content
-detector = SecretsDetector()
-findings = detector.scan(content)
-
-# Scrub PII before storage
-scrubber = PIIScrubber()
-clean_content = scrubber.scrub(content)
+# Validate file path before any write operation
+validated = _validate_file_path(user_path)
+with validated.open("w") as f:
+    f.write(data)
 ```
 
 ### Test Credentials
@@ -134,7 +131,36 @@ All test files use obviously fake credentials:
 - Use placeholder patterns like `abc123xyz789...`
 - AWS example keys: `AKIAIOSFODNN7EXAMPLE`
 
-## Security Hardening (Pattern 6 Implementation)
+## Security Hardening (v5.0.1–v5.0.3)
+
+### Runtime Security (v5.0.1)
+
+| Feature | What It Does |
+| ------- | ------------ |
+| **Memory ownership** | `created_by` validation before retrieve/delete operations |
+| **Workspace isolation** | INTERNAL classification enforces cross-project boundaries |
+| **MCP rate limiter** | 60 calls/minute per tool prevents abuse |
+| **Hook import guard** | Only `attune.*` modules can be loaded via hook executor |
+| **Path validation on state** | State manager and morning workflow validate all file paths |
+
+### Plugin Security Hooks (v5.0.3)
+
+The plugin ships portable PreToolUse and PostToolUse hooks:
+
+- **PreToolUse `security_guard.py`** — Intercepts Bash,
+  Edit, and Write tool calls. Blocks `eval()`, `exec()`,
+  `__import__()`, `subprocess.call(shell=True)`, and
+  `rm -rf /`. Validates file paths against system
+  directory blocklist (CWE-22, CWE-95, B602).
+- **PostToolUse `format_on_save.py`** — Auto-formats
+  Python files with `black` and `ruff --fix` after
+  Write/Edit. Validates paths before formatting.
+
+Hooks use `${CLAUDE_PLUGIN_ROOT}` for portability and
+run with enforced timeouts (5s for security, 10s for
+formatting).
+
+## Path Traversal Protection (Pattern 6)
 
 ### Overview
 
@@ -292,6 +318,6 @@ For security concerns, contact:
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026
 
 Thank you for helping keep Attune AI and our users safe!
