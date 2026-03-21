@@ -15,7 +15,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from attune.cache.base import CacheEntry, CacheStats
 from attune.workflows.base import ModelProvider, ModelTier
 
 # =============================================================================
@@ -96,39 +95,6 @@ class TestWorkflowExecution:
 
         # Should convert to unified ModelTier
         assert unified.value == "cheap"
-
-    def test_cache_entry_creation(self):
-        """Test creating cache entry for workflow results."""
-        entry = CacheEntry(
-            key="workflow_test_key",
-            response="workflow result",
-            workflow="test_workflow",
-            stage="analyze",
-            model="claude-3-5-sonnet-20241022",
-            prompt_hash="abc123",
-            timestamp=time.time(),
-            ttl=3600,
-        )
-
-        assert entry.key == "workflow_test_key"
-        assert entry.workflow == "test_workflow"
-        assert entry.stage == "analyze"
-        assert entry.ttl == 3600
-
-    def test_cache_stats_workflow_tracking(self):
-        """Test cache stats tracking for workflow executions."""
-        stats = CacheStats()
-
-        # Simulate workflow cache hits/misses
-        stats.hits = 3  # 3 steps cached
-        stats.misses = 2  # 2 steps computed
-        stats.evictions = 1
-
-        assert stats.total == 5
-        assert stats.hit_rate == 60.0
-        stats_dict = stats.to_dict()
-        assert stats_dict["hits"] == 3
-        assert stats_dict["misses"] == 2
 
     def test_workflow_execution_with_mock_executor(self, mock_llm_executor):
         """Test workflow execution using mocked executor."""

@@ -627,7 +627,7 @@ class TestTierService:
 
 
 class TestCacheService:
-    """Tests for CacheService."""
+    """Tests for CacheService (no-op — Anthropic handles caching server-side)."""
 
     def _make_service(self, **kwargs):
         from attune.workflows.services.cache_service import CacheService
@@ -636,180 +636,40 @@ class TestCacheService:
         defaults.update(kwargs)
         return CacheService(**defaults)
 
-    def test_init_defaults(self):
+    def test_always_disabled(self):
         svc = self._make_service()
-        assert svc.enabled is True
+        assert svc.enabled is False
         assert svc._cache is None
 
-    def test_init_disabled(self):
-        svc = self._make_service(enable=False)
-        assert svc.enabled is False
-
-    def test_init_with_cache(self):
-        mock_cache = MagicMock()
-        svc = self._make_service(cache=mock_cache)
-        assert svc._cache is mock_cache
-        assert svc._setup_attempted is True
-
-    def test_make_key_with_system(self):
+    def test_lookup_returns_none(self):
         svc = self._make_service()
-        key = svc.make_key("system prompt", "user message")
-        assert key == "system prompt\n\nuser message"
+        assert svc.lookup("stage1", "sys", "user", "model") is None
 
-    def test_make_key_without_system(self):
-        svc = self._make_service()
-        key = svc.make_key("", "user message")
-        assert key == "user message"
-
-    def test_lookup_disabled(self):
-        svc = self._make_service(enable=False)
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert result is None
-
-    def test_lookup_no_cache(self):
-        svc = self._make_service()
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert result is None
-
-    def test_lookup_cache_miss(self):
-        mock_cache = MagicMock()
-        mock_cache.get.return_value = None
-        svc = self._make_service(cache=mock_cache)
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert result is None
-
-    def test_lookup_cache_hit(self):
-        cached_data = {"content": "cached response", "input_tokens": 100, "output_tokens": 50}
-        mock_cache = MagicMock()
-        mock_cache.get.return_value = cached_data
-        svc = self._make_service(cache=mock_cache)
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert isinstance(result, CachedResponse)
-        assert result.content == "cached response"
-
-    def test_lookup_cache_error(self):
-        mock_cache = MagicMock()
-        mock_cache.get.side_effect = TypeError("bad data")
-        svc = self._make_service(cache=mock_cache)
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert result is None
-
-    def test_lookup_cache_os_error(self):
-        mock_cache = MagicMock()
-        mock_cache.get.side_effect = OSError("disk full")
-        svc = self._make_service(cache=mock_cache)
-        result = svc.lookup("stage1", "sys", "user", "model")
-        assert result is None
-
-    def test_store_disabled(self):
-        svc = self._make_service(enable=False)
-        result = svc.store("s", "sys", "usr", "m", CachedResponse("r", 1, 1))
-        assert result is False
-
-    def test_store_no_cache(self):
+    def test_store_returns_false(self):
         svc = self._make_service()
         result = svc.store("s", "sys", "usr", "m", CachedResponse("r", 1, 1))
         assert result is False
 
-    def test_store_success(self):
-        mock_cache = MagicMock()
-        svc = self._make_service(cache=mock_cache)
-        resp = CachedResponse("response text", 100, 50)
-        result = svc.store("stage1", "sys", "user", "model", resp)
-        assert result is True
-        mock_cache.put.assert_called_once()
-
-    def test_store_os_error(self):
-        mock_cache = MagicMock()
-        mock_cache.put.side_effect = OSError("disk full")
-        svc = self._make_service(cache=mock_cache)
-        result = svc.store("s", "sys", "usr", "m", CachedResponse("r", 1, 1))
-        assert result is False
-
-    def test_store_serialization_error(self):
-        mock_cache = MagicMock()
-        mock_cache.put.side_effect = ValueError("bad data")
-        svc = self._make_service(cache=mock_cache)
-        result = svc.store("s", "sys", "usr", "m", CachedResponse("r", 1, 1))
-        assert result is False
-
-    def test_get_cache_type_no_cache(self):
+    def test_cache_type_is_anthropic(self):
         svc = self._make_service()
-        assert svc.get_cache_type() == "none"
+        assert svc.get_cache_type() == "anthropic"
 
-    def test_get_cache_type_with_type_attr(self):
-        mock_cache = MagicMock()
-        mock_cache.cache_type = "semantic"
-        svc = self._make_service(cache=mock_cache)
-        assert svc.get_cache_type() == "semantic"
-
-    def test_get_cache_type_default(self):
-        mock_cache = MagicMock(spec=[])  # no cache_type attr
-        svc = self._make_service(cache=mock_cache)
-        assert svc.get_cache_type() == "hash"
-
-    def test_get_stats_no_cache(self):
+    def test_stats_are_empty(self):
         svc = self._make_service()
-        stats = svc.get_stats()
-        assert stats == {"hits": 0, "misses": 0, "hit_rate": 0.0}
+        assert svc.get_stats() == {"hits": 0, "misses": 0, "hit_rate": 0.0}
 
-    def test_get_stats_with_cache(self):
-        mock_cache = MagicMock()
-        mock_stats = MagicMock()
-        mock_stats.hits = 10
-        mock_stats.misses = 5
-        mock_stats.hit_rate = 0.667
-        mock_cache.get_stats.return_value = mock_stats
-        svc = self._make_service(cache=mock_cache)
-        stats = svc.get_stats()
-        assert stats["hits"] == 10
-        assert stats["misses"] == 5
-
-    def test_get_stats_error(self):
-        mock_cache = MagicMock()
-        mock_cache.get_stats.side_effect = AttributeError("no stats")
-        svc = self._make_service(cache=mock_cache)
-        stats = svc.get_stats()
-        assert stats == {"hits": 0, "misses": 0, "hit_rate": 0.0}
-
-    def test_setup_disabled(self):
-        svc = self._make_service(enable=False)
+    def test_setup_is_noop(self):
+        svc = self._make_service()
         svc.setup()
         assert svc._cache is None
 
-    def test_setup_already_attempted(self):
-        mock_cache = MagicMock()
-        svc = self._make_service(cache=mock_cache)
-        svc.setup()  # Should be no-op since cache already provided
-        assert svc._cache is mock_cache
-
-    def test_setup_auto_config(self):
+    def test_make_key_with_system(self):
         svc = self._make_service()
-        mock_cache = MagicMock()
-        with patch("attune.cache.auto_setup_cache"):
-            with patch("attune.cache.create_cache", return_value=mock_cache):
-                svc.setup()
-                assert svc._cache is mock_cache
+        assert svc.make_key("sys", "usr") == "sys\n\nusr"
 
-    def test_setup_import_error_falls_back(self):
+    def test_make_key_without_system(self):
         svc = self._make_service()
-        mock_hash_cache = MagicMock()
-        with patch("attune.cache.auto_setup_cache", side_effect=ImportError("no semantic")):
-            with patch("attune.cache.create_cache", return_value=mock_hash_cache):
-                svc.setup()
-                assert svc._cache is mock_hash_cache
-
-    def test_setup_os_error_disables(self):
-        svc = self._make_service()
-        with patch("attune.cache.auto_setup_cache", side_effect=OSError("no disk")):
-            svc.setup()
-            assert svc.enabled is False
-
-    def test_setup_config_error_disables(self):
-        svc = self._make_service()
-        with patch("attune.cache.auto_setup_cache", side_effect=ValueError("bad config")):
-            svc.setup()
-            assert svc.enabled is False
+        assert svc.make_key("", "usr") == "usr"
 
 
 # =============================================================================

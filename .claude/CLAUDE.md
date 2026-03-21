@@ -908,4 +908,27 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `logger.warning()` in discovery paths so `--verbose` or
   log inspection can surface the root cause.
 
+- **Semantic cache 70% hit rate claim was unmeasured**:
+  Telemetry data (`~/.attune/telemetry/usage.jsonl`, 17,264
+  requests) showed 0.2% hit rate and $0.26 saved out of $72.
+  The 0.95 similarity threshold and non-repetitive workflow
+  prompts (unique file paths, timestamps, code snippets) meant
+  near-matches almost never fired. Always verify performance
+  claims against actual telemetry before documenting them.
+
+- **Anthropic's built-in prompt caching supersedes custom
+  caching**: Since Dec 2024, the Anthropic API provides 90%
+  input token discounts via server-side prompt caching. The
+  Claude Agent SDK uses this automatically. Custom client-side
+  caching with `sentence-transformers` (420MB dep) delivered
+  0.4% savings vs Anthropic's automatic server-side caching.
+  Removed in favor of the native solution.
+
+- **Dead code modules with full test suites look alive**:
+  `socratic/embeddings/` had 240 lines of passing tests, clean
+  exports in `__init__.py`, and conftest fixtures — but zero
+  imports from any workflow, CLI, or MCP path. Tests passing
+  is not evidence of integration. Grep for imports outside the
+  module itself before considering a feature "active".
+
 <!-- attune-lessons-end -->

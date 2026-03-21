@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as generateSEOMetadata } from '@/lib/metadata';
-import { getAllPosts, getAllTags, getPostsByTag } from '@/lib/blog';
+import { getAllTags, getPostsByTag } from '@/lib/blog';
 
 interface PageProps {
   params: Promise<{ tag: string }>;

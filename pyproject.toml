@@ -109,13 +109,10 @@ agents = [
 # See docs/CREWAI_MIGRATION.md for migration guide.
 # crewai_adapter.py kept for backward compatibility (lazy-loaded, no core dep)
 
-# Hybrid caching for 70% cost reduction (v3.8.0+)
-# Includes semantic similarity matching with sentence-transformers
-cache = [
-    "sentence-transformers>=2.0.0,<6.0.0",
-    "torch>=2.0.0,<3.0.0",
-    "numpy>=1.24.0,<3.0.0",
-]
+# Cache extra removed — Anthropic's built-in prompt caching (90% discount)
+# is automatic via the Claude Agent SDK. Kept as empty extra for backward
+# compatibility with pip install 'attune-ai[cache]'.
+cache = []
 
 # Anthropic Agent SDK — now a core dependency (moved to [project.dependencies])
 # Kept as empty extra for backward compatibility with pip install 'attune-ai[agent-sdk]'

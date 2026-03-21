@@ -354,37 +354,6 @@ def sample_collaborative_session(sample_participant, storage_path):
 
 
 # =============================================================================
-# EMBEDDING FIXTURES
-# =============================================================================
-
-
-@pytest.fixture
-def sample_embedded_goal():
-    """Create a sample EmbeddedGoal for testing."""
-    from attune.socratic.embeddings import EmbeddedGoal
-
-    return EmbeddedGoal(
-        goal_id="goal-001",
-        goal_text="Automate code reviews",
-        embedding=[0.1] * 256,  # 256-dimensional embedding
-        domains=["code_review"],
-        workflow_id="workflow-001",
-        success_score=0.85,
-    )
-
-
-@pytest.fixture
-def vector_store(storage_path):
-    """Create a VectorStore for testing."""
-    from attune.socratic.embeddings import TFIDFEmbeddingProvider, VectorStore
-
-    return VectorStore(
-        provider=TFIDFEmbeddingProvider(dimension=64),
-        storage_path=storage_path / "embeddings.json",
-    )
-
-
-# =============================================================================
 # EXPERIMENT FIXTURES
 # =============================================================================
 

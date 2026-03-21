@@ -13,7 +13,6 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 if TYPE_CHECKING:
-    from attune.cache import BaseCache
     from attune.models import LLMExecutor, TelemetryBackend, UnifiedModelProvider
     from attune.workflows.base import BaseWorkflow
     from attune.workflows.config import WorkflowConfig
@@ -74,7 +73,7 @@ class WorkflowBuilder(Generic[T]):
         self._config: WorkflowConfig | None = None
         self._executor: LLMExecutor | None = None
         self._provider: UnifiedModelProvider | None = None
-        self._cache: BaseCache | None = None
+        self._cache: Any | None = None
         self._enable_cache: bool = True
         self._telemetry_backend: TelemetryBackend | None = None
         self._enable_telemetry: bool = True
@@ -122,17 +121,15 @@ class WorkflowBuilder(Generic[T]):
         self._provider = provider
         return self
 
-    def with_cache(self, cache: BaseCache) -> WorkflowBuilder[T]:
-        """Set custom cache instance.
+    def with_cache(self, cache: Any) -> WorkflowBuilder[T]:
+        """No-op — retained for backward compatibility.
 
-        Args:
-            cache: BaseCache instance for caching LLM responses
+        Anthropic's built-in prompt caching handles this automatically.
 
         Returns:
             Self for method chaining
 
         """
-        self._cache = cache
         return self
 
     def with_cache_enabled(self, enabled: bool) -> WorkflowBuilder[T]:

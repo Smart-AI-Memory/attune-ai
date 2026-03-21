@@ -25,11 +25,11 @@ class TestCoreImports:
 
         assert workflows is not None
 
-    def test_import_cache(self):
-        """Test cache import."""
-        from attune import cache
+    def test_import_caching_mixin(self):
+        """Test caching mixin import (no-op stub)."""
+        from attune.workflows.caching import CachingMixin
 
-        assert cache is not None
+        assert CachingMixin is not None
 
     def test_import_meta_workflows(self):
         """Test meta workflows import."""
@@ -46,13 +46,6 @@ class TestCoreImports:
 
 class TestCoreClasses:
     """Test core class instantiation."""
-
-    def test_cache_creation(self):
-        """Test cache can be created."""
-        from attune.cache import create_cache
-
-        cache = create_cache(cache_type="hash")
-        assert cache is not None
 
     def test_workflow_base_import(self):
         """Test workflow base classes."""

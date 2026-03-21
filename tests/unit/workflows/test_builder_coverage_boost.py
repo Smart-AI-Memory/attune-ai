@@ -90,14 +90,14 @@ class TestWorkflowBuilderWithMethods:
         assert builder._provider is mock_provider
         assert result is builder
 
-    def test_with_cache_sets_cache(self):
-        """Test with_cache() sets cache instance."""
+    def test_with_cache_is_noop(self):
+        """Test with_cache() is a no-op (Anthropic handles caching)."""
         builder = WorkflowBuilder(MockWorkflow)
         mock_cache = MagicMock()
 
         result = builder.with_cache(mock_cache)
 
-        assert builder._cache is mock_cache
+        # with_cache is a no-op — returns self for chaining
         assert result is builder
 
     def test_with_cache_enabled_true(self):
@@ -233,14 +233,15 @@ class TestWorkflowBuilderBuild:
 
         assert workflow.kwargs["provider"] is mock_provider
 
-    def test_build_with_cache(self):
-        """Test build() includes cache when set."""
+    def test_build_with_cache_noop(self):
+        """Test build() ignores cache (Anthropic handles caching)."""
         mock_cache = MagicMock()
         builder = WorkflowBuilder(MockWorkflow).with_cache(mock_cache)
 
         workflow = builder.build()
 
-        assert workflow.kwargs["cache"] is mock_cache
+        # Cache is no longer passed through — Anthropic handles it server-side
+        assert "cache" not in workflow.kwargs or workflow.kwargs.get("cache") is None
 
     def test_build_with_cache_disabled(self):
         """Test build() respects cache_enabled flag."""
@@ -325,7 +326,7 @@ class TestWorkflowBuilderBuild:
         assert workflow.kwargs["config"] is mock_config
         assert workflow.kwargs["executor"] is mock_executor
         assert workflow.kwargs["provider"] is mock_provider
-        assert workflow.kwargs["cache"] is mock_cache
+        # cache is no longer passed — Anthropic handles it server-side
         assert workflow.kwargs["enable_cache"] is False
         assert workflow.kwargs["telemetry_backend"] is mock_telemetry
         assert workflow.kwargs["enable_telemetry"] is False
@@ -370,7 +371,7 @@ class TestWorkflowBuilderChaining:
         )
 
         assert workflow.kwargs["config"] is mock_config
-        assert workflow.kwargs["cache"] is mock_cache
+        # cache is no longer passed — Anthropic handles it server-side
         assert workflow.kwargs["enable_cache"] is True
         assert workflow.kwargs["enable_telemetry"] is False
 
@@ -585,6 +586,6 @@ class TestWorkflowBuilderIntegration:
         # Verify all configuration was preserved
         assert workflow.kwargs["config"] is mock_config
         assert workflow.kwargs["executor"] is mock_executor
-        assert workflow.kwargs["cache"] is mock_cache
+        # cache is no longer passed — Anthropic handles it server-side
         assert workflow.kwargs["enable_cache"] is True
         assert workflow.kwargs["enable_telemetry"] is False

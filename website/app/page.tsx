@@ -56,7 +56,7 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-sm group cursor-pointer border border-white/20">
                     <span className="opacity-50 mr-2">$</span>
-                    <span>pip install 'attune-ai[developer]'</span>
+                    <span>pip install &apos;attune-ai[developer]&apos;</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity">
                       <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>

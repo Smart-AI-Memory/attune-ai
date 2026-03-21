@@ -33,8 +33,6 @@ try:
 except ImportError:
     pass  # python-dotenv not installed, rely on environment variables
 
-# Import caching infrastructure
-from attune.cache import BaseCache
 from attune.cost_tracker import CostTracker
 
 # Import unified types from attune.models
@@ -189,7 +187,7 @@ class BaseWorkflow(
         executor: LLMExecutor | None = None,
         telemetry_backend: TelemetryBackend | None = None,
         progress_callback: ProgressCallback | None = None,
-        cache: BaseCache | None = None,
+        cache: Any | None = None,
         enable_cache: bool = True,
         enable_tier_tracking: bool = True,
         enable_tier_fallback: bool = True,
@@ -295,10 +293,10 @@ class BaseWorkflow(
         self._executor = executor
         self._api_key: str | None = None  # For default executor creation
 
-        # Cache support
-        self._cache: BaseCache | None = cache
-        self._enable_cache = enable_cache
-        self._cache_setup_attempted = False
+        # Cache support (no-op — Anthropic handles caching server-side)
+        self._cache = None
+        self._enable_cache = False
+        self._cache_setup_attempted = True
 
         # Tier tracking support
         self._enable_tier_tracking = enable_tier_tracking

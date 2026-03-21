@@ -74,17 +74,6 @@ from .domain_templates import (
     WorkflowTemplate,
     get_registry,
 )
-
-# Vector embeddings for semantic matching
-from .embeddings import (
-    AnthropicEmbeddingProvider,
-    EmbeddedGoal,
-    EmbeddingProvider,
-    SemanticGoalMatcher,
-    SimilarityResult,
-    TFIDFEmbeddingProvider,
-    VectorStore,
-)
 from .engine import SocraticWorkflowBuilder
 
 # Workflow explainer
@@ -202,14 +191,6 @@ __all__ = [
     # MCP server
     "SocraticMCPServer",
     "SOCRATIC_TOOLS",
-    # Vector embeddings
-    "VectorStore",
-    "SemanticGoalMatcher",
-    "EmbeddingProvider",
-    "TFIDFEmbeddingProvider",
-    "AnthropicEmbeddingProvider",
-    "EmbeddedGoal",
-    "SimilarityResult",
     # A/B testing
     "ExperimentManager",
     "WorkflowABTester",

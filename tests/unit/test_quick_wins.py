@@ -1,7 +1,6 @@
 """Quick Win Tests for Attune AI.
 
 High-impact, low-effort tests covering edge cases in:
-- Zero vector handling in cosine_similarity
 - HTTP error handling in API clients
 - File permission handling in scanner
 
@@ -14,83 +13,6 @@ Licensed under the Apache License, Version 2.0
 from unittest.mock import Mock, patch
 
 import pytest
-
-np = pytest.importorskip("numpy", reason="numpy required for quick wins tests")
-
-
-class TestCosineSimilarityZeroVector:
-    """Test edge cases in cosine_similarity function."""
-
-    def test_handles_zero_vector_a(self):
-        """Test cosine_similarity handles zero first vector without division by zero."""
-        from attune.cache.hybrid import cosine_similarity
-
-        zero_vec = np.array([0.0, 0.0, 0.0])
-        normal_vec = np.array([1.0, 2.0, 3.0])
-
-        # Should handle gracefully (returns nan, inf, or raises)
-        with pytest.warns(RuntimeWarning):  # Division by zero warning expected
-            result = cosine_similarity(zero_vec, normal_vec)
-            # Result will be nan or inf
-            assert np.isnan(result) or np.isinf(result)
-
-    def test_handles_zero_vector_b(self):
-        """Test cosine_similarity handles zero second vector without division by zero."""
-        from attune.cache.hybrid import cosine_similarity
-
-        normal_vec = np.array([1.0, 2.0, 3.0])
-        zero_vec = np.array([0.0, 0.0, 0.0])
-
-        with pytest.warns(RuntimeWarning):  # Division by zero warning expected
-            result = cosine_similarity(normal_vec, zero_vec)
-            assert np.isnan(result) or np.isinf(result)
-
-    def test_handles_both_zero_vectors(self):
-        """Test cosine_similarity handles both vectors being zero."""
-        from attune.cache.hybrid import cosine_similarity
-
-        zero_vec_a = np.array([0.0, 0.0, 0.0])
-        zero_vec_b = np.array([0.0, 0.0, 0.0])
-
-        with pytest.warns(RuntimeWarning):  # Division by zero warning expected
-            result = cosine_similarity(zero_vec_a, zero_vec_b)
-            assert np.isnan(result) or np.isinf(result)
-
-    def test_normal_vectors_work_correctly(self):
-        """Test that normal vectors still work correctly."""
-        from attune.cache.hybrid import cosine_similarity
-
-        vec_a = np.array([1.0, 2.0, 3.0])
-        vec_b = np.array([1.0, 2.0, 3.0])
-
-        result = cosine_similarity(vec_a, vec_b)
-
-        # Identical vectors should have similarity of 1.0
-        assert abs(result - 1.0) < 0.001
-
-    def test_orthogonal_vectors(self):
-        """Test cosine similarity of orthogonal vectors is zero."""
-        from attune.cache.hybrid import cosine_similarity
-
-        vec_a = np.array([1.0, 0.0, 0.0])
-        vec_b = np.array([0.0, 1.0, 0.0])
-
-        result = cosine_similarity(vec_a, vec_b)
-
-        # Orthogonal vectors should have similarity of 0.0
-        assert abs(result - 0.0) < 0.001
-
-    def test_opposite_vectors(self):
-        """Test cosine similarity of opposite vectors is -1."""
-        from attune.cache.hybrid import cosine_similarity
-
-        vec_a = np.array([1.0, 2.0, 3.0])
-        vec_b = np.array([-1.0, -2.0, -3.0])
-
-        result = cosine_similarity(vec_a, vec_b)
-
-        # Opposite vectors should have similarity of -1.0
-        assert abs(result - (-1.0)) < 0.001
 
 
 class TestFilePermissionHandling:
