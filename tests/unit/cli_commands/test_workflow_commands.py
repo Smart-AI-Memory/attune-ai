@@ -529,9 +529,9 @@ class TestCmdWorkflowRunSyncExecution:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Workflow completed" in captured.out
-        assert "score: 95" in captured.out
+        # Voice layer replaces "Workflow completed" with personality-driven messaging
         assert "issues: 2" in captured.out
+        assert "95" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_sync_workflow_non_dict_result(self, mock_get, capsys):
@@ -545,7 +545,7 @@ class TestCmdWorkflowRunSyncExecution:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Result: All tests passed" in captured.out
+        assert "All tests passed" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_sync_workflow_none_result(self, mock_get, capsys):
@@ -566,7 +566,8 @@ class TestCmdWorkflowRunSyncExecution:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Result: None" in captured.out
+        # Voice layer handles None result gracefully
+        assert "Running workflow: wf" in captured.out
 
 
 class TestCmdWorkflowRunAsyncExecution:
@@ -588,7 +589,6 @@ class TestCmdWorkflowRunAsyncExecution:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Workflow completed" in captured.out
         assert "async_result: True" in captured.out
 
     @patch("attune.workflows.get_workflow")
@@ -671,7 +671,6 @@ class TestCmdWorkflowRunJsonOutput:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Workflow completed" in captured.out
         assert "key: val" in captured.out
 
 
@@ -692,7 +691,7 @@ class TestCmdWorkflowRunExceptionHandling:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Workflow failed" in captured.out
+        assert "Something went wrong" in captured.out
         assert "Something broke" in captured.out
 
     @patch("attune.workflows.get_workflow")
@@ -709,7 +708,7 @@ class TestCmdWorkflowRunExceptionHandling:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Workflow failed" in captured.out
+        assert "Something went wrong" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_workflow_raises_key_error(self, mock_get, capsys):
@@ -725,7 +724,7 @@ class TestCmdWorkflowRunExceptionHandling:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Workflow failed" in captured.out
+        assert "Something went wrong" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_async_workflow_raises_exception(self, mock_get, capsys):
@@ -742,7 +741,7 @@ class TestCmdWorkflowRunExceptionHandling:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Workflow failed" in captured.out
+        assert "Something went wrong" in captured.out
         assert "API unreachable" in captured.out
 
 

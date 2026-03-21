@@ -931,4 +931,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is not evidence of integration. Grep for imports outside the
   module itself before considering a feature "active".
 
+- **Changing user-facing output strings cascades through test
+  assertions**: Replacing "Workflow completed" with voice layer
+  personality messaging broke 6 assertions across 4 test classes.
+  When changing any user-facing output string in a shared path
+  (like `_print_workflow_result`), grep the entire test suite for
+  the old string before considering the change done. This is
+  broader than just error messages — any output text change.
+
+- **Real project files on disk override test mocks**: Tests that
+  mock `_get_raw_suggestions()` at the definition site still get
+  real suggestions from `_get_spec_suggestions()` which reads
+  actual `.claude/plans/` files. Fix: mock at the *import site*
+  in the consuming module (`attune.voice.formatter.get_next_steps`
+  not `attune.voice.next_steps.get_next_steps`), or use
+  `monkeypatch.chdir(tmp_path)` to isolate from the real
+  filesystem.
+
+- **MCP `call_tool` wrapper pattern**: When adding a cross-cutting
+  concern (like voice layer) to the MCP server, rename the
+  original `call_tool()` to `_dispatch_tool()` and create a new
+  `call_tool()` that wraps it. This preserves the public API,
+  keeps the diff minimal, and lets the wrapper degrade gracefully
+  with a try/except around the new layer.
+
 <!-- attune-lessons-end -->

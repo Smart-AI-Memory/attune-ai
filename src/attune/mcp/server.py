@@ -736,15 +736,15 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "context_set": self._handle_context_set,
         }
 
-    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        """Execute a tool call.
+    async def _dispatch_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Dispatch a tool call to the appropriate handler.
 
         Args:
             tool_name: Name of the tool to execute
             arguments: Tool arguments
 
         Returns:
-            Tool execution result
+            Raw tool execution result (before voice layer)
 
         """
         if not self._rate_limiter.check(tool_name):
@@ -818,6 +818,51 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except Exception as e:  # noqa: BLE001
             logger.exception(f"Tool execution failed: {tool_name}")
             return {"success": False, "error": f"Tool execution failed: {type(e).__name__}"}
+
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Execute a tool call with unified voice layer.
+
+        Delegates to _dispatch_tool for handler routing, then
+        wraps workflow-type results through the voice layer for
+        consistent next-step suggestions and summaries.
+
+        Args:
+            tool_name: Name of the tool to execute
+            arguments: Tool arguments
+
+        Returns:
+            Tool execution result with voice fields
+
+        """
+        result = await self._dispatch_tool(tool_name, arguments)
+
+        # Apply voice layer to workflow-type responses
+        # (skip memory, auth, telemetry, empathy tools — they're utility)
+        _VOICE_SKIP = {
+            "memory_store",
+            "memory_retrieve",
+            "memory_search",
+            "memory_forget",
+            "attune_get_level",
+            "attune_set_level",
+            "context_get",
+            "context_set",
+            "auth_status",
+            "auth_recommend",
+            "telemetry_stats",
+        }
+        if tool_name not in _VOICE_SKIP and isinstance(result, dict):
+            try:
+                from attune.voice.formatter import format_mcp_response
+
+                # Map tool_name to workflow name (underscores to hyphens)
+                wf_name = tool_name.replace("_", "-")
+                result = format_mcp_response(wf_name, result)
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: Voice layer is optional — never break MCP
+                logger.debug("Voice layer failed for %s", tool_name)
+
+        return result
 
     async def _run_security_audit(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run security audit workflow."""

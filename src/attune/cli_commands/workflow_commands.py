@@ -126,64 +126,33 @@ def cmd_workflow_run(args: Namespace) -> int:
         if args.json:
             print(json.dumps(result, indent=2, default=str))
         else:
-            _print_workflow_result(result)
+            _print_workflow_result(result, workflow_name=name)
 
         return 0
 
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: CLI commands should catch all errors and report gracefully
         logger.exception(f"Workflow failed: {e}")
-        print(f"\n❌ Workflow failed: {e}")
+        from attune.voice import format_error
+
+        print(format_error(str(e), workflow_name=name))
         return 1
 
 
-def _print_workflow_result(result: object) -> None:
-    """Print a workflow result in a human-readable format.
+def _print_workflow_result(
+    result: object,
+    workflow_name: str = "unknown",
+) -> None:
+    """Print a workflow result using the unified voice layer.
 
-    Handles WorkflowResult dataclass objects by extracting the formatted
-    report and cost summary. Falls back to dict iteration or repr for
-    other result types.
+    Routes through attune.voice.format_output() for consistent
+    personality, formatting, and contextual next-step suggestions.
 
     Args:
         result: Workflow execution result (WorkflowResult, dict, or other)
+        workflow_name: Name of the workflow that produced this result
 
     """
-    from attune.workflows.data_classes import WorkflowResult
+    from attune.voice import format_output
 
-    if isinstance(result, WorkflowResult):
-        # Print formatted report if available in final_output
-        if isinstance(result.final_output, dict):
-            report = result.final_output.get("formatted_report")
-            if report:
-                print(f"\n{report}")
-            else:
-                # No formatted report — show key fields from final_output
-                print("\n✅ Workflow completed\n")
-                for key, value in result.final_output.items():
-                    if not isinstance(value, dict | list):
-                        print(f"  {key}: {value}")
-        elif result.final_output is not None:
-            print("\n✅ Workflow completed\n")
-            print(f"  {result.final_output}")
-        else:
-            print("\n✅ Workflow completed (no output)")
-
-        # Print cost and duration summary
-        cr = result.cost_report
-        print(f"\n{'─' * 60}")
-        print(f"  Cost: ${cr.total_cost:.4f}", end="")
-        if cr.savings_percent > 0:
-            print(f"  (saved {cr.savings_percent:.0f}% vs premium)")
-        else:
-            print()
-        print(f"  Duration: {result.total_duration_ms / 1000:.1f}s")
-        if not result.success:
-            print(f"  Error: {result.error}")
-        print()
-
-    elif isinstance(result, dict):
-        print("\n✅ Workflow completed\n")
-        for key, value in result.items():
-            print(f"  {key}: {value}")
-    else:
-        print(f"\n✅ Result: {result}")
+    print(format_output(workflow_name, result))
