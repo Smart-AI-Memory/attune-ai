@@ -1,6 +1,7 @@
 """Tests for markdown agent parser."""
 
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -190,7 +191,7 @@ File-based agent.
             config = parser.parse_file(f.name)
 
             assert config.name == "file-agent"
-            assert config.extra["source_file"] == f.name
+            assert config.extra["source_file"] == str(Path(f.name).resolve())
 
     def test_parse_file_not_found(self, parser):
         """Test that missing file raises FileNotFoundError."""

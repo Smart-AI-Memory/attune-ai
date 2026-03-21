@@ -92,7 +92,8 @@ class PatternPersistence:
             >>> library = PatternPersistence.load_from_json("patterns.json")
 
         """
-        with open(filepath) as f:
+        validated_path = _validate_file_path(filepath)
+        with open(validated_path) as f:
             data = json.load(f)
 
         library = PatternLibrary()
@@ -143,7 +144,8 @@ class PatternPersistence:
             >>> PatternPersistence.save_to_sqlite(library, "patterns.db")
 
         """
-        conn = sqlite3.connect(db_path)
+        validated_path = _validate_file_path(db_path)
+        conn = sqlite3.connect(str(validated_path))
         cursor = conn.cursor()
 
         # Create tables
@@ -227,7 +229,8 @@ class PatternPersistence:
             >>> library = PatternPersistence.load_from_sqlite("patterns.db")
 
         """
-        conn = sqlite3.connect(db_path)
+        validated_path = _validate_file_path(db_path)
+        conn = sqlite3.connect(str(validated_path))
         conn.row_factory = sqlite3.Row  # Access columns by name
         cursor = conn.cursor()
 

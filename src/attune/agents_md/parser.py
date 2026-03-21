@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from attune.config.agent_config import ModelTier, Provider, UnifiedAgentConfig
+from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,8 @@ class MarkdownAgentParser:
             ValueError: If file format is invalid
 
         """
-        file_path = Path(file_path)
+        validated_path = _validate_file_path(str(file_path))
+        file_path = Path(validated_path)
 
         if not file_path.exists():
             raise FileNotFoundError(f"Agent file not found: {file_path}")
@@ -210,7 +212,12 @@ class MarkdownAgentParser:
 
         """
         errors = []
-        file_path = Path(file_path)
+
+        try:
+            validated_path = _validate_file_path(str(file_path))
+            file_path = Path(validated_path)
+        except ValueError as e:
+            return [f"Invalid file path: {e}"]
 
         if not file_path.exists():
             return [f"File not found: {file_path}"]

@@ -436,6 +436,6 @@ class LeveragePointAnalyzer:
             "expected_outcomes": point.expected_outcomes,
         }
 
-    def reset(self):
-        """Reset analyzer state"""
+    def reset(self) -> None:
+        """Reset analyzer state."""
         self.identified_points = []

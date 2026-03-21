@@ -157,7 +157,7 @@ class AgentMonitor:
                 message=f"Agent {agent_id} response time: {response_time_ms:.0f}ms",
             )
 
-    def record_pattern_discovery(self, agent_id: str, pattern_id: str | None = None):
+    def record_pattern_discovery(self, agent_id: str, pattern_id: str | None = None) -> None:
         """Record that an agent discovered a new pattern.
 
         Args:
@@ -175,7 +175,7 @@ class AgentMonitor:
         pattern_id: str | None = None,
         pattern_agent: str | None = None,
         success: bool = True,
-    ):
+    ) -> None:
         """Record that an agent used a pattern.
 
         Args:
@@ -407,8 +407,8 @@ class AgentMonitor:
         if len(self.alerts) > 1000:
             self.alerts = self.alerts[-500:]
 
-    def reset(self):
-        """Reset all monitoring data"""
+    def reset(self) -> None:
+        """Reset all monitoring data."""
         self.agents = {}
         self.pattern_uses = []
         self.alerts = []
