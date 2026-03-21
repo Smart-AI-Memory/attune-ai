@@ -33,7 +33,7 @@ Before running, ask:
 For docstring generation:
 
 ```
-doc_gen(path="<target module>")
+doc_gen(source_path="<target module>")
 ```
 
 For a full documentation audit first:
@@ -45,7 +45,7 @@ doc_audit(path="<target>")
 Then generate docs for gaps found:
 
 ```
-doc_gen(path="<gap file>")
+doc_gen(source_path="<gap file>")
 ```
 
 For a complete pipeline (audit + generate + review):

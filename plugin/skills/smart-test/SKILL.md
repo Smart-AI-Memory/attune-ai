@@ -37,13 +37,13 @@ test_audit(path="<target>")
 For targeted test generation:
 
 ```
-test_generation(path="<target module>")
+test_generation(module="<target module>")
 ```
 
 For batch generation across many modules:
 
 ```
-test_gen_parallel(path="<target directory>")
+test_gen_parallel(top=10)
 ```
 
 ## Output Format

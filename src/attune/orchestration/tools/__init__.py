@@ -13,6 +13,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 from ._shared import _validate_file_path
+from .architecture import ArchitectureReport, RealArchitectureAnalyzer
 from .performance import PERFORMANCE_TOOLS, PerformanceReport, RealPerformanceProfiler
 from .quality import (
     QUALITY_TOOLS,
@@ -49,6 +50,8 @@ __all__ = [
     "DocumentationReport",
     "PerformanceReport",
     # Classes
+    "RealArchitectureAnalyzer",
+    "ArchitectureReport",
     "RealCoverageAnalyzer",
     "RealTestGenerator",
     "RealTestValidator",

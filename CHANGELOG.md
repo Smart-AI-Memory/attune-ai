@@ -5,6 +5,51 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2026-03-20
+
+### Added (5.1.3)
+
+- **Architecture analyzer** — New
+  `RealArchitectureAnalyzer` tool for module structure,
+  circular import detection, and coupling analysis
+  (`src/attune/orchestration/tools/architecture.py`).
+- **`deep_review` MCP tool** — Registered and wired as
+  the 31st MCP tool with full dispatch, path validation,
+  and schema definition.
+- **`architecture_analyst` agent dispatch** — Strategy
+  base class now routes `architecture_analyst` agents to
+  the real architecture analyzer.
+- **11 new test files, 100+ tests** — Coverage for
+  strategy base dispatch, tools package exports,
+  workflow init supplemental paths, architecture
+  analyzer, deep review wiring, and 6 workflow execute
+  tests (simplify, suggestions, telemetry, test-audit,
+  test-gen, workflows-init).
+- **Commands migrated to skills** — All 21
+  `.claude/commands/` files replaced by
+  `.claude/skills/` equivalents for SDK compliance.
+
+### Changed (5.1.3)
+
+- **`health-check` registry entry** — Now points to
+  `OrchestratedHealthCheckWorkflow` (was
+  `HealthCheckAgentSDKWorkflow`). Removed stale
+  `health_check.py` and its tests.
+- **Skill descriptions updated** — `code-quality`,
+  `doc-gen`, `smart-test`, `workflow-orchestration`
+  skills refined for better auto-invocation triggers.
+- **Website landing page** — Refreshed hero section,
+  globals.css, and layout metadata.
+
+### Removed (5.1.3)
+
+- `src/attune/workflows/health_check.py` — Merged into
+  `OrchestratedHealthCheckWorkflow`.
+- `tests/unit/workflows/test_health_check.py` — Tests
+  for removed module.
+- 21 `.claude/commands/*.md` files — Superseded by
+  `.claude/skills/` directory.
+
 ## [5.1.1] - 2026-03-19
 
 ### Highlights

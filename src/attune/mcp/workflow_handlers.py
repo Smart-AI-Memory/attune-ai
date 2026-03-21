@@ -17,8 +17,8 @@ class WorkflowHandlersMixin:
     Covers workflows not already exposed in the base server:
     doc-audit, doc-gen, doc-orchestrator, test-audit,
     test-gen-parallel, refactor-plan, dependency-check,
-    simplify-code, secure-release, health-check, and
-    research-synthesis.
+    simplify-code, deep-review, secure-release, health-check,
+    and research-synthesis.
     """
 
     def _validated_path(self, args: dict[str, Any], key: str = "path", default: str = ".") -> str:
@@ -240,6 +240,31 @@ class WorkflowHandlersMixin:
         from attune.workflows.dependency_check import DependencyCheckWorkflow
 
         workflow = DependencyCheckWorkflow()
+        result = await workflow.execute(path=self._validated_path(args))
+
+        return {
+            "success": result.success,
+            "output": result.final_output,
+            "cost": result.cost_report.total_cost,
+        }
+
+    # ------------------------------------------------------------------
+    # Deep Review
+    # ------------------------------------------------------------------
+
+    async def _run_deep_review(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run multi-pass deep code review.
+
+        Args:
+            args: ``path`` (required) for target directory or file.
+
+        Returns:
+            Dict with success, findings, and review output.
+
+        """
+        from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
+
+        workflow = DeepReviewAgentSDKWorkflow()
         result = await workflow.execute(path=self._validated_path(args))
 
         return {

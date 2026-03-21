@@ -25,6 +25,7 @@ Based on the answer, route to the appropriate workflow.
 | Code Review | `code_review` | Quality, correctness, and security analysis |
 | Bug Prediction | `bug_predict` | Pattern analysis and likely bug detection |
 | Performance Audit | `performance_audit` | Bottleneck detection and optimization |
+| Deep Review | `deep_review` | Multi-pass: security, quality, and test gap analysis |
 
 ### Testing
 

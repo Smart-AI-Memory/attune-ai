@@ -71,7 +71,8 @@ if TYPE_CHECKING:
         Validator,
         escalate,
     )
-    from .health_check import HealthCheckAgentSDKWorkflow
+
+    # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
     from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
@@ -199,7 +200,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # SimplifyCodeAgentSDKWorkflow: Merged into SimplifyCodeWorkflow (v4.2.0)
     # DependencyCheckAgentSDKWorkflow: Merged into DependencyCheckWorkflow (v4.2.0)
     # ResearchSynthesisAgentSDKWorkflow: Merged into ResearchSynthesisWorkflow (v4.2.0)
-    "HealthCheckAgentSDKWorkflow": (".health_check", "HealthCheckAgentSDKWorkflow"),
+    # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
     "XMLAgent": (".xml_enhanced_crew", "XMLAgent"),
     "XMLTask": (".xml_enhanced_crew", "XMLTask"),
     "parse_xml_response": (".xml_enhanced_crew", "parse_xml_response"),
@@ -332,7 +333,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # simplify-code-sdk: Merged into simplify-code (v4.2.0)
     # dependency-check-sdk: Merged into dependency-check (v4.2.0)
     # research-synthesis-sdk: Merged into research-synthesis (v4.2.0)
-    "health-check": "HealthCheckAgentSDKWorkflow",
+    "health-check": "OrchestratedHealthCheckWorkflow",
     # test-maintenance: Removed — utility class, not a BaseWorkflow.
     # Import directly: from attune.workflows.test_maintenance import TestMaintenanceWorkflow
     # batch-processing: Removed — batch API client with execute_batch().
@@ -746,7 +747,7 @@ __all__ = [
     # SimplifyCodeAgentSDKWorkflow: Merged (v4.2.0)
     # DependencyCheckAgentSDKWorkflow: Merged (v4.2.0)
     # ResearchSynthesisAgentSDKWorkflow: Merged (v4.2.0)
-    "HealthCheckAgentSDKWorkflow",
+    # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
     # XML-enhanced prompting
     "XMLAgent",
     "XMLTask",

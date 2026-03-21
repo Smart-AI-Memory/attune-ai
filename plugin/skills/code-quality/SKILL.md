@@ -11,9 +11,10 @@ argument-hint: "<path or directory to review>"
 Before running, ask:
 
 1. **Scope**: "Which files or directory should I review?"
-2. **Depth**: "Quick scan or thorough analysis?"
+2. **Depth**: "Quick scan, thorough, or deep review?"
    - Quick: code_review only
    - Thorough: code_review + bug_predict combined
+   - Deep: deep_review (security + quality + test gaps)
 
 ## Execution
 
@@ -31,6 +32,12 @@ bug_predict(path="<user-specified path>")
 ```
 
 Merge and deduplicate results from both tools.
+
+**Deep review** (multi-pass: security, quality, test gaps):
+
+```
+deep_review(path="<user-specified path>")
+```
 
 ## Output Format
 

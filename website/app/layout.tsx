@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { generateMetadata, generateStructuredData } from "@/lib/metadata";
 import PlausibleAnalytics from "@/components/PlausibleAnalytics";
 import WebVitals from "@/components/WebVitals";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "600", "700", "800"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 const geistMono = Geist_Mono({
@@ -44,7 +52,7 @@ export default function RootLayout({
         <PlausibleAnalytics />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${manrope.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
         <a
           href="#main-content"

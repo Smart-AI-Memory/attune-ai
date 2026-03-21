@@ -260,6 +260,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 "Find complex code hotspots and suggest simplifications to reduce cognitive load.",
                 param_desc="Directory to scan for complexity",
             ),
+            "deep_review": _pt(
+                "Multi-pass deep code review: security, quality, and test gap analysis with prioritized findings.",
+                param_desc="Path to directory or file to review",
+                required=True,
+            ),
             "secure_release": _pt(
                 "Full secure release pipeline: security audit, code review, and go/no-go decision.",
                 param_desc="Project root path",
@@ -659,6 +664,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "refactor_plan": self._run_refactor_plan,
             "dependency_check": self._run_dependency_check,
             "simplify_code": self._run_simplify_code,
+            "deep_review": self._run_deep_review,
             "secure_release": self._run_secure_release,
             "health_check": self._run_health_check,
             "research_synthesis": self._run_research_synthesis,
@@ -720,6 +726,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 return await self._run_dependency_check(arguments)
             if tool_name == "simplify_code":
                 return await self._run_simplify_code(arguments)
+            if tool_name == "deep_review":
+                return await self._run_deep_review(arguments)
             if tool_name == "secure_release":
                 return await self._run_secure_release(arguments)
             if tool_name == "health_check":

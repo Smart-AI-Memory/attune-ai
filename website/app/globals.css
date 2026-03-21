@@ -1,33 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand Colors - Empathy Framework */
-  --primary: #1E40AF;      /* Deep Blue - Trust, Intelligence */
-  --primary-dark: #1E3A8A;
-  --primary-light: #3B82F6;
+  /* Brand Colors — Material Design 3 palette */
+  --primary: #004ac6;        /* Deep Blue — Trust */
+  --primary-dark: #003ea8;
+  --primary-light: #2563eb;
 
-  --secondary: #06B6D4;    /* Cyan - Innovation, Technology */
-  --secondary-dark: #0891B2;
-  --secondary-light: #22D3EE;
+  --secondary: #006c49;     /* Green — Growth */
+  --secondary-dark: #005236;
+  --secondary-light: #4edea3;
 
-  --accent: #8B5CF6;       /* Purple - AI, Creativity */
+  --accent: #8B5CF6;        /* Purple — AI, Creativity */
   --accent-dark: #7C3AED;
   --accent-light: #A78BFA;
 
-  --success: #10B981;      /* Green */
-  --warning: #F59E0B;      /* Amber */
-  --error: #EF4444;        /* Red */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #ba1a1a;
 
-  /* Neutrals */
-  --background: #FFFFFF;
-  --foreground: #0F172A;   /* Slate 900 */
-  --muted: #64748B;        /* Slate 500 */
-  --border: #E2E8F0;       /* Slate 200 */
+  /* Surfaces */
+  --background: #f8f9ff;
+  --foreground: #0b1c30;
+  --muted: #434655;
+  --border: #c3c6d7;
+
+  /* Surface hierarchy */
+  --surface: #f8f9ff;
+  --surface-container-low: #eff4ff;
+  --surface-container: #e5eeff;
+  --surface-container-high: #dce9ff;
+  --surface-container-highest: #d3e4fe;
+  --surface-variant: #d3e4fe;
 
   /* Text Colors */
-  --text-primary: #0F172A;
-  --text-secondary: #334155;  /* Darker for better contrast - was #475569 */
-  --text-muted: #64748B;       /* Darker for better contrast - was #94A3B8 */
+  --text-primary: #0b1c30;
+  --text-secondary: #434655;
+  --text-muted: #737686;
 }
 
 @theme inline {
@@ -53,8 +61,17 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
 
+  /* Surface hierarchy */
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-container-low);
+  --color-surface-mid: var(--surface-container);
+  --color-surface-high: var(--surface-container-high);
+  --color-surface-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
+
   /* Typography */
-  --font-sans: var(--font-geist-sans);
+  --font-headline: var(--font-manrope);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
   /* Spacing */
@@ -63,33 +80,47 @@
 }
 
 :root.dark {
-  --background: #0F172A;   /* Slate 900 */
-  --foreground: #F1F5F9;   /* Slate 100 */
-  --muted: #94A3B8;        /* Slate 400 */
-  --border: #334155;       /* Slate 700 */
+  --background: #0b1c30;
+  --foreground: #f8f9ff;
+  --muted: #b7c8e1;
+  --border: #38485d;
 
-  --text-primary: #F1F5F9;
-  --text-secondary: #CBD5E1;
-  --text-muted: #94A3B8;
+  --surface: #0b1c30;
+  --surface-container-low: #132438;
+  --surface-container: #1a2d42;
+  --surface-container-high: #213145;
+  --surface-container-highest: #2a3b50;
+  --surface-variant: #38485d;
+
+  --text-primary: #f8f9ff;
+  --text-secondary: #b7c8e1;
+  --text-muted: #737686;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0F172A;   /* Slate 900 */
-    --foreground: #F1F5F9;   /* Slate 100 */
-    --muted: #94A3B8;        /* Slate 400 */
-    --border: #334155;       /* Slate 700 */
+    --background: #0b1c30;
+    --foreground: #f8f9ff;
+    --muted: #b7c8e1;
+    --border: #38485d;
 
-    --text-primary: #F1F5F9;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
+    --surface: #0b1c30;
+    --surface-container-low: #132438;
+    --surface-container: #1a2d42;
+    --surface-container-high: #213145;
+    --surface-container-highest: #2a3b50;
+    --surface-variant: #38485d;
+
+    --text-primary: #f8f9ff;
+    --text-secondary: #b7c8e1;
+    --text-muted: #737686;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -99,9 +130,10 @@ body {
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-family: var(--font-headline), 'Manrope', sans-serif;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 /* Headings on dark/gradient backgrounds should be white */
@@ -182,6 +214,17 @@ pre code {
 
 .gradient-accent {
   background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+}
+
+.glass-panel {
+  background: rgba(211, 228, 254, 0.7);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(195, 198, 215, 0.15);
 }
 
 .text-gradient {

@@ -66,6 +66,7 @@ class ExecutionStrategy(ABC):
         import time
 
         from ..real_tools import (
+            RealArchitectureAnalyzer,
             RealCodeQualityAnalyzer,
             RealCoverageAnalyzer,
             RealDocumentationAnalyzer,
@@ -164,6 +165,24 @@ class ExecutionStrategy(ABC):
                 success = report.passed
                 confidence = report.score / 10.0
 
+            elif agent.id == "architecture_analyst" or "architecture" in agent.role.lower():
+                analyzer = RealArchitectureAnalyzer(project_root)
+                report = analyzer.analyze(target_path)
+
+                output = {
+                    "agent_role": agent.role,
+                    "score": report.score,
+                    "total_modules": report.total_modules,
+                    "total_packages": report.total_packages,
+                    "max_depth": report.max_depth,
+                    "circular_imports": len(report.circular_imports),
+                    "high_coupling_count": len(report.high_coupling),
+                    "high_coupling": report.high_coupling,
+                    "passed": report.passed,
+                }
+                success = report.passed
+                confidence = report.score / 10.0
+
             elif agent.id == "test_generator":
                 # Test generation requires different handling (LLM-based)
                 logger.info("Test generation requires manual invocation, returning placeholder")
@@ -203,6 +222,10 @@ class ExecutionStrategy(ABC):
             )
 
         except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Agent execution may fail for various reasons
+            # (missing deps, invalid input, resource exhaustion). Catch
+            # broadly so the orchestrator always gets an AgentResult
+            # with error details rather than crashing the entire run.
             duration = time.perf_counter() - start_time
             logger.error(f"Agent {agent.id} failed: {e}")
 
