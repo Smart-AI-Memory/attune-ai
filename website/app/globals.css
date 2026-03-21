@@ -227,6 +227,18 @@ pre code {
   border: 1px solid rgba(195, 198, 215, 0.15);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .glass-panel {
+    background: rgba(42, 59, 80, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+:root.dark .glass-panel {
+  background: rgba(42, 59, 80, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .text-gradient {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
   -webkit-background-clip: text;
@@ -429,4 +441,13 @@ pre code {
 .btn-outline:hover {
   background: var(--primary);
   color: white !important;
+}
+
+.btn-ghost-white {
+  color: white !important;
+}
+
+.btn-ghost-white:hover {
+  color: white !important;
+  opacity: 0.9;
 }

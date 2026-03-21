@@ -58,7 +58,7 @@ export default function AttunePluginPage() {
                 href="https://github.com/Smart-AI-Memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)] text-lg px-8 py-4"
+                className="btn btn-ghost-white border-2 border-white bg-white/10 hover:bg-white hover:!text-[var(--primary)] text-lg px-8 py-4"
               >
                 Get Attune AI (Full)
               </a>
@@ -383,7 +383,7 @@ export default function AttunePluginPage() {
                 href="https://github.com/Smart-AI-Memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn border-2 border-white text-white hover:bg-white hover:text-[var(--primary)] text-lg px-8 py-4"
+                className="btn btn-ghost-white border-2 border-white hover:bg-white hover:!text-[var(--primary)] text-lg px-8 py-4"
               >
                 Install Attune AI
               </a>

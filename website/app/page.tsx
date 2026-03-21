@@ -54,7 +54,7 @@ export default function Home() {
                   type <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-sm">/attune</code> and go.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-sm group cursor-pointer border border-white/10">
+                  <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-sm group cursor-pointer border border-white/20">
                     <span className="opacity-50 mr-2">$</span>
                     <span>pip install 'attune-ai[developer]'</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -64,7 +64,7 @@ export default function Home() {
                   </div>
                   <Link
                     href="/workflows"
-                    className="bg-[var(--surface-container-high)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-container-highest)] transition-colors text-center"
+                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)]"
                   >
                     Explore Workflows
                   </Link>
@@ -81,7 +81,7 @@ export default function Home() {
 
               {/* Agent orchestrator visual */}
               <div className="relative">
-                <div className="relative z-10 rounded-2xl overflow-hidden bg-[var(--surface-container-low)] p-8 border border-[var(--border)]/15 shadow-2xl">
+                <div className="relative z-10 rounded-2xl overflow-hidden bg-[var(--surface-container-low)] p-8 border border-[var(--border)]/40 shadow-2xl">
                   <div className="flex items-center gap-2 mb-6">
                     <div className="w-3 h-3 rounded-full bg-red-500/40"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500/40"></div>
@@ -228,7 +228,7 @@ export default function Home() {
                     href="https://github.com/Smart-AI-Memory/attune-ai"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="border border-white/30 text-white px-8 py-3 rounded-lg font-bold hover:bg-white/10 transition-colors text-center"
+                    className="btn-ghost-white border-2 border-white/60 px-8 py-3 rounded-lg font-bold hover:bg-white/15 transition-colors text-center"
                   >
                     Star on GitHub
                   </a>
@@ -238,7 +238,7 @@ export default function Home() {
             </div>
 
             <div className="lg:col-span-2 space-y-6">
-              <div className="p-6 border border-[var(--border)]/15 rounded-2xl bg-[var(--surface-container-low)]">
+              <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
                 <div className="flex items-center gap-4 mb-3">
                   <span className="text-[var(--primary)]">🔒</span>
                   <span className="font-bold">Security Built In</span>
@@ -247,7 +247,7 @@ export default function Home() {
                   Path traversal protection, SSRF validation, rate limiting, module import restrictions, and PreToolUse security hooks.
                 </p>
               </div>
-              <div className="p-6 border border-[var(--border)]/15 rounded-2xl bg-[var(--surface-container-low)]">
+              <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
                 <div className="flex items-center gap-4 mb-3">
                   <span className="text-[var(--secondary)]">💰</span>
                   <span className="font-bold">Cost-Optimized Routing</span>
