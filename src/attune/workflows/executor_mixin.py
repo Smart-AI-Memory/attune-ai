@@ -95,11 +95,18 @@ class ExecutorMixin:
         from attune.models.fallback import ResilientExecutor
 
         # Create the base executor
-        base_executor = EmpathyLLMExecutor(
-            provider=self._provider_str,
-            api_key=self._api_key,
-            telemetry_store=self._telemetry_backend,
-        )
+        executor_kwargs: dict[str, Any] = {
+            "provider": self._provider_str,
+            "api_key": self._api_key,
+            "telemetry_store": self._telemetry_backend,
+        }
+
+        # Enable extended thinking if the workflow opts in
+        if getattr(self, "_use_thinking", False):
+            executor_kwargs["use_thinking"] = True
+            executor_kwargs["thinking_budget"] = getattr(self, "_thinking_budget", 10000)
+
+        base_executor = EmpathyLLMExecutor(**executor_kwargs)
 
         # When tier fallback is enabled, skip LLM-level fallback
         # to avoid double fallback (tier-level + LLM-level)

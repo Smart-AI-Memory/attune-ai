@@ -292,6 +292,59 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                     "required": ["sources", "question"],
                 },
             },
+            "analyze_batch": {
+                "description": "Submit tasks to the Anthropic Batch API for 50% cost savings. Processes asynchronously (up to 24 hours). Best for non-urgent bulk analysis.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "requests": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "task_id": {
+                                        "type": "string",
+                                        "description": "Unique task identifier",
+                                    },
+                                    "task_type": {
+                                        "type": "string",
+                                        "description": "Task type (e.g., analyze_logs, generate_report)",
+                                    },
+                                    "input_data": {
+                                        "type": "object",
+                                        "description": "Task input data",
+                                    },
+                                    "model_tier": {
+                                        "type": "string",
+                                        "enum": ["cheap", "capable", "premium"],
+                                        "description": "Model tier (default: capable)",
+                                    },
+                                },
+                                "required": ["task_id", "task_type", "input_data"],
+                            },
+                            "description": "List of tasks to process in batch",
+                        },
+                    },
+                    "required": ["requests"],
+                },
+            },
+            "analyze_image": {
+                "description": "Analyze an image (screenshot, diagram, UI mockup) using Claude's vision capabilities. Supports PNG, JPEG, GIF, and WebP.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "image_path": {
+                            "type": "string",
+                            "description": "Path to the image file to analyze",
+                        },
+                        "prompt": {
+                            "type": "string",
+                            "description": "Analysis prompt (default: describe what you see, focusing on errors or notable elements)",
+                        },
+                    },
+                    "required": ["image_path"],
+                },
+            },
         }
 
     def _register_utility_tools(self) -> dict[str, dict[str, Any]]:
@@ -668,6 +721,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "secure_release": self._run_secure_release,
             "health_check": self._run_health_check,
             "research_synthesis": self._run_research_synthesis,
+            "analyze_batch": self._run_analyze_batch,
+            "analyze_image": self._run_analyze_image,
             "auth_status": lambda _args: self._get_auth_status(),
             "auth_recommend": self._get_auth_recommend,
             "telemetry_stats": self._get_telemetry_stats,

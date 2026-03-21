@@ -382,6 +382,15 @@ class TestModuleConstants:
         assert "capable" in MODEL_CONFIG
         assert "premium" in MODEL_CONFIG
 
+    def test_model_config_uses_current_model_ids(self):
+        """MODEL_CONFIG uses non-deprecated model IDs."""
+        from attune.agents.release.release_models import MODEL_CONFIG
+
+        # Prevent regression to deprecated model IDs
+        assert MODEL_CONFIG["cheap"] == "claude-haiku-4-5-20251001"
+        assert MODEL_CONFIG["capable"] == "claude-sonnet-4-6"
+        assert MODEL_CONFIG["premium"] == "claude-opus-4-6"
+
     def test_default_quality_gates_keys(self):
         """DEFAULT_QUALITY_GATES has expected keys."""
         from attune.agents.release.release_models import DEFAULT_QUALITY_GATES

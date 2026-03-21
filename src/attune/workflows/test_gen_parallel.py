@@ -56,6 +56,8 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
 
     Supports composition via ``WorkflowContext`` -- use ``default_context()``
     to get a pre-configured context with prompt and parsing services.
+
+    Uses extended thinking for better test planning and completion.
     """
 
     name = "parallel-test-generation"
@@ -67,6 +69,10 @@ class ParallelTestGenerationWorkflow(BaseWorkflow):
         "complete_tests": ModelTier.CAPABLE,
         "validate": ModelTier.CHEAP,
     }
+
+    # Enable extended thinking for complex test generation
+    _use_thinking = True
+    _thinking_budget = 10000
 
     @classmethod
     def default_context(cls, xml_config: dict | None = None) -> WorkflowContext:

@@ -46,6 +46,8 @@ class EmpathyLLMExecutor:
         provider: str = "anthropic",
         api_key: str | None = None,
         telemetry_store: TelemetryBackend | TelemetryStore | None = None,
+        use_thinking: bool = False,
+        thinking_budget: int = 10000,
         **llm_kwargs: Any,
     ):
         """Initialize the EmpathyLLM executor.
@@ -55,11 +57,18 @@ class EmpathyLLMExecutor:
             provider: LLM provider (anthropic).
             api_key: Optional API key for the provider.
             telemetry_store: Optional telemetry store for recording calls.
+            use_thinking: Enable extended thinking for complex analysis.
+                Adds a thinking step before generating output.
+            thinking_budget: Max tokens for thinking (default: 10000).
             **llm_kwargs: Additional arguments for EmpathyLLM.
 
         """
         self._provider = provider
         self._api_key = api_key
+        # Thread thinking config through to the provider
+        if use_thinking:
+            llm_kwargs["use_thinking"] = True
+            llm_kwargs["thinking_budget"] = thinking_budget
         self._llm_kwargs = llm_kwargs
         self._llm = empathy_llm
         self._telemetry = telemetry_store

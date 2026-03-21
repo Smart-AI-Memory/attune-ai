@@ -402,3 +402,155 @@ class WorkflowHandlersMixin:
             "success": True,
             "output": str(final),
         }
+
+    async def _run_analyze_batch(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Submit tasks to the Anthropic Batch API (50% cost savings).
+
+        Args:
+            args: ``requests`` (list of task dicts with task_id,
+                task_type, input_data, and optional model_tier).
+
+        Returns:
+            Dict with batch_id and submission status.
+
+        """
+        from attune.workflows.batch_processing import (
+            BatchProcessingWorkflow,
+            BatchRequest,
+        )
+
+        raw_requests = args.get("requests", [])
+        if not raw_requests:
+            return {"success": False, "error": "requests array is required and cannot be empty"}
+
+        requests = [
+            BatchRequest(
+                task_id=r["task_id"],
+                task_type=r["task_type"],
+                input_data=r["input_data"],
+                model_tier=r.get("model_tier", "capable"),
+            )
+            for r in raw_requests
+        ]
+
+        workflow = BatchProcessingWorkflow()
+        results = await workflow.execute_batch(requests)
+
+        return {
+            "success": True,
+            "total": len(results),
+            "succeeded": sum(1 for r in results if r.success),
+            "failed": sum(1 for r in results if not r.success),
+            "results": [
+                {
+                    "task_id": r.task_id,
+                    "success": r.success,
+                    "output": r.output,
+                    "error": r.error,
+                }
+                for r in results
+            ],
+        }
+
+    async def _run_analyze_image(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Analyze an image using Claude's vision capabilities.
+
+        Args:
+            args: ``image_path`` (str, required) and ``prompt``
+                (str, optional).
+
+        Returns:
+            Dict with analysis text.
+
+        """
+        import base64
+        import os
+
+        from attune.security.path_validation import _validate_file_path
+
+        image_path = args.get("image_path", "")
+        if not image_path:
+            return {"success": False, "error": "image_path is required"}
+
+        # Validate path
+        validated_path = _validate_file_path(image_path, allowed_dir=self._workspace_root)
+
+        # Check file exists
+        if not validated_path.exists():
+            return {"success": False, "error": f"File not found: {image_path}"}
+
+        # Check file size (max 10MB)
+        file_size = validated_path.stat().st_size
+        max_size = 10 * 1024 * 1024
+        if file_size > max_size:
+            return {"success": False, "error": f"File too large ({file_size} bytes). Max: 10MB"}
+
+        # Detect MIME type
+        suffix = validated_path.suffix.lower()
+        mime_map = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+        }
+        media_type = mime_map.get(suffix)
+        if not media_type:
+            return {
+                "success": False,
+                "error": f"Unsupported image format: {suffix}. Supported: png, jpg, gif, webp",
+            }
+
+        # Check for API key
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return {"success": False, "error": "ANTHROPIC_API_KEY not set"}
+
+        # Read and encode image
+        image_data = base64.b64encode(validated_path.read_bytes()).decode("utf-8")
+
+        prompt = args.get(
+            "prompt",
+            "Analyze this image and describe what you see, focusing on any errors, issues, or notable elements.",
+        )
+
+        # Call Anthropic API with vision
+        try:
+            from attune.llm.providers.anthropic import AnthropicProvider
+
+            provider = AnthropicProvider(api_key=api_key)
+            response = await provider.generate(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": media_type,
+                                    "data": image_data,
+                                },
+                            },
+                            {"type": "text", "text": prompt},
+                        ],
+                    },
+                ],
+            )
+
+            return {
+                "success": True,
+                "analysis": response.get("content", str(response)),
+                "image_path": str(validated_path),
+                "media_type": media_type,
+                "file_size_bytes": file_size,
+            }
+
+        except ImportError as e:
+            return {"success": False, "error": f"Anthropic provider unavailable: {e}"}
+        except (ConnectionError, TimeoutError) as e:
+            return {"success": False, "error": f"API connection failed: {e}"}
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: Vision analysis is best-effort
+            logger.exception("Image analysis failed")
+            return {"success": False, "error": "Image analysis failed"}

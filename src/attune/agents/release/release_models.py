@@ -45,7 +45,7 @@ except ImportError:
 # =============================================================================
 
 MODEL_CONFIG = {
-    "cheap": "claude-3-5-haiku-latest",
+    "cheap": "claude-haiku-4-5-20251001",
     "capable": "claude-sonnet-4-6",
     "premium": "claude-opus-4-6",
 }
