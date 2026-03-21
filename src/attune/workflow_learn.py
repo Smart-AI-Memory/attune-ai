@@ -139,23 +139,28 @@ def learn_workflow(
     debugging_file = patterns_path / "debugging.json"
     existing: dict[str, Any] = {"patterns": []}
 
-    if debugging_file.exists():
+    try:
+        validated_file = _validate_file_path(str(debugging_file))
+    except ValueError as e:
+        print(f"  Warning: path validation failed: {e}")
+        validated_file = None
+
+    if validated_file is not None:
         try:
-            with open(debugging_file) as f:
+            with validated_file.open() as f:
                 existing = json.load(f)
-        except (OSError, json.JSONDecodeError):
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
             pass
 
     # Add new patterns (avoid duplicates)
     existing_ids = {p.get("pattern_id") for p in existing.get("patterns", [])}
     new_patterns = [p for p in learned if p["pattern_id"] not in existing_ids]
 
-    if new_patterns:
+    if new_patterns and validated_file is not None:
         existing["patterns"].extend(new_patterns)
         existing["last_updated"] = datetime.now().isoformat()
 
-        validated_path = _validate_file_path(str(debugging_file))
-        with validated_path.open("w") as f:
+        with validated_file.open("w") as f:
             json.dump(existing, f, indent=2)
 
     # Summary

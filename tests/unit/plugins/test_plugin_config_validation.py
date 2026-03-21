@@ -108,10 +108,17 @@ class TestHooksJson:
             assert event in valid_events, f"Unknown hook event: {event}"
 
     def test_hook_entries_have_matcher(self) -> None:
-        """Test that each hook entry has a matcher field."""
+        """Test that tool-use hook entries have a matcher field.
+
+        SessionStart/SessionEnd hooks do not use matchers.
+        """
+        # Events that match on tool names
+        tool_events = {"PreToolUse", "PostToolUse"}
         path = PLUGIN_ROOT / "hooks" / "hooks.json"
         data = json.loads(path.read_text(encoding="utf-8"))
         for event, entries in data["hooks"].items():
+            if event not in tool_events:
+                continue
             for entry in entries:
                 assert "matcher" in entry, f"Hook entry in {event} missing 'matcher'"
 

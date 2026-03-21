@@ -67,7 +67,10 @@ protection.
 | **Deep review tool** | Multi-pass code review: security, quality, and test gap analysis |
 
 <details>
-<summary>v5.1.1 — v5.1.3 patch notes</summary>
+<summary>v5.1.1 — v5.1.4 patch notes</summary>
+
+**v5.1.4** — SessionStart welcome hook for first-run
+discovery, path validation on read paths, TOCTOU fix.
 
 **v5.1.3** — Architecture analyzer, `deep_review` MCP
 tool (#31), 145+ new tests, commands→skills migration,

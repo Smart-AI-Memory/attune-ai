@@ -67,7 +67,7 @@ class TelemetryStore:
 
     def _append_record(self, file: Path, record: Any) -> None:
         """Append a single record to a JSONL file."""
-        with open(file, "a", encoding="utf-8") as f:
+        with file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record.to_dict()) + "\n")
 
     def _read_jsonl(
@@ -98,7 +98,7 @@ class TelemetryStore:
             return []
 
         records: list[T] = []
-        with open(file, encoding="utf-8") as f:
+        with file.open(encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
                     continue

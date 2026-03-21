@@ -207,7 +207,7 @@ def _export_json(tracker: CostTracker, days: int, path: Path) -> None:
 
     """
     summary = tracker.get_summary(days)
-    with open(path, "w") as f:
+    with path.open("w") as f:
         json.dump(summary, f, indent=2)
 
 
@@ -225,7 +225,7 @@ def _export_csv(tracker: CostTracker, days: int, path: Path) -> None:
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
     daily_totals = tracker.data.get("daily_totals", {})
 
-    with open(path, "w", newline="") as f:
+    with path.open("w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
             [

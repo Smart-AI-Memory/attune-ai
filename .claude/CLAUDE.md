@@ -320,6 +320,16 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   This is cleaner than moving imports or using
   `patch.dict("sys.modules")`.
 
+- **Mock a lazy `import X` with `types.ModuleType` +
+  `patch.dict("sys.modules")`**: When a function body does
+  `import attune` (bare module, not `from X import Y`),
+  `patch("module.attune")` fails (not at module scope) and
+  source-module patching doesn't apply. Fix: create
+  `mock = types.ModuleType("attune")`, set attributes like
+  `mock.__version__ = "1.0.0"`, then use
+  `patch.dict("sys.modules", {"attune": mock})`. The lazy
+  import inside the function resolves from `sys.modules`.
+
 - **Shadow directories at repo root break imports**: An `attune/`
   directory at the repo root (from prototyping) shadows the installed
   `src/attune/` package, causing `ModuleNotFoundError` on submodules

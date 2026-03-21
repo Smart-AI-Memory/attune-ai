@@ -56,7 +56,7 @@ def collect_metrics(telemetry_dir: Path) -> dict[str, float]:
     error_calls = 0
 
     try:
-        with open(usage_file) as f:
+        with usage_file.open() as f:
             for line in f:
                 if not line.strip():
                     continue

@@ -5,6 +5,28 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.4] - 2026-03-21
+
+### Added (5.1.4)
+
+- **SessionStart welcome hook** — New users see an
+  orientation message when Claude Code loads the plugin,
+  showing `/attune` entry point and top 3 workflows.
+- **Path validation on read paths** — `workflow_learn.py`,
+  `storage.py`, `metrics.py`, `cost_commands.py` now use
+  `Path.open()` and validate before reading.
+
+### Fixed (5.1.4)
+
+- **Plugin validation test** — `test_hook_entries_have_matcher`
+  now skips `SessionStart`/`SessionEnd` hooks (they don't
+  use matchers).
+- **Duplicate path validation** in `workflow_learn.py` —
+  validate once, reuse for both read and write.
+- **TOCTOU in `workflow_learn.py`** — Removed `exists()`
+  check before `open()`; catches `FileNotFoundError`
+  instead.
+
 ## [5.1.3] - 2026-03-20
 
 ### Added (5.1.3)
