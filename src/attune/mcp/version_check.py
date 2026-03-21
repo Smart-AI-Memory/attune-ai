@@ -44,7 +44,9 @@ def check_for_updates() -> dict[str, Any] | None:
             "https://pypi.org/pypi/attune-ai/json",
             headers={"Accept": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=2) as resp:  # nosec B310
+        with urllib.request.urlopen(
+            req, timeout=2
+        ) as resp:  # noqa: S310  # nosec B310 — hardcoded https URL
             data = json.loads(resp.read().decode("utf-8"))
 
         latest = data.get("info", {}).get("version", "")

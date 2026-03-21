@@ -112,7 +112,7 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
     }
 
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310 — URL validated by _validate_webhook_url
         validated_url,
         data=data,
         headers={"Content-Type": "application/json"},
@@ -135,7 +135,9 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
     opener = build_opener(_NoRedirect)
 
     try:
-        with opener.open(req, timeout=10) as response:  # nosec B310
+        with opener.open(
+            req, timeout=10
+        ) as response:  # noqa: S310  # nosec B310 — URL validated by _validate_webhook_url
             if response.status == 200:
                 logger.info("webhook_delivered: url=%s", validated_url)
                 return True

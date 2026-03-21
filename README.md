@@ -8,14 +8,14 @@ with Anthropic best practices.**
 18 multi-agent workflows for code review, security,
 testing, and release — each backed by specialized Claude
 subagents with intelligent model routing, budget controls,
-and structured output. 30 MCP tools. 10 auto-invoking
+and structured output. 31 MCP tools. 10 auto-invoking
 skills. Just type `/attune` and go.
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C555%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-11%2C138%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -37,7 +37,7 @@ pip install 'attune-ai[developer]'
 | | |
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
-| **30 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
+| **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
 | **10 Auto-Invoking Skills** | Describe what you need and Claude triggers the right skill automatically |
 | **Anthropic Best Practices** | System prompt separation, per-agent model routing, budget safety nets, structured output |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
@@ -47,7 +47,24 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v5.1.2
+## What's New in v5.1.3
+
+v5.1.3 adds an architecture analyzer, the `deep_review`
+MCP tool (#31), 145+ new tests across 14 new test files,
+migrates commands to SDK-compliant skills, and resolves
+all 7 security audit findings.
+
+| Feature | What It Does |
+| ------- | ------------ |
+| **Architecture analyzer** | `RealArchitectureAnalyzer` — module structure, circular import detection, coupling analysis |
+| **`deep_review` MCP tool** | 31st tool: multi-pass code review with security, quality, and test gap analysis |
+| **Commands → Skills** | 21 `.claude/commands/` migrated to `.claude/skills/` for SDK compliance |
+| **145+ new tests** | Strategy dispatch, tools init, workflows init, architecture, allocator, notifications, version check |
+| **7 security findings fixed** | S310, S608, S108, S311, S104 — all resolved with code fixes or documented suppressions |
+| **Health check merge** | `HealthCheckAgentSDKWorkflow` merged into `OrchestratedHealthCheckWorkflow` |
+
+<details>
+<summary>v5.1.2</summary>
 
 v5.1.2 fixes 3 security vulnerabilities (CWE-22 path
 traversal in MCP workflow handlers and wizard YAML loader,
@@ -62,6 +79,8 @@ and updates workflow/skill counts to match the registry.
 | **73 new tests** | Security tests for path traversal, SSRF, rate limiter, and auth CLI (0% → covered) |
 | **Complexity reduction** | Extracted helpers from 80-line `_gather_project_context()` |
 | **Accurate counts** | README updated: 18 workflows, 10 skills, 30 MCP tools |
+
+</details>
 
 <details>
 <summary>v5.1.1</summary>

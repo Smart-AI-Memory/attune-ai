@@ -22,6 +22,10 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# IPC constants for Claude Code communication
+_IPC_TIMEOUT_SECONDS = 60
+_IPC_POLL_INTERVAL_SECONDS = 0.1
+
 # Global callback for custom AskUserQuestion implementations
 _custom_ask_function: Callable | None = None
 
@@ -117,7 +121,7 @@ def _is_running_in_claude_code() -> bool:
     return (
         os.getenv("CLAUDE_CODE_SESSION") is not None
         or os.getenv("CLAUDE_AGENT_MODE") is not None
-        or Path("/tmp/.claude-code").exists()  # nosec B108
+        or Path(tempfile.gettempdir(), ".claude-code").exists()
     )
 
 
@@ -160,8 +164,8 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
         request_file.write_text(json.dumps(request_data, indent=2))
         logger.info(f"Wrote IPC request: {request_file}")
 
-        # Wait for response (max 60 seconds)
-        timeout = 60
+        # Wait for response
+        timeout = _IPC_TIMEOUT_SECONDS
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -176,7 +180,7 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
 
                 return response_data.get("answers", {})
 
-            time.sleep(0.1)  # Poll every 100ms
+            time.sleep(_IPC_POLL_INTERVAL_SECONDS)
 
         raise RuntimeError(
             f"Timeout waiting for user response (waited {timeout}s). "
@@ -184,7 +188,10 @@ def _ask_via_claude_code_ipc(questions: list[dict[str, Any]]) -> dict[str, Any]:
         )
 
     except Exception as e:  # noqa: BLE001
-        # Cleanup on error
+        # INTENTIONAL: Cleanup on any error — IPC can fail for many
+        # reasons (file I/O, JSON parse, timeout). Always remove temp
+        # files before re-raising.
+        logger.debug("Claude Code IPC failed: %s", e)
         request_file.unlink(missing_ok=True)
         response_file.unlink(missing_ok=True)
         raise RuntimeError(f"Claude Code IPC failed: {e}") from e

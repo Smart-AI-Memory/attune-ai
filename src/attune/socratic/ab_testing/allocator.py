@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 import random  # Security Note: For A/B test simulation data, not cryptographic use
+import zlib
 
 from .models import AllocationStrategy, Experiment, Variant
 
@@ -26,7 +27,7 @@ class TrafficAllocator:
 
         """
         self.experiment = experiment
-        self._random = random.Random()
+        self._random = random.Random()  # noqa: S311 — A/B test allocation, not crypto
 
     def allocate(self, user_id: str) -> Variant:
         """Allocate a user to a variant.
@@ -52,9 +53,6 @@ class TrafficAllocator:
 
     def _fixed_allocation(self, user_id: str) -> Variant:
         """Deterministic allocation based on user ID hash."""
-        # Deterministic bucket assignment using CRC32 (not cryptographic/not for security)
-        import zlib
-
         bucket_key = f"{self.experiment.experiment_id}:{user_id}"
         bucket = zlib.crc32(bucket_key.encode()) % 100
 

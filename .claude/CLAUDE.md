@@ -310,6 +310,16 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   level — even optional ones, using an availability guard pattern
   if needed.
 
+- **Patch the source module for `from ..X import Y` in function
+  bodies**: When a function does `from ..real_tools import
+  RealSecurityAuditor`, patching
+  `_strategies.base.RealSecurityAuditor` fails (not at module
+  scope). Instead patch `real_tools.RealSecurityAuditor` — the
+  source module where the name IS at module scope. The deferred
+  import resolves from the (now-patched) source at call time.
+  This is cleaner than moving imports or using
+  `patch.dict("sys.modules")`.
+
 - **Shadow directories at repo root break imports**: An `attune/`
   directory at the repo root (from prototyping) shadows the installed
   `src/attune/` package, causing `ModuleNotFoundError` on submodules

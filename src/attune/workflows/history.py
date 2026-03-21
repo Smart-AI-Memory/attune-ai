@@ -517,13 +517,13 @@ class WorkflowHistoryStore:
         # Actual data (run_ids) passed as parameters - SQL injection safe
         placeholders = ",".join("?" * len(run_ids))
         cursor.execute(
-            f"DELETE FROM workflow_stages WHERE run_id IN ({placeholders})",  # nosec B608
+            f"DELETE FROM workflow_stages WHERE run_id IN ({placeholders})",  # noqa: S608  # nosec B608 — placeholders only, data parameterized
             run_ids,
         )
 
         # Delete runs (same safe parameterization pattern)
         cursor.execute(
-            f"DELETE FROM workflow_runs WHERE run_id IN ({placeholders})",  # nosec B608
+            f"DELETE FROM workflow_runs WHERE run_id IN ({placeholders})",  # noqa: S608  # nosec B608 — placeholders only, data parameterized
             run_ids,
         )
 

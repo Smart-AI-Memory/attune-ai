@@ -75,12 +75,16 @@ def _validate_webhook_url(url: str) -> str:
     try:
         decoded_url = urllib.parse.unquote(url)
     except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: unquote can raise on malformed percent-encoding;
+        # catch broadly to give a clear validation error
         raise ValueError(f"Invalid URL encoding: {e}") from e
 
     # Parse the decoded URL
     try:
         parsed = urllib.parse.urlparse(decoded_url)
     except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: urlparse can raise on edge-case inputs;
+        # catch broadly to give a clear validation error
         raise ValueError(f"Invalid URL format: {e}") from e
 
     # Only allow http and https schemes
@@ -103,7 +107,7 @@ def _validate_webhook_url(url: str) -> str:
     blocked_hosts = {
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",  # nosec B104 - blocklist, not a bind
+        "0.0.0.0",  # noqa: S104  # nosec B104 — blocklist entry, not a bind
         "::1",
         "[::1]",
         "169.254.169.254",  # AWS metadata
