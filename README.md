@@ -47,84 +47,68 @@ pip install 'attune-ai[developer]'
 
 ---
 
-## What's New in v5.1.3
+## What's New
 
-v5.1.3 adds an architecture analyzer, the `deep_review`
-MCP tool (#31), 145+ new tests across 14 new test files,
-migrates commands to SDK-compliant skills, and resolves
-all 7 security audit findings.
+### v5.1 — Full Plugin SDK Compliance
+
+**v5.1.0** made attune-ai a fully compliant Claude Code
+plugin. Every workflow is now reachable as a native MCP
+tool, every tool is wired through an auto-invoking skill,
+and security hooks ship with the plugin for zero-config
+protection.
 
 | Feature | What It Does |
 | ------- | ------------ |
-| **Architecture analyzer** | `RealArchitectureAnalyzer` — module structure, circular import detection, coupling analysis |
-| **`deep_review` MCP tool** | 31st tool: multi-pass code review with security, quality, and test gap analysis |
-| **Commands → Skills** | 21 `.claude/commands/` migrated to `.claude/skills/` for SDK compliance |
-| **145+ new tests** | Strategy dispatch, tools init, workflows init, architecture, allocator, notifications, version check |
-| **7 security findings fixed** | S310, S608, S108, S311, S104 — all resolved with code fixes or documented suppressions |
-| **Health check merge** | `HealthCheckAgentSDKWorkflow` merged into `OrchestratedHealthCheckWorkflow` |
+| **31 MCP tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
+| **10 auto-invoking skills** | Describe what you need — Claude triggers the right skill automatically |
+| **Portable security hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
+| **Plugin SDK frontmatter** | Skills use `argument-hint`, `disable-model-invocation`, and rich trigger descriptions |
+| **Architecture analyzer** | Module structure, circular import detection, and coupling analysis |
+| **Deep review tool** | Multi-pass code review: security, quality, and test gap analysis |
 
 <details>
-<summary>v5.1.2</summary>
+<summary>v5.1.1 — v5.1.3 patch notes</summary>
 
-v5.1.2 fixes 3 security vulnerabilities (CWE-22 path
-traversal in MCP workflow handlers and wizard YAML loader,
-CWE-918 SSRF in webhook executor), adds 73 new tests,
-and updates workflow/skill counts to match the registry.
+**v5.1.3** — Architecture analyzer, `deep_review` MCP
+tool (#31), 145+ new tests, commands→skills migration,
+7 security findings resolved.
 
-| Feature | What It Does |
-| ------- | ------------ |
-| **MCP path validation** | All 11 workflow handler mixin methods now validate paths via `_validate_file_path()` with workspace containment |
-| **Wizard YAML security** | `ConfigDrivenWizard.from_yaml()` validates paths before opening files |
-| **Webhook SSRF protection** | `_execute_webhook()` validates URLs via `_validate_webhook_url()` before HTTP requests |
-| **73 new tests** | Security tests for path traversal, SSRF, rate limiter, and auth CLI (0% → covered) |
-| **Complexity reduction** | Extracted helpers from 80-line `_gather_project_context()` |
-| **Accurate counts** | README updated: 18 workflows, 10 skills, 30 MCP tools |
+**v5.1.2** — 3 security fixes (CWE-22 path traversal
+in MCP handlers and wizard YAML, CWE-918 SSRF in
+webhook executor), 73 new tests.
+
+**v5.1.1** — 3 new skills from attune-lite (`doc-gen`,
+`smart-test`, `fix-test`), bringing the plugin to 10
+skills total.
 
 </details>
 
-<details>
-<summary>v5.1.1</summary>
+### v5.0 — Anthropic Best Practices
 
-v5.1.1 completes the Anthropic SDK alignment that began
-in v5.0.0 — full plugin SDK compliance, all 30 MCP tools
-wired through 10 skills, portable security hooks, rewritten
-documentation, and security hardening across the stack.
+**v5.0.0** aligned all 15 SDK-native workflows with
+Anthropic's recommended patterns for the Claude Agent
+SDK. This is the foundation everything else builds on.
 
 | Feature | What It Does |
 | ------- | ------------ |
-| **Plugin SDK compliance** | Skills use SDK-standard frontmatter (`argument-hint`, `disable-model-invocation`), auto-invocation triggers |
-| **30 MCP tools wired** | Every tool reachable from plugin skills and commands (was 17) |
-| **Portable hooks** | PreToolUse security guard + PostToolUse formatter distributed with plugin via `${CLAUDE_PLUGIN_ROOT}` |
-| **10 auto-invoking skills** | Claude triggers the right skill based on what you describe |
-| **Side-effect protection** | `release-prep` and `memory-and-context` require explicit invocation |
-
-</details>
+| **System prompt separation** | Each workflow splits persona from task instructions, passed via `system_prompt=` on `ClaudeAgentOptions` |
+| **Per-agent model routing** | Security/architect → Opus, quality/planning → Sonnet, lint/coverage → Haiku. Override with env vars |
+| **Budget safety nets** | $0.50 quick / $2.00 standard / $5.00 deep — configurable per workflow, override with `ATTUNE_MAX_BUDGET_USD` |
+| **Cost and usage tracking** | `AgentRunResult` captures actual cost, token counts, duration, and session ID from every run |
+| **Structured output** | JSON schema output for code-review and security-audit with confidence scores and findings |
+| **26 new SDK tests** | Budget caps, model routing, cost extraction, structured output adapter |
 
 <details>
-<summary>Previous releases</summary>
+<summary>v5.0.1 — v5.0.2 patch notes</summary>
 
-### v5.0.2 — SDK Workflow Fix
+**v5.0.2** — Fixed all 15 Agent SDK workflows. Added
+`collect_agent_output()` to collect from both
+`ResultMessage` and `AssistantMessage` content blocks.
 
-Fixed all 15 Agent SDK workflows.
-Added `collect_agent_output()` to centralize message
-collection from `AssistantMessage` content blocks.
-
-### v5.0.1 — Security Hardening
-
-| Feature | What It Does |
-| ------- | ------------ |
-| Memory ownership | Retrieve/delete checks `created_by` before access |
-| Workspace isolation | INTERNAL classification enforces project boundaries |
-| MCP rate limiter | 60 calls/min per tool prevents abuse |
-| Hook import guard | Only `attune.*` modules loadable via hooks |
-| Path validation | State manager and morning workflow validate all paths |
-
-### v5.0.0 — Anthropic Best Practices
-
-All 15 workflows aligned with Anthropic's recommended
-Agent SDK patterns: system prompt separation, per-agent
-model routing, budget safety nets, cost/usage tracking,
-and structured JSON output.
+**v5.0.1** — Security hardening: memory ownership
+checks, workspace isolation, MCP rate limiter (60/min),
+hook import guard (`attune.*` only), path validation
+on state manager.
 
 </details>
 
