@@ -108,10 +108,11 @@ def ship_workflow(
     """Pre-commit validation pipeline.
 
     Runs:
-    1. empathy inspect (code analysis)
-    2. empathy health (quick checks)
-    3. empathy sync-claude (pattern sync)
-    4. Summary
+    1. Lint check (ruff)
+    2. Format check (ruff format)
+    3. Type check (mypy)
+    4. Git status
+    5. Summary
 
     Args:
         patterns_dir: Path to patterns directory
@@ -167,7 +168,7 @@ def ship_workflow(
             ],
         )
         warnings.append(f"Format: {files} files need formatting")
-        print(f"   WARN - {files} files need formatting (run 'empathy fix-all')")
+        print(f"   WARN - {files} files need formatting (run 'ruff format .')")
 
     # 3. Type check (if mypy available)
     print("3. Checking types...")
@@ -196,16 +197,19 @@ def ship_workflow(
         else:
             print("   INFO - Working tree clean")
 
-    # 5. Sync to Claude (optional)
+    # 5. Security check (optional)
     if not skip_sync:
-        print("5. Syncing patterns to Claude Code...")
-        success, output = wc._run_command("attune sync-claude", capture=True)
+        print("5. Running quick security check...")
+        success, output = wc._run_command(
+            ["bandit", "-r", project_root, "-ll", "-q"],
+            capture=True,
+        )
         if success:
-            print("   PASS - Patterns synced")
+            print("   PASS - No security issues")
         else:
-            print("   SKIP - sync-claude not available")
+            print("   SKIP - Bandit not available")
     else:
-        print("5. Skipping Claude sync (--skip-sync)")
+        print("5. Skipping security check (--skip-sync)")
 
     # Summary
     print("\n" + "-" * 60)
@@ -214,7 +218,7 @@ def ship_workflow(
         print("\nBLOCKERS (must fix before shipping):")
         for issue in issues:
             print(f"  - {issue}")
-        print("\n  Run 'empathy fix-all' to auto-fix what's possible")
+        print("\n  Run 'ruff check --fix . && ruff format .' to auto-fix what's possible")
         print("\n" + "=" * 60)
         print("  NOT READY TO SHIP")
         print("=" * 60 + "\n")

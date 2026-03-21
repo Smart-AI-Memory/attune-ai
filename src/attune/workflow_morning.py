@@ -83,7 +83,7 @@ def morning_workflow(
         "increasing": "  Trending UP - Consider allocating time for cleanup",
         "decreasing": "  Trending DOWN - Great progress!",
         "stable": "  Stable - Holding steady",
-        "unknown": "  Run 'empathy inspect' to start tracking",
+        "unknown": "  Run 'attune workflow run code-review' to start tracking",
         "insufficient_data": "  Not enough data yet - keep coding!",
     }
     print(trend_icons.get(trend, "  Unknown"))
@@ -149,17 +149,17 @@ def morning_workflow(
     if investigating_bugs:
         suggestions.append(
             f"Resolve {len(investigating_bugs)} investigating bug(s)"
-            " via 'empathy patterns resolve'",
+            " via 'attune workflow run bug-predict'",
         )
 
     if trend == "increasing":
-        suggestions.append("Address tech debt - run 'empathy status' for priorities")
+        suggestions.append("Address tech debt - run 'attune doctor' for priorities")
 
     if total_bugs == 0:
-        suggestions.append("Start learning patterns - run 'empathy learn' or 'empathy inspect'")
+        suggestions.append("Start learning patterns - run 'attune workflow run code-review'")
 
     if not suggestions:
-        suggestions.append("Ship something great! Run 'empathy ship' before committing")
+        suggestions.append("Ship something great! Run 'attune workflow run ship' before committing")
 
     for i, suggestion in enumerate(suggestions[:3], 1):
         print(f"  {i}. {suggestion}")

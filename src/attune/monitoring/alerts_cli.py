@@ -3,12 +3,12 @@
 Interactive workflow for setting up LLM telemetry alerts.
 
 **Usage:**
-    empathy alerts init      # Interactive setup workflow
-    empathy alerts list      # List configured alerts
-    empathy alerts delete    # Delete an alert
-    empathy alerts watch     # Start monitoring
-    empathy alerts history   # View alert history
-    empathy alerts metrics   # View current metrics
+    attune alerts init      # Interactive setup workflow
+    attune alerts list      # List configured alerts
+    attune alerts delete    # Delete an alert
+    attune alerts watch     # Start monitoring
+    attune alerts history   # View alert history
+    attune alerts metrics   # View current metrics
 
 Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -162,7 +162,7 @@ def _create_alert(
         click.echo(f"   Threshold: {threshold}")
         click.echo(f"   Channel: {channel}")
 
-        click.echo("\n💡 Tip: Run 'empathy alerts watch' to start monitoring")
+        click.echo("\n💡 Tip: Run 'attune alerts watch' to start monitoring")
 
     except ValueError as e:
         click.echo(f"\n❌ Error: {e}")
@@ -180,7 +180,7 @@ def list_cmd(as_json: bool):
         if as_json:
             click.echo("[]")
         else:
-            click.echo("No alerts configured. Run 'empathy alerts init' to create one.")
+            click.echo("No alerts configured. Run 'attune alerts init' to create one.")
         return
 
     if as_json:
@@ -250,7 +250,7 @@ def watch(interval: int, daemon: bool, once: bool):
 
     alerts_list = engine.list_alerts()
     if not alerts_list:
-        click.echo("No alerts configured. Run 'empathy alerts init' first.")
+        click.echo("No alerts configured. Run 'attune alerts init' first.")
         sys.exit(1)
 
     enabled_count = sum(1 for a in alerts_list if a.enabled)

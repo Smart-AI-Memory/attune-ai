@@ -884,4 +884,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   helpers had docstrings. Always re-verify agent findings against
   the actual codebase before planning fixes.
 
+- **Ghost command references survive CLI renames**: Renaming
+  `empathy` → `attune` left 30+ stale command references in
+  discovery tips, workflow output, template definitions, and
+  docstrings across 15 files. After any CLI rename, grep the
+  entire `src/` for the old name and add a validation test
+  that checks user-facing command strings against the actual
+  registered CLI subcommands.
+
+- **New MCP handlers must match the validation pattern of
+  adjacent handlers**: `_run_test_generation` was the only
+  handler (out of 10) missing `_validate_file_path()` — easy
+  to miss because the handler worked fine without it. When
+  adding a new MCP tool handler, copy the validation block
+  from the nearest similar handler, not just the workflow
+  call pattern.
+
+- **Silent `pass` blocks in discovery/registry code hide
+  import failures**: Workflow discovery had 6 silent `pass`
+  blocks that swallowed `ImportError`/`AttributeError`. When
+  a workflow disappeared from `attune workflow list`, there
+  was no diagnostic output at any log level. Always use
+  `logger.warning()` in discovery paths so `--verbose` or
+  log inspection can surface the root cause.
+
 <!-- attune-lessons-end -->

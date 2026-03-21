@@ -248,15 +248,16 @@ class TestHandleRequestPromptsGet:
         result = await handle_request(server, request)
         assert result["error"]["code"] == -32602
 
-    async def test_prompts_get_value_error_message_in_response(self) -> None:
-        """Test that the ValueError message appears in the error response."""
+    async def test_prompts_get_value_error_returns_generic_message(self) -> None:
+        """Test that ValueError returns a generic error (no internal details)."""
         server = _make_server(prompt_raises=ValueError("Unknown prompt: bad"))
         request = {
             "method": "prompts/get",
             "params": {"name": "bad", "arguments": {}},
         }
         result = await handle_request(server, request)
-        assert "Unknown prompt: bad" in result["error"]["message"]
+        assert result["error"]["code"] == -32602
+        assert result["error"]["message"] == "Invalid prompt parameters"
 
     async def test_prompts_get_missing_arguments_defaults_to_empty_dict(self) -> None:
         """Test that missing 'arguments' in params defaults to empty dict."""

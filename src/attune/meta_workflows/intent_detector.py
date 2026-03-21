@@ -357,7 +357,7 @@ class IntentDetector:
             confidence_pct = int(match.confidence * 100)
             lines.append(f"  {i}. **{match.template_name}** ({confidence_pct}% match)")
             lines.append(f"     {match.description}")
-            lines.append(f"     Run with: `empathy meta-workflow run {match.template_id}`")
+            lines.append(f"     Run with: `attune workflow run {match.template_id}`")
             lines.append("")
 
         return "\n".join(lines)

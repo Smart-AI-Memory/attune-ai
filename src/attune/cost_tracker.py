@@ -7,7 +7,7 @@ Features:
 - Log each API request with model, tokens, and task type
 - Calculate actual cost vs baseline (if all requests used premium model)
 - Generate weekly/monthly reports
-- Integrate with `attune costs` and `attune morning` commands
+- Integrate with `attune costs` command
 - **Performance optimized**: Batch writes (50 requests) + JSONL format
 
 Model pricing is sourced from attune.models.MODEL_REGISTRY.

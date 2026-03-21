@@ -11,7 +11,7 @@ from typing import Any
 
 PYTHON_FASTAPI_TEMPLATE: dict[str, Any] = {
     "name": "Python FastAPI",
-    "description": "FastAPI web service with Empathy integration",
+    "description": "FastAPI web service with Attune integration",
     "files": {
         "attune.config.yml": """# Attune AI Configuration
 # Template: python-fastapi
@@ -30,7 +30,7 @@ model_routing:
 
 claude_sync:
   enabled: true
-  output_dir: ".claude/rules/empathy"
+  output_dir: ".claude/rules/attune"
 
 persistence_enabled: true
 persistence_backend: "sqlite"
@@ -55,7 +55,7 @@ FastAPI application for {{project_name}}
 """
 
 from fastapi import FastAPI
-from attune import EmpathyOS, load_config
+from attune import AttuneOS, load_config
 
 app = FastAPI(
     title="{{project_name}}",
@@ -63,22 +63,22 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Initialize Empathy (optional - for AI features)
+# Initialize Attune (optional - for AI features)
 try:
     config = load_config()
-    empathy = EmpathyOS(config)
+    attune = AttuneOS(config)
 except Exception:  # noqa: BLE001
-    # INTENTIONAL: Empathy is optional - app must start even if config fails
+    # INTENTIONAL: Attune is optional - app must start even if config fails
     import logging
-    logging.getLogger(__name__).warning("Empathy initialization failed, running without AI features")
-    empathy = None
+    logging.getLogger(__name__).warning("Attune initialization failed, running without AI features")
+    attune = None
 
 
 @app.get("/")
 async def root():
     return {
         "message": "Welcome to {{project_name}}",
-        "empathy_enabled": empathy is not None
+        "attune_enabled": attune is not None
     }
 
 
@@ -99,7 +99,7 @@ requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.100",
     "uvicorn[standard]>=0.20",
-    "empathy-framework>=2.3",
+    "attune-ai>=5.0",
 ]
 
 [project.scripts]
@@ -124,14 +124,14 @@ uvicorn {{project_name}}.main:app --reload
 ## Development
 
 ```bash
-# Start-of-day briefing
-empathy morning
-
 # Pre-commit checks
-empathy ship
+attune workflow run ship
 
 # Run health checks
-empathy health
+attune doctor
+
+# Code review
+attune workflow run code-review
 ```
 
 ## API
@@ -152,9 +152,9 @@ FastAPI web service with Attune AI integration.
 
 ## Commands
 
-- `empathy morning` - Daily briefing
-- `empathy ship` - Pre-commit checks
-- `empathy health` - Code health
+- `attune workflow run ship` - Pre-commit checks
+- `attune doctor` - Environment health check
+- `attune workflow run code-review` - Code review
 
 ## Patterns
 
@@ -185,7 +185,7 @@ patterns/sensitive/
 
 PYTHON_AGENT_TEMPLATE: dict[str, Any] = {
     "name": "Python AI Agent",
-    "description": "AI agent project with Empathy for pattern learning",
+    "description": "AI agent project with Attune for pattern learning",
     "files": {
         "attune.config.yml": """# Attune AI Configuration
 # Template: python-agent
@@ -210,7 +210,7 @@ model_routing:
 
 claude_sync:
   enabled: true
-  output_dir: ".claude/rules/empathy"
+  output_dir: ".claude/rules/attune"
   sync_patterns:
     debugging: true
     security: true
@@ -235,22 +235,22 @@ __version__ = "0.1.0"
 AI Agent implementation for {{project_name}}
 """
 
-from attune import EmpathyOS, load_config
-from attune.llm.core import EmpathyLLM
+from attune import AttuneOS, load_config
+from attune.llm.core import AttuneLLM
 import os
 
 
 class {{project_name_class}}Agent:
     """
-    AI Agent with Empathy-powered learning and memory.
+    AI Agent with Attune-powered learning and memory.
     """
 
     def __init__(self):
         self.config = load_config()
-        self.empathy = EmpathyOS(self.config)
+        self.attune = AttuneOS(self.config)
 
         # Initialize LLM with model routing
-        self.llm = EmpathyLLM(
+        self.llm = AttuneLLM(
             provider="anthropic",
             api_key=os.getenv("ANTHROPIC_API_KEY"),
         )
@@ -266,7 +266,7 @@ class {{project_name_class}}Agent:
 
     def get_patterns(self) -> list:
         """Get learned patterns."""
-        return self.empathy.pattern_library.list_patterns()
+        return self.attune.pattern_library.list_patterns()
 
 
 async def main():
@@ -291,7 +291,7 @@ description = "AI Agent powered by Attune AI"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "empathy-framework>=2.3",
+    "attune-ai>=5.0",
     "anthropic>=0.18",
 ]
 
@@ -331,14 +331,14 @@ AI Agent powered by Attune AI with pattern learning.
 ## Development
 
 ```bash
-# Learn patterns from git history
-empathy learn --analyze 50
+# Pre-commit checks
+attune workflow run ship
 
-# Sync patterns to Claude Code
-empathy sync-claude
+# Code review
+attune workflow run code-review
 
-# Morning briefing
-empathy morning
+# Environment health check
+attune doctor
 ```
 """,
         ".claude/CLAUDE.md": """# {{project_name}} - AI Agent Rules
@@ -349,7 +349,7 @@ AI agent with Attune AI for pattern learning and memory.
 
 ## Agent Architecture
 
-- `agent.py` - Main agent class with Empathy integration
+- `agent.py` - Main agent class with Attune integration
 - Model routing: Haiku for simple, Sonnet for code, Opus for decisions
 
 ## Pattern Storage

@@ -58,12 +58,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://smartaimemory.com',
+    'https://www.smartaimemory.com',
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+  ];
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
   return NextResponse.json(
     {},
     {
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },

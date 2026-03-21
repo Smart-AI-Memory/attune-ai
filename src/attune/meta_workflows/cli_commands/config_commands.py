@@ -97,7 +97,7 @@ def suggest_defaults_cmd(
         console.print(table)
         console.print(
             f"\n[dim]Use these defaults by running:[/dim]\n"
-            f"  empathy meta-workflow run {template_id} --use-defaults\n",
+            f"  attune workflow run {template_id} --use-defaults\n",
         )
 
     except ImportError:
@@ -139,25 +139,25 @@ def show_migration_guide(
             "template_id": "release-prep",
             "old_import": "from attune.workflows.release_prep_crew import ReleasePreparationCrew",
             "old_usage": "crew = ReleasePreparationCrew(project_root='.')\nresult = await crew.execute()",
-            "new_usage": "empathy meta-workflow run release-prep",
+            "new_usage": "attune workflow run release-prep",
         },
         "TestCoverageBoostCrew": {
             "template_id": "test-coverage-boost",
             "old_import": "from attune.workflows.test_coverage_boost_crew import TestCoverageBoostCrew",
             "old_usage": "crew = TestCoverageBoostCrew(target_coverage=85.0)\nresult = await crew.execute()",
-            "new_usage": "empathy meta-workflow run test-coverage-boost",
+            "new_usage": "attune workflow run test-coverage-boost",
         },
         "TestMaintenanceCrew": {
             "template_id": "test-maintenance",
             "old_import": "from attune.workflows.test_maintenance_crew import TestMaintenanceCrew",
             "old_usage": "crew = TestMaintenanceCrew('.')\nresult = await crew.run(mode='full')",
-            "new_usage": "empathy meta-workflow run test-maintenance",
+            "new_usage": "attune workflow run test-maintenance",
         },
         "ManageDocumentationCrew": {
             "template_id": "manage-docs",
             "old_import": "from attune.workflows.manage_documentation import ManageDocumentationCrew",
             "old_usage": "crew = ManageDocumentationCrew()\nresult = await crew.execute(path='./src')",
-            "new_usage": "empathy meta-workflow run manage-docs",
+            "new_usage": "attune workflow run manage-docs",
         },
     }
 
@@ -189,7 +189,7 @@ def show_migration_guide(
         console.print("  ✓ Session context for learning preferences")
         console.print("  ✓ Built-in analytics and pattern learning\n")
 
-        console.print(f"[dim]Try it now: empathy meta-workflow run {info['template_id']}[/dim]\n")
+        console.print(f"[dim]Try it now: attune workflow run {info['template_id']}[/dim]\n")
 
     else:
         # Show overview
@@ -217,7 +217,7 @@ def show_migration_guide(
         console.print(
             "  1. List available templates: [cyan]empathy meta-workflow list-templates[/cyan]",
         )
-        console.print("  2. Run a workflow: [cyan]empathy meta-workflow run release-prep[/cyan]")
+        console.print("  2. Run a workflow: [cyan]attune workflow run release-prep[/cyan]")
         console.print("  3. View results: [cyan]empathy meta-workflow list-runs[/cyan]\n")
 
         console.print("[bold]More Details:[/bold]")

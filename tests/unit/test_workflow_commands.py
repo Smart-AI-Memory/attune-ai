@@ -709,8 +709,8 @@ class TestShipWorkflow:
         captured = capsys.readouterr()
         assert "WARNINGS" in captured.out
 
-    def test_ship_workflow_syncs_to_claude(self, tmp_path, monkeypatch, capsys):
-        """Test ship workflow syncs patterns to Claude."""
+    def test_ship_workflow_runs_security_check(self, tmp_path, monkeypatch, capsys):
+        """Test ship workflow runs security check when skip_sync=False."""
 
         def mock_run_command(cmd, capture=True):
             return True, ""
@@ -723,7 +723,7 @@ class TestShipWorkflow:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Patterns synced" in captured.out
+        assert "No security issues" in captured.out
 
 
 class TestRunTestsOnly:
@@ -1440,21 +1440,22 @@ class TestShipWorkflowEdgeCases:
         captured = capsys.readouterr()
         assert "type issues" in captured.out
 
-    def test_ship_workflow_sync_claude_import_error(self, tmp_path, monkeypatch, capsys):
-        """Test ship workflow handles sync_claude import errors gracefully."""
+    def test_ship_workflow_security_check_not_available(self, tmp_path, monkeypatch, capsys):
+        """Test ship workflow handles missing bandit gracefully."""
 
         def mock_run_command(cmd, capture=True):
+            if isinstance(cmd, list) and "bandit" in cmd:
+                return False, "bandit: not found"
             return True, ""
 
         monkeypatch.setattr(workflow_commands, "_run_command", mock_run_command)
         monkeypatch.setattr(workflow_commands, "_save_stats", lambda stats: None)
         monkeypatch.setattr(workflow_commands, "_load_stats", lambda: {"commands": {}})
 
-        # Don't mock the import - let it fail naturally
         workflow_commands.ship_workflow(project_root=str(tmp_path), skip_sync=False)
 
         captured = capsys.readouterr()
-        assert "SKIP" in captured.out or "sync" in captured.out.lower()
+        assert "SKIP" in captured.out or "security" in captured.out.lower()
 
     def test_ship_workflow_handles_empty_git_status(self, tmp_path, monkeypatch, capsys):
         """Test ship workflow handles clean git status."""

@@ -283,9 +283,10 @@ class AuthStrategy:
         if path is None:
             path = AUTH_STRATEGY_FILE
 
-        if path.exists():
+        validated_path = _validate_file_path(str(path))
+        if validated_path.exists():
             try:
-                with open(path) as f:
+                with open(validated_path) as f:
                     data = json.load(f)
                 return cls.from_dict(data)
             except Exception:  # noqa: BLE001

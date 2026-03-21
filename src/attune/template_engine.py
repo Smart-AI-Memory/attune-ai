@@ -132,7 +132,7 @@ def scaffold_project(
         "next_steps": [
             f"cd {target}",
             "pip install -e .",
-            "empathy morning",
+            "attune doctor",
         ],
     }
 
@@ -159,13 +159,13 @@ def cmd_new(args: object) -> int:
         print("-" * 50)
         for t in list_templates():
             print(f"  {t['id']:15} {t['description']}")
-        print("\nUsage: empathy new <template> <project-name>")
+        print("\nUsage: attune new <template> <project-name>")
         print()
         return 0
 
     if not template or not project_name:
-        print("Usage: empathy new <template> <project-name>")
-        print("       empathy new --list")
+        print("Usage: attune new <template> <project-name>")
+        print("       attune new --list")
         return 1
 
     print(f"\nCreating new project from '{template}' template...")

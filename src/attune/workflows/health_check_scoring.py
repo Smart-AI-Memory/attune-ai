@@ -241,43 +241,45 @@ def generate_recommendations(
         if not category.passed:
             if category.name == "Security":
                 recommendations.append(f"🔒 Address {len(category.issues)} security issue(s)")
-                recommendations.append("   → Run: empathy workflow run security-audit --path .")
+                recommendations.append("   → Run: attune workflow run security-audit --path .")
             elif category.name == "Coverage":
                 recommendations.append(
                     f"🧪 Increase test coverage to 80%+ (currently {category.score:.1f}%)",
                 )
                 recommendations.append("   → Run: pytest --cov=src --cov-report=term-missing")
                 recommendations.append(
-                    "   → Or use: empathy workflow run test-gen --path <file>",
+                    "   → Or use: attune workflow run test-gen --path <file>",
                 )
             elif category.name == "Quality":
                 quality_score = category.raw_metrics.get("quality_score", 0.0)
                 recommendations.append(
                     f"✨ Improve code quality to 7+ (currently {quality_score:.1f}/10)",
                 )
-                recommendations.append("   → Run: empathy workflow run code-review --path .")
-                recommendations.append("   → Or: empathy fix-all  (auto-fix lint/format issues)")
+                recommendations.append("   → Run: attune workflow run code-review --path .")
+                recommendations.append(
+                    "   → Or: ruff check --fix . && ruff format .  (auto-fix lint/format issues)"
+                )
             elif category.name == "Performance":
                 bottlenecks = category.raw_metrics.get("bottleneck_count", 0)
                 recommendations.append(f"⚡ Optimize {bottlenecks} performance bottleneck(s)")
-                recommendations.append("   → Run: empathy workflow run perf-audit --path .")
+                recommendations.append("   → Run: attune workflow run perf-audit --path .")
             elif category.name == "Documentation":
                 recommendations.append(
                     f"📚 Complete documentation (currently {category.score:.1f}%)",
                 )
-                recommendations.append("   → Run: empathy workflow run doc-gen --path .")
+                recommendations.append("   → Run: attune workflow run doc-gen --path .")
 
     # Add general recommendations
     if len(recommendations) == 0:
         recommendations.append("✅ Project health looks good! Keep up the good work.")
         recommendations.append(
-            "   → Run: empathy orchestrate health-check --mode weekly  (for deeper analysis)",
+            "   → Run: attune workflow run health-check --mode weekly  (for deeper analysis)",
         )
     elif len(recommendations) >= 6:  # Multiple issues
         recommendations.append("")
         recommendations.append("💡 Tip: Focus on top priority first for maximum impact")
         recommendations.append(
-            "   → Rerun: empathy orchestrate health-check --mode daily  (to track progress)",
+            "   → Rerun: attune workflow run health-check --mode daily  (to track progress)",
         )
 
     return recommendations

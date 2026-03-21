@@ -95,12 +95,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handle OPTIONS for CORS if needed
-export async function OPTIONS() {
+// Handle OPTIONS for CORS — restrict to same-origin
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://smartaimemory.com',
+    'https://www.smartaimemory.com',
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+  ];
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },

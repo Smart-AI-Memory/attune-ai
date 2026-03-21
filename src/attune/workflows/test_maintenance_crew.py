@@ -2,7 +2,7 @@
 
 .. deprecated:: 4.3.0
     This workflow is deprecated in favor of the meta-workflow system.
-    Use ``empathy meta-workflow run test-maintenance`` instead.
+    Use ``attune workflow run test-maintenance`` instead.
     See docs/CREWAI_MIGRATION.md for migration guide.
 
 A crew of specialized agents that collaboratively manage the test lifecycle:
@@ -680,11 +680,11 @@ class TestMaintenanceCrew:
         """Initialize the test maintenance crew.
 
         .. deprecated:: 4.3.0
-            Use meta-workflow system instead: ``empathy meta-workflow run test-maintenance``
+            Use meta-workflow system instead: ``attune workflow run test-maintenance``
         """
         warnings.warn(
             "TestMaintenanceCrew is deprecated since v4.3.0. "
-            "Use meta-workflow system instead: empathy meta-workflow run test-maintenance. "
+            "Use meta-workflow system instead: attune workflow run test-maintenance. "
             "See docs/CREWAI_MIGRATION.md for migration guide.",
             DeprecationWarning,
             stacklevel=2,

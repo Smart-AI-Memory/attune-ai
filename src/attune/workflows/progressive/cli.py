@@ -156,7 +156,7 @@ def create_parser() -> argparse.ArgumentParser:
 
     """
     parser = argparse.ArgumentParser(
-        prog="empathy progressive",
+        prog="attune progressive",
         description="Manage progressive tier escalation workflows",
     )
 

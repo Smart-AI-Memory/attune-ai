@@ -436,7 +436,7 @@ Examples:
 
     if args.save and not args.quiet:
         print("\nPatterns saved with 'investigating' status.")
-        print("Use 'empathy patterns resolve <id>' to complete them.")
+        print("Use 'attune workflow run bug-predict <id>' to complete them.")
 
 
 if __name__ == "__main__":

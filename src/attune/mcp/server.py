@@ -816,10 +816,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
     async def _run_test_generation(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run test generation workflow."""
+        from attune.security.path_validation import _validate_file_path
         from attune.workflows.test_gen import TestGenerationWorkflow
 
+        validated_path = str(_validate_file_path(args["module"], allowed_dir=self._workspace_root))
         workflow = TestGenerationWorkflow()
-        result = await workflow.execute(module_path=args["module"])
+        result = await workflow.execute(module_path=validated_path)
 
         return {
             "success": result.success,
@@ -1028,7 +1030,8 @@ async def handle_request(server: EmpathyMCPServer, request: dict[str, Any]) -> d
             messages = server.get_prompt_messages(prompt_name, arguments)
             return {"messages": messages}
         except ValueError as e:
-            return {"error": {"code": -32602, "message": str(e)}}
+            logger.warning("Invalid prompt request: %s", e)
+            return {"error": {"code": -32602, "message": "Invalid prompt parameters"}}
     else:
         return {"error": {"code": -32601, "message": f"Method not found: {method}"}}
 
@@ -1058,10 +1061,10 @@ async def main_loop():
             logger.error(f"Invalid JSON: {e}")
             error_response = {"error": {"code": -32700, "message": "Parse error"}}
             print(json.dumps(error_response), flush=True)
-        except Exception as e:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # INTENTIONAL: Server loop must not crash
             logger.exception("Error handling request")
-            error_response = {"error": {"code": -32603, "message": str(e)}}
+            error_response = {"error": {"code": -32603, "message": "Internal server error"}}
             print(json.dumps(error_response), flush=True)
 
 

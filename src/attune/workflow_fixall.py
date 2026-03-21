@@ -98,7 +98,7 @@ def fix_all_workflow(
         print("Run without --dry-run to apply changes")
     else:
         print(f"\nTotal fixes applied: {fixed_count}+")
-        print("Run 'empathy ship' to verify everything is ready")
+        print("Run 'attune workflow run ship' to verify everything is ready")
 
     print("\n" + "=" * 60 + "\n")
 

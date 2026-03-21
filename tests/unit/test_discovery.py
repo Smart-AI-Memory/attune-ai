@@ -1,6 +1,9 @@
 """Tests for attune.discovery"""
 
+import re
+
 from attune.discovery import (
+    DISCOVERY_TIPS,
     DiscoveryEngine,
     format_tips_for_cli,
     get_engine,
@@ -221,3 +224,66 @@ def test_format_tips_for_cli_empty():
     result = format_tips_for_cli([])
 
     assert result == ""
+
+
+# Valid top-level CLI subcommands registered in cli_minimal.py
+_VALID_CLI_SUBCOMMANDS = {
+    "workflow",
+    "telemetry",
+    "costs",
+    "provider",
+    "remember",
+    "forget",
+    "lessons",
+    "setup",
+    "auth",
+    "doctor",
+    "features",
+    "validate",
+    "version",
+}
+
+# Valid compound commands: "attune <sub> <action>" or tool commands
+_VALID_COMMAND_PATTERNS = [
+    r"attune workflow run \S+",
+    r"attune doctor",
+    r"attune costs",
+    r"attune workflow run \S+ --\S+",
+    r"ruff (?:check|format)",
+    r"pytest ",
+]
+
+
+def test_discovery_tips_reference_valid_commands():
+    """Ensure all discovery tips reference commands that actually exist.
+
+    This prevents ghost command references (e.g. 'attune ship',
+    'attune sync-claude') from reaching users. Every tip that
+    mentions 'attune ...' must reference either a registered CLI
+    subcommand or a known tool command.
+    """
+    # Extract all 'attune ...' and 'ruff ...' command references from tips
+    command_pattern = re.compile(r"'(attune \S+(?:\s\S+)*)'")
+
+    for tip_id, tip_config in DISCOVERY_TIPS.items():
+        tip_text = tip_config["tip"]
+        matches = command_pattern.findall(tip_text)
+
+        for cmd in matches:
+            parts = cmd.split()
+            assert parts[0] == "attune", f"Tip '{tip_id}' references unexpected prefix: {cmd}"
+
+            # The second token must be a registered subcommand
+            if len(parts) >= 2:
+                subcommand = parts[1]
+                assert subcommand in _VALID_CLI_SUBCOMMANDS, (
+                    f"Tip '{tip_id}' references non-existent subcommand "
+                    f"'attune {subcommand}'. Valid subcommands: "
+                    f"{sorted(_VALID_CLI_SUBCOMMANDS)}"
+                )
+
+            # If it's "attune workflow run <name>", the structure is valid
+            # (workflow names are dynamic, so we just check the prefix)
+            if len(parts) >= 4 and parts[1] == "workflow" and parts[2] == "run":
+                # Valid: attune workflow run <something>
+                pass

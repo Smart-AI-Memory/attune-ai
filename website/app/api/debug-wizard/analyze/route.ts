@@ -522,6 +522,41 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
+    // Input size limits to prevent abuse
+    const MAX_ERROR_LENGTH = 10_000;
+    const MAX_STACK_LENGTH = 50_000;
+    const MAX_FILES = 20;
+    const MAX_FILE_SIZE = 100_000;
+
+    if (error_message.length > MAX_ERROR_LENGTH) {
+      return Response.json(
+        { success: false, error: `error_message exceeds ${MAX_ERROR_LENGTH} character limit` } as AnalysisResponse,
+        { status: 400 }
+      );
+    }
+    if (stack_trace && stack_trace.length > MAX_STACK_LENGTH) {
+      return Response.json(
+        { success: false, error: `stack_trace exceeds ${MAX_STACK_LENGTH} character limit` } as AnalysisResponse,
+        { status: 400 }
+      );
+    }
+    if (file_contents && file_contents.length > MAX_FILES) {
+      return Response.json(
+        { success: false, error: `file_contents exceeds ${MAX_FILES} file limit` } as AnalysisResponse,
+        { status: 400 }
+      );
+    }
+    if (file_contents) {
+      for (const file of file_contents) {
+        if (file.content && file.content.length > MAX_FILE_SIZE) {
+          return Response.json(
+            { success: false, error: `File "${file.path}" exceeds ${MAX_FILE_SIZE} character limit` } as AnalysisResponse,
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     // Get tier (default to FREE for unauthenticated requests)
     // TODO: Implement actual auth check
     const tier = DEFAULT_TIER;

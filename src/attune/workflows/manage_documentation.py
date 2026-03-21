@@ -1,7 +1,7 @@
 """Manage_Documentation - Multi-Agent Workflow (Facade)
 
 .. deprecated:: 4.3.0
-    Use ``empathy meta-workflow run manage-docs`` instead.
+    Use ``attune workflow run manage-docs`` instead.
 
 Facade re-exporting public names from doc_crew_models,
 doc_crew_report, and doc_crew_execution.
@@ -106,7 +106,7 @@ class ManageDocumentationCrew(DocCrewExecutionMixin):
         warnings.warn(
             "ManageDocumentationCrew is deprecated since v4.3.0. "
             "Use meta-workflow system instead: "
-            "empathy meta-workflow run manage-docs. "
+            "attune workflow run manage-docs. "
             "See docs/CREWAI_MIGRATION.md for migration guide.",
             DeprecationWarning,
             stacklevel=2,

@@ -434,9 +434,13 @@ def discover_workflows(
         for workflow_id, class_name in _DEFAULT_WORKFLOW_NAMES.items():
             try:
                 discovered[workflow_id] = _get_workflow_class(class_name)
-            except (ImportError, AttributeError):
-                # Skip workflows that fail to load
-                pass
+            except (ImportError, AttributeError) as e:
+                logger.warning(
+                    "Failed to load workflow '%s' (%s): %s",
+                    workflow_id,
+                    class_name,
+                    e,
+                )
 
     # Add opt-in workflows based on config
     if config is not None:
@@ -445,8 +449,13 @@ def discover_workflows(
             for workflow_id, class_name in _OPT_IN_WORKFLOW_NAMES.items():
                 try:
                     discovered[workflow_id] = _get_workflow_class(class_name)
-                except (ImportError, AttributeError):
-                    pass
+                except (ImportError, AttributeError) as e:
+                    logger.warning(
+                        "Failed to load HIPAA workflow '%s' (%s): %s",
+                        workflow_id,
+                        class_name,
+                        e,
+                    )
 
         # Explicitly enabled workflows
         for workflow_name in config.enabled_workflows:
@@ -455,8 +464,12 @@ def discover_workflows(
                     discovered[workflow_name] = _get_workflow_class(
                         _OPT_IN_WORKFLOW_NAMES[workflow_name],
                     )
-                except (ImportError, AttributeError):
-                    pass
+                except (ImportError, AttributeError) as e:
+                    logger.warning(
+                        "Failed to load enabled workflow '%s': %s",
+                        workflow_name,
+                        e,
+                    )
 
         # Explicitly disabled workflows
         for workflow_name in config.disabled_workflows:
@@ -471,10 +484,16 @@ def discover_workflows(
                 if isinstance(workflow_cls, type) and hasattr(workflow_cls, "execute"):
                     if config is None or ep.name not in config.disabled_workflows:
                         discovered[ep.name] = workflow_cls
-            except Exception:  # noqa: BLE001
-                pass
-    except Exception:  # noqa: BLE001
-        pass
+            except Exception as e:  # noqa: BLE001
+                # INTENTIONAL: entry point plugins may fail; log but don't break
+                logger.warning(
+                    "Failed to load workflow entry point '%s': %s",
+                    ep.name,
+                    e,
+                )
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: entry_points() may not be available; log but don't break
+        logger.debug("Entry point discovery unavailable: %s", e)
 
     return discovered
 
@@ -505,8 +524,13 @@ def get_opt_in_workflows() -> dict[str, type]:
     for name, class_name in _OPT_IN_WORKFLOW_NAMES.items():
         try:
             result[name] = _get_workflow_class(class_name)
-        except (ImportError, AttributeError):
-            pass
+        except (ImportError, AttributeError) as e:
+            logger.warning(
+                "Failed to load opt-in workflow '%s' (%s): %s",
+                name,
+                class_name,
+                e,
+            )
     return result
 
 

@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "5.1.3"
+version = "5.1.4"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -436,7 +436,7 @@ requires-dist = [
     { name = "bcrypt", marker = "extra == 'enterprise'", specifier = ">=4.0.0,<6.0.0" },
     { name = "black", marker = "extra == 'all'", specifier = ">=24.3.0,<27.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.3.0,<27.0" },
-    { name = "claude-agent-sdk", specifier = ">=0.1.0" },
+    { name = "claude-agent-sdk", specifier = ">=0.1.0,<1.0.0" },
     { name = "colorama", marker = "extra == 'all'", specifier = ">=0.4.6,<1.0.0" },
     { name = "colorama", marker = "extra == 'windows'", specifier = ">=0.4.6,<1.0.0" },
     { name = "coverage", marker = "extra == 'all'", specifier = ">=7.0,<8.0" },
@@ -513,7 +513,7 @@ requires-dist = [
     { name = "pygls", marker = "extra == 'all'", specifier = ">=1.0.0,<3.0.0" },
     { name = "pygls", marker = "extra == 'lsp'", specifier = ">=1.0.0,<3.0.0" },
     { name = "pyjwt", extras = ["crypto"], marker = "extra == 'all'", specifier = ">=2.8.0" },
-    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'backend'", specifier = ">=2.8.0" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'backend'", specifier = ">=2.8.0,<3.0.0" },
     { name = "pyjwt", extras = ["crypto"], marker = "extra == 'enterprise'", specifier = ">=2.8.0" },
     { name = "pymdown-extensions", marker = "extra == 'all'", specifier = ">=10.0,<11.0" },
     { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=10.0,<11.0" },

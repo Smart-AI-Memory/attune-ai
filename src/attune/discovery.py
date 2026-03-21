@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 DISCOVERY_TIPS = {
     # After first commands
     "after_first_inspect": {
-        "tip": "Try 'attune ship' before commits for automated pre-flight checks",
+        "tip": "Try 'attune workflow run ship' before commits for pre-flight checks",
         "trigger": "inspect",
         "min_uses": 1,
         "priority": 2,
         "shown": False,
     },
     "after_first_health": {
-        "tip": "Use 'attune fix-all' to auto-fix lint and format issues",
+        "tip": "Use 'ruff check --fix . && ruff format .' to auto-fix lint and format issues",
         "trigger": "health",
         "min_uses": 1,
         "priority": 2,
@@ -35,14 +35,14 @@ DISCOVERY_TIPS = {
     },
     # After accumulating usage
     "after_10_inspects": {
-        "tip": "You've got patterns! Run 'attune sync-claude' to share them with Claude Code",
+        "tip": "Run 'attune workflow run code-review' for AI-powered code analysis",
         "trigger": "inspect",
         "min_uses": 10,
         "priority": 1,
         "shown": False,
     },
     "after_5_ships": {
-        "tip": "Start your day with 'attune morning' for a productivity briefing",
+        "tip": "Run 'attune doctor' for a comprehensive environment health check",
         "trigger": "ship",
         "min_uses": 5,
         "priority": 1,
@@ -50,13 +50,13 @@ DISCOVERY_TIPS = {
     },
     # Context-based tips
     "high_tech_debt": {
-        "tip": "Tech debt is trending up. Try 'attune status' for priority focus areas",
+        "tip": "Tech debt is trending up. Run 'attune doctor' for priority focus areas",
         "condition": lambda stats: stats.get("tech_debt_trend") == "increasing",
         "priority": 1,
         "shown": False,
     },
     "no_patterns": {
-        "tip": "Run 'attune learn' to extract patterns from your git history",
+        "tip": "Run 'attune workflow run code-review' to analyze your codebase",
         "condition": lambda stats: stats.get("patterns_learned", 0) == 0
         and stats.get("total_commands", 0) > 5,
         "priority": 1,
@@ -69,8 +69,8 @@ DISCOVERY_TIPS = {
         "shown": False,
     },
     # Weekly reminders
-    "weekly_sync": {
-        "tip": "Weekly reminder: Run 'attune sync-claude' to keep Claude Code patterns current",
+    "weekly_review": {
+        "tip": "Weekly reminder: Run 'attune workflow run security-audit' to check for issues",
         "condition": lambda stats: _days_since_sync(stats) >= 7,
         "priority": 2,
         "shown": False,

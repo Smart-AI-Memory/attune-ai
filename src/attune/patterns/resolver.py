@@ -17,7 +17,7 @@ Usage:
     )
 
 CLI:
-    empathy patterns resolve bug_20251212_3c5b9951 \\
+    attune workflow run bug-predict bug_20251212_3c5b9951 \\
         --root-cause "Missing null check" \\
         --fix "Added optional chaining" \\
         --fix-code "data?.items ?? []" \\
@@ -231,7 +231,7 @@ def cmd_patterns_resolve(args):
                 print("⚠ Failed to regenerate summary")
     else:
         print(f"✗ Failed to resolve: {args.bug_id}")
-        print("  Use 'empathy patterns resolve' (no args) to list investigating bugs")
+        print("  Use 'attune workflow run bug-predict' (no args) to list investigating bugs")
 
 
 def main():

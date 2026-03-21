@@ -45,7 +45,7 @@ def learn_workflow(
 
     if watch:
         print("Watch mode not yet implemented.")
-        print("Use 'empathy learn --analyze N' to analyze recent commits.\n")
+        print("Use 'attune workflow run learn --analyze N' to analyze recent commits.\n")
         return 1
 
     # Default to analyzing last 10 commits
@@ -179,7 +179,7 @@ def learn_workflow(
             print(f"  {bug_type}: {count}")
 
     print("\n" + "=" * 60)
-    print("  Run 'empathy sync-claude' to use these patterns with Claude Code")
+    print("  Patterns saved. Use these with Claude Code via attune workflow run code-review")
     print("=" * 60 + "\n")
 
     # Update stats
