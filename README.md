@@ -15,7 +15,7 @@ skills. Just type `/attune` and go.
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-11%2C138%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-15%2C591%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -49,25 +49,20 @@ pip install 'attune-ai[developer]'
 
 ## What's New
 
-### v5.1 — Full Plugin SDK Compliance
+### v5.2 — Voice Layer & Security Hardening
 
-**v5.1.0** made attune-ai a fully compliant Claude Code
-plugin. Every workflow is now reachable as a native MCP
-tool, every tool is wired through an auto-invoking skill,
-and security hooks ship with the plugin for zero-config
-protection.
+**v5.2.0** adds a unified voice layer for consistent
+output personality and closes 5 path traversal gaps
+found via bug-predict audit.
 
 | Feature | What It Does |
 | ------- | ------------ |
-| **31 MCP tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **10 auto-invoking skills** | Describe what you need — Claude triggers the right skill automatically |
-| **Portable security hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
-| **Plugin SDK frontmatter** | Skills use `argument-hint`, `disable-model-invocation`, and rich trigger descriptions |
-| **Architecture analyzer** | Module structure, circular import detection, and coupling analysis |
-| **Deep review tool** | Multi-pass code review: security, quality, and test gap analysis |
+| **Unified voice layer** | Consistent output personality across all workflow results via `VoiceFormatter` |
+| **5 path traversal fixes** | `_validate_file_path()` added to pattern persistence and agent parser I/O |
+| **Integration tests** | End-to-end voice layer wiring tests for MCP and workflow printer |
 
 <details>
-<summary>v5.1.1 — v5.1.4 patch notes</summary>
+<summary>v5.1.0 — v5.1.4 patch notes</summary>
 
 **v5.1.4** — SessionStart welcome hook for first-run
 discovery, path validation on read paths, TOCTOU fix.
@@ -83,6 +78,11 @@ webhook executor), 73 new tests.
 **v5.1.1** — 3 new skills from attune-lite (`doc-gen`,
 `smart-test`, `fix-test`), bringing the plugin to 10
 skills total.
+
+**v5.1.0** — Full Plugin SDK compliance. Every workflow
+reachable as a native MCP tool, every tool wired through
+an auto-invoking skill, security hooks ship with the
+plugin for zero-config protection.
 
 </details>
 

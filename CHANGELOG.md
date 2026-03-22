@@ -5,6 +5,28 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-03-21
+
+### Added (5.2.0)
+
+- **Unified voice layer** — Consistent output personality
+  across all workflow results via `VoiceFormatter` with
+  configurable tone presets (`src/attune/voice/`).
+- **Voice layer integration tests** — End-to-end wiring
+  tests verifying voice formatting in MCP call_tool
+  wrapper and workflow result printer.
+
+### Fixed (5.2.0)
+
+- **Path validation on 5 file operations** (CWE-22) —
+  `PatternPersistence.load_from_json()`,
+  `save_to_sqlite()`, `load_from_sqlite()`, and
+  `MarkdownAgentParser.parse_file()` / `validate_file()`
+  now call `_validate_file_path()` before any I/O.
+- **Missing `-> None` return type hints** on 4 public
+  methods in `agent_monitoring.py` and
+  `leverage_points.py`.
+
 ## [5.1.4] - 2026-03-21
 
 ### Added (5.1.4)
