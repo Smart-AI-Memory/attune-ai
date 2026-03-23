@@ -1,0 +1,135 @@
+---
+title: "Attune AI v5.2.0: Full Anthropic SDK Alignment with 18 Agent-Powered Workflows"
+date: "2026-03-21"
+author: "Patrick Roebuck"
+excerpt: "v5.2.0 completes the Anthropic best-practices migration — 18 workflows built on the Claude Agent SDK with system prompt separation, model routing, budget controls, and a new unified voice layer."
+tags: ["release", "claude-agent-sdk", "anthropic", "claude-code", "security", "v5.2.0"]
+published: true
+---
+
+**Attune AI v5.2.0** marks the completion of a journey that started with v5.0: aligning every workflow in attune-ai with Anthropic's recommended patterns and building on the capabilities the Claude Agent SDK makes possible.
+
+The result is 18 production-ready multi-agent workflows — each backed by specialized Claude subagents — that follow Anthropic best practices out of the box.
+
+## Built on the Claude Agent SDK
+
+Every workflow in attune-ai runs on the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent-sdk). This isn't a wrapper or an abstraction layer — it's a direct integration that takes advantage of what the SDK was designed for:
+
+**System prompt separation.** Each workflow splits persona instructions from task-specific prompts, passed via `system_prompt=` on `ClaudeAgentOptions`. This follows Anthropic's guidance on keeping system context stable while varying user instructions per run.
+
+**Per-agent model routing.** Not every task needs the most powerful model. Attune-ai routes intelligently:
+
+| Task Type | Model | Why |
+|-----------|-------|-----|
+| Security audit, architecture review | Opus | Requires deep reasoning about attack vectors and system design |
+| Code review, test generation, planning | Sonnet | Best balance of quality and speed for analytical work |
+| Linting, coverage scanning, file indexing | Haiku | Fast, cheap, perfect for high-volume mechanical tasks |
+
+**Budget safety nets.** Every workflow enforces configurable cost caps — $0.50 for quick scans, $2.00 for standard analysis, $5.00 for deep reviews. Override globally with `ATTUNE_MAX_BUDGET_USD`.
+
+**Structured output.** Security audits and code reviews return typed results with confidence scores, severity levels, and actionable findings — not just prose.
+
+## What the Agent SDK Enables
+
+The Agent SDK isn't just a better API client. It enables patterns that would be impractical to build from scratch:
+
+### Multi-Agent Teams
+
+Each workflow runs a team of 2-6 specialized subagents. A security audit, for example, runs:
+
+1. A **scanner agent** (Haiku) that indexes files and identifies candidates
+2. An **analyzer agent** (Sonnet) that examines each candidate for vulnerability patterns
+3. A **reviewer agent** (Opus) that validates findings and eliminates false positives
+
+The SDK handles agent lifecycle, message passing, and result collection. We focus on the domain logic.
+
+### 31 MCP Tools
+
+Every workflow is exposed as a native Model Context Protocol tool. When you use attune-ai as a Claude Code plugin, Claude can invoke any workflow directly:
+
+```
+User: "Check this module for security issues"
+Claude: [calls security_audit MCP tool with path="src/auth/"]
+```
+
+No slash commands needed — Claude's tool use handles routing.
+
+### 10 Auto-Invoking Skills
+
+Skills bridge natural language to structured workflows. When you describe what you need, Claude matches it to the right skill automatically:
+
+- "Review my code" triggers the code review skill
+- "Find security issues" triggers the security audit skill
+- "What needs testing?" triggers the smart-test skill
+
+## Unified Voice Layer (New in v5.2.0)
+
+With 18 workflows all returning results, consistency matters.
+
+Before v5.2.0, each workflow formatted output independently. A security audit returned terse findings while a code review gave narrative prose. The `VoiceFormatter` — new in this release — sits between workflow execution and output delivery, normalizing results into a consistent tone: clear, actionable, and human.
+
+```python
+# The voice layer wraps MCP tool responses automatically
+# No configuration needed
+result = await server.call_tool("security_audit", {"path": "src/"})
+# Output: structured findings with consistent formatting
+```
+
+The raw structured data is preserved underneath. Voice is a presentation layer, not a filter.
+
+## Dogfooding: Our Bug-Predict Workflow Found Real Bugs
+
+Here's the part we didn't plan: **we found real security vulnerabilities in our own codebase by running our own tool.**
+
+```bash
+attune workflow run bug-predict --input '{"path": "src/attune/"}'
+```
+
+The scan flagged 5 file operations in two modules that accepted user-controlled paths without calling `_validate_file_path()`:
+
+| Module | Functions | Risk |
+|--------|-----------|------|
+| `pattern_persistence.py` | `load_from_json()`, `save_to_sqlite()`, `load_from_sqlite()` | Path traversal on read/write |
+| `agents_md/parser.py` | `parse_file()`, `validate_file()` | Path traversal on read |
+
+These were real CWE-22 path traversal gaps hiding in a codebase with 15,591 passing tests. The fix was straightforward — add the same `_validate_file_path()` call that 140+ other file operations already use.
+
+The takeaway: if your security tools work, they should catch things in your own code too.
+
+## The v5.x Journey
+
+| Version | Theme | Key Changes |
+|---------|-------|-------------|
+| **v5.0** | Anthropic SDK alignment | System prompt separation, per-agent model routing, budget safety nets, structured output |
+| **v5.1** | Claude Code plugin | 31 MCP tools, 10 auto-invoking skills, portable security hooks, full plugin SDK compliance |
+| **v5.2** | Voice layer + hardening | Unified output personality, 5 CWE-22 fixes, integration tests |
+
+## By the Numbers
+
+| Metric | Value |
+|--------|-------|
+| Multi-agent workflows | 18 |
+| MCP tools | 31 |
+| Auto-invoking skills | 10 |
+| Tests passing | 15,591 |
+| Test coverage | 85% |
+| Security hooks | 2 (PreToolUse + PostToolUse) |
+
+## Get Started
+
+```bash
+pip install 'attune-ai[developer]'
+python -m attune.models.auth_cli setup
+```
+
+The install pulls the package. The setup command configures your Anthropic API key and model routing preferences — takes about 30 seconds.
+
+Then type `/attune` in Claude Code. Socratic discovery guides you to the right workflow — no memorizing commands.
+
+---
+
+**Links:**
+- [PyPI](https://pypi.org/project/attune-ai/)
+- [GitHub](https://github.com/Smart-AI-Memory/attune-ai)
+- [Changelog](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md)
+- [Claude Agent SDK docs](https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent-sdk)

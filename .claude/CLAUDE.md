@@ -955,4 +955,12 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   keeps the diff minimal, and lets the wrapper degrade gracefully
   with a try/except around the new layer.
 
+- **macOS `/var` → `/private/var` symlink breaks path assertions**:
+  `_validate_file_path()` calls `Path.resolve()`, which follows the
+  macOS symlink from `/var/folders/...` to `/private/var/folders/...`.
+  Tests using `tempfile.NamedTemporaryFile` get unresolved paths from
+  `f.name` but resolved paths from validated code. Fix: assert against
+  `str(Path(f.name).resolve())` instead of `f.name`. This is the macOS
+  equivalent of the Windows drive-letter lesson.
+
 <!-- attune-lessons-end -->
