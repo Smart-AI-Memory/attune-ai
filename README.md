@@ -14,7 +14,7 @@ with Anthropic best practices.**
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
 
 ---
 
@@ -463,53 +463,19 @@ export REDIS_URL="redis://localhost:6379"  # Optional
 - Automated security scanning (CodeQL, bandit,
   detect-secrets)
 
-See [SECURITY.md](SECURITY.md) for vulnerability
+See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability
 reporting and full security details.
 
 ---
 
-## Documentation
+## Links
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Project Overview](docs/PROJECT_OVERVIEW.md)
-- [Coding Standards](docs/CODING_STANDARDS.md)
-- [Plugin README](plugin/README.md)
 - [Full Documentation](https://smartaimemory.com/framework-docs/)
+- [Plugin Setup](https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/README.md)
+- [GitHub Repository](https://github.com/Smart-AI-Memory/attune-ai)
 
----
+**Apache License 2.0** — Free and open source.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## License
-
-**Apache License 2.0** — Free and open source. Use it,
-modify it, build commercial products with it.
-[Details](LICENSE)
-
----
-
-## Acknowledgements
-
-Special thanks to:
-
-- **[Anthropic](https://www.anthropic.com/)** — For
-  Claude AI, MCP, and the Agent SDK patterns that
-  shaped v5.0
-- **[Boris Cherny](https://x.com/bcherny)** — Creator
-  of Claude Code, whose workflow posts validated
-  Attune's approach
-- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations
-
-[View Full Acknowledgements](ACKNOWLEDGMENTS.md)
-
----
-
-**Built by [Smart AI Memory](https://smartaimemory.com)** ·
-[Docs](https://smartaimemory.com/framework-docs/) ·
-[Issues](https://github.com/Smart-AI-Memory/attune-ai/issues)
+**Built by [Smart AI Memory](https://smartaimemory.com)**
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
