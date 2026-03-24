@@ -142,16 +142,20 @@ def cmd_setup(args: Namespace) -> int:
 
     total = copied + agents_copied + configs_copied
     print(
-        f"\n✅ Installed {total} file(s) ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
+        f"\n✅ Installed {total} file(s)"
+        f" ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
     )
     print("\n📝 You can now use in Claude Code:")
-    print("   /dev              - Developer tools (debug, commit, PR)")
-    print("   /testing          - Run tests, coverage, test generation")
-    print("   /workflows        - Security audit, bug prediction, perf")
-    print("   /plan             - Planning, architecture review")
-    print("   /docs             - Documentation generation")
-    print("   /release          - Release preparation and publishing")
-    print("   /agent            - Custom agent management")
+    print("   /attune           - Guided discovery (asks what you need)")
+    print("   /security         - Security audit")
+    print("   /code-quality     - Code review + bug prediction")
+    print("   /smart-test       - Find test gaps, generate tests")
+    print("   /fix-test         - Auto-fix failing tests")
+    print("   /doc-gen          - Generate documentation")
+    print("   /refactor         - Refactoring roadmap")
+    print("   /plan             - Feature/architecture planning")
+    print("   /release          - Release preparation")
+    print("   /workflows        - Run any workflow by name")
 
     return 0
 

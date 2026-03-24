@@ -5,12 +5,6 @@
 **Production-ready AI workflows for Claude Code, aligned
 with Anthropic best practices.**
 
-18 multi-agent workflows for code review, security,
-testing, and release — each backed by specialized Claude
-subagents with intelligent model routing, budget controls,
-and structured output. 31 MCP tools. 10 auto-invoking
-skills. Just type `/attune` and go.
-
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
@@ -22,13 +16,62 @@ skills. Just type `/attune` and go.
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-**1.** Install:
+---
+
+## Get Started in 60 Seconds
 
 ```bash
 pip install 'attune-ai[developer]'
+attune setup
 ```
 
-**2.** [Complete Quick Start →](#quick-start)
+Then type `/attune` in Claude Code. That's it.
+
+---
+
+## Cheat Sheet
+
+Every command works in Claude Code. Just type it.
+
+| Command | What It Does |
+| ------- | ------------ |
+| `/attune` | Guided discovery — asks what you need |
+| `/security` | Scan for vulnerabilities |
+| `/code-quality` | Code review + bug prediction |
+| `/smart-test` | Find test gaps, generate tests |
+| `/fix-test` | Auto-diagnose failing tests |
+| `/doc-gen` | Generate documentation |
+| `/refactor` | Refactoring analysis + roadmap |
+| `/plan` | Feature, TDD, or architecture planning |
+| `/release` | Pre-release health + security check |
+| `/workflows` | Run any analysis workflow by name |
+| `/remember` | Store/retrieve persistent memory |
+
+Each command runs as a skill using your **Claude
+subscription** — no API key needed.
+
+### What the Output Looks Like
+
+```text
+$ attune workflow run security-audit --path src/
+
+Looking solid — this is in great shape.
+
+## Findings
+Score: 95/100
+3 issues found (1 medium, 2 low)
+
+  Cost & Time
+  $0.03 (saved 58% vs premium) | 12.4s
+
+  What I'd Do Next
+  I'd run `attune workflow run bug-predict` next —
+  your spec has work remaining.
+```
+
+Every workflow speaks in the same voice, with contextual
+next-step suggestions based on what just happened and
+what your spec says should come next.
 
 ---
 
@@ -37,8 +80,9 @@ pip install 'attune-ai[developer]'
 | | |
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
-| **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **10 Auto-Invoking Skills** | Describe what you need and Claude triggers the right skill automatically |
+| **36 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
+| **11 Slash Commands** | Short commands (`/security`, `/doc-gen`) that work directly — no namespacing needed |
+| **Unified Voice Layer** | Consistent personality across all output with contextual next-step suggestions |
 | **Anthropic Best Practices** | System prompt separation, per-agent model routing, budget safety nets, structured output |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
 | **Intelligent Cost Routing** | Opus for security, Sonnet for analysis, Haiku for scanning — right model per task |
@@ -49,26 +93,35 @@ pip install 'attune-ai[developer]'
 
 ## What's New
 
-### v5.2 — Voice Layer & Security Hardening
+### v5.2 — Voice Layer & Short Commands
 
 **v5.2.0** adds a unified voice layer for consistent
-output personality and closes 5 path traversal gaps
-found via bug-predict audit.
+output personality and contextual next-step suggestions.
+**v5.2.1** adds short command wrappers so every skill
+is accessible without namespacing.
 
 | Feature | What It Does |
 | ------- | ------------ |
-| **Unified voice layer** | Consistent output personality across all workflow results via `VoiceFormatter` |
+| **Unified voice layer** | Friendly senior engineer personality across all output — greetings, score commentary, voiced next steps |
+| **Spec-aware suggestions** | When `.claude/plans/` has an active spec, next steps follow the lifecycle |
+| **11 short commands** | `/security`, `/doc-gen`, `/fix-test`, etc. — no more `/attune-lite:skill-name` |
 | **5 path traversal fixes** | `_validate_file_path()` added to pattern persistence and agent parser I/O |
-| **Integration tests** | End-to-end voice layer wiring tests for MCP and workflow printer |
 
 <details>
-<summary>v5.1.0 — v5.1.4 patch notes</summary>
+<summary>v5.1.0 — v5.1.6 patch notes</summary>
+
+**v5.1.6** — Custom cache removed (~8K lines, ~420MB
+deps). Anthropic SDK alignment: batch tool, vision tool,
+extended thinking, model ID fix.
+
+**v5.1.5** — Security hardening (7 fixes), ghost command
+cleanup (30+ stale refs), workflow discovery diagnostics.
 
 **v5.1.4** — SessionStart welcome hook for first-run
 discovery, path validation on read paths, TOCTOU fix.
 
 **v5.1.3** — Architecture analyzer, `deep_review` MCP
-tool (#31), 145+ new tests, commands→skills migration,
+tool (#31), 145+ new tests, commands-to-skills migration,
 7 security findings resolved.
 
 **v5.1.2** — 3 security fixes (CWE-22 path traversal
@@ -95,7 +148,7 @@ SDK. This is the foundation everything else builds on.
 | Feature | What It Does |
 | ------- | ------------ |
 | **System prompt separation** | Each workflow splits persona from task instructions, passed via `system_prompt=` on `ClaudeAgentOptions` |
-| **Per-agent model routing** | Security/architect → Opus, quality/planning → Sonnet, lint/coverage → Haiku. Override with env vars |
+| **Per-agent model routing** | Security/architect to Opus, quality/planning to Sonnet, lint/coverage to Haiku. Override with env vars |
 | **Budget safety nets** | $0.50 quick / $2.00 standard / $5.00 deep — configurable per workflow, override with `ATTUNE_MAX_BUDGET_USD` |
 | **Cost and usage tracking** | `AgentRunResult` captures actual cost, token counts, duration, and session ID from every run |
 | **Structured output** | JSON schema output for code-review and security-audit with confidence scores and findings |
@@ -117,32 +170,43 @@ on state manager.
 
 ---
 
+## How to Access Workflows
+
+There are three ways to run workflows, depending on
+your context:
+
+| How | When to Use | Example |
+| --- | ----------- | ------- |
+| **Slash command** | In Claude Code (recommended) | `/security src/auth/` |
+| **`/attune` hub** | When you're not sure which workflow | `/attune "find bugs"` |
+| **CLI** | Terminal, CI/CD, automation | `attune workflow run security-audit --path src/` |
+
+Slash commands and `/attune` use your **Claude
+subscription**. CLI mode requires `ANTHROPIC_API_KEY`.
+
+---
+
 ## Plugin & Skills
 
 The attune-ai plugin integrates with Claude Code via
-the `/attune` command and 10 auto-invoking skills. Skills
+11 slash commands and 10 auto-invoking skills. Skills
 trigger automatically based on what you describe — no
 need to memorize commands.
 
 ### Skills
 
-| Skill | Triggers On | Manual Only? |
-| ----- | ----------- | ------------ |
-| `security-audit` | "security", "vulnerability", "scan" | No |
-| `code-quality` | "review", "quality", "bugs" | No |
-| `doc-gen` | "generate docs", "documentation", "docstrings" | No |
-| `smart-test` | "test gaps", "generate tests", "coverage" | No |
-| `fix-test` | "fix test", "broken test", "test failure" | Yes |
-| `workflow-orchestration` | "workflow", "analyze", "test" | No |
-| `planning` | "plan", "feature", "architecture" | No |
-| `refactor-plan` | "refactor", "tech debt", "simplify" | No |
-| `release-prep` | "release", "publish", "deploy" | Yes |
-| `memory-and-context` | "memory", "store", "empathy" | Yes |
-
-Skills marked "Manual Only" have
-`disable-model-invocation: true` — they write data or
-orchestrate agents, so they require explicit invocation
-(`/attune release` or `/attune-ai:release-prep`).
+| Skill | Triggers On | Command |
+| ----- | ----------- | ------- |
+| `security-audit` | "security", "vulnerability", "scan" | `/security` |
+| `code-quality` | "review", "quality", "bugs" | `/code-quality` |
+| `doc-gen` | "generate docs", "documentation" | `/doc-gen` |
+| `smart-test` | "test gaps", "generate tests" | `/smart-test` |
+| `fix-test` | "fix test", "broken test" | `/fix-test` |
+| `workflow-orchestration` | "workflow", "analyze" | `/workflows` |
+| `planning` | "plan", "feature", "architecture" | `/plan` |
+| `refactor-plan` | "refactor", "tech debt" | `/refactor` |
+| `release-prep` | "release", "publish" | `/release` |
+| `memory-and-context` | "memory", "store" | `/remember` |
 
 ### Portable Hooks
 
@@ -158,7 +222,7 @@ The plugin ships two hooks that run automatically:
 
 ## MCP Integration
 
-30 tools organized into 5 categories:
+36 tools organized into 6 categories:
 
 ### Analysis (6)
 
@@ -184,10 +248,15 @@ The plugin ships two hooks that run automatically:
 `memory_forget` `context_get` `context_set`
 `attune_get_level` `attune_set_level`
 
-### Utility (6)
+### Utility (7)
 
 `auth_status` `auth_recommend` `telemetry_stats`
-`research_synthesis` + 2 MCP resources
+`research_synthesis` `deep_review` `analyze_batch`
+`analyze_image`
+
+### Resources (3)
+
+`workflows` `auth_config` `telemetry`
 
 All tools are accessible through Claude Code's natural
 language interface. Describe what you need and Claude
@@ -288,14 +357,15 @@ Type `/attune` for Socratic discovery, or use shortcuts:
 
 ```bash
 /attune                # Guided — asks what you need
-/attune security       # Security audit
-/attune review         # Code review
-/attune tests          # Generate tests
-/attune perf           # Performance analysis
-/attune release        # Release preparation
-/attune health         # Project health check
-/attune docs           # Generate documentation
-/attune simplify       # Reduce code complexity
+/security              # Security audit
+/code-quality          # Code review + bug prediction
+/smart-test            # Generate tests for gaps
+/fix-test              # Auto-fix failing tests
+/doc-gen               # Generate documentation
+/refactor              # Refactoring roadmap
+/plan                  # Feature/architecture planning
+/release               # Release preparation
+/workflows             # Run any workflow by name
 ```
 
 ### CLI Usage
@@ -309,26 +379,6 @@ attune workflow run release-prep
 attune telemetry show
 ```
 
-### What Does It Look Like?
-
-```text
-$ attune workflow run security-audit --path src/
-
-[security-audit] vuln-scanner (opus) ........... done
-[security-audit] secret-detector (opus) ........ done
-[security-audit] auth-reviewer (opus) .......... done
-[security-audit] remediation-planner (opus) .... done
-
-Security Audit Results
-Score: 95/100 | Cost: $0.03 | Turns: 12
-
-| Severity | Count | Example                       |
-|----------|-------|-------------------------------|
-| High     | 1     | Broad except in cli.py:42     |
-| Medium   | 3     | Missing type hints            |
-| Low      | 2     | TODO comments                 |
-```
-
 ---
 
 ## Why Attune?
@@ -339,24 +389,10 @@ Score: 95/100 | Cost: $0.03 | Turns: 12
 | **Per-agent model routing** | Opus/Sonnet/Haiku per role | Manual | None | None |
 | **Budget controls** | Depth-based caps | None | None | SaaS pricing |
 | **Multi-agent teams** | 2-6 agents per workflow | Yes | No | No |
-| **MCP integration** | 30 native tools | No | No | No |
-| **Auto-invoking skills** | 10 with trigger descriptions | No | No | No |
+| **MCP integration** | 36 native tools | No | No | No |
+| **Slash commands** | 11 short commands | No | No | No |
 | **Portable security hooks** | PreToolUse + PostToolUse | No | No | No |
 | **Structured output** | JSON schema with fallback | Manual | No | No |
-
----
-
-## Command Hubs
-
-| Hub | Command | Description |
-| --- | --- | --- |
-| **Developer** | `/dev` | Debug, commit, PR, code review, quality |
-| **Testing** | `/testing` | Run tests, smart test, coverage, test gen |
-| **Documentation** | `/docs` | Generate docs, changelog, doc audit |
-| **Release** | `/release` | Release prep, security scan, publishing |
-| **Workflows** | `/workflows` | Automated analysis (security, bugs, perf) |
-| **Plan** | `/plan` | Feature planning, brainstorm, refactoring |
-| **Agent** | `/agent` | Create and manage custom agents |
 
 ---
 
@@ -364,13 +400,13 @@ Score: 95/100 | Cost: $0.03 | Turns: 12
 
 ### Skills in Claude Code
 
-Most workflows run as skills using your Claude
+All workflows run as skills using your Claude
 subscription — no additional API costs:
 
 ```bash
-/dev           # Uses your Claude subscription
-/testing       # Uses your Claude subscription
-/release       # Uses your Claude subscription
+/security          # Uses your Claude subscription
+/smart-test        # Uses your Claude subscription
+/release           # Uses your Claude subscription
 ```
 
 ### API Mode (CI/CD, Automation)
@@ -386,7 +422,7 @@ subscription — no additional API costs:
 ## Installation Options
 
 ```bash
-# Recommended (agents, memory, semantic caching)
+# Recommended (agents, memory)
 pip install 'attune-ai[developer]'
 
 # Minimal (CLI + workflows only)

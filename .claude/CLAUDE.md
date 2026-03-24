@@ -963,4 +963,15 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `str(Path(f.name).resolve())` instead of `f.name`. This is the macOS
   equivalent of the Windows drive-letter lesson.
 
+- **Plugin skills are namespaced, commands are not**: A skill
+  named `doc-gen` in `plugin/skills/doc-gen/SKILL.md` is invoked
+  as `/attune-lite:doc-gen` (namespaced under the plugin name).
+  A command named `doc-gen` in `plugin/commands/doc-gen.md` is
+  invoked as `/doc-gen` directly. If users should be able to type
+  short slash commands, create thin command wrappers that `Read
+  skill` the corresponding SKILL.md. Check Claude Code built-ins
+  (`/batch`, `/compact`, `/config`, `/cost`, `/help`, `/init`,
+  `/login`, `/logout`, `/memory`, `/permissions`, `/review`,
+  `/status`, `/vim`) before naming commands to avoid collisions.
+
 <!-- attune-lessons-end -->
