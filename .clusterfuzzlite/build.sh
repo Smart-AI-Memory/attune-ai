@@ -2,9 +2,7 @@
 
 pip3 install atheris
 
-# Copy fuzz targets to $OUT
+# Compile fuzz targets using the standard OSS-Fuzz helper
 for fuzzer in $SRC/fuzz_*.py; do
-  target=$(basename "$fuzzer" .py)
-  cp "$fuzzer" "$OUT/$target"
-  chmod +x "$OUT/$target"
+  compile_python_fuzzer "$fuzzer"
 done
