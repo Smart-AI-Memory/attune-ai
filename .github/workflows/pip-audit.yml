@@ -40,7 +40,7 @@ jobs:
         run: pip install -e .
 
       - name: Audit core dependencies
-        run: pip-audit --strict --desc on
+        run: pip-audit --strict --desc on --ignore-vuln CVE-2026-4539  # pygments 2.19.2, no fix available yet
 
       - name: Audit with optional deps
         continue-on-error: true
