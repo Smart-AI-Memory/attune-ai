@@ -632,10 +632,6 @@ class TestPipelineExecution:
             patch(
                 "attune.workflows.release_prep.ReleasePreparationWorkflow",
             ) as mock_rel_cls,
-            patch(
-                "attune.workflows.security_adapters._check_crew_available",
-                return_value=False,
-            ),
         ):
             # Setup mock instances
             mock_security = MagicMock()
@@ -659,13 +655,7 @@ class TestPipelineExecution:
         pipeline = SecureReleasePipeline(mode="standard", use_crew=False)
 
         # Patch at source module (where class is defined)
-        with (
-            patch("attune.workflows.security_audit.SecurityAuditWorkflow") as mock_cls,
-            patch(
-                "attune.workflows.security_adapters._check_crew_available",
-                return_value=False,
-            ),
-        ):
+        with (patch("attune.workflows.security_audit.SecurityAuditWorkflow") as mock_cls,):
             # Setup mock instance that raises exception
             mock_security = MagicMock()
             mock_security.execute = AsyncMock(side_effect=Exception("Workflow failed"))

@@ -269,86 +269,6 @@ class TestCostTracker:
 
 
 # ============================================================================
-# Health Check Crew Tests
-# ============================================================================
-
-
-class TestHealthCheckCrewStructure:
-    """Test HealthCheckCrew structure and types."""
-
-    def test_health_category_enum(self):
-        """Test HealthCategory enum values."""
-        from attune.agent_factory.crews.health_check import HealthCategory
-
-        assert HealthCategory.LINT.value == "lint"
-        assert HealthCategory.TYPES.value == "types"
-        assert HealthCategory.TESTS.value == "tests"
-        assert HealthCategory.SECURITY.value == "security"
-
-    def test_issue_severity_enum(self):
-        """Test IssueSeverity enum values."""
-        from attune.agent_factory.crews.health_check import IssueSeverity
-
-        assert IssueSeverity.CRITICAL.value == "critical"
-        assert IssueSeverity.HIGH.value == "high"
-        assert IssueSeverity.MEDIUM.value == "medium"
-        assert IssueSeverity.LOW.value == "low"
-        assert IssueSeverity.INFO.value == "info"
-
-    def test_health_issue_dataclass(self):
-        """Test HealthIssue dataclass structure."""
-        from attune.agent_factory.crews.health_check import (
-            HealthCategory,
-            HealthIssue,
-            IssueSeverity,
-        )
-
-        issue = HealthIssue(
-            title="Test Issue",
-            description="A test issue",
-            category=HealthCategory.LINT,
-            severity=IssueSeverity.MEDIUM,
-        )
-
-        assert issue.title == "Test Issue"
-        assert issue.category == HealthCategory.LINT
-        assert issue.severity == IssueSeverity.MEDIUM
-
-        # Test to_dict
-        d = issue.to_dict()
-        assert d["title"] == "Test Issue"
-        assert d["category"] == "lint"
-        assert d["severity"] == "medium"
-
-    def test_health_score_calculation(self):
-        """Test health score calculation with category caps."""
-        from attune.agent_factory.crews.health_check import (
-            HealthCategory,
-            HealthCheckCrew,
-            HealthIssue,
-            IssueSeverity,
-        )
-
-        # Create many lint issues - should be capped
-        issues = [
-            HealthIssue(
-                title=f"Lint issue {i}",
-                description="Lint warning",
-                category=HealthCategory.LINT,
-                severity=IssueSeverity.MEDIUM,
-            )
-            for i in range(50)
-        ]
-
-        crew = HealthCheckCrew.__new__(HealthCheckCrew)
-        score = crew._calculate_health_score(issues)
-
-        # With cap of 15 for lint, score should be 85
-        assert score >= 80, f"Score {score} too low - cap not working"
-        assert score <= 100
-
-
-# ============================================================================
 # Import Smoke Tests
 # ============================================================================
 
@@ -365,18 +285,6 @@ class TestImports:
         assert EmpathyOS is not None
         assert EmpathyConfig is not None
         assert callable(get_all_models)
-
-    def test_crew_imports(self):
-        """Test crew imports work."""
-        from attune.agent_factory.crews import (
-            CodeReviewCrew,
-            HealthCheckCrew,
-            SecurityAuditCrew,
-        )
-
-        assert HealthCheckCrew is not None
-        assert CodeReviewCrew is not None
-        assert SecurityAuditCrew is not None
 
     def test_workflow_imports(self):
         """Test workflow imports work."""

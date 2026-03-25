@@ -105,7 +105,6 @@ class AgentFactory:
         from attune.agent_factory.adapters import (
             NativeAdapter,
             get_autogen_adapter,
-            get_crewai_adapter,
             get_haystack_adapter,
             get_langchain_adapter,
             get_langgraph_adapter,
@@ -128,10 +127,6 @@ class AgentFactory:
 
         if self.framework == Framework.HAYSTACK:
             adapter_class = get_haystack_adapter()
-            return adapter_class(self.provider, self.api_key)  # type: ignore[no-any-return]
-
-        if self.framework == Framework.CREWAI:
-            adapter_class = get_crewai_adapter()
             return adapter_class(self.provider, self.api_key)  # type: ignore[no-any-return]
 
         # Fallback to native
@@ -384,7 +379,6 @@ class AgentFactory:
             Framework.LANGGRAPH,
             Framework.AUTOGEN,
             Framework.HAYSTACK,
-            Framework.CREWAI,
         ]
 
         if installed_only:

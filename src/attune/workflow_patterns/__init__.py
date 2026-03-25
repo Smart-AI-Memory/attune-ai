@@ -10,7 +10,7 @@ from .behavior import CodeScannerPattern, ConditionalTierPattern, ConfigDrivenPa
 from .core import PatternCategory, WorkflowComplexity, WorkflowPattern
 from .output import ResultDataclassPattern
 from .registry import WorkflowPatternRegistry, get_workflow_pattern_registry
-from .structural import CrewBasedPattern, MultiStagePattern, SingleStagePattern
+from .structural import MultiStagePattern, SingleStagePattern
 
 __all__ = [
     # Core
@@ -20,7 +20,6 @@ __all__ = [
     # Structural
     "SingleStagePattern",
     "MultiStagePattern",
-    "CrewBasedPattern",
     # Behavioral
     "ConditionalTierPattern",
     "ConfigDrivenPattern",

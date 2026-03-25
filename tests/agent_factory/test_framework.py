@@ -18,7 +18,7 @@ from attune.agent_factory.framework import (
 
 _real_import = builtins.__import__
 
-OPTIONAL_FRAMEWORKS = frozenset(("langchain", "langgraph", "autogen", "haystack", "crewai"))
+OPTIONAL_FRAMEWORKS = frozenset(("langchain", "langgraph", "autogen", "haystack"))
 
 
 def _make_import(allow: frozenset[str] = frozenset()):
@@ -58,9 +58,9 @@ def _make_import_with_error(name_to_error: str, error: Exception):
 class TestFrameworkEnum:
     """Tests for Framework enum values."""
 
-    def test_all_six_values_exist(self):
-        """All 6 framework values are defined."""
-        expected = {"NATIVE", "LANGCHAIN", "LANGGRAPH", "AUTOGEN", "HAYSTACK", "CREWAI"}
+    def test_all_five_values_exist(self):
+        """All 5 framework values are defined."""
+        expected = {"NATIVE", "LANGCHAIN", "LANGGRAPH", "AUTOGEN", "HAYSTACK"}
         actual = {member.name for member in Framework}
         assert actual == expected
 
@@ -71,7 +71,6 @@ class TestFrameworkEnum:
         assert Framework.LANGGRAPH.value == "langgraph"
         assert Framework.AUTOGEN.value == "autogen"
         assert Framework.HAYSTACK.value == "haystack"
-        assert Framework.CREWAI.value == "crewai"
 
 
 # ── from_string ─────────────────────────────────────────────────
@@ -90,7 +89,6 @@ class TestFromString:
             ("langgraph", Framework.LANGGRAPH),
             ("autogen", Framework.AUTOGEN),
             ("haystack", Framework.HAYSTACK),
-            ("crewai", Framework.CREWAI),
         ],
     )
     def test_exact_match(self, name: str, expected: Framework):
@@ -102,15 +100,13 @@ class TestFromString:
         [
             ("lang_graph", Framework.LANGGRAPH),
             ("auto_gen", Framework.AUTOGEN),
-            ("crew_ai", Framework.CREWAI),
-            ("crew", Framework.CREWAI),
         ],
     )
     def test_aliases(self, alias: str, expected: Framework):
         """Underscore and short aliases resolve correctly."""
         assert Framework.from_string(alias) == expected
 
-    @pytest.mark.parametrize("name", ["NATIVE", "LangChain", "CREWAI", "HayStack"])
+    @pytest.mark.parametrize("name", ["NATIVE", "LangChain", "HayStack"])
     def test_case_insensitive(self, name: str):
         """from_string is case-insensitive."""
         result = Framework.from_string(name)
@@ -120,7 +116,7 @@ class TestFromString:
         """Leading/trailing whitespace is stripped."""
         assert Framework.from_string("  native  ") == Framework.NATIVE
 
-    @pytest.mark.parametrize("name", ["unknown", "pytorch", "", "  "])
+    @pytest.mark.parametrize("name", ["unknown", "pytorch", "", "  ", "crewai"])
     def test_invalid_name_raises_value_error(self, name: str):
         """Invalid framework names raise ValueError."""
         with pytest.raises(ValueError, match="Unknown framework"):
@@ -153,14 +149,6 @@ class TestDetectInstalledFrameworks:
 
         assert Framework.LANGCHAIN in result
         assert Framework.NATIVE in result
-
-    def test_crewai_attribute_error_handled(self):
-        """CrewAI AttributeError during import is handled gracefully."""
-        side_effect = _make_import_with_error("crewai", AttributeError("bad attribute"))
-        with patch("builtins.__import__", side_effect=side_effect):
-            result = detect_installed_frameworks()
-
-        assert Framework.CREWAI not in result
 
     def test_multiple_frameworks_detected(self):
         """Multiple frameworks detected when importable."""
@@ -271,7 +259,6 @@ class TestGetFrameworkInfo:
             Framework.LANGGRAPH,
             Framework.AUTOGEN,
             Framework.HAYSTACK,
-            Framework.CREWAI,
         ],
     )
     def test_non_native_has_install_command(self, framework: Framework):
@@ -290,8 +277,4 @@ class TestGetFrameworkInfo:
     def test_unknown_framework_falls_back_to_native(self):
         """Unknown framework value returns NATIVE info (via dict.get fallback)."""
         native_info = get_framework_info(Framework.NATIVE)
-        # The function uses info.get(framework, info[Framework.NATIVE])
-        # so any missing key falls back to NATIVE info.
-        # We can't easily pass a non-Framework value since it's typed,
-        # but we verify the fallback mechanism exists by checking NATIVE.
         assert native_info["name"] == "Empathy Native"

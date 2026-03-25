@@ -429,7 +429,7 @@ class TestAgentFactory:
         """Test listing all frameworks."""
         frameworks = AgentFactory.list_frameworks(installed_only=False)
 
-        assert len(frameworks) >= 6  # NATIVE, LANGCHAIN, LANGGRAPH, AUTOGEN, HAYSTACK, CREWAI
+        assert len(frameworks) >= 5  # NATIVE, LANGCHAIN, LANGGRAPH, AUTOGEN, HAYSTACK
 
     def test_recommend_framework(self):
         """Test framework recommendation."""

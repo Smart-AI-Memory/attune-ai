@@ -26,9 +26,6 @@ class Framework(Enum):
     # deepset Haystack
     HAYSTACK = "haystack"
 
-    # CrewAI
-    CREWAI = "crewai"
-
     @classmethod
     def from_string(cls, name: str) -> "Framework":
         """Convert string to Framework enum."""
@@ -42,9 +39,6 @@ class Framework(Enum):
             "autogen": cls.AUTOGEN,
             "auto_gen": cls.AUTOGEN,
             "haystack": cls.HAYSTACK,
-            "crewai": cls.CREWAI,
-            "crew_ai": cls.CREWAI,
-            "crew": cls.CREWAI,
         }
         if name_lower in mapping:
             return mapping[name_lower]
@@ -90,15 +84,6 @@ def detect_installed_frameworks() -> list[Framework]:
 
         installed.append(Framework.HAYSTACK)
     except ImportError:
-        pass
-
-    # Check CrewAI
-    try:
-        import crewai  # noqa: F401
-
-        installed.append(Framework.CREWAI)
-    except (ImportError, AttributeError, ImportWarning):
-        # INTENTIONAL: Catch import-time errors from CrewAI dependencies
         pass
 
     return installed
@@ -176,18 +161,6 @@ def get_framework_info(framework: Framework) -> dict[str, object]:
             "best_for": ["Document QA", "RAG", "Search", "NLP pipelines"],
             "install_command": "pip install haystack-ai",
             "docs_url": "https://docs.haystack.deepset.ai/",
-        },
-        Framework.CREWAI: {
-            "name": "CrewAI",
-            "description": "Role-based multi-agent framework with goal-oriented crews",
-            "best_for": [
-                "Agent teams",
-                "Role-playing",
-                "Task delegation",
-                "Hierarchical workflows",
-            ],
-            "install_command": "pip install crewai",
-            "docs_url": "https://docs.crewai.com/",
         },
     }
     return info.get(framework, info[Framework.NATIVE])

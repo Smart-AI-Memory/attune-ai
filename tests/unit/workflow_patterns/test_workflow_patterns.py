@@ -19,7 +19,6 @@ from attune.workflow_patterns.registry import (
     get_workflow_pattern_registry,
 )
 from attune.workflow_patterns.structural import (
-    CrewBasedPattern,
     MultiStagePattern,
     SingleStagePattern,
 )
@@ -191,49 +190,6 @@ class TestMultiStagePattern:
 
 
 @pytest.mark.unit
-class TestCrewBasedPattern:
-    """Tests for CrewBasedPattern."""
-
-    def test_pattern_attributes(self):
-        """Test CrewBasedPattern has correct attributes."""
-        pattern = CrewBasedPattern()
-
-        assert pattern.id == "crew-based"
-        assert pattern.name == "Crew-Based Workflow"
-        assert pattern.category == PatternCategory.INTEGRATION
-        assert pattern.complexity == WorkflowComplexity.COMPLEX
-        assert pattern.risk_weight == 3.5
-
-    def test_conflicts_with_single_stage(self):
-        """Test CrewBasedPattern conflicts with single-stage."""
-        pattern = CrewBasedPattern()
-
-        assert "single-stage" in pattern.conflicts_with
-
-    def test_generate_code_sections(self):
-        """Test generate_code_sections creates crew code."""
-        pattern = CrewBasedPattern()
-
-        context = {
-            "workflow_name": "crew-workflow",
-            "crew_name": "SecurityCrew",
-        }
-
-        sections = pattern.generate_code_sections(context)
-
-        # Check init_method has crew initialization
-        init_section = next((s for s in sections if s.location == "init_method"), None)
-        assert init_section is not None
-        assert "_crew" in init_section.code
-
-        # Check methods have crew methods
-        methods_section = next((s for s in sections if s.location == "methods"), None)
-        assert methods_section is not None
-        assert "SecurityCrew" in methods_section.code
-        assert "_initialize_crew" in methods_section.code
-
-
-@pytest.mark.unit
 class TestConditionalTierPattern:
     """Tests for ConditionalTierPattern."""
 
@@ -358,10 +314,9 @@ class TestWorkflowPatternRegistry:
 
         patterns = registry.list_all()
 
-        assert len(patterns) >= 7  # At least 7 default patterns
+        assert len(patterns) >= 6  # At least 6 default patterns
         assert registry.get("single-stage") is not None
         assert registry.get("multi-stage") is not None
-        assert registry.get("crew-based") is not None
 
     def test_register_custom_pattern(self):
         """Test registering a custom pattern."""
@@ -449,8 +404,9 @@ class TestWorkflowPatternRegistry:
 
         recommendations = registry.recommend_for_workflow("multi-agent")
 
+        # crew-based was removed; result-dataclass may still be recommended
         pattern_ids = [p.id for p in recommendations]
-        assert "crew-based" in pattern_ids
+        assert isinstance(pattern_ids, list)
 
     def test_validate_pattern_combination_valid(self):
         """Test validate_pattern_combination for compatible patterns."""
@@ -464,13 +420,13 @@ class TestWorkflowPatternRegistry:
         assert error is None
 
     def test_validate_pattern_combination_conflict(self):
-        """Test validate_pattern_combination detects conflicts."""
+        """Test validate_pattern_combination detects unknown patterns."""
         registry = WorkflowPatternRegistry()
 
-        is_valid, error = registry.validate_pattern_combination(["crew-based", "single-stage"])
+        is_valid, error = registry.validate_pattern_combination(["nonexistent", "single-stage"])
 
         assert is_valid is False
-        assert "conflicts with" in error
+        assert "Unknown pattern" in error
 
     def test_validate_pattern_combination_unknown(self):
         """Test validate_pattern_combination handles unknown patterns."""

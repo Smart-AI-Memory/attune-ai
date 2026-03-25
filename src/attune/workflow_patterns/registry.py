@@ -11,7 +11,7 @@ from typing import Any
 from .behavior import CodeScannerPattern, ConditionalTierPattern, ConfigDrivenPattern
 from .core import PatternCategory, WorkflowComplexity, WorkflowPattern
 from .output import ResultDataclassPattern
-from .structural import CrewBasedPattern, MultiStagePattern, SingleStagePattern
+from .structural import MultiStagePattern, SingleStagePattern
 
 
 class WorkflowPatternRegistry:
@@ -28,7 +28,6 @@ class WorkflowPatternRegistry:
             # Structural
             SingleStagePattern(),
             MultiStagePattern(),
-            CrewBasedPattern(),
             # Behavioral
             ConditionalTierPattern(),
             ConfigDrivenPattern(),

@@ -73,7 +73,6 @@ if TYPE_CHECKING:
     )
 
     # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
-    from .manage_documentation import ManageDocumentationCrew, ManageDocumentationCrewResult
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
     from .perf_audit import PerformanceAuditWorkflow
@@ -103,7 +102,6 @@ if TYPE_CHECKING:
 
     # TestGenAgentSDKWorkflow: Merged into TestGenerationWorkflow (v4.2.0)
     from .test_gen_parallel import ParallelTestGenerationWorkflow
-    from .xml_enhanced_crew import XMLAgent, XMLTask
 
 # Only import base module eagerly (small, needed for type checks)
 from .base import (
@@ -153,8 +151,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "DocumentManagerWorkflow": (".document_manager", "DocumentManagerWorkflow"),
     "DocumentationOrchestrator": (".documentation_orchestrator", "DocumentationOrchestrator"),
     "OrchestratorResult": (".documentation_orchestrator", "OrchestratorResult"),
-    "ManageDocumentationCrew": (".manage_documentation", "ManageDocumentationCrew"),
-    "ManageDocumentationCrewResult": (".manage_documentation", "ManageDocumentationCrewResult"),
     "OrchestratedHealthCheckWorkflow": (
         ".orchestrated_health_check",
         "OrchestratedHealthCheckWorkflow",
@@ -201,9 +197,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # DependencyCheckAgentSDKWorkflow: Merged into DependencyCheckWorkflow (v4.2.0)
     # ResearchSynthesisAgentSDKWorkflow: Merged into ResearchSynthesisWorkflow (v4.2.0)
     # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
-    "XMLAgent": (".xml_enhanced_crew", "XMLAgent"),
-    "XMLTask": (".xml_enhanced_crew", "XMLTask"),
-    "parse_xml_response": (".xml_enhanced_crew", "parse_xml_response"),
     # Release agent team (v5.2)
     "ReleasePrepTeamWorkflow": (
         "attune.agents.release.release_prep_team",
@@ -694,8 +687,6 @@ __all__ = [
     # Health check crew integration (v3.1)
     # Removed deprecated: "HealthCheckWorkflow" (use OrchestratedHealthCheckWorkflow)
     "HealthCheckReport",
-    "ManageDocumentationCrew",
-    "ManageDocumentationCrewResult",
     "ModelConfig",
     "ModelProvider",
     "ModelTier",

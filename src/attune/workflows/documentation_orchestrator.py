@@ -33,22 +33,9 @@ from .doc_orch_scout import DocOrchScoutMixin
 
 logger = logging.getLogger(__name__)
 
-# Import scout workflow
-ManageDocumentationCrew = None
-ManageDocumentationCrewResult = None
+# ManageDocumentationCrew was removed in v5.3.0 — scout
+# phase now always uses ProjectIndex fallback.
 HAS_SCOUT = False
-
-try:
-    from .manage_documentation import ManageDocumentationCrew as _ManageDocumentationCrew
-    from .manage_documentation import (
-        ManageDocumentationCrewResult as _ManageDocumentationCrewResult,
-    )
-
-    ManageDocumentationCrew = _ManageDocumentationCrew
-    ManageDocumentationCrewResult = _ManageDocumentationCrewResult
-    HAS_SCOUT = True
-except ImportError:
-    pass
 
 # Import writer workflow
 DocumentGenerationWorkflow = None
@@ -314,10 +301,6 @@ class DocumentationOrchestrator(
         self._total_cost = 0.0
         self._items: list[DocumentationItem] = []
         self._excluded_files: list[dict] = []  # Track files excluded by patterns
-
-        # Initialize scout if available
-        if HAS_SCOUT and ManageDocumentationCrew is not None:
-            self._scout = ManageDocumentationCrew(project_root=str(self.project_root))
 
         # Initialize writer if available
         if HAS_WRITER and DocumentGenerationWorkflow is not None:

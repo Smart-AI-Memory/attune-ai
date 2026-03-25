@@ -27,7 +27,7 @@ from .generator_registry import AGENT_TEMPLATES, TOOL_REGISTRY, AgentTemplate
 from .success import SuccessCriteria
 
 if TYPE_CHECKING:
-    from ..workflows.xml_enhanced_crew import XMLAgent
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -214,17 +214,15 @@ class AgentGenerator:
             generated_at=datetime.now().isoformat(),
         )
 
-    def _create_xml_agent(self, spec: AgentSpec) -> XMLAgent:
-        """Create an XMLAgent from a spec."""
-        from ..workflows.xml_enhanced_crew import XMLAgent
-
-        return XMLAgent(
-            role=spec.name,
-            goal=spec.goal,
-            backstory=spec.backstory,
-            expertise_level="expert" if spec.model_tier != "cheap" else "competent",
-            custom_instructions=spec.custom_instructions,
-        )
+    def _create_xml_agent(self, spec: AgentSpec) -> dict[str, Any]:
+        """Create an agent config dict from a spec."""
+        return {
+            "role": spec.name,
+            "goal": spec.goal,
+            "backstory": spec.backstory,
+            "expertise_level": "expert" if spec.model_tier != "cheap" else "competent",
+            "custom_instructions": spec.custom_instructions,
+        }
 
     def create_workflow_blueprint(
         self,
