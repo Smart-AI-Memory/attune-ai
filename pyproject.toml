@@ -129,7 +129,7 @@ socratic = []
 backend = [
     "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
     "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<1.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
+    "starlette>=0.40.0,<2.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
     "bcrypt>=4.0.0,<6.0.0",  # Password hashing (cost factor 12)
     "PyJWT[crypto]>=2.8.0,<3.0.0",  # JWT auth - uses cryptography (no ecdsa CVE)
 ]
@@ -223,7 +223,7 @@ enterprise = [
     # Backend API server with authentication
     "fastapi>=0.109.1,<1.0.0",
     "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<1.0.0",
+    "starlette>=0.40.0,<2.0.0",
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
     "PyJWT[crypto]>=2.8.0",  # JWT authentication
     # OpenTelemetry for enterprise telemetry
@@ -269,7 +269,7 @@ all = [
     # Backend with authentication
     "fastapi>=0.109.1,<1.0.0",  # CVE fix
     "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<1.0.0",  # CVE fix
+    "starlette>=0.40.0,<2.0.0",  # CVE fix
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
     "PyJWT[crypto]>=2.8.0",  # JWT authentication
     # LSP
