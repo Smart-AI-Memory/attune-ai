@@ -990,4 +990,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   must be self-contained — embed the instructions directly instead
   of referencing skill files.
 
+- **Dependency lower bounds trigger Scorecard vulnerability alerts**:
+  Even if installed versions are safe, OpenSSF Scorecard flags
+  `pyproject.toml` specs that *allow* vulnerable versions (e.g.,
+  `pydantic>=2.0.0` permits 2.0–2.3 which have CVEs). Fix: bump
+  lower bounds past the patched version, not just the lockfile.
+
+- **`enforce_admins: false` defeats Code-Review Scorecard check**:
+  Even with `required_approving_review_count: 1`, admins bypass
+  reviews when `enforce_admins` is off. Scorecard sees 0/25
+  approved changesets. For solo devs: enable `enforce_admins` and
+  add an auto-approve workflow triggered by CI success.
+
+- **YAML `run:` values with colons cause parse errors**: A GitHub
+  Actions `run:` like `run: gh pr review --body "Auto-approved:
+  update"` fails YAML parsing because the colon after
+  "Auto-approved" is interpreted as a mapping. Remove the colon
+  or quote the entire value.
+
+- **CodeQL alerts dismissible in bulk via `gh api`**: Use
+  `gh api repos/OWNER/REPO/code-scanning/alerts/ID -X PATCH
+  -f state=dismissed -f dismissed_reason="false positive"
+  -f dismissed_comment="..."` to batch-dismiss with documented
+  reasons. Valid reasons: `false positive`, `won't fix`,
+  `used in tests`.
+
 <!-- attune-lessons-end -->

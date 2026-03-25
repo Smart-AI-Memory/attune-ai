@@ -1,0 +1,70 @@
+# Stop Letting AI Write Code You Haven't Approved
+
+I've been building AI solutions using spec-driven
+development for 2 years. Along the way I packaged
+the workflows into attune-ai, an open-source plugin
+for Claude Code. The AI stays aware of your spec and
+where you are in the implementation process. You still
+do the real engineering work -- but your starting
+prototypes come out higher quality from day one.
+
+---
+
+## /spec: Brainstorm, Plan, Review, Then Execute
+
+Attune AI v5.3 adds a `/spec` command to Claude Code
+that enforces a simple lifecycle:
+
+--- CODE START ---
+/spec add rate limiting to the API
+--- CODE END ---
+
+What happens:
+
+1. It ASKS questions first (what's the problem? what
+   does success look like?)
+2. It decomposes the work into discrete tasks with
+   files, validation checks, and risks
+3. You REVIEW the full plan before any code is written
+4. It executes task-by-task with quality gates after each
+
+If a quality gate finds a security issue, it blocks. You
+can't auto-approve high-severity findings.
+
+If you close your laptop mid-spec, it remembers where you
+left off. State lives in the plan file itself.
+
+---
+
+## Why This Matters
+
+The spec file is just markdown with XML tasks — version
+controlled, portable, human-readable.
+
+--- CODE START ---
+| Status | ID | Name            | Objective              |
+|--------|----|-----------------|------------------------|
+| done   | 1  | rate-limiter    | Core sliding window    |
+| >>>    | 2  | middleware      | FastAPI integration    |
+| ...    | 3  | redis-backend   | Distributed support    |
+--- CODE END ---
+
+This is how experienced engineers already work — scope
+the work, review the plan, then execute. `/spec` just
+makes AI follow the same discipline.
+
+---
+
+## Try It
+
+--- CODE START ---
+pip install 'attune-ai[developer]'
+attune setup
+--- CODE END ---
+
+Then type `/spec` in Claude Code.
+
+Open source, Apache 2.0:
+github.com/Smart-AI-Memory/attune-ai
+
+#ClaudeCode #AIEngineering #DeveloperTools #OpenSource
