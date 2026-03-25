@@ -5,6 +5,9 @@ on:
     types: [published]
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

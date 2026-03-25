@@ -1,0 +1,6 @@
+homepage: "https://github.com/Smart-AI-Memory/attune-ai"
+language: python
+fuzzing_engines:
+  - libfuzzer
+sanitizers:
+  - address
