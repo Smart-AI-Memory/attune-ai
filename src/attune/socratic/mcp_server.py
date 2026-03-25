@@ -443,7 +443,7 @@ class SocraticMCPServer:
 
         return {"recommendations": recommendations, "count": len(recommendations)}
 
-    def _get_session(self, session_id: str):
+    def _get_session(self, session_id: str) -> dict | None:
         """Get session from memory or storage."""
         # Check memory first
         if session_id in self._sessions:
@@ -554,7 +554,7 @@ async def run_mcp_server():
             logger.exception(f"Error processing message: {e}")
 
 
-def main():
+def main() -> None:
     """Entry point for MCP server."""
     logging.basicConfig(
         level=logging.INFO,

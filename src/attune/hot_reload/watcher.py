@@ -6,6 +6,8 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -173,11 +175,16 @@ class WorkflowFileWatcher:
         """
         return self._running
 
-    def __enter__(self):
+    def __enter__(self) -> WorkflowFileWatcher:
         """Context manager entry."""
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """Context manager exit."""
         self.stop()

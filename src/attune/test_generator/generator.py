@@ -176,26 +176,27 @@ class TestGenerator:
             Context dictionary for templates
 
         """
-        # Get pattern details
-        patterns = [self.registry.get(pid) for pid in pattern_ids if self.registry.get(pid)]
+        # Get pattern details — single lookup per ID
+        patterns_by_id = {pid: self.registry.get(pid) for pid in pattern_ids}
+        patterns = [p for p in patterns_by_id.values() if p]
 
         # Check for specific patterns
-        has_linear_flow = "linear_flow" in pattern_ids
-        has_phased = "phased_processing" in pattern_ids
-        has_approval = "approval" in pattern_ids
+        has_linear_flow = "linear_flow" in patterns_by_id
+        has_phased = "phased_processing" in patterns_by_id
+        has_approval = "approval" in patterns_by_id
         has_async = True  # Assume async by default for modern workflows
 
         # Get linear flow details if present
         total_steps = None
         if has_linear_flow:
-            linear_pattern = self.registry.get("linear_flow")
+            linear_pattern = patterns_by_id["linear_flow"]
             if isinstance(linear_pattern, LinearFlowPattern):
                 total_steps = linear_pattern.total_steps
 
         # Get phases if present
         phases = []
         if has_phased:
-            phased_pattern = self.registry.get("phased_processing")
+            phased_pattern = patterns_by_id["phased_processing"]
             if isinstance(phased_pattern, PhasedProcessingPattern):
                 phases = phased_pattern.phases
 

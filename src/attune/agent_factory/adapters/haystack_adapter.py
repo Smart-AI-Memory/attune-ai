@@ -10,7 +10,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import os
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from typing import Any
 
 from attune.agent_factory.base import (
@@ -102,7 +102,9 @@ class HaystackAgent(BaseAgent):
         except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
-    async def stream(self, input_data: str | dict, context: dict | None = None):
+    async def stream(
+        self, input_data: str | dict, context: dict | None = None
+    ) -> AsyncGenerator[dict, None]:
         """Haystack 2.0 supports streaming for some generators."""
         # Most Haystack components don't stream; yield full result
         result = await self.invoke(input_data, context)

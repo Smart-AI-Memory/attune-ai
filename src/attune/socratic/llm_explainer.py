@@ -44,7 +44,7 @@ Format as markdown with clear sections."""
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         self._client = None
 
-    def _get_client(self):
+    def _get_client(self) -> object | None:
         """Lazy-load Anthropic client."""
         if self._client is None and self.api_key:
             try:

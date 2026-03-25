@@ -5,6 +5,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from .base import BaseLLMProvider, LLMResponse
@@ -276,7 +277,7 @@ class AnthropicProvider(BaseLLMProvider):
         temperature: float = 0.7,
         max_tokens: int = 1024,
         **kwargs,
-    ):
+    ) -> AsyncGenerator[str, None]:
         """Stream response from Anthropic API for real-time output.
 
         Yields text chunks as they arrive from the API.

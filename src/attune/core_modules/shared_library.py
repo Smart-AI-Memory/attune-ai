@@ -29,8 +29,8 @@ class SharedLibraryMixin:
     shared_library: PatternLibrary | None
     persistence_enabled: bool
 
-    async def __aenter__(self):
-        """Enter async context manager
+    async def __aenter__(self) -> SharedLibraryMixin:
+        """Enter async context manager.
 
         Enables usage: async with EmpathyOS(...) as empathy:
 
@@ -104,7 +104,7 @@ class SharedLibraryMixin:
             )
         self.shared_library.contribute_pattern(self.user_id, pattern)
 
-    def query_patterns(self, context: dict, **kwargs):
+    def query_patterns(self, context: dict, **kwargs) -> list:
         """Query the shared library for patterns relevant to the current context.
 
         Enables agents to benefit from patterns discovered by other agents

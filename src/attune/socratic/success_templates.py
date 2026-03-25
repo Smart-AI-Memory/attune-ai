@@ -9,10 +9,15 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .success_models import MetricDirection, MetricType, SuccessMetric
 
+if TYPE_CHECKING:
+    from .success import SuccessCriteria
 
-def code_review_criteria():
+
+def code_review_criteria() -> SuccessCriteria:
     """Create standard success criteria for code review workflows."""
     from .success import SuccessCriteria
 
@@ -67,7 +72,7 @@ def code_review_criteria():
     )
 
 
-def security_audit_criteria():
+def security_audit_criteria() -> SuccessCriteria:
     """Create success criteria for security audit workflows."""
     from .success import SuccessCriteria
 
@@ -122,7 +127,7 @@ def security_audit_criteria():
     )
 
 
-def test_generation_criteria():
+def test_generation_criteria() -> SuccessCriteria:
     """Create success criteria for test generation workflows."""
     from .success import SuccessCriteria
 

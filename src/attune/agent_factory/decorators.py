@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def safe_agent_operation(operation_name: str):
+def safe_agent_operation(operation_name: str) -> Callable[[F], F]:
     """Decorator for safe agent operations with logging and error handling.
 
     Wraps async agent methods to:
@@ -99,7 +99,7 @@ def retry_on_failure(
     delay: float = 1.0,
     backoff: float = 2.0,
     exceptions: tuple = (Exception,),
-):
+) -> Callable[[F], F]:
     """Decorator to retry failed operations with exponential backoff.
 
     Args:
@@ -147,7 +147,7 @@ def retry_on_failure(
     return decorator
 
 
-def log_performance(threshold_seconds: float = 1.0):
+def log_performance(threshold_seconds: float = 1.0) -> Callable[[F], F]:
     """Decorator to log slow operations.
 
     Args:

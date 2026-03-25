@@ -64,7 +64,7 @@ class TaskComplexityScorer:
             use_premium_model()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize complexity scorer."""
         if tiktoken:
             self.tokenizer = tiktoken.get_encoding("cl100k_base")

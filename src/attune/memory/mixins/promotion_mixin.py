@@ -71,12 +71,10 @@ class PatternPromotionMixin:
             logger.error("memory_backends_unavailable")
             return None
 
-        # Retrieve staged pattern
+        # Retrieve staged pattern — dict lookup instead of linear scan
         staged_patterns = self.get_staged_patterns()
-        staged = next(
-            (p for p in staged_patterns if p.get("pattern_id") == staged_pattern_id),
-            None,
-        )
+        staged_by_id = {p.get("pattern_id"): p for p in staged_patterns}
+        staged = staged_by_id.get(staged_pattern_id)
 
         if not staged:
             logger.warning("staged_pattern_not_found", pattern_id=staged_pattern_id)

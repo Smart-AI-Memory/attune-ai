@@ -215,7 +215,8 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
                 return
 
             patterns = self.panel.list_patterns()
-            pattern = next((p for p in patterns if p.get("pattern_id") == pattern_id), None)
+            patterns_by_id = {p.get("pattern_id"): p for p in patterns}
+            pattern = patterns_by_id.get(pattern_id)
             if pattern:
                 self._send_json(pattern)
             else:

@@ -30,8 +30,8 @@ class MetricsCollector:
         self.db_path = db_path
         self._init_database()
 
-    def _init_database(self):
-        """Initialize SQLite database for metrics"""
+    def _init_database(self) -> None:
+        """Initialize SQLite database for metrics."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -73,8 +73,8 @@ class MetricsCollector:
         success: bool,
         response_time_ms: float,
         metadata: dict | None = None,
-    ):
-        """Record a single metric event
+    ) -> None:
+        """Record a single metric event.
 
         Args:
             user_id: User identifier

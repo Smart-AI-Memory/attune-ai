@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import os
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 
 from attune.agent_factory.base import (
     AgentConfig,
@@ -90,12 +90,14 @@ class AutoGenAgent(BaseAgent):
         except Exception as e:  # noqa: BLE001
             return {"output": f"Error: {e}", "metadata": {"error": str(e)}}
 
-    async def stream(self, input_data: str | dict, context: dict | None = None):
+    async def stream(
+        self, input_data: str | dict, context: dict | None = None
+    ) -> AsyncGenerator[dict, None]:
         """AutoGen doesn't support streaming natively."""
         result = await self.invoke(input_data, context)
         yield result
 
-    def get_autogen_agent(self):
+    def get_autogen_agent(self) -> object | None:
         """Get the underlying AutoGen agent for direct use."""
         return self._autogen_agent
 

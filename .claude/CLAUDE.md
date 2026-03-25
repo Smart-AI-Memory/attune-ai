@@ -26,22 +26,20 @@ See `docs/reference/cli-reference.md`.
 
 Use `/hub-name` to access organized workflows:
 
-| Hub | Key Routes | Description |
-| --- | ---------- | ----------- |
-| `/attune` | Socratic discovery | Natural language routing to all workflows |
-| `/dev` | debug, review, commit, pr, refactor, quality, perf-audit | Developer tools |
-| `/testing` | run, coverage, generate, benchmark | Test runner and generation |
-| `/workflows` | security, bugs, perf, review, test-gen, refactor, deps, list | Automated analysis |
-| `/plan` | feature, refactor, architecture | Planning and strategy |
-| `/docs` | generate, readme, changelog, explain, audit, overview | Documentation |
-| `/release` | prep, security, health, publish | Release preparation |
-| `/brainstorm` | "topic", plan | Guided brainstorming and ideation |
-| `/agent` | create, list, run, release-prep | Agent management |
-| `/bulk` | submit, status, results, wait | Batch API processing (50% cost savings) |
-| `/wizard` | run, create, list, edit | Guided multi-step wizards |
-| `/pipeline` | full, dev, eval, release | Spec-driven development lifecycle |
-| `/utilities` | auth-setup, auth-status, auth-reset | Auth and provider management |
-| `/help` | (navigation) | Help navigating workflows |
+| Command | Description |
+| ------- | ----------- |
+| `/spec` | Spec-driven development with approval loop |
+| `/attune` | Socratic discovery — routes to any workflow |
+| `/security` | Security audit |
+| `/smart-test` | Find test gaps, generate tests |
+| `/release` | Release preparation and publishing |
+| `/help` | Quick reference for all commands |
+
+**More commands** (type `/help` for full list):
+
+`/dev` `/plan` `/brainstorm` `/code-quality`
+`/doc-gen` `/fix-test` `/refactor` `/deep-review`
+`/agent` `/wizard` `/bulk` `/remember`
 
 ---
 
@@ -619,7 +617,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   ordering matters in both IP literal checks and DNS resolution
   checks.
 
-
 - **Changing error messages breaks tests across the codebase**:
   Updating `_validate_file_path()`'s error from `"path must be
   within"` to `"outside allowed directory"` broke 10 test files.
@@ -973,5 +970,24 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (`/batch`, `/compact`, `/config`, `/cost`, `/help`, `/init`,
   `/login`, `/logout`, `/memory`, `/permissions`, `/review`,
   `/status`, `/vim`) before naming commands to avoid collisions.
+
+- **PyPI renders README links relative to its own domain**: Relative
+  links like `docs/ARCHITECTURE.md` become
+  `https://pypi.org/project/attune-ai/docs/ARCHITECTURE.md` which
+  404s. All links in README.md must use absolute GitHub URLs
+  (`https://github.com/Smart-AI-Memory/attune-ai/blob/main/...`).
+  This applies to LICENSE, SECURITY.md, CONTRIBUTING.md, and any
+  docs/ path. Contributor-facing links (coding standards,
+  contributing guide) are better removed from the PyPI README
+  entirely — they add clutter and broken-link risk for users who
+  will never contribute.
+
+- **Plugin `Read skill` references break outside the plugin**: The
+  `file:///skills/doc-gen/SKILL.md` path in plugin commands is
+  relative to `${CLAUDE_PLUGIN_ROOT}`. When the command is copied
+  to `~/.claude/commands/` via `attune setup`, the path doesn't
+  resolve. Commands shipped in `src/attune/commands/` (for PyPI)
+  must be self-contained — embed the instructions directly instead
+  of referencing skill files.
 
 <!-- attune-lessons-end -->
