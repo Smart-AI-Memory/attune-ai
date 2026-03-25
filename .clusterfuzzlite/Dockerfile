@@ -5,5 +5,3 @@ WORKDIR $SRC/attune-ai
 
 COPY .clusterfuzzlite/build.sh $SRC/build.sh
 COPY .clusterfuzzlite/fuzz_*.py $SRC/
-
-RUN pip3 install -e .
