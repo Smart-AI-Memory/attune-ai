@@ -68,7 +68,7 @@ class CommandParser:
         r"compact|context|memory": CommandCategory.CONTEXT,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the parser."""
 
     def parse_file(self, file_path: str | Path) -> CommandConfig:

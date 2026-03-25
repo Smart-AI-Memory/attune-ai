@@ -23,6 +23,8 @@ class TaskResult:
             (None if not run).
         simplified: Whether simplification was applied.
         gate_details: Quality gate findings from agent team.
+        gate_score: Minimum score across gate results
+            (None if gates were not run).
         error: Error message if the task failed.
         cost: Cost in USD for this task's gate execution.
 
@@ -35,8 +37,31 @@ class TaskResult:
     tests_passed: bool | None = None
     simplified: bool = False
     gate_details: dict | None = None
+    gate_score: float | None = None
     error: str | None = None
     cost: float = 0.0
+
+    @property
+    def severity(self) -> str:
+        """Classify gate result severity.
+
+        Returns:
+            ``"high"`` if gate score < 50 or gate failed
+            with no score, ``"medium"`` if score 50-69,
+            ``"low"`` if score >= 70 or gate passed/skipped.
+
+        """
+        if self.quality_gate_passed is True:
+            return "low"
+        if self.quality_gate_passed is None:
+            return "low"
+        if self.gate_score is not None:
+            if self.gate_score < 50:
+                return "high"
+            if self.gate_score < 70:
+                return "medium"
+            return "low"
+        return "high"
 
 
 @dataclass

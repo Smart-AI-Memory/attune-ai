@@ -14,8 +14,9 @@ from __future__ import annotations
 import logging
 import subprocess
 import time
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from attune.orchestration.team_builder import DynamicTeamBuilder
 from attune.pipeline.models import PipelineResult, TaskResult
@@ -69,16 +70,49 @@ class PipelineOrchestrator:
         self.skip_simplify = skip_simplify
         self.results: list[TaskResult] = []
 
-    async def run_all(self) -> PipelineResult:
+    #: Valid decisions returned by on_task_complete callbacks.
+    TaskDecision = Literal["approve", "redo", "auto", "stop"]
+
+    #: Callback type for on_task_complete: receives (task, result),
+    #: returns a decision string or None.
+    TaskCallback = Callable[
+        [DecomposedTask, TaskResult],
+        Awaitable[TaskDecision | None],
+    ]
+
+    async def run_all(
+        self,
+        *,
+        on_task_complete: TaskCallback | None = None,
+        skip_task_ids: set[str] | None = None,
+    ) -> PipelineResult:
         """Run quality gates for all tasks sequentially.
+
+        Args:
+            on_task_complete: Optional async callback called after
+                each task completes. Receives ``(task, result)`` and
+                returns a decision string:
+                - ``"approve"`` or ``None``: continue to next task
+                - ``"redo"``: re-run the same task (single retry)
+                - ``"auto"``: approve and skip future callbacks
+                - ``"stop"``: stop the pipeline
+            skip_task_ids: Set of task IDs to skip (already
+                completed). Used for resume-from-checkpoint.
 
         Returns:
             PipelineResult with per-task outcomes.
 
         """
+        self.results = []  # Reset to avoid state leak on reuse
         start = time.monotonic()
+        skip = skip_task_ids or set()
+        auto_run = False
 
         for task in self.tasks:
+            if task.task_id in skip:
+                logger.info("Skipping completed task %s", task.task_id)
+                continue
+
             result = await self.run_gates_for_task(task)
             self.results.append(result)
 
@@ -88,6 +122,19 @@ class PipelineOrchestrator:
                     task.task_id,
                 )
                 break
+
+            # Approval callback (when provided and not in auto-run mode)
+            if on_task_complete is not None and not auto_run:
+                decision = await on_task_complete(task, result)
+                if decision == "redo":
+                    # Remove the result and re-run
+                    self.results.pop()
+                    result = await self.run_gates_for_task(task)
+                    self.results.append(result)
+                elif decision == "auto":
+                    auto_run = True
+                elif decision == "stop":
+                    break
 
         duration_ms = int((time.monotonic() - start) * 1000)
         total_cost = sum(r.cost for r in self.results)
@@ -125,6 +172,17 @@ class PipelineOrchestrator:
                 result.quality_gate_passed = gate_passed
                 result.gate_details = gate_details
                 result.cost = cost
+
+                gate_results = gate_details.get("gate_results", {})
+                if gate_results:
+                    result.gate_score = min(
+                        (
+                            v["score"]
+                            for v in gate_results.values()
+                            if isinstance(v, dict) and "score" in v
+                        ),
+                        default=None,
+                    )
 
                 if not gate_passed:
                     return result
@@ -329,9 +387,9 @@ class PipelineOrchestrator:
             SimplifyCodeWorkflow,
         )
 
+        workflow = SimplifyCodeWorkflow()
         for path in source_files:
             try:
-                workflow = SimplifyCodeWorkflow()
                 await workflow.execute(path=path)
             except Exception as e:  # noqa: BLE001
                 # INTENTIONAL: Per-file simplify failure is non-fatal

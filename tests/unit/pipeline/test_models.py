@@ -26,12 +26,83 @@ class TestTaskResult:
             tests_passed=True,
             simplified=True,
             gate_details={"score": 95},
+            gate_score=95.0,
             cost=0.05,
         )
         assert r.executed
         assert r.quality_gate_passed
         assert r.gate_details == {"score": 95}
+        assert r.gate_score == 95.0
         assert r.cost == 0.05
+
+
+class TestTaskResultSeverity:
+    """Tests for TaskResult.severity property."""
+
+    def test_passed_gate_is_low(self):
+        """Passed gate is always low severity."""
+        r = TaskResult(task_id="1", task_name="t", quality_gate_passed=True)
+        assert r.severity == "low"
+
+    def test_skipped_gate_is_low(self):
+        """Skipped gate (None) is low severity."""
+        r = TaskResult(task_id="1", task_name="t", quality_gate_passed=None)
+        assert r.severity == "low"
+
+    def test_failed_no_score_is_high(self):
+        """Failed gate with no score is high severity."""
+        r = TaskResult(task_id="1", task_name="t", quality_gate_passed=False)
+        assert r.severity == "high"
+
+    def test_failed_low_score_is_high(self):
+        """Failed gate with score < 50 is high severity."""
+        r = TaskResult(
+            task_id="1",
+            task_name="t",
+            quality_gate_passed=False,
+            gate_score=30,
+        )
+        assert r.severity == "high"
+
+    def test_failed_medium_score(self):
+        """Failed gate with score 50-69 is medium severity."""
+        r = TaskResult(
+            task_id="1",
+            task_name="t",
+            quality_gate_passed=False,
+            gate_score=55,
+        )
+        assert r.severity == "medium"
+
+    def test_failed_high_score_is_low(self):
+        """Failed gate with score >= 70 is low severity."""
+        r = TaskResult(
+            task_id="1",
+            task_name="t",
+            quality_gate_passed=False,
+            gate_score=75,
+        )
+        assert r.severity == "low"
+
+    def test_boundary_50_is_medium(self):
+        """Score exactly 50 is medium, not high."""
+        r = TaskResult(
+            task_id="1",
+            task_name="t",
+            quality_gate_passed=False,
+            gate_score=50,
+        )
+        assert r.severity == "medium"
+
+    def test_boundary_70_is_low(self):
+        """Score exactly 70 is low, not medium."""
+        r = TaskResult(
+            task_id="1",
+            task_name="t",
+            quality_gate_passed=False,
+            gate_score=70,
+        )
+        assert r.severity == "low"
 
 
 class TestPipelineResult:

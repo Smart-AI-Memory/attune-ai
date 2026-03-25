@@ -10,8 +10,8 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
+from attune.security.path_validation import _validate_file_path
 from attune.wizards.decomposer import DecomposedTask, TaskDecomposer
 
 logger = logging.getLogger(__name__)
@@ -30,13 +30,13 @@ def read_spec(plan_path: str) -> list[DecomposedTask]:
 
     Raises:
         FileNotFoundError: If plan_path does not exist.
-        ValueError: If plan_path is empty.
+        ValueError: If plan_path is empty or invalid.
 
     """
     if not plan_path:
         raise ValueError("plan_path must be a non-empty string")
 
-    path = Path(plan_path)
+    path = _validate_file_path(plan_path)
     if not path.exists():
         raise FileNotFoundError(f"Plan file not found: {plan_path}")
 

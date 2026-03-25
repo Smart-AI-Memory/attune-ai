@@ -87,7 +87,10 @@ def cmd_setup(args: Namespace) -> int:
                     count += 1
                 elif hasattr(item, "read_text") and str(item.name).endswith(".md"):
                     dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
-                    dst_file.write_text(item.read_text())
+                    dst_file.write_text(
+                        item.read_text(encoding="utf-8"),
+                        encoding="utf-8",
+                    )
                     print(f"  ✅ Installed: {item.name}")
                     count += 1
         return count
@@ -146,16 +149,12 @@ def cmd_setup(args: Namespace) -> int:
         f" ({copied} commands, {agents_copied} subagents, {configs_copied} configs)",
     )
     print("\n📝 You can now use in Claude Code:")
+    print("   /spec             - Spec-driven development")
     print("   /attune           - Guided discovery (asks what you need)")
     print("   /security         - Security audit")
-    print("   /code-quality     - Code review + bug prediction")
     print("   /smart-test       - Find test gaps, generate tests")
-    print("   /fix-test         - Auto-fix failing tests")
-    print("   /doc-gen          - Generate documentation")
-    print("   /refactor         - Refactoring roadmap")
-    print("   /plan             - Feature/architecture planning")
     print("   /release          - Release preparation")
-    print("   /workflows        - Run any workflow by name")
+    print("   /help             - Full command reference")
 
     return 0
 
@@ -168,7 +167,7 @@ def _has_env_key(name: str) -> bool:
     import os
 
     val = os.environ.get(name, "")
-    return len(val) > 0
+    return bool(val)
 
 
 def cmd_validate(args: Namespace) -> int:
@@ -273,35 +272,21 @@ def cmd_features(args: Namespace) -> int:
     print("ATTUNE AI - FEATURE AVAILABILITY")
     print("=" * 70)
 
-    # Memory features
-    print("\n📦 MEMORY FEATURES\n")
-    print(f"{'Feature':<30} {'Status':<15} {'Details'}")
-    print("-" * 70)
+    def _print_feature_table(title: str, features: dict) -> None:
+        """Print a feature availability table."""
+        print(f"\n{title}\n")
+        print(f"{'Feature':<30} {'Status':<15} {'Details'}")
+        print("-" * 70)
+        for _name, info in sorted(features.items()):
+            is_available = info.status.value == "available"
+            symbol = "✅" if is_available else "⚠️"
+            status_text = info.status.value.replace("_", " ").title()
+            print(f"{symbol} {info.name:<28} {status_text:<15} {info.message}")
+            if info.install_command and not is_available:
+                print(f"   {'':>28} Install: {info.install_command}")
 
-    memory_features = MemoryFeatures.list_all_features()
-    for _name, info in sorted(memory_features.items()):
-        is_available = info.status.value == "available"
-        status_symbol = "✅" if is_available else "⚠️"
-        status_text = info.status.value.replace("_", " ").title()
-        print(f"{status_symbol} {info.name:<28} {status_text:<15} {info.message}")
-
-        if info.install_command and not is_available:
-            print(f"   {'':>28} Install: {info.install_command}")
-
-    # Telemetry features
-    print("\n\n📊 TELEMETRY FEATURES\n")
-    print(f"{'Feature':<30} {'Status':<15} {'Details'}")
-    print("-" * 70)
-
-    telemetry_features = TelemetryFeatures.list_all_features()
-    for _name, info in sorted(telemetry_features.items()):
-        is_available = info.status.value == "available"
-        status_symbol = "✅" if is_available else "⚠️"
-        status_text = info.status.value.replace("_", " ").title()
-        print(f"{status_symbol} {info.name:<28} {status_text:<15} {info.message}")
-
-        if info.install_command and not is_available:
-            print(f"   {'':>28} Install: {info.install_command}")
+    _print_feature_table("📦 MEMORY FEATURES", MemoryFeatures.list_all_features())
+    _print_feature_table("\n📊 TELEMETRY FEATURES", TelemetryFeatures.list_all_features())
 
     # Installation instructions summary
     print("\n" + "=" * 70)

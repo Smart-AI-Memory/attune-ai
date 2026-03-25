@@ -309,9 +309,12 @@ class TestRunSimplify:
         )
         task = _make_task()
 
+        mock_wf = AsyncMock()
+        mock_wf.execute.side_effect = RuntimeError("simplify broke")
+
         with patch(
             "attune.workflows.simplify_code.SimplifyCodeWorkflow",
-            side_effect=RuntimeError("simplify broke"),
+            return_value=mock_wf,
         ):
             result = await orch.run_gates_for_task(task)
 
@@ -366,3 +369,184 @@ class TestRunAll:
         # Should stop after first task fails
         assert len(result.tasks) == 1
         assert not result.success
+
+
+# ====================================================================
+# Callback + resume tests (for /spec approval loop)
+# ====================================================================
+
+
+class TestRunAllWithCallback:
+    """Tests for run_all() on_task_complete callback support."""
+
+    @pytest.mark.asyncio
+    async def test_callback_receives_task_and_result(self):
+        """Callback is called with task and result after each task."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        received = []
+
+        async def on_complete(task, result):
+            received.append((task.task_id, result.task_id))
+            return "approve"
+
+        await orch.run_all(on_task_complete=on_complete)
+
+        assert len(received) == 5
+        assert received[0][0] == "1"
+
+    @pytest.mark.asyncio
+    async def test_callback_none_is_backward_compatible(self):
+        """No callback = existing behavior (all tasks run)."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        result = await orch.run_all(on_task_complete=None)
+        assert len(result.tasks) == 5
+
+    @pytest.mark.asyncio
+    async def test_callback_stop_halts_pipeline(self):
+        """Returning 'stop' from callback halts after that task."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        async def on_complete(task, result):
+            return "stop" if task.task_id == "2" else "approve"
+
+        result = await orch.run_all(on_task_complete=on_complete)
+        assert len(result.tasks) == 2
+
+    @pytest.mark.asyncio
+    async def test_callback_auto_skips_future_callbacks(self):
+        """Returning 'auto' skips callback for remaining tasks."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        call_count = 0
+
+        async def on_complete(task, result):
+            nonlocal call_count
+            call_count += 1
+            return "auto" if task.task_id == "1" else "approve"
+
+        result = await orch.run_all(on_task_complete=on_complete)
+        assert len(result.tasks) == 5
+        assert call_count == 1  # Only called once before auto-run kicked in
+
+
+class TestRunAllWithSkipTaskIds:
+    """Tests for run_all() skip_task_ids (resume) support."""
+
+    @pytest.mark.asyncio
+    async def test_skips_completed_tasks(self):
+        """Tasks in skip_task_ids are not executed."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        result = await orch.run_all(skip_task_ids={"1", "2", "3"})
+        assert len(result.tasks) == 2
+        task_ids = [t.task_id for t in result.tasks]
+        assert "1" not in task_ids
+        assert "4" in task_ids
+
+    @pytest.mark.asyncio
+    async def test_empty_skip_set_runs_all(self):
+        """Empty skip set runs all tasks."""
+        orch = PipelineOrchestrator("fake.md", skip_gates=True, skip_tests=True, skip_simplify=True)
+
+        result = await orch.run_all(skip_task_ids=set())
+        assert len(result.tasks) == 5
+
+
+class TestCallbackRedo:
+    """Tests for the 'redo' callback path."""
+
+    @pytest.mark.asyncio
+    async def test_callback_redo_reruns_task(self):
+        """Returning 'redo' pops the result and re-runs the task."""
+        orch = PipelineOrchestrator(
+            "fake.md",
+            skip_gates=True,
+            skip_tests=True,
+            skip_simplify=True,
+        )
+
+        redo_fired = {"count": 0}
+
+        async def on_complete(task, result):
+            # Redo task "2" once, approve everything else
+            if task.task_id == "2" and redo_fired["count"] == 0:
+                redo_fired["count"] += 1
+                return "redo"
+            return "approve"
+
+        pipeline_result = await orch.run_all(on_task_complete=on_complete)
+
+        # All 5 tasks should still appear in results
+        assert len(pipeline_result.tasks) == 5
+        # Task 2 was run, redone, and the redo result kept
+        assert redo_fired["count"] == 1
+
+
+class TestRunGatesTestFailurePath:
+    """Tests for the test-failure early-return path."""
+
+    @pytest.mark.asyncio
+    async def test_test_failure_skips_simplify(self):
+        """When tests fail, simplify is skipped and result reflects failure."""
+        orch = PipelineOrchestrator(
+            "fake.md",
+            skip_gates=True,
+            skip_tests=False,
+            skip_simplify=False,
+        )
+        task = _make_task()
+
+        with (
+            patch.object(orch, "_find_test_files", return_value=["tests/test_x.py"]),
+            patch.object(orch, "_run_tests", return_value=False),
+        ):
+            result = await orch.run_gates_for_task(task)
+
+        assert result.tests_passed is False
+        assert not result.simplified
+
+    @pytest.mark.asyncio
+    async def test_test_success_continues_to_simplify(self):
+        """When tests pass, simplification runs."""
+        orch = PipelineOrchestrator(
+            "fake.md",
+            skip_gates=True,
+            skip_tests=False,
+            skip_simplify=False,
+        )
+        task = _make_task()
+
+        with (
+            patch.object(orch, "_find_test_files", return_value=["tests/test_x.py"]),
+            patch.object(orch, "_run_tests", return_value=True),
+            patch(
+                "attune.workflows.simplify_code.SimplifyCodeWorkflow",
+            ) as mock_simplify_cls,
+        ):
+            mock_simplify_cls.return_value = AsyncMock()
+            result = await orch.run_gates_for_task(task)
+
+        assert result.tests_passed is True
+        assert result.simplified
+
+
+class TestRunAllResultsReset:
+    """Test that run_all resets results on each call."""
+
+    @pytest.mark.asyncio
+    async def test_second_call_does_not_accumulate(self):
+        """Calling run_all twice doesn't accumulate results."""
+        orch = PipelineOrchestrator(
+            "fake.md",
+            skip_gates=True,
+            skip_tests=True,
+            skip_simplify=True,
+        )
+
+        result1 = await orch.run_all()
+        assert len(result1.tasks) == 5
+
+        result2 = await orch.run_all()
+        assert len(result2.tasks) == 5  # Not 10

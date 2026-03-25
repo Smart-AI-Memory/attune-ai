@@ -15,6 +15,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.cli_commands.utility_commands import (
+    cmd_doctor,
+    cmd_features,
     cmd_setup,
     cmd_validate,
     cmd_version,
@@ -107,7 +109,7 @@ class TestCmdSetup:
         source_dir = tmp_path / "source" / ".claude" / "commands"
         source_dir.mkdir(parents=True)
         (source_dir / "dev.md").write_text("# Dev Hub")
-        (source_dir / "testing.md").write_text("# Testing Hub")
+        (source_dir / "spec.md").write_text("# Spec Command")
         (source_dir / "not-a-command.txt").write_text("ignored")
 
         home_dir = tmp_path / "home"
@@ -122,12 +124,12 @@ class TestCmdSetup:
         assert result == 0
         captured = capsys.readouterr()
         assert "Installed: dev.md" in captured.out
-        assert "Installed: testing.md" in captured.out
+        assert "Installed: spec.md" in captured.out
 
         # Verify files were actually copied
         target_dir = home_dir / ".claude" / "commands"
         assert (target_dir / "dev.md").exists()
-        assert (target_dir / "testing.md").exists()
+        assert (target_dir / "spec.md").exists()
         assert not (target_dir / "not-a-command.txt").exists()
 
     def test_copies_agents_subdirectory(
@@ -381,7 +383,7 @@ class TestCopyMdFilesPathValidation:
         source_dir = tmp_path / "source" / ".claude" / "commands"
         source_dir.mkdir(parents=True)
         (source_dir / "dev.md").write_text("# Dev")
-        (source_dir / "testing.md").write_text("# Testing")
+        (source_dir / "spec.md").write_text("# Spec")
         (source_dir / "agents").mkdir()
 
         home_dir = tmp_path / "home"
@@ -396,7 +398,7 @@ class TestCopyMdFilesPathValidation:
         assert result == 0
         target_dir = home_dir / ".claude" / "commands"
         assert (target_dir / "dev.md").exists()
-        assert (target_dir / "testing.md").exists()
+        assert (target_dir / "spec.md").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -796,3 +798,285 @@ class TestCmdVersion:
 
         captured = capsys.readouterr()
         assert captured.out.strip() == "attune-ai 3.1.4"
+
+
+# ---------------------------------------------------------------------------
+# cmd_features
+# ---------------------------------------------------------------------------
+
+
+class TestCmdFeatures:
+    """Tests for cmd_features."""
+
+    def _make_args(self) -> types.SimpleNamespace:
+        return types.SimpleNamespace()
+
+    @staticmethod
+    def _mock_feature(
+        name: str = "JSON Memory",
+        status: str = "available",
+        message: str = "Ready",
+        install_command: str | None = None,
+    ) -> MagicMock:
+        """Create a mock feature info object."""
+        f = MagicMock()
+        f.name = name
+        f.status.value = status
+        f.message = message
+        f.install_command = install_command
+        return f
+
+    @staticmethod
+    def _patch_features(mock_mem: MagicMock, mock_tel: MagicMock):
+        """Patch lazy imports of MemoryFeatures and TelemetryFeatures."""
+        mem_mod = MagicMock(MemoryFeatures=mock_mem)
+        tel_mod = MagicMock(TelemetryFeatures=mock_tel)
+        return patch.dict(
+            "sys.modules",
+            {
+                "attune.memory.features": mem_mod,
+                "attune.telemetry.features": tel_mod,
+            },
+        )
+
+    def test_returns_zero(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Test returns 0 and displays feature tables."""
+        args = self._make_args()
+
+        mock_mem = MagicMock()
+        mock_mem.list_all_features.return_value = {"json": self._mock_feature()}
+        mock_mem.is_redis_available.return_value = False
+
+        mock_tel = MagicMock()
+        mock_tel.list_all_features.return_value = {"usage": self._mock_feature()}
+
+        with self._patch_features(mock_mem, mock_tel):
+            result = cmd_features(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "FEATURE AVAILABILITY" in captured.out
+        assert "JSON Memory" in captured.out
+
+    def test_redis_not_available_shows_install(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Test shows install instructions when Redis unavailable."""
+        args = self._make_args()
+
+        mock_mem = MagicMock()
+        mock_mem.list_all_features.return_value = {"json": self._mock_feature()}
+        mock_mem.is_redis_available.return_value = False
+
+        mock_tel = MagicMock()
+        mock_tel.list_all_features.return_value = {}
+
+        with self._patch_features(mock_mem, mock_tel):
+            cmd_features(args)
+
+        captured = capsys.readouterr()
+        assert "enable Redis-enhanced features" in captured.out
+        assert "attune-ai[memory]" in captured.out
+
+    def test_redis_available_and_running(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Test shows success message when Redis available and running."""
+        args = self._make_args()
+
+        mock_mem = MagicMock()
+        mock_mem.list_all_features.return_value = {}
+        mock_mem.is_redis_available.return_value = True
+        mock_mem.is_redis_running.return_value = True
+
+        mock_tel = MagicMock()
+        mock_tel.list_all_features.return_value = {}
+
+        with self._patch_features(mock_mem, mock_tel):
+            cmd_features(args)
+
+        captured = capsys.readouterr()
+        assert "all features available" in captured.out
+
+    def test_redis_available_not_running(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Test shows warning when Redis installed but not running."""
+        args = self._make_args()
+
+        mock_mem = MagicMock()
+        mock_mem.list_all_features.return_value = {}
+        mock_mem.is_redis_available.return_value = True
+        mock_mem.is_redis_running.return_value = False
+
+        mock_tel = MagicMock()
+        mock_tel.list_all_features.return_value = {}
+
+        with self._patch_features(mock_mem, mock_tel):
+            cmd_features(args)
+
+        captured = capsys.readouterr()
+        assert "server not running" in captured.out
+
+    def test_unavailable_feature_shows_install_command(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Test that unavailable features show install instructions."""
+        args = self._make_args()
+
+        mock_feature = self._mock_feature(
+            name="Redis Memory",
+            status="not_installed",
+            message="Not available",
+            install_command="pip install 'attune-ai[memory]'",
+        )
+
+        mock_mem = MagicMock()
+        mock_mem.list_all_features.return_value = {"redis": mock_feature}
+        mock_mem.is_redis_available.return_value = False
+
+        mock_tel = MagicMock()
+        mock_tel.list_all_features.return_value = {}
+
+        with self._patch_features(mock_mem, mock_tel):
+            cmd_features(args)
+
+        captured = capsys.readouterr()
+        assert "Install:" in captured.out
+        assert "attune-ai[memory]" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# cmd_doctor
+# ---------------------------------------------------------------------------
+
+
+class TestCmdDoctor:
+    """Tests for cmd_doctor."""
+
+    def _make_args(self) -> types.SimpleNamespace:
+        return types.SimpleNamespace()
+
+    def test_all_pass_returns_zero(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test returns 0 when all checks pass."""
+        args = self._make_args()
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-123")
+
+        mock_version = MagicMock()
+        mock_version.__version__ = "5.0.0"
+
+        mock_wfs = MagicMock()
+        mock_wfs.discover_workflows.return_value = {"wf1": {}}
+
+        mock_wizards = MagicMock()
+        mock_wizards.list_wizards.return_value = ["wiz1"]
+
+        mock_server_cls = MagicMock()
+        mock_server_cls.return_value.tools = [1, 2, 3]
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "attune": mock_version,
+                "attune.workflows": mock_wfs,
+                "attune.wizards": mock_wizards,
+                "redis": MagicMock(),
+                "jinja2": MagicMock(),
+                "sentence_transformers": MagicMock(),
+            },
+        ):
+            with patch(
+                "attune.cli_commands.utility_commands.EmpathyMCPServer",
+                mock_server_cls,
+                create=True,
+            ):
+                # Patch the lazy import inside cmd_doctor
+                with patch.dict(
+                    "sys.modules",
+                    {"attune.mcp.server": MagicMock(EmpathyMCPServer=mock_server_cls)},
+                ):
+                    result = cmd_doctor(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "ANTHROPIC_API_KEY set" in captured.out
+        assert "0 failures" in captured.out
+
+    def test_no_api_key_returns_one(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test returns 1 when API key is missing."""
+        args = self._make_args()
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        mock_version = MagicMock()
+        mock_version.__version__ = "5.0.0"
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "attune": mock_version,
+                "attune.workflows": MagicMock(
+                    discover_workflows=MagicMock(return_value={}),
+                ),
+                "attune.wizards": MagicMock(
+                    list_wizards=MagicMock(return_value=[]),
+                ),
+                "attune.mcp.server": MagicMock(),
+            },
+        ):
+            result = cmd_doctor(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "[FAIL]" in captured.out
+        assert "ANTHROPIC_API_KEY not set" in captured.out
+
+    def test_optional_extras_shown(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test optional extras are shown as warnings when missing."""
+        args = self._make_args()
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+
+        mock_version = MagicMock()
+        mock_version.__version__ = "5.0.0"
+
+        # Remove optional packages from sys.modules so import fails
+        with patch.dict(
+            "sys.modules",
+            {
+                "attune": mock_version,
+                "attune.workflows": MagicMock(
+                    discover_workflows=MagicMock(return_value={}),
+                ),
+                "attune.wizards": MagicMock(
+                    list_wizards=MagicMock(return_value=[]),
+                ),
+                "attune.mcp.server": MagicMock(),
+                "redis": None,
+                "jinja2": None,
+                "sentence_transformers": None,
+            },
+        ):
+            result = cmd_doctor(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "not installed" in captured.out
+        assert "optional" in captured.out
