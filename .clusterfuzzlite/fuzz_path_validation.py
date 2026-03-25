@@ -4,6 +4,8 @@ import sys
 
 import atheris
 
+from attune.security.path_validation import _validate_file_path
+
 
 def test_one_input(data: bytes) -> None:
     """Fuzz _validate_file_path with arbitrary input."""
@@ -14,8 +16,6 @@ def test_one_input(data: bytes) -> None:
         return
 
     try:
-        from attune.security.path_validation import _validate_file_path
-
         _validate_file_path(path_str)
     except (ValueError, TypeError, OSError):
         # Expected rejections from the validator
