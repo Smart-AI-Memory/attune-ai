@@ -9,7 +9,7 @@ with Anthropic best practices.**
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C591%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-15%2C026%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -42,6 +42,7 @@ Every command works in Claude Code. Just type it.
 | `/fix-test` | Auto-diagnose failing tests |
 | `/doc-gen` | Generate documentation |
 | `/refactor` | Refactoring analysis + roadmap |
+| `/spec` | Spec-driven dev — brainstorm → plan → execute |
 | `/plan` | Feature, TDD, or architecture planning |
 | `/release` | Pre-release health + security check |
 | `/workflows` | Run any analysis workflow by name |
@@ -81,7 +82,7 @@ what your spec says should come next.
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
 | **36 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **11 Slash Commands** | Short commands (`/security`, `/doc-gen`) that work directly — no namespacing needed |
+| **13 Slash Commands** | Short commands (`/security`, `/spec`, `/doc-gen`) that work directly — no namespacing needed |
 | **Unified Voice Layer** | Consistent personality across all output with contextual next-step suggestions |
 | **Anthropic Best Practices** | System prompt separation, per-agent model routing, budget safety nets, structured output |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
@@ -92,6 +93,22 @@ what your spec says should come next.
 ---
 
 ## What's New
+
+### v5.3 — Spec-Driven Dev & Dead Code Removal
+
+**v5.3.0** adds `/spec` for spec-driven development and
+removes ~18,000 lines of deprecated CrewAI code.
+
+| Feature | What It Does |
+| ------- | ------------ |
+| **`/spec` command** | Brainstorm → plan → review → execute lifecycle with approval gates and state tracking |
+| **CrewAI removal** | Deleted entire `agent_factory/crews/` subsystem (~18K lines) — all workflows are SDK-native since v5.0 |
+| **MCP dispatch rewrite** | Replaced 29-branch if/elif chain with O(1) dict lookup; extracted schemas to `tool_schemas.py` |
+| **`/bug-predict` command** | New short command for bug prediction workflow |
+| **Ruff F821 fixes** | Forward reference errors in watcher and success templates |
+
+<details>
+<summary>v5.2 — Voice Layer & Short Commands</summary>
 
 ### v5.2 — Voice Layer & Short Commands
 
@@ -139,6 +156,11 @@ plugin for zero-config protection.
 
 </details>
 
+</details>
+
+<details>
+<summary>v5.0 — Anthropic Best Practices</summary>
+
 ### v5.0 — Anthropic Best Practices
 
 **v5.0.0** aligned all 15 SDK-native workflows with
@@ -168,6 +190,8 @@ on state manager.
 
 </details>
 
+</details>
+
 ---
 
 ## How to Access Workflows
@@ -189,7 +213,7 @@ subscription**. CLI mode requires `ANTHROPIC_API_KEY`.
 ## Plugin & Skills
 
 The attune-ai plugin integrates with Claude Code via
-11 slash commands and 10 auto-invoking skills. Skills
+13 slash commands and 10 auto-invoking skills. Skills
 trigger automatically based on what you describe — no
 need to memorize commands.
 
@@ -357,6 +381,7 @@ Type `/attune` for Socratic discovery, or use shortcuts:
 
 ```bash
 /attune                # Guided — asks what you need
+/spec                  # Spec-driven development
 /security              # Security audit
 /code-quality          # Code review + bug prediction
 /smart-test            # Generate tests for gaps
