@@ -34,7 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/contact',
     '/book',
     '/blog',
-    '/contribute',
     '/chapter-23',
     '/tools/debug-wizard',
     '/tools/workflows',
