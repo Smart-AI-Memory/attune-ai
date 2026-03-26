@@ -14,7 +14,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -326,3 +326,197 @@ class TestHotspotsStage:
             ModelTier.CHEAP,
         )
         assert len(result["hotspot_result"]["hotspots"]) <= 15
+
+
+# ---------------------------------------------------------------------------
+# _profile with auth strategy
+# ---------------------------------------------------------------------------
+
+
+class TestProfileAuthStrategy:
+    """Tests for auth strategy integration in _profile."""
+
+    @pytest.mark.asyncio
+    async def test_profile_with_auth_strategy_enabled(
+        self, host: _FakeHost, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test profile with auth strategy enabled triggers _run_auth_strategy."""
+        import attune.workflows.perf_audit_stages_mixin as mod
+
+        monkeypatch.setattr(mod, "_SKIP_DIRS", [".git", "node_modules", "__pycache__", "venv"])
+
+        host.enable_auth_strategy = True
+
+        py_file = tmp_path / "app.py"
+        py_file.write_text("x = 1\n", encoding="utf-8")
+
+        # Mock _run_auth_strategy to avoid real import
+        with patch.object(mod, "_run_auth_strategy") as mock_auth:
+            result, _, _ = await host._profile(
+                {"path": str(tmp_path)},
+                ModelTier.CHEAP,
+            )
+
+        mock_auth.assert_called_once()
+        assert result["files_scanned"] == 1
+
+
+# ---------------------------------------------------------------------------
+# _run_auth_strategy helper
+# ---------------------------------------------------------------------------
+
+
+class TestRunAuthStrategy:
+    """Tests for _run_auth_strategy module-level helper."""
+
+    def test_import_error_handled(self) -> None:
+        """Test graceful handling when attune.models is not importable."""
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        mock_wf = MagicMock()
+        target = Path("/nonexistent")
+
+        # Mock attune.models being unavailable
+        with patch.dict("sys.modules", {"attune.models": None}):
+            # Should not raise
+            _run_auth_strategy(mock_wf, target, [".py"], "/nonexistent")
+
+    def test_attribute_error_handled(self) -> None:
+        """Test graceful handling of AttributeError during auth strategy."""
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        mock_wf = MagicMock()
+        target = Path("/nonexistent")
+
+        # Patch the models import to raise AttributeError
+        import types
+
+        mock_models = types.ModuleType("attune.models")
+        mock_models.count_lines_of_code = MagicMock(side_effect=AttributeError("no attr"))
+        mock_models.get_auth_strategy = MagicMock()
+        mock_models.get_module_size_category = MagicMock()
+
+        with patch.dict("sys.modules", {"attune.models": mock_models}):
+            # Should not raise — caught by except (AttributeError, TypeError)
+            _run_auth_strategy(mock_wf, target, [".py"], "/nonexistent")
+
+    def test_auth_strategy_runs_for_directory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test auth strategy with a real directory path."""
+        import attune.workflows.perf_audit_stages_mixin as mod
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        # Remove "test" from skip dirs so tmp_path (which contains "test") works
+        monkeypatch.setattr(mod, "_SKIP_DIRS", [".git", "node_modules", "__pycache__", "venv"])
+
+        py_file = tmp_path / "app.py"
+        py_file.write_text("x = 1\ny = 2\n", encoding="utf-8")
+
+        mock_wf = MagicMock()
+        mock_wf._auth_mode_used = None
+
+        # Mock the attune.models imports
+        mock_mode = MagicMock()
+        mock_mode.value = "api"
+
+        mock_strategy = MagicMock()
+        mock_strategy.get_recommended_mode.return_value = mock_mode
+        mock_strategy.estimate_cost.return_value = 0.0012
+
+        import types
+
+        mock_models = types.ModuleType("attune.models")
+        mock_models.count_lines_of_code = MagicMock(return_value=2)
+        mock_models.get_auth_strategy = MagicMock(return_value=mock_strategy)
+        mock_models.get_module_size_category = MagicMock(return_value="small")
+
+        with patch.dict("sys.modules", {"attune.models": mock_models}):
+            _run_auth_strategy(mock_wf, tmp_path, [".py"], str(tmp_path))
+
+        assert mock_wf._auth_mode_used == "api"
+
+    def test_auth_strategy_subscription_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test auth strategy with subscription mode cost estimate."""
+        import attune.workflows.perf_audit_stages_mixin as mod
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        monkeypatch.setattr(mod, "_SKIP_DIRS", [".git", "node_modules", "__pycache__", "venv"])
+
+        py_file = tmp_path / "module.py"
+        py_file.write_text("class Foo:\n    pass\n", encoding="utf-8")
+
+        mock_wf = MagicMock()
+        mock_wf._auth_mode_used = None
+
+        mock_mode = MagicMock()
+        mock_mode.value = "subscription"
+
+        mock_strategy = MagicMock()
+        mock_strategy.get_recommended_mode.return_value = mock_mode
+        mock_strategy.estimate_cost.return_value = 0.0
+
+        import types
+
+        mock_models = types.ModuleType("attune.models")
+        mock_models.count_lines_of_code = MagicMock(return_value=2)
+        mock_models.get_auth_strategy = MagicMock(return_value=mock_strategy)
+        mock_models.get_module_size_category = MagicMock(return_value="small")
+
+        with patch.dict("sys.modules", {"attune.models": mock_models}):
+            _run_auth_strategy(mock_wf, tmp_path, [".py"], str(tmp_path))
+
+        assert mock_wf._auth_mode_used == "subscription"
+
+    def test_auth_strategy_file_target(self, tmp_path: Path) -> None:
+        """Test auth strategy with a single file target."""
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        py_file = tmp_path / "single.py"
+        py_file.write_text("def foo(): pass\n", encoding="utf-8")
+
+        mock_wf = MagicMock()
+        mock_wf._auth_mode_used = None
+
+        mock_mode = MagicMock()
+        mock_mode.value = "api"
+
+        mock_strategy = MagicMock()
+        mock_strategy.get_recommended_mode.return_value = mock_mode
+        mock_strategy.estimate_cost.return_value = 0.001
+
+        import types
+
+        mock_models = types.ModuleType("attune.models")
+        mock_models.count_lines_of_code = MagicMock(return_value=1)
+        mock_models.get_auth_strategy = MagicMock(return_value=mock_strategy)
+        mock_models.get_module_size_category = MagicMock(return_value="tiny")
+
+        with patch.dict("sys.modules", {"attune.models": mock_models}):
+            _run_auth_strategy(mock_wf, py_file, [".py"], str(py_file))
+
+        assert mock_wf._auth_mode_used == "api"
+
+    def test_auth_strategy_zero_lines(self, tmp_path: Path) -> None:
+        """Test auth strategy when no lines of code found."""
+        from attune.workflows.perf_audit_stages_mixin import _run_auth_strategy
+
+        # Empty directory — no .py files
+        mock_wf = MagicMock()
+        mock_wf._auth_mode_used = None
+
+        import types
+
+        mock_models = types.ModuleType("attune.models")
+        mock_models.count_lines_of_code = MagicMock(return_value=0)
+        mock_models.get_auth_strategy = MagicMock()
+        mock_models.get_module_size_category = MagicMock()
+
+        with patch.dict("sys.modules", {"attune.models": mock_models}):
+            _run_auth_strategy(mock_wf, tmp_path, [".py"], str(tmp_path))
+
+        # _auth_mode_used should not be set since 0 lines
+        # (only set when total_lines > 0)
+        mock_models.get_auth_strategy.assert_not_called()

@@ -136,6 +136,98 @@ class TestHealthStage:
 
         mock_validate.assert_called_once_with(".")
 
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    @patch("attune.workflows.release_prep_stages._validate_file_path")
+    async def test_health_test_count_from_stdout(
+        self,
+        mock_validate: MagicMock,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test that test count is extracted from pytest stdout."""
+        mock_validate.return_value = "."
+
+        def side_effect(cmd, **kwargs):
+            if "pytest" in cmd:
+                return MagicMock(
+                    returncode=0,
+                    stdout="tests/test_one.py::test_a\ntests/test_two.py::test_b\n",
+                    stderr="",
+                )
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = side_effect
+
+        result, _, _ = await host._health({"path": "."}, ModelTier.CHEAP)
+
+        assert result["health"]["checks"]["tests"]["test_count"] == 2
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    @patch("attune.workflows.release_prep_stages._validate_file_path")
+    async def test_health_multiple_checks_fail(
+        self,
+        mock_validate: MagicMock,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test health score when multiple checks fail."""
+        mock_validate.return_value = "."
+
+        # Both lint and type checks fail
+        def side_effect(cmd, **kwargs):
+            if "ruff" in cmd:
+                return MagicMock(returncode=1, stdout="error", stderr="")
+            if "mypy" in cmd:
+                return MagicMock(returncode=1, stdout="error:", stderr="")
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = side_effect
+
+        result, _, _ = await host._health({"path": "."}, ModelTier.CHEAP)
+
+        assert len(result["health"]["failed_checks"]) == 2
+        assert result["health"]["health_score"] == 60
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    @patch("attune.workflows.release_prep_stages._validate_file_path")
+    async def test_health_auth_strategy_enabled(
+        self,
+        mock_validate: MagicMock,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test health with auth strategy enabled (import error path)."""
+        mock_validate.return_value = "."
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        host.enable_auth_strategy = True
+
+        # Auth strategy code will fail to import attune.models in test env
+        # The except block should catch the error gracefully
+        result, _, _ = await host._health({"path": "."}, ModelTier.CHEAP)
+
+        assert result["health"]["passed"] is True
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    @patch("attune.workflows.release_prep_stages._validate_file_path")
+    async def test_health_file_not_found(
+        self,
+        mock_validate: MagicMock,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test health when subprocess command not found."""
+        mock_validate.return_value = "."
+        mock_run.side_effect = FileNotFoundError("not found")
+
+        result, _, _ = await host._health({"path": "."}, ModelTier.CHEAP)
+
+        for check in result["health"]["checks"].values():
+            assert check.get("skipped") is True
+
 
 # ---------------------------------------------------------------------------
 # _security stage
@@ -326,6 +418,115 @@ class TestCrewSecurityStage:
         assert result["crew_security"]["available"] is False
         assert result["crew_security"]["fallback"] is True
 
+    @pytest.mark.asyncio
+    async def test_crew_security_report_none(
+        self,
+        host: _FakeHost,
+    ) -> None:
+        """Test fallback when crew audit returns None."""
+        import types
+
+        mock_adapters = types.ModuleType("attune.workflows.security_adapters")
+        mock_adapters._check_crew_available = lambda: True
+        mock_adapters._get_crew_audit = AsyncMock(return_value=None)
+        mock_adapters.crew_report_to_workflow_format = MagicMock()
+        mock_adapters.merge_security_results = MagicMock()
+
+        with patch.dict(
+            "sys.modules",
+            {"attune.workflows.security_adapters": mock_adapters},
+        ):
+            result, _, _ = await host._crew_security({"path": "."}, ModelTier.CHEAP)
+
+        assert result["crew_security"]["available"] is True
+        assert result["crew_security"]["fallback"] is True
+        assert "failed or timed out" in result["crew_security"]["reason"]
+
+    @pytest.mark.asyncio
+    async def test_crew_security_success_path(
+        self,
+        host: _FakeHost,
+    ) -> None:
+        """Test full crew security success path with findings."""
+        import types
+
+        mock_report = MagicMock()
+        crew_results = {
+            "findings": [{"id": 1, "severity": "high"}],
+            "finding_count": 1,
+            "risk_score": 75,
+            "risk_level": "high",
+            "summary": "Found critical issue",
+            "agents_used": ["scanner", "assessor"],
+            "assessment": {
+                "critical_findings": [],
+                "high_findings": [{"id": 1}],
+            },
+        }
+
+        mock_adapters = types.ModuleType("attune.workflows.security_adapters")
+        mock_adapters._check_crew_available = lambda: True
+        mock_adapters._get_crew_audit = AsyncMock(return_value=mock_report)
+        mock_adapters.crew_report_to_workflow_format = MagicMock(return_value=crew_results)
+        mock_adapters.merge_security_results = MagicMock(return_value={"merged": True})
+
+        with patch.dict(
+            "sys.modules",
+            {"attune.workflows.security_adapters": mock_adapters},
+        ):
+            result, in_t, out_t = await host._crew_security(
+                {"path": ".", "security": {"issues": []}},
+                ModelTier.CHEAP,
+            )
+
+        cs = result["crew_security"]
+        assert cs["available"] is True
+        assert cs["fallback"] is False
+        assert cs["high_count"] == 1
+        assert cs["critical_count"] == 0
+        assert cs["risk_score"] == 75
+        assert host._has_blockers is True
+
+    @pytest.mark.asyncio
+    async def test_crew_security_success_no_blockers(
+        self,
+        host: _FakeHost,
+    ) -> None:
+        """Test crew security success path with no critical/high findings."""
+        import types
+
+        mock_report = MagicMock()
+        crew_results = {
+            "findings": [{"id": 1, "severity": "low"}],
+            "finding_count": 1,
+            "risk_score": 10,
+            "risk_level": "low",
+            "summary": "Minor issue",
+            "agents_used": ["scanner"],
+            "assessment": {
+                "critical_findings": [],
+                "high_findings": [],
+            },
+        }
+
+        mock_adapters = types.ModuleType("attune.workflows.security_adapters")
+        mock_adapters._check_crew_available = lambda: True
+        mock_adapters._get_crew_audit = AsyncMock(return_value=mock_report)
+        mock_adapters.crew_report_to_workflow_format = MagicMock(return_value=crew_results)
+        mock_adapters.merge_security_results = MagicMock(return_value={})
+
+        with patch.dict(
+            "sys.modules",
+            {"attune.workflows.security_adapters": mock_adapters},
+        ):
+            result, _, _ = await host._crew_security({"path": "."}, ModelTier.CHEAP)
+
+        cs = result["crew_security"]
+        assert cs["available"] is True
+        assert cs["high_count"] == 0
+        assert cs["critical_count"] == 0
+        assert host._has_blockers is False
+
 
 # ---------------------------------------------------------------------------
 # _changelog stage
@@ -462,3 +663,53 @@ class TestChangelogStage:
 
         # Should not raise
         datetime.fromisoformat(result["changelog"]["generated_at"])
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    async def test_changelog_skips_blank_lines(
+        self,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test that blank lines in git output are skipped."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="abc123 feat: feature\n\n\ndef456 fix: bugfix\n",
+            stderr="",
+        )
+
+        result, _, _ = await host._changelog({"path": "."}, ModelTier.CHEAP)
+
+        assert result["changelog"]["total_commits"] == 2
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    async def test_changelog_single_word_commit_skipped(
+        self,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test that lines with only SHA (no message) are skipped."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="abc123\ndef456 fix: something\n",
+            stderr="",
+        )
+
+        result, _, _ = await host._changelog({"path": "."}, ModelTier.CHEAP)
+
+        assert result["changelog"]["total_commits"] == 1
+
+    @pytest.mark.asyncio
+    @patch("attune.workflows.release_prep_stages.subprocess.run")
+    async def test_changelog_file_not_found(
+        self,
+        mock_run: MagicMock,
+        host: _FakeHost,
+    ) -> None:
+        """Test graceful handling when git is not found."""
+        mock_run.side_effect = FileNotFoundError("git not found")
+
+        result, _, _ = await host._changelog({"path": "."}, ModelTier.CHEAP)
+
+        assert result["changelog"]["total_commits"] == 0

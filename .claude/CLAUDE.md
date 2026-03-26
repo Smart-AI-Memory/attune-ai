@@ -1035,4 +1035,5 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   values. `generateStaticParams` constrains valid values but CodeQL
   can't see that.
 
+- **2026-03-26** Test lesson
 <!-- attune-lessons-end -->
