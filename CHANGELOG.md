@@ -5,6 +5,69 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.2] - 2026-03-25
+
+### Added (5.3.2)
+
+- **ClusterFuzzLite integration** — Continuous fuzzing for
+  `_validate_file_path()` and config parsing via
+  `.clusterfuzzlite/` targets.
+- **Auto-approve workflow** — CI-triggered PR approval for
+  solo-dev OpenSSF Scorecard compliance
+  (`.github/workflows/auto-approve.yml`).
+- **New test suites** — 6 new test modules: cache stats,
+  bug-predict report, code-review classify, dependency-check
+  report, release-prep approve, security-audit report, and
+  spec runner execute (~1,900 lines).
+- **Blog content** — Spec-driven development tutorials and
+  showcase articles for Anthropic, LinkedIn, and blog.
+
+### Fixed (5.3.2)
+
+- **SSRF hardening** — Webhook security test updated for
+  stricter URL validation.
+- **CI workflow hardening** — Pinned all GitHub Actions to
+  SHA hashes, added `permissions:` blocks, enabled
+  `enforce_admins` on branch protection.
+- **CodeQL upgraded** — Extended analysis to `javascript`
+  and `actions` languages with `security-and-quality` suite.
+- **Dependency lower bounds bumped** — Addresses OpenSSF
+  Scorecard vulnerability alerts for permissive version
+  ranges.
+
+### Removed (5.3.2)
+
+- **Stripe integration** — Removed checkout, portal, and
+  webhook routes plus `CheckoutButton` component from
+  website.
+- **Contribute page** — Removed `website/app/contribute/`.
+- **`.env.example` files** — Removed from root and website
+  to avoid leaking config structure.
+
+## [5.3.1] - 2026-03-25
+
+### Changed (5.3.1)
+
+- **Dependency bumps** — starlette `<2.0.0`,
+  codeql-action `4.34.1`, codecov-action `5.5.3`,
+  actions/cache `5.0.4` via Dependabot.
+
+## [5.3.0] - 2026-03-25
+
+### Added (5.3.0)
+
+- **Spec-driven development** — New `src/attune/spec/`
+  module with brainstorm, plan, review, and execute stages
+  plus approval loop (`/spec` command).
+
+### Refactored (5.3.0)
+
+- **CrewAI removal** — Deleted ~5,900 lines of dead CrewAI
+  orchestration code.
+- **MCP schema extraction** — Tool schemas moved to
+  `src/attune/mcp/tool_schemas.py` with O(1) dispatch
+  lookup replacing if/elif chain.
+
 ## [5.2.0] - 2026-03-21
 
 ### Added (5.2.0)
