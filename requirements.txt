@@ -7,7 +7,7 @@
 # See pyproject.toml for all optional dependencies
 
 # Core required dependencies (minimal to run framework)
-pydantic>=2.0.0,<3.0.0
+pydantic>=2.4.0,<3.0.0
 typing-extensions>=4.0.0,<5.0.0
 python-dotenv>=1.0.0,<2.0.0
 structlog>=23.0.0,<26.0.0

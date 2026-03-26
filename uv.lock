@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "5.2.2"
+version = "5.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -538,9 +538,9 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.1,<1.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1,<1.0" },
     { name = "sentence-transformers", marker = "extra == 'developer'", specifier = ">=2.0.0,<6.0.0" },
-    { name = "starlette", marker = "extra == 'all'", specifier = ">=0.40.0,<1.0.0" },
-    { name = "starlette", marker = "extra == 'backend'", specifier = ">=0.40.0,<1.0.0" },
-    { name = "starlette", marker = "extra == 'enterprise'", specifier = ">=0.40.0,<1.0.0" },
+    { name = "starlette", marker = "extra == 'all'", specifier = ">=0.40.0,<2.0.0" },
+    { name = "starlette", marker = "extra == 'backend'", specifier = ">=0.40.0,<2.0.0" },
+    { name = "starlette", marker = "extra == 'enterprise'", specifier = ">=0.40.0,<2.0.0" },
     { name = "structlog", specifier = ">=24.0.0,<26.0.0" },
     { name = "torch", marker = "extra == 'developer'", specifier = ">=2.0.0,<3.0.0" },
     { name = "typer", specifier = ">=0.9.0,<1.0.0" },

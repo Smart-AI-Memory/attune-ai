@@ -12,14 +12,22 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { wizard_name, input_data } = body;
 
-    if (!wizard_name) {
+    if (!wizard_name || typeof wizard_name !== 'string') {
       return Response.json(
         { error: 'wizard_name is required' },
         { status: 400 }
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/wizards/${wizard_name}/invoke`, {
+    // Validate wizard_name to prevent SSRF via path traversal
+    if (!/^[a-z0-9_-]+$/i.test(wizard_name)) {
+      return Response.json(
+        { error: 'Invalid wizard_name format' },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/wizards/${encodeURIComponent(wizard_name)}/invoke`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

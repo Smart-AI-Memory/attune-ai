@@ -390,8 +390,8 @@ redis = "attune_redis.memory:AMSMemoryBackend"
 | [SECURITY_REVIEW.md](SECURITY_REVIEW.md) | Security analysis |
 | [REDIS_SETUP.md](REDIS_SETUP.md) | Redis configuration |
 | [SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) | Plugin skills reference |
-| [CHANGELOG.md](../CHANGELOG.md) | Version history |
-| [SECURITY.md](../SECURITY.md) | Vulnerability reporting |
+| [CHANGELOG.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md) | Version history |
+| [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) | Vulnerability reporting |
 
 ---
 

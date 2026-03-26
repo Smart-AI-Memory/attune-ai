@@ -1,0 +1,42 @@
+name: Auto Approve
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-approve-dependabot:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Approve Dependabot PR
+        run: gh pr review "$PR_URL" --approve --body "Auto-approved Dependabot dependency update"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-approve-owner:
+    if: github.actor == 'patrickroebuck'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait for CI checks
+        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          running-workflow-name: auto-approve-owner
+          check-regexp: ^(test |lint)
+          wait-interval: 30
+          allowed-conclusions: success
+
+      - name: Approve PR after CI passes
+        run: gh pr review "$PR_URL" --approve --body "Auto-approved after CI checks passed"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

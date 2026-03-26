@@ -13,7 +13,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.hooks.executor import HookExecutor
+pytest.importorskip("aiohttp", reason="aiohttp required for webhook tests")
+
+from attune.hooks.executor import HookExecutor  # noqa: E402
 
 
 @pytest.fixture()
