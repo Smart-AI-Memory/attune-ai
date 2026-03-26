@@ -140,75 +140,70 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
     return 0
 
 
+def _get_file_test_records(args: Any) -> list | None:
+    """Retrieve and filter file test records.
+
+    Returns:
+        List of records, or None on error.
+    """
+    from attune.models.telemetry import get_telemetry_store
+
+    store = get_telemetry_store()
+    file_path = getattr(args, "file", None)
+    failed_only = getattr(args, "failed", False)
+    stale_only = getattr(args, "stale", False)
+    limit = getattr(args, "limit", 50)
+
+    if file_path:
+        record = store.get_latest_file_test(file_path)
+        if record is None:
+            print(f"No test record found for: {file_path}")
+            return []
+        return [record]
+
+    all_records = store.get_file_tests(limit=100000)
+    if not all_records:
+        print("No per-file test records found.")
+        print("Run: empathy test-file <source_file> to track tests for a file.")
+        return []
+
+    # Get latest record per file
+    latest_by_file: dict[str, Any] = {}
+    for record in all_records:
+        existing = latest_by_file.get(record.file_path)
+        if existing is None or record.timestamp > existing.timestamp:
+            latest_by_file[record.file_path] = record
+
+    records = list(latest_by_file.values())
+
+    if failed_only:
+        records = [r for r in records if r.last_test_result in ("failed", "error")]
+    if stale_only:
+        records = [r for r in records if r.is_stale]
+
+    records.sort(key=lambda r: r.file_path)
+    return records[:limit]
+
+
 def cmd_file_test_status(args: Any) -> int:
     """Show per-file test status.
 
-    Displays the test status for individual files, including:
-    - Last test result (passed/failed/error/no_tests)
-    - When tests were last run
-    - Whether tests are stale (source modified since last test)
-
     Args:
         args: Parsed command-line arguments
-            - file: Optional specific file to check
-            - failed: Show only failed tests
-            - stale: Show only stale tests
-            - limit: Maximum files to show
 
     Returns:
         Exit code (0 for success)
 
     """
-    from attune.models.telemetry import get_telemetry_store
-
     try:
-        store = get_telemetry_store()
-
-        file_path = getattr(args, "file", None)
-        failed_only = getattr(args, "failed", False)
-        stale_only = getattr(args, "stale", False)
-        limit = getattr(args, "limit", 50)
-
-        if file_path:
-            # Show status for a specific file
-            record = store.get_latest_file_test(file_path)
-            if record is None:
-                print(f"No test record found for: {file_path}")
-                return 0
-            records = [record]
-        else:
-            # Get all file test records
-            all_records = store.get_file_tests(limit=100000)
-
-            if not all_records:
-                print("No per-file test records found.")
-                print("Run: empathy test-file <source_file> to track tests for a file.")
-                return 0
-
-            # Get latest record per file
-            latest_by_file: dict[str, Any] = {}
-            for record in all_records:
-                existing = latest_by_file.get(record.file_path)
-                if existing is None or record.timestamp > existing.timestamp:
-                    latest_by_file[record.file_path] = record
-
-            records = list(latest_by_file.values())
-
-            # Apply filters
-            if failed_only:
-                records = [r for r in records if r.last_test_result in ("failed", "error")]
-            if stale_only:
-                records = [r for r in records if r.is_stale]
-
-            # Sort by file path and limit
-            records.sort(key=lambda r: r.file_path)
-            records = records[:limit]
-
+        records = _get_file_test_records(args)
     except Exception as e:  # noqa: BLE001
         print(f"Error retrieving file test status: {e}")
         return 1
 
     if not records:
+        failed_only = getattr(args, "failed", False)
+        stale_only = getattr(args, "stale", False)
         filter_desc = []
         if failed_only:
             filter_desc.append("failed")
@@ -219,107 +214,106 @@ def cmd_file_test_status(args: Any) -> int:
         return 0
 
     if RICH_AVAILABLE and Console is not None:
-        console = Console()
-
-        # Summary stats
-        total = len(records)
-        passed = sum(1 for r in records if r.last_test_result == "passed")
-        failed = sum(1 for r in records if r.last_test_result in ("failed", "error"))
-        no_tests = sum(1 for r in records if r.last_test_result == "no_tests")
-        stale = sum(1 for r in records if r.is_stale)
-
-        summary = Text()
-        summary.append(f"Files: {total}  ", style="bold")
-        summary.append(f"Passed: {passed}  ", style="green")
-        summary.append(f"Failed: {failed}  ", style="red")
-        summary.append(f"No Tests: {no_tests}  ", style="yellow")
-        summary.append(f"Stale: {stale}", style="magenta")
-        console.print(Panel(summary, title="Per-File Test Status Summary", border_style="cyan"))
-
-        # File status table
-        table = Table(title="File Test Status")
-        table.add_column("File", style="cyan", max_width=50)
-        table.add_column("Result", style="bold")
-        table.add_column("Tests", justify="right")
-        table.add_column("Passed", justify="right", style="green")
-        table.add_column("Failed", justify="right", style="red")
-        table.add_column("Duration", justify="right")
-        table.add_column("Last Run", style="dim")
-        table.add_column("Stale", style="magenta")
-
-        for record in records:
-            # Format result with color
-            result = record.last_test_result
-            if result == "passed":
-                result_style = "green"
-            elif result in ("failed", "error"):
-                result_style = "red"
-            elif result == "no_tests":
-                result_style = "yellow"
-            else:
-                result_style = "dim"
-
-            # Format timestamp
-            try:
-                dt = datetime.fromisoformat(record.timestamp.rstrip("Z"))
-                ts_display = dt.strftime("%Y-%m-%d %H:%M")
-            except (ValueError, AttributeError):
-                ts_display = record.timestamp[:16] if record.timestamp else "-"
-
-            # Stale indicator
-            stale_str = "YES" if record.is_stale else ""
-
-            table.add_row(
-                record.file_path,
-                Text(result, style=result_style),
-                str(record.test_count),
-                str(record.passed),
-                str(record.failed + record.errors),
-                f"{record.duration_seconds:.1f}s" if record.duration_seconds else "-",
-                ts_display,
-                stale_str,
-            )
-
-        console.print(table)
-
-        # Show failed test details if any
-        failed_records = [r for r in records if r.failed_tests]
-        if failed_records:
-            fail_table = Table(title="Failed Test Details")
-            fail_table.add_column("File", style="cyan")
-            fail_table.add_column("Test Name", style="red")
-            fail_table.add_column("Error")
-
-            for record in failed_records[:10]:
-                for test in record.failed_tests[:3]:
-                    fail_table.add_row(
-                        record.file_path,
-                        test.get("name", "unknown"),
-                        test.get("error", "")[:50],
-                    )
-
-            console.print(fail_table)
-
+        _render_file_test_status_rich(records)
     else:
-        # Plain text fallback
-        print("\nPer-File Test Status")
-        print("=" * 80)
-
-        for record in records:
-            status = record.last_test_result.upper()
-            stale_marker = " [STALE]" if record.is_stale else ""
-            print(f"\n{record.file_path}")
-            print(f"  Status: {status}{stale_marker}")
-            print(
-                f"  Tests: {record.test_count} (passed: {record.passed}, failed: {record.failed})",
-            )
-            if record.duration_seconds:
-                print(f"  Duration: {record.duration_seconds:.1f}s")
-            print(f"  Last Run: {record.timestamp[:19]}")
-
-            if record.failed_tests:
-                print("  Failed Tests:")
-                for test in record.failed_tests[:3]:
-                    print(f"    - {test.get('name', 'unknown')}: {test.get('error', '')[:40]}")
+        _render_file_test_status_plain(records)
 
     return 0
+
+
+_RESULT_STYLES = {
+    "passed": "green",
+    "failed": "red",
+    "error": "red",
+    "no_tests": "yellow",
+}
+
+
+def _render_file_test_status_rich(records: list) -> None:
+    """Render file test status using Rich tables."""
+    console = Console()
+
+    total = len(records)
+    passed = sum(1 for r in records if r.last_test_result == "passed")
+    failed = sum(1 for r in records if r.last_test_result in ("failed", "error"))
+    no_tests = sum(1 for r in records if r.last_test_result == "no_tests")
+    stale = sum(1 for r in records if r.is_stale)
+
+    summary = Text()
+    summary.append(f"Files: {total}  ", style="bold")
+    summary.append(f"Passed: {passed}  ", style="green")
+    summary.append(f"Failed: {failed}  ", style="red")
+    summary.append(f"No Tests: {no_tests}  ", style="yellow")
+    summary.append(f"Stale: {stale}", style="magenta")
+    console.print(Panel(summary, title="Per-File Test Status Summary", border_style="cyan"))
+
+    table = Table(title="File Test Status")
+    table.add_column("File", style="cyan", max_width=50)
+    table.add_column("Result", style="bold")
+    table.add_column("Tests", justify="right")
+    table.add_column("Passed", justify="right", style="green")
+    table.add_column("Failed", justify="right", style="red")
+    table.add_column("Duration", justify="right")
+    table.add_column("Last Run", style="dim")
+    table.add_column("Stale", style="magenta")
+
+    for record in records:
+        result_style = _RESULT_STYLES.get(record.last_test_result, "dim")
+        try:
+            dt = datetime.fromisoformat(record.timestamp.rstrip("Z"))
+            ts_display = dt.strftime("%Y-%m-%d %H:%M")
+        except (ValueError, AttributeError):
+            ts_display = record.timestamp[:16] if record.timestamp else "-"
+
+        table.add_row(
+            record.file_path,
+            Text(record.last_test_result, style=result_style),
+            str(record.test_count),
+            str(record.passed),
+            str(record.failed + record.errors),
+            f"{record.duration_seconds:.1f}s" if record.duration_seconds else "-",
+            ts_display,
+            "YES" if record.is_stale else "",
+        )
+
+    console.print(table)
+
+    failed_records = [r for r in records if r.failed_tests]
+    if failed_records:
+        fail_table = Table(title="Failed Test Details")
+        fail_table.add_column("File", style="cyan")
+        fail_table.add_column("Test Name", style="red")
+        fail_table.add_column("Error")
+
+        for record in failed_records[:10]:
+            for test in record.failed_tests[:3]:
+                fail_table.add_row(
+                    record.file_path,
+                    test.get("name", "unknown"),
+                    test.get("error", "")[:50],
+                )
+
+        console.print(fail_table)
+
+
+def _render_file_test_status_plain(records: list) -> None:
+    """Render file test status as plain text."""
+    print("\nPer-File Test Status")
+    print("=" * 80)
+
+    for record in records:
+        status = record.last_test_result.upper()
+        stale_marker = " [STALE]" if record.is_stale else ""
+        print(f"\n{record.file_path}")
+        print(f"  Status: {status}{stale_marker}")
+        print(
+            f"  Tests: {record.test_count} (passed: {record.passed}, failed: {record.failed})",
+        )
+        if record.duration_seconds:
+            print(f"  Duration: {record.duration_seconds:.1f}s")
+        print(f"  Last Run: {record.timestamp[:19]}")
+
+        if record.failed_tests:
+            print("  Failed Tests:")
+            for test in record.failed_tests[:3]:
+                print(f"    - {test.get('name', 'unknown')}: {test.get('error', '')[:40]}")

@@ -19,6 +19,77 @@ from typing import Any
 from .models import FileCategory
 
 
+class _MetricsVisitor(ast.NodeVisitor):
+    """Single-pass AST visitor that collects code metrics."""
+
+    def __init__(self) -> None:
+        """Initialize metrics result dict and function depth tracker."""
+        self.result: dict[str, Any] = {
+            "has_docstrings": False,
+            "has_type_hints": False,
+            "imports": [],
+            "test_count": 0,
+            "complexity": 0.0,
+        }
+        self.function_depth = 0
+
+    def visit_Module(self, node: ast.Module) -> None:
+        """Check module-level docstring presence."""
+        if ast.get_docstring(node):
+            self.result["has_docstrings"] = True
+        self.generic_visit(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Check class-level docstring presence."""
+        if ast.get_docstring(node):
+            self.result["has_docstrings"] = True
+        self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Delegate to _handle_function for sync functions."""
+        self._handle_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        """Delegate to _handle_function for async functions."""
+        self._handle_function(node)
+
+    def _handle_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        """Analyze a function/method node for metrics."""
+        if ast.get_docstring(node):
+            self.result["has_docstrings"] = True
+        if node.returns or any(arg.annotation for arg in node.args.args):
+            self.result["has_type_hints"] = True
+        if node.name.startswith("test_"):
+            self.result["test_count"] += 1
+        self.function_depth += 1
+        self.generic_visit(node)
+        self.function_depth -= 1
+
+    def _visit_complexity_node(self, node: ast.AST) -> None:
+        """Increment complexity for control flow nodes inside functions."""
+        if self.function_depth > 0:
+            self.result["complexity"] += 1.0
+        self.generic_visit(node)
+
+    visit_If = _visit_complexity_node
+    visit_For = _visit_complexity_node
+    visit_While = _visit_complexity_node
+    visit_Try = _visit_complexity_node
+    visit_ExceptHandler = _visit_complexity_node
+
+    def visit_Import(self, node: ast.Import) -> None:
+        """Record import names."""
+        for alias in node.names:
+            self.result["imports"].append(alias.name)
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        """Record from-import module names."""
+        if node.module:
+            self.result["imports"].append(node.module)
+        self.generic_visit(node)
+
+
 class CodeMetricsMixin:
     """Mixin providing code metrics extraction and cached AST analysis.
 
@@ -146,106 +217,9 @@ class CodeMetricsMixin:
     def _analyze_python_ast(self, tree: ast.AST) -> dict[str, Any]:
         """Analyze Python AST for metrics.
 
-        Optimized to use single-pass traversal with NodeVisitor instead of
-        nested ast.walk() calls. Previous implementation was O(n^2) due to
-        walking each function's subtree separately. This version is O(n).
+        Uses single-pass traversal with _MetricsVisitor (module-level)
+        instead of nested ast.walk() calls. O(n) complexity.
         """
-
-        # Use inner class to maintain state during traversal
-        class MetricsVisitor(ast.NodeVisitor):
-            """Single-pass AST visitor that collects code metrics."""
-
-            def __init__(self) -> None:
-                """Initialize metrics result dict and function depth tracker."""
-                self.result: dict[str, Any] = {
-                    "has_docstrings": False,
-                    "has_type_hints": False,
-                    "imports": [],
-                    "test_count": 0,
-                    "complexity": 0.0,
-                }
-                self.function_depth = 0  # Track if we're inside a function
-
-            def visit_Module(self, node: ast.Module) -> None:
-                """Check module-level docstring presence."""
-                if ast.get_docstring(node):
-                    self.result["has_docstrings"] = True
-                self.generic_visit(node)
-
-            def visit_ClassDef(self, node: ast.ClassDef) -> None:
-                """Check class-level docstring presence."""
-                if ast.get_docstring(node):
-                    self.result["has_docstrings"] = True
-                self.generic_visit(node)
-
-            def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-                """Delegate to _handle_function for sync functions."""
-                self._handle_function(node)
-
-            def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-                """Delegate to _handle_function for async functions."""
-                self._handle_function(node)
-
-            def _handle_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-                # Check for docstrings
-                if ast.get_docstring(node):
-                    self.result["has_docstrings"] = True
-
-                # Check for type hints
-                if node.returns or any(arg.annotation for arg in node.args.args):
-                    self.result["has_type_hints"] = True
-
-                # Count test functions
-                if node.name.startswith("test_"):
-                    self.result["test_count"] += 1
-
-                # Enter function scope for complexity counting
-                self.function_depth += 1
-                self.generic_visit(node)
-                self.function_depth -= 1
-
-            def visit_If(self, node: ast.If) -> None:
-                """Increment complexity for if-statements inside functions."""
-                if self.function_depth > 0:
-                    self.result["complexity"] += 1.0
-                self.generic_visit(node)
-
-            def visit_For(self, node: ast.For) -> None:
-                """Increment complexity for for-loops inside functions."""
-                if self.function_depth > 0:
-                    self.result["complexity"] += 1.0
-                self.generic_visit(node)
-
-            def visit_While(self, node: ast.While) -> None:
-                """Increment complexity for while-loops inside functions."""
-                if self.function_depth > 0:
-                    self.result["complexity"] += 1.0
-                self.generic_visit(node)
-
-            def visit_Try(self, node: ast.Try) -> None:
-                """Increment complexity for try blocks inside functions."""
-                if self.function_depth > 0:
-                    self.result["complexity"] += 1.0
-                self.generic_visit(node)
-
-            def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
-                """Increment complexity for except handlers inside functions."""
-                if self.function_depth > 0:
-                    self.result["complexity"] += 1.0
-                self.generic_visit(node)
-
-            def visit_Import(self, node: ast.Import) -> None:
-                """Record import names."""
-                for alias in node.names:
-                    self.result["imports"].append(alias.name)
-                self.generic_visit(node)
-
-            def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-                """Record from-import module names."""
-                if node.module:
-                    self.result["imports"].append(node.module)
-                self.generic_visit(node)
-
-        visitor = MetricsVisitor()
+        visitor = _MetricsVisitor()
         visitor.visit(tree)
         return visitor.result

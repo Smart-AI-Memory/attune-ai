@@ -585,6 +585,61 @@ def main():
     asyncio.run(run())
 
 
+def _format_pipeline_findings(result: CodeReviewPipelineResult) -> list[str]:
+    """Format the findings section of the pipeline report."""
+    lines = []
+    total_findings = len(result.combined_findings)
+
+    files_reviewed = result.metadata.get("files_reviewed", 0)
+    if files_reviewed > 0:
+        lines.append(f"Files Reviewed: {files_reviewed}")
+
+    if not (total_findings > 0 or result.critical_count > 0 or result.high_count > 0):
+        lines.append("✅ No issues found!")
+        lines.append("")
+        return lines
+
+    lines.append(f"Issues Found: {total_findings}")
+    lines.append(f"  🔴 Critical: {result.critical_count}")
+    lines.append(f"  🟠 High: {result.high_count}")
+    lines.append(f"  🟡 Medium: {result.medium_count}")
+    lines.append("")
+
+    critical_high = [
+        f for f in result.combined_findings if f.get("severity") in ("critical", "high")
+    ][:5]
+    if critical_high:
+        lines.append("Top Issues:")
+        for i, finding in enumerate(critical_high, 1):
+            severity = finding.get("severity", "unknown")
+            title = finding.get(
+                "title",
+                finding.get("message", finding.get("description", "Issue found")),
+            )
+            emoji_f = "🔴" if severity == "critical" else "🟠"
+            if len(str(title)) > 50:
+                title = str(title)[:47] + "..."
+            lines.append(f"  {emoji_f} {i}. {title}")
+        lines.append("")
+    return lines
+
+
+def _format_pipeline_summary(text: str) -> list[str]:
+    """Word-wrap summary text to 58 chars."""
+    lines = []
+    words = text.split()
+    current_line = ""
+    for word in words:
+        if len(current_line) + len(word) + 1 <= 58:
+            current_line += (" " if current_line else "") + word
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+
 def format_code_review_pipeline_report(result: CodeReviewPipelineResult) -> str:
     """Format code review pipeline result as a human-readable report.
 
@@ -597,7 +652,6 @@ def format_code_review_pipeline_report(result: CodeReviewPipelineResult) -> str:
     """
     lines = []
 
-    # Header with verdict
     verdict_emoji = {
         "approve": "✅",
         "approve_with_suggestions": "🟡",
@@ -610,8 +664,6 @@ def format_code_review_pipeline_report(result: CodeReviewPipelineResult) -> str:
     lines.append("CODE REVIEW REPORT")
     lines.append("=" * 60)
     lines.append("")
-
-    # Verdict banner
     lines.append("-" * 60)
     lines.append(f"{emoji} VERDICT: {result.verdict.upper().replace('_', ' ')}")
     lines.append("-" * 60)
@@ -632,64 +684,19 @@ def format_code_review_pipeline_report(result: CodeReviewPipelineResult) -> str:
     lines.append(f"[{bar}] {score:.0f}/100 ({quality_label})")
     lines.append("")
 
-    # Crew summary (if available)
+    # Crew summary
     if result.crew_report and result.crew_report.get("summary"):
         lines.append("-" * 60)
         lines.append("SUMMARY")
         lines.append("-" * 60)
-        summary = result.crew_report["summary"]
-        # Word wrap the summary
-        words = summary.split()
-        current_line = ""
-        for word in words:
-            if len(current_line) + len(word) + 1 <= 58:
-                current_line += (" " if current_line else "") + word
-            else:
-                lines.append(current_line)
-                current_line = word
-        if current_line:
-            lines.append(current_line)
+        lines.extend(_format_pipeline_summary(result.crew_report["summary"]))
         lines.append("")
 
-    # Findings summary
-    total_findings = len(result.combined_findings)
+    # Findings
     lines.append("-" * 60)
     lines.append("FINDINGS")
     lines.append("-" * 60)
-
-    # Show files reviewed from metadata
-    files_reviewed = result.metadata.get("files_reviewed", 0)
-    if files_reviewed > 0:
-        lines.append(f"Files Reviewed: {files_reviewed}")
-
-    if total_findings > 0 or result.critical_count > 0 or result.high_count > 0:
-        lines.append(f"Issues Found: {total_findings}")
-        lines.append(f"  🔴 Critical: {result.critical_count}")
-        lines.append(f"  🟠 High: {result.high_count}")
-        lines.append(f"  🟡 Medium: {result.medium_count}")
-        lines.append("")
-
-        # Show top critical/high findings
-        if result.combined_findings:
-            critical_high = [
-                f for f in result.combined_findings if f.get("severity") in ("critical", "high")
-            ][:5]
-            if critical_high:
-                lines.append("Top Issues:")
-                for i, finding in enumerate(critical_high, 1):
-                    severity = finding.get("severity", "unknown")
-                    title = finding.get(
-                        "title",
-                        finding.get("message", finding.get("description", "Issue found")),
-                    )
-                    emoji_f = "🔴" if severity == "critical" else "🟠"
-                    if len(str(title)) > 50:
-                        title = str(title)[:47] + "..."
-                    lines.append(f"  {emoji_f} {i}. {title}")
-                lines.append("")
-    else:
-        lines.append("✅ No issues found!")
-        lines.append("")
+    lines.extend(_format_pipeline_findings(result))
 
     # Blockers
     if result.blockers:
