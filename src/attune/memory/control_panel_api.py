@@ -142,14 +142,54 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key")
         self.end_headers()
 
+    def _get_patterns_list(self, query):
+        """Handle GET /api/patterns."""
+        classification = query.get("classification", [None])[0]
+        if not _validate_classification(classification):
+            self._send_error("Invalid classification. Use PUBLIC, INTERNAL, or SENSITIVE.", 400)
+            return
+        try:
+            limit = int(query.get("limit", [100])[0])
+            limit = max(1, min(limit, 1000))
+        except (ValueError, TypeError):
+            limit = 100
+        patterns = self.panel.list_patterns(classification=classification, limit=limit)
+        self._send_json(patterns)
+
+    def _get_patterns_export(self, query):
+        """Handle GET /api/patterns/export."""
+        classification = query.get("classification", [None])[0]
+        if not _validate_classification(classification):
+            self._send_error("Invalid classification. Use PUBLIC, INTERNAL, or SENSITIVE.", 400)
+            return
+        patterns = self.panel.list_patterns(classification=classification)
+        export_data = {
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "classification_filter": classification,
+            "patterns": patterns,
+        }
+        self._send_json({"pattern_count": len(patterns), "export_data": export_data})
+
+    def _get_pattern_by_id(self, path):
+        """Handle GET /api/patterns/<id>."""
+        pattern_id = path.split("/")[-1]
+        if not _validate_pattern_id(pattern_id):
+            self._send_error("Invalid pattern ID format", 400)
+            return
+        patterns = self.panel.list_patterns()
+        patterns_by_id = {p.get("pattern_id"): p for p in patterns}
+        pattern = patterns_by_id.get(pattern_id)
+        if pattern:
+            self._send_json(pattern)
+        else:
+            self._send_error("Pattern not found", 404)
+
     def do_GET(self):
         """Handle GET requests."""
-        # Rate limiting check
         if not self._check_rate_limit():
             self._send_error("Rate limit exceeded. Try again later.", 429)
             return
 
-        # Authentication check (skip for ping endpoint)
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -161,78 +201,42 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
         if path == "/api/ping":
             self._send_json({"status": "ok", "service": "empathy-memory"})
-
         elif path == "/api/status":
             self._send_json(self.panel.status())
-
         elif path == "/api/stats":
-            stats = self.panel.get_statistics()
-            self._send_json(asdict(stats))
-
+            self._send_json(asdict(self.panel.get_statistics()))
         elif path == "/api/health":
             self._send_json(self.panel.health_check())
-
         elif path == "/api/patterns":
-            classification = query.get("classification", [None])[0]
-
-            # Validate classification
-            if not _validate_classification(classification):
-                self._send_error("Invalid classification. Use PUBLIC, INTERNAL, or SENSITIVE.", 400)
-                return
-
-            # Validate and sanitize limit
-            try:
-                limit = int(query.get("limit", [100])[0])
-                limit = max(1, min(limit, 1000))  # Clamp between 1 and 1000
-            except (ValueError, TypeError):
-                limit = 100
-
-            patterns = self.panel.list_patterns(classification=classification, limit=limit)
-            self._send_json(patterns)
-
+            self._get_patterns_list(query)
         elif path == "/api/patterns/export":
-            classification = query.get("classification", [None])[0]
-
-            # Validate classification
-            if not _validate_classification(classification):
-                self._send_error("Invalid classification. Use PUBLIC, INTERNAL, or SENSITIVE.", 400)
-                return
-
-            patterns = self.panel.list_patterns(classification=classification)
-            export_data = {
-                "exported_at": datetime.now(timezone.utc).isoformat(),
-                "classification_filter": classification,
-                "patterns": patterns,
-            }
-            self._send_json({"pattern_count": len(patterns), "export_data": export_data})
-
+            self._get_patterns_export(query)
         elif path.startswith("/api/patterns/"):
-            pattern_id = path.split("/")[-1]
-
-            # Validate pattern ID
-            if not _validate_pattern_id(pattern_id):
-                self._send_error("Invalid pattern ID format", 400)
-                return
-
-            patterns = self.panel.list_patterns()
-            patterns_by_id = {p.get("pattern_id"): p for p in patterns}
-            pattern = patterns_by_id.get(pattern_id)
-            if pattern:
-                self._send_json(pattern)
-            else:
-                self._send_error("Pattern not found", 404)
-
+            self._get_pattern_by_id(path)
         else:
             self._send_error("Not found", 404)
 
+    def _read_json_body(self) -> dict | None:
+        """Read and parse JSON body, returning None on error (error already sent)."""
+        content_length = int(self.headers.get("Content-Length", 0))
+        max_body_size = 1024 * 1024  # 1MB limit
+        if content_length > max_body_size:
+            self._send_error("Request body too large", 413)
+            return None
+        if content_length == 0:
+            return {}
+        try:
+            return json.loads(self.rfile.read(content_length).decode())
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._send_error("Invalid JSON body", 400)
+            return None
+
     def do_POST(self):
         """Handle POST requests."""
-        # Rate limiting check
         if not self._check_rate_limit():
             self._send_error("Rate limit exceeded. Try again later.", 429)
             return
 
-        # Authentication check
         if not self._check_auth():
             self._send_error("Unauthorized. Provide valid API key.", 401)
             return
@@ -240,20 +244,9 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        # Read body if present (with size limit to prevent DoS)
-        content_length = int(self.headers.get("Content-Length", 0))
-        max_body_size = 1024 * 1024  # 1MB limit
-        if content_length > max_body_size:
-            self._send_error("Request body too large", 413)
+        body = self._read_json_body()
+        if body is None:
             return
-
-        body = {}
-        if content_length > 0:
-            try:
-                body = json.loads(self.rfile.read(content_length).decode())
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                self._send_error("Invalid JSON body", 400)
-                return
 
         if path == "/api/redis/start":
             status = self.panel.start_redis(verbose=False)
@@ -263,7 +256,6 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
                     "message": f"Redis {'OK' if status.available else 'failed'} via {status.method.value}",
                 },
             )
-
         elif path == "/api/redis/stop":
             stopped = self.panel.stop_redis()
             self._send_json(
@@ -272,18 +264,13 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
                     "message": "Redis stopped" if stopped else "Could not stop Redis",
                 },
             )
-
         elif path == "/api/memory/clear":
             agent_id = body.get("agent_id", "admin")
-
-            # Validate agent ID
             if not _validate_agent_id(agent_id):
                 self._send_error("Invalid agent ID format", 400)
                 return
-
             deleted = self.panel.clear_short_term(agent_id)
             self._send_json({"keys_deleted": deleted})
-
         else:
             self._send_error("Not found", 404)
 

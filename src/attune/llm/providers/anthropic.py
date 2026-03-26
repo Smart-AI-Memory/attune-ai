@@ -156,20 +156,16 @@ class AnthropicProvider(BaseLLMProvider):
             logger.error(f"Anthropic API error (status {e.status_code}): {e}")
             raise
 
-        # Extract thinking content if present
+        # Extract thinking content and text from response blocks
         thinking_content = None
         response_content = ""
-
         for block in response.content:
-            if hasattr(block, "type"):
-                if block.type == "thinking":
-                    thinking_content = block.thinking
-                elif block.type == "text":
-                    response_content = block.text
-            else:
+            block_type = getattr(block, "type", None)
+            if block_type == "thinking":
+                thinking_content = block.thinking
+            elif block_type == "text" or block_type is None:
                 response_content = block.text
 
-        # Convert to standardized format
         metadata = {
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
@@ -177,41 +173,8 @@ class AnthropicProvider(BaseLLMProvider):
             "model": self.model,
         }
 
-        # Add cache performance metrics if available
-        if hasattr(response.usage, "cache_creation_input_tokens"):
-            cache_creation = getattr(response.usage, "cache_creation_input_tokens", 0)
-            cache_read = getattr(response.usage, "cache_read_input_tokens", 0)
+        self._add_cache_metrics(metadata, response.usage)
 
-            # Ensure values are numeric (handle mock objects in tests)
-            if isinstance(cache_creation, int) and isinstance(cache_read, int):
-                metadata["cache_creation_tokens"] = cache_creation
-                metadata["cache_read_tokens"] = cache_read
-
-                # Log cache performance for monitoring with detailed cost savings
-                # Cache reads cost 90% less than regular input tokens
-                # Cache writes cost 25% more than regular input tokens
-                from attune.models.registry import get_pricing_for_model
-
-                pricing = get_pricing_for_model(self.model)
-                input_cost_per_million = pricing["input"] if pricing else 3.00
-                input_cost_per_token = input_cost_per_million / 1_000_000
-
-                if cache_read > 0:
-                    savings_per_token = input_cost_per_token * 0.9
-                    total_savings = cache_read * savings_per_token
-                    logger.info(
-                        f"Cache HIT: {cache_read:,} tokens read from cache "
-                        f"(saved ${total_savings:.4f} vs full price)",
-                    )
-                if cache_creation > 0:
-                    write_cost_per_token = input_cost_per_token * 1.25
-                    write_cost = cache_creation * write_cost_per_token
-                    logger.debug(
-                        f"Cache WRITE: {cache_creation:,} tokens written to cache "
-                        f"(cost ${write_cost:.4f})",
-                    )
-
-        # Add thinking content if present
         if thinking_content:
             metadata["thinking"] = thinking_content
 
@@ -222,6 +185,42 @@ class AnthropicProvider(BaseLLMProvider):
             finish_reason=response.stop_reason,
             metadata=metadata,
         )
+
+    def _add_cache_metrics(self, metadata: dict, usage) -> None:
+        """Add cache performance metrics to metadata if available."""
+        if not hasattr(usage, "cache_creation_input_tokens"):
+            return
+
+        cache_creation = getattr(usage, "cache_creation_input_tokens", 0)
+        cache_read = getattr(usage, "cache_read_input_tokens", 0)
+
+        # Ensure values are numeric (handle mock objects in tests)
+        if not (isinstance(cache_creation, int) and isinstance(cache_read, int)):
+            return
+
+        metadata["cache_creation_tokens"] = cache_creation
+        metadata["cache_read_tokens"] = cache_read
+
+        from attune.models.registry import get_pricing_for_model
+
+        pricing = get_pricing_for_model(self.model)
+        input_cost_per_million = pricing["input"] if pricing else 3.00
+        input_cost_per_token = input_cost_per_million / 1_000_000
+
+        if cache_read > 0:
+            savings_per_token = input_cost_per_token * 0.9
+            total_savings = cache_read * savings_per_token
+            logger.info(
+                f"Cache HIT: {cache_read:,} tokens read from cache "
+                f"(saved ${total_savings:.4f} vs full price)",
+            )
+        if cache_creation > 0:
+            write_cost_per_token = input_cost_per_token * 1.25
+            write_cost = cache_creation * write_cost_per_token
+            logger.debug(
+                f"Cache WRITE: {cache_creation:,} tokens written to cache "
+                f"(cost ${write_cost:.4f})",
+            )
 
     async def analyze_large_codebase(
         self,

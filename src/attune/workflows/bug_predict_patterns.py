@@ -108,6 +108,48 @@ def _should_exclude_file(file_path: str, exclude_patterns: list[str]) -> bool:
     return False
 
 
+def _check_version_context(before_text: str, after_text: str) -> bool:
+    """Check for version/metadata detection with fallback."""
+    if any(kw in before_text for kw in ["get_version", "version", "metadata", "__version__"]):
+        return any(kw in after_text for kw in ["return", "dev", "unknown", "0.0.0"])
+    return False
+
+
+def _check_config_context(before_text: str, after_text: str) -> bool:
+    """Check for config loading with default fallback."""
+    if any(kw in before_text for kw in ["config", "settings", "yaml", "json", "load"]):
+        return any(kw in after_text for kw in ["pass", "default", "fallback"])
+    return False
+
+
+def _check_optional_context(before_text: str, after_text: str) -> bool:
+    """Check for optional import/feature detection."""
+    if "import" in before_text or "hasattr" in before_text:
+        return any(kw in after_text for kw in ["pass", "none", "false"])
+    return False
+
+
+def _check_cleanup_context(before_text: str, _after_text: str) -> bool:
+    """Check for cleanup/teardown code."""
+    return any(kw in before_text for kw in ["__del__", "__exit__", "cleanup", "close", "teardown"])
+
+
+def _check_logging_context(_before_text: str, after_text: str) -> bool:
+    """Check for explicit logging then re-raise or return."""
+    return "log" in after_text and ("raise" in after_text or "return" in after_text)
+
+
+_CONTEXT_CHECKERS: dict[str, object] = {
+    "version": _check_version_context,
+    "config": _check_config_context,
+    "optional": _check_optional_context,
+    "cleanup": _check_cleanup_context,
+    "logging": _check_logging_context,
+}
+
+_INTENTIONAL_KEYWORDS = ["fallback", "ignore", "optional", "best effort", "graceful", "intentional"]
+
+
 def _is_acceptable_broad_exception(
     line: str,
     context_before: list[str],
@@ -133,47 +175,19 @@ def _is_acceptable_broad_exception(
         True if the exception handler is acceptable, False if problematic.
 
     """
-    # Default acceptable contexts if not provided
     if acceptable_contexts is None:
         acceptable_contexts = ["version", "config", "cleanup", "optional"]
 
-    # Join context for pattern matching
     before_text = "\n".join(context_before[-5:]).lower()
     after_text = "\n".join(context_after[:5]).lower()
 
-    # Acceptable: Version/metadata detection
-    if "version" in acceptable_contexts:
-        if any(kw in before_text for kw in ["get_version", "version", "metadata", "__version__"]):
-            if any(kw in after_text for kw in ["return", "dev", "unknown", "0.0.0"]):
-                return True
-
-    # Acceptable: Config loading with fallback to defaults
-    if "config" in acceptable_contexts:
-        if any(kw in before_text for kw in ["config", "settings", "yaml", "json", "load"]):
-            if "pass" in after_text or "default" in after_text or "fallback" in after_text:
-                return True
-
-    # Acceptable: Optional import/feature detection
-    if "optional" in acceptable_contexts:
-        if "import" in before_text or "hasattr" in before_text:
-            if "pass" in after_text or "none" in after_text or "false" in after_text:
-                return True
-
-    # Acceptable: Cleanup with pass (often in __del__ or context managers)
-    if "cleanup" in acceptable_contexts:
-        if any(kw in before_text for kw in ["__del__", "__exit__", "cleanup", "close", "teardown"]):
-            return True
-
-    # Acceptable: Explicit logging then re-raise or return error
-    if "logging" in acceptable_contexts:
-        if "log" in after_text and ("raise" in after_text or "return" in after_text):
+    for ctx in acceptable_contexts:
+        checker = _CONTEXT_CHECKERS.get(ctx)
+        if checker and checker(before_text, after_text):
             return True
 
     # Always accept: Comment explains the broad catch is intentional
-    if "# " in after_text and any(
-        kw in after_text
-        for kw in ["fallback", "ignore", "optional", "best effort", "graceful", "intentional"]
-    ):
+    if "# " in after_text and any(kw in after_text for kw in _INTENTIONAL_KEYWORDS):
         return True
 
     return False
@@ -224,6 +238,44 @@ def _has_problematic_exception_handlers(
     return problematic_count > 0
 
 
+def _has_no_eval_exec(content: str) -> bool:
+    """Return True if content has no eval( or exec( at all."""
+    return "eval(" not in content and "exec(" not in content
+
+
+_SCANNER_TEST_PATTERNS = ["test_bug_predict", "test_scanner", "test_security_scan"]
+
+_FIXTURE_STRIP_REGEXES = [
+    (r"write_text\s*\([^)]*\)", re.DOTALL),
+    (r'write_text\s*\("""[\s\S]*?"""\)', 0),
+    (r"write_text\s*\('''[\s\S]*?'''\)", 0),
+]
+
+
+def _all_eval_in_fixtures(content: str) -> bool:
+    """Return True if all eval/exec occurrences are inside write_text() calls."""
+    cleaned = content
+    for pattern, flags in _FIXTURE_STRIP_REGEXES:
+        cleaned = re.sub(pattern, "", cleaned, flags=flags)
+    return _has_no_eval_exec(cleaned)
+
+
+def _is_detection_code_line(line: str) -> bool:
+    """Check if a line uses eval/exec in a detection context (string literals, regexes)."""
+    # Check for "in content/text/code/source" pattern
+    if " in " in line and any(kw in line for kw in ("content", "text", "code", "source")):
+        return True
+    # Check if eval/exec is inside a string literal
+    if re.search(r'["\'][^"\']*eval\([^"\']*["\']', line):
+        return True
+    if re.search(r'["\'][^"\']*exec\([^"\']*["\']', line):
+        return True
+    # Check for raw string regex patterns containing eval/exec
+    if re.search(r"r['\"][^'\"]*(?:eval|exec)[^'\"]*['\"]", line):
+        return True
+    return False
+
+
 def _is_dangerous_eval_usage(content: str, file_path: str) -> bool:
     """Check if file contains dangerous eval/exec usage, filtering false positives.
 
@@ -241,112 +293,46 @@ def _is_dangerous_eval_usage(content: str, file_path: str) -> bool:
         True if dangerous eval/exec usage is found, False otherwise.
 
     """
-    # Check if file even contains eval or exec
-    if "eval(" not in content and "exec(" not in content:
+    if _has_no_eval_exec(content):
         return False
 
-    # Exclude scanner test files (they deliberately contain example bad patterns)
-    scanner_test_patterns = [
-        "test_bug_predict",
-        "test_scanner",
-        "test_security_scan",
-    ]
+    # Exclude scanner test files
     file_name = file_path.lower()
-    if any(pattern in file_name for pattern in scanner_test_patterns):
+    if any(pattern in file_name for pattern in _SCANNER_TEST_PATTERNS):
         return False
 
-    # Check for test fixture patterns - eval/exec inside write_text() or heredoc strings
-    # These are test data being written to temp files, not actual dangerous code
+    # Check for test fixture patterns
     fixture_patterns = [
-        r'write_text\s*\(\s*["\'][\s\S]*?(?:eval|exec)\s*\(',  # write_text("...eval(...")
-        r'write_text\s*\(\s*"""[\s\S]*?(?:eval|exec)\s*\(',  # write_text("""...eval(...""")
-        r"write_text\s*\(\s*'''[\s\S]*?(?:eval|exec)\s*\(",  # write_text('''...eval(...''')
+        r'write_text\s*\(\s*["\'][\s\S]*?(?:eval|exec)\s*\(',
+        r'write_text\s*\(\s*"""[\s\S]*?(?:eval|exec)\s*\(',
+        r"write_text\s*\(\s*'''[\s\S]*?(?:eval|exec)\s*\(",
     ]
-    for pattern in fixture_patterns:
-        if re.search(pattern, content, re.MULTILINE):
-            # All eval/exec occurrences might be in fixtures - do deeper check
-            # Remove fixture content and see if any eval/exec remains
-            content_without_fixtures = re.sub(
-                r"write_text\s*\([^)]*\)",
-                "",
-                content,
-                flags=re.DOTALL,
-            )
-            content_without_fixtures = re.sub(
-                r'write_text\s*\("""[\s\S]*?"""\)',
-                "",
-                content_without_fixtures,
-            )
-            content_without_fixtures = re.sub(
-                r"write_text\s*\('''[\s\S]*?'''\)",
-                "",
-                content_without_fixtures,
-            )
-            if "eval(" not in content_without_fixtures and "exec(" not in content_without_fixtures:
-                return False
+    if any(re.search(p, content, re.MULTILINE) for p in fixture_patterns):
+        if _all_eval_in_fixtures(content):
+            return False
 
     # For JavaScript/TypeScript files, check for regex.exec() which is safe
     if file_path.endswith((".js", ".ts", ".tsx", ".jsx")):
-        # Remove all regex.exec() calls (these are safe)
         content_without_regex_exec = re.sub(r"\.\s*exec\s*\(", ".SAFE_EXEC(", content)
-        # If no eval/exec remains, it was all regex.exec()
-        if "eval(" not in content_without_regex_exec and "exec(" not in content_without_regex_exec:
+        if _has_no_eval_exec(content_without_regex_exec):
             return False
 
     # Remove docstrings before line-by-line analysis
-    # This prevents false positives from documentation that mentions eval/exec
     content_without_docstrings = _remove_docstrings(content)
 
     # Check each line for real dangerous usage
-    lines = content_without_docstrings.splitlines()
-    for line in lines:
-        # Skip comment lines
+    for line in content_without_docstrings.splitlines():
         stripped = line.strip()
-        if stripped.startswith("#") or stripped.startswith("//") or stripped.startswith("*"):
-            continue
 
-        # Skip security policy documentation (e.g., "- No eval() or exec()")
+        # Skip comment lines
+        if stripped.startswith(("#", "//", "*")):
+            continue
         if _is_security_policy_line(stripped):
             continue
-
-        # Check for eval( or exec( in this line
-        if "eval(" not in line and "exec(" not in line:
+        if _has_no_eval_exec(line):
             continue
-
-        # Skip if it's inside a string literal for detection purposes
-        # e.g., 'if "eval(" in content' or "pattern = r'eval\('"
-        detection_patterns = [
-            r'["\'].*eval\(.*["\']',  # "eval(" or 'eval(' in a string
-            r'["\'].*exec\(.*["\']',  # "exec(" or 'exec(' in a string
-            r"in\s+\w+",  # Pattern like 'in content'
-            r'r["\'].*eval',  # Raw string regex pattern
-            r'r["\'].*exec',  # Raw string regex pattern
-        ]
-
-        is_detection_code = False
-        for pattern in detection_patterns:
-            if re.search(pattern, line):
-                # Check if it's really detection code
-                if " in " in line and (
-                    "content" in line or "text" in line or "code" in line or "source" in line
-                ):
-                    is_detection_code = True
-                    break
-                # Check if it's a string literal being defined (eval or exec)
-                if re.search(r'["\'][^"\']*eval\([^"\']*["\']', line):
-                    is_detection_code = True
-                    break
-                if re.search(r'["\'][^"\']*exec\([^"\']*["\']', line):
-                    is_detection_code = True
-                    break
-                # Check for raw string regex patterns containing eval/exec
-                if re.search(r"r['\"][^'\"]*(?:eval|exec)[^'\"]*['\"]", line):
-                    is_detection_code = True
-                    break
-
-        if is_detection_code:
+        if _is_detection_code_line(line):
             continue
-
         # Skip JavaScript regex.exec() - pattern.exec(text)
         if re.search(r"\w+\.exec\s*\(", line):
             continue

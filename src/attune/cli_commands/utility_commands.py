@@ -19,46 +19,95 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def cmd_setup(args: Namespace) -> int:
-    """Install Attune slash commands for Claude Code."""
+def _find_source_dir() -> Path | None:
+    """Find the source directory for Attune command files."""
+    try:
+        from importlib.resources import files
+
+        source_dir = files("attune") / "commands"
+        if hasattr(source_dir, "iterdir"):
+            return source_dir
+    except (ImportError, TypeError):
+        pass
+
+    package_dir = Path(__file__).parent.parent
+    potential_paths = [
+        package_dir / "commands",
+        package_dir.parent / ".claude" / "commands",
+        Path.cwd() / ".claude" / "commands",
+    ]
+    for p in potential_paths:
+        if p.exists() and p.is_dir():
+            return p
+    return None
+
+
+def _copy_md_files(src: Path, dst: Path) -> int:
+    """Copy .md files from src to dst, return count."""
     import shutil
 
-    # Determine source directory (package data)
-    try:
-        # For Python 3.9+
-        try:
-            from importlib.resources import files
+    from attune.security.path_validation import _validate_file_path
 
-            source_dir = files("attune") / "commands"
-        except (ImportError, TypeError):
-            # Fallback for older Python
-            source_dir = None
-    except ImportError:
-        source_dir = None
+    count = 0
+    if not hasattr(src, "iterdir"):
+        return 0
+    for item in src.iterdir():
+        if not str(item.name).endswith(".md"):
+            continue
+        dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
+        if hasattr(item, "is_file") and item.is_file():
+            shutil.copy2(item, dst_file)
+        elif hasattr(item, "read_text"):
+            dst_file.write_text(item.read_text(encoding="utf-8"), encoding="utf-8")
+        else:
+            continue
+        print(f"  ✅ Installed: {item.name}")
+        count += 1
+    return count
 
-    # If package resources don't work, try to find commands relative to this file
-    if source_dir is None or not hasattr(source_dir, "iterdir"):
-        # Look for commands directory relative to the package
-        package_dir = Path(__file__).parent.parent
-        potential_paths = [
-            package_dir / "commands",
-            package_dir.parent / ".claude" / "commands",
-            Path.cwd() / ".claude" / "commands",
-        ]
 
-        source_dir = None
-        for p in potential_paths:
-            if p.exists() and p.is_dir():
-                source_dir = p
-                break
+def _find_agents_src(source_dir) -> Path | None:
+    """Find the agents subdirectory if it exists."""
+    if not hasattr(source_dir, "__truediv__"):
+        return None
+    candidate = source_dir / "agents"
+    if isinstance(candidate, Path) and candidate.exists():
+        return candidate
+    if hasattr(candidate, "iterdir"):
+        return candidate
+    return None
 
+
+def _install_config_files() -> int:
+    """Install config files, never overwriting existing ones. Return count."""
+    import shutil
+
+    project_claude_dir = Path.cwd() / ".claude"
+    config_files = ["settings.json", "mcp.json"]
+    configs_copied = 0
+    for config_name in config_files:
+        src_config = project_claude_dir / config_name
+        if not src_config.exists():
+            continue
+        dst_config = Path.home() / ".claude" / config_name
+        if dst_config.exists():
+            print(f"  ⏭️  Skipped: {config_name} (already exists)")
+        else:
+            shutil.copy2(src_config, dst_config)
+            print(f"  ✅ Installed: {config_name}")
+            configs_copied += 1
+    return configs_copied
+
+
+def cmd_setup(args: Namespace) -> int:
+    """Install Attune slash commands for Claude Code."""
+    source_dir = _find_source_dir()
     if source_dir is None:
         print("❌ Could not find Attune command files.")
         print("\n   If you installed from git, run from the repository root:")
         print("   cd /path/to/attune-ai && attune setup")
         return 1
 
-    # Target directory
     target_dir = Path.home() / ".claude" / "commands"
 
     print("\n🔧 Attune Setup\n")
@@ -66,52 +115,16 @@ def cmd_setup(args: Namespace) -> int:
     print(f"  Source:      {source_dir}")
     print(f"  Target:      {target_dir}")
 
-    # Create target directory
     target_dir.mkdir(parents=True, exist_ok=True)
     print(f"\n  ✅ Created {target_dir}")
 
-    # Copy command files (hub commands)
-    copied = 0
-
-    def _copy_md_files(src: Path, dst: Path) -> int:
-        """Copy .md files from src to dst, return count."""
-        from attune.security.path_validation import _validate_file_path
-
-        count = 0
-        if hasattr(src, "iterdir"):
-            for item in src.iterdir():
-                if hasattr(item, "is_file") and item.is_file() and str(item.name).endswith(".md"):
-                    dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
-                    shutil.copy2(item, dst_file)
-                    print(f"  ✅ Installed: {item.name}")
-                    count += 1
-                elif hasattr(item, "read_text") and str(item.name).endswith(".md"):
-                    dst_file = _validate_file_path(str(dst / item.name), allowed_dir=str(dst))
-                    dst_file.write_text(
-                        item.read_text(encoding="utf-8"),
-                        encoding="utf-8",
-                    )
-                    print(f"  ✅ Installed: {item.name}")
-                    count += 1
-        return count
-
     # Install hub commands
     print("\n  Hub Commands:")
-    copied += _copy_md_files(source_dir, target_dir)
+    copied = _copy_md_files(source_dir, target_dir)
 
-    # Install subagent definitions from agents/ subdirectory
+    # Install subagent definitions
     agents_copied = 0
-    agents_src = None
-    if hasattr(source_dir, "__truediv__"):
-        # Path-like object
-        candidate = source_dir / "agents"
-        if isinstance(candidate, Path):
-            # Real Path — trust .exists()
-            if candidate.exists():
-                agents_src = candidate
-        elif hasattr(candidate, "iterdir"):
-            # importlib resource — no .exists(), but iterable
-            agents_src = candidate
+    agents_src = _find_agents_src(source_dir)
     if agents_src is not None:
         agents_dst = target_dir / "agents"
         agents_dst.mkdir(parents=True, exist_ok=True)
@@ -120,21 +133,9 @@ def cmd_setup(args: Namespace) -> int:
         if agents_copied > 0:
             print(f"  ✅ Installed {agents_copied} subagent(s)")
 
-    # Install config files (never overwrite existing)
+    # Install config files
     print("\n  Configuration Files:")
-    project_claude_dir = Path.cwd() / ".claude"
-    config_files = ["settings.json", "mcp.json"]
-    configs_copied = 0
-    for config_name in config_files:
-        src_config = project_claude_dir / config_name
-        dst_config = Path.home() / ".claude" / config_name
-        if src_config.exists():
-            if dst_config.exists():
-                print(f"  ⏭️  Skipped: {config_name} (already exists)")
-            else:
-                shutil.copy2(src_config, dst_config)
-                print(f"  ✅ Installed: {config_name}")
-                configs_copied += 1
+    configs_copied = _install_config_files()
 
     print("-" * 60)
 
