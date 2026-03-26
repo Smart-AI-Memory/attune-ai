@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 
 pip3 install atheris
-pip3 install -e $SRC/attune-ai
+pip3 install $SRC/attune-ai
 
 # Compile fuzz targets using the standard OSS-Fuzz helper.
 # PyInstaller can't auto-detect attune imports, so pass
