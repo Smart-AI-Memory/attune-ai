@@ -59,4 +59,4 @@ __all__ = [
     "HotReloadIntegration",
 ]
 
-__version__ = "1.0.0"
+from attune import __version__

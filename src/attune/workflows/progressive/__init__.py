@@ -79,4 +79,4 @@ __all__ = [
     "calculate_coverage",
 ]
 
-__version__ = "4.1.1"
+from attune import __version__

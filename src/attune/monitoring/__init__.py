@@ -49,4 +49,4 @@ __all__ = [
     "log_workflow_run",
 ]
 
-__version__ = "3.8.0-alpha"
+from attune import __version__

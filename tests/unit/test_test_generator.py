@@ -391,4 +391,4 @@ class TestTestGeneratorInit:
         assert hasattr(tg, "TestGenerator")
         assert hasattr(tg, "RiskAnalyzer")
         assert hasattr(tg, "RiskAnalysis")
-        assert tg.__version__ == "1.0.0"
+        assert tg.__version__  # dynamic from importlib.metadata
