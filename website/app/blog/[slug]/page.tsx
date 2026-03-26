@@ -137,7 +137,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   {post.tags.map((tag) => (
                     <Link
                       key={tag}
-                      href={`/blog/tag/${tag}`}
+                      href={`/blog/tag/${encodeURIComponent(tag)}`}
                       className="px-3 py-1 bg-[var(--border)] text-[var(--text-primary)] rounded-full text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors"
                     >
                       {tag}

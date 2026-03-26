@@ -1015,4 +1015,24 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   reasons. Valid reasons: `false positive`, `won't fix`,
   `used in tests`.
 
+- **Repo merge policy may restrict merge strategies**: `gh pr merge
+  --merge` failed with "Merge method merge commits are not allowed".
+  This repo only allows squash merges. Always use `--squash` for
+  `gh pr merge` in this repo.
+
+- **CodeQL `py/clear-text-logging-sensitive-data` traces data flow,
+  not literal secrets**: CodeQL flagged `user_id` in a log message
+  inside `security.py` even though only the count of secrets was
+  logged (not secret values). It traces any variable that flows
+  through a security-sensitive method. Fix: use `%s` formatting
+  without user identifiers, or move audit correlation to the
+  dedicated audit logger which is designed for that purpose.
+
+- **CodeQL `js/stored-xss` flags JSX even though React auto-escapes**:
+  CodeQL flagged `{tag}` rendered in `<h1>` as stored XSS despite
+  React's automatic text escaping. Defense-in-depth fix:
+  `decodeURIComponent` on input + `encodeURIComponent` on `href`
+  values. `generateStaticParams` constrains valid values but CodeQL
+  can't see that.
+
 <!-- attune-lessons-end -->

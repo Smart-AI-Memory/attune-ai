@@ -16,7 +16,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { tag } = await params;
+  const { tag: rawTag } = await params;
+  const tag = decodeURIComponent(rawTag);
   const posts = getPostsByTag(tag);
 
   if (posts.length === 0) {
