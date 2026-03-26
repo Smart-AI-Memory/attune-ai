@@ -11,6 +11,9 @@ on:
       - '.github/workflows/test-attune-redis.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
