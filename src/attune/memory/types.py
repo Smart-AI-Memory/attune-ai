@@ -168,14 +168,15 @@ class RedisMetrics:
             self.operations_failed += 1
 
         # Track by operation type
-        if operation == "stash":
-            self.stash_count += 1
-        elif operation == "retrieve":
-            self.retrieve_count += 1
-        elif operation == "publish":
-            self.publish_count += 1
-        elif operation == "stream_append":
-            self.stream_append_count += 1
+        _OP_COUNTERS = {
+            "stash": "stash_count",
+            "retrieve": "retrieve_count",
+            "publish": "publish_count",
+            "stream_append": "stream_append_count",
+        }
+        attr = _OP_COUNTERS.get(operation)
+        if attr:
+            setattr(self, attr, getattr(self, attr) + 1)
 
     @property
     def latency_avg_ms(self) -> float:
