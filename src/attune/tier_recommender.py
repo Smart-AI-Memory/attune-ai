@@ -225,20 +225,16 @@ class TierRecommender:
         if not isinstance(files_affected, list):
             raise TypeError(f"files_affected must be list, got {type(files_affected).__name__}")
 
-        similar = []
+        similar = list(self.bug_type_index.get(bug_type, []))
+        seen = {id(p) for p in similar}
 
-        # Match by bug type
-        similar.extend(self.bug_type_index.get(bug_type, []))
-
-        # Match by file patterns
         if files_affected:
             for file in files_affected:
                 parts = Path(file).parts
                 if parts:
-                    file_matches = self.file_pattern_index.get(parts[0], [])
-                    # Add only if not already in similar list
-                    for pattern in file_matches:
-                        if pattern not in similar:
+                    for pattern in self.file_pattern_index.get(parts[0], []):
+                        if id(pattern) not in seen:
+                            seen.add(id(pattern))
                             similar.append(pattern)
 
         return similar
@@ -305,23 +301,21 @@ class TierRecommender:
             "avg_attempts": total_attempts / len(matching),
         }
 
+    # (max_complexity, tier, cost)
+    _COMPLEXITY_TIERS = [(3, "CHEAP", 0.030), (7, "CAPABLE", 0.150), (10, "PREMIUM", 0.450)]
+
     def _fallback_recommendation(
         self,
         bug_description: str,
         complexity_hint: int | None,
     ) -> TierRecommendationResult:
         """Provide fallback recommendation when no historical data available."""
-        # Use complexity hint if provided
         if complexity_hint is not None:
-            if complexity_hint <= 3:
-                tier = "CHEAP"
-                cost = 0.030
-            elif complexity_hint <= 7:
-                tier = "CAPABLE"
-                cost = 0.150
-            else:
-                tier = "PREMIUM"
-                cost = 0.450
+            tier, cost = "PREMIUM", 0.450
+            for max_c, t, c in self._COMPLEXITY_TIERS:
+                if complexity_hint <= max_c:
+                    tier, cost = t, c
+                    break
 
             return TierRecommendationResult(
                 tier=tier,

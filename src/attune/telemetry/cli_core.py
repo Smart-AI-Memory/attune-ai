@@ -358,6 +358,17 @@ def cmd_telemetry_compare(args: Any) -> int:
         print("Insufficient telemetry data for comparison.")
         return 0
 
+    def _pct_change(a: float, b: float) -> float:
+        return ((a - b) / b * 100) if b > 0 else 0.0
+
+    avg1 = stats1["total_cost"] / stats1["total_calls"] if stats1["total_calls"] > 0 else 0
+    avg2 = stats2["total_cost"] / stats2["total_calls"] if stats2["total_calls"] > 0 else 0
+
+    calls_change = _pct_change(stats1["total_calls"], stats2["total_calls"])
+    cost_change = _pct_change(stats1["total_cost"], stats2["total_cost"])
+    avg_change = _pct_change(avg1, avg2)
+    cache_change = stats1["cache_hit_rate"] - stats2["cache_hit_rate"]
+
     if RICH_AVAILABLE and Console is not None:
         console = Console()
         table = Table(title="Telemetry Comparison", show_header=True, header_style="bold magenta")
@@ -366,24 +377,11 @@ def cmd_telemetry_compare(args: Any) -> int:
         table.add_column(f"Last {period2_days} days", justify="right", style="yellow")
         table.add_column("Change", justify="right", style="blue")
 
-        # Total calls
-        calls_change = (
-            ((stats1["total_calls"] - stats2["total_calls"]) / stats2["total_calls"] * 100)
-            if stats2["total_calls"] > 0
-            else 0
-        )
         table.add_row(
             "Total Calls",
             str(stats1["total_calls"]),
             str(stats2["total_calls"]),
             f"{calls_change:+.1f}%",
-        )
-
-        # Total cost
-        cost_change = (
-            ((stats1["total_cost"] - stats2["total_cost"]) / stats2["total_cost"] * 100)
-            if stats2["total_cost"] > 0
-            else 0
         )
         table.add_row(
             "Total Cost",
@@ -391,20 +389,12 @@ def cmd_telemetry_compare(args: Any) -> int:
             f"${stats2['total_cost']:.2f}",
             f"{cost_change:+.1f}%",
         )
-
-        # Avg cost per call
-        avg1 = stats1["total_cost"] / stats1["total_calls"] if stats1["total_calls"] > 0 else 0
-        avg2 = stats2["total_cost"] / stats2["total_calls"] if stats2["total_calls"] > 0 else 0
-        avg_change = ((avg1 - avg2) / avg2 * 100) if avg2 > 0 else 0
         table.add_row(
             "Avg Cost/Call",
             f"${avg1:.4f}",
             f"${avg2:.4f}",
             f"{avg_change:+.1f}%",
         )
-
-        # Cache hit rate
-        cache_change = stats1["cache_hit_rate"] - stats2["cache_hit_rate"]
         table.add_row(
             "Cache Hit Rate",
             f"{stats1['cache_hit_rate']:.1f}%",
@@ -414,7 +404,6 @@ def cmd_telemetry_compare(args: Any) -> int:
 
         console.print(table)
     else:
-        # Fallback to plain text
         print("\n" + "=" * 80)
         print("TELEMETRY COMPARISON")
         print("=" * 80)
@@ -422,35 +411,16 @@ def cmd_telemetry_compare(args: Any) -> int:
             f"{'Metric':<20} {'Last ' + str(period1_days) + ' days':>20} {'Last ' + str(period2_days) + ' days':>20} {'Change':>15}",
         )
         print("-" * 80)
-
-        calls_change = (
-            ((stats1["total_calls"] - stats2["total_calls"]) / stats2["total_calls"] * 100)
-            if stats2["total_calls"] > 0
-            else 0
-        )
         print(
             f"{'Total Calls':<20} {stats1['total_calls']:>20} {stats2['total_calls']:>20} {calls_change:>14.1f}%",
-        )
-
-        cost_change = (
-            ((stats1["total_cost"] - stats2["total_cost"]) / stats2["total_cost"] * 100)
-            if stats2["total_cost"] > 0
-            else 0
         )
         print(
             f"{'Total Cost':<20} ${stats1['total_cost']:>19.2f} ${stats2['total_cost']:>19.2f} {cost_change:>14.1f}%",
         )
-
-        avg1 = stats1["total_cost"] / stats1["total_calls"] if stats1["total_calls"] > 0 else 0
-        avg2 = stats2["total_cost"] / stats2["total_calls"] if stats2["total_calls"] > 0 else 0
-        avg_change = ((avg1 - avg2) / avg2 * 100) if avg2 > 0 else 0
         print(f"{'Avg Cost/Call':<20} ${avg1:>19.4f} ${avg2:>19.4f} {avg_change:>14.1f}%")
-
-        cache_change = stats1["cache_hit_rate"] - stats2["cache_hit_rate"]
         print(
             f"{'Cache Hit Rate':<20} {stats1['cache_hit_rate']:>19.1f}% {stats2['cache_hit_rate']:>19.1f}% {cache_change:>14.1f}pp",
         )
-
         print("=" * 80)
 
     return 0
@@ -533,48 +503,37 @@ def cmd_telemetry_export(args: Any) -> int:
             "duration_ms",
         ]
 
+        def _entry_to_row(entry: dict) -> dict:
+            tokens = entry.get("tokens", {})
+            cache = entry.get("cache", {})
+            return {
+                "ts": entry.get("ts", ""),
+                "workflow": entry.get("workflow", ""),
+                "stage": entry.get("stage", ""),
+                "tier": entry.get("tier", ""),
+                "model": entry.get("model", ""),
+                "provider": entry.get("provider", ""),
+                "cost": entry.get("cost", 0.0),
+                "tokens_input": tokens.get("input", 0),
+                "tokens_output": tokens.get("output", 0),
+                "cache_hit": cache.get("hit", False),
+                "cache_type": cache.get("type", ""),
+                "duration_ms": entry.get("duration_ms", 0),
+            }
+
+        def _write_csv(dest) -> None:
+            writer = csv.DictWriter(dest, fieldnames=fieldnames)
+            writer.writeheader()
+            for entry in entries:
+                writer.writerow(_entry_to_row(entry))
+
         if output_file:
             validated_path = _validate_file_path(output_file)
             with open(validated_path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                writer.writeheader()
-                for entry in entries:
-                    row = {
-                        "ts": entry.get("ts", ""),
-                        "workflow": entry.get("workflow", ""),
-                        "stage": entry.get("stage", ""),
-                        "tier": entry.get("tier", ""),
-                        "model": entry.get("model", ""),
-                        "provider": entry.get("provider", ""),
-                        "cost": entry.get("cost", 0.0),
-                        "tokens_input": entry.get("tokens", {}).get("input", 0),
-                        "tokens_output": entry.get("tokens", {}).get("output", 0),
-                        "cache_hit": entry.get("cache", {}).get("hit", False),
-                        "cache_type": entry.get("cache", {}).get("type", ""),
-                        "duration_ms": entry.get("duration_ms", 0),
-                    }
-                    writer.writerow(row)
+                _write_csv(f)
             print(f"Exported {len(entries)} entries to {validated_path}")
         else:
-            # Print to stdout
-            writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
-            writer.writeheader()
-            for entry in entries:
-                row = {
-                    "ts": entry.get("ts", ""),
-                    "workflow": entry.get("workflow", ""),
-                    "stage": entry.get("stage", ""),
-                    "tier": entry.get("tier", ""),
-                    "model": entry.get("model", ""),
-                    "provider": entry.get("provider", ""),
-                    "cost": entry.get("cost", 0.0),
-                    "tokens_input": entry.get("tokens", {}).get("input", 0),
-                    "tokens_output": entry.get("tokens", {}).get("output", 0),
-                    "cache_hit": entry.get("cache", {}).get("hit", False),
-                    "cache_type": entry.get("cache", {}).get("type", ""),
-                    "duration_ms": entry.get("duration_ms", 0),
-                }
-                writer.writerow(row)
+            _write_csv(sys.stdout)
     else:
         print(f"Unknown format: {format_type}")
         print("Supported formats: json, csv")

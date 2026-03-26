@@ -220,6 +220,36 @@ def assign_grade(
     return "F"
 
 
+_CATEGORY_RECOMMENDATIONS: dict[str, tuple[str, list[str]]] = {
+    "Security": (
+        "🔒 Address {issue_count} security issue(s)",
+        ["   → Run: attune workflow run security-audit --path ."],
+    ),
+    "Coverage": (
+        "🧪 Increase test coverage to 80%+ (currently {score:.1f}%)",
+        [
+            "   → Run: pytest --cov=src --cov-report=term-missing",
+            "   → Or use: attune workflow run test-gen --path <file>",
+        ],
+    ),
+    "Quality": (
+        "✨ Improve code quality to 7+ (currently {quality_score:.1f}/10)",
+        [
+            "   → Run: attune workflow run code-review --path .",
+            "   → Or: ruff check --fix . && ruff format .  (auto-fix lint/format issues)",
+        ],
+    ),
+    "Performance": (
+        "⚡ Optimize {bottleneck_count} performance bottleneck(s)",
+        ["   → Run: attune workflow run perf-audit --path ."],
+    ),
+    "Documentation": (
+        "📚 Complete documentation (currently {score:.1f}%)",
+        ["   → Run: attune workflow run doc-gen --path ."],
+    ),
+}
+
+
 def generate_recommendations(
     category_scores: list[CategoryScore],
 ) -> list[str]:
@@ -234,40 +264,23 @@ def generate_recommendations(
     """
     recommendations: list[str] = []
 
-    # Sort categories by score (lowest first)
     sorted_categories = sorted(category_scores, key=lambda x: x.score)
 
     for category in sorted_categories:
-        if not category.passed:
-            if category.name == "Security":
-                recommendations.append(f"🔒 Address {len(category.issues)} security issue(s)")
-                recommendations.append("   → Run: attune workflow run security-audit --path .")
-            elif category.name == "Coverage":
-                recommendations.append(
-                    f"🧪 Increase test coverage to 80%+ (currently {category.score:.1f}%)",
-                )
-                recommendations.append("   → Run: pytest --cov=src --cov-report=term-missing")
-                recommendations.append(
-                    "   → Or use: attune workflow run test-gen --path <file>",
-                )
-            elif category.name == "Quality":
-                quality_score = category.raw_metrics.get("quality_score", 0.0)
-                recommendations.append(
-                    f"✨ Improve code quality to 7+ (currently {quality_score:.1f}/10)",
-                )
-                recommendations.append("   → Run: attune workflow run code-review --path .")
-                recommendations.append(
-                    "   → Or: ruff check --fix . && ruff format .  (auto-fix lint/format issues)"
-                )
-            elif category.name == "Performance":
-                bottlenecks = category.raw_metrics.get("bottleneck_count", 0)
-                recommendations.append(f"⚡ Optimize {bottlenecks} performance bottleneck(s)")
-                recommendations.append("   → Run: attune workflow run perf-audit --path .")
-            elif category.name == "Documentation":
-                recommendations.append(
-                    f"📚 Complete documentation (currently {category.score:.1f}%)",
-                )
-                recommendations.append("   → Run: attune workflow run doc-gen --path .")
+        if category.passed:
+            continue
+        template = _CATEGORY_RECOMMENDATIONS.get(category.name)
+        if not template:
+            continue
+        heading_fmt, commands = template
+        fmt_vars = {
+            "score": category.score,
+            "issue_count": len(category.issues),
+            "quality_score": category.raw_metrics.get("quality_score", 0.0),
+            "bottleneck_count": category.raw_metrics.get("bottleneck_count", 0),
+        }
+        recommendations.append(heading_fmt.format(**fmt_vars))
+        recommendations.extend(commands)
 
     # Add general recommendations
     if len(recommendations) == 0:

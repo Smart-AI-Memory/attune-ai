@@ -781,15 +781,7 @@ def suggestions_to_options(suggestions: list[NextAction]) -> list[dict[str, str]
         List of option dicts with 'label' and 'description' keys
 
     """
-    options = []
-    for s in suggestions:
-        options.append(
-            {
-                "label": f"/{s.workflow_name}",
-                "description": s.description,
-            },
-        )
-    return options
+    return [{"label": f"/{s.workflow_name}", "description": s.description} for s in suggestions]
 
 
 def _suggestions_for_failure(
