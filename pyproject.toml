@@ -417,7 +417,7 @@ exclude = [
     "src/attune/workflows/test5.py",  # Test workflow
     "benchmarks/",  # Benchmark and test scripts
     "scaffolding/",  # Development scaffolding code
-    "hot_reload/",  # Hot reload system
+
     "test_generator/",  # Test generator tools
     "workflow_patterns/",  # Experimental workflow patterns
     "workflow_scaffolding/",  # Workflow scaffolding tools
@@ -471,7 +471,7 @@ known-first-party = ["attune", "attune_software"]
 "run_*.py" = ["BLE001"]  # Manual test runner scripts
 "manual_*.py" = ["BLE001"]  # Manual test scripts
 "benchmarks/**/*.py" = ["BLE001"]  # Benchmark directory - broad exception handling for test/benchmark scripts
-"hot_reload/**/*.py" = ["BLE001"]  # Hot reload system needs broad exception handling
+
 "scaffolding/**/*.py" = ["BLE001"]  # Scaffolding code - development tools
 "test_generator/**/*.py" = ["BLE001"]  # Test generator - development tools
 "workflow_patterns/**/*.py" = ["BLE001"]  # Workflow patterns - development/experimental
@@ -592,8 +592,6 @@ omit = [
     # Legacy/alternative CLIs
     "attune_software/cli/*.py",  # Plugin CLI subcommands
     # Infrastructure requiring external deps
-    "*/hot_reload/watcher.py",  # Requires watchdog library
-    "*/hot_reload/integration.py",  # Requires watchdog library
     # Scaffolding CLI (tested via integration)
     "*/scaffolding/cli.py",  # Scaffolding CLI
     "*/scaffolding/__main__.py",  # Scaffolding entry point
@@ -634,8 +632,6 @@ omit = [
     "*/hooks/scripts/session_start.py",  # Standalone hook
     "*/hooks/scripts/suggest_compact.py",  # Standalone hook
     "*/hooks/scripts/telemetry_hook.py",  # Standalone hook
-    # Hot reload websocket server
-    "*/hot_reload/websocket.py",  # WebSocket server
     # Core module stubs
     "*/core_modules/interaction.py",  # Interaction stubs
     "*/core_modules/short_term_memory.py",  # Memory stubs

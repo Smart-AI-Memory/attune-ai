@@ -128,7 +128,8 @@ class SecurityMixin:
             security_metadata["pii_scrubbed"] = len(pii_detections) > 0
             if pii_detections:
                 logger.info(
-                    f"PII detected for user {user_id}: {len(pii_detections)} items scrubbed",
+                    "PII detected: %d item(s) scrubbed",
+                    len(pii_detections),
                 )
 
         # Step 2 - Secrets Detection
@@ -139,8 +140,9 @@ class SecurityMixin:
             if secrets_detections:
                 block_on_secrets = self.security_config.get("block_on_secrets", True)
                 logger.warning(
-                    f"Secrets detected for user {user_id}: {len(secrets_detections)} secrets, "
-                    f"blocking={block_on_secrets}",
+                    "Secrets detected: %d secret(s), blocking=%s",
+                    len(secrets_detections),
+                    block_on_secrets,
                 )
 
                 # Log security violation

@@ -169,16 +169,12 @@ class BatchProcessingWorkflow:
             result_type = result.get("type", "unknown")
 
             if result_type == "succeeded":
-                # Extract message content from succeeded result
                 message = result.get("message", {})
-                content_blocks = message.get("content", [])
-
-                # Convert content blocks to simple output format
-                output_text = ""
-                for block in content_blocks:
-                    if isinstance(block, dict) and block.get("type") == "text":
-                        output_text += block.get("text", "")
-
+                output_text = "".join(
+                    block.get("text", "")
+                    for block in message.get("content", [])
+                    if isinstance(block, dict) and block.get("type") == "text"
+                )
                 output = {
                     "content": output_text,
                     "usage": message.get("usage", {}),
@@ -186,32 +182,17 @@ class BatchProcessingWorkflow:
                     "stop_reason": message.get("stop_reason"),
                 }
                 results.append(BatchResult(task_id=task_id, success=True, output=output))
-
             elif result_type == "errored":
-                # Extract error from errored result
                 error = result.get("error", {})
-                error_msg = error.get("message", "Unknown error")
-                error_type = error.get("type", "unknown_error")
-                results.append(
-                    BatchResult(task_id=task_id, success=False, error=f"{error_type}: {error_msg}"),
+                error_msg = (
+                    f"{error.get('type', 'unknown_error')}: {error.get('message', 'Unknown error')}"
                 )
-
-            elif result_type == "expired":
-                results.append(BatchResult(task_id=task_id, success=False, error="Request expired"))
-
-            elif result_type == "canceled":
-                results.append(
-                    BatchResult(task_id=task_id, success=False, error="Request canceled"),
-                )
-
+                results.append(BatchResult(task_id=task_id, success=False, error=error_msg))
             else:
-                results.append(
-                    BatchResult(
-                        task_id=task_id,
-                        success=False,
-                        error=f"Unknown result type: {result_type}",
-                    ),
-                )
+                # expired, canceled, or unknown
+                label = {"expired": "Request expired", "canceled": "Request canceled"}
+                error_msg = label.get(result_type, f"Unknown result type: {result_type}")
+                results.append(BatchResult(task_id=task_id, success=False, error=error_msg))
 
         # Log summary
         success_count = sum(r.success for r in results)

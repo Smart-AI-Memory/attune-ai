@@ -16,7 +16,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { tag } = await params;
+  const { tag: rawTag } = await params;
+  const tag = decodeURIComponent(rawTag);
   const posts = getPostsByTag(tag);
 
   if (posts.length === 0) {
@@ -32,7 +33,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function TagPage({ params }: PageProps) {
-  const { tag } = await params;
+  const { tag: rawTag } = await params;
+  const tag = decodeURIComponent(rawTag);
   const posts = getPostsByTag(tag);
 
   if (posts.length === 0) {
@@ -77,7 +79,7 @@ export default async function TagPage({ params }: PageProps) {
                       {post.tags.map((t) => (
                         <Link
                           key={t}
-                          href={`/blog/tag/${t}`}
+                          href={`/blog/tag/${encodeURIComponent(t)}`}
                           className={`px-2 py-0.5 rounded text-xs font-semibold transition-colors ${
                             t === tag
                               ? 'bg-[var(--primary)] text-white'
@@ -118,7 +120,7 @@ export default async function TagPage({ params }: PageProps) {
                   {allTags.map((t) => (
                     <Link
                       key={t}
-                      href={`/blog/tag/${t}`}
+                      href={`/blog/tag/${encodeURIComponent(t)}`}
                       className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
                         t === tag
                           ? 'bg-[var(--primary)] text-white'

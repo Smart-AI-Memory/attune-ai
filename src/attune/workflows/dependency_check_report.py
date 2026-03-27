@@ -12,6 +12,53 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+_RISK_LEVELS = [
+    (75, "🔴", "CRITICAL"),
+    (50, "🟠", "HIGH RISK"),
+    (25, "🟡", "MEDIUM RISK"),
+    (0, "🟢", "LOW RISK"),
+]
+
+
+def _get_risk_display(risk_score: int) -> tuple[str, str]:
+    """Return (icon, text) for a risk score."""
+    for threshold, icon, text in _RISK_LEVELS:
+        if risk_score >= threshold:
+            return icon, text
+    return "🟢", "LOW RISK"
+
+
+def _format_vulnerabilities(vulnerabilities: list[dict]) -> list[str]:
+    """Format vulnerability detail lines."""
+    lines = ["-" * 60, "VULNERABLE PACKAGES", "-" * 60]
+    for vuln in vulnerabilities[:10]:
+        severity = vuln.get("severity", "unknown").upper()
+        pkg = vuln.get("package", "unknown")
+        version = vuln.get("current_version", "?")
+        cve = vuln.get("cve", "N/A")
+        sev_icon = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡"}.get(severity, "⚪")
+        lines.append(f"  {sev_icon} {pkg}@{version}")
+        lines.append(f"      CVE: {cve} | Severity: {severity}")
+    if len(vulnerabilities) > 10:
+        lines.append(f"  ... and {len(vulnerabilities) - 10} more")
+    lines.append("")
+    return lines
+
+
+def _format_remediation(recommendations: list[dict]) -> list[str]:
+    """Format remediation action lines."""
+    lines = ["-" * 60, "REMEDIATION ACTIONS", "-" * 60]
+    priority_labels = {1: "🔴 URGENT", 2: "🟠 HIGH", 3: "🟡 REVIEW"}
+    for rec in recommendations[:10]:
+        priority = rec.get("priority", 3)
+        pkg = rec.get("package", "unknown")
+        suggestion = rec.get("suggestion", "")
+        label = priority_labels.get(priority, "⚪ LOW")
+        lines.append(f"  {label}: {pkg}")
+        lines.append(f"      {suggestion}")
+    lines.append("")
+    return lines
+
 
 def format_dependency_check_report(result: dict, input_data: dict) -> str:
     """Format dependency check output as a human-readable report.
@@ -25,22 +72,8 @@ def format_dependency_check_report(result: dict, input_data: dict) -> str:
 
     """
     lines = []
-
-    # Header with risk level
     risk_score = result.get("risk_score", 0)
-
-    if risk_score >= 75:
-        risk_icon = "🔴"
-        risk_text = "CRITICAL"
-    elif risk_score >= 50:
-        risk_icon = "🟠"
-        risk_text = "HIGH RISK"
-    elif risk_score >= 25:
-        risk_icon = "🟡"
-        risk_text = "MEDIUM RISK"
-    else:
-        risk_icon = "🟢"
-        risk_text = "LOW RISK"
+    risk_icon, risk_text = _get_risk_display(risk_score)
 
     lines.append("=" * 60)
     lines.append("DEPENDENCY SECURITY REPORT")
@@ -72,65 +105,35 @@ def format_dependency_check_report(result: dict, input_data: dict) -> str:
 
     # Vulnerability summary
     summary = result.get("summary", {})
-    vuln_count = result.get("vulnerability_count", 0)
-    outdated_count = result.get("outdated_count", 0)
-
     lines.append("-" * 60)
     lines.append("SECURITY FINDINGS")
     lines.append("-" * 60)
-    lines.append(f"Vulnerabilities: {vuln_count}")
+    lines.append(f"Vulnerabilities: {result.get('vulnerability_count', 0)}")
     lines.append(f"  🔴 Critical: {summary.get('critical', 0)}")
     lines.append(f"  🟠 High: {summary.get('high', 0)}")
     lines.append(f"  🟡 Medium: {summary.get('medium', 0)}")
-    lines.append(f"Outdated Packages: {outdated_count}")
+    lines.append(f"Outdated Packages: {result.get('outdated_count', 0)}")
     lines.append("")
 
     # Vulnerabilities detail
-    assessment = input_data.get("assessment", {})
-    vulnerabilities = assessment.get("vulnerabilities", [])
+    vulnerabilities = input_data.get("assessment", {}).get("vulnerabilities", [])
     if vulnerabilities:
-        lines.append("-" * 60)
-        lines.append("VULNERABLE PACKAGES")
-        lines.append("-" * 60)
-        for vuln in vulnerabilities[:10]:
-            severity = vuln.get("severity", "unknown").upper()
-            pkg = vuln.get("package", "unknown")
-            version = vuln.get("current_version", "?")
-            cve = vuln.get("cve", "N/A")
-            sev_icon = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡"}.get(severity, "⚪")
-            lines.append(f"  {sev_icon} {pkg}@{version}")
-            lines.append(f"      CVE: {cve} | Severity: {severity}")
-        if len(vulnerabilities) > 10:
-            lines.append(f"  ... and {len(vulnerabilities) - 10} more")
-        lines.append("")
+        lines.extend(_format_vulnerabilities(vulnerabilities))
 
     # Recommendations
     recommendations = result.get("recommendations", [])
     if recommendations:
-        lines.append("-" * 60)
-        lines.append("REMEDIATION ACTIONS")
-        lines.append("-" * 60)
-        priority_labels = {1: "🔴 URGENT", 2: "🟠 HIGH", 3: "🟡 REVIEW"}
-        for rec in recommendations[:10]:
-            priority = rec.get("priority", 3)
-            pkg = rec.get("package", "unknown")
-            suggestion = rec.get("suggestion", "")
-            label = priority_labels.get(priority, "⚪ LOW")
-            lines.append(f"  {label}: {pkg}")
-            lines.append(f"      {suggestion}")
-        lines.append("")
+        lines.extend(_format_remediation(recommendations))
 
-    # Security report from LLM (if available)
+    # Security report from LLM
     security_report = result.get("security_report", "")
     if security_report and not security_report.startswith("[Simulated"):
         lines.append("-" * 60)
         lines.append("DETAILED ANALYSIS")
         lines.append("-" * 60)
-        # Truncate if very long
-        if len(security_report) > 1500:
-            lines.append(security_report[:1500] + "...")
-        else:
-            lines.append(security_report)
+        lines.append(
+            security_report[:1500] + "..." if len(security_report) > 1500 else security_report
+        )
         lines.append("")
 
     # Footer

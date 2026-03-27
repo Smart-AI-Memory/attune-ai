@@ -276,40 +276,35 @@ class SocraticMCPServer:
             self._storage.save_session(session)
 
         # Convert to JSON-serializable format
-        agents = []
-        for agent in workflow.blueprint.agents:
-            agents.append(
-                {
-                    "agent_id": agent.agent_id,
-                    "name": agent.name,
-                    "role": agent.role.value,
-                    "description": agent.description,
-                    "tools": [t.tool_id for t in agent.tools],
-                },
-            )
-
-        stages = []
-        for stage in workflow.blueprint.stages:
-            stages.append(
-                {
-                    "stage_id": stage.stage_id,
-                    "name": stage.name,
-                    "agent_ids": stage.agent_ids,
-                    "dependencies": stage.dependencies,
-                },
-            )
-
-        metrics = []
-        for metric in workflow.success_criteria.metrics:
-            metrics.append(
-                {
-                    "metric_id": metric.metric_id,
-                    "name": metric.name,
-                    "description": metric.description,
-                    "type": metric.metric_type.value,
-                    "target": metric.target_value,
-                },
-            )
+        agents = [
+            {
+                "agent_id": a.agent_id,
+                "name": a.name,
+                "role": a.role.value,
+                "description": a.description,
+                "tools": [t.tool_id for t in a.tools],
+            }
+            for a in workflow.blueprint.agents
+        ]
+        stages = [
+            {
+                "stage_id": s.stage_id,
+                "name": s.name,
+                "agent_ids": s.agent_ids,
+                "dependencies": s.dependencies,
+            }
+            for s in workflow.blueprint.stages
+        ]
+        metrics = [
+            {
+                "metric_id": m.metric_id,
+                "name": m.name,
+                "description": m.description,
+                "type": m.metric_type.value,
+                "target": m.target_value,
+            }
+            for m in workflow.success_criteria.metrics
+        ]
 
         return {
             "session_id": session_id,

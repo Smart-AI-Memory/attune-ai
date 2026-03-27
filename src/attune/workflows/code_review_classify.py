@@ -28,104 +28,114 @@ from .base import ModelTier
 logger = logging.getLogger(__name__)
 
 
+def _count_target_lines(target_path: str) -> int:
+    """Count lines of code for a file or directory path."""
+    if not target_path:
+        return 0
+    try:
+        from pathlib import Path
+
+        from attune.models import count_lines_of_code
+
+        target_obj = Path(target_path)
+        if not target_obj.exists():
+            return 0
+        if target_obj.is_file():
+            return count_lines_of_code(target_obj)
+        if target_obj.is_dir():
+            total = 0
+            for py_file in target_obj.rglob("*.py"):
+                try:
+                    total += count_lines_of_code(py_file)
+                except (OSError, UnicodeDecodeError):
+                    pass
+            return total
+    except (OSError, ImportError):
+        pass
+    return 0
+
+
 class ClassifyMixin:
     """Mixin providing the classification stage for code review."""
 
-    async def _classify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
-        """Classify the type of change."""
+    def _get_code_to_review(self, input_data: dict) -> tuple[str | None, dict | None]:
+        """Resolve code to review, returning (code, error_result) or (code, None)."""
         diff = input_data.get("diff", "")
         target = input_data.get("target", "")
+        code = diff or target
+
+        if code and code.strip() not in (".", "", "./"):
+            return code, None
+
+        project_context = self._gather_project_context()
+        if project_context:
+            input_data["is_project_review"] = True
+            return project_context, None
+
+        error_result = {
+            "classification": "ERROR: No code provided for review",
+            "error": True,
+            "error_message": (
+                "No code was provided for review. Please ensure you:\n"
+                "1. Have a file open in the editor, OR\n"
+                "2. Select a specific file to review, OR\n"
+                '3. Provide code content directly via --input \'{"diff": "..."}\'\n\n'
+                "Tip: Use 'Select File...' option in the workflow picker."
+            ),
+            "change_type": "none",
+            "files_changed": [],
+            "file_count": 0,
+            "needs_architect_review": False,
+            "is_core_module": False,
+            "code_to_review": "",
+        }
+        return None, error_result
+
+    def _apply_auth_strategy(self, target: str, diff: str) -> None:
+        """Apply auth strategy integration for code review."""
+        try:
+            from attune.models import (
+                get_auth_strategy,
+                get_module_size_category,
+            )
+
+            target_path = target or diff
+            total_lines = _count_target_lines(target_path)
+            if total_lines <= 0:
+                return
+
+            strategy = get_auth_strategy()
+            recommended_mode = strategy.get_recommended_mode(total_lines)
+            self._auth_mode_used = recommended_mode.value
+
+            size_category = get_module_size_category(total_lines)
+            logger.info(
+                "Code review target: %s (%s LOC, %s)",
+                target_path,
+                f"{total_lines:,}",
+                size_category,
+            )
+            logger.info("Recommended auth mode: %s", recommended_mode.value)
+
+            cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
+            if recommended_mode.value == "subscription":
+                logger.info("Cost: %s", cost_estimate["quota_cost"])
+            else:
+                logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
+
+        except (AttributeError, ImportError, TypeError) as e:
+            logger.warning("Auth strategy detection failed: %s", e)
+
+    async def _classify(self, input_data: dict, tier: ModelTier) -> tuple[dict, int, int]:
+        """Classify the type of change."""
         files_changed = input_data.get("files_changed", [])
 
-        # If target provided instead of diff, use it as the code to review
-        code_to_review = diff or target
+        code_to_review, error_result = self._get_code_to_review(input_data)
+        if error_result is not None:
+            return error_result, 0, 0
 
-        # Handle project-level review when target is "." or empty
-        if not code_to_review or code_to_review.strip() in (".", "", "./"):
-            # Gather project context for project-level review
-            project_context = self._gather_project_context()
-            if not project_context:
-                # Return early with helpful error message if no context found
-                return (
-                    {
-                        "classification": "ERROR: No code provided for review",
-                        "error": True,
-                        "error_message": (
-                            "No code was provided for review. Please ensure you:\n"
-                            "1. Have a file open in the editor, OR\n"
-                            "2. Select a specific file to review, OR\n"
-                            '3. Provide code content directly via --input \'{"diff": "..."}\'\n\n'
-                            "Tip: Use 'Select File...' option in the workflow picker."
-                        ),
-                        "change_type": "none",
-                        "files_changed": [],
-                        "file_count": 0,
-                        "needs_architect_review": False,
-                        "is_core_module": False,
-                        "code_to_review": "",
-                    },
-                    0,
-                    0,
-                )
-            code_to_review = project_context
-            # Mark as project-level review
-            input_data["is_project_review"] = True
-
-        # === AUTH STRATEGY INTEGRATION ===
         if self.enable_auth_strategy:
-            try:
-                import logging
-                from pathlib import Path
-
-                from attune.models import (
-                    count_lines_of_code,
-                    get_auth_strategy,
-                    get_module_size_category,
-                )
-
-                logger = logging.getLogger(__name__)
-
-                # Calculate module size (for file) or total LOC (for directory)
-                target_path = target or diff
-                total_lines = 0
-                if target_path:
-                    try:
-                        target_obj = Path(target_path)
-                        if target_obj.exists():
-                            if target_obj.is_file():
-                                total_lines = count_lines_of_code(target_obj)
-                            elif target_obj.is_dir():
-                                for py_file in target_obj.rglob("*.py"):
-                                    try:
-                                        total_lines += count_lines_of_code(py_file)
-                                    except (OSError, UnicodeDecodeError):
-                                        pass
-                    except OSError:
-                        pass  # Invalid path (e.g. "..." on Windows)
-
-                if total_lines > 0:
-                    strategy = get_auth_strategy()
-                    recommended_mode = strategy.get_recommended_mode(total_lines)
-                    self._auth_mode_used = recommended_mode.value
-
-                    size_category = get_module_size_category(total_lines)
-                    logger.info(
-                        "Code review target: %s (%s LOC, %s)",
-                        target_path,
-                        f"{total_lines:,}",
-                        size_category,
-                    )
-                    logger.info("Recommended auth mode: %s", recommended_mode.value)
-
-                    cost_estimate = strategy.estimate_cost(total_lines, recommended_mode)
-                    if recommended_mode.value == "subscription":
-                        logger.info("Cost: %s", cost_estimate["quota_cost"])
-                    else:
-                        logger.info("Cost: ~$%.4f", cost_estimate["monetary_cost"])
-
-            except (AttributeError, ImportError, TypeError) as e:
-                logger = logging.getLogger(__name__)
-                logger.warning("Auth strategy detection failed: %s", e)
+            self._apply_auth_strategy(input_data.get("target", ""), input_data.get("diff", ""))
 
         system = """You are a code review classifier. Analyze the code and classify:
 1. Change type: bug_fix, feature, refactor, docs, test, config, or security

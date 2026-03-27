@@ -81,6 +81,56 @@ class CacheAnalyzer:
 
         return {name: CacheAnalyzer._calculate_health(stats) for name, stats in all_stats.items()}
 
+    # Thresholds: (excellent, good, fair) — below fair = "poor"
+    _HEALTH_THRESHOLDS: dict[str, tuple[float, float, float]] = {
+        "low": (0.8, 0.6, 0.0),
+        "medium": (0.7, 0.5, 0.3),
+        "high": (0.6, 0.4, 0.2),
+    }
+
+    @staticmethod
+    def _get_confidence(total_requests: int) -> str:
+        """Map request count to confidence level."""
+        if total_requests < 10:
+            return "low"
+        if total_requests < 100:
+            return "medium"
+        return "high"
+
+    @staticmethod
+    def _get_health(hit_rate: float, thresholds: tuple[float, float, float]) -> str:
+        """Map hit rate to health label using thresholds."""
+        excellent, good, fair = thresholds
+        if hit_rate >= excellent:
+            return "excellent"
+        if hit_rate >= good:
+            return "good"
+        if hit_rate >= fair:
+            return "fair"
+        return "poor"
+
+    @staticmethod
+    def _build_recommendation(hit_rate: float, total_requests: int) -> tuple[list[str], str]:
+        """Build reasons list and recommendation string."""
+        reasons = []
+        if hit_rate > 0.7:
+            reasons.append("Strong hit rate indicates good cache effectiveness")
+            recommendation = (
+                "Cache is performing well. Consider monitoring for memory usage as it grows."
+                if total_requests >= 100
+                else "Cache shows promise with limited data. Continue monitoring."
+            )
+        elif hit_rate > 0.5:
+            reasons.append("Moderate hit rate suggests cache is somewhat effective")
+            recommendation = "Monitor for patterns. May benefit from adjusted cache key strategy."
+        elif hit_rate > 0.2:
+            reasons.append("Low hit rate indicates cache may not be effective for this pattern")
+            recommendation = "Review cache invalidation strategy or consider disabling if overhead exceeds benefit."
+        else:
+            reasons.append("Very low hit rate suggests cache is ineffective")
+            recommendation = "Strongly consider disabling this cache or redesigning cache key."
+        return reasons, recommendation
+
     @staticmethod
     def _calculate_health(stats: CacheStats) -> CacheHealthScore:
         """Calculate health score for cache statistics.
@@ -96,60 +146,10 @@ class CacheAnalyzer:
         total_requests = stats.total_requests
         utilization = stats.utilization
 
-        # Determine health based on hit rate and request count
-        if total_requests < 10:
-            # Low request count - low confidence
-            confidence = "low"
-            if hit_rate >= 0.8:
-                health = "excellent"
-            elif hit_rate >= 0.6:
-                health = "good"
-            else:
-                health = "fair"
-        elif total_requests < 100:
-            # Medium request count - medium confidence
-            confidence = "medium"
-            if hit_rate >= 0.7:
-                health = "excellent"
-            elif hit_rate >= 0.5:
-                health = "good"
-            elif hit_rate >= 0.3:
-                health = "fair"
-            else:
-                health = "poor"
-        else:
-            # High request count - high confidence
-            confidence = "high"
-            if hit_rate >= 0.6:
-                health = "excellent"
-            elif hit_rate >= 0.4:
-                health = "good"
-            elif hit_rate >= 0.2:
-                health = "fair"
-            else:
-                health = "poor"
-
-        # Generate reasons and recommendations
-        reasons = []
-        recommendation = ""
-
-        if hit_rate > 0.7:
-            reasons.append("Strong hit rate indicates good cache effectiveness")
-            if total_requests >= 100:
-                recommendation = (
-                    "Cache is performing well. Consider monitoring for memory usage as it grows."
-                )
-            else:
-                recommendation = "Cache shows promise with limited data. Continue monitoring."
-        elif hit_rate > 0.5:
-            reasons.append("Moderate hit rate suggests cache is somewhat effective")
-            recommendation = "Monitor for patterns. May benefit from adjusted cache key strategy."
-        elif hit_rate > 0.2:
-            reasons.append("Low hit rate indicates cache may not be effective for this pattern")
-            recommendation = "Review cache invalidation strategy or consider disabling if overhead exceeds benefit."
-        else:
-            reasons.append("Very low hit rate suggests cache is ineffective")
-            recommendation = "Strongly consider disabling this cache or redesigning cache key."
+        confidence = CacheAnalyzer._get_confidence(total_requests)
+        thresholds = CacheAnalyzer._HEALTH_THRESHOLDS[confidence]
+        health = CacheAnalyzer._get_health(hit_rate, thresholds)
+        reasons, recommendation = CacheAnalyzer._build_recommendation(hit_rate, total_requests)
 
         if utilization > 0.9 and stats.max_size > 0:
             reasons.append("Cache is nearly full - may be evicting useful entries")

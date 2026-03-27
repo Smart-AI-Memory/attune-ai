@@ -55,7 +55,13 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-__version__ = "5.1.6"
+try:
+    from importlib.metadata import version as _get_version
+
+    __version__ = _get_version("attune-ai")
+except Exception:  # noqa: BLE001
+    # INTENTIONAL: Fallback for dev installs without metadata
+    __version__ = "dev"
 __author__ = "Patrick Roebuck"
 __email__ = "patrick.roebuck@smartaimemory.com"
 

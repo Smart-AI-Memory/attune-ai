@@ -395,105 +395,74 @@ Documentation: https://smartaimemory.com/framework-docs/
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Main entry point."""
-    parser = create_parser()
-    args = parser.parse_args(argv)
+_SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
+    "workflow": {
+        "_attr": "workflow_command",
+        "list": cmd_workflow_list,
+        "info": cmd_workflow_info,
+        "run": cmd_workflow_run,
+    },
+    "telemetry": {
+        "_attr": "telemetry_command",
+        "show": cmd_telemetry_show,
+        "savings": cmd_telemetry_savings,
+        "export": cmd_telemetry_export,
+        "routing-stats": cmd_telemetry_routing_stats,
+        "routing-check": cmd_telemetry_routing_check,
+        "models": cmd_telemetry_models,
+        "agents": cmd_telemetry_agents,
+        "signals": cmd_telemetry_signals,
+    },
+    "provider": {
+        "_attr": "provider_command",
+        "show": cmd_provider_show,
+        "set": cmd_provider_set,
+    },
+    "auth": {
+        "_attr": "auth_command",
+        "status": cmd_auth_status,
+        "setup": cmd_auth_setup,
+        "reset": cmd_auth_reset,
+        "recommend": cmd_auth_recommend,
+    },
+    "costs": {
+        "_attr": "costs_command",
+        "today": cmd_costs_today,
+        "export": cmd_costs_export,
+        "reset": cmd_costs_reset,
+    },
+}
 
-    # Configure logging
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.WARNING)
+_SIMPLE_DISPATCH: dict[str, object] = {
+    "remember": cmd_remember,
+    "forget": cmd_forget,
+    "lessons": cmd_lessons,
+    "setup": cmd_setup,
+    "doctor": cmd_doctor,
+    "features": cmd_features,
+    "validate": cmd_validate,
+    "version": cmd_version,
+}
 
-    # Route to command handlers
-    if args.command == "workflow":
-        if args.workflow_command == "list":
-            return cmd_workflow_list(args)
-        if args.workflow_command == "info":
-            return cmd_workflow_info(args)
-        if args.workflow_command == "run":
-            return cmd_workflow_run(args)
-        print("Usage: attune workflow {list|info|run}")
-        return 1
 
-    if args.command == "telemetry":
-        if args.telemetry_command == "show":
-            return cmd_telemetry_show(args)
-        if args.telemetry_command == "savings":
-            return cmd_telemetry_savings(args)
-        if args.telemetry_command == "export":
-            return cmd_telemetry_export(args)
-        if args.telemetry_command == "routing-stats":
-            return cmd_telemetry_routing_stats(args)
-        if args.telemetry_command == "routing-check":
-            return cmd_telemetry_routing_check(args)
-        if args.telemetry_command == "models":
-            return cmd_telemetry_models(args)
-        if args.telemetry_command == "agents":
-            return cmd_telemetry_agents(args)
-        if args.telemetry_command == "signals":
-            return cmd_telemetry_signals(args)
-        print(
-            "Usage: attune telemetry {show|savings|export|routing-stats|routing-check|models|agents|signals}",
-        )
-        return 1
-
-    if args.command == "provider":
-        if args.provider_command == "show":
-            return cmd_provider_show(args)
-        if args.provider_command == "set":
-            return cmd_provider_set(args)
-        print("Usage: attune provider {show|set}")
-        return 1
-
-    if args.command == "auth":
-        if args.auth_command == "status":
-            return cmd_auth_status(args)
-        if args.auth_command == "setup":
-            return cmd_auth_setup(args)
-        if args.auth_command == "reset":
-            return cmd_auth_reset(args)
-        if args.auth_command == "recommend":
-            return cmd_auth_recommend(args)
-        print("Usage: attune auth {status|setup|reset|recommend}")
-        return 1
-
-    if args.command == "remember":
-        return cmd_remember(args)
-
-    if args.command == "forget":
-        return cmd_forget(args)
-
-    if args.command == "lessons":
-        return cmd_lessons(args)
-
-    if args.command == "costs":
-        if getattr(args, "costs_command", None) == "today":
-            return cmd_costs_today(args)
-        if getattr(args, "costs_command", None) == "export":
-            return cmd_costs_export(args)
-        if getattr(args, "costs_command", None) == "reset":
-            return cmd_costs_reset(args)
-        # Default: show cost report
+def _dispatch_subcommand(args, command: str) -> int:
+    """Dispatch a command that has subcommands."""
+    table = _SUBCOMMAND_DISPATCH[command]
+    attr = table["_attr"]
+    sub = getattr(args, attr, None)
+    handler = table.get(sub)
+    if handler:
+        return handler(args)
+    # costs has a default handler (no subcommand = show report)
+    if command == "costs":
         return cmd_costs(args)
+    sub_names = [k for k in table if k != "_attr"]
+    print(f"Usage: attune {command} {{{'|'.join(sub_names)}}}")
+    return 1
 
-    if args.command == "setup":
-        return cmd_setup(args)
 
-    if args.command == "doctor":
-        return cmd_doctor(args)
-
-    if args.command == "features":
-        return cmd_features(args)
-
-    if args.command == "validate":
-        return cmd_validate(args)
-
-    if args.command == "version":
-        return cmd_version(args)
-
-    # No command given — show a concise welcome instead of full argparse help
+def _show_welcome() -> int:
+    """Show welcome message when no command is given."""
     try:
         from attune import __version__
 
@@ -519,6 +488,29 @@ For interactive development in Claude Code:
 More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
     )
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Main entry point."""
+    parser = create_parser()
+    args = parser.parse_args(argv)
+
+    # Configure logging
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
+
+    command = args.command
+
+    # Subcommand dispatch (workflow, telemetry, provider, auth, costs)
+    if command in _SUBCOMMAND_DISPATCH:
+        return _dispatch_subcommand(args, command)
+
+    # Simple command dispatch
+    handler = _SIMPLE_DISPATCH.get(command)
+    if handler:
+        return handler(args)
+
+    # No command given
+    return _show_welcome()
 
 
 if __name__ == "__main__":

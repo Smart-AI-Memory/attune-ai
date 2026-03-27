@@ -108,23 +108,33 @@ class TestMainCostsRouting:
         assert main(["costs"]) == 0
         mock_fn.assert_called_once()
 
-    @patch(f"{_CLI}.cmd_costs_today", return_value=0)
-    def test_costs_today(self, mock_fn: MagicMock) -> None:
+    @patch("attune.cost_tracker.CostTracker")
+    def test_costs_today(self, mock_tracker_cls: MagicMock) -> None:
         """Attune costs today dispatches to cmd_costs_today."""
+        tracker = MagicMock()
+        tracker.get_today.return_value = {
+            "requests": 5,
+            "actual_cost": 0.0044,
+            "baseline_cost": 0.2625,
+            "savings": 0.2581,
+        }
+        mock_tracker_cls.return_value = tracker
         assert main(["costs", "today"]) == 0
-        mock_fn.assert_called_once()
+        tracker.get_today.assert_called_once()
 
-    @patch(f"{_CLI}.cmd_costs_export", return_value=0)
-    def test_costs_export(self, mock_fn: MagicMock) -> None:
+    @patch("attune.cost_tracker.CostTracker")
+    def test_costs_export(self, mock_tracker_cls: MagicMock, tmp_path) -> None:
         """Attune costs export dispatches to cmd_costs_export."""
-        assert main(["costs", "export", "-o", "f.json"]) == 0
-        mock_fn.assert_called_once()
+        tracker = MagicMock()
+        tracker.get_summary.return_value = {"total_cost": 0.0, "requests": 0}
+        mock_tracker_cls.return_value = tracker
+        out = tmp_path / "costs.json"
+        assert main(["costs", "export", "-o", str(out)]) == 0
 
-    @patch(f"{_CLI}.cmd_costs_reset", return_value=0)
-    def test_costs_reset(self, mock_fn: MagicMock) -> None:
+    def test_costs_reset(self) -> None:
         """Attune costs reset dispatches to cmd_costs_reset."""
+        # cmd_costs_reset directly deletes files, no CostTracker needed
         assert main(["costs", "reset", "--confirm"]) == 0
-        mock_fn.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

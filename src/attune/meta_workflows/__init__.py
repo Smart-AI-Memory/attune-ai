@@ -10,6 +10,7 @@ Created: 2026-01-17
 Version: 1.0.0 (experimental)
 """
 
+from attune import __version__
 from attune.meta_workflows.agent_creator import DynamicAgentCreator
 from attune.meta_workflows.form_engine import SocraticFormEngine
 from attune.meta_workflows.intent_detector import (
@@ -38,8 +39,6 @@ from attune.meta_workflows.workflow import (
     list_execution_results,
     load_execution_result,
 )
-
-__version__ = "1.0.0"
 
 __all__ = [
     # Enums

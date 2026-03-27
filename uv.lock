@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "5.3.1"
+version = "5.3.2"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -244,6 +244,7 @@ dependencies = [
     { name = "defusedxml" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "python-multipart" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "structlog" },
@@ -502,7 +503,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'otel'", specifier = ">=1.20.0,<2.0.0" },
     { name = "pre-commit", marker = "extra == 'all'", specifier = ">=3.0,<5.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0,<5.0" },
-    { name = "pydantic", specifier = ">=2.0.0,<3.0.0" },
+    { name = "pydantic", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygls", marker = "extra == 'all'", specifier = ">=1.0.0,<3.0.0" },
     { name = "pygls", marker = "extra == 'lsp'", specifier = ">=1.0.0,<3.0.0" },
     { name = "pyjwt", extras = ["crypto"], marker = "extra == 'all'", specifier = ">=2.8.0" },
@@ -525,6 +526,7 @@ requires-dist = [
     { name = "python-docx", marker = "extra == 'enterprise'", specifier = ">=0.8.11,<2.0.0" },
     { name = "python-docx", marker = "extra == 'full'", specifier = ">=0.8.11,<2.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0,<2.0.0" },
+    { name = "python-multipart", specifier = ">=0.0.22" },
     { name = "pyyaml", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'all'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'developer'", specifier = ">=6.0,<7.0" },

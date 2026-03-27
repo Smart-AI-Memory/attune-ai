@@ -393,99 +393,17 @@ def ensure_redis(
     if verbose:
         print("Redis not running. Attempting to start...")
 
-    # Build platform-specific method list
-    start_methods: list[tuple[RedisStartMethod, Callable[[], bool]]] = []
-
-    if IS_MACOS:
-        start_methods.append((RedisStartMethod.HOMEBREW, _start_via_homebrew))
-    elif IS_LINUX:
-        start_methods.append((RedisStartMethod.SYSTEMD, _start_via_systemd))
-    elif IS_WINDOWS:
-        # Windows-specific methods
-        start_methods.extend(
-            [
-                (RedisStartMethod.WINDOWS_SERVICE, _start_via_windows_service),
-                (RedisStartMethod.CHOCOLATEY, _start_via_chocolatey),
-                (RedisStartMethod.SCOOP, _start_via_scoop),
-                (RedisStartMethod.WSL, _start_via_wsl),
-            ],
-        )
-
-    # Docker and direct work on all platforms
-    start_methods.extend(
-        [
-            (RedisStartMethod.DOCKER, lambda: _start_via_docker(port)),
-            (RedisStartMethod.DIRECT, lambda: _start_via_direct(port)),
-        ],
-    )
-
-    for method, start_func in start_methods:
-        try:
-            if start_func():
-                # Verify it's actually running
-                if _check_redis_running(host, port):
-                    status = RedisStatus(
-                        available=True,
-                        method=method,
-                        host=host,
-                        port=port,
-                        message=f"Redis started via {method.value}",
-                    )
-                    if verbose:
-                        print(f"✓ Redis started via {method.value}")
-                    return status
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Each start method is best-effort — try next method on failure
-            logger.debug("start_method_failed", method=method.value, error=str(e))
-            continue
+    # Try platform-specific and cross-platform start methods
+    started = _try_start_methods(host, port, verbose)
+    if started:
+        return started
 
     # All methods failed — offer interactive install if in a TTY
-    if sys.stdin.isatty():
-        try:
-            from attune.memory.redis_auto_detect import RedisAutoDetector
+    started = _try_interactive_install(host, port)
+    if started:
+        return started
 
-            detector = RedisAutoDetector()
-            if detector.should_prompt():
-                if detector.prompt_install():
-                    # Retry after install
-                    if _check_redis_running(host, port):
-                        return RedisStatus(
-                            available=True,
-                            method=RedisStartMethod.DIRECT,
-                            host=host,
-                            port=port,
-                            message="Redis installed and started via user prompt",
-                        )
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Install prompt is best-effort — fall through to mock
-            logger.debug("redis_install_prompt_failed", error=str(e))
-
-    # Build platform-specific fallback message
-    if IS_WINDOWS:
-        install_instructions = (
-            "Could not start Redis. For full functionality, install Redis:\n"
-            "  Chocolatey: choco install redis-64\n"
-            "  Scoop:      scoop install redis\n"
-            "  WSL:        wsl sudo apt install redis-server\n"
-            "  Docker:     docker run -d -p 6379:6379 redis:alpine\n"
-            "  Manual:     Download from https://github.com/microsoftarchive/redis/releases"
-        )
-    elif IS_MACOS:
-        install_instructions = (
-            "Could not start Redis. For full functionality, install Redis:\n"
-            "  Homebrew: brew install redis && brew services start redis\n"
-            "  Docker:   docker run -d -p 6379:6379 redis:alpine"
-        )
-    else:  # Linux
-        install_instructions = (
-            "Could not start Redis. For full functionality, install Redis:\n"
-            "  Ubuntu/Debian: sudo apt install redis-server\n"
-            "  RHEL/CentOS:   sudo yum install redis\n"
-            "  Docker:        docker run -d -p 6379:6379 redis:alpine"
-        )
-
-    message = f"{install_instructions}\n\nFalling back to in-memory mock (single-process only)."
-
+    message = _get_install_instructions()
     if verbose:
         print(f"\n⚠ {message}")
 
@@ -495,6 +413,114 @@ def ensure_redis(
         host=host,
         port=port,
         message=message,
+    )
+
+
+def _try_start_methods(
+    host: str,
+    port: int,
+    verbose: bool,
+) -> RedisStatus | None:
+    """Try platform-specific Redis start methods in order."""
+    start_methods: list[tuple[RedisStartMethod, Callable[[], bool]]] = []
+
+    if IS_MACOS:
+        start_methods.append((RedisStartMethod.HOMEBREW, _start_via_homebrew))
+    elif IS_LINUX:
+        start_methods.append((RedisStartMethod.SYSTEMD, _start_via_systemd))
+    elif IS_WINDOWS:
+        start_methods.extend(
+            [
+                (RedisStartMethod.WINDOWS_SERVICE, _start_via_windows_service),
+                (RedisStartMethod.CHOCOLATEY, _start_via_chocolatey),
+                (RedisStartMethod.SCOOP, _start_via_scoop),
+                (RedisStartMethod.WSL, _start_via_wsl),
+            ]
+        )
+
+    start_methods.extend(
+        [
+            (RedisStartMethod.DOCKER, lambda: _start_via_docker(port)),
+            (RedisStartMethod.DIRECT, lambda: _start_via_direct(port)),
+        ]
+    )
+
+    for method, start_func in start_methods:
+        try:
+            if start_func() and _check_redis_running(host, port):
+                if verbose:
+                    print(f"✓ Redis started via {method.value}")
+                return RedisStatus(
+                    available=True,
+                    method=method,
+                    host=host,
+                    port=port,
+                    message=f"Redis started via {method.value}",
+                )
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Each start method is best-effort
+            logger.debug("start_method_failed", method=method.value, error=str(e))
+
+    return None
+
+
+def _try_interactive_install(host: str, port: int) -> RedisStatus | None:
+    """Attempt interactive Redis install if running in a TTY."""
+    if not sys.stdin.isatty():
+        return None
+    try:
+        from attune.memory.redis_auto_detect import RedisAutoDetector
+
+        detector = RedisAutoDetector()
+        if detector.should_prompt() and detector.prompt_install():
+            if _check_redis_running(host, port):
+                return RedisStatus(
+                    available=True,
+                    method=RedisStartMethod.DIRECT,
+                    host=host,
+                    port=port,
+                    message="Redis installed and started via user prompt",
+                )
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Install prompt is best-effort
+        logger.debug("redis_install_prompt_failed", error=str(e))
+    return None
+
+
+_INSTALL_INSTRUCTIONS = {
+    "windows": (
+        "Could not start Redis. For full functionality, install Redis:\n"
+        "  Chocolatey: choco install redis-64\n"
+        "  Scoop:      scoop install redis\n"
+        "  WSL:        wsl sudo apt install redis-server\n"
+        "  Docker:     docker run -d -p 6379:6379 redis:alpine\n"
+        "  Manual:     Download from https://github.com/microsoftarchive/redis/releases"
+    ),
+    "macos": (
+        "Could not start Redis. For full functionality, install Redis:\n"
+        "  Homebrew: brew install redis && brew services start redis\n"
+        "  Docker:   docker run -d -p 6379:6379 redis:alpine"
+    ),
+    "linux": (
+        "Could not start Redis. For full functionality, install Redis:\n"
+        "  Ubuntu/Debian: sudo apt install redis-server\n"
+        "  RHEL/CentOS:   sudo yum install redis\n"
+        "  Docker:        docker run -d -p 6379:6379 redis:alpine"
+    ),
+}
+
+
+def _get_install_instructions() -> str:
+    """Get platform-specific Redis install instructions."""
+    if IS_WINDOWS:
+        platform = "windows"
+    elif IS_MACOS:
+        platform = "macos"
+    else:
+        platform = "linux"
+    return (
+        f"{_INSTALL_INSTRUCTIONS[platform]}\n\n"
+        "Falling back to in-memory mock (single-process only)."
     )
 
 

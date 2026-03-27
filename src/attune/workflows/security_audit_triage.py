@@ -34,104 +34,9 @@ class TriageStageMixin:
         target_path = input_data.get("path", ".")
         file_types = input_data.get("file_types", [".py", ".ts", ".tsx", ".js", ".jsx"])
 
-        findings: list[dict] = []
-        files_scanned = 0
-
         target = Path(target_path)
-        if target.exists():
-            # Handle both file and directory targets
-            files_to_scan: list[Path] = []
-            if target.is_file():
-                # Single file - check if it matches file_types
-                if any(str(target).endswith(ext) for ext in file_types):
-                    files_to_scan = [target]
-            else:
-                # Directory - recursively find all matching files
-                for ext in file_types:
-                    for file_path in target.rglob(f"*{ext}"):
-                        # Skip excluded directories
-                        if any(skip in str(file_path) for skip in SKIP_DIRECTORIES):
-                            continue
-                        files_to_scan.append(file_path)
-
-            for file_path in files_to_scan:
-                try:
-                    content = file_path.read_text(errors="ignore")
-                    lines = content.split("\n")
-                    files_scanned += 1
-
-                    for vuln_type, vuln_info in SECURITY_PATTERNS.items():
-                        for pattern in vuln_info["patterns"]:
-                            matches = list(re.finditer(pattern, content, re.IGNORECASE))
-                            for match in matches:
-                                # Find line number and get the line content
-                                line_num = content[: match.start()].count("\n") + 1
-                                line_content = lines[line_num - 1] if line_num <= len(lines) else ""
-
-                                # Skip if file is a security example/test file
-                                file_name = str(file_path)
-                                if any(exp in file_name for exp in SECURITY_EXAMPLE_PATHS):
-                                    continue
-
-                                # Skip if this looks like detection/scanning code
-                                if self._is_detection_code(line_content, match.group()):
-                                    continue
-
-                                # Phase 2: Skip safe SQL parameterization patterns
-                                if vuln_type == "sql_injection":
-                                    if self._is_safe_sql_parameterization(
-                                        line_content,
-                                        match.group(),
-                                        content,
-                                    ):
-                                        continue
-
-                                # Skip fake/test credentials
-                                if vuln_type == "hardcoded_secret":
-                                    if self._is_fake_credential(match.group()):
-                                        continue
-
-                                # Phase 2: Skip safe random usage (tests, demos, documented)
-                                if vuln_type == "insecure_random":
-                                    if self._is_safe_random_usage(
-                                        line_content,
-                                        file_name,
-                                        content,
-                                    ):
-                                        continue
-
-                                # Skip command_injection in documentation strings
-                                if vuln_type == "command_injection":
-                                    if self._is_documentation_or_string(
-                                        line_content,
-                                        match.group(),
-                                    ):
-                                        continue
-
-                                # Check if this is a test file - downgrade to informational
-                                is_test_file = any(
-                                    re.search(pat, file_name) for pat in TEST_FILE_PATTERNS
-                                )
-
-                                # Skip test file findings for hardcoded_secret (expected in tests)
-                                if is_test_file and vuln_type == "hardcoded_secret":
-                                    continue
-
-                                findings.append(
-                                    {
-                                        "type": vuln_type,
-                                        "file": str(file_path),
-                                        "line": line_num,
-                                        "match": match.group()[:100],
-                                        "severity": (
-                                            "low" if is_test_file else vuln_info["severity"]
-                                        ),
-                                        "owasp": vuln_info["owasp"],
-                                        "is_test": is_test_file,
-                                    },
-                                )
-                except OSError:
-                    continue
+        files_to_scan = self._collect_files_to_scan(target, file_types)
+        findings, files_scanned = self._scan_files_for_patterns(files_to_scan)
 
         # Phase 3: Apply AST-based filtering for command injection
         findings = self._apply_phase3_filtering(findings)
@@ -152,6 +57,105 @@ class TriageStageMixin:
             input_tokens,
             output_tokens,
         )
+
+    def _collect_files_to_scan(self, target: Path, file_types: list[str]) -> list[Path]:
+        """Collect files matching the target path and file types."""
+        if not target.exists():
+            return []
+        if target.is_file():
+            if any(str(target).endswith(ext) for ext in file_types):
+                return [target]
+            return []
+        files: list[Path] = []
+        for ext in file_types:
+            for file_path in target.rglob(f"*{ext}"):
+                if any(skip in str(file_path) for skip in SKIP_DIRECTORIES):
+                    continue
+                files.append(file_path)
+        return files
+
+    def _scan_files_for_patterns(self, files: list[Path]) -> tuple[list[dict], int]:
+        """Scan files for security patterns and return findings."""
+        findings: list[dict] = []
+        files_scanned = 0
+
+        for file_path in files:
+            try:
+                content = file_path.read_text(errors="ignore")
+                lines = content.split("\n")
+                files_scanned += 1
+                file_name = str(file_path)
+
+                for vuln_type, vuln_info in SECURITY_PATTERNS.items():
+                    for pattern in vuln_info["patterns"]:
+                        for match in re.finditer(pattern, content, re.IGNORECASE):
+                            finding = self._evaluate_match(
+                                match,
+                                content,
+                                lines,
+                                file_name,
+                                vuln_type,
+                                vuln_info,
+                            )
+                            if finding:
+                                findings.append(finding)
+            except OSError:
+                continue
+
+        return findings, files_scanned
+
+    def _evaluate_match(
+        self,
+        match: re.Match,
+        content: str,
+        lines: list[str],
+        file_name: str,
+        vuln_type: str,
+        vuln_info: dict,
+    ) -> dict | None:
+        """Evaluate a single regex match and return a finding or None if filtered."""
+        line_num = content[: match.start()].count("\n") + 1
+        line_content = lines[line_num - 1] if line_num <= len(lines) else ""
+        matched_text = match.group()
+
+        # Skip security example/test files
+        if any(exp in file_name for exp in SECURITY_EXAMPLE_PATHS):
+            return None
+        if self._is_detection_code(line_content, matched_text):
+            return None
+        if vuln_type == "sql_injection" and self._is_safe_sql_parameterization(
+            line_content,
+            matched_text,
+            content,
+        ):
+            return None
+        if vuln_type == "hardcoded_secret" and self._is_fake_credential(matched_text):
+            return None
+        if vuln_type == "insecure_random" and self._is_safe_random_usage(
+            line_content,
+            file_name,
+            content,
+        ):
+            return None
+        if vuln_type == "command_injection" and self._is_documentation_or_string(
+            line_content,
+            matched_text,
+        ):
+            return None
+
+        is_test_file = any(re.search(pat, file_name) for pat in TEST_FILE_PATTERNS)
+        if is_test_file and vuln_type == "hardcoded_secret":
+            return None
+
+        return {
+            "type": vuln_type,
+            "file": file_name,
+            "line": line_num,
+            "match": matched_text[:100],
+            "severity": "low" if is_test_file else vuln_info["severity"],
+            "owasp": vuln_info["owasp"],
+            "is_test": is_test_file,
+        }
 
     def _apply_phase3_filtering(self, findings: list[dict]) -> list[dict]:
         """Apply AST-based Phase 3 filtering for command injection findings.

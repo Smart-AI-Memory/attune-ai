@@ -122,12 +122,10 @@ class TierService:
         complexity = self._assess_complexity(input_data)
 
         stage_index = self._stages.index(stage_name) if stage_name in self._stages else 0
-        if stage_index == 0:
-            latency_sensitivity = "high"
-        elif stage_index < len(self._stages) // 2:
-            latency_sensitivity = "medium"
-        else:
-            latency_sensitivity = "low"
+        half = len(self._stages) // 2
+        latency_sensitivity = (
+            "high" if stage_index == 0 else ("medium" if stage_index < half else "low")
+        )
 
         context = RoutingContext(
             task_type=f"{self._workflow_name}:{stage_name}",
@@ -173,13 +171,10 @@ class TierService:
             stage=stage_name,
         )
 
+        _UPGRADE = {ModelTier.CHEAP: ModelTier.CAPABLE, ModelTier.CAPABLE: ModelTier.PREMIUM}
+
         if should_upgrade:
-            if current_tier == ModelTier.CHEAP:
-                new_tier = ModelTier.CAPABLE
-            elif current_tier == ModelTier.CAPABLE:
-                new_tier = ModelTier.PREMIUM
-            else:
-                new_tier = current_tier
+            new_tier = _UPGRADE.get(current_tier, current_tier)
 
             logger.warning(
                 f"Adaptive tier upgrade: {self._workflow_name}:{stage_name} "
