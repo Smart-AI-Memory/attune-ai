@@ -1,6 +1,7 @@
 #!/bin/bash -eu
 
 pip3 install atheris==3.0.0
+pip3 install structlog
 pip3 install --no-deps $SRC/attune-ai
 
 # Compile fuzz targets using the standard OSS-Fuzz helper.
