@@ -751,10 +751,11 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (purple) which is brighter. This affected callout boxes and hero
   sections on the attune-lite page.
 
-- **Claude Code plugins expect `plugin.json` at the repo root**:
-  Placing `plugin.json` inside a subdirectory like `.claude-plugin/`
-  causes install errors. Claude Code looks for `plugin.json` at the
-  top level of the repo, alongside `skills/` and `commands/`.
+- **Claude Code plugins expect `plugin.json` inside `.claude-plugin/`**:
+  The correct location is `<plugin-root>/.claude-plugin/plugin.json`.
+  Skills, commands, agents, and hooks directories go at the plugin
+  root level alongside `.claude-plugin/`. Use `claude --plugin-dir
+  ./plugin` to test local plugins during development.
 
 - **`_validate_file_path` needed on reads too, not just writes**:
   `load_state(user_id)` and `delete_state(user_id)` built paths
@@ -838,7 +839,11 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   invoked as `/attune` directly. A skill named
   `workflow-orchestration` is invoked as
   `/attune-ai:workflow-orchestration`. Keep a command as
-  the short entry point when UX matters.
+  the short entry point when UX matters. Check Claude
+  Code built-ins (`/batch`, `/compact`, `/config`,
+  `/cost`, `/help`, `/init`, `/login`, `/logout`,
+  `/memory`, `/permissions`, `/review`, `/status`,
+  `/vim`) before naming commands to avoid collisions.
 
 - **MCP tool renames propagate to skill docs**: The empathy
   tools were renamed from `empathy_get_level`/`empathy_set_level`
@@ -960,17 +965,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `str(Path(f.name).resolve())` instead of `f.name`. This is the macOS
   equivalent of the Windows drive-letter lesson.
 
-- **Plugin skills are namespaced, commands are not**: A skill
-  named `doc-gen` in `plugin/skills/doc-gen/SKILL.md` is invoked
-  as `/attune-lite:doc-gen` (namespaced under the plugin name).
-  A command named `doc-gen` in `plugin/commands/doc-gen.md` is
-  invoked as `/doc-gen` directly. If users should be able to type
-  short slash commands, create thin command wrappers that `Read
-  skill` the corresponding SKILL.md. Check Claude Code built-ins
-  (`/batch`, `/compact`, `/config`, `/cost`, `/help`, `/init`,
-  `/login`, `/logout`, `/memory`, `/permissions`, `/review`,
-  `/status`, `/vim`) before naming commands to avoid collisions.
-
 - **PyPI renders README links relative to its own domain**: Relative
   links like `docs/ARCHITECTURE.md` become
   `https://pypi.org/project/attune-ai/docs/ARCHITECTURE.md` which
@@ -1035,5 +1029,91 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   values. `generateStaticParams` constrains valid values but CodeQL
   can't see that.
 
-- **2026-03-26** Test lesson
+- **Dispatch tables hold direct function references — mocks
+  must target the table, not the module name**: When
+  `_SUBCOMMAND_DISPATCH` or `_SIMPLE_DISPATCH` in
+  `cli_minimal.py` captures `cmd_foo` at import time,
+  `@patch("attune.cli_minimal.cmd_foo")` replaces the module
+  attribute but the dispatch table still calls the original.
+  Fix: use `patch.dict("attune.cli_minimal._SUBCOMMAND_DISPATCH",
+  {command: {**orig, subcommand: mock_fn}})` to replace the
+  entry in the dispatch table itself. This caused 20+
+  pre-existing test failures.
+
+- **Pre-commit stash conflicts when any tracked unstaged file
+  exists alongside staged files**: Even a single unrelated
+  unstaged tracked file (e.g. `memdocs_storage/test_key.json`)
+  triggers pre-commit's stash/restore cycle. If auto-fix hooks
+  (black, ruff) modify staged files during that cycle, the
+  restore conflicts and the commit fails. Fix: `git stash push`
+  the unstaged tracked files before committing, then
+  `git stash pop` after.
+
+- **`hot_reload/` subsystem was 1,038 lines of dead code**:
+  Zero inbound imports from any file outside the package, but
+  it had its own test suite (1,409 lines) that all passed —
+  making it look alive. Lesson: passing tests are not evidence
+  of integration. Always grep for imports outside the module
+  itself before considering a feature active. (This echoes the
+  existing `socratic/embeddings/` lesson but for a different
+  module.)
+
+- **`gh pr merge --admin` is blocked by in-progress required
+  checks**: The `--admin` flag only bypasses failed or missing
+  checks — it cannot override checks that are still running.
+  GitHub returns `Required status check "X" is in progress`.
+  You must wait for required checks to complete (or cancel
+  them) before even an admin merge is possible. Budget extra
+  time when the test matrix is large (12 platform combos ~15
+  min).
+
+- **ClusterFuzzLite `--no-deps` misses transitive imports**:
+  `.clusterfuzzlite/build.sh` used `pip3 install --no-deps`
+  to keep the fuzz image lean, but when `attune.security`
+  gained a transitive import chain to `structlog` (via
+  `attune.memory.security.secrets_detector`), the fuzz target
+  crashed at startup with `ModuleNotFoundError`. PyInstaller
+  `--hidden-import` flags tell the bundler about modules but
+  don't install missing packages. Fix: explicitly `pip3
+  install <dep>` for any dependency reachable from fuzz target
+  imports.
+- **Required status check names must match GitHub's exact check
+  names**: We set `Analyze Python` as a required check, but the
+  actual name is `Analyze (python)` (with parentheses). Mismatched
+  names silently block merges because the expected check never
+  appears. Always run `gh pr checks <PR>` first to see the exact
+  check names before adding them to branch protection.
+
+- **`enforce_admins` + required reviews blocks solo-dev merges**:
+  With `enforce_admins: true` and `required_approving_review_count:
+  1`, the repo owner cannot self-approve PRs (`Review Can not
+  approve your own pull request`) and `--admin` merge also fails.
+  The auto-approve workflow's `GITHUB_TOKEN` also can't approve
+  the PR author's own PRs. For solo-dev repos: temporarily remove
+  the review requirement via API, merge, then re-enable. The
+  auto-approve workflow works correctly for PRs opened by other
+  actors (Dependabot, collaborators).
+
+- **OpenSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are
+  process metrics, not code bugs**: They measure the ratio of
+  approved/analyzed changesets over time. No single PR can fix
+  them — they improve incrementally as future PRs flow through
+  review and SAST gates. Setting up the gates (required reviews,
+  required CodeQL checks) is the fix; the score follows.
+- **Scorecard's pip parser ignores `--hash` flags entirely**:
+  Even single-line `pip3 install 'pkg==1.0' --hash=sha256:abc...`
+  is flagged as "not pinned by hash". Scorecard's `PinnedDependenciesID`
+  check does not recognize pip's `--hash` CLI flag — it only
+  recognizes `--require-hashes` with a requirements file, or
+  possibly other formats. For ClusterFuzzLite `build.sh`, dismiss
+  as false positive since the deps ARE hash-pinned. The alerts
+  recur on each Scorecard re-scan so expect to re-dismiss.
+
+- **Re-enabling required reviews kills queued auto-merge**: If you
+  set `gh pr merge --auto` while reviews are removed, then
+  re-enable `required_approving_review_count: 1` before the merge
+  fires, auto-merge is blocked (no approval exists). Fix: either
+  wait for auto-merge to complete before re-enabling reviews, or
+  skip auto-merge entirely and use the remove-reviews → admin-merge
+  → re-enable-reviews pattern.
 <!-- attune-lessons-end -->
