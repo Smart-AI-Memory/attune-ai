@@ -1116,4 +1116,40 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   wait for auto-merge to complete before re-enabling reviews, or
   skip auto-merge entirely and use the remove-reviews → admin-merge
   → re-enable-reviews pattern.
+- **Skill descriptions must be under 250 characters**: Anthropic
+  truncates skill descriptions longer than 250 chars, which breaks
+  auto-triggering from natural language. Always check with
+  `len(description)` after editing SKILL.md frontmatter. Our initial
+  migration had 7 of 11 skills over the limit.
+
+- **Skill frontmatter allowlist (March 2026)**: Valid fields are
+  `name`, `description`, `argument-hint`, `disable-model-invocation`,
+  `user-invocable`, `allowed-tools`, `model`, `effort`, `context`,
+  `agent`, `hooks`, `paths`, `shell`. Fields `compatibility`,
+  `license`, and `metadata` are NOT in the official docs and should
+  not be used. The old lesson about a strict 8-field allowlist was
+  outdated.
+
+- **`claude plugin install` is marketplace-only**: The `install`
+  command does not accept local paths. For local testing use
+  `claude --plugin-dir ./plugin`. For distribution, create a
+  `.claude-plugin/marketplace.json` at the repo root and have users
+  run `claude plugin marketplace add owner/repo` then
+  `claude plugin install name@marketplace`.
+
+- **GitHub repos serve as Claude Code marketplaces**: Add
+  `.claude-plugin/marketplace.json` at the repo root with a `source`
+  field pointing to the plugin subdirectory (e.g., `"./plugin"`).
+  Users install with two commands:
+  `claude plugin marketplace add Smart-AI-Memory/attune-ai` then
+  `claude plugin install attune-ai@attune-ai`. The marketplace clones
+  from the default branch — changes must be merged to `main` before
+  users see them.
+
+- **Duplicate plugins cause conflicting skill triggers**: Having
+  both `attune-lite` and `attune-ai` installed creates duplicate
+  skills (`security-audit`, `smart-test`, etc.). Claude sees both
+  and must pick one, degrading UX. When consolidating plugins,
+  deprecate the old one and uninstall it before installing the
+  replacement.
 <!-- attune-lessons-end -->
