@@ -300,18 +300,18 @@ class TestPluginStructure:
         """Test that the expected number of skills exist."""
         skills_dir = PLUGIN_ROOT / "skills"
         skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
-        assert len(skill_dirs) == 11, (
-            f"Expected 11 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
+        assert len(skill_dirs) == 13, (
+            f"Expected 13 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
         )
 
-    def test_command_count(self) -> None:
-        """Test that exactly 2 commands exist (attune + spec)."""
+    def test_no_commands_directory(self) -> None:
+        """Test that commands/ directory no longer exists (fully skills-centric)."""
         commands_dir = PLUGIN_ROOT / "commands"
-        cmd_files = sorted(f.name for f in commands_dir.glob("*.md"))
-        assert cmd_files == [
-            "attune.md",
-            "spec.md",
-        ], f"Expected ['attune.md', 'spec.md'], found {cmd_files}"
+        assert not commands_dir.exists(), (
+            f"commands/ directory should not exist. "
+            f"All commands migrated to skills. "
+            f"Found: {sorted(f.name for f in commands_dir.glob('*.md')) if commands_dir.exists() else []}"
+        )
 
     def test_hook_scripts_exist(self) -> None:
         """Test that hook commands reference existing scripts."""

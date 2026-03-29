@@ -106,23 +106,23 @@ def _collect_skill_refs() -> tuple[list[tuple[str, str]], list[tuple[str, str, s
     return tool_refs, class_refs
 
 
-def _collect_command_tool_refs() -> list[tuple[str, str]]:
-    """Extract MCP tool names referenced in attune.md."""
-    content = _CMD_CONTENTS.get("attune.md", "")
+def _collect_hub_tool_refs() -> list[tuple[str, str]]:
+    """Extract MCP tool names referenced in attune-hub skill."""
+    content = _SKILL_CONTENTS.get("attune-hub", "")
     if not content:
         return []
 
     refs: list[tuple[str, str]] = []
     for m in re.finditer(r"[Cc]all\s+`([a-z][a-z_]+)`", content):
         if "_" in m.group(1):
-            refs.append(("attune.md", m.group(1)))
+            refs.append(("attune-hub", m.group(1)))
 
     for row in _iter_table_rows(content, "Natural Language Routing"):
         parts = row.split("|")
         if len(parts) >= 3:
             action = parts[2].strip()
             for name in re.findall(r"([a-z][a-z_]+_[a-z_]+)", action):
-                refs.append(("attune.md", name))
+                refs.append(("attune-hub", name))
 
     seen: dict[str, tuple[str, str]] = {}
     for pair in refs:
@@ -131,8 +131,8 @@ def _collect_command_tool_refs() -> list[tuple[str, str]]:
 
 
 def _collect_attune_skill_names() -> set[str]:
-    """Extract skill names from attune.md's Skills Reference table."""
-    content = _CMD_CONTENTS.get("attune.md", "")
+    """Extract skill names from attune-hub's Skills Reference table."""
+    content = _SKILL_CONTENTS.get("attune-hub", "")
     names: set[str] = set()
     for row in _iter_table_rows(content, "Skills Reference"):
         parts = row.split("|")
@@ -160,7 +160,7 @@ def _get_registered_tool_names() -> set[str]:
 
 COMMAND_SKILL_REFS, FILE_PATH_REFS = _collect_command_refs()
 SKILL_TOOL_REFS, SKILL_CLASS_REFS = _collect_skill_refs()
-COMMAND_TOOL_REFS = _collect_command_tool_refs()
+HUB_TOOL_REFS = _collect_hub_tool_refs()
 ATTUNE_SKILL_NAMES = _collect_attune_skill_names()
 
 try:
@@ -211,19 +211,19 @@ class TestSkillMcpToolRefs:
 
 
 @pytest.mark.unit
-class TestCommandMcpToolRefs:
-    """MCP tool names referenced in attune.md must exist in schemas."""
+class TestHubMcpToolRefs:
+    """MCP tool names referenced in attune-hub must exist in schemas."""
 
     @pytest.mark.skipif(not MCP_TOOL_NAMES, reason="attune not installed")
     @pytest.mark.parametrize(
-        "command_file,tool_name",
-        COMMAND_TOOL_REFS,
-        ids=[f"{cmd}:{tool}" for cmd, tool in COMMAND_TOOL_REFS],
+        "skill_name,tool_name",
+        HUB_TOOL_REFS,
+        ids=[f"{skill}:{tool}" for skill, tool in HUB_TOOL_REFS],
     )
-    def test_tool_exists(self, command_file: str, tool_name: str) -> None:
-        """Verify MCP tool referenced by command is registered."""
+    def test_tool_exists(self, skill_name: str, tool_name: str) -> None:
+        """Verify MCP tool referenced by hub skill is registered."""
         assert tool_name in MCP_TOOL_NAMES, (
-            f"Command '{command_file}' references MCP tool '{tool_name}' "
+            f"Skill '{skill_name}' references MCP tool '{tool_name}' "
             f"which is not registered in tool_schemas.py. "
             f"Registered tools: {sorted(MCP_TOOL_NAMES)}"
         )
@@ -276,7 +276,7 @@ class TestCoverage:
     """Ensure no commands or skills are orphaned."""
 
     def test_all_skill_dirs_referenced_by_attune_hub(self) -> None:
-        """Every skill directory should appear in attune.md Skills Reference."""
+        """Every skill should appear in attune-hub's Skills Reference."""
         skills_dir = PLUGIN_ROOT / "skills"
         if not skills_dir.exists():
             pytest.skip("No skills directory")
@@ -284,11 +284,11 @@ class TestCoverage:
         all_skills = {
             d.name for d in skills_dir.iterdir() if d.is_dir() and (d / "SKILL.md").exists()
         }
-        # Skills are referenced in attune.md's Skills Reference table
-        referenced = ATTUNE_SKILL_NAMES
+        # attune-hub and spec reference themselves, so exclude from orphan check
+        referenced = ATTUNE_SKILL_NAMES | {"attune-hub", "spec"}
 
         orphaned = all_skills - referenced
-        assert not orphaned, f"Skills not in attune.md Skills Reference: {orphaned}"
+        assert not orphaned, f"Skills not in attune-hub Skills Reference: {orphaned}"
 
     def test_all_command_skill_refs_are_unique(self) -> None:
         """Same command should not reference the same skill twice."""

@@ -1,26 +1,34 @@
 ---
 name: spec
-description: "Spec-driven development — brainstorm, plan, review, and execute with quality gates and approval."
+description: "Spec-driven development — brainstorm, plan, review, and execute with quality gates. Triggers on: spec, brainstorm and build, plan and execute, idea to code, build from scratch."
 argument-hint: "<what to build, or 'resume'>"
-question:
-  header: "Spec"
-  question: "What would you like to do?"
-  multiSelect: false
-  options:
-    - label: "Start a new spec"
-      description: "Brainstorm, decompose into tasks, then execute"
-    - label: "Resume an in-progress spec"
-      description: "Pick up where you left off"
-    - label: "Import a spec file"
-      description: "Load a plan from another project or path"
-    - label: "Execute a spec"
-      description: "Review and execute tasks from a saved plan"
 ---
 
-# /spec — Spec-Driven Development
+# Spec-Driven Development
 
-One command to go from idea to shipped code, with quality
+One skill to go from idea to shipped code, with quality
 gates and your approval at every step.
+
+## Scoping
+
+Use `AskUserQuestion` to determine the mode:
+
+```yaml
+question: "What would you like to do?"
+header: "Spec"
+options:
+  - label: "Start a new spec"
+    description: "Brainstorm, decompose into tasks, then execute"
+  - label: "Resume an in-progress spec"
+    description: "Pick up where you left off"
+  - label: "Import a spec file"
+    description: "Load a plan from another project or path"
+  - label: "Execute a spec"
+    description: "Review and execute tasks from a saved plan"
+```
+
+If the user provides arguments (e.g., "resume" or a file
+path), skip the picker and route directly.
 
 ## How It Works
 
@@ -35,21 +43,22 @@ Five stages, one flow:
    approve, redo with new instructions, or auto-run
    the rest.
 5. **Resume** — Session ended mid-execution? Next
-   `/spec` picks up where you left off.
+   invocation picks up where you left off.
 
 ## Import
 
 When the user chooses "Import a spec file":
 
-1. Ask for the file path (use `AskUserQuestion` or
-   accept from arguments)
+1. Ask for the file path
 2. Validate with `_validate_file_path()`
 3. Copy to `.claude/plans/` if not already there
 4. Load and validate tasks:
+
    ```python
    from attune.pipeline.spec_reader import read_spec
    tasks = read_spec(imported_path)
    ```
+
 5. If tasks found, proceed to Review stage
 6. If no tasks, tell the user the file has no XML
    `<task>` blocks and offer to create a spec instead
@@ -59,7 +68,7 @@ When the user chooses "Import a spec file":
 When the user chooses "Start a new spec":
 
 1. Run the brainstorm conversation flow (same phases
-   as `/brainstorm`: Context, Problem, Goals, End State)
+   as brainstorm: Context, Problem, Goals, End State)
 2. When the end state is clear, auto-decompose the
    approach into XML `<task>` blocks
 3. Save to `.claude/plans/{topic-slug}.md` with both
@@ -69,19 +78,28 @@ When the user chooses "Start a new spec":
 
 ## Stage 2: Review
 
-1. Load tasks: `from attune.pipeline.spec_reader import read_spec`
+1. Load tasks:
+
+   ```python
+   from attune.pipeline.spec_reader import read_spec
+   ```
+
 2. Present the task table:
+
    ```python
    from attune.spec import present_tasks, load_state
    tasks = read_spec(plan_path)
    state = load_state(plan_path)
    print(present_tasks(tasks, state))
    ```
+
 3. For each task, show detail:
+
    ```python
    from attune.spec import present_task_detail
    print(present_task_detail(task))
    ```
+
 4. Use `AskUserQuestion`: "Does this plan look right?"
    - "Looks good, proceed to execution"
    - "I want to edit the plan file"
@@ -92,6 +110,7 @@ When the user chooses "Start a new spec":
 Show final summary: task count, scope, risks. Then:
 
 Use `AskUserQuestion`: "Ready to start executing?"
+
 - "Start executing"
 - "Go back to review"
 
@@ -100,56 +119,48 @@ Use `AskUserQuestion`: "Ready to start executing?"
 For each pending task:
 
 1. Show progress:
+
    ```python
    from attune.spec import format_progress_bar
    print(format_progress_bar(completed, total))
    ```
+
 2. Show task detail with `present_task_detail(task)`
 3. **Implement the task** — create/modify files as
    specified in the XML task block
 4. Run quality gates:
+
    ```python
    from attune.pipeline import PipelineOrchestrator
-   orch = PipelineOrchestrator(plan_path, skip_tests=True)
+   orch = PipelineOrchestrator(plan_path)
    result = await orch.run_gates_for_task(task)
    ```
+
 5. Show result with `present_task_result(task, result)`
 6. **Severity-gated approval:**
 
-   Check `result.severity` (from `TaskResult.severity`):
+   If `"high"` severity (score < 50):
+   Use `AskUserQuestion` with 2 options:
+   - "Fix and retry"
+   - "Acknowledge risk and continue"
 
-   - If `"high"` (score < 50 or gate failed with no score):
-     Use `AskUserQuestion` with 2 options:
-     - "Fix and retry"
-     - "Acknowledge risk and continue"
-     (NO "Auto-run remaining" — force deliberate choice)
-
-   - If `"medium"` or `"low"` (score >= 50, or gate passed):
-     Use `AskUserQuestion` with 3 options:
-     - "Approve and continue"
-     - "Redo with new instructions"
-     - "Auto-run remaining tasks"
+   If `"medium"` or `"low"` severity:
+   Use `AskUserQuestion` with 3 options:
+   - "Approve and continue"
+   - "Redo with new instructions"
+   - "Auto-run remaining tasks"
 
 7. Save state after each decision:
+
    ```python
-   from attune.spec import SpecState, save_state
+   from attune.spec import save_state
    state.completed.append(task.task_id)
    save_state(state)
    ```
 
-If "Redo" / "Fix and retry": ask the user what to
-change, then go back to step 3 for the same task.
-
-If "Auto-run": set `state.auto_run = True`, skip
-`AskUserQuestion` for all remaining tasks.
-
-If "Acknowledge risk": log the acknowledged risk in
-state, approve, and continue (but do NOT enable
-auto-run).
-
 ## Stage 5: Resume
 
-On `/spec` invocation, check for resumable plans:
+On invocation, check for resumable plans:
 
 ```python
 from attune.spec import find_resumable_plans
@@ -158,19 +169,17 @@ plans = find_resumable_plans()
 
 If resumable plans exist, show them with
 `AskUserQuestion`:
-- "Resume {plan name} ({completed}/{total} tasks done)"
+
+- "Resume {plan name} ({completed}/{total} done)"
 - "Start a new spec"
 
-If resume: load state, skip completed tasks, resume
-at the `current` task in Stage 4.
-
-## CRITICAL Rules
+## Critical Rules
 
 - **ALWAYS use AskUserQuestion** between stages
 - **ALWAYS save_state()** after each task approval
 - **Show progress bar** before each task
 - **Voice layer**: use the attune voice personality
-  throughout — friendly senior engineer
+  — friendly senior engineer
 - **Power users**: the plan file is always editable.
   If the user says "let me edit the plan," pause and
-  wait for them to re-invoke `/spec review`
+  wait for them to re-invoke
