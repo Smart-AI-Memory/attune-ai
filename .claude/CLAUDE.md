@@ -1152,4 +1152,20 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and must pick one, degrading UX. When consolidating plugins,
   deprecate the old one and uninstall it before installing the
   replacement.
+
+- **Untracked scripts break CI when tests import them**: The
+  `test_sync_agents_skills.py` test imported from
+  `scripts/sync_agents_skills.py` which existed locally but was
+  never committed. CI failed with `ModuleNotFoundError` on all 12
+  platforms. Always `git status` scripts referenced by tests
+  before pushing. Guard with `pytest.importorskip()` for
+  resilience.
+
+- **PR test workflows may not auto-trigger after close/reopen or
+  branch reuse**: When a PR branch is reused after a previous PR
+  was merged, the `pull_request` trigger may not fire on new
+  pushes. `gh workflow run tests.yml --ref <branch>` is the
+  reliable manual fallback. The `synchronize` event only fires
+  for pushes to an *open* PR — if the PR was closed during the
+  push, the event is lost.
 <!-- attune-lessons-end -->
