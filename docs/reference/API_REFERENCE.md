@@ -1,10 +1,6 @@
----
-description: Attune AI API Reference API reference: **Version:** 3.8.0 **License:** Apache License 2.0 **Copyright:** 2025-2026 Smart AI Memory, LLC --- ## Tabl
----
-
 # Attune AI API Reference
 
-**Version:** 3.8.0
+**Version:** 5.3.2
 **License:** Apache License 2.0
 **Copyright:** 2025-2026 Smart AI Memory, LLC
 
@@ -14,792 +10,198 @@ description: Attune AI API Reference API reference: **Version:** 3.8.0 **License
 
 - [Overview](#overview)
 - [Core Framework](#core-framework)
-  - [EmpathyLLM](#empathyllm)
-  - [CollaborationState](#collaborationstate)
-  - [EmpathyLevel](#empathylevel)
-- [Intelligence System](#intelligence-system)
-  - [SmartRouter](#smartrouter)
-  - [MemoryGraph](#memorygraph)
-  - [ChainExecutor](#chainexecutor)
-- [Resilience Patterns](#resilience-patterns)
-  - [retry](#retry-decorator)
-  - [circuit_breaker](#circuit_breaker-decorator)
-  - [timeout](#timeout-decorator)
-  - [fallback](#fallback-decorator)
-  - [HealthCheck](#healthcheck)
-- [LLM Providers](#llm-providers)
-  - [AnthropicProvider](#anthropicprovider)
-  - [OpenAIProvider](#openaiprovider)
-  - [LocalProvider](#localprovider)
+  - [EmpathyOS](#empathyos)
+  - [InteractionResponse](#interactionresponse)
+  - [Exceptions](#exceptions)
 - [Configuration](#configuration)
   - [AttuneConfig](#attuneconfig)
-- [Coach Wizards](#coach-wizards)
-  - [BaseCoachWizard](#basecoachwizard)
-  - [SecurityWizard](#securitywizard)
-  - [PerformanceWizard](#performancewizard)
-  - [All Available Wizards](#all-available-wizards)
+  - [ConfigLoader](#configloader)
+  - [ModelTier](#modeltier)
+- [Memory System](#memory-system)
+  - [UnifiedMemory](#unifiedmemory)
+  - [Classification](#classification)
+  - [AccessTier](#accesstier)
+  - [TTLStrategy](#ttlstrategy)
+  - [MemoryBackend Protocol](#memorybackend-protocol)
+  - [RedisShortTermMemory](#redisshorttermemory)
+  - [LongTermMemory](#longtermemory)
 - [Workflows](#workflows)
-  - [TestAuditWorkflow](#testauditworkflow)
-  - [DocAuditWorkflow](#docauditworkflow)
+  - [BaseWorkflow](#baseworkflow)
+  - [WorkflowResult](#workflowresult)
+  - [CostReport](#costreport)
+  - [Available Workflows](#available-workflows)
+- [Models & Execution](#models--execution)
+  - [ModelRegistry](#modelregistry)
+  - [ModelInfo](#modelinfo)
+  - [LLMExecutor Protocol](#llmexecutor-protocol)
+  - [LLMResponse](#llmresponse)
+  - [CircuitBreaker](#circuitbreaker)
+  - [ResilientExecutor](#resilientexecutor)
+  - [AdaptiveModelRouter](#adaptivemodelrouter)
+- [MCP Server](#mcp-server)
+  - [EmpathyMCPServer](#empathymcpserver)
+  - [Tool Schemas](#tool-schemas)
+  - [RateLimiter](#ratelimiter)
+- [Orchestration](#orchestration)
+  - [MetaOrchestrator](#metaorchestrator)
+  - [DynamicTeam](#dynamicteam)
+  - [AgentTemplate](#agenttemplate)
+  - [ExecutionStrategy](#executionstrategy)
+- [Meta-Workflows](#meta-workflows)
+  - [MetaWorkflow](#metaworkflow)
+  - [SocraticFormEngine](#socraticformengine)
+  - [TemplateRegistry](#templateregistry)
+- [Agents](#agents)
+  - [AgentStateStore](#agentstatestore)
+  - [ReleaseAgent](#releaseagent)
+- [Wizards](#wizards)
+  - [BaseWizard](#basewizard)
+  - [WizardRegistry](#wizardregistry)
+  - [ConfigDrivenWizard](#configdrivenwizard)
+  - [TaskDecomposer](#taskdecomposer)
+- [Telemetry](#telemetry)
+  - [UsageTracker](#usagetracker)
+  - [FeedbackLoop](#feedbackloop)
+  - [ApprovalGate](#approvalgate)
+  - [EventStreamer](#eventstreamer)
+- [Monitoring](#monitoring)
+  - [AlertConfig](#alertconfig)
+  - [AlertEvent](#alertevent)
+- [Project Index](#project-index)
+  - [ProjectIndex](#projectindex)
+  - [FileRecord](#filerecord)
+  - [ProjectSummary](#projectsummary)
 - [Plugin System](#plugin-system)
   - [BasePlugin](#baseplugin)
-  - [SoftwarePlugin](#softwareplugin)
-- [Data Models](#data-models)
-- [Pattern Library](#pattern-library)
-- [Utilities](#utilities)
+  - [PluginRegistry](#pluginregistry)
+- [Security](#security)
+  - [_validate_file_path](#_validate_file_path)
+  - [SecretsDetector](#secretsdetector)
+  - [PIIScrubber](#piiscrubber)
+- [Voice Layer](#voice-layer)
+  - [format_output](#format_output)
+  - [format_error](#format_error)
 
 ---
 
 ## Overview
 
-The Attune AI provides a comprehensive API for building AI systems that progress from reactive (Level 1) to anticipatory (Level 4) and systems-level (Level 5) collaboration. This reference documents all public APIs, classes, methods, and their usage.
+Attune AI is an AI-powered developer workflow OS for Claude
+Code. It provides cost-optimized workflows, multi-agent
+orchestration, and a unified memory system.
 
 ### Core Concepts
 
-- **Level 1 (Reactive)**: Simple question-answer, no memory
-- **Level 2 (Guided)**: Contextual collaboration with clarifying questions
-- **Level 3 (Proactive)**: Pattern detection and proactive actions
-- **Level 4 (Anticipatory)**: Trajectory prediction and bottleneck prevention
-- **Level 5 (Systems)**: Cross-domain pattern learning and structural design
+| Concept | Description |
+|---------|-------------|
+| **Workflows** | SDK-native multi-stage pipelines with 3-tier model routing |
+| **Memory** | Two-tier system: Redis (short-term) + persistent (long-term) |
+| **Orchestration** | Dynamic agent team composition based on task requirements |
+| **MCP Server** | Model Context Protocol integration for Claude Code |
+| **Wizards** | Interactive multi-step guided flows with XML task decomposition |
+
+### Installation
+
+```bash
+pip install attune-ai                # Core
+pip install 'attune-ai[developer]'   # Developer extras
+pip install 'attune-ai[memory]'      # Memory extras
+pip install 'attune-ai[redis]'       # Redis support
+```
 
 ---
 
 ## Core Framework
 
-### EmpathyLLM
+### EmpathyOS
 
-Main class that wraps any LLM provider with Attune AI levels.
+`attune.core.EmpathyOS`
+
+Main orchestration class for the five-level empathy model.
+
+```python
+from attune import EmpathyOS
+
+empathy = EmpathyOS(user_id="developer@company.com")
+```
 
 #### Constructor
 
 ```python
-from attune_llm import EmpathyLLM
-
-llm = EmpathyLLM(
-    provider: str = "anthropic",
-    target_level: int = 3,
-    api_key: Optional[str] = None,
-    model: Optional[str] = None,
-    pattern_library: Optional[Dict] = None,
-    **kwargs
-)
+EmpathyOS(user_id: str)
 ```
-
-**Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `provider` | `str` | `"anthropic"` | LLM provider: `"anthropic"`, `"openai"`, or `"local"` |
-| `target_level` | `int` | `3` | Maximum empathy level (1-5) |
-| `api_key` | `Optional[str]` | `None` | API key for provider (or use environment variable) |
-| `model` | `Optional[str]` | `None` | Specific model to use (provider defaults apply) |
-| `pattern_library` | `Optional[Dict]` | `None` | Shared pattern library for Level 5 |
-| `**kwargs` | - | - | Provider-specific options |
-
-**Example:**
-
-```python
-# Using Anthropic (Claude)
-llm = EmpathyLLM(
-    provider="anthropic",
-    target_level=4,
-    api_key="sk-ant-..."
-)
-
-# Using OpenAI (GPT-4)
-llm = EmpathyLLM(
-    provider="openai",
-    target_level=3,
-    api_key="sk-...",
-    model="gpt-4-turbo-preview"
-)
-
-# Using local model (Ollama)
-llm = EmpathyLLM(
-    provider="local",
-    target_level=2,
-    endpoint="http://localhost:11434",
-    model="llama2"
-)
-```
-
-#### Methods
-
-##### `interact()`
-
-Main interaction method that automatically selects appropriate empathy level.
-
-```python
-async def interact(
-    user_id: str,
-    user_input: str,
-    context: Optional[Dict[str, Any]] = None,
-    force_level: Optional[int] = None
-) -> Dict[str, Any]
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `user_id` | `str` | Yes | Unique user identifier |
-| `user_input` | `str` | Yes | User's input/question |
-| `context` | `Optional[Dict]` | No | Additional context dictionary |
-| `force_level` | `Optional[int]` | No | Force specific level (testing/demo) |
-
-**Returns:**
-
-```python
-{
-    "content": str,              # LLM response
-    "level_used": int,           # Which empathy level was used (1-5)
-    "level_description": str,    # Human-readable level description
-    "proactive": bool,           # Whether action was proactive
-    "metadata": {
-        "tokens_used": int,
-        "model": str,
-        # ... additional metadata
-    }
-}
-```
-
-**Example:**
-
-```python
-import asyncio
-
-async def main():
-    llm = EmpathyLLM(provider="anthropic", target_level=4)
-
-    result = await llm.interact(
-        user_id="developer_123",
-        user_input="Help me optimize my database queries",
-        context={
-            "project_type": "web_app",
-            "database": "postgresql"
-        }
-    )
-
-    print(f"Level {result['level_used']}: {result['level_description']}")
-    print(f"Response: {result['content']}")
-    print(f"Proactive: {result['proactive']}")
-
-asyncio.run(main())
-```
-
-##### `update_trust()`
-
-Update trust level based on interaction outcome.
-
-```python
-def update_trust(
-    user_id: str,
-    outcome: str,
-    magnitude: float = 1.0
-)
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `user_id` | `str` | Yes | User identifier |
-| `outcome` | `str` | Yes | `"success"` or `"failure"` |
-| `magnitude` | `float` | No | Adjustment magnitude (0.0-1.0) |
-
-**Example:**
-
-```python
-# Positive feedback
-llm.update_trust("developer_123", outcome="success", magnitude=1.0)
-
-# Negative feedback (reduce trust)
-llm.update_trust("developer_123", outcome="failure", magnitude=0.5)
-```
-
-##### `add_pattern()`
-
-Manually add a detected pattern for proactive behavior.
-
-```python
-def add_pattern(
-    user_id: str,
-    pattern: UserPattern
-)
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `user_id` | `str` | Yes | User identifier |
-| `pattern` | `UserPattern` | Yes | Pattern instance |
-
-**Example:**
-
-```python
-from attune_llm import UserPattern, PatternType
-
-pattern = UserPattern(
-    pattern_type=PatternType.SEQUENTIAL,
-    trigger="code review request",
-    action="run security scan",
-    confidence=0.85
-)
-
-llm.add_pattern("developer_123", pattern)
-```
-
-##### `get_statistics()`
-
-Get collaboration statistics for a user.
-
-```python
-def get_statistics(user_id: str) -> Dict[str, Any]
-```
-
-**Returns:**
-
-```python
-{
-    "total_interactions": int,
-    "trust_level": float,
-    "detected_patterns": int,
-    "successful_actions": int,
-    "failed_actions": int,
-    "success_rate": float
-}
-```
-
----
-
-### CollaborationState
-
-Tracks collaboration state for individual users.
-
-#### Properties
-
-```python
-class CollaborationState:
-    user_id: str
-    trust_level: float          # 0.0 to 1.0
-    interactions: List[Dict]    # Interaction history
-    detected_patterns: List[UserPattern]
-    successful_actions: int
-    failed_actions: int
-    created_at: datetime
-    updated_at: datetime
-```
-
-#### Methods
-
-##### `add_interaction()`
-
-```python
-def add_interaction(
-    role: str,
-    content: str,
-    level: int,
-    metadata: Optional[Dict] = None
-)
-```
-
-##### `get_conversation_history()`
-
-```python
-def get_conversation_history(
-    max_turns: int = 10
-) -> List[Dict[str, str]]
-```
-
-Returns conversation history formatted for LLM consumption.
-
-##### `should_progress_to_level()`
-
-```python
-def should_progress_to_level(level: int) -> bool
-```
-
-Determines if sufficient trust exists to progress to a level.
-
----
-
-### EmpathyLevel
-
-Utility class for level-specific information.
-
-#### Static Methods
-
-##### `get_description()`
-
-```python
-@staticmethod
-def get_description(level: int) -> str
-```
-
-Returns human-readable description of level.
-
-**Example:**
-
-```python
-from attune_llm import EmpathyLevel
-
-desc = EmpathyLevel.get_description(4)
-# Returns: "Anticipatory - Predicts future needs based on trajectory"
-```
-
-##### `get_system_prompt()`
-
-```python
-@staticmethod
-def get_system_prompt(level: int) -> str
-```
-
-Returns appropriate system prompt for the level.
-
-##### `get_temperature_recommendation()`
-
-```python
-@staticmethod
-def get_temperature_recommendation(level: int) -> float
-```
-
-Returns recommended temperature setting for the level.
-
-##### `get_max_tokens_recommendation()`
-
-```python
-@staticmethod
-def get_max_tokens_recommendation(level: int) -> int
-```
-
-Returns recommended max_tokens for the level.
-
----
-
-## Intelligence System
-
-### SmartRouter
-
-Routes developer requests to appropriate wizard(s) using natural language understanding.
-
-```python
-from attune.routing import SmartRouter
-
-router = SmartRouter()
-```
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `route_sync()` | `request: str, context: dict = None` | `RoutingDecision` | Synchronously route a request |
-| `route()` | `request: str, context: dict = None` | `RoutingDecision` | Async version of route_sync |
-| `suggest_for_file()` | `file_path: str` | `List[str]` | Get wizard suggestions for a file |
-| `suggest_for_error()` | `error_message: str` | `List[str]` | Get wizard suggestions for an error |
-| `list_wizards()` | None | `List[WizardInfo]` | List all registered wizards |
-
-#### RoutingDecision
-
-```python
-@dataclass
-class RoutingDecision:
-    primary_wizard: str          # Best matching wizard
-    secondary_wizards: List[str] # Related wizards
-    confidence: float            # 0.0-1.0 match confidence
-    reasoning: str               # Why this routing was chosen
-    suggested_chain: List[str]   # Recommended execution order
-    context: Dict                # Preserved context
-```
-
-### MemoryGraph
-
-Knowledge graph for cross-wizard intelligence sharing.
-
-```python
-from attune.memory import MemoryGraph, NodeType, EdgeType
-
-graph = MemoryGraph(path="patterns/memory_graph.json")
-```
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `add_finding()` | `wizard: str, finding: dict` | `str` | Add a node, returns node ID |
-| `add_edge()` | `from_id: str, to_id: str, edge_type: EdgeType` | `str` | Connect nodes, returns edge ID |
-| `find_related()` | `node_id: str, edge_types: List[EdgeType]` | `List[Node]` | Find connected nodes |
-| `find_similar()` | `finding: dict, threshold: float = 0.8` | `List[Node]` | Find similar nodes |
-| `get_statistics()` | None | `Dict` | Graph stats (nodes, edges, by type) |
-
-#### Edge Types
-
-```python
-class EdgeType(Enum):
-    CAUSES = "causes"
-    FIXED_BY = "fixed_by"
-    SIMILAR_TO = "similar_to"
-    AFFECTS = "affects"
-    CONTAINS = "contains"
-    DEPENDS_ON = "depends_on"
-    TESTED_BY = "tested_by"
-```
-
-### ChainExecutor
-
-Executes wizard chains and manages auto-chaining rules.
-
-```python
-from attune.routing import ChainExecutor
-
-executor = ChainExecutor(config_path=".empathy/wizard_chains.yaml")
-```
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `get_triggered_chains()` | `wizard: str, result: dict` | `List[ChainTrigger]` | Get chains triggered by result |
-| `get_template()` | `name: str` | `ChainTemplate` | Get a pre-defined template |
-| `list_templates()` | None | `List[str]` | List available templates |
-| `should_auto_execute()` | `trigger: ChainTrigger` | `bool` | Check if chain runs without approval |
-
----
-
-## Resilience Patterns
-
-Production-ready patterns for fault tolerance. Import from `attune.resilience`.
-
-### retry decorator
-
-Retry failed operations with exponential backoff.
-
-```python
-from attune.resilience import retry, RetryConfig
-
-@retry(max_attempts=3, initial_delay=1.0, backoff_factor=2.0, jitter=True)
-async def flaky_operation():
-    ...
-```
-
-#### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `max_attempts` | `int` | `3` | Maximum retry attempts |
-| `initial_delay` | `float` | `1.0` | Initial delay in seconds |
-| `backoff_factor` | `float` | `2.0` | Multiply delay by this each retry |
-| `max_delay` | `float` | `60.0` | Maximum delay cap |
-| `jitter` | `bool` | `True` | Add randomness to prevent thundering herd |
-| `retryable_exceptions` | `Tuple[Type]` | `(Exception,)` | Which exceptions trigger retry |
-
-### circuit_breaker decorator
-
-Prevent cascading failures by failing fast when a service is down.
-
-```python
-from attune.resilience import circuit_breaker, get_circuit_breaker, CircuitOpenError
-
-@circuit_breaker(name="api", failure_threshold=5, reset_timeout=60.0)
-async def external_call():
-    ...
-
-# Check state
-cb = get_circuit_breaker("api")
-print(cb.state)  # CircuitState.CLOSED, OPEN, or HALF_OPEN
-```
-
-#### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `name` | `str` | Function name | Circuit breaker identifier |
-| `failure_threshold` | `int` | `5` | Failures before opening |
-| `reset_timeout` | `float` | `60.0` | Seconds before trying recovery |
-| `half_open_max_calls` | `int` | `3` | Successes needed to close |
-| `excluded_exceptions` | `Tuple[Type]` | `()` | Exceptions that don't count as failures |
-| `fallback` | `Callable` | `None` | Function to call when circuit is open |
-
-#### Circuit States
-
-- **CLOSED**: Normal operation, calls pass through
-- **OPEN**: Failures exceeded threshold, calls fail immediately with `CircuitOpenError`
-- **HALF_OPEN**: Testing if service recovered, limited calls allowed
-
-### timeout decorator
-
-Prevent operations from hanging indefinitely.
-
-```python
-from attune.resilience import timeout, with_timeout, ResilienceTimeoutError
-
-@timeout(30.0)
-async def slow_operation():
-    ...
-
-# With fallback
-@timeout(5.0, fallback=lambda: "default")
-async def quick_lookup():
-    ...
-
-# One-off usage
-result = await with_timeout(coro, timeout_seconds=10.0, fallback_value="default")
-```
-
-#### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `seconds` | `float` | Required | Timeout in seconds |
-| `fallback` | `Callable` | `None` | Return value on timeout |
-
-### fallback decorator
-
-Graceful degradation when primary operations fail.
-
-```python
-from attune.resilience import fallback, Fallback
-
-@fallback(fallback_func=get_cached, default="unavailable")
-async def get_live_data():
-    ...
-
-# Chain multiple fallbacks
-fb = Fallback(name="data", default_value="offline")
-fb.add(primary_source)
-fb.add(backup_source)
-fb.add(cache_source)
-result = await fb.execute()
-```
-
-### HealthCheck
-
-Monitor system component health.
-
-```python
-from attune.resilience import HealthCheck, HealthStatus
-
-health = HealthCheck(version="3.1.0")
-
-@health.register("database", timeout=5.0)
-async def check_db():
-    return await db.ping()
-
-# Run all checks
-status = await health.run_all()
-print(status.to_dict())
-```
-
-#### HealthCheck.register() Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `name` | `str` | Required | Check identifier |
-| `timeout` | `float` | `10.0` | Max time for check |
-| `critical` | `bool` | `False` | If True, failure = system unhealthy |
-
-#### Return Values
-
-Health check functions can return:
-- `True` → Healthy
-- `False` → Unhealthy
-- `dict` with `{"healthy": bool, ...}` → Status with details
-
-#### SystemHealth
-
-```python
-@dataclass
-class SystemHealth:
-    status: HealthStatus      # HEALTHY, DEGRADED, UNHEALTHY, UNKNOWN
-    checks: List[HealthCheckResult]
-    version: str
-    uptime_seconds: float
-    timestamp: datetime
-
-    def to_dict() -> Dict  # JSON-serializable output
-```
-
----
-
-## LLM Providers
-
-### AnthropicProvider
-
-Provider for Anthropic's Claude models with advanced features.
-
-#### Constructor
-
-```python
-from attune_llm.providers import AnthropicProvider
-
-provider = AnthropicProvider(
-    api_key: Optional[str] = None,
-    model: str = "claude-3-5-sonnet-20241022",
-    use_prompt_caching: bool = True,
-    use_thinking: bool = False,
-    **kwargs
-)
-```
-
-**Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `api_key` | `Optional[str]` | `None` | Anthropic API key |
-| `model` | `str` | `"claude-3-5-sonnet-20241022"` | Claude model version |
-| `use_prompt_caching` | `bool` | `True` | Enable prompt caching (90% cost reduction) |
-| `use_thinking` | `bool` | `False` | Enable extended thinking mode |
-
-**Supported Models:**
-
-- `claude-3-opus-20240229` - Most capable, best for complex reasoning
-- `claude-3-5-sonnet-20241022` - Balanced performance and cost (recommended)
-- `claude-3-haiku-20240307` - Fastest, lowest cost
-
-#### Methods
-
-##### `generate()`
-
-```python
-async def generate(
-    messages: List[Dict[str, str]],
-    system_prompt: Optional[str] = None,
-    temperature: float = 0.7,
-    max_tokens: int = 1024,
-    **kwargs
-) -> LLMResponse
-```
-
-##### `analyze_large_codebase()`
-
-Claude-specific method for analyzing entire repositories using 200K context window.
-
-```python
-async def analyze_large_codebase(
-    codebase_files: List[Dict[str, str]],
-    analysis_prompt: str,
-    **kwargs
-) -> LLMResponse
-```
-
-**Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `codebase_files` | `List[Dict]` | List of `{"path": "...", "content": "..."}` dicts |
-| `analysis_prompt` | `str` | What to analyze for |
-
-**Example:**
-
-```python
-provider = AnthropicProvider(
-    api_key="sk-ant-...",
-    use_prompt_caching=True
-)
-
-files = [
-    {"path": "app.py", "content": "..."},
-    {"path": "models.py", "content": "..."},
-    {"path": "utils.py", "content": "..."}
-]
-
-result = await provider.analyze_large_codebase(
-    codebase_files=files,
-    analysis_prompt="Find all security vulnerabilities"
-)
-
-print(result.content)
-```
-
-##### `get_model_info()`
-
-```python
-def get_model_info() -> Dict[str, Any]
-```
-
-Returns model capabilities and pricing:
-
-```python
-{
-    "max_tokens": 200000,
-    "cost_per_1m_input": 3.00,
-    "cost_per_1m_output": 15.00,
-    "supports_prompt_caching": True,
-    "supports_thinking": True,
-    "ideal_for": "General development, balanced cost/performance"
-}
-```
-
----
-
-### OpenAIProvider
-
-Provider for OpenAI's GPT models.
-
-#### Constructor
-
-```python
-from attune_llm.providers import OpenAIProvider
-
-provider = OpenAIProvider(
-    api_key: Optional[str] = None,
-    model: str = "gpt-4-turbo-preview",
-    **kwargs
-)
-```
-
-**Supported Models:**
-
-- `gpt-4-turbo-preview` - Latest GPT-4 with 128K context (recommended)
-- `gpt-4` - Standard GPT-4 (8K context)
-- `gpt-3.5-turbo` - Faster, cheaper option (16K context)
+| `user_id` | `str` | Unique identifier for the user |
 
 #### Methods
 
-Same interface as `BaseLLMProvider`:
-- `generate()`
-- `get_model_info()`
+```python
+# Level 1: Reactive (simple Q&A)
+response = empathy.level_1_reactive(
+    user_input: str,
+    context: dict | None = None
+) -> InteractionResponse
+
+# Level 2: Guided (contextual with clarifying questions)
+response = empathy.level_2_guided(
+    user_input: str,
+    context: dict,
+    history: list[dict]
+) -> InteractionResponse
+
+# Level 3: Proactive (pattern detection)
+response = empathy.level_3_proactive(
+    user_input: str,
+    context: dict,
+    history: list[dict]
+) -> InteractionResponse
+
+# Level 4: Anticipatory (trajectory prediction)
+response = empathy.level_4_anticipatory(
+    user_input: str,
+    context: dict,
+    history: list[dict]
+) -> InteractionResponse
+
+# Memory shortcuts
+empathy.stash(key: str, value: Any) -> bool
+empathy.persist_pattern(
+    content: str,
+    pattern_type: str
+) -> dict
+```
 
 ---
 
-### LocalProvider
+### InteractionResponse
 
-Provider for local models (Ollama, LM Studio, etc.).
+`attune.core.InteractionResponse`
 
-#### Constructor
+Dataclass returned by all EmpathyOS level methods.
 
-```python
-from attune_llm.providers import LocalProvider
+| Field | Type | Description |
+|-------|------|-------------|
+| `level` | `int` | Empathy level used (1-5) |
+| `response` | `str` | Generated response text |
+| `confidence` | `float` | Confidence score (0.0-1.0) |
+| `predictions` | `list[str] \| None` | Predicted next actions (Level 4+) |
 
-provider = LocalProvider(
-    endpoint: str = "http://localhost:11434",
-    model: str = "llama2",
-    **kwargs
-)
-```
+---
 
-**Parameters:**
+### Exceptions
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `endpoint` | `str` | `"http://localhost:11434"` | Local server endpoint |
-| `model` | `str` | `"llama2"` | Model name |
+`attune.exceptions`
 
-**Example:**
-
-```python
-# Using Ollama
-provider = LocalProvider(
-    endpoint="http://localhost:11434",
-    model="llama2"
-)
-
-# Using LM Studio
-provider = LocalProvider(
-    endpoint="http://localhost:1234",
-    model="mistral-7b"
-)
-```
+| Exception | Base | Description |
+|-----------|------|-------------|
+| `EmpathyFrameworkError` | `Exception` | Base exception |
+| `ValidationError` | `EmpathyFrameworkError` | Input validation failure |
+| `PatternNotFoundError` | `EmpathyFrameworkError` | Pattern lookup miss |
+| `EmpathyLevelError` | `EmpathyFrameworkError` | Invalid empathy level |
+| `TrustThresholdError` | `EmpathyFrameworkError` | Trust check failure |
+| `ConfidenceThresholdError` | `EmpathyFrameworkError` | Below confidence threshold |
 
 ---
 
@@ -807,581 +209,859 @@ provider = LocalProvider(
 
 ### AttuneConfig
 
-Comprehensive configuration management supporting YAML, JSON, and environment variables.
+`attune.config.AttuneConfig`
 
-#### Constructor
-
-```python
-from attune.config import AttuneConfig
-
-config = AttuneConfig(
-    user_id: str = "default_user",
-    target_level: int = 3,
-    confidence_threshold: float = 0.75,
-    trust_building_rate: float = 0.05,
-    trust_erosion_rate: float = 0.10,
-    persistence_enabled: bool = True,
-    persistence_backend: str = "sqlite",
-    persistence_path: str = "./empathy_data",
-    state_persistence: bool = True,
-    state_path: str = "./empathy_state",
-    metrics_enabled: bool = True,
-    metrics_path: str = "./metrics.db",
-    log_level: str = "INFO",
-    log_file: Optional[str] = None,
-    structured_logging: bool = True,
-    pattern_library_enabled: bool = True,
-    pattern_sharing: bool = True,
-    pattern_confidence_threshold: float = 0.3,
-    async_enabled: bool = True,
-    feedback_loop_monitoring: bool = True,
-    leverage_point_analysis: bool = True,
-    metadata: Dict[str, Any] = {}
-)
-```
-
-#### Configuration Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `user_id` | `str` | `"default_user"` | Default user identifier |
-| `target_level` | `int` | `3` | Maximum empathy level (1-5) |
-| `confidence_threshold` | `float` | `0.75` | Minimum confidence for actions |
-| `trust_building_rate` | `float` | `0.05` | Trust increase per success |
-| `trust_erosion_rate` | `float` | `0.10` | Trust decrease per failure |
-| `persistence_enabled` | `bool` | `True` | Enable state persistence |
-| `persistence_backend` | `str` | `"sqlite"` | Backend: `"sqlite"`, `"json"`, `"none"` |
-| `metrics_enabled` | `bool` | `True` | Enable metrics collection |
-| `pattern_library_enabled` | `bool` | `True` | Enable pattern learning |
-
-#### Class Methods
-
-##### `from_yaml()`
+Main configuration dataclass. Backward-compatible alias:
+`EmpathyConfig`.
 
 ```python
-@classmethod
-def from_yaml(cls, filepath: str) -> AttuneConfig
+from attune.config import AttuneConfig, load_config
+
+config = load_config()
 ```
 
-Load configuration from YAML file.
-
-**Example:**
+#### Key Functions
 
 ```python
-config = AttuneConfig.from_yaml("empathy.config.yml")
+load_config() -> AttuneConfig
 ```
-
-##### `from_json()`
-
-```python
-@classmethod
-def from_json(cls, filepath: str) -> AttuneConfig
-```
-
-Load configuration from JSON file.
-
-##### `from_env()`
-
-```python
-@classmethod
-def from_env(cls, prefix: str = "EMPATHY_") -> AttuneConfig
-```
-
-Load configuration from environment variables.
-
-**Example:**
-
-```bash
-export ATTUNE_USER_ID=alice
-export ATTUNE_TARGET_LEVEL=4
-export ATTUNE_CONFIDENCE_THRESHOLD=0.8
-```
-
-```python
-config = AttuneConfig.from_env()  # Checks ATTUNE_* first, falls back to EMPATHY_*
-```
-
-##### `from_file()`
-
-```python
-@classmethod
-def from_file(cls, filepath: Optional[str] = None) -> AttuneConfig
-```
-
-Auto-detect and load configuration. Searches for:
-1. Provided filepath
-2. `.empathy.yml`
-3. `.empathy.yaml`
-4. `empathy.config.yml`
-5. `empathy.config.yaml`
-6. `.empathy.json`
-7. `empathy.config.json`
-
-#### Instance Methods
-
-##### `to_yaml()`
-
-```python
-def to_yaml(filepath: str)
-```
-
-Save configuration to YAML file.
-
-##### `to_json()`
-
-```python
-def to_json(filepath: str, indent: int = 2)
-```
-
-Save configuration to JSON file.
-
-##### `validate()`
-
-```python
-def validate() -> bool
-```
-
-Validate configuration values. Raises `ValueError` if invalid.
-
-##### `update()`
-
-```python
-def update(**kwargs)
-```
-
-Update configuration fields dynamically.
-
-**Example:**
-
-```python
-config = AttuneConfig()
-config.update(user_id="alice", target_level=4)
-```
-
-##### `merge()`
-
-```python
-def merge(other: AttuneConfig) -> AttuneConfig
-```
-
-Merge with another configuration (other takes precedence).
 
 ---
 
-## Coach Wizards
+### ConfigLoader
 
-### BaseCoachWizard
+`attune.config.loader.ConfigLoader`
 
-Abstract base class for all Coach wizards implementing Level 4 Anticipatory Empathy.
+Discovers and loads configuration from YAML/JSON files.
+
+```python
+from attune.config.loader import ConfigLoader
+
+loader = ConfigLoader(config_path="attune.yml")
+config = loader.load()
+```
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `discover_config_path()` | `Path \| None` | Auto-discover config file |
+| `load()` | `UnifiedConfig` | Load and validate config |
+
+---
+
+### ModelTier
+
+`attune.config.ModelTier`
+
+Enum for model cost tiers used by workflow routing.
+
+| Value | Description |
+|-------|-------------|
+| `CHEAP` | Haiku — summarization, classification |
+| `CAPABLE` | Sonnet — analysis, code generation |
+| `PREMIUM` | Opus — synthesis, architecture |
+
+---
+
+## Memory System
+
+### UnifiedMemory
+
+`attune.memory.UnifiedMemory`
+
+Main API for the two-tier memory system (Redis short-term +
+persistent long-term).
+
+```python
+from attune.memory import UnifiedMemory, Classification
+
+memory = UnifiedMemory(user_id="dev-1")
+
+# Short-term (Redis-backed with TTL)
+memory.stash("context", {"topic": "auth"}, ttl=3600)
+value = memory.retrieve("context")
+
+# Long-term (persistent with classification)
+result = memory.persist_pattern(
+    content="Auth patterns use JWT",
+    pattern_type="technique",
+    classification=Classification.INTERNAL,
+)
+pattern = memory.recall_pattern(result["pattern_id"])
+
+# Staging workflow
+staged_id = memory.stage_pattern({"content": "draft"})
+memory.promote_pattern(staged_id)
+```
 
 #### Constructor
 
 ```python
-from coach_wizards import BaseCoachWizard
-
-class MyWizard(BaseCoachWizard):
-    def __init__(self):
-        super().__init__(
-            name: str,
-            category: str,
-            languages: List[str]
-        )
+UnifiedMemory(
+    user_id: str,
+    environment: Environment = Environment.PRODUCTION
+)
 ```
-
-#### Abstract Methods (Must Implement)
-
-##### `analyze_code()`
-
-```python
-@abstractmethod
-def analyze_code(
-    code: str,
-    file_path: str,
-    language: str
-) -> List[WizardIssue]
-```
-
-Analyze code for current issues.
-
-##### `predict_future_issues()`
-
-```python
-@abstractmethod
-def predict_future_issues(
-    code: str,
-    file_path: str,
-    project_context: Dict[str, Any],
-    timeline_days: int = 90
-) -> List[WizardPrediction]
-```
-
-Level 4 Anticipatory: Predict issues 30-90 days ahead.
-
-##### `suggest_fixes()`
-
-```python
-@abstractmethod
-def suggest_fixes(issue: WizardIssue) -> str
-```
-
-Suggest how to fix an issue with code examples.
 
 #### Methods
 
-##### `run_full_analysis()`
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `stash(key, value, ttl=None)` | `bool` | Store short-term value |
+| `retrieve(key)` | `Any \| None` | Retrieve short-term value |
+| `persist_pattern(content, pattern_type, classification)` | `dict` | Store long-term pattern |
+| `recall_pattern(pattern_id)` | `SecurePattern \| None` | Retrieve long-term pattern |
+| `stage_pattern(pattern)` | `str` | Stage for review |
+| `promote_pattern(staged_id)` | `bool` | Promote staged to long-term |
+
+---
+
+### Classification
+
+`attune.memory.Classification`
+
+| Value | Description |
+|-------|-------------|
+| `PUBLIC` | No access restriction |
+| `INTERNAL` | Team-visible only |
+| `SENSITIVE` | Encrypted at rest |
+
+---
+
+### AccessTier
+
+`attune.memory.AccessTier`
+
+| Value | Description |
+|-------|-------------|
+| `OBSERVER` | Read-only |
+| `CONTRIBUTOR` | Read + write |
+| `VALIDATOR` | Read + write + approve |
+| `STEWARD` | Full admin |
+
+---
+
+### TTLStrategy
+
+`attune.memory.TTLStrategy`
+
+Pre-defined TTL durations for short-term memory.
+
+| Value | TTL | Use Case |
+|-------|-----|----------|
+| `WORKING_RESULTS` | 3600s | Intermediate workflow results |
+| `STAGED_PATTERNS` | 86400s | Patterns awaiting promotion |
+
+---
+
+### MemoryBackend Protocol
+
+`attune.memory.backend.MemoryBackend`
+
+Formal interface for implementing custom memory backends.
 
 ```python
-def run_full_analysis(
-    code: str,
-    file_path: str,
-    language: str,
-    project_context: Optional[Dict[str, Any]] = None
-) -> WizardResult
-```
-
-Run complete analysis: current issues + future predictions.
-
-**Example:**
-
-```python
-from coach_wizards import SecurityWizard
-
-wizard = SecurityWizard()
-
-code = """
-def login(username, password):
-    query = f"SELECT * FROM users WHERE username='{username}'"
-    return db.execute(query)
-"""
-
-result = wizard.run_full_analysis(
-    code=code,
-    file_path="auth.py",
-    language="python",
-    project_context={
-        "team_size": 10,
-        "deployment_frequency": "daily",
-        "user_count": 5000
-    }
-)
-
-print(f"Summary: {result.summary}")
-print(f"Current issues: {len(result.issues)}")
-print(f"Predicted issues: {len(result.predictions)}")
-
-for issue in result.issues:
-    print(f"  - [{issue.severity}] {issue.message}")
-
-for prediction in result.predictions:
-    print(f"  - [Predicted {prediction.predicted_date}] {prediction.issue_type}")
-    print(f"    Probability: {prediction.probability:.0%}")
-    print(f"    Prevention: {prediction.prevention_steps}")
+class MemoryBackend(Protocol):
+    def stash(self, key: str, value: Any,
+              ttl: int | None = None,
+              agent_id: str | None = None) -> bool: ...
+    def retrieve(self, key: str,
+                 agent_id: str | None = None) -> Any | None: ...
+    def search(self, pattern: str) -> list[tuple]: ...
+    def forget(self, key: str,
+               agent_id: str | None = None) -> bool: ...
 ```
 
 ---
 
-### SecurityWizard
+### RedisShortTermMemory
 
-Detects security vulnerabilities and predicts future attack vectors.
+`attune.memory.RedisShortTermMemory`
 
-```python
-from coach_wizards import SecurityWizard
+Redis-backed short-term memory with TTL expiration.
 
-wizard = SecurityWizard()
-```
-
-**Detects:**
-- SQL injection
-- XSS (Cross-Site Scripting)
-- CSRF vulnerabilities
-- Hardcoded secrets
-- Insecure dependencies
-- Authentication flaws
-- Authorization bypass
-- Insecure deserialization
-
-**Predicts (Level 4):**
-- Emerging vulnerabilities
-- Dependency risks
-- Attack surface growth
-- Zero-day exposure
-
-**Supported Languages:**
-- Python
-- JavaScript/TypeScript
-- Java
-- Go
-- Rust
+Requires: `pip install 'attune-ai[redis]'`
 
 ---
 
-### PerformanceWizard
+### LongTermMemory
 
-Analyzes performance issues and predicts scalability bottlenecks.
+`attune.memory.LongTermMemory`
 
-```python
-from coach_wizards import PerformanceWizard
-
-wizard = PerformanceWizard()
-```
-
-**Detects:**
-- N+1 query problems
-- Memory leaks
-- Inefficient algorithms
-- Blocking operations
-- Missing indexes
-- Large object allocations
-
-**Predicts (Level 4):**
-- Scalability bottlenecks at growth rate
-- Performance degradation timeline
-- Resource exhaustion points
-
----
-
-### All Available Wizards
-
-The framework includes 16+ specialized Coach wizards:
-
-#### Security & Compliance
-
-- **SecurityWizard** - Security vulnerabilities
-- **ComplianceWizard** - GDPR, SOC 2, PII handling
-
-#### Performance & Scalability
-
-- **PerformanceWizard** - Performance issues
-- **DatabaseWizard** - Database optimization
-- **ScalingWizard** - Scalability analysis
-
-#### Code Quality
-
-- **RefactoringWizard** - Code smells and complexity
-- **TestingWizard** - Test coverage and quality
-- **DebuggingWizard** - Error detection
-
-#### API & Integration
-
-- **APIWizard** - API design consistency
-- **MigrationWizard** - Deprecated API detection
-
-#### DevOps & Operations
-
-- **CICDWizard** - CI/CD pipeline optimization
-- **ObservabilityWizard** - Logging and metrics
-- **MonitoringWizard** - System monitoring
-
-#### User Experience
-
-- **AccessibilityWizard** - WCAG compliance
-- **LocalizationWizard** - Internationalization
-
-#### Documentation
-
-- **DocumentationWizard** - Documentation quality
-
-**Import Example:**
-
-```python
-from coach_wizards import (
-    SecurityWizard,
-    PerformanceWizard,
-    TestingWizard,
-    AccessibilityWizard,
-    # ... import others as needed
-)
-```
+Persistent pattern storage with classification and
+encryption support.
 
 ---
 
 ## Workflows
 
-Attune AI workflows are multi-stage pipelines built on
-`BaseWorkflow`. Each workflow defines named stages, a
-model tier map, and an async `run_stage()` dispatcher.
+### BaseWorkflow
+
+`attune.workflows.base.BaseWorkflow`
+
+Abstract base class for all workflows. Provides mixins for
+execution, cost tracking, caching, and verification.
+
+All concrete workflows implement `async execute(**kwargs)`.
 
 ```python
-from attune.workflows import list_workflows
+from attune.workflows import SecurityAuditWorkflow
 
-# List all registered workflows
-for wf in list_workflows():
-    print(wf["name"], "-", wf["description"])
+workflow = SecurityAuditWorkflow()
+result = await workflow.execute(path="src/")
 ```
 
-### TestAuditWorkflow
+**Class attributes** (set by subclasses, not constructor
+params):
 
-Autonomous test coverage audit and generation workflow.
-Runs `pytest --cov`, prioritizes modules by coverage gap,
-generates batch task specs, and verifies results.
-
-**Module:** `attune.workflows.test_audit`
-
-#### Constructor
-
-```python
-from attune.workflows.test_audit import TestAuditWorkflow
-
-workflow = TestAuditWorkflow(
-    target_coverage: float = 90.0,
-    min_module_coverage: float = 50.0,
-    max_batches: int = 5,
-    batch_parallelism: int = 3,
-    mode: str = "deep",
-)
-```
-
-**Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `target_coverage` | `float` | `90.0` | Overall coverage target percentage |
-| `min_module_coverage` | `float` | `50.0` | Modules below this % are included in the plan |
-| `max_batches` | `int` | `5` | Maximum number of test-gen batches |
-| `batch_parallelism` | `int` | `3` | Concurrent batches in execute stage |
-| `mode` | `str` | `"deep"` | `"deep"` (all 4 stages) or `"quick"` (audit + verify only) |
-
-#### Stages
-
-| Stage | Tier | Description |
-|-------|------|-------------|
-| `audit` | CHEAP | Run `pytest --cov`, parse coverage JSON, prioritize modules |
-| `plan` | CAPABLE | Group modules into batches, generate XML task specs |
-| `execute` | CAPABLE | Produce test generation specs per batch (skipped in quick mode) |
-| `verify` | CHEAP | Re-run test suite, compare before/after coverage |
-
-#### Usage
-
-```python
-workflow = TestAuditWorkflow(target_coverage=85.0, mode="quick")
-result = await workflow.execute(src_path="src/attune")
-
-# Result includes:
-# - coverage_before / coverage_after / delta
-# - modules_below_threshold
-# - batches (in deep mode)
-# - tests_total, regressions
-```
-
-#### Supporting Classes
-
-**ModuleCoverage** — Coverage data for a single module.
-
-```python
-from attune.workflows.test_audit.coverage_parser import (
-    ModuleCoverage,
-    parse_coverage_json,
-    prioritize_modules,
-    group_into_batches,
-)
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `path` | `str` | File path of the module |
-| `stmts` | `int` | Total statements |
-| `covered` | `int` | Covered statements |
-| `missing_lines` | `list[int]` | Uncovered line numbers |
-| `pct` | `float` | Coverage percentage (0-100) |
-| `priority` | `float` | `(1 - pct/100) * stmts` — higher = more urgent |
-
-**Functions:**
-
-| Function | Description |
-|----------|-------------|
-| `parse_coverage_json(path)` | Parse pytest-cov's coverage.json output |
-| `prioritize_modules(modules, min_threshold)` | Filter and sort modules by coverage gap |
-| `group_into_batches(modules, max_batches)` | Group modules by subsystem into batches |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | `str` | Workflow identifier |
+| `description` | `str` | Human-readable description |
+| `stages` | `list[str]` | Ordered stage names |
+| `tier_map` | `dict[str, ModelTier]` | Stage-to-tier mapping |
 
 ---
 
-### DocAuditWorkflow
+### WorkflowResult
 
-Documentation accuracy audit and gap-filling workflow.
-Runs 10 programmatic checks, plans fixes, applies
-auto-fixable changes, and verifies results.
+`attune.workflows.data_classes.WorkflowResult`
 
-**Module:** `attune.workflows.doc_audit`
+Returned by all workflow `execute()` calls.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | `bool` | Whether workflow completed |
+| `output` | `Any` | Workflow-specific output |
+| `error` | `str \| None` | Error message if failed |
+| `cost_report` | `CostReport` | Cost breakdown |
+| `duration_ms` | `int` | Total execution time |
+| `quality_score` | `float` | Quality assessment |
+| `metadata` | `dict` | Additional metadata |
+
+---
+
+### CostReport
+
+`attune.workflows.data_classes.CostReport`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_cost` | `float` | Total API cost |
+| `savings_percent` | `float` | Cost savings vs single-tier |
+| `cost_by_tier` | `dict[str, float]` | Breakdown by tier |
+| `token_counts` | `dict[str, int]` | Token usage by tier |
+
+---
+
+### Available Workflows
+
+All workflows are SDK-native (Agent SDK powered). Run via
+CLI or programmatic API:
+
+```bash
+attune workflow run <name> --path <target>
+```
+
+| Workflow | Description |
+|----------|-------------|
+| `bug-predict` | Predict likely bug locations with 3 subagents |
+| `code-review` | Multi-pass code review with 4 subagents |
+| `deep-review` | Deep review: security, quality, test gaps |
+| `dependency-check` | Dependency vulnerability audit |
+| `doc-audit` | Audit docs for staleness and broken links |
+| `doc-gen` | Generate documentation from source code |
+| `doc-orchestrator` | End-to-end doc-audit + doc-gen pipeline |
+| `perf-audit` | Performance audit with 3 subagents |
+| `refactor-plan` | Prioritize tech debt with subagents |
+| `release-prep` | Release readiness assessment |
+| `research-synthesis` | Multi-source research synthesis |
+| `security-audit` | Security audit with 4 subagents |
+| `simplify-code` | Simplify over-engineered code |
+| `test-audit` | Autonomous test coverage audit |
+| `test-gen` | Test generation with 3 subagents |
+
+---
+
+## Models & Execution
+
+### ModelRegistry
+
+`attune.models.registry.ModelRegistry`
+
+Central registry of available LLM models.
+
+```python
+from attune.models import MODEL_REGISTRY
+
+model = MODEL_REGISTRY.get_model("claude-sonnet-4-6")
+models = MODEL_REGISTRY.list_models(tier="capable")
+```
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `get_model(model_id)` | `ModelInfo \| None` | Look up model |
+| `list_models(tier=None)` | `list[ModelInfo]` | List models |
+| `register_model(info)` | `bool` | Register custom model |
+
+---
+
+### ModelInfo
+
+`attune.models.registry.ModelInfo`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `str` | Model identifier |
+| `provider` | `str` | Provider name |
+| `tier` | `str` | Cost tier |
+| `input_cost_per_million` | `float` | Input token cost |
+| `output_cost_per_million` | `float` | Output token cost |
+| `max_tokens` | `int` | Max output tokens |
+| `supports_vision` | `bool` | Vision capability |
+| `supports_tools` | `bool` | Tool use capability |
+
+---
+
+### LLMExecutor Protocol
+
+`attune.models.executor.LLMExecutor`
+
+Protocol for LLM execution backends.
+
+```python
+class LLMExecutor(Protocol):
+    async def execute(
+        self,
+        prompt: str,
+        context: ExecutionContext
+    ) -> LLMResponse: ...
+```
+
+---
+
+### LLMResponse
+
+`attune.models.executor.LLMResponse`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `content` | `str` | Response text |
+| `model_id` | `str` | Model used |
+| `provider` | `str` | Provider name |
+| `tier` | `str` | Cost tier |
+| `tokens_input` | `int` | Input tokens |
+| `tokens_output` | `int` | Output tokens |
+| `cost_estimate` | `float` | Estimated cost |
+| `latency_ms` | `int` | Response latency |
+| `metadata` | `dict` | Additional data |
+
+---
+
+### CircuitBreaker
+
+`attune.models.circuit_breaker.CircuitBreaker`
+
+Fault tolerance pattern for LLM calls.
+
+```python
+from attune.models.circuit_breaker import CircuitBreaker
+
+breaker = CircuitBreaker(
+    failure_threshold=5,
+    recovery_timeout=60
+)
+result = breaker.call(my_function, *args)
+```
+
+---
+
+### ResilientExecutor
+
+`attune.models.resilient_executor.ResilientExecutor`
+
+Combines circuit breaker, retry, and fallback policies.
+
+---
+
+### AdaptiveModelRouter
+
+`attune.models.adaptive_routing.AdaptiveModelRouter`
+
+Routes requests to the appropriate model tier based on
+task complexity and historical performance.
+
+---
+
+## MCP Server
+
+### EmpathyMCPServer
+
+`attune.mcp.server.EmpathyMCPServer`
+
+Model Context Protocol server exposing workflows, memory,
+and agents as MCP tools for Claude Code.
+
+```python
+from attune.mcp import create_server
+
+server = create_server()
+```
+
+---
+
+### Tool Schemas
+
+`attune.mcp.tool_schemas`
+
+Functions that return tool schema definitions:
+
+| Function | Description |
+|----------|-------------|
+| `get_workflow_tools()` | Workflow execution tools |
+| `get_memory_tools()` | Memory operation tools |
+| `get_prompts()` | Available prompt templates |
+| `get_resources()` | Exposed resources |
+
+---
+
+### RateLimiter
+
+`attune.mcp.rate_limiter.RateLimiter`
+
+Request rate limiting for MCP tool calls.
+
+---
+
+## Orchestration
+
+### MetaOrchestrator
+
+`attune.orchestration.MetaOrchestrator`
+
+Analyzes tasks and composes agent teams dynamically.
+
+```python
+from attune.orchestration import MetaOrchestrator
+
+orchestrator = MetaOrchestrator()
+plan = orchestrator.analyze_and_compose(
+    task="Review auth module for security issues",
+    context={"path": "src/auth/"}
+)
+```
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `analyze_and_compose(task, context)` | `ExecutionPlan` | Plan agent team |
+
+---
+
+### DynamicTeam
+
+`attune.orchestration.DynamicTeam`
+
+Executable agent team built from an execution plan.
+
+---
+
+### AgentTemplate
+
+`attune.orchestration.AgentTemplate`
+
+Template for agent creation. 14 built-in templates.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | `str` | Agent role name |
+| `capabilities` | `list[AgentCapability]` | What it can do |
+| `description` | `str` | Human description |
+| `tier` | `str` | Model tier (cheap/capable/premium) |
+
+#### Registry Functions
+
+```python
+from attune.orchestration import (
+    get_template,
+    get_all_templates,
+    get_templates_by_capability,
+    get_templates_by_tier,
+    register_custom_template,
+)
+
+templates = get_all_templates()  # 14 built-in templates
+security = get_templates_by_capability(
+    AgentCapability.security_analysis
+)
+```
+
+---
+
+### ExecutionStrategy
+
+`attune.orchestration.ExecutionStrategy`
+
+Protocol defining how agents execute. Implementations:
+
+| Strategy | Description |
+|----------|-------------|
+| `ToolEnhancedStrategy` | Agents use tool calling |
+| `DelegationChainStrategy` | Sequential delegation |
+| `PromptCachedSequentialStrategy` | Cache-optimized sequential |
+
+---
+
+## Meta-Workflows
+
+### MetaWorkflow
+
+`attune.meta_workflows.MetaWorkflow`
+
+Dynamic agent team generation with Socratic discovery.
+
+```python
+from attune.meta_workflows import MetaWorkflow
+
+meta = MetaWorkflow()
+result = meta.execute(
+    task="Generate tests for auth module",
+    context={"path": "src/auth/"}
+)
+```
+
+---
+
+### SocraticFormEngine
+
+`attune.meta_workflows.SocraticFormEngine`
+
+Interactive multi-step questioning engine for workflow
+scoping.
+
+---
+
+### TemplateRegistry
+
+`attune.meta_workflows.TemplateRegistry`
+
+Registry of workflow templates for auto-detection.
+
+```python
+from attune.meta_workflows import (
+    auto_detect_template,
+    detect_and_suggest,
+)
+
+template = auto_detect_template("review code for bugs")
+suggestions = detect_and_suggest("security audit")
+```
+
+---
+
+## Agents
+
+### AgentStateStore
+
+`attune.agents.AgentStateStore`
+
+Persistent state storage for running agents.
+
+Related: `AgentRecoveryManager`, `AgentExecutionRecord`,
+`AgentStateRecord`.
+
+---
+
+### ReleaseAgent
+
+`attune.agents.ReleaseAgent`
+
+Automated release preparation agent.
+
+Related: `ReleasePrepTeam`, `ReleasePrepTeamWorkflow`,
+`ReleaseReadinessReport`.
+
+---
+
+## Wizards
+
+### BaseWizard
+
+`attune.wizards.BaseWizard`
+
+Abstract base for interactive multi-step wizards.
+
+```python
+from attune.wizards import BaseWizard
+
+class MyWizard(BaseWizard):
+    async def execute_steps(
+        self, form_response: FormResponse
+    ) -> dict:
+        # Implementation
+        ...
+```
 
 #### Constructor
 
 ```python
-from attune.workflows.doc_audit import DocAuditWorkflow
+BaseWizard(ask_user_callback: AskUserQuestionCallback, ...)
+```
 
-workflow = DocAuditWorkflow(
-    auto_fix: bool = True,
-    build_docs: bool = True,
-    strict: bool = True,
-    project_root: str = ".",
+#### Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `async run(inputs)` | `WizardResult` | Run the wizard |
+| `async execute_steps(form_response)` | `dict` | Abstract — implement steps |
+
+---
+
+### WizardRegistry
+
+`attune.wizards.WizardRegistry`
+
+Note: `list_wizards()` is a module-level function, not a
+class method.
+
+```python
+from attune.wizards import list_wizards, get_wizard
+
+wizards = list_wizards()
+wizard_class = get_wizard("security-coach")
+```
+
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `list_wizards()` | `list[WizardConfig]` | All registered wizards |
+| `get_wizard(id)` | `type[BaseWizard]` | Look up wizard class |
+| `register_wizard(config, cls)` | `bool` | Register custom wizard |
+| `save_custom_wizard(config, path)` | `bool` | Save wizard to YAML |
+| `delete_custom_wizard(id)` | `bool` | Remove custom wizard |
+
+---
+
+### ConfigDrivenWizard
+
+`attune.wizards.ConfigDrivenWizard`
+
+Wizard instantiated from a YAML configuration file.
+
+```python
+from attune.wizards import ConfigDrivenWizard
+
+wizard = ConfigDrivenWizard.from_yaml("my_wizard.yml")
+result = await wizard.run(inputs={})
+```
+
+---
+
+### TaskDecomposer
+
+`attune.wizards.TaskDecomposer`
+
+XML-based task decomposition for complex multi-step work.
+
+```python
+from attune.wizards import TaskDecomposer
+
+decomposer = TaskDecomposer()
+tasks = decomposer.decompose(
+    "Migrate auth from sessions to JWT"
+)
+# Returns list[DecomposedTask]
+```
+
+---
+
+## Telemetry
+
+### UsageTracker
+
+`attune.telemetry.UsageTracker`
+
+Privacy-first, local-only usage tracking.
+
+```python
+from attune.telemetry import UsageTracker
+
+tracker = UsageTracker()
+tracker.log_llm_call(
+    model="claude-sonnet-4-6",
+    input_tokens=1500,
+    output_tokens=800,
+    cost=0.012,
+)
+stats = tracker.get_stats(days=30)
+today_cost = tracker.get_today_cost()
+```
+
+#### Constructor
+
+```python
+UsageTracker(
+    telemetry_dir: Path | None = None,
+    retention_days: int = 90,
+    max_file_size_mb: int = 10,
+    buffer_size: int = 50,
 )
 ```
 
-**Parameters:**
+---
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `auto_fix` | `bool` | `True` | Apply safe auto-fixable changes |
-| `build_docs` | `bool` | `True` | Run `mkdocs build --strict` to verify links |
-| `strict` | `bool` | `True` | Treat warnings as failures when scoring |
-| `project_root` | `str` | `"."` | Root directory to audit |
+### FeedbackLoop
 
-#### Stages
+`attune.telemetry.FeedbackLoop`
 
-| Stage | Tier | Description |
-|-------|------|-------------|
-| `audit` | CHEAP | Run all 10 checks, compute 0-100 health score |
-| `plan` | CAPABLE | Generate fix plans for failing/warning checks |
-| `execute` | CAPABLE | Apply auto-fixable changes (badge counts in README) |
-| `verify` | CHEAP | Re-run all checks, compare before/after scores |
-
-#### Usage
+Agent-to-LLM quality feedback for tier optimization.
 
 ```python
-workflow = DocAuditWorkflow(project_root=".", strict=True)
-result = await workflow.execute()
+from attune.telemetry import FeedbackLoop, FeedbackEntry
 
-# Result includes:
-# - before_score / after_score / improved
-# - applied (auto-fixed count) / manual (needs human)
-# - mkdocs_build (True/False/None)
-# - checks (list of CheckResult dicts)
+loop = FeedbackLoop()
+loop.submit_feedback(FeedbackEntry(
+    workflow_name="code-review",
+    quality_score=0.92,
+    latency_ms=4500,
+    cost_estimate=0.08,
+))
+recommendation = loop.get_tier_recommendation()
 ```
 
-#### Audit Checks
+---
 
-The workflow runs these 10 checks via `run_all_checks()`:
+### ApprovalGate
 
-| Check ID | Description |
-|----------|-------------|
-| `test-count` | README test badge matches `pytest --collect-only` |
-| `workflow-count` | README workflow count matches registry |
-| `skill-count` | README skill count matches `.claude/commands/` |
-| `mcp-tool-count` | README MCP tool count matches `@server.tool()` decorators |
-| `file-line-limits` | No Python file in `src/` exceeds 1000 lines |
-| `install-extras` | Extras match between `pyproject.toml` and README |
-| `stale-references` | No references to removed features in docs |
-| `version-consistency` | Version matches across pyproject.toml, `__init__.py`, CHANGELOG |
-| `cross-doc-numbers` | Numeric claims consistent across all docs |
-| `documentation-links` | Local markdown links resolve to existing files |
+`attune.telemetry.ApprovalGate`
 
-**CheckResult** — Result of a single audit check.
+Human-in-the-loop approval workflow.
 
 ```python
-from attune.workflows.doc_audit.checks import (
-    CheckResult,
-    run_all_checks,
+from attune.telemetry import ApprovalGate
+
+gate = ApprovalGate(
+    workflow_name="release-prep",
+    requires_approval=True,
+    approval_timeout=3600,
+)
+request = gate.request_approval(data={"version": "5.3.2"})
+gate.respond_to_request(
+    request.id,
+    ApprovalResponse(approved=True, comment="LGTM",
+                     responder="patrick"),
 )
 ```
+
+---
+
+### EventStreamer
+
+`attune.telemetry.EventStreamer`
+
+Real-time event streaming via Redis Streams.
+
+Requires: `pip install 'attune-ai[redis]'`
+
+---
+
+## Monitoring
+
+### AlertConfig
+
+`attune.monitoring.AlertConfig`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | `str` | Check identifier (e.g. `"test-count"`) |
-| `name` | `str` | Human-readable name |
-| `status` | `str` | `"pass"`, `"fail"`, or `"warn"` |
-| `details` | `str` | Explanation of what was found |
-| `file` | `str \| None` | Relevant file path |
-| `line` | `int \| None` | Line number in the file |
-| `auto_fixable` | `bool` | Whether the check can be fixed automatically |
+| `metric` | `AlertMetric` | What to monitor |
+| `threshold` | `float` | Trigger threshold |
+| `channel` | `AlertChannel` | Notification channel |
+| `severity` | `AlertSeverity` | Alert severity |
+
+**Enums:**
+
+| Enum | Values |
+|------|--------|
+| `AlertMetric` | `DAILY_COST`, `ERROR_RATE`, `AVG_LATENCY`, `TOKEN_USAGE` |
+| `AlertChannel` | `WEBHOOK`, `EMAIL`, `VSCODE_OUTPUT`, `STDOUT` |
+| `AlertSeverity` | `INFO`, `WARNING`, `CRITICAL` |
+
+---
+
+### AlertEvent
+
+`attune.monitoring.AlertEvent`
+
+Triggered alert instance with `config_id`, `metric`,
+`value`, `timestamp`, and `severity`.
+
+---
+
+## Project Index
+
+### ProjectIndex
+
+`attune.project_index.ProjectIndex`
+
+Codebase intelligence layer for tracking file metadata.
+
+```python
+from attune.project_index import ProjectIndex
+
+index = ProjectIndex(project_root=".")
+summary = index.scan()
+record = index.get_file_record("src/auth.py")
+```
+
+#### Constructor
+
+```python
+ProjectIndex(
+    project_root: str,
+    config: IndexConfig | None = None,
+    redis_client: Any | None = None,
+    workers: int | None = None,
+    use_parallel: bool = True,
+)
+```
+
+#### Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `scan()` | `ProjectSummary` | Scan entire project |
+| `get_file_record(path)` | `FileRecord \| None` | Look up file |
+| `query_files(pattern)` | `Iterator[FileRecord]` | Search files |
+| `update_file_metadata(path, meta)` | `bool` | Update metadata |
+| `persist()` | `None` | Save index to disk |
+
+---
+
+### FileRecord
+
+`attune.project_index.FileRecord`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `path` | `str` | File path |
+| `file_type` | `str` | Detected file type |
+| `last_modified` | `datetime` | Last modification |
+| `lines_of_code` | `int` | LOC count |
+| `test_coverage` | `float \| None` | Coverage percentage |
+| `dependencies` | `list[str]` | Import dependencies |
+| `is_test` | `bool` | Whether it's a test file |
+
+---
+
+### ProjectSummary
+
+`attune.project_index.ProjectSummary`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_files` | `int` | Files scanned |
+| `total_lines` | `int` | Total LOC |
+| `average_coverage` | `float` | Mean coverage |
+| `files_without_tests` | `list[str]` | Untested files |
+| `stale_files` | `list[str]` | Stale files |
+| `key_dependencies` | `list[str]` | Top dependencies |
 
 ---
 
@@ -1389,403 +1069,161 @@ from attune.workflows.doc_audit.checks import (
 
 ### BasePlugin
 
-Abstract base class for domain plugins.
+`attune.plugins.BasePlugin`
+
+Abstract base class for extending Attune AI.
 
 ```python
 from attune.plugins import BasePlugin, PluginMetadata
 
 class MyPlugin(BasePlugin):
-    def get_metadata(self) -> PluginMetadata:
-        return PluginMetadata(
-            name="My Plugin",
-            version="1.0.0",
-            domain="my_domain",
-            description="Plugin description",
-            author="Your Name",
-            license="Apache-2.0",
-            requires_core_version="1.0.0",
-            dependencies=[]
-        )
-
-    def register_wizards(self) -> Dict[str, Type[BaseWizard]]:
-        return {
-            "my_wizard": MyWizard
-        }
-
-    def register_patterns(self) -> Dict:
-        return {
-            "domain": "my_domain",
-            "patterns": { ... }
-        }
+    metadata = PluginMetadata(
+        name="my-plugin",
+        version="1.0.0",
+        domain="custom",
+        description="My custom plugin",
+        author="Dev",
+        license="MIT",
+        requires_core_version=">=5.0.0",
+    )
 ```
 
 ---
 
-### SoftwarePlugin
+### PluginRegistry
 
-Built-in software development plugin providing 16+ Coach wizards.
+`attune.plugins.PluginRegistry`
 
 ```python
-from empathy_software_plugin import SoftwarePlugin
+from attune.plugins import get_global_registry
 
-plugin = SoftwarePlugin()
-metadata = plugin.get_metadata()
-wizards = plugin.register_wizards()
-patterns = plugin.register_patterns()
+registry = get_global_registry()
+registry.register_plugin(MyPlugin)
+plugins = registry.list_plugins()
 ```
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `register_plugin(cls)` | `bool` | Register plugin |
+| `get_plugin(id)` | `BasePlugin \| None` | Look up plugin |
+| `list_plugins()` | `list[BasePlugin]` | All plugins |
+| `discover_plugins()` | `list[type[BasePlugin]]` | Auto-discover |
 
 ---
 
-## Data Models
+## Security
 
-### WizardIssue
+### _validate_file_path
 
-Represents an issue found by a wizard.
+`attune.security.path_validation._validate_file_path`
+
+Validates file paths to prevent path traversal (CWE-22).
+Used in 77+ files across the codebase.
 
 ```python
-from coach_wizards.base_wizard import WizardIssue
+from attune.security.path_validation import _validate_file_path
 
-issue = WizardIssue(
-    severity: str,              # 'error', 'warning', 'info'
-    message: str,               # Issue description
-    file_path: str,             # File path
-    line_number: Optional[int], # Line number
-    code_snippet: Optional[str],# Code snippet
-    fix_suggestion: Optional[str], # Fix suggestion
-    category: str,              # Issue category
-    confidence: float           # 0.0 to 1.0
+validated = _validate_file_path(
+    path="output.json",
+    allowed_dir="./data"
 )
 ```
 
-### WizardPrediction
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `path` | `str` | Path to validate |
+| `allowed_dir` | `str \| None` | Restrict to directory |
 
-Level 4 Anticipatory: Predicts future issues.
+**Returns:** `Path` — resolved, validated path.
+
+**Raises:** `ValueError` for null bytes, system directories,
+or paths outside `allowed_dir`.
+
+---
+
+### SecretsDetector
+
+`attune.security.SecretsDetector`
+
+Detects hardcoded secrets (API keys, passwords, tokens).
 
 ```python
-from coach_wizards.base_wizard import WizardPrediction
+from attune.security import SecretsDetector, detect_secrets
 
-prediction = WizardPrediction(
-    predicted_date: datetime,   # When issue will occur
-    issue_type: str,            # Type of issue
-    probability: float,         # 0.0 to 1.0
-    impact: str,                # 'low', 'medium', 'high', 'critical'
-    prevention_steps: List[str],# Steps to prevent
-    reasoning: str              # Why this is predicted
+findings = detect_secrets(file_path="config.py")
+```
+
+---
+
+### PIIScrubber
+
+`attune.security.PIIScrubber`
+
+Scrubs personally identifiable information from text.
+
+---
+
+## Voice Layer
+
+### format_output
+
+`attune.voice.format_output`
+
+All user-facing output passes through this function for
+consistent personality and formatting.
+
+```python
+from attune.voice import format_output
+
+text = format_output(
+    workflow_name="security-audit",
+    result=workflow_result,
+    compact=False,
 )
 ```
 
-### WizardResult
+---
 
-Complete wizard analysis result.
+### format_error
+
+`attune.voice.format_error`
+
+Format error messages with personality and next-step
+guidance.
 
 ```python
-from coach_wizards.base_wizard import WizardResult
+from attune.voice import format_error
 
-result = WizardResult(
-    wizard_name: str,
-    issues: List[WizardIssue],
-    predictions: List[WizardPrediction],
-    summary: str,
-    analyzed_files: int,
-    analysis_time: float,
-    recommendations: List[str]
+msg = format_error(
+    message="File not found: auth.py",
+    context="workflow",
 )
 ```
 
-### LLMResponse
+---
 
-Standardized response from any LLM provider.
+## Module Summary
 
-```python
-from attune_llm.providers import LLMResponse
-
-response = LLMResponse(
-    content: str,               # Response content
-    model: str,                 # Model used
-    tokens_used: int,           # Total tokens
-    finish_reason: str,         # Why generation stopped
-    metadata: Dict[str, Any]    # Additional metadata
-)
-```
-
-### UserPattern
-
-Represents a detected user pattern for Level 3 Proactive behavior.
-
-```python
-from attune_llm import UserPattern, PatternType
-
-pattern = UserPattern(
-    pattern_type: PatternType,  # SEQUENTIAL, CONDITIONAL, ADAPTIVE
-    trigger: str,               # What triggers the pattern
-    action: str,                # What action to take
-    confidence: float,          # 0.0 to 1.0
-    usage_count: int = 0,       # How many times used
-    success_rate: float = 1.0   # Success rate
-)
-```
-
-**PatternType Enum:**
-- `PatternType.SEQUENTIAL` - Sequential workflow
-- `PatternType.CONDITIONAL` - Conditional logic
-- `PatternType.ADAPTIVE` - Adapts based on context
+| Module | Purpose | Key Export |
+|--------|---------|-----------|
+| `attune` | Core framework | `EmpathyOS` |
+| `attune.config` | Configuration | `AttuneConfig`, `load_config` |
+| `attune.memory` | Two-tier memory | `UnifiedMemory` |
+| `attune.workflows` | SDK-native pipelines | `BaseWorkflow`, 15 workflows |
+| `attune.models` | Model registry + execution | `MODEL_REGISTRY`, `LLMResponse` |
+| `attune.mcp` | MCP server for Claude Code | `create_server` |
+| `attune.orchestration` | Dynamic agent teams | `MetaOrchestrator` |
+| `attune.meta_workflows` | Socratic discovery | `MetaWorkflow` |
+| `attune.agents` | State + release agents | `AgentStateStore` |
+| `attune.wizards` | Interactive wizards | `list_wizards`, `BaseWizard` |
+| `attune.telemetry` | Privacy-first tracking | `UsageTracker` |
+| `attune.monitoring` | Alerts + observability | `AlertConfig` |
+| `attune.project_index` | Codebase intelligence | `ProjectIndex` |
+| `attune.plugins` | Extension system | `BasePlugin` |
+| `attune.security` | Path + secret validation | `_validate_file_path` |
+| `attune.voice` | Output formatting | `format_output` |
 
 ---
 
-## Pattern Library
-
-The pattern library enables Level 5 Systems Empathy through cross-domain learning.
-
-### Pattern Structure
-
-```python
-pattern_library = {
-    "domain": "software",
-    "patterns": {
-        "pattern_id": {
-            "description": str,
-            "indicators": List[str],
-            "threshold": str,
-            "recommendation": str
-        }
-    }
-}
-```
-
-### Example Patterns
-
-```python
-software_patterns = {
-    "domain": "software",
-    "patterns": {
-        "testing_bottleneck": {
-            "description": "Manual testing burden grows faster than team",
-            "indicators": [
-                "test_count_growth_rate",
-                "manual_test_time",
-                "wizard_count"
-            ],
-            "threshold": "test_time > 900 seconds",
-            "recommendation": "Implement test automation framework"
-        },
-        "security_drift": {
-            "description": "Security practices degrade without monitoring",
-            "indicators": [
-                "input_validation_coverage",
-                "authentication_consistency"
-            ],
-            "threshold": "coverage < 80%",
-            "recommendation": "Add security wizard to CI/CD"
-        }
-    }
-}
-```
-
----
-
-## Utilities
-
-### load_config()
-
-Flexible configuration loading with precedence.
-
-```python
-from attune.config import load_config
-
-config = load_config(
-    filepath: Optional[str] = None,
-    use_env: bool = True,
-    defaults: Optional[Dict[str, Any]] = None
-) -> AttuneConfig
-```
-
-**Precedence (highest to lowest):**
-1. Environment variables (if `use_env=True`)
-2. Configuration file (if provided/found)
-3. Defaults (if provided)
-4. Built-in defaults
-
-**Example:**
-
-```python
-# Load with all defaults
-config = load_config()
-
-# Load from specific file
-config = load_config("my-config.yml")
-
-# Load with custom defaults
-config = load_config(defaults={"target_level": 4})
-
-# Load file + override with env vars
-config = load_config("empathy.yml", use_env=True)
-```
-
----
-
-## Complete Example
-
-Here's a comprehensive example using multiple APIs:
-
-```python
-import asyncio
-from attune_llm import EmpathyLLM, UserPattern, PatternType
-from attune.config import load_config
-from coach_wizards import SecurityWizard, PerformanceWizard
-
-async def main():
-    # Load configuration
-    config = load_config("empathy.config.yml", use_env=True)
-
-    # Initialize EmpathyLLM with Claude
-    llm = EmpathyLLM(
-        provider="anthropic",
-        target_level=config.target_level,
-        api_key=os.getenv("ANTHROPIC_API_KEY")
-    )
-
-    # Initialize wizards
-    security = SecurityWizard()
-    performance = PerformanceWizard()
-
-    # Analyze code with security wizard
-    code = open("app.py").read()
-    security_result = security.run_full_analysis(
-        code=code,
-        file_path="app.py",
-        language="python",
-        project_context={
-            "team_size": 10,
-            "deployment_frequency": "daily",
-            "user_count": 5000
-        }
-    )
-
-    # Report current issues
-    print(f"Security Analysis: {security_result.summary}")
-    for issue in security_result.issues:
-        print(f"  [{issue.severity}] {issue.message} (line {issue.line_number})")
-
-    # Report Level 4 predictions
-    print("\nLevel 4 Anticipatory Predictions:")
-    for pred in security_result.predictions:
-        print(f"  {pred.issue_type} predicted on {pred.predicted_date}")
-        print(f"  Probability: {pred.probability:.0%}, Impact: {pred.impact}")
-        print(f"  Prevention: {pred.prevention_steps}")
-
-    # Use EmpathyLLM for conversational help
-    result = await llm.interact(
-        user_id="developer_alice",
-        user_input="How do I fix the SQL injection on line 42?",
-        context={
-            "wizard_results": security_result,
-            "file": "app.py"
-        }
-    )
-
-    print(f"\nLevel {result['level_used']} Response:")
-    print(result['content'])
-
-    # Update trust based on outcome
-    llm.update_trust("developer_alice", outcome="success")
-
-    # Add pattern for future proactive help
-    pattern = UserPattern(
-        pattern_type=PatternType.SEQUENTIAL,
-        trigger="code review request",
-        action="run security scan automatically",
-        confidence=0.90
-    )
-    llm.add_pattern("developer_alice", pattern)
-
-    # Get statistics
-    stats = llm.get_statistics("developer_alice")
-    print(f"\nCollaboration Stats:")
-    print(f"  Trust level: {stats['trust_level']:.2f}")
-    print(f"  Success rate: {stats['success_rate']:.0%}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
----
-
-## Environment Variables
-
-All configuration can be set via environment variables (use `ATTUNE_` prefix; `EMPATHY_` prefix is also accepted for backward compatibility):
-
-```bash
-# Core settings
-export ATTUNE_USER_ID=alice
-export ATTUNE_TARGET_LEVEL=4
-export ATTUNE_CONFIDENCE_THRESHOLD=0.8
-
-# LLM providers
-export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
-
-# Persistence
-export ATTUNE_PERSISTENCE_ENABLED=true
-export ATTUNE_PERSISTENCE_BACKEND=sqlite
-export ATTUNE_PERSISTENCE_PATH=./empathy_data
-
-# Metrics
-export ATTUNE_METRICS_ENABLED=true
-export ATTUNE_METRICS_PATH=./metrics.db
-
-# Pattern library
-export ATTUNE_PATTERN_LIBRARY_ENABLED=true
-export ATTUNE_PATTERN_SHARING=true
-```
-
----
-
-## Error Handling
-
-All API methods raise standard Python exceptions:
-
-```python
-try:
-    llm = EmpathyLLM(
-        provider="anthropic",
-        api_key="invalid_key"
-    )
-except ValueError as e:
-    print(f"Configuration error: {e}")
-
-try:
-    result = await llm.interact(
-        user_id="test",
-        user_input="Hello"
-    )
-except Exception as e:
-    print(f"Runtime error: {e}")
-```
-
-**Common Exceptions:**
-- `ValueError` - Invalid configuration or parameters
-- `ImportError` - Missing dependencies
-- `FileNotFoundError` - Configuration file not found
-- `JSONDecodeError` - Invalid JSON configuration
-
----
-
-## Support & Resources
-
-- **Documentation:** https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs
-- **Issues:** https://github.com/Smart-AI-Memory/attune-ai/issues
-- **Discussions:** https://github.com/Smart-AI-Memory/attune-ai/discussions
-- **Email:** patrick.roebuck@smartaimemory.com
-
-**Commercial Support:**
-- Priority bug fixes and feature requests
-- Direct access to core development team
-- Guaranteed response times
-- Security advisories
-
-Learn more: https://github.com/Smart-AI-Memory/attune-ai/blob/main/SPONSORSHIP.md
-
----
-
-**Copyright 2025 Smart AI Memory, LLC**
-**Licensed under the Apache License, Version 2.0**
+**Version:** 5.3.2 | **License:** Apache 2.0
+**Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)

@@ -104,12 +104,13 @@ If the MCP server is not responding, trigger the setup-guide agent to diagnose a
 | Skill | Triggers |
 | ----- | -------- |
 | security-audit | security, vulnerability, audit, scan, CVE, CWE |
-| code-quality | review, quality, analyze, lint, bugs, predict |
+| code-quality | review, quality, analyze, lint, bugs, code smell |
+| bug-predict | predict bugs, find bugs, risky code, what might break |
 | doc-gen | generate docs, documentation, docstrings, README, API docs |
 | smart-test | generate tests, test gaps, coverage, untested, smart test |
 | fix-test | fix test, broken test, test failure, debug test |
 | planning | plan, feature, architecture, design, TDD, strategy |
-| refactor-plan | refactor, restructure, code smell, tech debt, simplify |
+| refactor-plan | refactor, restructure, tech debt, simplify, modularize |
 | release-prep | release, publish, ship, deploy, version bump, changelog |
 | memory-and-context | memory, store, retrieve, empathy, pattern, classification |
-| workflow-orchestration | workflow, run, execute, security, review, test, perf |
+| workflow-orchestration | workflow, run, execute, analyze, all workflows |

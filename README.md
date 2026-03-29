@@ -121,7 +121,7 @@ is accessible without namespacing.
 | ------- | ------------ |
 | **Unified voice layer** | Friendly senior engineer personality across all output — greetings, score commentary, voiced next steps |
 | **Spec-aware suggestions** | When `.claude/plans/` has an active spec, next steps follow the lifecycle |
-| **11 short commands** | `/security`, `/doc-gen`, `/fix-test`, etc. — no more `/attune-lite:skill-name` |
+| **11 auto-triggering skills** | Say "review my code" and Claude picks the right skill — no slash commands needed |
 | **5 path traversal fixes** | `_validate_file_path()` added to pattern persistence and agent parser I/O |
 
 <details>
