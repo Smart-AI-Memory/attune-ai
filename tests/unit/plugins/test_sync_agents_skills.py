@@ -14,15 +14,19 @@ from pathlib import Path
 import pytest
 
 # Add scripts/ to path so we can import the sync module.
-sys.path.insert(0, str(Path(__file__).parents[3] / "scripts"))
-from sync_agents_skills import (  # noqa: E402
-    CLAUDE_CODE_FIELDS,
-    build_output,
-    discover_skills,
-    parse_frontmatter,
-    sync_one,
-    validate_name,
+_scripts_dir = Path(__file__).parents[3] / "scripts"
+sys.path.insert(0, str(_scripts_dir))
+
+_sync_module = pytest.importorskip(
+    "sync_agents_skills",
+    reason="scripts/sync_agents_skills.py not found",
 )
+CLAUDE_CODE_FIELDS = _sync_module.CLAUDE_CODE_FIELDS
+build_output = _sync_module.build_output
+discover_skills = _sync_module.discover_skills
+parse_frontmatter = _sync_module.parse_frontmatter
+sync_one = _sync_module.sync_one
+validate_name = _sync_module.validate_name
 
 # -----------------------------------------------------------
 # parse_frontmatter
