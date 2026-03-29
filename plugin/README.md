@@ -70,17 +70,24 @@ The plugin ships two security hooks:
 - **PostToolUse** — auto-formats Python with `black`
   and `ruff --fix` after Write/Edit
 
-## Python Package (optional)
+## Python Package (optional — unlocks CLI + MCP)
 
-For CLI workflows and MCP server integration:
+The plugin works standalone. Add the Python package
+for CLI automation, 31 MCP tools, multi-agent
+workflows, and cost tracking:
 
 ```bash
 pip install 'attune-ai[developer]'
 ```
 
-This adds the `attune` CLI and 31 MCP tools. The
-plugin works without it — skills are prompt-based and
-don't require the Python package.
+| Capability | Plugin only | + pip |
+| ---------- | ----------- | ----- |
+| 11 auto-triggering skills | Yes | Yes |
+| Prompt-based analysis | Yes | Yes |
+| 31 MCP tools | -- | Yes |
+| `attune` CLI | -- | Yes |
+| Multi-agent workflows | -- | Yes |
+| Cost tracking | -- | Yes |
 
 ## Links
 
