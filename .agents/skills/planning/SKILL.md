@@ -1,9 +1,7 @@
 ---
 name: planning
 description: "High-level development planning — features, TDD, architecture review. Triggers on: plan, feature, architecture, design, TDD, strategy."
-argument-hint: "<what to plan: feature, tdd, architecture>"
 ---
-
 # Planning
 
 High-level development planning and architecture design.

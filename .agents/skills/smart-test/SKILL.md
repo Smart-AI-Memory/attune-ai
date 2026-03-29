@@ -1,9 +1,7 @@
 ---
 name: smart-test
 description: "Find test gaps and generate tests for uncovered code. Triggers on: generate tests, write tests, test coverage, find untested code, test gaps, smart test, what needs testing."
-argument-hint: "<path or module to test>"
 ---
-
 # Smart Test
 
 Find test gaps and generate tests for uncovered code.

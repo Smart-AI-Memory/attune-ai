@@ -1,9 +1,7 @@
 ---
 name: doc-gen
 description: "Generate documentation from source code — docstrings, READMEs, API references. Triggers on: generate docs, write documentation, document this, create README, API docs, doc-gen."
-argument-hint: "<path or module to document>"
 ---
-
 # Doc Gen
 
 Generate documentation from source code with structured

@@ -1,9 +1,7 @@
 ---
 name: code-quality
 description: "Code review and bug prediction to find quality issues, style violations, and likely bugs. Triggers on: review, quality, code review, analyze, lint, bugs, predict, code smell."
-argument-hint: "<path or directory to review>"
 ---
-
 # Code Quality
 
 ## Scoping
