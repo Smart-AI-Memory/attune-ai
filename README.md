@@ -20,7 +20,7 @@ with Anthropic best practices.**
 
 ## Get Started in 60 Seconds
 
-### Claude Code Plugin (recommended)
+### Plugin (works standalone)
 
 ```bash
 claude plugin marketplace add Smart-AI-Memory/attune-ai
@@ -29,7 +29,7 @@ claude plugin install attune-ai@attune-ai
 
 Then type `/attune` in Claude Code. That's it.
 
-### Python Package (for CLI and MCP server)
+### Add Python Package (optional — unlocks CLI + MCP)
 
 ```bash
 pip install 'attune-ai[developer]'
@@ -381,7 +381,7 @@ export ATTUNE_MAX_BUDGET_USD=0     # Disable caps
 
 ## Quick Start
 
-### Option A: Claude Code Plugin (recommended)
+### Option A: Plugin Only (zero-config)
 
 ```bash
 claude plugin marketplace add Smart-AI-Memory/attune-ai
@@ -395,19 +395,37 @@ Then in Claude Code, just say what you need:
 - `/attune` — guided discovery hub
 - `/spec` — spec-driven development
 
-### Option B: Python Package (for CLI and MCP)
+### Option B: Plugin + Python Package (full power)
 
 ```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 pip install 'attune-ai[developer]'
 ```
 
 ```bash
-# Verify environment
-attune doctor
-
-# Configure authentication (API key or subscription)
-attune auth
+attune doctor    # Verify environment
+attune auth      # Configure API key or subscription
 ```
+
+### What Each Layer Adds
+
+| Capability | Plugin only | Plugin + pip |
+| ---------- | ----------- | ------------ |
+| 11 auto-triggering skills | Yes | Yes |
+| `/attune` hub + `/spec` | Yes | Yes |
+| Security hooks | Yes | Yes |
+| Prompt-based analysis | Yes | Yes |
+| 31 MCP tools | -- | Yes |
+| `attune` CLI | -- | Yes |
+| Multi-agent workflows | -- | Yes |
+| Cost tracking + routing | -- | Yes |
+| CI/CD automation | -- | Yes |
+
+The plugin works standalone — skills guide Claude through
+analysis without any dependencies. Add the Python package
+when you want MCP tool execution, CLI automation, or
+multi-agent orchestration.
 
 ### CLI Usage
 
