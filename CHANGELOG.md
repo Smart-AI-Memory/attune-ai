@@ -5,6 +5,43 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-03-29
+
+### Added (5.4.0)
+
+- **Skills-centric plugin architecture** — 14 commands
+  migrated to 11 auto-triggering skills + 2 commands
+  (`/attune`, `/spec`) per Anthropic's official guidance.
+- **Marketplace install** — attune-ai repo serves as its
+  own Claude Code marketplace. Install with
+  `claude plugin install attune-ai@attune-ai`.
+- **`bug-predict` skill** — new skill with scoping
+  questions, migrated from command.
+- **Complementary layers docs** — README explains plugin
+  standalone vs plugin + pip with capability table.
+- **API reference rewrite** — updated from v3.8.0 to
+  v5.4.0, covering all 16 public modules.
+- **6 new plugin validation tests** — description max
+  length, skill/command counts, hook script existence,
+  agents sync content, frontmatter allowlist update.
+- **`scripts/sync_agents_skills.py`** — now tracked in
+  git for CI compatibility.
+
+### Changed (5.4.0)
+
+- **Skill frontmatter** — dropped `compatibility`,
+  `license`, `metadata` fields (not in Anthropic's
+  official allowlist). All descriptions trimmed to
+  under 250 characters for auto-triggering.
+- **attune-lite deprecated** — all skills merged into
+  attune-ai. Repo archived on GitHub.
+- **VALID_FIELDS test** — updated to March 2026 Claude
+  Code allowlist (13 fields).
+
+### Removed (5.4.0)
+
+- 11 delegator command files (replaced by skills).
+
 ## [5.3.2] - 2026-03-25
 
 ### Added (5.3.2)
