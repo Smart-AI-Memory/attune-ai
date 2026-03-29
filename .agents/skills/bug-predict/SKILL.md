@@ -51,5 +51,3 @@ positives like `subprocess_exec` matching
 | `dangerous_eval` | HIGH | Use of eval() or exec() |
 | `broad_exception` | MEDIUM | Bare except: or except Exception: |
 | `incomplete_code` | LOW | TODO/FIXME comments |
-
-ARGUMENTS: $ARGUMENTS

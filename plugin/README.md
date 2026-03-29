@@ -78,7 +78,7 @@ For CLI workflows and MCP server integration:
 pip install 'attune-ai[developer]'
 ```
 
-This adds the `attune` CLI and 36 MCP tools. The
+This adds the `attune` CLI and 31 MCP tools. The
 plugin works without it — skills are prompt-based and
 don't require the Python package.
 

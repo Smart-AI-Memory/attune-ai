@@ -90,7 +90,7 @@ what your spec says should come next.
 | | |
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
-| **36 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
+| **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
 | **11 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — no slash commands needed |
 | **Skills-First Plugin** | Install via `claude plugin install attune-ai@attune-ai` — skills auto-trigger from natural language |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
@@ -274,7 +274,7 @@ The plugin ships two hooks that run automatically:
 
 ## MCP Integration
 
-36 tools organized into 6 categories:
+31 tools organized into 6 categories:
 
 ### Analysis (6)
 
