@@ -1,9 +1,7 @@
 ---
 name: refactor-plan
 description: "Code-level refactoring analysis and roadmap. Detects smells, duplication, complexity. Triggers on: refactor, tech debt, simplify, code smell, clean up, modularize, DRY."
-argument-hint: "<path to analyze>"
 ---
-
 # Refactor Planning
 
 AI-powered refactoring analysis and roadmap generation.

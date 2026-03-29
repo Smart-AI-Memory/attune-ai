@@ -1,9 +1,7 @@
 ---
 name: release-prep
 description: "Pre-release preparation with health checks, security audit, changelog validation, version bumps, and dependency audits. Triggers on: release, publish, ship, deploy, version bump, changelog."
-argument-hint: "<version or 'check'>"
 ---
-
 # Release Prep
 
 ## Scoping

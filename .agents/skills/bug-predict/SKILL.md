@@ -1,9 +1,7 @@
 ---
 name: bug-predict
 description: "Predict likely bug locations from code patterns and complexity. Triggers on: predict bugs, find bugs, risky code, code risk, what might break, likely bugs."
-argument-hint: "<path or directory to scan>"
 ---
-
 # Bug Prediction
 
 Scan code for patterns that predict likely bug locations.
@@ -51,5 +49,3 @@ positives like `subprocess_exec` matching
 | `dangerous_eval` | HIGH | Use of eval() or exec() |
 | `broad_exception` | MEDIUM | Bare except: or except Exception: |
 | `incomplete_code` | LOW | TODO/FIXME comments |
-
-ARGUMENTS: $ARGUMENTS

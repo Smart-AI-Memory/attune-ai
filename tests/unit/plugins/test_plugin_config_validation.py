@@ -187,15 +187,21 @@ class TestMcpJson:
 class TestSkillFrontmatter:
     """Validate YAML frontmatter in all SKILL.md files."""
 
+    # Official Claude Code skill frontmatter fields (March 2026)
     VALID_FIELDS = {
         "name",
         "description",
         "argument-hint",
         "disable-model-invocation",
         "user-invocable",
-        "compatibility",
-        "license",
-        "metadata",
+        "allowed-tools",
+        "model",
+        "effort",
+        "context",
+        "agent",
+        "hooks",
+        "paths",
+        "shell",
     }
 
     def _get_skill_dirs(self) -> list[Path]:
@@ -269,6 +275,62 @@ class TestSkillFrontmatter:
                 f"{path} description too short ({len(desc)} chars) "
                 f"for effective auto-invocation"
             )
+
+    def test_descriptions_under_250_chars(self) -> None:
+        """Test that descriptions are under 250 chars.
+
+        Anthropic truncates skill descriptions longer than 250
+        characters, which breaks auto-triggering from natural language.
+        """
+        for skill_dir in self._get_skill_dirs():
+            path = skill_dir / "SKILL.md"
+            data = self._parse_frontmatter(path)
+            desc = data["description"]
+            assert len(desc) <= 250, (
+                f"{skill_dir.name} description is {len(desc)} chars "
+                f"(max 250). Truncation will break auto-triggering."
+            )
+
+
+@pytest.mark.unit
+class TestPluginStructure:
+    """Validate plugin directory counts and layout."""
+
+    def test_skill_count(self) -> None:
+        """Test that the expected number of skills exist."""
+        skills_dir = PLUGIN_ROOT / "skills"
+        skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+        assert len(skill_dirs) == 11, (
+            f"Expected 11 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
+        )
+
+    def test_command_count(self) -> None:
+        """Test that exactly 2 commands exist (attune + spec)."""
+        commands_dir = PLUGIN_ROOT / "commands"
+        cmd_files = sorted(f.name for f in commands_dir.glob("*.md"))
+        assert cmd_files == [
+            "attune.md",
+            "spec.md",
+        ], f"Expected ['attune.md', 'spec.md'], found {cmd_files}"
+
+    def test_hook_scripts_exist(self) -> None:
+        """Test that hook commands reference existing scripts."""
+        hooks_path = PLUGIN_ROOT / "hooks" / "hooks.json"
+        data = json.loads(hooks_path.read_text(encoding="utf-8"))
+        for _event, entries in data["hooks"].items():
+            for entry in entries:
+                for hook in entry["hooks"]:
+                    if hook.get("type") == "command":
+                        cmd = hook["command"]
+                        # Extract script path after ${CLAUDE_PLUGIN_ROOT}/
+                        if "${CLAUDE_PLUGIN_ROOT}/" in cmd:
+                            rel = cmd.split("${CLAUDE_PLUGIN_ROOT}/")[1]
+                            # Strip any trailing arguments
+                            script = rel.split()[0]
+                            actual = PLUGIN_ROOT / script
+                            assert actual.exists(), (
+                                f"Hook references {script} " f"but {actual} does not exist"
+                            )
 
 
 @pytest.mark.unit

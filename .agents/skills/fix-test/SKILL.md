@@ -1,9 +1,7 @@
 ---
 name: fix-test
 description: "Auto-diagnose and fix failing tests — up to 3 attempts with re-runs. Triggers on: fix test, failing test, broken test, test error, why is this test failing, debug test."
-argument-hint: "<test file or pattern>"
 ---
-
 # Fix Test
 
 Auto-diagnose and fix failing tests with up to 3 retry

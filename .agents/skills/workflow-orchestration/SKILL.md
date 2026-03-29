@@ -1,9 +1,7 @@
 ---
 name: workflow-orchestration
 description: "Run analysis workflows — security, code review, tests, perf, bugs, docs, release. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, docs, audit."
-argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 ---
-
 # Workflow Orchestration
 
 ## Scoping

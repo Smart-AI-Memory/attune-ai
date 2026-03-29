@@ -1,10 +1,7 @@
 ---
 name: memory-and-context
 description: "Store, retrieve, search, and manage persistent memory across sessions. Includes empathy level modulation and security-classified pattern storage. Triggers on: memory, store, remember, retrieve, forget, pattern, empathy, context, classification."
-argument-hint: "<operation: store|retrieve|search|forget|empathy>"
-disable-model-invocation: true
 ---
-
 # Memory and Context
 
 Structured knowledge management, empathy modulation,
