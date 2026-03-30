@@ -5,6 +5,35 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-03-30
+
+### Added (5.5.0)
+
+- **Documentation template engine** — runtime help system
+  with 305 generated templates (errors, warnings, tips,
+  references) loaded via `attune.help.engine.populate()`.
+- **Audience transformers** — `render_claude_code`,
+  `render_marketplace`, and `render_cli` adapt template
+  output for each channel.
+- **`attune help-docs` CLI** — browse, search, and display
+  templates from the terminal (`attune help errors`,
+  `attune help --tag security`).
+- **Cross-link index** — 305 templates connected with 216
+  cross-links and 19 tags for contextual navigation.
+- **Reference subtypes** — templates now support subtypes
+  (e.g., `skill`, `tool`, `workflow`) for richer taxonomy.
+
+### Fixed (5.5.0)
+
+- **MCP server protocol compliance** — migrated from custom
+  JSON-RPC stdio loop to official MCP Python SDK
+  (`mcp.server.Server` + `stdio_server`). Fixes handshake
+  failures that prevented Claude Code from connecting to
+  attune-ai MCP tools (36 tools now registered).
+- **MCP `.mcp.json` python path** — changed from bare
+  `python` (resolved to pyenv shim with stale v3.9.0) to
+  `uv run --from attune-ai` for correct package resolution.
+
 ## [5.4.0] - 2026-03-29
 
 ### Added (5.4.0)
