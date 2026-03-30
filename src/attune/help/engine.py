@@ -292,17 +292,20 @@ def populate(
     audience: AudienceProfile | None = None,
     *,
     generated_dir: str | Path | None = None,
+    compose: bool = False,
 ) -> PopulatedTemplate | None:
     """Populate a template with context and audience adaptation.
 
     Loads the template from disk, resolves cross-links, and
-    adapts content for the target audience.
+    adapts content for the target audience. When compose=True,
+    inlines embedded templates (tips, tool refs) into the body.
 
     Args:
         template_id: Template identifier (e.g. "err-shadow-dirs").
         context: Optional runtime context parameters.
         audience: Optional audience profile (defaults to claude-code).
         generated_dir: Override path to generated/ directory.
+        compose: If True, inline embedded templates (max depth 1).
 
     Returns:
         PopulatedTemplate, or None if template not found.
@@ -342,6 +345,27 @@ def populate(
             metadata["workflow_name"] = context.workflow_name
         if context.extra:
             metadata.update(context.extra)
+
+    # Step 5: Compose embedded templates (max depth 1)
+    composed_from: list[str] = []
+    if compose:
+        links_data = cross_links.get("links", {}).get(template_id, {})
+        for embed in links_data.get("embeds", []):
+            embed_id = embed["id"]
+            embed_result = populate(
+                embed_id,
+                audience=AudienceProfile(verbosity="compact"),
+                generated_dir=generated_dir,
+                compose=False,  # no recursive composition
+            )
+            if embed_result:
+                adapted_body += (
+                    f"\n\n---\n\n**Related:** {embed_result.title}\n\n{embed_result.body}"
+                )
+                composed_from.append(embed_id)
+
+    if composed_from:
+        metadata["composed_from"] = composed_from
 
     return PopulatedTemplate(
         template_id=template_id,
@@ -468,46 +492,213 @@ def get_workflow_help(
     return results
 
 
+# -----------------------------------------------------------
+# Error precursor detection
+# -----------------------------------------------------------
+
+_EXTENSION_TAG_MAP: dict[str, list[str]] = {
+    ".py": ["python", "imports", "testing"],
+    ".yml": ["ci"],
+    ".yaml": ["ci"],
+    ".json": ["packaging"],
+    ".toml": ["packaging", "python"],
+    ".md": ["claude-code"],
+    ".js": [],
+    ".ts": [],
+}
+
+
+def get_precursor_warnings(
+    file_path: str,
+    *,
+    generated_dir: str | Path | None = None,
+    max_results: int = 3,
+) -> list[PopulatedTemplate]:
+    """Get warnings relevant to a file being edited.
+
+    Maps the file extension to tags, queries the cross-link
+    tag index, and returns matching warning/error templates.
+
+    Args:
+        file_path: Path to the file being edited.
+        generated_dir: Override path to generated/ directory.
+        max_results: Maximum templates to return.
+
+    Returns:
+        List of PopulatedTemplate at compact verbosity.
+    """
+    gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
+    cross_links = _load_cross_links(gen_dir)
+    tag_index = cross_links.get("tag_index", {})
+
+    # Determine relevant tags from file extension
+    ext = Path(file_path).suffix.lower()
+    relevant_tags = _EXTENSION_TAG_MAP.get(ext, [])
+    if not relevant_tags:
+        return []
+
+    # Collect candidate template IDs from matching tags
+    candidates: dict[str, int] = {}  # template_id -> match count
+    for tag in relevant_tags:
+        for tid in tag_index.get(tag, []):
+            # Only warnings and errors are precursor-relevant
+            if tid.startswith(("war-", "err-")):
+                candidates[tid] = candidates.get(tid, 0) + 1
+
+    if not candidates:
+        return []
+
+    # Sort by match count (more tag overlaps = more relevant)
+    sorted_ids = sorted(candidates, key=lambda t: candidates[t], reverse=True)
+
+    audience = AudienceProfile(verbosity="compact")
+    results: list[PopulatedTemplate] = []
+
+    for tid in sorted_ids[:max_results]:
+        result = populate(tid, audience=audience, generated_dir=generated_dir)
+        if result:
+            results.append(result)
+
+    return results
+
+
 def reset_session() -> None:
     """Reset progressive depth session state."""
     _session_state["last_template_id"] = None
     _session_state["depth_level"] = 0
 
 
+# -----------------------------------------------------------
+# Usage-driven priority
+# -----------------------------------------------------------
+
+
+def get_usage_weights(
+    days: int = 30,
+) -> dict[str, float]:
+    """Get template relevance weights from usage telemetry.
+
+    Reads workflow usage from UsageTracker and maps to
+    template IDs via the workflow_map in cross_links.json.
+
+    Args:
+        days: Number of days to look back.
+
+    Returns:
+        Dict of template_id -> weight (0.0-1.0).
+        Empty dict if telemetry unavailable.
+    """
+    try:
+        from attune.telemetry.usage_tracker import UsageTracker
+
+        tracker = UsageTracker()
+        stats = tracker.get_stats(days=days)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: telemetry is optional
+        return {}
+
+    by_workflow = stats.get("by_workflow", {})
+    if not by_workflow:
+        return {}
+
+    # Normalize to 0.0-1.0 (values may be dicts or floats)
+    costs: dict[str, float] = {}
+    for wf_name, val in by_workflow.items():
+        if isinstance(val, dict):
+            costs[wf_name] = float(val.get("total_cost", 0))
+        else:
+            costs[wf_name] = float(val)
+
+    max_cost = max(costs.values(), default=0)
+    if max_cost <= 0:
+        return {}
+
+    wf_weights: dict[str, float] = {}
+    for wf_name, cost in costs.items():
+        wf_weights[wf_name] = cost / max_cost
+
+    # Map workflow weights to template IDs via workflow_map
+    cross_links = _load_cross_links(_DEFAULT_GENERATED_DIR)
+    workflow_map = cross_links.get("workflow_map", {})
+
+    template_weights: dict[str, float] = {}
+    for wf_name, weight in wf_weights.items():
+        for tid in workflow_map.get(wf_name, []):
+            template_weights[tid] = max(
+                template_weights.get(tid, 0),
+                weight,
+            )
+
+    return template_weights
+
+
 def search_by_tag(
     tag: str,
     *,
     generated_dir: str | Path | None = None,
+    sort_by_usage: bool = False,
 ) -> list[str]:
     """Find template IDs matching a tag.
 
     Args:
         tag: Tag to search for.
         generated_dir: Override path to generated/ directory.
+        sort_by_usage: Sort results by usage frequency.
 
     Returns:
         List of matching template IDs.
     """
     gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
     cross_links = _load_cross_links(gen_dir)
-    return cross_links.get("tag_index", {}).get(tag, [])
+    results = cross_links.get("tag_index", {}).get(tag, [])
+
+    if sort_by_usage and results:
+        weights = get_usage_weights()
+        if weights:
+            results = sorted(
+                results,
+                key=lambda tid: weights.get(tid, 0),
+                reverse=True,
+            )
+
+    return results
 
 
 def list_tags(
     *,
     generated_dir: str | Path | None = None,
+    sort_by_usage: bool = False,
 ) -> dict[str, int]:
     """List all tags with their template counts.
 
     Args:
         generated_dir: Override path to generated/ directory.
+        sort_by_usage: Sort by aggregate usage weight.
 
     Returns:
-        Dict of tag -> count, sorted by count descending.
+        Dict of tag -> count, sorted by count or usage.
     """
     gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
     cross_links = _load_cross_links(gen_dir)
     tag_index = cross_links.get("tag_index", {})
+
+    if sort_by_usage:
+        weights = get_usage_weights()
+        if weights:
+            # Sort by sum of weights for templates in each tag
+            def tag_weight(item: tuple[str, list[str]]) -> float:
+                tag_name, tids = item
+                return sum(weights.get(tid, 0) for tid in tids)
+
+            return {
+                tag: len(ids)
+                for tag, ids in sorted(
+                    tag_index.items(),
+                    key=tag_weight,
+                    reverse=True,
+                )
+            }
+
     return dict(
         sorted(
             ((tag, len(ids)) for tag, ids in tag_index.items()),
@@ -515,3 +706,110 @@ def list_tags(
             reverse=True,
         )
     )
+
+
+# -----------------------------------------------------------
+# Feedback loop
+# -----------------------------------------------------------
+
+_FEEDBACK_FILE = "feedback.json"
+
+
+def _load_feedback(generated_dir: Path) -> dict[str, dict]:
+    """Load feedback data from feedback.json.
+
+    Args:
+        generated_dir: Path to generated/ directory.
+
+    Returns:
+        Dict of template_id -> {good: int, bad: int}.
+    """
+    path = generated_dir / _FEEDBACK_FILE
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning("Failed to load feedback.json: %s", e)
+        return {}
+
+
+def _save_feedback(generated_dir: Path, data: dict) -> None:
+    """Save feedback data atomically.
+
+    Args:
+        generated_dir: Path to generated/ directory.
+        data: Feedback dict to save.
+    """
+    path = generated_dir / _FEEDBACK_FILE
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp.rename(path)
+
+
+def record_template_feedback(
+    template_id: str,
+    rating: str,
+    *,
+    generated_dir: str | Path | None = None,
+) -> float:
+    """Record user feedback on a template.
+
+    Args:
+        template_id: Template to rate.
+        rating: "good" or "bad".
+        generated_dir: Override path to generated/ directory.
+
+    Returns:
+        Updated confidence score (0.0-1.0).
+    """
+    gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
+    feedback = _load_feedback(gen_dir)
+
+    if template_id not in feedback:
+        feedback[template_id] = {"good": 0, "bad": 0}
+
+    if rating == "good":
+        feedback[template_id]["good"] += 1
+    elif rating == "bad":
+        feedback[template_id]["bad"] += 1
+
+    _save_feedback(gen_dir, feedback)
+
+    return get_template_confidence(template_id, generated_dir=generated_dir)
+
+
+def get_template_confidence(
+    template_id: str,
+    *,
+    generated_dir: str | Path | None = None,
+) -> float:
+    """Get confidence score for a template based on feedback.
+
+    Returns good / (good + bad), or 1.0 if no feedback.
+
+    Args:
+        template_id: Template to check.
+        generated_dir: Override path to generated/ directory.
+
+    Returns:
+        Confidence score 0.0-1.0.
+    """
+    gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
+    feedback = _load_feedback(gen_dir)
+
+    entry = feedback.get(template_id)
+    if not entry:
+        return 1.0
+
+    good = entry.get("good", 0)
+    bad = entry.get("bad", 0)
+    total = good + bad
+
+    if total == 0:
+        return 1.0
+
+    return good / total

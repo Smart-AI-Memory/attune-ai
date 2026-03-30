@@ -46,6 +46,12 @@
       ],
       "tags": [
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-10-inspects",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-b904-raise-x-from-e-is-not-auto-fixable-by-ruff": {
@@ -693,6 +699,12 @@
       ],
       "tags": [
         "git"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-first-inspect",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-pureposixpath-match-doesnt-support-in-python-3-10": {
@@ -826,6 +838,12 @@
         "imports",
         "claude-code",
         "python"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-first-health",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-ruff-parses-pytest-ini-as-python": {
@@ -1160,6 +1178,28 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-doc-gen",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-refactor-plan",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-release-prep",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-bug-predict": {
@@ -1169,6 +1209,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-code-quality": {
@@ -1184,6 +1230,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-doc-gen",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-fix-test": {
@@ -1205,6 +1257,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-refactor-plan",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-refactor-plan": {
@@ -1214,6 +1272,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-refactor-plan",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-release-prep": {
@@ -1223,6 +1287,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-release-prep",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-security-audit": {
@@ -1232,6 +1302,12 @@
       "tags": [
         "skill",
         "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-smart-test": {

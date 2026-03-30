@@ -359,6 +359,7 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     help_parser.add_argument(
         "--deep", action="store_true", help="Show full detail with related topics"
     )
+    help_parser.add_argument("--feedback", choices=["good", "bad"], help="Rate a template")
 
     subparsers.add_parser("doctor", help="Run comprehensive environment health check")
     subparsers.add_parser("features", help="Show available features and dependencies")

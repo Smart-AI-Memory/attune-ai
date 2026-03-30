@@ -464,6 +464,16 @@ def build_cross_links(generated_dir: Path) -> dict:
     # Build workflow map
     workflow_map = _build_workflow_map(references, tips)
 
+    # Build embed rules from existing relationships
+    for _tid, data in sorted_links.items():
+        embeds: list[dict[str, str]] = []
+        for tip_id in data.get("prevented_by", []):
+            embeds.append({"id": tip_id, "position": "after_resolution"})
+        for tool_id in data.get("references_tools", []):
+            embeds.append({"id": tool_id, "position": "after_execution"})
+        if embeds:
+            data["embeds"] = embeds
+
     # Stats
     total_templates = sum(len(v) for v in all_templates.values())
     linked = sum(1 for v in sorted_links.values() if any(k != "tags" for k in v))
