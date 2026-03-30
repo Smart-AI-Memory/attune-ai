@@ -1,0 +1,34 @@
+---
+type: reference
+subtype: procedural
+name: {{ name }}
+category: {{ category }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Reference: {{ title }}
+
+{{ description }}
+{% if usage %}
+
+**Usage:** {{ usage }}
+{% endif %}
+{% for section in sections %}
+
+## {{ section.heading }}
+
+{{ section.body }}
+{% endfor %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- {{ topic.type }}: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+None generated yet.
+{% endif %}

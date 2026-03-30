@@ -1,0 +1,32 @@
+---
+type: tip
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Tip: {{ title }}
+
+## Context
+
+{{ context }}
+
+## Recommendation
+
+{{ recommendation }}
+
+## Why
+
+{{ why }}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- {{ topic.type }}: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+None generated yet.
+{% endif %}

@@ -1,0 +1,84 @@
+---
+type: reference
+subtype: procedural
+name: skill-workflow-orchestration
+category: skill
+tags: [skill, plugin]
+source: plugin/skills/workflow-orchestration/SKILL.md
+---
+
+# Reference: Skill: workflow-orchestration
+
+Run analysis workflows — security, code review, tests, perf, bugs, docs, release. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, docs, audit.
+
+**Usage:** `/workflow-orchestration <workflow: security, review, tests, perf, release, bugs, docs>`
+
+## Scoping
+
+Before running, ask:
+
+1. **Goal**: "What are you trying to accomplish?"
+2. **Scope**: "Which path or files should I analyze?"
+
+Based on the answer, route to the appropriate workflow.
+
+## Workflows
+
+### Analysis
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Security Audit | `security_audit` | Scans for vulnerabilities, dangerous patterns, secrets |
+| Code Review | `code_review` | Quality, correctness, and security analysis |
+| Bug Prediction | `bug_predict` | Pattern analysis and likely bug detection |
+| Performance Audit | `performance_audit` | Bottleneck detection and optimization |
+| Deep Review | `deep_review` | Multi-pass: security, quality, and test gap analysis |
+
+### Testing
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Test Generation | `test_generation` | Generates unit tests with edge cases |
+| Test Audit | `test_audit` | Coverage audit and gap detection |
+| Parallel Test Gen | `test_gen_parallel` | Batch test generation for 10-50 modules |
+
+### Documentation
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Doc Audit | `doc_audit` | Documentation freshness and gap analysis |
+| Doc Generation | `doc_gen` | Generate documentation for a module |
+| Doc Orchestrator | `doc_orchestrator` | Full documentation maintenance pipeline |
+
+### Release
+
+| Workflow | MCP Tool | What It Does |
+| -------- | -------- | ------------ |
+| Release Prep | `release_prep` | Health checks, changelog, dependency audits |
+
+## Execution
+
+Route to the matching MCP tool with the scoped path:
+
+```
+security_audit(path="<user-specified path>")
+code_review(path="<user-specified path>")
+test_audit(path="<user-specified path>")
+doc_audit(path="<user-specified path>")
+```
+
+## Output Format
+
+Present results grouped by severity with clickable
+file links using markdown link syntax.
+
+## Follow-Up
+
+After presenting results, offer:
+
+- "Want me to fix the critical issues?"
+- "Should I run another workflow on the same path?"
+- "Want to generate tests for the flagged files?"
+
+## Related Topics
+- Reference: MCP tools: security_audit, code_review, bug_predict, performance_audit, deep_review, test_generation, test_audit, test_gen_parallel, doc_audit, doc_gen, doc_orchestrator, release_prep
