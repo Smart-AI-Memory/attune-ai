@@ -1,0 +1,39 @@
+---
+type: error
+name: {{ name }}
+confidence: {{ confidence }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Error: {{ title }}
+
+## Signature
+
+{{ signature }}
+
+## Root Cause
+
+{{ root_cause }}
+
+## Resolution
+
+{% for step in resolution_steps %}
+{{ loop.index }}. {{ step }}
+{% endfor %}
+
+## Confidence
+
+**{{ confidence }}** — {{ confidence_reason }}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- {{ topic.type }}: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+None generated yet.
+{% endif %}

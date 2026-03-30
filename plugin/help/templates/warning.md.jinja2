@@ -1,0 +1,39 @@
+---
+type: warning
+name: {{ name }}
+confidence: {{ confidence }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Warning: {{ title }}
+
+## Condition
+
+{{ condition }}
+
+## Risk
+
+{{ risk }}
+
+## Mitigation
+
+{% for step in mitigation_steps %}
+{{ loop.index }}. {{ step }}
+{% endfor %}
+
+## Confidence
+
+**{{ confidence }}** — {{ confidence_reason }}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- {{ topic.type }}: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+None generated yet.
+{% endif %}

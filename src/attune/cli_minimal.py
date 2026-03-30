@@ -61,6 +61,7 @@ from attune.cli_commands.cost_commands import (
     cmd_costs_reset,
     cmd_costs_today,
 )
+from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_commands import (
     cmd_forget,
     cmd_lessons,
@@ -350,6 +351,11 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     auth_rec_parser.add_argument("file_path", help="Path to the file to analyze")
 
     # --- Utility commands ---
+    help_parser = subparsers.add_parser("help-docs", help="Browse documentation templates")
+    help_parser.add_argument("topic", nargs="?", help="Category or template name")
+    help_parser.add_argument("--tag", help="Filter by tag")
+    help_parser.add_argument("--tags", action="store_true", help="List all tags")
+
     subparsers.add_parser("doctor", help="Run comprehensive environment health check")
     subparsers.add_parser("features", help="Show available features and dependencies")
     subparsers.add_parser("validate", help="Validate configuration")
@@ -438,6 +444,7 @@ _SIMPLE_DISPATCH: dict[str, object] = {
     "forget": cmd_forget,
     "lessons": cmd_lessons,
     "setup": cmd_setup,
+    "help-docs": cmd_help,
     "doctor": cmd_doctor,
     "features": cmd_features,
     "validate": cmd_validate,

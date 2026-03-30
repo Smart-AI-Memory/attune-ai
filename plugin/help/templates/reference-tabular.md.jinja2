@@ -1,0 +1,40 @@
+---
+type: reference
+subtype: tabular
+name: {{ name }}
+category: {{ category }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Reference: {{ title }}
+
+{{ description }}
+{% if parameters %}
+
+## Parameters
+
+| Parameter | Type | Description | Default |
+| --------- | ---- | ----------- | ------- |
+{% for p in parameters %}
+| `{{ p.name }}` | {{ p.type }} | {{ p.description }} | {{ p.default }} |
+{% endfor %}
+{% endif %}
+{% if usage %}
+
+## Usage
+
+{{ usage }}
+{% endif %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- {{ topic.type }}: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+None generated yet.
+{% endif %}
