@@ -27,7 +27,7 @@ claude plugin marketplace add Smart-AI-Memory/attune-ai
 claude plugin install attune-ai@attune-ai
 ```
 
-Then type `/attune` in Claude Code. That's it.
+Then say "what can attune do?" in Claude Code. That's it.
 
 ### Add Python Package (optional — unlocks CLI + MCP)
 
@@ -39,13 +39,13 @@ pip install 'attune-ai[developer]'
 
 ## Cheat Sheet
 
-Skills trigger automatically from natural language —
-just describe what you need. Or use the two commands:
+All 13 skills trigger automatically from natural
+language — just describe what you need:
 
 | Input | What Happens |
 | ----- | ------------ |
-| `/attune` | Guided discovery — asks what you need |
-| `/spec` | Spec-driven dev — brainstorm → plan → execute |
+| "what can attune do?" | Auto-triggers `attune-hub` — guided discovery |
+| "build this feature from scratch" | Auto-triggers `spec` — brainstorm → plan → execute |
 | "review my code" | Auto-triggers `code-quality` skill |
 | "scan for vulnerabilities" | Auto-triggers `security-audit` skill |
 | "generate tests for src/" | Auto-triggers `smart-test` skill |
@@ -91,7 +91,7 @@ what your spec says should come next.
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
 | **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **11 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — no slash commands needed |
+| **13 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — fully skills-centric, zero commands |
 | **Skills-First Plugin** | Install via `claude plugin install attune-ai@attune-ai` — skills auto-trigger from natural language |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
 | **Intelligent Cost Routing** | Opus for security, Sonnet for analysis, Haiku for scanning — right model per task |
@@ -112,12 +112,12 @@ marketplace. attune-lite deprecated and merged.
 
 | Feature | What It Does |
 | ------- | ------------ |
-| **Skills-first plugin** | 14 commands → 2 commands + 11 auto-triggering skills |
+| **Skills-first plugin** | 14 commands → 0 commands + 13 auto-triggering skills |
 | **Marketplace install** | `claude plugin install attune-ai@attune-ai` — no pip required for the plugin |
 | **`bug-predict` skill** | New skill migrated from command with scoping questions |
 | **attune-lite deprecated** | All skills merged into attune-ai; repo archived |
 | **Compliant frontmatter** | All descriptions under 250 chars; only official fields used |
-| **`/spec` command** | Brainstorm → plan → review → execute lifecycle with approval gates |
+| **`spec` skill** | Brainstorm → plan → review → execute lifecycle with approval gates |
 | **CrewAI removal** | Deleted ~18K lines of deprecated code — all workflows SDK-native |
 | **API reference rewrite** | Updated from v3.8.0 to v5.3.2, covering all 16 modules |
 
@@ -216,20 +216,19 @@ your context:
 | How | When to Use | Example |
 | --- | ----------- | ------- |
 | **Natural language** | In Claude Code (recommended) | "scan this for security issues" |
-| **`/attune` hub** | When you're not sure which workflow | `/attune` |
+| **`attune-hub` skill** | When you're not sure which workflow | "what can attune do?" |
 | **CLI** | Terminal, CI/CD, automation | `attune workflow run security-audit --path src/` |
 
-Skills and `/attune` use your **Claude subscription**.
-CLI mode requires `ANTHROPIC_API_KEY`.
+Skills use your **Claude subscription**. CLI mode
+requires `ANTHROPIC_API_KEY`.
 
 ---
 
 ## Plugin & Skills
 
-The attune-ai plugin provides 11 auto-triggering skills
-and 2 commands (`/attune`, `/spec`). Skills trigger
-automatically from natural language — describe what you
-need and Claude picks the right one.
+The attune-ai plugin provides 13 auto-triggering skills
+and zero commands. Every capability is a skill — describe
+what you need and Claude picks the right one.
 
 ### Install
 
@@ -248,6 +247,8 @@ claude plugin update attune-ai
 
 | Skill | Triggers On |
 | ----- | ----------- |
+| `attune-hub` | "what can attune do", "help", "capabilities" |
+| `spec` | "build from scratch", "brainstorm and execute", "spec" |
 | `security-audit` | "security", "vulnerability", "scan" |
 | `code-quality` | "review", "quality", "bugs", "code smell" |
 | `bug-predict` | "predict bugs", "risky code", "what might break" |
@@ -392,8 +393,8 @@ Then in Claude Code, just say what you need:
 
 - "review my code" — triggers code-quality skill
 - "scan for security issues" — triggers security-audit
-- `/attune` — guided discovery hub
-- `/spec` — spec-driven development
+- "what can attune do?" — triggers attune-hub discovery
+- "build this from a spec" — triggers spec-driven dev
 
 ### Option B: Plugin + Python Package (full power)
 
@@ -412,8 +413,7 @@ attune auth      # Configure API key or subscription
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 11 auto-triggering skills | Yes | Yes |
-| `/attune` hub + `/spec` | Yes | Yes |
+| 13 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | 31 MCP tools | -- | Yes |

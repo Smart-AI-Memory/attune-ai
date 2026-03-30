@@ -1,12 +1,10 @@
 # attune-ai
 
-Developer workflow tools for Claude Code. 11
-auto-triggering skills for security audits, code
-reviews, test generation, bug prediction, and release
-preparation. Say what you need — Claude picks the right
-skill.
+Developer workflow tools for Claude Code. 13
+auto-triggering skills — zero commands. Say what you
+need and Claude picks the right skill.
 
-**Version:** 5.3.2 | **License:** Apache 2.0
+**Version:** 5.4.0 | **License:** Apache 2.0
 
 ## Install
 
@@ -23,10 +21,9 @@ claude plugin update attune-ai
 
 ## Usage
 
-### Natural language (recommended)
-
 Just describe what you need in Claude Code:
 
+- "what can attune do?" — triggers `attune-hub`
 - "review my code" — triggers `code-quality`
 - "scan for security issues" — triggers `security-audit`
 - "generate tests for src/" — triggers `smart-test`
@@ -36,18 +33,14 @@ Just describe what you need in Claude Code:
 - "plan this feature" — triggers `planning`
 - "refactor this module" — triggers `refactor-plan`
 - "prepare a release" — triggers `release-prep`
-
-### Commands
-
-| Command | What It Does |
-| ------- | ------------ |
-| `/attune` | Guided discovery hub — asks what you need |
-| `/spec` | Spec-driven dev: brainstorm, plan, execute |
+- "build from a spec" — triggers `spec`
 
 ## Skills
 
 | Skill | Triggers On |
 | ----- | ----------- |
+| `attune-hub` | what can attune do, help, capabilities |
+| `spec` | build from scratch, brainstorm and execute |
 | `security-audit` | security, vulnerability, scan |
 | `code-quality` | review, quality, bugs, code smell |
 | `bug-predict` | predict bugs, risky code, what might break |
@@ -82,7 +75,7 @@ pip install 'attune-ai[developer]'
 
 | Capability | Plugin only | + pip |
 | ---------- | ----------- | ----- |
-| 11 auto-triggering skills | Yes | Yes |
+| 13 auto-triggering skills | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | 31 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
