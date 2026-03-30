@@ -1,11 +1,94 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 498,
+    "total_templates": 540,
     "linked_templates": 426,
-    "total_tags": 34
+    "total_tags": 37
   },
   "links": {
+    "com-auth-strategies": {
+      "tags": [
+        "auth",
+        "setup"
+      ]
+    },
+    "com-cli-vs-claude-code": {
+      "tags": [
+        "cli",
+        "claude-code"
+      ]
+    },
+    "com-lite-vs-full": {
+      "tags": [
+        "plugin",
+        "setup"
+      ]
+    },
+    "com-workflow-vs-wizard": {
+      "tags": [
+        "workflow",
+        "architecture"
+      ]
+    },
+    "con-audience-adaptation": {
+      "tags": [
+        "help-system",
+        "architecture"
+      ]
+    },
+    "con-cross-linking": {
+      "tags": [
+        "help-system",
+        "architecture"
+      ]
+    },
+    "con-feedback-loop": {
+      "tags": [
+        "help-system",
+        "telemetry"
+      ]
+    },
+    "con-meta-orchestration": {
+      "tags": [
+        "architecture",
+        "workflow"
+      ]
+    },
+    "con-progressive-depth": {
+      "tags": [
+        "help-system",
+        "ux"
+      ]
+    },
+    "con-socratic-discovery": {
+      "tags": [
+        "philosophy",
+        "ux"
+      ]
+    },
+    "con-sync-paradigm": {
+      "tags": [
+        "architecture",
+        "documentation"
+      ]
+    },
+    "con-template-composition": {
+      "tags": [
+        "help-system"
+      ]
+    },
+    "con-tier-routing": {
+      "tags": [
+        "architecture",
+        "cost-optimization"
+      ]
+    },
+    "con-workflow-chain-prediction": {
+      "tags": [
+        "help-system",
+        "workflow"
+      ]
+    },
     "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that": {
       "related_faq": [
         "faq-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that"
@@ -2955,6 +3038,131 @@
         "terminology"
       ]
     },
+    "qui-browse-help": {
+      "tags": [
+        "cli",
+        "help"
+      ]
+    },
+    "qui-check-costs": {
+      "tags": [
+        "cli",
+        "telemetry"
+      ]
+    },
+    "qui-check-health": {
+      "tags": [
+        "cli",
+        "setup"
+      ]
+    },
+    "qui-generate-tests": {
+      "tags": [
+        "workflow",
+        "testing"
+      ]
+    },
+    "qui-install": {
+      "tags": [
+        "setup"
+      ]
+    },
+    "qui-install-plugin": {
+      "tags": [
+        "setup",
+        "claude-code"
+      ]
+    },
+    "qui-run-code-review": {
+      "tags": [
+        "workflow",
+        "code-quality"
+      ]
+    },
+    "qui-run-security-audit": {
+      "tags": [
+        "workflow",
+        "security"
+      ]
+    },
+    "qui-skill-attune-hub": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-bug-predict": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-code-quality": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-doc-gen": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-fix-test": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-memory-and-context": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-planning": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-refactor-plan": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-release-prep": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-security-audit": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-smart-test": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-spec": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-workflow-orchestration": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "ref-skill-attune-hub": {
       "references_tools": [
         "ref-tool-bug-predict",
@@ -3631,6 +3839,55 @@
     "tip-weekly-review": {
       "tags": [
         "discovery"
+      ]
+    },
+    "tro-ci-tests-timeout": {
+      "tags": [
+        "ci",
+        "testing",
+        "windows"
+      ]
+    },
+    "tro-gpg-signing-fails": {
+      "tags": [
+        "git",
+        "macos",
+        "setup"
+      ]
+    },
+    "tro-import-error-attune": {
+      "tags": [
+        "imports",
+        "python",
+        "setup"
+      ]
+    },
+    "tro-mcp-server-not-responding": {
+      "tags": [
+        "mcp",
+        "claude-code",
+        "setup"
+      ]
+    },
+    "tro-plugin-not-found": {
+      "tags": [
+        "claude-code",
+        "plugin",
+        "setup"
+      ]
+    },
+    "tro-pre-commit-infinite-loop": {
+      "tags": [
+        "git",
+        "python",
+        "ci"
+      ]
+    },
+    "tro-workflow-not-running": {
+      "tags": [
+        "workflow",
+        "auth",
+        "setup"
       ]
     },
     "war-adding-logger-before-eager-imports-triggers-e402-in-init-py": {
@@ -4528,6 +4785,12 @@
   },
   "tag_index": {
     "architecture": [
+      "com-workflow-vs-wizard",
+      "con-audience-adaptation",
+      "con-cross-linking",
+      "con-meta-orchestration",
+      "con-sync-paradigm",
+      "con-tier-routing",
       "not-decision-d1-template-schemas-live-in-the-repo",
       "not-decision-d2-search-index-first-unified-later",
       "not-decision-d3-faq-sourcing-four-channels",
@@ -4537,7 +4800,9 @@
       "not-project-structure"
     ],
     "auth": [
-      "tas-check-auth-status"
+      "com-auth-strategies",
+      "tas-check-auth-status",
+      "tro-workflow-not-running"
     ],
     "ci": [
       "err-ci-timeout-tests-enforce-the-range-you-set",
@@ -4564,6 +4829,8 @@
       "faq-windows-ci-encoding",
       "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
       "faq-yaml-run-values-with-colons-cause-parse-errors",
+      "tro-ci-tests-timeout",
+      "tro-pre-commit-infinite-loop",
       "war-gitignore-exclusions-break-ci-tests-that-read-those-files",
       "war-hardcoded-root-paths-in-tests",
       "war-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu",
@@ -4574,6 +4841,7 @@
       "war-yaml-run-values-with-colons-cause-parse-errors"
     ],
     "claude-code": [
+      "com-cli-vs-claude-code",
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
       "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
       "err-attune-skill-names-must-not-collide-with-claude-code-built-in",
@@ -4671,7 +4939,23 @@
       "faq-validate-infrastructure-against-user-value-before-extending",
       "faq-verify-mcp-tool-wiring-after-adding-new-tools",
       "not-command-hubs",
+      "qui-install-plugin",
+      "qui-skill-attune-hub",
+      "qui-skill-bug-predict",
+      "qui-skill-code-quality",
+      "qui-skill-doc-gen",
+      "qui-skill-fix-test",
+      "qui-skill-memory-and-context",
+      "qui-skill-planning",
+      "qui-skill-refactor-plan",
+      "qui-skill-release-prep",
+      "qui-skill-security-audit",
+      "qui-skill-smart-test",
+      "qui-skill-spec",
+      "qui-skill-workflow-orchestration",
       "tas-install-plugin",
+      "tro-mcp-server-not-responding",
+      "tro-plugin-not-found",
       "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
       "war-attune-skill-names-must-not-collide-with-claude-code-built-in",
       "war-bug-predict-dangerous-eval-flags-subprocess-exec",
@@ -4709,7 +4993,11 @@
       "war-validate-infrastructure-against-user-value-before-extending"
     ],
     "cli": [
+      "com-cli-vs-claude-code",
       "not-command-hubs",
+      "qui-browse-help",
+      "qui-check-costs",
+      "qui-check-health",
       "tas-browse-help-docs",
       "tas-check-auth-status",
       "tas-export-telemetry",
@@ -4718,7 +5006,11 @@
       "tas-run-workflow"
     ],
     "code-quality": [
-      "not-code-simplification"
+      "not-code-simplification",
+      "qui-run-code-review"
+    ],
+    "cost-optimization": [
+      "con-tier-routing"
     ],
     "design-decision": [
       "not-decision-d1-template-schemas-live-in-the-repo",
@@ -4737,6 +5029,9 @@
       "tip-high-tech-debt",
       "tip-no-patterns",
       "tip-weekly-review"
+    ],
+    "documentation": [
+      "con-sync-paradigm"
     ],
     "formatting": [
       "not-markdown-formatting"
@@ -4803,6 +5098,8 @@
       "faq-verify-new-dispatch-branches-with-a-known-fixture-not-just",
       "faq-wizards-call-workflows-internally-they-are-not-duplicates",
       "faq-workflowresult-constructor-mismatches-surface-only-at-runtime",
+      "tro-gpg-signing-fails",
+      "tro-pre-commit-infinite-loop",
       "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
       "war-generated-content-with-trailing-whitespace-causes-perpetual-pre",
@@ -4829,7 +5126,16 @@
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
     ],
     "help": [
+      "qui-browse-help",
       "tas-browse-help-docs"
+    ],
+    "help-system": [
+      "con-audience-adaptation",
+      "con-cross-linking",
+      "con-feedback-loop",
+      "con-progressive-depth",
+      "con-template-composition",
+      "con-workflow-chain-prediction"
     ],
     "imports": [
       "err-adding-logger-before-eager-imports-triggers-e402-in-init-py",
@@ -4899,6 +5205,7 @@
       "faq-untracked-scripts-break-ci-when-tests-import-them",
       "faq-validate-file-path-needed-on-reads-too-not-just-writes",
       "faq-verify-new-dispatch-branches-with-a-known-fixture-not-just",
+      "tro-import-error-attune",
       "war-adding-logger-before-eager-imports-triggers-e402-in-init-py",
       "war-bugpredictionworkflow-not-bugpredictworkflow",
       "war-clusterfuzzlite-no-deps-misses-transitive-imports",
@@ -4930,6 +5237,7 @@
       "err-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
       "faq-macos-var-private-var-symlink-breaks-path-assertions",
       "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
+      "tro-gpg-signing-fails",
       "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos"
     ],
     "mcp": [
@@ -4963,7 +5271,8 @@
       "ref-tool-telemetry-stats",
       "ref-tool-test-audit",
       "ref-tool-test-gen-parallel",
-      "ref-tool-test-generation"
+      "ref-tool-test-generation",
+      "tro-mcp-server-not-responding"
     ],
     "memory": [
       "ref-tool-memory-forget",
@@ -5007,10 +5316,12 @@
       "war-wizards-call-workflows-internally-they-are-not-duplicates"
     ],
     "philosophy": [
+      "con-socratic-discovery",
       "not-code-simplification",
       "not-socratic-interaction-rule"
     ],
     "plugin": [
+      "com-lite-vs-full",
       "ref-skill-attune-hub",
       "ref-skill-bug-predict",
       "ref-skill-code-quality",
@@ -5024,7 +5335,8 @@
       "ref-skill-smart-test",
       "ref-skill-spec",
       "ref-skill-workflow-orchestration",
-      "tas-install-plugin"
+      "tas-install-plugin",
+      "tro-plugin-not-found"
     ],
     "python": [
       "err-adding-logger-before-eager-imports-triggers-e402-in-init-py",
@@ -5078,6 +5390,8 @@
       "faq-windows-ci-encoding",
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
       "faq-workflowresult-constructor-mismatches-surface-only-at-runtime",
+      "tro-import-error-attune",
+      "tro-pre-commit-infinite-loop",
       "war-adding-logger-before-eager-imports-triggers-e402-in-init-py",
       "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
       "war-b904-raise-x-from-e-is-not-auto-fixable-by-ruff",
@@ -5146,6 +5460,7 @@
       "faq-validate-infrastructure-against-user-value-before-extending",
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
       "not-critical-rules",
+      "qui-run-security-audit",
       "war-bug-predict-dangerous-eval-flags-subprocess-exec",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
       "war-clusterfuzzlite-no-deps-misses-transitive-imports",
@@ -5163,10 +5478,33 @@
       "war-validate-infrastructure-against-user-value-before-extending"
     ],
     "setup": [
+      "com-auth-strategies",
+      "com-lite-vs-full",
+      "qui-check-health",
+      "qui-install",
+      "qui-install-plugin",
       "tas-install-plugin",
-      "tas-run-doctor"
+      "tas-run-doctor",
+      "tro-gpg-signing-fails",
+      "tro-import-error-attune",
+      "tro-mcp-server-not-responding",
+      "tro-plugin-not-found",
+      "tro-workflow-not-running"
     ],
     "skill": [
+      "qui-skill-attune-hub",
+      "qui-skill-bug-predict",
+      "qui-skill-code-quality",
+      "qui-skill-doc-gen",
+      "qui-skill-fix-test",
+      "qui-skill-memory-and-context",
+      "qui-skill-planning",
+      "qui-skill-refactor-plan",
+      "qui-skill-release-prep",
+      "qui-skill-security-audit",
+      "qui-skill-smart-test",
+      "qui-skill-spec",
+      "qui-skill-workflow-orchestration",
       "ref-skill-attune-hub",
       "ref-skill-bug-predict",
       "ref-skill-code-quality",
@@ -5213,6 +5551,8 @@
       "tas-use-workflow-orchestration"
     ],
     "telemetry": [
+      "con-feedback-loop",
+      "qui-check-costs",
       "tas-export-telemetry"
     ],
     "terminology": [
@@ -5349,6 +5689,8 @@
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
       "faq-windows-time-time-can-return-0-0-duration-for-fast-operations",
       "faq-workflowresult-constructor-mismatches-surface-only-at-runtime",
+      "qui-generate-tests",
+      "tro-ci-tests-timeout",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
       "war-changing-user-facing-output-strings-cascades-through-test",
       "war-claude-code-plugins-expect-plugin-json-inside-claude-plugin",
@@ -5435,6 +5777,8 @@
       "ref-tool-telemetry-stats"
     ],
     "ux": [
+      "con-progressive-depth",
+      "con-socratic-discovery",
       "not-socratic-interaction-rule"
     ],
     "windows": [
@@ -5448,11 +5792,18 @@
       "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
       "faq-windows-time-time-can-return-0-0-duration-for-fast-operations",
+      "tro-ci-tests-timeout",
       "war-windows-ci-encoding",
       "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
       "war-windows-time-time-can-return-0-0-duration-for-fast-operations"
     ],
     "workflow": [
+      "com-workflow-vs-wizard",
+      "con-meta-orchestration",
+      "con-workflow-chain-prediction",
+      "qui-generate-tests",
+      "qui-run-code-review",
+      "qui-run-security-audit",
       "ref-tool-analyze-batch",
       "ref-tool-analyze-image",
       "ref-tool-bug-predict",
@@ -5473,7 +5824,8 @@
       "ref-tool-test-audit",
       "ref-tool-test-gen-parallel",
       "ref-tool-test-generation",
-      "tas-run-workflow"
+      "tas-run-workflow",
+      "tro-workflow-not-running"
     ],
     "workflow-transition": [
       "tip-after-bug-predict",

@@ -259,10 +259,14 @@ def main() -> int:
     check = "--check" in argv
     mode = "Verifying" if check else "Generating"
 
-    # Import new generators inline to avoid linter stripping
+    # Import generators inline to avoid linter stripping unused imports
+    from generate_comparison_templates import main as generate_comparisons
+    from generate_concept_templates import main as generate_concepts
     from generate_faq_templates import main as generate_faqs
     from generate_note_templates import main as generate_notes
+    from generate_quickstart_templates import main as generate_quickstarts
     from generate_task_templates import main as generate_tasks
+    from generate_troubleshooting_templates import main as generate_troubleshooting
 
     generators = [
         ("Error", generate_errors),
@@ -272,6 +276,10 @@ def main() -> int:
         ("Task", generate_tasks),
         ("FAQ", generate_faqs),
         ("Note", generate_notes),
+        ("Quickstart", generate_quickstarts),
+        ("Concept", generate_concepts),
+        ("Troubleshooting", generate_troubleshooting),
+        ("Comparison", generate_comparisons),
         ("Cross-Links", build_cross_links),
     ]
 

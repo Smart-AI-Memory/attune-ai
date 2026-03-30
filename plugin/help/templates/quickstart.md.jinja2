@@ -1,0 +1,34 @@
+---
+type: quickstart
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Quickstart: {{ title }}
+
+{{ goal }}
+
+```
+{{ command }}
+```
+{% if result %}
+
+**Result:** {{ result }}
+{% endif %}
+{% if next_step %}
+
+**Next:** {{ next_step }}
+{% endif %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}
