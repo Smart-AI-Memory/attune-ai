@@ -1,12 +1,15 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 484,
-    "linked_templates": 222,
-    "total_tags": 27
+    "total_templates": 498,
+    "linked_templates": 426,
+    "total_tags": 34
   },
   "links": {
     "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that": {
+      "related_faq": [
+        "faq-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that"
+      ],
       "tags": [
         "testing",
         "security",
@@ -17,6 +20,9 @@
       "related_warning": [
         "war-adding-logger-before-eager-imports-triggers-e402-in-init-py"
       ],
+      "related_faq": [
+        "faq-adding-logger-before-eager-imports-triggers-e402-in-init-py"
+      ],
       "tags": [
         "imports",
         "python"
@@ -25,11 +31,17 @@
     "err-anthropics-built-in-prompt-caching-supersedes-custom-caching": {
       "related_warning": [
         "war-anthropics-built-in-prompt-caching-supersedes-custom-caching"
+      ],
+      "related_faq": [
+        "faq-anthropics-built-in-prompt-caching-supersedes-custom-caching"
       ]
     },
     "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto": {
       "related_warning": [
         "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto"
+      ],
+      "related_faq": [
+        "faq-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto"
       ],
       "tags": [
         "git",
@@ -43,6 +55,9 @@
       ],
       "prevented_by": [
         "tip-after-10-inspects"
+      ],
+      "related_faq": [
+        "faq-attune-skill-names-must-not-collide-with-claude-code-built-in"
       ],
       "tags": [
         "claude-code"
@@ -58,6 +73,9 @@
       "related_warning": [
         "war-b904-raise-x-from-e-is-not-auto-fixable-by-ruff"
       ],
+      "related_faq": [
+        "faq-b904-raise-x-from-e-is-not-auto-fixable-by-ruff"
+      ],
       "tags": [
         "python"
       ]
@@ -65,20 +83,32 @@
     "err-background-processes-from-previous-sessions-persist-across": {
       "related_warning": [
         "war-background-processes-from-previous-sessions-persist-across"
+      ],
+      "related_faq": [
+        "faq-background-processes-from-previous-sessions-persist-across"
       ]
     },
     "err-bandit-b108-blocks-hardcoded-tmp-paths": {
+      "related_faq": [
+        "faq-bandit-b108-blocks-hardcoded-tmp-paths"
+      ],
       "tags": [
         "python"
       ]
     },
     "err-baseworkflow-now-provides-self-logger": {
+      "related_faq": [
+        "faq-baseworkflow-now-provides-self-logger"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "err-baseworkflow-uses-class-attributes-not-constructor-params": {
+      "related_faq": [
+        "faq-baseworkflow-uses-class-attributes-not-constructor-params"
+      ],
       "tags": [
         "git"
       ]
@@ -86,9 +116,15 @@
     "err-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode": {
       "related_warning": [
         "war-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode"
+      ],
+      "related_faq": [
+        "faq-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode"
       ]
     },
     "err-broad-gitignore-patterns-match-nested-directories": {
+      "related_faq": [
+        "faq-broad-gitignore-patterns-match-nested-directories"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -96,6 +132,9 @@
     "err-bug-predict-dangerous-eval-flags-subprocess-exec": {
       "related_warning": [
         "war-bug-predict-dangerous-eval-flags-subprocess-exec"
+      ],
+      "related_faq": [
+        "faq-bug-predict-dangerous-eval-flags-subprocess-exec"
       ],
       "tags": [
         "security",
@@ -106,6 +145,9 @@
       "related_warning": [
         "war-bugpredictionworkflow-not-bugpredictworkflow"
       ],
+      "related_faq": [
+        "faq-bugpredictionworkflow-not-bugpredictworkflow"
+      ],
       "tags": [
         "imports",
         "claude-code"
@@ -114,6 +156,9 @@
     "err-changing-error-messages-breaks-tests-across-the-codebase": {
       "related_warning": [
         "war-changing-error-messages-breaks-tests-across-the-codebase"
+      ],
+      "related_faq": [
+        "faq-changing-error-messages-breaks-tests-across-the-codebase"
       ],
       "tags": [
         "testing",
@@ -125,17 +170,26 @@
       "related_warning": [
         "war-changing-user-facing-output-strings-cascades-through-test"
       ],
+      "related_faq": [
+        "faq-changing-user-facing-output-strings-cascades-through-test"
+      ],
       "tags": [
         "testing"
       ]
     },
     "err-ci-timeout-tests-enforce-the-range-you-set": {
+      "related_faq": [
+        "faq-ci-timeout-tests-enforce-the-range-you-set"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
     "err-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai": {
+      "related_faq": [
+        "faq-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai"
+      ],
       "tags": [
         "packaging"
       ]
@@ -143,6 +197,9 @@
     "err-claude-code-plugin-is-platform-specific": {
       "related_warning": [
         "war-claude-code-plugin-is-platform-specific"
+      ],
+      "related_faq": [
+        "faq-claude-code-plugin-is-platform-specific"
       ],
       "tags": [
         "claude-code"
@@ -152,12 +209,18 @@
       "related_warning": [
         "war-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
       ],
+      "related_faq": [
+        "faq-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "err-claude-plugin-install-is-marketplace-only": {
+      "related_faq": [
+        "faq-claude-plugin-install-is-marketplace-only"
+      ],
       "tags": [
         "testing",
         "claude-code"
@@ -166,6 +229,9 @@
     "err-clusterfuzzlite-no-deps-misses-transitive-imports": {
       "related_warning": [
         "war-clusterfuzzlite-no-deps-misses-transitive-imports"
+      ],
+      "related_faq": [
+        "faq-clusterfuzzlite-no-deps-misses-transitive-imports"
       ],
       "tags": [
         "security",
@@ -177,17 +243,26 @@
       "related_warning": [
         "war-codeql-alerts-dismissible-in-bulk-via-gh-api"
       ],
+      "related_faq": [
+        "faq-codeql-alerts-dismissible-in-bulk-via-gh-api"
+      ],
       "tags": [
         "testing"
       ]
     },
     "err-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes": {
+      "related_faq": [
+        "faq-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "err-codeql-py-clear-text-logging-sensitive-data-traces-data-flow": {
+      "related_faq": [
+        "faq-codeql-py-clear-text-logging-sensitive-data-traces-data-flow"
+      ],
       "tags": [
         "security"
       ]
@@ -196,11 +271,17 @@
       "related_warning": [
         "war-commands-are-not-namespaced-in-plugins-skills-are"
       ],
+      "related_faq": [
+        "faq-commands-are-not-namespaced-in-plugins-skills-are"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-config-py-alongside-config-creates-a-mypy-duplicate-module": {
+      "related_faq": [
+        "faq-config-py-alongside-config-creates-a-mypy-duplicate-module"
+      ],
       "tags": [
         "imports",
         "git",
@@ -211,16 +292,25 @@
       "related_warning": [
         "war-costreport-is-a-dataclass-not-a-dict"
       ],
+      "related_faq": [
+        "faq-costreport-is-a-dataclass-not-a-dict"
+      ],
       "tags": [
         "python"
       ]
     },
     "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+      "related_faq": [
+        "faq-custom-mcp-stdio-loop-fails-claude-code-handshake"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the": {
+      "related_faq": [
+        "faq-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the"
+      ],
       "tags": [
         "testing",
         "python"
@@ -229,6 +319,9 @@
     "err-dead-code-modules-with-full-test-suites-look-alive": {
       "related_warning": [
         "war-dead-code-modules-with-full-test-suites-look-alive"
+      ],
+      "related_faq": [
+        "faq-dead-code-modules-with-full-test-suites-look-alive"
       ],
       "tags": [
         "testing",
@@ -241,11 +334,17 @@
       "related_warning": [
         "war-deep-review-false-positives-verify-before-acting"
       ],
+      "related_faq": [
+        "faq-deep-review-false-positives-verify-before-acting"
+      ],
       "tags": [
         "testing"
       ]
     },
     "err-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts": {
+      "related_faq": [
+        "faq-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts"
+      ],
       "tags": [
         "testing"
       ]
@@ -253,6 +352,9 @@
     "err-dispatch-tables-hold-direct-function-references-mocks-must": {
       "related_warning": [
         "war-dispatch-tables-hold-direct-function-references-mocks-must"
+      ],
+      "related_faq": [
+        "faq-dispatch-tables-hold-direct-function-references-mocks-must"
       ],
       "tags": [
         "testing",
@@ -263,6 +365,9 @@
       "related_warning": [
         "war-dist-can-contain-stale-artifacts-after-version-bumps"
       ],
+      "related_faq": [
+        "faq-dist-can-contain-stale-artifacts-after-version-bumps"
+      ],
       "tags": [
         "packaging"
       ]
@@ -270,6 +375,9 @@
     "err-dont-append-z-to-timezone-aware-isoformat": {
       "related_warning": [
         "war-dont-append-z-to-timezone-aware-isoformat"
+      ],
+      "related_faq": [
+        "faq-dont-append-z-to-timezone-aware-isoformat"
       ],
       "tags": [
         "python"
@@ -279,6 +387,9 @@
       "related_warning": [
         "war-duplicate-plugins-cause-conflicting-skill-triggers"
       ],
+      "related_faq": [
+        "faq-duplicate-plugins-cause-conflicting-skill-triggers"
+      ],
       "tags": [
         "testing",
         "security",
@@ -286,11 +397,17 @@
       ]
     },
     "err-enforce-admins-false-defeats-code-review-scorecard-check": {
+      "related_faq": [
+        "faq-enforce-admins-false-defeats-code-review-scorecard-check"
+      ],
       "tags": [
         "ci"
       ]
     },
     "err-enforce-admins-required-reviews-blocks-solo-dev-merges": {
+      "related_faq": [
+        "faq-enforce-admins-required-reviews-blocks-solo-dev-merges"
+      ],
       "tags": [
         "git"
       ]
@@ -299,11 +416,17 @@
       "related_warning": [
         "war-exploration-agents-fabricate-names-verify-against-source"
       ],
+      "related_faq": [
+        "faq-exploration-agents-fabricate-names-verify-against-source"
+      ],
       "tags": [
         "testing"
       ]
     },
     "err-full-coverage-runs-on-15k-test-suites-timeout-easily": {
+      "related_faq": [
+        "faq-full-coverage-runs-on-15k-test-suites-timeout-easily"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -312,6 +435,9 @@
     "err-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
       "related_warning": [
         "war-generated-content-with-trailing-whitespace-causes-perpetual-pre"
+      ],
+      "related_faq": [
+        "faq-generated-content-with-trailing-whitespace-causes-perpetual-pre"
       ],
       "tags": [
         "git",
@@ -322,12 +448,18 @@
       "related_warning": [
         "war-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks"
       ],
+      "related_faq": [
+        "faq-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "err-ghost-command-references-survive-cli-renames": {
+      "related_faq": [
+        "faq-ghost-command-references-survive-cli-renames"
+      ],
       "tags": [
         "testing"
       ]
@@ -336,6 +468,9 @@
       "related_warning": [
         "war-github-protected-tags-cannot-be-force-updated"
       ],
+      "related_faq": [
+        "faq-github-protected-tags-cannot-be-force-updated"
+      ],
       "tags": [
         "git"
       ]
@@ -343,6 +478,9 @@
     "err-github-repos-serve-as-claude-code-marketplaces": {
       "related_warning": [
         "war-github-repos-serve-as-claude-code-marketplaces"
+      ],
+      "related_faq": [
+        "faq-github-repos-serve-as-claude-code-marketplaces"
       ],
       "tags": [
         "git",
@@ -353,6 +491,9 @@
       "related_warning": [
         "war-gitignore-exclusions-break-ci-tests-that-read-those-files"
       ],
+      "related_faq": [
+        "faq-gitignore-exclusions-break-ci-tests-that-read-those-files"
+      ],
       "tags": [
         "ci",
         "testing"
@@ -362,6 +503,9 @@
       "related_warning": [
         "war-gpg-signing-fails-in-non-interactive-terminals-vscode-extension"
       ],
+      "related_faq": [
+        "faq-gpg-signing-fails-in-non-interactive-terminals-vscode-extension"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -369,6 +513,9 @@
     "err-hardcoded-root-paths-in-tests": {
       "related_warning": [
         "war-hardcoded-root-paths-in-tests"
+      ],
+      "related_faq": [
+        "faq-hardcoded-root-paths-in-tests"
       ],
       "tags": [
         "ci",
@@ -378,11 +525,17 @@
     "err-hardcoded-strings-in-method-bodies-survive-class-attribute": {
       "related_warning": [
         "war-hardcoded-strings-in-method-bodies-survive-class-attribute"
+      ],
+      "related_faq": [
+        "faq-hardcoded-strings-in-method-bodies-survive-class-attribute"
       ]
     },
     "err-hardcoded-user-id-defeats-ownership-checks": {
       "related_warning": [
         "war-hardcoded-user-id-defeats-ownership-checks"
+      ],
+      "related_faq": [
+        "faq-hardcoded-user-id-defeats-ownership-checks"
       ],
       "tags": [
         "claude-code"
@@ -392,6 +545,9 @@
       "related_warning": [
         "war-hot-reload-subsystem-was-1-038-lines-of-dead-code"
       ],
+      "related_faq": [
+        "faq-hot-reload-subsystem-was-1-038-lines-of-dead-code"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -400,6 +556,9 @@
     "err-importlib-import-module-is-an-arbitrary-code-execution-vector": {
       "related_warning": [
         "war-importlib-import-module-is-an-arbitrary-code-execution-vector"
+      ],
+      "related_faq": [
+        "faq-importlib-import-module-is-an-arbitrary-code-execution-vector"
       ],
       "tags": [
         "security",
@@ -411,6 +570,9 @@
       "related_warning": [
         "war-is-private-is-a-superset-in-python-ipaddress"
       ],
+      "related_faq": [
+        "faq-is-private-is-a-superset-in-python-ipaddress"
+      ],
       "tags": [
         "testing"
       ]
@@ -421,6 +583,9 @@
       ]
     },
     "err-kwargs-collides-with-explicit-params-of-the-same-name": {
+      "related_faq": [
+        "faq-kwargs-collides-with-explicit-params-of-the-same-name"
+      ],
       "tags": [
         "python"
       ]
@@ -428,6 +593,9 @@
     "err-lazy-imports-inside-function-bodies-cant-be-patched-with": {
       "related_warning": [
         "war-lazy-imports-inside-function-bodies-cant-be-patched-with"
+      ],
+      "related_faq": [
+        "faq-lazy-imports-inside-function-bodies-cant-be-patched-with"
       ],
       "tags": [
         "testing",
@@ -438,9 +606,15 @@
     "err-linkedin-paste-use-ascii-markers-not-unicode-arrows": {
       "related_warning": [
         "war-linkedin-paste-use-ascii-markers-not-unicode-arrows"
+      ],
+      "related_faq": [
+        "faq-linkedin-paste-use-ascii-markers-not-unicode-arrows"
       ]
     },
     "err-list-wizards-is-a-function-not-a-class-method": {
+      "related_faq": [
+        "faq-list-wizards-is-a-function-not-a-class-method"
+      ],
       "tags": [
         "imports"
       ]
@@ -448,9 +622,15 @@
     "err-list-workflows-deduplication-must-keep-base-names-visible": {
       "related_warning": [
         "war-list-workflows-deduplication-must-keep-base-names-visible"
+      ],
+      "related_faq": [
+        "faq-list-workflows-deduplication-must-keep-base-names-visible"
       ]
     },
     "err-macos-var-private-var-symlink-breaks-path-assertions": {
+      "related_faq": [
+        "faq-macos-var-private-var-symlink-breaks-path-assertions"
+      ],
       "tags": [
         "testing",
         "security",
@@ -463,6 +643,9 @@
       "related_warning": [
         "war-mcp-call-tool-wrapper-pattern"
       ],
+      "related_faq": [
+        "faq-mcp-call-tool-wrapper-pattern"
+      ],
       "tags": [
         "testing",
         "claude-code"
@@ -471,6 +654,9 @@
     "err-mcp-handler-validate-paths-before-importing-workflows": {
       "related_warning": [
         "war-mcp-handler-validate-paths-before-importing-workflows"
+      ],
+      "related_faq": [
+        "faq-mcp-handler-validate-paths-before-importing-workflows"
       ],
       "tags": [
         "security",
@@ -482,11 +668,17 @@
       "related_warning": [
         "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv"
       ],
+      "related_faq": [
+        "faq-mcp-json-python-resolves-to-pyenv-shim-not-project-venv"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-mcp-tool-count-tests-are-hardcoded": {
+      "related_faq": [
+        "faq-mcp-tool-count-tests-are-hardcoded"
+      ],
       "tags": [
         "testing",
         "claude-code"
@@ -496,27 +688,42 @@
       "related_warning": [
         "war-mcp-tool-renames-propagate-to-skill-docs"
       ],
+      "related_faq": [
+        "faq-mcp-tool-renames-propagate-to-skill-docs"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path": {
+      "related_faq": [
+        "faq-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "err-mixin-classes-inherit-self-workspace-root-at-runtime-not-at": {
+      "related_faq": [
+        "faq-mixin-classes-inherit-self-workspace-root-at-runtime-not-at"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-mkdocs-strict-treats-broken-links-as-fatal-errors": {
+      "related_faq": [
+        "faq-mkdocs-strict-treats-broken-links-as-fatal-errors"
+      ],
       "tags": [
         "ci"
       ]
     },
     "err-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules": {
+      "related_faq": [
+        "faq-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -525,6 +732,9 @@
     "err-modeltier-has-two-copies-imports-must-match": {
       "related_warning": [
         "war-modeltier-has-two-copies-imports-must-match"
+      ],
+      "related_faq": [
+        "faq-modeltier-has-two-copies-imports-must-match"
       ],
       "tags": [
         "testing",
@@ -535,6 +745,9 @@
       "related_warning": [
         "war-module-level-optional-imports-enable-clean-test-patching"
       ],
+      "related_faq": [
+        "faq-module-level-optional-imports-enable-clean-test-patching"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -543,11 +756,17 @@
     "err-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins": {
       "related_warning": [
         "war-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins"
+      ],
+      "related_faq": [
+        "faq-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins"
       ]
     },
     "err-mypy-437-errors-was-stale-actual-count-was-2": {
       "related_warning": [
         "war-mypy-437-errors-was-stale-actual-count-was-2"
+      ],
+      "related_faq": [
+        "faq-mypy-437-errors-was-stale-actual-count-was-2"
       ],
       "tags": [
         "git",
@@ -558,6 +777,9 @@
       "related_warning": [
         "war-new-dataclass-fields-need-both-the-class-and-the-parser-updated"
       ],
+      "related_faq": [
+        "faq-new-dataclass-fields-need-both-the-class-and-the-parser-updated"
+      ],
       "tags": [
         "python"
       ]
@@ -565,6 +787,9 @@
     "err-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent": {
       "related_warning": [
         "war-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent"
+      ],
+      "related_faq": [
+        "faq-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent"
       ],
       "tags": [
         "testing",
@@ -576,6 +801,9 @@
       "related_warning": [
         "war-new-security-features-need-dedicated-tests-before-release"
       ],
+      "related_faq": [
+        "faq-new-security-features-need-dedicated-tests-before-release"
+      ],
       "tags": [
         "testing",
         "security",
@@ -584,6 +812,9 @@
       ]
     },
     "err-next-js-shared-data-libs-prevent-page-duplication": {
+      "related_faq": [
+        "faq-next-js-shared-data-libs-prevent-page-duplication"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -593,6 +824,9 @@
       "related_warning": [
         "war-non-baseworkflow-classes-in-workflow-registry-crash-the-cli"
       ],
+      "related_faq": [
+        "faq-non-baseworkflow-classes-in-workflow-registry-crash-the-cli"
+      ],
       "tags": [
         "imports",
         "git"
@@ -601,11 +835,17 @@
     "err-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process": {
       "related_warning": [
         "war-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
+      ],
+      "related_faq": [
+        "faq-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
       ]
     },
     "err-patch-requires-the-target-name-to-exist-at-module-scope-at": {
       "related_warning": [
         "war-patch-requires-the-target-name-to-exist-at-module-scope-at"
+      ],
+      "related_faq": [
+        "faq-patch-requires-the-target-name-to-exist-at-module-scope-at"
       ],
       "tags": [
         "testing",
@@ -613,6 +853,9 @@
       ]
     },
     "err-patch-the-source-module-for-from-x-import-y-in-function-bodies": {
+      "related_faq": [
+        "faq-patch-the-source-module-for-from-x-import-y-in-function-bodies"
+      ],
       "tags": [
         "testing",
         "security",
@@ -620,6 +863,9 @@
       ]
     },
     "err-pip-audit-fails-on-unpublished-versions": {
+      "related_faq": [
+        "faq-pip-audit-fails-on-unpublished-versions"
+      ],
       "tags": [
         "ci",
         "packaging"
@@ -629,12 +875,18 @@
       "related_warning": [
         "war-plugin-read-skill-references-break-outside-the-plugin"
       ],
+      "related_faq": [
+        "faq-plugin-read-skill-references-break-outside-the-plugin"
+      ],
       "tags": [
         "claude-code",
         "packaging"
       ]
     },
     "err-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or": {
+      "related_faq": [
+        "faq-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or"
+      ],
       "tags": [
         "testing",
         "git"
@@ -643,6 +895,9 @@
     "err-pre-commit-auto-fix-requires-re-stage-before-retry": {
       "related_warning": [
         "war-pre-commit-auto-fix-requires-re-stage-before-retry"
+      ],
+      "related_faq": [
+        "faq-pre-commit-auto-fix-requires-re-stage-before-retry"
       ],
       "tags": [
         "git",
@@ -654,6 +909,9 @@
       "related_warning": [
         "war-pre-commit-black-unstaged-files-re-stage-after-failure"
       ],
+      "related_faq": [
+        "faq-pre-commit-black-unstaged-files-re-stage-after-failure"
+      ],
       "tags": [
         "git",
         "claude-code"
@@ -662,6 +920,9 @@
     "err-pre-commit-stash-conflict-when-black-ruff-fix-files-with": {
       "related_warning": [
         "war-pre-commit-stash-conflict-when-black-ruff-fix-files-with"
+      ],
+      "related_faq": [
+        "faq-pre-commit-stash-conflict-when-black-ruff-fix-files-with"
       ],
       "tags": [
         "git",
@@ -673,6 +934,9 @@
       "related_warning": [
         "war-pre-commit-stash-conflict-with-auto-fix-hooks"
       ],
+      "related_faq": [
+        "faq-pre-commit-stash-conflict-with-auto-fix-hooks"
+      ],
       "tags": [
         "git",
         "claude-code",
@@ -682,6 +946,9 @@
     "err-pre-commit-stash-conflicts-when-any-tracked-unstaged-file": {
       "related_warning": [
         "war-pre-commit-stash-conflicts-when-any-tracked-unstaged-file"
+      ],
+      "related_faq": [
+        "faq-pre-commit-stash-conflicts-when-any-tracked-unstaged-file"
       ],
       "tags": [
         "testing",
@@ -697,6 +964,9 @@
       "prevented_by": [
         "tip-after-first-inspect"
       ],
+      "related_faq": [
+        "faq-pull-main-before-merging-develop-to-avoid-merge-commits"
+      ],
       "tags": [
         "git"
       ],
@@ -708,6 +978,9 @@
       ]
     },
     "err-pureposixpath-match-doesnt-support-in-python-3-10": {
+      "related_faq": [
+        "faq-pureposixpath-match-doesnt-support-in-python-3-10"
+      ],
       "tags": [
         "python"
       ]
@@ -715,6 +988,9 @@
     "err-pureposixpath-strips-trailing-slashes": {
       "related_warning": [
         "war-pureposixpath-strips-trailing-slashes"
+      ],
+      "related_faq": [
+        "faq-pureposixpath-strips-trailing-slashes"
       ],
       "tags": [
         "testing",
@@ -725,6 +1001,9 @@
       "related_warning": [
         "war-push-specific-tags-not-tags"
       ],
+      "related_faq": [
+        "faq-push-specific-tags-not-tags"
+      ],
       "tags": [
         "git"
       ]
@@ -732,6 +1011,9 @@
     "err-pypi-renders-readme-links-relative-to-its-own-domain": {
       "related_warning": [
         "war-pypi-renders-readme-links-relative-to-its-own-domain"
+      ],
+      "related_faq": [
+        "faq-pypi-renders-readme-links-relative-to-its-own-domain"
       ],
       "tags": [
         "security",
@@ -743,6 +1025,9 @@
       "related_warning": [
         "war-pytest-importorskip-triggers-ruff-e402"
       ],
+      "related_faq": [
+        "faq-pytest-importorskip-triggers-ruff-e402"
+      ],
       "tags": [
         "testing",
         "imports",
@@ -753,6 +1038,9 @@
       "related_warning": [
         "war-re-enabling-required-reviews-kills-queued-auto-merge"
       ],
+      "related_faq": [
+        "faq-re-enabling-required-reviews-kills-queued-auto-merge"
+      ],
       "tags": [
         "git"
       ]
@@ -761,11 +1049,17 @@
       "related_warning": [
         "war-read-source-before-writing-tests-for-tricky-logic"
       ],
+      "related_faq": [
+        "faq-read-source-before-writing-tests-for-tricky-logic"
+      ],
       "tags": [
         "testing"
       ]
     },
     "err-real-project-files-on-disk-override-test-mocks": {
+      "related_faq": [
+        "faq-real-project-files-on-disk-override-test-mocks"
+      ],
       "tags": [
         "testing",
         "imports"
@@ -775,6 +1069,9 @@
       "related_warning": [
         "war-rebuild-dist-after-readme-changes"
       ],
+      "related_faq": [
+        "faq-rebuild-dist-after-readme-changes"
+      ],
       "tags": [
         "packaging"
       ]
@@ -783,6 +1080,9 @@
       "related_warning": [
         "war-redisshorttermmemory-mock-injection-path"
       ],
+      "related_faq": [
+        "faq-redisshorttermmemory-mock-injection-path"
+      ],
       "tags": [
         "testing"
       ]
@@ -790,6 +1090,9 @@
     "err-registry-count-assertions-are-scattered-across-test-files": {
       "related_warning": [
         "war-registry-count-assertions-are-scattered-across-test-files"
+      ],
+      "related_faq": [
+        "faq-registry-count-assertions-are-scattered-across-test-files"
       ],
       "tags": [
         "testing",
@@ -801,6 +1104,9 @@
       "related_warning": [
         "war-replacing-a-mixin-based-class-scatters-test-failures-across"
       ],
+      "related_faq": [
+        "faq-replacing-a-mixin-based-class-scatters-test-failures-across"
+      ],
       "tags": [
         "testing",
         "git"
@@ -810,6 +1116,9 @@
       "related_warning": [
         "war-repo-merge-policy-may-restrict-merge-strategies"
       ],
+      "related_faq": [
+        "faq-repo-merge-policy-may-restrict-merge-strategies"
+      ],
       "tags": [
         "git"
       ]
@@ -818,6 +1127,9 @@
       "related_warning": [
         "war-required-status-check-names-must-match-githubs-exact-check-names"
       ],
+      "related_faq": [
+        "faq-required-status-check-names-must-match-githubs-exact-check-names"
+      ],
       "tags": [
         "git"
       ]
@@ -825,6 +1137,9 @@
     "err-resultmessage-result-is-often-none-capture-assistantmessage": {
       "related_warning": [
         "war-resultmessage-result-is-often-none-capture-assistantmessage"
+      ],
+      "related_faq": [
+        "faq-resultmessage-result-is-often-none-capture-assistantmessage"
       ]
     },
     "err-ruff-auto-fix-strips-imports-before-usage-code-exists": {
@@ -833,6 +1148,9 @@
       ],
       "prevented_by": [
         "tip-after-first-health"
+      ],
+      "related_faq": [
+        "faq-ruff-auto-fix-strips-imports-before-usage-code-exists"
       ],
       "tags": [
         "imports",
@@ -847,6 +1165,9 @@
       ]
     },
     "err-ruff-parses-pytest-ini-as-python": {
+      "related_faq": [
+        "faq-ruff-parses-pytest-ini-as-python"
+      ],
       "tags": [
         "testing",
         "git",
@@ -858,6 +1179,9 @@
       "related_warning": [
         "war-run-simplify-catches-per-file-errors-internally"
       ],
+      "related_faq": [
+        "faq-run-simplify-catches-per-file-errors-internally"
+      ],
       "tags": [
         "testing",
         "packaging"
@@ -867,12 +1191,18 @@
       "related_warning": [
         "war-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu"
       ],
+      "related_faq": [
+        "faq-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
     "err-scorecards-pip-parser-ignores-hash-flags-entirely": {
+      "related_faq": [
+        "faq-scorecards-pip-parser-ignores-hash-flags-entirely"
+      ],
       "tags": [
         "packaging"
       ]
@@ -880,6 +1210,9 @@
     "err-sdk-agent-model-config-uses-stale-model-names": {
       "related_warning": [
         "war-sdk-agent-model-config-uses-stale-model-names"
+      ],
+      "related_faq": [
+        "faq-sdk-agent-model-config-uses-stale-model-names"
       ],
       "tags": [
         "testing"
@@ -889,6 +1222,9 @@
       "related_warning": [
         "war-sdk-native-workflows-validate-in-execute-not-input-schema"
       ],
+      "related_faq": [
+        "faq-sdk-native-workflows-validate-in-execute-not-input-schema"
+      ],
       "tags": [
         "testing",
         "security"
@@ -897,11 +1233,17 @@
     "err-semantic-cache-70-hit-rate-claim-was-unmeasured": {
       "related_warning": [
         "war-semantic-cache-70-hit-rate-claim-was-unmeasured"
+      ],
+      "related_faq": [
+        "faq-semantic-cache-70-hit-rate-claim-was-unmeasured"
       ]
     },
     "err-session-hooks-may-be-vestigial": {
       "related_warning": [
         "war-session-hooks-may-be-vestigial"
+      ],
+      "related_faq": [
+        "faq-session-hooks-may-be-vestigial"
       ],
       "tags": [
         "claude-code"
@@ -911,6 +1253,9 @@
       "related_warning": [
         "war-shadow-directories-at-repo-root-break-imports"
       ],
+      "related_faq": [
+        "faq-shadow-directories-at-repo-root-break-imports"
+      ],
       "tags": [
         "imports"
       ]
@@ -918,6 +1263,9 @@
     "err-silent-pass-blocks-in-discovery-registry-code-hide-import": {
       "related_warning": [
         "war-silent-pass-blocks-in-discovery-registry-code-hide-import"
+      ],
+      "related_faq": [
+        "faq-silent-pass-blocks-in-discovery-registry-code-hide-import"
       ],
       "tags": [
         "imports"
@@ -927,11 +1275,17 @@
       "related_warning": [
         "war-skill-descriptions-must-be-under-250-characters"
       ],
+      "related_faq": [
+        "faq-skill-descriptions-must-be-under-250-characters"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "err-skill-frontmatter-allowlist-march-2026": {
+      "related_faq": [
+        "faq-skill-frontmatter-allowlist-march-2026"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -939,6 +1293,9 @@
     "err-skill-frontmatter-has-a-strict-allowlist": {
       "related_warning": [
         "war-skill-frontmatter-has-a-strict-allowlist"
+      ],
+      "related_faq": [
+        "faq-skill-frontmatter-has-a-strict-allowlist"
       ],
       "tags": [
         "claude-code"
@@ -956,11 +1313,17 @@
       "related_warning": [
         "war-ssrf-always-decode-urls-before-validating-hostnames"
       ],
+      "related_faq": [
+        "faq-ssrf-always-decode-urls-before-validating-hostnames"
+      ],
       "tags": [
         "security"
       ]
     },
     "err-ssrf-in-webhook-handlers-is-easy-to-miss": {
+      "related_faq": [
+        "faq-ssrf-in-webhook-handlers-is-easy-to-miss"
+      ],
       "tags": [
         "security",
         "claude-code"
@@ -970,6 +1333,9 @@
       "related_warning": [
         "war-ssrf-strip-ipv6-zone-ids-before-ip-validation"
       ],
+      "related_faq": [
+        "faq-ssrf-strip-ipv6-zone-ids-before-ip-validation"
+      ],
       "tags": [
         "security"
       ]
@@ -978,12 +1344,18 @@
       "related_warning": [
         "war-stacked-patch-decorators-inject-args-bottom-up"
       ],
+      "related_faq": [
+        "faq-stacked-patch-decorators-inject-args-bottom-up"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "err-stop-hook-ordering-matters": {
+      "related_faq": [
+        "faq-stop-hook-ordering-matters"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -991,6 +1363,9 @@
     "err-stop-hooks-inject-stderr-not-stdout": {
       "related_warning": [
         "war-stop-hooks-inject-stderr-not-stdout"
+      ],
+      "related_faq": [
+        "faq-stop-hooks-inject-stderr-not-stdout"
       ],
       "tags": [
         "claude-code"
@@ -1000,6 +1375,9 @@
       "related_warning": [
         "war-stop-hooks-loop-without-a-sentinel"
       ],
+      "related_faq": [
+        "faq-stop-hooks-loop-without-a-sentinel"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -1007,6 +1385,9 @@
     "err-stop-hooks-missing-cd-prefix-inherit-session-cwd": {
       "related_warning": [
         "war-stop-hooks-missing-cd-prefix-inherit-session-cwd"
+      ],
+      "related_faq": [
+        "faq-stop-hooks-missing-cd-prefix-inherit-session-cwd"
       ],
       "tags": [
         "claude-code"
@@ -1016,6 +1397,9 @@
       "related_warning": [
         "war-structlog-kwargs-vs-stdlib-logger"
       ],
+      "related_faq": [
+        "faq-structlog-kwargs-vs-stdlib-logger"
+      ],
       "tags": [
         "imports"
       ]
@@ -1023,6 +1407,9 @@
     "err-test-mocks-must-match-imports": {
       "related_warning": [
         "war-test-mocks-must-match-imports"
+      ],
+      "related_faq": [
+        "faq-test-mocks-must-match-imports"
       ],
       "tags": [
         "testing",
@@ -1033,6 +1420,9 @@
       "related_warning": [
         "war-tests-for-optional-dep-code-need-pytest-importorskip-guards-in"
       ],
+      "related_faq": [
+        "faq-tests-for-optional-dep-code-need-pytest-importorskip-guards-in"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1040,6 +1430,9 @@
       ]
     },
     "err-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive": {
+      "related_faq": [
+        "faq-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive"
+      ],
       "tags": [
         "claude-code",
         "packaging"
@@ -1058,6 +1451,9 @@
       "related_warning": [
         "war-untracked-scripts-break-ci-when-tests-import-them"
       ],
+      "related_faq": [
+        "faq-untracked-scripts-break-ci-when-tests-import-them"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1067,6 +1463,9 @@
       ]
     },
     "err-validate-file-path-needed-on-reads-too-not-just-writes": {
+      "related_faq": [
+        "faq-validate-file-path-needed-on-reads-too-not-just-writes"
+      ],
       "tags": [
         "security",
         "imports"
@@ -1076,6 +1475,9 @@
       "related_warning": [
         "war-validate-infrastructure-against-user-value-before-extending"
       ],
+      "related_faq": [
+        "faq-validate-infrastructure-against-user-value-before-extending"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1083,6 +1485,9 @@
       ]
     },
     "err-verify-mcp-tool-wiring-after-adding-new-tools": {
+      "related_faq": [
+        "faq-verify-mcp-tool-wiring-after-adding-new-tools"
+      ],
       "tags": [
         "claude-code"
       ]
@@ -1090,6 +1495,9 @@
     "err-verify-new-dispatch-branches-with-a-known-fixture-not-just": {
       "related_warning": [
         "war-verify-new-dispatch-branches-with-a-known-fixture-not-just"
+      ],
+      "related_faq": [
+        "faq-verify-new-dispatch-branches-with-a-known-fixture-not-just"
       ],
       "tags": [
         "testing",
@@ -1100,11 +1508,17 @@
     "err-website-feature-lists-can-diverge-from-the-python-registry": {
       "related_warning": [
         "war-website-feature-lists-can-diverge-from-the-python-registry"
+      ],
+      "related_faq": [
+        "faq-website-feature-lists-can-diverge-from-the-python-registry"
       ]
     },
     "err-windows-ci-encoding": {
       "related_warning": [
         "war-windows-ci-encoding"
+      ],
+      "related_faq": [
+        "faq-windows-ci-encoding"
       ],
       "tags": [
         "ci",
@@ -1116,6 +1530,9 @@
       "related_warning": [
         "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos"
       ],
+      "related_faq": [
+        "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1124,6 +1541,9 @@
       ]
     },
     "err-windows-path-resolve-prepends-the-drive-letter-to-unix-paths": {
+      "related_faq": [
+        "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1135,6 +1555,9 @@
       "related_warning": [
         "war-windows-time-time-can-return-0-0-duration-for-fast-operations"
       ],
+      "related_faq": [
+        "faq-windows-time-time-can-return-0-0-duration-for-fast-operations"
+      ],
       "tags": [
         "testing",
         "windows"
@@ -1144,6 +1567,9 @@
       "related_warning": [
         "war-wizards-call-workflows-internally-they-are-not-duplicates"
       ],
+      "related_faq": [
+        "faq-wizards-call-workflows-internally-they-are-not-duplicates"
+      ],
       "tags": [
         "git",
         "packaging"
@@ -1152,6 +1578,9 @@
     "err-workflowresult-constructor-mismatches-surface-only-at-runtime": {
       "related_warning": [
         "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
+      ],
+      "related_faq": [
+        "faq-workflowresult-constructor-mismatches-surface-only-at-runtime"
       ],
       "tags": [
         "testing",
@@ -1163,11 +1592,17 @@
       "related_warning": [
         "war-yaml-run-values-with-colons-cause-parse-errors"
       ],
+      "related_faq": [
+        "faq-yaml-run-values-with-colons-cause-parse-errors"
+      ],
       "tags": [
         "ci"
       ]
     },
     "faq-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that": {
+      "related_error": [
+        "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1175,12 +1610,23 @@
       ]
     },
     "faq-adding-logger-before-eager-imports-triggers-e402-in-init-py": {
+      "related_error": [
+        "err-adding-logger-before-eager-imports-triggers-e402-in-init-py"
+      ],
       "tags": [
         "imports",
         "python"
       ]
     },
+    "faq-anthropics-built-in-prompt-caching-supersedes-custom-caching": {
+      "related_error": [
+        "err-anthropics-built-in-prompt-caching-supersedes-custom-caching"
+      ]
+    },
     "faq-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto": {
+      "related_error": [
+        "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto"
+      ],
       "tags": [
         "git",
         "claude-code",
@@ -1188,49 +1634,86 @@
       ]
     },
     "faq-attune-skill-names-must-not-collide-with-claude-code-built-in": {
+      "related_error": [
+        "err-attune-skill-names-must-not-collide-with-claude-code-built-in"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-b904-raise-x-from-e-is-not-auto-fixable-by-ruff": {
+      "related_error": [
+        "err-b904-raise-x-from-e-is-not-auto-fixable-by-ruff"
+      ],
       "tags": [
         "python"
       ]
     },
+    "faq-background-processes-from-previous-sessions-persist-across": {
+      "related_error": [
+        "err-background-processes-from-previous-sessions-persist-across"
+      ]
+    },
     "faq-bandit-b108-blocks-hardcoded-tmp-paths": {
+      "related_error": [
+        "err-bandit-b108-blocks-hardcoded-tmp-paths"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-baseworkflow-now-provides-self-logger": {
+      "related_error": [
+        "err-baseworkflow-now-provides-self-logger"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-baseworkflow-uses-class-attributes-not-constructor-params": {
+      "related_error": [
+        "err-baseworkflow-uses-class-attributes-not-constructor-params"
+      ],
       "tags": [
         "git"
       ]
     },
+    "faq-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode": {
+      "related_error": [
+        "err-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode"
+      ]
+    },
     "faq-broad-gitignore-patterns-match-nested-directories": {
+      "related_error": [
+        "err-broad-gitignore-patterns-match-nested-directories"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-bug-predict-dangerous-eval-flags-subprocess-exec": {
+      "related_error": [
+        "err-bug-predict-dangerous-eval-flags-subprocess-exec"
+      ],
       "tags": [
         "security",
         "claude-code"
       ]
     },
     "faq-bugpredictionworkflow-not-bugpredictworkflow": {
+      "related_error": [
+        "err-bugpredictionworkflow-not-bugpredictworkflow"
+      ],
       "tags": [
         "imports",
         "claude-code"
       ]
     },
     "faq-changing-error-messages-breaks-tests-across-the-codebase": {
+      "related_error": [
+        "err-changing-error-messages-breaks-tests-across-the-codebase"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1238,39 +1721,60 @@
       ]
     },
     "faq-changing-user-facing-output-strings-cascades-through-test": {
+      "related_error": [
+        "err-changing-user-facing-output-strings-cascades-through-test"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-ci-timeout-tests-enforce-the-range-you-set": {
+      "related_error": [
+        "err-ci-timeout-tests-enforce-the-range-you-set"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
     "faq-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai": {
+      "related_error": [
+        "err-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai"
+      ],
       "tags": [
         "packaging"
       ]
     },
     "faq-claude-code-plugin-is-platform-specific": {
+      "related_error": [
+        "err-claude-code-plugin-is-platform-specific"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-claude-code-plugins-expect-plugin-json-inside-claude-plugin": {
+      "related_error": [
+        "err-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "faq-claude-plugin-install-is-marketplace-only": {
+      "related_error": [
+        "err-claude-plugin-install-is-marketplace-only"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "faq-clusterfuzzlite-no-deps-misses-transitive-imports": {
+      "related_error": [
+        "err-clusterfuzzlite-no-deps-misses-transitive-imports"
+      ],
       "tags": [
         "security",
         "imports",
@@ -1278,27 +1782,42 @@
       ]
     },
     "faq-codeql-alerts-dismissible-in-bulk-via-gh-api": {
+      "related_error": [
+        "err-codeql-alerts-dismissible-in-bulk-via-gh-api"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes": {
+      "related_error": [
+        "err-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "faq-codeql-py-clear-text-logging-sensitive-data-traces-data-flow": {
+      "related_error": [
+        "err-codeql-py-clear-text-logging-sensitive-data-traces-data-flow"
+      ],
       "tags": [
         "security"
       ]
     },
     "faq-commands-are-not-namespaced-in-plugins-skills-are": {
+      "related_error": [
+        "err-commands-are-not-namespaced-in-plugins-skills-are"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-config-py-alongside-config-creates-a-mypy-duplicate-module": {
+      "related_error": [
+        "err-config-py-alongside-config-creates-a-mypy-duplicate-module"
+      ],
       "tags": [
         "imports",
         "git",
@@ -1306,22 +1825,34 @@
       ]
     },
     "faq-costreport-is-a-dataclass-not-a-dict": {
+      "related_error": [
+        "err-costreport-is-a-dataclass-not-a-dict"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+      "related_error": [
+        "err-custom-mcp-stdio-loop-fails-claude-code-handshake"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the": {
+      "related_error": [
+        "err-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the"
+      ],
       "tags": [
         "testing",
         "python"
       ]
     },
     "faq-dead-code-modules-with-full-test-suites-look-alive": {
+      "related_error": [
+        "err-dead-code-modules-with-full-test-suites-look-alive"
+      ],
       "tags": [
         "testing",
         "imports",
@@ -1330,32 +1861,50 @@
       ]
     },
     "faq-deep-review-false-positives-verify-before-acting": {
+      "related_error": [
+        "err-deep-review-false-positives-verify-before-acting"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts": {
+      "related_error": [
+        "err-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-dispatch-tables-hold-direct-function-references-mocks-must": {
+      "related_error": [
+        "err-dispatch-tables-hold-direct-function-references-mocks-must"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-dist-can-contain-stale-artifacts-after-version-bumps": {
+      "related_error": [
+        "err-dist-can-contain-stale-artifacts-after-version-bumps"
+      ],
       "tags": [
         "packaging"
       ]
     },
     "faq-dont-append-z-to-timezone-aware-isoformat": {
+      "related_error": [
+        "err-dont-append-z-to-timezone-aware-isoformat"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-duplicate-plugins-cause-conflicting-skill-triggers": {
+      "related_error": [
+        "err-duplicate-plugins-cause-conflicting-skill-triggers"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1363,83 +1912,133 @@
       ]
     },
     "faq-enforce-admins-false-defeats-code-review-scorecard-check": {
+      "related_error": [
+        "err-enforce-admins-false-defeats-code-review-scorecard-check"
+      ],
       "tags": [
         "ci"
       ]
     },
     "faq-enforce-admins-required-reviews-blocks-solo-dev-merges": {
+      "related_error": [
+        "err-enforce-admins-required-reviews-blocks-solo-dev-merges"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-exploration-agents-fabricate-names-verify-against-source": {
+      "related_error": [
+        "err-exploration-agents-fabricate-names-verify-against-source"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-full-coverage-runs-on-15k-test-suites-timeout-easily": {
+      "related_error": [
+        "err-full-coverage-runs-on-15k-test-suites-timeout-easily"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+      "related_error": [
+        "err-generated-content-with-trailing-whitespace-causes-perpetual-pre"
+      ],
       "tags": [
         "git",
         "claude-code"
       ]
     },
     "faq-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
+      "related_error": [
+        "err-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "faq-ghost-command-references-survive-cli-renames": {
+      "related_error": [
+        "err-ghost-command-references-survive-cli-renames"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-github-protected-tags-cannot-be-force-updated": {
+      "related_error": [
+        "err-github-protected-tags-cannot-be-force-updated"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-github-repos-serve-as-claude-code-marketplaces": {
+      "related_error": [
+        "err-github-repos-serve-as-claude-code-marketplaces"
+      ],
       "tags": [
         "git",
         "claude-code"
       ]
     },
     "faq-gitignore-exclusions-break-ci-tests-that-read-those-files": {
+      "related_error": [
+        "err-gitignore-exclusions-break-ci-tests-that-read-those-files"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
     "faq-gpg-signing-fails-in-non-interactive-terminals-vscode-extension": {
+      "related_error": [
+        "err-gpg-signing-fails-in-non-interactive-terminals-vscode-extension"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-hardcoded-root-paths-in-tests": {
+      "related_error": [
+        "err-hardcoded-root-paths-in-tests"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
+    "faq-hardcoded-strings-in-method-bodies-survive-class-attribute": {
+      "related_error": [
+        "err-hardcoded-strings-in-method-bodies-survive-class-attribute"
+      ]
+    },
     "faq-hardcoded-user-id-defeats-ownership-checks": {
+      "related_error": [
+        "err-hardcoded-user-id-defeats-ownership-checks"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
+      "related_error": [
+        "err-hot-reload-subsystem-was-1-038-lines-of-dead-code"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-importlib-import-module-is-an-arbitrary-code-execution-vector": {
+      "related_error": [
+        "err-importlib-import-module-is-an-arbitrary-code-execution-vector"
+      ],
       "tags": [
         "security",
         "imports",
@@ -1447,28 +2046,53 @@
       ]
     },
     "faq-is-private-is-a-superset-in-python-ipaddress": {
+      "related_error": [
+        "err-is-private-is-a-superset-in-python-ipaddress"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-kwargs-collides-with-explicit-params-of-the-same-name": {
+      "related_error": [
+        "err-kwargs-collides-with-explicit-params-of-the-same-name"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-lazy-imports-inside-function-bodies-cant-be-patched-with": {
+      "related_error": [
+        "err-lazy-imports-inside-function-bodies-cant-be-patched-with"
+      ],
       "tags": [
         "testing",
         "imports",
         "claude-code"
       ]
     },
+    "faq-linkedin-paste-use-ascii-markers-not-unicode-arrows": {
+      "related_error": [
+        "err-linkedin-paste-use-ascii-markers-not-unicode-arrows"
+      ]
+    },
     "faq-list-wizards-is-a-function-not-a-class-method": {
+      "related_error": [
+        "err-list-wizards-is-a-function-not-a-class-method"
+      ],
       "tags": [
         "imports"
       ]
     },
+    "faq-list-workflows-deduplication-must-keep-base-names-visible": {
+      "related_error": [
+        "err-list-workflows-deduplication-must-keep-base-names-visible"
+      ]
+    },
     "faq-macos-var-private-var-symlink-breaks-path-assertions": {
+      "related_error": [
+        "err-macos-var-private-var-symlink-breaks-path-assertions"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1478,12 +2102,18 @@
       ]
     },
     "faq-mcp-call-tool-wrapper-pattern": {
+      "related_error": [
+        "err-mcp-call-tool-wrapper-pattern"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "faq-mcp-handler-validate-paths-before-importing-workflows": {
+      "related_error": [
+        "err-mcp-handler-validate-paths-before-importing-workflows"
+      ],
       "tags": [
         "security",
         "imports",
@@ -1491,67 +2121,108 @@
       ]
     },
     "faq-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+      "related_error": [
+        "err-mcp-json-python-resolves-to-pyenv-shim-not-project-venv"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-mcp-tool-count-tests-are-hardcoded": {
+      "related_error": [
+        "err-mcp-tool-count-tests-are-hardcoded"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "faq-mcp-tool-renames-propagate-to-skill-docs": {
+      "related_error": [
+        "err-mcp-tool-renames-propagate-to-skill-docs"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path": {
+      "related_error": [
+        "err-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path"
+      ],
       "tags": [
         "testing",
         "claude-code"
       ]
     },
     "faq-mixin-classes-inherit-self-workspace-root-at-runtime-not-at": {
+      "related_error": [
+        "err-mixin-classes-inherit-self-workspace-root-at-runtime-not-at"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-mkdocs-strict-treats-broken-links-as-fatal-errors": {
+      "related_error": [
+        "err-mkdocs-strict-treats-broken-links-as-fatal-errors"
+      ],
       "tags": [
         "ci"
       ]
     },
     "faq-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules": {
+      "related_error": [
+        "err-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-modeltier-has-two-copies-imports-must-match": {
+      "related_error": [
+        "err-modeltier-has-two-copies-imports-must-match"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-module-level-optional-imports-enable-clean-test-patching": {
+      "related_error": [
+        "err-module-level-optional-imports-enable-clean-test-patching"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
+    "faq-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins": {
+      "related_error": [
+        "err-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins"
+      ]
+    },
     "faq-mypy-437-errors-was-stale-actual-count-was-2": {
+      "related_error": [
+        "err-mypy-437-errors-was-stale-actual-count-was-2"
+      ],
       "tags": [
         "git",
         "python"
       ]
     },
     "faq-new-dataclass-fields-need-both-the-class-and-the-parser-updated": {
+      "related_error": [
+        "err-new-dataclass-fields-need-both-the-class-and-the-parser-updated"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent": {
+      "related_error": [
+        "err-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1559,6 +2230,9 @@
       ]
     },
     "faq-new-security-features-need-dedicated-tests-before-release": {
+      "related_error": [
+        "err-new-security-features-need-dedicated-tests-before-release"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1567,24 +2241,41 @@
       ]
     },
     "faq-next-js-shared-data-libs-prevent-page-duplication": {
+      "related_error": [
+        "err-next-js-shared-data-libs-prevent-page-duplication"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-non-baseworkflow-classes-in-workflow-registry-crash-the-cli": {
+      "related_error": [
+        "err-non-baseworkflow-classes-in-workflow-registry-crash-the-cli"
+      ],
       "tags": [
         "imports",
         "git"
       ]
     },
+    "faq-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process": {
+      "related_error": [
+        "err-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
+      ]
+    },
     "faq-patch-requires-the-target-name-to-exist-at-module-scope-at": {
+      "related_error": [
+        "err-patch-requires-the-target-name-to-exist-at-module-scope-at"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-patch-the-source-module-for-from-x-import-y-in-function-bodies": {
+      "related_error": [
+        "err-patch-the-source-module-for-from-x-import-y-in-function-bodies"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1592,24 +2283,36 @@
       ]
     },
     "faq-pip-audit-fails-on-unpublished-versions": {
+      "related_error": [
+        "err-pip-audit-fails-on-unpublished-versions"
+      ],
       "tags": [
         "ci",
         "packaging"
       ]
     },
     "faq-plugin-read-skill-references-break-outside-the-plugin": {
+      "related_error": [
+        "err-plugin-read-skill-references-break-outside-the-plugin"
+      ],
       "tags": [
         "claude-code",
         "packaging"
       ]
     },
     "faq-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or": {
+      "related_error": [
+        "err-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "faq-pre-commit-auto-fix-requires-re-stage-before-retry": {
+      "related_error": [
+        "err-pre-commit-auto-fix-requires-re-stage-before-retry"
+      ],
       "tags": [
         "git",
         "claude-code",
@@ -1617,12 +2320,18 @@
       ]
     },
     "faq-pre-commit-black-unstaged-files-re-stage-after-failure": {
+      "related_error": [
+        "err-pre-commit-black-unstaged-files-re-stage-after-failure"
+      ],
       "tags": [
         "git",
         "claude-code"
       ]
     },
     "faq-pre-commit-stash-conflict-when-black-ruff-fix-files-with": {
+      "related_error": [
+        "err-pre-commit-stash-conflict-when-black-ruff-fix-files-with"
+      ],
       "tags": [
         "git",
         "claude-code",
@@ -1630,6 +2339,9 @@
       ]
     },
     "faq-pre-commit-stash-conflict-with-auto-fix-hooks": {
+      "related_error": [
+        "err-pre-commit-stash-conflict-with-auto-fix-hooks"
+      ],
       "tags": [
         "git",
         "claude-code",
@@ -1637,6 +2349,9 @@
       ]
     },
     "faq-pre-commit-stash-conflicts-when-any-tracked-unstaged-file": {
+      "related_error": [
+        "err-pre-commit-stash-conflicts-when-any-tracked-unstaged-file"
+      ],
       "tags": [
         "testing",
         "git",
@@ -1645,27 +2360,42 @@
       ]
     },
     "faq-pull-main-before-merging-develop-to-avoid-merge-commits": {
+      "related_error": [
+        "err-pull-main-before-merging-develop-to-avoid-merge-commits"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-pureposixpath-match-doesnt-support-in-python-3-10": {
+      "related_error": [
+        "err-pureposixpath-match-doesnt-support-in-python-3-10"
+      ],
       "tags": [
         "python"
       ]
     },
     "faq-pureposixpath-strips-trailing-slashes": {
+      "related_error": [
+        "err-pureposixpath-strips-trailing-slashes"
+      ],
       "tags": [
         "testing",
         "security"
       ]
     },
     "faq-push-specific-tags-not-tags": {
+      "related_error": [
+        "err-push-specific-tags-not-tags"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-pypi-renders-readme-links-relative-to-its-own-domain": {
+      "related_error": [
+        "err-pypi-renders-readme-links-relative-to-its-own-domain"
+      ],
       "tags": [
         "security",
         "packaging",
@@ -1673,6 +2403,9 @@
       ]
     },
     "faq-pytest-importorskip-triggers-ruff-e402": {
+      "related_error": [
+        "err-pytest-importorskip-triggers-ruff-e402"
+      ],
       "tags": [
         "testing",
         "imports",
@@ -1680,32 +2413,50 @@
       ]
     },
     "faq-re-enabling-required-reviews-kills-queued-auto-merge": {
+      "related_error": [
+        "err-re-enabling-required-reviews-kills-queued-auto-merge"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-read-source-before-writing-tests-for-tricky-logic": {
+      "related_error": [
+        "err-read-source-before-writing-tests-for-tricky-logic"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-real-project-files-on-disk-override-test-mocks": {
+      "related_error": [
+        "err-real-project-files-on-disk-override-test-mocks"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-rebuild-dist-after-readme-changes": {
+      "related_error": [
+        "err-rebuild-dist-after-readme-changes"
+      ],
       "tags": [
         "packaging"
       ]
     },
     "faq-redisshorttermmemory-mock-injection-path": {
+      "related_error": [
+        "err-redisshorttermmemory-mock-injection-path"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-registry-count-assertions-are-scattered-across-test-files": {
+      "related_error": [
+        "err-registry-count-assertions-are-scattered-across-test-files"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1713,22 +2464,39 @@
       ]
     },
     "faq-replacing-a-mixin-based-class-scatters-test-failures-across": {
+      "related_error": [
+        "err-replacing-a-mixin-based-class-scatters-test-failures-across"
+      ],
       "tags": [
         "testing",
         "git"
       ]
     },
     "faq-repo-merge-policy-may-restrict-merge-strategies": {
+      "related_error": [
+        "err-repo-merge-policy-may-restrict-merge-strategies"
+      ],
       "tags": [
         "git"
       ]
     },
     "faq-required-status-check-names-must-match-githubs-exact-check-names": {
+      "related_error": [
+        "err-required-status-check-names-must-match-githubs-exact-check-names"
+      ],
       "tags": [
         "git"
       ]
     },
+    "faq-resultmessage-result-is-often-none-capture-assistantmessage": {
+      "related_error": [
+        "err-resultmessage-result-is-often-none-capture-assistantmessage"
+      ]
+    },
     "faq-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+      "related_error": [
+        "err-ruff-auto-fix-strips-imports-before-usage-code-exists"
+      ],
       "tags": [
         "imports",
         "claude-code",
@@ -1736,6 +2504,9 @@
       ]
     },
     "faq-ruff-parses-pytest-ini-as-python": {
+      "related_error": [
+        "err-ruff-parses-pytest-ini-as-python"
+      ],
       "tags": [
         "testing",
         "git",
@@ -1744,117 +2515,188 @@
       ]
     },
     "faq-run-simplify-catches-per-file-errors-internally": {
+      "related_error": [
+        "err-run-simplify-catches-per-file-errors-internally"
+      ],
       "tags": [
         "testing",
         "packaging"
       ]
     },
     "faq-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu": {
+      "related_error": [
+        "err-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu"
+      ],
       "tags": [
         "ci",
         "testing"
       ]
     },
     "faq-scorecards-pip-parser-ignores-hash-flags-entirely": {
+      "related_error": [
+        "err-scorecards-pip-parser-ignores-hash-flags-entirely"
+      ],
       "tags": [
         "packaging"
       ]
     },
     "faq-sdk-agent-model-config-uses-stale-model-names": {
+      "related_error": [
+        "err-sdk-agent-model-config-uses-stale-model-names"
+      ],
       "tags": [
         "testing"
       ]
     },
     "faq-sdk-native-workflows-validate-in-execute-not-input-schema": {
+      "related_error": [
+        "err-sdk-native-workflows-validate-in-execute-not-input-schema"
+      ],
       "tags": [
         "testing",
         "security"
       ]
     },
+    "faq-semantic-cache-70-hit-rate-claim-was-unmeasured": {
+      "related_error": [
+        "err-semantic-cache-70-hit-rate-claim-was-unmeasured"
+      ]
+    },
     "faq-session-hooks-may-be-vestigial": {
+      "related_error": [
+        "err-session-hooks-may-be-vestigial"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-shadow-directories-at-repo-root-break-imports": {
+      "related_error": [
+        "err-shadow-directories-at-repo-root-break-imports"
+      ],
       "tags": [
         "imports"
       ]
     },
     "faq-silent-pass-blocks-in-discovery-registry-code-hide-import": {
+      "related_error": [
+        "err-silent-pass-blocks-in-discovery-registry-code-hide-import"
+      ],
       "tags": [
         "imports"
       ]
     },
     "faq-skill-descriptions-must-be-under-250-characters": {
+      "related_error": [
+        "err-skill-descriptions-must-be-under-250-characters"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-skill-frontmatter-allowlist-march-2026": {
+      "related_error": [
+        "err-skill-frontmatter-allowlist-march-2026"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-skill-frontmatter-has-a-strict-allowlist": {
+      "related_error": [
+        "err-skill-frontmatter-has-a-strict-allowlist"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-ssrf-always-decode-urls-before-validating-hostnames": {
+      "related_error": [
+        "err-ssrf-always-decode-urls-before-validating-hostnames"
+      ],
       "tags": [
         "security"
       ]
     },
     "faq-ssrf-in-webhook-handlers-is-easy-to-miss": {
+      "related_error": [
+        "err-ssrf-in-webhook-handlers-is-easy-to-miss"
+      ],
       "tags": [
         "security",
         "claude-code"
       ]
     },
     "faq-ssrf-strip-ipv6-zone-ids-before-ip-validation": {
+      "related_error": [
+        "err-ssrf-strip-ipv6-zone-ids-before-ip-validation"
+      ],
       "tags": [
         "security"
       ]
     },
     "faq-stacked-patch-decorators-inject-args-bottom-up": {
+      "related_error": [
+        "err-stacked-patch-decorators-inject-args-bottom-up"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-stop-hook-ordering-matters": {
+      "related_error": [
+        "err-stop-hook-ordering-matters"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-stop-hooks-inject-stderr-not-stdout": {
+      "related_error": [
+        "err-stop-hooks-inject-stderr-not-stdout"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-stop-hooks-loop-without-a-sentinel": {
+      "related_error": [
+        "err-stop-hooks-loop-without-a-sentinel"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-stop-hooks-missing-cd-prefix-inherit-session-cwd": {
+      "related_error": [
+        "err-stop-hooks-missing-cd-prefix-inherit-session-cwd"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-structlog-kwargs-vs-stdlib-logger": {
+      "related_error": [
+        "err-structlog-kwargs-vs-stdlib-logger"
+      ],
       "tags": [
         "imports"
       ]
     },
     "faq-test-mocks-must-match-imports": {
+      "related_error": [
+        "err-test-mocks-must-match-imports"
+      ],
       "tags": [
         "testing",
         "imports"
       ]
     },
     "faq-tests-for-optional-dep-code-need-pytest-importorskip-guards-in": {
+      "related_error": [
+        "err-tests-for-optional-dep-code-need-pytest-importorskip-guards-in"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1862,12 +2704,18 @@
       ]
     },
     "faq-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive": {
+      "related_error": [
+        "err-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive"
+      ],
       "tags": [
         "claude-code",
         "packaging"
       ]
     },
     "faq-untracked-scripts-break-ci-when-tests-import-them": {
+      "related_error": [
+        "err-untracked-scripts-break-ci-when-tests-import-them"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1877,12 +2725,18 @@
       ]
     },
     "faq-validate-file-path-needed-on-reads-too-not-just-writes": {
+      "related_error": [
+        "err-validate-file-path-needed-on-reads-too-not-just-writes"
+      ],
       "tags": [
         "security",
         "imports"
       ]
     },
     "faq-validate-infrastructure-against-user-value-before-extending": {
+      "related_error": [
+        "err-validate-infrastructure-against-user-value-before-extending"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1890,18 +2744,32 @@
       ]
     },
     "faq-verify-mcp-tool-wiring-after-adding-new-tools": {
+      "related_error": [
+        "err-verify-mcp-tool-wiring-after-adding-new-tools"
+      ],
       "tags": [
         "claude-code"
       ]
     },
     "faq-verify-new-dispatch-branches-with-a-known-fixture-not-just": {
+      "related_error": [
+        "err-verify-new-dispatch-branches-with-a-known-fixture-not-just"
+      ],
       "tags": [
         "testing",
         "imports",
         "git"
       ]
     },
+    "faq-website-feature-lists-can-diverge-from-the-python-registry": {
+      "related_error": [
+        "err-website-feature-lists-can-diverge-from-the-python-registry"
+      ]
+    },
     "faq-windows-ci-encoding": {
+      "related_error": [
+        "err-windows-ci-encoding"
+      ],
       "tags": [
         "ci",
         "windows",
@@ -1909,6 +2777,9 @@
       ]
     },
     "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos": {
+      "related_error": [
+        "err-windows-ci-runners-are-3x-slower-than-ubuntu-macos"
+      ],
       "tags": [
         "ci",
         "testing",
@@ -1917,6 +2788,9 @@
       ]
     },
     "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths": {
+      "related_error": [
+        "err-windows-path-resolve-prepends-the-drive-letter-to-unix-paths"
+      ],
       "tags": [
         "testing",
         "security",
@@ -1925,18 +2799,27 @@
       ]
     },
     "faq-windows-time-time-can-return-0-0-duration-for-fast-operations": {
+      "related_error": [
+        "err-windows-time-time-can-return-0-0-duration-for-fast-operations"
+      ],
       "tags": [
         "testing",
         "windows"
       ]
     },
     "faq-wizards-call-workflows-internally-they-are-not-duplicates": {
+      "related_error": [
+        "err-wizards-call-workflows-internally-they-are-not-duplicates"
+      ],
       "tags": [
         "git",
         "packaging"
       ]
     },
     "faq-workflowresult-constructor-mismatches-surface-only-at-runtime": {
+      "related_error": [
+        "err-workflowresult-constructor-mismatches-surface-only-at-runtime"
+      ],
       "tags": [
         "testing",
         "git",
@@ -1944,14 +2827,29 @@
       ]
     },
     "faq-yaml-run-values-with-colons-cause-parse-errors": {
+      "related_error": [
+        "err-yaml-run-values-with-colons-cause-parse-errors"
+      ],
       "tags": [
         "ci"
+      ]
+    },
+    "not-code-simplification": {
+      "tags": [
+        "philosophy",
+        "code-quality"
       ]
     },
     "not-command-hubs": {
       "tags": [
         "cli",
         "claude-code"
+      ]
+    },
+    "not-critical-rules": {
+      "tags": [
+        "security",
+        "rules"
       ]
     },
     "not-decision-d1-template-schemas-live-in-the-repo": {
@@ -1990,9 +2888,71 @@
         "design-decision"
       ]
     },
+    "not-markdown-formatting": {
+      "tags": [
+        "formatting",
+        "standards"
+      ]
+    },
     "not-project-structure": {
       "tags": [
         "architecture"
+      ]
+    },
+    "not-socratic-interaction-rule": {
+      "tags": [
+        "philosophy",
+        "ux"
+      ]
+    },
+    "not-term-cli": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-crew": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-hub": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-llm": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-p2b": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-progressive": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-sdk": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-socratic": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-tier": {
+      "tags": [
+        "terminology"
+      ]
+    },
+    "not-term-wizard": {
+      "tags": [
+        "terminology"
       ]
     },
     "ref-skill-attune-hub": {
@@ -2002,6 +2962,9 @@
         "ref-tool-refactor-plan",
         "ref-tool-release-prep",
         "ref-tool-security-audit"
+      ],
+      "related_task": [
+        "tas-use-attune-hub"
       ],
       "tags": [
         "skill",
@@ -2034,6 +2997,9 @@
       "references_tools": [
         "ref-tool-bug-predict"
       ],
+      "related_task": [
+        "tas-use-bug-predict"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2046,6 +3012,9 @@
       ]
     },
     "ref-skill-code-quality": {
+      "related_task": [
+        "tas-use-code-quality"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2054,6 +3023,9 @@
     "ref-skill-doc-gen": {
       "references_tools": [
         "ref-tool-doc-gen"
+      ],
+      "related_task": [
+        "tas-use-doc-gen"
       ],
       "tags": [
         "skill",
@@ -2067,12 +3039,18 @@
       ]
     },
     "ref-skill-fix-test": {
+      "related_task": [
+        "tas-use-fix-test"
+      ],
       "tags": [
         "skill",
         "plugin"
       ]
     },
     "ref-skill-memory-and-context": {
+      "related_task": [
+        "tas-use-memory-and-context"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2081,6 +3059,9 @@
     "ref-skill-planning": {
       "references_tools": [
         "ref-tool-refactor-plan"
+      ],
+      "related_task": [
+        "tas-use-planning"
       ],
       "tags": [
         "skill",
@@ -2097,6 +3078,9 @@
       "references_tools": [
         "ref-tool-refactor-plan"
       ],
+      "related_task": [
+        "tas-use-refactor-plan"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2111,6 +3095,9 @@
     "ref-skill-release-prep": {
       "references_tools": [
         "ref-tool-release-prep"
+      ],
+      "related_task": [
+        "tas-use-release-prep"
       ],
       "tags": [
         "skill",
@@ -2127,6 +3114,9 @@
       "references_tools": [
         "ref-tool-security-audit"
       ],
+      "related_task": [
+        "tas-use-security-audit"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2139,18 +3129,27 @@
       ]
     },
     "ref-skill-smart-test": {
+      "related_task": [
+        "tas-use-smart-test"
+      ],
       "tags": [
         "skill",
         "plugin"
       ]
     },
     "ref-skill-spec": {
+      "related_task": [
+        "tas-use-spec"
+      ],
       "tags": [
         "skill",
         "plugin"
       ]
     },
     "ref-skill-workflow-orchestration": {
+      "related_task": [
+        "tas-use-workflow-orchestration"
+      ],
       "tags": [
         "skill",
         "plugin"
@@ -2438,78 +3437,117 @@
       ]
     },
     "tas-use-attune-hub": {
+      "related_reference": [
+        "ref-skill-attune-hub"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-bug-predict": {
+      "related_reference": [
+        "ref-skill-bug-predict"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-code-quality": {
+      "related_reference": [
+        "ref-skill-code-quality"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-doc-gen": {
+      "related_reference": [
+        "ref-skill-doc-gen"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-fix-test": {
+      "related_reference": [
+        "ref-skill-fix-test"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-memory-and-context": {
+      "related_reference": [
+        "ref-skill-memory-and-context"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-planning": {
+      "related_reference": [
+        "ref-skill-planning"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-refactor-plan": {
+      "related_reference": [
+        "ref-skill-refactor-plan"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-release-prep": {
+      "related_reference": [
+        "ref-skill-release-prep"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-security-audit": {
+      "related_reference": [
+        "ref-skill-security-audit"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-smart-test": {
+      "related_reference": [
+        "ref-skill-smart-test"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-spec": {
+      "related_reference": [
+        "ref-skill-spec"
+      ],
       "tags": [
         "skill",
         "task"
       ]
     },
     "tas-use-workflow-orchestration": {
+      "related_reference": [
+        "ref-skill-workflow-orchestration"
+      ],
       "tags": [
         "skill",
         "task"
@@ -3679,6 +4717,9 @@
       "tas-run-doctor",
       "tas-run-workflow"
     ],
+    "code-quality": [
+      "not-code-simplification"
+    ],
     "design-decision": [
       "not-decision-d1-template-schemas-live-in-the-repo",
       "not-decision-d2-search-index-first-unified-later",
@@ -3696,6 +4737,9 @@
       "tip-high-tech-debt",
       "tip-no-patterns",
       "tip-weekly-review"
+    ],
+    "formatting": [
+      "not-markdown-formatting"
     ],
     "git": [
       "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
@@ -3962,6 +5006,10 @@
       "war-run-simplify-catches-per-file-errors-internally",
       "war-wizards-call-workflows-internally-they-are-not-duplicates"
     ],
+    "philosophy": [
+      "not-code-simplification",
+      "not-socratic-interaction-rule"
+    ],
     "plugin": [
       "ref-skill-attune-hub",
       "ref-skill-bug-predict",
@@ -4049,6 +5097,9 @@
       "war-windows-ci-encoding",
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
     ],
+    "rules": [
+      "not-critical-rules"
+    ],
     "security": [
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
       "err-bug-predict-dangerous-eval-flags-subprocess-exec",
@@ -4094,6 +5145,7 @@
       "faq-validate-file-path-needed-on-reads-too-not-just-writes",
       "faq-validate-infrastructure-against-user-value-before-extending",
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
+      "not-critical-rules",
       "war-bug-predict-dangerous-eval-flags-subprocess-exec",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
       "war-clusterfuzzlite-no-deps-misses-transitive-imports",
@@ -4142,6 +5194,9 @@
       "tas-use-spec",
       "tas-use-workflow-orchestration"
     ],
+    "standards": [
+      "not-markdown-formatting"
+    ],
     "task": [
       "tas-use-attune-hub",
       "tas-use-bug-predict",
@@ -4159,6 +5214,18 @@
     ],
     "telemetry": [
       "tas-export-telemetry"
+    ],
+    "terminology": [
+      "not-term-cli",
+      "not-term-crew",
+      "not-term-hub",
+      "not-term-llm",
+      "not-term-p2b",
+      "not-term-progressive",
+      "not-term-sdk",
+      "not-term-socratic",
+      "not-term-tier",
+      "not-term-wizard"
     ],
     "testing": [
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
@@ -4366,6 +5433,9 @@
       "ref-tool-context-get",
       "ref-tool-context-set",
       "ref-tool-telemetry-stats"
+    ],
+    "ux": [
+      "not-socratic-interaction-rule"
     ],
     "windows": [
       "err-macos-var-private-var-symlink-breaks-path-assertions",

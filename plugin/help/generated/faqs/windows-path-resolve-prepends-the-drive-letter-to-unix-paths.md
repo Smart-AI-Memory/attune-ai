@@ -5,16 +5,13 @@ tags: [testing, security, windows, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Windows `Path.resolve()` prepends the drive letter to Unix
-  paths?
+# FAQ: What should I know about windows Path.resolve() prepends the drive letter to Unix paths?
 
 ## Answer
 
 `Path("/code").resolve()` on Windows returns `D:\code`, not `/code`. Tests that assert exact path strings passed through `_validate_file_path` fail on Windows CI.
 
-
-**Fix:**
-
+**How to fix:**
 - patch `_validate_file_path` in tests that verify handler logic (not path validation) so paths pass through unchanged
 
 ```

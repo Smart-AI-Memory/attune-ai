@@ -13,8 +13,6 @@ Available slash command hubs in Claude Code.
 
 ## Content
 
-## Command Hubs
-
 Use `/hub-name` to access organized workflows:
 
 | Command | Description |
@@ -25,6 +23,14 @@ Use `/hub-name` to access organized workflows:
 | `/smart-test` | Find test gaps, generate tests |
 | `/release` | Release preparation and publishing |
 | `/help` | Quick reference for all commands |
+
+**More commands** (type `/help` for full list):
+
+`/dev` `/plan` `/brainstorm` `/code-quality`
+`/doc-gen` `/fix-test` `/refactor` `/deep-review`
+`/agent` `/wizard` `/bulk` `/remember`
+
+---
 
 ## Related Topics
 

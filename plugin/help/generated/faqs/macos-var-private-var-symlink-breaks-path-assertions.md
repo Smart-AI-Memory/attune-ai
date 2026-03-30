@@ -5,15 +5,13 @@ tags: [testing, security, windows, macos, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does macOS `/var` → `/private/var` symlink breaks path assertions?
+# FAQ: Why does macOS /var → /private/var symlink breaks path assertions?
 
 ## Answer
 
 `_validate_file_path()` calls `Path.resolve()`, which follows the macOS symlink from `/var/folders/...` to `/private/var/folders/...`. Tests using `tempfile.NamedTemporaryFile` get unresolved paths from `f.name` but resolved paths from validated code.
 
-
-**Fix:**
-
+**How to fix:**
 - assert against `str(Path(f.name).resolve())` instead of `f.name`
 
 ```

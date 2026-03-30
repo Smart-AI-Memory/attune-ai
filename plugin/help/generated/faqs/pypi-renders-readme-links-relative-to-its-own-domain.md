@@ -5,7 +5,7 @@ tags: [security, packaging, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: PyPI renders README links relative to its own domain?
+# FAQ: What should I know about pyPI renders README links relative to its own domain?
 
 ## Answer
 

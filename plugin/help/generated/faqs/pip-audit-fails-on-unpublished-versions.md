@@ -5,7 +5,7 @@ tags: [ci, packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does `pip-audit` fails on unpublished versions?
+# FAQ: Why does pip-audit fails on unpublished versions?
 
 ## Answer
 

@@ -13,18 +13,21 @@ Invoke with: `/security-audit <path or directory to scan>`
 
 ## Steps
 
-1. **Scope the security-audit request**
-   The skill asks scoping questions before running.
+1. **Define scope**
+   "Which path should I scan?" Default to the project root if the user says "everything."
 
-2. **Execute the security-audit workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define focus**
+   "Any specific concern — secrets, injection, dependencies, or a full sweep?"
+
+3. **Run the tool**
+   Call the `security_audit` MCP tool with the scoped path:
 
    ```
    security_audit(path="<user-specified path>")
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Choose follow-up action**
+   Want me to fix the critical issues?; Should I generate security tests for the flagged files?; Want a deeper scan of a specific directory?
 
 
 ## Related Topics

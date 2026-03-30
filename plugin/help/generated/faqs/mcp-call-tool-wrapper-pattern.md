@@ -5,7 +5,7 @@ tags: [testing, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: MCP `call_tool` wrapper pattern?
+# FAQ: What should I know about MCP call_tool wrapper pattern?
 
 ## Answer
 

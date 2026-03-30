@@ -5,8 +5,7 @@ tags: [ci, testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does `.gitignore` exclusions break CI tests that read those
-  files?
+# FAQ: Why does .gitignore exclusions break CI tests that read those files?
 
 ## Answer
 

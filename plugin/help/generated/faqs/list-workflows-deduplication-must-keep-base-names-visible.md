@@ -4,7 +4,7 @@ name: list-workflows-deduplication-must-keep-base-names-visible
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: `list_workflows()` deduplication must keep base names visible?
+# FAQ: What do I need to know about list_workflows() deduplication must keep base names visible?
 
 ## Answer
 

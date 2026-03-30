@@ -5,16 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does GPG signing fails in non-interactive terminals (VSCode
-  extension, Claude Code)?
+# FAQ: Why does GPG signing fails in non-interactive terminals (VSCode extension, Claude Code)?
 
 ## Answer
 
 `gpg` tries to open `/dev/tty` for passphrase input, which doesn't exist in spawned subprocesses. The passphrase must still be cached first by running `echo "unlock" | gpg --clearsign` in a real terminal.
 
-
-**Fix:**
-
+**How to fix:**
 - install `pinentry-mac` (`brew install pinentry-mac`), set `pinentry-program /opt/homebrew/bin/pinentry-mac` in `~/.gnupg/gpg-agent.conf` (remove any earlier `pinentry-tty` lines — GPG uses the first match), then `gpgconf --kill gpg-agent`
 
 ```

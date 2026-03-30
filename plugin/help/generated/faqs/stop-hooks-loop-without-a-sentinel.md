@@ -5,15 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Stop hooks loop without a sentinel?
+# FAQ: What should I know about stop hooks loop without a sentinel?
 
 ## Answer
 
 Exit code 2 blocks one stop attempt but the next attempt triggers the hook again, creating an infinite loop.
 
-
-**Fix:**
-
+**How to fix:**
 - Use a TTL sentinel file (`~/.attune/lessons_reminded`) to fire the reminder only once per session
 
 ```

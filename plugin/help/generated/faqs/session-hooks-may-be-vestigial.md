@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Session hooks may be vestigial?
+# FAQ: What should I know about session hooks may be vestigial?
 
 ## Answer
 

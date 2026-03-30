@@ -13,18 +13,39 @@ Invoke with: `/doc-gen <path or module to document>`
 
 ## Steps
 
-1. **Scope the doc-gen request**
-   The skill asks scoping questions before running.
+1. **Define target**
+   "Which file or module needs documentation?"
 
-2. **Execute the doc-gen workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define type**
+   "What kind of docs?" - Docstrings — Add or update Google-style docstrings - README — Generate a README section for a module - API reference — Generate full API documentation - Overview — High-level module explanation
+
+3. **Run the tool**
+   For docstring generation: For a full documentation audit first: Then generate docs for gaps found: For a complete pipeline (audit + generate + review):
 
    ```
    doc_gen(source_path="<target module>")
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Run tool (option 2)**
+
+   ```
+   doc_audit(path="<target>")
+   ```
+
+5. **Run tool (option 3)**
+
+   ```
+   doc_gen(source_path="<gap file>")
+   ```
+
+6. **Run tool (option 4)**
+
+   ```
+   doc_orchestrator(path="<target>")
+   ```
+
+7. **Choose follow-up action**
+   Want me to apply these docstrings to the files?; Should I audit the rest of the project?; Want a README section generated from this?
 
 
 ## Related Topics

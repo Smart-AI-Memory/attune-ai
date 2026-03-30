@@ -5,7 +5,7 @@ tags: [python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `PurePosixPath.match()` doesn't support `**` in Python 3.10?
+# FAQ: Why purePosixPath.match() doesn't support ** in Python 3.10?
 
 ## Answer
 

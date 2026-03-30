@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Skill frontmatter allowlist (March 2026)?
+# FAQ: What should I know about skill frontmatter allowlist (March 2026)?
 
 ## Answer
 

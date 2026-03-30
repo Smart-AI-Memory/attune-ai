@@ -5,8 +5,7 @@ tags: [testing, git, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `WorkflowResult` constructor mismatches surface only at
-  runtime?
+# FAQ: What should I know about workflowResult constructor mismatches surface only at runtime?
 
 ## Answer
 

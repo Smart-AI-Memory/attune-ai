@@ -5,7 +5,7 @@ tags: [packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Scorecard's pip parser ignores `--hash` flags entirely?
+# FAQ: What should I know about scorecard's pip parser ignores --hash flags entirely?
 
 ## Answer
 

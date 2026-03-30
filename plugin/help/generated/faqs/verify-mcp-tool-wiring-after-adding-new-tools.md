@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Verify MCP tool wiring after adding new tools?
+# FAQ: What should I know about verify MCP tool wiring after adding new tools?
 
 ## Answer
 

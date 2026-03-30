@@ -5,7 +5,7 @@ tags: [git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does `enforce_admins` + required reviews blocks solo-dev merges?
+# FAQ: Why does enforce_admins + required reviews blocks solo-dev merges?
 
 ## Answer
 

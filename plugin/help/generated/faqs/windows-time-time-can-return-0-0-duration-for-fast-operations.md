@@ -5,16 +5,13 @@ tags: [testing, windows]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Windows `time.time()` can return 0.0 duration for fast
-  operations?
+# FAQ: What should I know about windows time.time() can return 0.0 duration for fast operations?
 
 ## Answer
 
 On Windows 3.10-3.12, `time.time()` has ~15ms resolution. Tests asserting `execution_time > 0` fail when the operation completes within one tick.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `time.perf_counter()` for sub-millisecond timing, or assert `>= 0` if the operation may be instant
 
 ```

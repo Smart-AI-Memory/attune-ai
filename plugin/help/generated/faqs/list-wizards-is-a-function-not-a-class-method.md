@@ -5,7 +5,7 @@ tags: [imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `list_wizards()` is a function, not a class method?
+# FAQ: What should I know about list_wizards() is a function, not a class method?
 
 ## Answer
 

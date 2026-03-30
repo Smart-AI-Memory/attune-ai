@@ -5,15 +5,13 @@ tags: [imports, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `BugPredictionWorkflow` not `BugPredictWorkflow`?
+# FAQ: Why do I get `ImportError` (bugPredictionWorkflow not BugPredictWorkflow)?
 
 ## Answer
 
 The class in `attune.workflows.bug_predict` is `BugPredictionWorkflow`. The MCP server had `BugPredictWorkflow` which caused `ImportError`.
 
-
-**Fix:**
-
+**How to fix:**
 - Always verify the actual class name with `grep` before writing an import
 
 ```

@@ -5,16 +5,13 @@ tags: [git, claude-code, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Pre-commit stash conflict when black/ruff fix files with unstaged
-  siblings?
+# FAQ: What should I know about pre-commit stash conflict when black/ruff fix files with unstaged siblings?
 
 ## Answer
 
 When staging a subset of changed files and running `git commit`, pre-commit stashes unstaged changes, auto-fixes staged files, then tries to restore — causing a conflict if the same file has both staged and unstaged changes.
 
-
-**Fix:**
-
+**How to fix:**
 - run `uv run ruff check --fix <files>` and `uv run black <files>` manually before staging, so the hook sees already-clean files
 
 ```

@@ -13,11 +13,14 @@ Invoke with: `/workflow-orchestration <workflow: security, review, tests, perf, 
 
 ## Steps
 
-1. **Scope the workflow-orchestration request**
-   The skill asks scoping questions before running.
+1. **Define goal**
+   "What are you trying to accomplish?"
 
-2. **Execute the workflow-orchestration workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define scope**
+   "Which path or files should I analyze?" Based on the answer, route to the appropriate workflow.
+
+3. **Run the tool**
+   Route to the matching MCP tool with the scoped path:
 
    ```
    security_audit(path="<user-specified path>")
@@ -26,8 +29,8 @@ test_audit(path="<user-specified path>")
 doc_audit(path="<user-specified path>")
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Choose follow-up action**
+   Want me to fix the critical issues?; Should I run another workflow on the same path?; Want to generate tests for the flagged files?
 
 
 ## Related Topics

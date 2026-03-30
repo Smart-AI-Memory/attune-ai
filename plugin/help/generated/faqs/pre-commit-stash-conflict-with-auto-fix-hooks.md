@@ -5,15 +5,13 @@ tags: [git, claude-code, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Pre-commit stash conflict with auto-fix hooks?
+# FAQ: What should I know about pre-commit stash conflict with auto-fix hooks?
 
 ## Answer
 
 When black/ruff auto-fix staged files and there are also unstaged changes, the pre-commit stash/restore cycle conflicts with the fixes.
 
-
-**Fix:**
-
+**How to fix:**
 - run `uv run ruff check --fix <paths>` manually before committing so the staged files are already clean when the hook runs
 
 ```

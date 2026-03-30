@@ -5,15 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Stop hooks missing `cd` prefix inherit session cwd?
+# FAQ: Why stop hooks missing cd prefix inherit session cwd?
 
 ## Answer
 
 Stop hooks without an explicit `cd /abs/path &&` prefix inherit whatever directory Claude Code was started from — which may not be the repo root.
 
-
-**Fix:**
-
+**How to fix:**
 - Always prefix Stop (and all) hook commands with `cd /Users/patrickroebuck/attune-ai &&` to guarantee the correct working directory regardless of where the session was opened
 
 ```

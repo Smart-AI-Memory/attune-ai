@@ -5,8 +5,7 @@ tags: [testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Changing user-facing output strings cascades through test
-  assertions?
+# FAQ: What should I know about changing user-facing output strings cascades through test assertions?
 
 ## Answer
 

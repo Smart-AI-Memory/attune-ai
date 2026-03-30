@@ -4,15 +4,13 @@ name: semantic-cache-70-hit-rate-claim-was-unmeasured
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Semantic cache 70% hit rate claim was unmeasured?
+# FAQ: What should I know about semantic cache 70% hit rate claim was unmeasured?
 
 ## Answer
 
 Telemetry data (`~/.attune/telemetry/usage.jsonl`, 17,264 requests) showed 0.2% hit rate and $0.26 saved out of $72. The 0.95 similarity threshold and non-repetitive workflow prompts (unique file paths, timestamps, code snippets) meant near-matches almost never fired.
 
-
-**Fix:**
-
+**How to fix:**
 - Always verify performance claims against actual telemetry before documenting them
 
 ```

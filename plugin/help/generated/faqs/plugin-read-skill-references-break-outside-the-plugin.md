@@ -5,7 +5,7 @@ tags: [claude-code, packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Plugin `Read skill` references break outside the plugin?
+# FAQ: Why does plugin Read skill references break outside the plugin?
 
 ## Answer
 

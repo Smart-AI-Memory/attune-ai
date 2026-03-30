@@ -5,15 +5,13 @@ tags: [imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Shadow directories at repo root break imports?
+# FAQ: Why do I get `ModuleNotFoundError` (shadow directories at repo root break imports)?
 
 ## Answer
 
 An `attune/` directory at the repo root (from prototyping) shadows the installed `src/attune/` package, causing `ModuleNotFoundError` on submodules that only exist in one copy.
 
-
-**Fix:**
-
+**How to fix:**
 - Always check for rogue top-level directories matching the package name before debugging import errors
 
 ```

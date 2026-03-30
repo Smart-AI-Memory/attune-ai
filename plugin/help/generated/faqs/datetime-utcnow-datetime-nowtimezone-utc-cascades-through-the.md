@@ -5,8 +5,7 @@ tags: [testing, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
-  through the entire codebase?
+# FAQ: What should I know about datetime.utcnow() → datetime.now(timezone.utc) cascades through the entire codebase?
 
 ## Answer
 

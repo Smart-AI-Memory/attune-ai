@@ -5,7 +5,7 @@ tags: [packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Rebuild dist after README changes?
+# FAQ: What should I know about rebuild dist after README changes?
 
 ## Answer
 

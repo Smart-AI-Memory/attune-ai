@@ -13,15 +13,21 @@ Invoke with: `/refactor-plan <path to analyze>`
 
 ## Steps
 
-1. **Scope the refactor-plan request**
-   The skill asks scoping questions before running.
+1. **Define target**
+   "Which file or directory needs refactoring analysis?"
 
-2. **Execute the refactor-plan workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define focus**
+   "Full analysis or specific concern?" - Full: `refactor_plan` (all areas) - Simplify: `simplify_code` (reduce complexity only)
+
+3. **Define depth**
+   "Quick scan or detailed roadmap?"
+
+4. **Run the tool**
+   Based on scope: - Full analysis: `refactor_plan(path="<target>")`
+- Simplify only: `simplify_code(path="<target>")` Or via CLI:
 
    ```
-   bash
-attune workflow run refactor-plan --path <target>
+   attune workflow run refactor-plan --path <target>
    ```
 
 

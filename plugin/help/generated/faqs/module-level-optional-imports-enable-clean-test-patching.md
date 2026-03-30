@@ -5,7 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Module-level optional imports enable clean test patching?
+# FAQ: How do I handle module-level optional imports enable clean test patching?
 
 ## Answer
 

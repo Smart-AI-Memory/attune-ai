@@ -5,15 +5,13 @@ tags: [git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Push specific tags, not `--tags`?
+# FAQ: What should I know about push specific tags, not --tags?
 
 ## Answer
 
 `git push origin main --tags` pushes ALL local tags, causing "already exists" rejections for old tags.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `git push origin main v4.0.0` to push only the intended tag
 
 ```

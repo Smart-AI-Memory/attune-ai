@@ -5,7 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: BaseWorkflow now provides `self.logger`?
+# FAQ: What should I know about baseWorkflow now provides self.logger?
 
 ## Answer
 

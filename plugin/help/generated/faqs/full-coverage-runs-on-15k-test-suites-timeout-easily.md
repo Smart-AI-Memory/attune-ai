@@ -5,7 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Full coverage runs on 15k+ test suites timeout easily?
+# FAQ: Why does full coverage runs on 15k+ test suites timeout easily?
 
 ## Answer
 

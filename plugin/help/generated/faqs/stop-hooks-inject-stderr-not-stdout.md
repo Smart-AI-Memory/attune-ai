@@ -5,15 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Stop hooks inject stderr, not stdout?
+# FAQ: What should I know about stop hooks inject stderr, not stdout?
 
 ## Answer
 
 Claude Code's Stop hook with exit code 2 surfaces the hook's **stderr** as the feedback message.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `print(..., file=sys.stderr)` — `print()` writes to stdout which is silently discarded
 
 ```

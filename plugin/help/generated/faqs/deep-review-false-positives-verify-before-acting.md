@@ -5,15 +5,13 @@ tags: [testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Deep review false positives — verify before acting?
+# FAQ: What should I know about deep review false positives — verify before acting?
 
 ## Answer
 
 The quality pass reported `summary_index.py` at 0% coverage and `test_runner_helpers.py` missing docstrings. Both were wrong — `summary_index.py` had 25 tests in `tests/memory/`, and all helpers had docstrings.
 
-
-**Fix:**
-
+**How to fix:**
 - Always re-verify agent findings against the actual codebase before planning fixes
 
 ```

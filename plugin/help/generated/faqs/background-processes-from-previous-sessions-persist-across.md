@@ -4,16 +4,13 @@ name: background-processes-from-previous-sessions-persist-across
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Background processes from previous sessions persist across
-  restarts?
+# FAQ: What should I know about background processes from previous sessions persist across restarts?
 
 ## Answer
 
 Long-running processes started by Claude (e.g. `npm run dev`) survive session end and keep running silently.
 
-
-**Fix:**
-
+**How to fix:**
 - Always `kill` them explicitly when removing a feature, and check `ps aux` if unexpected behavior is observed (Chrome tabs opening, ports already in use, etc.)
 
 ```

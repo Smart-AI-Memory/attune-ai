@@ -5,8 +5,7 @@ tags: [testing, security, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: New MCP handlers must match the validation pattern of
-  adjacent handlers?
+# FAQ: What do I need to know about new MCP handlers must match the validation pattern of adjacent handlers?
 
 ## Answer
 

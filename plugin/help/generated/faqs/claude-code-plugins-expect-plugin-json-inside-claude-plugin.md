@@ -5,15 +5,13 @@ tags: [testing, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Claude Code plugins expect `plugin.json` inside `.claude-plugin/`?
+# FAQ: What should I know about claude Code plugins expect plugin.json inside .claude-plugin/?
 
 ## Answer
 
 The correct location is `<plugin-root>/.claude-plugin/plugin.json`. Skills, commands, agents, and hooks directories go at the plugin root level alongside `.claude-plugin/`.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `claude --plugin-dir ./plugin` to test local plugins during development
 
 ```

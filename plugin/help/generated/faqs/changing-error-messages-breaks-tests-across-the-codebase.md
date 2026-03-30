@@ -5,7 +5,7 @@ tags: [testing, security, git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Changing error messages breaks tests across the codebase?
+# FAQ: Why does changing error messages breaks tests across the codebase?
 
 ## Answer
 

@@ -13,18 +13,34 @@ Invoke with: `/code-quality <path or directory to review>`
 
 ## Steps
 
-1. **Scope the code-quality request**
-   The skill asks scoping questions before running.
+1. **Define scope**
+   "Which files or directory should I review?"
 
-2. **Execute the code-quality workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define depth**
+   "Quick scan, thorough, or deep review?" - Quick: code_review only - Thorough: code_review + bug_predict combined - Deep: deep_review (security + quality + test gaps)
+
+3. **Run the tool**
+   **Quick scan:** **Thorough analysis:** Merge and deduplicate results from both tools. **Deep review** (multi-pass: security, quality, test gaps):
 
    ```
    code_review(path="<user-specified path>")
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Run tool (option 2)**
+
+   ```
+   code_review(path="<user-specified path>")
+bug_predict(path="<user-specified path>")
+   ```
+
+5. **Run tool (option 3)**
+
+   ```
+   deep_review(path="<user-specified path>")
+   ```
+
+6. **Choose follow-up action**
+   Want me to fix these issues?; Should I generate tests for the risky areas?; Want to run a security-focused deep scan?
 
 
 ## Related Topics

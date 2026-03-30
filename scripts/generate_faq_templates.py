@@ -43,40 +43,96 @@ class FAQTemplate:
     related_topics: list[dict[str, str]] = field(default_factory=list)
 
 
-# Patterns for generating questions from lesson titles
-_QUESTION_PATTERNS: list[tuple[str, str]] = [
-    # Titles starting with action verbs -> "How do I..." questions
-    (r"^(Always|Never|Use|Avoid|Check|Run|Set|Move|Add|Remove)\b", "How should I handle: {title}?"),
-    # Titles with "fails" or "breaks" -> "Why does..." questions
-    (r"(fail|break|crash|block|reject|timeout|missing)", "Why does {title}?"),
-    # Titles with "must" or "need" -> "What do I need to know about..." questions
-    (r"(must|need|require)", "What do I need to know about: {title}?"),
-    # Default -> "What is the issue with..." question
-    (r".", "What is the issue with: {title}?"),
-]
+def _clean_title(title: str) -> str:
+    """Clean a title for use in a question.
 
-
-def _generate_question(title: str) -> str:
-    """Generate a natural FAQ question from a lesson title.
+    Strips backticks, normalizes whitespace, lowercases
+    the first word if it's not an acronym.
 
     Args:
-        title: Lesson title text.
+        title: Raw lesson title.
 
     Returns:
-        Question string.
+        Cleaned title string.
     """
-    title_lower = title.lower()
-    for pattern, template in _QUESTION_PATTERNS:
-        if re.search(pattern, title_lower):
-            return template.format(title=title)
-    return f"What is the issue with: {title}?"
+    cleaned = re.sub(r"`([^`]+)`", r"\1", title)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    # Lowercase first word if it's not an acronym (all caps)
+    words = cleaned.split(" ", 1)
+    if words and not words[0].isupper() and len(words[0]) > 2:
+        words[0] = words[0][0].lower() + words[0][1:]
+        cleaned = " ".join(words)
+    return cleaned
+
+
+def _extract_error_signature(title: str, body: str) -> str:
+    """Extract an error name from title or body.
+
+    Args:
+        title: Lesson title.
+        body: Lesson body.
+
+    Returns:
+        Error signature string, or empty.
+    """
+    # Look for ErrorType in backticks
+    for text in [body, title]:
+        match = re.search(r"`([A-Z][a-zA-Z]*(?:Error|Exception))`", text)
+        if match:
+            return match.group(1)
+    return ""
+
+
+def _generate_question(title: str, body: str) -> str:
+    """Generate a natural FAQ question from a lesson.
+
+    Classifies the lesson type and produces a natural
+    question phrasing.
+
+    Args:
+        title: Lesson title.
+        body: Lesson body text.
+
+    Returns:
+        Natural question string.
+    """
+    clean = _clean_title(title)
+    lower = clean.lower()
+    error_sig = _extract_error_signature(title, body)
+
+    # Error/crash patterns -> "Why do I get...?"
+    if error_sig:
+        return f"Why do I get `{error_sig}` ({clean})?"
+
+    # Failure patterns
+    if re.search(r"(fail|break|crash|block|reject|timeout)", lower):
+        return f"Why does {clean}?"
+
+    # "must", "need", "required" patterns
+    if re.search(r"(must|need|require)", lower):
+        return f"What do I need to know about {clean}?"
+
+    # "can't", "cannot", "doesn't", "won't" patterns
+    if re.search(r"(can.?t|cannot|doesn.?t|won.?t|missing)", lower):
+        return f"Why {clean}?"
+
+    # Best practice / imperative patterns
+    if re.search(r"^(always|never|avoid|use |prefer|ensure)", lower):
+        return f"What is the best practice for {clean}?"
+
+    # Configuration / setup patterns
+    if re.search(r"(config|setup|install|enable|disable)", lower):
+        return f"How do I handle {clean}?"
+
+    # Default: "What should I know about...?"
+    return f"What should I know about {clean}?"
 
 
 def _extract_code_example(body: str) -> str:
     """Extract the first code-like example from a body.
 
-    Looks for backtick-quoted commands or identifiers
-    that serve as examples.
+    Looks for backtick-quoted commands that look like
+    actionable code. Strips trailing whitespace.
 
     Args:
         body: Lesson body text.
@@ -84,37 +140,37 @@ def _extract_code_example(body: str) -> str:
     Returns:
         Code example string, or empty.
     """
-    # Look for backtick-quoted commands
     match = re.search(r"`([^`]{10,80})`", body)
     if match:
-        return match.group(1)
+        return match.group(1).rstrip()
     return ""
 
 
 def _build_answer(body: str) -> str:
     """Build a concise FAQ answer from the lesson body.
 
-    Takes the first 2-3 sentences as the explanation,
-    then appends any Fix: instructions.
+    Separates explanation (first 2 sentences) from
+    actionable fix steps (Fix:, Always, Never, etc.).
 
     Args:
         body: Lesson body text.
 
     Returns:
-        Answer string.
+        Structured answer string.
     """
     sentences = split_sentences(body)
     if not sentences:
         return body[:300]
 
-    # Take explanation sentences (non-imperative)
     explanation: list[str] = []
     fix_steps: list[str] = []
 
     for sentence in sentences:
         if sentence.startswith("Fix:"):
             fix_steps.append(sentence[4:].strip())
-        elif sentence.startswith(("Always", "Never", "Use", "Avoid", "Check", "Run", "Set")):
+        elif sentence.startswith(
+            ("Always", "Never", "Use", "Avoid", "Check", "Run", "Set"),
+        ):
             fix_steps.append(sentence)
         elif len(explanation) < 2:
             explanation.append(sentence)
@@ -123,11 +179,11 @@ def _build_answer(body: str) -> str:
     if explanation:
         parts.append(". ".join(explanation) + ".")
     if fix_steps:
-        parts.append("\n\n**Fix:**\n")
+        parts.append("\n\n**How to fix:**")
         for step in fix_steps:
-            parts.append(f"- {step}")
+            parts.append(f"\n- {step}")
 
-    return "\n".join(parts) if parts else body[:300]
+    return "".join(parts) if parts else body[:300]
 
 
 def lesson_to_faq(entry) -> FAQTemplate:
@@ -140,7 +196,7 @@ def lesson_to_faq(entry) -> FAQTemplate:
         FAQTemplate.
     """
     name = slugify(entry.title)
-    question = _generate_question(entry.title)
+    question = _generate_question(entry.title, entry.body)
     answer = _build_answer(entry.body)
     code_example = _extract_code_example(entry.body)
     tags = classify_tags(entry.title, entry.body)

@@ -5,15 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Commands are NOT namespaced in plugins, skills ARE?
+# FAQ: What should I know about commands are NOT namespaced in plugins, skills ARE?
 
 ## Answer
 
 A command named `attune` in `commands/attune.md` is invoked as `/attune` directly. A skill named `workflow-orchestration` is invoked as `/attune-ai:workflow-orchestration`.
 
-
-**Fix:**
-
+**How to fix:**
 - Check Claude Code built-ins (`/batch`, `/compact`, `/config`, `/cost`, `/help`, `/init`, `/login`, `/logout`, `/memory`, `/permissions`, `/review`, `/status`, `/vim`) before naming commands to avoid collisions
 
 ```

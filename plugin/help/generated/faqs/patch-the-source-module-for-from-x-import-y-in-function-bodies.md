@@ -5,8 +5,7 @@ tags: [testing, security, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Patch the source module for `from ..X import Y` in function
-  bodies?
+# FAQ: What should I know about patch the source module for from ..X import Y in function bodies?
 
 ## Answer
 

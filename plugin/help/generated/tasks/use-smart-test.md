@@ -13,18 +13,33 @@ Invoke with: `/smart-test <path or module to test>`
 
 ## Steps
 
-1. **Scope the smart-test request**
-   The skill asks scoping questions before running.
+1. **Define target**
+   "Which file or module needs tests?"
 
-2. **Execute the smart-test workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define approach**
+   "What kind of testing?" - Gap analysis — Find untested public functions - Generate tests — Write pytest tests for a module - Both — Audit gaps then generate tests for them
+
+3. **Run the tool**
+   For gap analysis: For targeted test generation: For batch generation across many modules:
 
    ```
    test_audit(path="<target>")
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Run tool (option 2)**
+
+   ```
+   test_generation(module="<target module>")
+   ```
+
+5. **Run tool (option 3)**
+
+   ```
+   test_gen_parallel(top=10)
+   ```
+
+6. **Choose follow-up action**
+   Want me to generate tests for the top gaps?; Should I run the generated tests to verify?; Want to see coverage for a different module?
 
 
 ## Related Topics

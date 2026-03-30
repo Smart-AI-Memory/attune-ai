@@ -5,8 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: `patch()` requires the target name to exist at module scope at
-  patch time?
+# FAQ: Why do I get `AttributeError` (patch() requires the target name to exist at module scope at patch time)?
 
 ## Answer
 

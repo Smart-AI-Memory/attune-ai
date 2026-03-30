@@ -5,7 +5,7 @@ tags: [git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: GitHub protected tags cannot be force-updated?
+# FAQ: Why gitHub protected tags cannot be force-updated?
 
 ## Answer
 

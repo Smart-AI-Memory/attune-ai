@@ -4,8 +4,7 @@ name: hardcoded-strings-in-method-bodies-survive-class-attribute
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Hardcoded strings in method bodies survive class attribute
-  renames?
+# FAQ: What should I know about hardcoded strings in method bodies survive class attribute renames?
 
 ## Answer
 

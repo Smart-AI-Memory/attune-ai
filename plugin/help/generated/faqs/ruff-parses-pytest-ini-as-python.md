@@ -5,7 +5,7 @@ tags: [testing, git, claude-code, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: ruff parses pytest.ini as Python?
+# FAQ: What should I know about ruff parses pytest.ini as Python?
 
 ## Answer
 

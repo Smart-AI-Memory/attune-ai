@@ -4,16 +4,13 @@ name: multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Multiple `pinentry-program` lines in gpg-agent.conf — first
-  wins?
+# FAQ: What should I know about multiple pinentry-program lines in gpg-agent.conf — first wins?
 
 ## Answer
 
 GPG uses the first `pinentry-program` directive it finds. Appending a new line doesn't override earlier ones.
 
-
-**Fix:**
-
+**How to fix:**
 - Always replace, don't append
 
 ```

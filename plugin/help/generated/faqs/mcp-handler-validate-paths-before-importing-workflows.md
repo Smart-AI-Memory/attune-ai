@@ -5,15 +5,13 @@ tags: [security, imports, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: MCP handler: validate paths before importing workflows?
+# FAQ: What should I know about MCP handler: validate paths before importing workflows?
 
 ## Answer
 
 In `server.py`, `_validate_file_path()` must run before the lazy `from attune.workflows.X import XWorkflow` import. If the import fails (wrong class name, missing dep), the path validation never fires and the security check is bypassed.
 
-
-**Fix:**
-
+**How to fix:**
 - Always: validate first, import second
 
 ```

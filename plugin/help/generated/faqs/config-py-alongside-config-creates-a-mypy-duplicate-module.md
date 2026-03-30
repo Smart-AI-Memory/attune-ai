@@ -5,8 +5,7 @@ tags: [imports, git, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `config.py` alongside `config/` creates a mypy duplicate
-  module?
+# FAQ: How do I handle config.py alongside config/ creates a mypy duplicate module?
 
 ## Answer
 

@@ -13,14 +13,23 @@ Invoke with: `/bug-predict <path or directory to scan>`
 
 ## Steps
 
-1. **Scope the bug-predict request**
-   The skill asks scoping questions before running.
+1. **Define target path**
+   "Which files or directory should I scan?" Default to `src/` if not specified.
 
-2. **Execute the bug-predict workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define severity filter**
+   "Show all findings, or only HIGH severity?"
+
+3. **Run the tool**
+   Call the `bug_predict` MCP tool with the scoped path: Or via CLI:
 
    ```
    bug_predict(path="<user-specified path>")
+   ```
+
+4. **Run tool (option 2)**
+
+   ```
+   uv run attune workflow run bug-predict --path <target>
    ```
 
 

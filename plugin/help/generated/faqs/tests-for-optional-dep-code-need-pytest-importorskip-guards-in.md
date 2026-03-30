@@ -5,8 +5,7 @@ tags: [ci, testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: Tests for optional-dep code need `pytest.importorskip()`
-  guards in CI?
+# FAQ: Why do I get `ModuleNotFoundError` (tests for optional-dep code need pytest.importorskip() guards in CI)?
 
 ## Answer
 

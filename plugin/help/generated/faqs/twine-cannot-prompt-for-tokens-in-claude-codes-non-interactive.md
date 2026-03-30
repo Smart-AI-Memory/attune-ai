@@ -5,8 +5,7 @@ tags: [claude-code, packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Twine cannot prompt for tokens in Claude Code's non-interactive
-  terminal?
+# FAQ: Why do I get `EOFError` (twine cannot prompt for tokens in Claude Code's non-interactive terminal)?
 
 ## Answer
 

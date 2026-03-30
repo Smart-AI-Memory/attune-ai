@@ -14,7 +14,7 @@ Invoke with: `/spec <what to build, or 'resume'>`
 ## Steps
 
 1. **Scope the spec request**
-   The skill asks scoping questions before running.
+   Answer the scoping questions before running.
 
 
 ## Related Topics

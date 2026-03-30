@@ -5,16 +5,13 @@ tags: [security, imports, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `importlib.import_module()` is an arbitrary code execution
-  vector?
+# FAQ: What should I know about importlib.import_module() is an arbitrary code execution vector?
 
 ## Answer
 
 The hook executor's `_execute_python()` fell through to `importlib.import_module(module_path)` for any module not in `_python_handlers`. This allowed importing `os`, `subprocess`, or any installed package.
 
-
-**Fix:**
-
+**How to fix:**
 - allowlist module prefixes (e.g., `("attune.",)`) before the import call
 
 ```

@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Skill frontmatter has a strict allowlist?
+# FAQ: What should I know about skill frontmatter has a strict allowlist?
 
 ## Answer
 

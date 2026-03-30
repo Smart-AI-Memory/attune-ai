@@ -5,8 +5,7 @@ tags: [testing, git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Replacing a mixin-based class scatters test failures across many
-  files?
+# FAQ: Why does replacing a mixin-based class scatters test failures across many files?
 
 ## Answer
 

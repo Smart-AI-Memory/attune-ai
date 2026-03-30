@@ -5,7 +5,7 @@ tags: [testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: RedisShortTermMemory mock injection path?
+# FAQ: What should I know about redisShortTermMemory mock injection path?
 
 ## Answer
 

@@ -5,8 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: Attune skill names must not collide with Claude Code built-in
-  commands?
+# FAQ: What do I need to know about attune skill names must not collide with Claude Code built-in commands?
 
 ## Answer
 

@@ -5,15 +5,13 @@ tags: [security, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Bug-predict `dangerous_eval` flags `subprocess_exec`?
+# FAQ: What should I know about bug-predict dangerous_eval flags subprocess_exec?
 
 ## Answer
 
 The scanner's regex matches `create_subprocess_exec` as containing `exec`, producing a false positive for `dangerous_eval` in `hooks/executor.py`. There is no actual `eval()` or `exec()` usage.
 
-
-**Fix:**
-
+**How to fix:**
 - Always verify HIGH severity scanner findings against the source before treating them as real vulnerabilities
 
 ```

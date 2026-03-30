@@ -5,15 +5,13 @@ tags: [python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: B904 (`raise X from e`) is not auto-fixable by ruff?
+# FAQ: What should I know about B904 (raise X from e) is not auto-fixable by ruff?
 
 ## Answer
 
 Despite `ruff check --fix`, B904 violations require manual edits. After fixing all violations, remove B904 from the ruff ignore list to enforce going forward.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `from e` when the exception variable is captured, `from None` when suppressing the original
 
 ```

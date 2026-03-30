@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Stop hook ordering matters?
+# FAQ: What should I know about stop hook ordering matters?
 
 ## Answer
 

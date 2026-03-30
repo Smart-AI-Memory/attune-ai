@@ -5,8 +5,7 @@ tags: [testing, git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does `gh pr merge --admin` is blocked by in-progress required
-  checks?
+# FAQ: Why does gh pr merge --admin is blocked by in-progress required checks?
 
 ## Answer
 

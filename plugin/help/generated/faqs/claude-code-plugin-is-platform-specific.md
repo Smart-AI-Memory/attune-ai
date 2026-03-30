@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Claude Code plugin is platform-specific?
+# FAQ: What should I know about claude Code plugin is platform-specific?
 
 ## Answer
 

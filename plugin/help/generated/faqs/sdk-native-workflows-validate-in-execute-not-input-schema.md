@@ -5,7 +5,7 @@ tags: [testing, security]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: SDK-native workflows validate in `execute()`, not `input_schema`?
+# FAQ: What should I know about sDK-native workflows validate in execute(), not input_schema?
 
 ## Answer
 

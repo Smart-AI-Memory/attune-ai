@@ -5,15 +5,13 @@ tags: [python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: New dataclass fields need both the class AND the parser updated?
+# FAQ: What do I need to know about new dataclass fields need both the class AND the parser updated?
 
 ## Answer
 
 Adding a field (e.g. `local_python`) to a dataclass only updates the in-memory model.
 
-
-**Fix:**
-
+**How to fix:**
 - Always grep for the parser function when adding a new dataclass field
 
 ```

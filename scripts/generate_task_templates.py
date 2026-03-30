@@ -195,11 +195,78 @@ _CLI_TASKS: list[dict] = [
 ]
 
 
+def _extract_section(body: str, heading: str) -> str:
+    """Extract a ## section's body from markdown.
+
+    Args:
+        body: Full markdown body.
+        heading: Section heading (without ##).
+
+    Returns:
+        Section body text, or empty string.
+    """
+    pattern = rf"## {re.escape(heading)}\n+(.+?)(?=\n## |\Z)"
+    match = re.search(pattern, body, re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+
+def _parse_numbered_items(text: str) -> list[tuple[str, str]]:
+    """Parse numbered items like '1. **Label**: description'.
+
+    Args:
+        text: Section body text.
+
+    Returns:
+        List of (label, description) tuples.
+    """
+    items: list[tuple[str, str]] = []
+    for match in re.finditer(
+        r"\d+\.\s+\*\*([^*]+)\*\*:?\s*(.*?)(?=\n\d+\.|\Z)",
+        text,
+        re.DOTALL,
+    ):
+        label = match.group(1).strip()
+        desc = re.sub(r"\n\s+", " ", match.group(2).strip())
+        items.append((label, desc))
+    return items
+
+
+def _parse_bullet_items(text: str) -> list[str]:
+    """Parse bullet-point items from markdown.
+
+    Args:
+        text: Section body text.
+
+    Returns:
+        List of item strings.
+    """
+    items: list[str] = []
+    for match in re.finditer(
+        r"^- (.+?)(?=\n- |\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    ):
+        items.append(re.sub(r"\n\s+", " ", match.group(1).strip()))
+    return items
+
+
+def _extract_all_code_blocks(text: str) -> list[str]:
+    """Extract all fenced code blocks from text.
+
+    Args:
+        text: Markdown text.
+
+    Returns:
+        List of code block contents.
+    """
+    return [m.group(1).strip() for m in re.finditer(r"```\w*\n?(.+?)\n?```", text, re.DOTALL)]
+
+
 def parse_skill_tasks(skills_dir: Path) -> list[TaskTemplate]:
     """Parse SKILL.md files to generate task templates.
 
-    Creates a "how to use" task for each skill that has
-    a Scoping and Execution section.
+    Extracts specific steps from Scoping (numbered items),
+    Execution (all code blocks), and Follow-Up (bullet items).
 
     Args:
         skills_dir: Path to plugin/skills/ directory.
@@ -219,49 +286,64 @@ def parse_skill_tasks(skills_dir: Path) -> list[TaskTemplate]:
         description = post.get("description", "")
         argument_hint = post.get("argument-hint", "")
 
-        # Only generate tasks for skills with execution steps
         body = post.content
         if "## Execution" not in body and "## Scoping" not in body:
             continue
 
         steps: list[Step] = []
 
-        # Scoping step
-        if "## Scoping" in body:
-            steps.append(
-                Step(
-                    action=f"Scope the {name} request",
-                    detail="The skill asks scoping questions before running.",
+        # Scoping: extract numbered questions
+        scoping = _extract_section(body, "Scoping")
+        if scoping:
+            numbered = _parse_numbered_items(scoping)
+            if numbered:
+                for label, desc in numbered:
+                    steps.append(
+                        Step(
+                            action=f"Define {label.lower()}",
+                            detail=desc or f"Answer the {label.lower()} question.",
+                        )
+                    )
+            else:
+                steps.append(
+                    Step(
+                        action=f"Scope the {name} request",
+                        detail="Answer the scoping questions before running.",
+                    )
                 )
-            )
 
-        # Execution step — extract tool call if present
-        exec_match = re.search(
-            r"## Execution\n+(.+?)(?=\n## |\Z)",
-            body,
-            re.DOTALL,
-        )
-        if exec_match:
-            exec_body = exec_match.group(1).strip()
-            # Find first code block
-            code_match = re.search(r"```\n?(.+?)\n?```", exec_body, re.DOTALL)
-            code = code_match.group(1).strip() if code_match else ""
-            steps.append(
-                Step(
-                    action=f"Execute the {name} workflow",
-                    detail="Run the MCP tool with your scoped parameters.",
-                    code=code,
+        # Execution: extract all code blocks
+        execution = _extract_section(body, "Execution")
+        if execution:
+            code_blocks = _extract_all_code_blocks(execution)
+            detail = re.sub(
+                r"```\w*\n?.+?\n?```",
+                "",
+                execution,
+                flags=re.DOTALL,
+            ).strip()
+            detail = re.sub(r"\n\s*\n", " ", detail).strip()
+            if code_blocks:
+                for i, code in enumerate(code_blocks):
+                    action = "Run the tool" if i == 0 else f"Run tool (option {i + 1})"
+                    steps.append(Step(action=action, detail=detail if i == 0 else "", code=code))
+            else:
+                steps.append(
+                    Step(
+                        action=f"Execute the {name} workflow",
+                        detail=detail or "Run the MCP tool with your parameters.",
+                    )
                 )
-            )
 
-        # Follow-up step
-        if "## Follow-Up" in body:
-            steps.append(
-                Step(
-                    action="Review results and choose follow-up",
-                    detail="The skill offers contextual next actions after presenting results.",
-                )
-            )
+        # Follow-Up: extract bullet items
+        followup = _extract_section(body, "Follow-Up")
+        if followup:
+            bullets = _parse_bullet_items(followup)
+            if bullets:
+                options = "; ".join(b.strip('"') for b in bullets[:3])
+                steps.append(Step(action="Choose follow-up action", detail=options))
+            else:
+                steps.append(Step(action="Review results and choose next steps"))
 
         if not steps:
             continue

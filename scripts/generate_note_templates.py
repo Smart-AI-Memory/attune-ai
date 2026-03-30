@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generate Note templates from design decisions and architecture context.
+"""Generate Note templates from terms, rules, and design decisions.
 
 Sources:
-  1. Decisions section in documentation-stack-spec.md
-  2. Terms/architecture from .claude/CLAUDE.md
-
-Notes capture supplementary context that enriches
-understanding but isn't actionable on its own.
+  1. Terms table from CLAUDE.md (root)
+  2. Key sections from .claude/CLAUDE.md (Socratic,
+     Critical Rules, Code Simplification, Markdown)
+  3. Architecture notes from .claude/CLAUDE.md
+  4. Design decisions from documentation-stack-spec.md
 
 Follows the sync paradigm: Discover -> Parse -> Transform ->
 Validate -> Output -> Verify (--check mode).
@@ -40,21 +40,17 @@ class NoteTemplate:
     related_topics: list[dict[str, str]] = field(default_factory=list)
 
 
-def parse_terms(claude_md_path: Path) -> list[NoteTemplate]:
-    """Parse Terms table from CLAUDE.md into Note templates.
-
-    The Terms table defines project-specific vocabulary
-    that's useful as reference notes.
+def parse_terms(root_claude_md: Path) -> list[NoteTemplate]:
+    """Parse Terms table from root CLAUDE.md.
 
     Args:
-        claude_md_path: Path to CLAUDE.md.
+        root_claude_md: Path to CLAUDE.md (repo root).
 
     Returns:
         List of NoteTemplate objects.
     """
-    text = claude_md_path.read_text(encoding="utf-8")
+    text = root_claude_md.read_text(encoding="utf-8")
 
-    # Find the Terms table
     terms_match = re.search(
         r"## Terms\n+\|[^\n]+\n\|[-\s|]+\n((?:\|[^\n]+\n)+)",
         text,
@@ -80,21 +76,39 @@ def parse_terms(claude_md_path: Path) -> list[NoteTemplate]:
                 context="Project terminology used in the attune-ai codebase.",
                 content=f"**{term}** — {meaning}",
                 tags=["terminology"],
-                source=".claude/CLAUDE.md",
+                source="CLAUDE.md",
             )
         )
 
     return templates
 
 
-def parse_architecture_notes(claude_md_path: Path) -> list[NoteTemplate]:
-    """Parse architecture/project structure notes.
-
-    Extracts the project structure and key architectural
-    decisions as supplementary notes.
+def _extract_section(text: str, heading: str) -> str:
+    """Extract a ## section body from markdown.
 
     Args:
-        claude_md_path: Path to CLAUDE.md.
+        text: Full markdown text.
+        heading: Section heading (without ##).
+
+    Returns:
+        Section body, or empty string.
+    """
+    pattern = rf"## {re.escape(heading)}\n+(.+?)(?=\n## |\Z)"
+    match = re.search(pattern, text, re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+
+def parse_claude_md_sections(
+    claude_md_path: Path,
+) -> list[NoteTemplate]:
+    """Parse key sections from .claude/CLAUDE.md as notes.
+
+    Extracts Socratic rules, Critical Rules, Code
+    Simplification, and Markdown Formatting as
+    supplementary context notes.
+
+    Args:
+        claude_md_path: Path to .claude/CLAUDE.md.
 
     Returns:
         List of NoteTemplate objects.
@@ -102,7 +116,60 @@ def parse_architecture_notes(claude_md_path: Path) -> list[NoteTemplate]:
     text = claude_md_path.read_text(encoding="utf-8")
     templates: list[NoteTemplate] = []
 
-    # Extract Project Structure
+    sections = {
+        "Socratic Interaction Rule": {
+            "context": "Core UX principle: always guide users with "
+            "questions before executing actions.",
+            "tags": ["philosophy", "ux"],
+        },
+        "Critical Rules": {
+            "context": "Non-negotiable security and quality rules " "for the attune-ai codebase.",
+            "tags": ["security", "rules"],
+        },
+        "Code Simplification": {
+            "context": "Engineering philosophy: simpler is better. "
+            "Three clear lines beat one clever abstraction.",
+            "tags": ["philosophy", "code-quality"],
+        },
+        "Markdown Formatting": {
+            "context": "Formatting standards for all .md files in " "the project.",
+            "tags": ["formatting", "standards"],
+        },
+    }
+
+    for heading, meta in sections.items():
+        body = _extract_section(text, heading)
+        if not body:
+            continue
+
+        templates.append(
+            NoteTemplate(
+                name=slugify(heading),
+                title=heading,
+                context=meta["context"],
+                content=body,
+                tags=meta["tags"],
+                source=".claude/CLAUDE.md",
+            )
+        )
+
+    return templates
+
+
+def parse_architecture_notes(
+    claude_md_path: Path,
+) -> list[NoteTemplate]:
+    """Parse architecture/project structure notes.
+
+    Args:
+        claude_md_path: Path to .claude/CLAUDE.md.
+
+    Returns:
+        List of NoteTemplate objects.
+    """
+    text = claude_md_path.read_text(encoding="utf-8")
+    templates: list[NoteTemplate] = []
+
     struct_match = re.search(
         r"## Project Structure\n+```text\n(.+?)```",
         text,
@@ -120,18 +187,14 @@ def parse_architecture_notes(claude_md_path: Path) -> list[NoteTemplate]:
             )
         )
 
-    # Extract Command Hubs table
-    hubs_match = re.search(
-        r"## Command Hubs\n+[^\n]*\n+((?:\|[^\n]+\n)+)",
-        text,
-    )
-    if hubs_match:
+    hubs = _extract_section(text, "Command Hubs")
+    if hubs:
         templates.append(
             NoteTemplate(
                 name="command-hubs",
                 title="Command hub overview",
                 context="Available slash command hubs in Claude Code.",
-                content=hubs_match.group(0).strip(),
+                content=hubs,
                 tags=["cli", "claude-code"],
                 source=".claude/CLAUDE.md",
             )
@@ -142,9 +205,6 @@ def parse_architecture_notes(claude_md_path: Path) -> list[NoteTemplate]:
 
 def parse_design_decisions(spec_path: Path) -> list[NoteTemplate]:
     """Parse design decisions from the documentation stack spec.
-
-    Each D1-D6 decision becomes a Note template capturing
-    the rationale and context.
 
     Args:
         spec_path: Path to documentation-stack-spec.md.
@@ -158,7 +218,6 @@ def parse_design_decisions(spec_path: Path) -> list[NoteTemplate]:
     text = spec_path.read_text(encoding="utf-8")
     templates: list[NoteTemplate] = []
 
-    # Find ### D{n}. Title sections
     decision_pattern = re.compile(
         r"^### (D\d+)\.\s+(.+?)\n\n(.+?)(?=\n### D\d+|\n---|\Z)",
         re.MULTILINE | re.DOTALL,
@@ -191,7 +250,8 @@ def main(argv: list[str] | None = None) -> int:
     check = "--check" in argv
 
     repo_root = Path(__file__).resolve().parent.parent
-    claude_md = repo_root / ".claude" / "CLAUDE.md"
+    root_claude_md = repo_root / "CLAUDE.md"
+    dot_claude_md = repo_root / ".claude" / "CLAUDE.md"
     spec_path = repo_root / ".claude" / "plans" / "documentation-stack-spec.md"
     templates_dir = repo_root / "plugin" / "help" / "templates"
     output_dir = repo_root / "plugin" / "help" / "generated" / "notes"
@@ -202,19 +262,25 @@ def main(argv: list[str] | None = None) -> int:
 
     notes: list[NoteTemplate] = []
 
-    # Source 1: Terms
-    if claude_md.exists():
-        terms = parse_terms(claude_md)
+    # Source 1: Terms from root CLAUDE.md
+    if root_claude_md.exists():
+        terms = parse_terms(root_claude_md)
         notes.extend(terms)
         print(f"  Terms: {len(terms)} found")
 
-    # Source 2: Architecture notes
-    if claude_md.exists():
-        arch = parse_architecture_notes(claude_md)
+    # Source 2: Key sections from .claude/CLAUDE.md
+    if dot_claude_md.exists():
+        sections = parse_claude_md_sections(dot_claude_md)
+        notes.extend(sections)
+        print(f"  CLAUDE.md sections: {len(sections)} found")
+
+    # Source 3: Architecture notes
+    if dot_claude_md.exists():
+        arch = parse_architecture_notes(dot_claude_md)
         notes.extend(arch)
         print(f"  Architecture notes: {len(arch)} found")
 
-    # Source 3: Design decisions
+    # Source 4: Design decisions
     decisions = parse_design_decisions(spec_path)
     notes.extend(decisions)
     print(f"  Design decisions: {len(decisions)} found")

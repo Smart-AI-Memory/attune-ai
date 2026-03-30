@@ -5,7 +5,7 @@ tags: [testing, git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: CodeQL `js/stored-xss` flags JSX even though React auto-escapes?
+# FAQ: What should I know about codeQL js/stored-xss flags JSX even though React auto-escapes?
 
 ## Answer
 

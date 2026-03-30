@@ -5,15 +5,13 @@ tags: [imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: structlog kwargs vs stdlib Logger?
+# FAQ: What should I know about structlog kwargs vs stdlib Logger?
 
 ## Answer
 
 `logger.info("msg", key=value)` is structlog syntax. stdlib `logging.Logger` raises `TypeError: info() got an unexpected keyword argument`.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `logger.info("msg: key=%s", value)` instead
 
 ```

@@ -5,7 +5,7 @@ tags: [testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Ghost command references survive CLI renames?
+# FAQ: What should I know about ghost command references survive CLI renames?
 
 ## Answer
 

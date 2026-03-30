@@ -5,15 +5,13 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Custom MCP stdio loop fails Claude Code handshake?
+# FAQ: Why does custom MCP stdio loop fails Claude Code handshake?
 
 ## Answer
 
 A hand-rolled JSON-RPC `main_loop()` reading `sys.stdin` line by line does not implement the MCP initialization sequence (capability negotiation, `initialize` method). Claude Code's MCP client expects the standard protocol and silently drops the connection.
 
-
-**Fix:**
-
+**How to fix:**
 - use the official `mcp.server.Server` + `mcp.server.stdio.stdio_server` which handles the full handshake
 
 ```

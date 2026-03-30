@@ -5,7 +5,7 @@ tags: [git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: BaseWorkflow uses class attributes, not constructor params?
+# FAQ: Why do I get `TypeError` (baseWorkflow uses class attributes, not constructor params)?
 
 ## Answer
 

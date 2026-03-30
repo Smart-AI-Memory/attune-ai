@@ -5,7 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Next.js shared data libs prevent page duplication?
+# FAQ: What should I know about next.js shared data libs prevent page duplication?
 
 ## Answer
 

@@ -4,8 +4,7 @@ name: anthropics-built-in-prompt-caching-supersedes-custom-caching
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Anthropic's built-in prompt caching supersedes custom
-  caching?
+# FAQ: What should I know about anthropic's built-in prompt caching supersedes custom caching?
 
 ## Answer
 

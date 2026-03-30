@@ -5,7 +5,7 @@ tags: [imports, git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: Why does Non-BaseWorkflow classes in workflow registry crash the CLI?
+# FAQ: Why does non-BaseWorkflow classes in workflow registry crash the CLI?
 
 ## Answer
 

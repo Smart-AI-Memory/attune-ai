@@ -5,7 +5,7 @@ tags: [git, packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Wizards call workflows internally — they are not duplicates?
+# FAQ: What should I know about wizards call workflows internally — they are not duplicates?
 
 ## Answer
 

@@ -5,7 +5,7 @@ tags: [testing, packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `_run_simplify` catches per-file errors internally?
+# FAQ: What should I know about _run_simplify catches per-file errors internally?
 
 ## Answer
 

@@ -5,15 +5,13 @@ tags: [ci, windows, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Windows CI encoding?
+# FAQ: What should I know about windows CI encoding?
 
 ## Answer
 
 Windows defaults to `cp1252` which fails on any file containing non-ASCII bytes.
 
-
-**Fix:**
-
+**How to fix:**
 - Always use `encoding="utf-8"` on `Path.read_text()` calls
 
 ```

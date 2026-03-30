@@ -5,7 +5,7 @@ tags: [testing, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `claude plugin install` is marketplace-only?
+# FAQ: How do I handle claude plugin install is marketplace-only?
 
 ## Answer
 

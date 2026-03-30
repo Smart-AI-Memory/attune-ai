@@ -5,15 +5,13 @@ tags: [packaging]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: dist/ can contain stale artifacts after version bumps?
+# FAQ: What should I know about dist/ can contain stale artifacts after version bumps?
 
 ## Answer
 
 The `dist/` directory is not automatically rebuilt when `pyproject.toml` version changes. Publishing stale artifacts uploads the old version to PyPI.
 
-
-**Fix:**
-
+**How to fix:**
 - Always run `rm -rf dist/ && uv run python -m build` before publishing and verify `ls dist/` shows the correct version
 
 ```

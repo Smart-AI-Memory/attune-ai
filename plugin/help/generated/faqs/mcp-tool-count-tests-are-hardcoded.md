@@ -5,7 +5,7 @@ tags: [testing, claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: MCP tool count tests are hardcoded?
+# FAQ: What should I know about MCP tool count tests are hardcoded?
 
 ## Answer
 

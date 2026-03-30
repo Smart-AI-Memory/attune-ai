@@ -5,7 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Broad gitignore patterns match nested directories?
+# FAQ: What should I know about broad gitignore patterns match nested directories?
 
 ## Answer
 

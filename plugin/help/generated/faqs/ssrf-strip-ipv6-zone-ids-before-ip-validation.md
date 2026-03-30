@@ -5,7 +5,7 @@ tags: [security]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: SSRF: strip IPv6 zone IDs before IP validation?
+# FAQ: What should I know about SSRF: strip IPv6 zone IDs before IP validation?
 
 ## Answer
 

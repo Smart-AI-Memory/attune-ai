@@ -5,7 +5,7 @@ tags: [python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Don't append `+ "Z"` to timezone-aware `.isoformat()`?
+# FAQ: What should I know about don't append + "Z" to timezone-aware .isoformat()?
 
 ## Answer
 

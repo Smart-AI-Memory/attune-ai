@@ -289,6 +289,110 @@ def _build_error_tip_links(
     return links
 
 
+def _build_faq_error_links(
+    faqs: list[TemplateEntry],
+    errors: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build FAQ <-> Error links by matching slugs.
+
+    Each FAQ and Error from the same Lessons Learned entry
+    share the same slug name.
+
+    Args:
+        faqs: FAQ template entries.
+        errors: Error template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+    error_by_name = {e.name: e for e in errors}
+
+    for faq in faqs:
+        if faq.name in error_by_name:
+            faq_id = f"faq-{faq.name}"
+            err_id = f"err-{faq.name}"
+            links.setdefault(faq_id, {})["related_error"] = [err_id]
+            links.setdefault(err_id, {}).setdefault(
+                "related_faq",
+                [],
+            ).append(faq_id)
+
+    return links
+
+
+def _build_task_reference_links(
+    tasks: list[TemplateEntry],
+    references: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build Task -> Reference links by skill/tool name.
+
+    Skill tasks (use-X) link to their reference (skill-X).
+    CLI tasks link to related references by tag overlap.
+
+    Args:
+        tasks: Task template entries.
+        references: Reference template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+    ref_by_name = {r.name: r for r in references}
+
+    for task in tasks:
+        task_id = f"tas-{task.name}"
+
+        # Skill tasks: use-X -> skill-X
+        if task.name.startswith("use-"):
+            skill_name = f"skill-{task.name[4:]}"
+            if skill_name in ref_by_name:
+                ref_id = f"ref-{skill_name}"
+                links.setdefault(task_id, {})["related_reference"] = [ref_id]
+                links.setdefault(ref_id, {}).setdefault(
+                    "related_task",
+                    [],
+                ).append(task_id)
+
+    return links
+
+
+def _build_note_reference_links(
+    notes: list[TemplateEntry],
+    references: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build Note -> Reference links by keyword matching.
+
+    Design decision notes link to references that share
+    2+ non-stopword tokens.
+
+    Args:
+        notes: Note template entries.
+        references: Reference template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+
+    ref_tokens = [(r, _tokenize(r.title)) for r in references]
+
+    for note in notes:
+        note_tokens = _tokenize(note.title)
+        note_id = f"not-{note.name}"
+
+        for ref, tokens in ref_tokens:
+            overlap = note_tokens & tokens
+            if len(overlap) >= 2:
+                ref_id = f"ref-{ref.name}"
+                links.setdefault(note_id, {}).setdefault(
+                    "related_reference",
+                    [],
+                ).append(ref_id)
+
+    return links
+
+
 def _build_tag_index(
     all_templates: dict[str, list[TemplateEntry]],
 ) -> dict[str, list[str]]:
@@ -307,6 +411,9 @@ def _build_tag_index(
         "warnings": "war",
         "tips": "tip",
         "references": "ref",
+        "tasks": "tas",
+        "faqs": "faq",
+        "notes": "not",
     }
 
     for type_name, entries in all_templates.items():
@@ -432,14 +539,29 @@ def build_cross_links(generated_dir: Path) -> dict:
     warnings = all_templates.get("warnings", [])
     tips = all_templates.get("tips", [])
     references = all_templates.get("references", [])
+    tasks = all_templates.get("tasks", [])
+    faqs = all_templates.get("faqs", [])
+    notes = all_templates.get("notes", [])
 
-    # Build relationship links
+    # Build relationship links (original 3)
     ew_links = _build_error_warning_links(errors, warnings)
     st_links = _build_skill_tool_links(references)
     et_links = _build_error_tip_links(errors, tips)
 
+    # Build new cross-type links
+    fe_links = _build_faq_error_links(faqs, errors)
+    tr_links = _build_task_reference_links(tasks, references)
+    nr_links = _build_note_reference_links(notes, references)
+
     # Merge all links
-    all_links = _merge_links(ew_links, st_links, et_links)
+    all_links = _merge_links(
+        ew_links,
+        st_links,
+        et_links,
+        fe_links,
+        tr_links,
+        nr_links,
+    )
 
     # Add tags to each entry
     prefix_map = {
@@ -447,6 +569,9 @@ def build_cross_links(generated_dir: Path) -> dict:
         "warnings": "war",
         "tips": "tip",
         "references": "ref",
+        "tasks": "tas",
+        "faqs": "faq",
+        "notes": "not",
     }
     for type_name, entries in all_templates.items():
         prefix = prefix_map.get(type_name, type_name[:3])

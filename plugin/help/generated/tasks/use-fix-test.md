@@ -13,19 +13,34 @@ Invoke with: `/fix-test <test file or pattern>`
 
 ## Steps
 
-1. **Scope the fix-test request**
-   The skill asks scoping questions before running.
+1. **Define target**
+   "Which test is failing? A specific file, test name, or should I find failures automatically?"
 
-2. **Execute the fix-test workflow**
-   Run the MCP tool with your scoped parameters.
+2. **Define context**
+   "Did this start failing after a recent change, or has it been broken?"
+
+3. **Run the tool**
+   ### Step 1: Identify Failures Run the failing test(s) to capture the error: ### Step 2: Diagnose Root Cause Common failure patterns: | Pattern | Root Cause | Fix |
+| ------- | ---------- | --- |
+| `ModuleNotFoundError` | Import path changed | Update import |
+| `AttributeError: mock` | Mock target wrong | Match import path |
+| `AssertionError` | Expected value drift | Update assertion |
+| `TypeError: __init__` | Constructor changed | Update call site |
+| `FileNotFoundError` | Fixture path wrong | Use `tmp_path` | ### Step 3: Apply Fix and Re-run Apply the fix, then re-run the test. If it still fails,
+diagnose again with the new error. Repeat up to 3 times. ### Step 4: Report After fixing (or exhausting 3 attempts), report: ```markdown
 
    ```
-   bash
-uv run pytest <target> -v --tb=short 2>&1 | tail -40
+   uv run pytest <target> -v --tb=short 2>&1 | tail -40
    ```
 
-3. **Review results and choose follow-up**
-   The skill offers contextual next actions after presenting results.
+4. **Run tool (option 2)**
+
+   ```
+   uv run pytest <target> -v --tb=short
+   ```
+
+5. **Choose follow-up action**
+   Want me to generate missing tests for the fixed module?; Should I check for similar failures elsewhere?; Want a deeper look at the root cause?
 
 
 ## Related Topics

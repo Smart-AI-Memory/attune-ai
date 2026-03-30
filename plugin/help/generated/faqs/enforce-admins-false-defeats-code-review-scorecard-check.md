@@ -5,7 +5,7 @@ tags: [ci]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `enforce_admins: false` defeats Code-Review Scorecard check?
+# FAQ: What should I know about enforce_admins: false defeats Code-Review Scorecard check?
 
 ## Answer
 

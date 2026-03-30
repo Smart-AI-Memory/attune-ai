@@ -5,8 +5,7 @@ tags: [claude-code]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Mixin classes inherit `self._workspace_root` at runtime,
-  not at definition time?
+# FAQ: What should I know about mixin classes inherit self._workspace_root at runtime, not at definition time?
 
 ## Answer
 

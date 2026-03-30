@@ -5,7 +5,7 @@ tags: [ci]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: YAML `run:` values with colons cause parse errors?
+# FAQ: What should I know about YAML run: values with colons cause parse errors?
 
 ## Answer
 

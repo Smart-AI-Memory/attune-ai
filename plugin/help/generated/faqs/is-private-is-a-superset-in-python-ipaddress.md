@@ -5,7 +5,7 @@ tags: [testing]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `is_private` is a superset in Python `ipaddress`?
+# FAQ: What should I know about is_private is a superset in Python ipaddress?
 
 ## Answer
 

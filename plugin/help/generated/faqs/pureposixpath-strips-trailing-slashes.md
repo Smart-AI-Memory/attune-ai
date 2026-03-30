@@ -5,15 +5,13 @@ tags: [testing, security]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: `PurePosixPath` strips trailing slashes?
+# FAQ: What should I know about purePosixPath strips trailing slashes?
 
 ## Answer
 
 The test fixture `_passthrough` returns `PurePosixPath(path)`, which strips trailing slashes (`"src/"` → `"src"`). Tests asserting exact path strings passed through `_validate_file_path` must account for this.
 
-
-**Fix:**
-
+**How to fix:**
 - Use `in ("src/", "src")` or check `call_args.kwargs` instead of `assert_awaited_once_with`
 
 ```

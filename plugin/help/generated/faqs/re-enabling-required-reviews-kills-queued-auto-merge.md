@@ -5,15 +5,13 @@ tags: [git]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: Re-enabling required reviews kills queued auto-merge?
+# FAQ: What do I need to know about re-enabling required reviews kills queued auto-merge?
 
 ## Answer
 
 If you set `gh pr merge --auto` while reviews are removed, then re-enable `required_approving_review_count: 1` before the merge fires, auto-merge is blocked (no approval exists).
 
-
-**Fix:**
-
+**How to fix:**
 - either wait for auto-merge to complete before re-enabling reviews, or skip auto-merge entirely and use the remove-reviews → admin-merge → re-enable-reviews pattern
 
 ```

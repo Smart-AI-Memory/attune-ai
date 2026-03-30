@@ -5,7 +5,7 @@ tags: [security, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: `_validate_file_path` needed on reads too, not just writes?
+# FAQ: What do I need to know about _validate_file_path needed on reads too, not just writes?
 
 ## Answer
 

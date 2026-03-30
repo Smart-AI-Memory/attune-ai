@@ -5,7 +5,7 @@ tags: [ci]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: mkdocs `--strict` treats broken links as fatal errors?
+# FAQ: What should I know about mkdocs --strict treats broken links as fatal errors?
 
 ## Answer
 

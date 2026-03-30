@@ -5,7 +5,7 @@ tags: [testing, imports]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What do I need to know about: Test mocks must match imports?
+# FAQ: What do I need to know about test mocks must match imports?
 
 ## Answer
 

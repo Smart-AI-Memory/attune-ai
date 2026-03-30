@@ -5,8 +5,7 @@ tags: [imports, python]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Adding `logger` before eager imports triggers E402 in
-  `__init__.py`?
+# FAQ: What should I know about adding logger before eager imports triggers E402 in __init__.py?
 
 ## Answer
 

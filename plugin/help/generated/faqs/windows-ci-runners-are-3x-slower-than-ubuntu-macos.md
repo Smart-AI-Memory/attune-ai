@@ -5,15 +5,13 @@ tags: [ci, testing, windows, macos]
 source: CLAUDE.md Lessons Learned
 ---
 
-# FAQ: What is the issue with: Windows CI runners are ~3x slower than Ubuntu/macOS?
+# FAQ: What should I know about windows CI runners are ~3x slower than Ubuntu/macOS?
 
 ## Answer
 
 A 16k+ test suite that finishes in ~15min on macOS and ~17min on Ubuntu needs ~45min+ on Windows. Remember to update `test_timeout_values_are_reasonable` when changing the upper bound.
 
-
-**Fix:**
-
+**How to fix:**
 - Set `timeout-minutes` high enough (60) or the Windows matrix will always time out
 
 ```
