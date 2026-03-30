@@ -355,6 +355,10 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     help_parser.add_argument("topic", nargs="?", help="Category or template name")
     help_parser.add_argument("--tag", help="Filter by tag")
     help_parser.add_argument("--tags", action="store_true", help="List all tags")
+    help_parser.add_argument("--detail", action="store_true", help="Show normal detail level")
+    help_parser.add_argument(
+        "--deep", action="store_true", help="Show full detail with related topics"
+    )
 
     subparsers.add_parser("doctor", help="Run comprehensive environment health check")
     subparsers.add_parser("features", help="Show available features and dependencies")

@@ -110,7 +110,7 @@ def _list_category(category: str) -> int:
     return 0
 
 
-def _show_template(name: str) -> int:
+def _show_template(name: str, verbosity: str = "normal") -> int:
     """Show a specific template by name.
 
     Tries all categories to find the template, then
@@ -118,11 +118,14 @@ def _show_template(name: str) -> int:
 
     Args:
         name: Template name (without .md extension).
+        verbosity: One of compact, normal, detailed.
 
     Returns:
         Exit code.
     """
     from attune.help.engine import AudienceProfile, populate
+
+    audience = AudienceProfile(channel="cli", verbosity=verbosity)
 
     # Try to find by prefix
     prefix_map = {
@@ -135,7 +138,7 @@ def _show_template(name: str) -> int:
     # If name already has a prefix, use it directly
     for prefix in prefix_map:
         if name.startswith(f"{prefix}-"):
-            result = populate(name, audience=AudienceProfile(channel="cli"))
+            result = populate(name, audience=audience)
             if result:
                 from attune.help.transformers import render_cli
 
@@ -147,7 +150,7 @@ def _show_template(name: str) -> int:
     # Try each prefix
     for prefix in prefix_map.values():
         template_id = f"{prefix}-{name}"
-        result = populate(template_id, audience=AudienceProfile(channel="cli"))
+        result = populate(template_id, audience=audience)
         if result:
             from attune.help.transformers import render_cli
 
@@ -233,5 +236,14 @@ def cmd_help(args: argparse.Namespace) -> int:
     if topic in _CATEGORIES:
         return _list_category(topic)
 
+    # Determine verbosity from flags
+    verbosity = "normal"
+    if getattr(args, "deep", False):
+        verbosity = "detailed"
+    elif getattr(args, "detail", False):
+        verbosity = "normal"
+    else:
+        verbosity = "compact"
+
     # Otherwise try to show a specific template
-    return _show_template(topic)
+    return _show_template(topic, verbosity=verbosity)

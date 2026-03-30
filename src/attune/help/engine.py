@@ -359,6 +359,121 @@ def populate(
     )
 
 
+# -----------------------------------------------------------
+# Progressive depth: auto-escalate on repeated access
+# -----------------------------------------------------------
+
+_DEPTH_VERBOSITY = {0: "compact", 1: "normal", 2: "detailed"}
+
+_session_state: dict[str, Any] = {
+    "last_template_id": None,
+    "depth_level": 0,
+}
+
+
+def populate_progressive(
+    template_id: str,
+    context: TemplateContext | None = None,
+    audience: AudienceProfile | None = None,
+    *,
+    generated_dir: str | Path | None = None,
+) -> PopulatedTemplate | None:
+    """Populate with automatic depth escalation.
+
+    On repeated calls with the same template_id, verbosity
+    escalates: compact -> normal -> detailed. Switching to
+    a different template resets depth to compact.
+
+    Args:
+        template_id: Template identifier.
+        context: Optional runtime context.
+        audience: Optional audience profile (verbosity overridden).
+        generated_dir: Override path to generated/ directory.
+
+    Returns:
+        PopulatedTemplate with metadata["depth_level"], or None.
+    """
+    state = _session_state
+
+    if template_id == state["last_template_id"]:
+        state["depth_level"] = min(state["depth_level"] + 1, 2)
+    else:
+        state["last_template_id"] = template_id
+        state["depth_level"] = 0
+
+    depth = state["depth_level"]
+    verbosity = _DEPTH_VERBOSITY[depth]
+
+    if audience is None:
+        audience = AudienceProfile(verbosity=verbosity)
+    else:
+        audience = AudienceProfile(
+            channel=audience.channel,
+            verbosity=verbosity,
+        )
+
+    result = populate(
+        template_id,
+        context=context,
+        audience=audience,
+        generated_dir=generated_dir,
+    )
+
+    if result is not None:
+        result.metadata["depth_level"] = depth
+
+    return result
+
+
+# -----------------------------------------------------------
+# Workflow chain prediction
+# -----------------------------------------------------------
+
+
+def get_workflow_help(
+    workflow_name: str,
+    *,
+    generated_dir: str | Path | None = None,
+    max_results: int = 3,
+) -> list[PopulatedTemplate]:
+    """Get help templates relevant after a workflow completes.
+
+    Looks up the workflow_map in cross_links.json and returns
+    compact templates for the mapped entries.
+
+    Args:
+        workflow_name: Workflow slug (e.g. "code-review").
+        generated_dir: Override path to generated/ directory.
+        max_results: Maximum templates to return.
+
+    Returns:
+        List of PopulatedTemplate at compact verbosity.
+    """
+    gen_dir = Path(generated_dir) if generated_dir else _DEFAULT_GENERATED_DIR
+    cross_links = _load_cross_links(gen_dir)
+    workflow_map = cross_links.get("workflow_map", {})
+
+    template_ids = workflow_map.get(workflow_name, [])
+    if not template_ids:
+        return []
+
+    audience = AudienceProfile(verbosity="compact")
+    results: list[PopulatedTemplate] = []
+
+    for tid in template_ids[:max_results]:
+        result = populate(tid, audience=audience, generated_dir=generated_dir)
+        if result:
+            results.append(result)
+
+    return results
+
+
+def reset_session() -> None:
+    """Reset progressive depth session state."""
+    _session_state["last_template_id"] = None
+    _session_state["depth_level"] = 0
+
+
 def search_by_tag(
     tag: str,
     *,

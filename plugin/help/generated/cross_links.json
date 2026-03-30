@@ -1,8 +1,8 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 305,
-    "linked_templates": 216,
+    "total_templates": 312,
+    "linked_templates": 222,
     "total_tags": 19
   },
   "links": {
@@ -209,6 +209,11 @@
         "python"
       ]
     },
+    "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+      "tags": [
+        "claude-code"
+      ]
+    },
     "err-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the": {
       "tags": [
         "testing",
@@ -296,6 +301,15 @@
       "tags": [
         "testing",
         "imports"
+      ]
+    },
+    "err-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+      "related_warning": [
+        "war-generated-content-with-trailing-whitespace-causes-perpetual-pre"
+      ],
+      "tags": [
+        "git",
+        "claude-code"
       ]
     },
     "err-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
@@ -455,6 +469,14 @@
       "tags": [
         "security",
         "imports",
+        "claude-code"
+      ]
+    },
+    "err-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+      "related_warning": [
+        "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv"
+      ],
+      "tags": [
         "claude-code"
       ]
     },
@@ -791,6 +813,19 @@
     "err-resultmessage-result-is-often-none-capture-assistantmessage": {
       "related_warning": [
         "war-resultmessage-result-is-often-none-capture-assistantmessage"
+      ]
+    },
+    "err-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+      "related_warning": [
+        "war-ruff-auto-fix-strips-imports-before-usage-code-exists"
+      ],
+      "prevented_by": [
+        "tip-after-first-health"
+      ],
+      "tags": [
+        "imports",
+        "claude-code",
+        "python"
       ]
     },
     "err-ruff-parses-pytest-ini-as-python": {
@@ -1734,6 +1769,15 @@
         "testing"
       ]
     },
+    "war-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+      "related_error": [
+        "err-generated-content-with-trailing-whitespace-causes-perpetual-pre"
+      ],
+      "tags": [
+        "git",
+        "claude-code"
+      ]
+    },
     "war-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
       "related_error": [
         "err-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks"
@@ -1862,6 +1906,14 @@
       "tags": [
         "security",
         "imports",
+        "claude-code"
+      ]
+    },
+    "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+      "related_error": [
+        "err-mcp-json-python-resolves-to-pyenv-shim-not-project-venv"
+      ],
+      "tags": [
         "claude-code"
       ]
     },
@@ -2131,6 +2183,16 @@
     "war-resultmessage-result-is-often-none-capture-assistantmessage": {
       "related_error": [
         "err-resultmessage-result-is-often-none-capture-assistantmessage"
+      ]
+    },
+    "war-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+      "related_error": [
+        "err-ruff-auto-fix-strips-imports-before-usage-code-exists"
+      ],
+      "tags": [
+        "imports",
+        "claude-code",
+        "python"
       ]
     },
     "war-run-simplify-catches-per-file-errors-internally": {
@@ -2435,8 +2497,10 @@
       "err-claude-code-plugins-expect-plugin-json-inside-claude-plugin",
       "err-claude-plugin-install-is-marketplace-only",
       "err-commands-are-not-namespaced-in-plugins-skills-are",
+      "err-custom-mcp-stdio-loop-fails-claude-code-handshake",
       "err-dead-code-modules-with-full-test-suites-look-alive",
       "err-duplicate-plugins-cause-conflicting-skill-triggers",
+      "err-generated-content-with-trailing-whitespace-causes-perpetual-pre",
       "err-github-repos-serve-as-claude-code-marketplaces",
       "err-gpg-signing-fails-in-non-interactive-terminals-vscode-extension",
       "err-hardcoded-user-id-defeats-ownership-checks",
@@ -2444,6 +2508,7 @@
       "err-lazy-imports-inside-function-bodies-cant-be-patched-with",
       "err-mcp-call-tool-wrapper-pattern",
       "err-mcp-handler-validate-paths-before-importing-workflows",
+      "err-mcp-json-python-resolves-to-pyenv-shim-not-project-venv",
       "err-mcp-tool-count-tests-are-hardcoded",
       "err-mcp-tool-renames-propagate-to-skill-docs",
       "err-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path",
@@ -2455,6 +2520,7 @@
       "err-pre-commit-stash-conflict-when-black-ruff-fix-files-with",
       "err-pre-commit-stash-conflict-with-auto-fix-hooks",
       "err-pre-commit-stash-conflicts-when-any-tracked-unstaged-file",
+      "err-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "err-ruff-parses-pytest-ini-as-python",
       "err-session-hooks-may-be-vestigial",
       "err-skill-descriptions-must-be-under-250-characters",
@@ -2478,6 +2544,7 @@
       "war-commands-are-not-namespaced-in-plugins-skills-are",
       "war-dead-code-modules-with-full-test-suites-look-alive",
       "war-duplicate-plugins-cause-conflicting-skill-triggers",
+      "war-generated-content-with-trailing-whitespace-causes-perpetual-pre",
       "war-github-repos-serve-as-claude-code-marketplaces",
       "war-gpg-signing-fails-in-non-interactive-terminals-vscode-extension",
       "war-hardcoded-user-id-defeats-ownership-checks",
@@ -2485,6 +2552,7 @@
       "war-lazy-imports-inside-function-bodies-cant-be-patched-with",
       "war-mcp-call-tool-wrapper-pattern",
       "war-mcp-handler-validate-paths-before-importing-workflows",
+      "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv",
       "war-mcp-tool-renames-propagate-to-skill-docs",
       "war-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent",
       "war-plugin-read-skill-references-break-outside-the-plugin",
@@ -2493,6 +2561,7 @@
       "war-pre-commit-stash-conflict-when-black-ruff-fix-files-with",
       "war-pre-commit-stash-conflict-with-auto-fix-hooks",
       "war-pre-commit-stash-conflicts-when-any-tracked-unstaged-file",
+      "war-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "war-session-hooks-may-be-vestigial",
       "war-skill-descriptions-must-be-under-250-characters",
       "war-skill-frontmatter-has-a-strict-allowlist",
@@ -2519,6 +2588,7 @@
       "err-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes",
       "err-config-py-alongside-config-creates-a-mypy-duplicate-module",
       "err-enforce-admins-required-reviews-blocks-solo-dev-merges",
+      "err-generated-content-with-trailing-whitespace-causes-perpetual-pre",
       "err-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks",
       "err-github-protected-tags-cannot-be-force-updated",
       "err-github-repos-serve-as-claude-code-marketplaces",
@@ -2545,6 +2615,7 @@
       "err-workflowresult-constructor-mismatches-surface-only-at-runtime",
       "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
+      "war-generated-content-with-trailing-whitespace-causes-perpetual-pre",
       "war-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks",
       "war-github-protected-tags-cannot-be-force-updated",
       "war-github-repos-serve-as-claude-code-marketplaces",
@@ -2591,6 +2662,7 @@
       "err-patch-the-source-module-for-from-x-import-y-in-function-bodies",
       "err-pytest-importorskip-triggers-ruff-e402",
       "err-real-project-files-on-disk-override-test-mocks",
+      "err-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "err-shadow-directories-at-repo-root-break-imports",
       "err-silent-pass-blocks-in-discovery-registry-code-hide-import",
       "err-stacked-patch-decorators-inject-args-bottom-up",
@@ -2616,6 +2688,7 @@
       "war-non-baseworkflow-classes-in-workflow-registry-crash-the-cli",
       "war-patch-requires-the-target-name-to-exist-at-module-scope-at",
       "war-pytest-importorskip-triggers-ruff-e402",
+      "war-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "war-shadow-directories-at-repo-root-break-imports",
       "war-silent-pass-blocks-in-discovery-registry-code-hide-import",
       "war-stacked-patch-decorators-inject-args-bottom-up",
@@ -2728,6 +2801,7 @@
       "err-pureposixpath-match-doesnt-support-in-python-3-10",
       "err-pypi-renders-readme-links-relative-to-its-own-domain",
       "err-pytest-importorskip-triggers-ruff-e402",
+      "err-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "err-ruff-parses-pytest-ini-as-python",
       "err-splitting-text-on-breaks-backtick-quoted-code-references",
       "err-windows-ci-encoding",
@@ -2747,6 +2821,7 @@
       "war-pre-commit-stash-conflicts-when-any-tracked-unstaged-file",
       "war-pypi-renders-readme-links-relative-to-its-own-domain",
       "war-pytest-importorskip-triggers-ruff-e402",
+      "war-ruff-auto-fix-strips-imports-before-usage-code-exists",
       "war-splitting-text-on-breaks-backtick-quoted-code-references",
       "war-windows-ci-encoding",
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
@@ -2992,6 +3067,67 @@
       "tip-after-refactor-plan",
       "tip-after-security-audit",
       "tip-after-simplify-code",
+      "tip-after-test-gen"
+    ]
+  },
+  "workflow_map": {
+    "10-inspects": [
+      "tip-after-10-inspects"
+    ],
+    "5-ships": [
+      "tip-after-5-ships"
+    ],
+    "bug-predict": [
+      "ref-skill-bug-predict",
+      "ref-tool-bug-predict",
+      "tip-after-bug-predict"
+    ],
+    "code-review": [
+      "ref-skill-code-quality",
+      "ref-tool-code-review",
+      "tip-after-code-review"
+    ],
+    "deep-review": [
+      "ref-tool-deep-review"
+    ],
+    "dependency-check": [
+      "ref-tool-dependency-check",
+      "tip-after-dependency-check"
+    ],
+    "doc-gen": [
+      "ref-skill-doc-gen"
+    ],
+    "first-health": [
+      "tip-after-first-health"
+    ],
+    "first-inspect": [
+      "tip-after-first-inspect"
+    ],
+    "perf-audit": [
+      "ref-tool-performance-audit",
+      "tip-after-perf-audit"
+    ],
+    "refactor-plan": [
+      "ref-skill-refactor-plan",
+      "ref-tool-refactor-plan",
+      "tip-after-refactor-plan"
+    ],
+    "release-prep": [
+      "ref-skill-release-prep",
+      "ref-tool-release-prep"
+    ],
+    "security-audit": [
+      "ref-skill-security-audit",
+      "ref-tool-security-audit",
+      "tip-after-security-audit"
+    ],
+    "simplify-code": [
+      "ref-tool-simplify-code",
+      "tip-after-simplify-code"
+    ],
+    "test-gen": [
+      "ref-skill-smart-test",
+      "ref-tool-test-generation",
       "tip-after-test-gen"
     ]
   }

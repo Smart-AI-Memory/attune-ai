@@ -323,6 +323,74 @@ def _build_tag_index(
     return index
 
 
+def _build_workflow_map(
+    references: list[TemplateEntry],
+    tips: list[TemplateEntry],
+) -> dict[str, list[str]]:
+    """Build workflow name -> relevant template IDs map.
+
+    Maps workflow slugs (e.g. "code-review") to templates
+    that document or relate to that workflow.
+
+    Args:
+        references: Reference template entries.
+        tips: Tip template entries.
+
+    Returns:
+        Dict of workflow_name -> list of template_ids.
+    """
+    wf_map: dict[str, list[str]] = {}
+
+    # Workflow transition tips (named "after-{workflow}")
+    for tip in tips:
+        if tip.name.startswith("after-"):
+            source_wf = tip.name[6:]  # strip "after-"
+            wf_map.setdefault(source_wf, []).append(f"tip-{tip.name}")
+
+    # Skill references (skill name often matches workflow name)
+    skill_to_wf = {
+        "security-audit": "security-audit",
+        "code-quality": "code-review",
+        "smart-test": "test-gen",
+        "bug-predict": "bug-predict",
+        "release-prep": "release-prep",
+        "refactor-plan": "refactor-plan",
+        "doc-gen": "doc-gen",
+    }
+    for ref in references:
+        if ref.category == "skill":
+            skill_name = ref.name.replace("skill-", "")
+            wf_name = skill_to_wf.get(skill_name)
+            if wf_name:
+                wf_map.setdefault(wf_name, []).append(f"ref-{ref.name}")
+
+    # Tool references (tool name maps to workflow)
+    tool_to_wf = {
+        "security-audit": "security-audit",
+        "bug-predict": "bug-predict",
+        "code-review": "code-review",
+        "test-generation": "test-gen",
+        "performance-audit": "perf-audit",
+        "release-prep": "release-prep",
+        "refactor-plan": "refactor-plan",
+        "simplify-code": "simplify-code",
+        "dependency-check": "dependency-check",
+        "deep-review": "deep-review",
+    }
+    for ref in references:
+        if ref.category == "tool":
+            tool_name = ref.name.replace("tool-", "")
+            wf_name = tool_to_wf.get(tool_name)
+            if wf_name:
+                wf_map.setdefault(wf_name, []).append(f"ref-{ref.name}")
+
+    # Sort each workflow's templates for deterministic output
+    for wf in wf_map:
+        wf_map[wf] = sorted(set(wf_map[wf]))
+
+    return dict(sorted(wf_map.items()))
+
+
 def _merge_links(
     *link_dicts: dict[str, dict],
 ) -> dict[str, dict]:
@@ -393,6 +461,9 @@ def build_cross_links(generated_dir: Path) -> dict:
     # Build tag index
     tag_index = _build_tag_index(all_templates)
 
+    # Build workflow map
+    workflow_map = _build_workflow_map(references, tips)
+
     # Stats
     total_templates = sum(len(v) for v in all_templates.values())
     linked = sum(1 for v in sorted_links.values() if any(k != "tags" for k in v))
@@ -406,6 +477,7 @@ def build_cross_links(generated_dir: Path) -> dict:
         },
         "links": sorted_links,
         "tag_index": dict(sorted(tag_index.items())),
+        "workflow_map": workflow_map,
     }
 
 
