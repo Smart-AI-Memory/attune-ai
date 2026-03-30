@@ -1,0 +1,24 @@
+---
+type: faq
+name: bandit-b108-blocks-hardcoded-tmp-paths
+tags: [python]
+source: CLAUDE.md Lessons Learned
+---
+
+# FAQ: Why does Bandit B108 blocks hardcoded `/tmp` paths?
+
+## Answer
+
+Using a literal `/tmp/...` string in `subprocess.run` or `open()` triggers bandit B108 (insecure temp file usage). This came up in `doc_audit/workflow.py` which used `/tmp/doc-audit-site` for mkdocs builds.
+
+
+**Fix:**
+
+- use `tempfile.TemporaryDirectory(prefix="...")` instead
+
+```
+ string in
+```
+
+## Related Topics
+- **Error**: Detailed error: Bandit B108 blocks hardcoded `/tmp` paths

@@ -259,11 +259,19 @@ def main() -> int:
     check = "--check" in argv
     mode = "Verifying" if check else "Generating"
 
+    # Import new generators inline to avoid linter stripping
+    from generate_faq_templates import main as generate_faqs
+    from generate_note_templates import main as generate_notes
+    from generate_task_templates import main as generate_tasks
+
     generators = [
         ("Error", generate_errors),
         ("Warning", generate_warnings),
         ("Tip", generate_tips),
         ("Reference", generate_references),
+        ("Task", generate_tasks),
+        ("FAQ", generate_faqs),
+        ("Note", generate_notes),
         ("Cross-Links", build_cross_links),
     ]
 

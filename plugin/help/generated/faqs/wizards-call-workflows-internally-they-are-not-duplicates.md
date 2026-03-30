@@ -1,0 +1,19 @@
+---
+type: faq
+name: wizards-call-workflows-internally-they-are-not-duplicates
+tags: [git, packaging]
+source: CLAUDE.md Lessons Learned
+---
+
+# FAQ: What is the issue with: Wizards call workflows internally — they are not duplicates?
+
+## Answer
+
+`attune wizard run` = interactive guided UX; `attune workflow run` = non-interactive multi-stage pipeline. `WizardInternalWorkflow` is the bridge.
+
+```
+attune wizard run
+```
+
+## Related Topics
+- **Error**: Detailed error: Wizards call workflows internally — they are not duplicates

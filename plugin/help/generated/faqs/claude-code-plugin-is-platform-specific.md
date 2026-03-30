@@ -1,0 +1,15 @@
+---
+type: faq
+name: claude-code-plugin-is-platform-specific
+tags: [claude-code]
+source: CLAUDE.md Lessons Learned
+---
+
+# FAQ: What is the issue with: Claude Code plugin is platform-specific?
+
+## Answer
+
+Skills, hooks, and MCP config only work in Claude Code (CLI). They do not function in Claude.ai (web).
+
+## Related Topics
+- **Error**: Detailed error: Claude Code plugin is platform-specific
