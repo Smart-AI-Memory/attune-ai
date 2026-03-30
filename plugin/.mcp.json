@@ -1,12 +1,11 @@
 {
   "mcpServers": {
     "attune-ai": {
-      "command": "python",
-      "args": ["-m", "attune.mcp.server"],
+      "command": "uv",
+      "args": ["run", "--from", "attune-ai", "python", "-m", "attune.mcp.server"],
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "ATTUNE_REDIS_REQUIRED": "false",
-        "ATTUNE_CONFIG": "${CLAUDE_PLUGIN_ROOT}/config.json"
+        "ATTUNE_REDIS_REQUIRED": "false"
       }
     }
   }

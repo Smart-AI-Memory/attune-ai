@@ -1168,4 +1168,40 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   reliable manual fallback. The `synchronize` event only fires
   for pushes to an *open* PR — if the PR was closed during the
   push, the event is lost.
+
+- **Generated content with trailing whitespace causes perpetual
+  pre-commit failures**: If a Jinja2 template renders source data
+  that contains trailing spaces (e.g. a sentence ending with "after
+  "), the `trailing-whitespace` pre-commit hook strips it on commit.
+  But the generator reproduces the trailing space on the next run,
+  so `--check` mode always reports "out of sync". Fix: strip
+  trailing whitespace per-line in the generator's render output
+  before writing: `"\n".join(line.rstrip() for line in rendered
+  .splitlines()) + "\n"`.
+
+- **Custom MCP stdio loop fails Claude Code handshake**: A
+  hand-rolled JSON-RPC `main_loop()` reading `sys.stdin` line
+  by line does not implement the MCP initialization sequence
+  (capability negotiation, `initialize` method). Claude Code's
+  MCP client expects the standard protocol and silently drops
+  the connection. Fix: use the official `mcp.server.Server` +
+  `mcp.server.stdio.stdio_server` which handles the full
+  handshake. The `EmpathyMCPServer` class (handlers, schemas,
+  state) stays intact — only the transport layer changes.
+
+- **`.mcp.json` `python` resolves to pyenv shim, not project
+  venv**: When Claude Code spawns an MCP server process via
+  `"command": "python"`, the shell resolves to the pyenv shim
+  which may have an ancient package version (e.g. v3.9.0 vs
+  v5.4.0 in the venv). Fix: use
+  `"command": "uv", "args": ["run", "--from", "attune-ai", ...]`
+  to ensure the correct package resolution.
+
+- **Ruff auto-fix strips imports before usage code exists**:
+  When adding `from mcp.server import Server` at the top of a
+  file but the code using `Server(...)` is at the bottom (not
+  yet written), ruff's `--fix` removes the import as unused.
+  The edit succeeds but the import silently vanishes. Fix: add
+  imports and their usage code in the same edit, or add usage
+  first then imports.
 <!-- attune-lessons-end -->

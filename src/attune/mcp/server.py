@@ -1,15 +1,27 @@
 """Attune AI MCP Server Implementation.
 
 Exposes Empathy workflows as MCP tools for Claude Code integration.
+Uses the official MCP Python SDK for protocol compliance.
 """
 
 import asyncio
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import Any
+
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import (
+    GetPromptResult,
+    Prompt,
+    PromptArgument,
+    PromptMessage,
+    Resource,
+    TextContent,
+    Tool,
+)
 
 from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.rate_limiter import RateLimiter
@@ -22,7 +34,6 @@ from attune.mcp.tool_schemas import (
 )
 from attune.mcp.workflow_handlers import WorkflowHandlersMixin
 
-# MCP server will be implemented using stdio transport
 logger = logging.getLogger(__name__)
 
 ATTUNE_LEVEL_NAMES: dict[int, str] = {
@@ -608,74 +619,110 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         return list(self.resources.values())
 
 
-async def handle_request(server: EmpathyMCPServer, request: dict[str, Any]) -> dict[str, Any]:
-    """Handle an MCP request.
+# -- MCP SDK wiring ------------------------------------------------
+# Uses the official MCP Python SDK (mcp.server.Server) for protocol
+# compliance. The EmpathyMCPServer class above holds all state and
+# handlers; the SDK layer below delegates to it.
 
-    Args:
-        server: MCP server instance
-        request: MCP request
-
-    Returns:
-        MCP response
-
-    """
-    method = request.get("method")
-    params = request.get("params", {})
-
-    if method == "tools/list":
-        return {"tools": server.get_tool_list()}
-    if method == "tools/call":
-        tool_name = params.get("name")
-        arguments = params.get("arguments", {})
-        result = await server.call_tool(tool_name, arguments)
-        return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
-    if method == "resources/list":
-        return {"resources": server.get_resource_list()}
-    if method == "prompts/list":
-        return {"prompts": server.get_prompt_list()}
-    if method == "prompts/get":
-        prompt_name = params.get("name")
-        arguments = params.get("arguments", {})
-        try:
-            messages = server.get_prompt_messages(prompt_name, arguments)
-            return {"messages": messages}
-        except ValueError as e:
-            logger.warning("Invalid prompt request: %s", e)
-            return {"error": {"code": -32602, "message": "Invalid prompt parameters"}}
-    else:
-        return {"error": {"code": -32601, "message": f"Method not found: {method}"}}
+_mcp_server = Server("attune-ai")
+_app: EmpathyMCPServer | None = None
 
 
-async def main_loop():
-    """Main MCP server loop using stdio transport."""
-    server = EmpathyMCPServer()
-    loop = asyncio.get_running_loop()
+def _get_app() -> EmpathyMCPServer:
+    """Lazily create the application server singleton."""
+    global _app  # noqa: PLW0603
+    if _app is None:
+        _app = EmpathyMCPServer()
+    return _app
 
-    logger.info("Empathy MCP Server started")
-    logger.info(f"Registered {len(server.tools)} tools")
 
-    while True:
-        try:
-            # Read request from stdin (JSON-RPC format)
-            line = await loop.run_in_executor(None, sys.stdin.readline)
-            if not line:
-                break
+@_mcp_server.list_tools()
+async def _handle_list_tools() -> list[Tool]:
+    app = _get_app()
+    return [
+        Tool(
+            name=name,
+            description=defn.get("description", ""),
+            inputSchema=defn.get(
+                "input_schema",
+                {"type": "object", "properties": {}},
+            ),
+        )
+        for name, defn in app.tools.items()
+    ]
 
-            request = json.loads(line)
-            response = await handle_request(server, request)
 
-            # Write response to stdout
-            print(json.dumps(response), flush=True)
+@_mcp_server.call_tool()
+async def _handle_call_tool(
+    name: str,
+    arguments: dict[str, Any] | None = None,
+) -> list[TextContent]:
+    app = _get_app()
+    result = await app.call_tool(name, arguments or {})
+    return [
+        TextContent(
+            type="text",
+            text=json.dumps(result, indent=2),
+        ),
+    ]
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON: {e}")
-            error_response = {"error": {"code": -32700, "message": "Parse error"}}
-            print(json.dumps(error_response), flush=True)
-        except Exception:  # noqa: BLE001
-            # INTENTIONAL: Server loop must not crash
-            logger.exception("Error handling request")
-            error_response = {"error": {"code": -32603, "message": "Internal server error"}}
-            print(json.dumps(error_response), flush=True)
+
+@_mcp_server.list_resources()
+async def _handle_list_resources() -> list[Resource]:
+    app = _get_app()
+    return [
+        Resource(
+            uri=defn["uri"],
+            name=defn["name"],
+            description=defn.get("description"),
+            mimeType=defn.get("mime_type"),
+        )
+        for defn in app.resources.values()
+    ]
+
+
+@_mcp_server.list_prompts()
+async def _handle_list_prompts() -> list[Prompt]:
+    app = _get_app()
+    return [
+        Prompt(
+            name=defn["name"],
+            description=defn.get("description"),
+            arguments=[
+                PromptArgument(
+                    name=arg["name"],
+                    description=arg.get("description"),
+                    required=arg.get("required", False),
+                )
+                for arg in defn.get("arguments", [])
+            ],
+        )
+        for defn in app.prompts.values()
+    ]
+
+
+@_mcp_server.get_prompt()
+async def _handle_get_prompt(
+    name: str,
+    arguments: dict[str, str] | None = None,
+) -> GetPromptResult:
+    app = _get_app()
+    messages = app.get_prompt_messages(name, arguments or {})
+    return GetPromptResult(
+        messages=[
+            PromptMessage(
+                role=m["role"],
+                content=TextContent(
+                    type="text",
+                    text=m["content"]["text"],
+                ),
+            )
+            for m in messages
+        ],
+    )
+
+
+# -- Public helpers -------------------------------------------------
 
 
 def create_server() -> EmpathyMCPServer:
@@ -688,7 +735,17 @@ def create_server() -> EmpathyMCPServer:
     return EmpathyMCPServer()
 
 
-def main():
+async def _run_stdio() -> None:
+    """Run the MCP server over stdio transport."""
+    async with stdio_server() as (read_stream, write_stream):
+        await _mcp_server.run(
+            read_stream,
+            write_stream,
+            _mcp_server.create_initialization_options(),
+        )
+
+
+def main() -> None:
     """Entry point for MCP server."""
     import tempfile
 
@@ -697,13 +754,15 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler(str(log_dir / "attune-mcp.log"))],
+        handlers=[
+            logging.FileHandler(str(log_dir / "attune-mcp.log")),
+        ],
     )
 
     try:
-        asyncio.run(main_loop())
+        asyncio.run(_run_stdio())
     except KeyboardInterrupt:
-        logger.info("Empathy MCP Server stopped")
+        logger.info("Attune MCP Server stopped")
 
 
 if __name__ == "__main__":
