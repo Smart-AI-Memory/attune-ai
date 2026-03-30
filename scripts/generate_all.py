@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import sys
 
+from build_cross_links import main as build_cross_links
 from generate_error_templates import main as generate_errors
 from generate_reference_templates import main as generate_references
 from generate_tip_templates import main as generate_tips
@@ -34,6 +35,7 @@ def main() -> int:
         ("Warning", generate_warnings),
         ("Tip", generate_tips),
         ("Reference", generate_references),
+        ("Cross-Links", build_cross_links),
     ]
 
     print(f"{'=' * 50}")
