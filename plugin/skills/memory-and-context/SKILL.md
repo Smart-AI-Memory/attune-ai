@@ -7,8 +7,12 @@ disable-model-invocation: true
 
 # Memory and Context
 
-Structured knowledge management, empathy modulation,
-and memory operations for attune-ai.
+Before scoping, tell the user:
+
+> **Memory and Context** manages persistent memory across
+> sessions — store, retrieve, search, and forget
+> knowledge with security classification (PUBLIC,
+> INTERNAL, SENSITIVE).
 
 ## Scoping
 

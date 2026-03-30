@@ -6,7 +6,11 @@ argument-hint: "<path or module to test>"
 
 # Smart Test
 
-Find test gaps and generate tests for uncovered code.
+Before scoping, tell the user:
+
+> **Smart Test** finds test coverage gaps and generates
+> pytest tests for uncovered code — gap analysis, targeted
+> generation, or batch mode for 10-50 modules.
 
 ## Scoping
 

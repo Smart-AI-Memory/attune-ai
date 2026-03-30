@@ -6,6 +6,13 @@ argument-hint: "<path or directory to scan>"
 
 # Security Audit
 
+Before scoping, tell the user:
+
+> **Security Audit** scans for eval/exec, path traversal,
+> hardcoded secrets, SQL/command injection, and broad
+> exception handling. Results grouped by severity with
+> CWE identifiers.
+
 ## Scoping
 
 Before running, ask:

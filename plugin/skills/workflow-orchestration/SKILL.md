@@ -6,6 +6,13 @@ argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 
 # Workflow Orchestration
 
+Before scoping, tell the user:
+
+> **Workflow Orchestration** runs AI analysis workflows —
+> security audits, code reviews, test generation,
+> performance analysis, bug prediction, docs, and release
+> prep.
+
 ## Scoping
 
 Before running, ask:

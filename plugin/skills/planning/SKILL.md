@@ -6,9 +6,14 @@ argument-hint: "<what to plan: feature, tdd, architecture>"
 
 # Planning
 
+Before scoping, tell the user:
+
+> **Planning** helps with high-level development planning
+> — feature specs, TDD scaffolding, and architecture
+> review. For code-level refactoring, use `/refactor-plan`
+> instead.
+
 High-level development planning and architecture design.
-For code-level refactoring analysis (code smells,
-duplication, complexity), use the `refactor-plan` skill.
 
 ## Routes
 

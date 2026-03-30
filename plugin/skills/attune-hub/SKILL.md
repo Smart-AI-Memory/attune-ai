@@ -6,8 +6,11 @@ argument-hint: "<what you need help with>"
 
 # Attune Hub
 
-Single entry point for all attune-ai capabilities.
-Routes to the appropriate skill based on context.
+Before scoping, tell the user:
+
+> **Attune** is your developer workflow hub — security
+> audits, code reviews, test generation, refactoring,
+> release prep, and more. Tell me what you need.
 
 ## Scoping
 

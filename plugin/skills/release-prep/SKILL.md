@@ -6,6 +6,12 @@ argument-hint: "<version or 'check'>"
 
 # Release Prep
 
+Before scoping, tell the user:
+
+> **Release Prep** runs health checks, security audit,
+> changelog validation, version bumps, and dependency
+> audits to assess release readiness.
+
 ## Scoping
 
 Before running, ask:

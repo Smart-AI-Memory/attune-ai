@@ -6,6 +6,12 @@ argument-hint: "<path or directory to review>"
 
 # Code Quality
 
+Before scoping, tell the user:
+
+> **Code Quality** reviews code for quality issues, style
+> violations, and likely bugs. Supports quick scan,
+> thorough review, or deep multi-pass analysis.
+
 ## Scoping
 
 Before running, ask:

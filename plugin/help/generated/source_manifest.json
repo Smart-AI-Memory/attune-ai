@@ -1,302 +1,302 @@
 {
   "ref-skill-attune-hub": {
     "source": "plugin/skills/attune-hub/SKILL.md",
-    "hash": "dfdb9113a6427e9d180423cf83ebfa82b0280da7acbf4d8fe0ed132ddfdfa814",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "4b77854537fc4462c24c5b4ec70860f9af43c804d739c0b6483e74d65e0a355b",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-bug-predict": {
     "source": "plugin/skills/bug-predict/SKILL.md",
-    "hash": "049b30079d8b0b23fa0c2952faaeeb5645966f5d409593aedc0801c79c1e5d73",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "923059fd6d5d32dfa84d6093229ac6e4d0e34bf4622541cb5723574a99637f0c",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-code-quality": {
     "source": "plugin/skills/code-quality/SKILL.md",
-    "hash": "65b8ec89077bcfc0b4d34deda54cd2fb9a997654b36c71a24ba1360efdf2001c",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "486c845305b928b9a88e33e12d3d01c3d8228cf50ff444cdfefd413d579fa47e",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-doc-gen": {
     "source": "plugin/skills/doc-gen/SKILL.md",
-    "hash": "848bcb1ce19099224eb7903809963762da21729cff48d2cea6bccb8c7503f73b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "18c68fcfdaae2a3ba125ce3ab833ee5635988d4c15504744a97fe833740c6aa7",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-fix-test": {
     "source": "plugin/skills/fix-test/SKILL.md",
-    "hash": "4c8f3e343262ab7e929ba1fd41ce50bad674f2e8dd74a748cbdda9fb65354b48",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "d58237624390c0d489e5f5d75afbad9f7f82f0273fb4586221b4b24dbdd5349b",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-memory-and-context": {
     "source": "plugin/skills/memory-and-context/SKILL.md",
-    "hash": "13b908f2c3949f65713aaab8bfa019bae7ac7a6c3ef48b163c0c8180bf90e4ab",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "8d46871e141e35e36f68d7971dd453f254eeeba90e4246daae8d219179b37fab",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-planning": {
     "source": "plugin/skills/planning/SKILL.md",
-    "hash": "95ef05851218e3847be8ff58a5da11256a839cd81aa1001acb2f641e5a9c5d04",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "a4fce71d1c6d887a1effa1f93e9e7c7452a8c80af4174de4370f8d8322351fc0",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-refactor-plan": {
     "source": "plugin/skills/refactor-plan/SKILL.md",
-    "hash": "5f190f1f2086a02a0a012f9eb87e5e52a574e229c06712f3d90a009571a9c2c8",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "05d92f1de8663bc5af9b31e1aaae3a698d52a907d512ca3b9d17fa2322c21151",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-release-prep": {
     "source": "plugin/skills/release-prep/SKILL.md",
-    "hash": "b35751b330a40c9d0feb0e779c66f14574a14c0d025118d8f713a7feeffe570c",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "d95f4f0df7a613d274e29ead00c10ed9ba3f4cf692305f36bf339221b66d7433",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-security-audit": {
     "source": "plugin/skills/security-audit/SKILL.md",
-    "hash": "1c5ca622d7fa39d3badc6f1db1e65478ae2e3fdab799e48b135ce955633a8c79",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "dccd19fad9cbe34a361c870f60a91c88c2d3f69bcef66babc5f03cb6f0be56f5",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-smart-test": {
     "source": "plugin/skills/smart-test/SKILL.md",
-    "hash": "c31f64980d9f1bdaf82ca61a0637b7b3f892fd8f401b3477904af255c09dbe7f",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "25c78d57fdb9195fc1c7dcfbd1ce0c13f9c08b48619e5286d88ff9ac5ef67f72",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-spec": {
     "source": "plugin/skills/spec/SKILL.md",
-    "hash": "338d93a43c8ee13b37df0b56fd5f3c321bfa9a2dfc391e4ec00728efe5c31457",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "e9bc74fa086f6a6819c3776d65e252744afc30f3244f29eefb37384650a39d4f",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-skill-workflow-orchestration": {
     "source": "plugin/skills/workflow-orchestration/SKILL.md",
-    "hash": "d32dcaa35f410bfda52bac0f62387a2c213a4bdb71e0bf680aea2dea98b368fb",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "hash": "389fe194b5383c5ab79975b95906c8e65af60b3313cea36e72c955d8ae37b796",
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-analyze-batch": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-analyze-image": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-attune-get-level": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-attune-set-level": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-auth-recommend": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-auth-status": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-bug-predict": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-code-review": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-context-get": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-context-set": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-deep-review": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-dependency-check": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-doc-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-doc-gen": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-doc-orchestrator": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-health-check": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-memory-forget": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-memory-retrieve": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-memory-search": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-memory-store": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-performance-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-refactor-plan": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-release-prep": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-research-synthesis": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-secure-release": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-security-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-simplify-code": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-telemetry-stats": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-test-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-test-gen-parallel": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "ref-tool-test-generation": {
     "source": "src/attune/mcp/tool_schemas.py",
     "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-10-inspects": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-5-ships": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-bug-predict": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-code-review": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-dependency-check": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-first-health": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-first-inspect": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-perf-audit": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-refactor-plan": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-security-audit": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-simplify-code": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-after-test-gen": {
     "source": "src/attune/workflows/suggestions.py",
     "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-cost-savings": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-high-tech-debt": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-no-patterns": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   },
   "tip-weekly-review": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T17:35:02.768538+00:00"
+    "generated_at": "2026-03-30T20:55:53.081437+00:00"
   }
 }
