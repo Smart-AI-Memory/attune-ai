@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Scan for tech debt, analyze trends, and generate a prioritized refactoring plan.
 
+**Group:** workflow
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `path` | string | Directory to scan for refactoring opportunities | . |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `path` | string | Directory to scan for refactoring opportunities |  | . |
+
+## Usage
+
+`refactor_plan()`
 
 ## Related Topics
-- Reference: Related workflow tools: security_audit, bug_predict, code_review
+- **Reference**: Tool: Security Audit — Run security audit workflow on codebase. Detects vulnerabili...
+- **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
+- **Reference**: Tool: Code Review — Run code review workflow. Provides comprehensive code qualit...

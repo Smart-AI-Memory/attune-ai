@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Run security audit workflow on codebase. Detects vulnerabilities, dangerous patterns, and security issues. Returns findings with severity levels.
 
+**Group:** workflow
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `path` | string | Path to directory or file to audit | required |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `path` | string | Path to directory or file to audit |  | required |
+
+## Usage
+
+`security_audit(path="...")`
 
 ## Related Topics
-- Reference: Related workflow tools: bug_predict, code_review, test_generation
+- **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
+- **Reference**: Tool: Code Review — Run code review workflow. Provides comprehensive code qualit...
+- **Reference**: Tool: Test Generation — Generate tests for code. Can batch generate tests for multip...

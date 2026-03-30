@@ -67,10 +67,12 @@ doc_orchestrator(path="<target>")
 **Files:** X | **Functions Documented:** Y | **Gaps:** Z
 
 ### Generated Docstrings
+
 | File | Function | Status |
 |------|----------|--------|
 
 ### Gaps Remaining
+
 | File | Missing |
 |------|---------|
 ```
@@ -84,4 +86,6 @@ After presenting results, offer:
 - "Want a README section generated from this?"
 
 ## Related Topics
-- Reference: MCP tools: doc_gen, doc_audit, doc_orchestrator
+- **Reference**: Tool: Doc Gen (`doc_gen`)
+- **Reference**: Tool: Doc Audit (`doc_audit`)
+- **Reference**: Tool: Doc Orchestrator (`doc_orchestrator`)

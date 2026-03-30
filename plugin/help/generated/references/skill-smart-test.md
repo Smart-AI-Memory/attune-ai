@@ -60,10 +60,12 @@ test_gen_parallel(top=10)
 **Coverage:** X% | **Untested Functions:** Y
 
 ### Gaps by Priority
+
 | File | Function | Risk | Coverage |
 |------|----------|------|----------|
 
 ### Generated Tests
+
 | File | Tests Created | Edge Cases |
 |------|---------------|------------|
 ```
@@ -77,4 +79,6 @@ After presenting results, offer:
 - "Want to see coverage for a different module?"
 
 ## Related Topics
-- Reference: MCP tools: test_audit, test_generation, test_gen_parallel
+- **Reference**: Tool: Test Audit (`test_audit`)
+- **Reference**: Tool: Test Generation (`test_generation`)
+- **Reference**: Tool: Test Gen Parallel (`test_gen_parallel`)

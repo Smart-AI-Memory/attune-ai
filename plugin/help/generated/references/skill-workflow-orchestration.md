@@ -24,6 +24,8 @@ Based on the answer, route to the appropriate workflow.
 
 ## Workflows
 
+
+
 ### Analysis
 
 | Workflow | MCP Tool | What It Does |
@@ -81,4 +83,15 @@ After presenting results, offer:
 - "Want to generate tests for the flagged files?"
 
 ## Related Topics
-- Reference: MCP tools: security_audit, code_review, bug_predict, performance_audit, deep_review, test_generation, test_audit, test_gen_parallel, doc_audit, doc_gen, doc_orchestrator, release_prep
+- **Reference**: Tool: Security Audit (`security_audit`)
+- **Reference**: Tool: Code Review (`code_review`)
+- **Reference**: Tool: Bug Predict (`bug_predict`)
+- **Reference**: Tool: Performance Audit (`performance_audit`)
+- **Reference**: Tool: Deep Review (`deep_review`)
+- **Reference**: Tool: Test Generation (`test_generation`)
+- **Reference**: Tool: Test Audit (`test_audit`)
+- **Reference**: Tool: Test Gen Parallel (`test_gen_parallel`)
+- **Reference**: Tool: Doc Audit (`doc_audit`)
+- **Reference**: Tool: Doc Gen (`doc_gen`)
+- **Reference**: Tool: Doc Orchestrator (`doc_orchestrator`)
+- **Reference**: Tool: Release Prep (`release_prep`)

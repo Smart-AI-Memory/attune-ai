@@ -11,5 +11,13 @@ source: src/attune/mcp/tool_schemas.py
 
 Get authentication strategy status. Shows current configuration, subscription tier, and default mode.
 
+**Group:** utility
+
+## Usage
+
+`auth_status()`
+
 ## Related Topics
-- Reference: Related utility tools: auth_recommend, telemetry_stats, attune_get_level
+- **Reference**: Tool: Auth Recommend — Get authentication recommendation for a file. Analyzes LOC a...
+- **Reference**: Tool: Telemetry Stats — Get telemetry statistics. Shows cost savings, cache hit rate...
+- **Reference**: Tool: Attune Get Level — Get current interaction level (1-5). Level 1=Reactive, 2=Gui...

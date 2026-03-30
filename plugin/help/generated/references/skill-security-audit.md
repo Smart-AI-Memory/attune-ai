@@ -41,14 +41,17 @@ Present results as a table grouped by severity:
 **Score:** X/100 | **Files Scanned:** Y | **Issues:** Z
 
 ### Critical
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 
 ### High
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 
 ### Medium / Low
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 ```
@@ -75,4 +78,4 @@ After presenting results, offer:
 - "Want a deeper scan of a specific directory?"
 
 ## Related Topics
-- Reference: MCP tools: security_audit
+- **Reference**: Tool: Security Audit (`security_audit`)

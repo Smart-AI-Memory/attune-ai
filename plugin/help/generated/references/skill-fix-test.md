@@ -24,6 +24,8 @@ Before running, ask:
 
 ## Execution
 
+
+
 ### Step 1: Identify Failures
 
 Run the failing test(s) to capture the error:
@@ -64,10 +66,12 @@ After fixing (or exhausting 3 attempts), report:
 **Tests Fixed:** X/Y | **Attempts Used:** Z/3
 
 ### Fixed
+
 | Test | Root Cause | Fix Applied |
 |------|------------|-------------|
 
 ### Still Failing (if any)
+
 | Test | Error | Attempts | Notes |
 |------|-------|----------|-------|
 ```
@@ -83,4 +87,4 @@ After presenting results, offer:
 
 ## Related Topics
 
-None generated yet.
+_No related topics yet._

@@ -90,10 +90,12 @@ The full `release_prep` orchestrates a 4-agent team:
 - Dependencies: ALL COMPATIBLE / [list conflicts]
 
 ### Blockers
+
 | Blocker | Agent | Severity |
 |---------|-------|----------|
 
 ### Recommendations
+
 1. [Ordered list of actions before release]
 ```
 
@@ -106,4 +108,7 @@ After presenting results, offer:
 - "Ready to tag and publish?"
 
 ## Related Topics
-- Reference: MCP tools: release_prep, health_check, dependency_check, secure_release, release_prep, release_prep
+- **Reference**: Tool: Release Prep (`release_prep`)
+- **Reference**: Tool: Health Check (`health_check`)
+- **Reference**: Tool: Dependency Check (`dependency_check`)
+- **Reference**: Tool: Secure Release (`secure_release`)

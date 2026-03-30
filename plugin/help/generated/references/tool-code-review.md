@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Run code review workflow. Provides comprehensive code quality analysis with suggestions for improvement.
 
+**Group:** workflow
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `path` | string | Path to directory or file to review | required |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `path` | string | Path to directory or file to review |  | required |
+
+## Usage
+
+`code_review(path="...")`
 
 ## Related Topics
-- Reference: Related workflow tools: security_audit, bug_predict, test_generation
+- **Reference**: Tool: Security Audit — Run security audit workflow on codebase. Detects vulnerabili...
+- **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
+- **Reference**: Tool: Test Generation — Generate tests for code. Can batch generate tests for multip...

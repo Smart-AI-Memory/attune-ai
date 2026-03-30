@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Retrieve data from attune-ai memory by key or pattern ID.
 
+**Group:** memory
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `key` | string | Key or pattern_id to retrieve | required |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `key` | string | Key or pattern_id to retrieve |  | required |
+
+## Usage
+
+`memory_retrieve(key="...")`
 
 ## Related Topics
-- Reference: Related memory tools: memory_store, memory_search, memory_forget
+- **Reference**: Tool: Memory Store — Store data in attune-ai memory. Use for structured knowledge...
+- **Reference**: Tool: Memory Search — Search attune-ai memory for patterns matching a query.
+- **Reference**: Tool: Memory Forget — Remove data from attune-ai memory.

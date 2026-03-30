@@ -51,4 +51,4 @@ Before running, ask:
    implementation
 
 ## Related Topics
-- Reference: MCP tools: research_synthesis, research_synthesis, research_synthesis
+- **Reference**: Tool: Research Synthesis (`research_synthesis`)

@@ -55,6 +55,7 @@ deep_review(path="<user-specified path>")
 **Health:** X/100 | **Files:** Y | **Issues:** Z
 
 ### Issues by Category
+
 | Category | Count | Severity |
 |----------|-------|----------|
 | Style | X | Low |
@@ -63,10 +64,12 @@ deep_review(path="<user-specified path>")
 | Predicted Bugs | W | Medium |
 
 ### Details
+
 | File | Line | Issue | Source |
 |------|------|-------|--------|
 
 ### Predicted Bug Risks
+
 | File | Pattern | Confidence |
 |------|---------|------------|
 ```
@@ -81,4 +84,4 @@ After presenting results, offer:
 
 ## Related Topics
 
-None generated yet.
+_No related topics yet._
