@@ -3,7 +3,7 @@ type: warning
 name: repo-merge-policy-may-restrict-merge-strategies
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Repo merge policy may restrict merge strategies

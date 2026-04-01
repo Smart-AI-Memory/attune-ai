@@ -3,7 +3,7 @@ type: error
 name: pr-test-workflows-may-not-auto-trigger-after-close-reopen-or
 confidence: Verified
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: PR test workflows may not auto-trigger after close/reopen or

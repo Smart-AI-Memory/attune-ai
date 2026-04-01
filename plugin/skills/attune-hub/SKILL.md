@@ -6,7 +6,7 @@ argument-hint: "<what you need help with>"
 
 # Attune Hub
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Attune** is your developer workflow hub — security
 > audits, code reviews, test generation, refactoring,

@@ -2,7 +2,7 @@
 type: faq
 name: windows-ci-runners-are-3x-slower-than-ubuntu-macos
 tags: [ci, testing, windows, macos]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about windows CI runners are ~3x slower than Ubuntu/macOS?

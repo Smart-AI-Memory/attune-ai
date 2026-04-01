@@ -2,7 +2,7 @@
 type: faq
 name: baseworkflow-now-provides-self-logger
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about baseWorkflow now provides self.logger?

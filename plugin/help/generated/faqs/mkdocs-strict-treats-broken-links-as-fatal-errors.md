@@ -2,7 +2,7 @@
 type: faq
 name: mkdocs-strict-treats-broken-links-as-fatal-errors
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about mkdocs --strict treats broken links as fatal errors?

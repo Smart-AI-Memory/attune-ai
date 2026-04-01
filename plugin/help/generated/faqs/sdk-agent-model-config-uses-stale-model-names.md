@@ -2,7 +2,7 @@
 type: faq
 name: sdk-agent-model-config-uses-stale-model-names
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: How do I handle SDK agent MODEL_CONFIG uses stale model names?

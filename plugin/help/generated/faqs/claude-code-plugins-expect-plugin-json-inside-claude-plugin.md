@@ -2,7 +2,7 @@
 type: faq
 name: claude-code-plugins-expect-plugin-json-inside-claude-plugin
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about claude Code plugins expect plugin.json inside .claude-plugin/?

@@ -6,7 +6,7 @@ argument-hint: "<path or directory to scan>"
 
 # Security Audit
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Security Audit** scans for eval/exec, path traversal,
 > hardcoded secrets, SQL/command injection, and broad
@@ -63,6 +63,20 @@ Use clickable file links: `[file.py:123](path#L123)`
 - Command injection risks (CWE-78)
 - Broad exception handling that masks errors
 - Missing input validation
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="security-audit",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+security audits — want to see them?"
 
 ## Follow-Up
 

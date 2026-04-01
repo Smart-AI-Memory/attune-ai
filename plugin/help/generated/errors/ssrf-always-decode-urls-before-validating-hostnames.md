@@ -3,7 +3,7 @@ type: error
 name: ssrf-always-decode-urls-before-validating-hostnames
 confidence: Verified
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: SSRF: always decode URLs before validating hostnames

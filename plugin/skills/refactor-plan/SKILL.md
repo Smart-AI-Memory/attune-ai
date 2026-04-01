@@ -6,7 +6,7 @@ argument-hint: "<path to analyze>"
 
 # Refactor Planning
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Refactor Plan** detects code smells, duplication,
 > and complexity, then generates a prioritized refactoring

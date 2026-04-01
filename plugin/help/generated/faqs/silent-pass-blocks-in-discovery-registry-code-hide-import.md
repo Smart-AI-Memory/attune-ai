@@ -2,7 +2,7 @@
 type: faq
 name: silent-pass-blocks-in-discovery-registry-code-hide-import
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ImportError` (silent pass blocks in discovery/registry code hide import failures)?

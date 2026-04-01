@@ -2,7 +2,7 @@
 type: faq
 name: stop-hooks-missing-cd-prefix-inherit-session-cwd
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why stop hooks missing cd prefix inherit session cwd?

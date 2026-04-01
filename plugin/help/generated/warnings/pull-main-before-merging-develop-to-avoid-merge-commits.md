@@ -3,7 +3,7 @@ type: warning
 name: pull-main-before-merging-develop-to-avoid-merge-commits
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Pull `main` before merging `develop` to avoid merge commits

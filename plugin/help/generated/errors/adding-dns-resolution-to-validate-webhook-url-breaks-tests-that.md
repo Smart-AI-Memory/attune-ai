@@ -3,7 +3,7 @@ type: error
 name: adding-dns-resolution-to-validate-webhook-url-breaks-tests-that
 confidence: Verified
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Adding DNS resolution to `_validate_webhook_url` breaks tests

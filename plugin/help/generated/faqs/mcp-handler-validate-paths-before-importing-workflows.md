@@ -2,7 +2,7 @@
 type: faq
 name: mcp-handler-validate-paths-before-importing-workflows
 tags: [security, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about MCP handler: validate paths before importing workflows?

@@ -3,7 +3,7 @@ type: error
 name: baseworkflow-uses-class-attributes-not-constructor-params
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: BaseWorkflow uses class attributes, not constructor params

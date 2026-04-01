@@ -3,7 +3,7 @@ type: warning
 name: generated-content-with-trailing-whitespace-causes-perpetual-pre
 confidence: Verified
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Generated content with trailing whitespace causes perpetual

@@ -2,7 +2,7 @@
 type: warning
 name: openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: OpenSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are

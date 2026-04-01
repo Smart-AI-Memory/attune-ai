@@ -2,7 +2,7 @@
 type: faq
 name: dead-code-modules-with-full-test-suites-look-alive
 tags: [testing, imports, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about dead code modules with full test suites look alive?

@@ -3,7 +3,7 @@ type: error
 name: redisshorttermmemory-mock-injection-path
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: RedisShortTermMemory mock injection path

@@ -3,7 +3,7 @@ type: error
 name: non-baseworkflow-classes-in-workflow-registry-crash-the-cli
 confidence: Verified
 tags: [imports, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Non-BaseWorkflow classes in workflow registry crash the CLI

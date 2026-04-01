@@ -2,7 +2,7 @@
 type: faq
 name: gpg-signing-fails-in-non-interactive-terminals-vscode-extension
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does GPG signing fails in non-interactive terminals (VSCode extension, Claude Code)?

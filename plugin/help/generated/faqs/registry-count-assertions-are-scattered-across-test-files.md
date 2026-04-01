@@ -2,7 +2,7 @@
 type: faq
 name: registry-count-assertions-are-scattered-across-test-files
 tags: [testing, security, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about registry count assertions are scattered across test files?

@@ -3,7 +3,7 @@ type: warning
 name: validate-infrastructure-against-user-value-before-extending
 confidence: Verified
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Validate infrastructure against user value before extending

@@ -2,7 +2,7 @@
 type: faq
 name: mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about mock a lazy import X with types.ModuleType + patch.dict("sys.modules")?

@@ -2,7 +2,7 @@
 type: faq
 name: read-source-before-writing-tests-for-tricky-logic
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about read source before writing tests for tricky logic?

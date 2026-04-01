@@ -3,7 +3,7 @@ type: error
 name: dont-append-z-to-timezone-aware-isoformat
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Don't append `+ "Z"` to timezone-aware `.isoformat()`

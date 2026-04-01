@@ -2,7 +2,7 @@
 type: faq
 name: custom-mcp-stdio-loop-fails-claude-code-handshake
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does custom MCP stdio loop fails Claude Code handshake?

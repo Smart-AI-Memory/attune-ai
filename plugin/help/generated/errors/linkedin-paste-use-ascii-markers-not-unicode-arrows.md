@@ -2,7 +2,7 @@
 type: error
 name: linkedin-paste-use-ascii-markers-not-unicode-arrows
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: LinkedIn paste: use ASCII markers, not Unicode arrows

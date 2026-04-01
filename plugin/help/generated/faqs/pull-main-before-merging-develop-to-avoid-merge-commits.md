@@ -2,7 +2,7 @@
 type: faq
 name: pull-main-before-merging-develop-to-avoid-merge-commits
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about pull main before merging develop to avoid merge commits?

@@ -3,7 +3,7 @@ type: warning
 name: windows-ci-encoding
 confidence: Verified
 tags: [ci, windows, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Windows CI encoding

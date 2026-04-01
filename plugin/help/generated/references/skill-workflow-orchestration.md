@@ -74,6 +74,20 @@ doc_audit(path="<user-specified path>")
 Present results grouped by severity with clickable
 file links using markdown link syntax.
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="workflow-orchestration",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+this workflow — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:

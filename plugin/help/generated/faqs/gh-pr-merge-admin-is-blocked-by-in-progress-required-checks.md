@@ -2,7 +2,7 @@
 type: faq
 name: gh-pr-merge-admin-is-blocked-by-in-progress-required-checks
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does gh pr merge --admin is blocked by in-progress required checks?

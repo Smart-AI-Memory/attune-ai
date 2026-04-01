@@ -2,7 +2,7 @@
 type: faq
 name: sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about /sbin is a symlink to /usr/sbin on modern Ubuntu?

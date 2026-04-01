@@ -3,7 +3,7 @@ type: error
 name: claude-plugin-install-is-marketplace-only
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `claude plugin install` is marketplace-only

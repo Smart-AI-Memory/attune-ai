@@ -2,7 +2,7 @@
 type: faq
 name: pip-audit-fails-on-unpublished-versions
 tags: [ci, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does pip-audit fails on unpublished versions?

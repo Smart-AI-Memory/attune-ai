@@ -2,7 +2,7 @@
 type: faq
 name: deep-review-false-positives-verify-before-acting
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about deep review false positives — verify before acting?

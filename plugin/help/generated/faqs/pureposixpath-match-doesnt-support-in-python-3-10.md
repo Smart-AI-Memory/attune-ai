@@ -2,7 +2,7 @@
 type: faq
 name: pureposixpath-match-doesnt-support-in-python-3-10
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why purePosixPath.match() doesn't support ** in Python 3.10?

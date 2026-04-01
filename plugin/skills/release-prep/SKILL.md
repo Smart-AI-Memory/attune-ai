@@ -6,7 +6,7 @@ argument-hint: "<version or 'check'>"
 
 # Release Prep
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Release Prep** runs health checks, security audit,
 > changelog validation, version bumps, and dependency
@@ -94,6 +94,17 @@ The full `release_prep` orchestrates a 4-agent team:
 ### Recommendations
 1. [Ordered list of actions before release]
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="release-prep", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+release preparation — want to see them?"
 
 ## Follow-Up
 

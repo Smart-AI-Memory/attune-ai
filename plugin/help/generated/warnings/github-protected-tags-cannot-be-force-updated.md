@@ -3,7 +3,7 @@ type: warning
 name: github-protected-tags-cannot-be-force-updated
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: GitHub protected tags cannot be force-updated

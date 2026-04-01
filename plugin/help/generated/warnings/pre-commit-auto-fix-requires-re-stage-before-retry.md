@@ -3,7 +3,7 @@ type: warning
 name: pre-commit-auto-fix-requires-re-stage-before-retry
 confidence: Verified
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Pre-commit auto-fix requires re-stage before retry

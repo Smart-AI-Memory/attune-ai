@@ -2,7 +2,7 @@
 type: warning
 name: hardcoded-strings-in-method-bodies-survive-class-attribute
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Hardcoded strings in method bodies survive class attribute

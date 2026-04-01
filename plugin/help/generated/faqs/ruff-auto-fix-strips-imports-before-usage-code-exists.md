@@ -2,7 +2,7 @@
 type: faq
 name: ruff-auto-fix-strips-imports-before-usage-code-exists
 tags: [imports, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about ruff auto-fix strips imports before usage code exists?

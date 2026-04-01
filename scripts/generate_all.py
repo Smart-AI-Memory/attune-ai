@@ -72,16 +72,40 @@ def _build_source_manifest(generated_dir: Path) -> dict:
     manifest: dict[str, dict] = {}
     now = datetime.now(timezone.utc).isoformat()
 
-    type_dirs = ["errors", "warnings", "tips", "references"]
+    type_dirs = [
+        "errors",
+        "warnings",
+        "tips",
+        "references",
+        "tasks",
+        "faqs",
+        "notes",
+        "quickstarts",
+        "concepts",
+        "troubleshooting",
+        "comparisons",
+    ]
+
+    prefix_map = {
+        "errors": "err",
+        "warnings": "war",
+        "tips": "tip",
+        "references": "ref",
+        "tasks": "tas",
+        "faqs": "faq",
+        "notes": "not",
+        "quickstarts": "qui",
+        "concepts": "con",
+        "troubleshooting": "tro",
+        "comparisons": "com",
+    }
 
     for type_dir_name in type_dirs:
         type_dir = generated_dir / type_dir_name
         if not type_dir.exists():
             continue
 
-        prefix = {"errors": "err", "warnings": "war", "tips": "tip", "references": "ref"}[
-            type_dir_name
-        ]
+        prefix = prefix_map[type_dir_name]
 
         for md_file in sorted(type_dir.glob("*.md")):
             try:
@@ -95,7 +119,7 @@ def _build_source_manifest(generated_dir: Path) -> dict:
                 continue
 
             source_path = repo / source_rel
-            if not source_path.exists():
+            if not source_path.is_file():
                 continue
 
             template_id = f"{prefix}-{md_file.stem}"
@@ -124,7 +148,10 @@ def _write_manifest(generated_dir: Path) -> int:
     return len(manifest)
 
 
-def check_staleness(generated_dir: Path) -> int:
+def check_staleness(
+    generated_dir: Path,
+    json_output: bool = False,
+) -> int:
     """Check if sources changed since last generation.
 
     Compares current source file hashes against stored
@@ -132,6 +159,7 @@ def check_staleness(generated_dir: Path) -> int:
 
     Args:
         generated_dir: Path to plugin/help/generated/.
+        json_output: If True, print JSON instead of text.
 
     Returns:
         Exit code: 0 if none stale, 1 if any stale.
@@ -140,29 +168,60 @@ def check_staleness(generated_dir: Path) -> int:
     manifest_path = generated_dir / "source_manifest.json"
 
     if not manifest_path.exists():
-        print("No source_manifest.json found.")
-        print("Run: python scripts/generate_all.py")
+        if json_output:
+            print(json.dumps({"error": "no manifest"}))
+        else:
+            print("No source_manifest.json found.")
+            print("Run: python scripts/generate_all.py")
         return 1
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    stale: list[str] = []
+    stale_items: list[dict[str, str]] = []
+    types_affected: set[str] = set()
 
     for template_id, entry in manifest.items():
         source_path = repo / entry["source"]
-        if not source_path.exists():
-            stale.append(f"  {template_id}: source missing ({entry['source']})")
+        if not source_path.is_file():
+            stale_items.append(
+                {
+                    "id": template_id,
+                    "reason": "source missing",
+                    "source": entry["source"],
+                }
+            )
+            types_affected.add(template_id.split("-", 1)[0])
             continue
 
         current_hash = _hash_file(source_path)
         if current_hash != entry["hash"]:
-            stale.append(f"  {template_id}: source changed ({entry['source']})")
+            stale_items.append(
+                {
+                    "id": template_id,
+                    "reason": "source changed",
+                    "source": entry["source"],
+                }
+            )
+            types_affected.add(template_id.split("-", 1)[0])
 
-    if stale:
-        print(f"Stale templates ({len(stale)}):\n")
-        for line in stale[:20]:
-            print(line)
-        if len(stale) > 20:
-            print(f"  ... and {len(stale) - 20} more")
+    if json_output:
+        print(
+            json.dumps(
+                {
+                    "stale_count": len(stale_items),
+                    "stale": stale_items,
+                    "types_affected": sorted(types_affected),
+                    "total_tracked": len(manifest),
+                }
+            )
+        )
+        return 1 if stale_items else 0
+
+    if stale_items:
+        print(f"Stale templates ({len(stale_items)}):\n")
+        for item in stale_items[:20]:
+            print(f"  {item['id']}: {item['reason']} ({item['source']})")
+        if len(stale_items) > 20:
+            print(f"  ... and {len(stale_items) - 20} more")
         print("\nRun: python scripts/generate_all.py")
         return 1
 
@@ -176,10 +235,11 @@ def check_staleness(generated_dir: Path) -> int:
 
 
 def check_coverage(generated_dir: Path) -> int:
-    """Check for undocumented features.
+    """Check for undocumented features across all template types.
 
-    Scans skill directories and MCP tool schemas, reports
-    items without corresponding reference templates.
+    Verifies every skill has concept + task + reference templates,
+    every MCP tool has a reference, and every workflow_map entry
+    has at least one tip.
 
     Args:
         generated_dir: Path to plugin/help/generated/.
@@ -188,22 +248,36 @@ def check_coverage(generated_dir: Path) -> int:
         Exit code: 0 if full coverage, 1 if gaps.
     """
     repo = _repo_root()
-    refs_dir = generated_dir / "references"
-    existing_refs = {f.stem for f in refs_dir.glob("*.md")} if refs_dir.exists() else set()
 
-    gaps: list[str] = []
+    def _existing_stems(subdir: str) -> set[str]:
+        d = generated_dir / subdir
+        return {f.stem for f in d.glob("*.md")} if d.exists() else set()
 
-    # Check skills
+    existing_refs = _existing_stems("references")
+    existing_concepts = _existing_stems("concepts")
+    existing_tasks = _existing_stems("tasks")
+    existing_tips = _existing_stems("tips")
+
+    ref_gaps: list[str] = []
+    concept_gaps: list[str] = []
+    task_gaps: list[str] = []
+    tip_gaps: list[str] = []
+
+    # Check skills: each should have reference + concept + task
     skills_dir = repo / "plugin" / "skills"
     if skills_dir.exists():
         for skill_dir in sorted(skills_dir.iterdir()):
             if not (skill_dir / "SKILL.md").exists():
                 continue
-            expected = f"skill-{skill_dir.name}"
-            if expected not in existing_refs:
-                gaps.append(f"  MISSING: skill '{skill_dir.name}' has no reference template")
+            name = skill_dir.name
+            if f"skill-{name}" not in existing_refs:
+                ref_gaps.append(f"  skill '{name}' — no reference")
+            if f"tool-{name}" not in existing_concepts:
+                concept_gaps.append(f"  skill '{name}' — no concept")
+            if f"use-{name}" not in existing_tasks:
+                task_gaps.append(f"  skill '{name}' — no task")
 
-    # Check MCP tools
+    # Check MCP tools: each should have a reference
     tool_schemas_path = repo / "src" / "attune" / "mcp" / "tool_schemas.py"
     if tool_schemas_path.exists():
         import importlib.util
@@ -220,17 +294,49 @@ def check_coverage(generated_dir: Path) -> int:
                 for tool_name in get_fn():
                     expected = f"tool-{tool_name.replace('_', '-')}"
                     if expected not in existing_refs:
-                        gaps.append(f"  MISSING: tool '{tool_name}' has no reference template")
+                        ref_gaps.append(f"  tool '{tool_name}' — no reference")
 
-    if gaps:
-        print(f"Coverage gaps ({len(gaps)}):\n")
-        for line in gaps:
-            print(line)
+    # Check workflow_map: each workflow should have a tip
+    cross_links_path = generated_dir / "cross_links.json"
+    if cross_links_path.exists():
+        try:
+            cl_data = json.loads(cross_links_path.read_text(encoding="utf-8"))
+            for wf_name in cl_data.get("workflow_map", {}):
+                expected = f"after-{wf_name}"
+                if expected not in existing_tips:
+                    tip_gaps.append(f"  workflow '{wf_name}' — no tip")
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    all_gaps = ref_gaps + concept_gaps + task_gaps + tip_gaps
+    if all_gaps:
+        print(f"Coverage gaps ({len(all_gaps)}):\n")
+        if ref_gaps:
+            print(f"Missing references ({len(ref_gaps)}):")
+            for line in ref_gaps:
+                print(line)
+        if concept_gaps:
+            print(f"\nMissing concepts ({len(concept_gaps)}):")
+            for line in concept_gaps:
+                print(line)
+        if task_gaps:
+            print(f"\nMissing tasks ({len(task_gaps)}):")
+            for line in task_gaps:
+                print(line)
+        if tip_gaps:
+            print(f"\nMissing tips ({len(tip_gaps)}):")
+            for line in tip_gaps:
+                print(line)
         return 1
 
     skill_count = sum(1 for r in existing_refs if r.startswith("skill-"))
     tool_count = sum(1 for r in existing_refs if r.startswith("tool-"))
-    print(f"Full coverage: {skill_count} skills, {tool_count} tools documented.")
+    concept_count = len(existing_concepts)
+    task_count = len(existing_tasks)
+    print(
+        f"Full coverage: {skill_count} skills, {tool_count} tools, "
+        f"{concept_count} concepts, {task_count} tasks documented."
+    )
     return 0
 
 
@@ -250,11 +356,20 @@ def main() -> int:
 
     # Handle --stale flag (standalone check)
     if "--stale" in argv:
-        return check_staleness(generated_dir)
+        return check_staleness(
+            generated_dir,
+            json_output="--json" in argv,
+        )
 
     # Handle --coverage flag (standalone check)
     if "--coverage" in argv:
         return check_coverage(generated_dir)
+
+    # Handle --manifest-only flag (rebuild manifest without generators)
+    if "--manifest-only" in argv:
+        count = _write_manifest(generated_dir)
+        print(f"Source manifest: {count} entries written.")
+        return 0
 
     check = "--check" in argv
     mode = "Verifying" if check else "Generating"

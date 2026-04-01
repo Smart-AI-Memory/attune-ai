@@ -2,7 +2,7 @@
 type: faq
 name: rebuild-dist-after-readme-changes
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about rebuild dist after README changes?

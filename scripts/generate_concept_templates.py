@@ -263,6 +263,81 @@ _CONCEPTS: list[dict] = [
 ]
 
 
+def _discover_concepts_from_skills(repo_root: Path) -> list[dict]:
+    """Auto-derive concept templates from plugin skill definitions.
+
+    Reads each SKILL.md's frontmatter (name, description) and
+    generates a concept dict. Only creates entries for skills
+    that don't already have a curated concept in _CONCEPTS.
+
+    Args:
+        repo_root: Repository root directory.
+
+    Returns:
+        List of concept dicts for newly discovered skills.
+    """
+    import frontmatter
+
+    skills_dir = repo_root / "plugin" / "skills"
+    if not skills_dir.exists():
+        return []
+
+    curated_names = {c["name"] for c in _CONCEPTS}
+    output_dir = repo_root / "plugin" / "help" / "generated" / "concepts"
+    discovered: list[dict] = []
+
+    for skill_dir in sorted(skills_dir.iterdir()):
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.exists():
+            continue
+
+        try:
+            post = frontmatter.load(str(skill_md))
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: skip unparseable skill files
+            continue
+
+        skill_name = post.get("name", skill_dir.name)
+        concept_name = f"tool-{skill_name}"
+
+        # Skip if a curated concept already exists
+        if concept_name in curated_names:
+            continue
+
+        # Skip if a hand-written concept already exists on disk
+        # (tagged with non-auto-discovered tags)
+        existing = output_dir / f"{concept_name}.md"
+        if existing.exists():
+            try:
+                existing_post = frontmatter.load(str(existing))
+                tags = existing_post.get("tags", [])
+                if "auto-discovered" not in (tags if isinstance(tags, list) else []):
+                    continue  # Hand-written, don't overwrite
+            except Exception:  # noqa: BLE001
+                pass
+
+        description = post.get("description", "")
+        # Strip trigger info from description (after "Triggers on:")
+        short_desc = description.split("Triggers on:")[0].strip().rstrip(".")
+
+        discovered.append(
+            {
+                "name": concept_name,
+                "title": skill_name.replace("-", " ").title(),
+                "what": short_desc or f"The {skill_name} skill.",
+                "why": (
+                    "See the full reference for details on what "
+                    "this tool checks and when to use it."
+                ),
+                "how": f"Run `/{skill_name}` to get started.",
+                "tags": ["skill", "auto-discovered"],
+                "source": f"plugin/skills/{skill_dir.name}/SKILL.md",
+            }
+        )
+
+    return discovered
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the Concept template generator."""
     if argv is None:
@@ -278,8 +353,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {templates_dir} not found")
         return 1
 
-    concepts = [ConceptTemplate(**c) for c in _CONCEPTS]
-    print(f"  Concepts: {len(concepts)} found")
+    # Merge curated + auto-discovered (curated takes precedence)
+    all_concept_dicts = list(_CONCEPTS)
+    discovered = _discover_concepts_from_skills(repo_root)
+    all_concept_dicts.extend(discovered)
+
+    concepts = [ConceptTemplate(**c) for c in all_concept_dicts]
+    print(f"  Concepts: {len(concepts)} found ({len(discovered)} auto-discovered)")
 
     env = Environment(
         loader=FileSystemLoader(str(templates_dir)),

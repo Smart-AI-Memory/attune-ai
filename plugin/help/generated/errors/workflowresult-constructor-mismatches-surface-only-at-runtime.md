@@ -3,7 +3,7 @@ type: error
 name: workflowresult-constructor-mismatches-surface-only-at-runtime
 confidence: Verified
 tags: [testing, git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `WorkflowResult` constructor mismatches surface only at

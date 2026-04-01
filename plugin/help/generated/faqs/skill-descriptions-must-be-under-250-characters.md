@@ -2,7 +2,7 @@
 type: faq
 name: skill-descriptions-must-be-under-250-characters
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about skill descriptions must be under 250 characters?

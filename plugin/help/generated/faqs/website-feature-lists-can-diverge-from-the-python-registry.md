@@ -1,7 +1,7 @@
 ---
 type: faq
 name: website-feature-lists-can-diverge-from-the-python-registry
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about website feature lists can diverge from the Python registry?

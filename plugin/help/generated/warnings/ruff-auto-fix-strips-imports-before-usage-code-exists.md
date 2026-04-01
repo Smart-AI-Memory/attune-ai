@@ -3,7 +3,7 @@ type: warning
 name: ruff-auto-fix-strips-imports-before-usage-code-exists
 confidence: Verified
 tags: [imports, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Ruff auto-fix strips imports before usage code exists

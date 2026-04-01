@@ -3,7 +3,7 @@ type: warning
 name: mcp-handler-validate-paths-before-importing-workflows
 confidence: Verified
 tags: [security, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: MCP handler: validate paths before importing workflows

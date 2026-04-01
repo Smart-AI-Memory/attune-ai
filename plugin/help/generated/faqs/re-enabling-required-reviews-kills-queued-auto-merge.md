@@ -2,7 +2,7 @@
 type: faq
 name: re-enabling-required-reviews-kills-queued-auto-merge
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about re-enabling required reviews kills queued auto-merge?

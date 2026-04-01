@@ -2,7 +2,7 @@
 type: faq
 name: codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about codeQL js/stored-xss flags JSX even though React auto-escapes?

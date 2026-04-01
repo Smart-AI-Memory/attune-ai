@@ -2,7 +2,7 @@
 type: faq
 name: changing-user-facing-output-strings-cascades-through-test
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about changing user-facing output strings cascades through test assertions?

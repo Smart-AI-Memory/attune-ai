@@ -3,7 +3,7 @@ type: error
 name: custom-mcp-stdio-loop-fails-claude-code-handshake
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Custom MCP stdio loop fails Claude Code handshake

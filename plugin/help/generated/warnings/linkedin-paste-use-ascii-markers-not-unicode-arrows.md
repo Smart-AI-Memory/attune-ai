@@ -2,7 +2,7 @@
 type: warning
 name: linkedin-paste-use-ascii-markers-not-unicode-arrows
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: LinkedIn paste: use ASCII markers, not Unicode arrows

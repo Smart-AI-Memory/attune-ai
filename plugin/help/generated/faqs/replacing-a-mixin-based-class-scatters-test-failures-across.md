@@ -2,7 +2,7 @@
 type: faq
 name: replacing-a-mixin-based-class-scatters-test-failures-across
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does replacing a mixin-based class scatters test failures across many files?

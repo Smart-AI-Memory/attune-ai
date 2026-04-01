@@ -77,6 +77,17 @@ doc_orchestrator(path="<target>")
 |------|---------|
 ```
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="doc-gen", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+documentation generation — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:

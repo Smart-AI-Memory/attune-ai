@@ -2,7 +2,7 @@
 type: faq
 name: kwargs-collides-with-explicit-params-of-the-same-name
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about **kwargs collides with explicit params of the same name?

@@ -3,7 +3,7 @@ type: error
 name: costreport-is-a-dataclass-not-a-dict
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `CostReport` is a dataclass, not a dict

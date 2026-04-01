@@ -3,7 +3,7 @@ type: warning
 name: push-specific-tags-not-tags
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Push specific tags, not `--tags`

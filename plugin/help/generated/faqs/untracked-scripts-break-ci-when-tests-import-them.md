@@ -2,7 +2,7 @@
 type: faq
 name: untracked-scripts-break-ci-when-tests-import-them
 tags: [ci, testing, imports, git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ModuleNotFoundError` (untracked scripts break CI when tests import them)?

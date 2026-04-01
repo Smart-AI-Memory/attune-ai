@@ -70,6 +70,17 @@ test_gen_parallel(top=10)
 |------|---------------|------------|
 ```
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="smart-test", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+test generation — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:

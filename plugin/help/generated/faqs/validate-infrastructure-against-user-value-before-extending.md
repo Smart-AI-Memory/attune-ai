@@ -2,7 +2,7 @@
 type: faq
 name: validate-infrastructure-against-user-value-before-extending
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about validate infrastructure against user value before extending?

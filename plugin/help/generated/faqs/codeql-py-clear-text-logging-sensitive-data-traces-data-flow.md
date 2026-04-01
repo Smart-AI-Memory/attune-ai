@@ -2,7 +2,7 @@
 type: faq
 name: codeql-py-clear-text-logging-sensitive-data-traces-data-flow
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about codeQL py/clear-text-logging-sensitive-data traces data flow, not literal secrets?

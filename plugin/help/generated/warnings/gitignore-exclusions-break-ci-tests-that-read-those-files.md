@@ -3,7 +3,7 @@ type: warning
 name: gitignore-exclusions-break-ci-tests-that-read-those-files
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `.gitignore` exclusions break CI tests that read those

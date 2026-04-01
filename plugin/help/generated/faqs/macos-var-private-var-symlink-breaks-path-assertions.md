@@ -2,7 +2,7 @@
 type: faq
 name: macos-var-private-var-symlink-breaks-path-assertions
 tags: [testing, security, windows, macos, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does macOS /var → /private/var symlink breaks path assertions?

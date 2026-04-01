@@ -2,7 +2,7 @@
 type: faq
 name: mcp-tool-renames-propagate-to-skill-docs
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about MCP tool renames propagate to skill docs?

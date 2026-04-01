@@ -2,7 +2,7 @@
 type: faq
 name: workflowresult-constructor-mismatches-surface-only-at-runtime
 tags: [testing, git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about workflowResult constructor mismatches surface only at runtime?

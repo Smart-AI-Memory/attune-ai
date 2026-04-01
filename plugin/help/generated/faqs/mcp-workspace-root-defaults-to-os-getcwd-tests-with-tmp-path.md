@@ -2,7 +2,7 @@
 type: faq
 name: mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does MCP workspace_root defaults to os.getcwd() — tests with tmp_path fail?

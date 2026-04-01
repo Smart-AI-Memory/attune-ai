@@ -2,7 +2,7 @@
 type: faq
 name: pytest-importorskip-triggers-ruff-e402
 tags: [testing, imports, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about pytest.importorskip triggers ruff E402?

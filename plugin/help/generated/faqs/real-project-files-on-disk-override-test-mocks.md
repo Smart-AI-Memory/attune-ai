@@ -2,7 +2,7 @@
 type: faq
 name: real-project-files-on-disk-override-test-mocks
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about real project files on disk override test mocks?

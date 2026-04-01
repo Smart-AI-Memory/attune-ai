@@ -2,7 +2,7 @@
 type: faq
 name: list-wizards-is-a-function-not-a-class-method
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about list_wizards() is a function, not a class method?

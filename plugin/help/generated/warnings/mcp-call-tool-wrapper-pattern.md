@@ -3,7 +3,7 @@ type: warning
 name: mcp-call-tool-wrapper-pattern
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: MCP `call_tool` wrapper pattern

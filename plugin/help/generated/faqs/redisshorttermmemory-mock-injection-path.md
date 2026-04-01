@@ -2,7 +2,7 @@
 type: faq
 name: redisshorttermmemory-mock-injection-path
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about redisShortTermMemory mock injection path?

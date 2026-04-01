@@ -3,7 +3,7 @@ type: error
 name: pytest-importorskip-triggers-ruff-e402
 confidence: Verified
 tags: [testing, imports, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `pytest.importorskip` triggers ruff E402

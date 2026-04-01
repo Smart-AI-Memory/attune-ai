@@ -2,7 +2,7 @@
 type: faq
 name: new-dataclass-fields-need-both-the-class-and-the-parser-updated
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about new dataclass fields need both the class AND the parser updated?

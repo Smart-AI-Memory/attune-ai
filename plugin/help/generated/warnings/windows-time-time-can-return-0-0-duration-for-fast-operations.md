@@ -3,7 +3,7 @@ type: warning
 name: windows-time-time-can-return-0-0-duration-for-fast-operations
 confidence: Verified
 tags: [testing, windows]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Windows `time.time()` can return 0.0 duration for fast

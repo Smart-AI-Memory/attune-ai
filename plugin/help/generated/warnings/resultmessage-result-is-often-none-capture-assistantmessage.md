@@ -2,7 +2,7 @@
 type: warning
 name: resultmessage-result-is-often-none-capture-assistantmessage
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `ResultMessage.result` is often `None` — capture

@@ -2,7 +2,7 @@
 type: faq
 name: pre-commit-stash-conflicts-when-any-tracked-unstaged-file
 tags: [testing, git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about pre-commit stash conflicts when any tracked unstaged file exists alongside staged files?

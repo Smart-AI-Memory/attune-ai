@@ -2,7 +2,7 @@
 type: faq
 name: enforce-admins-required-reviews-blocks-solo-dev-merges
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does enforce_admins + required reviews blocks solo-dev merges?

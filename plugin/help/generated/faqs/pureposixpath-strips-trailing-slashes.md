@@ -2,7 +2,7 @@
 type: faq
 name: pureposixpath-strips-trailing-slashes
 tags: [testing, security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about purePosixPath strips trailing slashes?

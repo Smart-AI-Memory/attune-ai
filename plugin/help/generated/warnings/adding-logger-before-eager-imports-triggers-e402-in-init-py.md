@@ -3,7 +3,7 @@ type: warning
 name: adding-logger-before-eager-imports-triggers-e402-in-init-py
 confidence: Verified
 tags: [imports, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Adding `logger` before eager imports triggers E402 in

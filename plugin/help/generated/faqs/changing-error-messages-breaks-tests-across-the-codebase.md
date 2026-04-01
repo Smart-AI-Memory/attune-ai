@@ -2,7 +2,7 @@
 type: faq
 name: changing-error-messages-breaks-tests-across-the-codebase
 tags: [testing, security, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does changing error messages breaks tests across the codebase?

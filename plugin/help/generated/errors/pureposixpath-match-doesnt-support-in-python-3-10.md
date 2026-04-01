@@ -3,7 +3,7 @@ type: error
 name: pureposixpath-match-doesnt-support-in-python-3-10
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `PurePosixPath.match()` doesn't support `**` in Python 3.10

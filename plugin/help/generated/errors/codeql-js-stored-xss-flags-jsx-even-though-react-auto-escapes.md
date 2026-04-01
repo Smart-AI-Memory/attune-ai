@@ -3,7 +3,7 @@ type: error
 name: codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes
 confidence: Verified
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: CodeQL `js/stored-xss` flags JSX even though React auto-escapes

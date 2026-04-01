@@ -2,7 +2,7 @@
 type: faq
 name: hot-reload-subsystem-was-1-038-lines-of-dead-code
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about hot_reload/ subsystem was 1,038 lines of dead code?

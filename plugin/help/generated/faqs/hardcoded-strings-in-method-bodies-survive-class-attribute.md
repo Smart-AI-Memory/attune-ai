@@ -1,7 +1,7 @@
 ---
 type: faq
 name: hardcoded-strings-in-method-bodies-survive-class-attribute
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about hardcoded strings in method bodies survive class attribute renames?

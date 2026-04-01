@@ -2,7 +2,7 @@
 type: faq
 name: dont-append-z-to-timezone-aware-isoformat
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about don't append + "Z" to timezone-aware .isoformat()?

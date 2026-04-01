@@ -2,7 +2,7 @@
 type: faq
 name: codeql-alerts-dismissible-in-bulk-via-gh-api
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about codeQL alerts dismissible in bulk via gh api?

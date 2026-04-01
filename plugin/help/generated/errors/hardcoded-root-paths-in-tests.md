@@ -3,7 +3,7 @@ type: error
 name: hardcoded-root-paths-in-tests
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Hardcoded `/root/` paths in tests

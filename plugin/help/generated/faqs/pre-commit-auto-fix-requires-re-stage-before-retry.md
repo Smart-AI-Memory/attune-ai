@@ -2,7 +2,7 @@
 type: faq
 name: pre-commit-auto-fix-requires-re-stage-before-retry
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about pre-commit auto-fix requires re-stage before retry?

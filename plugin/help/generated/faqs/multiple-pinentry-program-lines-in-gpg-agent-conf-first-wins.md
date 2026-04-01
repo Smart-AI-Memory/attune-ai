@@ -1,7 +1,7 @@
 ---
 type: faq
 name: multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about multiple pinentry-program lines in gpg-agent.conf — first wins?

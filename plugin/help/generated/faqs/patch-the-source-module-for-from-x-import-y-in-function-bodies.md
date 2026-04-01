@@ -2,7 +2,7 @@
 type: faq
 name: patch-the-source-module-for-from-x-import-y-in-function-bodies
 tags: [testing, security, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about patch the source module for from ..X import Y in function bodies?

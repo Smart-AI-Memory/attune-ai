@@ -2,7 +2,7 @@
 type: faq
 name: next-js-shared-data-libs-prevent-page-duplication
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about next.js shared data libs prevent page duplication?

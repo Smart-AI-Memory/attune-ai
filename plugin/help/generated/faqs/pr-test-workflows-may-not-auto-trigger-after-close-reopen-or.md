@@ -2,7 +2,7 @@
 type: faq
 name: pr-test-workflows-may-not-auto-trigger-after-close-reopen-or
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about PR test workflows may not auto-trigger after close/reopen or branch reuse?

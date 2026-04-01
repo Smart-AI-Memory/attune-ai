@@ -2,7 +2,7 @@
 type: faq
 name: any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about any unstaged file triggers pre-commit stash conflicts with auto-fix?

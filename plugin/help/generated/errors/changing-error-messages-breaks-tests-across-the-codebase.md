@@ -3,7 +3,7 @@ type: error
 name: changing-error-messages-breaks-tests-across-the-codebase
 confidence: Verified
 tags: [testing, security, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Changing error messages breaks tests across the codebase

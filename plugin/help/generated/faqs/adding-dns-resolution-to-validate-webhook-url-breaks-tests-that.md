@@ -2,7 +2,7 @@
 type: faq
 name: adding-dns-resolution-to-validate-webhook-url-breaks-tests-that
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does adding DNS resolution to _validate_webhook_url breaks tests that pass real hostnames?

@@ -2,7 +2,7 @@
 type: faq
 name: config-py-alongside-config-creates-a-mypy-duplicate-module
 tags: [imports, git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: How do I handle config.py alongside config/ creates a mypy duplicate module?

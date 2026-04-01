@@ -3,7 +3,7 @@ type: error
 name: mcp-tool-renames-propagate-to-skill-docs
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: MCP tool renames propagate to skill docs

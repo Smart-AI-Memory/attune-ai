@@ -2,7 +2,7 @@
 type: faq
 name: github-protected-tags-cannot-be-force-updated
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why gitHub protected tags cannot be force-updated?

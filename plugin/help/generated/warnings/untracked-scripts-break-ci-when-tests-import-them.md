@@ -3,7 +3,7 @@ type: warning
 name: untracked-scripts-break-ci-when-tests-import-them
 confidence: Verified
 tags: [ci, testing, imports, git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Untracked scripts break CI when tests import them

@@ -3,7 +3,7 @@ type: error
 name: gpg-signing-fails-in-non-interactive-terminals-vscode-extension
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: GPG signing fails in non-interactive terminals (VSCode

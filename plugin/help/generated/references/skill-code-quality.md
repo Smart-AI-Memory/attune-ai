@@ -74,6 +74,17 @@ deep_review(path="<user-specified path>")
 |------|---------|------------|
 ```
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="code-quality", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+code quality reviews — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:

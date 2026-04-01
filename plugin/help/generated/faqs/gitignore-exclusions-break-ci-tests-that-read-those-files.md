@@ -2,7 +2,7 @@
 type: faq
 name: gitignore-exclusions-break-ci-tests-that-read-those-files
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does .gitignore exclusions break CI tests that read those files?

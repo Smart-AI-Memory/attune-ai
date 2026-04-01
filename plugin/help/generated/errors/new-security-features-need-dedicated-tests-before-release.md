@@ -3,7 +3,7 @@ type: error
 name: new-security-features-need-dedicated-tests-before-release
 confidence: Verified
 tags: [testing, security, imports, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: New security features need dedicated tests before release

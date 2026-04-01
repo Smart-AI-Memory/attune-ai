@@ -74,7 +74,7 @@ class WarningTemplate:
     confidence: str = "Verified"
     confidence_reason: str = "Confirmed by prior incident (Lessons Learned)"
     tags: list[str] = field(default_factory=list)
-    source: str = "CLAUDE.md Lessons Learned"
+    source: str = ".claude/CLAUDE.md"
     related_topics: list[dict[str, str]] = field(default_factory=list)
 
 

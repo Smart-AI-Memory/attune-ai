@@ -68,6 +68,20 @@ Use clickable file links: `[file.py:123](path#L123)`
 - Broad exception handling that masks errors
 - Missing input validation
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="security-audit",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+security audits — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:

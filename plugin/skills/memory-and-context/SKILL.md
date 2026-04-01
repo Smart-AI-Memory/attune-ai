@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Memory and Context
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Memory and Context** manages persistent memory across
 > sessions — store, retrieve, search, and forget

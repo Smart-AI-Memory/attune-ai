@@ -3,7 +3,7 @@ type: error
 name: datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the
 confidence: Verified
 tags: [testing, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `datetime.utcnow()` → `datetime.now(timezone.utc)` cascades

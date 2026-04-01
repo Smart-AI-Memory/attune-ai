@@ -1,302 +1,2712 @@
 {
+  "com-auth-strategies": {
+    "source": "src/attune/models/auth_cli.py",
+    "hash": "a67909ffce327c85d8308d335169dda2bb2714d4c9749ac5fd852a9b6c685283",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "com-workflow-vs-wizard": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-audience-adaptation": {
+    "source": "src/attune/help/transformers.py",
+    "hash": "00861e98056d93ab47c8ca43e64c941c802a1876da7faaad2ed0f825d698938c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-cross-linking": {
+    "source": "scripts/build_cross_links.py",
+    "hash": "f271a7146802a35388670a2541ab016e3358a78bf5aa876f30f9af1d4d4344b0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-feedback-loop": {
+    "source": "src/attune/help/engine.py",
+    "hash": "fb2e640808ea8bf679e5c6898c32ad85b71eb4508a53b30d6a62527574ad20aa",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-progressive-depth": {
+    "source": "src/attune/help/engine.py",
+    "hash": "fb2e640808ea8bf679e5c6898c32ad85b71eb4508a53b30d6a62527574ad20aa",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-socratic-discovery": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-sync-paradigm": {
+    "source": "scripts/generate_all.py",
+    "hash": "352f37af61e1915e38e6306ff68cbf130fc89d79a1b6e2dbff1c5a1224bd3cfe",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-template-composition": {
+    "source": "src/attune/help/engine.py",
+    "hash": "fb2e640808ea8bf679e5c6898c32ad85b71eb4508a53b30d6a62527574ad20aa",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tier-routing": {
+    "source": "src/attune/workflows/base.py",
+    "hash": "7ac6d031ad704a95ef26d96646a48441a153b29e251e1a0de3533d7b4efad38b",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-attune-hub": {
+    "source": "plugin/skills/attune-hub/SKILL.md",
+    "hash": "bb890fbc97e092d5a5556efae13d6142e3f433e2cfa123025d1aa3aee268fcd4",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-bug-predict": {
+    "source": "plugin/skills/bug-predict/SKILL.md",
+    "hash": "61e382efaaf27d510cf46d6e2368c9ff8290e394372e4338dce16d6264ad2000",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-code-quality": {
+    "source": "plugin/skills/code-quality/SKILL.md",
+    "hash": "079c1120a85e4bce1a68e440f1b1328702ef845bdb89e2889e59084b129e9228",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-doc-gen": {
+    "source": "plugin/skills/doc-gen/SKILL.md",
+    "hash": "b04cd51b25dfdcfdf930f8c31e7292512926c8481483335cd59bb61257a6bd64",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-fix-test": {
+    "source": "plugin/skills/fix-test/SKILL.md",
+    "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-learn": {
+    "source": "plugin/skills/learn/SKILL.md",
+    "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-memory-and-context": {
+    "source": "plugin/skills/memory-and-context/SKILL.md",
+    "hash": "b116352b49b4a6e3b695e58b4858d160ebcb23491073c329d2fbf41dbf0442a0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-planning": {
+    "source": "plugin/skills/planning/SKILL.md",
+    "hash": "4e9b0b273a476909bcabde3df3acc5bb0ac4402a300d2979610bc2db561486d7",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-refactor-plan": {
+    "source": "plugin/skills/refactor-plan/SKILL.md",
+    "hash": "690aefc255fd4a8f7923e9a3b1d14c12ff55c0fa889cc090769d4dd1860e4942",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-release-prep": {
+    "source": "plugin/skills/release-prep/SKILL.md",
+    "hash": "f59afd7b8126d3b470bb678f4c6c087fa7cc8d79546a63633c31e6c079df0fe8",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-security-audit": {
+    "source": "plugin/skills/security-audit/SKILL.md",
+    "hash": "8dc74e347ebfd0dd494901bb29595264b70652cbeda9645dc812a776ff14b7d6",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-smart-test": {
+    "source": "plugin/skills/smart-test/SKILL.md",
+    "hash": "ac818ca038f05c13a677103d67a974508d29cf46bc7a2bfb374248990d6f7f88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-spec": {
+    "source": "plugin/skills/spec/SKILL.md",
+    "hash": "1513b310e263f6b30ab190d2e432eac103c6f7dc30dde1988063b88a8167c8fd",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-tool-workflow-orchestration": {
+    "source": "plugin/skills/workflow-orchestration/SKILL.md",
+    "hash": "37840307ac63cd84b39a4862d1b2a2c83a47951d30ca5e95338744573aab9963",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "con-workflow-chain-prediction": {
+    "source": "src/attune/workflows/suggestions.py",
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-adding-logger-before-eager-imports-triggers-e402-in-init-py": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-anthropics-built-in-prompt-caching-supersedes-custom-caching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-attune-skill-names-must-not-collide-with-claude-code-built-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-b904-raise-x-from-e-is-not-auto-fixable-by-ruff": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-background-processes-from-previous-sessions-persist-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-bandit-b108-blocks-hardcoded-tmp-paths": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-baseworkflow-now-provides-self-logger": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-baseworkflow-uses-class-attributes-not-constructor-params": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-broad-gitignore-patterns-match-nested-directories": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-bug-predict-dangerous-eval-flags-subprocess-exec": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-bugpredictionworkflow-not-bugpredictworkflow": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-changing-error-messages-breaks-tests-across-the-codebase": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-changing-user-facing-output-strings-cascades-through-test": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ci-timeout-tests-enforce-the-range-you-set": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-claude-code-plugin-is-platform-specific": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-claude-code-plugins-expect-plugin-json-inside-claude-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-claude-plugin-install-is-marketplace-only": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-clusterfuzzlite-no-deps-misses-transitive-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-codeql-alerts-dismissible-in-bulk-via-gh-api": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-codeql-py-clear-text-logging-sensitive-data-traces-data-flow": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-commands-are-not-namespaced-in-plugins-skills-are": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-config-py-alongside-config-creates-a-mypy-duplicate-module": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-costreport-is-a-dataclass-not-a-dict": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-dead-code-modules-with-full-test-suites-look-alive": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-deep-review-false-positives-verify-before-acting": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-dispatch-tables-hold-direct-function-references-mocks-must": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-dist-can-contain-stale-artifacts-after-version-bumps": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-dont-append-z-to-timezone-aware-isoformat": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-duplicate-plugins-cause-conflicting-skill-triggers": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-enforce-admins-false-defeats-code-review-scorecard-check": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-enforce-admins-required-reviews-blocks-solo-dev-merges": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-exploration-agents-fabricate-names-verify-against-source": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-full-coverage-runs-on-15k-test-suites-timeout-easily": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ghost-command-references-survive-cli-renames": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-github-protected-tags-cannot-be-force-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-github-repos-serve-as-claude-code-marketplaces": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-gitignore-exclusions-break-ci-tests-that-read-those-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-gpg-signing-fails-in-non-interactive-terminals-vscode-extension": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-hardcoded-root-paths-in-tests": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-hardcoded-strings-in-method-bodies-survive-class-attribute": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-hardcoded-user-id-defeats-ownership-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-importlib-import-module-is-an-arbitrary-code-execution-vector": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-is-private-is-a-superset-in-python-ipaddress": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-kwargs-collides-with-explicit-params-of-the-same-name": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-lazy-imports-inside-function-bodies-cant-be-patched-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-linkedin-paste-use-ascii-markers-not-unicode-arrows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-list-wizards-is-a-function-not-a-class-method": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-list-workflows-deduplication-must-keep-base-names-visible": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-macos-var-private-var-symlink-breaks-path-assertions": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-call-tool-wrapper-pattern": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-handler-validate-paths-before-importing-workflows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-tool-count-tests-are-hardcoded": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-tool-renames-propagate-to-skill-docs": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mixin-classes-inherit-self-workspace-root-at-runtime-not-at": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mkdocs-strict-treats-broken-links-as-fatal-errors": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-modeltier-has-two-copies-imports-must-match": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-module-level-optional-imports-enable-clean-test-patching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-mypy-437-errors-was-stale-actual-count-was-2": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-new-dataclass-fields-need-both-the-class-and-the-parser-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-new-security-features-need-dedicated-tests-before-release": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-next-js-shared-data-libs-prevent-page-duplication": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-non-baseworkflow-classes-in-workflow-registry-crash-the-cli": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-patch-requires-the-target-name-to-exist-at-module-scope-at": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-patch-the-source-module-for-from-x-import-y-in-function-bodies": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pip-audit-fails-on-unpublished-versions": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-plugin-read-skill-references-break-outside-the-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pre-commit-auto-fix-requires-re-stage-before-retry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pre-commit-black-unstaged-files-re-stage-after-failure": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pre-commit-stash-conflict-when-black-ruff-fix-files-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pre-commit-stash-conflict-with-auto-fix-hooks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pre-commit-stash-conflicts-when-any-tracked-unstaged-file": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pull-main-before-merging-develop-to-avoid-merge-commits": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pureposixpath-match-doesnt-support-in-python-3-10": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pureposixpath-strips-trailing-slashes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-push-specific-tags-not-tags": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pypi-renders-readme-links-relative-to-its-own-domain": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-pytest-importorskip-triggers-ruff-e402": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-re-enabling-required-reviews-kills-queued-auto-merge": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-read-source-before-writing-tests-for-tricky-logic": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-real-project-files-on-disk-override-test-mocks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-rebuild-dist-after-readme-changes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-redisshorttermmemory-mock-injection-path": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-registry-count-assertions-are-scattered-across-test-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-replacing-a-mixin-based-class-scatters-test-failures-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-repo-merge-policy-may-restrict-merge-strategies": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-required-status-check-names-must-match-githubs-exact-check-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-resultmessage-result-is-often-none-capture-assistantmessage": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ruff-parses-pytest-ini-as-python": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-run-simplify-catches-per-file-errors-internally": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-scorecards-pip-parser-ignores-hash-flags-entirely": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-sdk-agent-model-config-uses-stale-model-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-sdk-native-workflows-validate-in-execute-not-input-schema": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-semantic-cache-70-hit-rate-claim-was-unmeasured": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-session-hooks-may-be-vestigial": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-shadow-directories-at-repo-root-break-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-silent-pass-blocks-in-discovery-registry-code-hide-import": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-skill-descriptions-must-be-under-250-characters": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-skill-frontmatter-allowlist-march-2026": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-skill-frontmatter-has-a-strict-allowlist": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ssrf-always-decode-urls-before-validating-hostnames": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ssrf-in-webhook-handlers-is-easy-to-miss": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-ssrf-strip-ipv6-zone-ids-before-ip-validation": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-stacked-patch-decorators-inject-args-bottom-up": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-stop-hook-ordering-matters": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-stop-hooks-inject-stderr-not-stdout": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-stop-hooks-loop-without-a-sentinel": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-stop-hooks-missing-cd-prefix-inherit-session-cwd": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-structlog-kwargs-vs-stdlib-logger": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-test-mocks-must-match-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-tests-for-optional-dep-code-need-pytest-importorskip-guards-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-untracked-scripts-break-ci-when-tests-import-them": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-validate-file-path-needed-on-reads-too-not-just-writes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-validate-infrastructure-against-user-value-before-extending": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-verify-mcp-tool-wiring-after-adding-new-tools": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-verify-new-dispatch-branches-with-a-known-fixture-not-just": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-website-feature-lists-can-diverge-from-the-python-registry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-windows-ci-encoding": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-windows-ci-runners-are-3x-slower-than-ubuntu-macos": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-windows-path-resolve-prepends-the-drive-letter-to-unix-paths": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-windows-time-time-can-return-0-0-duration-for-fast-operations": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-wizards-call-workflows-internally-they-are-not-duplicates": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-workflowresult-constructor-mismatches-surface-only-at-runtime": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "err-yaml-run-values-with-colons-cause-parse-errors": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-adding-logger-before-eager-imports-triggers-e402-in-init-py": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-anthropics-built-in-prompt-caching-supersedes-custom-caching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-attune-skill-names-must-not-collide-with-claude-code-built-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-b904-raise-x-from-e-is-not-auto-fixable-by-ruff": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-background-processes-from-previous-sessions-persist-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-bandit-b108-blocks-hardcoded-tmp-paths": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-baseworkflow-now-provides-self-logger": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-baseworkflow-uses-class-attributes-not-constructor-params": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-broad-gitignore-patterns-match-nested-directories": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-bug-predict-dangerous-eval-flags-subprocess-exec": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-bugpredictionworkflow-not-bugpredictworkflow": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-changing-error-messages-breaks-tests-across-the-codebase": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-changing-user-facing-output-strings-cascades-through-test": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ci-timeout-tests-enforce-the-range-you-set": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-claude-code-plugin-is-platform-specific": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-claude-code-plugins-expect-plugin-json-inside-claude-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-claude-plugin-install-is-marketplace-only": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-clusterfuzzlite-no-deps-misses-transitive-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-codeql-alerts-dismissible-in-bulk-via-gh-api": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-codeql-js-stored-xss-flags-jsx-even-though-react-auto-escapes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-codeql-py-clear-text-logging-sensitive-data-traces-data-flow": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-commands-are-not-namespaced-in-plugins-skills-are": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-config-py-alongside-config-creates-a-mypy-duplicate-module": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-costreport-is-a-dataclass-not-a-dict": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-dead-code-modules-with-full-test-suites-look-alive": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-deep-review-false-positives-verify-before-acting": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-dependency-lower-bounds-trigger-scorecard-vulnerability-alerts": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-dispatch-tables-hold-direct-function-references-mocks-must": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-dist-can-contain-stale-artifacts-after-version-bumps": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-dont-append-z-to-timezone-aware-isoformat": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-duplicate-plugins-cause-conflicting-skill-triggers": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-enforce-admins-false-defeats-code-review-scorecard-check": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-enforce-admins-required-reviews-blocks-solo-dev-merges": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-exploration-agents-fabricate-names-verify-against-source": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-full-coverage-runs-on-15k-test-suites-timeout-easily": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ghost-command-references-survive-cli-renames": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-github-protected-tags-cannot-be-force-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-github-repos-serve-as-claude-code-marketplaces": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-gitignore-exclusions-break-ci-tests-that-read-those-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-gpg-signing-fails-in-non-interactive-terminals-vscode-extension": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-hardcoded-root-paths-in-tests": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-hardcoded-strings-in-method-bodies-survive-class-attribute": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-hardcoded-user-id-defeats-ownership-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-importlib-import-module-is-an-arbitrary-code-execution-vector": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-is-private-is-a-superset-in-python-ipaddress": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-kwargs-collides-with-explicit-params-of-the-same-name": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-lazy-imports-inside-function-bodies-cant-be-patched-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-linkedin-paste-use-ascii-markers-not-unicode-arrows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-list-wizards-is-a-function-not-a-class-method": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-list-workflows-deduplication-must-keep-base-names-visible": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-macos-var-private-var-symlink-breaks-path-assertions": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-call-tool-wrapper-pattern": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-handler-validate-paths-before-importing-workflows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-tool-count-tests-are-hardcoded": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-tool-renames-propagate-to-skill-docs": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mixin-classes-inherit-self-workspace-root-at-runtime-not-at": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mkdocs-strict-treats-broken-links-as-fatal-errors": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-modeltier-has-two-copies-imports-must-match": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-module-level-optional-imports-enable-clean-test-patching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-mypy-437-errors-was-stale-actual-count-was-2": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-new-dataclass-fields-need-both-the-class-and-the-parser-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-new-security-features-need-dedicated-tests-before-release": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-next-js-shared-data-libs-prevent-page-duplication": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-non-baseworkflow-classes-in-workflow-registry-crash-the-cli": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-patch-requires-the-target-name-to-exist-at-module-scope-at": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-patch-the-source-module-for-from-x-import-y-in-function-bodies": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pip-audit-fails-on-unpublished-versions": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-plugin-read-skill-references-break-outside-the-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pr-test-workflows-may-not-auto-trigger-after-close-reopen-or": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pre-commit-auto-fix-requires-re-stage-before-retry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pre-commit-black-unstaged-files-re-stage-after-failure": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pre-commit-stash-conflict-when-black-ruff-fix-files-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pre-commit-stash-conflict-with-auto-fix-hooks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pre-commit-stash-conflicts-when-any-tracked-unstaged-file": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pull-main-before-merging-develop-to-avoid-merge-commits": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pureposixpath-match-doesnt-support-in-python-3-10": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pureposixpath-strips-trailing-slashes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-push-specific-tags-not-tags": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pypi-renders-readme-links-relative-to-its-own-domain": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-pytest-importorskip-triggers-ruff-e402": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-re-enabling-required-reviews-kills-queued-auto-merge": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-read-source-before-writing-tests-for-tricky-logic": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-real-project-files-on-disk-override-test-mocks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-rebuild-dist-after-readme-changes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-redisshorttermmemory-mock-injection-path": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-registry-count-assertions-are-scattered-across-test-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-replacing-a-mixin-based-class-scatters-test-failures-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-repo-merge-policy-may-restrict-merge-strategies": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-required-status-check-names-must-match-githubs-exact-check-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-resultmessage-result-is-often-none-capture-assistantmessage": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ruff-parses-pytest-ini-as-python": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-run-simplify-catches-per-file-errors-internally": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-scorecards-pip-parser-ignores-hash-flags-entirely": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-sdk-agent-model-config-uses-stale-model-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-sdk-native-workflows-validate-in-execute-not-input-schema": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-semantic-cache-70-hit-rate-claim-was-unmeasured": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-session-hooks-may-be-vestigial": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-shadow-directories-at-repo-root-break-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-silent-pass-blocks-in-discovery-registry-code-hide-import": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-skill-descriptions-must-be-under-250-characters": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-skill-frontmatter-allowlist-march-2026": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-skill-frontmatter-has-a-strict-allowlist": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ssrf-always-decode-urls-before-validating-hostnames": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ssrf-in-webhook-handlers-is-easy-to-miss": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-ssrf-strip-ipv6-zone-ids-before-ip-validation": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-stacked-patch-decorators-inject-args-bottom-up": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-stop-hook-ordering-matters": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-stop-hooks-inject-stderr-not-stdout": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-stop-hooks-loop-without-a-sentinel": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-stop-hooks-missing-cd-prefix-inherit-session-cwd": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-structlog-kwargs-vs-stdlib-logger": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-test-mocks-must-match-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-tests-for-optional-dep-code-need-pytest-importorskip-guards-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-untracked-scripts-break-ci-when-tests-import-them": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-validate-file-path-needed-on-reads-too-not-just-writes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-validate-infrastructure-against-user-value-before-extending": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-verify-mcp-tool-wiring-after-adding-new-tools": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-verify-new-dispatch-branches-with-a-known-fixture-not-just": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-website-feature-lists-can-diverge-from-the-python-registry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-windows-ci-encoding": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-windows-ci-runners-are-3x-slower-than-ubuntu-macos": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-windows-time-time-can-return-0-0-duration-for-fast-operations": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-wizards-call-workflows-internally-they-are-not-duplicates": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-workflowresult-constructor-mismatches-surface-only-at-runtime": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "faq-yaml-run-values-with-colons-cause-parse-errors": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-code-simplification": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-command-hubs": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-critical-rules": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d1-template-schemas-live-in-the-repo": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d2-search-index-first-unified-later": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d3-faq-sourcing-four-channels": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d4-code-is-the-source-of-truth": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d5-intelligent-templates-the-engine": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-decision-d6-proof-of-concept-lessons-learned-error-templates": {
+    "source": ".claude/plans/documentation-stack-spec.md",
+    "hash": "8ac207215df6d59686f456b44e76ec33e6c5b8dd6acb5d7754100c158865bd88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-markdown-formatting": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-project-structure": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-socratic-interaction-rule": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-cli": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-crew": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-hub": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-llm": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-p2b": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-progressive": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-sdk": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-socratic": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-tier": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "not-term-wizard": {
+    "source": "CLAUDE.md",
+    "hash": "811c9cf90d6a42eb767f78b7fc6874a5ab0c6ae914fc1533ec40cc800f40749c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-browse-help": {
+    "source": "src/attune/cli_commands/help_commands.py",
+    "hash": "d284892c4f058b5a9d4861f08f7f2de09c8050d33766471014bb739215a83582",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-check-costs": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-check-health": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-generate-tests": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-install": {
+    "source": "README.md",
+    "hash": "ecbbb9e1fe830f92eef43f264b6ab97d135ae14c73377b2efd9bdacaad543bae",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-install-plugin": {
+    "source": "README.md",
+    "hash": "ecbbb9e1fe830f92eef43f264b6ab97d135ae14c73377b2efd9bdacaad543bae",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-run-code-review": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-run-security-audit": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-attune-hub": {
+    "source": "plugin/skills/attune-hub/SKILL.md",
+    "hash": "bb890fbc97e092d5a5556efae13d6142e3f433e2cfa123025d1aa3aee268fcd4",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-bug-predict": {
+    "source": "plugin/skills/bug-predict/SKILL.md",
+    "hash": "61e382efaaf27d510cf46d6e2368c9ff8290e394372e4338dce16d6264ad2000",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-code-quality": {
+    "source": "plugin/skills/code-quality/SKILL.md",
+    "hash": "079c1120a85e4bce1a68e440f1b1328702ef845bdb89e2889e59084b129e9228",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-doc-gen": {
+    "source": "plugin/skills/doc-gen/SKILL.md",
+    "hash": "b04cd51b25dfdcfdf930f8c31e7292512926c8481483335cd59bb61257a6bd64",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-fix-test": {
+    "source": "plugin/skills/fix-test/SKILL.md",
+    "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-learn": {
+    "source": "plugin/skills/learn/SKILL.md",
+    "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-memory-and-context": {
+    "source": "plugin/skills/memory-and-context/SKILL.md",
+    "hash": "b116352b49b4a6e3b695e58b4858d160ebcb23491073c329d2fbf41dbf0442a0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-planning": {
+    "source": "plugin/skills/planning/SKILL.md",
+    "hash": "4e9b0b273a476909bcabde3df3acc5bb0ac4402a300d2979610bc2db561486d7",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-refactor-plan": {
+    "source": "plugin/skills/refactor-plan/SKILL.md",
+    "hash": "690aefc255fd4a8f7923e9a3b1d14c12ff55c0fa889cc090769d4dd1860e4942",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-release-prep": {
+    "source": "plugin/skills/release-prep/SKILL.md",
+    "hash": "f59afd7b8126d3b470bb678f4c6c087fa7cc8d79546a63633c31e6c079df0fe8",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-security-audit": {
+    "source": "plugin/skills/security-audit/SKILL.md",
+    "hash": "8dc74e347ebfd0dd494901bb29595264b70652cbeda9645dc812a776ff14b7d6",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-smart-test": {
+    "source": "plugin/skills/smart-test/SKILL.md",
+    "hash": "ac818ca038f05c13a677103d67a974508d29cf46bc7a2bfb374248990d6f7f88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-spec": {
+    "source": "plugin/skills/spec/SKILL.md",
+    "hash": "1513b310e263f6b30ab190d2e432eac103c6f7dc30dde1988063b88a8167c8fd",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "qui-skill-workflow-orchestration": {
+    "source": "plugin/skills/workflow-orchestration/SKILL.md",
+    "hash": "37840307ac63cd84b39a4862d1b2a2c83a47951d30ca5e95338744573aab9963",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
   "ref-skill-attune-hub": {
     "source": "plugin/skills/attune-hub/SKILL.md",
-    "hash": "4b77854537fc4462c24c5b4ec70860f9af43c804d739c0b6483e74d65e0a355b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "bb890fbc97e092d5a5556efae13d6142e3f433e2cfa123025d1aa3aee268fcd4",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-bug-predict": {
     "source": "plugin/skills/bug-predict/SKILL.md",
-    "hash": "923059fd6d5d32dfa84d6093229ac6e4d0e34bf4622541cb5723574a99637f0c",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "61e382efaaf27d510cf46d6e2368c9ff8290e394372e4338dce16d6264ad2000",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-code-quality": {
     "source": "plugin/skills/code-quality/SKILL.md",
-    "hash": "486c845305b928b9a88e33e12d3d01c3d8228cf50ff444cdfefd413d579fa47e",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "079c1120a85e4bce1a68e440f1b1328702ef845bdb89e2889e59084b129e9228",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-doc-gen": {
     "source": "plugin/skills/doc-gen/SKILL.md",
-    "hash": "18c68fcfdaae2a3ba125ce3ab833ee5635988d4c15504744a97fe833740c6aa7",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "b04cd51b25dfdcfdf930f8c31e7292512926c8481483335cd59bb61257a6bd64",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-fix-test": {
     "source": "plugin/skills/fix-test/SKILL.md",
-    "hash": "d58237624390c0d489e5f5d75afbad9f7f82f0273fb4586221b4b24dbdd5349b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "ref-skill-learn": {
+    "source": "plugin/skills/learn/SKILL.md",
+    "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-memory-and-context": {
     "source": "plugin/skills/memory-and-context/SKILL.md",
-    "hash": "8d46871e141e35e36f68d7971dd453f254eeeba90e4246daae8d219179b37fab",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "b116352b49b4a6e3b695e58b4858d160ebcb23491073c329d2fbf41dbf0442a0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-planning": {
     "source": "plugin/skills/planning/SKILL.md",
-    "hash": "a4fce71d1c6d887a1effa1f93e9e7c7452a8c80af4174de4370f8d8322351fc0",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4e9b0b273a476909bcabde3df3acc5bb0ac4402a300d2979610bc2db561486d7",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-refactor-plan": {
     "source": "plugin/skills/refactor-plan/SKILL.md",
-    "hash": "05d92f1de8663bc5af9b31e1aaae3a698d52a907d512ca3b9d17fa2322c21151",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "690aefc255fd4a8f7923e9a3b1d14c12ff55c0fa889cc090769d4dd1860e4942",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-release-prep": {
     "source": "plugin/skills/release-prep/SKILL.md",
-    "hash": "d95f4f0df7a613d274e29ead00c10ed9ba3f4cf692305f36bf339221b66d7433",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "f59afd7b8126d3b470bb678f4c6c087fa7cc8d79546a63633c31e6c079df0fe8",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-security-audit": {
     "source": "plugin/skills/security-audit/SKILL.md",
-    "hash": "dccd19fad9cbe34a361c870f60a91c88c2d3f69bcef66babc5f03cb6f0be56f5",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "8dc74e347ebfd0dd494901bb29595264b70652cbeda9645dc812a776ff14b7d6",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-smart-test": {
     "source": "plugin/skills/smart-test/SKILL.md",
-    "hash": "25c78d57fdb9195fc1c7dcfbd1ce0c13f9c08b48619e5286d88ff9ac5ef67f72",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "ac818ca038f05c13a677103d67a974508d29cf46bc7a2bfb374248990d6f7f88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-spec": {
     "source": "plugin/skills/spec/SKILL.md",
-    "hash": "e9bc74fa086f6a6819c3776d65e252744afc30f3244f29eefb37384650a39d4f",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "1513b310e263f6b30ab190d2e432eac103c6f7dc30dde1988063b88a8167c8fd",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-skill-workflow-orchestration": {
     "source": "plugin/skills/workflow-orchestration/SKILL.md",
-    "hash": "389fe194b5383c5ab79975b95906c8e65af60b3313cea36e72c955d8ae37b796",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "37840307ac63cd84b39a4862d1b2a2c83a47951d30ca5e95338744573aab9963",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-analyze-batch": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-analyze-image": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-attune-get-level": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-attune-set-level": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-auth-recommend": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-auth-status": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-bug-predict": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-code-review": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-context-get": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-context-set": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-deep-review": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-dependency-check": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-doc-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-doc-gen": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-doc-orchestrator": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-health-check": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-memory-forget": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-memory-retrieve": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-memory-search": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-memory-store": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-performance-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-refactor-plan": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-release-prep": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-research-synthesis": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-secure-release": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-security-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-simplify-code": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-telemetry-stats": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-test-audit": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-test-gen-parallel": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "ref-tool-test-generation": {
     "source": "src/attune/mcp/tool_schemas.py",
-    "hash": "4f0e8a0a85cc40f7b12d373c5ec8de5cdefb641a1bb982f85487c86155664499",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "4d94456dee9ce34d9f126d38cdbc2a14dc675959ae1cab53ebe03c229be1fca0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-browse-help-docs": {
+    "source": "src/attune/cli_commands/help_commands.py",
+    "hash": "d284892c4f058b5a9d4861f08f7f2de09c8050d33766471014bb739215a83582",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-check-auth-status": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-export-telemetry": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-install-plugin": {
+    "source": "README.md",
+    "hash": "ecbbb9e1fe830f92eef43f264b6ab97d135ae14c73377b2efd9bdacaad543bae",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-manage-lessons": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-run-doctor": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-run-workflow": {
+    "source": "src/attune/cli_minimal.py",
+    "hash": "7a3dcaf13553bd81673e98994e99c5bab7dbec630b33e5786145681d40ba6e25",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-attune-hub": {
+    "source": "plugin/skills/attune-hub/SKILL.md",
+    "hash": "bb890fbc97e092d5a5556efae13d6142e3f433e2cfa123025d1aa3aee268fcd4",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-bug-predict": {
+    "source": "plugin/skills/bug-predict/SKILL.md",
+    "hash": "61e382efaaf27d510cf46d6e2368c9ff8290e394372e4338dce16d6264ad2000",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-code-quality": {
+    "source": "plugin/skills/code-quality/SKILL.md",
+    "hash": "079c1120a85e4bce1a68e440f1b1328702ef845bdb89e2889e59084b129e9228",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-doc-gen": {
+    "source": "plugin/skills/doc-gen/SKILL.md",
+    "hash": "b04cd51b25dfdcfdf930f8c31e7292512926c8481483335cd59bb61257a6bd64",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-fix-test": {
+    "source": "plugin/skills/fix-test/SKILL.md",
+    "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-learn": {
+    "source": "plugin/skills/learn/SKILL.md",
+    "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-memory-and-context": {
+    "source": "plugin/skills/memory-and-context/SKILL.md",
+    "hash": "b116352b49b4a6e3b695e58b4858d160ebcb23491073c329d2fbf41dbf0442a0",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-planning": {
+    "source": "plugin/skills/planning/SKILL.md",
+    "hash": "4e9b0b273a476909bcabde3df3acc5bb0ac4402a300d2979610bc2db561486d7",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-refactor-plan": {
+    "source": "plugin/skills/refactor-plan/SKILL.md",
+    "hash": "690aefc255fd4a8f7923e9a3b1d14c12ff55c0fa889cc090769d4dd1860e4942",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-release-prep": {
+    "source": "plugin/skills/release-prep/SKILL.md",
+    "hash": "f59afd7b8126d3b470bb678f4c6c087fa7cc8d79546a63633c31e6c079df0fe8",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-security-audit": {
+    "source": "plugin/skills/security-audit/SKILL.md",
+    "hash": "8dc74e347ebfd0dd494901bb29595264b70652cbeda9645dc812a776ff14b7d6",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-smart-test": {
+    "source": "plugin/skills/smart-test/SKILL.md",
+    "hash": "ac818ca038f05c13a677103d67a974508d29cf46bc7a2bfb374248990d6f7f88",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-spec": {
+    "source": "plugin/skills/spec/SKILL.md",
+    "hash": "1513b310e263f6b30ab190d2e432eac103c6f7dc30dde1988063b88a8167c8fd",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "tas-use-workflow-orchestration": {
+    "source": "plugin/skills/workflow-orchestration/SKILL.md",
+    "hash": "37840307ac63cd84b39a4862d1b2a2c83a47951d30ca5e95338744573aab9963",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-10-inspects": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-5-ships": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-bug-predict": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-code-review": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-dependency-check": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-first-health": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-first-inspect": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-perf-audit": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-refactor-plan": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-security-audit": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-simplify-code": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-after-test-gen": {
     "source": "src/attune/workflows/suggestions.py",
-    "hash": "3c93b6aa9187e0ca199c14bac13559d3d1a1d68432de84dc866938afb7d36d60",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "hash": "9fb5407b1dba124b70220f50a325b1285e63a90f5a4ef2fd748a546babe547cb",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-cost-savings": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-high-tech-debt": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-no-patterns": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
   "tip-weekly-review": {
     "source": "src/attune/discovery.py",
     "hash": "81b550a4505d51c66f590eb3ea9d2c52002c0ffcab1ff3b2c013f5e34cd79c8b",
-    "generated_at": "2026-03-30T20:55:53.081437+00:00"
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-adding-logger-before-eager-imports-triggers-e402-in-init-py": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-anthropics-built-in-prompt-caching-supersedes-custom-caching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-attune-skill-names-must-not-collide-with-claude-code-built-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-b904-raise-x-from-e-is-not-auto-fixable-by-ruff": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-background-processes-from-previous-sessions-persist-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-bug-predict-dangerous-eval-flags-subprocess-exec": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-bugpredictionworkflow-not-bugpredictworkflow": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-changing-error-messages-breaks-tests-across-the-codebase": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-changing-user-facing-output-strings-cascades-through-test": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-claude-code-plugin-is-platform-specific": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-claude-code-plugins-expect-plugin-json-inside-claude-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-clusterfuzzlite-no-deps-misses-transitive-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-codeql-alerts-dismissible-in-bulk-via-gh-api": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-commands-are-not-namespaced-in-plugins-skills-are": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-costreport-is-a-dataclass-not-a-dict": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-dead-code-modules-with-full-test-suites-look-alive": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-deep-review-false-positives-verify-before-acting": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-dispatch-tables-hold-direct-function-references-mocks-must": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-dist-can-contain-stale-artifacts-after-version-bumps": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-dont-append-z-to-timezone-aware-isoformat": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-duplicate-plugins-cause-conflicting-skill-triggers": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-exploration-agents-fabricate-names-verify-against-source": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-generated-content-with-trailing-whitespace-causes-perpetual-pre": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-gh-pr-merge-admin-is-blocked-by-in-progress-required-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-github-protected-tags-cannot-be-force-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-github-repos-serve-as-claude-code-marketplaces": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-gitignore-exclusions-break-ci-tests-that-read-those-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-gpg-signing-fails-in-non-interactive-terminals-vscode-extension": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-hardcoded-root-paths-in-tests": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-hardcoded-strings-in-method-bodies-survive-class-attribute": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-hardcoded-user-id-defeats-ownership-checks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-importlib-import-module-is-an-arbitrary-code-execution-vector": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-is-private-is-a-superset-in-python-ipaddress": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-lazy-imports-inside-function-bodies-cant-be-patched-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-linkedin-paste-use-ascii-markers-not-unicode-arrows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-list-workflows-deduplication-must-keep-base-names-visible": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-mcp-call-tool-wrapper-pattern": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-mcp-handler-validate-paths-before-importing-workflows": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-mcp-tool-renames-propagate-to-skill-docs": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-modeltier-has-two-copies-imports-must-match": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-module-level-optional-imports-enable-clean-test-patching": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-mypy-437-errors-was-stale-actual-count-was-2": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-new-dataclass-fields-need-both-the-class-and-the-parser-updated": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-new-security-features-need-dedicated-tests-before-release": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-non-baseworkflow-classes-in-workflow-registry-crash-the-cli": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-patch-requires-the-target-name-to-exist-at-module-scope-at": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-plugin-read-skill-references-break-outside-the-plugin": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pre-commit-auto-fix-requires-re-stage-before-retry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pre-commit-black-unstaged-files-re-stage-after-failure": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pre-commit-stash-conflict-when-black-ruff-fix-files-with": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pre-commit-stash-conflict-with-auto-fix-hooks": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pre-commit-stash-conflicts-when-any-tracked-unstaged-file": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pull-main-before-merging-develop-to-avoid-merge-commits": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pureposixpath-strips-trailing-slashes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-push-specific-tags-not-tags": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pypi-renders-readme-links-relative-to-its-own-domain": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-pytest-importorskip-triggers-ruff-e402": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-re-enabling-required-reviews-kills-queued-auto-merge": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-read-source-before-writing-tests-for-tricky-logic": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-rebuild-dist-after-readme-changes": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-redisshorttermmemory-mock-injection-path": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-registry-count-assertions-are-scattered-across-test-files": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-replacing-a-mixin-based-class-scatters-test-failures-across": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-repo-merge-policy-may-restrict-merge-strategies": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-required-status-check-names-must-match-githubs-exact-check-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-resultmessage-result-is-often-none-capture-assistantmessage": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-ruff-auto-fix-strips-imports-before-usage-code-exists": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-run-simplify-catches-per-file-errors-internally": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-sdk-agent-model-config-uses-stale-model-names": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-sdk-native-workflows-validate-in-execute-not-input-schema": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-semantic-cache-70-hit-rate-claim-was-unmeasured": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-session-hooks-may-be-vestigial": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-shadow-directories-at-repo-root-break-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-silent-pass-blocks-in-discovery-registry-code-hide-import": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-skill-descriptions-must-be-under-250-characters": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-skill-frontmatter-has-a-strict-allowlist": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-ssrf-always-decode-urls-before-validating-hostnames": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-ssrf-strip-ipv6-zone-ids-before-ip-validation": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-stacked-patch-decorators-inject-args-bottom-up": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-stop-hooks-inject-stderr-not-stdout": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-stop-hooks-loop-without-a-sentinel": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-stop-hooks-missing-cd-prefix-inherit-session-cwd": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-structlog-kwargs-vs-stdlib-logger": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-test-mocks-must-match-imports": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-tests-for-optional-dep-code-need-pytest-importorskip-guards-in": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-untracked-scripts-break-ci-when-tests-import-them": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-validate-infrastructure-against-user-value-before-extending": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-verify-new-dispatch-branches-with-a-known-fixture-not-just": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-website-feature-lists-can-diverge-from-the-python-registry": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-windows-ci-encoding": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-windows-time-time-can-return-0-0-duration-for-fast-operations": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-wizards-call-workflows-internally-they-are-not-duplicates": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-workflowresult-constructor-mismatches-surface-only-at-runtime": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
+  },
+  "war-yaml-run-values-with-colons-cause-parse-errors": {
+    "source": ".claude/CLAUDE.md",
+    "hash": "c46a33000adff92ace65ab603811a58c94430f96a5639a2f3acef4821ef7755c",
+    "generated_at": "2026-04-01T12:56:43.198773+00:00"
   }
 }

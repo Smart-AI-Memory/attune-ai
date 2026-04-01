@@ -2,7 +2,7 @@
 type: faq
 name: broad-gitignore-patterns-match-nested-directories
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about broad gitignore patterns match nested directories?

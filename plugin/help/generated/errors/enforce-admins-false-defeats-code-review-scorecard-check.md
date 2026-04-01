@@ -3,7 +3,7 @@ type: error
 name: enforce-admins-false-defeats-code-review-scorecard-check
 confidence: Verified
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `enforce_admins: false` defeats Code-Review Scorecard check

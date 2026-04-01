@@ -2,7 +2,7 @@
 type: faq
 name: required-status-check-names-must-match-githubs-exact-check-names
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about required status check names must match GitHub's exact check names?

@@ -2,7 +2,7 @@
 type: faq
 name: ghost-command-references-survive-cli-renames
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about ghost command references survive CLI renames?

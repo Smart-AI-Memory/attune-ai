@@ -2,7 +2,7 @@
 type: faq
 name: importlib-import-module-is-an-arbitrary-code-execution-vector
 tags: [security, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about importlib.import_module() is an arbitrary code execution vector?

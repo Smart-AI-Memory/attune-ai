@@ -2,7 +2,7 @@
 type: faq
 name: stop-hook-ordering-matters
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about stop hook ordering matters?

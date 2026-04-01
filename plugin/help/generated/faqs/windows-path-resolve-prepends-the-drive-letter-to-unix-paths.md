@@ -2,7 +2,7 @@
 type: faq
 name: windows-path-resolve-prepends-the-drive-letter-to-unix-paths
 tags: [testing, security, windows, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about windows Path.resolve() prepends the drive letter to Unix paths?

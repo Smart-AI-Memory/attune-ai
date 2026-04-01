@@ -3,7 +3,7 @@ type: error
 name: mcp-call-tool-wrapper-pattern
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: MCP `call_tool` wrapper pattern

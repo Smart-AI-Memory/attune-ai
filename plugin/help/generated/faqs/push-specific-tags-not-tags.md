@@ -2,7 +2,7 @@
 type: faq
 name: push-specific-tags-not-tags
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about push specific tags, not --tags?

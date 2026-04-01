@@ -2,7 +2,7 @@
 type: faq
 name: stop-hooks-loop-without-a-sentinel
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about stop hooks loop without a sentinel?

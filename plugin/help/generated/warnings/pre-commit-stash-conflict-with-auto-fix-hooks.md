@@ -3,7 +3,7 @@ type: warning
 name: pre-commit-stash-conflict-with-auto-fix-hooks
 confidence: Verified
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Pre-commit stash conflict with auto-fix hooks

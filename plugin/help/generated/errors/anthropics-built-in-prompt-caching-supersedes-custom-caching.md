@@ -2,7 +2,7 @@
 type: error
 name: anthropics-built-in-prompt-caching-supersedes-custom-caching
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Anthropic's built-in prompt caching supersedes custom

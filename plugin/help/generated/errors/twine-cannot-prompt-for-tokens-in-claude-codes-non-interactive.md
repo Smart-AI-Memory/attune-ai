@@ -3,7 +3,7 @@ type: error
 name: twine-cannot-prompt-for-tokens-in-claude-codes-non-interactive
 confidence: Verified
 tags: [claude-code, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Twine cannot prompt for tokens in Claude Code's non-interactive

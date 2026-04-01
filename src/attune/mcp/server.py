@@ -26,6 +26,7 @@ from mcp.types import (
 from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.tool_schemas import (
+    get_help_tools,
     get_memory_tools,
     get_prompts,
     get_resources,
@@ -164,6 +165,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         tools.update(get_workflow_tools())
         tools.update(get_memory_tools())
         tools.update(get_utility_tools())
+        tools.update(get_help_tools())
         return tools
 
     @staticmethod
@@ -202,6 +204,9 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     ) -> list[dict[str, Any]]:
         """Get messages for a specific prompt.
 
+        Delegates to prompts.get_prompt_messages() which owns
+        the prompt templates and input sanitization.
+
         Args:
             prompt_name: Name of the prompt to retrieve
             arguments: Prompt arguments provided by the caller
@@ -213,76 +218,9 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             ValueError: If prompt_name is not found
 
         """
-        if prompt_name not in self.prompts:
-            raise ValueError(f"Unknown prompt: {prompt_name}")
+        from attune.mcp.prompts import get_prompt_messages
 
-        if prompt_name == "security-scan":
-            path = arguments.get("path", "src/")
-            return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": (
-                            f"Run a comprehensive security audit on `{path}`. "
-                            "Check for: eval/exec usage (CWE-95), path traversal (CWE-22), "
-                            "hardcoded secrets, broad exception handling (BLE001), "
-                            "and shell injection risks (B602). "
-                            "Report findings in a severity-sorted table with file:line, CWE, "
-                            "and recommended fix."
-                        ),
-                    },
-                },
-            ]
-        if prompt_name == "test-gen":
-            module = arguments.get("module", "")
-            batch = arguments.get("batch", "false").lower() == "true"
-            if batch:
-                return [
-                    {
-                        "role": "user",
-                        "content": {
-                            "type": "text",
-                            "text": (
-                                "Generate behavioral tests in batch mode for all untested modules. "
-                                "Use Given/When/Then structure, pytest fixtures, and target 80%+ coverage. "
-                                "Run: `uv run attune workflow run test-gen-behavioral --batch`"
-                            ),
-                        },
-                    },
-                ]
-            return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": (
-                            f"Generate behavioral tests for `{module}`. "
-                            "Use Given/When/Then structure, pytest fixtures, and test naming convention "
-                            "`test_{{function}}_{{scenario}}_{{expected}}()`. "
-                            f"Run: `uv run attune workflow run test-gen-behavioral --path {module}`"
-                        ),
-                    },
-                },
-            ]
-        if prompt_name == "cost-report":
-            days = arguments.get("days", "30")
-            return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": (
-                            f"Generate a cost optimization report for the last {days} days. "
-                            "Show: total LLM spend by workflow, cache hit rates, "
-                            "savings from tier routing (cheap vs capable vs premium), "
-                            "and recommendations for further optimization. "
-                            "Run: `uv run attune telemetry report`"
-                        ),
-                    },
-                },
-            ]
-        raise ValueError(f"Unknown prompt: {prompt_name}")
+        return get_prompt_messages(self.prompts, prompt_name, arguments)
 
     def _build_dispatch_table(self) -> dict[str, Any]:
         """Build tool name -> handler mapping.
@@ -324,6 +262,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "attune_set_level": self._handle_attune_set_level,
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
+            "help_lookup": self._handle_help_lookup,
+            "help_maintain": self._handle_help_maintain,
         }
 
     async def _dispatch_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -598,6 +538,119 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "success": True,
             "key": key,
             "value": value,
+        }
+
+    async def _handle_help_lookup(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Look up contextual help with type-driven progression.
+
+        Supports four modes:
+        - progressive: escalates across template types
+          (concept -> procedural -> reference)
+        - workflow_help: tips relevant after a workflow completes
+        - precursor: warnings relevant to a file being edited
+        - search_tag: find templates matching a tag
+
+        Args:
+            args: Must contain topic; optional mode, file_path,
+                last_workflow, reset.
+
+        Returns:
+            Dict with templates, depth level, and metadata.
+
+        """
+        from attune.help.engine import (
+            get_precursor_warnings,
+            get_workflow_help,
+            populate_progressive,
+            reset_session,
+            search_by_tag,
+        )
+
+        topic = args["topic"]
+        mode = args.get("mode", "progressive")
+
+        if mode == "progressive":
+            # Handle reset request
+            if args.get("reset"):
+                reset_session()
+
+            # Context-aware starting level
+            starting_level = None
+            if args.get("last_workflow"):
+                starting_level = 1  # skip concept, start at procedural
+
+            result = populate_progressive(
+                topic,
+                starting_level=starting_level,
+            )
+            if result is None:
+                return {"success": False, "error": f"Template not found: {topic}"}
+            return {
+                "success": True,
+                "title": result.title,
+                "body": result.body,
+                "type": result.type,
+                "depth_level": result.metadata.get("depth_level", 0),
+                "level_label": result.metadata.get("level_label", ""),
+                "topic": result.metadata.get("topic", ""),
+                "tags": result.tags,
+                "related": result.related,
+            }
+
+        if mode == "workflow_help":
+            templates = get_workflow_help(topic)
+            return {
+                "success": True,
+                "templates": [
+                    {"title": t.title, "body": t.body, "id": t.template_id} for t in templates
+                ],
+            }
+
+        if mode == "precursor":
+            file_path = args.get("file_path", topic)
+            warnings = get_precursor_warnings(file_path)
+            return {
+                "success": True,
+                "warnings": [
+                    {"title": w.title, "body": w.body, "id": w.template_id} for w in warnings
+                ],
+            }
+
+        if mode == "search_tag":
+            template_ids = search_by_tag(topic)
+            return {
+                "success": True,
+                "template_ids": template_ids,
+                "count": len(template_ids),
+            }
+
+        return {"success": False, "error": f"Unknown mode: {mode}"}
+
+    async def _handle_help_maintain(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run help knowledge base maintenance.
+
+        Detects stale templates and optionally regenerates them.
+
+        Args:
+            args: Optional ``dry_run`` boolean.
+
+        Returns:
+            Dict with stale count, regenerated types, and
+            validation status.
+
+        """
+        from attune.workflows.help_maintenance import (
+            HelpMaintenanceWorkflow,
+        )
+
+        dry_run = args.get("dry_run", False)
+        batch = args.get("batch", False)
+        workflow = HelpMaintenanceWorkflow()
+        result = await workflow.execute(dry_run=dry_run, batch=batch)
+
+        return {
+            "success": result.success,
+            "output": result.final_output,
         }
 
     def get_tool_list(self) -> list[dict[str, Any]]:

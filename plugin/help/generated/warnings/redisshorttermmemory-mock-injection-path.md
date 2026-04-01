@@ -3,7 +3,7 @@ type: warning
 name: redisshorttermmemory-mock-injection-path
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: RedisShortTermMemory mock injection path

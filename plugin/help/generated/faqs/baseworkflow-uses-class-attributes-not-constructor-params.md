@@ -2,7 +2,7 @@
 type: faq
 name: baseworkflow-uses-class-attributes-not-constructor-params
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `TypeError` (baseWorkflow uses class attributes, not constructor params)?

@@ -2,7 +2,7 @@
 type: faq
 name: shadow-directories-at-repo-root-break-imports
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ModuleNotFoundError` (shadow directories at repo root break imports)?

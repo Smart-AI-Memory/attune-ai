@@ -1,7 +1,7 @@
 ---
 type: faq
 name: linkedin-paste-use-ascii-markers-not-unicode-arrows
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about linkedIn paste: use ASCII markers, not Unicode arrows?

@@ -3,7 +3,7 @@ type: error
 name: claude-agent-sdk-is-now-a-core-dependency-of-attune-ai
 confidence: Verified
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `claude-agent-sdk` is now a core dependency of attune-ai

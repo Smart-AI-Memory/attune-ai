@@ -2,7 +2,7 @@
 type: faq
 name: commands-are-not-namespaced-in-plugins-skills-are
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about commands are NOT namespaced in plugins, skills ARE?

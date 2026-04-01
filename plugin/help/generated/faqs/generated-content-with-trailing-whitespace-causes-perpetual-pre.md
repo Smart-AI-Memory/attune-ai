@@ -2,7 +2,7 @@
 type: faq
 name: generated-content-with-trailing-whitespace-causes-perpetual-pre
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does generated content with trailing whitespace causes perpetual pre-commit failures?

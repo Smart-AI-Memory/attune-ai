@@ -2,7 +2,7 @@
 type: faq
 name: ssrf-strip-ipv6-zone-ids-before-ip-validation
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about SSRF: strip IPv6 zone IDs before IP validation?

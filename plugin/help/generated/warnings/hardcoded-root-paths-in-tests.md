@@ -3,7 +3,7 @@ type: warning
 name: hardcoded-root-paths-in-tests
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Hardcoded `/root/` paths in tests

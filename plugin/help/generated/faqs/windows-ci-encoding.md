@@ -2,7 +2,7 @@
 type: faq
 name: windows-ci-encoding
 tags: [ci, windows, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about windows CI encoding?

@@ -2,7 +2,7 @@
 type: faq
 name: ci-timeout-tests-enforce-the-range-you-set
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does CI timeout tests enforce the range you set?

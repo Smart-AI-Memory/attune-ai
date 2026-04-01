@@ -3,7 +3,7 @@ type: error
 name: mcp-json-python-resolves-to-pyenv-shim-not-project-venv
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `.mcp.json` `python` resolves to pyenv shim, not project

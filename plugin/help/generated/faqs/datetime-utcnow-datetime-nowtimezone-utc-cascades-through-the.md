@@ -2,7 +2,7 @@
 type: faq
 name: datetime-utcnow-datetime-nowtimezone-utc-cascades-through-the
 tags: [testing, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about datetime.utcnow() → datetime.now(timezone.utc) cascades through the entire codebase?

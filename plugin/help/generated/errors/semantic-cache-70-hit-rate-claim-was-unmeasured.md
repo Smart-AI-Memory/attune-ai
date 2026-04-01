@@ -2,7 +2,7 @@
 type: error
 name: semantic-cache-70-hit-rate-claim-was-unmeasured
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Semantic cache 70% hit rate claim was unmeasured

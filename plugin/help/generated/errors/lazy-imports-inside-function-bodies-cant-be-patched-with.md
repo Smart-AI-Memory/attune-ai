@@ -3,7 +3,7 @@ type: error
 name: lazy-imports-inside-function-bodies-cant-be-patched-with
 confidence: Verified
 tags: [testing, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Lazy imports inside function bodies can't be patched with

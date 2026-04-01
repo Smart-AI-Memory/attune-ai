@@ -3,7 +3,7 @@ type: error
 name: mcp-tool-count-tests-are-hardcoded
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: MCP tool count tests are hardcoded

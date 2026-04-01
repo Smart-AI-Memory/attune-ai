@@ -2,7 +2,7 @@
 type: faq
 name: stop-hooks-inject-stderr-not-stdout
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about stop hooks inject stderr, not stdout?

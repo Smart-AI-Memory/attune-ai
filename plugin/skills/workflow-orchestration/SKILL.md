@@ -6,7 +6,7 @@ argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 
 # Workflow Orchestration
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Workflow Orchestration** runs AI analysis workflows —
 > security audits, code reviews, test generation,
@@ -71,6 +71,20 @@ doc_audit(path="<user-specified path>")
 
 Present results grouped by severity with clickable
 file links using markdown link syntax.
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="workflow-orchestration",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+this workflow — want to see them?"
 
 ## Follow-Up
 

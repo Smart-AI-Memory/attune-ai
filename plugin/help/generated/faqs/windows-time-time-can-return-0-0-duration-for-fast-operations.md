@@ -2,7 +2,7 @@
 type: faq
 name: windows-time-time-can-return-0-0-duration-for-fast-operations
 tags: [testing, windows]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about windows time.time() can return 0.0 duration for fast operations?

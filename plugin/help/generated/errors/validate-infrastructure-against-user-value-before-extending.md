@@ -3,7 +3,7 @@ type: error
 name: validate-infrastructure-against-user-value-before-extending
 confidence: Verified
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Validate infrastructure against user value before extending

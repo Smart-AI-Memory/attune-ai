@@ -2,7 +2,7 @@
 type: faq
 name: run-simplify-catches-per-file-errors-internally
 tags: [testing, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about _run_simplify catches per-file errors internally?

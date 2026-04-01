@@ -310,6 +310,105 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
     }
 
 
+def get_help_tools() -> dict[str, dict[str, Any]]:
+    """Tool definitions for contextual help and progressive documentation."""
+    return {
+        "help_lookup": {
+            "description": (
+                "Look up contextual help for a topic, workflow, or error. "
+                "Progressive mode escalates across template types: "
+                "concept (what is it?) -> procedural (how to use it) -> "
+                "reference (full detail). Repeated calls auto-advance. "
+                "Can also return post-workflow tips and file-based warnings."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": (
+                            "Topic slug (e.g. 'security-audit', "
+                            "'code-review'), template ID "
+                            "(e.g. 'ref-tool-code-review'), "
+                            "workflow name, or tag (e.g. 'security')"
+                        ),
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "progressive",
+                            "workflow_help",
+                            "precursor",
+                            "search_tag",
+                        ],
+                        "description": (
+                            "progressive: type-driven depth (default). "
+                            "workflow_help: tips after a workflow. "
+                            "precursor: warnings for a file. "
+                            "search_tag: find templates by tag."
+                        ),
+                        "default": "progressive",
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "description": (
+                            "File path for precursor mode (returns "
+                            "warnings relevant to the file extension)"
+                        ),
+                    },
+                    "last_workflow": {
+                        "type": "string",
+                        "description": (
+                            "Name of the last workflow the user ran. "
+                            "When set, progressive mode starts at the "
+                            "procedural level (skipping the concept)."
+                        ),
+                    },
+                    "reset": {
+                        "type": "boolean",
+                        "description": (
+                            "Reset depth to concept level. Use when "
+                            "the user says 'start from the beginning'."
+                        ),
+                        "default": False,
+                    },
+                },
+                "required": ["topic"],
+            },
+        },
+        "help_maintain": {
+            "description": (
+                "Check for stale help templates and regenerate them. "
+                "Detects when source files (CLAUDE.md, SKILL.md, "
+                "tool_schemas.py) have changed since last generation, "
+                "then regenerates only the stale templates."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": (
+                            "Only report stale templates without "
+                            "regenerating. Defaults to false."
+                        ),
+                        "default": False,
+                    },
+                    "batch": {
+                        "type": "boolean",
+                        "description": (
+                            "Submit to Anthropic Batch API for "
+                            "50% cost savings (async, up to 24h). "
+                            "Defaults to false."
+                        ),
+                        "default": False,
+                    },
+                },
+            },
+        },
+    }
+
+
 def get_memory_tools() -> dict[str, dict[str, Any]]:
     """Tool definitions for memory store/retrieve/search/forget."""
     return {

@@ -2,7 +2,7 @@
 type: faq
 name: enforce-admins-false-defeats-code-review-scorecard-check
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about enforce_admins: false defeats Code-Review Scorecard check?

@@ -2,7 +2,7 @@
 type: faq
 name: exploration-agents-fabricate-names-verify-against-source
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about exploration agents fabricate names — verify against source?

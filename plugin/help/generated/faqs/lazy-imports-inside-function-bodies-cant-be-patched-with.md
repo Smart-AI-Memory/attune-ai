@@ -2,7 +2,7 @@
 type: faq
 name: lazy-imports-inside-function-bodies-cant-be-patched-with
 tags: [testing, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `AttributeError` (lazy imports inside function bodies can't be patched with patch("module.Name"))?

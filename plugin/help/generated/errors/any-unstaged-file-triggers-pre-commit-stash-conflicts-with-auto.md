@@ -3,7 +3,7 @@ type: error
 name: any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto
 confidence: Verified
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Any unstaged file triggers pre-commit stash conflicts with

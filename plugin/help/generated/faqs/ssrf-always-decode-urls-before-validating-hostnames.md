@@ -2,7 +2,7 @@
 type: faq
 name: ssrf-always-decode-urls-before-validating-hostnames
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about SSRF: always decode URLs before validating hostnames?

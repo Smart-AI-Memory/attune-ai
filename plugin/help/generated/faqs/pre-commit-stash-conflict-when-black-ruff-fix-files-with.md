@@ -2,7 +2,7 @@
 type: faq
 name: pre-commit-stash-conflict-when-black-ruff-fix-files-with
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about pre-commit stash conflict when black/ruff fix files with unstaged siblings?

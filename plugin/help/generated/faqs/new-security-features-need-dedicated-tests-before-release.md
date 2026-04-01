@@ -2,7 +2,7 @@
 type: faq
 name: new-security-features-need-dedicated-tests-before-release
 tags: [testing, security, imports, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about new security features need dedicated tests before release?

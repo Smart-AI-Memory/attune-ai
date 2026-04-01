@@ -2,7 +2,7 @@
 type: faq
 name: dist-can-contain-stale-artifacts-after-version-bumps
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about dist/ can contain stale artifacts after version bumps?

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 540,
-    "linked_templates": 426,
-    "total_tags": 37
+    "total_templates": 557,
+    "linked_templates": 430,
+    "total_tags": 62
   },
   "links": {
     "com-auth-strategies": {
@@ -81,6 +81,102 @@
       "tags": [
         "architecture",
         "cost-optimization"
+      ]
+    },
+    "con-tool-attune-hub": {
+      "tags": [
+        "hub",
+        "routing",
+        "discovery"
+      ]
+    },
+    "con-tool-bug-predict": {
+      "tags": [
+        "security",
+        "bugs",
+        "scanning"
+      ]
+    },
+    "con-tool-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "linting"
+      ]
+    },
+    "con-tool-doc-gen": {
+      "tags": [
+        "documentation",
+        "docstrings"
+      ]
+    },
+    "con-tool-fix-test": {
+      "tags": [
+        "testing",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "con-tool-learn": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-memory-and-context": {
+      "tags": [
+        "memory",
+        "context",
+        "persistence"
+      ]
+    },
+    "con-tool-planning": {
+      "tags": [
+        "planning",
+        "architecture",
+        "design"
+      ]
+    },
+    "con-tool-refactor-plan": {
+      "tags": [
+        "refactoring",
+        "complexity",
+        "code-smells"
+      ]
+    },
+    "con-tool-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "ci"
+      ]
+    },
+    "con-tool-security-audit": {
+      "tags": [
+        "security",
+        "skill",
+        "workflow"
+      ]
+    },
+    "con-tool-smart-test": {
+      "tags": [
+        "testing",
+        "coverage",
+        "generation"
+      ]
+    },
+    "con-tool-spec": {
+      "tags": [
+        "spec",
+        "planning",
+        "workflow"
+      ]
+    },
+    "con-tool-workflow-orchestration": {
+      "tags": [
+        "workflows",
+        "orchestration",
+        "routing"
       ]
     },
     "con-workflow-chain-prediction": {
@@ -3115,6 +3211,12 @@
         "claude-code"
       ]
     },
+    "qui-skill-learn": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "qui-skill-memory-and-context": {
       "tags": [
         "skill",
@@ -3253,6 +3355,54 @@
       "tags": [
         "skill",
         "plugin"
+      ]
+    },
+    "ref-skill-learn": {
+      "references_tools": [
+        "ref-tool-bug-predict",
+        "ref-tool-code-review",
+        "ref-tool-doc-gen",
+        "ref-tool-refactor-plan",
+        "ref-tool-release-prep",
+        "ref-tool-security-audit",
+        "ref-tool-test-generation"
+      ],
+      "related_task": [
+        "tas-use-learn"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-code-review",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-doc-gen",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-refactor-plan",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-release-prep",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-test-generation",
+          "position": "after_execution"
+        }
       ]
     },
     "ref-skill-memory-and-context": {
@@ -3408,7 +3558,8 @@
     "ref-tool-bug-predict": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-bug-predict"
+        "ref-skill-bug-predict",
+        "ref-skill-learn"
       ],
       "tags": [
         "mcp",
@@ -3417,6 +3568,9 @@
       ]
     },
     "ref-tool-code-review": {
+      "referenced_by_skills": [
+        "ref-skill-learn"
+      ],
       "tags": [
         "mcp",
         "tool",
@@ -3461,7 +3615,8 @@
     "ref-tool-doc-gen": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-doc-gen"
+        "ref-skill-doc-gen",
+        "ref-skill-learn"
       ],
       "tags": [
         "mcp",
@@ -3521,6 +3676,7 @@
     "ref-tool-refactor-plan": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
+        "ref-skill-learn",
         "ref-skill-planning",
         "ref-skill-refactor-plan"
       ],
@@ -3533,6 +3689,7 @@
     "ref-tool-release-prep": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
+        "ref-skill-learn",
         "ref-skill-release-prep"
       ],
       "tags": [
@@ -3558,6 +3715,7 @@
     "ref-tool-security-audit": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
+        "ref-skill-learn",
         "ref-skill-security-audit"
       ],
       "tags": [
@@ -3595,6 +3753,9 @@
       ]
     },
     "ref-tool-test-generation": {
+      "referenced_by_skills": [
+        "ref-skill-learn"
+      ],
       "tags": [
         "mcp",
         "tool",
@@ -3683,6 +3844,15 @@
     "tas-use-fix-test": {
       "related_reference": [
         "ref-skill-fix-test"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
+    "tas-use-learn": {
+      "related_reference": [
+        "ref-skill-learn"
       ],
       "tags": [
         "skill",
@@ -4791,6 +4961,7 @@
       "con-meta-orchestration",
       "con-sync-paradigm",
       "con-tier-routing",
+      "con-tool-planning",
       "not-decision-d1-template-schemas-live-in-the-repo",
       "not-decision-d2-search-index-first-unified-later",
       "not-decision-d3-faq-sourcing-four-channels",
@@ -4804,7 +4975,14 @@
       "tas-check-auth-status",
       "tro-workflow-not-running"
     ],
+    "auto-discovered": [
+      "con-tool-learn"
+    ],
+    "bugs": [
+      "con-tool-bug-predict"
+    ],
     "ci": [
+      "con-tool-release-prep",
       "err-ci-timeout-tests-enforce-the-range-you-set",
       "err-enforce-admins-false-defeats-code-review-scorecard-check",
       "err-gitignore-exclusions-break-ci-tests-that-read-those-files",
@@ -4945,6 +5123,7 @@
       "qui-skill-code-quality",
       "qui-skill-doc-gen",
       "qui-skill-fix-test",
+      "qui-skill-learn",
       "qui-skill-memory-and-context",
       "qui-skill-planning",
       "qui-skill-refactor-plan",
@@ -5009,8 +5188,26 @@
       "not-code-simplification",
       "qui-run-code-review"
     ],
+    "code-smells": [
+      "con-tool-refactor-plan"
+    ],
+    "complexity": [
+      "con-tool-refactor-plan"
+    ],
+    "context": [
+      "con-tool-memory-and-context"
+    ],
     "cost-optimization": [
       "con-tier-routing"
+    ],
+    "coverage": [
+      "con-tool-smart-test"
+    ],
+    "debugging": [
+      "con-tool-fix-test"
+    ],
+    "design": [
+      "con-tool-planning"
     ],
     "design-decision": [
       "not-decision-d1-template-schemas-live-in-the-repo",
@@ -5021,6 +5218,7 @@
       "not-decision-d6-proof-of-concept-lessons-learned-error-templates"
     ],
     "discovery": [
+      "con-tool-attune-hub",
       "tip-after-10-inspects",
       "tip-after-5-ships",
       "tip-after-first-health",
@@ -5030,11 +5228,21 @@
       "tip-no-patterns",
       "tip-weekly-review"
     ],
+    "docstrings": [
+      "con-tool-doc-gen"
+    ],
     "documentation": [
-      "con-sync-paradigm"
+      "con-sync-paradigm",
+      "con-tool-doc-gen"
+    ],
+    "fixes": [
+      "con-tool-fix-test"
     ],
     "formatting": [
       "not-markdown-formatting"
+    ],
+    "generation": [
+      "con-tool-smart-test"
     ],
     "git": [
       "err-any-unstaged-file-triggers-pre-commit-stash-conflicts-with-auto",
@@ -5137,6 +5345,9 @@
       "con-template-composition",
       "con-workflow-chain-prediction"
     ],
+    "hub": [
+      "con-tool-attune-hub"
+    ],
     "imports": [
       "err-adding-logger-before-eager-imports-triggers-e402-in-init-py",
       "err-baseworkflow-now-provides-self-logger",
@@ -5232,6 +5443,9 @@
       "war-untracked-scripts-break-ci-when-tests-import-them",
       "war-verify-new-dispatch-branches-with-a-known-fixture-not-just"
     ],
+    "linting": [
+      "con-tool-code-quality"
+    ],
     "macos": [
       "err-macos-var-private-var-symlink-breaks-path-assertions",
       "err-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
@@ -5275,11 +5489,15 @@
       "tro-mcp-server-not-responding"
     ],
     "memory": [
+      "con-tool-memory-and-context",
       "ref-tool-memory-forget",
       "ref-tool-memory-retrieve",
       "ref-tool-memory-search",
       "ref-tool-memory-store",
       "tas-manage-lessons"
+    ],
+    "orchestration": [
+      "con-tool-workflow-orchestration"
     ],
     "packaging": [
       "err-claude-agent-sdk-is-now-a-core-dependency-of-attune-ai",
@@ -5315,10 +5533,17 @@
       "war-run-simplify-catches-per-file-errors-internally",
       "war-wizards-call-workflows-internally-they-are-not-duplicates"
     ],
+    "persistence": [
+      "con-tool-memory-and-context"
+    ],
     "philosophy": [
       "con-socratic-discovery",
       "not-code-simplification",
       "not-socratic-interaction-rule"
+    ],
+    "planning": [
+      "con-tool-planning",
+      "con-tool-spec"
     ],
     "plugin": [
       "com-lite-vs-full",
@@ -5327,6 +5552,7 @@
       "ref-skill-code-quality",
       "ref-skill-doc-gen",
       "ref-skill-fix-test",
+      "ref-skill-learn",
       "ref-skill-memory-and-context",
       "ref-skill-planning",
       "ref-skill-refactor-plan",
@@ -5337,6 +5563,9 @@
       "ref-skill-workflow-orchestration",
       "tas-install-plugin",
       "tro-plugin-not-found"
+    ],
+    "publishing": [
+      "con-tool-release-prep"
     ],
     "python": [
       "err-adding-logger-before-eager-imports-triggers-e402-in-init-py",
@@ -5411,10 +5640,31 @@
       "war-windows-ci-encoding",
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
     ],
+    "quality": [
+      "con-tool-code-quality"
+    ],
+    "refactoring": [
+      "con-tool-refactor-plan"
+    ],
+    "release": [
+      "con-tool-release-prep"
+    ],
+    "review": [
+      "con-tool-code-quality"
+    ],
+    "routing": [
+      "con-tool-attune-hub",
+      "con-tool-workflow-orchestration"
+    ],
     "rules": [
       "not-critical-rules"
     ],
+    "scanning": [
+      "con-tool-bug-predict"
+    ],
     "security": [
+      "con-tool-bug-predict",
+      "con-tool-security-audit",
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
       "err-bug-predict-dangerous-eval-flags-subprocess-exec",
       "err-changing-error-messages-breaks-tests-across-the-codebase",
@@ -5492,11 +5742,14 @@
       "tro-workflow-not-running"
     ],
     "skill": [
+      "con-tool-learn",
+      "con-tool-security-audit",
       "qui-skill-attune-hub",
       "qui-skill-bug-predict",
       "qui-skill-code-quality",
       "qui-skill-doc-gen",
       "qui-skill-fix-test",
+      "qui-skill-learn",
       "qui-skill-memory-and-context",
       "qui-skill-planning",
       "qui-skill-refactor-plan",
@@ -5510,6 +5763,7 @@
       "ref-skill-code-quality",
       "ref-skill-doc-gen",
       "ref-skill-fix-test",
+      "ref-skill-learn",
       "ref-skill-memory-and-context",
       "ref-skill-planning",
       "ref-skill-refactor-plan",
@@ -5523,6 +5777,7 @@
       "tas-use-code-quality",
       "tas-use-doc-gen",
       "tas-use-fix-test",
+      "tas-use-learn",
       "tas-use-memory-and-context",
       "tas-use-planning",
       "tas-use-refactor-plan",
@@ -5531,6 +5786,9 @@
       "tas-use-smart-test",
       "tas-use-spec",
       "tas-use-workflow-orchestration"
+    ],
+    "spec": [
+      "con-tool-spec"
     ],
     "standards": [
       "not-markdown-formatting"
@@ -5541,6 +5799,7 @@
       "tas-use-code-quality",
       "tas-use-doc-gen",
       "tas-use-fix-test",
+      "tas-use-learn",
       "tas-use-memory-and-context",
       "tas-use-planning",
       "tas-use-refactor-plan",
@@ -5568,6 +5827,8 @@
       "not-term-wizard"
     ],
     "testing": [
+      "con-tool-fix-test",
+      "con-tool-smart-test",
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
       "err-baseworkflow-now-provides-self-logger",
       "err-changing-error-messages-breaks-tests-across-the-codebase",
@@ -5800,6 +6061,8 @@
     "workflow": [
       "com-workflow-vs-wizard",
       "con-meta-orchestration",
+      "con-tool-security-audit",
+      "con-tool-spec",
       "con-workflow-chain-prediction",
       "qui-generate-tests",
       "qui-run-code-review",
@@ -5836,6 +6099,9 @@
       "tip-after-security-audit",
       "tip-after-simplify-code",
       "tip-after-test-gen"
+    ],
+    "workflows": [
+      "con-tool-workflow-orchestration"
     ]
   },
   "workflow_map": {

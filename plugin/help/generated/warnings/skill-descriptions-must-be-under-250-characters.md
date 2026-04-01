@@ -3,7 +3,7 @@ type: warning
 name: skill-descriptions-must-be-under-250-characters
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Skill descriptions must be under 250 characters

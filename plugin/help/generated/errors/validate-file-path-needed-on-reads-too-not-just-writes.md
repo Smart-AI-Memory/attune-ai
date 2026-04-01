@@ -3,7 +3,7 @@ type: error
 name: validate-file-path-needed-on-reads-too-not-just-writes
 confidence: Verified
 tags: [security, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `_validate_file_path` needed on reads too, not just writes

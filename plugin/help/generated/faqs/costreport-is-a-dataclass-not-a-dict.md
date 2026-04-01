@@ -2,7 +2,7 @@
 type: faq
 name: costreport-is-a-dataclass-not-a-dict
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about costReport is a dataclass, not a dict?

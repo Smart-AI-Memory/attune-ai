@@ -2,7 +2,7 @@
 type: faq
 name: module-level-optional-imports-enable-clean-test-patching
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: How do I handle module-level optional imports enable clean test patching?

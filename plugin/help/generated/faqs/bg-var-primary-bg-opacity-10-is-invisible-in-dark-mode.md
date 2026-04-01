@@ -1,7 +1,7 @@
 ---
 type: faq
 name: bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about bg-[var(--primary)] bg-opacity-10 is invisible in dark mode?

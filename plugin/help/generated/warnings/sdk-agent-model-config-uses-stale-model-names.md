@@ -3,7 +3,7 @@ type: warning
 name: sdk-agent-model-config-uses-stale-model-names
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: SDK agent MODEL_CONFIG uses stale model names

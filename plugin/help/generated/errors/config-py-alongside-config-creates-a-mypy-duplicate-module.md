@@ -3,7 +3,7 @@ type: error
 name: config-py-alongside-config-creates-a-mypy-duplicate-module
 confidence: Verified
 tags: [imports, git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `config.py` alongside `config/` creates a mypy duplicate

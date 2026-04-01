@@ -2,7 +2,7 @@
 type: faq
 name: verify-new-dispatch-branches-with-a-known-fixture-not-just
 tags: [testing, imports, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about verify new dispatch branches with a known fixture, not just imports?

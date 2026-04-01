@@ -3,7 +3,7 @@ type: warning
 name: attune-skill-names-must-not-collide-with-claude-code-built-in
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Attune skill names must not collide with Claude Code built-in

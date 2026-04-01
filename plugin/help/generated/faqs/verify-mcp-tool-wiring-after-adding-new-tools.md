@@ -2,7 +2,7 @@
 type: faq
 name: verify-mcp-tool-wiring-after-adding-new-tools
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about verify MCP tool wiring after adding new tools?

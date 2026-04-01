@@ -2,7 +2,7 @@
 type: faq
 name: claude-code-plugin-is-platform-specific
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about claude Code plugin is platform-specific?

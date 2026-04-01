@@ -3,7 +3,7 @@ type: error
 name: mypy-437-errors-was-stale-actual-count-was-2
 confidence: Verified
 tags: [git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: MyPy "437 errors" was stale — actual count was 2

@@ -3,7 +3,7 @@ type: error
 name: ruff-parses-pytest-ini-as-python
 confidence: Verified
 tags: [testing, git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: ruff parses pytest.ini as Python

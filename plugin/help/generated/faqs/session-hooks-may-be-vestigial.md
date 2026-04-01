@@ -2,7 +2,7 @@
 type: faq
 name: session-hooks-may-be-vestigial
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about session hooks may be vestigial?

@@ -2,7 +2,7 @@
 type: faq
 name: bandit-b108-blocks-hardcoded-tmp-paths
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does bandit B108 blocks hardcoded /tmp paths?

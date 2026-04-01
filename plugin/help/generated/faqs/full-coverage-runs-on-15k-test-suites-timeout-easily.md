@@ -2,7 +2,7 @@
 type: faq
 name: full-coverage-runs-on-15k-test-suites-timeout-easily
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does full coverage runs on 15k+ test suites timeout easily?

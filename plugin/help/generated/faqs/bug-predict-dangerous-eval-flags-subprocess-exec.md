@@ -2,7 +2,7 @@
 type: faq
 name: bug-predict-dangerous-eval-flags-subprocess-exec
 tags: [security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about bug-predict dangerous_eval flags subprocess_exec?

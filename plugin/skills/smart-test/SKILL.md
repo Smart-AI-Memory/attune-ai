@@ -6,7 +6,7 @@ argument-hint: "<path or module to test>"
 
 # Smart Test
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Smart Test** finds test coverage gaps and generates
 > pytest tests for uncovered code — gap analysis, targeted
@@ -65,6 +65,17 @@ test_gen_parallel(top=10)
 | File | Tests Created | Edge Cases |
 |------|---------------|------------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="smart-test", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+test generation — want to see them?"
 
 ## Follow-Up
 

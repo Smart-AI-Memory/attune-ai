@@ -2,7 +2,7 @@
 type: faq
 name: duplicate-plugins-cause-conflicting-skill-triggers
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about duplicate plugins cause conflicting skill triggers?

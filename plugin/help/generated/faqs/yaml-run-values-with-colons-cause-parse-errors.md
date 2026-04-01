@@ -2,7 +2,7 @@
 type: faq
 name: yaml-run-values-with-colons-cause-parse-errors
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about YAML run: values with colons cause parse errors?

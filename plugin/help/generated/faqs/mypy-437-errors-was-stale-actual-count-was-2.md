@@ -2,7 +2,7 @@
 type: faq
 name: mypy-437-errors-was-stale-actual-count-was-2
 tags: [git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about myPy "437 errors" was stale — actual count was 2?

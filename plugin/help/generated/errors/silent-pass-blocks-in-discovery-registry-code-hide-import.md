@@ -3,7 +3,7 @@ type: error
 name: silent-pass-blocks-in-discovery-registry-code-hide-import
 confidence: Verified
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Silent `pass` blocks in discovery/registry code hide

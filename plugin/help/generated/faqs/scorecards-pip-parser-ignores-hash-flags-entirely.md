@@ -2,7 +2,7 @@
 type: faq
 name: scorecards-pip-parser-ignores-hash-flags-entirely
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about scorecard's pip parser ignores --hash flags entirely?

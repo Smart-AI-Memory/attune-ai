@@ -2,7 +2,7 @@
 type: faq
 name: wizards-call-workflows-internally-they-are-not-duplicates
 tags: [git, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about wizards call workflows internally — they are not duplicates?

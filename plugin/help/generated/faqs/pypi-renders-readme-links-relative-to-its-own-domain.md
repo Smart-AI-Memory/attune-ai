@@ -2,7 +2,7 @@
 type: faq
 name: pypi-renders-readme-links-relative-to-its-own-domain
 tags: [security, packaging, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about pyPI renders README links relative to its own domain?

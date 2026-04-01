@@ -2,7 +2,7 @@
 type: faq
 name: tests-for-optional-dep-code-need-pytest-importorskip-guards-in
 tags: [ci, testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ModuleNotFoundError` (tests for optional-dep code need pytest.importorskip() guards in CI)?

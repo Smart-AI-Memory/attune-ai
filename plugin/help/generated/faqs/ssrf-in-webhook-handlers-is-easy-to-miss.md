@@ -2,7 +2,7 @@
 type: faq
 name: ssrf-in-webhook-handlers-is-easy-to-miss
 tags: [security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about SSRF in webhook handlers is easy to miss?

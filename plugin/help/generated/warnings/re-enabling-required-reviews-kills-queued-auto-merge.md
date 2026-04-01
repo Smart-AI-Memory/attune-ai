@@ -3,7 +3,7 @@ type: warning
 name: re-enabling-required-reviews-kills-queued-auto-merge
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Re-enabling required reviews kills queued auto-merge

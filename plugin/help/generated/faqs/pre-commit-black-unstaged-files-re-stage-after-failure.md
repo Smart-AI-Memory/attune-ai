@@ -2,7 +2,7 @@
 type: faq
 name: pre-commit-black-unstaged-files-re-stage-after-failure
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does pre-commit black + unstaged files: re-stage after failure?

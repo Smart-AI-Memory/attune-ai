@@ -2,7 +2,7 @@
 type: faq
 name: clusterfuzzlite-no-deps-misses-transitive-imports
 tags: [security, imports, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ModuleNotFoundError` (clusterFuzzLite --no-deps misses transitive imports)?

@@ -2,7 +2,7 @@
 type: faq
 name: claude-agent-sdk-is-now-a-core-dependency-of-attune-ai
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about claude-agent-sdk is now a core dependency of attune-ai?

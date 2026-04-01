@@ -2,7 +2,7 @@
 type: faq
 name: structlog-kwargs-vs-stdlib-logger
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about structlog kwargs vs stdlib Logger?

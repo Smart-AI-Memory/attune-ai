@@ -2,7 +2,7 @@
 type: faq
 name: hardcoded-root-paths-in-tests
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about hardcoded /root/ paths in tests?

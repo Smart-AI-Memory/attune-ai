@@ -2,7 +2,7 @@
 type: faq
 name: dispatch-tables-hold-direct-function-references-mocks-must
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about dispatch tables hold direct function references — mocks must target the table, not the module name?

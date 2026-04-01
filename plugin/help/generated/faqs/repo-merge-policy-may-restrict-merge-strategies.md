@@ -2,7 +2,7 @@
 type: faq
 name: repo-merge-policy-may-restrict-merge-strategies
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about repo merge policy may restrict merge strategies?

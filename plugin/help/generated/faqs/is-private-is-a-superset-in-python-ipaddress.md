@@ -2,7 +2,7 @@
 type: faq
 name: is-private-is-a-superset-in-python-ipaddress
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about is_private is a superset in Python ipaddress?

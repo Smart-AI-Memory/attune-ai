@@ -2,7 +2,7 @@
 type: faq
 name: ruff-parses-pytest-ini-as-python
 tags: [testing, git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about ruff parses pytest.ini as Python?

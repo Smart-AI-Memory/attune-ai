@@ -2,7 +2,7 @@
 type: faq
 name: skill-frontmatter-allowlist-march-2026
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about skill frontmatter allowlist (March 2026)?

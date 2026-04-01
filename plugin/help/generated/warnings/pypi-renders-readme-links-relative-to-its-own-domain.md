@@ -3,7 +3,7 @@ type: warning
 name: pypi-renders-readme-links-relative-to-its-own-domain
 confidence: Verified
 tags: [security, packaging, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: PyPI renders README links relative to its own domain

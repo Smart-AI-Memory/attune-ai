@@ -2,7 +2,7 @@
 type: faq
 name: github-repos-serve-as-claude-code-marketplaces
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about gitHub repos serve as Claude Code marketplaces?

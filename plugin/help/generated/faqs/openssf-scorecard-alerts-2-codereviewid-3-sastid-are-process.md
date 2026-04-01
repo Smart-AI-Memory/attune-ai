@@ -1,7 +1,7 @@
 ---
 type: faq
 name: openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about openSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are process metrics, not code bugs?

@@ -2,7 +2,7 @@
 type: faq
 name: bugpredictionworkflow-not-bugpredictworkflow
 tags: [imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `ImportError` (bugPredictionWorkflow not BugPredictWorkflow)?

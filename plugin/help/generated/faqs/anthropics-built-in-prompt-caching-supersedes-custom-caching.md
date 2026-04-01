@@ -1,7 +1,7 @@
 ---
 type: faq
 name: anthropics-built-in-prompt-caching-supersedes-custom-caching
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about anthropic's built-in prompt caching supersedes custom caching?

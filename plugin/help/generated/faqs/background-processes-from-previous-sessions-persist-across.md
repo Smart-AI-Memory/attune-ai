@@ -1,7 +1,7 @@
 ---
 type: faq
 name: background-processes-from-previous-sessions-persist-across
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about background processes from previous sessions persist across restarts?

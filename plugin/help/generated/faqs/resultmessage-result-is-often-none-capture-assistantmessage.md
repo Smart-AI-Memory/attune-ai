@@ -1,7 +1,7 @@
 ---
 type: faq
 name: resultmessage-result-is-often-none-capture-assistantmessage
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about resultMessage.result is often None — capture AssistantMessage text too?

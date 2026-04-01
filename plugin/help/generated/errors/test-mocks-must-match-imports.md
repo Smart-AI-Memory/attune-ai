@@ -3,7 +3,7 @@ type: error
 name: test-mocks-must-match-imports
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Test mocks must match imports

@@ -2,7 +2,7 @@
 type: faq
 name: modeltier-has-two-copies-imports-must-match
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about modelTier has two copies — imports must match?

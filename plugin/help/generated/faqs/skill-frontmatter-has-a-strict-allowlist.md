@@ -2,7 +2,7 @@
 type: faq
 name: skill-frontmatter-has-a-strict-allowlist
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about skill frontmatter has a strict allowlist?

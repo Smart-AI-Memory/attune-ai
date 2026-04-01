@@ -3,7 +3,7 @@ type: warning
 name: pre-commit-black-unstaged-files-re-stage-after-failure
 confidence: Verified
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Pre-commit black + unstaged files: re-stage after failure

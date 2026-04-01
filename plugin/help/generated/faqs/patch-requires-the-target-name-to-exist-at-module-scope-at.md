@@ -2,7 +2,7 @@
 type: faq
 name: patch-requires-the-target-name-to-exist-at-module-scope-at
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `AttributeError` (patch() requires the target name to exist at module scope at patch time)?

@@ -2,7 +2,7 @@
 type: faq
 name: b904-raise-x-from-e-is-not-auto-fixable-by-ruff
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about B904 (raise X from e) is not auto-fixable by ruff?

@@ -3,7 +3,7 @@ type: error
 name: full-coverage-runs-on-15k-test-suites-timeout-easily
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Full coverage runs on 15k+ test suites timeout easily

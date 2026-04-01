@@ -3,7 +3,7 @@ type: error
 name: b904-raise-x-from-e-is-not-auto-fixable-by-ruff
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: B904 (`raise X from e`) is not auto-fixable by ruff

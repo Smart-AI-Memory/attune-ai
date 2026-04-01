@@ -2,7 +2,7 @@
 type: faq
 name: adding-logger-before-eager-imports-triggers-e402-in-init-py
 tags: [imports, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about adding logger before eager imports triggers E402 in __init__.py?

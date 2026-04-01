@@ -6,7 +6,7 @@ argument-hint: "<what to plan: feature, tdd, architecture>"
 
 # Planning
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Planning** helps with high-level development planning
 > — feature specs, TDD scaffolding, and architecture

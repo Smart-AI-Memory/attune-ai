@@ -3,7 +3,7 @@ type: warning
 name: read-source-before-writing-tests-for-tricky-logic
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Read source before writing tests for tricky logic

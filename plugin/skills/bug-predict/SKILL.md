@@ -6,7 +6,7 @@ argument-hint: "<path or directory to scan>"
 
 # Bug Prediction
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Bug Prediction** finds likely bug locations using
 > pattern analysis — eval/exec usage, broad exceptions,

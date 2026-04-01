@@ -1,7 +1,7 @@
 ---
 type: faq
 name: semantic-cache-70-hit-rate-claim-was-unmeasured
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about semantic cache 70% hit rate claim was unmeasured?

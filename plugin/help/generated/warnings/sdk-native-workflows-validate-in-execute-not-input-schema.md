@@ -3,7 +3,7 @@ type: warning
 name: sdk-native-workflows-validate-in-execute-not-input-schema
 confidence: Verified
 tags: [testing, security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: SDK-native workflows validate in `execute()`, not `input_schema`

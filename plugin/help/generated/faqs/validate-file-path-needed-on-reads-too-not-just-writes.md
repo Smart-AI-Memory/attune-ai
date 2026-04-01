@@ -2,7 +2,7 @@
 type: faq
 name: validate-file-path-needed-on-reads-too-not-just-writes
 tags: [security, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about _validate_file_path needed on reads too, not just writes?

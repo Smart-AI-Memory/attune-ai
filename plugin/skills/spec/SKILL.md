@@ -6,7 +6,7 @@ argument-hint: "<what to build, or 'resume'>"
 
 # Spec-Driven Development
 
-Before scoping, tell the user:
+**IMPORTANT: Start your response by telling the user:**
 
 > **Spec** takes you from idea to shipped code —
 > brainstorm, plan, review, and execute with quality

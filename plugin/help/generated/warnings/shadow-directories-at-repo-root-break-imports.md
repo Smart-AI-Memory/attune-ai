@@ -3,7 +3,7 @@ type: warning
 name: shadow-directories-at-repo-root-break-imports
 confidence: Verified
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Shadow directories at repo root break imports

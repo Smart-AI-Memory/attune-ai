@@ -2,7 +2,7 @@
 type: faq
 name: non-baseworkflow-classes-in-workflow-registry-crash-the-cli
 tags: [imports, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why does non-BaseWorkflow classes in workflow registry crash the CLI?

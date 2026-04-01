@@ -2,7 +2,7 @@
 type: faq
 name: stacked-patch-decorators-inject-args-bottom-up
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: Why do I get `NameError` (stacked @patch decorators inject args bottom-up)?

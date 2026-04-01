@@ -2,7 +2,7 @@
 type: faq
 name: hardcoded-user-id-defeats-ownership-checks
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What should I know about hardcoded user_id defeats ownership checks?

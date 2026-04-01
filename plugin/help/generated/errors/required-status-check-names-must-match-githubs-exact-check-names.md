@@ -3,7 +3,7 @@ type: error
 name: required-status-check-names-must-match-githubs-exact-check-names
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Required status check names must match GitHub's exact check

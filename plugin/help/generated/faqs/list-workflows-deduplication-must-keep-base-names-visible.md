@@ -1,7 +1,7 @@
 ---
 type: faq
 name: list-workflows-deduplication-must-keep-base-names-visible
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # FAQ: What do I need to know about list_workflows() deduplication must keep base names visible?

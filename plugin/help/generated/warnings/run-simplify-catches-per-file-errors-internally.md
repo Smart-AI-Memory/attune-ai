@@ -3,7 +3,7 @@ type: warning
 name: run-simplify-catches-per-file-errors-internally
 confidence: Verified
 tags: [testing, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `_run_simplify` catches per-file errors internally

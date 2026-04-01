@@ -3,7 +3,7 @@ type: error
 name: mcp-workspace-root-defaults-to-os-getcwd-tests-with-tmp-path
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: MCP `workspace_root` defaults to `os.getcwd()` — tests with
