@@ -47,15 +47,12 @@ class TestListWorkflowsShowAll:
             assert "engine" in wf
             assert wf["engine"] in ("sdk", "native")
 
-    def test_sdk_native_workflows_labeled_sdk(self):
-        """Workflows in _SDK_NATIVE_WORKFLOWS get engine='sdk'."""
-        from attune.workflows import _SDK_NATIVE_WORKFLOWS, list_workflows
+    def test_all_workflows_labeled_sdk(self):
+        """All workflows are SDK-native (v4.2.0+)."""
+        from attune.workflows import list_workflows
 
-        workflows = {wf["name"]: wf for wf in list_workflows()}
-
-        for name in _SDK_NATIVE_WORKFLOWS:
-            if name in workflows:
-                assert workflows[name]["engine"] == "sdk", f"{name} should have engine='sdk'"
+        for wf in list_workflows():
+            assert wf["engine"] == "sdk", f"{wf['name']} should have engine='sdk'"
 
     def test_class_field_is_string(self):
         """Each workflow dict has a class field that is a string."""
@@ -135,35 +132,3 @@ class TestRefreshWorkflowRegistryWithConfig:
         refresh_workflow_registry(config=None)
 
         assert len(WORKFLOW_REGISTRY) > 0
-
-
-class TestSDKMapsConsistency:
-    """Tests for _SDK_WORKFLOW_MAP and related structures."""
-
-    def test_sdk_workflow_map_is_empty(self):
-        """_SDK_WORKFLOW_MAP is empty after v4.2.0 merge."""
-        from attune.workflows import _SDK_WORKFLOW_MAP
-
-        assert _SDK_WORKFLOW_MAP == {}
-
-    def test_sdk_reverse_map_is_empty(self):
-        """_SDK_REVERSE_MAP is empty (inverse of empty map)."""
-        from attune.workflows import _SDK_REVERSE_MAP
-
-        assert _SDK_REVERSE_MAP == {}
-
-    def test_sdk_native_workflows_is_set(self):
-        """_SDK_NATIVE_WORKFLOWS is a non-empty set."""
-        from attune.workflows import _SDK_NATIVE_WORKFLOWS
-
-        assert isinstance(_SDK_NATIVE_WORKFLOWS, set)
-        assert len(_SDK_NATIVE_WORKFLOWS) > 0
-
-    def test_sdk_native_workflows_are_in_registry(self):
-        """All SDK-native workflow names exist in _DEFAULT_WORKFLOW_NAMES."""
-        from attune.workflows import _DEFAULT_WORKFLOW_NAMES, _SDK_NATIVE_WORKFLOWS
-
-        for name in _SDK_NATIVE_WORKFLOWS:
-            assert (
-                name in _DEFAULT_WORKFLOW_NAMES
-            ), f"{name} in _SDK_NATIVE_WORKFLOWS but not in _DEFAULT_WORKFLOW_NAMES"

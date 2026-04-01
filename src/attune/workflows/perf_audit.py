@@ -31,26 +31,11 @@ from .agent_sdk_adapter import (
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
-from .perf_audit_patterns import (
-    OPTIMIZATION_ACTIONS,  # noqa: F401 — re-exported
-    PERF_AUDIT_STEPS,  # noqa: F401 — re-exported
-    PERF_PATTERNS,  # noqa: F401 — re-exported
-)
-from .perf_audit_report import (
-    create_perf_audit_workflow_report,  # noqa: F401 — re-exported
-    format_perf_audit_report,  # noqa: F401 — re-exported
-)
 
 logger = logging.getLogger(__name__)
 
-# Re-export public API for backward compatibility
 __all__ = [
-    "PERF_AUDIT_STEPS",
-    "PERF_PATTERNS",
     "PerformanceAuditWorkflow",
-    "create_perf_audit_workflow_report",
-    "format_perf_audit_report",
-    "main",
 ]
 
 # Depth → max agent turns mapping

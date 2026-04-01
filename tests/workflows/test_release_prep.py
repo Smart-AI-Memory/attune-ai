@@ -57,28 +57,5 @@ class TestReleasePreparationWorkflowAttributes:
         assert wf is not None
 
 
-@pytest.mark.unit
-class TestReleasePreparationReExports:
-    """Test public re-exports from release_prep module."""
-
-    def test_release_prep_steps_exported(self):
-        """Test RELEASE_PREP_STEPS is importable."""
-        from attune.workflows.release_prep import RELEASE_PREP_STEPS
-
-        assert isinstance(RELEASE_PREP_STEPS, list | tuple | dict)
-
-    def test_format_release_prep_report_exported(self):
-        """Test format_release_prep_report is importable."""
-        from attune.workflows.release_prep import format_release_prep_report
-
-        assert callable(format_release_prep_report)
-
-    def test_main_exported(self):
-        """Test main is importable."""
-        from attune.workflows.release_prep import main
-
-        assert callable(main)
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

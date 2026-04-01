@@ -76,11 +76,8 @@ class TestRegistryConsolidation:
         from attune.workflows import _LAZY_WORKFLOW_IMPORTS
 
         preserved_classes = [
-            "CodeReviewPipeline",
-            "PRReviewWorkflow",
             "DocumentManagerWorkflow",
             "OrchestratedReleasePrepWorkflow",
-            "AutonomousTestGenerator",
             "ProgressiveTestGenWorkflow",
         ]
         for cls_name in preserved_classes:
@@ -145,28 +142,6 @@ class TestDeprecationWarnings:
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) >= 1
             assert "DocumentManagerWorkflow is deprecated" in str(deprecation_warnings[0].message)
-
-    def test_code_review_pipeline_warns(self):
-        """CodeReviewPipeline should emit DeprecationWarning."""
-        from attune.workflows import CodeReviewPipeline
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            CodeReviewPipeline()
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1
-            assert "CodeReviewPipeline is deprecated" in str(deprecation_warnings[0].message)
-
-    def test_pr_review_workflow_warns(self):
-        """PRReviewWorkflow should emit DeprecationWarning."""
-        from attune.workflows import PRReviewWorkflow
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            PRReviewWorkflow()
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1
-            assert "PRReviewWorkflow is deprecated" in str(deprecation_warnings[0].message)
 
     def test_orchestrated_release_prep_warns(self):
         """OrchestratedReleasePrepWorkflow should emit DeprecationWarning."""

@@ -26,14 +26,9 @@ from .agent_sdk_adapter import (
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import CostReport, WorkflowResult, WorkflowStage
-from .release_prep_approve import RELEASE_PREP_STEPS  # noqa: F401
-from .release_prep_report import format_release_prep_report, main  # noqa: F401
 
 __all__ = [
-    "RELEASE_PREP_STEPS",
     "ReleasePreparationWorkflow",
-    "format_release_prep_report",
-    "main",
 ]
 
 logger = logging.getLogger(__name__)
@@ -279,7 +274,3 @@ class ReleasePreparationWorkflow(BaseWorkflow):
             provider="anthropic",
             error=message,
         )
-
-
-if __name__ == "__main__":
-    main()
