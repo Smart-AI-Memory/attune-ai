@@ -5,6 +5,26 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-04-02
+
+### Changed (5.6.0)
+
+- **README reframed around help system** — lead with
+  "the 21st century help system for developer tools"
+  positioning, help architecture as primary content
+- **Restored acknowledgments section** — credits for
+  Anthropic, Boris Cherny, and Affaan Mustafa with link
+  to full ACKNOWLEDGMENTS.md
+- **Added star request** — tasteful repo star prompt
+
+### Fixed (5.6.0)
+
+- **4 dead test files breaking CI** — removed 34 tests
+  importing modules deleted in the 20k-line legacy cleanup
+  (security_audit_phase3, RELEASE_PREP_STEPS, PERF_AUDIT_STEPS)
+- **Pre-commit CI missing `uv`** — check-docs-freshness
+  hook required `uv` which wasn't installed in the workflow
+
 ## [5.5.0] - 2026-04-01
 
 ### Added (5.5.0)
