@@ -3,7 +3,7 @@ type: error
 name: re-enabling-required-reviews-kills-queued-auto-merge
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Re-enabling required reviews kills queued auto-merge

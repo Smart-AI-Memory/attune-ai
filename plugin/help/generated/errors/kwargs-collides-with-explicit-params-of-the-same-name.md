@@ -3,7 +3,7 @@ type: error
 name: kwargs-collides-with-explicit-params-of-the-same-name
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `**kwargs` collides with explicit params of the same name

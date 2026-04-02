@@ -3,7 +3,7 @@ type: error
 name: changing-user-facing-output-strings-cascades-through-test
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Changing user-facing output strings cascades through test

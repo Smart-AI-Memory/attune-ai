@@ -3,7 +3,7 @@ type: error
 name: broad-gitignore-patterns-match-nested-directories
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Broad gitignore patterns match nested directories

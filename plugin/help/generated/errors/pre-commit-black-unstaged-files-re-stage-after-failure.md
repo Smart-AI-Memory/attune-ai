@@ -3,7 +3,7 @@ type: error
 name: pre-commit-black-unstaged-files-re-stage-after-failure
 confidence: Verified
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Pre-commit black + unstaged files: re-stage after failure

@@ -3,7 +3,7 @@ type: warning
 name: replacing-a-mixin-based-class-scatters-test-failures-across
 confidence: Verified
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Replacing a mixin-based class scatters test failures across many

@@ -3,7 +3,7 @@ type: error
 name: session-hooks-may-be-vestigial
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Session hooks may be vestigial

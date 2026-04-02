@@ -58,4 +58,4 @@ positives like `subprocess_exec` matching
 | `incomplete_code` | LOW | TODO/FIXME comments |
 
 ## Related Topics
-- Reference: MCP tools: bug_predict
+- **Reference**: Tool: Bug Predict (`bug_predict`)

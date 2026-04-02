@@ -3,7 +3,7 @@ type: error
 name: claude-code-plugins-expect-plugin-json-inside-claude-plugin
 confidence: Verified
 tags: [testing, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Claude Code plugins expect `plugin.json` inside `.claude-plugin/`

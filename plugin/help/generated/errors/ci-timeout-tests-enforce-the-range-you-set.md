@@ -3,7 +3,7 @@ type: error
 name: ci-timeout-tests-enforce-the-range-you-set
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: CI timeout tests enforce the range you set

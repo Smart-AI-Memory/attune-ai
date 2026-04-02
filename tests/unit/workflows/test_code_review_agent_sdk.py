@@ -220,23 +220,3 @@ class TestCodeReviewWorkflowReExports:
         from attune.workflows.code_review import CODE_REVIEW_STEPS
 
         assert "architect_review" in CODE_REVIEW_STEPS
-
-    def test_format_code_review_report_accessible(self) -> None:
-        """Given the module, format_code_review_report is importable."""
-        from attune.workflows.code_review import format_code_review_report
-
-        assert callable(format_code_review_report)
-
-    def test_analysis_helpers_accessible(self) -> None:
-        """Given the module, analysis helpers are importable."""
-        from attune.workflows.code_review import (
-            _format_findings_for_prompt,
-            _gather_file_snippets,
-            _parse_deep_enrichment,
-            _recount_by_key,
-        )
-
-        assert callable(_format_findings_for_prompt)
-        assert callable(_gather_file_snippets)
-        assert callable(_parse_deep_enrichment)
-        assert callable(_recount_by_key)

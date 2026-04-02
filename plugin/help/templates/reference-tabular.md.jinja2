@@ -12,29 +12,33 @@ source: {{ source }}
 # Reference: {{ title }}
 
 {{ description }}
+{% if group %}
+
+**Group:** {{ group }}
+{% endif %}
 {% if parameters %}
 
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
 {% for p in parameters %}
-| `{{ p.name }}` | {{ p.type }} | {{ p.description }} | {{ p.default }} |
+| `{{ p.name }}` | {{ p.type }} | {{ p.description }} | {{ p.constraints }} | {{ p.default }} |
 {% endfor %}
 {% endif %}
-{% if usage %}
+{% if usage_example %}
 
 ## Usage
 
-{{ usage }}
+{{ usage_example }}
 {% endif %}
 
 ## Related Topics
 {% if related_topics %}
 {% for topic in related_topics %}
-- {{ topic.type }}: {{ topic.description }}
+- **{{ topic.type }}**: {{ topic.description }}
 {% endfor %}
 {% else %}
 
-None generated yet.
+_No related topics yet._
 {% endif %}

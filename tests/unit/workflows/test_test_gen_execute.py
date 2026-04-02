@@ -188,10 +188,10 @@ class TestTestGenErrorResult:
         assert result.provider == "anthropic"
 
     def test_error_result_has_stage(self, workflow):
-        """_error_result() includes the agent-gen stage."""
+        """_error_result() includes workflow name as stage name."""
         result = workflow._error_result("test error")
         assert len(result.stages) == 1
-        assert result.stages[0].name == "agent-gen"
+        assert result.stages[0].name == workflow.name
         assert result.stages[0].tier == ModelTier.CAPABLE
 
     def test_error_result_timestamps(self, workflow):

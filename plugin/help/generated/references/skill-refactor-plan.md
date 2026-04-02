@@ -81,4 +81,5 @@ simplify_code(path="<target file>")
 - Before/after examples
 
 ## Related Topics
-- Reference: MCP tools: refactor_plan, simplify_code, refactor_plan, simplify_code
+- **Reference**: Tool: Refactor Plan (`refactor_plan`)
+- **Reference**: Tool: Simplify Code (`simplify_code`)

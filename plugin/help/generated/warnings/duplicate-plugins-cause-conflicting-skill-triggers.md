@@ -3,7 +3,7 @@ type: warning
 name: duplicate-plugins-cause-conflicting-skill-triggers
 confidence: Verified
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Duplicate plugins cause conflicting skill triggers

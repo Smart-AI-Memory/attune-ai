@@ -6,6 +6,12 @@ argument-hint: "<path or directory to review>"
 
 # Code Quality
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Code Quality** reviews code for quality issues, style
+> violations, and likely bugs. Supports quick scan,
+> thorough review, or deep multi-pass analysis.
+
 ## Scoping
 
 Before running, ask:
@@ -62,6 +68,17 @@ deep_review(path="<user-specified path>")
 | File | Pattern | Confidence |
 |------|---------|------------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="code-quality", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+code quality reviews — want to see them?"
 
 ## Follow-Up
 

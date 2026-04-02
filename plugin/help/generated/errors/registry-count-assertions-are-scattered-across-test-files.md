@@ -3,7 +3,7 @@ type: error
 name: registry-count-assertions-are-scattered-across-test-files
 confidence: Verified
 tags: [testing, security, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Registry count assertions are scattered across test files

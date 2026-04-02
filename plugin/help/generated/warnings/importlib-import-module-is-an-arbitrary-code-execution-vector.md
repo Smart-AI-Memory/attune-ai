@@ -3,7 +3,7 @@ type: warning
 name: importlib-import-module-is-an-arbitrary-code-execution-vector
 confidence: Verified
 tags: [security, imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `importlib.import_module()` is an arbitrary code execution

@@ -3,7 +3,7 @@ type: error
 name: ssrf-strip-ipv6-zone-ids-before-ip-validation
 confidence: Verified
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: SSRF: strip IPv6 zone IDs before IP validation

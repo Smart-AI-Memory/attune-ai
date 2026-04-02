@@ -3,7 +3,7 @@ type: error
 name: ssrf-in-webhook-handlers-is-easy-to-miss
 confidence: Verified
 tags: [security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: SSRF in webhook handlers is easy to miss

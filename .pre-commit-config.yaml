@@ -124,3 +124,17 @@ repos:
         pass_filenames: false
         stages: [manual]  # Run manually with: pre-commit run platform-compat
         # Change to 'stages: [commit]' to run automatically on every commit
+
+      # Help template freshness check
+      # Warns when doc source files change without template regeneration
+      # Set ATTUNE_DOCS_AUTOREGEN=1 to auto-regenerate on commit
+      - id: check-docs-freshness
+        name: Check Help Template Freshness
+        entry: uv run python scripts/check_docs_freshness.py
+        language: system
+        pass_filenames: false
+        files: >-
+          ^\.claude/CLAUDE\.md$|
+          ^plugin/skills/.*/SKILL\.md$|
+          ^src/attune/mcp/tool_schemas\.py$
+        stages: [commit]

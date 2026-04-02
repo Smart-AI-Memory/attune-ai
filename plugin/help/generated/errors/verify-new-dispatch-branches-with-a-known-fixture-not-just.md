@@ -3,7 +3,7 @@ type: error
 name: verify-new-dispatch-branches-with-a-known-fixture-not-just
 confidence: Verified
 tags: [testing, imports, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Verify new dispatch branches with a known fixture, not just

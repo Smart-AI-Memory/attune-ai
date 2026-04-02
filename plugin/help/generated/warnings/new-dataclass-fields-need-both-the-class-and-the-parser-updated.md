@@ -3,7 +3,7 @@ type: warning
 name: new-dataclass-fields-need-both-the-class-and-the-parser-updated
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: New dataclass fields need both the class AND the parser updated

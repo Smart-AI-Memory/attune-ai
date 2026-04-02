@@ -3,7 +3,7 @@ type: error
 name: pip-audit-fails-on-unpublished-versions
 confidence: Verified
 tags: [ci, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `pip-audit` fails on unpublished versions

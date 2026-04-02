@@ -1,0 +1,46 @@
+---
+type: task
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Task: {{ title }}
+
+{{ introduction }}
+{% if prerequisites %}
+
+## Prerequisites
+
+{% for prereq in prerequisites %}
+- {{ prereq }}
+{% endfor %}
+{% endif %}
+
+## Steps
+
+{% for step in steps %}
+{{ loop.index }}. **{{ step.action }}**
+{% if step.detail %}
+   {{ step.detail }}
+{% endif %}
+{% if step.code %}
+
+   ```
+   {{ step.code }}
+   ```
+{% endif %}
+
+{% endfor %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}

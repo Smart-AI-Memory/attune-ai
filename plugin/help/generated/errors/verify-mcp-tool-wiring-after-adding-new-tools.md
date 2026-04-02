@@ -3,7 +3,7 @@ type: error
 name: verify-mcp-tool-wiring-after-adding-new-tools
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Verify MCP tool wiring after adding new tools

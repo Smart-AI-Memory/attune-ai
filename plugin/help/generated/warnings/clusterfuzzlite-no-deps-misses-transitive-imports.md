@@ -3,7 +3,7 @@ type: warning
 name: clusterfuzzlite-no-deps-misses-transitive-imports
 confidence: Verified
 tags: [security, imports, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: ClusterFuzzLite `--no-deps` misses transitive imports

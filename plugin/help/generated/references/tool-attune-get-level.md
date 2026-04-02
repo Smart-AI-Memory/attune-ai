@@ -11,5 +11,13 @@ source: src/attune/mcp/tool_schemas.py
 
 Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems.
 
+**Group:** utility
+
+## Usage
+
+`attune_get_level()`
+
 ## Related Topics
-- Reference: Related utility tools: auth_status, auth_recommend, telemetry_stats
+- **Reference**: Tool: Auth Status — Get authentication strategy status. Shows current configurat...
+- **Reference**: Tool: Auth Recommend — Get authentication recommendation for a file. Analyzes LOC a...
+- **Reference**: Tool: Telemetry Stats — Get telemetry statistics. Shows cost savings, cache hit rate...

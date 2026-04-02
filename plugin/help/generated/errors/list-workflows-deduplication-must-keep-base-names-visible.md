@@ -2,7 +2,7 @@
 type: error
 name: list-workflows-deduplication-must-keep-base-names-visible
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `list_workflows()` deduplication must keep base names visible

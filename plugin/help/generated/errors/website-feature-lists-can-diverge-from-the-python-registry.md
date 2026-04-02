@@ -2,7 +2,7 @@
 type: error
 name: website-feature-lists-can-diverge-from-the-python-registry
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Website feature lists can diverge from the Python registry

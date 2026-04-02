@@ -3,7 +3,7 @@ type: error
 name: github-protected-tags-cannot-be-force-updated
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: GitHub protected tags cannot be force-updated

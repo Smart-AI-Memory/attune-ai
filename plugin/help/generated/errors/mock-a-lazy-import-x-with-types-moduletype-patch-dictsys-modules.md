@@ -3,7 +3,7 @@ type: error
 name: mock-a-lazy-import-x-with-types-moduletype-patch-dictsys-modules
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Mock a lazy `import X` with `types.ModuleType` +

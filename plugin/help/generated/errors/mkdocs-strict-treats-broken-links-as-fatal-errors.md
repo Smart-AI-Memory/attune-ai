@@ -3,7 +3,7 @@ type: error
 name: mkdocs-strict-treats-broken-links-as-fatal-errors
 confidence: Verified
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: mkdocs `--strict` treats broken links as fatal errors

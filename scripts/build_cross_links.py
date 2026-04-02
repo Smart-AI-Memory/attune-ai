@@ -289,6 +289,110 @@ def _build_error_tip_links(
     return links
 
 
+def _build_faq_error_links(
+    faqs: list[TemplateEntry],
+    errors: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build FAQ <-> Error links by matching slugs.
+
+    Each FAQ and Error from the same Lessons Learned entry
+    share the same slug name.
+
+    Args:
+        faqs: FAQ template entries.
+        errors: Error template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+    error_by_name = {e.name: e for e in errors}
+
+    for faq in faqs:
+        if faq.name in error_by_name:
+            faq_id = f"faq-{faq.name}"
+            err_id = f"err-{faq.name}"
+            links.setdefault(faq_id, {})["related_error"] = [err_id]
+            links.setdefault(err_id, {}).setdefault(
+                "related_faq",
+                [],
+            ).append(faq_id)
+
+    return links
+
+
+def _build_task_reference_links(
+    tasks: list[TemplateEntry],
+    references: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build Task -> Reference links by skill/tool name.
+
+    Skill tasks (use-X) link to their reference (skill-X).
+    CLI tasks link to related references by tag overlap.
+
+    Args:
+        tasks: Task template entries.
+        references: Reference template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+    ref_by_name = {r.name: r for r in references}
+
+    for task in tasks:
+        task_id = f"tas-{task.name}"
+
+        # Skill tasks: use-X -> skill-X
+        if task.name.startswith("use-"):
+            skill_name = f"skill-{task.name[4:]}"
+            if skill_name in ref_by_name:
+                ref_id = f"ref-{skill_name}"
+                links.setdefault(task_id, {})["related_reference"] = [ref_id]
+                links.setdefault(ref_id, {}).setdefault(
+                    "related_task",
+                    [],
+                ).append(task_id)
+
+    return links
+
+
+def _build_note_reference_links(
+    notes: list[TemplateEntry],
+    references: list[TemplateEntry],
+) -> dict[str, dict]:
+    """Build Note -> Reference links by keyword matching.
+
+    Design decision notes link to references that share
+    2+ non-stopword tokens.
+
+    Args:
+        notes: Note template entries.
+        references: Reference template entries.
+
+    Returns:
+        Dict of template_id -> link data.
+    """
+    links: dict[str, dict] = {}
+
+    ref_tokens = [(r, _tokenize(r.title)) for r in references]
+
+    for note in notes:
+        note_tokens = _tokenize(note.title)
+        note_id = f"not-{note.name}"
+
+        for ref, tokens in ref_tokens:
+            overlap = note_tokens & tokens
+            if len(overlap) >= 2:
+                ref_id = f"ref-{ref.name}"
+                links.setdefault(note_id, {}).setdefault(
+                    "related_reference",
+                    [],
+                ).append(ref_id)
+
+    return links
+
+
 def _build_tag_index(
     all_templates: dict[str, list[TemplateEntry]],
 ) -> dict[str, list[str]]:
@@ -307,6 +411,9 @@ def _build_tag_index(
         "warnings": "war",
         "tips": "tip",
         "references": "ref",
+        "tasks": "tas",
+        "faqs": "faq",
+        "notes": "not",
     }
 
     for type_name, entries in all_templates.items():
@@ -321,6 +428,74 @@ def _build_tag_index(
         index[tag].sort()
 
     return index
+
+
+def _build_workflow_map(
+    references: list[TemplateEntry],
+    tips: list[TemplateEntry],
+) -> dict[str, list[str]]:
+    """Build workflow name -> relevant template IDs map.
+
+    Maps workflow slugs (e.g. "code-review") to templates
+    that document or relate to that workflow.
+
+    Args:
+        references: Reference template entries.
+        tips: Tip template entries.
+
+    Returns:
+        Dict of workflow_name -> list of template_ids.
+    """
+    wf_map: dict[str, list[str]] = {}
+
+    # Workflow transition tips (named "after-{workflow}")
+    for tip in tips:
+        if tip.name.startswith("after-"):
+            source_wf = tip.name[6:]  # strip "after-"
+            wf_map.setdefault(source_wf, []).append(f"tip-{tip.name}")
+
+    # Skill references (skill name often matches workflow name)
+    skill_to_wf = {
+        "security-audit": "security-audit",
+        "code-quality": "code-review",
+        "smart-test": "test-gen",
+        "bug-predict": "bug-predict",
+        "release-prep": "release-prep",
+        "refactor-plan": "refactor-plan",
+        "doc-gen": "doc-gen",
+    }
+    for ref in references:
+        if ref.category == "skill":
+            skill_name = ref.name.replace("skill-", "")
+            wf_name = skill_to_wf.get(skill_name)
+            if wf_name:
+                wf_map.setdefault(wf_name, []).append(f"ref-{ref.name}")
+
+    # Tool references (tool name maps to workflow)
+    tool_to_wf = {
+        "security-audit": "security-audit",
+        "bug-predict": "bug-predict",
+        "code-review": "code-review",
+        "test-generation": "test-gen",
+        "performance-audit": "perf-audit",
+        "release-prep": "release-prep",
+        "refactor-plan": "refactor-plan",
+        "simplify-code": "simplify-code",
+        "dependency-check": "dependency-check",
+        "deep-review": "deep-review",
+    }
+    for ref in references:
+        if ref.category == "tool":
+            tool_name = ref.name.replace("tool-", "")
+            wf_name = tool_to_wf.get(tool_name)
+            if wf_name:
+                wf_map.setdefault(wf_name, []).append(f"ref-{ref.name}")
+
+    # Sort each workflow's templates for deterministic output
+    for wf in wf_map:
+        wf_map[wf] = sorted(set(wf_map[wf]))
+
+    return dict(sorted(wf_map.items()))
 
 
 def _merge_links(
@@ -364,14 +539,29 @@ def build_cross_links(generated_dir: Path) -> dict:
     warnings = all_templates.get("warnings", [])
     tips = all_templates.get("tips", [])
     references = all_templates.get("references", [])
+    tasks = all_templates.get("tasks", [])
+    faqs = all_templates.get("faqs", [])
+    notes = all_templates.get("notes", [])
 
-    # Build relationship links
+    # Build relationship links (original 3)
     ew_links = _build_error_warning_links(errors, warnings)
     st_links = _build_skill_tool_links(references)
     et_links = _build_error_tip_links(errors, tips)
 
+    # Build new cross-type links
+    fe_links = _build_faq_error_links(faqs, errors)
+    tr_links = _build_task_reference_links(tasks, references)
+    nr_links = _build_note_reference_links(notes, references)
+
     # Merge all links
-    all_links = _merge_links(ew_links, st_links, et_links)
+    all_links = _merge_links(
+        ew_links,
+        st_links,
+        et_links,
+        fe_links,
+        tr_links,
+        nr_links,
+    )
 
     # Add tags to each entry
     prefix_map = {
@@ -379,6 +569,9 @@ def build_cross_links(generated_dir: Path) -> dict:
         "warnings": "war",
         "tips": "tip",
         "references": "ref",
+        "tasks": "tas",
+        "faqs": "faq",
+        "notes": "not",
     }
     for type_name, entries in all_templates.items():
         prefix = prefix_map.get(type_name, type_name[:3])
@@ -393,6 +586,19 @@ def build_cross_links(generated_dir: Path) -> dict:
     # Build tag index
     tag_index = _build_tag_index(all_templates)
 
+    # Build workflow map
+    workflow_map = _build_workflow_map(references, tips)
+
+    # Build embed rules from existing relationships
+    for _tid, data in sorted_links.items():
+        embeds: list[dict[str, str]] = []
+        for tip_id in data.get("prevented_by", []):
+            embeds.append({"id": tip_id, "position": "after_resolution"})
+        for tool_id in data.get("references_tools", []):
+            embeds.append({"id": tool_id, "position": "after_execution"})
+        if embeds:
+            data["embeds"] = embeds
+
     # Stats
     total_templates = sum(len(v) for v in all_templates.values())
     linked = sum(1 for v in sorted_links.values() if any(k != "tags" for k in v))
@@ -406,6 +612,7 @@ def build_cross_links(generated_dir: Path) -> dict:
         },
         "links": sorted_links,
         "tag_index": dict(sorted(tag_index.items())),
+        "workflow_map": workflow_map,
     }
 
 

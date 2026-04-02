@@ -3,7 +3,7 @@ type: warning
 name: dead-code-modules-with-full-test-suites-look-alive
 confidence: Verified
 tags: [testing, imports, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Dead code modules with full test suites look alive

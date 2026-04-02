@@ -3,7 +3,7 @@ type: warning
 name: structlog-kwargs-vs-stdlib-logger
 confidence: Verified
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: structlog kwargs vs stdlib Logger

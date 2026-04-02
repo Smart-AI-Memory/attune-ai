@@ -3,7 +3,7 @@ type: error
 name: macos-var-private-var-symlink-breaks-path-assertions
 confidence: Verified
 tags: [testing, security, windows, macos, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: macOS `/var` → `/private/var` symlink breaks path assertions

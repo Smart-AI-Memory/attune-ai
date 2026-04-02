@@ -3,7 +3,7 @@ type: warning
 name: tests-for-optional-dep-code-need-pytest-importorskip-guards-in
 confidence: Verified
 tags: [ci, testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Tests for optional-dep code need `pytest.importorskip()`

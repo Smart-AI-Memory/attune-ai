@@ -3,7 +3,7 @@ type: warning
 name: plugin-read-skill-references-break-outside-the-plugin
 confidence: Verified
 tags: [claude-code, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Plugin `Read skill` references break outside the plugin

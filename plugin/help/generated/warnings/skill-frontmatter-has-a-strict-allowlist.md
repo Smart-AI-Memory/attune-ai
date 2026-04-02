@@ -3,7 +3,7 @@ type: warning
 name: skill-frontmatter-has-a-strict-allowlist
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Skill frontmatter has a strict allowlist

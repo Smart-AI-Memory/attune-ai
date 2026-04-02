@@ -3,7 +3,7 @@ type: warning
 name: deep-review-false-positives-verify-before-acting
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Deep review false positives — verify before acting

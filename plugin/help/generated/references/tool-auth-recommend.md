@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode.
 
+**Group:** utility
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `file_path` | string | Path to file to analyze | required |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `file_path` | string | Path to file to analyze |  | required |
+
+## Usage
+
+`auth_recommend(file_path="...")`
 
 ## Related Topics
-- Reference: Related utility tools: auth_status, telemetry_stats, attune_get_level
+- **Reference**: Tool: Auth Status — Get authentication strategy status. Shows current configurat...
+- **Reference**: Tool: Telemetry Stats — Get telemetry statistics. Shows cost savings, cache hit rate...
+- **Reference**: Tool: Attune Get Level — Get current interaction level (1-5). Level 1=Reactive, 2=Gui...

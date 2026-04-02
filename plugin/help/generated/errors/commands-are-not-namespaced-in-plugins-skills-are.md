@@ -3,7 +3,7 @@ type: error
 name: commands-are-not-namespaced-in-plugins-skills-are
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Commands are NOT namespaced in plugins, skills ARE

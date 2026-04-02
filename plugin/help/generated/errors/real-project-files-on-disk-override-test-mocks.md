@@ -3,7 +3,7 @@ type: error
 name: real-project-files-on-disk-override-test-mocks
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Real project files on disk override test mocks

@@ -2,7 +2,7 @@
 type: warning
 name: bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `bg-[var(--primary)] bg-opacity-10` is invisible in dark mode

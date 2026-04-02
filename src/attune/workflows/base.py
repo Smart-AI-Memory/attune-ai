@@ -364,6 +364,45 @@ class BaseWorkflow(
 
         self.provider = provider
 
+    def _error_result(self, message: str) -> WorkflowResult:
+        """Build a failed WorkflowResult with the given error message.
+
+        Provides a standard error result so subclasses don't need
+        to duplicate the boilerplate. Uses the workflow's own name
+        and description for the stage metadata.
+
+        Args:
+            message: Human-readable error description.
+
+        Returns:
+            WorkflowResult with success=False.
+        """
+        from datetime import datetime
+
+        now = datetime.now()
+        return WorkflowResult(
+            success=False,
+            stages=[
+                WorkflowStage(
+                    name=self.name,
+                    tier=ModelTier.CAPABLE,
+                    description=self.description,
+                ),
+            ],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=0,
+            provider="anthropic",
+            error=message,
+        )
+
     def get_tier_for_stage(self, stage_name: str) -> ModelTier:
         """Get the model tier for a stage from static tier_map."""
         return self.tier_map.get(stage_name, ModelTier.CAPABLE)

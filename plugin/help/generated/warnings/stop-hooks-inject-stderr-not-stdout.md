@@ -3,7 +3,7 @@ type: warning
 name: stop-hooks-inject-stderr-not-stdout
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Stop hooks inject stderr, not stdout

@@ -3,7 +3,7 @@ type: warning
 name: stacked-patch-decorators-inject-args-bottom-up
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Stacked `@patch` decorators inject args bottom-up

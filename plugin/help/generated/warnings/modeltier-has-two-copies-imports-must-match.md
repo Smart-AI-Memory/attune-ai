@@ -3,7 +3,7 @@ type: warning
 name: modeltier-has-two-copies-imports-must-match
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `ModelTier` has two copies — imports must match

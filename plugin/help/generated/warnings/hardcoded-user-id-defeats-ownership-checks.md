@@ -3,7 +3,7 @@ type: warning
 name: hardcoded-user-id-defeats-ownership-checks
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Hardcoded `user_id` defeats ownership checks

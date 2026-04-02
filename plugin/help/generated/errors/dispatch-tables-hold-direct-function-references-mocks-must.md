@@ -3,7 +3,7 @@ type: error
 name: dispatch-tables-hold-direct-function-references-mocks-must
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Dispatch tables hold direct function references — mocks

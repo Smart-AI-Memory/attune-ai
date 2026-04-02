@@ -3,7 +3,7 @@ type: warning
 name: test-mocks-must-match-imports
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Test mocks must match imports

@@ -31,24 +31,8 @@ from .agent_sdk_adapter import (
     get_subagent_model,
 )
 from .base import BaseWorkflow, ModelTier
-from .data_classes import CostReport, WorkflowResult, WorkflowStage
+from .data_classes import WorkflowResult
 from .output_schemas import WORKFLOW_OUTPUT_SCHEMA
-from .security_audit_patterns import (
-    DETECTION_PATTERNS,  # noqa: F401 — re-exported
-    FAKE_CREDENTIAL_PATTERNS,  # noqa: F401 — re-exported
-    SECURITY_EXAMPLE_PATHS,  # noqa: F401 — re-exported
-    SECURITY_PATTERNS,  # noqa: F401 — re-exported
-    SKIP_DIRECTORIES,  # noqa: F401 — re-exported
-    TEST_FILE_PATTERNS,  # noqa: F401 — re-exported
-    TEST_FIXTURE_PATTERNS,  # noqa: F401 — re-exported
-)
-from .security_audit_report import (
-    format_security_report,  # noqa: F401 — re-exported
-    main,  # noqa: F401 — re-exported
-)
-from .security_audit_stages import (
-    SECURITY_STEPS,  # noqa: F401 — re-exported
-)
 
 logger = logging.getLogger(__name__)
 
@@ -272,36 +256,3 @@ class SecurityAuditWorkflow(BaseWorkflow):
                 run_result = sdk_result
         run_result.result_text = build_result_text(assistant_parts, result_parts)
         return run_result
-
-    def _error_result(self, message: str) -> WorkflowResult:
-        """Build a failed WorkflowResult with the given error message.
-
-        Args:
-            message: Human-readable error description.
-
-        Returns:
-            WorkflowResult with success=False.
-        """
-        now = datetime.now()
-        return WorkflowResult(
-            success=False,
-            stages=[
-                WorkflowStage(
-                    name="agent-audit",
-                    tier=ModelTier.CAPABLE,
-                    description="Agent SDK security audit",
-                ),
-            ],
-            final_output=None,
-            cost_report=CostReport(
-                total_cost=0.0,
-                baseline_cost=0.0,
-                savings=0.0,
-                savings_percent=0.0,
-            ),
-            started_at=now,
-            completed_at=now,
-            total_duration_ms=0,
-            provider="anthropic",
-            error=message,
-        )

@@ -3,7 +3,7 @@ type: error
 name: yaml-run-values-with-colons-cause-parse-errors
 confidence: Verified
 tags: [ci]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: YAML `run:` values with colons cause parse errors

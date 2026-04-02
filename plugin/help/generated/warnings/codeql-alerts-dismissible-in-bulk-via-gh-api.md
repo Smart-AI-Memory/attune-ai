@@ -3,7 +3,7 @@ type: warning
 name: codeql-alerts-dismissible-in-bulk-via-gh-api
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: CodeQL alerts dismissible in bulk via `gh api`

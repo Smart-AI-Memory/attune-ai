@@ -3,7 +3,7 @@ type: warning
 name: pureposixpath-strips-trailing-slashes
 confidence: Verified
 tags: [testing, security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `PurePosixPath` strips trailing slashes

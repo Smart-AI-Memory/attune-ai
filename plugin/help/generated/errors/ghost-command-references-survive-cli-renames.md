@@ -3,7 +3,7 @@ type: error
 name: ghost-command-references-survive-cli-renames
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Ghost command references survive CLI renames

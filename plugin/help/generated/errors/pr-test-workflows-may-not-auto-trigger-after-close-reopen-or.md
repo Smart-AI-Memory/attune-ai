@@ -3,7 +3,7 @@ type: error
 name: pr-test-workflows-may-not-auto-trigger-after-close-reopen-or
 confidence: Verified
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: PR test workflows may not auto-trigger after close/reopen or
@@ -17,7 +17,6 @@ PR test workflows may not auto-trigger after close/reopen or
 ## Root Cause
 
 When a PR branch is reused after a previous PR was merged, the `pull_request` trigger may not fire on new pushes. `gh workflow run tests.yml --ref <branch>` is the reliable manual fallback. The `synchronize` event only fires for pushes to an *open* PR — if the PR was closed during the push, the event is lost.
-<!-- attune-lessons-end -->
 
 ## Resolution
 

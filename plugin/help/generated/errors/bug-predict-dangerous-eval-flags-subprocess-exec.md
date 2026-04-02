@@ -3,7 +3,7 @@ type: error
 name: bug-predict-dangerous-eval-flags-subprocess-exec
 confidence: Verified
 tags: [security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Bug-predict `dangerous_eval` flags `subprocess_exec`

@@ -1,0 +1,37 @@
+---
+type: comparison
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Comparison: {{ title }}
+
+{{ context }}
+
+| Feature | {% for opt in options %}{{ opt.name }} | {% endfor %}
+
+| ------- | {% for opt in options %}------- | {% endfor %}
+
+{% for row in rows %}
+| {{ row.feature }} | {% for val in row.cells %}{{ val }} | {% endfor %}
+
+{% endfor %}
+{% if recommendation %}
+
+## Recommendation
+
+{{ recommendation }}
+{% endif %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}

@@ -3,7 +3,7 @@ type: warning
 name: stop-hooks-loop-without-a-sentinel
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Stop hooks loop without a sentinel

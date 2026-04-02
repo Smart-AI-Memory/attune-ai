@@ -11,12 +11,20 @@ source: src/attune/mcp/tool_schemas.py
 
 Search attune-ai memory for patterns matching a query.
 
+**Group:** memory
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `query` | string | Search string | required |
-| `pattern_type` | string | Filter by pattern type (optional) |  |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `query` | string | Search string |  | required |
+| `pattern_type` | string | Filter by pattern type (optional) |  |  |
+
+## Usage
+
+`memory_search(query="...")`
 
 ## Related Topics
-- Reference: Related memory tools: memory_store, memory_retrieve, memory_forget
+- **Reference**: Tool: Memory Store — Store data in attune-ai memory. Use for structured knowledge...
+- **Reference**: Tool: Memory Retrieve — Retrieve data from attune-ai memory by key or pattern ID.
+- **Reference**: Tool: Memory Forget — Remove data from attune-ai memory.

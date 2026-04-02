@@ -3,7 +3,7 @@ type: warning
 name: gh-pr-merge-admin-is-blocked-by-in-progress-required-checks
 confidence: Verified
 tags: [testing, git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `gh pr merge --admin` is blocked by in-progress required

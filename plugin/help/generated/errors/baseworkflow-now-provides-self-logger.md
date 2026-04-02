@@ -3,7 +3,7 @@ type: error
 name: baseworkflow-now-provides-self-logger
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: BaseWorkflow now provides `self.logger`

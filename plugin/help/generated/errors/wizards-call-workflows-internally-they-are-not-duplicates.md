@@ -3,7 +3,7 @@ type: error
 name: wizards-call-workflows-internally-they-are-not-duplicates
 confidence: Verified
 tags: [git, packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Wizards call workflows internally — they are not duplicates

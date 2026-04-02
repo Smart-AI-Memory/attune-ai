@@ -3,7 +3,7 @@ type: warning
 name: workflowresult-constructor-mismatches-surface-only-at-runtime
 confidence: Verified
 tags: [testing, git, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `WorkflowResult` constructor mismatches surface only at

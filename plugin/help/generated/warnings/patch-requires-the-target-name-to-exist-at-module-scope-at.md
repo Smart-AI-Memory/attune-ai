@@ -3,7 +3,7 @@ type: warning
 name: patch-requires-the-target-name-to-exist-at-module-scope-at
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: `patch()` requires the target name to exist at module scope at

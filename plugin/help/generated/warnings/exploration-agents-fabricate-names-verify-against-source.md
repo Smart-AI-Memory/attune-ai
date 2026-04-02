@@ -3,7 +3,7 @@ type: warning
 name: exploration-agents-fabricate-names-verify-against-source
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Exploration agents fabricate names — verify against

@@ -5,7 +5,28 @@ Provides prompt list and prompt message generation for MCP prompt resources.
 
 from __future__ import annotations
 
+import re
 from typing import Any
+
+
+def _sanitize_prompt_arg(value: str) -> str:
+    """Sanitize a user-supplied value before prompt interpolation.
+
+    Strips characters that could manipulate prompt structure:
+    backticks, newlines, and control characters.
+
+    Args:
+        value: Raw user input.
+
+    Returns:
+        Sanitized string safe for prompt interpolation.
+    """
+    # Remove backticks (prevent code fence injection)
+    # Remove newlines (prevent prompt structure manipulation)
+    # Remove control characters
+    sanitized = re.sub(r"[`\n\r\x00-\x1f]", "", value)
+    # Truncate to reasonable length
+    return sanitized[:500]
 
 
 def get_prompt_list(prompts: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -44,7 +65,7 @@ def get_prompt_messages(
         raise ValueError(f"Unknown prompt: {prompt_name}")
 
     if prompt_name == "security-scan":
-        path = arguments.get("path", "src/")
+        path = _sanitize_prompt_arg(arguments.get("path", "src/"))
         return [
             {
                 "role": "user",
@@ -62,7 +83,7 @@ def get_prompt_messages(
             },
         ]
     if prompt_name == "test-gen":
-        module = arguments.get("module", "")
+        module = _sanitize_prompt_arg(arguments.get("module", ""))
         batch = arguments.get("batch", "false").lower() == "true"
         if batch:
             return [
@@ -93,7 +114,7 @@ def get_prompt_messages(
             },
         ]
     if prompt_name == "cost-report":
-        days = arguments.get("days", "30")
+        days = _sanitize_prompt_arg(arguments.get("days", "30"))
         return [
             {
                 "role": "user",

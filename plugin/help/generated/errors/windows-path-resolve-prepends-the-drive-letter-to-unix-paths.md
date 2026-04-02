@@ -3,7 +3,7 @@ type: error
 name: windows-path-resolve-prepends-the-drive-letter-to-unix-paths
 confidence: Verified
 tags: [testing, security, windows, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Windows `Path.resolve()` prepends the drive letter to Unix

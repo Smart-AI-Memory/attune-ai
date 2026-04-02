@@ -3,7 +3,7 @@ type: error
 name: module-level-optional-imports-enable-clean-test-patching
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Module-level optional imports enable clean test patching

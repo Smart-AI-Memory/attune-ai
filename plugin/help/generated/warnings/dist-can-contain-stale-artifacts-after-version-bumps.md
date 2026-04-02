@@ -3,7 +3,7 @@ type: warning
 name: dist-can-contain-stale-artifacts-after-version-bumps
 confidence: Verified
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: dist/ can contain stale artifacts after version bumps

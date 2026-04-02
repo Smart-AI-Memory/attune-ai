@@ -3,7 +3,7 @@ type: error
 name: pre-commit-stash-conflict-when-black-ruff-fix-files-with
 confidence: Verified
 tags: [git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Pre-commit stash conflict when black/ruff fix files with unstaged

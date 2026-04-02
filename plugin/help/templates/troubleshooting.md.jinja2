@@ -1,0 +1,40 @@
+---
+type: troubleshooting
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Troubleshooting: {{ title }}
+
+## Symptom
+
+{{ symptom }}
+
+## Diagnosis
+
+{% for step in diagnosis_steps %}
+{{ loop.index }}. {{ step }}
+{% endfor %}
+
+## Fix
+
+{{ fix }}
+{% if prevention %}
+
+## Prevention
+
+{{ prevention }}
+{% endif %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}

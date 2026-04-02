@@ -3,7 +3,7 @@ type: error
 name: modeltier-has-two-copies-imports-must-match
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `ModelTier` has two copies — imports must match

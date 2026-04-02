@@ -6,8 +6,11 @@ argument-hint: "<path or module to document>"
 
 # Doc Gen
 
-Generate documentation from source code with structured
-outlines and Google-style formatting.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Doc Gen** generates documentation from source code —
+> docstrings, README sections, API references, and module
+> overviews with Google-style formatting.
 
 ## Scoping
 
@@ -69,6 +72,17 @@ doc_orchestrator(path="<target>")
 | File | Missing |
 |------|---------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="doc-gen", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+documentation generation — want to see them?"
 
 ## Follow-Up
 

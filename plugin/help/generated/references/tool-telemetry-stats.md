@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance.
 
+**Group:** utility
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `days` | integer | Number of days to analyze | 30 |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `days` | integer | Number of days to analyze |  | 30 |
+
+## Usage
+
+`telemetry_stats()`
 
 ## Related Topics
-- Reference: Related utility tools: auth_status, auth_recommend, attune_get_level
+- **Reference**: Tool: Auth Status — Get authentication strategy status. Shows current configurat...
+- **Reference**: Tool: Auth Recommend — Get authentication recommendation for a file. Analyzes LOC a...
+- **Reference**: Tool: Attune Get Level — Get current interaction level (1-5). Level 1=Reactive, 2=Gui...

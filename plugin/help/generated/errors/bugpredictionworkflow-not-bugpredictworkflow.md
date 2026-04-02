@@ -3,7 +3,7 @@ type: error
 name: bugpredictionworkflow-not-bugpredictworkflow
 confidence: Verified
 tags: [imports, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `BugPredictionWorkflow` not `BugPredictWorkflow`

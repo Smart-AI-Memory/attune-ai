@@ -3,7 +3,7 @@ type: error
 name: sbin-is-a-symlink-to-usr-sbin-on-modern-ubuntu
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `/sbin` is a symlink to `/usr/sbin` on modern Ubuntu

@@ -3,7 +3,7 @@ type: warning
 name: new-mcp-handlers-must-match-the-validation-pattern-of-adjacent
 confidence: Verified
 tags: [testing, security, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: New MCP handlers must match the validation pattern of

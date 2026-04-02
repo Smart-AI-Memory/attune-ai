@@ -3,7 +3,7 @@ type: error
 name: hot-reload-subsystem-was-1-038-lines-of-dead-code
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `hot_reload/` subsystem was 1,038 lines of dead code

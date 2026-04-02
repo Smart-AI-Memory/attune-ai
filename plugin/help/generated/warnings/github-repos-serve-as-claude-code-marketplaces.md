@@ -3,7 +3,7 @@ type: warning
 name: github-repos-serve-as-claude-code-marketplaces
 confidence: Verified
 tags: [git, claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: GitHub repos serve as Claude Code marketplaces

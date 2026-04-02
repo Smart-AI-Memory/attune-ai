@@ -3,7 +3,7 @@ type: error
 name: gitignore-exclusions-break-ci-tests-that-read-those-files
 confidence: Verified
 tags: [ci, testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `.gitignore` exclusions break CI tests that read those

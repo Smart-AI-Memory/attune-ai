@@ -44,6 +44,8 @@ which system to use for a given task.
 
 ## When to Use This Skill
 
+
+
 ### Layer Positioning
 
 | Use Case | Use Anthropic Native | Use attune-ai |
@@ -321,4 +323,4 @@ coordination pauses until reconnection.
   system validate them.
 
 ## Related Topics
-- Reference: MCP tools: memory_store, memory_store, memory_store
+- **Reference**: Tool: Memory Store (`memory_store`)

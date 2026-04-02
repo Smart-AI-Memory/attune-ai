@@ -2,7 +2,7 @@
 type: warning
 name: background-processes-from-previous-sessions-persist-across
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Background processes from previous sessions persist across

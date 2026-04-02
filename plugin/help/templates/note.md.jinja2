@@ -1,0 +1,28 @@
+---
+type: note
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# Note: {{ title }}
+
+## Context
+
+{{ context }}
+
+## Content
+
+{{ content }}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}

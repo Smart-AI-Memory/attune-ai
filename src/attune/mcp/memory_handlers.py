@@ -91,12 +91,12 @@ class MemoryHandlersMixin:
                     result["pattern_id"] = persist_result.get("pattern_id")
                 except Exception as e:  # noqa: BLE001
                     # INTENTIONAL: Pattern persistence is best-effort
-                    logger.warning(f"Pattern persistence failed: {e}")
+                    logger.warning("Pattern persistence failed: %s", e)
 
             return result
 
         except ImportError as e:
-            logger.error(f"Memory module not available: {e}")
+            logger.error("Memory module not available: %s", e)
             return {
                 "success": False,
                 "error": _MEMORY_NOT_INSTALLED,
@@ -147,7 +147,7 @@ class MemoryHandlersMixin:
                 pattern = memory.recall_pattern(key)
                 if pattern:
                     if not self._check_ownership(pattern if isinstance(pattern, dict) else {}):
-                        logger.warning("memory_retrieve_denied", key=key)
+                        logger.warning("memory_retrieve_denied key=%s", key)
                         return {
                             "success": True,
                             "key": key,
@@ -162,7 +162,7 @@ class MemoryHandlersMixin:
             return {"success": True, "key": key, "data": None, "message": "Key not found"}
 
         except ImportError as e:
-            logger.error(f"Memory module not available: {e}")
+            logger.error("Memory module not available: %s", e)
             return {
                 "success": False,
                 "error": _MEMORY_NOT_INSTALLED,
@@ -210,7 +210,7 @@ class MemoryHandlersMixin:
             return {"success": True, "query": query, "results": results, "count": len(results)}
 
         except ImportError as e:
-            logger.error(f"Memory module not available: {e}")
+            logger.error("Memory module not available: %s", e)
             return {
                 "success": False,
                 "error": _MEMORY_NOT_INSTALLED,
@@ -246,7 +246,7 @@ class MemoryHandlersMixin:
                     removed_from.append("session")
                 except Exception as e:  # noqa: BLE001
                     # INTENTIONAL: Short-term removal is best-effort
-                    logger.debug(f"Short-term removal failed for {key}: {e}")
+                    logger.debug("Short-term removal failed for %s: %s", key, e)
 
             if scope in ("persistent", "all"):
                 try:
@@ -265,12 +265,12 @@ class MemoryHandlersMixin:
                         removed_from.append("persistent")
                 except Exception as e:  # noqa: BLE001
                     # INTENTIONAL: Long-term removal is best-effort
-                    logger.debug(f"Long-term removal failed for {key}: {e}")
+                    logger.debug("Long-term removal failed for %s: %s", key, e)
 
             return {"success": True, "key": key, "removed_from": removed_from}
 
         except ImportError as e:
-            logger.error(f"Memory module not available: {e}")
+            logger.error("Memory module not available: %s", e)
             return {
                 "success": False,
                 "error": _MEMORY_NOT_INSTALLED,

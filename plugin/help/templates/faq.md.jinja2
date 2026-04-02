@@ -1,0 +1,30 @@
+---
+type: faq
+name: {{ name }}
+{% if tags -%}
+tags: [{{ tags | join(', ') }}]
+{% endif -%}
+source: {{ source }}
+---
+
+# FAQ: {{ question }}
+
+## Answer
+
+{{ answer }}
+{% if code_example %}
+
+```
+{{ code_example }}
+```
+{% endif %}
+
+## Related Topics
+{% if related_topics %}
+{% for topic in related_topics %}
+- **{{ topic.type }}**: {{ topic.description }}
+{% endfor %}
+{% else %}
+
+_No related topics yet._
+{% endif %}

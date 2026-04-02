@@ -3,7 +3,7 @@ type: error
 name: stop-hooks-missing-cd-prefix-inherit-session-cwd
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Stop hooks missing `cd` prefix inherit session cwd

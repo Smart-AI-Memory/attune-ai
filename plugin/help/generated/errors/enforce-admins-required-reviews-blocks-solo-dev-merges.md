@@ -3,7 +3,7 @@ type: error
 name: enforce-admins-required-reviews-blocks-solo-dev-merges
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `enforce_admins` + required reviews blocks solo-dev merges

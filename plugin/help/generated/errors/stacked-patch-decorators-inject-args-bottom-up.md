@@ -3,7 +3,7 @@ type: error
 name: stacked-patch-decorators-inject-args-bottom-up
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Stacked `@patch` decorators inject args bottom-up

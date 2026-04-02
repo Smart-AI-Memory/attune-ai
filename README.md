@@ -2,8 +2,7 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
-**Production-ready AI workflows for Claude Code, aligned
-with Anthropic best practices.**
+**The 21st century help system for developer tools.**
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
@@ -18,6 +17,98 @@ with Anthropic best practices.**
 
 ---
 
+Static docs rot. READMEs go stale the moment you merge.
+Help pages don't know if you're a beginner or an expert.
+Nobody maintains them — and it shows.
+
+Attune AI is a different approach. Documentation is
+**authored once as templates**, **rendered at runtime**
+with audience awareness, **maintained automatically** by
+AI agents, and **learned from** based on how people
+actually use it. The result is a living knowledge base
+that stays accurate, adapts to who's reading, and
+improves over time — without anyone manually updating
+markdown files.
+
+The same system powers 18 multi-agent workflows, 13
+auto-triggering skills, and 38 MCP tools — all of which
+double as the authoring and assistance toolkit for
+building and maintaining knowledge bases at scale.
+
+---
+
+## How It Works
+
+### 1. Authored as Templates
+
+540 templates across 11 types — errors, warnings, tips,
+references, tasks, FAQs, notes, quickstarts, concepts,
+troubleshooting, and comparisons. Each template has
+structured frontmatter (tags, related links, audience
+hints) and a markdown body. Templates are the source of
+truth; rendered output is ephemeral.
+
+### 2. Rendered at Runtime
+
+Help adapts to the reader. **Progressive depth**
+escalates across template types as you ask again:
+
+```text
+First ask   → concept   (what is this?)
+Second ask  → task      (how do I use it?)
+Third ask   → reference (show me the details)
+```
+
+**Audience adaptation** adjusts verbosity and framing
+for Claude Code users, CLI users, and marketplace
+readers — from the same source template.
+
+**Precursor warnings** surface relevant errors and
+warnings *before* you hit them, based on the file
+you're editing.
+
+### 3. Maintained by AI
+
+A 5-phase maintenance workflow detects stale templates,
+prioritizes by usage feedback, regenerates via batch API,
+rebuilds cross-links, and validates the result — all
+without manual intervention.
+
+```text
+detect → map → regenerate → rebuild → validate
+```
+
+Templates that help people more get maintained first.
+Templates nobody reads get deprioritized. The knowledge
+base optimizes itself.
+
+### 4. Learned from Usage
+
+Every template lookup is tracked. Feedback ratings
+adjust template confidence scores. Usage telemetry
+weights priorities so the maintenance workflow focuses
+on what matters. The help system gets better the more
+you use it.
+
+---
+
+## The Toolkit
+
+The help system doesn't just *contain* knowledge — it
+comes with tools to build, maintain, and deliver it.
+These same tools power attune-ai's own 540 templates,
+proving the approach works at scale.
+
+| | |
+| --- | --- |
+| **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — specialist teams of 2-6 Claude subagents that also serve as knowledge-authoring pipelines |
+| **38 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol, including `help_lookup` (4 modes) and `help_maintain` (auto-regeneration) |
+| **13 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — each skill integrates contextual help from the template engine |
+| **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
+| **Socratic Discovery** | Workflows ask questions before executing, not the other way around |
+
+---
+
 ## Get Started in 60 Seconds
 
 ### Plugin (works standalone)
@@ -29,11 +120,35 @@ claude plugin install attune-ai@attune-ai
 
 Then say "what can attune do?" in Claude Code. That's it.
 
-### Add Python Package (optional — unlocks CLI + MCP)
+### Add Python Package (unlocks CLI + MCP)
 
 ```bash
 pip install 'attune-ai[developer]'
 ```
+
+### What Each Layer Adds
+
+| Capability | Plugin only | Plugin + pip |
+| ---------- | ----------- | ------------ |
+| 13 auto-triggering skills | Yes | Yes |
+| Security hooks | Yes | Yes |
+| Prompt-based analysis | Yes | Yes |
+| 38 MCP tools | -- | Yes |
+| `attune` CLI | -- | Yes |
+| Multi-agent workflows | -- | Yes |
+| Help system maintenance | -- | Yes |
+| CI/CD automation | -- | Yes |
+
+The plugin works standalone — skills guide Claude
+through analysis using your existing subscription,
+with no additional costs. Add the Python package
+when you want MCP tool execution, CLI automation,
+help system maintenance, or multi-agent orchestration.
+
+> **Note:** The Python package's CLI and MCP tools
+> use the Anthropic API directly, which requires an
+> API key and incurs usage-based charges. See
+> [API Mode](#api-mode) for details.
 
 ---
 
@@ -45,7 +160,7 @@ language — just describe what you need:
 | Input | What Happens |
 | ----- | ------------ |
 | "what can attune do?" | Auto-triggers `attune-hub` — guided discovery |
-| "build this feature from scratch" | Auto-triggers `spec` — brainstorm → plan → execute |
+| "build this feature from scratch" | Auto-triggers `spec` — brainstorm, plan, execute |
 | "review my code" | Auto-triggers `code-quality` skill |
 | "scan for vulnerabilities" | Auto-triggers `security-audit` skill |
 | "generate tests for src/" | Auto-triggers `smart-test` skill |
@@ -55,227 +170,64 @@ language — just describe what you need:
 | "plan this feature" | Auto-triggers `planning` skill |
 | "refactor this module" | Auto-triggers `refactor-plan` skill |
 | "prepare a release" | Auto-triggers `release-prep` skill |
+| "tell me more" | Auto-triggers `learn` — progressive depth help |
 | "run all workflows" | Auto-triggers `workflow-orchestration` skill |
 
 Skills run using your **Claude subscription** — no API
-key needed.
-
-### What the Output Looks Like
-
-```text
-$ attune workflow run security-audit --path src/
-
-Looking solid — this is in great shape.
-
-## Findings
-Score: 95/100
-3 issues found (1 medium, 2 low)
-
-  Cost & Time
-  $0.03 (saved 58% vs premium) | 12.4s
-
-  What I'd Do Next
-  I'd run `attune workflow run bug-predict` next —
-  your spec has work remaining.
-```
-
-Every workflow speaks in the same voice, with contextual
-next-step suggestions based on what just happened and
-what your spec says should come next.
+key needed, no additional charges.
 
 ---
 
-## Key Features
+## Why Attune?
 
-| | |
-| --- | --- |
-| **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
-| **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
-| **13 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — fully skills-centric, zero commands |
-| **Skills-First Plugin** | Install via `claude plugin install attune-ai@attune-ai` — skills auto-trigger from natural language |
-| **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
-| **Intelligent Cost Routing** | Opus for security, Sonnet for analysis, Haiku for scanning — right model per task |
-| **Socratic Discovery** | Workflows ask questions before executing, not the other way around |
-| **Budget Controls** | $0.50 quick / $2.00 standard / $5.00 deep — configurable per workflow |
-
----
-
-## What's New
-
-### v5.3 — Skills-Centric Architecture
-
-**v5.3.2** migrates the plugin to a skills-first
-architecture per Anthropic's official guidance. Skills
-auto-trigger from natural language — no slash commands
-needed. Installs directly from GitHub as a Claude Code
-marketplace. attune-lite deprecated and merged.
-
-| Feature | What It Does |
-| ------- | ------------ |
-| **Skills-first plugin** | 14 commands → 0 commands + 13 auto-triggering skills |
-| **Marketplace install** | `claude plugin install attune-ai@attune-ai` — no pip required for the plugin |
-| **`bug-predict` skill** | New skill migrated from command with scoping questions |
-| **attune-lite deprecated** | All skills merged into attune-ai; repo archived |
-| **Compliant frontmatter** | All descriptions under 250 chars; only official fields used |
-| **`spec` skill** | Brainstorm → plan → review → execute lifecycle with approval gates |
-| **CrewAI removal** | Deleted ~18K lines of deprecated code — all workflows SDK-native |
-| **API reference rewrite** | Updated from v3.8.0 to v5.3.2, covering all 16 modules |
-
-<details>
-<summary>v5.2 — Voice Layer & Short Commands</summary>
-
-### v5.2 — Voice Layer & Short Commands
-
-**v5.2.0** adds a unified voice layer for consistent
-output personality and contextual next-step suggestions.
-**v5.2.1** adds short command wrappers so every skill
-is accessible without namespacing.
-
-| Feature | What It Does |
-| ------- | ------------ |
-| **Unified voice layer** | Friendly senior engineer personality across all output — greetings, score commentary, voiced next steps |
-| **Spec-aware suggestions** | When `.claude/plans/` has an active spec, next steps follow the lifecycle |
-| **11 auto-triggering skills** | Say "review my code" and Claude picks the right skill — no slash commands needed |
-| **5 path traversal fixes** | `_validate_file_path()` added to pattern persistence and agent parser I/O |
-
-<details>
-<summary>v5.1.0 — v5.1.6 patch notes</summary>
-
-**v5.1.6** — Custom cache removed (~8K lines, ~420MB
-deps). Anthropic SDK alignment: batch tool, vision tool,
-extended thinking, model ID fix.
-
-**v5.1.5** — Security hardening (7 fixes), ghost command
-cleanup (30+ stale refs), workflow discovery diagnostics.
-
-**v5.1.4** — SessionStart welcome hook for first-run
-discovery, path validation on read paths, TOCTOU fix.
-
-**v5.1.3** — Architecture analyzer, `deep_review` MCP
-tool (#31), 145+ new tests, commands-to-skills migration,
-7 security findings resolved.
-
-**v5.1.2** — 3 security fixes (CWE-22 path traversal
-in MCP handlers and wizard YAML, CWE-918 SSRF in
-webhook executor), 73 new tests.
-
-**v5.1.1** — 3 new skills from attune-lite (`doc-gen`,
-`smart-test`, `fix-test`), bringing the plugin to 10
-skills total.
-
-**v5.1.0** — Full Plugin SDK compliance. Every workflow
-reachable as a native MCP tool, every tool wired through
-an auto-invoking skill, security hooks ship with the
-plugin for zero-config protection.
-
-</details>
-
-</details>
-
-<details>
-<summary>v5.0 — Anthropic Best Practices</summary>
-
-### v5.0 — Anthropic Best Practices
-
-**v5.0.0** aligned all 15 SDK-native workflows with
-Anthropic's recommended patterns for the Claude Agent
-SDK. This is the foundation everything else builds on.
-
-| Feature | What It Does |
-| ------- | ------------ |
-| **System prompt separation** | Each workflow splits persona from task instructions, passed via `system_prompt=` on `ClaudeAgentOptions` |
-| **Per-agent model routing** | Security/architect to Opus, quality/planning to Sonnet, lint/coverage to Haiku. Override with env vars |
-| **Budget safety nets** | $0.50 quick / $2.00 standard / $5.00 deep — configurable per workflow, override with `ATTUNE_MAX_BUDGET_USD` |
-| **Cost and usage tracking** | `AgentRunResult` captures actual cost, token counts, duration, and session ID from every run |
-| **Structured output** | JSON schema output for code-review and security-audit with confidence scores and findings |
-| **26 new SDK tests** | Budget caps, model routing, cost extraction, structured output adapter |
-
-<details>
-<summary>v5.0.1 — v5.0.2 patch notes</summary>
-
-**v5.0.2** — Fixed all 15 Agent SDK workflows. Added
-`collect_agent_output()` to collect from both
-`ResultMessage` and `AssistantMessage` content blocks.
-
-**v5.0.1** — Security hardening: memory ownership
-checks, workspace isolation, MCP rate limiter (60/min),
-hook import guard (`attune.*` only), path validation
-on state manager.
-
-</details>
-
-</details>
+| | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
+| --- | --- | --- | --- | --- |
+| **Self-maintaining docs** | AI-maintained, usage-weighted | Manual, rots immediately | None | None |
+| **Progressive depth** | concept → task → reference | One-size-fits-all | None | None |
+| **Audience adaptation** | Adapts per reader | Write multiple versions | None | None |
+| **Ready-to-use workflows** | 18 built-in | None | Build from scratch | None |
+| **Multi-agent teams** | 2-6 agents per workflow | None | Yes | No |
+| **MCP integration** | 38 native tools | None | No | No |
+| **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
 ---
 
-## How to Access Workflows
+## Workflows
 
-There are three ways to run workflows, depending on
-your context:
+Every workflow runs as a multi-agent team. Each agent
+reads your code with `Read`, `Glob`, and `Grep` tools
+and reports findings to an orchestrator that synthesizes
+a unified result.
 
-| How | When to Use | Example |
-| --- | ----------- | ------- |
-| **Natural language** | In Claude Code (recommended) | "scan this for security issues" |
-| **`attune-hub` skill** | When you're not sure which workflow | "what can attune do?" |
-| **CLI** | Terminal, CI/CD, automation | `attune workflow run security-audit --path src/` |
-
-Skills use your **Claude subscription**. CLI mode
-requires `ANTHROPIC_API_KEY`.
-
----
-
-## Plugin & Skills
-
-The attune-ai plugin provides 13 auto-triggering skills
-and zero commands. Every capability is a skill — describe
-what you need and Claude picks the right one.
-
-### Install
-
-```bash
-claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-```
-
-Update an existing install:
-
-```bash
-claude plugin update attune-ai
-```
-
-### Skills
-
-| Skill | Triggers On |
-| ----- | ----------- |
-| `attune-hub` | "what can attune do", "help", "capabilities" |
-| `spec` | "build from scratch", "brainstorm and execute", "spec" |
-| `security-audit` | "security", "vulnerability", "scan" |
-| `code-quality` | "review", "quality", "bugs", "code smell" |
-| `bug-predict` | "predict bugs", "risky code", "what might break" |
-| `doc-gen` | "generate docs", "documentation", "README" |
-| `smart-test` | "test gaps", "generate tests", "coverage" |
-| `fix-test` | "fix test", "broken test", "debug test" |
-| `workflow-orchestration` | "workflow", "analyze", "run" |
-| `planning` | "plan", "feature", "architecture", "TDD" |
-| `refactor-plan` | "refactor", "tech debt", "simplify" |
-| `release-prep` | "release", "publish", "deploy" |
-| `memory-and-context` | "memory", "store", "retrieve" |
-
-### Portable Hooks
-
-The plugin ships two hooks that run automatically:
-
-- **PreToolUse** — `security_guard.py` blocks `eval()`,
-  `exec()`, path traversal, and `rm -rf /` in Bash
-  commands; validates file paths in Edit/Write operations
-- **PostToolUse** — `format_on_save.py` runs `black` and
-  `ruff --fix` on every Python file after Write/Edit
+| Workflow | Agents | What It Does |
+| --- | --- | --- |
+| **code-review** | security, quality, perf, architect | 4-perspective code review |
+| **security-audit** | vuln-scanner, secret-detector, auth-reviewer, remediation | Finds vulnerabilities and generates fix plans |
+| **deep-review** | security, quality, test-gap | Multi-pass deep analysis |
+| **perf-audit** | complexity, bottleneck, optimization | Identifies bottlenecks and O(n^2) patterns |
+| **bug-predict** | pattern-scanner, risk-correlator, prevention | Predicts likely failure points |
+| **health-check** | dynamic team (2-6) | Project health across tests, deps, lint, CI, docs, security |
+| **test-gen** | identifier, designer, writer | Writes pytest code for untested functions |
+| **test-audit** | coverage, gap-analyzer, planner | Audits coverage and prioritizes gaps |
+| **doc-gen** | outline, content, polish | Generates documentation from source |
+| **doc-audit** | staleness, accuracy, gap-finder | Finds stale docs and drift |
+| **dependency-check** | inventory, update-advisor | Audits outdated packages and advisories |
+| **refactor-plan** | debt-scanner, impact, plan-generator | Plans large-scale refactors |
+| **simplify-code** | complexity, simplification, safety | Proposes simplifications with safety review |
+| **release-prep** | health, security, changelog, assessor | Go/no-go readiness check |
+| **doc-orchestrator** | inventory, outline, content, polish | Full-project documentation |
+| **secure-release** | security, health, dep-auditor, gater | Release pipeline with risk scoring |
+| **research-synthesis** | summarizer, pattern-analyst, writer | Multi-source research synthesis |
 
 ---
 
-## MCP Integration
+## MCP Tools
 
-31 tools organized into 6 categories:
+38 tools organized into 7 categories:
+
+### Help (2)
+
+`help_lookup` `help_maintain`
 
 ### Analysis (6)
 
@@ -307,175 +259,6 @@ The plugin ships two hooks that run automatically:
 `research_synthesis` `deep_review` `analyze_batch`
 `analyze_image`
 
-### Resources (3)
-
-`workflows` `auth_config` `telemetry`
-
-All tools are accessible through Claude Code's natural
-language interface. Describe what you need and Claude
-invokes the appropriate tool.
-
----
-
-## Workflows
-
-Every workflow runs as a multi-agent team. Each agent is
-a specialist — it reads your code with `Read`, `Glob`,
-and `Grep` tools and reports findings to an orchestrator
-that synthesizes a unified result.
-
-| Workflow | Agents | What It Does | When to Use |
-| --- | --- | --- | --- |
-| **code-review** | security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer | 4-perspective code review covering security, quality, performance, and architecture | Before merging a PR or after significant changes |
-| **security-audit** | vuln-scanner, secret-detector, auth-reviewer, remediation-planner | Finds vulnerabilities, leaked secrets, auth issues, and generates fix plans | Pre-release security gate, compliance checks |
-| **deep-review** | security-reviewer, quality-reviewer, test-gap-reviewer | Multi-pass deep analysis with configurable focus areas | Complex modules needing thorough inspection |
-| **perf-audit** | complexity-analyzer, bottleneck-finder, optimization-advisor | Identifies O(n^2) patterns, bottlenecks, and optimization opportunities | Slow endpoints, large data processing |
-| **bug-predict** | pattern-scanner, risk-correlator, prevention-advisor | Scans for bug-prone patterns and predicts likely failure points | Proactive quality — find bugs before users do |
-| **health-check** | test-checker, dep-checker, lint-checker, ci-checker, doc-checker, security-checker | Dynamic agent team (2-6 agents based on mode) for project health | Daily health monitoring, onboarding to a new repo |
-| **test-gen** | function-identifier, test-designer, test-writer | Identifies untested functions, designs test cases, writes pytest code | Boosting coverage on undertested modules |
-| **test-audit** | coverage-auditor, gap-analyzer, test-planner | Audits test coverage, finds gaps, and prioritizes what to test next | Coverage-driven test improvement |
-| **doc-gen** | outline-planner, content-writer, polish-reviewer | Generates documentation from source code with structured outlines | Creating docs for undocumented modules |
-| **doc-audit** | staleness-checker, accuracy-reviewer, gap-finder | Checks for stale docs, broken links, and documentation drift | Keeping docs accurate after refactors |
-| **dependency-check** | inventory-assessor, update-advisor | Audits dependencies for outdated packages and security advisories | Pre-release dependency review |
-| **refactor-plan** | debt-scanner, impact-analyzer, plan-generator | Scans tech debt, analyzes refactoring impact, generates migration plans | Planning large-scale refactors |
-| **simplify-code** | complexity-scanner, simplification-designer, safety-reviewer | Finds over-engineered code and proposes simplifications with safety review | Reducing complexity after feature sprints |
-| **release-prep** | health-checker, security-scanner, changelog-generator, release-assessor | 4-agent readiness check: health, security, changelog, and go/no-go | Before cutting a release |
-| **doc-orchestrator** | inventory-scanner, outline-planner, content-writer, polish-reviewer | End-to-end documentation orchestration across an entire project | Full-project doc generation or refresh |
-| **orchestrated-health-check** | dynamic team (2-6 based on mode) | Extended health check with dynamic agent team and severity scoring | Comprehensive project health assessment |
-| **secure-release** | security-scanner, health-checker, dep-auditor, release-gater | Go/no-go release pipeline with combined risk scoring and blocker detection | Pre-publish security gate |
-| **research-synthesis** | source-summarizer, pattern-analyst, synthesis-writer | Multi-source research synthesis with pattern extraction | Technical research, RFC preparation |
-
-### Model Routing
-
-Each agent is assigned a model based on task complexity:
-
-| Model | Agents | Rationale |
-| --- | --- | --- |
-| **Opus** | security, vuln, architect | Deep reasoning for security and architecture |
-| **Sonnet** | quality, plan, research | Balanced analysis for synthesis and planning |
-| **Haiku** | complexity, lint, coverage, dep | Fast scanning for detection tasks |
-| **Inherited** | All others | Uses the parent orchestrator's model |
-
-Override any assignment with environment variables:
-
-```bash
-export ATTUNE_AGENT_MODEL_SECURITY=sonnet  # Save cost
-export ATTUNE_AGENT_MODEL_DEFAULT=opus     # Max quality
-```
-
-### Budget Controls
-
-Every workflow enforces a budget cap based on depth:
-
-| Depth | Budget | Use Case |
-| --- | --- | --- |
-| `quick` | $0.50 | Fast checks, smoke tests |
-| `standard` | $2.00 | Normal analysis (default) |
-| `deep` | $5.00 | Thorough multi-pass review |
-
-```bash
-export ATTUNE_MAX_BUDGET_USD=10.0  # Override
-export ATTUNE_MAX_BUDGET_USD=0     # Disable caps
-```
-
----
-
-## Quick Start
-
-### Option A: Plugin Only (zero-config)
-
-```bash
-claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-```
-
-Then in Claude Code, just say what you need:
-
-- "review my code" — triggers code-quality skill
-- "scan for security issues" — triggers security-audit
-- "what can attune do?" — triggers attune-hub discovery
-- "build this from a spec" — triggers spec-driven dev
-
-### Option B: Plugin + Python Package (full power)
-
-```bash
-claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-pip install 'attune-ai[developer]'
-```
-
-```bash
-attune doctor    # Verify environment
-attune auth      # Configure API key or subscription
-```
-
-### What Each Layer Adds
-
-| Capability | Plugin only | Plugin + pip |
-| ---------- | ----------- | ------------ |
-| 13 auto-triggering skills | Yes | Yes |
-| Security hooks | Yes | Yes |
-| Prompt-based analysis | Yes | Yes |
-| 31 MCP tools | -- | Yes |
-| `attune` CLI | -- | Yes |
-| Multi-agent workflows | -- | Yes |
-| Cost tracking + routing | -- | Yes |
-| CI/CD automation | -- | Yes |
-
-The plugin works standalone — skills guide Claude through
-analysis without any dependencies. Add the Python package
-when you want MCP tool execution, CLI automation, or
-multi-agent orchestration.
-
-### CLI Usage
-
-Run workflows directly from terminal:
-
-```bash
-attune workflow run code-review --path ./src
-attune workflow run security-audit --path ./src
-attune workflow run release-prep
-attune telemetry show
-```
-
----
-
-## Why Attune?
-
-| | Attune AI | Agent Frameworks | Coding CLIs | Review Bots |
-| --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 18 built-in | Build from scratch | None | PR review only |
-| **Per-agent model routing** | Opus/Sonnet/Haiku per role | Manual | None | None |
-| **Budget controls** | Depth-based caps | None | None | SaaS pricing |
-| **Multi-agent teams** | 2-6 agents per workflow | Yes | No | No |
-| **MCP integration** | 36 native tools | No | No | No |
-| **Slash commands** | 11 short commands | No | No | No |
-| **Portable security hooks** | PreToolUse + PostToolUse | No | No | No |
-| **Structured output** | JSON schema with fallback | Manual | No | No |
-
----
-
-## Cost Optimization
-
-### Skills in Claude Code
-
-All workflows run as skills using your Claude
-subscription — no additional API costs:
-
-```bash
-/security          # Uses your Claude subscription
-/smart-test        # Uses your Claude subscription
-/release           # Uses your Claude subscription
-```
-
-### API Mode (CI/CD, Automation)
-
-| Tier | Model | Use Case | Cost |
-| --- | --- | --- | --- |
-| CHEAP | Haiku | Formatting, simple tasks | ~$0.005 |
-| CAPABLE | Sonnet | Bug fixes, code review | ~$0.08 |
-| PREMIUM | Opus | Architecture, complex design | ~$0.45 |
-
 ---
 
 ## Installation Options
@@ -495,16 +278,50 @@ git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```
 
-## Environment Setup
+---
 
-**In Claude Code:** No API key needed — workflows run as
-skills using your Claude subscription. Just type `/attune`.
+## API Mode
 
-**For CLI usage** (`attune workflow run ...`):
+The plugin's skills use your Claude subscription at no
+extra cost. The Python package's CLI and MCP tools
+work differently — they spawn Agent SDK subagents
+that make
+**direct Anthropic API calls**, which require an API key
+and incur usage-based charges.
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."     # Required
 export REDIS_URL="redis://localhost:6379"  # Optional
+```
+
+### Model Routing
+
+Each subagent is assigned a model based on task
+complexity to balance cost and quality:
+
+| Model | Agents | Rationale |
+| --- | --- | --- |
+| **Opus** | security, vuln, architect | Deep reasoning |
+| **Sonnet** | quality, plan, research | Balanced analysis |
+| **Haiku** | complexity, lint, coverage | Fast scanning |
+
+```bash
+export ATTUNE_AGENT_MODEL_SECURITY=sonnet  # Save cost
+export ATTUNE_AGENT_MODEL_DEFAULT=opus     # Max quality
+```
+
+### Budget Controls
+
+Every CLI/MCP workflow enforces a budget cap:
+
+| Depth | Budget | Use Case |
+| --- | --- | --- |
+| `quick` | $0.50 | Fast checks |
+| `standard` | $2.00 | Normal analysis (default) |
+| `deep` | $5.00 | Thorough multi-pass review |
+
+```bash
+export ATTUNE_MAX_BUDGET_USD=10.0  # Override
 ```
 
 ---
@@ -518,6 +335,8 @@ export REDIS_URL="redis://localhost:6379"  # Optional
 - Hook import restriction (`attune.*` modules only)
 - PreToolUse security guard (blocks eval/exec, path
   traversal)
+- Prompt input sanitization (backticks, control chars,
+  truncation)
 - PII scrubbing in telemetry
 - Automated security scanning (CodeQL, bandit,
   detect-secrets)
@@ -535,6 +354,28 @@ reporting and full security details.
 
 **Apache License 2.0** — Free and open source.
 
-**Built by [Smart AI Memory](https://smartaimemory.com)**
+If you find Attune useful,
+[give it a star](https://github.com/Smart-AI-Memory/attune-ai) —
+it helps others discover the project.
+
+## Acknowledgments
+
+Special thanks to:
+
+- **[Anthropic](https://www.anthropic.com/)** — For Claude
+  AI, the Model Context Protocol, and the Agent SDK patterns
+  that shaped v5.0.0
+- **[Boris Cherny](https://x.com/bcherny)** — Creator of
+  Claude Code, whose workflow posts validated Attune's
+  approach to plan-first execution and multi-agent
+  orchestration
+- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations
+  that inspired our hook system
+
+[View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
+
+---
+
+**Built by Patrick Roebuck using Claude Code.**
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->

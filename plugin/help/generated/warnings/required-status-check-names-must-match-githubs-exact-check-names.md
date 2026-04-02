@@ -3,7 +3,7 @@ type: warning
 name: required-status-check-names-must-match-githubs-exact-check-names
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Required status check names must match GitHub's exact check

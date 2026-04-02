@@ -41,14 +41,17 @@ Present results as a table grouped by severity:
 **Score:** X/100 | **Files Scanned:** Y | **Issues:** Z
 
 ### Critical
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 
 ### High
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 
 ### Medium / Low
+
 | File | Line | Issue | CWE |
 |------|------|-------|-----|
 ```
@@ -65,6 +68,20 @@ Use clickable file links: `[file.py:123](path#L123)`
 - Broad exception handling that masks errors
 - Missing input validation
 
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="security-audit",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+security audits — want to see them?"
+
 ## Follow-Up
 
 After presenting results, offer:
@@ -75,4 +92,4 @@ After presenting results, offer:
 - "Want a deeper scan of a specific directory?"
 
 ## Related Topics
-- Reference: MCP tools: security_audit
+- **Reference**: Tool: Security Audit (`security_audit`)

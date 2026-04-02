@@ -3,7 +3,7 @@ type: error
 name: push-specific-tags-not-tags
 confidence: Verified
 tags: [git]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Push specific tags, not `--tags`

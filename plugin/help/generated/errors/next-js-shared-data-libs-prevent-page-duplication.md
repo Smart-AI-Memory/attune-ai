@@ -3,7 +3,7 @@ type: error
 name: next-js-shared-data-libs-prevent-page-duplication
 confidence: Verified
 tags: [testing, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Next.js shared data libs prevent page duplication

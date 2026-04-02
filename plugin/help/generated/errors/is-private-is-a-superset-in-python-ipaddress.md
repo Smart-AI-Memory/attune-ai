@@ -3,7 +3,7 @@ type: error
 name: is-private-is-a-superset-in-python-ipaddress
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `is_private` is a superset in Python `ipaddress`

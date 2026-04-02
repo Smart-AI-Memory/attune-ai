@@ -3,7 +3,7 @@ type: error
 name: deep-review-false-positives-verify-before-acting
 confidence: Verified
 tags: [testing]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Deep review false positives — verify before acting

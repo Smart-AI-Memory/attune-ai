@@ -3,7 +3,7 @@ type: warning
 name: rebuild-dist-after-readme-changes
 confidence: Verified
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Rebuild dist after README changes

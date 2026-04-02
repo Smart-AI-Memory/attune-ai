@@ -173,21 +173,3 @@ class TestWorkflowExecution:
 # ============================================================================
 # Test: Report Formatting (re-exported)
 # ============================================================================
-
-
-@pytest.mark.unit
-class TestReportFormatting:
-    """Tests for report generation (re-exported from code_review_report)."""
-
-    def test_format_code_review_report_exists(self):
-        """Test that report formatting function exists."""
-        from attune.workflows.code_review import format_code_review_report
-
-        assert callable(format_code_review_report)
-
-    def test_format_empty_results(self):
-        """Test formatting with minimal results."""
-        from attune.workflows.code_review import format_code_review_report
-
-        report = format_code_review_report({}, {})
-        assert isinstance(report, str)

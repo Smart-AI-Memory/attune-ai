@@ -55,6 +55,7 @@ deep_review(path="<user-specified path>")
 **Health:** X/100 | **Files:** Y | **Issues:** Z
 
 ### Issues by Category
+
 | Category | Count | Severity |
 |----------|-------|----------|
 | Style | X | Low |
@@ -63,13 +64,26 @@ deep_review(path="<user-specified path>")
 | Predicted Bugs | W | Medium |
 
 ### Details
+
 | File | Line | Issue | Source |
 |------|------|-------|--------|
 
 ### Predicted Bug Risks
+
 | File | Pattern | Confidence |
 |------|---------|------------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="code-quality", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+code quality reviews — want to see them?"
 
 ## Follow-Up
 
@@ -81,4 +95,4 @@ After presenting results, offer:
 
 ## Related Topics
 
-None generated yet.
+_No related topics yet._

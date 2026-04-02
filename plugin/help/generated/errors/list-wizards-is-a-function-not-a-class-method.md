@@ -3,7 +3,7 @@ type: error
 name: list-wizards-is-a-function-not-a-class-method
 confidence: Verified
 tags: [imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: `list_wizards()` is a function, not a class method

@@ -3,7 +3,7 @@ type: error
 name: patch-the-source-module-for-from-x-import-y-in-function-bodies
 confidence: Verified
 tags: [testing, security, imports]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Patch the source module for `from ..X import Y` in function

@@ -6,8 +6,11 @@ argument-hint: "<test file or pattern>"
 
 # Fix Test
 
-Auto-diagnose and fix failing tests with up to 3 retry
-attempts.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Fix Test** auto-diagnoses failing tests, identifies
+> root causes, and applies fixes with up to 3 retry
+> attempts.
 
 ## Scoping
 

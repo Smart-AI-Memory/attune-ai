@@ -23,14 +23,16 @@ from attune.help.engine import (
     AudienceProfile,
     PopulatedTemplate,
     TemplateContext,
+    list_tags,
+    populate,
+    search_by_tag,
+)
+from attune.help.templates import (
     _adapt_for_audience,
     _find_template_file,
     _load_cross_links,
     _parse_template_file,
     _resolve_related,
-    list_tags,
-    populate,
-    search_by_tag,
 )
 
 # -- Fixtures --------------------------------------------------------
@@ -221,6 +223,11 @@ class TestFindTemplateFile:
     def test_returns_none_for_missing_file(self, generated_dir: Path) -> None:
         """Test valid prefix but nonexistent file returns None."""
         assert _find_template_file("err-nonexistent", generated_dir) is None
+
+    def test_blocks_path_traversal(self, generated_dir: Path) -> None:
+        """Test path traversal attempts are blocked (CWE-22)."""
+        assert _find_template_file("err-../../etc/passwd", generated_dir) is None
+        assert _find_template_file("err-../../../etc/shadow", generated_dir) is None
 
 
 # -- _parse_template_file ---------------------------------------------
@@ -449,3 +456,612 @@ class TestTagHelpers:
         tags = list_tags(generated_dir=generated_dir)
         counts = list(tags.values())
         assert counts == sorted(counts, reverse=True)
+
+
+# -- Phase 3+4 Feature Tests -------------------------------------------
+
+
+class TestProgressiveDepth:
+    """Tests for populate_progressive() depth escalation."""
+
+    def test_first_call_returns_compact(self, generated_dir: Path) -> None:
+        """First call to a template returns compact verbosity."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        result = populate_progressive(
+            "err-shadow-dirs",
+            generated_dir=generated_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+        # Compact body should be shorter than full
+        full = populate(
+            "err-shadow-dirs",
+            audience=AudienceProfile(verbosity="normal"),
+            generated_dir=generated_dir,
+        )
+        assert len(result.body) <= len(full.body)
+
+    def test_second_call_escalates(self, generated_dir: Path) -> None:
+        """Second call to same template returns normal."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("err-shadow-dirs", generated_dir=generated_dir)
+        result = populate_progressive(
+            "err-shadow-dirs",
+            generated_dir=generated_dir,
+        )
+        assert result.metadata["depth_level"] == 1
+
+    def test_third_call_detailed(self, generated_dir: Path) -> None:
+        """Third call returns detailed (max depth)."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("err-shadow-dirs", generated_dir=generated_dir)
+        populate_progressive("err-shadow-dirs", generated_dir=generated_dir)
+        result = populate_progressive(
+            "err-shadow-dirs",
+            generated_dir=generated_dir,
+        )
+        assert result.metadata["depth_level"] == 2
+
+    def test_new_template_resets_depth(self, generated_dir: Path) -> None:
+        """Switching template ID resets depth to 0."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("err-shadow-dirs", generated_dir=generated_dir)
+        populate_progressive("err-shadow-dirs", generated_dir=generated_dir)
+        # Switch to tip
+        result = populate_progressive(
+            "tip-check-for-shadow-dirs",
+            generated_dir=generated_dir,
+        )
+        assert result.metadata["depth_level"] == 0
+
+    def test_caps_at_depth_2(self, generated_dir: Path) -> None:
+        """Depth does not exceed 2."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        for _ in range(5):
+            result = populate_progressive(
+                "err-shadow-dirs",
+                generated_dir=generated_dir,
+            )
+        assert result.metadata["depth_level"] == 2
+
+
+class TestWorkflowChainPrediction:
+    """Tests for get_workflow_help()."""
+
+    def test_returns_templates_for_known_workflow(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Known workflow returns matching templates."""
+        from attune.help.engine import get_workflow_help
+
+        # Add workflow_map to cross_links
+        cross_path = generated_dir / "cross_links.json"
+        data = json.loads(cross_path.read_text(encoding="utf-8"))
+        data["workflow_map"] = {
+            "code-review": ["tip-check-for-shadow-dirs"],
+        }
+        cross_path.write_text(
+            json.dumps(data),
+            encoding="utf-8",
+        )
+
+        results = get_workflow_help(
+            "code-review",
+            generated_dir=generated_dir,
+        )
+        assert len(results) == 1
+        assert results[0].template_id == "tip-check-for-shadow-dirs"
+
+    def test_returns_empty_for_unknown_workflow(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Unknown workflow returns empty list."""
+        from attune.help.engine import get_workflow_help
+
+        results = get_workflow_help(
+            "nonexistent",
+            generated_dir=generated_dir,
+        )
+        assert results == []
+
+
+class TestPrecursorWarnings:
+    """Tests for get_precursor_warnings()."""
+
+    def test_python_file_returns_warnings(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Python file returns templates tagged with python/imports."""
+        from attune.help.engine import get_precursor_warnings
+
+        results = get_precursor_warnings(
+            "src/module.py",
+            generated_dir=generated_dir,
+        )
+        # Should find templates tagged 'imports' or 'python'
+        assert len(results) > 0
+        for r in results:
+            assert r.template_id.startswith(("err-", "war-"))
+
+    def test_unknown_extension_returns_empty(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Unknown file extension returns empty list."""
+        from attune.help.engine import get_precursor_warnings
+
+        results = get_precursor_warnings(
+            "image.png",
+            generated_dir=generated_dir,
+        )
+        assert results == []
+
+
+class TestFeedbackLoop:
+    """Tests for record_template_feedback / get_template_confidence."""
+
+    def test_record_good_feedback(self, generated_dir: Path) -> None:
+        """Recording good feedback returns confidence 1.0."""
+        from attune.help.engine import record_template_feedback
+
+        score = record_template_feedback(
+            "err-shadow-dirs",
+            "good",
+            generated_dir=generated_dir,
+        )
+        assert score == 1.0
+
+    def test_record_bad_feedback(self, generated_dir: Path) -> None:
+        """Recording bad feedback returns confidence 0.0."""
+        from attune.help.engine import record_template_feedback
+
+        score = record_template_feedback(
+            "err-test",
+            "bad",
+            generated_dir=generated_dir,
+        )
+        assert score == 0.0
+
+    def test_mixed_feedback_confidence(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Mixed feedback returns ratio."""
+        from attune.help.engine import record_template_feedback
+
+        record_template_feedback(
+            "err-mixed",
+            "good",
+            generated_dir=generated_dir,
+        )
+        record_template_feedback(
+            "err-mixed",
+            "good",
+            generated_dir=generated_dir,
+        )
+        score = record_template_feedback(
+            "err-mixed",
+            "bad",
+            generated_dir=generated_dir,
+        )
+        # 2 good + 1 bad = 2/3
+        assert abs(score - 2 / 3) < 0.01
+
+    def test_no_feedback_returns_1(self, generated_dir: Path) -> None:
+        """No feedback defaults to confidence 1.0."""
+        from attune.help.engine import get_template_confidence
+
+        score = get_template_confidence(
+            "err-unknown",
+            generated_dir=generated_dir,
+        )
+        assert score == 1.0
+
+    def test_feedback_persists_to_file(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Feedback is saved to feedback.json."""
+        from attune.help.engine import record_template_feedback
+
+        record_template_feedback(
+            "err-persist",
+            "good",
+            generated_dir=generated_dir,
+        )
+        feedback_path = generated_dir / "feedback.json"
+        assert feedback_path.exists()
+        data = json.loads(feedback_path.read_text(encoding="utf-8"))
+        assert "err-persist" in data
+        assert data["err-persist"]["good"] == 1
+
+
+class TestComposition:
+    """Tests for populate(compose=True)."""
+
+    def test_compose_inlines_embedded_content(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Compose=True appends embedded template content."""
+        # Add embed rule to cross_links
+        cross_path = generated_dir / "cross_links.json"
+        data = json.loads(cross_path.read_text(encoding="utf-8"))
+        data["links"]["err-shadow-dirs"] = {
+            **data["links"].get("err-shadow-dirs", {}),
+            "embeds": [
+                {"id": "tip-check-for-shadow-dirs", "position": "after_resolution"},
+            ],
+        }
+        cross_path.write_text(
+            json.dumps(data),
+            encoding="utf-8",
+        )
+
+        result = populate(
+            "err-shadow-dirs",
+            compose=True,
+            generated_dir=generated_dir,
+        )
+        assert "composed_from" in result.metadata
+        assert "tip-check-for-shadow-dirs" in result.metadata["composed_from"]
+        # Body should contain embedded tip content
+        assert "Check for shadow" in result.body
+
+    def test_compose_false_no_embedding(
+        self,
+        generated_dir: Path,
+    ) -> None:
+        """Compose=False does not inline anything."""
+        result = populate(
+            "err-shadow-dirs",
+            compose=False,
+            generated_dir=generated_dir,
+        )
+        assert "composed_from" not in result.metadata
+
+
+# -- Type-driven progression fixture -----------------------------------
+
+
+@pytest.fixture()
+def typed_dir(tmp_path: Path) -> Path:
+    """Create a generated/ directory with concept/task/reference for one topic."""
+    gen = tmp_path / "generated"
+    (gen / "concepts").mkdir(parents=True)
+    (gen / "tasks").mkdir(parents=True)
+    (gen / "references").mkdir(parents=True)
+    (gen / "errors").mkdir(parents=True)
+
+    # Concept template for security-audit
+    (gen / "concepts" / "tool-security-audit.md").write_text(
+        "---\n"
+        "type: concept\n"
+        "name: tool-security-audit\n"
+        "tags: [security, skill]\n"
+        "source: test\n"
+        "---\n"
+        "\n"
+        "# Security Audit\n"
+        "\n"
+        "## What\n"
+        "\n"
+        "Scans code for vulnerabilities.\n"
+        "\n"
+        "## Why\n"
+        "\n"
+        "Catches bugs before release.\n",
+        encoding="utf-8",
+    )
+
+    # Task template for security-audit
+    (gen / "tasks" / "use-security-audit.md").write_text(
+        "---\n"
+        "type: task\n"
+        "name: use-security-audit\n"
+        "tags: [security, task]\n"
+        "source: test\n"
+        "---\n"
+        "\n"
+        "# Task: Use the security-audit skill\n"
+        "\n"
+        "## Steps\n"
+        "\n"
+        "1. Define scope\n"
+        "2. Run the tool\n"
+        "3. Review results\n",
+        encoding="utf-8",
+    )
+
+    # Reference template for security-audit
+    (gen / "references" / "skill-security-audit.md").write_text(
+        "---\n"
+        "type: reference\n"
+        "subtype: procedural\n"
+        "name: skill-security-audit\n"
+        "tags: [security, skill]\n"
+        "source: test\n"
+        "---\n"
+        "\n"
+        "# Reference: Skill: security-audit\n"
+        "\n"
+        "## Scoping\n"
+        "\n"
+        "Ask which path to scan.\n"
+        "\n"
+        "## Execution\n"
+        "\n"
+        "Call security_audit MCP tool.\n"
+        "\n"
+        "## What It Checks\n"
+        "\n"
+        "eval, exec, path traversal, secrets.\n",
+        encoding="utf-8",
+    )
+
+    # Error template (for fallback testing)
+    (gen / "errors" / "shadow-dirs.md").write_text(
+        "---\n"
+        "type: error\n"
+        "name: shadow-dirs\n"
+        "tags: [imports]\n"
+        "source: test\n"
+        "---\n"
+        "\n"
+        "# Error: Shadow directories\n"
+        "\n"
+        "## Signature\n"
+        "\n"
+        "ModuleNotFoundError\n"
+        "\n"
+        "## Resolution\n"
+        "\n"
+        "Delete the shadow directory.\n",
+        encoding="utf-8",
+    )
+
+    # Empty cross_links.json
+    (gen / "cross_links.json").write_text(
+        json.dumps({"links": {}, "tag_index": {}}),
+        encoding="utf-8",
+    )
+
+    return gen
+
+
+# -- _extract_topic ----------------------------------------------------
+
+
+@pytest.mark.unit
+class TestExtractTopic:
+    """Tests for _extract_topic prefix stripping."""
+
+    def test_strips_ref_skill_prefix(self) -> None:
+        """Test ref-skill- prefix is stripped."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("ref-skill-security-audit") == "security-audit"
+
+    def test_strips_tas_use_prefix(self) -> None:
+        """Test tas-use- prefix is stripped."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("tas-use-security-audit") == "security-audit"
+
+    def test_strips_con_tool_prefix(self) -> None:
+        """Test con-tool- prefix is stripped."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("con-tool-security-audit") == "security-audit"
+
+    def test_strips_ref_tool_prefix(self) -> None:
+        """Test ref-tool- prefix is stripped."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("ref-tool-code-review") == "code-review"
+
+    def test_bare_topic_unchanged(self) -> None:
+        """Test bare topic slug passes through."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("security-audit") == "security-audit"
+
+    def test_err_prefix(self) -> None:
+        """Test err- prefix is stripped."""
+        from attune.help.progression import _extract_topic
+
+        assert _extract_topic("err-shadow-dirs") == "shadow-dirs"
+
+
+# -- _resolve_topic_at_level -------------------------------------------
+
+
+@pytest.mark.unit
+class TestResolveTopicAtLevel:
+    """Tests for _resolve_topic_at_level."""
+
+    def test_resolves_concept(self, typed_dir: Path) -> None:
+        """Level 0 resolves to concept template."""
+        from attune.help.progression import _resolve_topic_at_level
+
+        result = _resolve_topic_at_level("security-audit", 0, typed_dir)
+        assert result == "con-tool-security-audit"
+
+    def test_resolves_task(self, typed_dir: Path) -> None:
+        """Level 1 resolves to task template."""
+        from attune.help.progression import _resolve_topic_at_level
+
+        result = _resolve_topic_at_level("security-audit", 1, typed_dir)
+        assert result == "tas-use-security-audit"
+
+    def test_resolves_reference(self, typed_dir: Path) -> None:
+        """Level 2 resolves to reference template."""
+        from attune.help.progression import _resolve_topic_at_level
+
+        result = _resolve_topic_at_level("security-audit", 2, typed_dir)
+        assert result == "ref-skill-security-audit"
+
+    def test_returns_none_for_missing(self, typed_dir: Path) -> None:
+        """Returns None when no template exists at level."""
+        from attune.help.progression import _resolve_topic_at_level
+
+        result = _resolve_topic_at_level("nonexistent-topic", 0, typed_dir)
+        assert result is None
+
+
+# -- Type-driven progressive depth -------------------------------------
+
+
+@pytest.mark.unit
+class TestTypeDrivenProgression:
+    """Tests for type-driven populate_progressive()."""
+
+    def test_first_call_returns_concept(self, typed_dir: Path) -> None:
+        """First call to a topic returns concept template."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        result = populate_progressive(
+            "security-audit",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+        assert result.metadata["level_label"] == "concept"
+        assert result.type == "concept"
+        assert "Scans code" in result.body
+
+    def test_second_call_returns_task(self, typed_dir: Path) -> None:
+        """Second call returns task/procedural template."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        result = populate_progressive(
+            "security-audit",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 1
+        assert result.metadata["level_label"] == "procedural"
+        assert result.type == "task"
+        assert "Steps" in result.body
+
+    def test_third_call_returns_reference(self, typed_dir: Path) -> None:
+        """Third call returns reference template."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        result = populate_progressive(
+            "security-audit",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 2
+        assert result.metadata["level_label"] == "reference"
+        assert result.type == "reference"
+        assert "What It Checks" in result.body
+
+    def test_full_template_id_extracts_topic(self, typed_dir: Path) -> None:
+        """Full template ID like ref-skill-X extracts topic and routes."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        result = populate_progressive(
+            "ref-skill-security-audit",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+        assert result.metadata["topic"] == "security-audit"
+        # Should get concept, not reference (topic starts at 0)
+        assert result.type == "concept"
+
+    def test_starting_level_skips_concept(self, typed_dir: Path) -> None:
+        """starting_level=1 skips concept, starts at task."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        result = populate_progressive(
+            "security-audit",
+            generated_dir=typed_dir,
+            starting_level=1,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 1
+        assert result.type == "task"
+
+    def test_new_topic_resets_depth(self, typed_dir: Path) -> None:
+        """Switching topics resets depth to 0."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        # Depth is now 1, switch topic
+        result = populate_progressive(
+            "err-shadow-dirs",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+
+    def test_fallback_to_verbosity_based(self, typed_dir: Path) -> None:
+        """Falls back to verbosity-based when no typed templates exist."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        # err-shadow-dirs has no concept/task/reference variants
+        result = populate_progressive(
+            "err-shadow-dirs",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+        # Should get the error template itself via fallback
+        assert "Shadow directories" in result.body
+
+    def test_reset_session_returns_to_concept(self, typed_dir: Path) -> None:
+        """reset_session() resets depth back to 0."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        populate_progressive("security-audit", generated_dir=typed_dir)
+        # Now at depth 1, reset
+        reset_session()
+        result = populate_progressive(
+            "security-audit",
+            generated_dir=typed_dir,
+        )
+        assert result is not None
+        assert result.metadata["depth_level"] == 0
+        assert result.type == "concept"
+
+    def test_caps_at_depth_2(self, typed_dir: Path) -> None:
+        """Depth does not exceed 2 with type-driven routing."""
+        from attune.help.engine import populate_progressive, reset_session
+
+        reset_session()
+        for _ in range(5):
+            result = populate_progressive(
+                "security-audit",
+                generated_dir=typed_dir,
+            )
+        assert result.metadata["depth_level"] == 2
+        assert result.type == "reference"

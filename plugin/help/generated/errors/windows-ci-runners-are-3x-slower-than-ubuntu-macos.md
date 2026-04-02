@@ -3,7 +3,7 @@ type: error
 name: windows-ci-runners-are-3x-slower-than-ubuntu-macos
 confidence: Verified
 tags: [ci, testing, windows, macos]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Windows CI runners are ~3x slower than Ubuntu/macOS

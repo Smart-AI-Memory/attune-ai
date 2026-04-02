@@ -3,7 +3,7 @@ type: error
 name: stop-hooks-inject-stderr-not-stdout
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Stop hooks inject stderr, not stdout

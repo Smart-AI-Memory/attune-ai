@@ -21,14 +21,22 @@ source: {{ source }}
 ## {{ section.heading }}
 
 {{ section.body }}
+{% if section.subsections %}
+{% for sub in section.subsections %}
+
+### {{ sub.heading }}
+
+{{ sub.body }}
+{% endfor %}
+{% endif %}
 {% endfor %}
 
 ## Related Topics
 {% if related_topics %}
 {% for topic in related_topics %}
-- {{ topic.type }}: {{ topic.description }}
+- **{{ topic.type }}**: {{ topic.description }}
 {% endfor %}
 {% else %}
 
-None generated yet.
+_No related topics yet._
 {% endif %}

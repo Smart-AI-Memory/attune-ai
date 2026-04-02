@@ -3,7 +3,7 @@ type: warning
 name: claude-code-plugin-is-platform-specific
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Claude Code plugin is platform-specific

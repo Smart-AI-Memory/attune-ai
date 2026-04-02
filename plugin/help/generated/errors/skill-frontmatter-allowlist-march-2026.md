@@ -3,7 +3,7 @@ type: error
 name: skill-frontmatter-allowlist-march-2026
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Skill frontmatter allowlist (March 2026)

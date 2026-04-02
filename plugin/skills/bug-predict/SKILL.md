@@ -6,7 +6,11 @@ argument-hint: "<path or directory to scan>"
 
 # Bug Prediction
 
-Scan code for patterns that predict likely bug locations.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Bug Prediction** finds likely bug locations using
+> pattern analysis — eval/exec usage, broad exceptions,
+> and incomplete code markers.
 
 ## Scoping
 

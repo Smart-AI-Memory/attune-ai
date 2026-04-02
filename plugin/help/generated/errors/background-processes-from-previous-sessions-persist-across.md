@@ -2,7 +2,7 @@
 type: error
 name: background-processes-from-previous-sessions-persist-across
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Background processes from previous sessions persist across

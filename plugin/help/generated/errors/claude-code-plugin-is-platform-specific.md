@@ -3,7 +3,7 @@ type: error
 name: claude-code-plugin-is-platform-specific
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Claude Code plugin is platform-specific

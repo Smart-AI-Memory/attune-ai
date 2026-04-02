@@ -2,7 +2,7 @@
 type: warning
 name: multiple-pinentry-program-lines-in-gpg-agent-conf-first-wins
 confidence: Verified
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Warning: Multiple `pinentry-program` lines in gpg-agent.conf — first

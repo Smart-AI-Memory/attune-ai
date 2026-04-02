@@ -3,7 +3,7 @@ type: error
 name: pre-commit-stash-conflicts-when-any-tracked-unstaged-file
 confidence: Verified
 tags: [testing, git, claude-code, python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Pre-commit stash conflicts when any tracked unstaged file

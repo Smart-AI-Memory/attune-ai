@@ -110,7 +110,7 @@ def _list_category(category: str) -> int:
     return 0
 
 
-def _show_template(name: str) -> int:
+def _show_template(name: str, verbosity: str = "normal") -> int:
     """Show a specific template by name.
 
     Tries all categories to find the template, then
@@ -118,11 +118,14 @@ def _show_template(name: str) -> int:
 
     Args:
         name: Template name (without .md extension).
+        verbosity: One of compact, normal, detailed.
 
     Returns:
         Exit code.
     """
     from attune.help.engine import AudienceProfile, populate
+
+    audience = AudienceProfile(channel="cli", verbosity=verbosity)
 
     # Try to find by prefix
     prefix_map = {
@@ -135,7 +138,7 @@ def _show_template(name: str) -> int:
     # If name already has a prefix, use it directly
     for prefix in prefix_map:
         if name.startswith(f"{prefix}-"):
-            result = populate(name, audience=AudienceProfile(channel="cli"))
+            result = populate(name, audience=audience)
             if result:
                 from attune.help.transformers import render_cli
 
@@ -147,7 +150,7 @@ def _show_template(name: str) -> int:
     # Try each prefix
     for prefix in prefix_map.values():
         template_id = f"{prefix}-{name}"
-        result = populate(template_id, audience=AudienceProfile(channel="cli"))
+        result = populate(template_id, audience=audience)
         if result:
             from attune.help.transformers import render_cli
 
@@ -204,6 +207,42 @@ def _list_all_tags() -> int:
     return 0
 
 
+def _record_feedback(name: str, rating: str) -> int:
+    """Record feedback on a template.
+
+    Args:
+        name: Template name or ID.
+        rating: "good" or "bad".
+
+    Returns:
+        Exit code.
+    """
+    if rating not in ("good", "bad"):
+        print(f"Invalid rating '{rating}'. Use 'good' or 'bad'.")
+        return 1
+
+    from attune.help.engine import record_template_feedback
+
+    # Try with prefixes if no prefix given
+    prefixes = ["err", "war", "tip", "ref"]
+    template_id = name
+
+    if not any(name.startswith(f"{p}-") for p in prefixes):
+        # Try each prefix to find a match
+        from attune.help.engine import populate
+
+        for prefix in prefixes:
+            tid = f"{prefix}-{name}"
+            if populate(tid) is not None:
+                template_id = tid
+                break
+
+    confidence = record_template_feedback(template_id, rating)
+    print(f"Feedback recorded for {template_id}.")
+    print(f"Confidence: {confidence:.2f}")
+    return 0
+
+
 def cmd_help(args: argparse.Namespace) -> int:
     """Handle the `attune help` command.
 
@@ -215,6 +254,15 @@ def cmd_help(args: argparse.Namespace) -> int:
     Returns:
         Exit code.
     """
+    # --feedback: record rating on a template
+    feedback_rating = getattr(args, "feedback", None)
+    if feedback_rating:
+        topic = getattr(args, "topic", None)
+        if not topic:
+            print("Usage: attune help-docs <template-id> --feedback good|bad")
+            return 1
+        return _record_feedback(topic, feedback_rating)
+
     # --tags flag: list all tags
     if getattr(args, "tags", False):
         return _list_all_tags()
@@ -233,5 +281,14 @@ def cmd_help(args: argparse.Namespace) -> int:
     if topic in _CATEGORIES:
         return _list_category(topic)
 
+    # Determine verbosity from flags
+    verbosity = "normal"
+    if getattr(args, "deep", False):
+        verbosity = "detailed"
+    elif getattr(args, "detail", False):
+        verbosity = "normal"
+    else:
+        verbosity = "compact"
+
     # Otherwise try to show a specific template
-    return _show_template(topic)
+    return _show_template(topic, verbosity=verbosity)

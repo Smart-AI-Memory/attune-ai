@@ -6,7 +6,11 @@ argument-hint: "<path to analyze>"
 
 # Refactor Planning
 
-AI-powered refactoring analysis and roadmap generation.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Refactor Plan** detects code smells, duplication,
+> and complexity, then generates a prioritized refactoring
+> roadmap.
 
 ## Scoping
 

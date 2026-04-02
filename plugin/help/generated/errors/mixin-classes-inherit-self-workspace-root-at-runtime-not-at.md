@@ -3,7 +3,7 @@ type: error
 name: mixin-classes-inherit-self-workspace-root-at-runtime-not-at
 confidence: Verified
 tags: [claude-code]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Mixin classes inherit `self._workspace_root` at runtime,

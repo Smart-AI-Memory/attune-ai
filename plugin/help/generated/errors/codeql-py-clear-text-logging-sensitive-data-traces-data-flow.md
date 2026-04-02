@@ -3,7 +3,7 @@ type: error
 name: codeql-py-clear-text-logging-sensitive-data-traces-data-flow
 confidence: Verified
 tags: [security]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: CodeQL `py/clear-text-logging-sensitive-data` traces data flow,

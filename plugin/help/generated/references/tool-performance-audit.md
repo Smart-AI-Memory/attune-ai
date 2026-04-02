@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Run performance audit workflow. Identifies bottlenecks, memory leaks, and optimization opportunities.
 
+**Group:** workflow
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `path` | string | Path to directory or file to audit | required |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `path` | string | Path to directory or file to audit |  | required |
+
+## Usage
+
+`performance_audit(path="...")`
 
 ## Related Topics
-- Reference: Related workflow tools: security_audit, bug_predict, code_review
+- **Reference**: Tool: Security Audit — Run security audit workflow on codebase. Detects vulnerabili...
+- **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
+- **Reference**: Tool: Code Review — Run code review workflow. Provides comprehensive code qualit...

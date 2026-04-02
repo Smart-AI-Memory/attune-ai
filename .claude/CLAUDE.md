@@ -1204,4 +1204,44 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   The edit succeeds but the import silently vanishes. Fix: add
   imports and their usage code in the same edit, or add usage
   first then imports.
+
+- **Template generators overwrite hand-written files**: The
+  `generate_concept_templates.py` auto-discovery creates bland
+  stubs that overwrite rich hand-written concept files. Fix:
+  check if the existing file has `auto-discovered` in its tags
+  before overwriting — if not, it was hand-written and should be
+  preserved. The `_CONCEPTS` curated list only protects system
+  concepts, not `tool-*` skill concepts.
+
+- **`_repo_root()` parents count varies by file depth**: A
+  utility function using `Path(__file__).resolve().parents[N]`
+  to find the repo root must match the file's actual depth.
+  `src/attune/help/engine.py` needs `parents[3]` but
+  `src/attune/workflows/help_maintenance.py` also needs
+  `parents[3]` (not `parents[2]`). Always count: file → parent
+  dir → ... → repo root. Off-by-one silently resolves to `src/`
+  instead of the repo root.
+
+- **`CostReport` fields are named, not positional**: The
+  `CostReport` dataclass requires `total_cost`, `baseline_cost`,
+  `savings`, `savings_percent`, and `by_stage`. Using
+  `total_input_tokens` or `total_output_tokens` raises
+  `TypeError` — those fields don't exist. Always check the
+  dataclass definition in `data_classes.py` before constructing.
+
+- **`# noqa: F401` re-exports break silently on satellite file
+  deletion**: SDK-native workflows re-export constants from legacy
+  satellite files (e.g. `from .security_audit_patterns import
+  SECURITY_PATTERNS  # noqa: F401`). Deleting the satellite file
+  breaks the import at runtime, not at lint time (ruff doesn't
+  check import resolution). Before deleting any workflow satellite
+  file, grep the parent workflow for `noqa: F401` imports from it.
+  Also check `__all__` — it may reference the re-exported names.
+
+- **Re-export accessibility tests are scattered across batch files**:
+  Tests like `test_format_code_review_report_accessible` appear in
+  SDK agent tests, workflow tests, and coverage batch files. A single
+  re-export removal can cascade through 5+ test files. After removing
+  any re-export, run `pytest -x` iteratively — each failure reveals
+  the next test file to fix.
 <!-- attune-lessons-end -->

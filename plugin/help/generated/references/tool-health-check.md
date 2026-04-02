@@ -11,11 +11,19 @@ source: src/attune/mcp/tool_schemas.py
 
 Orchestrated project health check with score, grade, and recommendations across multiple categories.
 
+**Group:** workflow
+
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| --------- | ---- | ----------- | ------- |
-| `project_root` | string | Project root to check | . |
+| Parameter | Type | Description | Constraints | Default |
+| --------- | ---- | ----------- | ----------- | ------- |
+| `project_root` | string | Project root to check |  | . |
+
+## Usage
+
+`health_check()`
 
 ## Related Topics
-- Reference: Related workflow tools: security_audit, bug_predict, code_review
+- **Reference**: Tool: Security Audit — Run security audit workflow on codebase. Detects vulnerabili...
+- **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
+- **Reference**: Tool: Code Review — Run code review workflow. Provides comprehensive code qualit...

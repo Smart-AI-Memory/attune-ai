@@ -3,7 +3,7 @@ type: error
 name: bandit-b108-blocks-hardcoded-tmp-paths
 confidence: Verified
 tags: [python]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Bandit B108 blocks hardcoded `/tmp` paths

@@ -3,7 +3,7 @@ type: error
 name: scorecards-pip-parser-ignores-hash-flags-entirely
 confidence: Verified
 tags: [packaging]
-source: CLAUDE.md Lessons Learned
+source: .claude/CLAUDE.md
 ---
 
 # Error: Scorecard's pip parser ignores `--hash` flags entirely

@@ -6,8 +6,11 @@ argument-hint: "<what to build, or 'resume'>"
 
 # Spec-Driven Development
 
-One skill to go from idea to shipped code, with quality
-gates and your approval at every step.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Spec** takes you from idea to shipped code —
+> brainstorm, plan, review, and execute with quality
+> gates and your approval at every step.
 
 ## Scoping
 

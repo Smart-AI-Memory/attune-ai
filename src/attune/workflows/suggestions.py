@@ -402,7 +402,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
         return suggestions
 
     try:
-        with open(index_path) as f:
+        with open(index_path, encoding="utf-8") as f:
             index_data = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         logger.debug("Could not load project index: %s", e)
@@ -559,7 +559,47 @@ def _suggestions_from_history(workflow_name: str) -> list[NextAction]:
 
 
 # ============================================================================
-# SIGNAL SOURCE 4: SUGGESTION PERSISTENCE
+# SIGNAL SOURCE 4: HELP SYSTEM TEMPLATES
+# ============================================================================
+
+
+def _suggestions_from_help(workflow_name: str) -> list[NextAction]:
+    """Generate suggestions from help system templates.
+
+    Queries the help engine for templates relevant to the
+    completed workflow and converts them to NextAction items.
+
+    Args:
+        workflow_name: Completed workflow slug.
+
+    Returns:
+        List of NextAction suggestions from help templates.
+    """
+    from attune.help.engine import get_workflow_help
+
+    templates = get_workflow_help(workflow_name, max_results=2)
+    if not templates:
+        return []
+
+    results: list[NextAction] = []
+    for tmpl in templates:
+        results.append(
+            NextAction(
+                workflow_name=f"learn-{workflow_name}",
+                description=f"Learn more: {tmpl.title}",
+                reasoning=(
+                    f"Help template available for {workflow_name}. "
+                    "Say '/learn' or 'tell me more' to explore."
+                ),
+                priority="low",
+                confidence=0.5,
+            ),
+        )
+    return results
+
+
+# ============================================================================
+# SIGNAL SOURCE 5: SUGGESTION PERSISTENCE
 # ============================================================================
 
 
@@ -575,7 +615,7 @@ def _load_suggestion_state() -> dict[str, Any]:
         return {"dismissed": {}}
 
     try:
-        with open(state_path) as f:
+        with open(state_path, encoding="utf-8") as f:
             data: dict[str, Any] = json.load(f)
             return data
     except (OSError, json.JSONDecodeError):
@@ -593,7 +633,7 @@ def _save_suggestion_state(state: dict[str, Any]) -> None:
     state_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        with open(state_path, "w") as f:
+        with open(state_path, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
     except OSError as e:
         logger.debug("Could not save suggestion state: %s", e)
@@ -713,6 +753,13 @@ def generate_suggestions(
     except Exception:  # noqa: BLE001
         # INTENTIONAL: History is optional
         logger.debug("History suggestions failed for %s", workflow_name)
+
+    # Source 4: Help system templates
+    try:
+        suggestions.extend(_suggestions_from_help(workflow_name))
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: Help system is optional
+        logger.debug("Help suggestions failed for %s", workflow_name)
 
     # Deduplicate by workflow_name (keep highest confidence)
     seen: dict[str, NextAction] = {}
