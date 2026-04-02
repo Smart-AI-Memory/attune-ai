@@ -90,7 +90,7 @@ what your spec says should come next.
 | | |
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — each runs a specialist team of 2-6 Claude subagents |
-| **31 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
+| **38 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol |
 | **13 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — fully skills-centric, zero commands |
 | **Skills-First Plugin** | Install via `claude plugin install attune-ai@attune-ai` — skills auto-trigger from natural language |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
@@ -101,6 +101,26 @@ what your spec says should come next.
 ---
 
 ## What's New
+
+### v5.5 — Dynamic Help System
+
+**v5.5.0** adds a living help system with 540 templates
+across 11 types, type-driven progressive depth, and
+auto-maintenance. Includes 3 critical MCP bug fixes and
+a 460-line dead code cleanup.
+
+| Feature | What It Does |
+| ------- | ------------ |
+| **540 help templates** | Errors, warnings, tips, tasks, FAQs, concepts, and more — loaded at runtime |
+| **Progressive depth** | Help escalates concept → task → reference as you ask again |
+| **2 new MCP tools** | `help_lookup` (4 modes) and `help_maintain` (auto-regeneration) |
+| **3 runtime bug fixes** | Code review, memory handler, and release prep MCP tools were broken |
+| **`_error_result` consolidation** | Extracted to `BaseWorkflow`, removed from 14 files |
+| **95 new tests** | Session, MCP handlers, maintenance workflow, suggestions |
+| **20K lines removed** | Legacy pre-SDK workflow code deleted |
+
+<details>
+<summary>v5.3 — Skills-Centric Architecture</summary>
 
 ### v5.3 — Skills-Centric Architecture
 
@@ -120,6 +140,8 @@ marketplace. attune-lite deprecated and merged.
 | **`spec` skill** | Brainstorm → plan → review → execute lifecycle with approval gates |
 | **CrewAI removal** | Deleted ~18K lines of deprecated code — all workflows SDK-native |
 | **API reference rewrite** | Updated from v3.8.0 to v5.3.2, covering all 16 modules |
+
+</details>
 
 <details>
 <summary>v5.2 — Voice Layer & Short Commands</summary>

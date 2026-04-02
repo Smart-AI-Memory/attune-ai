@@ -5,34 +5,77 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.5.0] - 2026-03-30
+## [5.5.0] - 2026-04-01
 
 ### Added (5.5.0)
 
 - **Documentation template engine** — runtime help system
-  with 305 generated templates (errors, warnings, tips,
-  references) loaded via `attune.help.engine.populate()`.
+  with 540 generated templates across 11 types (errors,
+  warnings, tips, references, tasks, FAQs, notes,
+  quickstarts, concepts, troubleshooting, comparisons)
+  loaded via `attune.help.engine.populate()`.
+- **Type-driven progressive depth** — help escalates
+  across template types (concept → task → reference)
+  with session state and 4-hour TTL.
+- **`help_lookup` MCP tool** — 4 modes: progressive,
+  workflow_help, precursor warnings, and tag search.
+- **`help_maintain` MCP tool** — auto-detects stale
+  templates and regenerates via batch API.
+- **Help maintenance workflow** — 5-phase pipeline
+  (detect, map, regenerate, rebuild, validate) with
+  feedback-weighted priority sorting.
 - **Audience transformers** — `render_claude_code`,
   `render_marketplace`, and `render_cli` adapt template
   output for each channel.
 - **`attune help-docs` CLI** — browse, search, and display
   templates from the terminal (`attune help errors`,
   `attune help --tag security`).
-- **Cross-link index** — 305 templates connected with 216
-  cross-links and 19 tags for contextual navigation.
-- **Reference subtypes** — templates now support subtypes
-  (e.g., `skill`, `tool`, `workflow`) for richer taxonomy.
+- **Cross-link index** — 540 templates connected with
+  cross-links and tags for contextual navigation.
+- **Prompt sanitization** — `_sanitize_prompt_arg()`
+  strips backticks, newlines, and control characters
+  from MCP prompt inputs.
+- **Cache invalidation** — `invalidate_cross_links_cache()`
+  for long-running MCP servers.
+- **95 new tests** — help session, MCP help handlers,
+  prompt sanitizer, maintenance workflow, suggestions
+  integration, and usage weights.
 
 ### Fixed (5.5.0)
 
+- **MCP code review tool always failed** — handler passed
+  `target_path=` but workflow reads `path=`. Code review
+  via MCP now works.
+- **MCP memory handler TypeError** — structlog-style
+  `logger.warning("msg", key=key)` on stdlib logger
+  replaced with `%s` formatting.
+- **MCP release prep TypeError** — removed invalid
+  `skip_approve_if_clean=True` constructor kwarg.
 - **MCP server protocol compliance** — migrated from custom
   JSON-RPC stdio loop to official MCP Python SDK
   (`mcp.server.Server` + `stdio_server`). Fixes handshake
   failures that prevented Claude Code from connecting to
-  attune-ai MCP tools (36 tools now registered).
+  attune-ai MCP tools (38 tools now registered).
 - **MCP `.mcp.json` python path** — changed from bare
   `python` (resolved to pyenv shim with stale v3.9.0) to
   `uv run --from attune-ai` for correct package resolution.
+- **Windows encoding** — added `encoding="utf-8"` to 3
+  `open()` calls in `suggestions.py`.
+- **Broken `__all__` exports** — removed `XMLAgent`,
+  `XMLTask`, `parse_xml_response` from
+  `workflows/__init__.py`.
+
+### Changed (5.5.0)
+
+- **`_error_result()` consolidated** — extracted to
+  `BaseWorkflow`, removed 460 lines of identical methods
+  from 14 workflow files.
+- **Dead code removed** — `is_using_api_fallback()` (always
+  returned False), unused `show_all` parameter on
+  `list_workflows()`.
+- **Prefix map deduplicated** — `help_maintenance.py` now
+  imports `_PREFIX_MAP` from `templates.py` instead of
+  maintaining a copy.
 
 ## [5.4.0] - 2026-03-29
 
