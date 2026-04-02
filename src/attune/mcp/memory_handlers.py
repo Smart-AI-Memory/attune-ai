@@ -147,7 +147,7 @@ class MemoryHandlersMixin:
                 pattern = memory.recall_pattern(key)
                 if pattern:
                     if not self._check_ownership(pattern if isinstance(pattern, dict) else {}):
-                        logger.warning("memory_retrieve_denied", key=key)
+                        logger.warning("memory_retrieve_denied key=%s", key)
                         return {
                             "success": True,
                             "key": key,

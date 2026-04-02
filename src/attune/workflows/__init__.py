@@ -522,33 +522,8 @@ def get_workflow(name: str) -> type[BaseWorkflow]:
     return WORKFLOW_REGISTRY[name]
 
 
-def is_using_api_fallback(name: str) -> bool:
-    """Check if a workflow name would use the API fallback (not SDK).
-
-    .. deprecated::
-        Always returns False since claude-agent-sdk is now a core
-        dependency. Kept for backward compatibility.
-
-    Args:
-        name: Workflow name the user requested.
-
-    Returns:
-        Always False — SDK is always available.
-
-    """
-    return False
-
-
-def list_workflows(*, show_all: bool = False) -> list[dict]:
+def list_workflows() -> list[dict]:
     """List available workflows with descriptions.
-
-    By default, hides SDK duplicates and shows only the best variant
-    per task (SDK when available, API otherwise). Pass ``show_all=True``
-    to include every registered workflow.
-
-    Args:
-        show_all: If True, return every registered workflow including
-            SDK duplicates.
 
     Returns:
         List of workflow info dicts
@@ -708,10 +683,7 @@ __all__ = [
     # DependencyCheckAgentSDKWorkflow: Merged (v4.2.0)
     # ResearchSynthesisAgentSDKWorkflow: Merged (v4.2.0)
     # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
-    # XML-enhanced prompting
-    "XMLAgent",
-    "XMLTask",
-    "parse_xml_response",
+    # XML-enhanced prompting removed (v5.1.0)
     # Workflow migration system
     "resolve_workflow_migration",
     "MigrationConfig",

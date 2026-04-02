@@ -366,7 +366,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
         workflow = CodeReviewWorkflow()
-        result = await workflow.execute(target_path=validated_path)
+        result = await workflow.execute(path=validated_path)
 
         return {
             "success": result.success,
@@ -415,7 +415,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         validated_path = str(
             _validate_file_path(args.get("path", "."), allowed_dir=self._workspace_root)
         )
-        workflow = ReleasePreparationWorkflow(skip_approve_if_clean=True)
+        workflow = ReleasePreparationWorkflow()
         result = await workflow.execute(path=validated_path)
 
         return {

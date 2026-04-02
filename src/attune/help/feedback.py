@@ -312,8 +312,6 @@ _EXTENSION_TAG_MAP: dict[str, list[str]] = {
     ".json": ["packaging"],
     ".toml": ["packaging", "python"],
     ".md": ["claude-code"],
-    ".js": [],
-    ".ts": [],
 }
 
 

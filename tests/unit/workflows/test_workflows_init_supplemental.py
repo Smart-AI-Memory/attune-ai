@@ -1,9 +1,7 @@
 """Supplemental tests for workflows/__init__.py.
 
 Covers functions and branches not tested by test_workflows_init.py:
-- is_using_api_fallback
-- list_workflows(show_all=True)
-- _SDK_NATIVE_WORKFLOWS engine labeling
+- list_workflows engine labeling
 - _ensure_registry_initialized idempotency
 - _lazy_import_workflow ImportError path
 - refresh_workflow_registry with config
@@ -14,30 +12,8 @@ from __future__ import annotations
 import pytest
 
 
-class TestIsUsingApiFallback:
-    """Tests for is_using_api_fallback (deprecated stub)."""
-
-    def test_always_returns_false(self):
-        """is_using_api_fallback always returns False."""
-        from attune.workflows import is_using_api_fallback
-
-        assert is_using_api_fallback("code-review") is False
-        assert is_using_api_fallback("security-audit") is False
-        assert is_using_api_fallback("nonexistent") is False
-
-
-class TestListWorkflowsShowAll:
-    """Tests for list_workflows show_all parameter."""
-
-    def test_show_all_returns_all_entries(self):
-        """show_all=True includes SDK reverse-map entries."""
-        from attune.workflows import list_workflows
-
-        default_list = list_workflows(show_all=False)
-        all_list = list_workflows(show_all=True)
-
-        # show_all should return >= default (it never filters)
-        assert len(all_list) >= len(default_list)
+class TestListWorkflows:
+    """Tests for list_workflows."""
 
     def test_engine_field_present(self):
         """Each workflow dict includes an engine field."""

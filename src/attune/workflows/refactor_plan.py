@@ -28,7 +28,7 @@ from .agent_sdk_adapter import (
     get_subagent_model,
 )
 from .base import BaseWorkflow, ModelTier
-from .data_classes import CostReport, WorkflowResult, WorkflowStage
+from .data_classes import WorkflowResult
 from .refactor_plan_report import (
     format_refactor_plan_report,  # noqa: F401 - re-exported
     main,  # noqa: F401 - re-exported
@@ -257,36 +257,3 @@ class RefactorPlanWorkflow(BaseWorkflow):
                 run_result = sdk_result
         run_result.result_text = build_result_text(assistant_parts, result_parts)
         return run_result
-
-    def _error_result(self, message: str) -> WorkflowResult:
-        """Build a failed WorkflowResult with the given error message.
-
-        Args:
-            message: Human-readable error description.
-
-        Returns:
-            WorkflowResult with success=False.
-        """
-        now = datetime.now()
-        return WorkflowResult(
-            success=False,
-            stages=[
-                WorkflowStage(
-                    name="agent-plan",
-                    tier=ModelTier.CAPABLE,
-                    description="Agent SDK refactor plan",
-                ),
-            ],
-            final_output=None,
-            cost_report=CostReport(
-                total_cost=0.0,
-                baseline_cost=0.0,
-                savings=0.0,
-                savings_percent=0.0,
-            ),
-            started_at=now,
-            completed_at=now,
-            total_duration_ms=0,
-            provider="anthropic",
-            error=message,
-        )

@@ -22,8 +22,7 @@ def cmd_workflow_list(args: Namespace) -> int:
     """List available workflows."""
     from attune.workflows import list_workflows
 
-    show_all = getattr(args, "all", False)
-    workflows = list_workflows(show_all=show_all)
+    workflows = list_workflows()
 
     print("\n📋 Available Workflows\n")
     print("-" * 60)

@@ -19,8 +19,19 @@ logger = logging.getLogger(__name__)
 _DEFAULT_GENERATED_DIR = Path(__file__).resolve().parents[3] / "plugin" / "help" / "generated"
 
 # Cross-links cache: loaded once per process, thread-safe.
+# Call invalidate_cross_links_cache() to force a reload.
 _CROSS_LINKS_CACHE: dict[str, dict[str, Any]] = {}
 _CROSS_LINKS_LOCK = threading.Lock()
+
+
+def invalidate_cross_links_cache() -> None:
+    """Clear the cross-links cache so the next lookup re-reads disk.
+
+    Call after regenerating templates in a long-running process
+    (e.g., MCP server) to pick up changes without restart.
+    """
+    with _CROSS_LINKS_LOCK:
+        _CROSS_LINKS_CACHE.clear()
 
 
 @dataclass(frozen=True)

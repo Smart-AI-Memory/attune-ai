@@ -23,8 +23,6 @@ from attune.help.feedback import (
 
 # Re-export from progression.py (type-driven depth)
 from attune.help.progression import (
-    _extract_topic,
-    _resolve_topic_at_level,
     populate_progressive,
     reset_session,
 )
@@ -34,11 +32,6 @@ from attune.help.templates import (
     AudienceProfile,
     PopulatedTemplate,
     TemplateContext,
-    _adapt_for_audience,
-    _find_template_file,
-    _load_cross_links,
-    _parse_template_file,
-    _resolve_related,
     populate,
 )
 
@@ -60,12 +53,4 @@ __all__ = [
     "record_template_feedback",
     "get_template_confidence",
     "get_usage_weights",
-    # Internal (used by tests)
-    "_find_template_file",
-    "_parse_template_file",
-    "_load_cross_links",
-    "_resolve_related",
-    "_adapt_for_audience",
-    "_extract_topic",
-    "_resolve_topic_at_level",
 ]

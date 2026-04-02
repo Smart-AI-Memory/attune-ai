@@ -23,14 +23,16 @@ from attune.help.engine import (
     AudienceProfile,
     PopulatedTemplate,
     TemplateContext,
+    list_tags,
+    populate,
+    search_by_tag,
+)
+from attune.help.templates import (
     _adapt_for_audience,
     _find_template_file,
     _load_cross_links,
     _parse_template_file,
     _resolve_related,
-    list_tags,
-    populate,
-    search_by_tag,
 )
 
 # -- Fixtures --------------------------------------------------------
@@ -849,37 +851,37 @@ class TestExtractTopic:
 
     def test_strips_ref_skill_prefix(self) -> None:
         """Test ref-skill- prefix is stripped."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("ref-skill-security-audit") == "security-audit"
 
     def test_strips_tas_use_prefix(self) -> None:
         """Test tas-use- prefix is stripped."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("tas-use-security-audit") == "security-audit"
 
     def test_strips_con_tool_prefix(self) -> None:
         """Test con-tool- prefix is stripped."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("con-tool-security-audit") == "security-audit"
 
     def test_strips_ref_tool_prefix(self) -> None:
         """Test ref-tool- prefix is stripped."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("ref-tool-code-review") == "code-review"
 
     def test_bare_topic_unchanged(self) -> None:
         """Test bare topic slug passes through."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("security-audit") == "security-audit"
 
     def test_err_prefix(self) -> None:
         """Test err- prefix is stripped."""
-        from attune.help.engine import _extract_topic
+        from attune.help.progression import _extract_topic
 
         assert _extract_topic("err-shadow-dirs") == "shadow-dirs"
 
@@ -893,28 +895,28 @@ class TestResolveTopicAtLevel:
 
     def test_resolves_concept(self, typed_dir: Path) -> None:
         """Level 0 resolves to concept template."""
-        from attune.help.engine import _resolve_topic_at_level
+        from attune.help.progression import _resolve_topic_at_level
 
         result = _resolve_topic_at_level("security-audit", 0, typed_dir)
         assert result == "con-tool-security-audit"
 
     def test_resolves_task(self, typed_dir: Path) -> None:
         """Level 1 resolves to task template."""
-        from attune.help.engine import _resolve_topic_at_level
+        from attune.help.progression import _resolve_topic_at_level
 
         result = _resolve_topic_at_level("security-audit", 1, typed_dir)
         assert result == "tas-use-security-audit"
 
     def test_resolves_reference(self, typed_dir: Path) -> None:
         """Level 2 resolves to reference template."""
-        from attune.help.engine import _resolve_topic_at_level
+        from attune.help.progression import _resolve_topic_at_level
 
         result = _resolve_topic_at_level("security-audit", 2, typed_dir)
         assert result == "ref-skill-security-audit"
 
     def test_returns_none_for_missing(self, typed_dir: Path) -> None:
         """Returns None when no template exists at level."""
-        from attune.help.engine import _resolve_topic_at_level
+        from attune.help.progression import _resolve_topic_at_level
 
         result = _resolve_topic_at_level("nonexistent-topic", 0, typed_dir)
         assert result is None

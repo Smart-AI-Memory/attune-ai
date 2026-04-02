@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from attune.help.templates import _PREFIX_MAP as _PREFIX_TO_TYPE
 from attune.workflows.base import BaseWorkflow, ModelTier
 from attune.workflows.data_classes import CostReport, WorkflowResult
 
@@ -38,21 +39,6 @@ _TYPE_TO_GENERATOR: dict[str, str] = {
     "concepts": "generate_concept_templates.py",
     "troubleshooting": "generate_troubleshooting_templates.py",
     "comparisons": "generate_comparison_templates.py",
-}
-
-# Reverse lookup: template ID prefix -> type dir name.
-_PREFIX_TO_TYPE: dict[str, str] = {
-    "err": "errors",
-    "war": "warnings",
-    "tip": "tips",
-    "ref": "references",
-    "tas": "tasks",
-    "faq": "faqs",
-    "not": "notes",
-    "qui": "quickstarts",
-    "con": "concepts",
-    "tro": "troubleshooting",
-    "com": "comparisons",
 }
 
 

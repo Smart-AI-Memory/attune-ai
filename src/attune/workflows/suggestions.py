@@ -402,7 +402,7 @@ def _suggestions_from_project_index(workflow_name: str) -> list[NextAction]:
         return suggestions
 
     try:
-        with open(index_path) as f:
+        with open(index_path, encoding="utf-8") as f:
             index_data = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         logger.debug("Could not load project index: %s", e)
@@ -615,7 +615,7 @@ def _load_suggestion_state() -> dict[str, Any]:
         return {"dismissed": {}}
 
     try:
-        with open(state_path) as f:
+        with open(state_path, encoding="utf-8") as f:
             data: dict[str, Any] = json.load(f)
             return data
     except (OSError, json.JSONDecodeError):
@@ -633,7 +633,7 @@ def _save_suggestion_state(state: dict[str, Any]) -> None:
     state_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        with open(state_path, "w") as f:
+        with open(state_path, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
     except OSError as e:
         logger.debug("Could not save suggestion state: %s", e)
