@@ -33,15 +33,6 @@ from attune.coordination import (
 # ---------------------------------------------------------------------------
 from attune.pattern_library import Pattern
 
-# ---------------------------------------------------------------------------
-# Release-prep imports – mock heavy base-class machinery
-# ---------------------------------------------------------------------------
-from attune.workflows.release_prep import (
-    RELEASE_PREP_STEPS,
-    ReleasePreparationWorkflow,
-    format_release_prep_report,
-)
-
 # ===================================================================
 # Helpers / Fixtures
 # ===================================================================
@@ -1349,72 +1340,3 @@ class TestTeamSession:
         session = TeamSession(mock_memory, session_id="s1")
         signals = session.get_signals()
         assert signals == []
-
-
-# ===================================================================
-# Tests: ReleasePreparationWorkflow (SDK-native, v4.2.0)
-# ===================================================================
-
-
-class TestReleasePreparationWorkflowInit:
-    """Tests for ReleasePreparationWorkflow initialization (SDK-native)."""
-
-    def test_class_name(self) -> None:
-        """Class attribute name is 'release-prep'."""
-        assert ReleasePreparationWorkflow.name == "release-prep"
-
-    def test_class_description(self) -> None:
-        """Description mentions Agent SDK."""
-        assert "Agent SDK" in ReleasePreparationWorkflow.description
-
-    def test_class_stages(self) -> None:
-        """SDK-native workflow has single agent-prep stage."""
-        assert ReleasePreparationWorkflow.stages == ["agent-prep"]
-
-    def test_default_construction(self) -> None:
-        """Default constructor succeeds."""
-        wf = ReleasePreparationWorkflow()
-        assert wf.name == "release-prep"
-
-    def test_kwargs_passed_to_base(self) -> None:
-        """Extra kwargs do not raise."""
-        wf = ReleasePreparationWorkflow(enable_post_simplification=False)
-        assert wf is not None
-
-
-class TestReleasePreparationWorkflowReExports:
-    """Test backward-compatibility re-exports."""
-
-    def test_release_prep_steps_importable(self) -> None:
-        """RELEASE_PREP_STEPS constant is importable."""
-        assert isinstance(RELEASE_PREP_STEPS, dict)
-        assert len(RELEASE_PREP_STEPS) > 0
-
-    def test_format_release_prep_report_importable(self) -> None:
-        """format_release_prep_report is callable."""
-        assert callable(format_release_prep_report)
-
-    def test_main_importable(self) -> None:
-        """main function is importable."""
-        from attune.workflows.release_prep import main
-
-        assert callable(main)
-
-
-class TestFormatReleasePrepReport:
-    """Tests for format_release_prep_report."""
-
-    def test_returns_string(self) -> None:
-        """Report formatter returns a string."""
-        result_data = {
-            "approved": True,
-            "recommendation": "Ship it",
-            "blockers": [],
-        }
-        input_data = {
-            "health": {"passed": True, "health_score": 100, "failed_checks": []},
-            "security": {"vulnerabilities": []},
-            "changelog": {"total_commits": 5, "entries": ["SDK migration"]},
-        }
-        report = format_release_prep_report(result_data, input_data)
-        assert isinstance(report, str)

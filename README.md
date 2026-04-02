@@ -354,6 +354,28 @@ reporting and full security details.
 
 **Apache License 2.0** — Free and open source.
 
-**Built by [Smart AI Memory](https://smartaimemory.com)**
+If you find Attune useful,
+[give it a star](https://github.com/Smart-AI-Memory/attune-ai) —
+it helps others discover the project.
+
+## Acknowledgments
+
+Special thanks to:
+
+- **[Anthropic](https://www.anthropic.com/)** — For Claude
+  AI, the Model Context Protocol, and the Agent SDK patterns
+  that shaped v5.0.0
+- **[Boris Cherny](https://x.com/bcherny)** — Creator of
+  Claude Code, whose workflow posts validated Attune's
+  approach to plan-first execution and multi-agent
+  orchestration
+- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations
+  that inspired our hook system
+
+[View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
+
+---
+
+**Built by Patrick Roebuck using Claude Code.**
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
