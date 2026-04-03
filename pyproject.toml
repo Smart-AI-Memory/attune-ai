@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "5.7.0"
+version = "5.8.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -202,10 +202,6 @@ developer = [
     "pyyaml>=6.0,<7.0",
     # Memory subsystem (Redis server 8.4+ recommended)
     "redis>=5.0.0,<8.0.0",
-    # Hybrid caching for 70% cost reduction
-    "sentence-transformers>=2.0.0,<6.0.0",
-    "torch>=2.0.0,<3.0.0",
-    "numpy>=1.24.0,<3.0.0",
 ]
 
 # Teams/enterprises - backend + authentication + compliance (excludes healthcare)

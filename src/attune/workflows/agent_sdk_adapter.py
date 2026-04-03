@@ -68,11 +68,9 @@ def collect_agent_output(
         ``build_result_text(assistant_parts, result_parts)``.
     """
     if isinstance(message, claude_agent_sdk.AssistantMessage):
-        # Only collect top-level messages (not subagent tool calls)
-        if message.parent_tool_use_id is None:
-            for block in message.content:
-                if isinstance(block, claude_agent_sdk.types.TextBlock):
-                    assistant_parts.append(block.text)
+        for block in message.content:
+            if isinstance(block, claude_agent_sdk.types.TextBlock):
+                assistant_parts.append(block.text)
         return None
 
     if isinstance(message, claude_agent_sdk.ResultMessage):
@@ -315,10 +313,18 @@ class AgentSDKResultAdapter:
         if metadata:
             result_metadata.update(metadata)
 
+        # Build final_output: prefer structured findings as markdown,
+        # fall back to collected text
+        final_output: str | dict[str, Any] = text
+        if findings:
+            formatted = cls._format_findings_markdown(findings, summary)
+            if formatted:
+                final_output = formatted
+
         return WorkflowResult(
             success=True,
             stages=stages,
-            final_output=text,
+            final_output=final_output,
             cost_report=cost_report,
             started_at=started_at,
             completed_at=completed_at,
@@ -537,6 +543,41 @@ class AgentSDKResultAdapter:
                     )
 
         return suggestions
+
+    @classmethod
+    def _format_findings_markdown(
+        cls,
+        findings: dict[str, Any],
+        summary: str = "",
+    ) -> str:
+        """Render findings dict as readable markdown.
+
+        Args:
+            findings: Category-keyed dict of finding lists.
+            summary: Optional summary to prepend.
+
+        Returns:
+            Markdown string, or empty string if no findings.
+        """
+        parts: list[str] = []
+        if summary:
+            parts.append(summary)
+            parts.append("")
+
+        for category, items in findings.items():
+            if not items:
+                continue
+            heading = category.replace("_", " ").title()
+            parts.append(f"## {heading}")
+            parts.append("")
+            if isinstance(items, list):
+                for item in items:
+                    parts.append(f"- {item}")
+            else:
+                parts.append(str(items))
+            parts.append("")
+
+        return "\n".join(parts).strip()
 
     @classmethod
     def _from_structured_output(

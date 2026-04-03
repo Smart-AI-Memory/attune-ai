@@ -83,7 +83,10 @@ class TestAgentSDKResultAdapterConversion:
 
         assert isinstance(result, WorkflowResult)
         assert result.success is True
-        assert result.final_output == _SAMPLE_REVIEW
+        # final_output is formatted from parsed findings
+        assert "No eval/exec usage found" in result.final_output
+        assert "Good naming conventions" in result.final_output
+        assert "Clean module boundaries" in result.final_output
         assert result.provider == "anthropic"
         assert result.error is None
 

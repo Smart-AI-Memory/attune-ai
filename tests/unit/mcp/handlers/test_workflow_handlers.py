@@ -200,7 +200,7 @@ class TestRunCodeReview:
 
     @pytest.mark.asyncio
     async def test_run_code_review_passes_target_path(self):
-        """execute() is called with target_path kwarg."""
+        """execute() is called with path kwarg."""
         server = _make_server()
         result = _make_result()
         mod = _make_workflow_module("attune.workflows.code_review", "CodeReviewWorkflow", result)
@@ -208,9 +208,7 @@ class TestRunCodeReview:
         with patch.dict(sys.modules, {"attune.workflows.code_review": mod}):
             await server._run_code_review({"path": "/mymod.py"})
 
-        mod.CodeReviewWorkflow.return_value.execute.assert_awaited_once_with(
-            target_path="/mymod.py"
-        )
+        mod.CodeReviewWorkflow.return_value.execute.assert_awaited_once_with(path="/mymod.py")
 
     @pytest.mark.asyncio
     async def test_run_code_review_none_feedback(self):

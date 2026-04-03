@@ -5,6 +5,33 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-04-03
+
+### Added (5.8.0)
+
+- **attune-help prototype** — lightweight runtime help
+  extraction with storage protocol, bundled templates,
+  and renderer selection
+- **76 new skill templates** — expanded template coverage
+  across 12 task categories (dependency management, error
+  handling, configuration, etc.)
+
+### Fixed (5.8.0)
+
+- **Stale MCP test assertion** — `target_path` kwarg
+  renamed to `path` in code review handler but test not
+  updated
+- **Plugin version synced** — plugin.json updated from
+  5.4.0 to 5.8.0 (was 4 versions behind)
+- **CLAUDE.md version references** — header and footer
+  updated from v5.0.0/v5.1.2 to 5.8.0
+
+### Removed (5.8.0)
+
+- **sentence-transformers and torch from [developer]
+  extra** — dead weight (420MB+) after semantic cache
+  removal in favor of Anthropic's built-in prompt caching
+
 ## [5.7.0] - 2026-04-02
 
 ### Changed (5.7.0)

@@ -8,9 +8,9 @@
 
 ## Someday
 
-- [ ] **Phase 2 optimizations** - Profile hot paths, generator
-  migration, data structure optimization, intelligent caching
-  — see `.claude/rules/attune/advanced-optimization-plan.md`
+- [ ] **Phase 2 optimizations** — Profile hot paths, generator
+  migration, data structure optimization
+  (see `.claude/rules/attune/advanced-optimization-plan.md`)
 - [ ] **Advanced strategies** - Implement ToolEnhanced,
   PromptCached strategies in `orchestration/_strategies/`
 
