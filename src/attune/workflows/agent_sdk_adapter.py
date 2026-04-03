@@ -107,15 +107,17 @@ def build_result_text(
     Returns:
         Combined result text, or a default message if both are empty.
     """
-    # Prefer ResultMessage.result if it has content
     result_text = "\n".join(result_parts).strip()
+    assistant_text = "\n\n".join(assistant_parts).strip()
+
+    # Prefer whichever source has more content — assistant_parts
+    # typically contain the full subagent analysis while
+    # result_parts may only have brief orchestrator commentary
+    if assistant_text and len(assistant_text) >= len(result_text):
+        return assistant_text
+
     if result_text:
         return result_text
-
-    # Fall back to AssistantMessage text blocks
-    assistant_text = "\n\n".join(assistant_parts).strip()
-    if assistant_text:
-        return assistant_text
 
     return "No results returned."
 
@@ -572,7 +574,17 @@ class AgentSDKResultAdapter:
             parts.append("")
             if isinstance(items, list):
                 for item in items:
-                    parts.append(f"- {item}")
+                    if isinstance(item, dict):
+                        desc = item.get("description", str(item))
+                        loc = item.get("file", "")
+                        if loc:
+                            line = item.get("line", "")
+                            loc_str = f"{loc}:{line}" if line else loc
+                            parts.append(f"- **{loc_str}** — {desc}")
+                        else:
+                            parts.append(f"- {desc}")
+                    else:
+                        parts.append(f"- {item}")
             else:
                 parts.append(str(items))
             parts.append("")

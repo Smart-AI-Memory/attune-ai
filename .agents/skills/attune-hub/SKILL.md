@@ -4,8 +4,9 @@ description: "Developer workflow hub — routes to the right skill based on what
 ---
 # Attune Hub
 
-Single entry point for all attune-ai capabilities.
-Routes to the appropriate skill based on context.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Attune Hub** — Your starting point — discovers what you need and routes you to the right skill.
 
 ## Scoping
 
@@ -74,6 +75,7 @@ intent so Claude matches the right skill:
 | memory-and-context | memory, store, retrieve, empathy |
 | workflow-orchestration | workflow, run, analyze |
 | spec | spec-driven dev, brainstorm and execute |
+| learn | learn, explain, tell me more, deeper |
 
 ## MCP Server Not Running
 

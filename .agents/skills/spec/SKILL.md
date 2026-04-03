@@ -4,8 +4,9 @@ description: "Spec-driven development — brainstorm, plan, review, and execute 
 ---
 # Spec-Driven Development
 
-One skill to go from idea to shipped code, with quality
-gates and your approval at every step.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Spec** — Walks you from idea to working code through brainstorm, plan, review, approve, and execute phases.
 
 ## Scoping
 

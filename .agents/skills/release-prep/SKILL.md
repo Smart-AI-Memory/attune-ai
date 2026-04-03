@@ -4,6 +4,10 @@ description: "Pre-release preparation with health checks, security audit, change
 ---
 # Release Prep
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Release Prep** — Runs pre-release checks — health, security, changelog, and go/no-go assessment.
+
 ## Scoping
 
 Before running, ask:
@@ -40,15 +44,14 @@ dependency_check(path="<project root>")
 secure_release(path="<project root>")
 ```
 
-The full `release_prep` orchestrates a 4-agent team:
+The full release prep covers four areas:
 
-- **Security Agent** — runs security_audit, flags
-  vulnerabilities that block release
-- **Testing Agent** — checks test coverage, runs
-  test_generation for gaps
-- **Docs Agent** — validates changelog, README, and
+- **Security** — scans for vulnerabilities that block
+  release
+- **Testing** — checks test coverage, identifies gaps
+- **Documentation** — validates changelog, README, and
   documentation freshness
-- **Version Agent** — checks version bumps, dependency
+- **Versioning** — checks version bumps, dependency
   compatibility, semver compliance
 
 ## Output Format
@@ -86,6 +89,17 @@ The full `release_prep` orchestrates a 4-agent team:
 ### Recommendations
 1. [Ordered list of actions before release]
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="release-prep", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+release preparation — want to see them?"
 
 ## Follow-Up
 

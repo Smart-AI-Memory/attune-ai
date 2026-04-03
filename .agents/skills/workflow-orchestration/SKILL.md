@@ -4,6 +4,10 @@ description: "Run analysis workflows — security, code review, tests, perf, bug
 ---
 # Workflow Orchestration
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Workflow Orchestration** — Runs multiple analysis workflows in sequence and combines the results.
+
 ## Scoping
 
 Before running, ask:
@@ -62,6 +66,20 @@ doc_audit(path="<user-specified path>")
 
 Present results grouped by severity with clickable
 file links using markdown link syntax.
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="workflow-orchestration",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+this workflow — want to see them?"
 
 ## Follow-Up
 

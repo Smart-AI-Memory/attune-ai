@@ -4,7 +4,9 @@ description: "Predict likely bug locations from code patterns and complexity. Tr
 ---
 # Bug Prediction
 
-Scan code for patterns that predict likely bug locations.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Bug Predict** — Predicts where bugs are most likely based on code patterns, complexity, and change frequency.
 
 ## Scoping
 

@@ -4,6 +4,10 @@ description: "Code review and bug prediction to find quality issues, style viola
 ---
 # Code Quality
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Code Quality** — Reviews your code for style issues, likely bugs, and structural problems in one pass.
+
 ## Scoping
 
 Before running, ask:
@@ -60,6 +64,17 @@ deep_review(path="<user-specified path>")
 | File | Pattern | Confidence |
 |------|---------|------------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="code-quality", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+code quality reviews — want to see them?"
 
 ## Follow-Up
 
