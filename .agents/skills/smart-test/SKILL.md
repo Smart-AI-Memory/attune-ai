@@ -4,7 +4,9 @@ description: "Find test gaps and generate tests for uncovered code. Triggers on:
 ---
 # Smart Test
 
-Find test gaps and generate tests for uncovered code.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Smart Test** — Finds untested code and generates pytest tests with edge cases and error paths.
 
 ## Scoping
 
@@ -59,6 +61,17 @@ test_gen_parallel(top=10)
 | File | Tests Created | Edge Cases |
 |------|---------------|------------|
 ```
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(topic="smart-test", mode="workflow_help")
+```
+
+If templates are returned, offer: "I have tips about
+test generation — want to see them?"
 
 ## Follow-Up
 

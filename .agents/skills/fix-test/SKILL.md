@@ -4,8 +4,9 @@ description: "Auto-diagnose and fix failing tests — up to 3 attempts with re-r
 ---
 # Fix Test
 
-Auto-diagnose and fix failing tests with up to 3 retry
-attempts.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Fix Test** — Diagnoses failing tests, classifies the root cause, and applies targeted fixes automatically.
 
 ## Scoping
 

@@ -157,7 +157,7 @@ class TestShowTemplate:
     ) -> None:
         """Test showing a template with prefix."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.templates._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _show_template("err-shadow-dirs")
@@ -170,7 +170,7 @@ class TestShowTemplate:
     ) -> None:
         """Test showing a template by name without prefix."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.templates._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _show_template("shadow-dirs")
@@ -181,7 +181,7 @@ class TestShowTemplate:
     ) -> None:
         """Test exit code 1 when template not found."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.templates._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _show_template("nonexistent-template")
@@ -201,7 +201,7 @@ class TestFilterByTag:
     ) -> None:
         """Test filtering by existing tag."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.feedback._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _filter_by_tag("imports")
@@ -214,7 +214,7 @@ class TestFilterByTag:
     ) -> None:
         """Test exit code 1 when no templates match tag."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.feedback._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _filter_by_tag("nonexistent")
@@ -233,7 +233,7 @@ class TestListAllTags:
     ) -> None:
         """Test listing all tags."""
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.feedback._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = _list_all_tags()
@@ -280,7 +280,7 @@ class TestCmdHelp:
         """Test --tags flag routes to _list_all_tags."""
         args = argparse.Namespace(topic=None, tag=None, tags=True)
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.feedback._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = cmd_help(args)
@@ -292,7 +292,7 @@ class TestCmdHelp:
         """Test --tag <tag> routes to _filter_by_tag."""
         args = argparse.Namespace(topic=None, tag="imports", tags=False)
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.feedback._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = cmd_help(args)
@@ -304,7 +304,7 @@ class TestCmdHelp:
         """Test specific template name routes to _show_template."""
         args = argparse.Namespace(topic="err-shadow-dirs", tag=None, tags=False)
         with patch(
-            "attune.help.engine._DEFAULT_GENERATED_DIR",
+            "attune.help.templates._DEFAULT_GENERATED_DIR",
             generated_dir,
         ):
             code = cmd_help(args)

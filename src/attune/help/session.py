@@ -78,7 +78,7 @@ def _persist_session(state: dict[str, Any]) -> None:
                 + "\n",
                 encoding="utf-8",
             )
-            tmp.rename(_SESSION_FILE)
+            tmp.replace(_SESSION_FILE)
         except OSError:
             pass  # Best-effort
 

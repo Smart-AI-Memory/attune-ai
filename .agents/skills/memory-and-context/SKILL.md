@@ -1,11 +1,12 @@
 ---
 name: memory-and-context
-description: "Store, retrieve, search, and manage persistent memory across sessions. Includes empathy level modulation and security-classified pattern storage. Triggers on: memory, store, remember, retrieve, forget, pattern, empathy, context, classification."
+description: "Store, retrieve, search, and manage persistent memory across sessions. Triggers on: memory, store, remember, retrieve, forget, pattern, context."
 ---
 # Memory and Context
 
-Structured knowledge management, empathy modulation,
-and memory operations for attune-ai.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Memory and Context** — Stores and retrieves persistent context across sessions — notes, preferences, project state.
 
 ## Scoping
 

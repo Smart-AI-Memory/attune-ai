@@ -4,7 +4,9 @@ description: "Code-level refactoring analysis and roadmap. Detects smells, dupli
 ---
 # Refactor Planning
 
-AI-powered refactoring analysis and roadmap generation.
+**IMPORTANT: Start your response by telling the user:**
+
+> **Refactor Plan** — Analyzes code structure and produces a prioritized refactoring roadmap.
 
 ## Scoping
 

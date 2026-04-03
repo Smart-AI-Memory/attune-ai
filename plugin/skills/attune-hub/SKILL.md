@@ -77,6 +77,7 @@ intent so Claude matches the right skill:
 | memory-and-context | memory, store, retrieve, empathy |
 | workflow-orchestration | workflow, run, analyze |
 | spec | spec-driven dev, brainstorm and execute |
+| learn | learn, explain, tell me more, deeper |
 
 ## MCP Server Not Running
 

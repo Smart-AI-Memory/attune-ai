@@ -68,11 +68,9 @@ def collect_agent_output(
         ``build_result_text(assistant_parts, result_parts)``.
     """
     if isinstance(message, claude_agent_sdk.AssistantMessage):
-        # Only collect top-level messages (not subagent tool calls)
-        if message.parent_tool_use_id is None:
-            for block in message.content:
-                if isinstance(block, claude_agent_sdk.types.TextBlock):
-                    assistant_parts.append(block.text)
+        for block in message.content:
+            if isinstance(block, claude_agent_sdk.types.TextBlock):
+                assistant_parts.append(block.text)
         return None
 
     if isinstance(message, claude_agent_sdk.ResultMessage):
@@ -109,15 +107,17 @@ def build_result_text(
     Returns:
         Combined result text, or a default message if both are empty.
     """
-    # Prefer ResultMessage.result if it has content
     result_text = "\n".join(result_parts).strip()
+    assistant_text = "\n\n".join(assistant_parts).strip()
+
+    # Prefer whichever source has more content — assistant_parts
+    # typically contain the full subagent analysis while
+    # result_parts may only have brief orchestrator commentary
+    if assistant_text and len(assistant_text) >= len(result_text):
+        return assistant_text
+
     if result_text:
         return result_text
-
-    # Fall back to AssistantMessage text blocks
-    assistant_text = "\n\n".join(assistant_parts).strip()
-    if assistant_text:
-        return assistant_text
 
     return "No results returned."
 
@@ -315,10 +315,18 @@ class AgentSDKResultAdapter:
         if metadata:
             result_metadata.update(metadata)
 
+        # Build final_output: prefer structured findings as markdown,
+        # fall back to collected text
+        final_output: str | dict[str, Any] = text
+        if findings:
+            formatted = cls._format_findings_markdown(findings, summary)
+            if formatted:
+                final_output = formatted
+
         return WorkflowResult(
             success=True,
             stages=stages,
-            final_output=text,
+            final_output=final_output,
             cost_report=cost_report,
             started_at=started_at,
             completed_at=completed_at,
@@ -537,6 +545,51 @@ class AgentSDKResultAdapter:
                     )
 
         return suggestions
+
+    @classmethod
+    def _format_findings_markdown(
+        cls,
+        findings: dict[str, Any],
+        summary: str = "",
+    ) -> str:
+        """Render findings dict as readable markdown.
+
+        Args:
+            findings: Category-keyed dict of finding lists.
+            summary: Optional summary to prepend.
+
+        Returns:
+            Markdown string, or empty string if no findings.
+        """
+        parts: list[str] = []
+        if summary:
+            parts.append(summary)
+            parts.append("")
+
+        for category, items in findings.items():
+            if not items:
+                continue
+            heading = category.replace("_", " ").title()
+            parts.append(f"## {heading}")
+            parts.append("")
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict):
+                        desc = item.get("description", str(item))
+                        loc = item.get("file", "")
+                        if loc:
+                            line = item.get("line", "")
+                            loc_str = f"{loc}:{line}" if line else loc
+                            parts.append(f"- **{loc_str}** — {desc}")
+                        else:
+                            parts.append(f"- {desc}")
+                    else:
+                        parts.append(f"- {item}")
+            else:
+                parts.append(str(items))
+            parts.append("")
+
+        return "\n".join(parts).strip()
 
     @classmethod
     def _from_structured_output(

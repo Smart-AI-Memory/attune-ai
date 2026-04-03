@@ -4,9 +4,11 @@ description: "High-level development planning — features, TDD, architecture re
 ---
 # Planning
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Planning** — Helps you plan features, architecture, and TDD strategy before writing code.
+
 High-level development planning and architecture design.
-For code-level refactoring analysis (code smells,
-duplication, complexity), use the `refactor-plan` skill.
 
 ## Routes
 

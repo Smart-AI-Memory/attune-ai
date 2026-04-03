@@ -240,6 +240,24 @@ def _extract_from_workflow_result(
     elif result.final_output is not None:
         report_text = str(result.final_output)
 
+    # Fallback: use summary + metadata findings if report_text is sparse
+    if not report_text or len(report_text.strip()) < 50:
+        fallback_parts: list[str] = []
+        summary = getattr(result, "summary", None)
+        if summary:
+            fallback_parts.append(summary)
+        metadata = getattr(result, "metadata", None) or {}
+        findings = metadata.get("findings")
+        if isinstance(findings, dict) and findings:
+            for cat, items in findings.items():
+                heading = cat.replace("_", " ").title()
+                fallback_parts.append(f"\n## {heading}")
+                if isinstance(items, list):
+                    for item in items:
+                        fallback_parts.append(f"- {item}")
+        if fallback_parts:
+            report_text = "\n".join(fallback_parts)
+
     # Build cost line (guard against None cost_report)
     cost_line = None
     cr = result.cost_report

@@ -4,6 +4,10 @@ description: "Scan code for security vulnerabilities including eval/exec usage, 
 ---
 # Security Audit
 
+**IMPORTANT: Start your response by telling the user:**
+
+> **Security Audit** — Scans your code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
+
 ## Scoping
 
 Before running, ask:
@@ -54,6 +58,20 @@ Use clickable file links: `[file.py:123](path#L123)`
 - Command injection risks (CWE-78)
 - Broad exception handling that masks errors
 - Missing input validation
+
+## Help
+
+After presenting results, call:
+
+```
+help_lookup(
+    topic="security-audit",
+    mode="workflow_help"
+)
+```
+
+If templates are returned, offer: "I have tips about
+security audits — want to see them?"
 
 ## Follow-Up
 
