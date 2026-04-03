@@ -114,12 +114,12 @@ help_maintain(dry_run=false)
 Report the count of stale templates found, which
 types were regenerated, and whether validation passed.
 
-For cost-optimized bulk updates (50% savings via
-Anthropic Batch API):
+For bulk updates (requires API key):
 
 ```
 help_maintain(batch=true, dry_run=false)
 ```
 
-This submits regeneration tasks asynchronously.
-Results arrive within 24 hours at half the cost.
+This submits regeneration tasks asynchronously via
+the Anthropic Batch API. Requires `ANTHROPIC_API_KEY`
+and the `attune-ai` Python package installed.
