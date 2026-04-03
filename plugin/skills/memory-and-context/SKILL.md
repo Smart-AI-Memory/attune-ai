@@ -9,10 +9,7 @@ disable-model-invocation: true
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Memory and Context** manages persistent memory across
-> sessions — store, retrieve, search, and forget
-> knowledge with security classification (PUBLIC,
-> INTERNAL, SENSITIVE).
+> **Memory and Context** — Stores and retrieves persistent context across sessions — notes, preferences, project state.
 
 ## Scoping
 

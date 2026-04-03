@@ -8,10 +8,7 @@ argument-hint: "<what to plan: feature, tdd, architecture>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Planning** helps with high-level development planning
-> — feature specs, TDD scaffolding, and architecture
-> review. For code-level refactoring, use `/refactor-plan`
-> instead.
+> **Planning** — Helps you plan features, architecture, and TDD strategy before writing code.
 
 High-level development planning and architecture design.
 

@@ -8,10 +8,7 @@ argument-hint: "<path or directory to scan>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Security Audit** scans for eval/exec, path traversal,
-> hardcoded secrets, SQL/command injection, and broad
-> exception handling. Results grouped by severity with
-> CWE identifiers.
+> **Security Audit** — Scans your code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
 
 ## Scoping
 

@@ -8,9 +8,7 @@ argument-hint: "<what you need help with>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Attune** is your developer workflow hub — security
-> audits, code reviews, test generation, refactoring,
-> release prep, and more. Tell me what you need.
+> **Attune Hub** — Your starting point — discovers what you need and routes you to the right skill.
 
 ## Scoping
 

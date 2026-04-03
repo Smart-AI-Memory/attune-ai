@@ -8,9 +8,7 @@ argument-hint: "<path or directory to scan>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Bug Prediction** finds likely bug locations using
-> pattern analysis — eval/exec usage, broad exceptions,
-> and incomplete code markers.
+> **Bug Predict** — Predicts where bugs are most likely based on code patterns, complexity, and change frequency.
 
 ## Scoping
 

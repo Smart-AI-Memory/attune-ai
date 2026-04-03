@@ -8,9 +8,7 @@ argument-hint: "<path or module to test>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Smart Test** finds test coverage gaps and generates
-> pytest tests for uncovered code — gap analysis, targeted
-> generation, or batch mode for 10-50 modules.
+> **Smart Test** — Finds untested code and generates pytest tests with edge cases and error paths.
 
 ## Scoping
 
