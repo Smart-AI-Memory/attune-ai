@@ -8,9 +8,7 @@ argument-hint: "<path or directory to review>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Code Quality** reviews code for quality issues, style
-> violations, and likely bugs. Supports quick scan,
-> thorough review, or deep multi-pass analysis.
+> **Code Quality** — Reviews your code for style issues, likely bugs, and structural problems in one pass.
 
 ## Scoping
 

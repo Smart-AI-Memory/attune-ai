@@ -8,9 +8,7 @@ argument-hint: "<test file or pattern>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Fix Test** auto-diagnoses failing tests, identifies
-> root causes, and applies fixes with up to 3 retry
-> attempts.
+> **Fix Test** — Diagnoses failing tests, classifies the root cause, and applies targeted fixes automatically.
 
 ## Scoping
 

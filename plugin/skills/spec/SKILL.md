@@ -8,9 +8,7 @@ argument-hint: "<what to build, or 'resume'>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Spec** takes you from idea to shipped code —
-> brainstorm, plan, review, and execute with quality
-> gates and your approval at every step.
+> **Spec** — Walks you from idea to working code through brainstorm, plan, review, approve, and execute phases.
 
 ## Scoping
 

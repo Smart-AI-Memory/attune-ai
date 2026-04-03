@@ -5,6 +5,34 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-04-02
+
+### Changed (5.7.0)
+
+- **42 skill templates rewritten** — all 14 skills x 3
+  levels (concept, task, reference) rewritten with
+  enhanced tables, Socratic flow callouts, natural
+  language prompts, and user-facing language. Removed
+  MCP tool call syntax from all templates.
+- **14 plugin skill summaries synced** — blockquote
+  summaries in SKILL.md files now match summaries.json
+  for consistent messaging on skill invocation
+- **"Want to learn more?" replaces Related Topics** —
+  natural language prompts instead of markdown links
+  for cross-template navigation
+
+### Added (5.7.0)
+
+- **5-part blog series drafted** — LinkedIn + Discord
+  versions covering help system, code-as-docs, template
+  types, dynamic assistance, self-maintaining knowledge
+  base
+- **attune-help package plan** — lightweight runtime
+  extraction plan with storage protocol, bundled
+  templates, renderer selection
+- **Template expansion plan** — 12 new task categories
+  (dependency management, error handling, config, etc.)
+
 ## [5.6.0] - 2026-04-02
 
 ### Changed (5.6.0)

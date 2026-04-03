@@ -8,10 +8,7 @@ argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Workflow Orchestration** runs AI analysis workflows —
-> security audits, code reviews, test generation,
-> performance analysis, bug prediction, docs, and release
-> prep.
+> **Workflow Orchestration** — Runs multiple analysis workflows in sequence and combines the results.
 
 ## Scoping
 

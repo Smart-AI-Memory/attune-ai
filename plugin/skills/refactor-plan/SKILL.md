@@ -8,9 +8,7 @@ argument-hint: "<path to analyze>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Refactor Plan** detects code smells, duplication,
-> and complexity, then generates a prioritized refactoring
-> roadmap.
+> **Refactor Plan** — Analyzes code structure and produces a prioritized refactoring roadmap.
 
 ## Scoping
 

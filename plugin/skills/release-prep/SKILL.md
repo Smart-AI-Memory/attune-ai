@@ -8,9 +8,7 @@ argument-hint: "<version or 'check'>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Release Prep** runs health checks, security audit,
-> changelog validation, version bumps, and dependency
-> audits to assess release readiness.
+> **Release Prep** — Runs pre-release checks — health, security, changelog, and go/no-go assessment.
 
 ## Scoping
 

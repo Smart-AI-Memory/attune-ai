@@ -8,10 +8,7 @@ argument-hint: "<topic: security-audit, code-review, etc.>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Learn** gives you progressive help on any Attune
-> topic. Each call goes deeper: concept (what is it?)
-> -> procedural (how to use it) -> reference (full
-> detail).
+> **Learn** — Explains any Attune topic with progressive depth — concept, then how-to, then full reference.
 
 ## How It Works
 

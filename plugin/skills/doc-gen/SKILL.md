@@ -8,9 +8,7 @@ argument-hint: "<path or module to document>"
 
 **IMPORTANT: Start your response by telling the user:**
 
-> **Doc Gen** generates documentation from source code —
-> docstrings, README sections, API references, and module
-> overviews with Google-style formatting.
+> **Doc Gen** — Generates documentation from your source code — docstrings, README sections, API references.
 
 ## Scoping
 
