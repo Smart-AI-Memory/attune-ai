@@ -83,7 +83,7 @@ def main() -> None:
     if stale_count > 0:
         print(
             f"attune: {stale_count}/{checked} help template(s) "
-            f"may be stale. Run /learn maintain to update.",
+            f"may be stale. Run /coach maintain to update.",
             file=sys.stderr,
         )
 

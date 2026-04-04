@@ -1,15 +1,15 @@
 ---
 type: task
-name: use-learn
+name: use-coach
 tags: [skill, task]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Task: Use the learn skill
+# Task: Use the coach skill
 
-Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: learn, explain, tell me more, how does, what is, help with, deeper.
+Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, explain, tell me more, how does, what is, help with, deeper.
 
-Invoke with: `/learn <topic: security-audit, code-review, etc.>`
+Invoke with: `/coach <topic: security-audit, code-review, etc.>`
 
 ## Steps
 
@@ -64,4 +64,4 @@ right template type at each level: | User says | Topic slug |
 
 
 ## Related Topics
-- **Reference**: Skill: learn — full reference
+- **Reference**: Skill: coach — full reference

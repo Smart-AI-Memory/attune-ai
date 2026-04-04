@@ -201,6 +201,7 @@ INTENT_PATTERNS: dict[IntentCategory, dict[str, Any]] = {
             "docs",
             "readme",
             "learn",
+            "coach",
             "show",
             "describe",
             "overview",

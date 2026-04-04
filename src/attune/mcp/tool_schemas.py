@@ -406,6 +406,99 @@ def get_help_tools() -> dict[str, dict[str, Any]]:
                 },
             },
         },
+        "help_init": {
+            "description": (
+                "Bootstrap a project-local help system. Scans the "
+                "project to discover features, returns proposals for "
+                "the user to review. After review, pass accepted "
+                "proposals back to create .help/features.yaml and "
+                "generate initial templates."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["scan", "accept"],
+                        "description": (
+                            "scan: discover features and return "
+                            "proposals. accept: save manifest and "
+                            "generate templates from accepted list."
+                        ),
+                    },
+                    "accepted": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "description": {"type": "string"},
+                                "files": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "tags": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                            "required": ["name", "description", "files"],
+                        },
+                        "description": (
+                            "List of accepted feature proposals " "(only used with action=accept)."
+                        ),
+                    },
+                },
+                "required": ["action"],
+            },
+        },
+        "help_status": {
+            "description": (
+                "Show staleness report for the project-local help "
+                "system (.help/features.yaml). Reports which features "
+                "have current vs stale templates."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "features": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Optional list of feature names to check. "
+                            "If omitted, checks all features."
+                        ),
+                    },
+                },
+            },
+        },
+        "help_update": {
+            "description": (
+                "Regenerate help templates for specific features or "
+                "all stale features in the project-local help system."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "features": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Feature names to regenerate. If omitted, "
+                            "regenerates all stale features."
+                        ),
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": (
+                            "Only report what would change without "
+                            "regenerating. Defaults to false."
+                        ),
+                        "default": False,
+                    },
+                },
+            },
+        },
     }
 
 

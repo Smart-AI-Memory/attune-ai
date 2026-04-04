@@ -117,7 +117,7 @@
         "fixes"
       ]
     },
-    "con-tool-learn": {
+    "con-tool-coach": {
       "tags": [
         "skill",
         "auto-discovered"
@@ -3211,7 +3211,7 @@
         "claude-code"
       ]
     },
-    "qui-skill-learn": {
+    "qui-skill-coach": {
       "tags": [
         "skill",
         "claude-code"
@@ -3357,7 +3357,7 @@
         "plugin"
       ]
     },
-    "ref-skill-learn": {
+    "ref-skill-coach": {
       "references_tools": [
         "ref-tool-bug-predict",
         "ref-tool-code-review",
@@ -3368,7 +3368,7 @@
         "ref-tool-test-generation"
       ],
       "related_task": [
-        "tas-use-learn"
+        "tas-use-coach"
       ],
       "tags": [
         "skill",
@@ -3559,7 +3559,7 @@
       "referenced_by_skills": [
         "ref-skill-attune-hub",
         "ref-skill-bug-predict",
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3569,7 +3569,7 @@
     },
     "ref-tool-code-review": {
       "referenced_by_skills": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3616,7 +3616,7 @@
       "referenced_by_skills": [
         "ref-skill-attune-hub",
         "ref-skill-doc-gen",
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3676,7 +3676,7 @@
     "ref-tool-refactor-plan": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-planning",
         "ref-skill-refactor-plan"
       ],
@@ -3689,7 +3689,7 @@
     "ref-tool-release-prep": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-release-prep"
       ],
       "tags": [
@@ -3715,7 +3715,7 @@
     "ref-tool-security-audit": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-security-audit"
       ],
       "tags": [
@@ -3754,7 +3754,7 @@
     },
     "ref-tool-test-generation": {
       "referenced_by_skills": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3850,9 +3850,9 @@
         "task"
       ]
     },
-    "tas-use-learn": {
+    "tas-use-coach": {
       "related_reference": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "skill",
@@ -4959,7 +4959,7 @@
       "tas-use-attune-hub",
       "tas-use-spec",
       "tas-use-workflow-orchestration",
-      "tas-use-learn",
+      "tas-use-coach",
       "tas-use-smart-test",
       "tas-use-security-audit",
       "tas-use-doc-gen",
@@ -4969,7 +4969,7 @@
       "tas-use-memory-and-context",
       "tas-use-refactor-plan",
       "tas-use-fix-test",
-      "ref-skill-learn",
+      "ref-skill-coach",
       "ref-skill-security-audit",
       "ref-skill-smart-test",
       "ref-skill-attune-hub",
@@ -4984,9 +4984,9 @@
       "ref-skill-workflow-orchestration",
       "ref-skill-memory-and-context",
       "con-tool-security-audit",
-      "con-tool-learn",
+      "con-tool-coach",
       "con-tool-code-quality",
-      "qui-skill-learn",
+      "qui-skill-coach",
       "qui-skill-security-audit",
       "qui-skill-smart-test",
       "qui-skill-attune-hub",
@@ -5006,7 +5006,7 @@
       "tas-use-attune-hub",
       "tas-use-spec",
       "tas-use-workflow-orchestration",
-      "tas-use-learn",
+      "tas-use-coach",
       "tas-use-smart-test",
       "tas-use-security-audit",
       "tas-use-doc-gen",
@@ -5154,13 +5154,13 @@
       "qui-task-database-migrations"
     ],
     "help-system": [
-      "tas-use-learn",
-      "ref-skill-learn",
+      "tas-use-coach",
+      "ref-skill-coach",
       "con-feedback-loop",
       "con-audience-adaptation",
       "con-template-composition",
       "con-workflow-chain-prediction",
-      "con-tool-learn",
+      "con-tool-coach",
       "con-progressive-depth",
       "con-cross-linking"
     ],
@@ -5533,7 +5533,7 @@
       "war-attune-skill-names-must-not-collide-with-claude-code-built-in",
       "war-github-repos-serve-as-claude-code-marketplaces",
       "war-ruff-auto-fix-strips-imports-before-usage-code-exists",
-      "qui-skill-learn",
+      "qui-skill-coach",
       "qui-skill-security-audit",
       "qui-skill-smart-test",
       "qui-skill-attune-hub",
@@ -5552,7 +5552,7 @@
     "plugin": [
       "tas-install-plugin",
       "com-lite-vs-full",
-      "ref-skill-learn",
+      "ref-skill-coach",
       "ref-skill-security-audit",
       "ref-skill-smart-test",
       "ref-skill-attune-hub",
@@ -6034,7 +6034,7 @@
       "con-cross-linking"
     ],
     "reference": [
-      "ref-skill-learn",
+      "ref-skill-coach",
       "ref-skill-security-audit",
       "ref-skill-attune-hub",
       "ref-skill-doc-gen",
@@ -6314,7 +6314,7 @@
       "con-tool-memory-and-context"
     ],
     "progressive-depth": [
-      "con-tool-learn"
+      "con-tool-coach"
     ],
     "bugs": [
       "con-tool-bug-predict"

@@ -1244,4 +1244,69 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   re-export removal can cascade through 5+ test files. After removing
   any re-export, run `pytest -x` iteratively — each failure reveals
   the next test file to fix.
+- **Version bumps must update 5+ files, not just `pyproject.toml`**:
+  The version lives in `pyproject.toml`, `plugin/.claude-plugin/
+  plugin.json`, `plugin/.claude-plugin/marketplace.json` (two fields:
+  `metadata.version` and `plugins[0].version`), `plugin/core/
+  __init__.py`, `.claude-plugin/marketplace.json` (root-level), and
+  `.claude/CLAUDE.md` (header and footer). The test
+  `test_all_versions_match` in `test_plugin_config_validation.py`
+  catches mismatches but only in CI. Grep for the old version string
+  across the whole repo before committing a bump.
+
+- **`.agents/skills/` must stay synced with `plugin/skills/`**: Adding
+  a new skill directory under `plugin/skills/` without also creating
+  a matching `.agents/skills/<name>/SKILL.md` fails the
+  `test_all_plugin_skills_synced` test. Run
+  `python scripts/sync_agents_skills.py` after adding or modifying
+  skills, or the `test_skill_body_content_matches` test will also
+  fail.
+
+- **Tags pushed before squash-merge point to the wrong commit**: If
+  you push a tag before the PR merges (e.g., `git push origin
+  v5.8.0`), the tag points to the pre-squash commit on the feature
+  branch. After squash-merge, the main branch has a different commit
+  hash. You must delete the old tag and re-tag the merge commit:
+  `git tag -d v5.8.0 && git tag -a v5.8.0 -m "..." && git push
+  origin v5.8.0 --force`. GitHub tag protection may block the
+  force-push — see the existing lesson on protected tags.
+- **`Path.rename()` fails on Windows when target exists**: On
+  Linux/macOS, `Path.rename()` atomically overwrites the target.
+  On Windows, it raises `FileExistsError` if the target already
+  exists. Use `Path.replace()` instead — it works cross-platform.
+  This caused 2 Windows-only CI failures in `help/session.py`
+  where the atomic-write pattern wrote to `.json.tmp` then
+  renamed to `.json`.
+
+- **Prefer GitHub Actions trusted publishing over local `twine`/`uv
+  publish`**: Local PyPI uploads can fail due to SSL cert mismatches
+  (VPN/proxy intercepting `upload.pypi.org`) or 504 Gateway Timeouts
+  on large wheels (~8MB). The repo has a trusted publishing workflow
+  at `.github/workflows/publish-pypi.yml` that uses OIDC — no tokens
+  needed. Trigger with `gh workflow run publish-pypi.yml --ref main`.
+  This runs on GitHub's infrastructure, bypassing local network
+  issues entirely.
+
+- **`pypi` environment requires manual approval in GitHub Actions**:
+  The `publish-pypi.yml` workflow uses `environment: pypi` which has
+  a required reviewer gate. After the build job passes, the publish
+  job appears to be "running" but is actually waiting for approval
+  at the Actions run page. Go to the run URL, click "Review
+  deployments", and approve. Without approval the job hangs
+  indefinitely (not a PyPI timeout).
+
+- **Never paste PyPI tokens into chat or logs**: Tokens pasted into
+  a conversation are permanently exposed. Always use environment
+  variables set in a separate terminal, or use trusted publishing
+  (OIDC) to avoid tokens altogether. If a token is exposed, revoke
+  it immediately at pypi.org/manage/account/token.
+
+- **`Path.glob("dir/**")` matches directories, not files**: The
+  `**` pattern in `Path.glob()` matches directory entries only.
+  To match files recursively, use `dir/**/*`. This matters when
+  users write `src/auth/**` in config files (like
+  `.help/features.yaml`) — the code that resolves these globs
+  must append `/*` when the pattern ends with `**`. Discovered
+  when `compute_source_hash()` returned 0 matched files for all
+  14 features until the glob was corrected.
 <!-- attune-lessons-end -->

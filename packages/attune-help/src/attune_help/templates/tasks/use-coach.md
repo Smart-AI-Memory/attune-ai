@@ -1,11 +1,11 @@
 ---
 type: task
-name: use-learn
+name: use-coach
 tags: [skill, help-system, task]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# How to Use Learn
+# How to Use Coach
 
 ## Quick start
 
@@ -18,7 +18,7 @@ what is security audit?
 Or use the skill directly:
 
 ```
-/learn security-audit
+/coach security-audit
 ```
 
 You'll get a concept-level overview. No setup, no API
@@ -99,8 +99,8 @@ start from the beginning on security audit
 - **Explore a topic** -- pick anything from the table
   above and ask about it
 - **Browse all templates** -- say "what topics can I
-  learn about?"
-- **Go deeper on learn itself** -- say "tell me more"
+  coach me on?"
+- **Go deeper on coach itself** -- say "tell me more"
   for the complete reference with template counts,
   cross-linking, and session state details
 
@@ -108,6 +108,6 @@ start from the beginning on security audit
 
 - Say **"tell me more"** for the full reference --
   all 11 template types, cross-link rules, tag search
-- Say **"what is learn?"** to go back to the overview
+- Say **"what is coach?"** to go back to the overview
 - Say **"what is progressive depth?"** to understand
   how the depth engine works

@@ -117,7 +117,7 @@
         "fixes"
       ]
     },
-    "con-tool-learn": {
+    "con-tool-coach": {
       "tags": [
         "skill",
         "auto-discovered"
@@ -3211,7 +3211,7 @@
         "claude-code"
       ]
     },
-    "qui-skill-learn": {
+    "qui-skill-coach": {
       "tags": [
         "skill",
         "claude-code"
@@ -3357,7 +3357,7 @@
         "plugin"
       ]
     },
-    "ref-skill-learn": {
+    "ref-skill-coach": {
       "references_tools": [
         "ref-tool-bug-predict",
         "ref-tool-code-review",
@@ -3368,7 +3368,7 @@
         "ref-tool-test-generation"
       ],
       "related_task": [
-        "tas-use-learn"
+        "tas-use-coach"
       ],
       "tags": [
         "skill",
@@ -3559,7 +3559,7 @@
       "referenced_by_skills": [
         "ref-skill-attune-hub",
         "ref-skill-bug-predict",
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3569,7 +3569,7 @@
     },
     "ref-tool-code-review": {
       "referenced_by_skills": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3616,7 +3616,7 @@
       "referenced_by_skills": [
         "ref-skill-attune-hub",
         "ref-skill-doc-gen",
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3676,7 +3676,7 @@
     "ref-tool-refactor-plan": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-planning",
         "ref-skill-refactor-plan"
       ],
@@ -3689,7 +3689,7 @@
     "ref-tool-release-prep": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-release-prep"
       ],
       "tags": [
@@ -3715,7 +3715,7 @@
     "ref-tool-security-audit": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
-        "ref-skill-learn",
+        "ref-skill-coach",
         "ref-skill-security-audit"
       ],
       "tags": [
@@ -3754,7 +3754,7 @@
     },
     "ref-tool-test-generation": {
       "referenced_by_skills": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "mcp",
@@ -3850,9 +3850,9 @@
         "task"
       ]
     },
-    "tas-use-learn": {
+    "tas-use-coach": {
       "related_reference": [
-        "ref-skill-learn"
+        "ref-skill-coach"
       ],
       "tags": [
         "skill",
@@ -4976,7 +4976,7 @@
       "tro-workflow-not-running"
     ],
     "auto-discovered": [
-      "con-tool-learn"
+      "con-tool-coach"
     ],
     "bugs": [
       "con-tool-bug-predict"
@@ -5123,7 +5123,7 @@
       "qui-skill-code-quality",
       "qui-skill-doc-gen",
       "qui-skill-fix-test",
-      "qui-skill-learn",
+      "qui-skill-coach",
       "qui-skill-memory-and-context",
       "qui-skill-planning",
       "qui-skill-refactor-plan",
@@ -5552,7 +5552,7 @@
       "ref-skill-code-quality",
       "ref-skill-doc-gen",
       "ref-skill-fix-test",
-      "ref-skill-learn",
+      "ref-skill-coach",
       "ref-skill-memory-and-context",
       "ref-skill-planning",
       "ref-skill-refactor-plan",
@@ -5742,14 +5742,14 @@
       "tro-workflow-not-running"
     ],
     "skill": [
-      "con-tool-learn",
+      "con-tool-coach",
       "con-tool-security-audit",
       "qui-skill-attune-hub",
       "qui-skill-bug-predict",
       "qui-skill-code-quality",
       "qui-skill-doc-gen",
       "qui-skill-fix-test",
-      "qui-skill-learn",
+      "qui-skill-coach",
       "qui-skill-memory-and-context",
       "qui-skill-planning",
       "qui-skill-refactor-plan",
@@ -5763,7 +5763,7 @@
       "ref-skill-code-quality",
       "ref-skill-doc-gen",
       "ref-skill-fix-test",
-      "ref-skill-learn",
+      "ref-skill-coach",
       "ref-skill-memory-and-context",
       "ref-skill-planning",
       "ref-skill-refactor-plan",
@@ -5777,7 +5777,7 @@
       "tas-use-code-quality",
       "tas-use-doc-gen",
       "tas-use-fix-test",
-      "tas-use-learn",
+      "tas-use-coach",
       "tas-use-memory-and-context",
       "tas-use-planning",
       "tas-use-refactor-plan",
@@ -5799,7 +5799,7 @@
       "tas-use-code-quality",
       "tas-use-doc-gen",
       "tas-use-fix-test",
-      "tas-use-learn",
+      "tas-use-coach",
       "tas-use-memory-and-context",
       "tas-use-planning",
       "tas-use-refactor-plan",

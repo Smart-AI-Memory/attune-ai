@@ -74,8 +74,8 @@
     "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
-  "con-tool-learn": {
-    "source": "plugin/skills/learn/SKILL.md",
+  "con-tool-coach": {
+    "source": "plugin/skills/coach/SKILL.md",
     "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
@@ -1739,8 +1739,8 @@
     "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
-  "qui-skill-learn": {
-    "source": "plugin/skills/learn/SKILL.md",
+  "qui-skill-coach": {
+    "source": "plugin/skills/coach/SKILL.md",
     "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
@@ -1809,8 +1809,8 @@
     "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
-  "ref-skill-learn": {
-    "source": "plugin/skills/learn/SKILL.md",
+  "ref-skill-coach": {
+    "source": "plugin/skills/coach/SKILL.md",
     "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
@@ -2069,8 +2069,8 @@
     "hash": "753489b2c22aa1a265924b927844e82ebca7375caf7f2fde2cef2d841311c77b",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },
-  "tas-use-learn": {
-    "source": "plugin/skills/learn/SKILL.md",
+  "tas-use-coach": {
+    "source": "plugin/skills/coach/SKILL.md",
     "hash": "ee107ffdbf3fc8ebc67a5be5ec90aee94e25f6110583818eec80a362783f1a44",
     "generated_at": "2026-04-01T12:56:43.198773+00:00"
   },

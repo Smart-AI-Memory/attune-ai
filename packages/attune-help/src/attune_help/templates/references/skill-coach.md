@@ -1,15 +1,15 @@
 ---
 type: reference
 subtype: procedural
-name: skill-learn
+name: skill-coach
 category: skill
 tags: [skill, help-system, plugin, reference]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Learn Reference
+# Coach Reference
 
-Complete reference for the learn skill -- the help
+Complete reference for the coach skill -- the help
 system's own help. Covers the template knowledge base,
 progressive depth engine, session state, cross-linking,
 and maintenance.
@@ -17,7 +17,7 @@ and maintenance.
 ## Invocation
 
 ```
-/learn <topic>
+/coach <topic>
 ```
 
 Or natural language:
@@ -29,7 +29,7 @@ explain progressive depth
 how does the help system work?
 ```
 
-**Trigger phrases:** learn, explain, tell me more,
+**Trigger phrases:** coach, learn, explain, tell me more,
 how does, what is, help with, deeper.
 
 Runs on your Claude subscription -- no API key or
@@ -212,8 +212,8 @@ help_maintain(batch=true, dry_run=false)
 
 ## Want to learn more?
 
-- Say **"what is learn?"** to go back to the overview
-- Say **"how do I use learn?"** for the step-by-step
+- Say **"what is coach?"** to go back to the overview
+- Say **"how do I use coach?"** for the step-by-step
   guide
 - Say **"what is progressive depth?"** to understand
   the depth engine

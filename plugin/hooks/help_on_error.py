@@ -3,7 +3,7 @@
 Reads tool result from stdin (JSON with tool_name,
 tool_input, tool_result). If the tool is Bash and
 the exit code is non-zero, pattern-matches the stderr
-against known error signatures and suggests a /learn
+against known error signatures and suggests a /coach
 topic.
 
 Exits 0 always (informational, never blocks).
@@ -19,7 +19,7 @@ import sys
 
 # Map error patterns to help topics.
 # Keys are substrings to match in stderr; values are
-# topic slugs for /learn.
+# topic slugs for /coach.
 _ERROR_TOPICS: dict[str, str] = {
     "ModuleNotFoundError": "imports",
     "ImportError": "imports",
@@ -65,7 +65,7 @@ def main() -> None:
     for pattern, topic in _ERROR_TOPICS.items():
         if pattern in stderr:
             print(
-                f"attune: see /learn {topic} for help " f"with this error",
+                f"attune: see /coach {topic} for help " f"with this error",
                 file=sys.stderr,
             )
             return
