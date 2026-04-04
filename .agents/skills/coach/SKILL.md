@@ -2,7 +2,6 @@
 name: coach
 description: "Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, tell me more, how does, what is, help with, deeper."
 ---
-
 # Coach
 
 **IMPORTANT: Start your response by telling the user:**
