@@ -1,14 +1,17 @@
 ---
-name: learn
-description: "Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: learn, explain, tell me more, how does, what is, help with, deeper."
-argument-hint: "<topic: security-audit, code-review, etc.>"
+type: reference
+subtype: procedural
+name: skill-coach
+category: skill
+tags: [skill, plugin]
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Learn
+# Reference: Skill: coach
 
-**IMPORTANT: Start your response by telling the user:**
+Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, tell me more, how does, what is, help with, deeper.
 
-> **Learn** — Explains any Attune topic with progressive depth — concept, then how-to, then full reference.
+**Usage:** `/coach <topic: security-audit, code-review, etc.>`
 
 ## How It Works
 
@@ -114,12 +117,16 @@ help_maintain(dry_run=false)
 Report the count of stale templates found, which
 types were regenerated, and whether validation passed.
 
-For bulk updates (requires API key):
+For cost-optimized bulk updates (50% savings via
+Anthropic Batch API):
 
 ```
 help_maintain(batch=true, dry_run=false)
 ```
 
-This submits regeneration tasks asynchronously via
-the Anthropic Batch API. Requires `ANTHROPIC_API_KEY`
-and the `attune-ai` Python package installed.
+This submits regeneration tasks asynchronously.
+Results arrive within 24 hours at half the cost.
+
+## Related Topics
+
+_No related topics yet._

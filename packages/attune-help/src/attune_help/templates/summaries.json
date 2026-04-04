@@ -10,7 +10,7 @@
   "release-prep": "Runs pre-release checks — health, security, changelog, and go/no-go assessment.",
   "spec": "Walks you from idea to working code through brainstorm, plan, review, approve, and execute phases.",
   "attune-hub": "Your starting point — discovers what you need and routes you to the right skill.",
-  "learn": "Explains any Attune topic with progressive depth — concept, then how-to, then full reference.",
+  "coach": "Explains any Attune topic with progressive depth — concept, then how-to, then full reference.",
   "workflow-orchestration": "Runs multiple analysis workflows in sequence and combines the results.",
   "memory-and-context": "Stores and retrieves persistent context across sessions — notes, preferences, project state.",
   "dependency-management": "What to check when adding or updating dependencies — security, compatibility, licensing, pinning.",

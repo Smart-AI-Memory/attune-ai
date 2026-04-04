@@ -1,0 +1,93 @@
+version: 1
+
+features:
+  workflows:
+    description: AI-powered analysis workflows (security, code review, tests, etc.)
+    files:
+      - src/attune/workflows/**
+    tags: [workflows, ai, analysis]
+
+  mcp-server:
+    description: Model Context Protocol server and tool handlers
+    files:
+      - src/attune/mcp/**
+    tags: [mcp, tools, server]
+
+  help-system:
+    description: Progressive-depth help engine and template management
+    files:
+      - src/attune/help/**
+      - packages/attune-help/src/attune_help/**
+    tags: [help, templates, docs]
+
+  memory:
+    description: Memory subsystem — storage, retrieval, and security
+    files:
+      - src/attune/memory/**
+    tags: [memory, storage]
+
+  agents:
+    description: Release agents, state persistence, and recovery
+    files:
+      - src/attune/agents/**
+      - src/attune/agent_factory/**
+    tags: [agents, ai, release]
+
+  security:
+    description: Path validation, secrets detection, and security scanning
+    files:
+      - src/attune/security/**
+      - src/attune/monitoring/**
+    tags: [security, validation]
+
+  cli:
+    description: Command-line interface and routing
+    files:
+      - src/attune/cli_minimal.py
+      - src/attune/cli_router.py
+      - src/attune/cli_commands/**
+    tags: [cli, commands]
+
+  models:
+    description: LLM authentication, provider routing, and tier management
+    files:
+      - src/attune/models/**
+    tags: [models, auth, llm]
+
+  orchestration:
+    description: Dynamic teams, workflow composition, and agent models
+    files:
+      - src/attune/orchestration/**
+      - src/attune/coordination/**
+    tags: [orchestration, teams]
+
+  telemetry:
+    description: Usage tracking and feedback loops
+    files:
+      - src/attune/telemetry/**
+    tags: [telemetry, metrics]
+
+  plugin:
+    description: Claude Code plugin — skills, hooks, commands, and MCP config
+    files:
+      - plugin/**
+    tags: [plugin, claude-code]
+
+  spec-engine:
+    description: Spec-driven development with approval loops
+    files:
+      - src/attune/spec/**
+      - src/attune/pipeline/**
+    tags: [spec, planning]
+
+  wizards:
+    description: Multi-step guided interactive workflows
+    files:
+      - src/attune/wizards/**
+    tags: [wizards, interactive]
+
+  configuration:
+    description: Project configuration and settings management
+    files:
+      - src/attune/config/**
+    tags: [config, settings]

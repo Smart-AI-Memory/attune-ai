@@ -5,6 +5,23 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.1] - 2026-04-03
+
+### Added (5.8.1)
+
+- **attune-help project-local help system** — manifest,
+  staleness detection, bootstrap, generator, and
+  maintenance workflows for self-updating project docs
+
+### Fixed (5.8.1)
+
+- **deep-review help system gaps** — security, quality,
+  and test gap fixes surfaced by deep-review
+- **attune-hub skills reference** — updated learn -> coach
+  rename, stripped argument-hint from .agents copy
+- **.agents/skills sync** — synced .agents/skills after
+  learn -> coach rename
+
 ## [5.8.0] - 2026-04-03
 
 ### Added (5.8.0)

@@ -241,6 +241,7 @@ WORKFLOW_REGISTRY: dict[str, WorkflowInfo] = {
             "study",
             "understand",
             "learn",
+            "coach",
             "compare",
         ],
         primary_domain="research",

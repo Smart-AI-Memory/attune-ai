@@ -1,21 +1,21 @@
 ---
 type: quickstart
-name: skill-learn
+name: skill-coach
 tags: [skill, claude-code]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Quickstart: Use /learn
+# Quickstart: Use /coach
 
 Progressive help for any topic.
 
 ```
-/learn <topic: security-audit, code-review, etc.>
+/coach <topic: security-audit, code-review, etc.>
 ```
 
 **Result:** Structured results in your Claude Code conversation.
 
-**Next:** See full reference: `attune help-docs ref-skill-learn`
+**Next:** See full reference: `attune help-docs ref-skill-coach`
 
 ## Related Topics
 

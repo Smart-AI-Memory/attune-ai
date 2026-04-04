@@ -1,0 +1,189 @@
+"""Tests for help/staleness.py — hash comparison and staleness detection."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from attune.help.manifest import Feature, FeatureManifest
+from attune.help.staleness import (
+    FeatureStaleness,
+    StalenessReport,
+    check_staleness,
+    compute_source_hash,
+)
+
+
+@pytest.fixture()
+def project(tmp_path: Path) -> Path:
+    """Create a minimal project with source files."""
+    src = tmp_path / "src" / "auth"
+    src.mkdir(parents=True)
+    (src / "login.py").write_text("def login(): pass\n", encoding="utf-8")
+    (src / "logout.py").write_text("def logout(): pass\n", encoding="utf-8")
+    return tmp_path
+
+
+@pytest.fixture()
+def feature() -> Feature:
+    return Feature(
+        name="auth",
+        description="Authentication",
+        files=["src/auth/**"],
+        tags=["security"],
+    )
+
+
+class TestComputeSourceHash:
+    """Tests for compute_source_hash()."""
+
+    def test_returns_hash_and_files(self, project: Path, feature: Feature) -> None:
+        digest, files = compute_source_hash(feature, project)
+        assert len(digest) == 64  # SHA-256 hex
+        assert len(files) == 2
+        assert "src/auth/login.py" in files
+
+    def test_deterministic(self, project: Path, feature: Feature) -> None:
+        h1, _ = compute_source_hash(feature, project)
+        h2, _ = compute_source_hash(feature, project)
+        assert h1 == h2
+
+    def test_changes_when_file_changes(self, project: Path, feature: Feature) -> None:
+        h1, _ = compute_source_hash(feature, project)
+        (project / "src" / "auth" / "login.py").write_text(
+            "def login(user): pass\n", encoding="utf-8"
+        )
+        h2, _ = compute_source_hash(feature, project)
+        assert h1 != h2
+
+    def test_empty_feature_returns_empty_hash(self, project: Path) -> None:
+        empty = Feature(name="empty", description="", files=[])
+        digest, files = compute_source_hash(empty, project)
+        assert len(digest) == 64  # still a valid hash
+        assert files == []
+
+    def test_nonexistent_glob_returns_no_files(self, project: Path) -> None:
+        feat = Feature(
+            name="missing",
+            description="",
+            files=["nonexistent/**"],
+        )
+        _, files = compute_source_hash(feat, project)
+        assert files == []
+
+
+class TestStalenessReport:
+    """Tests for StalenessReport properties."""
+
+    def test_counts(self) -> None:
+        entries = [
+            FeatureStaleness("a", is_stale=True, current_hash="x", stored_hash="y"),
+            FeatureStaleness("b", is_stale=False, current_hash="x", stored_hash="x"),
+            FeatureStaleness("c", is_stale=True, current_hash="z", stored_hash=None),
+        ]
+        report = StalenessReport(entries=entries)
+        assert report.stale_count == 2
+        assert report.current_count == 1
+        assert report.stale_features == ["a", "c"]
+
+
+class TestCheckStaleness:
+    """Tests for check_staleness()."""
+
+    def test_fresh_after_generation(self, project: Path) -> None:
+        """Features are current right after template generation."""
+        pytest.importorskip("yaml")
+        from attune.help.generator import generate_feature_templates
+        from attune.help.manifest import save_manifest
+
+        feat = Feature(
+            name="auth",
+            description="Authentication",
+            files=["src/auth/**"],
+            tags=["security"],
+        )
+        manifest = FeatureManifest(
+            version=1,
+            features={"auth": feat},
+        )
+        help_dir = project / ".help"
+        save_manifest(manifest, help_dir)
+        generate_feature_templates(feat, help_dir, project)
+
+        report = check_staleness(manifest, help_dir, project)
+        assert report.stale_count == 0
+        assert report.current_count == 1
+
+    def test_stale_after_source_change(self, project: Path) -> None:
+        """Feature becomes stale after source changes."""
+        pytest.importorskip("yaml")
+        from attune.help.generator import generate_feature_templates
+        from attune.help.manifest import save_manifest
+
+        feat = Feature(
+            name="auth",
+            description="Authentication",
+            files=["src/auth/**"],
+        )
+        manifest = FeatureManifest(
+            version=1,
+            features={"auth": feat},
+        )
+        help_dir = project / ".help"
+        save_manifest(manifest, help_dir)
+        generate_feature_templates(feat, help_dir, project)
+
+        # Modify source
+        (project / "src" / "auth" / "login.py").write_text(
+            "def login(user, password): pass\n",
+            encoding="utf-8",
+        )
+
+        report = check_staleness(manifest, help_dir, project)
+        assert report.stale_count == 1
+        assert report.stale_features == ["auth"]
+
+    def test_filter_by_feature_names(self, project: Path) -> None:
+        """Can check only specific features."""
+        pytest.importorskip("yaml")
+        from attune.help.manifest import save_manifest
+
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "auth": Feature(name="auth", description="", files=["src/auth/**"]),
+                "other": Feature(name="other", description="", files=["src/other/**"]),
+            },
+        )
+        help_dir = project / ".help"
+        save_manifest(manifest, help_dir)
+
+        report = check_staleness(manifest, help_dir, project, features=["auth"])
+        assert len(report.entries) == 1
+        assert report.entries[0].feature == "auth"
+
+
+class TestComputeSourceHashErrors:
+    """Tests for error paths in compute_source_hash."""
+
+    def test_unreadable_file_skipped(self, tmp_path: Path) -> None:
+        """Unreadable files are skipped; hash is still computed."""
+        src = tmp_path / "src" / "mod"
+        src.mkdir(parents=True)
+        good = src / "ok.py"
+        good.write_text("x = 1\n", encoding="utf-8")
+        bad = src / "broken.py"
+        bad.write_text("y = 2\n", encoding="utf-8")
+        bad.chmod(0o000)
+
+        feat = Feature(name="mod", description="", files=["src/mod/**"])
+        try:
+            digest, files = compute_source_hash(feat, tmp_path)
+            # Both files are matched by glob
+            assert len(files) == 2
+            # Hash is still a valid SHA-256 (from the readable file)
+            assert len(digest) == 64
+        finally:
+            # Restore permissions so tmp_path cleanup works
+            bad.chmod(0o644)

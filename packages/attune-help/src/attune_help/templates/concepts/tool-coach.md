@@ -1,13 +1,13 @@
 ---
 type: concept
-name: tool-learn
+name: tool-coach
 tags: [skill, help-system, progressive-depth]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Learn
+# Coach
 
-Learn is the help system's own help. It explains any
+Coach is the help system's own help. It explains any
 Attune topic using progressive depth -- start with a
 short concept overview, then drill into step-by-step
 instructions, then get the full reference with every
@@ -53,26 +53,26 @@ Sessions expire after 4 hours of inactivity.
   the results -- the engine can skip straight to the
   task level
 
-## Example: learning about security audits
+## Example: coaching on security audits
 
 ```
 You:    what is security audit?
-Learn:  [concept] What it finds, when to use it...
+Coach:  [concept] What it finds, when to use it...
         (say "tell me more" for step-by-step)
 
 You:    tell me more
-Learn:  [task] Quick start, choosing targets, reading results...
+Coach:  [task] Quick start, choosing targets, reading results...
         (say "tell me more" for full reference)
 
 You:    tell me more
-Learn:  [reference] All checks, CWE mappings, scoring, config...
+Coach:  [reference] All checks, CWE mappings, scoring, config...
         (full detail)
 ```
 
 ## Want to learn more?
 
 - Say **"tell me more"** for a quick-start guide to
-  using learn
+  using coach
 - Say **"what is progressive depth?"** to understand
   the engine behind it
 - Say **"how does the help system work?"** for the

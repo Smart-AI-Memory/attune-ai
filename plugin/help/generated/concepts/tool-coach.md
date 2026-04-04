@@ -1,11 +1,11 @@
 ---
 type: concept
-name: tool-learn
+name: tool-coach
 tags: [skill, auto-discovered]
-source: plugin/skills/learn/SKILL.md
+source: plugin/skills/coach/SKILL.md
 ---
 
-# Concept: Learn
+# Concept: Coach
 
 ## What
 
@@ -17,7 +17,7 @@ See the full reference for details on what this tool checks and when to use it.
 
 ## How
 
-Run `/learn` to get started.
+Run `/coach` to get started.
 
 ## Related Topics
 

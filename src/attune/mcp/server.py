@@ -264,6 +264,9 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "context_set": self._handle_context_set,
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
+            "help_init": self._handle_help_init,
+            "help_status": self._handle_help_status,
+            "help_update": self._handle_help_update,
         }
 
     async def _dispatch_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -651,6 +654,161 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         return {
             "success": result.success,
             "output": result.final_output,
+        }
+
+    async def _handle_help_init(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Bootstrap project-local help system.
+
+        Two-phase flow:
+        - action=scan: discover features, return proposals
+        - action=accept: save manifest + generate templates
+
+        Args:
+            args: Must contain action; optional accepted list.
+
+        Returns:
+            Dict with proposals (scan) or generation results (accept).
+
+        """
+        from attune.help.bootstrap import (
+            ProposedFeature,
+            proposals_to_manifest,
+            scan_project,
+        )
+        from attune.help.generator import generate_feature_templates
+        from attune.help.manifest import save_manifest
+
+        action = args.get("action", "scan")
+        project_root = self._workspace_root
+        help_dir = Path(project_root) / ".help"
+
+        if action == "scan":
+            proposals = scan_project(project_root)
+            return {
+                "success": True,
+                "proposals": [
+                    {
+                        "name": p.name,
+                        "description": p.description,
+                        "files": p.files,
+                        "tags": p.tags,
+                        "confidence": p.confidence,
+                        "reason": p.reason,
+                    }
+                    for p in proposals
+                ],
+                "count": len(proposals),
+            }
+
+        if action == "accept":
+            accepted_raw = args.get("accepted", [])
+            proposals = [
+                ProposedFeature(
+                    name=a["name"],
+                    description=a["description"],
+                    files=a.get("files", []),
+                    tags=a.get("tags", []),
+                )
+                for a in accepted_raw
+            ]
+            manifest = proposals_to_manifest(proposals)
+            save_manifest(manifest, help_dir)
+
+            generated = []
+            for feat in manifest.features.values():
+                result = generate_feature_templates(feat, help_dir, project_root)
+                generated.append(
+                    {
+                        "feature": result.feature,
+                        "templates": len(result.templates),
+                        "files": len(result.matched_files),
+                    }
+                )
+
+            return {
+                "success": True,
+                "manifest_path": str(help_dir / "features.yaml"),
+                "features": len(manifest.features),
+                "generated": generated,
+            }
+
+        return {"success": False, "error": f"Unknown action: {action}"}
+
+    async def _handle_help_status(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Show staleness report for project-local help.
+
+        Args:
+            args: Optional features list to filter.
+
+        Returns:
+            Dict with staleness report and formatted output.
+
+        """
+        from attune.help.maintenance import format_status_report
+        from attune.help.manifest import load_manifest
+        from attune.help.staleness import check_staleness
+
+        project_root = self._workspace_root
+        help_dir = Path(project_root) / ".help"
+
+        try:
+            manifest = load_manifest(help_dir)
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "error": ("No .help/features.yaml found. " "Run help_init(action='scan') first."),
+            }
+
+        features = args.get("features")
+        report = check_staleness(manifest, help_dir, project_root, features)
+
+        return {
+            "success": True,
+            "stale_count": report.stale_count,
+            "current_count": report.current_count,
+            "stale_features": report.stale_features,
+            "report": format_status_report(report),
+        }
+
+    async def _handle_help_update(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Regenerate help templates for features.
+
+        Args:
+            args: Optional features list and dry_run flag.
+
+        Returns:
+            Dict with regeneration results.
+
+        """
+        from attune.help.maintenance import run_maintenance
+
+        project_root = self._workspace_root
+        help_dir = Path(project_root) / ".help"
+
+        features = args.get("features")
+        dry_run = args.get("dry_run", False)
+
+        try:
+            result = run_maintenance(
+                help_dir,
+                project_root,
+                features=features,
+                dry_run=dry_run,
+            )
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "error": ("No .help/features.yaml found. " "Run help_init(action='scan') first."),
+            }
+
+        return {
+            "success": True,
+            "stale_count": result.stale_count,
+            "regenerated_count": result.regenerated_count,
+            "regenerated": [
+                {"feature": r.feature, "templates": len(r.templates)} for r in result.regenerated
+            ],
+            "failed": result.failed,
         }
 
     def get_tool_list(self) -> list[dict[str, Any]]:
