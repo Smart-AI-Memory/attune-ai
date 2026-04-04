@@ -17,6 +17,31 @@ from attune.help.manifest import Feature, FeatureManifest
 logger = logging.getLogger(__name__)
 
 
+def _read_frontmatter_value(text: str, key: str) -> str | None:
+    """Extract a value from YAML frontmatter.
+
+    Parses the ``---`` delimited frontmatter block and returns
+    the value for *key*, or ``None`` if not found.
+
+    Args:
+        text: Full file content.
+        key: Frontmatter key (e.g. ``"source_hash"``).
+
+    Returns:
+        Stripped value string, or None.
+    """
+    if not text.startswith("---"):
+        return None
+    end = text.find("---", 3)
+    if end == -1:
+        return None
+    for line in text[3:end].splitlines():
+        stripped = line.strip()
+        if stripped.startswith(f"{key}:"):
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
 @dataclass
 class FeatureStaleness:
     """Staleness status for one feature.
@@ -119,6 +144,15 @@ def _read_stored_hash(
     Returns:
         The stored source_hash or None if not found.
     """
+    if (
+        not feature_name
+        or "/" in feature_name
+        or "\\" in feature_name
+        or ".." in feature_name
+        or "\x00" in feature_name
+    ):
+        return None
+
     concept = help_dir / "templates" / feature_name / "concept.md"
     if not concept.exists():
         return None
@@ -128,21 +162,7 @@ def _read_stored_hash(
     except OSError:
         return None
 
-    # Parse YAML frontmatter between --- delimiters
-    if not text.startswith("---"):
-        return None
-
-    end = text.find("---", 3)
-    if end == -1:
-        return None
-
-    frontmatter = text[3:end]
-    for line in frontmatter.splitlines():
-        line = line.strip()
-        if line.startswith("source_hash:"):
-            return line.split(":", 1)[1].strip()
-
-    return None
+    return _read_frontmatter_value(text, "source_hash")
 
 
 def check_staleness(

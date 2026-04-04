@@ -162,3 +162,28 @@ class TestCheckStaleness:
         report = check_staleness(manifest, help_dir, project, features=["auth"])
         assert len(report.entries) == 1
         assert report.entries[0].feature == "auth"
+
+
+class TestComputeSourceHashErrors:
+    """Tests for error paths in compute_source_hash."""
+
+    def test_unreadable_file_skipped(self, tmp_path: Path) -> None:
+        """Unreadable files are skipped; hash is still computed."""
+        src = tmp_path / "src" / "mod"
+        src.mkdir(parents=True)
+        good = src / "ok.py"
+        good.write_text("x = 1\n", encoding="utf-8")
+        bad = src / "broken.py"
+        bad.write_text("y = 2\n", encoding="utf-8")
+        bad.chmod(0o000)
+
+        feat = Feature(name="mod", description="", files=["src/mod/**"])
+        try:
+            digest, files = compute_source_hash(feat, tmp_path)
+            # Both files are matched by glob
+            assert len(files) == 2
+            # Hash is still a valid SHA-256 (from the readable file)
+            assert len(digest) == 64
+        finally:
+            # Restore permissions so tmp_path cleanup works
+            bad.chmod(0o644)

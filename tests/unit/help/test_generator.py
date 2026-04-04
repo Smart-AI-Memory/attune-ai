@@ -182,3 +182,46 @@ class TestGenerateFeatureTemplates:
         text = (help_dir / "templates" / "auth" / "reference.md").read_text(encoding="utf-8")
         assert "`security`" in text
         assert "`users`" in text
+
+    def test_unknown_depth_skipped(self, feature: Feature, help_dir: Path, project: Path) -> None:
+        """Unknown depth names are skipped with a warning."""
+        result = generate_feature_templates(feature, help_dir, project, depths=["bogus"])
+        assert len(result.templates) == 0
+
+    def test_syntax_error_file_skipped(
+        self, feature: Feature, help_dir: Path, project: Path
+    ) -> None:
+        """Files with syntax errors are skipped gracefully."""
+        (project / "src" / "auth" / "broken.py").write_text("def oops(\n", encoding="utf-8")
+        result = generate_feature_templates(feature, help_dir, project)
+        # Still generates all 3 templates from the valid files
+        assert len(result.templates) == 3
+
+    def test_async_functions_included(self, help_dir: Path, tmp_path: Path) -> None:
+        """Async public functions appear in generated reference."""
+        src = tmp_path / "src" / "svc"
+        src.mkdir(parents=True)
+        (src / "handler.py").write_text(
+            "async def fetch_data(url: str) -> dict:\n"
+            '    """Fetch data from URL."""\n'
+            "    return {}\n",
+            encoding="utf-8",
+        )
+        feat = Feature(
+            name="svc",
+            description="Service layer",
+            files=["src/svc/**"],
+            tags=[],
+        )
+        result = generate_feature_templates(feat, help_dir, tmp_path)
+        text = (help_dir / "templates" / "svc" / "reference.md").read_text(encoding="utf-8")
+        assert "fetch_data" in text
+        assert len(result.templates) == 3
+
+    def test_invalid_feature_name_raises(self, help_dir: Path, project: Path) -> None:
+        """Feature names with path traversal characters are rejected."""
+        bad_names = ["../../etc", "a/b", "a\\b", "a\x00b", ""]
+        for name in bad_names:
+            feat = Feature(name=name, description="bad", files=[])
+            with pytest.raises(ValueError, match="Invalid feature name"):
+                generate_feature_templates(feat, help_dir, project)

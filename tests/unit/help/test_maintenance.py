@@ -170,3 +170,20 @@ class TestFormatStatusReport:
         text = format_status_report(report)
         assert "**1** stale" in text
         assert "auth" in text
+
+
+class TestRegenerationFailure:
+    """Tests for error paths during regeneration."""
+
+    @patch("attune.help.maintenance.generate_feature_templates")
+    def test_regeneration_failure_populates_failed(self, mock_gen: object, project: Path) -> None:
+        """OSError during regeneration is caught and recorded."""
+        mock_gen.side_effect = OSError("disk full")  # type: ignore[union-attr]
+
+        # Make auth stale so regeneration is attempted
+        (project / "src" / "auth" / "login.py").write_text("def login(u): pass\n", encoding="utf-8")
+
+        result = run_maintenance(project / ".help", project)
+        assert result.stale_count >= 1
+        assert "auth" in result.failed
+        assert result.regenerated_count == 0

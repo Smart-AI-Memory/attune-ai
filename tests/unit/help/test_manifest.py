@@ -206,3 +206,19 @@ class TestResolveTopic:
         )
         manifest = load_manifest(d)
         assert resolve_topic("auth", manifest) is None
+
+
+class TestVersionMismatch:
+    """Tests for manifest version handling."""
+
+    def test_version_mismatch_loads_with_warning(self, tmp_path: Path) -> None:
+        """A future manifest version still loads (with warning)."""
+        d = tmp_path / ".help"
+        d.mkdir()
+        (d / "features.yaml").write_text(
+            "version: 99\nfeatures:\n" "  x:\n    description: test\n",
+            encoding="utf-8",
+        )
+        manifest = load_manifest(d)
+        assert manifest.version == 99
+        assert "x" in manifest.features

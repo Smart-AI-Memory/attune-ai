@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from attune.help.manifest import Feature
-from attune.help.staleness import compute_source_hash
+from attune.help.staleness import _read_frontmatter_value, compute_source_hash
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,16 @@ def generate_feature_templates(
     root = Path(project_root)
     target_depths = depths or list(_DEPTH_NAMES)
 
+    # Guard against path traversal via crafted feature names
+    if (
+        not feature.name
+        or "/" in feature.name
+        or "\\" in feature.name
+        or ".." in feature.name
+        or "\x00" in feature.name
+    ):
+        raise ValueError(f"Invalid feature name: {feature.name!r}")
+
     # Compute source hash
     source_hash, matched_files = compute_source_hash(feature, root)
 
@@ -149,18 +159,7 @@ def _is_manual(path: Path) -> bool:
     except OSError:
         return False
 
-    if not text.startswith("---"):
-        return False
-
-    end = text.find("---", 3)
-    if end == -1:
-        return False
-
-    frontmatter = text[3:end]
-    for line in frontmatter.splitlines():
-        if line.strip().startswith("status:"):
-            return "manual" in line
-    return False
+    return _read_frontmatter_value(text, "status") == "manual"
 
 
 @dataclass
@@ -214,7 +213,9 @@ def _extract_source_info(
 
         # Public functions and classes
         for node in ast.iter_child_nodes(tree):
-            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+            if isinstance(
+                node, ast.FunctionDef | ast.AsyncFunctionDef
+            ) and not node.name.startswith("_"):
                 doc = ast.get_docstring(node) or ""
                 first_line = doc.split("\n")[0].strip() if doc else ""
                 info.public_functions.append(

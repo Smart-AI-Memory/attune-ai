@@ -169,19 +169,6 @@ def match_files_to_features(
     return matches
 
 
-def get_feature(manifest: FeatureManifest, name: str) -> Feature | None:
-    """Look up a feature by name.
-
-    Args:
-        manifest: The feature manifest.
-        name: Feature name to find.
-
-    Returns:
-        The Feature if found, None otherwise.
-    """
-    return manifest.features.get(name)
-
-
 def resolve_topic(
     query: str,
     manifest: FeatureManifest,
