@@ -233,11 +233,11 @@ export default function ContactPage() {
                     className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
                   >
                     <option value="general">General Inquiry</option>
-                    <option value="business">Business Partnership</option>
-                    <option value="volume">Volume Licensing</option>
                     <option value="technical">Technical Question</option>
-                    <option value="healthcare">Healthcare Implementation</option>
-                    <option value="anthropic">Anthropic Partnership</option>
+                    <option value="help-system">Help System / Templates</option>
+                    <option value="plugin">Claude Code Plugin</option>
+                    <option value="contributing">Contributing</option>
+                    <option value="partnership">Partnership</option>
                     <option value="other">Other</option>
                   </select>
                 </div>

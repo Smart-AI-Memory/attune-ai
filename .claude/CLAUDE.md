@@ -1318,4 +1318,13 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   still exists but is for quick command reference only —
   `/coach` is the one that connects to `.help/features.yaml`,
   staleness detection, and template generation.
+- **`text-white` on `gradient-primary` sections gets overridden**:
+  Tailwind's `text-white` class is overridden by global styles
+  on sections using `gradient-primary`. Use `!text-white`
+  (Tailwind's `!important` modifier) to force white text.
+  Similarly, `btn-outline-white` and `btn-secondary` don't
+  exist in `globals.css` — buttons using them are invisible.
+  Use inline Tailwind classes instead:
+  `px-8 py-4 rounded-lg font-medium !text-white border-2
+  border-white/60 hover:bg-white/15 transition-colors`.
 <!-- attune-lessons-end -->
