@@ -1,0 +1,178 @@
+---
+title: "From 18 Workflows to Living Docs — Why We Pivoted"
+date: "2026-04-04"
+author: "Patrick Roebuck"
+excerpt: "Attune AI grew from a desire to improve user assistance. We treat source code as the origin for help content — generating context-sensitive docs that live where users need them."
+tags: ["announcement", "attune-ai", "help-system", "attune-help", "living-docs"]
+published: true
+coverImage: "/og-image.png"
+---
+
+# From 18 Workflows to Living Docs
+
+Attune AI grew from a simple desire: improve user assistance.
+
+From the beginning, we've treated source code as the origin
+from which we generate and update documentation — help docs,
+knowledge base articles, context-sensitive guidance. The code
+is the single source of truth. Everything else derives from
+it.
+
+## The Vision: User Assistance, Rooted in Code
+
+Most documentation systems start with a blank page. Someone
+writes help content, publishes it, and hopes it stays current.
+It never does. The code evolves. The docs drift. Users get
+stale answers.
+
+We took the opposite approach. Start with the code. Extract
+the structure — modules, classes, functions, docstrings. Then
+generate help content that's directly tied to the
+implementation. When the code changes, the help content knows
+it's stale and regenerates.
+
+This isn't just API docs. It's user assistance that can take
+multiple forms:
+
+- **Context-sensitive help within an AI/human conversation**
+  — ask about a feature while working in Claude Code and get
+  progressive depth: concept first, then how-to, then full
+  reference
+- **Website-based help** — the same templates rendered for
+  browser-based documentation portals
+- **CLI help** — terminal-formatted output for developers
+  who live in the command line
+
+Same content, same source of truth, different renderers for
+different contexts.
+
+## Where Workflows Fit
+
+Our 18 workflows — security audits, code reviews, test
+generation, release prep — aren't the product. They're
+accelerators. They kick-start and speed up user learning by
+automating the analysis that would otherwise take hours of
+manual code reading.
+
+A security audit workflow doesn't just find vulnerabilities.
+It teaches you where your codebase is fragile. A code review
+workflow doesn't just flag style issues. It shows you patterns
+you didn't know existed in your own code.
+
+The workflows serve the help system, not the other way around.
+
+## Two Tools, Two Roles
+
+### Attune AI — The Authoring Tool
+
+`attune-ai` is the authoring and management side. It's what
+you use to create and maintain the help system:
+
+- **Bootstrap** — scan your codebase and discover features
+  worth documenting
+- **Generate** — create Jinja templates for each feature at
+  three depth levels (concept, task, reference)
+- **Detect staleness** — track source file hashes so you
+  know when help content has drifted from the code
+- **Regenerate** — rebuild stale templates from current
+  source while preserving hand-written content
+- **Manage** — add features, update templates, maintain the
+  `.help/` directory structure
+
+It includes the Claude Code plugin with `/coach` for
+interactive authoring and 14 additional skills.
+
+```bash
+pip install attune-ai
+```
+
+In Claude Code:
+
+```
+/coach init          # Bootstrap .help/ for your project
+/coach status        # Check which templates are stale
+/coach maintain      # Regenerate stale templates
+```
+
+### Attune Help — The Reader
+
+`attune-help` is the reader that lives on the user's
+computer. It's distributed separately because reading help
+shouldn't require the full authoring toolkit.
+
+It displays Jinja templates with progressive depth — concept
+on first ask, task on repeat, reference on third. One
+dependency (`python-frontmatter`), six files.
+
+```bash
+pip install attune-help
+```
+
+```python
+from attune_help import HelpEngine
+
+engine = HelpEngine(template_dir=".help/templates")
+
+# Progressive depth: each call goes deeper
+print(engine.lookup("authentication"))  # concept
+print(engine.lookup("authentication"))  # task
+print(engine.lookup("authentication"))  # reference
+```
+
+The authoring team uses attune-ai to generate and maintain
+templates. Everyone else uses attune-help to read them. The
+`.help/` directory is committed to the repo — one source of
+truth, shared across the team.
+
+## Progressive Depth
+
+Not every question needs the same level of detail. A new team
+member asking "what is authentication?" needs a different
+answer than a senior engineer looking up the session token
+API.
+
+Progressive depth serves this naturally:
+
+| Level | Type | Who It's For |
+|-------|------|-------------|
+| 0 | Concept | "What is this? When would I use it?" |
+| 1 | Task | "How do I do this, step by step?" |
+| 2 | Reference | "What are all the options and edge cases?" |
+
+First call returns concept. Repeat returns task. Third
+returns reference. A new topic resets to concept. No
+information overload — users self-select their depth by
+simply asking again.
+
+## Human Enhancement
+
+The system generates the first draft from source code, but
+humans own the content. A technical writer or developer can:
+
+- **Edit generated templates** — add context, examples, or
+  warnings the AI missed
+- **Write templates from scratch** — for nuanced topics
+  where human judgment matters most
+- **Mark templates as manual** — `status: manual` in the
+  frontmatter preserves them during regeneration
+
+AI handles the structure. Humans add the judgment. Both
+contributions coexist in the same `.help/` directory.
+
+## What's Next
+
+We're focused on making the authoring experience smoother and
+the reader more capable — more renderers for different help
+delivery contexts, deeper docs for each product, and a
+growing template ecosystem.
+
+The core idea stays the same: your code already contains the
+answers. We just extract, structure, and serve them where
+users need them.
+
+---
+
+*Living docs, rooted in code. User assistance that stays
+fresh because it comes from the code itself.*
+
+Both packages are open source, Apache 2.0.

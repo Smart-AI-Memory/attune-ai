@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: concept
-generated_at: 2026-04-04T02:25:50.375913+00:00
-source_hash: cb73fad6d8cdda9b027176f7e3c046b7f6e2d022d3546db534c3ab1b0d741b0b
+generated_at: 2026-04-04T13:00:34.143648+00:00
+source_hash: b3961a69a2834514dc7e777ba16f67fd57a9770e63c41fd38219fcf1994682c6
 status: generated
 ---
 

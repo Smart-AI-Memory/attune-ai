@@ -138,7 +138,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     <Link
                       key={tag}
                       href={`/blog/tag/${encodeURIComponent(tag)}`}
-                      className="px-3 py-1 bg-[var(--border)] text-[var(--text-primary)] rounded-full text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors"
+                      className="px-3 py-1 bg-[var(--surface-container-high)] text-[var(--foreground)] rounded-full text-sm font-semibold hover:bg-[var(--primary)] hover:text-white transition-colors"
                     >
                       {tag}
                     </Link>
@@ -187,7 +187,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                           {related.tags.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="px-2 py-0.5 bg-[var(--border)] rounded text-xs"
+                              className="px-2 py-0.5 bg-[var(--surface-container-high)] text-[var(--foreground)] rounded text-xs"
                             >
                               {tag}
                             </span>

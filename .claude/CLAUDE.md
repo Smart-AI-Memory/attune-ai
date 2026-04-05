@@ -1309,4 +1309,22 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   must append `/*` when the pattern ends with `**`. Discovered
   when `compute_source_hash()` returned 0 matched files for all
   14 features until the glob was corrected.
+- **`/coach` is the user-facing entry point for the `.help`
+  system**: The skill was renamed from `/help` to `/coach`
+  because Claude Code's built-in `/help` command shadows
+  plugin skills. `/coach` routes to the `.help` system via
+  MCP tools (`help_lookup`, `help_init`, `help_status`,
+  `help_update`, `help_maintain`). The old `/help` skill
+  still exists but is for quick command reference only —
+  `/coach` is the one that connects to `.help/features.yaml`,
+  staleness detection, and template generation.
+- **`text-white` on `gradient-primary` sections gets overridden**:
+  Tailwind's `text-white` class is overridden by global styles
+  on sections using `gradient-primary`. Use `!text-white`
+  (Tailwind's `!important` modifier) to force white text.
+  Similarly, `btn-outline-white` and `btn-secondary` don't
+  exist in `globals.css` — buttons using them are invisible.
+  Use inline Tailwind classes instead:
+  `px-8 py-4 rounded-lg font-medium !text-white border-2
+  border-white/60 hover:bg-white/15 transition-colors`.
 <!-- attune-lessons-end -->

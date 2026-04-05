@@ -16,18 +16,18 @@ export default function Footer() {
               href="/"
               className="text-xl font-bold text-gradient hover:opacity-80 transition-opacity"
             >
-              SmartAI Memory
+              Attune AI
             </Link>
             <p className="mt-4 text-sm text-[var(--text-secondary)]">
-              Power tools for Claude Code. Workflows, wizards, and dynamic agent creation.
+              Living docs, rooted in code. Help content that stays fresh automatically.
             </p>
             <div className="flex gap-4 mt-4">
               <a
-                href="https://github.com/Smart-AI-Memory"
+                href="https://github.com/Smart-AI-Memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--muted)] hover:text-[var(--primary)] transition-colors"
-                aria-label="GitHub Organization"
+                aria-label="GitHub Repository"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -49,15 +49,15 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/wizards"
+                  href="/how-it-works"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
-                  AI Wizards
+                  How It Works
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/framework-docs/"
+                  href="/docs"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
                   Documentation
@@ -69,6 +69,14 @@ export default function Footer() {
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
                   Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/changelog"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  Changelog
                 </Link>
               </li>
             </ul>
@@ -89,12 +97,24 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <Link
-                  href="/faq"
+                <a
+                  href="https://pypi.org/project/attune-ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
-                  FAQ
-                </Link>
+                  attune-ai on PyPI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://pypi.org/project/attune-help/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  attune-help on PyPI
+                </a>
               </li>
               <li>
                 <Link
@@ -110,7 +130,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-[var(--muted)] text-center md:text-left">
-            © {currentYear} SmartAI Memory · <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] transition-colors">Apache 2.0 License</a>
+            &copy; {currentYear} Attune AI &middot; <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] transition-colors">Apache 2.0 License</a>
           </div>
           <div className="flex gap-6 text-xs text-[var(--muted)]">
             <Link href="/privacy" className="hover:text-[var(--primary)] transition-colors">

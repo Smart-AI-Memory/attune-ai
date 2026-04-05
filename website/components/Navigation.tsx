@@ -1,66 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/lib/theme-provider';
 
 const navItems = [
-  { label: 'Plugins', href: '/attune-plugin' },
-  { label: 'Wizards', href: '/wizards' },
-  { label: 'Open Source', href: '/pricing' },
+  { label: 'How It Works', href: '/how-it-works' },
+  { label: 'Docs', href: '/docs' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Blog', href: '/blog' },
 ];
-
-const docsItems = [
-  {
-    label: 'Getting Started',
-    href: '/framework-docs/getting-started/',
-    description: 'Quick start guide',
-  },
-  {
-    label: 'Workflows',
-    href: '/workflows',
-    description: '17 AI workflows',
-  },
-  {
-    label: 'Attune Lite',
-    href: '/attune-lite',
-    description: 'Free 5-skill Claude Code plugin',
-  },
-  {
-    label: 'MkDocs',
-    href: '/framework-docs/',
-    description: 'Full API documentation',
-  },
-  {
-    label: 'Blog',
-    href: '/blog',
-    description: 'Technical articles and updates',
-  },
-  {
-    label: 'FAQ',
-    href: '/faq',
-    description: 'Frequently asked questions',
-  },
-  {
-    label: 'README',
-    href: 'https://github.com/Smart-AI-Memory/attune-ai#readme',
-    description: 'Project overview on GitHub',
-  },
-  {
-    label: 'Changelog',
-    href: 'https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md',
-    description: 'Version history and updates',
-  },
-];
-
-// Demos dropdown removed - wizards now has its own page
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDocsOpen, setIsDocsOpen] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
-  const docsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,17 +22,6 @@ export default function Navigation() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (docsRef.current && !docsRef.current.contains(event.target as Node)) {
-        setIsDocsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const toggleTheme = () => {
@@ -101,9 +44,9 @@ export default function Navigation() {
           <Link
             href="/"
             className="text-xl font-bold text-gradient hover:opacity-80 transition-opacity"
-            aria-label="SmartAI Memory Home"
+            aria-label="Attune AI Home"
           >
-            SmartAI Memory
+            Attune AI
           </Link>
 
           {/* Desktop Navigation */}
@@ -117,50 +60,6 @@ export default function Navigation() {
                 {item.label}
               </Link>
             ))}
-
-            {/* Docs Dropdown */}
-            <div className="relative" ref={docsRef}>
-              <button
-                type="button"
-                onClick={() => setIsDocsOpen(!isDocsOpen)}
-                className="flex items-center gap-1 text-sm font-medium hover:text-[var(--primary)] transition-colors"
-                aria-expanded={isDocsOpen ? 'true' : 'false'}
-                aria-haspopup="true"
-              >
-                Docs
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`transition-transform ${isDocsOpen ? 'rotate-180' : ''}`}
-                  aria-hidden="true"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-
-              {isDocsOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-lg py-2 animate-fade-in">
-                  {docsItems.map((doc) => (
-                    <Link
-                      key={doc.label}
-                      href={doc.href}
-                      className="block px-4 py-2 hover:bg-[var(--border)] hover:bg-opacity-50 transition-colors"
-                      onClick={() => setIsDocsOpen(false)}
-                    >
-                      <span className="font-medium text-sm">{doc.label}</span>
-                      <p className="text-xs text-[var(--muted)] mt-0.5">{doc.description}</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* Theme Toggle */}
             <button
@@ -233,7 +132,7 @@ export default function Navigation() {
             </a>
 
             {/* CTA Button */}
-            <Link href="/framework" className="btn btn-primary text-sm">
+            <Link href="/docs#quickstart" className="btn btn-primary text-sm">
               Get Started
             </Link>
           </div>
@@ -298,23 +197,6 @@ export default function Navigation() {
                 </Link>
               ))}
 
-              {/* Mobile Docs Section */}
-              <div className="pt-2 border-t border-[var(--border)]">
-                <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">
-                  Docs
-                </p>
-                {docsItems.map((doc) => (
-                  <Link
-                    key={doc.label}
-                    href={doc.href}
-                    className="block py-2 text-sm font-medium hover:text-[var(--primary)] transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {doc.label}
-                  </Link>
-                ))}
-              </div>
-
               <div className="flex items-center gap-4 pt-4 border-t border-[var(--border)]">
                 <button
                   type="button"
@@ -326,7 +208,7 @@ export default function Navigation() {
                 </button>
               </div>
               <Link
-                href="/framework"
+                href="/docs#quickstart"
                 className="btn btn-primary text-sm w-full"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
