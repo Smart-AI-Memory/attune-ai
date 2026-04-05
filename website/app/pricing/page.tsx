@@ -1,16 +1,26 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { generateMetadata, generateStructuredData } from '@/lib/metadata';
-import { getPricingSummary } from '@/lib/features';
+import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
 
-export const metadata: Metadata = generateMetadata({
-  title: 'Free & Open Source AI Workflows for Claude Code — Apache 2.0',
-  description: 'Attune AI is fully open source under Apache 2.0. 17 AI workflows, multi-agent orchestration, and cost-optimized tier routing — free for everyone.',
+export const metadata: Metadata = genMeta({
+  title: 'Free & Open Source',
+  description:
+    'Attune AI is fully open source under Apache 2.0. Help content generation, progressive depth, and staleness detection — free for everyone.',
   url: 'https://smartaimemory.com/pricing',
 });
+
+const includedItems = [
+  'Help content generation from source code',
+  'Progressive depth templates (concept / task / reference)',
+  'Staleness detection and auto-regeneration',
+  'Claude Code plugin with 14 skills',
+  'Standalone reader (attune-help)',
+  'Full source code access',
+  'Community support on GitHub',
+  'Commercial use rights (Apache 2.0)',
+];
 
 export default function PricingPage() {
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
@@ -29,223 +39,158 @@ export default function PricingPage() {
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         {/* Hero Section */}
-        <section className="py-20 gradient-primary text-white relative overflow-hidden">
-          <div className="absolute inset-0" aria-hidden="true">
-            <Image
-              src="/images/AdobeStock_1773561909.jpeg"
-              alt=""
-              fill
-              className="object-cover opacity-30 mix-blend-overlay"
-              priority
-            />
-          </div>
-          <div className="container relative">
+        <section className="py-20 gradient-primary text-white">
+          <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <div className="flex justify-center mb-6">
-                <Image
-                  src="/images/icons/briefcase.svg"
-                  alt=""
-                  width={56}
-                  height={56}
-                  className="invert opacity-90"
-                />
-              </div>
               <h1 className="text-5xl font-bold mb-6">
-                Free & Open Source
+                Free &amp; Open Source
               </h1>
-              <p className="text-2xl mb-8 opacity-90">
-                Apache License 2.0 — Free for everyone. Build whatever you want.
+              <p className="text-xl opacity-90 mb-8">
+                Apache License 2.0 — free for everyone. No hidden fees,
+                no usage limits, no license keys.
               </p>
               <a
                 href="https://github.com/Smart-AI-Memory/attune-ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-secondary text-lg px-8 py-4 inline-block"
+                className="px-8 py-4 text-lg rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors inline-block"
               >
-                View on GitHub →
+                View on GitHub
               </a>
             </div>
           </div>
         </section>
 
-        {/* Open Source Benefits */}
-        <section className="py-20">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-12">
-                Now Fully Open Source
+        {/* Everything Included */}
+        <section className="py-24 px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">
+                What You Get
+              </span>
+              <h2 className="text-4xl font-extrabold">
+                Everything Included
               </h2>
+            </div>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
-                  <div className="text-4xl mb-4">🎉</div>
-                  <h3 className="text-2xl font-bold mb-4">No Cost, Ever</h3>
-                  <p className="text-[var(--text-secondary)]">
-                    Use Attune AI completely free in personal projects, startups, or large enterprises.
-                    No hidden fees, no usage limits, no license keys.
-                  </p>
+            <div className="grid md:grid-cols-2 gap-6 mb-16">
+              {includedItems.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-4 p-6 rounded-2xl bg-[var(--surface)] hover:bg-[var(--surface-container-low)] transition-all"
+                >
+                  <span className="text-[var(--primary)] text-lg mt-0.5">&#10003;</span>
+                  <span className="font-medium text-sm">{item}</span>
                 </div>
+              ))}
+            </div>
 
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
-                  <div className="text-4xl mb-4">🔓</div>
-                  <h3 className="text-2xl font-bold mb-4">Commercial Friendly</h3>
-                  <p className="text-[var(--text-secondary)]">
-                    Build and sell commercial products using Attune AI. Apache 2.0 is approved by most
-                    legal teams and includes patent protection.
-                  </p>
-                </div>
+            {/* Install */}
+            <div className="text-center">
+              <p className="text-[var(--text-secondary)] mb-6">
+                Get started in seconds:
+              </p>
+              <div className="inline-flex items-center bg-[var(--foreground)] text-[var(--background)] px-6 py-3 rounded-lg font-mono text-sm">
+                <span className="opacity-50 mr-2">$</span>
+                <span>pip install attune-ai</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
-                  <div className="text-4xl mb-4">🛠️</div>
-                  <h3 className="text-2xl font-bold mb-4">Fork & Modify</h3>
-                  <p className="text-[var(--text-secondary)]">
-                    Customize the framework for your needs. Create derivative works, private forks, or contribute
-                    back to the community.
-                  </p>
-                </div>
+        {/* Open Source Benefits */}
+        <section className="py-24 px-6 bg-[var(--surface-container-low)]">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">
+                Open Source
+              </span>
+              <h2 className="text-4xl font-extrabold">
+                Why It&apos;s Free
+              </h2>
+            </div>
 
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
-                  <div className="text-4xl mb-4">🤝</div>
-                  <h3 className="text-2xl font-bold mb-4">Community Driven</h3>
-                  <p className="text-[var(--text-secondary)]">
-                    Contribute features, fix bugs, or just star the repo. We welcome all contributors and
-                    value community feedback.
-                  </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--background)] transition-all duration-300 hover:scale-[1.02]">
+                <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                  <span className="text-2xl group-hover:brightness-0 group-hover:invert transition-all">&#127881;</span>
                 </div>
+                <h3 className="text-lg font-bold mb-3">No Cost, Ever</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Personal projects, startups, or enterprises.
+                  No fees, no limits.
+                </p>
               </div>
 
-              {/* What You Get */}
-              <div className="bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] rounded-lg p-8 text-white">
-                <h3 className="text-2xl font-bold mb-6 text-center">Everything Included</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">{getPricingSummary()}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Progressive tier escalation (70-85% cost savings)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Semantic caching — avoids redundant API calls (~57% hit rate)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Multi-agent orchestration</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Anthropic auto-caching on cached tokens (Anthropic built-in, zero config)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Full source code access</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Community support on GitHub</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white mt-1">✓</span>
-                    <span className="text-sm">Commercial use rights</span>
-                  </div>
+              <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--background)] transition-all duration-300 hover:scale-[1.02]">
+                <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                  <span className="text-2xl group-hover:brightness-0 group-hover:invert transition-all">&#128275;</span>
                 </div>
+                <h3 className="text-lg font-bold mb-3">Commercial Friendly</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Build and sell commercial products. Apache 2.0
+                  includes patent protection.
+                </p>
+              </div>
+
+              <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--background)] transition-all duration-300 hover:scale-[1.02]">
+                <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                  <span className="text-2xl group-hover:brightness-0 group-hover:invert transition-all">&#128736;&#65039;</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Fork &amp; Modify</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Customize for your needs. Create private forks
+                  or contribute back.
+                </p>
+              </div>
+
+              <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--background)] transition-all duration-300 hover:scale-[1.02]">
+                <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                  <span className="text-2xl group-hover:brightness-0 group-hover:invert transition-all">&#129309;</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Community Driven</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Contribute features, fix bugs, or star the repo.
+                  We welcome everyone.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Why Open Source */}
-        <section className="py-20 bg-[var(--border)] bg-opacity-30">
-          <div className="container">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-12">
+        <section className="py-24 px-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">
+                Our Philosophy
+              </span>
+              <h2 className="text-4xl font-extrabold">
                 Why We Went Open Source
               </h2>
+            </div>
 
-              <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-8 mb-8">
-                <h3 className="text-xl font-bold mb-3">Adoption Over Revenue</h3>
-                <p className="text-[var(--text-secondary)] mb-4">
-                  We realized our Fair Source license was limiting adoption without generating meaningful revenue.
-                  Developers want to use proven, open source tools—especially in the AI space where alternatives
-                  like LangChain and LangGraph are fully open.
-                </p>
-                <p className="text-[var(--text-secondary)]">
-                  Going Apache 2.0 lets us focus on what matters: building the best AI orchestration framework
-                  and growing a community of users and contributors.
+            <div className="space-y-8">
+              <div className="p-8 rounded-2xl bg-[var(--surface)] border-l-4 border-[var(--primary)]">
+                <h3 className="text-xl font-bold mb-3">
+                  Adoption Over Revenue
+                </h3>
+                <p className="text-[var(--text-secondary)] leading-relaxed">
+                  Developers want proven, open source tools — especially
+                  in the AI space. Going Apache 2.0 lets us focus on
+                  building the best help content generation framework
+                  and growing a community of contributors.
                 </p>
               </div>
 
-              <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-8 mb-8">
-                <h3 className="text-xl font-bold mb-3">Sustainable Through Services</h3>
-                <p className="text-[var(--text-secondary)] mb-4">
-                  Open source doesn&apos;t mean no business model. We&apos;ll monetize through:
-                </p>
-                <ul className="space-y-2 text-[var(--text-secondary)]">
-                  <li>• <strong>Managed hosting</strong> - Attune Cloud for teams</li>
-                  <li>• <strong>Enterprise features</strong> - SSO, audit logs, team management</li>
-                  <li>• <strong>Support contracts</strong> - SLAs and priority assistance</li>
-                  <li>• <strong>Consulting services</strong> - Help teams implement AI workflows</li>
-                </ul>
-                <p className="text-[var(--text-secondary)] mt-4">
-                  But first, we need adoption. And that means being fully open source.
-                </p>
-              </div>
-
-              <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-8">
+              <div className="p-8 rounded-2xl bg-[var(--surface)] border-l-4 border-[var(--secondary)]">
                 <h3 className="text-xl font-bold mb-3">Community First</h3>
-                <p className="text-[var(--text-secondary)]">
-                  The best developer tools are built by communities, not companies. By going open source, we&apos;re
-                  inviting the world to help shape Attune AI&apos;s future. Your feedback, contributions, and
+                <p className="text-[var(--text-secondary)] leading-relaxed">
+                  The best developer tools are built by communities,
+                  not companies. Your feedback, contributions, and
                   support are what will make this project successful.
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Future Plans */}
-        <section className="py-20">
-          <div className="container">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-4xl font-bold mb-6">
-                Future Enterprise Features
-              </h2>
-              <p className="text-xl text-[var(--text-secondary)] mb-8">
-                The core framework will always be free and open source. In the future, we may offer optional
-                enterprise features for teams:
-              </p>
-              <div className="grid md:grid-cols-2 gap-6 text-left mb-12">
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold mb-2">Attune Cloud</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Managed hosting with automatic updates, monitoring, and team collaboration features.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold mb-2">Enterprise Support</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Priority support, SLA guarantees, and direct access to maintainers.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold mb-2">Advanced Security</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    SSO, SAML, audit logs, compliance reports, and security scanning.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold mb-2">Custom Workflows</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Professional services to build custom AI workflows for your specific needs.
-                  </p>
-                </div>
-              </div>
-              <p className="text-[var(--text-secondary)]">
-                <strong>Note:</strong> These features don&apos;t exist yet. We&apos;re focused on building adoption
-                and community first. Interested in enterprise features? <Link href="/contact" className="text-[var(--primary)] hover:underline">Let us know</Link>.
-              </p>
             </div>
           </div>
         </section>
@@ -258,20 +203,21 @@ export default function PricingPage() {
                 Ready to Get Started?
               </h2>
               <p className="text-xl mb-8 opacity-90">
-                Free and open source forever. Build the next generation of AI applications.
+                Free and open source forever. Generate help content
+                from your codebase today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
                   href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-secondary text-lg px-8 py-4"
+                  className="px-8 py-4 text-lg rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >
                   Star on GitHub
                 </a>
                 <Link
-                  href="/framework-docs/getting-started/"
-                  className="btn btn-outline-white text-lg px-8 py-4"
+                  href="/docs"
+                  className="px-8 py-4 text-lg rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >
                   View Documentation
                 </Link>

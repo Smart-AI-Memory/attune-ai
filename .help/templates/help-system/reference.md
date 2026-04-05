@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: reference
-generated_at: 2026-04-04T02:25:50.376175+00:00
-source_hash: cb73fad6d8cdda9b027176f7e3c046b7f6e2d022d3546db534c3ab1b0d741b0b
+generated_at: 2026-04-04T13:00:34.144583+00:00
+source_hash: b3961a69a2834514dc7e777ba16f67fd57a9770e63c41fd38219fcf1994682c6
 status: generated
 ---
 
@@ -88,8 +88,6 @@ status: generated
 | `save_manifest()` | Write a FeatureManifest to features.yaml. | `src/attune/help/manifest.py` |
 
 | `match_files_to_features()` | Match changed files against feature glob patterns. | `src/attune/help/manifest.py` |
-
-| `get_feature()` | Look up a feature by name. | `src/attune/help/manifest.py` |
 
 | `resolve_topic()` | Resolve a user query to a feature name. | `src/attune/help/manifest.py` |
 

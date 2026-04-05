@@ -1,6 +1,6 @@
 ---
 name: coach
-description: "Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, tell me more, how does, what is, help with, deeper."
+description: "Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, help, tell me more, how does, what is, help with, deeper."
 argument-hint: "<topic | init | status | maintain | update>"
 ---
 

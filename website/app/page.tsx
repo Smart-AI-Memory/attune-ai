@@ -5,21 +5,18 @@ import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
 
-const codeExample = `from attune.workflows import list_workflows
+const codeExample = `from attune_help import HelpEngine
 
-# See all 18 available workflows
-workflows = list_workflows()
-for wf in workflows:
-    print(f"{wf['name']:20s} stages={len(wf.get('stages', []))}")
+engine = HelpEngine(template_dir=".help/templates")
 
-# Run a security audit on your codebase
-from attune.workflows.security_audit import SecurityAuditWorkflow
+# First call: concept (what is it?)
+print(engine.lookup("security-audit"))
 
-audit = SecurityAuditWorkflow()
-result = await audit.execute(path="./src")
-print(f"Score: {result.final_output.get('health_score')}/100")
-print(f"Cost: \${result.cost_report.total_cost:.2f}")`;
+# Repeat: task (how to do it)
+print(engine.lookup("security-audit"))
 
+# Again: reference (full API detail)
+print(engine.lookup("security-audit"))`;
 
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
@@ -34,39 +31,39 @@ export default function Home() {
       />
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
+
         {/* Hero Section */}
         <section className="relative overflow-hidden px-6 py-24 md:py-32" aria-label="Hero">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v5.1.2</span>
+                  <span>v5.8.1</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
-                  <span className="opacity-80">18 Workflows</span>
+                  <span className="opacity-80">User Assistants Platform</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-                  AI Workflows &amp; Agent Orchestration{' '}
-                  <span className="text-[var(--primary)]">for Claude Code</span>
+                  Living Docs,{' '}
+                  <span className="text-gradient">Rooted in Code</span>
                 </h1>
                 <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
-                  18 multi-agent workflows for code review, security, testing,
-                  and release. 30 MCP tools. 10 auto-invoking skills. Just
-                  type <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-sm">/attune</code> and go.
+                  Help content generated from your codebase. Stays fresh
+                  automatically. Enhance with human expertise when it matters.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-sm group cursor-pointer border border-white/20">
                     <span className="opacity-50 mr-2">$</span>
-                    <span>pip install &apos;attune-ai[developer]&apos;</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity">
+                    <span>pip install attune-help</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity" aria-hidden="true">
                       <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                     </svg>
                   </div>
                   <Link
-                    href="/workflows"
+                    href="/how-it-works"
                     className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)]"
                   >
-                    Explore Workflows
+                    See How It Works
                   </Link>
                 </div>
                 {/* Trust badges */}
@@ -79,42 +76,50 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Agent orchestrator visual */}
+              {/* Depth cards visual */}
               <div className="relative">
                 <div className="relative z-10 rounded-2xl overflow-hidden bg-[var(--surface-container-low)] p-8 border border-[var(--border)]/40 shadow-2xl">
                   <div className="flex items-center gap-2 mb-6">
                     <div className="w-3 h-3 rounded-full bg-red-500/40"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500/40"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500/40"></div>
-                    <span className="ml-auto text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Attune AI v5.1.2</span>
+                    <span className="ml-auto text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Progressive Depth</span>
                   </div>
-                  <div className="space-y-4">
-                    <div className="h-4 bg-[var(--surface-container-high)] rounded w-3/4"></div>
-                    <div className="h-4 bg-[var(--surface-container-high)] rounded w-1/2"></div>
-                    <div className="grid grid-cols-3 gap-4 py-4">
-                      <div className="h-20 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex flex-col items-center justify-center">
-                        <span className="text-2xl mb-1">🔍</span>
-                        <span className="text-[10px] font-bold text-[var(--primary)]">SCAN</span>
-                      </div>
-                      <div className="h-20 rounded-lg bg-[var(--secondary)]/10 border border-[var(--secondary)]/20 flex flex-col items-center justify-center">
-                        <span className="text-2xl mb-1">🧠</span>
-                        <span className="text-[10px] font-bold text-[var(--secondary)]">ANALYZE</span>
-                      </div>
-                      <div className="h-20 rounded-lg bg-[var(--surface-container-highest)] border border-[var(--border)]/30 flex flex-col items-center justify-center">
-                        <span className="text-2xl mb-1">📋</span>
-                        <span className="text-[10px] font-bold text-[var(--text-secondary)]">REPORT</span>
-                      </div>
+
+                  {/* Code icon connecting to depth cards */}
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="w-12 h-12 rounded-lg bg-[var(--surface-container-high)] border border-[var(--border)]/30 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="16 18 22 12 16 6" />
+                        <polyline points="8 6 2 12 8 18" />
+                      </svg>
                     </div>
-                    <div className="h-4 bg-[var(--surface-container-high)] rounded w-full opacity-60"></div>
-                    <div className="h-4 bg-[var(--surface-container-high)] rounded w-2/3 opacity-60"></div>
                   </div>
-                  {/* Floating insight */}
-                  <div className="absolute -bottom-4 -right-4 glass-panel p-5 rounded-xl shadow-xl max-w-[220px]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">✨</span>
-                      <span className="text-[10px] font-bold text-[var(--foreground)] tracking-wider uppercase">Workflow Result</span>
+
+                  {/* Connection lines */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-px h-4 bg-[var(--border)]"></div>
+                  </div>
+                  <div className="flex justify-between px-8 mb-2">
+                    <div className="flex-1 flex justify-center">
+                      <div className="w-full h-px bg-[var(--border)]"></div>
                     </div>
-                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Security audit complete. Score: <span className="text-[var(--secondary)] font-bold">95/100</span>. Cost: $0.03.</p>
+                  </div>
+
+                  {/* Three depth cards */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="rounded-lg p-4 bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
+                      <span className="text-xs font-bold text-[var(--primary)] tracking-wider uppercase mb-2">Concept</span>
+                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">What is it?</p>
+                    </div>
+                    <div className="rounded-lg p-4 bg-[var(--secondary)]/10 border border-[var(--secondary)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
+                      <span className="text-xs font-bold text-[var(--secondary)] tracking-wider uppercase mb-2">Task</span>
+                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">How to do it?</p>
+                    </div>
+                    <div className="rounded-lg p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
+                      <span className="text-xs font-bold text-[var(--accent)] tracking-wider uppercase mb-2">Reference</span>
+                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">Full API detail</p>
+                    </div>
                   </div>
                 </div>
                 {/* Background blur */}
@@ -129,29 +134,29 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-16 items-start">
               <div className="md:w-1/3">
-                <h2 className="text-3xl font-extrabold mb-6">Start Building in Seconds.</h2>
+                <h2 className="text-3xl font-extrabold mb-6">Your Code Becomes Your Docs</h2>
                 <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                  Install from PyPI and run your first workflow. No API key needed in Claude Code — workflows run as skills using your subscription.
+                  Point the engine at your codebase. Each repeat query goes deeper &mdash; from concept to task to full reference.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">✓</span>
-                    <span className="font-medium text-sm">Native Claude Code Plugin</span>
+                    <span className="text-[var(--secondary)]">&#10003;</span>
+                    <span className="font-medium text-sm">Generated from source code</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">✓</span>
-                    <span className="font-medium text-sm">30 MCP Tools Built In</span>
+                    <span className="text-[var(--secondary)]">&#10003;</span>
+                    <span className="font-medium text-sm">Progressive depth: concept, task, reference</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">✓</span>
-                    <span className="font-medium text-sm">Open Source — Apache 2.0</span>
+                    <span className="text-[var(--secondary)]">&#10003;</span>
+                    <span className="font-medium text-sm">Open Source &mdash; Apache 2.0</span>
                   </li>
                 </ul>
               </div>
               <div className="md:w-2/3 w-full">
                 <div className="bg-[#213145] rounded-xl overflow-hidden shadow-2xl">
                   <div className="flex items-center px-4 py-2 bg-[#2a3b50] border-b border-white/5">
-                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">workflow_example.py</span>
+                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">help_example.py</span>
                     <div className="ml-auto flex gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
@@ -166,43 +171,43 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features Grid */}
-        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Features">
+        {/* Three Product Cards */}
+        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">What Attune AI Does</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Three Ways to Use It</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
+            {/* attune-ai */}
             <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
               <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-8 group-hover:bg-[var(--primary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all">🤖</span>
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128736;&#65039;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">18 Multi-Agent Workflows</h3>
+              <h3 className="text-xl font-bold mb-4">attune-ai</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Code review, security audit, test generation, release prep — each runs a specialist team of 2-6 Claude subagents with intelligent model routing.
+                Generate, maintain, and serve help from your code. Full framework on PyPI with workflows, staleness detection, and template management.
               </p>
             </div>
 
-            {/* Feature 2 */}
+            {/* attune-help */}
             <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
               <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-8 group-hover:bg-[var(--secondary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all">💬</span>
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128214;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">Socratic Discovery</h3>
+              <h3 className="text-xl font-bold mb-4">attune-help</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Workflows ask clarifying questions before executing — what scope? which files? what depth? — so you get exactly the analysis you need.
+                Lightweight reader. 1 dependency, 6 files. Embed progressive help anywhere &mdash; CLI tools, notebooks, internal apps.
               </p>
             </div>
 
-            {/* Feature 3 */}
+            {/* Claude Code Plugin */}
             <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
               <div className="w-14 h-14 rounded-xl bg-[var(--surface-container-high)] flex items-center justify-center mb-8 group-hover:bg-[var(--foreground)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all">🧙</span>
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9889;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">Smart Wizards</h3>
+              <h3 className="text-xl font-bold mb-4">Claude Code Plugin</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Pre-configured workflow templates for Claude Code. Deploy multi-step guided workflows — from security audits to release prep — without writing boilerplate.
+                Type <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/coach</code> in Claude Code. Progressive help in your terminal &mdash; no setup required.
               </p>
             </div>
           </div>
@@ -213,13 +218,13 @@ export default function Home() {
           <div className="grid lg:grid-cols-5 gap-8 items-center">
             <div className="lg:col-span-3 hero-gradient rounded-3xl p-12 text-white relative overflow-hidden">
               <div className="relative z-10">
-                <h3 className="text-3xl font-extrabold mb-6">Ready to automate your dev workflows?</h3>
+                <h3 className="text-3xl font-extrabold mb-6">Ready to make your docs live?</h3>
                 <p className="text-white/80 text-lg mb-8 max-w-lg">
-                  Install from PyPI. Type <code className="bg-white/20 px-1.5 py-0.5 rounded text-sm">/attune</code> in Claude Code. Go.
+                  Install from PyPI. Generate templates from your code. Ship help that never goes stale.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/framework-docs/getting-started/"
+                    href="/docs"
                     className="bg-white text-[var(--primary)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-container-low)] transition-colors text-center"
                   >
                     Read the Docs
@@ -240,20 +245,20 @@ export default function Home() {
             <div className="lg:col-span-2 space-y-6">
               <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
                 <div className="flex items-center gap-4 mb-3">
-                  <span className="text-[var(--primary)]">🔒</span>
-                  <span className="font-bold">Security Built In</span>
+                  <span className="text-[var(--primary)]">&#x1F504;</span>
+                  <span className="font-bold">Auto-Freshness</span>
                 </div>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Path traversal protection, SSRF validation, rate limiting, module import restrictions, and PreToolUse security hooks.
+                  Source hashes detect code drift. Stale templates regenerate automatically &mdash; your docs stay in sync with your codebase.
                 </p>
               </div>
               <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
                 <div className="flex items-center gap-4 mb-3">
-                  <span className="text-[var(--secondary)]">💰</span>
-                  <span className="font-bold">Cost-Optimized Routing</span>
+                  <span className="text-[var(--secondary)]">&#x270F;&#xFE0F;</span>
+                  <span className="font-bold">Human-Enhanceable</span>
                 </div>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Opus for security, Sonnet for analysis, Haiku for scanning. Right model per task with configurable budget caps ($0.50 – $5.00).
+                  Edit generated templates freely, or write from scratch. The engine respects hand-written content and never overwrites your work.
                 </p>
               </div>
             </div>

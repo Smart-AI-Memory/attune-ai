@@ -35,6 +35,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: '/workflows/', destination: '/docs/#workflows', permanent: true },
+      { source: '/wizards/', destination: '/docs/#workflows', permanent: true },
+      { source: '/wizards/:name/', destination: '/docs/#workflows', permanent: true },
+      { source: '/attune-lite/', destination: '/docs/#plugin', permanent: true },
+      { source: '/attune-plugin/', destination: '/docs/#plugin', permanent: true },
+      { source: '/compare/', destination: '/', permanent: true },
+      { source: '/compare/:slug/', destination: '/', permanent: true },
+      { source: '/tools/', destination: '/docs/', permanent: true },
+      { source: '/tools/:path*/', destination: '/docs/', permanent: true },
+      { source: '/demo/', destination: '/docs/', permanent: true },
+      { source: '/demo/:path*/', destination: '/docs/', permanent: true },
+      { source: '/framework/', destination: '/docs/#quickstart', permanent: true },
+      { source: '/book/', destination: '/docs/', permanent: true },
+      { source: '/chapter-23/', destination: '/docs/', permanent: true },
+      { source: '/plugins/', destination: '/docs/#plugin', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
