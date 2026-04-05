@@ -81,6 +81,26 @@ Or create them manually — any markdown file with
 `feature`, `depth`, and `source_hash` frontmatter
 fields works.
 
+## Demo Templates
+
+The package includes a demo feature showing the
+progressive depth format:
+
+```python
+from attune_help import get_demo_path
+
+# Copy to your project
+import shutil
+shutil.copytree(
+    get_demo_path() / "security-audit",
+    ".help/templates/security-audit",
+)
+```
+
+The `security-audit/` demo contains `concept.md`,
+`task.md`, and `reference.md` — the three depth
+levels that `/coach init` generates for each feature.
+
 ## API
 
 ### `HelpEngine`

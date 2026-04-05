@@ -7,6 +7,7 @@ full attune-ai authoring toolkit.
 
 from __future__ import annotations
 
+from attune_help.demos import get_demo_path
 from attune_help.engine import (
     AudienceProfile,
     HelpEngine,
@@ -22,6 +23,7 @@ __all__ = [
     "PopulatedTemplate",
     "SessionStorage",
     "TemplateContext",
+    "get_demo_path",
 ]
 
 try:

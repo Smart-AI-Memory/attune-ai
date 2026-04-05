@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-help"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lightweight help runtime with progressive depth and audience adaptation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -40,4 +40,4 @@ Repository = "https://github.com/Smart-AI-Memory/attune-ai"
 where = ["src"]
 
 [tool.setuptools.package-data]
-attune_help = ["templates/**/*.md", "templates/**/*.json"]
+attune_help = ["templates/**/*.md", "templates/**/*.json", "demos/**/*.md"]
