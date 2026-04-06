@@ -677,10 +677,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         )
         from attune.help.generator import generate_feature_templates
         from attune.help.manifest import save_manifest
+        from attune.security.path_validation import _validate_file_path
 
         action = args.get("action", "scan")
         project_root = self._workspace_root
         help_dir = Path(project_root) / ".help"
+        _validate_file_path(str(help_dir), allowed_dir=self._workspace_root)
 
         if action == "scan":
             proposals = scan_project(project_root)
@@ -702,26 +704,41 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         if action == "accept":
             accepted_raw = args.get("accepted", [])
-            proposals = [
-                ProposedFeature(
-                    name=a["name"],
-                    description=a["description"],
-                    files=a.get("files", []),
-                    tags=a.get("tags", []),
+            proposals = []
+            for a in accepted_raw:
+                name = a.get("name")
+                description = a.get("description")
+                if not name or not description:
+                    return {
+                        "success": False,
+                        "error": "Each accepted proposal must have 'name' and 'description'.",
+                    }
+                proposals.append(
+                    ProposedFeature(
+                        name=name,
+                        description=description,
+                        files=a.get("files", []),
+                        tags=a.get("tags", []),
+                    )
                 )
-                for a in accepted_raw
-            ]
             manifest = proposals_to_manifest(proposals)
             save_manifest(manifest, help_dir)
 
             generated = []
+            failed = []
             for feat in manifest.features.values():
-                result = generate_feature_templates(feat, help_dir, project_root)
+                try:
+                    gen_result = generate_feature_templates(feat, help_dir, project_root)
+                except OSError as exc:
+                    logger.warning("Template generation failed for %s: %s", feat.name, exc)
+                    failed.append(feat.name)
+                    continue
+
                 generated.append(
                     {
-                        "feature": result.feature,
-                        "templates": len(result.templates),
-                        "files": len(result.matched_files),
+                        "feature": gen_result.feature,
+                        "templates": len(gen_result.templates),
+                        "files": len(gen_result.matched_files),
                     }
                 )
 
@@ -730,6 +747,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 "manifest_path": str(help_dir / "features.yaml"),
                 "features": len(manifest.features),
                 "generated": generated,
+                "failed": failed,
             }
 
         return {"success": False, "error": f"Unknown action: {action}"}
@@ -747,9 +765,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         from attune.help.maintenance import format_status_report
         from attune.help.manifest import load_manifest
         from attune.help.staleness import check_staleness
+        from attune.security.path_validation import _validate_file_path
 
         project_root = self._workspace_root
         help_dir = Path(project_root) / ".help"
+        _validate_file_path(str(help_dir), allowed_dir=self._workspace_root)
 
         try:
             manifest = load_manifest(help_dir)
@@ -781,9 +801,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         """
         from attune.help.maintenance import run_maintenance
+        from attune.security.path_validation import _validate_file_path
 
         project_root = self._workspace_root
         help_dir = Path(project_root) / ".help"
+        _validate_file_path(str(help_dir), allowed_dir=self._workspace_root)
 
         features = args.get("features")
         dry_run = args.get("dry_run", False)

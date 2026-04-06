@@ -72,7 +72,7 @@ def main() -> None:
         sys.path.insert(0, str(help_dir.parent / "src"))
         from attune.help.maintenance import run_hook
 
-        result = run_hook(
+        hook_result = run_hook(
             help_dir=str(help_dir),
             project_root=str(help_dir.parent),
         )
@@ -80,11 +80,11 @@ def main() -> None:
         # INTENTIONAL: hook must never crash the commit flow
         return
 
-    if result is None:
+    if hook_result is None:
         return
 
-    if result.stale_count > 0:
-        regen = result.regenerated_count
+    if hook_result.stale_count > 0:
+        regen = hook_result.regenerated_count
         if regen > 0:
             print(
                 f"attune: auto-updated {regen} help "
@@ -93,10 +93,10 @@ def main() -> None:
                 file=sys.stderr,
             )
         else:
-            stale = result.staleness.stale_features
+            stale = hook_result.staleness.stale_features
             names = ", ".join(stale[:5])
             print(
-                f"attune: {result.stale_count} help feature(s) "
+                f"attune: {hook_result.stale_count} help feature(s) "
                 f"are stale ({names}). Run /coach maintain "
                 f"to update.",
                 file=sys.stderr,
