@@ -4,7 +4,14 @@ description: "Find test gaps and generate tests for uncovered code. Triggers on:
 ---
 # Smart Test
 
-**IMPORTANT: Start your response by telling the user:**
+**IMPORTANT: Start your response with a context preamble.**
+
+Call `help_lookup(topic="smart-test", mode="preamble")` and
+display the returned `preamble` text as a blockquote. Then
+tell the user they can say "tell me more" for a step-by-step
+guide, or answer the scoping questions below to proceed.
+
+If the MCP call fails, fall back to:
 
 > **Smart Test** — Finds untested code and generates pytest tests with edge cases and error paths.
 

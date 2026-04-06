@@ -1,31 +1,44 @@
 ---
 feature: memory
 depth: concept
-generated_at: 2026-04-04T02:25:50.438058+00:00
+generated_at: 2026-04-06T04:31:02.171580+00:00
 source_hash: f7be50272674d976f7e23f12d2da9909620b48df295f03bbf3d21d0e9e8b1034
 status: generated
 ---
 
 # Memory
 
-## What
+## How it works
 
-Memory subsystem — storage, retrieval, and security
+Memory subsystem provides persistent storage, semantic search, and centralized management for AI interactions.
 
-## Why
+The main building blocks are:
 
-This feature provides memory functionality for the project.
+- **`MemoryBackend`** — Protocol that defines the interface for short-term memory storage systems.
+- **`SearchableMemoryBackend`** — Extended protocol that adds semantic search capabilities to memory backends.
+- **`ClaudeMemoryConfig`** — Configuration settings for integrating with Claude's memory system.
+- **`MemoryFile`** — Represents a loaded CLAUDE.md file containing project-specific memory data.
+- **`ClaudeMemoryLoader`** — Manages loading and parsing of CLAUDE.md memory files for code projects.
 
-## How
+Under the hood, this feature spans 145 source
+files covering:
 
-Key components:
+- Memory backend protocols and implementations
+- Claude memory integration for code projects
+- Enterprise control panel for memory management
+- Redis-based storage (legacy support)
 
-- `MemoryBackend` — Protocol for short-term memory backends.
+## What connects to it
 
-- `SearchableMemoryBackend` — Extended protocol for backends with semantic search.
+This feature relates to: memory, storage.
 
-- `ClaudeMemoryConfig` — Configuration for Claude memory integration
+Other parts of the codebase interact with
+memory through these interfaces:
 
-- `MemoryFile` — Represents a loaded CLAUDE.md memory file
-
-- `ClaudeMemoryLoader` — Loads and manages Claude Code memory files (CLAUDE.md).
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `MemoryBackend` | Protocol that defines the interface for short-term memory storage systems. | `src/attune/memory/backend.py` |
+| `SearchableMemoryBackend` | Extended protocol that adds semantic search capabilities to memory backends. | `src/attune/memory/backend.py` |
+| `ClaudeMemoryConfig` | Configuration settings for integrating with Claude's memory system. | `src/attune/memory/claude_memory.py` |
+| `MemoryFile` | Represents a loaded CLAUDE.md file containing project-specific memory data. | `src/attune/memory/claude_memory.py` |
+| `ClaudeMemoryLoader` | Manages loading and parsing of CLAUDE.md memory files for code projects. | `src/attune/memory/claude_memory.py` |

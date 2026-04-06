@@ -1,31 +1,43 @@
 ---
 feature: telemetry
 depth: concept
-generated_at: 2026-04-04T02:25:50.579374+00:00
+generated_at: 2026-04-06T04:34:57.382786+00:00
 source_hash: cdb506bfba26d96b90402bbc00b19c3dd80afaec88f6a4ae5de0c1c585b63162
 status: generated
 ---
 
 # Telemetry
 
-## What
+## How it works
 
-Usage tracking and feedback loops
+Telemetry tracking for Attune AI, with agent coordination and human approval gates.
 
-## Why
+The main building blocks are:
 
-This feature provides telemetry functionality for the project.
+- **`CoordinationSignal`** — Coordination signal between agents.
+- **`CoordinationSignals`** — TTL-based inter-agent coordination signals.
+- **`AgentHeartbeat`** — Agent heartbeat data structure.
+- **`HeartbeatCoordinator`** — Coordinates agent heartbeats using Redis TTL keys.
+- **`ApprovalRequest`** — Approval request with context for human decision.
 
-## How
+Under the hood, this feature spans 33 source
+files covering:
 
-Key components:
+- Agent coordination via TTL signals
+- Agent heartbeat tracking system
+- Human approval gates for workflow control
 
-- `CoordinationSignal` — Coordination signal between agents.
+## What connects to it
 
-- `CoordinationSignals` — TTL-based inter-agent coordination signals.
+This feature relates to: telemetry, metrics.
 
-- `AgentHeartbeat` — Agent heartbeat data structure.
+Other parts of the codebase interact with
+telemetry through these interfaces:
 
-- `HeartbeatCoordinator` — Coordinates agent heartbeats using Redis TTL keys.
-
-- `ApprovalRequest` — Approval request with context for human decision.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `CoordinationSignal` | Coordination signal between agents. | `src/attune/telemetry/agent_coordination.py` |
+| `CoordinationSignals` | TTL-based inter-agent coordination signals. | `src/attune/telemetry/agent_coordination.py` |
+| `AgentHeartbeat` | Agent heartbeat data structure. | `src/attune/telemetry/agent_tracking.py` |
+| `HeartbeatCoordinator` | Coordinates agent heartbeats using Redis TTL keys. | `src/attune/telemetry/agent_tracking.py` |
+| `ApprovalRequest` | Approval request with context for human decision. | `src/attune/telemetry/approval_gates.py` |

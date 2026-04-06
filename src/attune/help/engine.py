@@ -54,6 +54,9 @@ from attune.help.manifest import (
     save_manifest,
 )
 
+# Re-export from preamble.py (context-sensitive one-liner)
+from attune.help.preamble import get_preamble, get_related_preambles  # noqa: F401
+
 # Re-export from progression.py (type-driven depth)
 from attune.help.progression import (
     populate_progressive,
@@ -120,4 +123,7 @@ __all__ = [
     "run_hook",
     "get_changed_files",
     "format_status_report",
+    # Preamble
+    "get_preamble",
+    "get_related_preambles",
 ]

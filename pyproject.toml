@@ -69,6 +69,7 @@ dependencies = [
     "anthropic>=0.40.0,<1.0.0",  # Core LLM provider (direct SDK usage)
     "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
     "python-multipart>=0.0.22",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg (transitive via mcp)
+    "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)

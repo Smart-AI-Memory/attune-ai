@@ -1,0 +1,97 @@
+# Work with {{ title | lower }}
+
+{% if description %}
+Use {{ title | lower }} when you need to {{ description | lower }}.
+{% else %}
+Use {{ title | lower }} when you need to interact with this subsystem.
+{% endif %}
+
+## Prerequisites
+
+- Access to the project source code
+{% if file_patterns %}
+- Familiarity with the files under {{ file_patterns[0] }}
+{% endif %}
+
+## Steps
+
+{% if public_functions %}
+1. **Understand the current behavior.**
+   Read the entry points to see what {{ title | lower }}
+   does today before making changes.
+   The primary functions are:
+{% for fn in public_functions[:5] %}
+   - `{{ fn.name }}()` in `{{ fn.file }}`{% if fn.doc %} — {{ fn.doc }}{% endif %}
+
+{% endfor %}
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
+
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
+
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "{{ feature_name }}"`.
+{% elif public_classes %}
+1. **Understand the class hierarchy.**
+   Read the interfaces to see how {{ title | lower }}
+   is structured before extending or modifying.
+   The key classes are:
+{% for cls in public_classes[:5] %}
+   - `{{ cls.name }}` in `{{ cls.file }}`{% if cls.doc %} — {{ cls.doc }}{% endif %}
+
+{% endfor %}
+2. **Decide whether to extend or modify.**
+   If the class has subclasses, extend with a new one
+   rather than changing the base. If it stands alone,
+   modify directly.
+
+3. **Make your change.**
+   Follow existing patterns — naming, error handling,
+   and logging style.
+
+4. **Run the related tests.**
+   Target with `pytest -k "{{ feature_name }}"`.
+{% else %}
+1. **Locate the source files** for {{ title | lower }}.
+
+2. **Read the module docstrings** to understand the
+   subsystem's purpose before making changes.
+
+3. **Make your change** following existing patterns.
+
+4. **Run the related tests** to catch regressions.
+{% endif %}
+
+## Key files
+
+{% if file_patterns %}
+{% for pattern in file_patterns %}
+- `{{ pattern }}`
+{% endfor %}
+{% else %}
+No file patterns configured for this feature.
+{% endif %}
+
+## Common modifications
+
+{% if public_functions %}
+Functions you are most likely to modify:
+
+{% for fn in public_functions[:8] %}
+- `{{ fn.name }}()` in `{{ fn.file }}`
+{% endfor %}
+{% elif public_classes %}
+Classes you are most likely to extend:
+
+{% for cls in public_classes[:8] %}
+- `{{ cls.name }}` in `{{ cls.file }}`
+{% endfor %}
+{% else %}
+Review the source files listed above for
+modification points.
+{% endif %}

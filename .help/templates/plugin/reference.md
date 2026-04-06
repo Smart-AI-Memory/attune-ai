@@ -1,40 +1,32 @@
 ---
 feature: plugin
 depth: reference
-generated_at: 2026-04-04T13:00:34.172497+00:00
-source_hash: d77f635d1744204539648a98bb499be7b81f018d08c49a5f270bbf69bc0595a1
+generated_at: 2026-04-06T04:35:37.736926+00:00
+source_hash: 671b121fa834def159cbd2cb857178dd617b336c060648c1bb153041e24bab05
 status: generated
 ---
 
-# Plugin Reference
+# Plugin reference
+
+Hooks and runtime components that extend Claude Code with automated development workflows.
 
 ## Functions
 
 | Function | Description | File |
-
 |----------|-------------|------|
-
-| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
-
-| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
-
-| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
-
-| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
-
-| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
-
-| `validate_file_path()` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
-
-| `main()` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |
-
-| `main()` | Print welcome message to stderr (Claude Code surfaces stderr). | `plugin/hooks/welcome.py` |
+| `main()` | Format Python files automatically after Write or Edit tool use. | `plugin/hooks/format_on_save.py` |
+| `main()` | Check if help templates need updates when you start a session. | `plugin/hooks/help_freshness_check.py` |
+| `main()` | Suggest relevant help when Bash commands fail. | `plugin/hooks/help_on_error.py` |
+| `main()` | Update help templates automatically after git commits. | `plugin/hooks/help_post_commit.py` |
+| `validate_bash_command()` | Validate Bash commands against security policies before execution. | `plugin/hooks/security_guard.py` |
+| `validate_file_path()` | Validate file paths against security policies before access. | `plugin/hooks/security_guard.py` |
+| `main()` | Validate tool calls against security policies. | `plugin/hooks/security_guard.py` |
+| `main()` | Display welcome message when you start Claude Code. | `plugin/hooks/welcome.py` |
 
 
-## Source Files
+## Source files
 
 - `plugin/**`
-
 
 ## Tags
 

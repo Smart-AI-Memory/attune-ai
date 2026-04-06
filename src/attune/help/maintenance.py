@@ -190,33 +190,44 @@ def run_hook(
     )
 
 
-def format_status_report(report: StalenessReport) -> str:
+def format_status_report(
+    report: StalenessReport,
+    help_dir: str | Path | None = None,
+) -> str:
     """Format a staleness report for display.
 
     Args:
         report: The staleness report to format.
+        help_dir: Path to .help/ directory for preamble lookup.
 
     Returns:
         Markdown-formatted status report.
     """
+    from attune.help.preamble import get_preamble
+
     lines = ["## Help Status\n"]
     lines.append(f"**{report.current_count}** current, " f"**{report.stale_count}** stale\n")
 
     if report.stale_count > 0:
         lines.append("### Stale Features\n")
-        lines.append("| Feature | Files Changed |\n")
-        lines.append("|---------|---------------|\n")
+        lines.append("| Feature | Description | Files Changed |\n")
+        lines.append("|---------|-------------|---------------|\n")
         for entry in report.entries:
             if entry.is_stale:
                 count = len(entry.matched_files)
-                lines.append(f"| {entry.feature} | {count} source files |\n")
+                preamble = get_preamble(entry.feature, help_dir) or ""
+                lines.append(f"| {entry.feature} | {preamble} | {count} source files |\n")
         lines.append("")
 
     if report.current_count > 0:
         lines.append("### Current Features\n")
         for entry in report.entries:
             if not entry.is_stale:
-                lines.append(f"- {entry.feature}\n")
+                preamble = get_preamble(entry.feature, help_dir) or ""
+                if preamble:
+                    lines.append(f"- **{entry.feature}** — {preamble}\n")
+                else:
+                    lines.append(f"- {entry.feature}\n")
         lines.append("")
 
     return "\n".join(lines)
