@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "AI-powered developer workflows for Claude Code — skills-first architecture with auto-triggering from natural language",
-    "version": "5.8.1"
+    "version": "5.9.0"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "14 auto-triggering skills for security audits, code reviews, test generation, bug prediction, and release preparation. Say what you need — Claude picks the right skill.",
       "source": "./plugin",
-      "version": "5.8.1",
+      "version": "5.9.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
