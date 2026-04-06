@@ -1,9 +1,13 @@
 """Template generation from source files.
 
 Generates concept, task, and reference markdown templates
-for a feature by reading its source files. Creates the
-.help/templates/<feature>/ directory structure with YAML
-frontmatter for staleness tracking.
+for a feature by reading its source files. Uses Jinja2 meta
+templates for structure and an optional LLM polish pass for
+content quality.
+
+Meta template resolution order:
+1. Project's .help/meta_templates/ (if exists)
+2. Package defaults in src/attune/help/meta_templates/
 """
 
 from __future__ import annotations
@@ -14,12 +18,53 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+import jinja2
+
 from attune.help.manifest import Feature
 from attune.help.staleness import _read_frontmatter_value, compute_source_hash
 
 logger = logging.getLogger(__name__)
 
 _DEPTH_NAMES = ("concept", "task", "reference")
+
+# Package-level default meta templates
+_DEFAULT_META_DIR = Path(__file__).resolve().parent / "meta_templates"
+
+
+def _build_jinja_env(
+    help_dir: Path | None = None,
+) -> jinja2.Environment:
+    """Build a Jinja2 environment with template resolution.
+
+    Looks for meta templates in the project's .help/meta_templates/
+    first, then falls back to package defaults.
+
+    Args:
+        help_dir: Path to the project's .help/ directory.
+
+    Returns:
+        Configured Jinja2 Environment.
+    """
+    search_paths: list[Path] = []
+
+    # Project-local meta templates take priority
+    if help_dir:
+        project_meta = help_dir / "meta_templates"
+        if project_meta.is_dir():
+            search_paths.append(project_meta)
+
+    # Package defaults as fallback
+    search_paths.append(_DEFAULT_META_DIR)
+
+    loader = jinja2.FileSystemLoader(
+        [str(p) for p in search_paths],
+    )
+    return jinja2.Environment(  # nosec B701 — outputs markdown, not HTML
+        loader=loader,
+        keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
 
 
 @dataclass
@@ -108,6 +153,9 @@ def generate_feature_templates(
     template_dir = help_path / "templates" / feature.name
     template_dir.mkdir(parents=True, exist_ok=True)
 
+    # Build Jinja2 environment with project-first resolution
+    env = _build_jinja_env(help_path)
+
     for depth in target_depths:
         if depth not in _DEPTH_NAMES:
             logger.warning("Unknown depth '%s', skipping", depth)
@@ -126,11 +174,15 @@ def generate_feature_templates(
                 continue
 
         content = _render_template(
+            env=env,
             feature=feature,
             depth=depth,
             source_hash=source_hash,
             source_info=source_info,
         )
+
+        # LLM polish pass — improves writing quality
+        content = _maybe_polish(content, feature, source_info)
 
         out_path.write_text(content, encoding="utf-8")
         result.templates.append(
@@ -143,6 +195,38 @@ def generate_feature_templates(
         )
 
     return result
+
+
+def _maybe_polish(
+    content: str,
+    feature: Feature,
+    source_info: _SourceInfo,
+) -> str:
+    """Run the LLM polish pass if an API key is available.
+
+    Args:
+        content: Jinja2-rendered template content.
+        feature: The feature being documented.
+        source_info: Extracted source information.
+
+    Returns:
+        Polished content, or original if polish unavailable.
+    """
+    import os
+
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return content
+
+    from attune.help.polish import build_source_summary, polish_template
+
+    summary = build_source_summary(
+        public_classes=source_info.public_classes,
+        public_functions=source_info.public_functions,
+        module_docstrings=source_info.module_docstrings,
+        file_count=source_info.file_count,
+    )
+
+    return polish_template(content, feature.name, summary)
 
 
 def _is_manual(path: Path) -> bool:
@@ -230,14 +314,16 @@ def _extract_source_info(
 
 
 def _render_template(
+    env: jinja2.Environment,
     feature: Feature,
     depth: str,
     source_hash: str,
     source_info: _SourceInfo,
 ) -> str:
-    """Render a help template for a feature at a given depth.
+    """Render a help template using Jinja2 meta templates.
 
     Args:
+        env: Jinja2 environment with template search paths.
         feature: The feature.
         depth: concept, task, or reference.
         source_hash: SHA-256 of source files.
@@ -259,130 +345,25 @@ def _render_template(
         f"---\n"
     )
 
-    if depth == "concept":
-        body = _render_concept(title, feature, source_info)
-    elif depth == "task":
-        body = _render_task(title, feature, source_info)
-    else:
-        body = _render_reference(title, feature, source_info)
+    template = env.get_template(f"{depth}.md.j2")
+    body = template.render(
+        title=title,
+        feature_name=feature.name,
+        description=feature.description,
+        file_patterns=feature.files,
+        tags=feature.tags,
+        public_classes=source_info.public_classes,
+        public_functions=source_info.public_functions,
+        module_docstrings=source_info.module_docstrings,
+        config_keys=source_info.config_keys,
+        file_count=source_info.file_count,
+    )
+
+    # Strip trailing whitespace per line to avoid
+    # perpetual pre-commit failures
+    body = "\n".join(line.rstrip() for line in body.splitlines())
 
     result = frontmatter + "\n" + body
     if not result.endswith("\n"):
         result += "\n"
     return result
-
-
-def _render_concept(
-    title: str,
-    feature: Feature,
-    info: _SourceInfo,
-) -> str:
-    """Render a concept template."""
-    lines = [f"# {title}\n"]
-
-    # What
-    lines.append("## What\n")
-    if feature.description:
-        lines.append(f"{feature.description}\n")
-    elif info.module_docstrings:
-        lines.append(f"{info.module_docstrings[0]}\n")
-    else:
-        lines.append(f"{title} feature.\n")
-
-    # Why
-    lines.append("## Why\n")
-    lines.append(f"This feature provides {title.lower()} " f"functionality for the project.\n")
-
-    # How
-    lines.append("## How\n")
-    if info.public_classes:
-        lines.append("Key components:\n")
-        for cls in info.public_classes[:5]:
-            doc_part = f" — {cls['doc']}" if cls["doc"] else ""
-            lines.append(f"- `{cls['name']}`{doc_part}\n")
-        lines.append("")
-    elif info.public_functions:
-        lines.append("Key functions:\n")
-        for fn in info.public_functions[:5]:
-            doc_part = f" — {fn['doc']}" if fn["doc"] else ""
-            lines.append(f"- `{fn['name']}()`{doc_part}\n")
-        lines.append("")
-    else:
-        lines.append(
-            f"See the source files ({info.file_count} files) " f"for implementation details.\n"
-        )
-
-    return "\n".join(lines)
-
-
-def _render_task(
-    title: str,
-    feature: Feature,
-    info: _SourceInfo,
-) -> str:
-    """Render a task template."""
-    lines = [f"# Working with {title}\n"]
-
-    lines.append("## Overview\n")
-    lines.append(f"Common tasks for modifying or extending " f"{title.lower()}.\n")
-
-    lines.append("## Key Files\n")
-    if feature.files:
-        for pattern in feature.files:
-            lines.append(f"- `{pattern}`\n")
-        lines.append("")
-
-    lines.append("## Common Modifications\n")
-    if info.public_functions:
-        lines.append("Functions you may need to modify:\n")
-        for fn in info.public_functions[:8]:
-            lines.append(f"- `{fn['name']}()` in `{fn['file']}`\n")
-        lines.append("")
-    else:
-        lines.append("Review the source files listed above for " "modification points.\n")
-
-    return "\n".join(lines)
-
-
-def _render_reference(
-    title: str,
-    feature: Feature,
-    info: _SourceInfo,
-) -> str:
-    """Render a reference template."""
-    lines = [f"# {title} Reference\n"]
-
-    # Classes
-    if info.public_classes:
-        lines.append("## Classes\n")
-        lines.append("| Class | Description | File |\n")
-        lines.append("|-------|-------------|------|\n")
-        for cls in info.public_classes:
-            doc = cls["doc"] or "—"
-            lines.append(f"| `{cls['name']}` | {doc} | `{cls['file']}` |\n")
-        lines.append("")
-
-    # Functions
-    if info.public_functions:
-        lines.append("## Functions\n")
-        lines.append("| Function | Description | File |\n")
-        lines.append("|----------|-------------|------|\n")
-        for fn in info.public_functions:
-            doc = fn["doc"] or "—"
-            lines.append(f"| `{fn['name']}()` | {doc} | `{fn['file']}` |\n")
-        lines.append("")
-
-    # Source files
-    lines.append("## Source Files\n")
-    if feature.files:
-        for pattern in feature.files:
-            lines.append(f"- `{pattern}`\n")
-    else:
-        lines.append("No file patterns configured.\n")
-
-    # Tags
-    if feature.tags:
-        lines.append("\n## Tags\n")
-        lines.append(", ".join(f"`{t}`" for t in feature.tags) + "\n")
-
-    return "\n".join(lines)

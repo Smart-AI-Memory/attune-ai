@@ -572,6 +572,28 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         topic = args["topic"]
         mode = args.get("mode", "progressive")
 
+        if mode == "preamble":
+            from attune.help.engine import get_preamble
+
+            line = get_preamble(topic)
+            if line is None:
+                return {"success": False, "error": f"No preamble for: {topic}"}
+            return {
+                "success": True,
+                "topic": topic,
+                "preamble": line,
+            }
+
+        if mode == "related":
+            from attune.help.engine import get_related_preambles
+
+            related = get_related_preambles(topic)
+            return {
+                "success": True,
+                "topic": topic,
+                "related": related,
+            }
+
         if mode == "progressive":
             # Handle reset request
             if args.get("reset"):
@@ -677,6 +699,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         )
         from attune.help.generator import generate_feature_templates
         from attune.help.manifest import save_manifest
+        from attune.help.preamble import get_preamble
         from attune.security.path_validation import _validate_file_path
 
         action = args.get("action", "scan")
@@ -728,17 +751,19 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             failed = []
             for feat in manifest.features.values():
                 try:
-                    gen_result = generate_feature_templates(feat, help_dir, project_root)
+                    result = generate_feature_templates(feat, help_dir, project_root)
                 except OSError as exc:
                     logger.warning("Template generation failed for %s: %s", feat.name, exc)
                     failed.append(feat.name)
                     continue
 
+                preamble = get_preamble(result.feature, help_dir) or ""
                 generated.append(
                     {
-                        "feature": gen_result.feature,
-                        "templates": len(gen_result.templates),
-                        "files": len(gen_result.matched_files),
+                        "feature": result.feature,
+                        "preamble": preamble,
+                        "templates": len(result.templates),
+                        "files": len(result.matched_files),
                     }
                 )
 
@@ -787,7 +812,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "stale_count": report.stale_count,
             "current_count": report.current_count,
             "stale_features": report.stale_features,
-            "report": format_status_report(report),
+            "report": format_status_report(report, help_dir),
         }
 
     async def _handle_help_update(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -823,12 +848,19 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 "error": ("No .help/features.yaml found. " "Run help_init(action='scan') first."),
             }
 
+        from attune.help.preamble import get_preamble
+
         return {
             "success": True,
             "stale_count": result.stale_count,
             "regenerated_count": result.regenerated_count,
             "regenerated": [
-                {"feature": r.feature, "templates": len(r.templates)} for r in result.regenerated
+                {
+                    "feature": r.feature,
+                    "preamble": get_preamble(r.feature, help_dir) or "",
+                    "templates": len(r.templates),
+                }
+                for r in result.regenerated
             ],
             "failed": result.failed,
         }

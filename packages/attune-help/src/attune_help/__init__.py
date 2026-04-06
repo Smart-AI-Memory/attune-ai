@@ -14,6 +14,7 @@ from attune_help.engine import (
     PopulatedTemplate,
     TemplateContext,
 )
+from attune_help.preamble import get_preamble  # noqa: F401
 from attune_help.storage import LocalFileStorage, SessionStorage
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "SessionStorage",
     "TemplateContext",
     "get_demo_path",
+    "get_preamble",
 ]
 
 try:

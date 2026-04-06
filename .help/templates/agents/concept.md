@@ -1,31 +1,43 @@
 ---
 feature: agents
 depth: concept
-generated_at: 2026-04-04T02:25:50.462368+00:00
+generated_at: 2026-04-06T04:32:17.870269+00:00
 source_hash: f4444f832b2067c6c0ece4cfebdca1ecf9eb7d5b16efcf3ba756c35f5da24167
 status: generated
 ---
 
 # Agents
 
-## What
+## How it works
 
-Release agents, state persistence, and recovery
+The Attune AI Agent System provides release preparation automation through specialized agents that validate code quality, test coverage, and documentation.
 
-## Why
+The main building blocks are:
 
-This feature provides agents functionality for the project.
+- **`ReleaseAgent`** — Base agent with progressive cost optimization across CHEAP, CAPABLE, and PREMIUM model tiers.
+- **`TestCoverageAgent`** — Executes pytest with coverage analysis and parses coverage reports.
+- **`DocumentationAgent`** — Validates docstring coverage, README currency, and CHANGELOG presence.
+- **`CodeQualityAgent`** — Runs ruff linting, validates type hints, and checks code complexity.
+- **`ReleasePrepTeam`** — Coordinates parallel execution of multiple release preparation agents.
 
-## How
+Under the hood, this feature spans 59 source
+files covering:
 
-Key components:
+- AI agent framework adapters for LangChain, LangGraph, AutoGen, and Haystack.
+- Release preparation workflow with quality gate thresholds.
+- Performance monitoring and cost tracking decorators.
 
-- `ReleaseAgent` — Base agent with CHEAP -> CAPABLE -> PREMIUM escalation.
+## What connects to it
 
-- `TestCoverageAgent` — Runs pytest --cov and parses coverage report.
+This feature relates to: agents, ai, release.
 
-- `DocumentationAgent` — Checks docstring coverage, README currency, and CHANGELOG presence.
+Other parts of the codebase interact with
+agents through these interfaces:
 
-- `CodeQualityAgent` — Runs ruff, checks type hints and complexity.
-
-- `Tier` — Model tier for progressive escalation.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `ReleaseAgent` | Base agent with progressive cost optimization across model tiers. | `src/attune/agents/release/base_agent.py` |
+| `TestCoverageAgent` | Executes pytest with coverage analysis and parses coverage reports. | `src/attune/agents/release/coverage_agent.py` |
+| `DocumentationAgent` | Validates docstring coverage, README currency, and CHANGELOG presence. | `src/attune/agents/release/documentation_agent.py` |
+| `CodeQualityAgent` | Runs ruff linting, validates type hints, and checks code complexity. | `src/attune/agents/release/quality_agent.py` |
+| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry. | `src/attune/agents/release/team_workflow.py` |

@@ -6,7 +6,14 @@ argument-hint: "<path or directory to review>"
 
 # Code Quality
 
-**IMPORTANT: Start your response by telling the user:**
+**IMPORTANT: Start your response with a context preamble.**
+
+Call `help_lookup(topic="code-quality", mode="preamble")` and
+display the returned `preamble` text as a blockquote. Then
+tell the user they can say "tell me more" for a step-by-step
+guide, or answer the scoping questions below to proceed.
+
+If the MCP call fails, fall back to:
 
 > **Code Quality** — Reviews your code for style issues, likely bugs, and structural problems in one pass.
 

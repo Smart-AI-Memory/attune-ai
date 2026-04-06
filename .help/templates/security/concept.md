@@ -1,7 +1,7 @@
 ---
 feature: security
 depth: concept
-generated_at: 2026-04-04T02:25:50.472348+00:00
+generated_at: 2026-04-06T02:43:20.655653+00:00
 source_hash: cbec6dd3b97445fab938304744407004a55adcad528e799ba56896c354f5ad8e
 status: generated
 ---
@@ -10,22 +10,30 @@ status: generated
 
 ## What
 
-Path validation, secrets detection, and security scanning
+LLM telemetry monitoring with configurable alerts and path validation utilities for Attune AI
 
-## Why
+## When to use
 
-This feature provides security functionality for the project.
+Use security when you need to:
 
-## How
+- Monitor LLM telemetry metrics and receive alerts when thresholds are exceeded
+- Validate file and directory paths for security compliance
+- Set up notification channels for alert delivery
+- Track alert history and view current telemetry metrics
 
-Key components:
+## Key components
 
-- `AlertEngine` — Alert engine with SQLite storage and notification delivery.
+| Component | Purpose |
+|-----------|---------|
+| `AlertEngine` | Manages alert storage in SQLite and delivers notifications when metrics exceed thresholds |
+| `AlertChannel` | Defines notification delivery methods for triggered alerts |
+| `AlertMetric` | Specifies telemetry metrics available for monitoring |
+| `AlertSeverity` | Categorizes alert importance levels |
+| `AlertConfig` | Stores configuration settings for individual alerts |
+| `AlertEvent` | Records details of triggered alert instances |
+| `TelemetryBackend` | Defines interface for telemetry storage systems |
+| `MultiBackend` | Enables simultaneous telemetry logging across multiple storage backends |
 
-- `AlertChannel` — Notification channels for alerts.
+## Related
 
-- `AlertMetric` — Metrics that can be monitored.
-
-- `AlertSeverity` — Alert severity levels.
-
-- `AlertConfig` — Configuration for a single alert.
+security, validation

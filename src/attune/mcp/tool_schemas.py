@@ -337,12 +337,16 @@ def get_help_tools() -> dict[str, dict[str, Any]]:
                         "type": "string",
                         "enum": [
                             "progressive",
+                            "preamble",
+                            "related",
                             "workflow_help",
                             "precursor",
                             "search_tag",
                         ],
                         "description": (
                             "progressive: type-driven depth (default). "
+                            "preamble: one-liner context sentence. "
+                            "related: preambles for related features. "
                             "workflow_help: tips after a workflow. "
                             "precursor: warnings for a file. "
                             "search_tag: find templates by tag."

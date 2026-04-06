@@ -170,6 +170,27 @@ class HelpEngine:
         depth = result.metadata.get("depth_level", 0)
         return rendered + _depth_prompt(depth)
 
+    def preamble(self, feature_name: str) -> str | None:
+        """Get the one-liner preamble for a feature.
+
+        Returns the "Use X when..." sentence from the
+        feature's task template. Useful as a context
+        tooltip wherever a feature name appears.
+
+        Args:
+            feature_name: Feature slug (e.g. "security").
+
+        Returns:
+            Preamble string, or None if not available.
+        """
+        from attune_help.preamble import get_preamble
+
+        if self._override_dir:
+            result = get_preamble(feature_name, self._override_dir)
+            if result:
+                return result
+        return get_preamble(feature_name, self._bundled_dir)
+
     def get_summary(self, skill_name: str) -> str | None:
         """Get a one-line summary for a skill.
 

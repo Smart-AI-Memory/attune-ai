@@ -1,11 +1,69 @@
 version: 1
 
 features:
-  workflows:
-    description: AI-powered analysis workflows (security, code review, tests, etc.)
+  security-audit:
+    description: Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks
     files:
-      - src/attune/workflows/**
-    tags: [workflows, ai, analysis]
+      - src/attune/workflows/security_audit.py
+      - src/attune/security/**
+      - src/attune/monitoring/**
+    tags: [security, audit, owasp, scanning]
+
+  code-quality:
+    description: Review code for style issues, likely bugs, and structural problems
+    files:
+      - src/attune/workflows/code_review.py
+      - src/attune/workflows/code_review_*.py
+    tags: [review, quality, bugs]
+
+  smart-test:
+    description: Find untested code and generate pytest tests with edge cases
+    files:
+      - src/attune/workflows/test_gen/**
+      - src/attune/workflows/test_audit/**
+      - src/attune/workflows/test_gen_parallel.py
+    tags: [tests, coverage, generation]
+
+  doc-gen:
+    description: Generate documentation from source code — docstrings, README sections, API references
+    files:
+      - src/attune/workflows/document_gen/**
+    tags: [docs, documentation, generation]
+
+  bug-predict:
+    description: Predict likely bug locations based on code patterns and complexity
+    files:
+      - src/attune/workflows/bug_predict.py
+      - src/attune/workflows/bug_predict_*.py
+    tags: [bugs, prediction, scanning]
+
+  release-prep:
+    description: Pre-release quality gate — health checks, security audit, changelog, version bumps
+    files:
+      - src/attune/workflows/release_prep.py
+      - src/attune/agents/release/**
+    tags: [release, publishing, quality]
+
+  refactor-plan:
+    description: Detect code smells and generate a prioritized refactoring roadmap
+    files:
+      - src/attune/workflows/refactor_plan.py
+      - src/attune/workflows/refactor_plan_report.py
+    tags: [refactor, tech-debt, complexity]
+
+  deep-review:
+    description: Multi-pass deep code review — security, quality, and test gap analysis
+    files:
+      - src/attune/workflows/deep_review.py
+    tags: [review, security, quality, tests]
+
+  fix-test:
+    description: Auto-diagnose and fix failing tests — identifies root causes and applies fixes
+    files:
+      - src/attune/workflows/test_runner.py
+      - src/attune/workflows/test_maintenance.py
+      - src/attune/workflows/test_lifecycle.py
+    tags: [tests, debugging, fixes]
 
   mcp-server:
     description: Model Context Protocol server and tool handlers
@@ -32,13 +90,6 @@ features:
       - src/attune/agents/**
       - src/attune/agent_factory/**
     tags: [agents, ai, release]
-
-  security:
-    description: Path validation, secrets detection, and security scanning
-    files:
-      - src/attune/security/**
-      - src/attune/monitoring/**
-    tags: [security, validation]
 
   cli:
     description: Command-line interface and routing

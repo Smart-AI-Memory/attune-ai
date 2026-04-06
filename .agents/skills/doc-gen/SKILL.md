@@ -4,7 +4,14 @@ description: "Generate documentation from source code — docstrings, READMEs, A
 ---
 # Doc Gen
 
-**IMPORTANT: Start your response by telling the user:**
+**IMPORTANT: Start your response with a context preamble.**
+
+Call `help_lookup(topic="doc-gen", mode="preamble")` and
+display the returned `preamble` text as a blockquote. Then
+tell the user they can say "tell me more" for a step-by-step
+guide, or answer the scoping questions below to proceed.
+
+If the MCP call fails, fall back to:
 
 > **Doc Gen** — Generates documentation from your source code — docstrings, README sections, API references.
 

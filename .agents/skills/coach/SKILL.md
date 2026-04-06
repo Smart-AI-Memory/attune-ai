@@ -127,8 +127,11 @@ help_init(
 
 This creates `.help/features.yaml` and generates
 concept, task, and reference templates for each
-feature. Tell the user: "Commit `.help/` to your
-repo to share help with your team."
+feature. The response includes a `preamble` for
+each feature — display these so the user can
+verify the generated summaries are accurate.
+Tell the user: "Commit `.help/` to your repo to
+share help with your team."
 
 ### Status (`/coach status`)
 

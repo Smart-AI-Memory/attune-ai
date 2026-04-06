@@ -1,31 +1,45 @@
 ---
 feature: plugin
 depth: concept
-generated_at: 2026-04-04T13:00:34.171719+00:00
-source_hash: d77f635d1744204539648a98bb499be7b81f018d08c49a5f270bbf69bc0595a1
+generated_at: 2026-04-06T04:35:25.897355+00:00
+source_hash: 671b121fa834def159cbd2cb857178dd617b336c060648c1bb153041e24bab05
 status: generated
 ---
 
 # Plugin
 
-## What
+## How it works
 
-Claude Code plugin — skills, hooks, commands, and MCP config
+Claude Code plugin provides automated hooks, security validation, and runtime integration for standalone operation.
 
-## Why
+The main entry points are:
 
-This feature provides plugin functionality for the project.
+- **`main()`** — Read tool result from stdin, format Python files.
+- **`main()`** — Check help template freshness on session start.
+- **`main()`** — Read PostToolUse payload and suggest help if applicable.
+- **`main()`** — Check for stale help after git commit.
+- **`validate_bash_command()`** — Validate a Bash command against security policies.
 
-## How
+Under the hood, this feature spans 610 source
+files covering:
 
-Key functions:
+- PostToolUse hook: auto-format Python files after Write/Edit.
+- SessionStart hook: check help template freshness.
+- PostToolUse hook: suggest help when Bash commands fail.
+- PostToolUse hook: auto-maintain .help/ after git commits.
+- attune-ai core: bundled runtime for standalone plugin operation.
 
-- `main()` — Read tool result from stdin, format Python files.
+## What connects to it
 
-- `main()` — Check help template freshness on session start.
+This feature relates to: plugin, claude-code.
 
-- `main()` — Read PostToolUse payload and suggest help if applicable.
+Other parts of the codebase call into
+plugin through these functions:
 
-- `main()` — Check for stale help after git commit.
-
-- `validate_bash_command()` — Validate a Bash command against security policies.
+| Function | Purpose | File |
+|----------|---------|------|
+| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
+| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
+| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
+| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
+| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |

@@ -1,29 +1,41 @@
 ---
 feature: spec-engine
 depth: concept
-generated_at: 2026-04-04T02:25:50.655254+00:00
+generated_at: 2026-04-06T04:35:43.403443+00:00
 source_hash: 9a5e04c503c29d581c2787038d961b7e425b0163cece10376e6b23a94fbb5aa4
 status: generated
 ---
 
 # Spec Engine
 
-## What
+## How it works
 
-Spec-driven development with approval loops
+The spec engine enables spec-driven development by executing XML specifications with human approval loops and persistent state management.
 
-## Why
+The main building blocks are:
 
-This feature provides spec engine functionality for the project.
+- **`SpecState`** — Tracks execution progress and task completion status for resumable spec runs.
+- **`TaskResult`** — Captures the outcome and quality gate status of individual pipeline tasks.
+- **`PipelineResult`** — Aggregates results across all tasks in a complete pipeline execution.
+- **`PipelineOrchestrator`** — Executes XML spec tasks sequentially with built-in quality gates and approval checkpoints.
 
-## How
+Under the hood, this feature spans 16 source
+files covering:
 
-Key components:
+- Human-readable task formatting with progress indicators and detailed status reports.
+- Interactive spec execution with per-task approval gates and quality validation.
+- Persistent state storage in HTML comments within plan files for resumable workflows.
 
-- `SpecState` — Execution state for a spec plan.
+## What connects to it
 
-- `TaskResult` — Result of executing a single pipeline task.
+This feature relates to: spec, planning.
 
-- `PipelineResult` — Aggregated result from a full pipeline run.
+Other parts of the codebase interact with
+spec engine through these interfaces:
 
-- `PipelineOrchestrator` — Executes tasks from an XML spec with quality gates.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `SpecState` | Tracks execution progress and task completion status for resumable spec runs. | `src/attune/spec/state.py` |
+| `TaskResult` | Captures the outcome and quality gate status of individual pipeline tasks. | `src/attune/pipeline/models.py` |
+| `PipelineResult` | Aggregates results across all tasks in a complete pipeline execution. | `src/attune/pipeline/models.py` |
+| `PipelineOrchestrator` | Executes XML spec tasks sequentially with built-in quality gates and approval checkpoints. | `src/attune/pipeline/orchestrator.py` |
