@@ -2,9 +2,8 @@
 
 Reads tool result from stdin (JSON with tool_name,
 tool_input, tool_result). If the tool is Bash and
-the exit code is non-zero, pattern-matches the stderr
-against known error signatures and suggests a /coach
-topic.
+stderr contains a known error pattern, suggests a
+/coach topic. Skips when exit_code is explicitly 0.
 
 Exits 0 always (informational, never blocks).
 
@@ -49,9 +48,12 @@ def main() -> None:
     if tool_name != "Bash":
         return
 
-    # Check for non-zero exit code in tool_result
     result = data.get("tool_result", "")
     if isinstance(result, dict):
+        # Skip when the command succeeded (exit_code=0)
+        exit_code = result.get("exit_code")
+        if exit_code == 0:
+            return
         stderr = result.get("stderr", "")
     elif isinstance(result, str):
         stderr = result

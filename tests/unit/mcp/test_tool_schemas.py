@@ -1,0 +1,281 @@
+"""Unit tests for attune.mcp.tool_schemas module.
+
+Tests cover:
+- _path_tool: schema builder with required/optional/custom params
+- get_workflow_tools: all workflow tool schemas present and valid
+- get_utility_tools: utility tool schemas present and valid
+- get_help_tools: help tool schemas present and valid
+- get_memory_tools: memory tool schemas present and valid
+- get_resources: MCP resource definitions
+- get_prompts: MCP prompt definitions
+
+Copyright 2026 Smart AI Memory, LLC
+Licensed under the Apache License, Version 2.0
+"""
+
+from __future__ import annotations
+
+from attune.mcp.tool_schemas import (
+    _path_tool,
+    get_help_tools,
+    get_memory_tools,
+    get_prompts,
+    get_resources,
+    get_utility_tools,
+    get_workflow_tools,
+)
+
+# -- _path_tool ------------------------------------------------------
+
+
+class TestPathTool:
+    """Tests for _path_tool() schema builder."""
+
+    def test_default_optional_path(self) -> None:
+        """Builds schema with optional path param and default."""
+        schema = _path_tool("My tool")
+        assert schema["description"] == "My tool"
+        props = schema["input_schema"]["properties"]
+        assert "path" in props
+        assert props["path"]["default"] == "."
+        assert "required" not in schema["input_schema"]
+
+    def test_required_path(self) -> None:
+        """Marks path as required when required=True."""
+        schema = _path_tool("Tool", required=True)
+        assert schema["input_schema"]["required"] == ["path"]
+        assert "default" not in schema["input_schema"]["properties"]["path"]
+
+    def test_custom_param_name(self) -> None:
+        """Uses custom param_name instead of 'path'."""
+        schema = _path_tool("Tool", param_name="project_root")
+        assert "project_root" in schema["input_schema"]["properties"]
+        assert "path" not in schema["input_schema"]["properties"]
+
+    def test_custom_param_desc(self) -> None:
+        """Uses custom param_desc."""
+        schema = _path_tool("Tool", param_desc="Custom desc")
+        props = schema["input_schema"]["properties"]
+        assert props["path"]["description"] == "Custom desc"
+
+    def test_custom_default(self) -> None:
+        """Uses custom default value."""
+        schema = _path_tool("Tool", default="src/")
+        props = schema["input_schema"]["properties"]
+        assert props["path"]["default"] == "src/"
+
+    def test_required_with_custom_param_name(self) -> None:
+        """Required list uses custom param_name."""
+        schema = _path_tool("Tool", param_name="dir", required=True)
+        assert schema["input_schema"]["required"] == ["dir"]
+
+
+# -- get_workflow_tools -----------------------------------------------
+
+
+class TestGetWorkflowTools:
+    """Tests for get_workflow_tools()."""
+
+    def test_returns_dict(self) -> None:
+        """Returns a non-empty dict."""
+        tools = get_workflow_tools()
+        assert isinstance(tools, dict)
+        assert len(tools) > 0
+
+    def test_all_tools_have_description(self) -> None:
+        """Every tool has a description string."""
+        for name, defn in get_workflow_tools().items():
+            assert "description" in defn, f"{name} missing description"
+            assert isinstance(defn["description"], str)
+
+    def test_all_tools_have_input_schema(self) -> None:
+        """Every tool has an input_schema dict."""
+        for name, defn in get_workflow_tools().items():
+            assert "input_schema" in defn, f"{name} missing input_schema"
+            assert defn["input_schema"]["type"] == "object"
+
+    def test_expected_tools_present(self) -> None:
+        """Key workflow tools are registered."""
+        tools = get_workflow_tools()
+        expected = {
+            "security_audit",
+            "bug_predict",
+            "code_review",
+            "test_generation",
+            "performance_audit",
+            "release_prep",
+            "deep_review",
+        }
+        assert expected.issubset(tools.keys())
+
+    def test_test_generation_has_module_required(self) -> None:
+        """test_generation requires 'module' param."""
+        schema = get_workflow_tools()["test_generation"]["input_schema"]
+        assert "module" in schema["required"]
+
+    def test_research_synthesis_requires_sources_and_question(self) -> None:
+        """research_synthesis requires both sources and question."""
+        schema = get_workflow_tools()["research_synthesis"]["input_schema"]
+        assert "sources" in schema["required"]
+        assert "question" in schema["required"]
+
+
+# -- get_utility_tools ------------------------------------------------
+
+
+class TestGetUtilityTools:
+    """Tests for get_utility_tools()."""
+
+    def test_returns_dict(self) -> None:
+        tools = get_utility_tools()
+        assert isinstance(tools, dict)
+
+    def test_expected_tools_present(self) -> None:
+        tools = get_utility_tools()
+        expected = {
+            "auth_status",
+            "auth_recommend",
+            "telemetry_stats",
+            "attune_get_level",
+            "attune_set_level",
+            "context_get",
+            "context_set",
+        }
+        assert expected == set(tools.keys())
+
+    def test_attune_set_level_requires_level(self) -> None:
+        schema = get_utility_tools()["attune_set_level"]["input_schema"]
+        assert "level" in schema["required"]
+
+    def test_context_set_requires_key_and_value(self) -> None:
+        schema = get_utility_tools()["context_set"]["input_schema"]
+        assert set(schema["required"]) == {"key", "value"}
+
+
+# -- get_help_tools ---------------------------------------------------
+
+
+class TestGetHelpTools:
+    """Tests for get_help_tools()."""
+
+    def test_returns_dict(self) -> None:
+        tools = get_help_tools()
+        assert isinstance(tools, dict)
+
+    def test_expected_tools_present(self) -> None:
+        tools = get_help_tools()
+        expected = {
+            "help_lookup",
+            "help_maintain",
+            "help_init",
+            "help_status",
+            "help_update",
+        }
+        assert expected == set(tools.keys())
+
+    def test_help_lookup_requires_topic(self) -> None:
+        schema = get_help_tools()["help_lookup"]["input_schema"]
+        assert "topic" in schema["required"]
+
+    def test_help_init_requires_action(self) -> None:
+        schema = get_help_tools()["help_init"]["input_schema"]
+        assert "action" in schema["required"]
+
+    def test_help_lookup_mode_enum(self) -> None:
+        """Mode param has correct enum values."""
+        props = get_help_tools()["help_lookup"]["input_schema"]["properties"]
+        assert "mode" in props
+        assert "progressive" in props["mode"]["enum"]
+        assert "preamble" in props["mode"]["enum"]
+
+
+# -- get_memory_tools -------------------------------------------------
+
+
+class TestGetMemoryTools:
+    """Tests for get_memory_tools()."""
+
+    def test_returns_dict(self) -> None:
+        tools = get_memory_tools()
+        assert isinstance(tools, dict)
+
+    def test_expected_tools_present(self) -> None:
+        tools = get_memory_tools()
+        expected = {
+            "memory_store",
+            "memory_retrieve",
+            "memory_search",
+            "memory_forget",
+        }
+        assert expected == set(tools.keys())
+
+    def test_memory_store_requires_key_and_value(self) -> None:
+        schema = get_memory_tools()["memory_store"]["input_schema"]
+        assert set(schema["required"]) == {"key", "value"}
+
+    def test_memory_store_classification_enum(self) -> None:
+        props = get_memory_tools()["memory_store"]["input_schema"]["properties"]
+        assert set(props["classification"]["enum"]) == {
+            "PUBLIC",
+            "INTERNAL",
+            "SENSITIVE",
+        }
+
+    def test_memory_forget_scope_enum(self) -> None:
+        props = get_memory_tools()["memory_forget"]["input_schema"]["properties"]
+        assert set(props["scope"]["enum"]) == {"session", "persistent", "all"}
+
+
+# -- get_resources ----------------------------------------------------
+
+
+class TestGetResources:
+    """Tests for get_resources()."""
+
+    def test_returns_dict(self) -> None:
+        resources = get_resources()
+        assert isinstance(resources, dict)
+
+    def test_all_resources_have_uri(self) -> None:
+        for name, defn in get_resources().items():
+            assert "uri" in defn, f"{name} missing uri"
+            assert defn["uri"].startswith("attune://")
+
+    def test_all_resources_have_name(self) -> None:
+        for name, defn in get_resources().items():
+            assert "name" in defn, f"{name} missing name"
+
+    def test_expected_resources_present(self) -> None:
+        resources = get_resources()
+        assert {"workflows", "auth_config", "telemetry"} == set(resources.keys())
+
+
+# -- get_prompts ------------------------------------------------------
+
+
+class TestGetPrompts:
+    """Tests for get_prompts()."""
+
+    def test_returns_dict(self) -> None:
+        prompts = get_prompts()
+        assert isinstance(prompts, dict)
+
+    def test_expected_prompts_present(self) -> None:
+        prompts = get_prompts()
+        assert {"security-scan", "test-gen", "cost-report"} == set(prompts.keys())
+
+    def test_all_prompts_have_name_and_description(self) -> None:
+        for key, defn in get_prompts().items():
+            assert "name" in defn, f"{key} missing name"
+            assert "description" in defn, f"{key} missing description"
+
+    def test_security_scan_has_required_path(self) -> None:
+        prompt = get_prompts()["security-scan"]
+        required_args = [a for a in prompt["arguments"] if a.get("required")]
+        assert len(required_args) == 1
+        assert required_args[0]["name"] == "path"
+
+    def test_test_gen_has_optional_batch(self) -> None:
+        prompt = get_prompts()["test-gen"]
+        batch_arg = next(a for a in prompt["arguments"] if a["name"] == "batch")
+        assert batch_arg.get("required") is False

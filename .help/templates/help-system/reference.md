@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: reference
-generated_at: 2026-04-06T04:30:34.400047+00:00
-source_hash: e4918f66598750dc930dee90c838cd2acf979b30107bd9345c3738c2b2f0dbac
+generated_at: 2026-04-06T16:05:32.007782+00:00
+source_hash: caf95aed14eb4d6660007f9eacb673cd2c7f4d1f2ac8d5301599e9ffee1dad6f
 status: generated
 ---
 

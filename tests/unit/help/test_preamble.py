@@ -68,18 +68,32 @@ class TestGetPreamble:
         assert result is None
 
     def test_uses_default_help_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Falls back to _DEFAULT_HELP_DIR when help_dir is None."""
-        monkeypatch.setattr(
-            "attune.help.preamble._DEFAULT_HELP_DIR",
-            tmp_path,
-        )
+        """Falls back to cwd/.help when help_dir is None."""
+        monkeypatch.chdir(tmp_path)
+        help_dir = tmp_path / ".help"
         _write_task_template(
-            tmp_path,
+            help_dir,
             "test-feat",
             "# Heading\n\nPreamble line here.\n",
         )
         result = get_preamble("test-feat")
         assert result == "Preamble line here."
+
+    @pytest.mark.parametrize(
+        "bad_name",
+        [
+            "../etc/passwd",
+            "feat/subdir",
+            "feat\\subdir",
+            "..",
+            "feat\x00name",
+            "",
+        ],
+        ids=["slash", "nested-slash", "backslash", "dotdot", "null-byte", "empty"],
+    )
+    def test_rejects_path_traversal(self, tmp_path: Path, bad_name: str) -> None:
+        """Rejects feature names with traversal characters."""
+        assert get_preamble(bad_name, help_dir=tmp_path) is None
 
 
 # -- _extract_preamble -----------------------------------------------
@@ -215,6 +229,12 @@ class TestGetRelatedPreambles:
         with patch("attune.help.manifest.load_manifest", return_value=manifest):
             result = get_related_preambles("a", help_dir=tmp_path, max_results=2)
         assert len(result) == 2
+
+    def test_rejects_path_traversal(self, tmp_path: Path) -> None:
+        """Rejects feature names with traversal characters."""
+        assert get_related_preambles("../etc/passwd", help_dir=tmp_path) == []
+        assert get_related_preambles("feat/sub", help_dir=tmp_path) == []
+        assert get_related_preambles("feat\x00x", help_dir=tmp_path) == []
 
     def test_skips_features_without_preamble(self, tmp_path: Path) -> None:
         """Excludes related features that have no task template."""

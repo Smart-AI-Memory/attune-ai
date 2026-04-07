@@ -7,8 +7,8 @@ the bridge between code changes and help updates.
 
 from __future__ import annotations
 
+import fnmatch
 import logging
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -51,6 +51,10 @@ class FeatureManifest:
     path: Path | None = None
 
 
+# Public alias
+Manifest = FeatureManifest
+
+
 def load_manifest(help_dir: str | Path) -> FeatureManifest:
     """Load and validate features.yaml from a .help/ directory.
 
@@ -64,7 +68,7 @@ def load_manifest(help_dir: str | Path) -> FeatureManifest:
         FileNotFoundError: If features.yaml doesn't exist.
         ValueError: If the manifest is malformed.
     """
-    import yaml  # lazy — yaml is optional
+    import yaml
 
     manifest_path = Path(help_dir) / _MANIFEST_FILENAME
     if not manifest_path.exists():
@@ -139,37 +143,6 @@ def save_manifest(manifest: FeatureManifest, help_dir: str | Path) -> Path:
     return out
 
 
-def _glob_match(filepath: str, pattern: str) -> bool:
-    """Match a filepath against a glob pattern.
-
-    Converts glob syntax to regex:
-    - ``**`` matches any path segments (including ``/``)
-    - ``*``  matches anything except ``/``
-    - ``?``  matches a single non-``/`` character
-
-    Args:
-        filepath: Relative file path (forward slashes).
-        pattern: Glob pattern (e.g. ``src/auth/**/*.py``).
-
-    Returns:
-        True if the filepath matches the pattern.
-    """
-    parts = pattern.split("**")
-    regex_parts: list[str] = []
-    for part in parts:
-        escaped = ""
-        for ch in part:
-            if ch == "*":
-                escaped += "[^/]*"
-            elif ch == "?":
-                escaped += "[^/]"
-            else:
-                escaped += re.escape(ch)
-        regex_parts.append(escaped)
-    regex = ".*".join(regex_parts)
-    return re.fullmatch(regex, filepath) is not None
-
-
 def match_files_to_features(
     changed_files: list[str],
     manifest: FeatureManifest,
@@ -189,7 +162,10 @@ def match_files_to_features(
         matched = []
         for filepath in changed_files:
             for pattern in feat.files:
-                if _glob_match(filepath, pattern):
+                # Replace ** with * for fnmatch (PurePosixPath.match
+                # doesn't support ** in Python 3.10)
+                flat = pattern.replace("**", "*")
+                if fnmatch.fnmatch(filepath, flat):
                     matched.append(filepath)
                     break
         if matched:
