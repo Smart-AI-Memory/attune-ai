@@ -38,7 +38,7 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v5.8.1</span>
+                  <span>v5.10.0</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
                   <span className="opacity-80">User Assistants Platform</span>
                 </div>

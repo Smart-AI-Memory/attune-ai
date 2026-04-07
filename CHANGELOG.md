@@ -5,6 +5,90 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0] - 2026-04-07
+
+### Added (5.10.0)
+
+- **attune-author package** — new sibling package
+  (`packages/attune-author/`) extracts documentation
+  authoring (generator, manifest, staleness, polish,
+  doc-gen pipeline, maintenance) into a standalone library.
+  `attune.help` now re-exports `attune_author` types for
+  backward compatibility.
+- **MCP help handler test coverage** — 254 new lines of
+  tests for MCP help handlers (`test_help_handlers.py`)
+  and additional smoke tests for the MCP server
+  (`test_server.py`, `test_tool_schemas.py`).
+- **`coach` plugin skill** — `.claude/skills/coach/SKILL.md`
+  for the renamed help workflow (replaces the `learn`
+  skill that collided with Claude Code's `/help` builtin).
+- **Post-release QA script** — `scripts/qa_post_release.py`
+  for validating PyPI artifacts after publish.
+
+### Changed (5.10.0)
+
+- **Help template refresh** — concept, reference, and task
+  templates updated for help-system, mcp-server, and plugin
+  topics with richer cross-linking and better trigger
+  keywords.
+- **Help preamble** — both `attune.help.preamble` and
+  `attune_help.preamble` updated for contextual rendering
+  improvements.
+- **Help manifest** — globbing now correctly handles `**`
+  patterns and resolves trailing slashes.
+
+### Security (5.10.0)
+
+- **PyJWT** — bumped to `>=2.12.0` in `backend`,
+  `enterprise`, and `all` extras to fix
+  [GHSA-752w-5fwx-jx9f](https://github.com/advisories/GHSA-752w-5fwx-jx9f).
+- **Transitive CVE sweep** — lockfile upgraded for
+  `cryptography 46.0.4 → 46.0.6`
+  ([CVE-2026-26007](https://nvd.nist.gov/vuln/detail/CVE-2026-26007),
+  [CVE-2026-34073](https://nvd.nist.gov/vuln/detail/CVE-2026-34073)),
+  `langchain-core 1.2.7 → 1.2.26`
+  ([CVE-2026-26013](https://nvd.nist.gov/vuln/detail/CVE-2026-26013)),
+  `langgraph 1.0.7 → 1.0.10`
+  ([CVE-2026-28277](https://nvd.nist.gov/vuln/detail/CVE-2026-28277)),
+  `langgraph-checkpoint 3.0.1 → 4.0.1`
+  ([CVE-2026-27794](https://nvd.nist.gov/vuln/detail/CVE-2026-27794)),
+  `mcp 1.12.4 → 1.27.0`
+  ([CVE-2025-66416](https://nvd.nist.gov/vuln/detail/CVE-2025-66416)),
+  `pygments 2.19.2 → 2.20.0`
+  ([CVE-2026-4539](https://nvd.nist.gov/vuln/detail/CVE-2026-4539)),
+  `requests 2.32.5 → 2.33.1`
+  ([CVE-2026-25645](https://nvd.nist.gov/vuln/detail/CVE-2026-25645)).
+- **`pydantic 2.10.6 → 2.12.5`** pulled in transitively
+  via the mcp upgrade.
+- **`.secrets.baseline` refreshed** — cleared stale
+  `empathy/` paths from the pre-rename audit baseline.
+- **`pip-audit` clean** — `0 known vulnerabilities` across
+  all installed packages.
+
+## [5.9.0] - 2026-04-06
+
+### Added (5.9.0)
+
+- **Jinja2 meta templates** — `attune-author` ships
+  `concept.md.j2`, `reference.md.j2`, and `task.md.j2`
+  meta templates for generating documentation pages from
+  feature manifests (#136).
+- **LLM polish layer** — generated docs run through an
+  optional polish stage for tone, structure, and length
+  consistency (#136).
+- **Contextual preambles** — help responses now include
+  audience-aware preambles tailored to detected user
+  context (#136).
+- **Hardened MCP help handlers** — new test coverage and
+  defensive validation for the MCP help endpoints (#137).
+- **Website redesign** — relaunch as the User Assistants
+  Platform (#134).
+
+### Changed (5.9.0)
+
+- **`attune-help 0.3.0`** companion release with the
+  template engine and audience transformer updates.
+
 ## [5.8.1] - 2026-04-03
 
 ### Added (5.8.1)

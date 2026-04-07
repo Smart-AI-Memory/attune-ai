@@ -1,4 +1,4 @@
-# Attune AI Framework v5.9.0
+# Attune AI Framework v5.10.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 5.9.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 5.10.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -534,9 +534,17 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 - **`PurePosixPath.match()` doesn't support `**` in Python 3.10**:
   `PurePosixPath("a/b/c.py").match("a/**")` returns `False` because
   `match()` treats `*` as single-segment only (no recursive globbing).
-  For `**` glob patterns, convert to fnmatch: replace `**` with `*`,
-  then use `fnmatch.fnmatch()`. Python 3.13+ adds recursive support
-  but 3.10 does not.
+  Do NOT replace `**` with `*` in `fnmatch.fnmatch()` — fnmatch's
+  `*` matches `/`, so `src/attune/*` incorrectly matches
+  `src/attune-redis/foo.py`. Instead, convert globs to regex: map
+  `**` → `.*`, `*` → `[^/]*`, `?` → `[^/]`, then use
+  `re.fullmatch()`. See `_glob_match()` in `help/manifest.py`.
+
+- **`Path.cwd()` at module level captures import-time cwd**:
+  `_DEFAULT = Path.cwd() / ".help"` evaluated at import time becomes
+  stale if the working directory changes or the module is imported
+  from a different cwd. Compute lazily inside the function:
+  `Path(arg) if arg else Path.cwd() / ".help"`.
 
 - **Adding `logger` before eager imports triggers E402 in
   `__init__.py`**: Placing `logger = logging.getLogger(__name__)`
