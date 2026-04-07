@@ -1335,4 +1335,65 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Use inline Tailwind classes instead:
   `px-8 py-4 rounded-lg font-medium !text-white border-2
   border-white/60 hover:bg-white/15 transition-colors`.
+
+- **`uv run pip-audit` runs the pyenv shim, not the venv**:
+  The pyenv `pip-audit` shim takes precedence on PATH, so
+  `uv run pip-audit` audits whatever Python pyenv points at —
+  not `.venv/`. Symptom: bumping a dep in the venv (verified
+  with `uv pip show`) doesn't change the pip-audit output.
+  Fix: install pip-audit *into* the venv with
+  `.venv/bin/python -m pip install pip-audit` and run
+  `.venv/bin/python -m pip_audit`. The `uv run` form is
+  unreliable for security audits.
+
+- **SDK-native `security-audit` workflow swallows subagent
+  findings**: `attune workflow run security-audit` returns
+  successfully but `metadata.findings` is `{}` and
+  `final_output` only contains the orchestrator's planning
+  message ("I'll launch four subagents..."). The SDK adapter
+  doesn't aggregate `AssistantMessage` content from the
+  spawned subagents back into the parent result. For real
+  pre-release security checks, run bandit, detect-secrets,
+  and pip-audit directly against the venv until the SDK
+  adapter is fixed.
+
+- **`attune.help` re-exports create a hidden cross-package
+  dep on `attune-author`**: `src/attune/help/__init__.py`
+  does `from attune_author.generator import ...` at module
+  level. This works in dev because
+  `[tool.uv.sources]` resolves `attune-author` from the local
+  workspace path, but a vanilla `pip install attune-ai` from
+  PyPI will fail at import time unless `attune-author` is
+  also published. Either publish `attune-author` to PyPI in
+  lockstep with `attune-ai` releases, wrap the imports in
+  try/except for graceful degradation, or inline the types
+  back into `attune.help`.
+
+- **`pytest` lives in the `dev` extra, not `developer`**:
+  The `developer` extra in `pyproject.toml` does NOT include
+  pytest — that's in the separate `dev` extra. Symptom:
+  `.venv/bin/python -m pytest` exits with `No module named
+  pytest` after `uv sync --extra developer`. Fix: sync both
+  with `uv sync --extra dev --extra developer`.
+
+- **`git stash pop` after pre-commit can resurrect stale
+  tool state**: When pre-commit's `detect-secrets` hook
+  bumps `.secrets.baseline`'s schema version (e.g.
+  `1.4.0 → 1.5.0`) during a commit, a previously stashed
+  copy of `.secrets.baseline` will conflict on `git stash
+  pop` and revert the schema bump. After popping, always
+  `git diff .secrets.baseline` and `git checkout
+  .secrets.baseline` to discard any reverted changes that
+  came from the stash.
+
+- **`detect-secrets` flags `"fake"` as a secret in test
+  fixtures**: The `Secret Keyword` heuristic matches any
+  string assigned to a key that looks like a credential
+  variable, including the obvious placeholder `"fake"` in
+  `patch.dict("os.environ", {"ANTHROPIC_API_KEY": "fake"})`.
+  Add `# pragma: allowlist secret` on the same line to
+  silence it. This is the same pattern as the existing
+  `# pragma: allowlist secret` lessons but the trigger
+  string is non-obvious — even a 4-char placeholder fires
+  it.
 <!-- attune-lessons-end -->

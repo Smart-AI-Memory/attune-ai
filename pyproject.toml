@@ -70,7 +70,11 @@ dependencies = [
     "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
     "python-multipart>=0.0.22",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg (transitive via mcp)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    "attune-author>=0.1.0",  # Documentation authoring (help system, doc-gen)
+    # NOTE: attune-author lives in packages/ as a workspace-only dev dep.
+    # It is NOT a runtime requirement of attune-ai — the help system's
+    # local submodules (bootstrap, generator, manifest, staleness, etc.)
+    # are self-contained. attune-author is for authoring/refactoring help
+    # content during development.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
