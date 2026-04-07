@@ -1396,4 +1396,50 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `# pragma: allowlist secret` lessons but the trigger
   string is non-obvious — even a 4-char placeholder fires
   it.
+
+- **Unused `__init__.py` re-exports become invisible
+  runtime deps**: Adding `from sibling_pkg.foo import Bar`
+  to a package's `__init__.py` for "backward compat" makes
+  that package fail to import unless `sibling_pkg` is
+  installed — even if NO consumer actually imports `Bar`
+  from your package. The cost is paid at import time, not
+  use time. Before adding any cross-package re-export,
+  grep `src/`, `plugin/`, and `tests/` for actual consumers
+  of the re-exported names. If nothing consumes them,
+  delete the re-exports rather than carrying a hidden
+  dependency.
+
+- **Verify optional dep boundaries with a `MetaPathFinder`,
+  not by uninstalling**: To prove a package imports cleanly
+  without an optional dep, install a custom finder on
+  `sys.meta_path` that raises `ImportError` for the target
+  module name, then attempt the imports. Cleaner than
+  `pip uninstall` (which mutates the venv), faster than
+  spinning up a fresh venv, and the same script works in
+  CI. Pattern:
+  ```python
+  class Block:
+      def find_module(self, name, path=None):
+          if name == "target_pkg" or name.startswith("target_pkg."):
+              return self
+      def load_module(self, name):
+          raise ImportError(f"BLOCKED: {name}")
+  sys.meta_path.insert(0, Block())
+  import my_pkg  # should succeed
+  ```
+
+- **Removing one workspace dep can cascade to remove
+  others**: When `attune-ai` declared `attune-author` as a
+  core dep, the lockfile also pulled in `attune-help`
+  (because `attune-author` depends on it). Removing
+  `attune-author` from `attune-ai`'s deps caused
+  `uv lock` to drop BOTH `attune-author` AND `attune-help`
+  from the lockfile. Always check the cascade with
+  `uv lock` *before* committing, and verify that any code
+  importing the cascaded-out package has a try/except
+  fallback. In our case, `attune.help.preamble` already
+  did `try: from attune_help.preamble import _extract_preamble
+  except ImportError: ...` — so the loss was safe — but
+  this is the kind of thing that breaks silently in
+  production if you skip the verification step.
 <!-- attune-lessons-end -->
