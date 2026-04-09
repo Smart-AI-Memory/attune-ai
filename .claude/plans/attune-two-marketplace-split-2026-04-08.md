@@ -1,9 +1,50 @@
 # Attune Two-Marketplace Split
 
 **Created:** 2026-04-08
-**Updated:** 2026-04-08 (Phase 1 committed, research findings integrated)
+**Updated:** 2026-04-09 (Phase 1 steps 2, 5 executed — see execution log)
 **Source:** /brainstorm session
-**Status:** Phase 1 committed. Phase 2 deferred pending Phase 1 validation.
+**Status:** Phase 1 in flight. Steps 2 (tags) and 5 (new repo) done. Steps 1, 3, 4, 6, 7, 8, 9 pending or skipped — see execution log below.
+
+## Phase 1 execution log (2026-04-09)
+
+- **PR #140 merged** (squash `96a04c96`): brought
+  `packages/attune-author/plugin/` and
+  `packages/attune-help/plugin/` to main along with the
+  v5.9.0/v5.10.0 release backport.
+- **Step 2 — per-plugin tags:** `attune-help-v0.3.0` and
+  `attune-author-v0.1.0` created and pushed at `96a04c96`.
+- **Step 5 — attune-docs repo:** created at
+  [Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs),
+  initialized **private**, contents: README, LICENSE
+  (Apache 2.0), .gitignore,
+  `.claude-plugin/marketplace.json` with `git-subdir` refs
+  pinned to the step 2 tags. Flip to public when announcing.
+- **Step 6 — slim attune-ai marketplace.json:** **mostly
+  already done.** Main never contained the bundled
+  attune-help/attune-author entries (the uncommitted additions
+  were discarded before PR #140). Still pending: add the
+  cross-promotion hook to the attune-ai plugin description
+  (see draft at /tmp/attune-docs-scratch/step6-attune-ai-marketplace-patch.md
+  or regenerate it from the "Draft repo copy" section below).
+- **Step 7 — migration banner:** **skipped** — the bundle
+  was never public, no users to migrate.
+- **Steps 1 and 8 — sandbox + funnel tests:** **pending.**
+  Both require a clean Claude Code session running in a second
+  instance; cannot be run from within the current session.
+  Manual test script drafted at
+  /tmp/attune-docs-scratch/manual-test-plan.md — run from a
+  clean environment when ready.
+- **Step 9 — publish and announce:** **blocked** on step 8.
+
+### Remaining prerequisites before making attune-docs public
+
+1. Run the Step 1 sandbox test and document the duplicate-
+   plugin behavior in Open Question 8 below.
+2. Run the Step 8 three-funnel test and record results.
+3. Apply the Step 6 cross-promotion hook to attune-ai's
+   `.claude-plugin/marketplace.json` description.
+4. Flip `Smart-AI-Memory/attune-docs` from private to public.
+5. Announce the two-marketplace structure.
 
 ## Problem
 
