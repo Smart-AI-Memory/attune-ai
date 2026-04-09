@@ -1,0 +1,13 @@
+{
+  "name": "attune-help",
+  "version": "0.3.0",
+  "description": "Read and explore .help/ documentation with progressive depth. Lightweight runtime companion to attune-author — no AI keys required.",
+  "author": {
+    "name": "Smart AI Memory",
+    "email": "patrick.roebuck@smartaimemory.com"
+  },
+  "homepage": "https://smartaimemory.com",
+  "repository": "https://github.com/Smart-AI-Memory/attune-ai",
+  "license": "Apache-2.0",
+  "keywords": ["help", "documentation", "progressive-depth", "lookup", "runtime", "claude-code"]
+}

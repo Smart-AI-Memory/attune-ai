@@ -1,0 +1,35 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "attune-help-plugin",
+  "owner": {
+    "name": "Smart AI Memory",
+    "email": "patrick.roebuck@smartaimemory.com"
+  },
+  "metadata": {
+    "description": "Lightweight help runtime for Claude Code — read .help/ templates with progressive depth and audience adaptation.",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "attune-help",
+      "description": "Read and explore .help/ documentation with progressive depth. Lightweight runtime companion to attune-author — no AI keys required.",
+      "source": "./",
+      "version": "0.3.0",
+      "author": {
+        "name": "Smart AI Memory",
+        "email": "patrick.roebuck@smartaimemory.com"
+      },
+      "homepage": "https://smartaimemory.com",
+      "repository": "https://github.com/Smart-AI-Memory/attune-ai",
+      "license": "Apache-2.0",
+      "category": "developer-tools",
+      "tags": [
+        "help",
+        "documentation",
+        "lookup",
+        "progressive-depth",
+        "runtime"
+      ]
+    }
+  ]
+}
