@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: task
-generated_at: 2026-04-06T16:05:32.003255+00:00
-source_hash: caf95aed14eb4d6660007f9eacb673cd2c7f4d1f2ac8d5301599e9ffee1dad6f
+generated_at: 2026-04-08T04:37:17.216738+00:00
+source_hash: a1d4f1afd1af17d0585ad7917dd72b4b1f82c4a12108c939fd895eb00d2a4313
 status: generated
 ---
 
