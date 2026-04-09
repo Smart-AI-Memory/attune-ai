@@ -1442,4 +1442,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   except ImportError: ...` — so the loss was safe — but
   this is the kind of thing that breaks silently in
   production if you skip the verification step.
+
+- **Pre-flight pre-commit's pinned black/ruff on new files
+  before staging**: Running `.venv/bin/python -m black` or
+  `uv run black` against a file doesn't guarantee pre-commit
+  will leave it alone — pre-commit pins its own black/ruff
+  versions that can format differently than whatever is in
+  `.venv` (I saw py3.10 black leave a file "clean" while
+  pre-commit's black reformatted triple-quoted-string
+  argument layouts). Fix: use the pinned tool directly —
+  `uv run --with pre-commit pre-commit run black --files
+  path/to/file.py` — before `git add`. This catches format
+  mismatches with the exact version pre-commit will enforce,
+  avoiding the stash/restore dance on commit.
+
+- **Release branches carry unmerged commits that feature
+  branches may depend on**: `release/v5.10.0` had 8 commits
+  not yet on `origin/main`, including
+  `1ffc8457 feat: extract attune-author package`. Branching
+  a new feature off `main` would have erased
+  `packages/attune-author/` — a dependency of the new plugin
+  work. Before branching for post-release feature work,
+  always `git log origin/main..<release-branch>` to see
+  whether the release branch is the effective trunk. If it
+  is, branch from the release branch, not main.
 <!-- attune-lessons-end -->
