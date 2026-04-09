@@ -45,17 +45,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ai = ["claude-agent-sdk>=0.1.0"]
+ai = ["anthropic>=0.40.0"]
+plugin = [
+    "mcp>=0.9.0",
+    "anthropic>=0.40.0",
+]
 rich = ["rich>=13.0.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.4.0",
     "black>=24.0",
+    "mcp>=0.9.0",
+    "anthropic>=0.40.0",
 ]
 
 [project.scripts]
 attune-author = "attune_author.cli:main"
+attune-author-mcp = "attune_author.mcp.server:main"
 
 [project.urls]
 Homepage = "https://github.com/Smart-AI-Memory/attune-ai"
