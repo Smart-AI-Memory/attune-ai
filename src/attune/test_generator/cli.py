@@ -53,10 +53,10 @@ def cmd_generate(args):
     output_dir = Path(args.output) if args.output else Path("tests/unit/workflows")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Write unit tests
+    # Write unit tests (utf-8 explicit for Windows cp1252 default)
     unit_test_file = output_dir / f"test_{workflow_id}_workflow.py"
     validated_unit_test = _validate_file_path(str(unit_test_file))
-    with open(validated_unit_test, "w") as f:
+    with open(validated_unit_test, "w", encoding="utf-8") as f:
         f.write(tests["unit"])
     logger.info(f"✓ Unit tests written to: {validated_unit_test}")
 
@@ -67,14 +67,14 @@ def cmd_generate(args):
         )
         integration_test_file.parent.mkdir(parents=True, exist_ok=True)
         validated_integration = _validate_file_path(str(integration_test_file))
-        with open(validated_integration, "w") as f:
+        with open(validated_integration, "w", encoding="utf-8") as f:
             f.write(tests["integration"])
         logger.info(f"✓ Integration tests written to: {validated_integration}")
 
     # Write fixtures
     fixtures_file = output_dir / f"fixtures_{workflow_id}.py"
     validated_fixtures = _validate_file_path(str(fixtures_file))
-    with open(validated_fixtures, "w") as f:
+    with open(validated_fixtures, "w", encoding="utf-8") as f:
         f.write(tests["fixtures"])
     logger.info(f"✓ Fixtures written to: {validated_fixtures}")
 

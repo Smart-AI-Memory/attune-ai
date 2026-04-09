@@ -116,7 +116,8 @@ def compute_source_hash(
             glob_pattern += "/*"
         for path in sorted(root.glob(glob_pattern)):
             if path.is_file():
-                rel = str(path.relative_to(root))
+                # Normalize to POSIX separators for cross-platform consistency
+                rel = path.relative_to(root).as_posix()
                 if rel not in matched:
                     matched.append(rel)
 
