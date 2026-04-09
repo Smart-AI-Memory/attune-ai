@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: concept
-generated_at: 2026-04-06T04:30:19.440252+00:00
-source_hash: e4918f66598750dc930dee90c838cd2acf979b30107bd9345c3738c2b2f0dbac
+generated_at: 2026-04-08T04:37:17.209190+00:00
+source_hash: a1d4f1afd1af17d0585ad7917dd72b4b1f82c4a12108c939fd895eb00d2a4313
 status: generated
 ---
 
@@ -10,22 +10,22 @@ status: generated
 
 ## How it works
 
-Progressive-depth help engine that generates and manages documentation templates with audience targeting and feedback scoring.
+Progressive-depth help engine and template management.
 
 The main building blocks are:
 
-- **`ProposedFeature`** — A feature discovered by scanning project source code.
-- **`GeneratedTemplate`** — Result of generating one template file with metadata.
-- **`GenerationResult`** — Result of generating all templates for a feature.
-- **`MaintenanceResult`** — Result of a help maintenance run including staleness checks.
-- **`Feature`** — A project feature mapped to its source files and documentation.
+- **`ProposedFeature`** — A feature discovered by scanning.
+- **`GeneratedTemplate`** — Result of generating one template file.
+- **`GenerationResult`** — Result of generating templates for a feature.
+- **`MaintenanceResult`** — Result of a help maintenance run.
+- **`Feature`** — A project feature mapped to source files.
 
-Under the hood, this feature spans 686 source
+Under the hood, this feature spans 697 source
 files covering:
 
-- Project scanning and manifest bootstrapping for feature discovery.
-- Template engine that adapts content for different audiences.
-- Feedback collection and confidence scoring for template quality assessment.
+- Project scanning and manifest bootstrapping.
+- Template engine for the documentation help system.
+- Feedback and confidence scoring for help templates.
 
 ## What connects to it
 
@@ -36,8 +36,8 @@ help system through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ProposedFeature` | A feature discovered by scanning project source code. | `src/attune/help/bootstrap.py` |
-| `GeneratedTemplate` | Result of generating one template file with metadata. | `src/attune/help/generator.py` |
-| `GenerationResult` | Result of generating all templates for a feature. | `src/attune/help/generator.py` |
-| `MaintenanceResult` | Result of a help maintenance run including staleness checks. | `src/attune/help/maintenance.py` |
-| `Feature` | A project feature mapped to its source files and documentation. | `src/attune/help/manifest.py` |
+| `ProposedFeature` | A feature discovered by scanning. | `src/attune/help/bootstrap.py` |
+| `GeneratedTemplate` | Result of generating one template file. | `src/attune/help/generator.py` |
+| `GenerationResult` | Result of generating templates for a feature. | `src/attune/help/generator.py` |
+| `MaintenanceResult` | Result of a help maintenance run. | `src/attune/help/maintenance.py` |
+| `Feature` | A project feature mapped to source files. | `src/attune/help/manifest.py` |

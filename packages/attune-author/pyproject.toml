@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attune-author"
+version = "0.1.0"
+description = "Documentation authoring and maintenance for the attune ecosystem — generate, maintain, and validate help content with AI assistance."
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Patrick Roebuck", email = "admin@smartaimemory.com"}
+]
+keywords = [
+    "documentation",
+    "authoring",
+    "help-system",
+    "templates",
+    "jinja2",
+    "ai",
+    "claude",
+    "attune",
+    "staleness-detection",
+    "doc-generation",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = [
+    "jinja2>=3.1.0",
+    "python-frontmatter>=1.0.0",
+    "pyyaml>=6.0",
+    "attune-help>=0.3.0",
+]
+
+[project.optional-dependencies]
+ai = ["anthropic>=0.40.0"]
+plugin = [
+    "mcp>=0.9.0",
+    "anthropic>=0.40.0",
+]
+rich = ["rich>=13.0.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4.0",
+    "black>=24.0",
+    "mcp>=0.9.0",
+    "anthropic>=0.40.0",
+]
+
+[project.scripts]
+attune-author = "attune_author.cli:main"
+attune-author-mcp = "attune_author.mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/Smart-AI-Memory/attune-ai"
+Repository = "https://github.com/Smart-AI-Memory/attune-ai"
+Documentation = "https://github.com/Smart-AI-Memory/attune-ai/tree/main/packages/attune-author"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+attune_author = ["meta_templates/*.j2"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "BLE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["attune_author"]

@@ -1,4 +1,4 @@
-# Attune AI Framework v5.8.1
+# Attune AI Framework v5.10.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 5.8.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 5.10.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -534,9 +534,17 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 - **`PurePosixPath.match()` doesn't support `**` in Python 3.10**:
   `PurePosixPath("a/b/c.py").match("a/**")` returns `False` because
   `match()` treats `*` as single-segment only (no recursive globbing).
-  For `**` glob patterns, convert to fnmatch: replace `**` with `*`,
-  then use `fnmatch.fnmatch()`. Python 3.13+ adds recursive support
-  but 3.10 does not.
+  Do NOT replace `**` with `*` in `fnmatch.fnmatch()` — fnmatch's
+  `*` matches `/`, so `src/attune/*` incorrectly matches
+  `src/attune-redis/foo.py`. Instead, convert globs to regex: map
+  `**` → `.*`, `*` → `[^/]*`, `?` → `[^/]`, then use
+  `re.fullmatch()`. See `_glob_match()` in `help/manifest.py`.
+
+- **`Path.cwd()` at module level captures import-time cwd**:
+  `_DEFAULT = Path.cwd() / ".help"` evaluated at import time becomes
+  stale if the working directory changes or the module is imported
+  from a different cwd. Compute lazily inside the function:
+  `Path(arg) if arg else Path.cwd() / ".help"`.
 
 - **Adding `logger` before eager imports triggers E402 in
   `__init__.py`**: Placing `logger = logging.getLogger(__name__)`
@@ -1327,4 +1335,135 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Use inline Tailwind classes instead:
   `px-8 py-4 rounded-lg font-medium !text-white border-2
   border-white/60 hover:bg-white/15 transition-colors`.
+
+- **`uv run pip-audit` runs the pyenv shim, not the venv**:
+  The pyenv `pip-audit` shim takes precedence on PATH, so
+  `uv run pip-audit` audits whatever Python pyenv points at —
+  not `.venv/`. Symptom: bumping a dep in the venv (verified
+  with `uv pip show`) doesn't change the pip-audit output.
+  Fix: install pip-audit *into* the venv with
+  `.venv/bin/python -m pip install pip-audit` and run
+  `.venv/bin/python -m pip_audit`. The `uv run` form is
+  unreliable for security audits.
+
+- **SDK-native `security-audit` workflow swallows subagent
+  findings**: `attune workflow run security-audit` returns
+  successfully but `metadata.findings` is `{}` and
+  `final_output` only contains the orchestrator's planning
+  message ("I'll launch four subagents..."). The SDK adapter
+  doesn't aggregate `AssistantMessage` content from the
+  spawned subagents back into the parent result. For real
+  pre-release security checks, run bandit, detect-secrets,
+  and pip-audit directly against the venv until the SDK
+  adapter is fixed.
+
+- **`attune.help` re-exports create a hidden cross-package
+  dep on `attune-author`**: `src/attune/help/__init__.py`
+  does `from attune_author.generator import ...` at module
+  level. This works in dev because
+  `[tool.uv.sources]` resolves `attune-author` from the local
+  workspace path, but a vanilla `pip install attune-ai` from
+  PyPI will fail at import time unless `attune-author` is
+  also published. Either publish `attune-author` to PyPI in
+  lockstep with `attune-ai` releases, wrap the imports in
+  try/except for graceful degradation, or inline the types
+  back into `attune.help`.
+
+- **`pytest` lives in the `dev` extra, not `developer`**:
+  The `developer` extra in `pyproject.toml` does NOT include
+  pytest — that's in the separate `dev` extra. Symptom:
+  `.venv/bin/python -m pytest` exits with `No module named
+  pytest` after `uv sync --extra developer`. Fix: sync both
+  with `uv sync --extra dev --extra developer`.
+
+- **`git stash pop` after pre-commit can resurrect stale
+  tool state**: When pre-commit's `detect-secrets` hook
+  bumps `.secrets.baseline`'s schema version (e.g.
+  `1.4.0 → 1.5.0`) during a commit, a previously stashed
+  copy of `.secrets.baseline` will conflict on `git stash
+  pop` and revert the schema bump. After popping, always
+  `git diff .secrets.baseline` and `git checkout
+  .secrets.baseline` to discard any reverted changes that
+  came from the stash.
+
+- **`detect-secrets` flags `"fake"` as a secret in test
+  fixtures**: The `Secret Keyword` heuristic matches any
+  string assigned to a key that looks like a credential
+  variable, including the obvious placeholder `"fake"` in
+  `patch.dict("os.environ", {"ANTHROPIC_API_KEY": "fake"})`.
+  Add `# pragma: allowlist secret` on the same line to
+  silence it. This is the same pattern as the existing
+  `# pragma: allowlist secret` lessons but the trigger
+  string is non-obvious — even a 4-char placeholder fires
+  it.
+
+- **Unused `__init__.py` re-exports become invisible
+  runtime deps**: Adding `from sibling_pkg.foo import Bar`
+  to a package's `__init__.py` for "backward compat" makes
+  that package fail to import unless `sibling_pkg` is
+  installed — even if NO consumer actually imports `Bar`
+  from your package. The cost is paid at import time, not
+  use time. Before adding any cross-package re-export,
+  grep `src/`, `plugin/`, and `tests/` for actual consumers
+  of the re-exported names. If nothing consumes them,
+  delete the re-exports rather than carrying a hidden
+  dependency.
+
+- **Verify optional dep boundaries with a `MetaPathFinder`,
+  not by uninstalling**: To prove a package imports cleanly
+  without an optional dep, install a custom finder on
+  `sys.meta_path` that raises `ImportError` for the target
+  module name, then attempt the imports. Cleaner than
+  `pip uninstall` (which mutates the venv), faster than
+  spinning up a fresh venv, and the same script works in
+  CI. Pattern:
+  ```python
+  class Block:
+      def find_module(self, name, path=None):
+          if name == "target_pkg" or name.startswith("target_pkg."):
+              return self
+      def load_module(self, name):
+          raise ImportError(f"BLOCKED: {name}")
+  sys.meta_path.insert(0, Block())
+  import my_pkg  # should succeed
+  ```
+
+- **Removing one workspace dep can cascade to remove
+  others**: When `attune-ai` declared `attune-author` as a
+  core dep, the lockfile also pulled in `attune-help`
+  (because `attune-author` depends on it). Removing
+  `attune-author` from `attune-ai`'s deps caused
+  `uv lock` to drop BOTH `attune-author` AND `attune-help`
+  from the lockfile. Always check the cascade with
+  `uv lock` *before* committing, and verify that any code
+  importing the cascaded-out package has a try/except
+  fallback. In our case, `attune.help.preamble` already
+  did `try: from attune_help.preamble import _extract_preamble
+  except ImportError: ...` — so the loss was safe — but
+  this is the kind of thing that breaks silently in
+  production if you skip the verification step.
+
+- **Pre-flight pre-commit's pinned black/ruff on new files
+  before staging**: Running `.venv/bin/python -m black` or
+  `uv run black` against a file doesn't guarantee pre-commit
+  will leave it alone — pre-commit pins its own black/ruff
+  versions that can format differently than whatever is in
+  `.venv` (I saw py3.10 black leave a file "clean" while
+  pre-commit's black reformatted triple-quoted-string
+  argument layouts). Fix: use the pinned tool directly —
+  `uv run --with pre-commit pre-commit run black --files
+  path/to/file.py` — before `git add`. This catches format
+  mismatches with the exact version pre-commit will enforce,
+  avoiding the stash/restore dance on commit.
+
+- **Release branches carry unmerged commits that feature
+  branches may depend on**: `release/v5.10.0` had 8 commits
+  not yet on `origin/main`, including
+  `1ffc8457 feat: extract attune-author package`. Branching
+  a new feature off `main` would have erased
+  `packages/attune-author/` — a dependency of the new plugin
+  work. Before branching for post-release feature work,
+  always `git log origin/main..<release-branch>` to see
+  whether the release branch is the effective trunk. If it
+  is, branch from the release branch, not main.
 <!-- attune-lessons-end -->

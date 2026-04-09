@@ -30,6 +30,14 @@ def get_preamble(
     Returns:
         Preamble string, or None if not available.
     """
+    if (
+        not feature_name
+        or "/" in feature_name
+        or "\\" in feature_name
+        or ".." in feature_name
+        or "\x00" in feature_name
+    ):
+        return None
     task_path = Path(template_dir) / feature_name / "task.md"
 
     if not task_path.exists():

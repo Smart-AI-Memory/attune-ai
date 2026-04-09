@@ -166,7 +166,7 @@ class HelpEngine:
         )
         if result is None:
             return None
-        rendered = self._render(result)
+        rendered = self.render(result)
         depth = result.metadata.get("depth_level", 0)
         return rendered + _depth_prompt(depth)
 
@@ -231,7 +231,7 @@ class HelpEngine:
         )
         if result is None:
             return None
-        return self._render(result)
+        return self.render(result)
 
     def lookup_raw(
         self,
@@ -262,8 +262,13 @@ class HelpEngine:
             generated_dir=self.generated_dir,
         )
 
-    def _render(self, template: PopulatedTemplate) -> str:
-        """Apply the configured renderer.
+    def render(self, template: PopulatedTemplate) -> str:
+        """Apply the configured renderer to an already-populated template.
+
+        Public API for callers that need to render a template without
+        advancing the session state (e.g. MCP handlers that already hold
+        the result of ``lookup_raw``). Use ``lookup()`` when you want the
+        combined "advance session + render" behavior.
 
         Args:
             template: Populated template to render.
@@ -383,7 +388,7 @@ class HelpEngine:
                 generated_dir=gen_dir,
             )
             if result:
-                results.append(self._render(result))
+                results.append(self.render(result))
         return results
 
     @staticmethod

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "attune-author": {
+      "command": "uv",
+      "args": ["run", "--from", "attune-author", "python", "-m", "attune_author.mcp.server"],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
+    }
+  }
+}

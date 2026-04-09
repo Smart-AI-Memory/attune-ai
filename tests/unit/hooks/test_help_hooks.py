@@ -260,6 +260,63 @@ class TestHelpOnError:
             mod.main()
         assert stderr_capture.getvalue() == ""
 
+    def test_skips_when_exit_code_zero(self, mod) -> None:
+        """No suggestion when exit_code is explicitly 0."""
+        payload = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "pip install foo"},
+                "tool_result": {
+                    "exit_code": 0,
+                    "stderr": "ModuleNotFoundError: something",
+                },
+            }
+        )
+        stderr_capture = StringIO()
+        with (
+            patch("sys.stdin", StringIO(payload)),
+            patch("sys.stderr", stderr_capture),
+        ):
+            mod.main()
+        assert stderr_capture.getvalue() == ""
+
+    def test_matches_when_exit_code_nonzero(self, mod) -> None:
+        """Suggests help when exit_code is non-zero."""
+        payload = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "python x.py"},
+                "tool_result": {
+                    "exit_code": 1,
+                    "stderr": "ModuleNotFoundError: No module named 'x'",
+                },
+            }
+        )
+        stderr_capture = StringIO()
+        with (
+            patch("sys.stdin", StringIO(payload)),
+            patch("sys.stderr", stderr_capture),
+        ):
+            mod.main()
+        assert "/coach imports" in stderr_capture.getvalue()
+
+    def test_matches_when_no_exit_code_field(self, mod) -> None:
+        """Backward compat: matches when exit_code not in result."""
+        payload = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "python x.py"},
+                "tool_result": {"stderr": "ModuleNotFoundError: no module"},
+            }
+        )
+        stderr_capture = StringIO()
+        with (
+            patch("sys.stdin", StringIO(payload)),
+            patch("sys.stderr", stderr_capture),
+        ):
+            mod.main()
+        assert "/coach imports" in stderr_capture.getvalue()
+
 
 # ── help_post_commit ──────────────────────────────────────
 

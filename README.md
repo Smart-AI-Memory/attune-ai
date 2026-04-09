@@ -8,7 +8,7 @@
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C446%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-14%2C929%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
@@ -30,8 +30,8 @@ that stays accurate, adapts to who's reading, and
 improves over time — without anyone manually updating
 markdown files.
 
-The same system powers 18 multi-agent workflows, 13
-auto-triggering skills, and 38 MCP tools — all of which
+The same system powers 18 multi-agent workflows, 14
+auto-triggering skills, and 36 MCP tools — all of which
 double as the authoring and assistance toolkit for
 building and maintaining knowledge bases at scale.
 
@@ -41,7 +41,7 @@ building and maintaining knowledge bases at scale.
 
 ### 1. Authored as Templates
 
-540 templates across 11 types — errors, warnings, tips,
+633 templates across 11 types — errors, warnings, tips,
 references, tasks, FAQs, notes, quickstarts, concepts,
 troubleshooting, and comparisons. Each template has
 structured frontmatter (tags, related links, audience
@@ -96,14 +96,14 @@ you use it.
 
 The help system doesn't just *contain* knowledge — it
 comes with tools to build, maintain, and deliver it.
-These same tools power attune-ai's own 540 templates,
+These same tools power attune-ai's own 633 templates,
 proving the approach works at scale.
 
 | | |
 | --- | --- |
 | **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — specialist teams of 2-6 Claude subagents that also serve as knowledge-authoring pipelines |
-| **38 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol, including `help_lookup` (4 modes) and `help_maintain` (auto-regeneration) |
-| **13 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — each skill integrates contextual help from the template engine |
+| **36 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol, including `help_lookup` (4 modes) and `help_maintain` (auto-regeneration) |
+| **14 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — each skill integrates contextual help from the template engine |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
 | **Socratic Discovery** | Workflows ask questions before executing, not the other way around |
 
@@ -130,10 +130,10 @@ pip install 'attune-ai[developer]'
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 13 auto-triggering skills | Yes | Yes |
+| 14 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 38 MCP tools | -- | Yes |
+| 36 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -154,7 +154,7 @@ help system maintenance, or multi-agent orchestration.
 
 ## Cheat Sheet
 
-All 13 skills trigger automatically from natural
+All 14 skills trigger automatically from natural
 language — just describe what you need:
 
 | Input | What Happens |
@@ -170,7 +170,7 @@ language — just describe what you need:
 | "plan this feature" | Auto-triggers `planning` skill |
 | "refactor this module" | Auto-triggers `refactor-plan` skill |
 | "prepare a release" | Auto-triggers `release-prep` skill |
-| "tell me more" | Auto-triggers `learn` — progressive depth help |
+| "tell me more" | Auto-triggers `coach` — progressive depth help |
 | "run all workflows" | Auto-triggers `workflow-orchestration` skill |
 
 Skills run using your **Claude subscription** — no API
@@ -187,7 +187,7 @@ key needed, no additional charges.
 | **Audience adaptation** | Adapts per reader | Write multiple versions | None | None |
 | **Ready-to-use workflows** | 18 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2-6 agents per workflow | None | Yes | No |
-| **MCP integration** | 38 native tools | None | No | No |
+| **MCP integration** | 36 native tools | None | No | No |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
 ---
@@ -223,41 +223,33 @@ a unified result.
 
 ## MCP Tools
 
-38 tools organized into 7 categories:
+36 tools organized into 4 categories:
 
-### Help (2)
-
-`help_lookup` `help_maintain`
-
-### Analysis (6)
+### Workflow (20)
 
 `security_audit` `code_review` `bug_predict`
 `performance_audit` `refactor_plan` `simplify_code`
+`deep_review` `test_generation` `test_audit`
+`test_gen_parallel` `doc_gen` `doc_audit`
+`doc_orchestrator` `release_prep` `health_check`
+`dependency_check` `secure_release` `research_synthesis`
+`analyze_batch` `analyze_image`
 
-### Testing (3)
+### Help (5)
 
-`test_generation` `test_audit` `test_gen_parallel`
+`help_lookup` `help_init` `help_status` `help_update`
+`help_maintain`
 
-### Documentation (3)
-
-`doc_gen` `doc_audit` `doc_orchestrator`
-
-### Release (4)
-
-`release_prep` `health_check` `dependency_check`
-`secure_release`
-
-### Memory & Context (8)
+### Memory (4)
 
 `memory_store` `memory_retrieve` `memory_search`
-`memory_forget` `context_get` `context_set`
-`attune_get_level` `attune_set_level`
+`memory_forget`
 
 ### Utility (7)
 
 `auth_status` `auth_recommend` `telemetry_stats`
-`research_synthesis` `deep_review` `analyze_batch`
-`analyze_image`
+`context_get` `context_set` `attune_get_level`
+`attune_set_level`
 
 ---
 

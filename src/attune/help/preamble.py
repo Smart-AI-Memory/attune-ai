@@ -15,8 +15,6 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_HELP_DIR = Path.cwd() / ".help"
-
 
 def get_preamble(
     feature_name: str,
@@ -35,7 +33,15 @@ def get_preamble(
     Returns:
         Preamble string, or None if not available.
     """
-    base = Path(help_dir) if help_dir else _DEFAULT_HELP_DIR
+    if (
+        not feature_name
+        or "/" in feature_name
+        or "\\" in feature_name
+        or ".." in feature_name
+        or "\x00" in feature_name
+    ):
+        return None
+    base = Path(help_dir) if help_dir else Path.cwd() / ".help"
     task_path = base / "templates" / feature_name / "task.md"
 
     if not task_path.exists():
@@ -51,41 +57,47 @@ def get_preamble(
     return _extract_preamble(text)
 
 
-def _extract_preamble(text: str) -> str | None:
-    """Extract preamble from task template content.
+try:
+    from attune_help.preamble import (
+        _extract_preamble as _extract_preamble,
+    )
+except ImportError:  # attune-help not installed
 
-    Skips YAML frontmatter and the h1 heading, returns
-    the first non-empty paragraph.
+    def _extract_preamble(text: str) -> str | None:  # type: ignore[misc]
+        """Extract preamble from task template content.
 
-    Args:
-        text: Full task template content.
+        Skips YAML frontmatter and the h1 heading, returns
+        the first non-empty paragraph.
 
-    Returns:
-        Preamble line, or None.
-    """
-    lines = text.split("\n")
+        Args:
+            text: Full task template content.
 
-    # Skip frontmatter
-    in_frontmatter = False
-    content_start = 0
-    for i, line in enumerate(lines):
-        if i == 0 and line.strip() == "---":
-            in_frontmatter = True
-            continue
-        if in_frontmatter and line.strip() == "---":
-            content_start = i + 1
-            break
+        Returns:
+            Preamble line, or None.
+        """
+        lines = text.split("\n")
 
-    # Find first non-empty, non-heading line
-    for line in lines[content_start:]:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.startswith("#"):
-            continue
-        return stripped
+        # Skip frontmatter
+        in_frontmatter = False
+        content_start = 0
+        for i, line in enumerate(lines):
+            if i == 0 and line.strip() == "---":
+                in_frontmatter = True
+                continue
+            if in_frontmatter and line.strip() == "---":
+                content_start = i + 1
+                break
 
-    return None
+        # Find first non-empty, non-heading line
+        for line in lines[content_start:]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#"):
+                continue
+            return stripped
+
+        return None
 
 
 def get_related_preambles(
@@ -107,7 +119,15 @@ def get_related_preambles(
     Returns:
         List of dicts with 'feature' and 'preamble' keys.
     """
-    base = Path(help_dir) if help_dir else _DEFAULT_HELP_DIR
+    if (
+        not feature_name
+        or "/" in feature_name
+        or "\\" in feature_name
+        or ".." in feature_name
+        or "\x00" in feature_name
+    ):
+        return []
+    base = Path(help_dir) if help_dir else Path.cwd() / ".help"
     manifest_path = base / "features.yaml"
 
     if not manifest_path.exists():

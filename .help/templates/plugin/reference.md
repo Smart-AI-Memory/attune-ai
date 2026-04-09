@@ -1,27 +1,26 @@
 ---
 feature: plugin
 depth: reference
-generated_at: 2026-04-06T04:35:37.736926+00:00
-source_hash: 671b121fa834def159cbd2cb857178dd617b336c060648c1bb153041e24bab05
+generated_at: 2026-04-08T04:37:17.258445+00:00
+source_hash: 3ae0107cee886520c63039f43c4d0a646ae56e26af17bb7283eca95febc121d5
 status: generated
 ---
 
 # Plugin reference
 
-Hooks and runtime components that extend Claude Code with automated development workflows.
 
 ## Functions
 
 | Function | Description | File |
 |----------|-------------|------|
-| `main()` | Format Python files automatically after Write or Edit tool use. | `plugin/hooks/format_on_save.py` |
-| `main()` | Check if help templates need updates when you start a session. | `plugin/hooks/help_freshness_check.py` |
-| `main()` | Suggest relevant help when Bash commands fail. | `plugin/hooks/help_on_error.py` |
-| `main()` | Update help templates automatically after git commits. | `plugin/hooks/help_post_commit.py` |
-| `validate_bash_command()` | Validate Bash commands against security policies before execution. | `plugin/hooks/security_guard.py` |
-| `validate_file_path()` | Validate file paths against security policies before access. | `plugin/hooks/security_guard.py` |
-| `main()` | Validate tool calls against security policies. | `plugin/hooks/security_guard.py` |
-| `main()` | Display welcome message when you start Claude Code. | `plugin/hooks/welcome.py` |
+| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
+| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
+| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
+| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
+| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
+| `validate_file_path()` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
+| `main()` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |
+| `main()` | Print welcome message to stderr (Claude Code surfaces stderr). | `plugin/hooks/welcome.py` |
 
 
 ## Source files

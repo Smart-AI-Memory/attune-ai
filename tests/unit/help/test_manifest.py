@@ -170,6 +170,65 @@ class TestMatchFilesToFeatures:
         assert "a" in matches
         assert "b" in matches
 
+    def test_star_does_not_cross_directory(self) -> None:
+        """Single * must not match across / boundaries."""
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "a": Feature(
+                    name="a",
+                    description="A",
+                    files=["src/attune/*"],
+                ),
+            },
+        )
+        result = match_files_to_features(
+            ["src/attune/foo.py", "src/attune-redis/foo.py"],
+            manifest,
+        )
+        assert "a" in result
+        assert result["a"] == ["src/attune/foo.py"]
+
+    def test_doublestar_crosses_directories(self) -> None:
+        """** matches across path separators."""
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "auth": Feature(
+                    name="auth",
+                    description="Auth",
+                    files=["src/auth/**"],
+                ),
+            },
+        )
+        result = match_files_to_features(
+            [
+                "src/auth/login.py",
+                "src/auth/providers/google.py",
+            ],
+            manifest,
+        )
+        assert "auth" in result
+        assert len(result["auth"]) == 2
+
+    def test_exact_path_matches(self) -> None:
+        """Literal path without globs matches itself."""
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "m": Feature(
+                    name="m",
+                    description="M",
+                    files=["src/middleware/session.py"],
+                ),
+            },
+        )
+        result = match_files_to_features(
+            ["src/middleware/session.py"],
+            manifest,
+        )
+        assert "m" in result
+
 
 class TestResolveTopic:
     """Tests for resolve_topic()."""

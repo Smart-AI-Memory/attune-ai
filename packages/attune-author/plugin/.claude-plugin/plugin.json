@@ -1,0 +1,13 @@
+{
+  "name": "attune-author",
+  "version": "0.1.0",
+  "description": "Documentation authoring for Claude Code — generate, maintain, and validate help content with the attune-author library",
+  "author": {
+    "name": "Smart AI Memory",
+    "email": "patrick.roebuck@smartaimemory.com"
+  },
+  "homepage": "https://smartaimemory.com",
+  "repository": "https://github.com/Smart-AI-Memory/attune-ai",
+  "license": "Apache-2.0",
+  "keywords": ["documentation", "authoring", "help-system", "templates", "doc-generation", "claude-code"]
+}

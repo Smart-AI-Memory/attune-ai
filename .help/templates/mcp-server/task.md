@@ -1,14 +1,14 @@
 ---
 feature: mcp-server
 depth: task
-generated_at: 2026-04-06T04:30:01.454592+00:00
-source_hash: 64f150abed667e764233b86a01bfe7000bb8f4d6507efcca218ef09579d9f90e
+generated_at: 2026-04-06T16:05:31.946220+00:00
+source_hash: 21be20fb9764e6dedd2f0f21394d99f48796b3f52102798ef7192d0abc6487ff
 status: generated
 ---
 
 # Work with mcp server
 
-Use the MCP server when you need to integrate Attune AI workflows with Model Context Protocol clients for memory management, prompt handling, and tool execution.
+Use mcp server when you need to model context protocol server and tool handlers.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Use the MCP server when you need to integrate Attune AI workflows with Model Con
 ## Steps
 
 1. **Understand the current behavior.**
-   Read the entry points to see what the MCP server
+   Read the entry points to see what mcp server
    does today before making changes.
    The primary functions are:
    - `get_prompt_list()` in `src/attune/mcp/prompts.py` — Get list of available prompts.

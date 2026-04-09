@@ -1,14 +1,14 @@
 ---
 feature: help-system
 depth: task
-generated_at: 2026-04-06T04:30:27.137022+00:00
-source_hash: e4918f66598750dc930dee90c838cd2acf979b30107bd9345c3738c2b2f0dbac
+generated_at: 2026-04-08T04:37:17.216738+00:00
+source_hash: a1d4f1afd1af17d0585ad7917dd72b4b1f82c4a12108c939fd895eb00d2a4313
 status: generated
 ---
 
 # Work with help system
 
-Use the help system when you need to generate documentation templates, manage audience-specific content, or track template feedback and confidence scores.
+Use help system when you need to progressive-depth help engine and template management.
 
 ## Prerequisites
 

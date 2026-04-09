@@ -403,3 +403,257 @@ class TestHandleHelpMaintain:
 
         assert result["success"] is False
         assert result["output"] == "error details"
+
+
+# ------------------------------------------------------------------
+# _handle_help_init
+# ------------------------------------------------------------------
+
+_BOOT = "attune.help.bootstrap"
+_GEN = "attune.help.generator"
+_MAN = "attune.help.manifest"
+_PREAM = "attune.help.preamble"
+_MAINT = "attune.help.maintenance"
+_STALE = "attune.help.staleness"
+_SEC = "attune.security.path_validation"
+
+
+@dataclass
+class _FakeProposal:
+    """Stand-in for ProposedFeature."""
+
+    name: str = "auth"
+    description: str = "Authentication"
+    files: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    confidence: float = 0.9
+    reason: str = "heuristic"
+
+
+@dataclass
+class _FakeFeature:
+    """Stand-in for manifest Feature."""
+
+    name: str = "auth"
+    description: str = "Auth"
+    files: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class _FakeManifest:
+    """Stand-in for FeatureManifest."""
+
+    version: int = 1
+    features: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class _FakeGenResult:
+    """Stand-in for generator result."""
+
+    feature: str = "auth"
+    templates: list[str] = field(default_factory=lambda: ["concept.md"])
+    matched_files: list[str] = field(default_factory=lambda: ["src/auth.py"])
+
+
+@dataclass
+class _FakeMaintenanceResult:
+    """Stand-in for MaintenanceResult."""
+
+    stale_count: int = 1
+    regenerated_count: int = 1
+    regenerated: list[Any] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+
+
+@dataclass
+class _FakeStalenessReport:
+    """Stand-in for StalenessReport."""
+
+    stale_count: int = 1
+    current_count: int = 2
+    stale_features: list[str] = field(default_factory=lambda: ["auth"])
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+class TestHandleHelpInit:
+    """Tests for _handle_help_init()."""
+
+    async def test_scan_returns_proposals(self, tmp_path: Any) -> None:
+        """Scan action returns discovered proposals."""
+        server = _make_server(tmp_path)
+        proposal = _FakeProposal(name="auth", description="Auth")
+        with (
+            patch(f"{_BOOT}.scan_project", return_value=[proposal]),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            result = await server._handle_help_init({"action": "scan"})
+        assert result["success"] is True
+        assert result["count"] == 1
+        assert result["proposals"][0]["name"] == "auth"
+
+    async def test_accept_saves_and_generates(self, tmp_path: Any) -> None:
+        """Accept action saves manifest and generates templates."""
+        server = _make_server(tmp_path)
+        manifest = _FakeManifest(features={"auth": _FakeFeature()})
+        gen_result = _FakeGenResult()
+        with (
+            patch(f"{_BOOT}.proposals_to_manifest", return_value=manifest),
+            patch(f"{_MAN}.save_manifest"),
+            patch(f"{_GEN}.generate_feature_templates", return_value=gen_result),
+            patch(f"{_PREAM}.get_preamble", return_value="Use auth when..."),
+            patch(f"{_SEC}._validate_file_path"),
+            patch(f"{_BOOT}.ProposedFeature", _FakeProposal),
+        ):
+            result = await server._handle_help_init(
+                {
+                    "action": "accept",
+                    "accepted": [{"name": "auth", "description": "Auth"}],
+                }
+            )
+        assert result["success"] is True
+        assert result["features"] == 1
+        assert result["generated"][0]["preamble"] == "Use auth when..."
+
+    async def test_accept_missing_name_returns_error(self, tmp_path: Any) -> None:
+        """Accept rejects proposals without a name."""
+        server = _make_server(tmp_path)
+        with patch(f"{_SEC}._validate_file_path"):
+            result = await server._handle_help_init(
+                {
+                    "action": "accept",
+                    "accepted": [{"description": "no name"}],
+                }
+            )
+        assert result["success"] is False
+        assert "name" in result["error"]
+
+    async def test_accept_generation_failure(self, tmp_path: Any) -> None:
+        """Generation failure lands in the failed list."""
+        server = _make_server(tmp_path)
+        manifest = _FakeManifest(features={"auth": _FakeFeature()})
+        with (
+            patch(f"{_BOOT}.proposals_to_manifest", return_value=manifest),
+            patch(f"{_MAN}.save_manifest"),
+            patch(f"{_GEN}.generate_feature_templates", side_effect=OSError("disk")),
+            patch(f"{_SEC}._validate_file_path"),
+            patch(f"{_BOOT}.ProposedFeature", _FakeProposal),
+        ):
+            result = await server._handle_help_init(
+                {
+                    "action": "accept",
+                    "accepted": [{"name": "auth", "description": "Auth"}],
+                }
+            )
+        assert result["success"] is True
+        assert "auth" in result["failed"]
+
+    async def test_unknown_action_returns_error(self, tmp_path: Any) -> None:
+        """Unknown action returns an error."""
+        server = _make_server(tmp_path)
+        with patch(f"{_SEC}._validate_file_path"):
+            result = await server._handle_help_init({"action": "bogus"})
+        assert result["success"] is False
+        assert "bogus" in result["error"]
+
+
+# ------------------------------------------------------------------
+# _handle_help_status
+# ------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+class TestHandleHelpStatus:
+    """Tests for _handle_help_status()."""
+
+    async def test_returns_staleness_report(self, tmp_path: Any) -> None:
+        """Returns stale/current counts and formatted report."""
+        server = _make_server(tmp_path)
+        report = _FakeStalenessReport()
+        with (
+            patch(f"{_MAN}.load_manifest", return_value=_FakeManifest()),
+            patch(f"{_STALE}.check_staleness", return_value=report),
+            patch(f"{_MAINT}.format_status_report", return_value="## Status"),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            result = await server._handle_help_status({})
+        assert result["success"] is True
+        assert result["stale_count"] == 1
+        assert result["current_count"] == 2
+        assert result["report"] == "## Status"
+
+    async def test_missing_manifest_returns_error(self, tmp_path: Any) -> None:
+        """Returns error when features.yaml is absent."""
+        server = _make_server(tmp_path)
+        with (
+            patch(f"{_MAN}.load_manifest", side_effect=FileNotFoundError),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            result = await server._handle_help_status({})
+        assert result["success"] is False
+        assert "help_init" in result["error"]
+
+    async def test_features_filter_forwarded(self, tmp_path: Any) -> None:
+        """Features list is forwarded to check_staleness."""
+        server = _make_server(tmp_path)
+        mock_check = MagicMock(return_value=_FakeStalenessReport())
+        with (
+            patch(f"{_MAN}.load_manifest", return_value=_FakeManifest()),
+            patch(f"{_STALE}.check_staleness", mock_check),
+            patch(f"{_MAINT}.format_status_report", return_value=""),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            await server._handle_help_status({"features": ["auth"]})
+        assert mock_check.call_args[0][3] == ["auth"]
+
+
+# ------------------------------------------------------------------
+# _handle_help_update
+# ------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+class TestHandleHelpUpdate:
+    """Tests for _handle_help_update()."""
+
+    async def test_successful_regeneration(self, tmp_path: Any) -> None:
+        """Returns regeneration results with preambles."""
+        server = _make_server(tmp_path)
+        maint_result = _FakeMaintenanceResult(
+            regenerated=[_FakeGenResult()],
+        )
+        with (
+            patch(f"{_MAINT}.run_maintenance", return_value=maint_result),
+            patch(f"{_PREAM}.get_preamble", return_value="preamble text"),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            result = await server._handle_help_update({})
+        assert result["success"] is True
+        assert result["regenerated_count"] == 1
+        assert result["regenerated"][0]["preamble"] == "preamble text"
+
+    async def test_dry_run_forwarded(self, tmp_path: Any) -> None:
+        """dry_run flag is forwarded to run_maintenance."""
+        server = _make_server(tmp_path)
+        mock_maint = MagicMock(return_value=_FakeMaintenanceResult())
+        with (
+            patch(f"{_MAINT}.run_maintenance", mock_maint),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            await server._handle_help_update({"dry_run": True})
+        assert mock_maint.call_args[1]["dry_run"] is True
+
+    async def test_missing_manifest_returns_error(self, tmp_path: Any) -> None:
+        """Returns error when maintenance raises FileNotFoundError."""
+        server = _make_server(tmp_path)
+        with (
+            patch(f"{_MAINT}.run_maintenance", side_effect=FileNotFoundError),
+            patch(f"{_SEC}._validate_file_path"),
+        ):
+            result = await server._handle_help_update({})
+        assert result["success"] is False
+        assert "help_init" in result["error"]
