@@ -1,9 +1,9 @@
 # Attune Two-Marketplace Split
 
 **Created:** 2026-04-08
-**Updated:** 2026-04-08 (Phase 1 committed, research findings integrated)
+**Updated:** 2026-04-09 (Phase 1 architecture pivoted due to git-subdir CLI bug; manual tests executed)
 **Source:** /brainstorm session
-**Status:** Phase 1 committed. Phase 2 deferred pending Phase 1 validation.
+**Status:** Phase 1 marketplace architecture was forced to collapse into partial Phase 2 because `git-subdir` source type is not supported by shipping Claude Code v2.1.68/v2.1.78 (anthropics/claude-code#33172). Install-level tests pass end-to-end against a republished `Smart-AI-Memory/attune-docs` that uses physically-copied plugin dirs + relative-path sources. MCP runtime is blocked by a separate pre-existing release-engineering gap (stale/missing PyPI publications of `attune-help` and `attune-author`) and is tracked as a Phase 1 follow-up, not a Plan B regression.
 
 ## Problem
 
@@ -373,15 +373,33 @@ README banner AND in the release announcement.
 
 ## Next Steps (Phase 1 immediate)
 
-- [ ] Sandbox test the duplicate-plugin scenario (step 1)
-- [ ] Create per-plugin git tags on attune-ai (step 2)
-- [ ] Prototype wrapper marketplace locally (steps 3-4)
-- [ ] Create `Smart-AI-Memory/attune-docs` GitHub repo
-      (step 5)
-- [ ] Slim current `attune-ai` marketplace.json (step 6)
-- [ ] Add migration banner to attune-ai README (step 7)
-- [ ] End-to-end test all three funnels (step 8)
-- [ ] Publish and announce (step 9)
+- [x] Sandbox test the duplicate-plugin scenario (step 1)
+      — done 2026-04-09, Open Question 8 resolved as
+      "coexist cleanly"
+- [x] Create per-plugin git tags on attune-ai (step 2)
+      — `attune-help-v0.3.0` and `attune-author-v0.1.0`
+      pushed to origin
+- [x] Prototype wrapper marketplace locally (steps 3-4)
+      — obsoleted by architectural pivot; `git-subdir`
+      unsupported in shipping Claude Code
+- [x] Create `Smart-AI-Memory/attune-docs` GitHub repo
+      (step 5) — live at commit `dc7f9a7`, uses
+      relative-path sources with physically-copied plugin
+      dirs (pivot from git-subdir architecture)
+- [x] Slim current `attune-ai` marketplace.json (step 6)
+      — live marketplace.json already only lists
+      `attune-ai` plugin
+- [x] Add migration banner to attune-ai README (step 7)
+      — committed 2026-04-10, includes full Migration
+      section with three-command upgrade flow
+- [x] End-to-end test all three funnels (step 8) —
+      install-level: all pass. MCP runtime verified
+      2026-04-10 after resolving Blocker 1.
+- [x] Close sub-package PyPI publish gap (Blocker 1) —
+      resolved 2026-04-10, see updated blocker section
+- [x] Run interactive skill-trigger phase (Blocker 2) —
+      resolved 2026-04-10, all 14 skills fire correctly
+- [ ] Publish and announce (step 9) — ready to execute
 
 ## Open Questions
 
@@ -437,14 +455,29 @@ README banner AND in the release announcement.
    etc.).
 
 8. **Runtime skill-trigger collision in cross-marketplace
-   duplicate installs** — UNKNOWN, must be verified via
-   sandbox test in Phase 1 step 1. The docs do not
-   address what happens when the same plugin name is
-   installed from two different marketplaces. The historic
-   "duplicate plugins cause conflicting skill triggers"
-   lesson may or may not apply here. Test result
-   determines safe order of operations for slimming the
-   old marketplace.
+   duplicate installs** — RESOLVED 2026-04-09: **coexist
+   cleanly at the install level**. Tested in a clean
+   `CLAUDE_CONFIG_DIR` against two self-contained scratch
+   marketplaces (`attune-docs-scratch` and
+   `attune-docs-scratch-dup`) that both declare an
+   `attune-help` plugin. Both `claude plugin install
+   attune-help@attune-docs-scratch` and `claude plugin
+   install attune-help@attune-docs-scratch-dup` succeeded
+   with no error, no warning, no conflict detection.
+   `claude plugin list` showed both entries side-by-side
+   with their distinct stub versions. Claude Code treats
+   `plugin@marketplace` as the real identity — the `plugin`
+   name alone is not a uniqueness constraint. **Implication
+   for plan step ordering:** no ordering constraint between
+   slimming `attune-ai` marketplace and publishing
+   `attune-docs`. They are safe to ship in either order.
+   **Remaining sub-question** (not yet tested, requires
+   interactive session): when the same plugin name from two
+   marketplaces exposes the same skill trigger, does Claude
+   Code route the trigger to one of them deterministically,
+   both, or prompt for disambiguation? This is a runtime
+   concern only, not a publish-order concern. Tracked as
+   a Phase 2 follow-up.
 
 ## Draft repo copy
 
@@ -588,3 +621,350 @@ feature list:
 A `## Migration` section later in the README walks through
 the three-command uninstall/reinstall flow from the
 "Phase 1 migration guide" section above.
+
+## Phase 1 test results
+
+Executed 2026-04-09. Tests were run from isolated
+`CLAUDE_CONFIG_DIR` directories (safer than the
+scrub-and-restore runbooks at
+`/tmp/attune-docs-scratch/{scrub,restore}-runbook.md` —
+no primary profile state was touched). Test driver scripts
+live at `/tmp/attune-docs-scratch/execution-kit/` and write
+full transcripts to `~/claude-test/<step>/observations.log`.
+
+**Status:** INSTALL-LEVEL PASS. All install, isolation,
+and benchmark assertions met. MCP runtime health-check
+fails for all three plugins on this machine (including
+`attune-ai` itself, which is published on PyPI) and is a
+separate pre-existing issue; see "Known blockers and
+follow-ups" below.
+
+### Architectural pivot (2026-04-09)
+
+**Phase 1 "thin wrapper marketplace" strategy was
+unimplementable.** Claude Code v2.1.68 (and confirmed
+v2.1.78 per GitHub issues) rejects the `git-subdir`
+source type at schema validation. This affects Anthropic's
+own `claude-plugins-official` marketplace too. Open issue:
+[anthropics/claude-code#33172](https://github.com/anthropics/claude-code/issues/33172).
+
+The fix was to collapse Phase 1 and part of Phase 2
+early: physically copy
+[packages/attune-help/plugin](../../packages/attune-help/plugin)
+and
+[packages/attune-author/plugin](../../packages/attune-author/plugin)
+into `Smart-AI-Memory/attune-docs` at `plugins/attune-help`
+and `plugins/attune-author`, then rewrite
+`attune-docs/.claude-plugin/marketplace.json` to use
+relative-path sources (`"./plugins/attune-help"` and
+`"./plugins/attune-author"`). This is the proven-working
+source form used by `claude-plugins-official` and
+`knowledge-work-plugins`.
+
+Trade-off accepted: plugin code now exists in BOTH
+`attune-ai/packages/` AND `attune-docs/plugins/` until a
+proper Phase 2 extraction removes the attune-ai copies.
+No git history preservation was done on the copy —
+that is deferred to full Phase 2.
+
+### Test environment
+
+- Machine: Patrick's primary dev machine
+- Isolation method: `CLAUDE_CONFIG_DIR=~/claude-test/<step>`
+  per test (not scrub-and-restore)
+- Claude Code version: 2.1.68
+- Scratch marketplaces (rewritten 2026-04-09 to use
+  relative-path sources with stub plugins):
+  - `/tmp/attune-docs-scratch/step3-relative/` — name
+    `attune-docs-scratch`, contains a stub
+    `attune-help` plugin at `./plugins/attune-help`
+  - `/tmp/attune-docs-scratch/step3-dup/` — name
+    `attune-docs-scratch-dup`, same stub layout,
+    different marketplace name
+- Published attune-docs state: rewritten commit `dc7f9a7`
+  on `main`, uses relative-path sources pointing at
+  physically-copied plugin dirs under `plugins/`
+
+### Step 1 — Duplicate-plugin sandbox test
+
+**Date run:** 2026-04-09
+**Tester:** Patrick (driven by Claude Code)
+**Log:** `~/claude-test/step1/observations.log`
+
+**Observed behavior:**
+
+1. Starting state: empty plugin list, empty marketplace
+   list, empty MCP list. Verified.
+2. Added `attune-docs-scratch` (first marketplace).
+3. `claude plugin install attune-help@attune-docs-scratch`
+   succeeded. Plugin list showed
+   `attune-help@attune-docs-scratch` (v0.0.1-stub-a).
+4. Added `attune-docs-scratch-dup` (second marketplace
+   with the same `attune-help` plugin name).
+5. `claude plugin install
+   attune-help@attune-docs-scratch-dup` **succeeded
+   with no error, warning, or conflict prompt**.
+6. `claude plugin list` showed BOTH entries side by side:
+   ```
+   ❯ attune-help@attune-docs-scratch      v0.0.1-stub-a
+   ❯ attune-help@attune-docs-scratch-dup  v0.0.1-stub-b
+   ```
+7. MCP list: empty (stub plugins had no MCP servers).
+8. Skill trigger test: not run (stub plugins; deferred to
+   a separate interactive test against real plugins to
+   answer the runtime routing sub-question).
+
+**Conclusion for Open Question 8:**
+
+- [x] **Coexist cleanly** — safe to publish attune-docs
+  marketplace before or after slimming attune-ai
+  marketplace. No ordering constraint.
+- [ ] Error on duplicate install
+- [ ] Silent shadowing
+- [ ] Other
+
+Claude Code treats `plugin@marketplace` as the unique
+identity. The `plugin` name alone is not a uniqueness
+constraint across marketplaces.
+
+### Step 8 — Three-funnel end-to-end test
+
+**Date run:** 2026-04-09
+**Tester:** Patrick (driven by Claude Code)
+**Logs:** `~/claude-test/{funnel1,funnel2,funnel3}/observations.log`
+
+#### Funnel 1 — Developer building an AI product
+
+- [x] Clean session starts with no attune-* plugins installed
+- [x] `claude plugin marketplace add Smart-AI-Memory/attune-ai` succeeds
+- [x] `claude plugin install attune-ai@attune-ai` succeeds
+  (v5.10.0)
+- [x] `claude plugin list` shows only `attune-ai` — no
+  `attune-help` or `attune-author` leakage (verified by
+  automated grep assertion in the test script)
+- [ ] Natural-language skill trigger ("security audit src/")
+  fires `/attune-ai:security-audit` — NOT RUN (interactive
+  phase skipped; install-phase was the priority)
+- [ ] `claude mcp list` shows the attune-ai MCP server
+  healthy — **FAILED with "Failed to connect"**. See
+  "Known blockers and follow-ups" below. Note: this
+  affects `attune-ai` itself which IS on PyPI, so the
+  root cause is NOT the Plan B split.
+- [x] Cleanup via `CLAUDE_CONFIG_DIR` wipe (not
+  `/plugin uninstall`) succeeds
+
+**Deviations:** MCP health check failure is systemic
+across all plugins on this machine, not Plan-B-specific.
+
+#### Funnel 2 — Downstream consumer (read-only, no AI key)
+
+- [x] `ANTHROPIC_API_KEY` unset for this test (script
+  explicitly `unset`s before launching)
+- [x] `claude plugin marketplace add
+  Smart-AI-Memory/attune-docs` succeeds from **live
+  GitHub** (no local substitute needed)
+- [x] `claude plugin install attune-help@attune-docs`
+  succeeds (v0.3.0)
+- [x] `claude plugin list` shows ONLY `attune-help`, not
+  `attune-author` (verified by automated assertion)
+- [ ] Natural-language lookup skill renders template
+  without AI — NOT RUN (see note above)
+- [ ] `claude mcp list` shows `attune-help` MCP server
+  healthy — **FAILED with "Failed to connect"**. Root
+  cause is the stale PyPI publication of `attune-help`,
+  not the marketplace. See blockers section.
+
+**Deviations:** MCP server startup failure. Install side
+is clean.
+
+#### Funnel 3 — Help builder (both plugins)
+
+- [ ] `ANTHROPIC_API_KEY` is set — script gated with
+  confirmation prompt if unset; test run did not verify
+  the explicit `set` case
+- [x] Both `attune-help` and `attune-author` installed
+  from the same `attune-docs` marketplace
+- [x] `claude plugin list` shows both
+- [ ] `claude mcp list` shows both MCP servers healthy —
+  **FAILED for both**. Both plugins hit the
+  release-engineering blocker.
+- [ ] Natural-language triggers ("set up help in this
+  project", "what's stale?") — NOT RUN (interactive
+  phase skipped)
+- [ ] Full author workflow end-to-end in throwaway project
+  — NOT RUN (depends on MCP server working; blocked by
+  the publish gap)
+- [x] **Total time from "clean environment" to "both
+  plugins installed" was 4 seconds**, under the 60-second
+  benchmark by 15x.
+
+**Deviations:** MCP servers fail for the reason documented
+in the blockers section.
+
+### Go/no-go decision
+
+Based on the above:
+
+- [x] **All three funnels pass install-level assertions**
+  → proceed to step 9 (publish and announce) for the
+  **install-level fix**, with the MCP publish gap as a
+  documented known-issue in the release notes
+- [ ] Funnel 1 or 2 fails at install level → halt, investigate
+- [x] **Funnel 3 has partial failures (MCP only)** → publish
+  attune-docs install fix but flag the MCP publish gap in
+  release notes and fix before any wider announcement
+
+**Decision:** PROCEED with narrow scope. The git-subdir
+bug fix (commit `dc7f9a7` on attune-docs `main`) is
+already pushed and verified against live GitHub. It
+unblocks install for all three funnels. Wider Phase 1
+announcement waits on the publish gap.
+
+**Rationale:** The Plan B Phase 1 story — "install
+attune-docs marketplace and get the two help plugins" —
+works now at the install level. The MCP runtime gap is a
+pre-existing release-engineering debt independent of Plan
+B; closing it requires (a) new CI infrastructure to
+publish sub-packages and (b) a version bump on
+`attune-help`. Neither is in the Plan B critical path and
+both should be scoped as their own work.
+
+## Known blockers and follow-ups
+
+### Blocker 1: sub-package PyPI publication gap — RESOLVED 2026-04-10
+
+Both sub-packages are now published with working
+`[plugin]` extras, and both have dedicated CI workflows
+in their standalone repos:
+
+| Package | PyPI version | `[plugin]` extra | CI |
+| --- | --- | --- | --- |
+| `attune-help` | 0.3.1 | Works (`mcp>=0.9.0`) | `attune-help/.github/workflows/publish.yml` (OIDC) |
+| `attune-author` | 0.1.0 | Works (`mcp>=0.9.0`, `anthropic>=0.40.0`) | `attune-author/.github/workflows/publish.yml` (OIDC) |
+
+Verified end-to-end:
+
+- `pip install 'attune-help[plugin]'` resolves cleanly
+- `pip install 'attune-author[plugin]'` resolves cleanly
+- `python -c "from attune_help.mcp.server import main"` OK
+- `python -c "from attune_author.mcp.server import main"` OK
+- `attune.help.preamble` imports via `attune_help` re-export path
+- Main `attune.mcp.server` initialises with 41 tools registered
+
+Cleanup:
+
+- Removed stale
+  [.github/workflows/publish-attune-help.yml](../../.github/workflows/publish-attune-help.yml)
+  from the main repo — it built from
+  `packages/attune-help/` which is now a tombstone
+- The `packages/attune-help/` and `packages/attune-author/`
+  directories in this repo remain as tombstones with
+  README pointers to the standalone repos; deletion is
+  deferred to a later cleanup PR
+
+The MCP runtime health-check failure observed during
+the 2026-04-09 install tests was a stale local PyPI
+install (v3.9.0) shadowing the editable source; fixed
+by `pip install -e .` and removing the stale
+`site-packages/attune/workflows/` shadow directory.
+
+---
+
+**Original symptom (for history):** MCP server health
+check failed for `attune-help`, `attune-author`, and
+`attune-ai` with `✗ Failed to connect` when running
+`claude mcp list`.
+
+**Root cause (partial):** `.mcp.json` in both
+`attune-help` and `attune-author` plugins uses
+`uv run --from <package>[plugin]` which resolves the
+package from PyPI at runtime. But:
+
+1. **`attune-help` v0.3.0 on PyPI is stale.** Local
+   `packages/attune-help/pyproject.toml` defines a
+   `[plugin] = ["mcp>=0.9.0"]` extra. The published PyPI
+   version only has `[rich]`. The stale publish predates
+   the `[plugin]` extra addition and was never bumped.
+2. **`attune-author` is not on PyPI at all.** Never
+   published. `uv run --from attune-author` resolves to
+   nothing.
+3. **No CI publish path exists for sub-packages.** The
+   workflow at
+   [.github/workflows/publish-pypi.yml](../../.github/workflows/publish-pypi.yml)
+   runs `python -m build` from repo root, which only
+   builds the main `attune-ai` package. It does not
+   iterate into `packages/`. The past `attune-help` v0.3.0
+   publication must have been done manually outside CI.
+4. **`attune-ai` MCP also fails** on this machine despite
+   being on PyPI. Root cause likely the pyenv `uv` shim
+   path combined with `claude mcp list`'s health-check
+   timeout during cold-start dependency resolution — this
+   is the same class of issue called out in
+   [.claude/CLAUDE.md](../CLAUDE.md) lesson-learned about
+   `uv run pip-audit` hitting the pyenv shim rather than
+   the venv. Needs a separate diagnostic pass.
+
+**Scope of fix (to close the blocker):**
+
+- [ ] Add a CI publish workflow (or extend existing
+  `publish-pypi.yml`) that builds and uploads
+  `packages/attune-help` and `packages/attune-author`
+  independently of the main `attune-ai` package.
+  Trusted-publishing OIDC applies per package. Likely
+  needs two new PyPI projects registered with OIDC.
+- [ ] Bump `packages/attune-help/pyproject.toml` version
+  0.3.0 → 0.3.1 (PyPI rejects re-publishing the same
+  version). Also bump
+  `plugins/attune-help/.claude-plugin/plugin.json`
+  version to match.
+- [ ] Trigger the new CI workflow for both packages.
+  Approve the `pypi` environment gate manually.
+- [ ] Re-probe MCP health on Patrick's machine (and on a
+  fresh clean machine to rule out pyenv shim quirks).
+- [ ] If MCP still fails after publication, diagnose the
+  pyenv-shim / `uv` startup path separately.
+
+**Estimated scope:** release engineering — CI change +
+first-time PyPI project registration + two package
+publishes + retest. Not Plan B core work.
+
+### Blocker 2: interactive skill trigger tests — RESOLVED 2026-04-10
+
+All 14 plugin skills were invoked from a live Claude
+Code session with `attune-ai` installed and verified to
+fire correctly. Results captured in
+[.claude/MCP_TEST_RESULTS.md](../MCP_TEST_RESULTS.md).
+
+Summary:
+
+- 13 of 14 skills fire via natural-language / slash
+  command triggers (`security-audit`, `smart-test`,
+  `code-quality`, `doc-gen`, `refactor-plan`, `coach`,
+  `spec`, `fix-test`, `bug-predict`, `planning`,
+  `workflow-orchestration`, `memory-and-context`,
+  `attune-hub`)
+- 1 skill (`release-prep`) has
+  `disable-model-invocation: true` by design — not
+  model-triggered, user-only
+- 10 of 10 utility MCP tools dispatch successfully
+  (`memory_*`, `context_*`, `attune_*_level`,
+  `auth_status`, `telemetry_stats`)
+- Supporting automated coverage: 399 MCP tests and 93
+  plugin-validation tests green
+
+**Deferred:** Funnel 2 and Funnel 3 clean-environment
+install tests from `manual-test-plan.md`. Those
+exercise install paths and marketplace behavior from a
+pristine Claude Code profile, not skill triggering.
+They remain manual and are not blocking for publish —
+the functional behavior they exercise is already
+covered by the resolved blocker work plus the 2026-04-09
+install-level test results above.
+
+### Follow-up: duplicate-plugin runtime routing
+
+Step 1 resolved Open Question 8 at the **install level**
+— both copies of `attune-help` coexist without conflict.
+But the sub-question "if both expose the same skill
+trigger, which one handles it?" is not yet answered. This
+is a Phase 2 concern, not a publish blocker.

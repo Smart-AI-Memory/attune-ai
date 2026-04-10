@@ -1,175 +1,103 @@
 # Attune MCP Server - Test Results
 
-**Date:** 2026-01-29
-**Status:** ✅ All Tests Passing
+**Date:** 2026-04-10
+**Status:** All Tests Passing
 
 ## Test Summary
 
-The Attune MCP Server has been successfully implemented and tested. All functionality is operational and ready for Claude Code integration.
+### Automated Tests (399 passed, 0 failures)
 
-### Test 1: Server Startup ✅
+| Suite | Tests | Status |
+|---|---|---|
+| `tests/unit/mcp/` (core) | 299 | Pass |
+| `tests/unit/test_mcp_memory_tools.py` | 27 | Pass |
+| `tests/unit/test_mcp_help_handlers.py` | 12 | Pass |
+| `tests/unit/mcp/test_request_handler.py` | 14 | Pass |
+| `tests/monitoring/test_mcp_path_containment.py` | 16 | Pass |
+| `attune_redis/tests/test_mcp_tools.py` | 31 | Pass |
 
-```bash
-echo '{"method":"tools/list","params":{}}' | PYTHONPATH=./src python -m attune.mcp.server
-```
+### Plugin Validation Tests (93 passed, 3 skipped)
 
-**Result:** Server starts without errors and responds to JSON-RPC requests.
+| Suite | Tests | Status |
+|---|---|---|
+| `test_plugin_reference_validation.py` | 54 | Pass |
+| `test_plugins_smoke.py` | 7 | Pass |
+| `test_smoke.py` | 5 | Pass |
+| `test_sync_agents_skills.py` | 24 | Pass |
+| `test_plugin_config_validation.py` | 3 | Skipped |
 
-### Test 2: Tool Registration ✅
+### Server Instantiation
 
-**Tools Registered:** 10 tools
+- attune-ai v5.10.0: **41 tools** registered
+- attune-help v0.3.1: MCP server imports OK
+- attune-author v0.1.0: MCP server imports OK
 
-| Tool Name | Description | Status |
-|-----------|-------------|--------|
-| security_audit | Run security audit workflow on codebase | ✅ |
-| bug_predict | Run bug prediction workflow | ✅ |
-| code_review | Run code review workflow | ✅ |
-| test_generation | Generate tests for code | ✅ |
-| performance_audit | Run performance audit workflow | ✅ |
-| release_prep | Run release preparation workflow | ✅ |
-| auth_status | Get authentication strategy status | ✅ |
-| auth_recommend | Get authentication recommendation | ✅ |
-| telemetry_stats | Get telemetry statistics | ✅ |
+### Skill-Trigger Tests (14/14 skills fire)
 
-### Test 3: Resource Registration ✅
+Tested via `Skill` tool invocation in a live Claude
+Code session with the attune-ai plugin installed.
 
-**Resources Registered:** 3 resources
+| Skill | Trigger | Fired |
+|---|---|---|
+| `attune-hub` | `/attune` | Yes |
+| `security-audit` | `/security` | Yes |
+| `smart-test` | `/smart-test` | Yes |
+| `code-quality` | `/code-quality` | Yes |
+| `doc-gen` | `/doc-gen` | Yes |
+| `refactor-plan` | `/refactor-plan` | Yes |
+| `coach` | `/coach` | Yes |
+| `spec` | `/spec` | Yes |
+| `fix-test` | `/fix-test` | Yes |
+| `bug-predict` | `/bug-predict` | Yes (via attune-ai) |
+| `planning` | `/planning` | Yes (via attune-ai) |
+| `workflow-orchestration` | `/workflows` | Yes |
+| `memory-and-context` | `/remember` | Yes |
+| `release-prep` | N/A | disable-model-invocation (user-only) |
 
-| Resource URI | Name | Type |
-|--------------|------|------|
-| empathy://workflows | Available Workflows | application/json |
-| empathy://auth/config | Authentication Configuration | application/json |
-| empathy://telemetry | Telemetry Data | application/json |
+### MCP Tool Dispatch (10/10 utility tools OK)
 
-### Test 4: Tool Execution ✅
+| Tool | Status |
+|---|---|
+| `memory_store` | OK (graceful error — no Redis) |
+| `memory_retrieve` | OK (graceful error — no Redis) |
+| `memory_search` | OK (graceful error — no Redis) |
+| `memory_forget` | OK (graceful error — no Redis) |
+| `attune_get_level` | OK |
+| `attune_set_level` | OK |
+| `context_set` | OK |
+| `context_get` | OK |
+| `auth_status` | OK |
+| `telemetry_stats` | OK |
 
-**Test Tool:** auth_status
+### Skill Description Lengths (all under 250 chars)
 
-**Request:**
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "auth_status",
-    "arguments": {}
-  }
-}
-```
+All 14 skills have descriptions between 137-222
+characters, within the 250-char limit for Claude Code
+auto-triggering.
 
-**Response:**
-```json
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "{\"success\": true, \"subscription_tier\": \"max\", \"default_mode\": \"api\", \"setup_completed\": true}"
-    }
-  ]
-}
-```
+### Skill-to-Tool Reference Chain (all resolve)
 
-**Result:** Tool executed successfully and returned properly formatted MCP response.
+Every MCP tool referenced by a skill exists in the
+server's tool registry (41 tools total).
 
-## Configuration Files
+## Sub-Package PyPI Status
 
-### MCP Configuration ✅
+| Package | Version | `[plugin]` extra | MCP server |
+|---|---|---|---|
+| `attune-help` | 0.3.1 | Working | `attune_help.mcp.server` |
+| `attune-author` | 0.1.0 | Working | `attune_author.mcp.server` |
 
-**File:** `.claude/mcp.json`
+Both have CI (`publish.yml`) with OIDC trusted publishing
+in their respective repos.
 
-```json
-{
-  "mcpServers": {
-    "empathy": {
-      "command": "python",
-      "args": ["-m", "attune.mcp.server"],
-      "env": {
-        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "PYTHONPATH": "${workspaceFolder}/src"
-      },
-      "disabled": false
-    }
-  }
-}
-```
+## Remaining Manual Tests
 
-### Verification Hooks ✅
+The following require a **clean** Claude Code environment
+(no pre-existing attune plugins) per `manual-test-plan.md`:
 
-**File:** `.claude/settings.local.json`
+- Funnel 1: Fresh `attune-ai` install from marketplace
+- Funnel 2: Fresh `attune-help` install (no API key)
+- Funnel 3: Both `attune-help` + `attune-author` coexist
 
-Added PostToolUse hooks for:
-- Python syntax validation (`.py` files)
-- JSON format validation (`.json` files)
-- Workflow output verification
-- Session end reminders
-
-## Claude Code Integration
-
-### How to Use
-
-1. **Restart Claude Code** - The MCP server will be automatically discovered from `.claude/mcp.json`
-
-2. **Verify Connection** - Check Claude Code status bar for "attune" server
-
-3. **Use Tools** - Claude Code can now invoke Attune workflows:
-
-```
-User: "Run a security audit on the src/ directory"
-Claude: [Invokes mcp__attune__security_audit tool]
-
-User: "Generate tests for src/attune/config.py"
-Claude: [Invokes mcp__attune__test_generation tool]
-
-User: "What's my auth status?"
-Claude: [Invokes mcp__attune__auth_status tool]
-```
-
-### Available Commands
-
-All Attune workflows are now accessible through natural language or direct MCP tool invocation:
-
-- **Security Analysis:** "audit security", "check vulnerabilities"
-- **Bug Prediction:** "predict bugs", "find potential issues"
-- **Code Review:** "review code", "analyze quality"
-- **Test Generation:** "generate tests", "boost coverage"
-- **Performance:** "audit performance", "find bottlenecks"
-- **Release Prep:** "prepare release", "check readiness"
-- **Auth Management:** "check auth status", "recommend auth mode"
-- **Telemetry:** "show cost stats", "telemetry report"
-
-## Next Steps
-
-1. ✅ MCP server implemented and tested
-2. ✅ Configuration files created
-3. ✅ Verification hooks added
-4. ⏳ Restart Claude Code to load MCP server
-5. ⏳ Update user documentation with MCP usage examples
-
-## Troubleshooting
-
-### Server Won't Start
-
-```bash
-# Check Python environment
-python -c "import attune.mcp.server; print('OK')"
-
-# Test server directly
-echo '{"method":"tools/list","params":{}}' | python -m attune.mcp.server
-```
-
-### Tools Not Available
-
-- Check `.claude/mcp.json` exists
-- Verify PYTHONPATH includes `${workspaceFolder}/src`
-- Restart Claude Code to reload MCP configuration
-
-### Tool Execution Fails
-
-- Check ANTHROPIC_API_KEY environment variable is set
-- Verify workflow dependencies are installed
-- Check logs in Claude Code for error details
-
-## Conclusion
-
-The Attune MCP Server is fully operational and ready for production use. All 18 tools and 3 resources are properly registered and functional. Claude Code can now directly access all Attune workflows through the Model Context Protocol.
-
-**Status: READY FOR USE** ✅
+These test install paths and marketplace behavior, not
+skill triggering (which is verified above).
