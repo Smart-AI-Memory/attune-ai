@@ -117,6 +117,26 @@ export default function Footer() {
                 </a>
               </li>
               <li>
+                <a
+                  href="https://pypi.org/project/attune-author/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  attune-author on PyPI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/Smart-AI-Memory/attune-docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  attune-docs marketplace
+                </a>
+              </li>
+              <li>
                 <Link
                   href="/contact"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
