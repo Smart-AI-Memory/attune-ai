@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "5.10.0"
+version = "5.10.1"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -672,7 +672,10 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-# uv workspace: resolve local packages from monorepo
+# Editable sibling repos: packages now live in their own dedicated repos.
+# See Smart-AI-Memory/attune-help and Smart-AI-Memory/attune-author.
+# Historical packages/attune-help and packages/attune-author dirs are
+# tombstoned in this repo (see their README.md files for the new home).
 [tool.uv.sources]
-attune-author = { path = "packages/attune-author", editable = true }
-attune-help = { path = "packages/attune-help", editable = true }
+attune-author = { path = "../attune-author", editable = true }
+attune-help = { path = "../attune-help", editable = true }

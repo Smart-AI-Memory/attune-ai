@@ -5,6 +5,42 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.1] - 2026-04-10
+
+### Fixed (5.10.1)
+
+- **MCP server `Failed to connect` — critical**. All three
+  plugins (`attune-ai`, `attune-help`, `attune-author`)
+  shipped `.mcp.json` files invoking the server with
+  `uv run --from <package> …`, but `--from` is not a
+  valid flag for `uv run` — it belongs to `uv tool run`
+  (aka `uvx`). The server failed to start on every install.
+  Fixed by switching to `uvx --from <package> …`. Verified
+  on uv 0.9.17 and 0.9.22 against clean-environment
+  installs in isolated `CLAUDE_CONFIG_DIR` profiles.
+- **Stale `publish-attune-help.yml` workflow** — removed.
+  It built from the tombstoned `packages/attune-help/`
+  directory; the real publish workflow lives in
+  `Smart-AI-Memory/attune-help`.
+
+### Changed (5.10.1)
+
+- **README migration banner + Migration section** — adds
+  a heads-up near the top of the README pointing users at
+  the new `Smart-AI-Memory/attune-docs` marketplace for
+  `attune-help` and `attune-author`, with the three-command
+  upgrade flow documented in full.
+
+### Documentation (5.10.1)
+
+- `.claude/plans/attune-two-marketplace-split-2026-04-08.md`
+  updated with Blocker 1, 2, and 3 resolutions and
+  clean-environment Funnel 1 / Funnel 3 test results.
+- `.claude/MCP_TEST_RESULTS.md` refreshed from the stale
+  Jan 2026 snapshot: 399 MCP tests passing, 93 plugin
+  validation tests, 41 MCP tools registered, all 14 skills
+  fire via natural-language triggers.
+
 ## [5.10.0] - 2026-04-07
 
 ### Added (5.10.0)
