@@ -17,6 +17,15 @@
 
 ---
 
+> **Heads up:** `attune-help` and `attune-author` have
+> moved to their own marketplace at
+> [Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs).
+> If you installed them via this marketplace previously,
+> see the [migration guide](#migration) below. New users
+> should add the `attune-docs` marketplace directly.
+
+---
+
 Static docs rot. READMEs go stale the moment you merge.
 Help pages don't know if you're a beginner or an expert.
 Nobody maintains them — and it shows.
@@ -335,6 +344,40 @@ export ATTUNE_MAX_BUDGET_USD=10.0  # Override
 
 See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability
 reporting and full security details.
+
+---
+
+## Migration
+
+`attune-help` and `attune-author` have moved to their own
+marketplace at
+[Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs).
+If you previously installed either of them via the
+`attune-ai` marketplace, move your installation with the
+three commands below.
+
+1. Add the new marketplace:
+
+   ```text
+   /plugin marketplace add Smart-AI-Memory/attune-docs
+   ```
+
+2. Uninstall from the old marketplace:
+
+   ```text
+   /plugin uninstall attune-help@attune-ai
+   /plugin uninstall attune-author@attune-ai
+   ```
+
+3. Install from the new marketplace:
+
+   ```text
+   /plugin install attune-help@attune-docs
+   /plugin install attune-author@attune-docs
+   ```
+
+New users: add `Smart-AI-Memory/attune-docs` directly —
+no migration steps needed.
 
 ---
 

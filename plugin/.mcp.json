@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "attune-ai": {
-      "command": "uv",
-      "args": ["run", "--from", "attune-ai", "python", "-m", "attune.mcp.server"],
+      "command": "uvx",
+      "args": ["--from", "attune-ai", "python", "-m", "attune.mcp.server"],
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
         "ATTUNE_REDIS_REQUIRED": "false"
