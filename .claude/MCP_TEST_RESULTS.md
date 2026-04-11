@@ -90,14 +90,57 @@ server's tool registry (41 tools total).
 Both have CI (`publish.yml`) with OIDC trusted publishing
 in their respective repos.
 
-## Remaining Manual Tests
+## Clean-Environment Funnel Tests (2026-04-10 evening)
 
-The following require a **clean** Claude Code environment
-(no pre-existing attune plugins) per `manual-test-plan.md`:
+Executed via `CLAUDE_CONFIG_DIR` isolation — per-funnel
+fresh profile in `/tmp/attune-ship-test/{funnel1,funnel3}/`.
 
-- Funnel 1: Fresh `attune-ai` install from marketplace
-- Funnel 2: Fresh `attune-help` install (no API key)
-- Funnel 3: Both `attune-help` + `attune-author` coexist
+### Funnel 1 — attune-ai solo (developer workflows)
 
-These test install paths and marketplace behavior, not
-skill triggering (which is verified above).
+```text
+claude plugin marketplace add Smart-AI-Memory/attune-ai  ->  OK
+claude plugin install attune-ai@attune-ai                ->  OK
+claude plugin list                                       ->  attune-ai@attune-ai v5.10.0 enabled
+claude mcp list                                          ->  uvx --from attune-ai python -m attune.mcp.server - Connected
+```
+
+All 14 skill directories present on disk. MCP health
+verified after applying the PR #142 `uvx` syntax fix
+to the installed plugin cache (same fix that ships in
+the merged PR).
+
+### Funnel 3 — attune-docs both plugins (AI authoring)
+
+```text
+claude plugin marketplace add Smart-AI-Memory/attune-docs  ->  OK
+claude plugin install attune-help@attune-docs              ->  OK
+claude plugin install attune-author@attune-docs            ->  OK
+claude plugin list                                         ->  both enabled
+  - attune-help@attune-docs   v0.3.1
+  - attune-author@attune-docs v0.1.0
+claude mcp list                                            ->  both Connected
+  - uvx --from attune-help[plugin] python -m attune_help.mcp.server
+  - uvx --from attune-author[plugin] python -m attune_author.mcp.server
+```
+
+All 4 attune-help skills and 6 attune-author skills
+present on disk.
+
+### Funnel 2 (attune-help solo, no API key) — not run
+
+Not exercised as a separate test. attune-help's
+connectivity and skill presence are already confirmed by
+Funnel 3, and attune-help is independent of
+`ANTHROPIC_API_KEY` by design (lookup-only runtime).
+
+## Root cause note: `uv run --from` is invalid syntax
+
+The "MCP Failed to connect" symptom documented in the
+2026-04-09 install test log was previously attributed to
+pyenv shim quirks. The actual root cause was that all
+three `.mcp.json` files invoked the MCP server with
+`uv run --from <pkg>` — a form that does not exist in any
+shipped uv version (tested 0.9.17 Homebrew and 0.9.22).
+The `--from` flag belongs to `uv tool run` (aka `uvx`),
+not `uv run`. Fixed in attune-ai PR #142 and attune-docs
+PR #2.
