@@ -38,7 +38,7 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v5.10.0</span>
+                  <span>v5.10.1</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
                   <span className="opacity-80">User Assistants Platform</span>
                 </div>
@@ -171,41 +171,57 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Three Product Cards */}
+        {/* Four Product Cards */}
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Three Ways to Use It</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Four Ways to Use It</h2>
+            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+              A full framework plus three focused tools. Pick the piece
+              that fits the job &mdash; or combine them for the full
+              author &rarr; reader loop.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* attune-ai */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-8 group-hover:bg-[var(--primary)] transition-colors">
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
                 <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128736;&#65039;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">attune-ai</h3>
+              <h3 className="text-xl font-bold mb-3">attune-ai</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Generate, maintain, and serve help from your code. Full framework on PyPI with workflows, staleness detection, and template management.
+                Full framework. Workflows, staleness detection, MCP server, and 14 auto-triggering skills for Claude Code.
               </p>
             </div>
 
             {/* attune-help */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-8 group-hover:bg-[var(--secondary)] transition-colors">
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--secondary)] transition-colors">
                 <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128214;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">attune-help</h3>
+              <h3 className="text-xl font-bold mb-3">attune-help</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Lightweight reader. 1 dependency, 6 files. Embed progressive help anywhere &mdash; CLI tools, notebooks, internal apps.
+                Lightweight reader. 1 dependency, 6 files. Embed progressive help in any CLI tool, notebook, or internal app.
+              </p>
+            </div>
+
+            {/* attune-author */}
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9999;&#65039;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">attune-author</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                AI authoring companion. Generates 11 kinds of source-grounded templates with per-type polish prompts.
               </p>
             </div>
 
             {/* Claude Code Plugin */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-8 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--surface-container-high)] flex items-center justify-center mb-8 group-hover:bg-[var(--foreground)] transition-colors">
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--surface-container-high)] flex items-center justify-center mb-6 group-hover:bg-[var(--foreground)] transition-colors">
                 <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9889;</span>
               </div>
-              <h3 className="text-xl font-bold mb-4">Claude Code Plugin</h3>
+              <h3 className="text-xl font-bold mb-3">Claude Code Plugin</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
                 Type <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/coach</code> in Claude Code. Progressive help in your terminal &mdash; no setup required.
               </p>

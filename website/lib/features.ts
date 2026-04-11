@@ -3,6 +3,11 @@
  *
  * All pages should import from here to ensure consistency.
  * Update counts and descriptions here when features change.
+ *
+ * Marketplace mapping after the 2026-04-10 attune-docs split:
+ *   attune-ai     → Smart-AI-Memory/attune-ai marketplace
+ *   attune-help   → Smart-AI-Memory/attune-docs marketplace
+ *   attune-author → Smart-AI-Memory/attune-docs marketplace
  */
 
 // --- Products ---
@@ -14,6 +19,8 @@ export interface Product {
   version: string;
   tagline: string;
   installCommand: string;
+  /** Claude Code marketplace installation (if applicable). */
+  marketplaceInstall?: string;
   description: string;
   features: string[];
 }
@@ -23,9 +30,11 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "5.10.0",
+    version: "5.10.1",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
+    marketplaceInstall:
+      "claude plugin marketplace add Smart-AI-Memory/attune-ai",
     description:
       "Full framework for bootstrapping a knowledge base from source code. " +
       "Scans your codebase, generates concept/task/reference templates, " +
@@ -36,16 +45,18 @@ export const PRODUCTS: Product[] = [
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
       "14 Claude Code skills included",
-      "MCP server with 5 help tools",
+      "MCP server with 41 registered tools",
     ],
   },
   {
     id: "attune-help",
     name: "Attune Help",
     pypiName: "attune-help",
-    version: "0.3.0",
+    version: "0.3.1",
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
+    marketplaceInstall:
+      "claude plugin install attune-help@attune-docs",
     description:
       "Standalone reader with just 1 dependency. Loads templates, " +
       "provides progressive depth (concept → task → reference), " +
@@ -60,13 +71,39 @@ export const PRODUCTS: Product[] = [
     ],
   },
   {
+    id: "attune-author",
+    name: "Attune Author",
+    pypiName: "attune-author",
+    version: "0.2.0",
+    tagline: "Author and polish help content with AI",
+    installCommand: "pip install 'attune-author[plugin]'",
+    marketplaceInstall:
+      "claude plugin install attune-author@attune-docs",
+    description:
+      "The AI authoring companion for attune-help. Generates 11 kinds " +
+      "of source-grounded templates — concept, task, reference, error, " +
+      "warning, troubleshooting, faq, quickstart, tip, note, and " +
+      "comparison — with per-type LLM polish prompts and typed source " +
+      "summaries so the output stays accurate.",
+    features: [
+      "11 meta-template kinds (up from 3 in v0.1.0)",
+      "Per-type LLM polish prompts with anti-pattern lists",
+      "Signature-aware source summaries (typed args + return)",
+      "Strict polish mode for CI (ATTUNE_AUTHOR_STRICT_POLISH)",
+      "Staleness detection via source file hashing",
+      "Works with attune-help for the full author → reader loop",
+    ],
+  },
+  {
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "5.10.0",
+    version: "5.10.1",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
+    marketplaceInstall:
+      "claude plugin install attune-ai@attune-ai",
     description:
       "Install from the Claude Code marketplace. Type /coach to get " +
       "progressive help on any topic. Init, status, maintain, and " +
@@ -77,7 +114,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "14 additional skills (security, testing, review, etc.)",
+      "14 auto-triggering skills (security, testing, review, etc.)",
     ],
   },
 ];
@@ -203,14 +240,34 @@ export const DIFFERENTIATORS: Differentiator[] = [
   },
 ];
 
-// --- Legacy Capabilities (folded into docs) ---
+// --- Capability counts (verified against Python registry) ---
 
-export const LEGACY_CAPABILITIES = {
+/**
+ * Counts that appear in prose and stat callouts across the
+ * site. Verified against the live Python code per the
+ * website-content-accuracy rule:
+ *
+ *   workflows: attune.workflows.list_workflows() with stages
+ *   skills: plugin/skills/ directory count
+ *   mcpTools: EmpathyMCPServer().tools length
+ *   templateKinds: attune_author.generator._ALL_TEMPLATE_NAMES length
+ */
+export const CAPABILITIES = {
+  workflows: 15,
+  skills: 14,
+  mcpTools: 41,
+  templateKinds: 11,
   wizards: 5,
-  workflows: 17,
   agentTemplates: 14,
   compositionPatterns: 6,
 } as const;
+
+/**
+ * @deprecated Use {@link CAPABILITIES} instead. Kept for
+ * backward compatibility with any consumer that may still
+ * import the old name.
+ */
+export const LEGACY_CAPABILITIES = CAPABILITIES;
 
 // --- Helpers ---
 
@@ -218,13 +275,21 @@ export function getPricingSummary(): string {
   return "Everything open source — Apache 2.0";
 }
 
+/** Icon used in homepage product cards for each product. */
+const PRODUCT_ICONS: Record<string, string> = {
+  "attune-ai": "🛠️",
+  "attune-help": "📖",
+  "attune-author": "✍️",
+  "claude-code-plugin": "⚡",
+};
+
 export function getHomepageFeatures(): Array<{
   icon: string;
   title: string;
   description: string;
 }> {
   return PRODUCTS.map((p) => ({
-    icon: p.id === "attune-ai" ? "🛠️" : p.id === "attune-help" ? "📖" : "⚡",
+    icon: PRODUCT_ICONS[p.id] ?? "📦",
     title: p.name,
     description: p.tagline,
   }));

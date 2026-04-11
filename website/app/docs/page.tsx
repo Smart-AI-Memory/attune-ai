@@ -20,7 +20,7 @@ const faqItems = [
   {
     question: 'Do I need attune-ai to read templates?',
     answer:
-      'No. The standalone attune-help package (1 dependency) can read any .help/ directory. attune-ai is only needed to generate and maintain templates.',
+      'No. The standalone attune-help package (1 dependency) can read any .help/ directory without the full framework. Generate templates with attune-author or attune-ai, then ship them alongside attune-help for a minimal runtime with no Anthropic API key required.',
   },
   {
     question: 'Can I write templates by hand?',
@@ -41,6 +41,11 @@ const faqItems = [
     question: 'What Claude Code skills are included?',
     answer:
       '14 auto-invoking skills: security audit, smart test, code review, deep review, doc generation, refactoring, bug prediction, release prep, planning, brainstorming, workflow orchestration, fix-test, spec-driven development, and the coach help system.',
+  },
+  {
+    question: 'Where do I install attune-help and attune-author from?',
+    answer:
+      'They live in the Smart-AI-Memory/attune-docs marketplace, not the main attune-ai marketplace. Add the marketplace with `claude plugin marketplace add Smart-AI-Memory/attune-docs`, then install the plugin(s) you want: `attune-help@attune-docs` for the reader and/or `attune-author@attune-docs` for the AI authoring companion. For PyPI direct installs, `pip install attune-help` and `pip install \'attune-author[plugin]\'` also work.',
   },
 ];
 
@@ -104,7 +109,10 @@ export default function DocsPage() {
                   Framework
                 </a>
                 <a href="#attune-help" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Standalone Reader
+                  Reader
+                </a>
+                <a href="#attune-author" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
+                  Authoring
                 </a>
                 <a href="#plugin" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   Plugin
@@ -126,57 +134,96 @@ export default function DocsPage() {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-4xl font-bold text-center mb-4">Quick Start</h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Choose the package that fits your needs. All three are open
-                source under Apache 2.0.
+                Choose the package that fits your needs. All four are
+                open source under Apache 2.0.
               </p>
 
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* attune-help */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 flex flex-col">
-                  <div className="text-sm font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Reader Only
                   </div>
-                  <h3 className="text-xl font-bold mb-2">attune-help</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-6 flex-1">
+                  <h3 className="text-lg font-bold mb-2">attune-help</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     Lightweight reader for .help/ templates. 1 dependency,
-                    6 files. Embed in any Python tool.
+                    6 files. Embed in any Python tool. No AI key required.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-4">
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-help
                   </div>
                 </div>
 
                 {/* attune-ai */}
-                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-8 flex flex-col relative">
+                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
                     Recommended
                   </div>
-                  <div className="text-sm font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Full Framework
                   </div>
-                  <h3 className="text-xl font-bold mb-2">attune-ai</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-6 flex-1">
+                  <h3 className="text-lg font-bold mb-2">attune-ai</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     Generate, maintain, and serve help from your codebase.
-                    17 workflows, 14 skills, MCP server.
+                    15 workflows, 14 skills, MCP server.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-4">
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
                   </div>
                 </div>
 
+                {/* attune-author */}
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                    AI Authoring
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">attune-author</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
+                    Generate 11 kinds of source-grounded templates with
+                    per-type polish prompts. Pairs with attune-help.
+                  </p>
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
+                    <span className="text-white/50">$ </span>pip install &apos;attune-author[plugin]&apos;
+                  </div>
+                </div>
+
                 {/* Claude Code Plugin */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 flex flex-col">
-                  <div className="text-sm font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Claude Code
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Plugin</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-6 flex-1">
+                  <h3 className="text-lg font-bold mb-2">Plugin</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     Install from the marketplace. Type /coach for
                     progressive help right in your terminal.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 break-all">
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
                     <span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai
                   </div>
+                </div>
+              </div>
+
+              {/* attune-docs marketplace callout */}
+              <div className="mt-10 bg-[var(--surface-container-low)] border border-[var(--border)] rounded-lg p-6">
+                <h3 className="font-bold text-lg mb-2">
+                  attune-help and attune-author plugins live in the attune-docs marketplace
+                </h3>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                  After the 2026-04-10 split, the Claude Code plugin
+                  versions of attune-help and attune-author live in a
+                  separate marketplace from the main attune-ai
+                  plugin. Add that marketplace first, then install
+                  whichever plugin(s) you want.
+                </p>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
+                  <div className="text-white/50"># Add the attune-docs marketplace</div>
+                  <div>claude plugin marketplace add Smart-AI-Memory/attune-docs</div>
+                  <br />
+                  <div className="text-white/50"># Install the reader (no API key required)</div>
+                  <div>claude plugin install attune-help@attune-docs</div>
+                  <br />
+                  <div className="text-white/50"># Install the AI authoring companion</div>
+                  <div>claude plugin install attune-author@attune-docs</div>
                 </div>
               </div>
             </div>
@@ -336,8 +383,105 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Attune Author (AI authoring companion) */}
+        <section id="attune-author" className="py-20 bg-[var(--border)] bg-opacity-30">
+          <div className="container">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-4xl font-bold text-center mb-4">
+                Attune Author
+              </h2>
+              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
+                The AI authoring companion for attune-help. Generates
+                source-grounded templates from your codebase and
+                polishes them with per-type LLM prompts.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-10">
+                <div>
+                  <h3 className="font-bold text-lg mb-4">11 Template Kinds</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-4">
+                    Up from 3 in v0.1.0. The generator produces the
+                    full set of shapes attune-help renders:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">concept</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">task</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">reference</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">error</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">warning</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">troubleshooting</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">faq</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">quickstart</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">tip</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">note</div>
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1">comparison</div>
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] mt-4">
+                    Default calls produce the original three kinds
+                    unchanged. The eight new kinds are strictly
+                    opt-in via the <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">depths=</code> kwarg.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-lg mb-4">Per-Type Polish</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-4">
+                    Each template kind gets its own system prompt
+                    that teaches the LLM what &ldquo;good&rdquo; looks
+                    like for that shape:
+                  </p>
+                  <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
+                    <li>
+                      <strong className="text-[var(--foreground)]">Concept</strong> &mdash;
+                      definitional clarity and mental models
+                    </li>
+                    <li>
+                      <strong className="text-[var(--foreground)]">Task</strong> &mdash;
+                      &ldquo;Use X when&hellip;&rdquo; openers and
+                      verifiable success criteria
+                    </li>
+                    <li>
+                      <strong className="text-[var(--foreground)]">Troubleshooting</strong> &mdash;
+                      symptom tables and step-by-step diagnosis
+                    </li>
+                    <li>
+                      <strong className="text-[var(--foreground)]">Comparison</strong> &mdash;
+                      decision tables with &ldquo;Use X when&hellip;&rdquo;
+                      recommendations
+                    </li>
+                  </ul>
+                  <p className="text-sm text-[var(--text-secondary)] mt-4">
+                    Plus signature-aware source summaries that feed
+                    the LLM typed function and method signatures, so
+                    the polished output stays factually grounded in
+                    your actual code.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
+                <h3 className="font-bold text-lg mb-4">Install and Generate</h3>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed mb-4">
+                  <div className="text-white/50"># PyPI install (includes the polish runtime)</div>
+                  <div>pip install &apos;attune-author[plugin]&apos;</div>
+                  <br />
+                  <div className="text-white/50"># Or via the attune-docs marketplace for Claude Code</div>
+                  <div>claude plugin install attune-author@attune-docs</div>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Requires <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">ANTHROPIC_API_KEY</code> for
+                  the polish pass. Without it, the generator falls
+                  back to the raw Jinja2 drafts. Set
+                  <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">ATTUNE_AUTHOR_STRICT_POLISH=1</code> to
+                  make polish failures hard errors for CI.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Claude Code Plugin */}
-        <section id="plugin" className="py-20 bg-[var(--border)] bg-opacity-30">
+        <section id="plugin" className="py-20">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl font-bold text-center mb-4">
@@ -411,8 +555,9 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                attune-ai includes 17 multi-stage workflows and 14
-                auto-invoking Claude Code skills.
+                attune-ai includes 15 multi-stage workflows, 14
+                auto-invoking Claude Code skills, and an MCP server
+                with 41 registered tools.
               </p>
 
               <div className="grid md:grid-cols-2 gap-8 mb-12">
