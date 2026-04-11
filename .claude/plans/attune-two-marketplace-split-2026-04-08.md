@@ -399,7 +399,17 @@ README banner AND in the release announcement.
       resolved 2026-04-10, see updated blocker section
 - [x] Run interactive skill-trigger phase (Blocker 2) —
       resolved 2026-04-10, all 14 skills fire correctly
+- [x] Fix invalid `uv run --from` syntax in all three
+      `.mcp.json` files (Blocker 3, discovered 2026-04-10
+      evening during funnel test run — was the actual
+      root cause of the MCP health-check failures
+      previously attributed to pyenv shim quirks)
+- [x] Clean-environment Funnel 1 + Funnel 3 tests with
+      `CLAUDE_CONFIG_DIR` isolation — both pass including
+      MCP runtime connectivity
 - [ ] Publish and announce (step 9) — ready to execute
+      once attune-ai PR #142 merges (CI test matrix
+      pending, all required checks already green)
 
 ## Open Questions
 
@@ -862,11 +872,98 @@ Cleanup:
   README pointers to the standalone repos; deletion is
   deferred to a later cleanup PR
 
-The MCP runtime health-check failure observed during
-the 2026-04-09 install tests was a stale local PyPI
-install (v3.9.0) shadowing the editable source; fixed
-by `pip install -e .` and removing the stale
-`site-packages/attune/workflows/` shadow directory.
+### Blocker 3: invalid `uv run --from` syntax in every `.mcp.json` — RESOLVED 2026-04-10
+
+Discovered during tonight's Funnel 1 test run. This was
+the actual root cause of the "MCP health-check fails for
+all three plugins" symptom attributed in the 2026-04-09
+test log to "pyenv shim quirks / uv startup path".
+
+All three plugins shipped `.mcp.json` files invoking the
+MCP server with:
+
+```text
+uv run --from <package>[plugin] python -m <module>
+```
+
+But `--from` is **not a valid flag for `uv run`** in any
+shipped uv version. Tested with uv 0.9.17 (Homebrew) and
+uv 0.9.22 (pyenv); both reject with:
+
+```text
+error: unexpected argument '--from' found
+tip: a similar argument exists: '--frozen'
+```
+
+The correct form is `uvx --from <package> <command>` (an
+alias for `uv tool run --from …`), which creates a
+dedicated isolated environment from the specified package
+and runs the command in it. The `--from` flag belongs to
+`uv tool run`, not `uv run`.
+
+Fix applied to all three plugins:
+
+- `plugin/.mcp.json` (this repo, on PR #142)
+- `attune-docs/plugins/attune-help/.mcp.json`
+  (attune-docs PR #2, merged)
+- `attune-docs/plugins/attune-author/.mcp.json`
+  (attune-docs PR #2, merged)
+
+Verified on live installs using
+`CLAUDE_CONFIG_DIR`-isolated profiles:
+
+```text
+# Funnel 3 (attune-docs, both plugins):
+plugin:attune-help:attune-help:
+  uvx --from attune-help[plugin] python -m attune_help.mcp.server
+  - ✓ Connected
+plugin:attune-author:attune-author:
+  uvx --from attune-author[plugin] python -m attune_author.mcp.server
+  - ✓ Connected
+
+# Funnel 1 (attune-ai, after patching the installed
+# cache with the PR #142 fix):
+plugin:attune-ai:attune-ai:
+  uvx --from attune-ai python -m attune.mcp.server
+  - ✓ Connected
+```
+
+Supporting verification of the local stale-install
+issue encountered earlier: the outdated v3.9.0 PyPI
+install on Patrick's machine was shadowing the editable
+source; fixed by `pip install -e .` and removing the
+stale `site-packages/attune/workflows/` shadow directory.
+That was a dev-machine quirk, not a ship-blocker.
+
+### Funnel test results (2026-04-10, evening)
+
+Test method: `CLAUDE_CONFIG_DIR` isolation per funnel,
+running `claude plugin marketplace add` → `claude plugin
+install` → `claude plugin list` → `claude mcp list`.
+
+**Funnel 1 — attune-ai solo (developer workflows):**
+
+- `claude plugin marketplace add Smart-AI-Memory/attune-ai` OK
+- `claude plugin install attune-ai@attune-ai` OK
+- `claude plugin list` shows `attune-ai@attune-ai` v5.10.0 enabled
+- All 14 skill directories present on disk
+- MCP health: `✓ Connected` (after patching cache with PR #142 fix)
+
+**Funnel 3 — attune-docs both plugins (AI authoring workflow):**
+
+- `claude plugin marketplace add Smart-AI-Memory/attune-docs` OK
+- `claude plugin install attune-help@attune-docs` OK
+- `claude plugin install attune-author@attune-docs` OK
+- `claude plugin list` shows both plugins enabled at
+  v0.3.1 and v0.1.0 respectively
+- All 4 attune-help skills and 6 attune-author skills
+  present on disk
+- MCP health: both servers `✓ Connected`
+
+Funnel 2 (attune-help solo, no AI key) was not run as a
+separate test tonight — the attune-help MCP connectivity
+evidence from Funnel 3 is sufficient, since attune-help
+is independent of `ANTHROPIC_API_KEY` by design.
 
 ---
 
