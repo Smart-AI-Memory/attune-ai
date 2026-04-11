@@ -5,18 +5,24 @@ import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
 
-const codeExample = `from attune_help import HelpEngine
+// Hero code sample shows the full author → reader loop
+// across all three packages so the homepage doesn't
+// elevate one product over the others. Kept intentionally
+// short — the goal is to tell the story in ~10 lines of
+// Python, not to document every API.
+const codeExample = `# 1. attune-author — generate polished, source-grounded
+#    templates from your codebase (CI or dev time)
+from attune_author.generator import generate_feature_templates
+generate_feature_templates(feature, help_dir=".help", project_root=".")
 
+# 2. attune-help — read them at runtime. 1 dependency,
+#    no API key required. Embed anywhere.
+from attune_help import HelpEngine
 engine = HelpEngine(template_dir=".help/templates")
-
-# First call: concept (what is it?)
 print(engine.lookup("security-audit"))
 
-# Repeat: task (how to do it)
-print(engine.lookup("security-audit"))
-
-# Again: reference (full API detail)
-print(engine.lookup("security-audit"))`;
+# 3. attune-ai — /coach in Claude Code, plus workflows,
+#    MCP tools, and the full author ⇄ reader pipeline`;
 
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
@@ -51,10 +57,10 @@ export default function Home() {
                   automatically. Enhance with human expertise when it matters.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-sm group cursor-pointer border border-white/20">
-                    <span className="opacity-50 mr-2">$</span>
-                    <span>pip install attune-help</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity" aria-hidden="true">
+                  <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-xs sm:text-sm group cursor-pointer border border-white/20 overflow-x-auto">
+                    <span className="opacity-50 mr-2 shrink-0">$</span>
+                    <span className="whitespace-nowrap">claude plugin marketplace add Smart-AI-Memory/attune-ai</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true">
                       <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                     </svg>
@@ -66,6 +72,14 @@ export default function Home() {
                     See How It Works
                   </Link>
                 </div>
+                <p className="mt-4 text-xs text-[var(--text-muted)] leading-relaxed max-w-xl">
+                  Or install directly from PyPI:{' '}
+                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">pip install attune-ai</code>
+                  {' '}&middot;{' '}
+                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">attune-help</code>
+                  {' '}&middot;{' '}
+                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">&apos;attune-author[plugin]&apos;</code>
+                </p>
                 {/* Trust badges */}
                 <div className="flex flex-wrap gap-3 mt-8">
                   <GitHubStarsBadge />
@@ -129,34 +143,59 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Code Example Section */}
-        <section className="py-24 bg-[var(--surface-container-low)]" aria-label="Code example">
+        {/* Platform overview — one code sample, three packages */}
+        <section className="py-24 bg-[var(--surface-container-low)]" aria-label="Platform overview">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-16 items-start">
-              <div className="md:w-1/3">
-                <h2 className="text-3xl font-extrabold mb-6">Your Code Becomes Your Docs</h2>
+              <div className="md:w-2/5">
+                <h2 className="text-3xl font-extrabold mb-6">How the Platform Fits Together</h2>
                 <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                  Point the engine at your codebase. Each repeat query goes deeper &mdash; from concept to task to full reference.
+                  Three focused Python packages that compose into a
+                  full author &rarr; reader loop. Use the full stack, or
+                  drop in just the piece you need.
                 </p>
-                <ul className="space-y-4">
-                  <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">&#10003;</span>
-                    <span className="font-medium text-sm">Generated from source code</span>
+                <ul className="space-y-5">
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-bold text-xs shrink-0 mt-0.5">1</span>
+                    <div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune-author</code></div>
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
+                        Generates 11 kinds of source-grounded templates with
+                        per-type LLM polish. Runs at dev time or in CI.
+                      </p>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">&#10003;</span>
-                    <span className="font-medium text-sm">Progressive depth: concept, task, reference</span>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--secondary)]/15 text-[var(--secondary)] font-bold text-xs shrink-0 mt-0.5">2</span>
+                    <div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune-help</code></div>
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
+                        Reads the templates at runtime. 1 dependency, no API
+                        key required. Embed in any Python tool.
+                      </p>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-[var(--secondary)]">&#10003;</span>
-                    <span className="font-medium text-sm">Open Source &mdash; Apache 2.0</span>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] font-bold text-xs shrink-0 mt-0.5">3</span>
+                    <div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune-ai</code></div>
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
+                        Full framework for Claude Code. 15 workflows, 14
+                        auto-triggering skills, MCP server with 41 tools.
+                      </p>
+                    </div>
                   </li>
                 </ul>
+                <div className="mt-8 pt-6 border-t border-[var(--border)]/40">
+                  <p className="text-xs text-[var(--text-muted)]">
+                    All three are open source &mdash; Apache 2.0.
+                  </p>
+                </div>
               </div>
-              <div className="md:w-2/3 w-full">
+              <div className="md:w-3/5 w-full">
                 <div className="bg-[#213145] rounded-xl overflow-hidden shadow-2xl">
                   <div className="flex items-center px-4 py-2 bg-[#2a3b50] border-b border-white/5">
-                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">help_example.py</span>
+                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">author_reader_loop.py</span>
                     <div className="ml-auto flex gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
