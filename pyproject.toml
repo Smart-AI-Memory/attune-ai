@@ -671,9 +671,7 @@ exclude_lines = [
 ]
 
 # Editable sibling repos: packages now live in their own dedicated repos.
-# See Smart-AI-Memory/attune-help and Smart-AI-Memory/attune-author.
-# Historical packages/attune-help and packages/attune-author dirs are
-# tombstoned in this repo (see their README.md files for the new home).
+# Editable sibling repo for local development.
+# attune-help is now a PyPI dependency (no source override needed).
 [tool.uv.sources]
 attune-author = { path = "../attune-author", editable = true }
-attune-help = { path = "../attune-help", editable = true }
