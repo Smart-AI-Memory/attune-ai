@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "5.10.1"
+version = "5.10.2"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -70,11 +70,9 @@ dependencies = [
     "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
     "python-multipart>=0.0.22",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg (transitive via mcp)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    # NOTE: attune-author lives in packages/ as a workspace-only dev dep.
-    # It is NOT a runtime requirement of attune-ai — the help system's
-    # local submodules (bootstrap, generator, manifest, staleness, etc.)
-    # are self-contained. attune-author is for authoring/refactoring help
-    # content during development.
+    "attune-help>=0.5.1",  # Progressive-depth help runtime + MCP tools
+    # NOTE: attune-author is a workspace-only dev dep for authoring/
+    # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
@@ -673,9 +671,7 @@ exclude_lines = [
 ]
 
 # Editable sibling repos: packages now live in their own dedicated repos.
-# See Smart-AI-Memory/attune-help and Smart-AI-Memory/attune-author.
-# Historical packages/attune-help and packages/attune-author dirs are
-# tombstoned in this repo (see their README.md files for the new home).
+# Editable sibling repo for local development.
+# attune-help is now a PyPI dependency (no source override needed).
 [tool.uv.sources]
 attune-author = { path = "../attune-author", editable = true }
-attune-help = { path = "../attune-help", editable = true }

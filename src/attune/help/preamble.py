@@ -13,6 +13,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from attune_help.preamble import _extract_preamble as _extract_preamble
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,49 +57,6 @@ def get_preamble(
         return None
 
     return _extract_preamble(text)
-
-
-try:
-    from attune_help.preamble import (
-        _extract_preamble as _extract_preamble,
-    )
-except ImportError:  # attune-help not installed
-
-    def _extract_preamble(text: str) -> str | None:  # type: ignore[misc]
-        """Extract preamble from task template content.
-
-        Skips YAML frontmatter and the h1 heading, returns
-        the first non-empty paragraph.
-
-        Args:
-            text: Full task template content.
-
-        Returns:
-            Preamble line, or None.
-        """
-        lines = text.split("\n")
-
-        # Skip frontmatter
-        in_frontmatter = False
-        content_start = 0
-        for i, line in enumerate(lines):
-            if i == 0 and line.strip() == "---":
-                in_frontmatter = True
-                continue
-            if in_frontmatter and line.strip() == "---":
-                content_start = i + 1
-                break
-
-        # Find first non-empty, non-heading line
-        for line in lines[content_start:]:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.startswith("#"):
-                continue
-            return stripped
-
-        return None
 
 
 def get_related_preambles(

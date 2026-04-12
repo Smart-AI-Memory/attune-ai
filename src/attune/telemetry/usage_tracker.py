@@ -426,7 +426,7 @@ class UsageTracker:
                 counter += 1
 
             # Rename current file
-            self.usage_file.rename(rotated_file)
+            self.usage_file.replace(rotated_file)
 
             # Clean up old files
             self._cleanup_old_files()
