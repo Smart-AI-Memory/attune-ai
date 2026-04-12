@@ -187,7 +187,7 @@ class AuditLogger(
             rotated_name = f"{self.log_filename}.{timestamp}"
             rotated_path = self.log_dir / rotated_name
 
-            self.log_path.rename(rotated_path)
+            self.log_path.replace(rotated_path)
             logger.info(f"Audit log rotated: {rotated_path}")
 
             # Clean up old logs beyond retention period

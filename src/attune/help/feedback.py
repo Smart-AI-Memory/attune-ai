@@ -61,7 +61,7 @@ def _save_feedback(generated_dir: Path, data: dict) -> None:
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    tmp.rename(path)
+    tmp.replace(path)  # replace() is cross-platform; rename() fails on Windows
 
 
 def record_template_feedback(
