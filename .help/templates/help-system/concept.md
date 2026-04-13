@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: concept
-generated_at: 2026-04-13T16:57:05.752536+00:00
-source_hash: 467a5c8cd33cd0393e786850d8fcc294aca5563b1004934e6374bb49fe5b2767
+generated_at: 2026-04-13T18:07:44.240940+00:00
+source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
 status: generated
 ---
 
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-Template engine and audience transformers for progressive-depth help documentation.
+Progressive-depth help engine and template management.
 
 The main building blocks are:
 

@@ -5,6 +5,58 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-04-13
+
+### Added (6.0.0)
+
+- **LLM polish pass for help templates** — the help system
+  now runs generated templates through an LLM polish pass
+  that replaces generic filler with specific, accurate
+  descriptions drawn from source code. All 63 templates
+  (21 features x 3 depths) ship polished. Requires
+  `ANTHROPIC_API_KEY` in `.env`.
+- **VS Code MCP support** — added `.mcp.json` at the
+  project root so the VS Code extension auto-starts the
+  attune-ai MCP server. The CLI reads `.claude/mcp.json`;
+  VS Code reads `.mcp.json` at the project root. Both
+  files are now maintained.
+- **Integration tests for help polish pipeline** — new
+  tests verify the full generate → polish → file chain,
+  including trailing newline handling and API key gating.
+- **Cache directory exclusion in staleness detection** —
+  `compute_source_hash()` now excludes `__pycache__/`,
+  `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`,
+  `node_modules/`, and `.git/` from hash computation,
+  making staleness detection deterministic.
+
+### Fixed (6.0.0)
+
+- **MCP server config committed and enabled** — the
+  `.claude/mcp.json` fix from v5.10.1 was in the working
+  tree but never committed, so new sessions started with
+  `"disabled": true`. Now committed and enabled.
+- **MCP server loads `.env` at startup** — `main()` now
+  calls `load_dotenv()` so features like the help polish
+  pass can access `ANTHROPIC_API_KEY` from `.env` files.
+- **`GenerationResult` is now sortable** — added
+  `order=True` with `compare=False` on list fields to
+  prevent `TypeError` when sorting maintenance results.
+- **LLM output trailing newline** — the polish pass now
+  ensures output ends with `\n`, preventing `end-of-file-
+  fixer` pre-commit failures on every regeneration.
+- **`Path.rename()` → `Path.replace()` for Windows** —
+  fixed cross-platform atomic write in `help/session.py`.
+
+### Changed (6.0.0)
+
+- **attune-help is now a core dependency** — no longer
+  requires a separate install.
+- **MCP tool descriptions updated** — `help_update` and
+  `help_maintain` now document the `ANTHROPIC_API_KEY`
+  requirement for the polish pass.
+- **Homepage rebalanced** — website surfaces all three
+  products (attune-ai, attune-help, attune-author) equally.
+
 ## [5.10.1] - 2026-04-10
 
 ### Fixed (5.10.1)

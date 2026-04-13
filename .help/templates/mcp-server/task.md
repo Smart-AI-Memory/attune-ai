@@ -1,14 +1,14 @@
 ---
 feature: mcp-server
 depth: task
-generated_at: 2026-04-13T16:56:48.682204+00:00
-source_hash: cd9113c895b6740f8b406b613bcb2f3d3ed3fac586882f2d8ebc96e6107c1f5f
+generated_at: 2026-04-13T18:07:44.222249+00:00
+source_hash: 573bf0d5245dd536c1752066c5919eba5993fb627889d8b4e69163436a9206ef
 status: generated
 ---
 
 # Work with mcp server
 
-Use mcp server when you need to integrate Attune AI's MCP (Model Context Protocol) server with client applications or modify its memory, workflow, and prompt handling capabilities.
+Use mcp server when you need to model context protocol server and tool handlers.
 
 ## Prerequisites
 

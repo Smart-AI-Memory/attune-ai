@@ -1,4 +1,4 @@
-# Attune AI Framework v5.10.1
+# Attune AI Framework v6.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 5.10.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 6.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -1493,4 +1493,27 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `field(default_factory=list, compare=False)` on list fields
   to exclude them. This fixed `GenerationResult` in
   `help/generator.py` which was unsortable.
+
+- **VS Code extension reads `.mcp.json` at project root, not
+  `.claude/mcp.json`**: The Claude Code CLI reads
+  `.claude/mcp.json` but the VS Code extension reads
+  `.mcp.json` at the project root. To support both, maintain
+  both files with identical content. A committed
+  `.claude/mcp.json` alone won't start local MCP servers in
+  VS Code.
+
+- **MCP server process doesn't inherit `.env` variables**:
+  The `${ANTHROPIC_API_KEY}` expansion in `.mcp.json` only
+  works if the variable is already in the shell environment.
+  If it's only in `.env`, the MCP server process won't have
+  it. Fix: call `load_dotenv()` in the server's `main()`
+  entrypoint so features like the help polish pass can access
+  the key at runtime.
+
+- **LLM API responses lack trailing newlines**: The Anthropic
+  API doesn't guarantee a trailing newline in message content.
+  When writing LLM output to files, always append `\n` if
+  missing — otherwise `end-of-file-fixer` pre-commit hooks
+  will reject the commit. Check with `if not text.endswith
+  ("\n"): text += "\n"`.
 <!-- attune-lessons-end -->
