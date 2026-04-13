@@ -1466,4 +1466,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   always `git log origin/main..<release-branch>` to see
   whether the release branch is the effective trunk. If it
   is, branch from the release branch, not main.
+
+- **Glob-based hash computation must exclude cache dirs**:
+  `compute_source_hash()` in `help/staleness.py` used
+  `Path.glob("**/*")` which matched `__pycache__/*.pyc` and
+  `.mypy_cache/*`. Since bytecode files change between runs,
+  the hash was non-deterministic — staleness detection
+  flip-flopped between stale and fresh on consecutive calls.
+  Fix: filter paths through `_is_excluded()` which rejects
+  any path containing `__pycache__`, `.mypy_cache`,
+  `.pytest_cache`, `.ruff_cache`, `node_modules`, or `.git`.
+
+- **Uncommitted `.claude/mcp.json` means MCP server never
+  starts**: Claude Code reads the *committed* version of
+  `.claude/mcp.json` at session start. If the working copy
+  has fixes (like removing `"disabled": true` or changing
+  `"command": "python"` to `"command": "uv"`) but they're
+  not committed, the MCP server won't connect. Always commit
+  MCP config changes immediately — an uncommitted fix is
+  invisible to new sessions.
+
+- **`dataclass(order=True)` needs `compare=False` on list
+  fields**: Adding `order=True` to a dataclass enables
+  `sorted()` but fails with `TypeError` if any field contains
+  a `list` (unhashable for comparison). Use
+  `field(default_factory=list, compare=False)` on list fields
+  to exclude them. This fixed `GenerationResult` in
+  `help/generator.py` which was unsortable.
 <!-- attune-lessons-end -->

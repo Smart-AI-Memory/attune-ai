@@ -89,6 +89,21 @@ class StalenessReport:
         return [e.feature for e in self.entries if e.is_stale]
 
 
+_EXCLUDED_DIRS = {
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "node_modules",
+    ".git",
+}
+
+
+def _is_excluded(path: Path) -> bool:
+    """Check if any path component is an excluded directory."""
+    return any(part in _EXCLUDED_DIRS for part in path.parts)
+
+
 def compute_source_hash(
     feature: Feature,
     project_root: str | Path,
@@ -97,7 +112,8 @@ def compute_source_hash(
 
     Reads all files matching the feature's glob patterns,
     concatenates their contents in sorted order, and returns
-    the SHA-256 hex digest.
+    the SHA-256 hex digest. Excludes cache and build
+    directories that change without source edits.
 
     Args:
         feature: The feature to hash.
@@ -115,7 +131,7 @@ def compute_source_hash(
         if glob_pattern.endswith("**"):
             glob_pattern += "/*"
         for path in sorted(root.glob(glob_pattern)):
-            if path.is_file():
+            if path.is_file() and not _is_excluded(path):
                 # Normalize to POSIX separators for cross-platform consistency
                 rel = path.relative_to(root).as_posix()
                 if rel not in matched:
