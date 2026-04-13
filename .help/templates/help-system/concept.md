@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: concept
-generated_at: 2026-04-08T04:37:17.209190+00:00
-source_hash: a1d4f1afd1af17d0585ad7917dd72b4b1f82c4a12108c939fd895eb00d2a4313
+generated_at: 2026-04-13T16:57:05.752536+00:00
+source_hash: 467a5c8cd33cd0393e786850d8fcc294aca5563b1004934e6374bb49fe5b2767
 status: generated
 ---
 
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-Progressive-depth help engine and template management.
+Template engine and audience transformers for progressive-depth help documentation.
 
 The main building blocks are:
 
@@ -20,7 +20,7 @@ The main building blocks are:
 - **`MaintenanceResult`** — Result of a help maintenance run.
 - **`Feature`** — A project feature mapped to source files.
 
-Under the hood, this feature spans 697 source
+Under the hood, this feature spans 17 source
 files covering:
 
 - Project scanning and manifest bootstrapping.

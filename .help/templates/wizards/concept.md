@@ -1,8 +1,8 @@
 ---
 feature: wizards
 depth: concept
-generated_at: 2026-04-06T04:36:04.699122+00:00
-source_hash: fad88261e0dbe9f9ea2e6e67da0819f247e4b1e816131c4c3128024aadbdd904
+generated_at: 2026-04-13T17:03:17.987170+00:00
+source_hash: 655cede9671032e7ccc7f39a9f47afbc96ce8855aa0b1bbe2c6567c1a091bf8b
 status: generated
 ---
 
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-XML-enhanced interactive workflows guide you through multi-step processes like debugging, refactoring, and security audits.
+XML-enhanced interactive workflows that guide you through multi-step processes like debugging, refactoring, and security audits.
 
 The main building blocks are:
 
@@ -20,12 +20,12 @@ The main building blocks are:
 - **`WizardResult`** — Result from a completed wizard run.
 - **`BaseWizard`** — Abstract base class for interactive, multi-step wizards.
 
-Under the hood, this feature spans 29 source
+Under the hood, this feature spans 14 source
 files covering:
 
-- XML-enhanced wizard system data types
-- Base wizard class for interactive workflows
-- Built-in wizards for debugging, refactoring, release preparation, security audits, and test generation
+- Data types for the wizard framework.
+- Base wizard class for XML-enhanced interactive workflows.
+- Built-in wizards for debugging, refactoring, release preparation, security audits, and test generation.
 
 ## What connects to it
 

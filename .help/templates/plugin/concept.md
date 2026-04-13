@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: concept
-generated_at: 2026-04-08T04:37:17.248360+00:00
-source_hash: 3ae0107cee886520c63039f43c4d0a646ae56e26af17bb7283eca95febc121d5
+generated_at: 2026-04-13T17:02:17.704285+00:00
+source_hash: 87e746872c84d001921b431b15885746de7e8990a689c551172afc6f72cf1c35
 status: generated
 ---
 
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-Claude Code plugin — skills, hooks, commands, and MCP config.
+Claude Code plugin system provides automated hooks, security validation, and bundled runtime for standalone operation.
 
 The main entry points are:
 
@@ -20,12 +20,14 @@ The main entry points are:
 - **`main()`** — Check for stale help after git commit.
 - **`validate_bash_command()`** — Validate a Bash command against security policies.
 
-Under the hood, this feature spans 613 source
+Under the hood, this feature spans 610 source
 files covering:
 
-- PostToolUse hook: auto-format Python files after Write/Edit.
-- SessionStart hook: check help template freshness.
-- PostToolUse hook: suggest help when Bash commands fail.
+- PostToolUse hook: auto-format Python files after Write/Edit operations.
+- SessionStart hook: verify help template freshness when Claude starts.
+- PostToolUse hook: suggest relevant help documentation when Bash commands fail.
+- PostToolUse hook: auto-maintain .help/ directory contents after git commits.
+- attune-ai core: bundled runtime environment for standalone plugin operation.
 
 ## What connects to it
 

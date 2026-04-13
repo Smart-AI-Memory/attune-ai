@@ -1,8 +1,8 @@
 ---
 feature: memory
 depth: concept
-generated_at: 2026-04-06T04:31:02.171580+00:00
-source_hash: f7be50272674d976f7e23f12d2da9909620b48df295f03bbf3d21d0e9e8b1034
+generated_at: 2026-04-13T16:57:39.724217+00:00
+source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
 status: generated
 ---
 
@@ -10,23 +10,24 @@ status: generated
 
 ## How it works
 
-Memory subsystem provides persistent storage, semantic search, and centralized management for AI interactions.
+Memory subsystem provides storage, retrieval, and enterprise-grade security for AI interactions.
 
 The main building blocks are:
 
-- **`MemoryBackend`** — Protocol that defines the interface for short-term memory storage systems.
-- **`SearchableMemoryBackend`** — Extended protocol that adds semantic search capabilities to memory backends.
-- **`ClaudeMemoryConfig`** — Configuration settings for integrating with Claude's memory system.
-- **`MemoryFile`** — Represents a loaded CLAUDE.md file containing project-specific memory data.
-- **`ClaudeMemoryLoader`** — Manages loading and parsing of CLAUDE.md memory files for code projects.
+- **`MemoryBackend`** — Protocol for short-term memory backends that store conversation context.
+- **`SearchableMemoryBackend`** — Extended protocol for backends with semantic search capabilities.
+- **`ClaudeMemoryConfig`** — Configuration for integrating Claude's memory system with your projects.
+- **`MemoryFile`** — Represents a loaded CLAUDE.md memory file containing project context.
+- **`ClaudeMemoryLoader`** — Loads and manages Claude Code memory files from your project directories.
 
-Under the hood, this feature spans 145 source
+Under the hood, this feature spans 72 source
 files covering:
 
-- Memory backend protocols and implementations
-- Claude memory integration for code projects
+- Memory backend protocols for Attune AI short-term storage
+- Claude memory integration for project-specific context
+- Redis configuration utilities (deprecated)
 - Enterprise control panel for memory management
-- Redis-based storage (legacy support)
+- Rate limiting and API key authentication
 
 ## What connects to it
 
@@ -37,8 +38,8 @@ memory through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `MemoryBackend` | Protocol that defines the interface for short-term memory storage systems. | `src/attune/memory/backend.py` |
-| `SearchableMemoryBackend` | Extended protocol that adds semantic search capabilities to memory backends. | `src/attune/memory/backend.py` |
-| `ClaudeMemoryConfig` | Configuration settings for integrating with Claude's memory system. | `src/attune/memory/claude_memory.py` |
-| `MemoryFile` | Represents a loaded CLAUDE.md file containing project-specific memory data. | `src/attune/memory/claude_memory.py` |
-| `ClaudeMemoryLoader` | Manages loading and parsing of CLAUDE.md memory files for code projects. | `src/attune/memory/claude_memory.py` |
+| `MemoryBackend` | Protocol for short-term memory backends that store conversation context. | `src/attune/memory/backend.py` |
+| `SearchableMemoryBackend` | Extended protocol for backends with semantic search capabilities. | `src/attune/memory/backend.py` |
+| `ClaudeMemoryConfig` | Configuration for integrating Claude's memory system with your projects. | `src/attune/memory/claude_memory.py` |
+| `MemoryFile` | Represents a loaded CLAUDE.md memory file containing project context. | `src/attune/memory/claude_memory.py` |
+| `ClaudeMemoryLoader` | Loads and manages Claude Code memory files from your project directories. | `src/attune/memory/claude_memory.py` |

@@ -1,14 +1,14 @@
 ---
 feature: models
 depth: task
-generated_at: 2026-04-06T04:33:45.082553+00:00
-source_hash: 5281a9cce870400fa1f93a29dd9b940cdc17f1029494b1b3ceec79cbe9969f3c
+generated_at: 2026-04-13T17:00:14.302892+00:00
+source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
 status: generated
 ---
 
 # Work with models
 
-Use the models feature when you need to configure authentication strategies, route tasks to optimal models based on performance telemetry, or manage Claude subscription tiers.
+Use models when you need to configure authentication strategies, route tasks to optimal models based on performance telemetry, or manage Claude subscription tiers.
 
 ## Prerequisites
 

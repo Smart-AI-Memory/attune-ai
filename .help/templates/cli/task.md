@@ -1,14 +1,14 @@
 ---
 feature: cli
 depth: task
-generated_at: 2026-04-06T04:33:15.002130+00:00
-source_hash: 60d629c5d9c90360ec0e4d695e0e6548b4a7742f1575ea77863085ed35e3a4ef
+generated_at: 2026-04-13T16:59:43.098833+00:00
+source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
 status: generated
 ---
 
 # Work with cli
 
-Use the Attune AI CLI when you need to interact with the system through command-line interface or route user input between skills and natural language processing.
+Use the Attune AI CLI when you need to interact with the system through command-line interface or route user input between natural language processing and specific skill invocations.
 
 ## Prerequisites
 

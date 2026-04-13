@@ -1,14 +1,14 @@
 ---
 feature: refactor-plan
 depth: task
-generated_at: 2026-04-06T04:29:12.995447+00:00
+generated_at: 2026-04-13T16:55:54.448985+00:00
 source_hash: 05ca199fb5b9d09ed7030f06c407e71de2e78a2433624c15a7beacf294de4d07
 status: generated
 ---
 
 # Work with refactor plan
 
-Use refactor plan when you need to identify technical debt and generate a prioritized refactoring roadmap for your codebase.
+Use refactor plan when you need to prioritize technical debt and generate a structured refactoring strategy for your codebase.
 
 ## Prerequisites
 

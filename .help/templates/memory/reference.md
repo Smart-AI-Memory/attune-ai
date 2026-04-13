@@ -1,8 +1,8 @@
 ---
 feature: memory
 depth: reference
-generated_at: 2026-04-06T04:31:17.499266+00:00
-source_hash: f7be50272674d976f7e23f12d2da9909620b48df295f03bbf3d21d0e9e8b1034
+generated_at: 2026-04-13T16:57:56.254961+00:00
+source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
 status: generated
 ---
 
@@ -130,4 +130,4 @@ status: generated
 | `get_railway_redis()` | Get Redis configured for Railway deployment. | `src/attune/memory/config.py` |
 | `run_api_server()` | Run the Memory API server with security features. | `src/attune/memory/control_panel_api.py` |
 | `print_status()` | Print status in a formatted way. | `src/attune/memory/control_panel_display.py` |
-| `print_stats()` | Print statistics
+| `print_stats()` | Print statistics in a formatted way.

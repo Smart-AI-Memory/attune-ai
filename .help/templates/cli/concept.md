@@ -1,8 +1,8 @@
 ---
 feature: cli
 depth: concept
-generated_at: 2026-04-06T04:33:09.132823+00:00
-source_hash: 60d629c5d9c90360ec0e4d695e0e6548b4a7742f1575ea77863085ed35e3a4ef
+generated_at: 2026-04-13T16:59:36.754504+00:00
+source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
 status: generated
 ---
 
@@ -14,14 +14,14 @@ Command-line interface that combines traditional commands with natural language 
 
 The main building blocks are:
 
-- **`RoutingPreference`** — Stores user's learned routing preferences for intelligent command handling.
-- **`HybridRouter`** — Routes user input between traditional CLI commands and Claude Code skill invocations.
+- **`RoutingPreference`** — Stores user's learned routing preferences for hybrid command interpretation.
+- **`HybridRouter`** — Routes user input between structured CLI commands and Claude Code skill invocations.
 
-Under the hood, this feature spans 158 source
+Under the hood, this feature spans 10 source
 files covering:
 
-- Hybrid CLI router that handles both structured commands and natural language
-- CLI command modules for core Attune functionality
+- Hybrid CLI router that handles both skills and natural language
+- Core CLI command modules for the Attune platform
 - Cost tracking commands for monitoring API usage
 
 ## What connects to it
@@ -33,5 +33,5 @@ cli through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `RoutingPreference` | Stores user's learned routing preferences for intelligent command handling. | `src/attune/cli_router.py` |
-| `HybridRouter` | Routes user input between traditional CLI commands and Claude Code skill invocations. | `src/attune/cli_router.py` |
+| `RoutingPreference` | Stores user's learned routing preferences for hybrid command interpretation. | `src/attune/cli_router.py` |
+| `HybridRouter` | Routes user input between structured CLI commands and Claude Code skill invocations. | `src/attune/cli_router.py` |

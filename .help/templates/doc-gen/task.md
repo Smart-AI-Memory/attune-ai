@@ -1,14 +1,14 @@
 ---
 feature: doc-gen
 depth: task
-generated_at: 2026-04-06T04:28:21.456674+00:00
-source_hash: 444c6caa95ffb8aba3f6ccaa58d9ed8e39b6778803e88559314abcc374802863
+generated_at: 2026-04-13T16:54:52.347797+00:00
+source_hash: 67aadd029bbf773d9f478a4d4c750e25344dc6b0bd9e1edadbcf5151d83f3bff
 status: generated
 ---
 
 # Work with doc gen
 
-Use doc gen when you need to automatically generate documentation from source code, including API references, docstrings, and readme sections.
+Use doc gen when you need to generate documentation from source code through a multi-stage workflow that extracts API references, creates outlines, writes content, and polishes the final output.
 
 ## Prerequisites
 
@@ -21,8 +21,7 @@ Use doc gen when you need to automatically generate documentation from source co
    Read the entry points to see what doc gen
    does today before making changes.
    The primary functions are:
-   - `format_doc_gen_report()` in `src/attune/workflows/document_gen/report_formatter.py` — formats document generation output as a human-readable report
-
+   - `format_doc_gen_report()` in `src/attune/workflows/document_gen/report_formatter.py` — Format document generation output as a human-readable report.
 2. **Locate the right function to change.**
    Each function has a single responsibility. Read its
    docstring, parameters, and return type to confirm it

@@ -1,8 +1,8 @@
 ---
 feature: configuration
 depth: concept
-generated_at: 2026-04-06T04:36:26.397569+00:00
-source_hash: 6be742830b8d72209e378e70916c649d55dd40a3afdfa434cf328395a1bc4ee3
+generated_at: 2026-04-13T17:03:44.253844+00:00
+source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
 status: generated
 ---
 
@@ -10,32 +10,35 @@ status: generated
 
 ## How it works
 
-The configuration system manages settings and options for all Attune AI agents with environment variable support and unified configuration models.
+Centralized configuration management system for Attune AI agents and workflows.
 
 The main building blocks are:
 
-- **`ModelTier`** — Defines cost optimization levels for different model usage scenarios.
-- **`Provider`** — Specifies which LLM provider to use for agent operations.
-- **`WorkflowMode`** — Controls how agent workflows execute (sequential, parallel, etc.).
-- **`AgentOperationError`** — Provides detailed error context when agent operations fail.
-- **`UnifiedAgentConfig`** — Contains all configuration options for agents in a single model.
+- **`ModelTier`** — Cost optimization levels for LLM models.
+- **`Provider`** — Available LLM provider options.
+- **`WorkflowMode`** — Agent workflow execution strategies.
+- **`UnifiedAgentConfig`** — Centralized configuration model for all agents.
+- **`ConfigLoader`** — Configuration file loading, saving, and validation.
 
-Under the hood, this feature spans 30 source files covering:
+Under the hood, this feature spans 15 source
+files covering:
 
-- Unified agent configuration with validation and defaults
-- Environment variable compatibility that checks ATTUNE_ then EMPATHY_ prefixes
-- Configuration loading, saving, and global state management
+- Environment variable compatibility with ATTUNE_ and EMPATHY_ prefixes
+- Redis and MemDocs integration configuration
+- Book production workflow settings
+- Global configuration state management
 
 ## What connects to it
 
 This feature relates to: config, settings.
 
-Other parts of the codebase interact with configuration through these interfaces:
+Other parts of the codebase interact with
+configuration through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ModelTier` | Defines cost optimization levels for different model usage scenarios. | `src/attune/config/agent_config.py` |
-| `Provider` | Specifies which LLM provider to use for agent operations. | `src/attune/config/agent_config.py` |
-| `WorkflowMode` | Controls how agent workflows execute (sequential, parallel, etc.). | `src/attune/config/agent_config.py` |
-| `AgentOperationError` | Provides detailed error context when agent operations fail. | `src/attune/config/agent_config.py` |
-| `UnifiedAgentConfig` | Contains all configuration options for agents in a single model. | `src/attune/config/agent_config.py` |
+| `get_config()` | Get global configuration instance | `src/attune/config/__init__.py` |
+| `load_unified_config()` | Load unified configuration from file | `src/attune/config/__init__.py` |
+| `get_attune_env()` | Get environment variables with prefix fallback | `src/attune/config/env.py` |
+| `UnifiedAgentConfig` | Unified configuration model for all agents | `src/attune/config/agent_config.py` |
+| `WorkflowConfig` | Configuration for agent workflows | `src/attune/config/agent_config.py` |

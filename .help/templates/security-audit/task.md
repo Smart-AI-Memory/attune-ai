@@ -1,14 +1,14 @@
 ---
 feature: security-audit
 depth: task
-generated_at: 2026-04-06T04:27:15.074186+00:00
-source_hash: f3c7ecfc06b88ed07137562d160e3d10e0168c98f92aa060ae8fbd378b2571c4
+generated_at: 2026-04-13T16:53:39.182361+00:00
+source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
 status: generated
 ---
 
 # Work with security audit
 
-Run a security audit when you need to scan your codebase for vulnerabilities before deploying or when security compliance requires validation.
+Use security audit when you need to identify security vulnerabilities in your codebase through SDK-native analysis with specialized subagents.
 
 ## Prerequisites
 
@@ -18,14 +18,14 @@ Run a security audit when you need to scan your codebase for vulnerabilities bef
 ## Steps
 
 1. **Understand the current behavior.**
-   Read the entry points to see what the SecurityAuditWorkflow
+   Read the entry points to see what security audit
    does today before making changes.
-   The primary functions are:
-   - `alerts()` in `src/attune/monitoring/alerts_cli.py` — Manage alerts for LLM telemetry monitoring.
+   The primary workflow is:
+   - `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py` — SDK-native security audit with four specialized subagents.
+   The supporting alert system includes:
+   - `alerts()` in `src/attune/monitoring/alerts_cli.py` — Alert management commands for LLM telemetry monitoring.
    - `init()` in `src/attune/monitoring/alerts_cli.py` — Initialize an alert with interactive workflow or CLI flags.
    - `list_cmd()` in `src/attune/monitoring/alerts_cli.py` — List all configured alerts.
-   - `delete()` in `src/attune/monitoring/alerts_cli.py` — Delete an alert by ID.
-   - `enable()` in `src/attune/monitoring/alerts_cli.py` — Enable an alert by ID.
 
 2. **Locate the right function to change.**
    Each function has a single responsibility. Read its

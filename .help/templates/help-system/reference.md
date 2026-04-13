@@ -1,8 +1,8 @@
 ---
 feature: help-system
 depth: reference
-generated_at: 2026-04-08T04:37:17.221376+00:00
-source_hash: a1d4f1afd1af17d0585ad7917dd72b4b1f82c4a12108c939fd895eb00d2a4313
+generated_at: 2026-04-13T16:57:19.764394+00:00
+source_hash: 467a5c8cd33cd0393e786850d8fcc294aca5563b1004934e6374bb49fe5b2767
 status: generated
 ---
 
@@ -23,14 +23,6 @@ status: generated
 | `TemplateContext` | Runtime parameters for template population. | `src/attune/help/templates.py` |
 | `AudienceProfile` | Target audience for output adaptation. | `src/attune/help/templates.py` |
 | `PopulatedTemplate` | Result of template population. | `src/attune/help/templates.py` |
-| `HelpEngine` | Lightweight help runtime with progressive depth. | `packages/attune-help/src/attune_help/engine.py` |
-| `AttuneHelpHandlers` | Async handlers for the 5 attune-help MCP tools. | `packages/attune-help/src/attune_help/mcp/handlers.py` |
-| `AttuneHelpMCPServer` | MCP server for attune-help. | `packages/attune-help/src/attune_help/mcp/server.py` |
-| `SessionStorage` | Protocol for session state backends. | `packages/attune-help/src/attune_help/storage.py` |
-| `LocalFileStorage` | File-based session storage (default implementation). | `packages/attune-help/src/attune_help/storage.py` |
-| `TemplateContext` | Runtime parameters for template population. | `packages/attune-help/src/attune_help/templates.py` |
-| `AudienceProfile` | Target audience for output adaptation. | `packages/attune-help/src/attune_help/templates.py` |
-| `PopulatedTemplate` | Result of template population. | `packages/attune-help/src/attune_help/templates.py` |
 
 ## Functions
 
@@ -69,18 +61,6 @@ status: generated
 | `render_claude_code()` | Render template for inline Claude Code conversation. | `src/attune/help/transformers.py` |
 | `render_marketplace()` | Render template for agentskills.io documentation page. | `src/attune/help/transformers.py` |
 | `render_cli()` | Render template for terminal display via `attune help`. | `src/attune/help/transformers.py` |
-| `get_demo_path()` | Return path to the bundled demo templates directory. | `packages/attune-help/src/attune_help/demos/__init__.py` |
-| `validate_file_path()` | Validate a user-controlled file path. | `packages/attune-help/src/attune_help/mcp/path_validation.py` |
-| `create_server()` | Create and return a fresh AttuneHelpMCPServer. | `packages/attune-help/src/attune_help/mcp/server.py` |
-| `main()` | Entry point for the attune-help MCP server. | `packages/attune-help/src/attune_help/mcp/server.py` |
-| `get_tools()` | Return all attune-help MCP tool definitions. | `packages/attune-help/src/attune_help/mcp/tool_schemas.py` |
-| `get_preamble()` | Get the one-liner preamble for a feature. | `packages/attune-help/src/attune_help/preamble.py` |
-| `populate_progressive()` | Populate with type-driven depth escalation. | `packages/attune-help/src/attune_help/progression.py` |
-| `invalidate_cross_links_cache()` | Clear the cross-links cache so the next lookup re-reads disk. | `packages/attune-help/src/attune_help/templates.py` |
-| `populate()` | Populate a template with context and audience adaptation. | `packages/attune-help/src/attune_help/templates.py` |
-| `render_claude_code()` | Render template for inline Claude Code conversation. | `packages/attune-help/src/attune_help/transformers.py` |
-| `render_marketplace()` | Render template for static site documentation. | `packages/attune-help/src/attune_help/transformers.py` |
-| `render_cli()` | Render template for terminal display. | `packages/attune-help/src/attune_help/transformers.py` |
 
 
 ## Source files

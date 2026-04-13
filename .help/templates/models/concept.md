@@ -1,8 +1,8 @@
 ---
 feature: models
 depth: concept
-generated_at: 2026-04-06T04:33:39.838730+00:00
-source_hash: 5281a9cce870400fa1f93a29dd9b940cdc17f1029494b1b3ceec79cbe9969f3c
+generated_at: 2026-04-13T17:00:06.834316+00:00
+source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
 status: generated
 ---
 
@@ -10,23 +10,22 @@ status: generated
 
 ## How it works
 
-Unified model registry with adaptive routing, authentication strategy management, and circuit breaker protection for LLM providers.
+The unified model registry for Attune AI that handles LLM authentication, adaptive provider routing, and Claude subscription tier management.
 
 The main building blocks are:
 
 - **`ModelPerformance`** — Performance metrics for a model on a specific task.
-- **`AdaptiveModelRouter`** — Route tasks to models based on historical telemetry performance.
+- **`AdaptiveModelRouter`** — Routes tasks to models based on historical telemetry performance.
 - **`SubscriptionTier`** — Claude subscription tiers.
 - **`AuthMode`** — Authentication mode selection.
 - **`AuthStrategy`** — Authentication strategy configuration.
 
-Under the hood, this feature spans 46 source
+Under the hood, this feature spans 22 source
 files covering:
 
-- Unified Model Registry for Attune AI
-- Adaptive Model Routing based on historical telemetry
-- CLI commands for authentication strategy management
-- Authentication Strategy for Claude Subscriptions vs API
+- CLI module execution for model commands
+- Adaptive model routing based on historical telemetry
+- Authentication strategy management through CLI commands
 
 ## What connects to it
 
@@ -38,7 +37,7 @@ models through these interfaces:
 | Interface | Purpose | File |
 |-----------|---------|------|
 | `ModelPerformance` | Performance metrics for a model on a specific task. | `src/attune/models/adaptive_routing.py` |
-| `AdaptiveModelRouter` | Route tasks to models based on historical telemetry performance. | `src/attune/models/adaptive_routing.py` |
+| `AdaptiveModelRouter` | Routes tasks to models based on historical telemetry performance. | `src/attune/models/adaptive_routing.py` |
 | `SubscriptionTier` | Claude subscription tiers. | `src/attune/models/auth_strategy.py` |
 | `AuthMode` | Authentication mode selection. | `src/attune/models/auth_strategy.py` |
 | `AuthStrategy` | Authentication strategy configuration. | `src/attune/models/auth_strategy.py` |

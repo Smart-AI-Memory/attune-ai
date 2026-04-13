@@ -1,8 +1,8 @@
 ---
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-06T16:05:31.926227+00:00
-source_hash: 21be20fb9764e6dedd2f0f21394d99f48796b3f52102798ef7192d0abc6487ff
+generated_at: 2026-04-13T16:56:40.511077+00:00
+source_hash: cd9113c895b6740f8b406b613bcb2f3d3ed3fac586882f2d8ebc96e6107c1f5f
 status: generated
 ---
 
@@ -10,21 +10,21 @@ status: generated
 
 ## How it works
 
-Model Context Protocol server and tool handlers.
+Model Context Protocol server that provides AI tools and workflow execution capabilities for Attune AI.
 
 The main building blocks are:
 
-- **`MemoryHandlersMixin`** — Mixin providing memory tool handlers for EmpathyMCPServer.
-- **`RateLimiter`** — Simple sliding-window rate limiter.
-- **`EmpathyMCPServer`** — MCP server for Attune AI workflows.
-- **`WorkflowHandlersMixin`** — Mixin providing workflow tool handlers for EmpathyMCPServer.
+- **`EmpathyMCPServer`** — Main server that handles MCP protocol communication and tool execution.
+- **`MemoryHandlersMixin`** — Provides memory operations including store, retrieve, search, and forget functionality.
+- **`WorkflowHandlersMixin`** — Handles workflow execution and management tools.
+- **`RateLimiter`** — Controls request frequency using a sliding-window algorithm to prevent abuse.
 
-Under the hood, this feature spans 19 source
+Under the hood, this feature spans 8 source
 files covering:
 
-- Memory tool handlers for the MCP server.
-- Prompt handling for Attune AI MCP Server.
-- In-process rate limiter for MCP tool calls.
+- Tool definitions for memory, workflow, utility, and help operations.
+- Prompt templates and message handling for AI interactions.
+- Rate limiting to control MCP tool call frequency.
 
 ## What connects to it
 
@@ -35,7 +35,7 @@ mcp server through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `MemoryHandlersMixin` | Mixin providing memory tool handlers for EmpathyMCPServer. | `src/attune/mcp/memory_handlers.py` |
-| `RateLimiter` | Simple sliding-window rate limiter. | `src/attune/mcp/rate_limiter.py` |
-| `EmpathyMCPServer` | MCP server for Attune AI workflows. | `src/attune/mcp/server.py` |
-| `WorkflowHandlersMixin` | Mixin providing workflow tool handlers for EmpathyMCPServer. | `src/attune/mcp/workflow_handlers.py` |
+| `EmpathyMCPServer` | Main server that handles MCP protocol communication and tool execution. | `src/attune/mcp/server.py` |
+| `MemoryHandlersMixin` | Provides memory operations including store, retrieve, search, and forget functionality. | `src/attune/mcp/memory_handlers.py` |
+| `WorkflowHandlersMixin` | Handles workflow execution and management tools. | `src/attune/mcp/workflow_handlers.py` |
+| `RateLimiter` | Controls request frequency using a sliding-window algorithm to prevent abuse. | `src/attune/mcp/rate_limiter.py` |

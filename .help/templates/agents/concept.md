@@ -1,8 +1,8 @@
 ---
 feature: agents
 depth: concept
-generated_at: 2026-04-06T04:32:17.870269+00:00
-source_hash: f4444f832b2067c6c0ece4cfebdca1ecf9eb7d5b16efcf3ba756c35f5da24167
+generated_at: 2026-04-13T16:58:56.239585+00:00
+source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
 status: generated
 ---
 
@@ -10,22 +10,22 @@ status: generated
 
 ## How it works
 
-The Attune AI Agent System provides release preparation automation through specialized agents that validate code quality, test coverage, and documentation.
+AI agents that automate release preparation tasks with progressive cost escalation and multi-framework integration.
 
 The main building blocks are:
 
-- **`ReleaseAgent`** — Base agent with progressive cost optimization across CHEAP, CAPABLE, and PREMIUM model tiers.
-- **`TestCoverageAgent`** — Executes pytest with coverage analysis and parses coverage reports.
-- **`DocumentationAgent`** — Validates docstring coverage, README currency, and CHANGELOG presence.
-- **`CodeQualityAgent`** — Runs ruff linting, validates type hints, and checks code complexity.
-- **`ReleasePrepTeam`** — Coordinates parallel execution of multiple release preparation agents.
+- **`ReleaseAgent`** — Escalates from cheap to premium models based on task complexity.
+- **`TestCoverageAgent`** — Analyzes pytest coverage reports to assess code quality.
+- **`DocumentationAgent`** — Validates docstring coverage, README freshness, and CHANGELOG completeness.
+- **`CodeQualityAgent`** — Evaluates code quality using ruff linting, type hints, and complexity metrics.
+- **`Tier`** — Defines cost and capability tiers for model escalation strategies.
 
-Under the hood, this feature spans 59 source
+Under the hood, this feature spans 29 source
 files covering:
 
-- AI agent framework adapters for LangChain, LangGraph, AutoGen, and Haystack.
-- Release preparation workflow with quality gate thresholds.
-- Performance monitoring and cost tracking decorators.
+- Release Preparation Agent Team coordination and parallel execution.
+- Progressive tier escalation from cheap to premium AI models.
+- Integration adapters for LangChain, LangGraph, AutoGen, and Haystack frameworks.
 
 ## What connects to it
 
@@ -36,8 +36,8 @@ agents through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ReleaseAgent` | Base agent with progressive cost optimization across model tiers. | `src/attune/agents/release/base_agent.py` |
-| `TestCoverageAgent` | Executes pytest with coverage analysis and parses coverage reports. | `src/attune/agents/release/coverage_agent.py` |
-| `DocumentationAgent` | Validates docstring coverage, README currency, and CHANGELOG presence. | `src/attune/agents/release/documentation_agent.py` |
-| `CodeQualityAgent` | Runs ruff linting, validates type hints, and checks code complexity. | `src/attune/agents/release/quality_agent.py` |
-| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry. | `src/attune/agents/release/team_workflow.py` |
+| `ReleaseAgent` | Escalates from cheap to premium models based on task complexity. | `src/attune/agents/release/base_agent.py` |
+| `TestCoverageAgent` | Analyzes pytest coverage reports to assess code quality. | `src/attune/agents/release/coverage_agent.py` |
+| `DocumentationAgent` | Validates docstring coverage, README freshness, and CHANGELOG completeness. | `src/attune/agents/release/documentation_agent.py` |
+| `CodeQualityAgent` | Evaluates code quality using ruff linting, type hints, and complexity metrics. | `src/attune/agents/release/quality_agent.py` |
+| `Tier` | Defines cost and capability tiers for model escalation strategies. | `src/attune/agents/release/release_models.py` |

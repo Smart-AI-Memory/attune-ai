@@ -1,14 +1,14 @@
 ---
 feature: orchestration
 depth: task
-generated_at: 2026-04-06T04:34:22.257240+00:00
-source_hash: 17a454ede63282929b4218973c064c597cdd92171aa4073eb371476a859ea7b4
+generated_at: 2026-04-13T17:00:56.318324+00:00
+source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
 status: generated
 ---
 
 # Work with orchestration
 
-Use orchestration when you need to compose dynamic agent teams, implement complex workflow patterns, or create hierarchical delegation systems.
+Use orchestration when you need to compose dynamic agent teams, implement complex workflow patterns, or manage hierarchical delegation strategies.
 
 ## Prerequisites
 

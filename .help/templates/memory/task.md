@@ -1,14 +1,14 @@
 ---
 feature: memory
 depth: task
-generated_at: 2026-04-06T04:31:09.528484+00:00
-source_hash: f7be50272674d976f7e23f12d2da9909620b48df295f03bbf3d21d0e9e8b1034
+generated_at: 2026-04-13T16:57:47.104201+00:00
+source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
 status: generated
 ---
 
 # Work with memory
 
-Use the memory subsystem when you need to store conversation context, implement semantic search, or manage project-specific memory files for AI interactions.
+Use the memory subsystem when you need to integrate AI memory backends, manage Claude memory files, or run the enterprise control panel for memory management.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Use the memory subsystem when you need to store conversation context, implement 
 ## Steps
 
 1. **Understand the current behavior.**
-   Read the entry points to see what the memory subsystem
+   Read the entry points to see what memory
    does today before making changes.
    The primary functions are:
    - `is_redis_available()` in `src/attune/memory/__init__.py` — Check if Redis subsystem is available without importing it.

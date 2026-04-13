@@ -1,14 +1,14 @@
 ---
 feature: configuration
 depth: task
-generated_at: 2026-04-06T04:36:34.123286+00:00
-source_hash: 6be742830b8d72209e378e70916c649d55dd40a3afdfa434cf328395a1bc4ee3
+generated_at: 2026-04-13T17:03:52.677062+00:00
+source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
 status: generated
 ---
 
 # Work with configuration
 
-Use configuration when you need to load, save, or validate Attune AI agent settings and environment variables.
+Use configuration management when you need to set up agents, manage environment variables, or configure workflow execution modes for Attune AI.
 
 ## Prerequisites
 

@@ -1,14 +1,14 @@
 ---
 feature: plugin
 depth: task
-generated_at: 2026-04-08T04:37:17.253516+00:00
-source_hash: 3ae0107cee886520c63039f43c4d0a646ae56e26af17bb7283eca95febc121d5
+generated_at: 2026-04-13T17:02:30.245668+00:00
+source_hash: 87e746872c84d001921b431b15885746de7e8990a689c551172afc6f72cf1c35
 status: generated
 ---
 
 # Work with plugin
 
-Use plugin when you need to claude code plugin — skills, hooks, commands, and mcp config.
+Use plugin when you need to modify Claude Code's runtime hooks, security policies, or standalone plugin behavior.
 
 ## Prerequisites
 

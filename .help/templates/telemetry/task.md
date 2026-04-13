@@ -1,14 +1,14 @@
 ---
 feature: telemetry
 depth: task
-generated_at: 2026-04-06T04:35:03.069860+00:00
-source_hash: cdb506bfba26d96b90402bbc00b19c3dd80afaec88f6a4ae5de0c1c585b63162
+generated_at: 2026-04-13T17:01:49.548610+00:00
+source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
 status: generated
 ---
 
 # Work with telemetry
 
-Use telemetry when you need to track agent performance, monitor cost savings, view test execution status, or implement approval gates for workflow control.
+Use telemetry when you need to track agent performance, coordinate multi-agent workflows, or analyze cost savings from model fallbacks.
 
 ## Prerequisites
 

@@ -1,12 +1,12 @@
 ---
 feature: security-audit
 depth: reference
-generated_at: 2026-04-06T04:27:22.301709+00:00
-source_hash: f3c7ecfc06b88ed07137562d160e3d10e0168c98f92aa060ae8fbd378b2571c4
+generated_at: 2026-04-13T16:53:47.282936+00:00
+source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
 status: generated
 ---
 
-# Security Audit reference
+# Security audit reference
 
 ## Classes
 

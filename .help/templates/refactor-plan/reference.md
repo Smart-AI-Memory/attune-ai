@@ -1,7 +1,7 @@
 ---
 feature: refactor-plan
 depth: reference
-generated_at: 2026-04-06T04:29:18.150303+00:00
+generated_at: 2026-04-13T16:55:59.070931+00:00
 source_hash: 05ca199fb5b9d09ed7030f06c407e71de2e78a2433624c15a7beacf294de4d07
 status: generated
 ---

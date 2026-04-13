@@ -1,7 +1,7 @@
 ---
 feature: fix-test
 depth: concept
-generated_at: 2026-04-06T04:29:33.659940+00:00
+generated_at: 2026-04-13T16:56:17.230851+00:00
 source_hash: add950818a88e621df7bd12cd03ded18fe60e40bac9a1bae6eb24fe1ff69abc8
 status: generated
 ---
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-The fix test feature provides automated test execution and coverage tracking utilities for Tier 1 automation with event-driven test lifecycle management.
+Automatically manages test lifecycle and maintenance through event-driven workflows that track test execution and coverage.
 
 The main building blocks are:
 
