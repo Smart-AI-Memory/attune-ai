@@ -1,14 +1,14 @@
 ---
 feature: spec-engine
 depth: task
-generated_at: 2026-04-06T04:35:50.879254+00:00
-source_hash: 9a5e04c503c29d581c2787038d961b7e425b0163cece10376e6b23a94fbb5aa4
+generated_at: 2026-04-13T17:02:56.183207+00:00
+source_hash: da2776f0fd9a91d42dcf9bea5dec82a4fb9b85009623c3ae56e9db9136c29d2e
 status: generated
 ---
 
 # Work with spec engine
 
-Use spec engine when you need to execute XML specs with per-task approval loops and state persistence for iterative development.
+Use spec engine when you need to implement spec-driven development workflows with human-readable task presentation and approval loops.
 
 ## Prerequisites
 

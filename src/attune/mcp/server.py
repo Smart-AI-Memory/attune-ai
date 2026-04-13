@@ -1014,6 +1014,15 @@ def main() -> None:
     """Entry point for MCP server."""
     import tempfile
 
+    # Load .env so ANTHROPIC_API_KEY is available for
+    # features like the help template polish pass
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    except ImportError:
+        pass
+
     log_dir = Path(tempfile.gettempdir()) / "attune"
     log_dir.mkdir(exist_ok=True)
     logging.basicConfig(

@@ -385,7 +385,9 @@ def get_help_tools() -> dict[str, dict[str, Any]]:
                 "Check for stale help templates and regenerate them. "
                 "Detects when source files (CLAUDE.md, SKILL.md, "
                 "tool_schemas.py) have changed since last generation, "
-                "then regenerates only the stale templates."
+                "then regenerates only the stale templates. "
+                "If ANTHROPIC_API_KEY is set, runs an LLM polish "
+                "pass to improve prose quality."
             ),
             "input_schema": {
                 "type": "object",
@@ -479,7 +481,9 @@ def get_help_tools() -> dict[str, dict[str, Any]]:
         "help_update": {
             "description": (
                 "Regenerate help templates for specific features or "
-                "all stale features in the project-local help system."
+                "all stale features in the project-local help system. "
+                "If ANTHROPIC_API_KEY is set, runs an LLM polish "
+                "pass to improve prose quality."
             ),
             "input_schema": {
                 "type": "object",

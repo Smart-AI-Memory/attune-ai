@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -225,3 +226,37 @@ class TestGenerateFeatureTemplates:
             feat = Feature(name=name, description="bad", files=[])
             with pytest.raises(ValueError, match="Invalid feature name"):
                 generate_feature_templates(feat, help_dir, project)
+
+
+class TestPolishIntegration:
+    """Integration: generate_feature_templates calls polish when API key is set."""
+
+    def test_polish_called_and_output_written(
+        self, feature: Feature, help_dir: Path, project: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Polished content is written to disk when API key is available."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # pragma: allowlist secret
+
+        def fake_polish(content: str, name: str, summary: str) -> str:
+            return content.replace("# Auth", "# Auth (polished)")
+
+        with patch(
+            "attune.help.polish.polish_template",
+            side_effect=fake_polish,
+        ):
+            generate_feature_templates(feature, help_dir, project, depths=["concept"])
+
+        text = (help_dir / "templates" / "auth" / "concept.md").read_text(encoding="utf-8")
+        assert "(polished)" in text
+
+    def test_polish_skipped_without_api_key(
+        self, feature: Feature, help_dir: Path, project: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Templates are still written when API key is absent (no polish)."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        generate_feature_templates(feature, help_dir, project, depths=["concept"])
+
+        text = (help_dir / "templates" / "auth" / "concept.md").read_text(encoding="utf-8")
+        assert "# Auth" in text
+        assert "(polished)" not in text

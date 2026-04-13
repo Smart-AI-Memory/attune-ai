@@ -1,8 +1,8 @@
 ---
 feature: telemetry
 depth: reference
-generated_at: 2026-04-06T04:35:10.803650+00:00
-source_hash: cdb506bfba26d96b90402bbc00b19c3dd80afaec88f6a4ae5de0c1c585b63162
+generated_at: 2026-04-13T17:02:02.388039+00:00
+source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
 status: generated
 ---
 
@@ -36,7 +36,7 @@ status: generated
 | Function | Description | File |
 |----------|-------------|------|
 | `main()` | Telemetry CLI entry point. | `src/attune/telemetry/__main__.py` |
-| `cmd_sonnet_opus_analysis()` | Show Sonnet 4.5 -> Opus 4.5 fallback analysis and cost savings. | `src/attune/telemetry/cli_analysis.py` |
+| `cmd_sonnet_opus_analysis()` | Show Sonnet 4.5 to Opus 4.5 fallback analysis and cost savings. | `src/attune/telemetry/cli_analysis.py` |
 | `cmd_file_test_status()` | Show per-file test status. | `src/attune/telemetry/cli_analysis.py` |
 | `cmd_tier1_status()` | Show comprehensive Tier 1 automation status. | `src/attune/telemetry/cli_automation.py` |
 | `cmd_task_routing_report()` | Show detailed task routing report. | `src/attune/telemetry/cli_automation.py` |

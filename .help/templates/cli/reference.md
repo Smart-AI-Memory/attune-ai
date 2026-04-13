@@ -1,34 +1,36 @@
 ---
 feature: cli
 depth: reference
-generated_at: 2026-04-06T04:33:24.018601+00:00
-source_hash: 60d629c5d9c90360ec0e4d695e0e6548b4a7742f1575ea77863085ed35e3a4ef
+generated_at: 2026-04-13T16:59:49.927429+00:00
+source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
 status: generated
 ---
 
-# Cli reference
+# CLI reference
+
+The Attune AI CLI provides a hybrid command interface that routes user input between structured commands and natural language processing through Claude Code skills.
 
 ## Classes
 
 | Class | Description | File |
 |-------|-------------|------|
-| `RoutingPreference` | User's learned routing preferences. | `src/attune/cli_router.py` |
-| `HybridRouter` | Routes user input to Claude Code skill invocations. | `src/attune/cli_router.py` |
+| `RoutingPreference` | Stores user's learned routing preferences for command interpretation. | `src/attune/cli_router.py` |
+| `HybridRouter` | Routes user input between traditional CLI commands and Claude Code skill invocations. | `src/attune/cli_router.py` |
 
 ## Functions
 
 | Function | Description | File |
 |----------|-------------|------|
-| `get_version()` | Get package version. | `src/attune/cli_minimal.py` |
-| `create_parser()` | Create the argument parser. | `src/attune/cli_minimal.py` |
-| `main()` | Main entry point. | `src/attune/cli_minimal.py` |
-| `route_user_input()` | Quick routing helper. | `src/attune/cli_router.py` |
-| `is_slash_command()` | Check if text is a slash command. | `src/attune/cli_router.py` |
-| `cmd_costs()` | Show cost report for recent period. | `src/attune/cli_commands/cost_commands.py` |
-| `cmd_costs_today()` | Show today's cost summary. | `src/attune/cli_commands/cost_commands.py` |
-| `cmd_costs_export()` | Export cost data to file. | `src/attune/cli_commands/cost_commands.py` |
-| `cmd_costs_reset()` | Clear all cost tracking data. | `src/attune/cli_commands/cost_commands.py` |
-| `cmd_help()` | Handle the `attune help` command. | `src/attune/cli_commands/help_commands.py` |
+| `get_version()` | Retrieves the current package version string. | `src/attune/cli_minimal.py` |
+| `create_parser()` | Creates and configures the argument parser for CLI commands. | `src/attune/cli_minimal.py` |
+| `main()` | Primary entry point that initializes the CLI and processes user input. | `src/attune/cli_minimal.py` |
+| `route_user_input()` | Determines whether input should be handled as a command or natural language. | `src/attune/cli_router.py` |
+| `is_slash_command()` | Identifies if input text begins with a slash command prefix. | `src/attune/cli_router.py` |
+| `cmd_costs()` | Displays cost report for a specified recent time period. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_today()` | Shows a summary of today's usage costs. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_export()` | Exports cost tracking data to a specified file format. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_reset()` | Removes all stored cost tracking data from the system. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_help()` | Processes help requests and displays documentation templates. | `src/attune/cli_commands/help_commands.py` |
 | `cmd_remember()` | Add a lesson to the lessons file. | `src/attune/cli_commands/memory_commands.py` |
 | `cmd_forget()` | Remove a lesson by line number or keyword. | `src/attune/cli_commands/memory_commands.py` |
 | `cmd_lessons()` | List current lessons with line numbers. | `src/attune/cli_commands/memory_commands.py` |

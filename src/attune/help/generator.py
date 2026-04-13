@@ -84,7 +84,7 @@ class GeneratedTemplate:
     source_hash: str
 
 
-@dataclass
+@dataclass(order=True)
 class GenerationResult:
     """Result of generating templates for a feature.
 
@@ -96,9 +96,9 @@ class GenerationResult:
     """
 
     feature: str
-    templates: list[GeneratedTemplate] = field(default_factory=list)
-    source_hash: str = ""
-    matched_files: list[str] = field(default_factory=list)
+    templates: list[GeneratedTemplate] = field(default_factory=list, compare=False)
+    source_hash: str = field(default="", compare=False)
+    matched_files: list[str] = field(default_factory=list, compare=False)
 
 
 def generate_feature_templates(

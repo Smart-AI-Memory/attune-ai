@@ -10,6 +10,7 @@ from attune.help.manifest import Feature, FeatureManifest
 from attune.help.staleness import (
     FeatureStaleness,
     StalenessReport,
+    _is_excluded,
     check_staleness,
     compute_source_hash,
 )
@@ -162,6 +163,42 @@ class TestCheckStaleness:
         report = check_staleness(manifest, help_dir, project, features=["auth"])
         assert len(report.entries) == 1
         assert report.entries[0].feature == "auth"
+
+
+class TestIsExcluded:
+    """Tests for _is_excluded() cache directory filtering."""
+
+    def test_excludes_pycache(self) -> None:
+        assert _is_excluded(Path("src/auth/__pycache__/login.cpython-310.pyc"))
+
+    def test_excludes_mypy_cache(self) -> None:
+        assert _is_excluded(Path("src/auth/.mypy_cache/3.10/login.data.json"))
+
+    def test_excludes_pytest_cache(self) -> None:
+        assert _is_excluded(Path(".pytest_cache/v/cache/stepwise"))
+
+    def test_excludes_ruff_cache(self) -> None:
+        assert _is_excluded(Path("src/.ruff_cache/0.8.4/content.json"))
+
+    def test_allows_source_files(self) -> None:
+        assert not _is_excluded(Path("src/auth/login.py"))
+
+    def test_allows_nested_source(self) -> None:
+        assert not _is_excluded(Path("src/attune/help/staleness.py"))
+
+    def test_hash_excludes_cache_dirs(self, tmp_path: Path) -> None:
+        """compute_source_hash skips __pycache__ files."""
+        src = tmp_path / "src" / "mod"
+        src.mkdir(parents=True)
+        (src / "real.py").write_text("x = 1\n", encoding="utf-8")
+        cache = src / "__pycache__"
+        cache.mkdir()
+        (cache / "real.cpython-310.pyc").write_bytes(b"\x00\x00")
+
+        feat = Feature(name="mod", description="", files=["src/mod/**"])
+        _, files = compute_source_hash(feat, tmp_path)
+        assert "src/mod/real.py" in files
+        assert not any("__pycache__" in f for f in files)
 
 
 class TestComputeSourceHashErrors:

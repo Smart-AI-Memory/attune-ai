@@ -1,14 +1,14 @@
 ---
 feature: deep-review
 depth: task
-generated_at: 2026-04-06T04:29:25.922449+00:00
+generated_at: 2026-04-13T16:56:09.369743+00:00
 source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
 status: generated
 ---
 
 # Work with deep review
 
-Use deep review when you need comprehensive code analysis across multiple passes, including security vulnerabilities, code quality issues, and test coverage gaps.
+Use deep review when you need comprehensive code analysis across multiple passes including security vulnerabilities, code quality issues, and test coverage gaps.
 
 ## Prerequisites
 
@@ -22,7 +22,6 @@ Use deep review when you need comprehensive code analysis across multiple passes
    is structured before extending or modifying.
    The key classes are:
    - `DeepReviewAgentSDKWorkflow` in `src/attune/workflows/deep_review.py` — Orchestrates multi-pass deep code review using Claude Agent SDK subagents.
-
 2. **Decide whether to extend or modify.**
    If the class has subclasses, extend with a new one
    rather than changing the base. If it stands alone,

@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: concept
-generated_at: 2026-04-08T04:37:17.248360+00:00
-source_hash: 3ae0107cee886520c63039f43c4d0a646ae56e26af17bb7283eca95febc121d5
+generated_at: 2026-04-13T18:07:44.279649+00:00
+source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
 status: generated
 ---
 
@@ -20,7 +20,7 @@ The main entry points are:
 - **`main()`** — Check for stale help after git commit.
 - **`validate_bash_command()`** — Validate a Bash command against security policies.
 
-Under the hood, this feature spans 613 source
+Under the hood, this feature spans 610 source
 files covering:
 
 - PostToolUse hook: auto-format Python files after Write/Edit.

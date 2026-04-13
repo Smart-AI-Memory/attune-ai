@@ -1,7 +1,7 @@
 ---
 feature: deep-review
 depth: concept
-generated_at: 2026-04-06T04:29:21.871328+00:00
+generated_at: 2026-04-13T16:56:05.015603+00:00
 source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
 status: generated
 ---
@@ -10,11 +10,11 @@ status: generated
 
 ## How it works
 
-Deep review conducts multi-pass analysis of your code to identify security vulnerabilities, quality issues, and test coverage gaps.
+Multi-pass deep code review that analyzes security vulnerabilities, code quality issues, and test coverage gaps using specialized AI agents.
 
 The main building blocks are:
 
-- **`DeepReviewAgentSDKWorkflow`** — Orchestrates multiple specialized Claude Agent SDK subagents to perform comprehensive code analysis across security, quality, and testing dimensions.
+- **`DeepReviewAgentSDKWorkflow`** — Orchestrates multiple specialized Claude AI subagents that each focus on different aspects of code review (security, quality, testing).
 
 ## What connects to it
 
@@ -25,4 +25,4 @@ deep review through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `DeepReviewAgentSDKWorkflow` | Orchestrates multi-pass code analysis using specialized subagents | `src/attune/workflows/deep_review.py` |
+| `DeepReviewAgentSDKWorkflow` | Coordinates specialized AI subagents for comprehensive code analysis across security, quality, and test dimensions | `src/attune/workflows/deep_review.py` |

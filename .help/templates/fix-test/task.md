@@ -1,14 +1,14 @@
 ---
 feature: fix-test
 depth: task
-generated_at: 2026-04-06T04:29:39.032965+00:00
+generated_at: 2026-04-13T16:56:24.629370+00:00
 source_hash: add950818a88e621df7bd12cd03ded18fe60e40bac9a1bae6eb24fe1ff69abc8
 status: generated
 ---
 
 # Work with fix test
 
-Use fix test when you need to manage test lifecycle and execution tracking for your project.
+Use fix test when you need to manage test execution, track coverage, and maintain test lifecycle automatically based on source file changes.
 
 ## Prerequisites
 

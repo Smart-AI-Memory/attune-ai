@@ -1,8 +1,8 @@
 ---
 feature: configuration
 depth: reference
-generated_at: 2026-04-06T04:36:41.221084+00:00
-source_hash: 6be742830b8d72209e378e70916c649d55dd40a3afdfa434cf328395a1bc4ee3
+generated_at: 2026-04-13T17:04:02.892538+00:00
+source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
 status: generated
 ---
 
@@ -46,9 +46,9 @@ status: generated
 | `get_attune_env()` | Gets an environment variable, checking ATTUNE_ first then EMPATHY_ fallback. | `src/attune/config/env_compat.py` |
 | `iter_attune_env_prefix()` | Yields (middle_part, value) for env vars matching ATTUNE_{prefix}*{suffix}. | `src/attune/config/env_compat.py` |
 | `get_loader()` | Gets the global ConfigLoader instance. | `src/attune/config/loader.py` |
-| `load_unified_config()` | Loads unified configuration. | `src/attune/config/loader.py` |
-| `save_unified_config()` | Saves unified configuration. | `src/attune/config/loader.py` |
-| `validate_config()` | Validates configuration. | `src/attune/config/validation.py` |
+| `load_unified_config()` | Convenience function to load unified configuration. | `src/attune/config/loader.py` |
+| `save_unified_config()` | Convenience function to save unified configuration. | `src/attune/config/loader.py` |
+| `validate_config()` | Convenience function to validate configuration. | `src/attune/config/validation.py` |
 | `get_config()` | Gets global configuration instance. | `src/attune/config/xml_config.py` |
 | `set_config()` | Sets global configuration instance. | `src/attune/config/xml_config.py` |
 

@@ -1,8 +1,8 @@
 ---
 feature: security-audit
 depth: concept
-generated_at: 2026-04-06T04:27:08.074754+00:00
-source_hash: f3c7ecfc06b88ed07137562d160e3d10e0168c98f92aa060ae8fbd378b2571c4
+generated_at: 2026-04-13T16:53:32.037482+00:00
+source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
 status: generated
 ---
 
@@ -10,34 +10,32 @@ status: generated
 
 ## How it works
 
-The security audit system scans code for vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks.
+Scans code for security vulnerabilities including eval/exec usage, path traversal risks, hardcoded secrets, and injection vulnerabilities.
 
 The main building blocks are:
 
-- **`SecurityAuditWorkflow`** — Orchestrates four specialized security subagents to perform comprehensive code analysis.
+- **`SecurityAuditWorkflow`** — SDK-native security audit with four specialized subagents that analyze different vulnerability categories.
 - **`AlertEngine`** — Manages alert storage in SQLite and delivers notifications when security issues are detected.
-- **`AlertChannel`** — Defines delivery methods for security alert notifications.
-- **`AlertMetric`** — Tracks security-related metrics for monitoring thresholds.
-- **`AlertSeverity`** — Classifies the criticality level of detected security issues.
+- **`AlertChannel`** — Defines delivery methods for security notifications.
+- **`AlertMetric`** — Tracks security-related metrics for monitoring.
+- **`AlertSeverity`** — Categorizes security findings by severity level.
 
-Under the hood, this feature spans 25 source
-files covering:
+Under the hood, this feature spans 13 source files covering:
 
-- SDK-native security audit workflows
-- Path validation and sanitization utilities
-- LLM telemetry monitoring for security events
+- Security Module for Attune AI
+- Path validation utilities for Attune AI
+- LLM Telemetry Monitoring System
 
 ## What connects to it
 
 This feature relates to: security, audit, owasp, scanning.
 
-Other parts of the codebase interact with
-security audit through these interfaces:
+Other parts of the codebase interact with security audit through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `SecurityAuditWorkflow` | Orchestrates four specialized security subagents to perform comprehensive code analysis. | `src/attune/workflows/security_audit.py` |
-| `AlertEngine` | Manages alert storage in SQLite and delivers notifications when security issues are detected. | `src/attune/monitoring/engine.py` |
-| `AlertChannel` | Defines delivery methods for security alert notifications. | `src/attune/monitoring/models.py` |
-| `AlertMetric` | Tracks security-related metrics for monitoring thresholds. | `src/attune/monitoring/models.py` |
-| `AlertSeverity` | Classifies the criticality level of detected security issues. | `src/attune/monitoring/models.py` |
+| `SecurityAuditWorkflow` | SDK-native security audit with four specialized subagents. | `src/attune/workflows/security_audit.py` |
+| `AlertEngine` | Alert engine with SQLite storage and notification delivery. | `src/attune/monitoring/engine.py` |
+| `AlertChannel` | Notification channels for alerts. | `src/attune/monitoring/models.py` |
+| `AlertMetric` | Metrics that can be monitored. | `src/attune/monitoring/models.py` |
+| `AlertSeverity` | Alert severity levels. | `src/attune/monitoring/models.py` |

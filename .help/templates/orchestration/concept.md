@@ -1,8 +1,8 @@
 ---
 feature: orchestration
 depth: concept
-generated_at: 2026-04-06T04:34:15.551931+00:00
-source_hash: 17a454ede63282929b4218973c064c597cdd92171aa4073eb371476a859ea7b4
+generated_at: 2026-04-13T17:00:50.551522+00:00
+source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
 status: generated
 ---
 
@@ -10,17 +10,17 @@ status: generated
 
 ## How it works
 
-Dynamic agent composition patterns for multi-agent workflows and complex task execution.
+Meta-orchestration system for dynamic agent composition with multiple execution strategies.
 
 The main building blocks are:
 
-- **`ToolEnhancedStrategy`** — Provides a single agent with comprehensive tool access for enhanced capabilities.
-- **`PromptCachedSequentialStrategy`** — Executes agents sequentially while maintaining shared cached context across the workflow.
-- **`DelegationChainStrategy`** — Implements hierarchical task delegation with maximum depth enforcement to prevent infinite recursion.
-- **`ExecutionStrategy`** — Serves as the base class that all agent composition strategies inherit from.
-- **`ConditionalStrategy`** — Enables conditional branching logic where different agents execute based on runtime conditions.
+- **`ToolEnhancedStrategy`** — Single agent with comprehensive tool access.
+- **`PromptCachedSequentialStrategy`** — Sequential execution with shared cached context.
+- **`DelegationChainStrategy`** — Hierarchical delegation with max depth enforcement.
+- **`ExecutionStrategy`** — Base class for agent composition strategies.
+- **`ConditionalStrategy`** — Conditional branching (if X then A else B).
 
-Under the hood, this feature spans 82 source
+Under the hood, this feature spans 40 source
 files covering:
 
 - Meta-orchestration system for dynamic agent composition.
@@ -36,8 +36,8 @@ orchestration through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ToolEnhancedStrategy` | Provides a single agent with comprehensive tool access for enhanced capabilities. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `PromptCachedSequentialStrategy` | Executes agents sequentially while maintaining shared cached context across the workflow. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `DelegationChainStrategy` | Implements hierarchical task delegation with maximum depth enforcement to prevent infinite recursion. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `ExecutionStrategy` | Serves as the base class that all agent composition strategies inherit from. | `src/attune/orchestration/_strategies/base.py` |
-| `ConditionalStrategy` | Enables conditional branching logic where different agents execute based on runtime conditions. | `src/attune/orchestration/_strategies/conditional_strategies.py` |
+| `ToolEnhancedStrategy` | Single agent with comprehensive tool access. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `PromptCachedSequentialStrategy` | Sequential execution with shared cached context. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `DelegationChainStrategy` | Hierarchical delegation with max depth enforcement. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `ExecutionStrategy` | Base class for agent composition strategies. | `src/attune/orchestration/_strategies/base.py` |
+| `ConditionalStrategy` | Conditional branching (if X then A else B). | `src/attune/orchestration/_strategies/conditional_strategies.py` |

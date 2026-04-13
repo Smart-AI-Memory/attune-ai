@@ -137,4 +137,4 @@ repos:
           ^\.claude/CLAUDE\.md$|
           ^plugin/skills/.*/SKILL\.md$|
           ^src/attune/mcp/tool_schemas\.py$
-        stages: [commit]
+        stages: [pre-commit]

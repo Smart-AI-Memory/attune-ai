@@ -1,8 +1,8 @@
 ---
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-06T16:05:31.926227+00:00
-source_hash: 21be20fb9764e6dedd2f0f21394d99f48796b3f52102798ef7192d0abc6487ff
+generated_at: 2026-04-13T18:07:44.215688+00:00
+source_hash: 573bf0d5245dd536c1752066c5919eba5993fb627889d8b4e69163436a9206ef
 status: generated
 ---
 
@@ -19,7 +19,7 @@ The main building blocks are:
 - **`EmpathyMCPServer`** — MCP server for Attune AI workflows.
 - **`WorkflowHandlersMixin`** — Mixin providing workflow tool handlers for EmpathyMCPServer.
 
-Under the hood, this feature spans 19 source
+Under the hood, this feature spans 8 source
 files covering:
 
 - Memory tool handlers for the MCP server.

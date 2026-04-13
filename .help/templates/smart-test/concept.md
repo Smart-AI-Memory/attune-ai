@@ -1,8 +1,8 @@
 ---
 feature: smart-test
 depth: concept
-generated_at: 2026-04-06T04:27:43.933443+00:00
-source_hash: 0e86de76d767be8bdf8056850e5e91c4a526aa1b59d9a50dbb63b86e27ed9c03
+generated_at: 2026-04-13T16:54:11.732502+00:00
+source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
 status: generated
 ---
 
@@ -10,22 +10,22 @@ status: generated
 
 ## How it works
 
-Find untested code and generate pytest tests with edge cases.
+Analyzes Python code structure and generates comprehensive pytest test suites with behavioral edge cases based on AST analysis and coverage data.
 
 The main building blocks are:
 
-- **`ASTFunctionAnalyzer`** — Analyzes function signatures and structure using Abstract Syntax Trees for precise test generation.
-- **`FunctionSignature`** — Captures detailed function metadata including parameters, return types, and documentation for test planning.
-- **`ClassSignature`** — Captures detailed class metadata including methods, attributes, and inheritance for comprehensive test coverage.
-- **`TestGenerationWorkflow`** — Orchestrates test creation using three specialized AI subagents that analyze code, generate test cases, and validate output.
-- **`ModuleCoverage`** — Tracks which lines and functions have existing test coverage to identify gaps.
+- **`ASTFunctionAnalyzer`** — Analyzes function signatures and parameters from abstract syntax trees to generate accurate test cases.
+- **`FunctionSignature`** — Captures detailed function metadata including parameters, return types, and docstrings for test generation.
+- **`ClassSignature`** — Extracts class structure information including methods and attributes for comprehensive test coverage.
+- **`TestGenerationWorkflow`** — Orchestrates automated test creation using three specialized AI agents for analysis, generation, and validation.
+- **`ModuleCoverage`** — Tracks which lines and branches are covered by existing tests to identify gaps.
 
-Under the hood, this feature spans 24 source
+Under the hood, this feature spans 12 source
 files covering:
 
-- Test Generation Workflow Package
-- AST-based Function and Class Analyzer
-- Test Generation Configuration
+- AST-based Function and Class Analyzer.
+- Test Generation Configuration.
+- Test Generation Data Models.
 
 ## What connects to it
 
@@ -36,8 +36,8 @@ smart test through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ASTFunctionAnalyzer` | Analyzes function signatures and structure using Abstract Syntax Trees for precise test generation. | `src/attune/workflows/test_gen/ast_analyzer.py` |
-| `FunctionSignature` | Captures detailed function metadata including parameters, return types, and documentation for test planning. | `src/attune/workflows/test_gen/data_models.py` |
-| `ClassSignature` | Captures detailed class metadata including methods, attributes, and inheritance for comprehensive test coverage. | `src/attune/workflows/test_gen/data_models.py` |
-| `TestGenerationWorkflow` | Orchestrates test creation using three specialized AI subagents that analyze code, generate test cases, and validate output. | `src/attune/workflows/test_gen/workflow.py` |
-| `ModuleCoverage` | Tracks which lines and functions have existing test coverage to identify gaps. | `src/attune/workflows/test_audit/coverage_parser.py` |
+| `ASTFunctionAnalyzer` | Analyzes function signatures and parameters from abstract syntax trees to generate accurate test cases. | `src/attune/workflows/test_gen/ast_analyzer.py` |
+| `FunctionSignature` | Captures detailed function metadata including parameters, return types, and docstrings for test generation. | `src/attune/workflows/test_gen/data_models.py` |
+| `ClassSignature` | Extracts class structure information including methods and attributes for comprehensive test coverage. | `src/attune/workflows/test_gen/data_models.py` |
+| `TestGenerationWorkflow` | Orchestrates automated test creation using three specialized AI agents for analysis, generation, and validation. | `src/attune/workflows/test_gen/workflow.py` |
+| `ModuleCoverage` | Tracks which lines and branches are covered by existing tests to identify gaps. | `src/attune/workflows/test_audit/coverage_parser.py` |

@@ -1,14 +1,14 @@
 ---
 feature: agents
 depth: task
-generated_at: 2026-04-06T04:32:24.915431+00:00
-source_hash: f4444f832b2067c6c0ece4cfebdca1ecf9eb7d5b16efcf3ba756c35f5da24167
+generated_at: 2026-04-13T16:59:03.189226+00:00
+source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
 status: generated
 ---
 
 # Work with agents
 
-Use agents when you need to automate release preparation tasks, integrate with AI agent frameworks, or assess code quality with progressive model escalation.
+Use agents when you need to prepare releases, assess code quality, or integrate with external AI agent frameworks like LangChain and AutoGen.
 
 ## Prerequisites
 
@@ -21,11 +21,11 @@ Use agents when you need to automate release preparation tasks, integrate with A
    Read the entry points to see what agents
    does today before making changes.
    The primary functions are:
-   - `get_langchain_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangChain adapter with lazy import.
-   - `get_langgraph_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangGraph adapter with lazy import.
-   - `get_autogen_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get AutoGen adapter with lazy import.
-   - `get_haystack_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get Haystack adapter with lazy import.
-   - `wrap_wizard()` in `src/attune/agent_factory/adapters/wizard_adapter.py` — Wrap a wizard as an agent.
+   - `get_langchain_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangChain adapter with lazy import for framework integration.
+   - `get_langgraph_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangGraph adapter with lazy import for workflow orchestration.
+   - `get_autogen_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get AutoGen adapter with lazy import for multi-agent conversations.
+   - `get_haystack_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get Haystack adapter with lazy import for document processing.
+   - `wrap_wizard()` in `src/attune/agent_factory/adapters/wizard_adapter.py` — Convert a wizard into an agent interface for unified operation.
 2. **Locate the right function to change.**
    Each function has a single responsibility. Read its
    docstring, parameters, and return type to confirm it

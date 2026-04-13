@@ -5,4 +5,4 @@ This module provides the core workflow functionality when the full
 attune-ai package is not installed via pip.
 """
 
-__version__ = "5.10.1"
+__version__ = "6.0.0"

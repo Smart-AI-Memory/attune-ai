@@ -1,7 +1,7 @@
 ---
 feature: bug-predict
 depth: reference
-generated_at: 2026-04-06T04:28:43.658347+00:00
+generated_at: 2026-04-13T16:55:17.291075+00:00
 source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
 status: generated
 ---

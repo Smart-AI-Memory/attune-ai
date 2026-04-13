@@ -1,8 +1,8 @@
 ---
 feature: telemetry
 depth: concept
-generated_at: 2026-04-06T04:34:57.382786+00:00
-source_hash: cdb506bfba26d96b90402bbc00b19c3dd80afaec88f6a4ae5de0c1c585b63162
+generated_at: 2026-04-13T17:01:38.879778+00:00
+source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
 status: generated
 ---
 
@@ -10,7 +10,7 @@ status: generated
 
 ## How it works
 
-Telemetry tracking for Attune AI, with agent coordination and human approval gates.
+Telemetry tracks AI agent performance, coordinates multi-agent workflows, and provides human oversight controls for Attune AI operations.
 
 The main building blocks are:
 
@@ -20,7 +20,7 @@ The main building blocks are:
 - **`HeartbeatCoordinator`** — Coordinates agent heartbeats using Redis TTL keys.
 - **`ApprovalRequest`** — Approval request with context for human decision.
 
-Under the hood, this feature spans 33 source
+Under the hood, this feature spans 15 source
 files covering:
 
 - Agent coordination via TTL signals

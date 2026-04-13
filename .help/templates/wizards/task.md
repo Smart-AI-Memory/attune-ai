@@ -1,14 +1,14 @@
 ---
 feature: wizards
 depth: task
-generated_at: 2026-04-06T04:36:11.991531+00:00
-source_hash: fad88261e0dbe9f9ea2e6e67da0819f247e4b1e816131c4c3128024aadbdd904
+generated_at: 2026-04-13T17:03:26.255506+00:00
+source_hash: 655cede9671032e7ccc7f39a9f47afbc96ce8855aa0b1bbe2c6567c1a091bf8b
 status: generated
 ---
 
 # Work with wizards
 
-Use wizards when you need to create or customize XML-enhanced interactive workflows that guide users through multi-step processes like debugging, refactoring, release preparation, security audits, or test generation.
+Use wizards when you need to guide users through complex multi-step workflows like debugging, refactoring, security audits, or test generation.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Use wizards when you need to create or customize XML-enhanced interactive workfl
 ## Steps
 
 1. **Understand the current behavior.**
-   Read the entry points to see what wizards
+   Read the entry points to see what the wizard system
    does today before making changes.
    The primary functions are:
    - `register_wizard()` in `src/attune/wizards/registry.py` — Register a wizard class.

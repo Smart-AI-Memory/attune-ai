@@ -117,7 +117,11 @@ def _call_llm(
     )
 
     if response.content:
-        return response.content[0].text
+        text = response.content[0].text
+        # Anthropic API doesn't guarantee a trailing newline
+        if not text.endswith("\n"):
+            text += "\n"
+        return text
 
     return content
 

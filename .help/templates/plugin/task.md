@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: task
-generated_at: 2026-04-08T04:37:17.253516+00:00
-source_hash: 3ae0107cee886520c63039f43c4d0a646ae56e26af17bb7283eca95febc121d5
+generated_at: 2026-04-13T18:07:44.284322+00:00
+source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
 status: generated
 ---
 
