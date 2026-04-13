@@ -99,7 +99,7 @@ class TestCallLlm:
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             result = _call_llm("content", "my-feature", "source info")
 
-        assert result == "polished"
+        assert result == "polished\n"
         call_kwargs = mock_client.messages.create.call_args.kwargs
         assert call_kwargs["max_tokens"] == 4096
         assert "my-feature" in call_kwargs["messages"][0]["content"]
@@ -118,6 +118,40 @@ class TestCallLlm:
             result = _call_llm("original", "feat", "summary")
 
         assert result == "original"
+
+    def test_appends_trailing_newline(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Ensures LLM output ends with a trailing newline."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # pragma: allowlist secret
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = _FakeResponse(
+            content=[_FakeTextBlock(text="polished content")]
+        )
+
+        mock_anthropic = types.ModuleType("anthropic")
+        mock_anthropic.Anthropic = MagicMock(return_value=mock_client)  # type: ignore[attr-defined]
+
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+            result = _call_llm("content", "feat", "summary")
+
+        assert result.endswith("\n")
+
+    def test_no_double_trailing_newline(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Does not double-add newline when LLM already includes one."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # pragma: allowlist secret
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = _FakeResponse(
+            content=[_FakeTextBlock(text="polished\n")]
+        )
+
+        mock_anthropic = types.ModuleType("anthropic")
+        mock_anthropic.Anthropic = MagicMock(return_value=mock_client)  # type: ignore[attr-defined]
+
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+            result = _call_llm("content", "feat", "summary")
+
+        assert result == "polished\n"
 
 
 # -- build_source_summary -------------------------------------------
