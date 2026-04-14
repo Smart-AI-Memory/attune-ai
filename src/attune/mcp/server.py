@@ -225,6 +225,20 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     def _build_dispatch_table(self) -> dict[str, Any]:
         """Build tool name -> handler mapping.
 
+        Tool namespace across the attune suite (avoid collisions
+        and duplicated UX when a user enables multiple MCP servers):
+
+        - ``help_*`` (here): attune-ai's own help engine
+          (``attune.help.engine``, ``attune.workflows.help_maintenance``).
+          Overlaps in intent with the two below; kept for now because
+          attune-ai still ships its internal help system. Consolidation
+          with ``attune-help``/``attune-author`` is a backlog item —
+          see CHANGELOG / audit punch list.
+        - ``lookup_*`` (attune-help MCP server): read-side lookup over
+          the rendered content (``attune_help.HelpEngine``).
+        - ``author_*`` (attune-author MCP server): write-side authoring
+          of the source-of-truth templates that attune-help renders.
+
         Returns:
             Dict mapping tool names to async handler callables.
             All handlers accept (args: dict) and return dict.
