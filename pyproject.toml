@@ -70,7 +70,7 @@ dependencies = [
     "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
     "python-multipart>=0.0.22",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg (transitive via mcp)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    "attune-help>=0.5.1",  # Progressive-depth help runtime + MCP tools
+    "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
@@ -527,11 +527,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-# Exclude pre-existing failing tests (tracked for v4.0.3)
-# - wizards_consolidated module missing (2 test files)
-# - test_generator mock issues (1 test file)
+# test_generator has mock issues with __file__ attribute — needs rewrite.
 norecursedirs = [
-    "tests/unit/test_generator",  # Mock issues with __file__ attribute
+    "tests/unit/test_generator",
 ]
 addopts = [
     "--verbose",
@@ -588,7 +586,7 @@ omit = [
     "*/models/auth_cli.py",  # Interactive auth setup
     "*/monitoring/alerts_cli.py",  # Monitoring CLI
     # Deprecated modules
-    "*/workflows/release_prep_crew.py",  # Deprecated CrewAI workflow
+    # release_prep_crew.py omit entry removed — file was deleted.
     # Legacy/alternative CLIs
     "attune_software/cli/*.py",  # Plugin CLI subcommands
     # Infrastructure requiring external deps

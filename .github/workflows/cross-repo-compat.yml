@@ -1,0 +1,60 @@
+name: Cross-repo compat (attune-help main)
+
+# Pulls attune-help from its main branch and runs this repo's
+# test suite against it. Catches silent breakage between
+# attune-help releases before it ships as a CHANGELOG surprise.
+
+on:
+  schedule:
+    # Monday 14:00 UTC, well clear of weekend release windows.
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-against-attune-help-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout attune-ai
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Checkout attune-help (main)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: Smart-AI-Memory/attune-help
+          path: _attune-help-main
+          ref: main
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install this repo with dev deps first (pulls attune-help
+          # from PyPI), then override with the main checkout so the
+          # test run actually exercises the in-flight attune-help.
+          pip install -e ".[dev]"
+          pip install -e ./_attune-help-main --force-reinstall --no-deps
+
+      - name: Show attune-help version under test
+        run: |
+          python -c "import attune_help; print(f'attune_help {attune_help.__version__} from {attune_help.__file__}')"
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v \
+            --ignore=tests/integration \
+            -m "not slow and not network and not llm" \
+            -x

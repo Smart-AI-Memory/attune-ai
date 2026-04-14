@@ -5,6 +5,42 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Weekly cross-repo compat CI** — new
+  `.github/workflows/cross-repo-compat.yml` pulls
+  attune-help from its `main` branch every Monday and runs
+  this repo's test suite against it. Catches breakage
+  between attune-help releases before it ships as a
+  CHANGELOG surprise. Also triggerable on demand via
+  `workflow_dispatch`.
+
+### Changed
+
+- **`attune-help` pin upper-capped** — now
+  `>=0.5.1,<0.6` (was `>=0.5.1`). Prevents silent breakage
+  if attune-help ships a pre-1.0 minor bump with breaking
+  changes. Bump the cap deliberately when attune-help 0.6
+  lands.
+- **MCP dispatch table namespacing documented** — the
+  `help_*` / `lookup_*` / `author_*` prefix ownership is
+  now spelled out in `_build_dispatch_table()` so users
+  running multiple attune MCP servers understand which
+  tool does what. Real consolidation (deprecate attune-ai's
+  internal help engine, delegate to attune-help) is
+  backlog.
+
+### Fixed
+
+- **Dead `release_prep_crew.py` coverage-omit entry
+  removed** — the file was deleted in a previous release
+  but the omit rule lingered in `pyproject.toml`.
+- **Ghost `v4.0.3` reference cleared from pytest config
+  comment** — the test_generator exclusion rationale no
+  longer points at a long-past release.
+
 ## [6.0.0] - 2026-04-13
 
 ### Added (6.0.0)
