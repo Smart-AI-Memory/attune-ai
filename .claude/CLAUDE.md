@@ -1516,4 +1516,43 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   missing — otherwise `end-of-file-fixer` pre-commit hooks
   will reject the commit. Check with `if not text.endswith
   ("\n"): text += "\n"`.
+
+- **`gh api -X PATCH ... -f name=N` rejects integers as
+  strings**: `gh api` flag `-f` always sends string values, so
+  `-f required_approving_review_count=1` produces a 422 error
+  `"1" is not an integer`. Use `-F` instead — it infers the
+  type (integer, boolean, etc.) from the value. Specifically
+  matters for `branches/<name>/protection/required_pull_request_reviews`
+  updates during the temp-remove-review/admin-merge/restore
+  dance.
+
+- **`gh pr merge --admin` prints a fast-forward warning even
+  when the remote merge succeeds**: After an admin-merge, the
+  CLI attempts a local fast-forward of your local main to
+  origin/main. If your local main diverged (e.g., you had
+  feature-branch commits before the squash), the CLI prints
+  `fatal: Not possible to fast-forward, aborting` and
+  `! warning: not possible to fast-forward to: "main"`. The
+  remote merge already succeeded — the warning is about the
+  local refresh failing. Always verify the actual merge state
+  via `gh pr view <n> --json state,mergedAt,mergeCommit`
+  before assuming the command failed.
+
+- **After a squash merge of a feature branch, local main can
+  have "extra" commits that are already in the squash**: If
+  you had any of the feature branch commits locally on main
+  before the squash (e.g., from a pull on release/v5.10.0
+  that got replayed onto main), `git pull` after the squash
+  merge tries to rebase and conflicts because the same tree
+  content exists on main at a different commit hash. Safe
+  fix: run `git log --oneline main ^origin/main` to see the
+  "extra" local commits, confirm the content is included in
+  the squash (`git show <squash-commit> --stat` shows the
+  expected files), then `git reset --hard origin/main`.
+
+- **`gh pr checks --json` field names**: the field is
+  `bucket` (pass/fail/pending/skipping/cancel), not
+  `conclusion`. Full field list is exposed by passing an
+  invalid field name and reading the error message. Useful
+  for scripted pre-merge checks.
 <!-- attune-lessons-end -->
