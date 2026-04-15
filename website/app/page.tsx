@@ -59,7 +59,7 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-xs sm:text-sm group cursor-pointer border border-white/20 overflow-x-auto">
                     <span className="opacity-50 mr-2 shrink-0">$</span>
-                    <span className="whitespace-nowrap">claude plugin marketplace add Smart-AI-Memory/attune-docs</span>
+                    <span className="whitespace-nowrap">pip install attune-help &apos;attune-author[plugin]&apos;</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true">
                       <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
@@ -73,12 +73,10 @@ export default function Home() {
                   </Link>
                 </div>
                 <p className="mt-4 text-xs text-[var(--text-muted)] leading-relaxed max-w-xl">
-                  Or install directly from PyPI:{' '}
-                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">pip install attune-help</code>
-                  {' '}&middot;{' '}
-                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">&apos;attune-author[plugin]&apos;</code>
-                  {' '}&middot;{' '}
-                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">attune-ai</code>
+                  Or use the Claude Code plugin:{' '}
+                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">claude plugin marketplace add Smart-AI-Memory/attune-docs</code>
+                  {' '}&middot; Full framework:{' '}
+                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">pip install attune-ai</code>
                 </p>
                 {/* Trust badges */}
                 <div className="flex flex-wrap gap-3 mt-8">
