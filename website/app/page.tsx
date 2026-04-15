@@ -57,14 +57,22 @@ export default function Home() {
                   automatically. Enhance with human expertise when it matters.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex items-center bg-[var(--foreground)] text-[var(--background)] px-4 py-3 rounded-lg font-mono text-xs sm:text-sm group cursor-pointer border border-white/20 overflow-x-auto">
-                    <span className="opacity-50 mr-2 shrink-0">$</span>
-                    <span className="whitespace-nowrap">pip install attune-help &apos;attune-author[plugin]&apos;</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true">
-                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                    </svg>
-                  </div>
+                  <a
+                    href="https://pypi.org/project/attune-help/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[var(--primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center"
+                  >
+                    attune-help on PyPI
+                  </a>
+                  <a
+                    href="https://pypi.org/project/attune-author/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[var(--primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center"
+                  >
+                    attune-author on PyPI
+                  </a>
                   <Link
                     href="/how-it-works"
                     className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)]"
@@ -76,7 +84,14 @@ export default function Home() {
                   Or use the Claude Code plugin:{' '}
                   <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">claude plugin marketplace add Smart-AI-Memory/attune-docs</code>
                   {' '}&middot; Full framework:{' '}
-                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">pip install attune-ai</code>
+                  <a
+                    href="https://pypi.org/project/attune-ai/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded hover:underline"
+                  >
+                    attune-ai on PyPI
+                  </a>
                 </p>
                 {/* Trust badges */}
                 <div className="flex flex-wrap gap-3 mt-8">
