@@ -1555,4 +1555,36 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `conclusion`. Full field list is exposed by passing an
   invalid field name and reading the error message. Useful
   for scripted pre-merge checks.
+
+- **`git pull` refuses with unstaged changes when
+  `pull.rebase=true`**: This repo's git config sets
+  `pull.rebase=true`, so `git pull` invokes rebase, which
+  fails immediately if the working tree has any unstaged
+  changes — even if those changes don't conflict with the
+  incoming commits. Workaround: `git fetch origin main`
+  followed by `git merge --ff-only origin/main`. The
+  fast-forward merge succeeds with a dirty tree because it
+  doesn't replay any commits, just moves the branch pointer.
+  Useful when local main is strictly behind origin/main and
+  you have unrelated in-flight work.
+
+- **Selective hook skip with `SKIP=hookname` is not the same
+  as `--no-verify`**: `SKIP=check-docs-freshness git commit …`
+  runs every other pre-commit hook (black, ruff, bandit,
+  detect-secrets, etc.) and skips only the named one. This is
+  defensible when one specific hook fails on state orthogonal
+  to the commit (e.g., docs-freshness flagging pre-existing
+  template staleness when the commit is unrelated). `--no-verify`
+  skips ALL hooks and is what the rules forbid; `SKIP=` is the
+  surgical alternative.
+
+- **uv.lock can drift from pyproject.toml on shared branches**:
+  Saw this on origin/main — pyproject.toml had
+  `attune-help>=0.5.1,<0.6` (cap added in PR #152) but uv.lock
+  still showed `>=0.5.1` (no cap). The cap-adding PR didn't
+  re-run `uv lock`, so the lockfile silently went out of sync.
+  Symptom: a stale local working tree change to uv.lock isn't a
+  no-op after `git pull` — it's a real drift fix. Always
+  `uv lock --check` after pulling, and bundle uv.lock fixes with
+  the next reasonable PR rather than treating them as noise.
 <!-- attune-lessons-end -->
