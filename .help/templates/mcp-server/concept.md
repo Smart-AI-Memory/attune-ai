@@ -1,8 +1,9 @@
 ---
+type: concept
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-13T18:07:44.215688+00:00
-source_hash: 573bf0d5245dd536c1752066c5919eba5993fb627889d8b4e69163436a9206ef
+generated_at: 2026-04-14T14:58:41.206381+00:00
+source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
 status: generated
 ---
 
@@ -10,32 +11,31 @@ status: generated
 
 ## How it works
 
-Model Context Protocol server and tool handlers.
+The MCP server is Attune AI's implementation of the Model Context Protocol, exposing workflow tools, memory storage, authentication utilities, and contextual help through a standardized interface that AI models can interact with directly.
 
-The main building blocks are:
+At its core, `EmpathyMCPServer` orchestrates five distinct tool categories: workflow execution (code review, security scans), memory operations (store/retrieve patterns across sessions), authentication management (status checks, tier recommendations), session utilities (interaction levels, context variables), and progressive help lookup. The server uses mixins to organize these capabilities—`MemoryHandlersMixin` handles memory operations while `WorkflowHandlersMixin` manages workflow tools.
 
-- **`MemoryHandlersMixin`** — Mixin providing memory tool handlers for EmpathyMCPServer.
-- **`RateLimiter`** — Simple sliding-window rate limiter.
-- **`EmpathyMCPServer`** — MCP server for Attune AI workflows.
-- **`WorkflowHandlersMixin`** — Mixin providing workflow tool handlers for EmpathyMCPServer.
+A `RateLimiter` with sliding-window tracking prevents abuse by limiting tool calls to 60 per minute by default. The server also exposes MCP resources (workflow lists, auth config, telemetry) and prompts (security-scan, test-gen, cost-report) that clients can discover and invoke.
 
-Under the hood, this feature spans 8 source
-files covering:
+## Core components
 
-- Memory tool handlers for the MCP server.
-- Prompt handling for Attune AI MCP Server.
-- In-process rate limiter for MCP tool calls.
+- **`EmpathyMCPServer`** — Main server class that coordinates tool dispatch, prompt handling, and resource access
+- **`MemoryHandlersMixin`** — Implements memory_store, memory_retrieve, memory_search, and memory_forget tools with classification levels
+- **`WorkflowHandlersMixin`** — Exposes workflow execution tools for code analysis and security scanning
+- **`RateLimiter`** — Sliding-window rate limiter that tracks calls per key over a 60-second window
 
-## What connects to it
+## Tool categories
 
-This feature relates to: mcp, tools, server.
+The server exposes 19 distinct tools across five functional areas:
 
-Other parts of the codebase interact with
-mcp server through these interfaces:
+**Memory tools** enable persistent storage with `memory_store` (supports PUBLIC/INTERNAL/SENSITIVE classifications), `memory_retrieve` for key-based lookup, `memory_search` for pattern matching, and `memory_forget` for cleanup.
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `MemoryHandlersMixin` | Mixin providing memory tool handlers for EmpathyMCPServer. | `src/attune/mcp/memory_handlers.py` |
-| `RateLimiter` | Simple sliding-window rate limiter. | `src/attune/mcp/rate_limiter.py` |
-| `EmpathyMCPServer` | MCP server for Attune AI workflows. | `src/attune/mcp/server.py` |
-| `WorkflowHandlersMixin` | Mixin providing workflow tool handlers for EmpathyMCPServer. | `src/attune/mcp/workflow_handlers.py` |
+**Utility tools** handle authentication (`auth_status`, `auth_recommend`), telemetry (`telemetry_stats`), session management (`attune_get_level`, `attune_set_level`), and context variables (`context_get`, `context_set`).
+
+**Help tools** provide contextual assistance through `help_lookup` (progressive depth escalation), `help_maintain` (stale template detection), `help_init` (project bootstrapping), `help_status` (staleness reports), and `help_update` (template regeneration).
+
+**Workflow tools** expose the core Attune AI capabilities for code review, security scanning, test generation, and cost analysis.
+
+## Integration points
+
+The server connects to Attune's broader ecosystem through the workspace root for file operations, user ID for personalization, and optional memory module integration. Voice interfaces can skip certain tools (memory, auth, telemetry) using the `_VOICE_SKIP_TOOLS` configuration. The `create_server()` factory function initializes a configured instance, while `main()` serves as the CLI entry point for standalone deployment.

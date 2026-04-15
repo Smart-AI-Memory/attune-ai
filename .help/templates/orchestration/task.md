@@ -1,58 +1,89 @@
 ---
+type: task
 feature: orchestration
 depth: task
-generated_at: 2026-04-13T17:00:56.318324+00:00
+generated_at: 2026-04-14T15:16:22.135027+00:00
 source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
 status: generated
 ---
 
 # Work with orchestration
 
-Use orchestration when you need to compose dynamic agent teams, implement complex workflow patterns, or manage hierarchical delegation strategies.
+Use orchestration when you need to compose dynamic agent teams, execute complex workflows with conditional logic, or implement hierarchical delegation patterns.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/orchestration/**
+- Familiarity with the files under `src/attune/orchestration/`
 
-## Steps
+## Identify your orchestration pattern
 
-1. **Understand the current behavior.**
-   Read the entry points to see what orchestration
-   does today before making changes.
-   The primary functions are:
-   - `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Get strategy instance by name.
-   - `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Register a strategy class by name.
-   - `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Register a workflow for nested references.
-   - `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Get a registered workflow by ID.
-   - `get_template()` in `src/attune/orchestration/agent_templates/registry.py` — Retrieve template by ID.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Determine your execution strategy.**
+   Choose the strategy that matches your workflow pattern:
+   - `ToolEnhancedStrategy` — Single agent with comprehensive tool access
+   - `PromptCachedSequentialStrategy` — Sequential execution with shared cached context
+   - `DelegationChainStrategy` — Hierarchical delegation with depth limits
+   - `ConditionalStrategy` — If-then-else branching logic
+   - `MultiConditionalStrategy` — Switch-case pattern with multiple conditions
+   - `NestedStrategy` — Workflow composition with sub-workflows
+   - `NestedSequentialStrategy` — Sequential steps with nested workflow support
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Review strategy requirements.**
+   Check the strategy's initialization parameters and execution context needs.
+   For example, `DelegationChainStrategy` requires a `max_depth` parameter, while
+   `ConditionalStrategy` needs condition and branch definitions.
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "orchestration"`.
+## Configure execution strategy
+
+1. **Register your strategy (if custom).**
+   ```python
+   from attune.orchestration import register_strategy
+   register_strategy("my_strategy", MyCustomStrategy)
+   ```
+
+2. **Retrieve and configure the strategy.**
+   ```python
+   from attune.orchestration import get_strategy
+   strategy = get_strategy("delegation_chain")
+   ```
+
+3. **Set up agent templates.**
+   Register templates for your agents using the template registry:
+   ```python
+   from attune.orchestration import register_custom_template
+   register_custom_template(my_agent_template)
+   ```
+
+## Execute your workflow
+
+1. **Prepare execution context.**
+   Create a context dictionary with the data your agents need:
+   ```python
+   context = {
+       "task_data": your_data,
+       "user_input": user_request,
+       "session_id": session_identifier
+   }
+   ```
+
+2. **Execute the strategy.**
+   ```python
+   result = strategy.execute(agents, context)
+   ```
+
+3. **Handle the result.**
+   Check the `StrategyResult` for success status, output data, and any errors.
+
+## Verify execution
+
+Your orchestration works correctly when:
+- The strategy executes without raising exceptions
+- The `StrategyResult.success` field returns `True`
+- The output contains expected data from your agents
+- For nested workflows, sub-workflow results appear in the context
 
 ## Key files
 
-- `src/attune/orchestration/**`
-- `src/attune/coordination/**`
-
-## Common modifications
-
-Functions you are most likely to modify:
-
-- `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
-- `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
-- `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
-- `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
-- `get_template()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_all_templates()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_templates_by_capability()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_templates_by_tier()` in `src/attune/orchestration/agent_templates/registry.py`
+- `src/attune/orchestration/_strategies/` — Execution strategy implementations
+- `src/attune/orchestration/agent_templates/registry.py` — Agent template management
+- `src/attune/coordination/` — Team coordination and conflict resolution

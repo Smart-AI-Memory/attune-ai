@@ -1,38 +1,33 @@
 ---
+type: concept
 feature: telemetry
 depth: concept
-generated_at: 2026-04-13T17:01:38.879778+00:00
+generated_at: 2026-04-14T15:19:17.136636+00:00
 source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
 status: generated
 ---
 
 # Telemetry
 
-## How it works
+The telemetry system enables real-time monitoring and coordination across Attune AI's multi-agent workflows through Redis-backed tracking, signaling, and approval mechanisms.
 
-Telemetry tracks AI agent performance, coordinates multi-agent workflows, and provides human oversight controls for Attune AI operations.
+## Core architecture
 
-The main building blocks are:
+The telemetry system operates on three foundational patterns: TTL-based signals for agent coordination, heartbeat tracking for liveness monitoring, and approval gates for human oversight. All components use Redis as a shared coordination layer, allowing agents to communicate without direct dependencies.
 
-- **`CoordinationSignal`** — Coordination signal between agents.
-- **`CoordinationSignals`** — TTL-based inter-agent coordination signals.
-- **`AgentHeartbeat`** — Agent heartbeat data structure.
-- **`HeartbeatCoordinator`** — Coordinates agent heartbeats using Redis TTL keys.
-- **`ApprovalRequest`** — Approval request with context for human decision.
+**Agent coordination** happens through `CoordinationSignals`, which send TTL-expiring messages between specific agents or broadcast to all agents. For example, when one agent completes a file analysis, it can signal completion to the next agent in the pipeline using `signal("analysis_complete", target_agent="reviewer")`.
 
-Under the hood, this feature spans 15 source
-files covering:
+**Heartbeat tracking** monitors agent health through `HeartbeatCoordinator`, which maintains Redis keys that expire if agents stop reporting. Each agent calls `beat(status="processing", progress=0.75)` periodically, and the coordinator can identify stale agents that haven't reported within a threshold.
 
-- Agent coordination via TTL signals
-- Agent heartbeat tracking system
-- Human approval gates for workflow control
+**Approval gates** pause workflows for human decisions through `ApprovalGate`. When an agent needs approval for a sensitive operation, it creates an `ApprovalRequest` with context and waits for a human response through `request_approval("deploy_changes", context={"files": ["config.py"]})`.
 
-## What connects to it
+## Event streaming and CLI reporting
 
-This feature relates to: telemetry, metrics.
+The `EventStreamer` publishes workflow events to Redis Streams for real-time monitoring, while the CLI commands provide operational visibility into system performance. Commands like `cmd_agent_performance` and `cmd_telemetry_savings` extract metrics from the telemetry data to show cost savings, test status, and agent performance across the system.
 
-Other parts of the codebase interact with
-telemetry through these interfaces:
+## Integration points
+
+Other parts of the codebase interact with telemetry through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|

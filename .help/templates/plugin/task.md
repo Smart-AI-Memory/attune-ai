@@ -1,57 +1,56 @@
 ---
+type: task
 feature: plugin
 depth: task
-generated_at: 2026-04-13T18:07:44.284322+00:00
+generated_at: 2026-04-14T15:22:31.898613+00:00
 source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
 status: generated
 ---
 
 # Work with plugin
 
-Use plugin when you need to claude code plugin — skills, hooks, commands, and mcp config.
+Use plugin when you need to customize Claude Code's runtime behavior through hooks, validation, or session management.
 
 ## Prerequisites
 
 - Access to the project source code
 - Familiarity with the files under plugin/**
 
-## Steps
+## Identify the hook or component
 
-1. **Understand the current behavior.**
-   Read the entry points to see what plugin
-   does today before making changes.
-   The primary functions are:
-   - `main()` in `plugin/hooks/format_on_save.py` — Read tool result from stdin, format Python files.
-   - `main()` in `plugin/hooks/help_freshness_check.py` — Check help template freshness on session start.
-   - `main()` in `plugin/hooks/help_on_error.py` — Read PostToolUse payload and suggest help if applicable.
-   - `main()` in `plugin/hooks/help_post_commit.py` — Check for stale help after git commit.
-   - `validate_bash_command()` in `plugin/hooks/security_guard.py` — Validate a Bash command against security policies.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Determine which hook handles your use case:**
+   - **Format on save**: `plugin/hooks/format_on_save.py` auto-formats Python files after Write/Edit operations
+   - **Help freshness**: `plugin/hooks/help_freshness_check.py` checks template freshness on session start
+   - **Error assistance**: `plugin/hooks/help_on_error.py` suggests help when Bash commands fail
+   - **Git integration**: `plugin/hooks/help_post_commit.py` maintains .help/ directory after commits
+   - **Security validation**: `plugin/hooks/security_guard.py` validates commands and file paths
+   - **Welcome messages**: `plugin/hooks/welcome.py` displays session startup information
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Read the hook's main function** to confirm it handles your scenario. Each hook has a single `main()` entry point that processes specific events.
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "plugin"`.
+## Modify hook behavior
 
-## Key files
+1. **Open the target hook file** and locate its `main()` function.
 
-- `plugin/**`
+2. **Review the current logic flow** by tracing through the function's parameters and return values:
+   - Format/help hooks read from stdin and process tool results
+   - Security guard validates commands against `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES`
+   - Welcome hook prints to stderr for Claude Code visibility
 
-## Common modifications
+3. **Edit the hook logic** while preserving the function signature and return format:
+   - Security functions return `(bool, str)` tuples
+   - Main security validator returns `{'allowed': True/False}` dict
+   - Other hooks typically return `None`
 
-Functions you are most likely to modify:
+4. **Test your changes** by running the hook directly or through `pytest -k "plugin"`.
 
-- `main()` in `plugin/hooks/format_on_save.py`
-- `main()` in `plugin/hooks/help_freshness_check.py`
-- `main()` in `plugin/hooks/help_on_error.py`
-- `main()` in `plugin/hooks/help_post_commit.py`
-- `validate_bash_command()` in `plugin/hooks/security_guard.py`
-- `validate_file_path()` in `plugin/hooks/security_guard.py`
-- `main()` in `plugin/hooks/security_guard.py`
-- `main()` in `plugin/hooks/welcome.py`
+## Verify the modification works
+
+Run a relevant operation to trigger your hook:
+- Save a Python file to test format_on_save
+- Start a new session to test help_freshness_check
+- Run a failing command to test help_on_error
+- Make a git commit to test help_post_commit
+- Execute a restricted command to test security_guard
+
+The hook should execute your modified behavior without errors.

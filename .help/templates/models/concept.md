@@ -1,43 +1,49 @@
 ---
+type: concept
 feature: models
 depth: concept
-generated_at: 2026-04-13T17:00:06.834316+00:00
+generated_at: 2026-04-14T15:13:03.992405+00:00
 source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
 status: generated
 ---
 
 # Models
 
-## How it works
+The models feature is Attune AI's unified system for routing LLM requests to optimal providers based on performance data, authentication strategy, and cost constraints.
 
-The unified model registry for Attune AI that handles LLM authentication, adaptive provider routing, and Claude subscription tier management.
+## Core architecture
 
-The main building blocks are:
+The system centers around intelligent routing that adapts based on real-world performance:
 
-- **`ModelPerformance`** — Performance metrics for a model on a specific task.
-- **`AdaptiveModelRouter`** — Routes tasks to models based on historical telemetry performance.
-- **`SubscriptionTier`** — Claude subscription tiers.
-- **`AuthMode`** — Authentication mode selection.
-- **`AuthStrategy`** — Authentication strategy configuration.
+- **`AdaptiveModelRouter`** learns from telemetry to route tasks like `workflow_step` or `code_generation` to the best-performing models
+- **`ModelPerformance`** tracks success rates, latency, and costs for each model-task combination, calculating quality scores for ranking
+- **`CircuitBreaker`** temporarily disables failing providers when they exceed failure thresholds (default: 5 failures)
+- **`EmpathyLLMExecutor`** wraps the routing logic and provides a unified interface for LLM execution
 
-Under the hood, this feature spans 22 source
-files covering:
+## Authentication strategy
 
-- CLI module execution for model commands
-- Adaptive model routing based on historical telemetry
-- Authentication strategy management through CLI commands
+The `AuthStrategy` class automatically selects between Claude subscriptions and API access based on your usage patterns:
 
-## What connects to it
+- Estimates tokens using a 4:1 lines-of-code multiplier
+- Recommends subscription mode for small modules (<500 lines), API mode for large modules (>2000 lines)
+- Calculates cost comparisons between subscription tiers (Pro, Team) and pay-per-token API usage
+- Stores preferences like `prefer_subscription` and `cost_optimization` for consistent decisions
 
-This feature relates to: models, auth, llm.
+## Performance tracking
 
-Other parts of the codebase interact with
-models through these interfaces:
+Every LLM call generates an `LLMResponse` with execution metrics:
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `ModelPerformance` | Performance metrics for a model on a specific task. | `src/attune/models/adaptive_routing.py` |
-| `AdaptiveModelRouter` | Routes tasks to models based on historical telemetry performance. | `src/attune/models/adaptive_routing.py` |
-| `SubscriptionTier` | Claude subscription tiers. | `src/attune/models/auth_strategy.py` |
-| `AuthMode` | Authentication mode selection. | `src/attune/models/auth_strategy.py` |
-| `AuthStrategy` | Authentication strategy configuration. | `src/attune/models/auth_strategy.py` |
+```
+content: "Generated code or text"
+model_id: "claude-3-5-sonnet-20241022"
+tokens_input: 1250
+tokens_output: 800
+cost_estimate: 0.0234
+latency_ms: 1800
+```
+
+The router uses this data to build `ModelPerformance` records tracking success rates and average costs per task type, then routes future requests to models with the highest quality scores.
+
+## Task-based routing
+
+The system recognizes task types like `chat`, `code_generation`, and `security_incident`, with special handling for `REALTIME_REQUIRED_TASKS` that need immediate responses. The router can enforce constraints like maximum cost (`max_cost`) or latency (`max_latency_ms`) when selecting models.

@@ -1,57 +1,138 @@
 ---
+type: task
 feature: configuration
 depth: task
-generated_at: 2026-04-13T17:03:52.677062+00:00
+generated_at: 2026-04-14T15:29:44.272903+00:00
 source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
 status: generated
 ---
 
 # Work with configuration
 
-Use configuration management when you need to set up agents, manage environment variables, or configure workflow execution modes for Attune AI.
+Use Attune's configuration system when you need to manage application settings, environment variables, or agent parameters across different execution contexts.
 
 ## Prerequisites
 
 - Access to the project source code
 - Familiarity with the files under src/attune/config/**
 
-## Steps
+## Load configuration
 
-1. **Understand the current behavior.**
-   Read the entry points to see what configuration
-   does today before making changes.
-   The primary functions are:
-   - `get_attune_env()` in `src/attune/config/env_compat.py` — Get an environment variable, checking ATTUNE_ first then EMPATHY_ fallback.
-   - `iter_attune_env_prefix()` in `src/attune/config/env_compat.py` — Yield (middle_part, value) for env vars matching ATTUNE_{prefix}*{suffix}.
-   - `get_loader()` in `src/attune/config/loader.py` — Get the global ConfigLoader instance.
-   - `load_unified_config()` in `src/attune/config/loader.py` — Convenience function to load unified configuration.
-   - `save_unified_config()` in `src/attune/config/loader.py` — Convenience function to save unified configuration.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Import the configuration loader:**
+   ```python
+   from attune.config import load_unified_config, get_loader
+   ```
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Load configuration from default paths:**
+   ```python
+   config = load_unified_config()
+   ```
+   This searches for config files in `./attune.config.json`, `~/.attune/config.json`, and `~/.config/attune/config.json`.
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "configuration"`.
+3. **Load configuration from a specific path:**
+   ```python
+   config = load_unified_config("/path/to/your/config.json")
+   ```
+
+4. **Verify the configuration loaded correctly:**
+   Check that `config` contains your expected settings and no validation errors occur.
+
+## Set up environment variables
+
+1. **Use the ATTUNE_ prefix for new variables:**
+   ```bash
+   export ATTUNE_MODEL_TIER=premium
+   export ATTUNE_PROVIDER=openai
+   ```
+
+2. **Access environment variables in code:**
+   ```python
+   from attune.config import get_attune_env
+
+   model_tier = get_attune_env("MODEL_TIER", "basic")
+   ```
+
+3. **Apply environment overrides to loaded config:**
+   ```python
+   from attune.config.loader import ConfigLoader
+
+   loader = ConfigLoader()
+   config = loader.load()
+   config = loader.apply_env_overrides(config)
+   ```
+
+4. **Verify environment variables are accessible:**
+   Print the variable value to confirm it was read correctly.
+
+## Configure agents
+
+1. **Create a unified agent configuration:**
+   ```python
+   from attune.config import UnifiedAgentConfig, ModelTier, Provider
+
+   agent_config = UnifiedAgentConfig(
+       model_tier=ModelTier.PREMIUM,
+       provider=Provider.OPENAI,
+       role="assistant",
+       max_tokens=4000
+   )
+   ```
+
+2. **Convert to book production format:**
+   ```python
+   book_config = agent_config.for_book_production()
+   model_id = book_config.model  # Access with backward compatibility
+   ```
+
+3. **Validate the agent configuration:**
+   ```python
+   from attune.config import validate_config
+
+   errors = validate_config(config)
+   if errors:
+       for error in errors:
+           print(f"Validation error: {error}")
+   ```
+
+4. **Confirm the agent accepts your configuration:**
+   Initialize your agent with the config and verify it starts without errors.
+
+## Save configuration
+
+1. **Create or modify a configuration object:**
+   ```python
+   from attune.config import UnifiedConfig
+
+   # Modify existing config or create new one
+   config.agent.model_tier = ModelTier.BASIC
+   ```
+
+2. **Save to the default location:**
+   ```python
+   from attune.config import save_unified_config
+
+   saved_path = save_unified_config(config)
+   print(f"Config saved to: {saved_path}")
+   ```
+
+3. **Save to a specific location:**
+   ```python
+   saved_path = save_unified_config(config, "/custom/path/config.json")
+   ```
+
+4. **Verify the file was written:**
+   Check that the saved file exists and contains your expected configuration values.
 
 ## Key files
 
-- `src/attune/config/**`
+- `src/attune/config/loader.py` — Core configuration loading and saving
+- `src/attune/config/env_compat.py` — Environment variable handling
+- `src/attune/config/unified.py` — Unified configuration data models
+- `src/attune/config/validation.py` — Configuration validation
 
-## Common modifications
+## Run tests
 
-Functions you are most likely to modify:
-
-- `get_attune_env()` in `src/attune/config/env_compat.py`
-- `iter_attune_env_prefix()` in `src/attune/config/env_compat.py`
-- `get_loader()` in `src/attune/config/loader.py`
-- `load_unified_config()` in `src/attune/config/loader.py`
-- `save_unified_config()` in `src/attune/config/loader.py`
-- `validate_config()` in `src/attune/config/validation.py`
-- `get_config()` in `src/attune/config/xml_config.py`
-- `set_config()` in `src/attune/config/xml_config.py`
+Target configuration-related tests to verify your changes:
+```bash
+pytest -k "configuration"
+```

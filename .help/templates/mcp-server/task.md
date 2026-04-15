@@ -1,57 +1,117 @@
 ---
+type: task
 feature: mcp-server
 depth: task
-generated_at: 2026-04-13T18:07:44.222249+00:00
-source_hash: 573bf0d5245dd536c1752066c5919eba5993fb627889d8b4e69163436a9206ef
+generated_at: 2026-04-14T14:59:00.023869+00:00
+source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
 status: generated
 ---
 
 # Work with mcp server
 
-Use mcp server when you need to model context protocol server and tool handlers.
+Use the MCP server when you need to integrate Attune AI workflows with Model Context Protocol-compatible clients like Claude Desktop or VS Code extensions.
 
 ## Prerequisites
 
 - Access to the project source code
 - Familiarity with the files under src/attune/mcp/**
 
-## Steps
+## Create a new MCP server instance
 
-1. **Understand the current behavior.**
-   Read the entry points to see what mcp server
-   does today before making changes.
-   The primary functions are:
-   - `get_prompt_list()` in `src/attune/mcp/prompts.py` — Get list of available prompts.
-   - `get_prompt_messages()` in `src/attune/mcp/prompts.py` — Get messages for a specific prompt.
-   - `create_server()` in `src/attune/mcp/server.py` — Create and return an Empathy MCP server instance.
-   - `main()` in `src/attune/mcp/server.py` — Entry point for MCP server.
-   - `get_workflow_tools()` in `src/attune/mcp/tool_schemas.py` — Tool definitions for workflow execution tools.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Import the server factory function:**
+   ```python
+   from attune.mcp.server import create_server
+   ```
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Create the server instance:**
+   ```python
+   server = create_server()
+   ```
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "mcp-server"`.
+3. **Verify the server is ready:**
+   Run `server.get_tool_list()` to confirm it returns available tools like `auth_status`, `help_lookup`, and workflow tools.
+
+## Add new tools to the server
+
+1. **Choose the appropriate tool category:**
+   - Workflow tools: Add to `get_workflow_tools()` in `src/attune/mcp/tool_schemas.py`
+   - Utility tools: Add to `get_utility_tools()` for auth, telemetry, and session management
+   - Help tools: Add to `get_help_tools()` for documentation features
+   - Memory tools: Add to `get_memory_tools()` for data persistence
+
+2. **Define your tool schema:**
+   ```python
+   'your_tool_name': {
+       'description': 'What your tool does',
+       'input_schema': {
+           'type': 'object',
+           'properties': {
+               'param_name': {
+                   'type': 'string',
+                   'description': 'Parameter description'
+               }
+           },
+           'required': ['param_name']
+       }
+   }
+   ```
+
+3. **Implement the tool handler:**
+   Add the handler method to the appropriate mixin class (`MemoryHandlersMixin` or `WorkflowHandlersMixin`) in the server implementation.
+
+4. **Test the tool registration:**
+   Run `server.get_tool_list()` and verify your new tool appears in the results.
+
+## Add new prompts to the server
+
+1. **Define the prompt in `get_prompts()`:**
+   ```python
+   'your-prompt-name': {
+       'name': 'your-prompt-name',
+       'description': 'What this prompt accomplishes',
+       'arguments': [
+           {
+               'name': 'input_param',
+               'description': 'Input parameter description',
+               'required': True
+           }
+       ]
+   }
+   ```
+
+2. **Test prompt availability:**
+   Run `server.get_prompt_list()` to confirm your prompt is registered.
+
+3. **Test prompt execution:**
+   Call `server.get_prompt_messages('your-prompt-name', {'input_param': 'test_value'})` and verify it returns properly formatted messages.
+
+## Configure rate limiting
+
+1. **Set rate limits during server creation:**
+   ```python
+   # Default: 60 calls per 60 seconds
+   server = create_server()
+
+   # Or customize in the RateLimiter class
+   rate_limiter = RateLimiter(max_calls=100, window_seconds=60.0)
+   ```
+
+2. **Verify rate limiting works:**
+   Make rapid successive calls to any tool and confirm that after the limit, `RateLimiter.check()` returns `False`.
 
 ## Key files
 
-- `src/attune/mcp/**`
+- `src/attune/mcp/server.py` - Main server implementation and factory
+- `src/attune/mcp/tool_schemas.py` - Tool definitions for all categories
+- `src/attune/mcp/prompts.py` - Prompt handling and message formatting
+- `src/attune/mcp/rate_limiter.py` - Request rate limiting
+- `src/attune/mcp/memory.py` - Memory tool handlers
+- `src/attune/mcp/workflow.py` - Workflow tool handlers
 
-## Common modifications
+## Verify success
 
-Functions you are most likely to modify:
-
-- `get_prompt_list()` in `src/attune/mcp/prompts.py`
-- `get_prompt_messages()` in `src/attune/mcp/prompts.py`
-- `create_server()` in `src/attune/mcp/server.py`
-- `main()` in `src/attune/mcp/server.py`
-- `get_workflow_tools()` in `src/attune/mcp/tool_schemas.py`
-- `get_utility_tools()` in `src/attune/mcp/tool_schemas.py`
-- `get_help_tools()` in `src/attune/mcp/tool_schemas.py`
-- `get_memory_tools()` in `src/attune/mcp/tool_schemas.py`
+The MCP server is working correctly when:
+- `create_server()` returns an `EmpathyMCPServer` instance without errors
+- `server.get_tool_list()` returns all expected tools including utility, help, memory, and workflow tools
+- Tool calls via `server.call_tool()` execute successfully and return proper responses
+- Rate limiting prevents excessive calls after the configured threshold

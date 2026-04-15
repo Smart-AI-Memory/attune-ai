@@ -1,7 +1,8 @@
 ---
+type: concept
 feature: help-system
 depth: concept
-generated_at: 2026-04-13T18:07:44.240940+00:00
+generated_at: 2026-04-14T15:01:48.673774+00:00
 source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
 status: generated
 ---
@@ -10,34 +11,24 @@ status: generated
 
 ## How it works
 
-Progressive-depth help engine and template management.
+The help system automatically generates documentation templates by scanning your project, tracking feature changes, and adapting output for different audiences and contexts.
 
-The main building blocks are:
+The core workflow follows three phases:
 
-- **`ProposedFeature`** — A feature discovered by scanning.
-- **`GeneratedTemplate`** — Result of generating one template file.
-- **`GenerationResult`** — Result of generating templates for a feature.
-- **`MaintenanceResult`** — Result of a help maintenance run.
-- **`Feature`** — A project feature mapped to source files.
+- **Discovery** — `scan_project()` identifies features by analyzing entry points, configuration files, and code patterns, producing `ProposedFeature` objects with confidence scores
+- **Generation** — `generate_feature_templates()` creates concept, task, and reference templates for each feature, tracking source file hashes to detect staleness
+- **Maintenance** — `run_maintenance()` regenerates templates when source files change, skipping manually edited files and collecting feedback scores
 
-Under the hood, this feature spans 17 source
-files covering:
-
-- Project scanning and manifest bootstrapping.
-- Template engine for the documentation help system.
-- Feedback and confidence scoring for help templates.
+The system stores templates with metadata including confidence scores from user feedback (`record_template_feedback()`), usage weights from telemetry (`get_usage_weights()`), and contextual relevance for workflows and file editing scenarios.
 
 ## What connects to it
 
-This feature relates to: help, templates, docs.
-
-Other parts of the codebase interact with
-help system through these interfaces:
+The help system integrates with your development workflow through several touch points:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
-| `ProposedFeature` | A feature discovered by scanning. | `src/attune/help/bootstrap.py` |
-| `GeneratedTemplate` | Result of generating one template file. | `src/attune/help/generator.py` |
-| `GenerationResult` | Result of generating templates for a feature. | `src/attune/help/generator.py` |
-| `MaintenanceResult` | Result of a help maintenance run. | `src/attune/help/maintenance.py` |
-| `Feature` | A project feature mapped to source files. | `src/attune/help/manifest.py` |
+| `ProposedFeature` | Feature candidates with confidence scores from project scanning | `src/attune/help/bootstrap.py` |
+| `GeneratedTemplate` | Template files linked to source hashes for staleness detection | `src/attune/help/generator.py` |
+| `GenerationResult` | Batch results from template generation with matched source files | `src/attune/help/generator.py` |
+| `MaintenanceResult` | Summary of regenerated, skipped, and failed templates during updates | `src/attune/help/maintenance.py` |
+| `Feature` | Canonical feature definitions mapping names to source files and tags | `src/attune/help/manifest.py` |

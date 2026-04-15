@@ -1,7 +1,8 @@
 ---
+type: reference
 feature: telemetry
 depth: reference
-generated_at: 2026-04-13T17:02:02.388039+00:00
+generated_at: 2026-04-14T15:19:53.996016+00:00
 source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
 status: generated
 ---
@@ -10,50 +11,169 @@ status: generated
 
 ## Classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `CoordinationSignal` | Coordination signal between agents. | `src/attune/telemetry/agent_coordination.py` |
-| `CoordinationSignals` | TTL-based inter-agent coordination signals. | `src/attune/telemetry/agent_coordination.py` |
-| `AgentHeartbeat` | Agent heartbeat data structure. | `src/attune/telemetry/agent_tracking.py` |
-| `HeartbeatCoordinator` | Coordinates agent heartbeats using Redis TTL keys. | `src/attune/telemetry/agent_tracking.py` |
-| `ApprovalRequest` | Approval request with context for human decision. | `src/attune/telemetry/approval_gates.py` |
-| `ApprovalResponse` | Response to an approval request. | `src/attune/telemetry/approval_gates.py` |
-| `ApprovalGate` | Human approval gates for workflow control. | `src/attune/telemetry/approval_gates.py` |
-| `StreamEvent` | Event published to Redis Stream. | `src/attune/telemetry/event_streaming.py` |
-| `EventStreamer` | Real-time event streaming using Redis Streams. | `src/attune/telemetry/event_streaming.py` |
-| `FeatureStatus` | Status of an optional feature. | `src/attune/telemetry/features.py` |
-| `FeatureInfo` | Information about a telemetry feature. | `src/attune/telemetry/features.py` |
-| `TelemetryFeatures` | Check availability of telemetry features. | `src/attune/telemetry/features.py` |
-| `FeedbackLoop` | Agent-to-LLM feedback loop for quality-based learning. | `src/attune/telemetry/feedback_loop.py` |
-| `ModelTier` | Model tier enum matching workflows.base.ModelTier. | `src/attune/telemetry/feedback_models.py` |
-| `FeedbackEntry` | Quality feedback for an LLM response. | `src/attune/telemetry/feedback_models.py` |
-| `QualityStats` | Quality statistics for a workflow stage. | `src/attune/telemetry/feedback_models.py` |
-| `TierRecommendation` | Tier recommendation based on quality feedback. | `src/attune/telemetry/feedback_models.py` |
-| `UsageTracker` | Privacy-first local telemetry tracker. | `src/attune/telemetry/usage_tracker.py` |
+### CoordinationSignal
 
-## Functions
+Coordination signal between agents.
 
-| Function | Description | File |
-|----------|-------------|------|
-| `main()` | Telemetry CLI entry point. | `src/attune/telemetry/__main__.py` |
-| `cmd_sonnet_opus_analysis()` | Show Sonnet 4.5 to Opus 4.5 fallback analysis and cost savings. | `src/attune/telemetry/cli_analysis.py` |
-| `cmd_file_test_status()` | Show per-file test status. | `src/attune/telemetry/cli_analysis.py` |
-| `cmd_tier1_status()` | Show comprehensive Tier 1 automation status. | `src/attune/telemetry/cli_automation.py` |
-| `cmd_task_routing_report()` | Show detailed task routing report. | `src/attune/telemetry/cli_automation.py` |
-| `cmd_test_status()` | Show test execution status. | `src/attune/telemetry/cli_automation.py` |
-| `cmd_agent_performance()` | Show agent performance metrics. | `src/attune/telemetry/cli_automation.py` |
-| `cmd_telemetry_show()` | Show recent telemetry entries. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_savings()` | Calculate and display cost savings. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_cache_stats()` | Show prompt caching performance statistics. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_compare()` | Compare telemetry across two time periods. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_reset()` | Reset/clear all telemetry data. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_export()` | Export telemetry data to JSON or CSV. | `src/attune/telemetry/cli_core.py` |
+| Field | Type | Default |
+|-------|------|---------|
+| signal_id | str | |
+| signal_type | str | |
+| source_agent | str | |
+| target_agent | str \| None | |
+| payload | dict[str, Any] | |
+| timestamp | datetime | |
+| ttl_seconds | int | 60 |
 
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| to_dict | self | dict[str, Any] | Convert to dictionary |
+| from_dict | cls, data: dict[str, Any] | CoordinationSignal | Create from dictionary |
 
-## Source files
+### CoordinationSignals
 
-- `src/attune/telemetry/**`
+TTL-based inter-agent coordination signals.
 
-## Tags
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| __init__ | self, memory = None, agent_id: str \| None = None, enable_streaming: bool = False | | Initialize coordination signals |
+| signal | self, signal_type: str, source_agent: str \| None = None, target_agent: str \| None = None, payload: dict[str, Any] \| None = None, ttl_seconds: int \| None = None, credentials: AgentCredentials \| None = None | str | Send signal to specific agent |
+| broadcast | self, signal_type: str, source_agent: str \| None = None, payload: dict[str, Any] \| None = None, ttl_seconds: int \| None = None, credentials: AgentCredentials \| None = None | str | Broadcast signal to all agents |
+| wait_for_signal | self, signal_type: str, source_agent: str \| None = None, timeout: float = 30.0, poll_interval: float = 0.5 | CoordinationSignal \| None | Wait for specific signal |
+| check_signal | self, signal_type: str, source_agent: str \| None = None, consume: bool = True | CoordinationSignal \| None | Check for signal without waiting |
+| get_pending_signals | self, signal_type: str \| None = None | list[CoordinationSignal] | Get all pending signals |
+| clear_signals | self, signal_type: str \| None = None | int | Clear signals and return count |
 
-`telemetry`, `metrics`
+### AgentHeartbeat
+
+Agent heartbeat data structure.
+
+| Field | Type | Default |
+|-------|------|---------|
+| agent_id | str | |
+| status | str | |
+| progress | float | |
+| current_task | str | |
+| last_beat | datetime | |
+| metadata | dict[str, Any] | field(default_factory=dict) |
+| display_name | str \| None | None |
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| to_dict | self | dict[str, Any] | Convert to dictionary |
+| from_dict | cls, data: dict[str, Any] | AgentHeartbeat | Create from dictionary |
+
+### HeartbeatCoordinator
+
+Coordinates agent heartbeats using Redis TTL keys.
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| __init__ | self, memory = None, enable_streaming: bool = False | | Initialize heartbeat coordinator |
+| start_heartbeat | self, agent_id: str, metadata: dict[str, Any] \| None = None, display_name: str \| None = None | None | Start heartbeat for agent |
+| beat | self, status: str = 'running', progress: float = 0.0, current_task: str = '' | None | Send heartbeat |
+| stop_heartbeat | self, final_status: str = 'completed' | None | Stop heartbeat with final status |
+| get_active_agents | self | list[AgentHeartbeat] | Get all active agents |
+| is_agent_alive | self, agent_id: str | bool | Check if agent is alive |
+| get_agent_status | self, agent_id: str | AgentHeartbeat \| None | Get agent status |
+| get_stale_agents | self, threshold_seconds: float = 60.0 | list[AgentHeartbeat] | Get agents past threshold |
+
+### ApprovalRequest
+
+Approval request with context for human decision.
+
+| Field | Type | Default |
+|-------|------|---------|
+| request_id | str | |
+| approval_type | str | |
+| agent_id | str | |
+| context | dict[str, Any] | |
+| timestamp | datetime | |
+| timeout_seconds | float | |
+| status | str | 'pending' |
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| to_dict | self | dict[str, Any] | Convert to dictionary |
+| from_dict | cls, data: dict[str, Any] | ApprovalRequest | Create from dictionary |
+
+### ApprovalResponse
+
+Response to an approval request.
+
+| Field | Type | Default |
+|-------|------|---------|
+| request_id | str | |
+| approved | bool | |
+| responder | str | |
+| reason | str | '' |
+| timestamp | datetime | field(default_factory=lambda : datetime.now(timezone.utc)) |
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| to_dict | self | dict[str, Any] | Convert to dictionary |
+| from_dict | cls, data: dict[str, Any] | ApprovalResponse | Create from dictionary |
+
+### ApprovalGate
+
+Human approval gates for workflow control.
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| __init__ | self, memory = None, agent_id: str \| None = None | | Initialize approval gate |
+| request_approval | self, approval_type: str, context: dict[str, Any] \| None = None, timeout: float \| None = None | ApprovalResponse | Request human approval |
+| respond_to_approval | self, request_id: str, approved: bool, responder: str, reason: str = '' | bool | Respond to approval request |
+| get_pending_approvals | self, approval_type: str \| None = None | list[ApprovalRequest] | Get pending approval requests |
+| clear_expired_requests | self | int | Clear expired requests and return count |
+
+### StreamEvent
+
+Event published to Redis Stream.
+
+| Field | Type | Default |
+|-------|------|---------|
+| event_id | str | |
+| event_type | str | |
+| timestamp | datetime | |
+| data | dict[str, Any] | |
+| source | str | 'attune' |
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| to_dict | self | dict[str, Any] | Convert to dictionary |
+| from_redis_entry | cls, event_id: str, entry_data: dict[bytes, bytes] | StreamEvent | Create from Redis entry |
+
+### EventStreamer
+
+Real-time event streaming using Redis Streams.
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| __init__ | self, memory = None | | Initialize event streamer |
+| publish_event | self, event_type: str, data: dict[str, Any], source: str = 'attune' | str | Publish event to stream |
+| consume_events | self, event_types: list[str] \| None = None, block_ms: int \| None = None, count: int = 10, start_id: str = '$' | Iterator[StreamEvent] | Consume events from streams |
+| get_recent_events | self, event_type: str, count: int = 100, start_id: str = '-', end_id: str = '+' | list[StreamEvent] | Get recent events |
+| get_stream_info | self, event_type: str | dict[str, Any] | Get stream information |
+| delete_stream | self, event_type: str | bool | Delete stream |
+| trim_stream | self, event_type: str, max_length: int = 1000 | int | Trim stream to max length |
+
+### FeatureStatus
+
+Status of an optional feature.
+
+## CLI Commands
+
+| Command | Parameters | Returns | Description |
+|---------|------------|---------|-------------|
+| main | | int | Telemetry CLI entry point |
+| cmd_sonnet_opus_analysis | args: Any | int | Show Sonnet 4.5 -> Opus 4.5 fallback analysis and cost savings |
+| cmd_file_test_status | args: Any | int | Show per-file test status |
+| cmd_tier1_status | args: Any | int | Show comprehensive Tier 1 automation status |
+| cmd_task_routing_report | args: Any | int | Show detailed task routing report |
+| cmd_test_status | args: Any | int | Show test execution status |
+| cmd_agent_performance | args: Any | int | Show agent performance metrics |
+| cmd_telemetry_show | args: Any | int | Show recent telemetry entries |
+| cmd_telemetry_savings | args: Any | int | Calculate and display cost savings |
+| cmd_telemetry_cache_stats | args: Any | int | Show prompt caching performance statistics |
+
+All CLI commands return 0 on success.

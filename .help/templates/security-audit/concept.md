@@ -1,41 +1,34 @@
 ---
+type: concept
 feature: security-audit
 depth: concept
-generated_at: 2026-04-13T16:53:32.037482+00:00
+generated_at: 2026-04-14T14:37:46.666142+00:00
 source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
 status: generated
 ---
 
 # Security Audit
 
-## How it works
+Security audit is a comprehensive vulnerability scanner that uses four specialized AI agents to analyze codebases for security risks including hardcoded secrets, path traversal vulnerabilities, injection attacks, and authentication flaws.
 
-Scans code for security vulnerabilities including eval/exec usage, path traversal risks, hardcoded secrets, and injection vulnerabilities.
+## Core components
 
-The main building blocks are:
+The security audit system consists of two main parts: the scanning workflow and the monitoring infrastructure.
 
-- **`SecurityAuditWorkflow`** — SDK-native security audit with four specialized subagents that analyze different vulnerability categories.
-- **`AlertEngine`** — Manages alert storage in SQLite and delivers notifications when security issues are detected.
-- **`AlertChannel`** — Defines delivery methods for security notifications.
-- **`AlertMetric`** — Tracks security-related metrics for monitoring.
-- **`AlertSeverity`** — Categorizes security findings by severity level.
+**SecurityAuditWorkflow** orchestrates four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner`) that each focus on specific security domains. The workflow synthesizes their findings into a unified report with an overall security score (0-100) and actionable remediation steps ordered by priority.
 
-Under the hood, this feature spans 13 source files covering:
+**AlertEngine** monitors LLM telemetry metrics and triggers notifications when security thresholds are exceeded. It stores alert configurations in SQLite and supports multiple notification channels including webhooks and email. Each alert has configurable cooldown periods and severity levels to prevent notification spam.
 
-- Security Module for Attune AI
-- Path validation utilities for Attune AI
-- LLM Telemetry Monitoring System
+## Telemetry and monitoring architecture
 
-## What connects to it
+The monitoring system captures security-related events through multiple backends:
 
-This feature relates to: security, audit, owasp, scanning.
+- **MultiBackend** logs to several storage systems simultaneously, with automatic failover handling
+- **OTELBackend** exports telemetry data to OpenTelemetry collectors for integration with existing observability infrastructure
+- **TelemetryStore** provides structured access to historical security audit data
 
-Other parts of the codebase interact with security audit through these interfaces:
+Alert configurations define specific metrics to watch (like vulnerability counts or secret detection rates), threshold values that trigger notifications, and delivery channels. The system tracks alert history and provides cooldown mechanisms to avoid flooding teams with duplicate notifications.
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `SecurityAuditWorkflow` | SDK-native security audit with four specialized subagents. | `src/attune/workflows/security_audit.py` |
-| `AlertEngine` | Alert engine with SQLite storage and notification delivery. | `src/attune/monitoring/engine.py` |
-| `AlertChannel` | Notification channels for alerts. | `src/attune/monitoring/models.py` |
-| `AlertMetric` | Metrics that can be monitored. | `src/attune/monitoring/models.py` |
-| `AlertSeverity` | Alert severity levels. | `src/attune/monitoring/models.py` |
+## Command-line interface
+
+You can manage security monitoring through the `alerts` command group, which supports interactive alert creation, threshold management, and real-time monitoring. The `watch` command continuously monitors telemetry and triggers alerts, while `history` and `metrics` commands provide visibility into past events and current system state.
