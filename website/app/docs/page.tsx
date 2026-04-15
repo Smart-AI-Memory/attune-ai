@@ -140,7 +140,10 @@ export default function DocsPage() {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* attune-help */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
+                    Recommended
+                  </div>
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Reader Only
                   </div>
@@ -155,10 +158,7 @@ export default function DocsPage() {
                 </div>
 
                 {/* attune-ai */}
-                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    Recommended
-                  </div>
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Full Framework
                   </div>
@@ -173,7 +173,10 @@ export default function DocsPage() {
                 </div>
 
                 {/* attune-author */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
+                    Recommended
+                  </div>
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     AI Authoring
                   </div>
