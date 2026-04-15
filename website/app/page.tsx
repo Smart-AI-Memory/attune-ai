@@ -61,7 +61,7 @@ export default function Home() {
                     href="https://pypi.org/project/attune-help/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[var(--primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center"
+                    className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
                   >
                     attune-help on PyPI
                   </a>
@@ -69,7 +69,7 @@ export default function Home() {
                     href="https://pypi.org/project/attune-author/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[var(--primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center"
+                    className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
                   >
                     attune-author on PyPI
                   </a>
