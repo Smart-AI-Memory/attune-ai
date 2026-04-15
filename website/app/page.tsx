@@ -80,19 +80,6 @@ export default function Home() {
                     See How It Works
                   </Link>
                 </div>
-                <p className="mt-4 text-xs text-[var(--text-muted)] leading-relaxed max-w-xl">
-                  Or use the Claude Code plugin:{' '}
-                  <code className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded">claude plugin marketplace add Smart-AI-Memory/attune-docs</code>
-                  {' '}&middot; Full framework:{' '}
-                  <a
-                    href="https://pypi.org/project/attune-ai/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-[var(--foreground)] bg-[var(--surface-container-high)] px-1 rounded hover:underline"
-                  >
-                    attune-ai on PyPI
-                  </a>
-                </p>
                 {/* Trust badges */}
                 <div className="flex flex-wrap gap-3 mt-8">
                   <GitHubStarsBadge />
