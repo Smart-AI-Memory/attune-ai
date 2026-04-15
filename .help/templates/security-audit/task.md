@@ -1,60 +1,76 @@
 ---
+type: task
 feature: security-audit
 depth: task
-generated_at: 2026-04-13T16:53:39.182361+00:00
+generated_at: 2026-04-14T14:37:58.750484+00:00
 source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
 status: generated
 ---
 
-# Work with security audit
+# Run a security audit
 
-Use security audit when you need to identify security vulnerabilities in your codebase through SDK-native analysis with specialized subagents.
+Run a security audit when you need to scan your codebase for vulnerabilities, secrets, authentication flaws, and security violations before deployment or code review.
 
 ## Prerequisites
 
-- Access to the project source code
-- Familiarity with the files under src/attune/workflows/security_audit.py
+- Python environment with Attune AI installed
+- Access to the codebase you want to audit
+- Write permissions for the `.attune` directory (for alert storage)
 
-## Steps
+## Execute the security audit
 
-1. **Understand the current behavior.**
-   Read the entry points to see what security audit
-   does today before making changes.
-   The primary workflow is:
-   - `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py` — SDK-native security audit with four specialized subagents.
-   The supporting alert system includes:
-   - `alerts()` in `src/attune/monitoring/alerts_cli.py` — Alert management commands for LLM telemetry monitoring.
-   - `init()` in `src/attune/monitoring/alerts_cli.py` — Initialize an alert with interactive workflow or CLI flags.
-   - `list_cmd()` in `src/attune/monitoring/alerts_cli.py` — List all configured alerts.
+1. **Initialize the security audit workflow**
+   ```python
+   from attune.workflows.security_audit import SecurityAuditWorkflow
 
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+   workflow = SecurityAuditWorkflow()
+   ```
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Run the audit on your codebase**
+   ```python
+   result = workflow.execute(path="/path/to/your/code")
+   ```
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "security-audit"`.
+3. **Review the structured report**
+   The workflow returns a `WorkflowResult` containing:
+   - Overall security score (0-100)
+   - Executive summary of security posture
+   - Findings organized by severity (CRITICAL, HIGH, MEDIUM, LOW)
+   - Actionable remediation steps with effort estimates
 
-## Key files
+## Set up alert monitoring
 
-- `src/attune/workflows/security_audit.py`
-- `src/attune/security/**`
-- `src/attune/monitoring/**`
+1. **Initialize alert configuration**
+   ```bash
+   attune alerts init
+   ```
+   Follow the interactive prompts to configure metric thresholds, notification channels, and delivery settings.
 
-## Common modifications
+2. **Create alerts programmatically**
+   ```python
+   from attune.monitoring.alerts import get_alert_engine, AlertMetric, AlertChannel, AlertSeverity
 
-Functions you are most likely to modify:
+   engine = get_alert_engine()
+   engine.add_alert(
+       alert_id="security-violations",
+       name="Security Violation Threshold",
+       metric=AlertMetric.SECURITY_VIOLATIONS,
+       threshold=5.0,
+       channel=AlertChannel.EMAIL,
+       email="security@yourcompany.com",
+       severity=AlertSeverity.CRITICAL
+   )
+   ```
 
-- `alerts()` in `src/attune/monitoring/alerts_cli.py`
-- `init()` in `src/attune/monitoring/alerts_cli.py`
-- `list_cmd()` in `src/attune/monitoring/alerts_cli.py`
-- `delete()` in `src/attune/monitoring/alerts_cli.py`
-- `enable()` in `src/attune/monitoring/alerts_cli.py`
-- `disable()` in `src/attune/monitoring/alerts_cli.py`
-- `watch()` in `src/attune/monitoring/alerts_cli.py`
-- `history()` in `src/attune/monitoring/alerts_cli.py`
+3. **Start monitoring**
+   ```bash
+   attune alerts watch --interval 300
+   ```
+
+## Verify audit completion
+
+The security audit succeeds when:
+- The `WorkflowResult` contains findings from all four subagents: vulnerability scanner, secret detector, authentication reviewer, and remediation planner
+- Each finding includes file paths and line numbers where issues were detected
+- The report shows an overall security score and prioritized remediation steps
+- Alert monitoring (if configured) shows active alerts in `attune alerts list`

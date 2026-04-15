@@ -1,43 +1,40 @@
 ---
+type: concept
 feature: plugin
 depth: concept
-generated_at: 2026-04-13T18:07:44.279649+00:00
+generated_at: 2026-04-14T15:22:21.269120+00:00
 source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
 status: generated
 ---
 
 # Plugin
 
-## How it works
+A Claude Code extension system that automatically executes actions at specific points in the development workflow through event-driven hooks.
 
-Claude Code plugin — skills, hooks, commands, and MCP config.
+## Hook-based architecture
 
-The main entry points are:
+The plugin system operates through event hooks that trigger when you perform specific actions:
 
-- **`main()`** — Read tool result from stdin, format Python files.
-- **`main()`** — Check help template freshness on session start.
-- **`main()`** — Read PostToolUse payload and suggest help if applicable.
-- **`main()`** — Check for stale help after git commit.
-- **`validate_bash_command()`** — Validate a Bash command against security policies.
+- **SessionStart hooks** run when you begin a new Claude Code session
+- **PostToolUse hooks** execute after Claude completes tool operations like writing files or running commands
 
-Under the hood, this feature spans 610 source
-files covering:
+Each hook is a standalone executable that receives event data and performs targeted actions. For example, when you save a Python file, the format-on-save hook automatically runs code formatting.
 
-- PostToolUse hook: auto-format Python files after Write/Edit.
-- SessionStart hook: check help template freshness.
-- PostToolUse hook: suggest help when Bash commands fail.
+## Security validation
 
-## What connects to it
+The security guard component validates commands and file paths before execution:
 
-This feature relates to: plugin, claude-code.
+- `validate_bash_command()` checks shell commands against security policies, blocking access to system directories like `/etc`, `/sys`, and `/proc`
+- `validate_file_path()` prevents operations on protected filesystem locations
+- Returns validation results as `(allowed: bool, reason: str)` tuples
 
-Other parts of the codebase call into
-plugin through these functions:
+## Development workflow integration
 
-| Function | Purpose | File |
-|----------|---------|------|
-| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
-| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
-| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
-| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
-| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
+The plugin system enhances your coding workflow through automated maintenance:
+
+- **Code formatting**: Auto-formats Python files after Write/Edit operations
+- **Help system maintenance**: Checks template freshness on session start and updates help content after git commits
+- **Error assistance**: Suggests relevant help when Bash commands fail
+- **Welcome messaging**: Displays startup information through stderr (visible in Claude Code interface)
+
+The bundled runtime (attune-ai core) enables standalone plugin operation outside the main Claude Code process, ensuring plugins can run independently without blocking the primary interface.

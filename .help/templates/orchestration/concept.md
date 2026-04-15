@@ -1,43 +1,48 @@
 ---
+type: concept
 feature: orchestration
 depth: concept
-generated_at: 2026-04-13T17:00:50.551522+00:00
+generated_at: 2026-04-14T15:16:10.557691+00:00
 source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
 status: generated
 ---
 
 # Orchestration
 
-## How it works
+Orchestration is the system that coordinates how multiple AI agents work together by defining execution strategies and managing their composition patterns.
 
-Meta-orchestration system for dynamic agent composition with multiple execution strategies.
+## Core execution strategies
 
-The main building blocks are:
+The orchestration system provides several built-in strategies for coordinating agent interactions:
 
-- **`ToolEnhancedStrategy`** — Single agent with comprehensive tool access.
-- **`PromptCachedSequentialStrategy`** — Sequential execution with shared cached context.
-- **`DelegationChainStrategy`** — Hierarchical delegation with max depth enforcement.
-- **`ExecutionStrategy`** — Base class for agent composition strategies.
-- **`ConditionalStrategy`** — Conditional branching (if X then A else B).
+**Sequential strategies** execute agents one after another:
+- `PromptCachedSequentialStrategy` passes cached context between agents to avoid recomputing shared information
+- `NestedSequentialStrategy` allows workflows to contain other workflows as steps
 
-Under the hood, this feature spans 40 source
-files covering:
+**Conditional strategies** route work based on runtime conditions:
+- `ConditionalStrategy` implements if-then-else branching logic
+- `MultiConditionalStrategy` handles switch-case patterns with multiple conditions
 
-- Meta-orchestration system for dynamic agent composition.
-- Conditional and nested execution strategies.
-- Advanced execution strategy patterns (11-13).
+**Enhanced execution patterns** provide specialized coordination:
+- `ToolEnhancedStrategy` gives a single agent comprehensive access to all available tools
+- `DelegationChainStrategy` creates hierarchical delegation with configurable depth limits to prevent infinite recursion
 
-## What connects to it
+## Strategy composition model
 
-This feature relates to: orchestration, teams.
+All execution strategies inherit from `ExecutionStrategy` and implement the same interface:
+- Accept a list of `AgentTemplate` instances and a shared context dictionary
+- Return a `StrategyResult` containing the execution outcome
+- Handle agent coordination according to their specific pattern
 
-Other parts of the codebase interact with
-orchestration through these interfaces:
+You register strategies by name using `register_strategy()` and retrieve them with `get_strategy()`. This allows workflows to reference strategies dynamically without hard-coding dependencies.
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `ToolEnhancedStrategy` | Single agent with comprehensive tool access. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `PromptCachedSequentialStrategy` | Sequential execution with shared cached context. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `DelegationChainStrategy` | Hierarchical delegation with max depth enforcement. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
-| `ExecutionStrategy` | Base class for agent composition strategies. | `src/attune/orchestration/_strategies/base.py` |
-| `ConditionalStrategy` | Conditional branching (if X then A else B). | `src/attune/orchestration/_strategies/conditional_strategies.py` |
+## Nested workflow support
+
+The orchestration system supports nested workflows through `WorkflowReference` objects. When a step in one workflow references another workflow, the `NestedStrategy` manages the execution depth and context passing between workflow layers. The `NestingContext` enforces maximum depth limits to prevent stack overflow from circular references.
+
+## Template and workflow registry
+
+The orchestration system maintains registries for reusable components:
+- Agent templates are stored and retrieved by ID, capability, or tier preference
+- Workflows can be registered and referenced by other workflows
+- Custom templates can be added at runtime for dynamic composition

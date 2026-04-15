@@ -1,37 +1,91 @@
 ---
+type: reference
 feature: release-prep
 depth: reference
-generated_at: 2026-04-13T16:55:40.993494+00:00
+generated_at: 2026-04-14T14:49:52.038519+00:00
 source_hash: fe9ded2c56c77207b818a4bfa424bc8ad639e250941dae59bba6027c7ec2bb75
 status: generated
 ---
 
 # Release Prep reference
 
-## Classes
+## Workflow classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `ReleasePreparationWorkflow` | Pre-release quality gate workflow powered by Agent SDK subagents | `src/attune/workflows/release_prep.py` |
-| `ReleaseAgent` | Base agent with CHEAP -> CAPABLE -> PREMIUM escalation | `src/attune/agents/release/base_agent.py` |
-| `TestCoverageAgent` | Runs pytest --cov and parses coverage report | `src/attune/agents/release/coverage_agent.py` |
-| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence | `src/attune/agents/release/documentation_agent.py` |
-| `CodeQualityAgent` | Runs ruff, checks type hints and complexity | `src/attune/agents/release/quality_agent.py` |
-| `Tier` | Model tier for progressive escalation | `src/attune/agents/release/release_models.py` |
-| `ReleaseAgentResult` | Result from an individual release agent | `src/attune/agents/release/release_models.py` |
-| `QualityGate` | Quality gate threshold for release readiness | `src/attune/agents/release/release_models.py` |
-| `ReleaseReadinessReport` | Aggregated release readiness assessment | `src/attune/agents/release/release_models.py` |
-| `ReleasePrepTeam` | Coordinates parallel execution of release preparation agents | `src/attune/agents/release/release_prep_team.py` |
-| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry | `src/attune/agents/release/release_prep_team.py` |
-| `SecurityAuditorAgent` | Analyzes bandit output and classifies vulnerabilities by severity | `src/attune/agents/release/security_agent.py` |
+| Class | Description | Methods |
+|-------|-------------|---------|
+| `ReleasePreparationWorkflow` | Pre-release quality gate workflow powered by Agent SDK subagents | `execute(**kwargs: Any) -> WorkflowResult` |
 
+## Agent classes
 
+| Class | Description | Parameters | Returns |
+|-------|-------------|------------|---------|
+| `ReleaseAgent` | Base agent with CHEAP -> CAPABLE -> PREMIUM escalation | `agent_id: str, role: str, redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` | |
+| | | `codebase_path: str = '.'` (process) | `ReleaseAgentResult` |
+| `TestCoverageAgent` | Runs pytest --cov and parses coverage report | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` | |
+| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` | |
+| `CodeQualityAgent` | Runs ruff, checks type hints and complexity | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` | |
+| `SecurityAuditorAgent` | Analyzes bandit output and classifies vulnerabilities by severity | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` | |
 
-## Source files
+## Team coordination classes
 
-- `src/attune/workflows/release_prep.py`
-- `src/attune/agents/release/**`
+| Class | Description | Parameters | Returns |
+|-------|-------------|------------|---------|
+| `ReleasePrepTeam` | Coordinates parallel execution of release preparation agents | `quality_gates: dict[str, Any] \| None = None, redis_url: str \| None = None` | |
+| | `get_total_cost()` | | `float` |
+| | `assess_readiness(codebase_path: str = '.')` | | `ReleaseReadinessReport` |
 
-## Tags
+## Data model classes
 
-`release`, `publishing`, `quality`
+### ReleaseAgentResult
+
+| Field | Type | Default |
+|-------|------|---------|
+| `agent_id` | `str` | |
+| `agent_role` | `str` | |
+| `success` | `bool` | |
+| `tier_used` | `Tier` | |
+| `findings` | `dict[str, Any]` | `field(default_factory=dict)` |
+| `score` | `float` | `0.0` |
+| `confidence` | `float` | `0.0` |
+| `cost` | `float` | `0.0` |
+| `execution_time_ms` | `float` | `0.0` |
+| `escalated` | `bool` | `False` |
+
+### QualityGate
+
+| Field | Type | Default |
+|-------|------|---------|
+| `name` | `str` | |
+| `threshold` | `float` | |
+| `actual` | `float` | `0.0` |
+| `passed` | `bool` | `False` |
+| `critical` | `bool` | `True` |
+| `message` | `str` | `''` |
+
+### ReleaseReadinessReport
+
+| Field | Type | Default |
+|-------|------|---------|
+| `approved` | `bool` | |
+| `confidence` | `str` | |
+| `quality_gates` | `list[QualityGate]` | `field(default_factory=list)` |
+| `agent_results` | `list[ReleaseAgentResult]` | `field(default_factory=list)` |
+| `blockers` | `list[str]` | `field(default_factory=list)` |
+| `warnings` | `list[str]` | `field(default_factory=list)` |
+| `summary` | `str` | `''` |
+| `timestamp` | `str` | `field(default_factory=lambda: datetime.now().isoformat())` |
+| `total_duration` | `float` | `0.0` |
+| `total_cost` | `float` | `0.0` |
+
+### ReleaseReadinessReport methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `to_dict()` | `dict[str, Any]` | Converts report to dictionary format |
+| `format_console_output()` | `str` | Formats report for console display |
+
+## Constants
+
+| Name | Values |
+|------|--------|
+| `SUBAGENT_NAMES` | `health-checker`, `security-scanner`, `changelog-generator`, `release-assessor` |

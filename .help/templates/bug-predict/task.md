@@ -1,49 +1,75 @@
 ---
+type: task
 feature: bug-predict
 depth: task
-generated_at: 2026-04-13T16:55:12.298881+00:00
+generated_at: 2026-04-14T14:47:32.530164+00:00
 source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
 status: generated
 ---
 
 # Work with bug predict
 
-Use bug predict when you need to identify potential bug locations in your codebase through pattern detection and complexity analysis.
+Use bug predict when you need to identify potential bug hotspots in your codebase before they cause production issues.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/workflows/bug_predict.py
+- Python environment with the attune SDK installed
 
-## Steps
+## Run bug prediction analysis
 
-1. **Understand the current behavior.**
-   Read the entry points to see what bug predict
-   does today before making changes.
-   The primary functions are:
-   - `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py` — Formats bug prediction output as a human-readable report.
-   - `main()` in `src/attune/workflows/bug_predict_report.py` — Provides CLI entry point for the bug prediction workflow.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Execute the bug prediction workflow from the command line.**
+   ```bash
+   python -m attune.workflows.bug_predict_report /path/to/your/codebase
+   ```
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+2. **Review the generated report.**
+   The workflow produces a structured analysis with:
+   - Overall risk score (0-100)
+   - Predicted bugs organized by severity (HIGH, MEDIUM, LOW)
+   - File paths and line numbers for each identified pattern
+   - Actionable prevention strategies
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "bug-predict"`.
+3. **Verify the analysis completed successfully.**
+   Check that the report includes all three sections (Summary, Bugs, Suggestions) and contains specific file references with line numbers.
+
+## Customize bug prediction programmatically
+
+1. **Import the BugPredictionWorkflow class.**
+   ```python
+   from attune.workflows.bug_predict import BugPredictionWorkflow
+   ```
+
+2. **Initialize the workflow with your parameters.**
+   ```python
+   workflow = BugPredictionWorkflow(**your_config)
+   ```
+
+3. **Execute the analysis.**
+   ```python
+   result = workflow.execute(path="/path/to/codebase")
+   ```
+
+4. **Format the output for human consumption.**
+   ```python
+   from attune.workflows.bug_predict_report import format_bug_predict_report
+   formatted_report = format_bug_predict_report(result, input_data)
+   ```
+
+5. **Confirm the workflow returned valid results.**
+   Verify that `result` contains findings from all three subagents: pattern-scanner, risk-correlator, and prevention-advisor.
+
+## Test your changes
+
+Run the bug prediction test suite to verify your modifications:
+```bash
+pytest -k "test_bug_predict or test_scanner"
+```
+
+Your tests pass when all bug prediction patterns are correctly identified and the report format matches expected structure.
 
 ## Key files
 
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_*.py`
-
-## Common modifications
-
-Functions you are most likely to modify:
-
-- `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py`
-- `main()` in `src/attune/workflows/bug_predict_report.py`
+- `src/attune/workflows/bug_predict.py` — Core workflow implementation
+- `src/attune/workflows/bug_predict_report.py` — Report formatting and CLI entry point
+- Related pattern detection helpers in the same directory

@@ -1,7 +1,8 @@
 ---
+type: reference
 feature: doc-gen
 depth: reference
-generated_at: 2026-04-13T16:54:59.269438+00:00
+generated_at: 2026-04-14T14:45:36.201441+00:00
 source_hash: 67aadd029bbf773d9f478a4d4c750e25344dc6b0bd9e1edadbcf5151d83f3bff
 status: generated
 ---
@@ -10,26 +11,42 @@ status: generated
 
 ## Classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `APIReferenceMixin` | Extracts and generates API reference documentation from source code. | `src/attune/workflows/document_gen/api_reference.py` |
-| `ChunkedGenerationMixin` | Processes large documentation tasks in manageable chunks with progress tracking. | `src/attune/workflows/document_gen/chunked_generation.py` |
-| `DocGenCostMixin` | Tracks and manages API costs during documentation generation. | `src/attune/workflows/document_gen/cost_management.py` |
-| `OutlineStageMixin` | Creates structured outlines for documentation before content generation. | `src/attune/workflows/document_gen/outline_stage.py` |
-| `PolishStageMixin` | Reviews and refines generated documentation for final output. | `src/attune/workflows/document_gen/polish_stage.py` |
-| `DocumentGenerationWorkflow` | Orchestrates the complete documentation generation process from source code to finished docs. | `src/attune/workflows/document_gen/workflow.py` |
-| `WriteStageMixin` | Generates documentation content based on source code analysis and outlines. | `src/attune/workflows/document_gen/write_stage.py` |
+| Class | Description |
+|-------|-------------|
+| `DocumentGenerationWorkflow` | Generate new documentation from source code (creation) |
+| `APIReferenceMixin` | Mixin providing API reference extraction and generation for doc generation |
+| `ChunkedGenerationMixin` | Mixin providing chunked generation and display utilities for doc generation |
+| `DocGenCostMixin` | Mixin providing cost management for document generation |
+| `OutlineStageMixin` | Mixin providing the outline generation stage |
+| `PolishStageMixin` | Mixin providing the polish (final review) stage |
+| `WriteStageMixin` | Mixin providing the write (content generation) stage |
+
+### DocumentGenerationWorkflow methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `default_context` | `xml_config: dict \| None = None` | `WorkflowContext` | Create default workflow context |
+| `execute` | `**kwargs: Any` | `WorkflowResult` | Execute the documentation generation workflow |
 
 ## Functions
 
-| Function | Description | File |
-|----------|-------------|------|
-| `format_doc_gen_report()` | Formats documentation generation results into readable progress and summary reports. | `src/attune/workflows/document_gen/report_formatter.py` |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `format_doc_gen_report` | `result: dict, input_data: dict` | `str` | Format document generation output as a human-readable report |
 
-## Source files
+## Constants
 
-- `src/attune/workflows/document_gen/**`
+| Constant | Value |
+|----------|-------|
+| `DOC_GEN_STEPS` | Workflow step definitions |
+| `TOKEN_COSTS` | Cost tracking configuration |
 
-## Tags
+## Subagents
 
-`docs`, `documentation`, `generation`
+The workflow uses three specialized subagents:
+
+| Subagent | Purpose |
+|----------|---------|
+| `outline-planner` | Structure documentation and plan content organization |
+| `content-writer` | Generate comprehensive documentation content |
+| `polish-reviewer` | Review and refine final documentation output |

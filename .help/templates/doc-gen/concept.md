@@ -1,43 +1,40 @@
 ---
+type: concept
 feature: doc-gen
 depth: concept
-generated_at: 2026-04-13T16:54:43.133218+00:00
+generated_at: 2026-04-14T14:45:17.483499+00:00
 source_hash: 67aadd029bbf773d9f478a4d4c750e25344dc6b0bd9e1edadbcf5151d83f3bff
 status: generated
 ---
 
 # Doc Gen
 
-## How it works
+Doc-gen is an automated documentation generation system that transforms source code into comprehensive markdown documentation using a three-stage AI workflow.
 
-Generate documentation from source code through a three-stage workflow that extracts API references, creates content outlines, writes documentation, and polishes the final output.
+## Architecture
 
-The main building blocks are:
+The system orchestrates three specialized subagents — outline-planner, content-writer, and polish-reviewer — through the `DocumentGenerationWorkflow` class. Each subagent focuses on a specific aspect of documentation creation:
 
-- **`DocumentGenerationWorkflow`** — Creates new documentation from source code with automated extraction and generation.
-- **`APIReferenceMixin`** — Extracts API references and generates documentation for classes, functions, and modules.
-- **`OutlineStageMixin`** — Creates structured outlines for documentation content.
-- **`WriteStageMixin`** — Generates the actual documentation content from outlines.
-- **`PolishStageMixin`** — Reviews and refines the generated documentation for quality and consistency.
+- **Outline-planner** structures the documentation hierarchy and identifies key modules and APIs
+- **Content-writer** generates detailed content with code examples and API references
+- **Polish-reviewer** performs final review and quality improvements
 
-Under the hood, this feature spans 10 source
-files covering:
+The workflow synthesizes outputs from all three subagents into a single structured document with Summary, Outline, Documentation, and Suggestions sections.
 
-- Document Generation API Reference Extraction.
-- Document Generation Chunked Operations.
-- Document Generation Configuration.
+## Stage-specific capabilities
 
-## What connects to it
+The system implements each documentation stage through dedicated mixins:
 
-This feature relates to: docs, documentation, generation.
+- **`OutlineStageMixin`** — Plans documentation structure and identifies content sections
+- **`WriteStageMixin`** — Generates detailed content with code examples and API documentation
+- **`PolishStageMixin`** — Reviews and refines the final documentation for clarity and completeness
 
-Other parts of the codebase interact with
-doc gen through these interfaces:
+Supporting mixins handle cross-cutting concerns:
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `APIReferenceMixin` | Extracts API references and generates documentation for classes, functions, and modules. | `src/attune/workflows/document_gen/api_reference.py` |
-| `ChunkedGenerationMixin` | Splits large documentation tasks into manageable chunks with progress tracking. | `src/attune/workflows/document_gen/chunked_generation.py` |
-| `DocGenCostMixin` | Tracks and manages costs associated with AI-powered documentation generation. | `src/attune/workflows/document_gen/cost_management.py` |
-| `OutlineStageMixin` | Creates structured outlines for documentation content. | `src/attune/workflows/document_gen/outline_stage.py` |
-| `PolishStageMixin` | Reviews and refines generated documentation for quality and consistency. | `src/attune/workflows/document_gen/polish_stage.py` |
+- **`APIReferenceMixin`** — Extracts and formats API documentation from source code
+- **`ChunkedGenerationMixin`** — Processes large codebases in manageable chunks to avoid token limits
+- **`DocGenCostMixin`** — Tracks and manages API costs during generation
+
+## Output format
+
+Generated documentation follows a standardized structure that you can customize through the workflow configuration. The `format_doc_gen_report` function transforms raw generation results into human-readable reports, making it easy to review what was generated and identify any issues.

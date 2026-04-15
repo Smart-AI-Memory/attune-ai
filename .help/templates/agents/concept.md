@@ -1,43 +1,41 @@
 ---
+type: concept
 feature: agents
 depth: concept
-generated_at: 2026-04-13T16:58:56.239585+00:00
+generated_at: 2026-04-14T15:07:39.750580+00:00
 source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
 status: generated
 ---
 
 # Agents
 
-## How it works
+The agents system orchestrates AI-powered release preparation by running specialized agents that assess code quality, test coverage, and documentation completeness before determining if your codebase is ready for release.
 
-AI agents that automate release preparation tasks with progressive cost escalation and multi-framework integration.
+## Architecture
 
-The main building blocks are:
+The system centers around the `ReleasePrepTeam`, which coordinates parallel execution of specialized agents. Each agent inherits from `ReleaseAgent` and implements progressive tier escalation — starting with cheaper AI models and escalating to more capable (and expensive) models when initial attempts fail.
 
-- **`ReleaseAgent`** — Escalates from cheap to premium models based on task complexity.
-- **`TestCoverageAgent`** — Analyzes pytest coverage reports to assess code quality.
-- **`DocumentationAgent`** — Validates docstring coverage, README freshness, and CHANGELOG completeness.
-- **`CodeQualityAgent`** — Evaluates code quality using ruff linting, type hints, and complexity metrics.
-- **`Tier`** — Defines cost and capability tiers for model escalation strategies.
+**Core agent types:**
+- **`TestCoverageAgent`** — Executes `pytest --cov` and analyzes coverage reports to ensure adequate test coverage
+- **`DocumentationAgent`** — Validates docstring coverage, README currency, and CHANGELOG presence
+- **`CodeQualityAgent`** — Runs `ruff` linting and examines type hints and code complexity metrics
 
-Under the hood, this feature spans 29 source
-files covering:
+**Tier escalation system:**
+- **`CHEAP`** — Fast, cost-effective models for initial assessment
+- **`CAPABLE`** — Mid-tier models when cheap models struggle
+- **`PREMIUM`** — Advanced models for complex analysis requiring high accuracy
 
-- Release Preparation Agent Team coordination and parallel execution.
-- Progressive tier escalation from cheap to premium AI models.
-- Integration adapters for LangChain, LangGraph, AutoGen, and Haystack frameworks.
+## Release readiness assessment
 
-## What connects to it
+The `ReleasePrepTeam.assess_readiness()` method runs all agents in parallel and aggregates results into a `ReleaseReadinessReport`. This report includes:
 
-This feature relates to: agents, ai, release.
+- **Quality gates** — Pass/fail thresholds for coverage percentages, documentation completeness, and code quality scores
+- **Agent results** — Individual findings from each specialized agent, including confidence scores and execution costs
+- **Release approval** — Binary decision on whether the codebase meets release standards
+- **Blockers and warnings** — Specific issues that prevent release or require attention
 
-Other parts of the codebase interact with
-agents through these interfaces:
+## Framework integrations
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `ReleaseAgent` | Escalates from cheap to premium models based on task complexity. | `src/attune/agents/release/base_agent.py` |
-| `TestCoverageAgent` | Analyzes pytest coverage reports to assess code quality. | `src/attune/agents/release/coverage_agent.py` |
-| `DocumentationAgent` | Validates docstring coverage, README freshness, and CHANGELOG completeness. | `src/attune/agents/release/documentation_agent.py` |
-| `CodeQualityAgent` | Evaluates code quality using ruff linting, type hints, and complexity metrics. | `src/attune/agents/release/quality_agent.py` |
-| `Tier` | Defines cost and capability tiers for model escalation strategies. | `src/attune/agents/release/release_models.py` |
+The system provides adapters for popular AI agent frameworks through lazy-loaded functions like `get_langchain_adapter()`, `get_autogen_adapter()`, and `get_haystack_adapter()`. You can also wrap existing wizards as agents using `wrap_wizard()`.
+
+State persistence ensures agent operations can recover from failures, while decorators like `@safe_agent_operation` and `@retry_on_failure` provide robust error handling and automatic retry logic with exponential backoff.
