@@ -1587,4 +1587,57 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   no-op after `git pull` — it's a real drift fix. Always
   `uv lock --check` after pulling, and bundle uv.lock fixes with
   the next reasonable PR rather than treating them as noise.
+
+- **`uv sync` wipes packages installed via `pip install`**:
+  Running `.venv/bin/python -m pip install pip-audit` into the
+  venv looks successful, but a subsequent `uv sync --extra dev
+  --extra developer` removes it because `uv sync` enforces the
+  lockfile. The symptom is a confusing `No module named
+  pip_audit` right after a successful install. Fix: use
+  `uv run --with pip-audit pip-audit --strict` for ephemeral
+  audit tools, or add the tool to a dev extra in
+  `pyproject.toml` so the lockfile keeps it.
+
+- **Anchor-tag buttons need `!text-white no-underline`**: The
+  existing lesson about `text-white` being overridden on
+  `gradient-primary` sections also applies to plain `<a>`
+  elements styled as primary buttons (e.g., hero CTAs with
+  `bg-[var(--primary)]`). Global styles set the link color to
+  the primary blue and add an underline, producing invisible
+  blue-on-blue text. Use `!text-white no-underline` on
+  anchor-styled buttons, even outside gradient sections.
+
+- **"SDK adapter swallows subagent findings" lesson was
+  wrong — adapter is fine, budget cap cuts the stream
+  early**: Verified with a 157-message trace of
+  `security-audit` (max_turns=30).
+  `collect_agent_output()` at
+  `src/attune/workflows/agent_sdk_adapter.py:48-91` already
+  captures all `AssistantMessage` TextBlocks (including from
+  subagents — those carry `parent_tool_use_id=<task-id>`,
+  no filter needed). The real issue: with 4-5 Opus subagents
+  spawned in parallel, the stream ends with
+  `ResultMessage(result=None, num_turns=2, is_error=False)`
+  — looks clean but is actually silent early termination at
+  the `max_budget_usd` cap (was $2.00 for "standard"
+  depth; bumped to $10.00 in the fix). Subagents were still
+  exploring (emitting
+  `ToolUseBlock`, not terminal `TextBlock`) when the stream
+  was cut, so the orchestrator never received their
+  findings to synthesize. Fix is in workflow config
+  (budgets), not the adapter: raise `max_budget_usd` for
+  multi-subagent workflows, or set
+  `ATTUNE_MAX_BUDGET_USD=0` to disable caps, or
+  restructure to run fewer/cheaper subagents.
+
+- **Squash-merge deletes the remote branch; subsequent push
+  silently recreates it with no PR attached**: After a squash
+  merge, GitHub deletes the feature branch. If you push more
+  commits to the same branch name later, `git push` succeeds
+  with `* [new branch]` output — GitHub recreates the branch
+  but there's no PR attached. Commits are orphaned on a branch
+  no one watches. Always check `gh pr view <n> --json state`
+  before adding more commits to a branch — if state is
+  `MERGED`, rebase onto `origin/main` and open a new PR
+  instead of pushing to the stale branch.
 <!-- attune-lessons-end -->
