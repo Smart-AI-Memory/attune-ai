@@ -675,3 +675,4 @@ exclude_lines = [
 # attune-help is now a PyPI dependency (no source override needed).
 [tool.uv.sources]
 attune-author = { path = "../attune-author", editable = true }
+attune-rag = { path = "../attune-rag", editable = true }
