@@ -539,7 +539,7 @@ requires-dist = [
     { name = "redis", marker = "extra == 'memory'", specifier = ">=5.0.0,<8.0.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.0,<8.0.0" },
     { name = "requests", marker = "extra == 'dev'", specifier = ">=2.28.0,<3.0.0" },
-    { name = "rich", specifier = ">=13.0.0,<15.0.0" },
+    { name = "rich", specifier = ">=13.0.0,<16.0.0" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.1,<1.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1,<1.0" },
     { name = "starlette", marker = "extra == 'all'", specifier = ">=0.40.0,<2.0.0" },
