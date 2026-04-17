@@ -68,7 +68,9 @@ dependencies = [
     "pyyaml>=6.0,<7.0",  # Required by workflows (bug_predict, etc.)
     "anthropic>=0.40.0,<1.0.0",  # Core LLM provider (direct SDK usage)
     "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
-    "python-multipart>=0.0.22",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg (transitive via mcp)
+    "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
+    "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
+    "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
@@ -102,8 +104,8 @@ memdocs = [
 # LangChain ecosystem for agents/workflows
 agents = [
     "langchain>=1.0.0,<2.0.0",
-    "langchain-core>=1.2.5,<2.0.0",  # 1.2.5+ has security fixes
-    "langchain-text-splitters>=0.3.9,<1.2.0",
+    "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
+    "langchain-text-splitters>=1.1.2,<1.2.0",  # GHSA-fv5p-p927-qmxr fix
     "langgraph>=1.0.0,<2.0.0",  # 1.0+ required for langgraph-checkpoint 3.0 (RCE fix)
     "langgraph-checkpoint>=3.0.0,<5.0.0",  # Security: GHSA-wwqv-p2pp-99h5 (RCE fix)
     "marshmallow>=4.1.2,<5.0.0",  # Security: GHSA-428g-f7cq-pgp5
@@ -168,7 +170,7 @@ docs = [
 
 # Development dependencies
 dev = [
-    "pytest>=7.0,<10.0",  # Updated upper bound for pytest 9.x
+    "pytest>=9.0.3,<10.0",  # CVE-2025-71176 fix
     "pytest-asyncio>=0.21,<2.0",  # Updated for pytest-asyncio 1.x
     "pytest-cov>=4.0,<8.0",  # Updated upper bound
     "pytest-mock>=3.14.0,<4.0",  # Mock fixtures for testing
@@ -196,8 +198,8 @@ developer = [
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
     "langchain>=1.0.0,<2.0.0",
-    "langchain-core>=1.2.5,<2.0.0",  # 1.2.5+ has security fixes
-    "langchain-text-splitters>=0.3.9,<1.2.0",
+    "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
+    "langchain-text-splitters>=1.1.2,<1.2.0",  # GHSA-fv5p-p927-qmxr fix
     "langgraph>=1.0.0,<2.0.0",  # 1.0+ required for langgraph-checkpoint 3.0 (RCE fix)
     "langgraph-checkpoint>=3.0.0,<5.0.0",  # Security: GHSA-wwqv-p2pp-99h5 (RCE fix)
     "marshmallow>=4.1.2,<5.0.0",  # Security: GHSA-428g-f7cq-pgp5
@@ -214,8 +216,8 @@ enterprise = [
     "anthropic>=0.40.0",
     "memdocs>=1.0.0",
     "langchain>=1.0.0,<2.0.0",
-    "langchain-core>=1.2.5,<2.0.0",
-    "langchain-text-splitters>=0.3.9,<1.2.0",
+    "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
+    "langchain-text-splitters>=1.1.2,<1.2.0",  # GHSA-fv5p-p927-qmxr fix
     "langgraph>=1.0.0,<2.0.0",
     "langgraph-checkpoint>=3.0.0,<5.0.0",
     "marshmallow>=4.1.2,<5.0.0",
@@ -241,8 +243,8 @@ full = [
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
     "langchain>=1.0.0,<2.0.0",
-    "langchain-core>=1.2.5,<2.0.0",  # 1.2.5+ has security fixes
-    "langchain-text-splitters>=0.3.9,<1.2.0",
+    "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
+    "langchain-text-splitters>=1.1.2,<1.2.0",  # GHSA-fv5p-p927-qmxr fix
     "langgraph>=1.0.0,<2.0.0",  # 1.0+ required for langgraph-checkpoint 3.0 (RCE fix)
     "langgraph-checkpoint>=3.0.0,<5.0.0",  # Security: GHSA-wwqv-p2pp-99h5 (RCE fix)
     "marshmallow>=4.1.2,<5.0.0",  # Security: GHSA-428g-f7cq-pgp5
@@ -259,8 +261,8 @@ all = [
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
     "langchain>=1.0.0,<2.0.0",
-    "langchain-core>=1.2.5,<2.0.0",  # 1.2.5+ has security fixes
-    "langchain-text-splitters>=0.3.9,<1.2.0",
+    "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
+    "langchain-text-splitters>=1.1.2,<1.2.0",  # GHSA-fv5p-p927-qmxr fix
     "langgraph>=1.0.0,<2.0.0",  # 1.0+ required for langgraph-checkpoint 3.0 (RCE fix)
     "langgraph-checkpoint>=3.0.0,<5.0.0",  # Security: GHSA-wwqv-p2pp-99h5 (RCE fix)
     "marshmallow>=4.1.2,<5.0.0",  # Security: GHSA-428g-f7cq-pgp5
@@ -289,7 +291,7 @@ all = [
     "mkdocs-with-pdf>=0.9.3,<1.0.0",
     "pymdown-extensions>=10.0,<11.0",
     # Dev tools
-    "pytest>=7.0,<10.0",
+    "pytest>=9.0.3,<10.0",  # CVE-2025-71176 fix
     "pytest-asyncio>=0.21,<2.0",
     "pytest-cov>=4.0,<8.0",
     "black>=24.3.0,<27.0",  # CVE fix
