@@ -455,25 +455,25 @@ class TestAgentSDKResultAdapterCostExtraction:
 class TestGetMaxBudgetUsd:
     """Test budget helper for workflow depth caps."""
 
-    def test_quick_depth_returns_half_dollar(self) -> None:
-        """Given 'quick' depth, returns 0.50."""
-        assert get_max_budget_usd("quick") == 0.50
+    def test_quick_depth_returns_two_dollars(self) -> None:
+        """Given 'quick' depth, returns 2.00."""
+        assert get_max_budget_usd("quick") == 2.00
 
-    def test_standard_depth_returns_two_dollars(self) -> None:
-        """Given 'standard' depth, returns 2.00."""
-        assert get_max_budget_usd("standard") == 2.00
+    def test_standard_depth_returns_ten_dollars(self) -> None:
+        """Given 'standard' depth, returns 10.00."""
+        assert get_max_budget_usd("standard") == 10.00
 
-    def test_deep_depth_returns_five_dollars(self) -> None:
-        """Given 'deep' depth, returns 5.00."""
-        assert get_max_budget_usd("deep") == 5.00
+    def test_deep_depth_returns_twentyfive_dollars(self) -> None:
+        """Given 'deep' depth, returns 25.00."""
+        assert get_max_budget_usd("deep") == 25.00
 
     def test_unknown_depth_falls_back_to_standard(self) -> None:
-        """Given unknown depth, returns 2.00 (standard default)."""
-        assert get_max_budget_usd("unknown") == 2.00
+        """Given unknown depth, returns 10.00 (standard default)."""
+        assert get_max_budget_usd("unknown") == 10.00
 
     def test_default_depth_is_standard(self) -> None:
-        """Given no argument, defaults to 'standard' (2.00)."""
-        assert get_max_budget_usd() == 2.00
+        """Given no argument, defaults to 'standard' (10.00)."""
+        assert get_max_budget_usd() == 10.00
 
     def test_env_var_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Given ATTUNE_MAX_BUDGET_USD env var, overrides depth default."""

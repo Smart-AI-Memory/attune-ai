@@ -122,11 +122,22 @@ def build_result_text(
     return "No results returned."
 
 
-# Budget defaults by depth level
+# Budget defaults by depth level.
+#
+# These caps target multi-subagent workflows like security-audit
+# and code-review, which spawn 4-5 parallel Opus subagents that
+# each make 15-25 tool calls before synthesis. A trace of
+# security-audit with the prior $2 "standard" cap showed the SDK
+# cutting the stream mid-exploration after ~100s with
+# ``ResultMessage(result=None, is_error=False)`` — silent early
+# termination before any subagent produced final findings.
+#
+# Set ``ATTUNE_MAX_BUDGET_USD=0`` to disable caps entirely, or
+# any positive float to override the depth default.
 _DEFAULT_BUDGET_USD: dict[str, float] = {
-    "quick": 0.50,
-    "standard": 2.00,
-    "deep": 5.00,
+    "quick": 2.00,
+    "standard": 10.00,
+    "deep": 25.00,
 }
 
 
@@ -144,12 +155,18 @@ def get_max_budget_usd(depth: str = "standard") -> float | None:
 
     Returns:
         Budget cap in USD, or None if caps are disabled.
+
+    Notes:
+        For pre-release audits where the default caps feel too
+        restrictive, export ``ATTUNE_MAX_BUDGET_USD=0`` to let
+        multi-subagent workflows run to completion. Subscription
+        users pay no per-request cost for these runs.
     """
     override = os.environ.get("ATTUNE_MAX_BUDGET_USD")
     if override is not None:
         val = float(override)
         return val if val > 0 else None
-    return _DEFAULT_BUDGET_USD.get(depth, 2.00)
+    return _DEFAULT_BUDGET_USD.get(depth, 10.00)
 
 
 # Role-keyword to model mapping for subagents
