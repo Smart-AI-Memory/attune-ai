@@ -231,6 +231,30 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
                 "required": ["image_path"],
             },
         },
+        "rag_knowledge_query": {
+            "description": (
+                "Query the RAG knowledge corpus (attune-help by default) for "
+                "a given question. Returns ranked hits plus an augmented "
+                "prompt string ready to feed to any LLM. Does NOT call an "
+                "LLM itself — use the rag-code-gen workflow for end-to-end "
+                "generation."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The question or request to ground against the corpus",
+                    },
+                    "k": {
+                        "type": "integer",
+                        "description": "Max hits to return (1-10)",
+                        "default": 3,
+                    },
+                },
+                "required": ["query"],
+            },
+        },
     }
 
 

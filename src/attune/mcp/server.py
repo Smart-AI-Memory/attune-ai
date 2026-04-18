@@ -265,6 +265,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "research_synthesis": self._run_research_synthesis,
             "analyze_batch": self._run_analyze_batch,
             "analyze_image": self._run_analyze_image,
+            "rag_knowledge_query": self._run_rag_knowledge_query,
             "auth_status": lambda _args: self._get_auth_status(),
             "auth_recommend": self._get_auth_recommend,
             "telemetry_stats": self._get_telemetry_stats,
