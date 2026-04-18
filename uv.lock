@@ -241,6 +241,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "attune-help" },
+    { name = "attune-rag" },
     { name = "claude-agent-sdk" },
     { name = "cryptography" },
     { name = "defusedxml" },
@@ -425,6 +426,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-help", specifier = ">=0.5.1,<0.6" },
+    { name = "attune-rag", editable = "../attune-rag" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -567,6 +569,43 @@ sdist = { url = "https://files.pythonhosted.org/packages/6f/47/4272b7839ebaf132c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/80/4b0dd224b2134577f051f3054c02b62054f034b9e0ef3874a145d8ad4371/attune_help-0.5.1-py3-none-any.whl", hash = "sha256:c6e74415223127860ea3c397a89abf21e31c572f5c87e387c23c9a916683f924", size = 694668, upload-time = "2026-04-12T13:36:54.75Z" },
 ]
+
+[[package]]
+name = "attune-rag"
+version = "0.1.0"
+source = { editable = "../attune-rag" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "pyyaml" },
+    { name = "structlog" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0,<1.0" },
+    { name = "anthropic", marker = "extra == 'claude'", specifier = ">=0.40.0,<1.0" },
+    { name = "anthropic", marker = "extra == 'dev'", specifier = ">=0.40.0,<1.0" },
+    { name = "attune-help", marker = "extra == 'all'", specifier = ">=0.5.1,<0.6" },
+    { name = "attune-help", marker = "extra == 'attune-help'", specifier = ">=0.5.1,<0.6" },
+    { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.5.1,<0.6" },
+    { name = "black", marker = "extra == 'dev'", specifier = ">=24.0" },
+    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "google-genai", marker = "extra == 'all'", specifier = ">=1.0,<2.0" },
+    { name = "google-genai", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
+    { name = "google-genai", marker = "extra == 'gemini'", specifier = ">=1.0,<2.0" },
+    { name = "jinja2", specifier = ">=3.1.0" },
+    { name = "openai", marker = "extra == 'all'", specifier = ">=1.40.0,<2.0" },
+    { name = "openai", marker = "extra == 'dev'", specifier = ">=1.40.0,<2.0" },
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.40.0,<2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
+    { name = "structlog", specifier = ">=24.0" },
+    { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0" },
+]
+provides-extras = ["attune-help", "claude", "openai", "gemini", "all", "dev"]
 
 [[package]]
 name = "babel"

@@ -73,6 +73,7 @@ dependencies = [
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
+    "attune-rag>=0.1.0,<0.2",  # LLM-agnostic RAG pipeline. Powers rag-code-gen workflow + rag_knowledge_query MCP tool. Upper cap: pre-1.0 minor bumps may break.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
