@@ -1897,4 +1897,55 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   tests that don't need the optional dep (use
   `sys.modules[name] = None` sentinel to exercise the
   "missing extra" branches).
+
+- **Adding a plugin skill has THREE enforcement gates,
+  not one**: Besides creating `plugin/skills/<name>/SKILL.md`,
+  you must also (1) bump the hardcoded count in
+  `tests/unit/plugins/test_plugin_config_validation.py::
+  TestPluginStructure::test_skill_count`, (2) add a row
+  to the "Skills Reference" table in
+  `plugin/skills/attune-hub/SKILL.md` (enforced by
+  `tests/unit/plugins/test_plugin_reference_validation.py::
+  TestCoverage::test_all_skill_dirs_referenced_by_attune_hub`),
+  and (3) run `python scripts/sync_agents_skills.py` to
+  regenerate the `.agents/skills/` mirror (enforced by
+  `test_skill_body_content_matches`). Missing any one
+  fails CI. Keep this sequence in mind as a single
+  "add a skill" checklist, not as separate surprises.
+
+- **After a PR merges while you're AFK, pull main before
+  tagging**: When a background wakeup fires and finds a
+  PR merged, the local checkout of `main` is still behind
+  `origin/main`. If you tag without syncing first, you
+  tag the old commit (before the squash), which means
+  the tag won't anchor to the release content. Always
+  `git fetch origin && git checkout main && git pull
+  --ff-only origin main` before `git tag -a -s v<X>`. Then
+  `git tag --verify v<X>` and confirm the `object <sha>`
+  matches `gh pr view <N> --json mergeCommit --jq .mergeCommit.oid`.
+  This pairs with the existing "Tags pushed before squash-
+  merge point to the wrong commit" lesson — same class
+  of bug, opposite direction in time.
+
+- **PyPI env policies may whitelist branches only — tag-
+  triggered publishes get rejected**: `pypi` environment
+  deployment branch policies on attune-ai allowed `main`
+  and `release/*` branches but not any tag pattern. A
+  `publish-pypi.yml` run fired by
+  `release: types: [published]` executes against the tag
+  ref (`refs/tags/v6.1.0`), which the env rejected with
+  "Tag <X> is not allowed to deploy due to environment
+  protection rules." Previous releases never hit this
+  because they all ran via `workflow_dispatch --ref main`.
+  Fix (fastest): re-trigger via
+  `gh workflow run publish-pypi.yml --ref main` — the
+  build pulls the latest main which already has the
+  version bump merged in. Alternative fix (if you prefer
+  tag-triggered publishes): add `v*` to the env's
+  `deployment-branch-policies` via
+  `gh api repos/<owner>/<repo>/environments/pypi/deployment-branch-policies -F name=v* -F type=tag`.
+  attune-rag and attune-author don't have this issue
+  because I set up their `pypi` envs with no
+  branch/tag restriction when creating them for the RAG
+  release.
 <!-- attune-lessons-end -->
