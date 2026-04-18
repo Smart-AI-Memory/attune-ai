@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-17
 **Decision gate:** Task 2.5 of the RAG grounding spec v4.0
-([.claude/plans/feature-rag-code-grounding-2026-04-17.md](../../.claude/plans/feature-rag-code-grounding-2026-04-17.md)).
+([.claude/plans/feature-rag-code-grounding-2026-04-17.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md)).
 **Decision owner:** Patrick Roebuck.
 **Gate criteria (from spec):** Adopt embeddings only if
 delta precision@1 >= 15 pts AND install cost <50MB AND no
@@ -235,7 +235,7 @@ move the gate.
 
 ## Links
 
-- Spec: [feature-rag-code-grounding-2026-04-17.md](../../.claude/plans/feature-rag-code-grounding-2026-04-17.md)
+- Spec: [feature-rag-code-grounding-2026-04-17.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md)
 - Benchmark harness: [attune-rag / src/attune_rag/benchmark.py](https://github.com/Smart-AI-Memory/attune-rag/blob/main/src/attune_rag/benchmark.py)
 - Golden queries: [attune-rag / tests/golden/queries.yaml](https://github.com/Smart-AI-Memory/attune-rag/blob/main/tests/golden/queries.yaml)
 - `fastembed` project: https://github.com/qdrant/fastembed

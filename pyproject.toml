@@ -689,4 +689,9 @@ exclude_lines = [
 # attune-help is now a PyPI dependency (no source override needed).
 [tool.uv.sources]
 attune-author = { path = "../attune-author", editable = true }
-attune-rag = { path = "../attune-rag", editable = true }
+# attune-rag source override intentionally omitted until
+# PyPI publish. uv sync in CI can't resolve a missing
+# sibling path; local devs who want [rag] should run:
+#   pip install -e ../attune-rag/
+# after cloning the sibling repo and before running the
+# rag-tagged tests locally.
