@@ -1122,22 +1122,34 @@ attune-rag/
   </objective>
 
   <files-to-create>
-    <file path="docs/rag/embeddings-decision-2026-04-XX.md">
-      Written only after task 2.4 runs. Contains:
-        - Baseline keyword metrics (from 2.4 output)
-        - Link to prior "sentence-transformers removed" lesson
-        - Proposed embedding strategy (if any)
-        - Hard gate: adopt only if delta precision@1 >= 15pts
-          AND install cost <50MB AND no new network
-          dependency at import time
-        - Go / no-go decision with reasoning
+    <file path="docs/rag/embeddings-decision-2026-04-17.md">
+      Written 2026-04-17. RESOLVED.
+
+      Baseline: KeywordRetriever hits 53.33% P@1 / 60% R@3
+      on 15 golden queries. Easy+medium pass; all 6 hard
+      queries fail with the same pattern — lesson/error files
+      with query keywords in the filename outrank the concept
+      files that actually answer.
+
+      Decision: sequence keyword tuning first (v0.1.x patch),
+      then fastembed (local ONNX embeddings, ~35MB) as
+      fallback in v0.2.0 if the gate isn't met. NOT
+      sentence-transformers (420MB, fails <50MB gate). NOT
+      hosted embeddings for v0.2.0 (keeps architectural posture
+      of local-corpus / local-retrieval).
+
+      Clarifies that the "sentence-transformers removed" lesson
+      was about semantic CACHING (0.4% ROI on unique prompts),
+      not RAG RETRIEVAL. Different problems, different ROI
+      profiles. Keyword tuning and fastembed are both
+      defensible in light of the clarified lesson.
     </file>
   </files-to-create>
 
   <validation>
-    <check>Decision doc exists and is linked from this plan</check>
-    <check>If adopted, CI benchmark shows improvement above gate</check>
-    <check>If adopted, install cost measured and reported</check>
+    <check>Decision doc exists and is linked from this plan (RESOLVED 2026-04-17)</check>
+    <check>Follow-up task filed: v0.1.x category-biased keyword tuning</check>
+    <check>Follow-up task filed: v0.2.0 fastembed EmbeddingRetriever (conditional)</check>
   </validation>
 
   <risks>
