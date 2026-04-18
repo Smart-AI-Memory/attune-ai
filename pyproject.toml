@@ -73,7 +73,11 @@ dependencies = [
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
-    "attune-rag>=0.1.0,<0.2",  # LLM-agnostic RAG pipeline. Powers rag-code-gen workflow + rag_knowledge_query MCP tool. Upper cap: pre-1.0 minor bumps may break.
+    # NOTE: attune-rag is an OPTIONAL extra, not a core dep.
+    #  Install with `pip install 'attune-ai[rag]'` to enable
+    #  the rag-code-gen workflow and rag_knowledge_query MCP
+    #  tool. Workflows/handlers lazy-import and return a
+    #  structured error when the extra is absent.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
@@ -82,6 +86,15 @@ dependencies = [
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
+# RAG-grounded code generation (rag-code-gen workflow +
+# rag_knowledge_query MCP tool). Optional so users who
+# don't want grounding avoid the dep. Once attune-rag is
+# on PyPI, no further work needed — this extra resolves
+# from PyPI.
+rag = [
+    "attune-rag>=0.1.0,<0.2",
+]
+
 # Memory subsystem (requires Redis server 8.4+ recommended)
 memory = [
     "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support

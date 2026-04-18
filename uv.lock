@@ -241,7 +241,6 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "attune-help" },
-    { name = "attune-rag" },
     { name = "claude-agent-sdk" },
     { name = "cryptography" },
     { name = "defusedxml" },
@@ -406,6 +405,9 @@ otel = [
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-sdk" },
 ]
+rag = [
+    { name = "attune-rag" },
+]
 redis = [
     { name = "agent-memory-client" },
     { name = "redis" },
@@ -426,7 +428,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-help", specifier = ">=0.5.1,<0.6" },
-    { name = "attune-rag", editable = "../attune-rag" },
+    { name = "attune-rag", marker = "extra == 'rag'", editable = "../attune-rag" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -556,7 +558,7 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'backend'", specifier = ">=0.20.0,<1.0.0" },
     { name = "uvicorn", marker = "extra == 'enterprise'", specifier = ">=0.20.0,<1.0.0" },
 ]
-provides-extras = ["memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
+provides-extras = ["rag", "memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
 
 [[package]]
 name = "attune-help"

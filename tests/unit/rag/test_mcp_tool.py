@@ -1,13 +1,23 @@
-"""Unit tests for the rag_knowledge_query MCP tool."""
+"""Unit tests for the rag_knowledge_query MCP tool.
+
+Skipped when the [rag] extra is not installed (attune-rag
+is an optional dep of attune-ai; see pyproject.toml). The
+MCP tool itself is always registered in the schema and
+returns a structured "install [rag] extra" error when
+called without attune-rag available — the dispatcher side
+of that contract is unit-tested separately.
+"""
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Iterable
-
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+pytest.importorskip("attune_rag")
+
+import asyncio  # noqa: E402
+from collections.abc import Iterable  # noqa: E402
+
+from attune.mcp.server import EmpathyMCPServer  # noqa: E402
 
 
 def _make_fake_corpus():

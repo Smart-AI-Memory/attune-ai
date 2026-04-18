@@ -1705,4 +1705,117 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   <path> --remote origin --push`. Saves 4 separate steps
   (repo create → remote add → set-upstream → push) when
   spinning up a new workspace-sibling package.
+
+- **MetaPathFinder `find_module`/`load_module` is dead in
+  Python 3.12+ — use `sys.modules[name] = None` sentinel
+  instead**: The existing "Verify optional dep boundaries
+  with a MetaPathFinder" lesson is partially wrong. The
+  deprecated `find_module` / `load_module` hooks stopped
+  firing in 3.12's import machinery (which migrated to
+  `find_spec`/`create_module`/`exec_module` fully). Tests
+  using the old Blocker pattern fall through to the real
+  SDK silently on 3.12+ CI matrix lanes. Cross-version
+  replacement: `sys.modules[name] = None` — Python's
+  import machinery treats the sentinel as "module is
+  unavailable" and raises `ImportError` on the next
+  `import name`. Works unchanged on 3.10-3.13. Remember
+  to snapshot+restore the original `sys.modules` entries
+  for the module and its dotted children.
+
+- **Apply lessons by problem, not by keyword**: The
+  `sentence-transformers removed — 0.4% savings, 420MB`
+  lesson is about **semantic caching** (match similar
+  queries to cached responses). It does NOT generalize to
+  **RAG retrieval** (match queries to documents). The
+  ROI profiles differ — attune workflow prompts are
+  mostly unique (file paths, code snippets) so caching
+  misses; retrieval ROI depends on how often semantic
+  similarity beats keyword overlap, which is much
+  higher. The install-size half of the lesson (420MB) IS
+  transferable and correctly rules out
+  `sentence-transformers` for any use case with a <50MB
+  gate. When citing prior lessons, check whether you're
+  invoking the mechanism or the specific problem.
+
+- **`fastembed` is the local-embeddings path that passes
+  a <50MB install gate**: When `sentence-transformers`
+  (420MB via `torch`) fails an install-size gate, don't
+  jump to hosted embeddings. `fastembed` (Qdrant)
+  ships ONNX-runtime-based MiniLM embeddings at ~35MB
+  total install, no `torch`, no network at runtime once
+  the ONNX model is downloaded at install time. Quality
+  is comparable to sentence-transformers for retrieval
+  and well-suited to local-corpus use cases. Consider it
+  before reaching for hosted providers.
+
+- **Duck-typed test fakes fail isinstance-based
+  collectors silently**: `collect_agent_output()` in
+  `src/attune/workflows/agent_sdk_adapter.py` does
+  `isinstance(message, claude_agent_sdk.AssistantMessage)`.
+  A shape-compatible fake class (`class _FakeAssistantMessage:
+  def __init__(self, text): self.content = [...]`) will
+  fall through the isinstance check and leave
+  `result_text="No results returned."` untouched — the
+  test passes against that default answer and may
+  appear successful. Fix: construct real SDK class
+  instances in tests:
+  `claude_agent_sdk.AssistantMessage(content=[...],
+  model="...", parent_tool_use_id=None)` and
+  `claude_agent_sdk.ResultMessage(subtype="success", ...)`.
+  Use `dataclasses.fields(Cls)` to discover the real
+  field list.
+
+- **Formatter strips imports that are "unused" at the
+  moment you save, even if a later edit will use them**:
+  When staging multiple edits that together introduce a
+  new import, the ruff/black autofix can run between
+  edits and remove the import as unused. Happens reliably
+  in the Claude Code hook pipeline. Two fixes:
+  (1) introduce the import in the SAME edit that first
+  uses it, not in a preceding edit; (2) scope the import
+  inside the function body that uses it so the unused-
+  import detector never fires even if the file is saved
+  mid-edit. Scoping is more robust for tests.
+
+- **`git commit -q` can exit 0 with pre-commit hook
+  feedback that looks like success but isn't**: When
+  pre-commit hooks (end-of-file-fixer, trailing-
+  whitespace) modify files during the commit, the tail
+  output shows "Passed" for each hook and gives no
+  explicit "Aborted" line — but the commit is skipped
+  and the files are left re-staged for retry. Always
+  verify with `git log --oneline -1` or `git status
+  --short` immediately after `git commit`; don't trust
+  that absence-of-error-message means the commit
+  landed.
+
+- **Golden-query test fixtures must match the actual
+  corpus layout, not an assumed one**: When writing a
+  `queries.yaml` file for retrieval regression tests,
+  cross-check every `expected_in_top_3` path against
+  the installed corpus directory before running the
+  benchmark. attune-help 0.5.1 has 43 `concepts/`
+  files but no `concepts/tool-brainstorm.md` (and no
+  brainstorm templates at all). A naive golden set that
+  assumes one concept file per CLI feature will fail
+  with `MISSING` errors until patched. Pre-validate
+  with:
+  `python3 -c "import yaml; from pathlib import Path;
+  base=Path('<corpus>/templates'); data=yaml.safe_load
+  (open('queries.yaml')); [print(f'MISSING {q[\"id\"]}:
+  {p}') for q in data['queries'] for p in q.get
+  ('expected_in_top_3',[]) if not (base/p).is_file()]"`
+
+- **Reclassify "unexpectedly hard" golden queries up the
+  difficulty ladder instead of silencing them**: When a
+  golden query you labeled `medium` fails and the
+  failure mode is the same as your known-hard cases
+  (keyword collision with other features), relabel to
+  `hard` rather than dropping the query or relaxing the
+  assertion. This keeps the difficulty bucket honest for
+  benchmarking. Use `pytest.mark.xfail(strict=False)`
+  gated on `difficulty == "hard"` so hard queries
+  document the gap without breaking CI and automatically
+  turn into XPASS if a retriever upgrade starts passing
+  them.
 <!-- attune-lessons-end -->

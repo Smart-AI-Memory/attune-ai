@@ -586,7 +586,14 @@ class WorkflowHandlersMixin:
         try:
             from attune_rag import RagPipeline
         except ImportError as exc:
-            return {"success": False, "error": f"attune-rag unavailable: {exc}"}
+            return {
+                "success": False,
+                "error": (
+                    "rag_knowledge_query requires the [rag] extra. "
+                    "Install with: pip install 'attune-ai[rag]'"
+                ),
+                "cause": str(exc),
+            }
 
         try:
             pipeline = RagPipeline()

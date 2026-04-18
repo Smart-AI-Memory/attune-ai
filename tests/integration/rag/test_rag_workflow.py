@@ -4,17 +4,22 @@ The Claude Agent SDK is mocked so tests don't hit the
 network. The RAG pipeline is exercised end-to-end against
 an in-memory corpus to prove retrieval -> prompt assembly
 -> workflow-result wiring works.
+
+Skipped when the [rag] extra is not installed (attune-rag
+is an optional dep of attune-ai; see pyproject.toml).
 """
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncIterator, Iterable
-from unittest.mock import patch
-
 import pytest
 
-from attune.workflows.rag_code_gen import RagCodeGenWorkflow
+pytest.importorskip("attune_rag")
+
+import asyncio  # noqa: E402
+from collections.abc import AsyncIterator, Iterable  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+
+from attune.workflows.rag_code_gen import RagCodeGenWorkflow  # noqa: E402
 
 pytest_plugins: list[str] = []
 

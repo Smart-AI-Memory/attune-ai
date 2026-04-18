@@ -98,8 +98,13 @@ class RagCodeGenWorkflow(BaseWorkflow):
 
     def _get_pipeline(self) -> Any:
         if self._pipeline is None:
-            from attune_rag import RagPipeline
-
+            try:
+                from attune_rag import RagPipeline
+            except ImportError as exc:
+                raise RuntimeError(
+                    "The rag-code-gen workflow requires the [rag] extra. "
+                    "Install with: pip install 'attune-ai[rag]'"
+                ) from exc
             self._pipeline = RagPipeline()
         return self._pipeline
 
