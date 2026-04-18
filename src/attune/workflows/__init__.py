@@ -75,6 +75,7 @@ if TYPE_CHECKING:
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
     from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
     from .perf_audit import PerformanceAuditWorkflow
+    from .rag_code_gen import RagCodeGenWorkflow
     from .refactor_plan import RefactorPlanWorkflow
 
     # RefactorPlanAgentSDKWorkflow: Merged into RefactorPlanWorkflow (v4.2.0)
@@ -164,6 +165,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "ResearchSynthesisWorkflow": (".research_synthesis", "ResearchSynthesisWorkflow"),
     "SecureReleasePipeline": (".secure_release", "SecureReleasePipeline"),
     "SecureReleaseResult": (".secure_release", "SecureReleaseResult"),
+    "RagCodeGenWorkflow": (".rag_code_gen", "RagCodeGenWorkflow"),
     "SecurityAuditWorkflow": (".security_audit", "SecurityAuditWorkflow"),
     "SimplifyCodeWorkflow": (".simplify_code", "SimplifyCodeWorkflow"),
     # TestCoverageBoostCrew removed (deprecated, use ParallelTestGenerationWorkflow)
@@ -285,6 +287,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # Analysis workflows
     "bug-predict": "BugPredictionWorkflow",
     "security-audit": "SecurityAuditWorkflow",
+    "rag-code-gen": "RagCodeGenWorkflow",
     "perf-audit": "PerformanceAuditWorkflow",
     # Generation workflows
     "test-audit": "TestAuditWorkflow",
@@ -616,6 +619,7 @@ __all__ = [
     "NextAction",
     "OrchestratorResult",
     "PerformanceAuditWorkflow",
+    "RagCodeGenWorkflow",
     "RefactorPlanWorkflow",
     "ReleasePreparationWorkflow",
     # Workflow implementations
