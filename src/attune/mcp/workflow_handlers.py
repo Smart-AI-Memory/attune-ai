@@ -554,3 +554,75 @@ class WorkflowHandlersMixin:
             # INTENTIONAL: Vision analysis is best-effort
             logger.exception("Image analysis failed")
             return {"success": False, "error": "Image analysis failed"}
+
+    async def _run_rag_knowledge_query(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Query the RAG corpus and return hits + augmented prompt.
+
+        Does NOT call an LLM. Callers feed the augmented prompt
+        to whatever LLM they want (or use the rag-code-gen
+        workflow for end-to-end generation).
+
+        Args:
+            args: ``query`` (str, required) and ``k`` (int,
+                optional, default 3, 1-10).
+
+        Returns:
+            Dict with ``fallback_used``, ``confidence``,
+            ``elapsed_ms``, ``corpus``, ``retriever``,
+            ``augmented_prompt``, and ``hits`` (list of
+            path/category/score/excerpt).
+        """
+        query = args.get("query", "")
+        if not query or not isinstance(query, str) or not query.strip():
+            return {"success": False, "error": "query is required"}
+
+        try:
+            k = int(args.get("k", 3))
+        except (TypeError, ValueError):
+            return {"success": False, "error": "k must be an integer"}
+        if k < 1 or k > 10:
+            return {"success": False, "error": "k must be between 1 and 10"}
+
+        try:
+            from attune_rag import RagPipeline
+        except ImportError as exc:
+            return {
+                "success": False,
+                "error": (
+                    "rag_knowledge_query requires the [rag] extra. "
+                    "Install with: pip install 'attune-ai[rag]'"
+                ),
+                "cause": str(exc),
+            }
+
+        try:
+            pipeline = RagPipeline()
+            result = pipeline.run(query, k=k)
+        except RuntimeError as exc:
+            # Typical cause: AttuneHelpCorpus can't find the
+            # [attune-help] extra. Return a structured error.
+            return {"success": False, "error": f"RAG setup error: {exc}"}
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: best-effort — return structured error
+            logger.exception("RAG knowledge query failed")
+            return {"success": False, "error": "RAG query failed"}
+
+        return {
+            "success": True,
+            "query": query,
+            "fallback_used": result.fallback_used,
+            "confidence": result.confidence,
+            "elapsed_ms": result.elapsed_ms,
+            "corpus": pipeline.corpus.name,
+            "retriever": type(pipeline.retriever).__name__,
+            "augmented_prompt": result.augmented_prompt,
+            "hits": [
+                {
+                    "template_path": hit.template_path,
+                    "category": hit.category,
+                    "score": hit.score,
+                    "excerpt": hit.excerpt,
+                }
+                for hit in result.citation.hits
+            ],
+        }

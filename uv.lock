@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "6.0.0"
+version = "6.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -317,6 +317,7 @@ backend = [
     { name = "uvicorn" },
 ]
 dev = [
+    { name = "attune-rag" },
     { name = "bandit" },
     { name = "black" },
     { name = "coverage" },
@@ -405,6 +406,9 @@ otel = [
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-sdk" },
 ]
+rag = [
+    { name = "attune-rag" },
+]
 redis = [
     { name = "agent-memory-client" },
     { name = "redis" },
@@ -425,6 +429,8 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-help", specifier = ">=0.5.1,<0.6" },
+    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.0,<0.2" },
+    { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -539,7 +545,7 @@ requires-dist = [
     { name = "redis", marker = "extra == 'memory'", specifier = ">=5.0.0,<8.0.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.0,<8.0.0" },
     { name = "requests", marker = "extra == 'dev'", specifier = ">=2.28.0,<3.0.0" },
-    { name = "rich", specifier = ">=13.0.0,<15.0.0" },
+    { name = "rich", specifier = ">=13.0.0,<16.0.0" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.1,<1.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1,<1.0" },
     { name = "starlette", marker = "extra == 'all'", specifier = ">=0.40.0,<2.0.0" },
@@ -554,7 +560,7 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'backend'", specifier = ">=0.20.0,<1.0.0" },
     { name = "uvicorn", marker = "extra == 'enterprise'", specifier = ">=0.20.0,<1.0.0" },
 ]
-provides-extras = ["memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
+provides-extras = ["rag", "memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
 
 [[package]]
 name = "attune-help"
@@ -566,6 +572,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6f/47/4272b7839ebaf132cc7987ddf92fcfa664d1a6e9030bf95728bd787a423e/attune_help-0.5.1.tar.gz", hash = "sha256:c5e56290be78c5056f33f65c8ec6b98d9ebae0059c45352c80da7e402dd05e09", size = 407624, upload-time = "2026-04-12T13:36:56.47Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/80/4b0dd224b2134577f051f3054c02b62054f034b9e0ef3874a145d8ad4371/attune_help-0.5.1-py3-none-any.whl", hash = "sha256:c6e74415223127860ea3c397a89abf21e31c572f5c87e387c23c9a916683f924", size = 694668, upload-time = "2026-04-12T13:36:54.75Z" },
+]
+
+[[package]]
+name = "attune-rag"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "pyyaml" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/69/06/f1531583904edfc5a28e744028c8b1de7ff6bdabc80e0cfef0167e735dc9/attune_rag-0.1.0.tar.gz", hash = "sha256:d75d03fe06c6f6c5fca15b6297c364ab5f51777be5ff40cf8bdc643bffbad138", size = 17929, upload-time = "2026-04-18T04:03:10.867Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/80/b2de4e7e53a4299b7f21e23a6dec189145f4a567779f4211c63cb78f139c/attune_rag-0.1.0-py3-none-any.whl", hash = "sha256:a7d402c4a8f7d4fdcb9737572c7c0741908db17a162f9a013fd4ac9c64744d3f", size = 22672, upload-time = "2026-04-18T04:03:09.316Z" },
 ]
 
 [[package]]

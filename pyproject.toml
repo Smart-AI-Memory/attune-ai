@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "6.0.0"
+version = "6.1.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -73,6 +73,11 @@ dependencies = [
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
+    # NOTE: attune-rag is an OPTIONAL extra, not a core dep.
+    #  Install with `pip install 'attune-ai[rag]'` to enable
+    #  the rag-code-gen workflow and rag_knowledge_query MCP
+    #  tool. Workflows/handlers lazy-import and return a
+    #  structured error when the extra is absent.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
@@ -81,6 +86,15 @@ dependencies = [
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
+# RAG-grounded code generation (rag-code-gen workflow +
+# rag_knowledge_query MCP tool). Optional so users who
+# don't want grounding avoid the dep. Once attune-rag is
+# on PyPI, no further work needed — this extra resolves
+# from PyPI.
+rag = [
+    "attune-rag>=0.1.0,<0.2",
+]
+
 # Memory subsystem (requires Redis server 8.4+ recommended)
 memory = [
     "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support
@@ -188,6 +202,11 @@ dev = [
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.109.1,<1.0.0",  # For wizard API tests
     "requests>=2.28.0,<3.0.0",  # For notification tests
+    # RAG integration test coverage — attune-rag is an
+    # optional runtime dep but required for the rag_code_gen
+    # and rag_knowledge_query test paths to exercise their
+    # branches (rag tests use pytest.importorskip).
+    "attune-rag>=0.1.0,<0.2",
 ]
 
 # Individual developers - lightweight, software development focused
@@ -675,3 +694,9 @@ exclude_lines = [
 # attune-help is now a PyPI dependency (no source override needed).
 [tool.uv.sources]
 attune-author = { path = "../attune-author", editable = true }
+# attune-rag source override intentionally omitted until
+# PyPI publish. uv sync in CI can't resolve a missing
+# sibling path; local devs who want [rag] should run:
+#   pip install -e ../attune-rag/
+# after cloning the sibling repo and before running the
+# rag-tagged tests locally.

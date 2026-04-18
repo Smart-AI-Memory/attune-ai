@@ -271,6 +271,10 @@ pip install 'attune-ai[developer]'
 # Minimal (CLI + workflows only)
 pip install attune-ai
 
+# With RAG-grounded code generation (rag-code-gen workflow
+# + rag_knowledge_query MCP tool; see "RAG grounding" below)
+pip install 'attune-ai[rag]'
+
 # All features
 pip install 'attune-ai[all]'
 
@@ -278,6 +282,31 @@ pip install 'attune-ai[all]'
 git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```
+
+### RAG grounding (optional)
+
+When installed with the `[rag]` extra, `attune-ai` gains:
+
+- **`rag-code-gen` workflow** — grounds LLM code generation in
+  the bundled attune-help corpus (633 templates) and emits a
+  `## Sources` block with clickable citations alongside the
+  generated output.
+- **`rag_knowledge_query` MCP tool** — returns retrieval hits
+  and an augmented prompt string ready to feed to any LLM.
+  Does not call an LLM itself.
+- **Optional feedback kwarg** — pass `feedback="good"|"bad"`
+  to the workflow to record verdicts against every cited
+  template for future tuning.
+
+The retrieval engine is the standalone
+[attune-rag](https://github.com/Smart-AI-Memory/attune-rag)
+package — LLM-agnostic and corpus-pluggable, usable on its
+own outside the attune-ai ecosystem.
+
+See [docs/rag/index.md](docs/rag/index.md) for the full
+walkthrough and
+[docs/rag/embeddings-decision-2026-04-17.md](docs/rag/embeddings-decision-2026-04-17.md)
+for the engineering decision record.
 
 ---
 

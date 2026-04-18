@@ -246,3 +246,4 @@ src/attune/dashboard/static/react/
 # Dashboard frontend dev dependencies
 dashboard/node_modules/
 dashboard/dist/
+.claude/scheduled_tasks.lock

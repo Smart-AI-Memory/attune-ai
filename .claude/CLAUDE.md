@@ -1,4 +1,4 @@
-# Attune AI Framework v6.0.0
+# Attune AI Framework v6.1.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 6.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 6.1.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -1640,4 +1640,261 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   before adding more commits to a branch — if state is
   `MERGED`, rebase onto `origin/main` and open a new PR
   instead of pushing to the stale branch.
+
+- **`packages/attune-*/` in attune-ai are pointer stubs, not
+  source**: `packages/attune-author/` and `packages/attune-help/`
+  contain a single README.md that points at the real sibling
+  repo (`/Users/patrickroebuck/attune-{author,help}/`). The
+  actual package source, `pyproject.toml`, tests, and CI live
+  in those sibling directories. `[tool.uv.sources]` in
+  attune-ai uses `path = "../attune-{name}", editable = true`
+  to resolve them during dev. Any new sibling package (e.g.
+  attune-rag) must follow the same layout: full source in
+  `../attune-<name>/`, pointer stub at
+  `packages/attune-<name>/README.md`, and a `[tool.uv.sources]`
+  entry.
+
+- **`uv pip install -e .` does not regenerate
+  `[project.scripts]` console scripts**: Editable reinstalls
+  after adding or changing a `[project.scripts]` entry leave
+  the old `.venv/bin/<name>` in place — or absent entirely if
+  it's new. Symptom: `ls .venv/bin/<cli>` returns nothing
+  despite a clean install log. Fix: use
+  `uv sync --extra dev --reinstall-package <pkg>` which
+  rebuilds the wheel and refreshes entry_points. `uv pip
+  install --force-reinstall -e .` also works but is slower.
+
+- **structlog default output pollutes stdout-captured CLI
+  tests**: structlog's default `ConsoleRenderer` writes log
+  lines to `sys.stdout`, not stderr. `capsys.readouterr().out`
+  in a pytest CLI test that emits JSON ends up with log lines
+  like `2026-04-17 [info     ] rag.run ...` prepended to the
+  JSON payload, breaking `json.loads()`. Fix: parse from the
+  first `{` (`json.loads(text[text.find("{"):])`) or
+  configure structlog to stderr in the CLI's `main()` before
+  running the pipeline. Don't just silence logs — they're
+  useful in prod.
+
+- **attune-help's sidecar schemas don't match path-keyed
+  assumptions**: `attune_help/templates/summaries.json` is
+  keyed by feature name (`"security-audit"`) — NOT by
+  template path. `cross_links.json` is a nested
+  `{version, stats, links, tag_index, workflow_map}` dict
+  keyed by short IDs like `"com-auth-strategies"`, not
+  paths. Any code trying to wire these as flat
+  `path -> value` maps (e.g. a DirectoryCorpus loader) will
+  silently produce empty summaries / related links. Either
+  write an attune-help-specific schema adapter, or load
+  templates without sidecars and treat the missing metadata
+  as a v-next concern.
+
+- **`git rebase --root --exec "git commit --amend --no-edit
+  -S"` re-signs every commit in a new repo**: When a repo is
+  initialized with `commit.gpgsign=false` for any reason (or
+  earlier commits used `-c commit.gpgsign=false` to bypass
+  signing), this one-liner walks all commits from the root
+  and re-signs each in place. Works in non-interactive
+  terminals (no editor needed). Useful when fixing signing
+  before first-time push of a fresh sibling repo.
+
+- **`gh repo create --source <path> --push` is a one-shot
+  for new sibling repos**: Creates the GitHub repo, adds it
+  as `origin` remote in the local path, and pushes HEAD in
+  a single command. Flags to use:
+  `--public --description "..." --homepage "..." --source
+  <path> --remote origin --push`. Saves 4 separate steps
+  (repo create → remote add → set-upstream → push) when
+  spinning up a new workspace-sibling package.
+
+- **MetaPathFinder `find_module`/`load_module` is dead in
+  Python 3.12+ — use `sys.modules[name] = None` sentinel
+  instead**: The existing "Verify optional dep boundaries
+  with a MetaPathFinder" lesson is partially wrong. The
+  deprecated `find_module` / `load_module` hooks stopped
+  firing in 3.12's import machinery (which migrated to
+  `find_spec`/`create_module`/`exec_module` fully). Tests
+  using the old Blocker pattern fall through to the real
+  SDK silently on 3.12+ CI matrix lanes. Cross-version
+  replacement: `sys.modules[name] = None` — Python's
+  import machinery treats the sentinel as "module is
+  unavailable" and raises `ImportError` on the next
+  `import name`. Works unchanged on 3.10-3.13. Remember
+  to snapshot+restore the original `sys.modules` entries
+  for the module and its dotted children.
+
+- **Apply lessons by problem, not by keyword**: The
+  `sentence-transformers removed — 0.4% savings, 420MB`
+  lesson is about **semantic caching** (match similar
+  queries to cached responses). It does NOT generalize to
+  **RAG retrieval** (match queries to documents). The
+  ROI profiles differ — attune workflow prompts are
+  mostly unique (file paths, code snippets) so caching
+  misses; retrieval ROI depends on how often semantic
+  similarity beats keyword overlap, which is much
+  higher. The install-size half of the lesson (420MB) IS
+  transferable and correctly rules out
+  `sentence-transformers` for any use case with a <50MB
+  gate. When citing prior lessons, check whether you're
+  invoking the mechanism or the specific problem.
+
+- **`fastembed` is the local-embeddings path that passes
+  a <50MB install gate**: When `sentence-transformers`
+  (420MB via `torch`) fails an install-size gate, don't
+  jump to hosted embeddings. `fastembed` (Qdrant)
+  ships ONNX-runtime-based MiniLM embeddings at ~35MB
+  total install, no `torch`, no network at runtime once
+  the ONNX model is downloaded at install time. Quality
+  is comparable to sentence-transformers for retrieval
+  and well-suited to local-corpus use cases. Consider it
+  before reaching for hosted providers.
+
+- **Duck-typed test fakes fail isinstance-based
+  collectors silently**: `collect_agent_output()` in
+  `src/attune/workflows/agent_sdk_adapter.py` does
+  `isinstance(message, claude_agent_sdk.AssistantMessage)`.
+  A shape-compatible fake class (`class _FakeAssistantMessage:
+  def __init__(self, text): self.content = [...]`) will
+  fall through the isinstance check and leave
+  `result_text="No results returned."` untouched — the
+  test passes against that default answer and may
+  appear successful. Fix: construct real SDK class
+  instances in tests:
+  `claude_agent_sdk.AssistantMessage(content=[...],
+  model="...", parent_tool_use_id=None)` and
+  `claude_agent_sdk.ResultMessage(subtype="success", ...)`.
+  Use `dataclasses.fields(Cls)` to discover the real
+  field list.
+
+- **Formatter strips imports that are "unused" at the
+  moment you save, even if a later edit will use them**:
+  When staging multiple edits that together introduce a
+  new import, the ruff/black autofix can run between
+  edits and remove the import as unused. Happens reliably
+  in the Claude Code hook pipeline. Two fixes:
+  (1) introduce the import in the SAME edit that first
+  uses it, not in a preceding edit; (2) scope the import
+  inside the function body that uses it so the unused-
+  import detector never fires even if the file is saved
+  mid-edit. Scoping is more robust for tests.
+
+- **`git commit -q` can exit 0 with pre-commit hook
+  feedback that looks like success but isn't**: When
+  pre-commit hooks (end-of-file-fixer, trailing-
+  whitespace) modify files during the commit, the tail
+  output shows "Passed" for each hook and gives no
+  explicit "Aborted" line — but the commit is skipped
+  and the files are left re-staged for retry. Always
+  verify with `git log --oneline -1` or `git status
+  --short` immediately after `git commit`; don't trust
+  that absence-of-error-message means the commit
+  landed.
+
+- **Golden-query test fixtures must match the actual
+  corpus layout, not an assumed one**: When writing a
+  `queries.yaml` file for retrieval regression tests,
+  cross-check every `expected_in_top_3` path against
+  the installed corpus directory before running the
+  benchmark. attune-help 0.5.1 has 43 `concepts/`
+  files but no `concepts/tool-brainstorm.md` (and no
+  brainstorm templates at all). A naive golden set that
+  assumes one concept file per CLI feature will fail
+  with `MISSING` errors until patched. Pre-validate
+  with:
+  `python3 -c "import yaml; from pathlib import Path;
+  base=Path('<corpus>/templates'); data=yaml.safe_load
+  (open('queries.yaml')); [print(f'MISSING {q[\"id\"]}:
+  {p}') for q in data['queries'] for p in q.get
+  ('expected_in_top_3',[]) if not (base/p).is_file()]"`
+
+- **Reclassify "unexpectedly hard" golden queries up the
+  difficulty ladder instead of silencing them**: When a
+  golden query you labeled `medium` fails and the
+  failure mode is the same as your known-hard cases
+  (keyword collision with other features), relabel to
+  `hard` rather than dropping the query or relaxing the
+  assertion. This keeps the difficulty bucket honest for
+  benchmarking. Use `pytest.mark.xfail(strict=False)`
+  gated on `difficulty == "hard"` so hard queries
+  document the gap without breaking CI and automatically
+  turn into XPASS if a retriever upgrade starts passing
+  them.
+
+- **PyPI trusted publisher "Workflow name" field wants the
+  FILENAME, not the YAML display name**: The PyPI
+  pending-publisher form has a "Workflow name" field that
+  must match the `workflow_ref` claim GitHub sends — which
+  is the filename (`publish.yml`), NOT the value of `name:`
+  at the top of the YAML (`Publish to PyPI`). If they
+  mismatch, the publish job fails with `invalid-publisher:
+  valid token, but no corresponding publisher`. The OIDC
+  debug output shows the actual claim — compare it to the
+  PyPI config field-by-field. Other common mismatches:
+  owner with wrong case or underscore-vs-hyphen,
+  environment name case, repository name.
+
+- **`uv.lock` retains `editable = "../name"` paths after
+  `[tool.uv.sources]` edits — always re-run `uv lock`**:
+  Deleting (or changing) a `[tool.uv.sources]` entry in
+  `pyproject.toml` does NOT automatically refresh the
+  lockfile. The lock keeps the old editable-sibling path,
+  and any `uv sync` / `uv run` in CI (pre-commit hooks,
+  fuzzing, etc.) fails with "Failed to generate package
+  metadata for pkg==ver @ editable+../path" because the
+  sibling directory doesn't exist in a CI checkout. Always
+  re-run `uv lock` immediately after editing
+  `[tool.uv.sources]` and commit `uv.lock` in the same
+  change. Verify with
+  `grep -A 2 "name = \"pkg\"" uv.lock` — the `source` line
+  should read `{ registry = "https://pypi.org/simple" }`
+  once the dep is published.
+
+- **`uv run` in pre-commit hooks propagates lockfile
+  errors as hook failures that look unrelated**: The
+  `check-docs-freshness` hook uses
+  `uv run python scripts/check_docs_freshness.py`. When
+  the lockfile has an unresolvable dep (e.g. sibling
+  editable path missing in CI), the failure renders as
+  "Check Help Template Freshness ... Failed" with a
+  metadata-resolution traceback in the log — nothing
+  about docs or templates. When seemingly-unrelated
+  pre-commit hooks start failing, read the actual log
+  and check `uv.lock` resolvability before assuming the
+  hook's nominal responsibility is the issue.
+
+- **`gh workflow run <file.yml> --ref <tag>` re-triggers
+  a release-gated workflow cleanly without churning the
+  release**: When a `publish.yml` triggered by
+  `release: types: [published]` fails on the first shot
+  (e.g. invalid trusted publisher config on PyPI side),
+  don't delete and recreate the release — if the workflow
+  also declares `workflow_dispatch:`,
+  `gh workflow run publish.yml --repo owner/repo --ref
+  <tag>` fires a fresh run against the same tag, skipping
+  the release-tag churn. Build + publish steps run
+  identically.
+
+- **Chicken-and-egg for optional extras in [dev]**: If
+  you want `pkg>=X,<Y` in `[dev]` extra so CI tests
+  actually exercise the code paths (rather than
+  `pytest.importorskip` and skip silently), the
+  package MUST be resolvable — i.e., on PyPI, or the
+  workspace source exists in the CI checkout. Publishing
+  the package is the unblocker when you're working in the
+  monorepo-sibling pattern where CI doesn't have the
+  sibling checkout. Sequence: publish 0.1.0 → add to
+  `[dev]` → tests run → coverage lands. Before publish,
+  rag tests use `importorskip` and patch coverage
+  reports 0% for the new code.
+
+- **`codecov/patch` 0% usually means tests *skipped*, not
+  failed**: The `codecov/patch` check measures coverage
+  of the diff — new/changed lines. If new tests use
+  `pytest.importorskip` on an optional dep that CI
+  doesn't install, every assertion skips, and the diff
+  shows 0% covered even though all tests "pass". Fix
+  by making the dep installable (add to `[dev]` or move
+  to required), or by adding unconditional error-path
+  tests that don't need the optional dep (use
+  `sys.modules[name] = None` sentinel to exercise the
+  "missing extra" branches).
 <!-- attune-lessons-end -->
