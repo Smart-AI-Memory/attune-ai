@@ -1570,22 +1570,61 @@ attune-rag/
 
 ---
 
+## Approved Follow-up Work
+
+### attune-help corpus metadata enrichment (approved 2026-04-17)
+
+**Decision:** yes — add corpus-level metadata to a future
+attune-help minor (targeting 0.6.0). Unblocks attune-rag
+0.2.0's schema adapter and significantly improves retrieval
+quality.
+
+**Scope (separate spec when we get to it):**
+
+- Add a **path-keyed summaries** schema alongside (or
+  replacing) the current feature-keyed
+  `summaries.json`. Each template gets a
+  one-line summary retrievable by its exact path.
+- Publish a **canonical feature map** linking template paths
+  to the feature they describe (e.g.
+  `"concepts/tool-security-audit.md" -> "security-audit"`).
+  Lets retrievers correlate paths to high-level features
+  without string-munging.
+- Add **difficulty tags** (`"beginner" | "intermediate" |
+  "advanced"`) per template so retrievers can bias toward
+  the audience the user asked about.
+- Restructure **cross-links** to be path-keyed consistently,
+  or add a `by_path` lookup index alongside the current
+  short-ID-keyed structure.
+
+**Why it matters:** Unblocks the "v0.1.0 note on sidecars"
+gap in `AttuneHelpCorpus` — today we load templates without
+summaries/related because the schemas don't match. Once
+attune-help ships path-keyed schemas, `AttuneHelpCorpus` can
+expose `RetrievalEntry.summary`, `.related`, and metadata
+like `difficulty`, lifting the `KeywordRetriever`'s
+`SUMMARY_WEIGHT` and `RELATED_WEIGHT` paths from dead weight
+to real retrieval signal.
+
+**Ordering:** No earlier than attune-rag 0.2.0 planning.
+Start as a separate spec in the attune-help repo; don't
+couple it to this spec's merge.
+
+---
+
 ## Open Questions
 
-1. Does the attune-help team want corpus-level metadata
-   (canonical feature names, difficulty tags) added in a
-   future attune-help minor to improve retrieval quality?
-2. Should `confidence_from_history` be exposed in the MCP
+1. Should `confidence_from_history` be exposed in the MCP
    tool response? Start model-only; surface to end users
    only if feedback data shows it improves trust.
-3. How do we avoid retrieval feedback loops where bad
+2. How do we avoid retrieval feedback loops where bad
    generations get marked "bad" and the same template is
    then under-retrieved, hiding the real root cause
    (retriever tuning)? Candidate mitigation: separate
    "retrieval was correct" vs "generation was good"
    feedback axes.
-4. Sync vs async in provider adapters. v0.1.0 ships async
+3. Sync vs async in provider adapters. v0.1.0 ships async
    only; watch for user demand before adding sync shims.
-5. Telemetry for external users of attune-rag. Do we want
+4. Telemetry for external users of attune-rag. Do we want
    anonymous retrieval metrics (hit count, fallback rate)?
    Opt-in only; default off. Separate spec if we pursue.

@@ -1640,4 +1640,69 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   before adding more commits to a branch — if state is
   `MERGED`, rebase onto `origin/main` and open a new PR
   instead of pushing to the stale branch.
+
+- **`packages/attune-*/` in attune-ai are pointer stubs, not
+  source**: `packages/attune-author/` and `packages/attune-help/`
+  contain a single README.md that points at the real sibling
+  repo (`/Users/patrickroebuck/attune-{author,help}/`). The
+  actual package source, `pyproject.toml`, tests, and CI live
+  in those sibling directories. `[tool.uv.sources]` in
+  attune-ai uses `path = "../attune-{name}", editable = true`
+  to resolve them during dev. Any new sibling package (e.g.
+  attune-rag) must follow the same layout: full source in
+  `../attune-<name>/`, pointer stub at
+  `packages/attune-<name>/README.md`, and a `[tool.uv.sources]`
+  entry.
+
+- **`uv pip install -e .` does not regenerate
+  `[project.scripts]` console scripts**: Editable reinstalls
+  after adding or changing a `[project.scripts]` entry leave
+  the old `.venv/bin/<name>` in place — or absent entirely if
+  it's new. Symptom: `ls .venv/bin/<cli>` returns nothing
+  despite a clean install log. Fix: use
+  `uv sync --extra dev --reinstall-package <pkg>` which
+  rebuilds the wheel and refreshes entry_points. `uv pip
+  install --force-reinstall -e .` also works but is slower.
+
+- **structlog default output pollutes stdout-captured CLI
+  tests**: structlog's default `ConsoleRenderer` writes log
+  lines to `sys.stdout`, not stderr. `capsys.readouterr().out`
+  in a pytest CLI test that emits JSON ends up with log lines
+  like `2026-04-17 [info     ] rag.run ...` prepended to the
+  JSON payload, breaking `json.loads()`. Fix: parse from the
+  first `{` (`json.loads(text[text.find("{"):])`) or
+  configure structlog to stderr in the CLI's `main()` before
+  running the pipeline. Don't just silence logs — they're
+  useful in prod.
+
+- **attune-help's sidecar schemas don't match path-keyed
+  assumptions**: `attune_help/templates/summaries.json` is
+  keyed by feature name (`"security-audit"`) — NOT by
+  template path. `cross_links.json` is a nested
+  `{version, stats, links, tag_index, workflow_map}` dict
+  keyed by short IDs like `"com-auth-strategies"`, not
+  paths. Any code trying to wire these as flat
+  `path -> value` maps (e.g. a DirectoryCorpus loader) will
+  silently produce empty summaries / related links. Either
+  write an attune-help-specific schema adapter, or load
+  templates without sidecars and treat the missing metadata
+  as a v-next concern.
+
+- **`git rebase --root --exec "git commit --amend --no-edit
+  -S"` re-signs every commit in a new repo**: When a repo is
+  initialized with `commit.gpgsign=false` for any reason (or
+  earlier commits used `-c commit.gpgsign=false` to bypass
+  signing), this one-liner walks all commits from the root
+  and re-signs each in place. Works in non-interactive
+  terminals (no editor needed). Useful when fixing signing
+  before first-time push of a fresh sibling repo.
+
+- **`gh repo create --source <path> --push` is a one-shot
+  for new sibling repos**: Creates the GitHub repo, adds it
+  as `origin` remote in the local path, and pushes HEAD in
+  a single command. Flags to use:
+  `--public --description "..." --homepage "..." --source
+  <path> --remote origin --push`. Saves 4 separate steps
+  (repo create → remote add → set-upstream → push) when
+  spinning up a new workspace-sibling package.
 <!-- attune-lessons-end -->
