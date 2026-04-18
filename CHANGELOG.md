@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **RAG-grounded code generation (new `[rag]` optional
+  extra)** — install via `pip install 'attune-ai[rag]'` to
+  enable:
+    - New `rag-code-gen` workflow. Grounds LLM code
+      generation in the bundled attune-help corpus (633
+      templates) and returns `WorkflowResult` whose
+      `final_output` carries both the generated output and
+      a markdown `## Sources` block with clickable
+      citations to
+      github.com/Smart-AI-Memory/attune-help.
+    - New `rag_knowledge_query` MCP tool. Runs retrieval
+      and returns hits + an augmented prompt string ready
+      for any LLM; does NOT call an LLM itself.
+    - Optional `feedback="good"|"bad"` kwarg on the
+      workflow records verdicts against every cited
+      template via the existing `help/feedback.py`
+      machinery.
+    - Pipeline is LLM-agnostic and corpus-pluggable —
+      powered by the new standalone
+      [attune-rag](https://github.com/Smart-AI-Memory/attune-rag)
+      package on PyPI.
+- **`docs/rag/embeddings-decision-2026-04-17.md`** — written
+  record of the benchmark-gated embeddings decision
+  (keyword tuning first in a v0.1.x patch, `fastembed`
+  ONNX fallback in v0.2.0 only if tuning plateaus below the
+  70% P@1 gate). Prior caching lesson about
+  `sentence-transformers` clarified as applying to
+  semantic caching, not retrieval.
 - **Weekly cross-repo compat CI** — new
   `.github/workflows/cross-repo-compat.yml` pulls
   attune-help from its `main` branch every Monday and runs

@@ -1,4 +1,4 @@
-# Attune AI Framework v6.0.0
+# Attune AI Framework v6.1.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 6.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 6.1.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -1818,4 +1818,83 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   document the gap without breaking CI and automatically
   turn into XPASS if a retriever upgrade starts passing
   them.
+
+- **PyPI trusted publisher "Workflow name" field wants the
+  FILENAME, not the YAML display name**: The PyPI
+  pending-publisher form has a "Workflow name" field that
+  must match the `workflow_ref` claim GitHub sends — which
+  is the filename (`publish.yml`), NOT the value of `name:`
+  at the top of the YAML (`Publish to PyPI`). If they
+  mismatch, the publish job fails with `invalid-publisher:
+  valid token, but no corresponding publisher`. The OIDC
+  debug output shows the actual claim — compare it to the
+  PyPI config field-by-field. Other common mismatches:
+  owner with wrong case or underscore-vs-hyphen,
+  environment name case, repository name.
+
+- **`uv.lock` retains `editable = "../name"` paths after
+  `[tool.uv.sources]` edits — always re-run `uv lock`**:
+  Deleting (or changing) a `[tool.uv.sources]` entry in
+  `pyproject.toml` does NOT automatically refresh the
+  lockfile. The lock keeps the old editable-sibling path,
+  and any `uv sync` / `uv run` in CI (pre-commit hooks,
+  fuzzing, etc.) fails with "Failed to generate package
+  metadata for pkg==ver @ editable+../path" because the
+  sibling directory doesn't exist in a CI checkout. Always
+  re-run `uv lock` immediately after editing
+  `[tool.uv.sources]` and commit `uv.lock` in the same
+  change. Verify with
+  `grep -A 2 "name = \"pkg\"" uv.lock` — the `source` line
+  should read `{ registry = "https://pypi.org/simple" }`
+  once the dep is published.
+
+- **`uv run` in pre-commit hooks propagates lockfile
+  errors as hook failures that look unrelated**: The
+  `check-docs-freshness` hook uses
+  `uv run python scripts/check_docs_freshness.py`. When
+  the lockfile has an unresolvable dep (e.g. sibling
+  editable path missing in CI), the failure renders as
+  "Check Help Template Freshness ... Failed" with a
+  metadata-resolution traceback in the log — nothing
+  about docs or templates. When seemingly-unrelated
+  pre-commit hooks start failing, read the actual log
+  and check `uv.lock` resolvability before assuming the
+  hook's nominal responsibility is the issue.
+
+- **`gh workflow run <file.yml> --ref <tag>` re-triggers
+  a release-gated workflow cleanly without churning the
+  release**: When a `publish.yml` triggered by
+  `release: types: [published]` fails on the first shot
+  (e.g. invalid trusted publisher config on PyPI side),
+  don't delete and recreate the release — if the workflow
+  also declares `workflow_dispatch:`,
+  `gh workflow run publish.yml --repo owner/repo --ref
+  <tag>` fires a fresh run against the same tag, skipping
+  the release-tag churn. Build + publish steps run
+  identically.
+
+- **Chicken-and-egg for optional extras in [dev]**: If
+  you want `pkg>=X,<Y` in `[dev]` extra so CI tests
+  actually exercise the code paths (rather than
+  `pytest.importorskip` and skip silently), the
+  package MUST be resolvable — i.e., on PyPI, or the
+  workspace source exists in the CI checkout. Publishing
+  the package is the unblocker when you're working in the
+  monorepo-sibling pattern where CI doesn't have the
+  sibling checkout. Sequence: publish 0.1.0 → add to
+  `[dev]` → tests run → coverage lands. Before publish,
+  rag tests use `importorskip` and patch coverage
+  reports 0% for the new code.
+
+- **`codecov/patch` 0% usually means tests *skipped*, not
+  failed**: The `codecov/patch` check measures coverage
+  of the diff — new/changed lines. If new tests use
+  `pytest.importorskip` on an optional dep that CI
+  doesn't install, every assertion skips, and the diff
+  shows 0% covered even though all tests "pass". Fix
+  by making the dep installable (add to `[dev]` or move
+  to required), or by adding unconditional error-path
+  tests that don't need the optional dep (use
+  `sys.modules[name] = None` sentinel to exercise the
+  "missing extra" branches).
 <!-- attune-lessons-end -->
