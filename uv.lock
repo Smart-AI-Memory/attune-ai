@@ -428,7 +428,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-help", specifier = ">=0.5.1,<0.6" },
-    { name = "attune-rag", marker = "extra == 'rag'", editable = "../attune-rag" },
+    { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -575,39 +575,16 @@ wheels = [
 [[package]]
 name = "attune-rag"
 version = "0.1.0"
-source = { editable = "../attune-rag" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
     { name = "pyyaml" },
     { name = "structlog" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0,<1.0" },
-    { name = "anthropic", marker = "extra == 'claude'", specifier = ">=0.40.0,<1.0" },
-    { name = "anthropic", marker = "extra == 'dev'", specifier = ">=0.40.0,<1.0" },
-    { name = "attune-help", marker = "extra == 'all'", specifier = ">=0.5.1,<0.6" },
-    { name = "attune-help", marker = "extra == 'attune-help'", specifier = ">=0.5.1,<0.6" },
-    { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.5.1,<0.6" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=24.0" },
-    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0" },
-    { name = "google-genai", marker = "extra == 'all'", specifier = ">=1.0,<2.0" },
-    { name = "google-genai", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
-    { name = "google-genai", marker = "extra == 'gemini'", specifier = ">=1.0,<2.0" },
-    { name = "jinja2", specifier = ">=3.1.0" },
-    { name = "openai", marker = "extra == 'all'", specifier = ">=1.40.0,<2.0" },
-    { name = "openai", marker = "extra == 'dev'", specifier = ">=1.40.0,<2.0" },
-    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.40.0,<2.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
-    { name = "structlog", specifier = ">=24.0" },
-    { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/69/06/f1531583904edfc5a28e744028c8b1de7ff6bdabc80e0cfef0167e735dc9/attune_rag-0.1.0.tar.gz", hash = "sha256:d75d03fe06c6f6c5fca15b6297c364ab5f51777be5ff40cf8bdc643bffbad138", size = 17929, upload-time = "2026-04-18T04:03:10.867Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/80/b2de4e7e53a4299b7f21e23a6dec189145f4a567779f4211c63cb78f139c/attune_rag-0.1.0-py3-none-any.whl", hash = "sha256:a7d402c4a8f7d4fdcb9737572c7c0741908db17a162f9a013fd4ac9c64744d3f", size = 22672, upload-time = "2026-04-18T04:03:09.316Z" },
 ]
-provides-extras = ["attune-help", "claude", "openai", "gemini", "all", "dev"]
 
 [[package]]
 name = "babel"
