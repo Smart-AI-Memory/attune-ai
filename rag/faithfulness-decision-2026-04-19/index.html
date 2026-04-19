@@ -12,7 +12,7 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/rag/embeddings-decision-2026-04-17/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/rag/faithfulness-decision-2026-04-19/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Embeddings Decision (attune-rag v0.1.x / v0.2.0) - Attune AI</title>
+        <title>Faithfulness decision 2026 04 19 - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#embeddings-decision-attune-rag-v01x-v020" class="md-skip">
+        <a href="#faithfulness-decision-attune-rag-v013" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Embeddings Decision (attune-rag v0.1.x / v0.2.0)
+              Faithfulness decision 2026 04 19
             
           </span>
         </div>
@@ -2874,14 +2874,23 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#faithfulness-decision-attune-rag-v013" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faithfulness Decision (attune-rag v0.1.3)
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#decision" class="md-nav__link">
@@ -2895,10 +2904,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prior-lesson-clarification" class="md-nav__link">
+  <a href="#experiment-design-experiments-1-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prior-lesson clarification
+        Experiment design (Experiments 1 + 2)
       
     </span>
   </a>
@@ -2906,10 +2915,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#baseline-keywordretriever-attune-help-051" class="md-nav__link">
+  <a href="#results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Baseline (KeywordRetriever, attune-help 0.5.1)
+        Results
       
     </span>
   </a>
@@ -2917,169 +2926,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#options-considered" class="md-nav__link">
+  <a href="#why-citation-wins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options considered
+        Why citation wins
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Options considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#option-a-keyword-retriever-tuning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option A — Keyword retriever tuning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#option-b-fastembed-onnx-local-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option B — fastembed (ONNX local embeddings)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#option-c-hosted-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option C — Hosted embeddings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#option-d-sentence-transformers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option D — sentence-transformers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#plan-of-record" class="md-nav__link">
+  <a href="#follow-up-wiring-in-v013" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plan of record
+        Follow-up wiring in v0.1.3
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Plan of record">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-25a-v01x-patch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2.5a (v0.1.x patch)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-25b-v020-conditional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2.5b (v0.2.0, conditional)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commitment-on-the-15-pt-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-commitment on the 15-pt gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-25a-result-attune-rag-011-2026-04-18" class="md-nav__link">
+  <a href="#what-we-did-not-do-and-why" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2.5a result (attune-rag 0.1.1, 2026-04-18)
+        What we did NOT do (and why)
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Phase 2.5a result (attune-rag 0.1.1, 2026-04-18)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#decision-proceed-to-phase-25b" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision: proceed to Phase 2.5b
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-25c-result-attune-help-070-attune-rag-012-2026-04-18" class="md-nav__link">
+  <a href="#residuals-worth-tracking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2.5c result (attune-help 0.7.0 + attune-rag 0.1.2, 2026-04-18)
+        Residuals worth tracking
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Phase 2.5c result (attune-help 0.7.0 + attune-rag 0.1.2, 2026-04-18)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#decision-phase-25b-deferred-indefinitely" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision: Phase 2.5b deferred indefinitely
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3114,417 +3000,189 @@
   
 
 
-<h1 id="embeddings-decision-attune-rag-v01x-v020">Embeddings Decision (attune-rag v0.1.x / v0.2.0)<a class="headerlink" href="#embeddings-decision-attune-rag-v01x-v020" title="Permanent link">&para;</a></h1>
-<p><strong>Date:</strong> 2026-04-17
-<strong>Decision gate:</strong> Task 2.5 of the RAG grounding spec v4.0
-(<a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md">.claude/plans/feature-rag-code-grounding-2026-04-17.md</a>).
+  <h1>Faithfulness decision 2026 04 19</h1>
+
+<h2 id="faithfulness-decision-attune-rag-v013">Faithfulness Decision (attune-rag v0.1.3)<a class="headerlink" href="#faithfulness-decision-attune-rag-v013" title="Permanent link">&para;</a></h2>
+<p><strong>Date:</strong> 2026-04-19
 <strong>Decision owner:</strong> Patrick Roebuck.
-<strong>Gate criteria (from spec):</strong> Adopt embeddings only if
-delta precision@1 &gt;= 15 pts AND install cost &lt;50MB AND no
-new network dependency at import time.</p>
+<strong>Context:</strong> After Phase 2.5c closed out retrieval work
+(P@1 73.3%, fastembed deferred), the remaining accuracy
+gap was <strong>faithfulness</strong> — the LLM retrieves correct
+passages but still drifts into prior knowledge.</p>
+<p><strong>Pre-committed gate:</strong> top prompt variant must reach
+mean faithfulness ≥ 0.85 to ship as the new default.
+Below that, escalate to experiment 3 (extract-then-answer
+two-stage pipeline).</p>
 <hr />
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p><strong>Sequence: keyword tuning first (v0.1.x), then
-<code>fastembed</code> fallback if the gate isn't met (v0.2.0).</strong></p>
+<p><strong>Ship <code>citation</code> as the default prompt variant in
+attune-rag v0.1.3. Experiment 3 is unnecessary.</strong></p>
+<p>Hallucination rate drops from <strong>46.7% → 6.7%</strong> vs
+baseline with identical retrieval quality. Mean
+faithfulness reaches <strong>1.00</strong> — the single residual
+unsupported claim is one of sixteen inside an already-hard
+query (<code>gq-013 "orchestrate documentation workflow"</code>).</p>
+<hr />
+<h2 id="experiment-design-experiments-1-2">Experiment design (Experiments 1 + 2)<a class="headerlink" href="#experiment-design-experiments-1-2" title="Permanent link">&para;</a></h2>
+<p>Built in attune-rag and run on 2026-04-19:</p>
 <ol>
-<li><strong>v0.1.x patch (next):</strong> category-biased keyword
-   tuning in <code>KeywordRetriever</code>. Boost <code>concepts/</code> and
-   <code>quickstarts/</code>, penalize <code>errors/faqs/warnings/</code>. Zero
-   new deps. Re-run <code>python -m attune_rag.benchmark</code> and
-   commit the new baseline back to this doc.</li>
-<li><strong>v0.2.0 (conditional):</strong> if v0.1.x clears the 70% P@1
-   gate, embeddings stay deferred indefinitely. If
-   v0.1.x plateaus, v0.2.0 ships <code>attune-rag[embeddings]</code>
-   using <strong><code>fastembed</code></strong> (ONNX-based local embeddings,
-   ~35MB install). <strong>Not sentence-transformers.</strong></li>
-<li><strong>Independent track:</strong> attune-help 0.6.0 metadata
-   enrichment (Approved Follow-up in the spec) is
-   pursued in parallel regardless of the embeddings
-   outcome, because it improves retrieval quality for
-   every retriever.</li>
+<li><strong>Faithfulness judge</strong> — <code>FaithfulnessJudge</code> at
+   <code>src/attune_rag/eval/faithfulness.py</code>. LLM-as-judge
+   using Anthropic forced tool-use for guaranteed-schema
+   JSON output. Decomposes each answer into atomic
+   factual claims, marks each supported / unsupported
+   against the retrieved passages, returns a 0-1 score.</li>
+<li><strong>Prompt surgery</strong> — three variants alongside
+   <code>baseline</code> in <code>src/attune_rag/prompts.py</code>:</li>
+<li><code>strict</code> — refuses to answer outside the context</li>
+<li><code>citation</code> — forces <code>[P1]</code> / <code>[P2]</code> markers per
+     claim, passages numbered at render time</li>
+<li><code>anti_prior</code> — tells the model its training data on
+     attune is stale and the context is authoritative</li>
+<li><strong>A/B runner</strong> — <code>attune_rag.eval.bench_prompts</code>
+   sweeps all four variants × 15 golden queries,
+   generates + judges each answer, prints a table. 120
+   LLM calls total (~$2, ~12 min sequential).</li>
 </ol>
 <hr />
-<h2 id="prior-lesson-clarification">Prior-lesson clarification<a class="headerlink" href="#prior-lesson-clarification" title="Permanent link">&para;</a></h2>
-<p>The CLAUDE.md lesson cited in the original spec ("Anthropic's
-built-in prompt caching supersedes custom caching") was about
-<strong>semantic caching</strong>, not <strong>RAG retrieval</strong>. Those are
-different problems with different ROI profiles:</p>
-<ul>
-<li>Semantic caching matches similar <em>queries</em> to cached
-  <em>responses</em> for cost savings. ROI is bounded by how often
-  attune workflow prompts happen to be similar in the wild.
-  In practice they rarely are (unique file paths, code
-  snippets, timestamps), so the ROI was measured at 0.4%.
-  Disabling it was correct.</li>
-<li>RAG retrieval matches <em>queries</em> to <em>documents</em> for
-  grounding. ROI is bounded by how often semantic
-  similarity beats keyword overlap. Our benchmark below
-  shows this happens for 6/15 queries — the entire "hard"
-  bucket.</li>
-</ul>
-<p>Reusing the caching lesson to reject RAG embeddings would
-over-generalize. But the lesson does correctly rule out the
-specific <code>sentence-transformers</code> + <code>torch</code> stack (420MB
-install), which fails the &lt;50MB gate regardless of ROI.</p>
-<hr />
-<h2 id="baseline-keywordretriever-attune-help-051">Baseline (KeywordRetriever, attune-help 0.5.1)<a class="headerlink" href="#baseline-keywordretriever-attune-help-051" title="Permanent link">&para;</a></h2>
-<p>From <code>python -m attune_rag.benchmark</code> against
-<code>tests/golden/queries.yaml</code> (15 queries):</p>
+<h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Metric</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Precision@1</td>
-<td>53.33% (8/15)</td>
-</tr>
-<tr>
-<td>Recall@3</td>
-<td>60.00% (9/15)</td>
-</tr>
-<tr>
-<td>Mean latency</td>
-<td>11.83 ms</td>
-</tr>
-<tr>
-<td>Max latency</td>
-<td>~48 ms</td>
-</tr>
-</tbody>
-</table>
-<p>Breakdown:</p>
-<table>
-<thead>
-<tr>
-<th>Difficulty</th>
+<th>variant</th>
 <th>P@1</th>
 <th>R@3</th>
+<th><strong>faith</strong></th>
+<th>refusal</th>
+<th><strong>hallu.</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Easy (5)</td>
-<td>4/5 (80%)</td>
-<td>5/5 (100%)</td>
+<td>baseline</td>
+<td>73.3%</td>
+<td>86.7%</td>
+<td>0.94</td>
+<td>0.0%</td>
+<td><strong>46.7%</strong></td>
 </tr>
 <tr>
-<td>Medium (4)</td>
-<td>4/4 (100%)</td>
-<td>4/4 (100%)</td>
+<td>strict</td>
+<td>73.3%</td>
+<td>86.7%</td>
+<td>0.97</td>
+<td>0.0%</td>
+<td>26.7%</td>
 </tr>
 <tr>
-<td>Hard (6)</td>
-<td><strong>0/6 (0%)</strong></td>
-<td><strong>0/6 (0%)</strong></td>
+<td><strong>citation</strong></td>
+<td>73.3%</td>
+<td>86.7%</td>
+<td><strong>1.00</strong></td>
+<td>0.0%</td>
+<td><strong>6.7%</strong></td>
+</tr>
+<tr>
+<td>anti_prior</td>
+<td>73.3%</td>
+<td>86.7%</td>
+<td>0.95</td>
+<td>0.0%</td>
+<td>33.3%</td>
 </tr>
 </tbody>
 </table>
-<p>All six hard failures share a single pattern: lesson / error
-/ faq files whose filename contains the query keywords
-outrank the <code>concepts/</code> or <code>quickstarts/</code> file that actually
-explains the feature. Examples:</p>
-<ul>
-<li><code>"look for dangerous eval calls"</code> returns
-  <code>errors/bug-predict-dangerous-eval-flags-subprocess-exec.md</code>
-  instead of <code>concepts/tool-bug-predict.md</code> because
-  the error filename literally contains "dangerous-eval".</li>
-<li><code>"vulnerability scan"</code> returns
-  <code>errors/dependency-lower-bounds-trigger-scorecard-vulnerability-alerts.md</code>
-  for the same reason.</li>
-<li><code>"plan a new feature"</code> returns
-  <code>concepts/tool-refactor-plan.md</code> (keyword collision on
-  "plan") and three <code>errors/new-*</code> files.</li>
-</ul>
-<p>Root cause is corpus distribution: attune-help has 147 error
-+ 144 faq + 105 warning files versus 43 concept + 41
-quickstart. Lesson files outnumber concept files ~4:1, so
-keyword matches land in lesson files disproportionately.</p>
+<p>Full per-query detail:
+<a href="../ab-report-2026-04-19.json">ab-report-2026-04-19.json</a>.</p>
+<p><strong>Read:</strong> <code>faith</code> = mean faithfulness score ∈ [0, 1];
+<code>hallu</code> = share of answers containing ≥1 unsupported
+claim; <code>refusal</code> = share of answers the judge parsed as
+zero-claim. Retrieval metrics (P@1, R@3) are identical
+across variants — as expected, retrieval is upstream of
+the prompt.</p>
 <hr />
-<h2 id="options-considered">Options considered<a class="headerlink" href="#options-considered" title="Permanent link">&para;</a></h2>
-<h3 id="option-a-keyword-retriever-tuning">Option A — Keyword retriever tuning<a class="headerlink" href="#option-a-keyword-retriever-tuning" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Install cost:</strong> 0</li>
-<li><strong>Network:</strong> no</li>
-<li><strong>Latency impact:</strong> negligible</li>
-<li><strong>Expected P@1 lift:</strong> +10–25 pts (closes 3–4 of 6 hard
-  queries)</li>
-<li><strong>Complexity:</strong> ~20 LOC in <code>retrieval.py</code>, a few new
-  tests, class attrs for category weights</li>
-</ul>
-<p>Candidate changes:</p>
+<h2 id="why-citation-wins">Why citation wins<a class="headerlink" href="#why-citation-wins" title="Permanent link">&para;</a></h2>
+<p>Two mechanisms, both causally downstream of the forced
+cite-per-claim requirement:</p>
 <ol>
-<li><strong>Category-weighted scoring.</strong> Multiply final score by
-   a per-category factor:</li>
-<li><code>concepts/</code>, <code>quickstarts/</code>, <code>tasks/</code>: <strong>1.5x</strong></li>
-<li><code>references/</code>, <code>comparisons/</code>: 1.0x</li>
-<li><code>tips/</code>, <code>notes/</code>, <code>troubleshooting/</code>: 0.9x</li>
-<li><code>errors/</code>, <code>warnings/</code>, <code>faqs/</code>: <strong>0.6x</strong></li>
-<li><strong>Strip long-filename boilerplate</strong> before path
-   tokenizing. Error filenames like <code>bug-predict-
-   dangerous-eval-flags-subprocess-exec.md</code> dump lesson-
-   title tokens into the path-score channel, which should
-   really only reflect feature names.</li>
-<li><strong>Boost first-heading token overlap</strong> instead of just
-   generic content overlap.</li>
+<li><strong>No citation = no claim.</strong> Unsupported sentences are
+   structurally awkward to produce. The model can't paste
+   a <code>[P1]</code> marker onto a claim it can't locate in the
+   passages without contradicting the template's
+   no-unsupported-cite rule — so it tends to drop the
+   sentence instead.</li>
+<li><strong>Citation acts as a self-check loop.</strong> Rendering
+   <code>[P1, P3]</code> forces the model to re-scan those specific
+   passages before emitting the sentence. That
+   re-verification catches drift at the point of
+   generation rather than relying on post-hoc filtering.</li>
 </ol>
-<p>Won't close the truly semantic gaps (<code>"plan a new feature"</code>
-vs <code>refactor-plan</code>), but will close the category-bias
-gaps.</p>
-<h3 id="option-b-fastembed-onnx-local-embeddings">Option B — <code>fastembed</code> (ONNX local embeddings)<a class="headerlink" href="#option-b-fastembed-onnx-local-embeddings" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Install cost:</strong> ~35MB (ONNX runtime + MiniLM model)</li>
-<li><strong>Network:</strong> no (after one-time model download at install)</li>
-<li><strong>Latency impact:</strong> ~30–80ms per query after warm-up;
-  ~1s cold-start to load the ONNX model</li>
-<li><strong>Expected P@1 lift:</strong> +25–40 pts (closes most / all 6
-  hard queries)</li>
-<li><strong>Complexity:</strong> new <code>EmbeddingRetriever</code> class,
-  pre-computed corpus embedding cache (~4MB), test
-  coverage for two retrievers, optional extra wiring.</li>
-</ul>
-<p>Why this over <code>sentence-transformers</code>:
-<code>sentence-transformers</code> carries the <code>torch</code> dep (~420MB),
-which fails the gate. <code>fastembed</code> was built specifically to
-avoid the torch tax — it ships ONNX models loaded via
-<code>onnxruntime</code>, which is ~10MB. Combined with a MiniLM model
-(~23MB), total install is ~35MB. Meets the gate.</p>
-<p>Why local over hosted:
-Hosted embeddings require a per-query network call, which
-technically satisfies the "no network at import time"
-language in the gate but introduces runtime network cost
-and provider churn. Local avoids both at the cost of install
-size. For a library whose default corpus is already bundled
-locally (attune-help), local embeddings are the right
-architectural fit.</p>
-<h3 id="option-c-hosted-embeddings">Option C — Hosted embeddings<a class="headerlink" href="#option-c-hosted-embeddings" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Install cost:</strong> ~1MB SDK dep per provider</li>
-<li><strong>Network:</strong> per query</li>
-<li><strong>Latency impact:</strong> 50–150ms network round trip</li>
-<li><strong>Expected P@1 lift:</strong> similar to Option B (semantic
-  similarity wins for the same reasons)</li>
-<li><strong>Complexity:</strong> provider adapters (matches existing
-  <code>attune_rag.providers.*</code> pattern), embedding cache
-  invalidation</li>
-<li><strong>Ongoing:</strong> provider churn (model renames, pricing)</li>
-<li>per-query API cost</li>
-</ul>
-<p>Considered but dispreferred vs Option B because network-at-
-query for a local corpus is a regression in operational
-posture. Kept on deck as a backup if fastembed hits quality
-issues on domains attune-help doesn't cover (multilingual,
-code-heavy, etc.).</p>
-<h3 id="option-d-sentence-transformers">Option D — <code>sentence-transformers</code><a class="headerlink" href="#option-d-sentence-transformers" title="Permanent link">&para;</a></h3>
-<p><strong>Rejected.</strong> 420MB install fails the &lt;50MB gate. Retained
-for historical reference because it's the strategy
-cited in the caching lesson.</p>
+<p><code>strict</code> and <code>anti_prior</code> address the same failure mode
+(prior-knowledge drift) with softer instructions.
+Neither creates the structural speed-bump that
+<code>citation</code> does, which is why they clear the gate but
+don't approach 1.00.</p>
 <hr />
-<h2 id="plan-of-record">Plan of record<a class="headerlink" href="#plan-of-record" title="Permanent link">&para;</a></h2>
-<h3 id="phase-25a-v01x-patch">Phase 2.5a (v0.1.x patch)<a class="headerlink" href="#phase-25a-v01x-patch" title="Permanent link">&para;</a></h3>
+<h2 id="follow-up-wiring-in-v013">Follow-up wiring in v0.1.3<a class="headerlink" href="#follow-up-wiring-in-v013" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Implement category-biased keyword tuning per Option A</li>
-<li>Re-run <code>attune-rag.benchmark</code>; append results section
-  below with before/after metrics</li>
-<li>If 70% P@1 gate cleared → ship v0.1.1; close this doc
-  as RESOLVED</li>
-<li>If plateau → proceed to Phase 2.5b</li>
+<li><code>RagPipeline.run(...)</code> and <code>run_and_generate(...)</code>
+  default to <code>prompt_variant="citation"</code>.</li>
+<li><code>python -m attune_rag.benchmark --with-faithfulness
+  --min-faithfulness 0.85</code> adds an opt-in faithfulness
+  gate to the existing retrieval benchmark. Default off
+  (the retrieval benchmark stays free / offline).</li>
+<li><code>attune_rag.eval</code> exposes <code>FaithfulnessJudge</code> and
+  <code>FaithfulnessResult</code> for third-party callers.</li>
 </ul>
-<h3 id="phase-25b-v020-conditional">Phase 2.5b (v0.2.0, conditional)<a class="headerlink" href="#phase-25b-v020-conditional" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Add <code>attune-rag[embeddings]</code> optional extra using
-  <code>fastembed</code> (option B)</li>
-<li>Implement <code>EmbeddingRetriever</code> behind the same
-  <code>RetrieverProtocol</code> so callers can swap in via
-  <code>RagPipeline(retriever=EmbeddingRetriever())</code></li>
-<li>Ship corpus embedding cache (auto-built on first use,
-  stored in user cache dir)</li>
-<li>Re-run benchmark with both retrievers; attach results</li>
-<li>Document the &lt;50MB gate as satisfied (measured install
-  size)</li>
-<li>Keep keyword retriever as the default so zero-dep users
-  aren't affected</li>
-</ul>
-<h3 id="pre-commitment-on-the-15-pt-gate">Pre-commitment on the 15-pt gate<a class="headerlink" href="#pre-commitment-on-the-15-pt-gate" title="Permanent link">&para;</a></h3>
-<p>The gate for Phase 2.5b is:</p>
-<ul>
-<li><strong>Precision@1 improvement &gt;= 15 pts</strong> over whatever
-  Phase 2.5a baseline we land</li>
-<li><strong>Install cost &lt; 50MB</strong> measured via <code>du</code> on a fresh
-  venv with the extra</li>
-<li><strong>No network dependency at import time</strong> — model
-  download at install is fine; network calls during
-  <code>import attune_rag</code> are not</li>
-</ul>
-<p>Writing this BEFORE running embedding experiments so a
-later "we already spent X days on this" argument can't
-move the gate.</p>
 <hr />
-<h2 id="phase-25a-result-attune-rag-011-2026-04-18">Phase 2.5a result (attune-rag 0.1.1, 2026-04-18)<a class="headerlink" href="#phase-25a-result-attune-rag-011-2026-04-18" title="Permanent link">&para;</a></h2>
-<p>Tuning landed: category weights, filename-length cap on
-path hits, and a minimal suffix stemmer. Re-ran
-<code>attune-rag.benchmark</code> against the same 15-query golden set
-and attune-help 0.5.1 corpus.</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Baseline (0.1.0)</th>
-<th>Tuned (0.1.1)</th>
-<th>Delta</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Precision@1</td>
-<td>53.33%</td>
-<td>66.67%</td>
-<td><strong>+13.34 pts</strong></td>
-</tr>
-<tr>
-<td>Recall@3</td>
-<td>60.00%</td>
-<td>73.33%</td>
-<td><strong>+13.33 pts</strong></td>
-</tr>
-<tr>
-<td>Easy P@1</td>
-<td>4/5</td>
-<td>5/5</td>
-<td>+1</td>
-</tr>
-<tr>
-<td>Medium P@1</td>
-<td>4/4</td>
-<td>4/4</td>
-<td>—</td>
-</tr>
-<tr>
-<td>Hard P@1</td>
-<td>0/6</td>
-<td>1/6</td>
-<td>+1</td>
-</tr>
-<tr>
-<td>Mean latency</td>
-<td>11.83 ms</td>
-<td>42.45 ms</td>
-<td>+30.6 ms</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Gate result: NOT MET (3.33 pts short of 70%).</strong> Landing
-at the top of Option A's predicted +10–25 pts range. The
-four unrecovered hard queries — <code>plan a new feature</code>,
-<code>vulnerability scan</code>, <code>orchestrate documentation workflow</code>,
-<code>look for dangerous eval calls</code> — have zero token overlap
-with their targets and require semantic similarity, exactly
-as anticipated above.</p>
-<h3 id="decision-proceed-to-phase-25b">Decision: proceed to Phase 2.5b<a class="headerlink" href="#decision-proceed-to-phase-25b" title="Permanent link">&para;</a></h3>
-<p>Per the pre-committed gate, v0.1.1 ships the tuning
-improvement and v0.2.0 adds <code>attune-rag[embeddings]</code> using
-<code>fastembed</code>. Keyword retrieval remains the default for
-zero-dep users.</p>
-<h2 id="phase-25c-result-attune-help-070-attune-rag-012-2026-04-18">Phase 2.5c result (attune-help 0.7.0 + attune-rag 0.1.2, 2026-04-18)<a class="headerlink" href="#phase-25c-result-attune-help-070-attune-rag-012-2026-04-18" title="Permanent link">&para;</a></h2>
-<p>After Phase 2.5a plateaued at 66.67% P@1, I ran a
-prototype: hand-crafted path-keyed keyword-rich summaries
-for one feature (bug-predict) and re-benchmarked. Result
-showed +40 pts P@1 for that feature, validating that the
-real ceiling wasn't the retriever but the corpus.
-Concretely: attune-help shipped summaries keyed by feature
-name (<code>"bug-predict"</code>) while <code>DirectoryCorpus</code> expected
-path-keyed (<code>"concepts/tool-bug-predict.md"</code>), so every
-one of 633 corpus entries silently had <code>summary=None</code> at
-retrieval time. The 1.5x <code>SUMMARY_WEIGHT</code> was applied to
-zero data.</p>
-<p>Shipped the fix as attune-help 0.7.0 (path-keyed
-<code>summaries_by_path.json</code>, 124 polished summaries across 26
-features, LLM polish pipeline with feature-
-differentiation hints) + attune-rag 0.1.2 (updated
-<code>AttuneHelpCorpus</code> to consume the new sidecar).</p>
-<p>Re-ran the 15-query golden benchmark against attune-help
-0.7.0 corpus with <code>AttuneHelpCorpus</code> + <code>KeywordRetriever</code>:</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>0.1.1 (tuning only)</th>
-<th>0.1.2 + 0.7.0</th>
-<th>Delta</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Precision@1</td>
-<td>66.67%</td>
-<td><strong>73.33%</strong></td>
-<td><strong>+6.66 pts</strong></td>
-</tr>
-<tr>
-<td>Recall@3</td>
-<td>73.33%</td>
-<td><strong>86.67%</strong></td>
-<td><strong>+13.34 pts</strong></td>
-</tr>
-<tr>
-<td>Easy P@1</td>
-<td>5/5</td>
-<td>4/5</td>
-<td>-1</td>
-</tr>
-<tr>
-<td>Medium P@1</td>
-<td>4/4</td>
-<td>4/4</td>
-<td>—</td>
-</tr>
-<tr>
-<td>Hard P@1</td>
-<td>1/6</td>
-<td>3/6</td>
-<td>+2</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Gate result: MET.</strong> Precision@1 73.33% clears the 70% gate by
-3.33 pts without any embeddings dependency.</p>
-<p>Corresponding multi-feature fixture benchmark (26 features ×
-25 queries = 650 queries) lands at 71.7% P@1 / 81.5% R@3 with
-similar margin.</p>
-<h3 id="decision-phase-25b-deferred-indefinitely">Decision: Phase 2.5b deferred indefinitely<a class="headerlink" href="#decision-phase-25b-deferred-indefinitely" title="Permanent link">&para;</a></h3>
-<p>Per the fastembed decision matrix (committed before this
-run):</p>
-<blockquote>
-<p>If Golden P@1 ≥ 80% AND industry fixture P@1 ≥ 70%:
-defer fastembed indefinitely.
-If Golden P@1 70-80%: ship fastembed as optional extra.</p>
-</blockquote>
-<p>Golden P@1 73.33% + fixture P@1 71.7% puts us in the middle
-band. Per the matrix, fastembed moves to <strong>optional extra</strong>
-status: we do NOT build it into the default attune-rag
-install, but we do keep the <code>attune-rag[embeddings]</code> extra
-slot reserved for a future contribution from users who need
-cross-corpus retrieval (where summaries don't exist).</p>
-<p>The immediate work is complete. Follow-up items:</p>
+<h2 id="what-we-did-not-do-and-why">What we did NOT do (and why)<a class="headerlink" href="#what-we-did-not-do-and-why" title="Permanent link">&para;</a></h2>
 <ul>
-<li>attune-help 0.7.1 — differentiation-tuning for the 6
-  features below the 60% per-feature P@1 gate (spec,
-  code-quality, planning, refactor-plan,
-  workflow-orchestration, security-audit).</li>
-<li>attune-rag — no further retrieval work planned unless
-  user need emerges for non-attune-help corpora.</li>
+<li><strong>Experiment 3 (extract-then-answer two-stage
+  pipeline).</strong> Pre-committed gate was ≥ 0.85 mean
+  faithfulness from the top variant. Citation cleared it
+  at 1.00. Building a two-stage pipeline that doubles
+  inference cost to fix a 6.7% hallucination rate would
+  regress ROI.</li>
+<li><strong>Tuning prompts further.</strong> The single failure is
+  inside a difficulty-hard query that was already
+  flagged in the golden set as a keyword collision. A
+  fixture-level fix (disambiguate the expected targets)
+  is cleaner than a prompt tweak that could regress
+  other variants.</li>
+<li><strong>Adding a faithfulness CI gate to every <code>pytest</code>
+  run.</strong> Every run would spend API tokens. The gate
+  lives on the opt-in benchmark command where the cost
+  is explicit.</li>
 </ul>
+<hr />
+<h2 id="residuals-worth-tracking">Residuals worth tracking<a class="headerlink" href="#residuals-worth-tracking" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Judge variance.</strong> A single judge model (Sonnet 4.6)
+  scoring itself as generator may systematically under-
+  call its own hallucinations. Worth a sanity check with
+  a second model (Opus or a non-Anthropic model) before
+  tightening the gate past 0.95.</li>
+<li><strong>Fixture coverage.</strong> 15 queries × 4 variants is
+  enough to decide between variants but under-powered
+  for detecting subtle regressions. Expand the golden
+  set to ~40-50 queries before relying on the
+  faithfulness gate as a sole CI signal.</li>
+<li><strong>Judge latency.</strong> Every <code>--with-faithfulness</code> run
+  spends ~2 min + ~$0.30 at the current 15-query set.
+  If we grow the fixture or run the gate on every PR,
+  this is the budget line to watch.</li>
+</ul>
+<hr />
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Spec: <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md">feature-rag-code-grounding-2026-04-17.md</a></li>
-<li>Benchmark harness: <a href="https://github.com/Smart-AI-Memory/attune-rag/blob/main/src/attune_rag/benchmark.py">attune-rag / src/attune_rag/benchmark.py</a></li>
-<li>Golden queries: <a href="https://github.com/Smart-AI-Memory/attune-rag/blob/main/tests/golden/queries.yaml">attune-rag / tests/golden/queries.yaml</a></li>
-<li><code>fastembed</code> project: https://github.com/qdrant/fastembed</li>
-<li>Prior caching lesson: <code>.claude/CLAUDE.md</code> → "Anthropic's
-  built-in prompt caching supersedes custom caching"</li>
+<li>attune-rag v0.1.3 CHANGELOG entry</li>
+<li>Judge: <code>src/attune_rag/eval/faithfulness.py</code></li>
+<li>Variants + registry:
+  <code>src/attune_rag/prompts.py</code> (<code>PROMPT_VARIANTS</code>)</li>
+<li>A/B runner:
+  <code>src/attune_rag/eval/bench_prompts.py</code></li>
+<li>Benchmark gate wiring:
+  <code>src/attune_rag/benchmark.py</code> (<code>--with-faithfulness</code>)</li>
 </ul>
 
 
