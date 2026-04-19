@@ -1977,3 +1977,92 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `uv run python -m ruff check tests/` before
   pushing test-refactor commits to avoid a CI-only
   failure across the whole matrix.
+
+- **Query fixtures are self-diagnostic for RAG corpora
+  even without wiring them into the retriever**:
+  Writing ~25 hand-crafted queries for one feature and
+  running them through the current pipeline exposed
+  which keywords are *missing from corpus entries*
+  without any code changes. For attune-rag bug-predict,
+  this revealed that patterns the feature literally
+  scans for ("race conditions", "memory leaks",
+  "subprocess injection") appear nowhere in its
+  summary or top-of-body prose — they live in error-
+  filename noise that the retriever penalizes. Result:
+  36% P@1 despite the target feature existing, because
+  query language and corpus content don't overlap.
+  Pattern: for any RAG-tuned library, before investing
+  in embeddings or retriever tuning, generate query
+  fixtures per feature and score them. The misses tell
+  you exactly what corpus content to write. Pairs well
+  with an LLM polish pipeline that consumes the
+  fixture keywords as `target_keywords`.
+
+- **Metadata can reach a retriever with zero signal if
+  the sidecar schema doesn't match the loader's
+  expected shape**: attune-rag's `DirectoryCorpus`
+  expected path-keyed `summaries.json`, but attune-help
+  0.5.1 shipped a feature-keyed one (`"security-audit":
+  "..."` instead of `"concepts/tool-security-audit.md":
+  "..."`). Result: every one of 633 corpus entries had
+  `summary=None` at retrieval time, making the 1.5x
+  `SUMMARY_WEIGHT` apply to zero data for months.
+  Always validate that metadata actually reaches the
+  retriever before spending time tuning retrieval
+  coefficients — a one-line check on
+  `sum(1 for e in corpus.entries() if e.summary)` would
+  have caught this in minutes instead of weeks.
+  Validated by a prototype that replaced the sidecar
+  schema on one feature and saw P@1 jump +40 pts
+  (bug-predict: 36% → 76%) without changing the
+  retriever at all.
+
+- **Hand-crafted summary prototype is the fastest way
+  to measure a RAG ceiling before committing to an
+  LLM polish pipeline**: Before building the 0.7.0
+  polish pipeline (hours of work + LLM budget), I
+  hand-crafted keyword-rich path-keyed summaries for
+  nine bug-predict templates in ~15 min, pointed a
+  scratch `DirectoryCorpus` at them, and reran the
+  fixture benchmark. The +40 pt P@1 result validated
+  the entire spec's thesis empirically. Pattern: for
+  any corpus-level improvement that will be automated
+  later, hand-craft one feature first and measure.
+  The hand-crafted result is the ceiling the
+  automation must approach. If hand-crafting
+  underperforms expectations, don't build the
+  automation at all.
+
+- **zsh has `status` as a read-only builtin variable**:
+  Shell scripts that do `status=$(...)` work in bash
+  but fail in zsh with "read-only variable: status".
+  Use `result=` or any other name instead. Relevant
+  when writing Monitor/polling scripts that capture a
+  command's output into a named variable — these often
+  run under /bin/bash -e in CI, but shell defaults
+  vary and the scripts may be invoked under zsh
+  locally. Repo guard: `tests/unit/ci/test_zsh_readonly
+  _assignments.py` scans all shell scripts + workflow
+  YAMLs for the pattern and fails CI if any script
+  assigns to `status`, `pipestatus`, or other zsh
+  readonly names.
+
+- **Industry terminology won't appear in LLM-polished
+  RAG summaries unless the prompt explicitly invites
+  common domain synonyms**: When polishing a
+  security-audit summary from the template body, the
+  LLM generated "hardcoded secrets, SQL injection,
+  path traversal" (grounded in the body) but missed
+  "CVE", "OWASP", "pen test", "backdoor" — industry
+  terms that don't appear in the body but are exactly
+  how users phrase queries. Empirical: the
+  security-audit fixture prototype hit 72% P@1 but
+  missed these specific queries; a 5-line prompt
+  addendum ("include domain terminology commonly used
+  in the industry even if it doesn't appear in the
+  template body, as long as it's a genuine synonym for
+  what the template describes") would close most of
+  them. Pattern: for any RAG polish pipeline over a
+  technical corpus, explicitly enumerate the industry
+  vocabulary in the prompt — the grounded-in-body rule
+  alone leaves queries on the table.
