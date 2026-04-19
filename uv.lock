@@ -185,7 +185,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.77.0"
+version = "0.96.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -197,9 +197,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/85/6cb5da3cf91de2eeea89726316e8c5c8c31e2d61ee7cb1233d7e95512c31/anthropic-0.77.0.tar.gz", hash = "sha256:ce36efeb80cb1e25430a88440dc0f9aa5c87f10d080ab70a1bdfd5c2c5fbedb4", size = 504575, upload-time = "2026-01-29T18:20:41.507Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/7e/672f533dee813028d2c699bfd2a7f52c9118d7353680d9aa44b9e23f717f/anthropic-0.96.0.tar.gz", hash = "sha256:9de947b737f39452f68aa520f1c2239d44119c9b73b0fb6d4e6ca80f00279ee6", size = 658210, upload-time = "2026-04-16T14:28:02.846Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/27/9df785d3f94df9ac72f43ee9e14b8120b37d992b18f4952774ed46145022/anthropic-0.77.0-py3-none-any.whl", hash = "sha256:65cc83a3c82ce622d5c677d0d7706c77d29dc83958c6b10286e12fda6ffb2651", size = 397867, upload-time = "2026-01-29T18:20:39.481Z" },
+    { url = "https://files.pythonhosted.org/packages/48/5a/72f33204064b6e87601a71a6baf8d855769f8a0c1eaae8d06a1094872371/anthropic-0.96.0-py3-none-any.whl", hash = "sha256:9a6e335a354602a521cd9e777e92bfd46ba6e115bf9bbfe6135311e8fb2015b2", size = 635930, upload-time = "2026-04-16T14:28:01.436Z" },
 ]
 
 [[package]]
@@ -428,7 +428,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-help", specifier = ">=0.5.1,<0.6" },
+    { name = "attune-help", specifier = ">=0.5.1,<0.8" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.0,<0.2" },
     { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
@@ -564,28 +564,28 @@ provides-extras = ["rag", "memory", "redis", "anthropic", "llm", "memdocs", "age
 
 [[package]]
 name = "attune-help"
-version = "0.5.1"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-frontmatter" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/47/4272b7839ebaf132cc7987ddf92fcfa664d1a6e9030bf95728bd787a423e/attune_help-0.5.1.tar.gz", hash = "sha256:c5e56290be78c5056f33f65c8ec6b98d9ebae0059c45352c80da7e402dd05e09", size = 407624, upload-time = "2026-04-12T13:36:56.47Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/7d/1272632cf6bca5d2e6d2458862fe3db27369c2807c5cef69822c9573b909/attune_help-0.7.0.tar.gz", hash = "sha256:e45fd10f66b7ba4d571e78f68565835e067005de874d0ba720c5e183e7881e77", size = 417299, upload-time = "2026-04-19T02:56:25.199Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/80/4b0dd224b2134577f051f3054c02b62054f034b9e0ef3874a145d8ad4371/attune_help-0.5.1-py3-none-any.whl", hash = "sha256:c6e74415223127860ea3c397a89abf21e31c572f5c87e387c23c9a916683f924", size = 694668, upload-time = "2026-04-12T13:36:54.75Z" },
+    { url = "https://files.pythonhosted.org/packages/70/47/4d0d60f7ab6c0d94abe0dca8060346771f781003e13f16682f496997ab45/attune_help-0.7.0-py3-none-any.whl", hash = "sha256:16067046c55f505271281606f90cd06cbecba59e697ba8781d7d1416d4baf8e9", size = 704311, upload-time = "2026-04-19T02:56:23.597Z" },
 ]
 
 [[package]]
 name = "attune-rag"
-version = "0.1.0"
+version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
     { name = "pyyaml" },
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/06/f1531583904edfc5a28e744028c8b1de7ff6bdabc80e0cfef0167e735dc9/attune_rag-0.1.0.tar.gz", hash = "sha256:d75d03fe06c6f6c5fca15b6297c364ab5f51777be5ff40cf8bdc643bffbad138", size = 17929, upload-time = "2026-04-18T04:03:10.867Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/95/4e2837289238845ec136053e0f02ceb87d1f5b51bbf6237efd2e86d9c6cb/attune_rag-0.1.4.tar.gz", hash = "sha256:567c33187a8b48615df4f1a28a532a63d1e397697eaadb83daa2fb5d470f96dc", size = 29058, upload-time = "2026-04-19T13:25:09.47Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/80/b2de4e7e53a4299b7f21e23a6dec189145f4a567779f4211c63cb78f139c/attune_rag-0.1.0-py3-none-any.whl", hash = "sha256:a7d402c4a8f7d4fdcb9737572c7c0741908db17a162f9a013fd4ac9c64744d3f", size = 22672, upload-time = "2026-04-18T04:03:09.316Z" },
+    { url = "https://files.pythonhosted.org/packages/64/37/d311bb803d9b45209a9146a520ef1d6009293080fe18de3372bbe290eb17/attune_rag-0.1.4-py3-none-any.whl", hash = "sha256:621b857f41c6801ad327a53ff801bf39b1c94e890a30c0d245e1e569d3229481", size = 35732, upload-time = "2026-04-19T13:25:07.939Z" },
 ]
 
 [[package]]

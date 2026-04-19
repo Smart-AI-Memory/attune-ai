@@ -72,7 +72,7 @@ dependencies = [
     "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    "attune-help>=0.5.1,<0.6",  # Progressive-depth help runtime + MCP tools. Upper cap: pre-1.0 minor bumps may break.
+    "attune-help>=0.5.1,<0.8",  # Progressive-depth help runtime + MCP tools. Cap raised from <0.6 to <0.8 to admit attune-help 0.7.0 (path-keyed summaries, CLI, Beta). 0.7.0 is additive; no API breaks per its CHANGELOG.
     # NOTE: attune-rag is an OPTIONAL extra, not a core dep.
     #  Install with `pip install 'attune-ai[rag]'` to enable
     #  the rag-code-gen workflow and rag_knowledge_query MCP
@@ -94,6 +94,17 @@ dependencies = [
 rag = [
     "attune-rag>=0.1.0,<0.2",
 ]
+
+# NOTE: an [author] extra for attune-author was considered
+# but deferred — attune-author 0.4.0 pins
+# `attune-help>=0.5.1,<0.6`, which conflicts with the
+# `>=0.7.0` requirement that attune-rag 0.1.4+ brings in
+# transitively. Bundling attune-author as an extra would
+# force attune-help back to 0.5.x and lose the polished-
+# summary path-keyed improvements. Install attune-author
+# ad-hoc (`uv pip install -e ../attune-author`) or run it
+# from its own project directory until attune-author bumps
+# its attune-help cap to `<0.8` in a 0.4.1 / 0.5.0 release.
 
 # Memory subsystem (requires Redis server 8.4+ recommended)
 memory = [
