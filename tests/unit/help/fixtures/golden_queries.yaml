@@ -21,12 +21,12 @@ queries:
   # security-audit
   - {id: sec-001, query: security-audit,              expected: security-audit, difficulty: easy}
   - {id: sec-002, query: audit,                       expected: security-audit, difficulty: medium}
-  - {id: sec-003, query: CVE,                         expected: security-audit, difficulty: hard}
+  - {id: sec-003, query: CVE,                         expected: security-audit, difficulty: medium} # promoted — cve tag added
 
   # code-quality
   - {id: cq-001,  query: code-quality,                expected: code-quality,   difficulty: easy}
   - {id: cq-002,  query: review,                      expected: code-quality,   difficulty: hard} # collides with deep-review
-  - {id: cq-003,  query: lint,                        expected: code-quality,   difficulty: hard}
+  - {id: cq-003,  query: lint,                        expected: code-quality,   difficulty: medium} # promoted — lint tag added
 
   # smart-test
   - {id: st-001,  query: smart-test,                  expected: smart-test,     difficulty: easy}
@@ -64,4 +64,4 @@ queries:
   # rag-grounding
   - {id: rg-001,  query: rag-grounding,               expected: rag-grounding,  difficulty: easy}
   - {id: rg-002,  query: grounding,                   expected: rag-grounding,  difficulty: medium}
-  - {id: rg-003,  query: retrieval,                   expected: rag-grounding,  difficulty: hard}
+  - {id: rg-003,  query: retrieval,                   expected: rag-grounding,  difficulty: medium} # promoted — memory desc "retrieval" -> "lookup"
