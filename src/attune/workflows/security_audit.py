@@ -27,8 +27,12 @@ from .agent_sdk_adapter import (
     AgentSDKResultAdapter,
     build_result_text,
     collect_agent_output,
+    collect_subagent_transcripts,
+    format_subagent_transcripts_markdown,
     get_max_budget_usd,
     get_subagent_model,
+    get_task_budget,
+    get_thinking_config,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -135,6 +139,21 @@ class SecurityAuditWorkflow(BaseWorkflow):
             run_result = await self._run_agent_audit(resolved_path, max_turns, depth)
             completed_at = datetime.now()
 
+            # Recover per-subagent findings from the session transcript
+            # so the orchestrator's synthesis is no longer a single point
+            # of data loss. See: 6.2.0 spec feature-agent-sdk-0163-uplift
+            # task #1, and the "SDK adapter swallows subagent findings"
+            # lesson in .claude/CLAUDE.md.
+            transcripts = await collect_subagent_transcripts(run_result.session_id)
+            rendered_transcripts = format_subagent_transcripts_markdown(transcripts)
+            if rendered_transcripts:
+                base_text = run_result.result_text or ""
+                run_result.result_text = (
+                    f"{base_text}\n\n## Subagent findings\n\n{rendered_transcripts}"
+                    if base_text and base_text != "No results returned."
+                    else f"## Subagent findings\n\n{rendered_transcripts}"
+                )
+
             return AgentSDKResultAdapter.from_agent_output(
                 result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
@@ -144,6 +163,7 @@ class SecurityAuditWorkflow(BaseWorkflow):
                     "path": resolved_path,
                     "depth": depth,
                     "max_turns": max_turns,
+                    "subagent_transcripts": transcripts,
                 },
                 agent_run_result=run_result,
             )
@@ -179,6 +199,19 @@ class SecurityAuditWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
+
+        # Token-aware budget (SDK 0.1.51+): the model sees remaining
+        # budget and paces itself instead of getting cut mid-exploration.
+        # Deep runs additionally engage extended thinking for richer
+        # architecture / remediation-planner output. See 6.2.0 spec
+        # task #2.
+        extra_opts: dict[str, Any] = {}
+        if (task_budget := get_task_budget(depth)) is not None:
+            extra_opts["task_budget"] = task_budget
+        if (thinking := get_thinking_config(depth)) is not None:
+            extra_opts["thinking"] = thinking
+            extra_opts["effort"] = "high"
+
         async for message in claude_agent_sdk.query(
             prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
@@ -189,6 +222,7 @@ class SecurityAuditWorkflow(BaseWorkflow):
                 permission_mode="default",
                 max_turns=max_turns,
                 output_format=WORKFLOW_OUTPUT_SCHEMA,
+                **extra_opts,
                 agents={
                     "vuln-scanner": claude_agent_sdk.AgentDefinition(
                         description=("Vulnerability scanner that finds " "injection flaws."),

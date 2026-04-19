@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "6.1.0"
+version = "6.2.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -67,7 +67,7 @@ dependencies = [
     "typer>=0.9.0,<1.0.0",  # Better CLI commands
     "pyyaml>=6.0,<7.0",  # Required by workflows (bug_predict, etc.)
     "anthropic>=0.40.0,<1.0.0",  # Core LLM provider (direct SDK usage)
-    "claude-agent-sdk>=0.1.0,<1.0.0",  # Agents SDK for workflow execution
+    "claude-agent-sdk>=0.1.60,<1.0.0",  # Agents SDK for workflow execution. Floor bumped in 6.2.0 to admit list_subagents/get_subagent_messages (transcript recovery) and TaskBudget (token-aware pacing) as first-class features; older SDKs degrade gracefully but miss the 6.2.0 headline wins.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
     "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)

@@ -30,6 +30,8 @@ from .agent_sdk_adapter import (
     build_result_text,
     collect_agent_output,
     get_max_budget_usd,
+    get_task_budget,
+    get_thinking_config,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -248,6 +250,13 @@ class RagCodeGenWorkflow(BaseWorkflow):
         }
         if model:
             options_kwargs["model"] = model
+        # Token-aware budget + optional extended thinking (deep runs only).
+        # See agent_sdk_adapter.get_task_budget / get_thinking_config.
+        if (task_budget := get_task_budget(depth)) is not None:
+            options_kwargs["task_budget"] = task_budget
+        if (thinking := get_thinking_config(depth)) is not None:
+            options_kwargs["thinking"] = thinking
+            options_kwargs["effort"] = "high"
 
         async for message in claude_agent_sdk.query(
             prompt=augmented_prompt,

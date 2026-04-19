@@ -91,6 +91,152 @@ def collect_agent_output(
     return None
 
 
+async def collect_subagent_transcripts(
+    session_id: str | None,
+) -> dict[str, list[str]]:
+    """Return per-subagent text transcripts for a completed run.
+
+    Multi-subagent workflows (``security_audit``, ``code_review``)
+    spawn parallel subagents via the SDK's ``Agent`` tool. The
+    orchestrator's top-level ``AssistantMessage`` stream only
+    surfaces what it chose to synthesize — per-subagent
+    exploration is lost if the orchestrator summarizes tersely
+    or hits the budget/turn cap. This helper reads each
+    subagent's JSONL transcript from the session's directory
+    and returns the raw assistant-text chunks so consumers can
+    attach them to the ``WorkflowResult``.
+
+    Args:
+        session_id: ``AgentRunResult.session_id`` from a completed
+            SDK run. Pass ``None`` when unknown — the helper
+            returns an empty dict rather than raising.
+
+    Returns:
+        Dict keyed by subagent ID (NOT name — the SDK stores
+        transcripts under their generated IDs; human-readable
+        subagent names live inside each message). Values are
+        lists of assistant-text chunks in original order.
+        Empty dict when ``session_id`` is None, the SDK version
+        doesn't expose ``list_subagents`` / ``get_subagent_messages``,
+        or the transcript directory is missing.
+    """
+    if not session_id:
+        return {}
+
+    list_fn = getattr(claude_agent_sdk, "list_subagents", None)
+    get_fn = getattr(claude_agent_sdk, "get_subagent_messages", None)
+    if list_fn is None or get_fn is None:
+        logger.debug(
+            "collect_subagent_transcripts: SDK %s lacks list_subagents / "
+            "get_subagent_messages — skipping enrichment",
+            getattr(claude_agent_sdk, "__version__", "unknown"),
+        )
+        return {}
+
+    try:
+        subagent_ids = list_fn(session_id)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: transcript enrichment is best-effort.
+        # Any failure reading session storage (missing directory,
+        # permission error, disk I/O hiccup, schema drift) should
+        # return an empty dict so callers emit the normal result
+        # without the enrichment block.
+        logger.debug(
+            "collect_subagent_transcripts: list_subagents(%s) failed",
+            session_id,
+            exc_info=True,
+        )
+        return {}
+
+    transcripts: dict[str, list[str]] = {}
+    for agent_id in subagent_ids:
+        try:
+            messages = get_fn(session_id, agent_id)
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: one broken subagent transcript must
+            # not prevent the others from being recovered.
+            logger.debug(
+                "collect_subagent_transcripts: get_subagent_messages(%s, %s) failed",
+                session_id,
+                agent_id,
+                exc_info=True,
+            )
+            continue
+        texts = _extract_assistant_texts(messages)
+        if texts:
+            transcripts[agent_id] = texts
+    return transcripts
+
+
+def format_subagent_transcripts_markdown(
+    transcripts: dict[str, list[str]],
+    max_chars_per_agent: int = 2000,
+) -> str:
+    """Render recovered subagent transcripts as a markdown block.
+
+    Produces one ``### <agent_id>`` subsection per subagent.
+    Each subsection concatenates the agent's text chunks and
+    truncates to ``max_chars_per_agent`` with a ``[truncated,
+    full transcript in metadata]`` footer — the full content
+    stays available under ``metadata["subagent_transcripts"]``
+    for programmatic consumers.
+
+    Returns an empty string when ``transcripts`` is empty so
+    callers can safely concatenate.
+    """
+    if not transcripts:
+        return ""
+    parts: list[str] = []
+    for agent_id, texts in transcripts.items():
+        joined = "\n\n".join(t.strip() for t in texts if t and t.strip())
+        if not joined:
+            continue
+        truncated_note = ""
+        if len(joined) > max_chars_per_agent:
+            joined = joined[:max_chars_per_agent]
+            truncated_note = (
+                "\n\n_[truncated; full transcript in " '`metadata["subagent_transcripts"]`]_'
+            )
+        parts.append(f"### {agent_id}\n\n{joined}{truncated_note}")
+    return "\n\n".join(parts)
+
+
+def _extract_assistant_texts(messages: Any) -> list[str]:
+    """Pull assistant text blocks out of a subagent's transcript.
+
+    Each ``SessionMessage`` carries a ``message`` field whose
+    shape follows the Anthropic API. We only care about
+    ``assistant``-typed messages' text content, in the order
+    they were emitted.
+    """
+    out: list[str] = []
+    if not messages:
+        return out
+    for msg in messages:
+        if getattr(msg, "type", None) != "assistant":
+            continue
+        payload = getattr(msg, "message", None)
+        if not payload:
+            continue
+        content = payload.get("content") if isinstance(payload, dict) else None
+        if content is None:
+            continue
+        # content can be a string OR a list of typed blocks.
+        if isinstance(content, str):
+            if content.strip():
+                out.append(content)
+            continue
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") != "text":
+                continue
+            text = block.get("text", "")
+            if text:
+                out.append(text)
+    return out
+
+
 def build_result_text(
     assistant_parts: list[str],
     result_parts: list[str],
@@ -139,6 +285,69 @@ _DEFAULT_BUDGET_USD: dict[str, float] = {
     "standard": 10.00,
     "deep": 25.00,
 }
+
+
+_DEFAULT_TASK_BUDGET_TOKENS: dict[str, int] = {
+    "quick": 20_000,
+    "standard": 80_000,
+    "deep": 200_000,
+}
+
+
+def get_task_budget(depth: str = "standard") -> Any:
+    """Build a token-aware ``TaskBudget`` for a workflow depth.
+
+    Pairs with :func:`get_max_budget_usd` — the USD cap is the
+    hard safety net; the ``TaskBudget`` is the primitive the
+    model actually sees, so it can pace itself and wrap up
+    cleanly instead of getting cut mid-exploration. Available
+    since ``claude-agent-sdk`` 0.1.51.
+
+    Override the per-depth default via the
+    ``ATTUNE_TASK_BUDGET_TOKENS`` env var (positive integer;
+    unset or 0 falls back to the depth default).
+
+    Returns ``None`` when the installed SDK doesn't expose
+    ``TaskBudget`` so callers can treat it as a no-op field.
+    """
+    budget_cls = getattr(claude_agent_sdk, "TaskBudget", None)
+    if budget_cls is None:
+        return None
+    override = os.environ.get("ATTUNE_TASK_BUDGET_TOKENS")
+    if override:
+        try:
+            val = int(override)
+            if val > 0:
+                return budget_cls(total=val)
+        except ValueError:
+            logger.warning(
+                "ATTUNE_TASK_BUDGET_TOKENS=%r not an int; falling back to depth default",
+                override,
+            )
+    total = _DEFAULT_TASK_BUDGET_TOKENS.get(depth, 80_000)
+    return budget_cls(total=total)
+
+
+def get_thinking_config(depth: str = "standard") -> Any:
+    """Return an ``ThinkingConfigAdaptive`` for deep runs, else None.
+
+    Deep-depth workflows spend 40+ turns of budget and benefit
+    materially from extended thinking on architecture /
+    remediation-planner subagents. Shallow runs don't need it
+    and paying for it is waste. Available since
+    ``claude-agent-sdk`` 0.1.36; replaces the deprecated
+    ``max_thinking_tokens`` knob.
+
+    Callers should do ``if cfg := get_thinking_config(depth):``
+    and only include ``thinking=cfg`` + ``effort="high"`` in
+    the options when non-None.
+    """
+    if depth != "deep":
+        return None
+    cfg_cls = getattr(claude_agent_sdk, "ThinkingConfigAdaptive", None)
+    if cfg_cls is None:
+        return None
+    return cfg_cls()
 
 
 def get_max_budget_usd(depth: str = "standard") -> float | None:

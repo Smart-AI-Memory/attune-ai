@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-04-19
+
+### Added — Agent SDK 0.1.63 uplift (quality + UX axis)
+
+Driven by a focused survey of new `claude-agent-sdk` surface
+between 0.1.34 and 0.1.63. Spec:
+[`.claude/plans/feature-agent-sdk-0163-uplift-2026-04-19.md`](.claude/plans/feature-agent-sdk-0163-uplift-2026-04-19.md).
+
+- **Subagent transcript recovery in multi-subagent workflows**
+  (new `collect_subagent_transcripts` +
+  `format_subagent_transcripts_markdown` in
+  `agent_sdk_adapter.py`). After the orchestrator's stream
+  closes, `security_audit` and `code_review` now read each
+  subagent's raw transcript from the session's JSONL storage
+  via SDK 0.1.60's `list_subagents` /
+  `get_subagent_messages` and attach:
+  - a condensed markdown block under a `## Subagent
+    findings` heading on `WorkflowResult.final_output`
+    (per-subagent sections, ≤2 KB each, truncation noted
+    in the rendered text), and
+  - the full transcripts under
+    `WorkflowResult.metadata["subagent_transcripts"]` keyed
+    by SDK-assigned subagent ID (machine consumers get the
+    lossless version).
+
+  Addresses the "SDK adapter swallows subagent findings"
+  lesson — the orchestrator's synthesis is no longer a
+  single point of data loss. Degrades cleanly (returns
+  `{}`) when run against SDKs <0.1.60 or when the session
+  storage is missing. Eight unit tests cover the helper's
+  behavior.
+
+- **Token-aware `TaskBudget` + optional extended thinking on
+  deep runs** across `security_audit`, `code_review`, and
+  `rag_code_gen`. New helpers in `agent_sdk_adapter.py`:
+  - `get_task_budget(depth)` — returns a `TaskBudget(total=N)`
+    with depth-based defaults (quick=20k, standard=80k,
+    deep=200k tokens) or an `ATTUNE_TASK_BUDGET_TOKENS` env
+    override. SDK 0.1.51+.
+  - `get_thinking_config(depth)` — returns a
+    `ThinkingConfigAdaptive()` only for `depth="deep"`, else
+    `None`. SDK 0.1.36+.
+
+  Workflows pass `task_budget` on every run and
+  `thinking=... + effort="high"` only when
+  `depth=="deep"` so quick/standard runs don't pay for
+  thinking they didn't request. Addresses the "budget-cap
+  silent early termination" lesson — the model now sees
+  the remaining budget and paces itself instead of getting
+  cut mid-exploration. Fourteen unit tests cover the
+  helpers and per-depth wiring on every workflow.
+
+### Changed
+
+- **`claude-agent-sdk` lower bound raised from `>=0.1.0` to
+  `>=0.1.60,<1.0.0`** so new installs automatically get
+  the headline 6.2.0 features working. Older SDKs degrade
+  cleanly but miss these wins.
+
+### Investigated but not shipped
+
+- `SystemPromptPreset(exclude_dynamic_sections=...)` was
+  identified by the initial research pass as a path to
+  cross-run prompt cache hits. Post-implementation
+  inspection showed the real API only wraps Claude Code's
+  `"claude_code"` preset and `exclude_dynamic_sections`
+  is a **boolean** (not a list of section names), so it
+  doesn't apply to our custom `_SYSTEM_PROMPT` strings.
+  Our static system prompts are already cache-friendly
+  and `cwd=` is a tool-execution config field (not
+  injected into the prompt stream), so there was no
+  cache problem to fix. Documented in the spec's
+  post-implementation note.
+
+### Test surface
+
++22 unit tests (8 transcript-recovery + 14 budget/thinking
+wiring). Full test suite continues to pass; no behavioral
+regressions in the `rag or mcp or agent_sdk or
+helper_adapter` slice (~2600 tests).
+
+## [6.1.0 — earlier work / Unreleased at time of writing]
+
 ### Added
 
 - **RAG-grounded code generation (new `[rag]` optional
