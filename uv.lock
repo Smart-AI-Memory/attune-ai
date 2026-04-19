@@ -309,6 +309,9 @@ all = [
 anthropic = [
     { name = "anthropic" },
 ]
+author = [
+    { name = "attune-author" },
+]
 backend = [
     { name = "bcrypt" },
     { name = "fastapi" },
@@ -428,6 +431,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
+    { name = "attune-author", marker = "extra == 'author'", editable = "../attune-author" },
     { name = "attune-help", specifier = ">=0.5.1,<0.8" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.0,<0.2" },
     { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
@@ -560,7 +564,40 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'backend'", specifier = ">=0.20.0,<1.0.0" },
     { name = "uvicorn", marker = "extra == 'enterprise'", specifier = ">=0.20.0,<1.0.0" },
 ]
-provides-extras = ["rag", "memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
+provides-extras = ["rag", "author", "memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "socratic", "backend", "lsp", "windows", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
+
+[[package]]
+name = "attune-author"
+version = "0.4.1"
+source = { editable = "../attune-author" }
+dependencies = [
+    { name = "attune-help" },
+    { name = "jinja2" },
+    { name = "python-frontmatter" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'ai'", specifier = ">=0.40.0" },
+    { name = "anthropic", marker = "extra == 'dev'", specifier = ">=0.40.0" },
+    { name = "anthropic", marker = "extra == 'plugin'", specifier = ">=0.40.0" },
+    { name = "attune-help", specifier = ">=0.5.1,<0.8" },
+    { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
+    { name = "black", marker = "extra == 'dev'", specifier = ">=24.0" },
+    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "jinja2", specifier = ">=3.1.0" },
+    { name = "mcp", marker = "extra == 'dev'", specifier = ">=0.9.0" },
+    { name = "mcp", marker = "extra == 'plugin'", specifier = ">=0.9.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
+    { name = "python-frontmatter", specifier = ">=1.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rich", marker = "extra == 'rich'", specifier = ">=13.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
+    { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0" },
+]
+provides-extras = ["ai", "rag", "plugin", "rich", "dev"]
 
 [[package]]
 name = "attune-help"

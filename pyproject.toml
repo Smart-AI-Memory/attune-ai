@@ -95,16 +95,21 @@ rag = [
     "attune-rag>=0.1.0,<0.2",
 ]
 
-# NOTE: an [author] extra for attune-author was considered
-# but deferred — attune-author 0.4.0 pins
-# `attune-help>=0.5.1,<0.6`, which conflicts with the
-# `>=0.7.0` requirement that attune-rag 0.1.4+ brings in
-# transitively. Bundling attune-author as an extra would
-# force attune-help back to 0.5.x and lose the polished-
-# summary path-keyed improvements. Install attune-author
-# ad-hoc (`uv pip install -e ../attune-author`) or run it
-# from its own project directory until attune-author bumps
-# its attune-help cap to `<0.8` in a 0.4.1 / 0.5.0 release.
+# Help authoring (generate / regenerate / polish the
+# project's own `.help/` templates). Optional because
+# most consumers of attune-ai don't edit help content.
+# Local devs working on attune-ai itself should install
+# this — it backs the `help_maintain` MCP tool and lets
+# the `attune-author` CLI run inside this venv without
+# a sibling checkout. `[tool.uv.sources]` (below) routes
+# to the sibling path for workspace dev; PyPI is the
+# fallback. Floor is `>=0.4.1` because 0.4.0 capped
+# `attune-help<0.6`, which would force-downgrade
+# attune-help back below 0.7.0 and collide with the
+# `>=0.7.0` requirement from attune-rag 0.1.4+.
+author = [
+    "attune-author>=0.4.1,<0.5",
+]
 
 # Memory subsystem (requires Redis server 8.4+ recommended)
 memory = [
