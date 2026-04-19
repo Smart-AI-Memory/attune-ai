@@ -233,6 +233,37 @@ move the gate.
 
 ---
 
+## Phase 2.5a result (attune-rag 0.1.1, 2026-04-18)
+
+Tuning landed: category weights, filename-length cap on
+path hits, and a minimal suffix stemmer. Re-ran
+`attune-rag.benchmark` against the same 15-query golden set
+and attune-help 0.5.1 corpus.
+
+| Metric | Baseline (0.1.0) | Tuned (0.1.1) | Delta |
+|---|---|---|---|
+| Precision@1 | 53.33% | 66.67% | **+13.34 pts** |
+| Recall@3 | 60.00% | 73.33% | **+13.33 pts** |
+| Easy P@1 | 4/5 | 5/5 | +1 |
+| Medium P@1 | 4/4 | 4/4 | — |
+| Hard P@1 | 0/6 | 1/6 | +1 |
+| Mean latency | 11.83 ms | 42.45 ms | +30.6 ms |
+
+**Gate result: NOT MET (3.33 pts short of 70%).** Landing
+at the top of Option A's predicted +10–25 pts range. The
+four unrecovered hard queries — `plan a new feature`,
+`vulnerability scan`, `orchestrate documentation workflow`,
+`look for dangerous eval calls` — have zero token overlap
+with their targets and require semantic similarity, exactly
+as anticipated above.
+
+### Decision: proceed to Phase 2.5b
+
+Per the pre-committed gate, v0.1.1 ships the tuning
+improvement and v0.2.0 adds `attune-rag[embeddings]` using
+`fastembed`. Keyword retrieval remains the default for
+zero-dep users.
+
 ## Links
 
 - Spec: [feature-rag-code-grounding-2026-04-17.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md)
