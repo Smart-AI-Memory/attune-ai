@@ -1,0 +1,67 @@
+# Golden-query fixtures for .help/ feature resolution.
+#
+# Each query asserts what feature resolve_topic() should return.
+# Queries are labelled easy/medium/hard:
+#
+#   easy   — should always pass (feature-name synonym)
+#   medium — paraphrase of the description, may need corpus/tag
+#            changes to pass reliably
+#   hard   — industry/domain terminology that doesn't appear in
+#            feature name, description, or tags today; expected
+#            to fail, pytest marks as xfail. Tracks the ceiling.
+#
+# When this file changes, tests/unit/help/test_golden_queries.py
+# re-runs the benchmark and reports P@1 in the test output.
+# Growing this file with real queries from
+# scripts/summarize_help_telemetry.py is the intended workflow.
+
+version: 1
+
+queries:
+  # security-audit
+  - {id: sec-001, query: security-audit,              expected: security-audit, difficulty: easy}
+  - {id: sec-002, query: audit,                       expected: security-audit, difficulty: medium}
+  - {id: sec-003, query: CVE,                         expected: security-audit, difficulty: hard}
+
+  # code-quality
+  - {id: cq-001,  query: code-quality,                expected: code-quality,   difficulty: easy}
+  - {id: cq-002,  query: review,                      expected: code-quality,   difficulty: hard} # collides with deep-review
+  - {id: cq-003,  query: lint,                        expected: code-quality,   difficulty: hard}
+
+  # smart-test
+  - {id: st-001,  query: smart-test,                  expected: smart-test,     difficulty: easy}
+  - {id: st-002,  query: coverage,                    expected: smart-test,     difficulty: medium}
+  - {id: st-003,  query: pytest,                      expected: smart-test,     difficulty: medium} # promoted — works today
+
+  # doc-gen
+  - {id: dg-001,  query: doc-gen,                     expected: doc-gen,        difficulty: easy}
+  - {id: dg-002,  query: documentation,               expected: doc-gen,        difficulty: medium}
+  - {id: dg-003,  query: docstrings,                  expected: doc-gen,        difficulty: medium} # promoted — works today
+
+  # bug-predict
+  - {id: bp-001,  query: bug-predict,                 expected: bug-predict,    difficulty: easy}
+  - {id: bp-002,  query: bugs,                        expected: bug-predict,    difficulty: hard} # collides with code-quality body
+  - {id: bp-003,  query: race condition,              expected: bug-predict,    difficulty: hard}
+
+  # release-prep
+  - {id: rp-001,  query: release-prep,                expected: release-prep,   difficulty: easy}
+  - {id: rp-002,  query: release,                     expected: release-prep,   difficulty: medium}
+  - {id: rp-003,  query: changelog,                   expected: release-prep,   difficulty: medium} # promoted — works today
+
+  # refactor-plan
+  - {id: rf-001,  query: refactor-plan,               expected: refactor-plan,  difficulty: easy}
+  - {id: rf-002,  query: refactor,                    expected: refactor-plan,  difficulty: medium}
+  - {id: rf-003,  query: tech debt,                   expected: refactor-plan,  difficulty: hard}
+
+  # deep-review
+  - {id: dr-001,  query: deep-review,                 expected: deep-review,    difficulty: easy}
+  - {id: dr-002,  query: comprehensive review,        expected: deep-review,    difficulty: hard} # ambiguous vs code-quality
+
+  # fix-test
+  - {id: ft-001,  query: fix-test,                    expected: fix-test,       difficulty: easy}
+  - {id: ft-002,  query: failing tests,               expected: fix-test,       difficulty: medium}
+
+  # rag-grounding
+  - {id: rg-001,  query: rag-grounding,               expected: rag-grounding,  difficulty: easy}
+  - {id: rg-002,  query: grounding,                   expected: rag-grounding,  difficulty: medium}
+  - {id: rg-003,  query: retrieval,                   expected: rag-grounding,  difficulty: hard}
