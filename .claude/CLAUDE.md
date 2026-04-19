@@ -2464,3 +2464,88 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   using string prompts; `SystemPromptPreset` only
   applies when building on top of the claude_code
   preset.
+
+- **`mcp__attune-ai__doc_orchestrator` is a no-op
+  stub**: calling the MCP tool on a real project
+  returns `{items_found: 0, docs_generated: [],
+  docs_updated: [], total_cost: 0.0, phase:
+  "complete", success: true}` — looks like a clean
+  pass but did zero actual analysis. Don't trust a
+  cost-zero MCP workflow response as evidence that
+  work was attempted; verify by spot-checking the
+  filesystem or running a direct script that's known
+  to work. For real doc gap analysis today, skip the
+  MCP tools and do a direct `ast` parse + docstring
+  check in Bash — takes seconds and actually returns
+  signal.
+
+- **`release: published` + `workflow_dispatch` both
+  approved for `pypi` env = duplicate publish, the
+  second fails "File already exists"**: on v6.2.0,
+  approving the `pypi` environment deployment on BOTH
+  the tag-triggered (`release: published`) and manual
+  (`workflow_dispatch`) runs caused the first to
+  upload successfully and the second to 400 with
+  `File already exists ('attune_ai-6.2.0-py3-none-any
+  .whl', with blake2_256 hash ...)`. The release is
+  fine — files are live on PyPI — but the failed run
+  looks alarming. Two fixes: (1) only approve ONE of
+  the two runs per release; (2) guard the publish
+  job with `if: ${{ github.event_name ==
+  'workflow_dispatch' }}` so tag-triggered runs
+  short-circuit before twine uploads. Related to the
+  existing `pypi` env branch-policy lesson — that
+  one bites when only tag-triggered runs exist; this
+  one bites when both paths are enabled and both get
+  approved.
+
+- **YAML `run:` block scalars break on blank lines
+  inside multi-line bash strings**: a `run:` block
+  containing `git commit -m "line1\n\nline2"` (with a
+  literal blank line in the heredoc) fails with
+  `Implicit keys need to be on a single line`
+  errors, because YAML's literal block scalar
+  interprets the blank line as terminating the
+  scalar. Fix: build multi-line strings via shell
+  grouping `{ echo 'line1'; echo; echo 'line2'; } >
+  /tmp/msg.txt`, then pass via `-F /tmp/msg.txt`
+  (git commit) or `--body-file /tmp/msg.txt` (gh pr
+  create). Related to the existing "YAML `run:`
+  values with colons cause parse errors" lesson but
+  the trigger is different — blank lines, not colons.
+  Always verify YAML validity before pushing:
+  `python -c "import yaml; yaml.safe_load(open('<
+  workflow>.yml'))"`.
+
+- **Orphan .help/ dirs are deprecated 3-depth output;
+  adding them to features.yaml triggers regen that
+  overwrites the content you wanted to preserve**:
+  the naive instinct when faced with orphan template
+  dirs (`.help/templates/security/`,
+  `.help/templates/workflows/` — both 3-kind leftovers
+  from the in-repo 3-depth generator) is "add to
+  manifest to keep them current." But attune-author's
+  `--all-kinds` regen on the next weekly run
+  overwrites all 3 files with 11 new ones — the
+  "preservation" is imaginary. Also, broad-named
+  orphans (`security`, `workflows`) collide with
+  existing feature names (`security-audit`, individual
+  workflow features) on RAG retrieval per the mutual-
+  competition lesson. Correct path: delete the orphan
+  dirs. Git history is the archive.
+
+- **`attune_author.check_staleness` +
+  `load_manifest` is the Python API for programmatic
+  stale detection**: the `attune-author status` CLI
+  emits only markdown tables. Parsing those with awk
+  is brittle (divider rows sneak through, feature-
+  name-starts-with-lowercase is hacky). The package
+  exposes a clean Python path:
+  `from attune_author import check_staleness,
+  load_manifest; manifest = load_manifest(help_dir);
+  report = check_staleness(manifest, help_dir,
+  project_root); report.stale_features`. Use this
+  anywhere automation would otherwise parse the
+  status table (GitHub Actions, SessionStart hooks,
+  pre-commit scripts). The CLI is for humans; the
+  API is for automation.
