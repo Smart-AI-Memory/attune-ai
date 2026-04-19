@@ -2066,3 +2066,109 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   technical corpus, explicitly enumerate the industry
   vocabulary in the prompt — the grounded-in-body rule
   alone leaves queries on the table.
+
+- **Mutual competition between polished RAG features
+  is real and structural — differentiation hints help
+  but can't fully resolve feature-boundary overlap**:
+  In attune-help 0.7.0, polishing bug-predict's
+  summary in isolation got 76% P@1 on its fixtures.
+  Polishing all 26 features with the same pipeline
+  dropped bug-predict to 44% because competing
+  features (security-audit, code-quality,
+  error-handling-design) now also had polished
+  summaries and stole its queries on shared vocabulary
+  ("eval", "exception", "injection"). Adding
+  per-feature differentiation hints (USP statements
+  describing what each feature uniquely does vs
+  adjacent features) recovered bug-predict to 60% but
+  regressed spec from 44% → 28% because spec is
+  structurally the superset of planning and no prompt
+  engineering dislodges the inclusion. Lesson: when
+  two features genuinely overlap, fix at the
+  **fixture level** (narrow the query set so queries
+  target only what's unique to that feature) or at
+  the **feature level** (merge the features), not at
+  the prompt level.
+
+- **`uv pip install -e <path>` can ship stale
+  package-data even after `--force-reinstall
+  --no-cache`**: added
+  `src/attune_help/templates/summaries_by_path.json`
+  and expected editable-installed attune-help to see
+  it. It didn't — the file appeared in a freshly
+  built wheel but not via the editable install.
+  Wasted ~20 min debugging. Workarounds that work:
+  (1) `uv sync` refreshes the whole venv from the
+  lockfile, (2) build a wheel with `python -m build
+  --wheel` and install it directly, (3) delete the
+  `site-packages/<pkg>` dir manually before
+  reinstalling. Use these when iterating on a
+  package's shipped data files — editable install's
+  caching is unreliable for non-Python content.
+
+- **Pre-committed decision matrices survive contact
+  with data**: the fastembed "if Golden P@1 ≥ 70%,
+  defer" matrix was written into
+  `docs/rag/embeddings-decision-2026-04-17.md` BEFORE
+  running Phase 2.5c. When the data came in at 73.3%,
+  there was zero temptation to move the goalpost —
+  the matrix routed the decision cleanly. Pattern:
+  for any gate-driven decision that could be
+  contested after the fact ("we already invested X in
+  this track, just ship it"), write the matrix before
+  running the experiment and commit it to the repo.
+  The commit timestamp is the arbiter, not your later
+  preference.
+
+- **Prompt-template word wrap silently breaks single-line
+  substring assertions in tests**: a template with a
+  sentence like "The provided context does not\ncover
+  this question." passes `"The provided context" in out`
+  but fails `"context does not cover" in out` because the
+  phrase straddles a newline. Fix: normalize whitespace
+  at the assertion boundary with
+  `" ".join(out.split())`, or pick a substring that
+  cannot wrap. Hit while adding the `strict` prompt
+  variant in attune-rag.
+
+- **Provenance/citation records usually store short
+  previews, not full content — preserve the exact context
+  separately when downstream evaluators need it**:
+  `attune_rag.provenance.CitedSource.excerpt` caps at 200
+  chars. A faithfulness judge fed `.excerpt` would score
+  answers against truncated passages and mis-flag
+  supported claims as unsupported. Fix: add a
+  `context: str` field on the pipeline result dataclass
+  (`RagResult.context` in this case) so downstream
+  consumers get the *exact* passage block the generator
+  saw. Same principle applies to any RAG/agent pipeline
+  that emits both a human-readable provenance record and
+  an evaluator-facing artifact — don't reuse one for the
+  other.
+
+- **Forced Anthropic tool-use is the cleanest path to
+  guaranteed-schema JSON from Claude**: `tools=[{...
+  schema...}], tool_choice={"type": "tool", "name":
+  "..."}` forces the model to call the named tool; the
+  `tool_use` block's `input` field is guaranteed to match
+  `input_schema` — no regex extraction, no code-fence
+  stripping, no JSON-parse fallbacks. Used in
+  `attune_rag.eval.faithfulness.FaithfulnessJudge`.
+  Extraction helper: walk `response.content`, pick the
+  block with `type == "tool_use"`, read `.input`. Raise
+  if no tool-use block is present (indicates a
+  capability/version mismatch, not a parse error).
+
+- **Re-adding an import after the formatter strips it —
+  use function-body usage as the anchor, not trust that
+  "I'll import it first"**: the edit-formatter cycle runs
+  on every Edit, and ruff's F401 fix removes any import
+  not currently referenced at module scope OR in a
+  function body. The robust sequence when adding an
+  import + new usage across edits: (1) add the *usage*
+  in a function body first, (2) add the import in a
+  follow-up edit — the name is now referenced so F401
+  leaves it alone. This extends the existing
+  "Formatter strips imports" lesson with the concrete
+  workaround: add usage first, import second, never the
+  other way around.
