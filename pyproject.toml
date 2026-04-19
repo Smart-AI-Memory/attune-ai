@@ -92,7 +92,13 @@ dependencies = [
 # on PyPI, no further work needed — this extra resolves
 # from PyPI.
 rag = [
-    "attune-rag>=0.1.0,<0.2",
+    # Floor at 0.1.5 so installs automatically get the
+    # <passage>-sentinel + injection-defense clause that
+    # `RagCodeGenWorkflow` relies on via its pinned
+    # `prompt_variant="citation"`. Older versions resolve but
+    # ship a prompt flow vulnerable to corpus-borne prompt
+    # injection.
+    "attune-rag>=0.1.5,<0.2",
 ]
 
 # Help authoring (generate / regenerate / polish the
@@ -221,8 +227,10 @@ dev = [
     # RAG integration test coverage — attune-rag is an
     # optional runtime dep but required for the rag_code_gen
     # and rag_knowledge_query test paths to exercise their
-    # branches (rag tests use pytest.importorskip).
-    "attune-rag>=0.1.0,<0.2",
+    # branches (rag tests use pytest.importorskip). Floor
+    # matches the [rag] extra so dev + runtime deps stay in
+    # lock-step.
+    "attune-rag>=0.1.5,<0.2",
 ]
 
 # Individual developers - lightweight, software development focused

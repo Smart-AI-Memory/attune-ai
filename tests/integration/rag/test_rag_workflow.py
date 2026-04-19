@@ -230,3 +230,158 @@ def test_workflow_class_has_expected_attributes() -> None:
     assert RagCodeGenWorkflow.name == "rag-code-gen"
     assert "retrieve" in RagCodeGenWorkflow.stages
     assert "generate" in RagCodeGenWorkflow.stages
+
+
+# ---------------------------------------------------------------------------
+# Deep-review gap coverage (tests #5-8 from 2026-04-19 review)
+# ---------------------------------------------------------------------------
+
+
+def test_execute_surfaces_sdk_connection_error_as_error_result() -> None:
+    """A transient network failure inside the Claude Agent SDK stream
+    must produce a structured error WorkflowResult, not crash the CLI."""
+    workflow = RagCodeGenWorkflow()
+
+    async def raising_stream(*args, **kwargs):  # noqa: ARG001
+        raise ConnectionError("ECONNREFUSED")
+        yield  # pragma: no cover — needed to make this an async generator
+
+    with patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", raising_stream):
+        result = asyncio.run(workflow.execute(query="security audit"))
+
+    assert result.success is False
+    assert result.error is not None
+    assert "connection failed" in result.error.lower()
+
+
+def test_execute_surfaces_sdk_generic_exception_as_error_result() -> None:
+    """Unknown SDK errors must be caught by the catch-all and turned
+    into a structured error result naming the exception type."""
+    workflow = RagCodeGenWorkflow()
+
+    async def raising_stream(*args, **kwargs):  # noqa: ARG001
+        raise ValueError("something weird happened")
+        yield  # pragma: no cover — needed to make this an async generator
+
+    with patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", raising_stream):
+        result = asyncio.run(workflow.execute(query="security audit"))
+
+    assert result.success is False
+    assert result.error is not None
+    assert "Agent SDK error" in result.error
+    assert "ValueError" in result.error
+
+
+def test_execute_passes_model_override_to_sdk_options() -> None:
+    """The `model=` kwarg must be forwarded into ClaudeAgentOptions
+    so callers can pin generation to a specific model."""
+    workflow = RagCodeGenWorkflow()
+    fake_stream = _make_fake_sdk_stream("result")
+
+    import claude_agent_sdk
+
+    captured: dict[str, object] = {}
+    real_options = claude_agent_sdk.ClaudeAgentOptions
+
+    def capturing_options(**kwargs):
+        captured.update(kwargs)
+        return real_options(**kwargs)
+
+    with (
+        patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", fake_stream),
+        patch(
+            "attune.workflows.rag_code_gen.claude_agent_sdk.ClaudeAgentOptions",
+            capturing_options,
+        ),
+    ):
+        result = asyncio.run(
+            workflow.execute(query="security audit", model="claude-haiku-4-5-20251001")
+        )
+
+    assert result.success is True
+    assert captured.get("model") == "claude-haiku-4-5-20251001"
+
+
+def test_execute_passes_cwd_to_sdk_options() -> None:
+    """The new `cwd=` kwarg must be forwarded so the SDK's
+    Read/Glob/Grep tools cannot climb out of the caller's directory.
+    (Coverage for fix #3 from the 2026-04-19 deep review.)"""
+    workflow = RagCodeGenWorkflow()
+    fake_stream = _make_fake_sdk_stream("result")
+
+    import claude_agent_sdk
+
+    captured: dict[str, object] = {}
+    real_options = claude_agent_sdk.ClaudeAgentOptions
+
+    def capturing_options(**kwargs):
+        captured.update(kwargs)
+        return real_options(**kwargs)
+
+    with (
+        patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", fake_stream),
+        patch(
+            "attune.workflows.rag_code_gen.claude_agent_sdk.ClaudeAgentOptions",
+            capturing_options,
+        ),
+    ):
+        asyncio.run(workflow.execute(query="security audit", cwd="/explicit/cwd"))
+
+    assert captured.get("cwd") == "/explicit/cwd"
+
+
+def test_execute_defaults_cwd_to_current_dir() -> None:
+    """When `cwd` is omitted, execute() falls back to os.getcwd()
+    — never None, never unscoped."""
+    import os
+
+    workflow = RagCodeGenWorkflow()
+    fake_stream = _make_fake_sdk_stream("result")
+
+    import claude_agent_sdk
+
+    captured: dict[str, object] = {}
+    real_options = claude_agent_sdk.ClaudeAgentOptions
+
+    def capturing_options(**kwargs):
+        captured.update(kwargs)
+        return real_options(**kwargs)
+
+    with (
+        patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", fake_stream),
+        patch(
+            "attune.workflows.rag_code_gen.claude_agent_sdk.ClaudeAgentOptions",
+            capturing_options,
+        ),
+    ):
+        asyncio.run(workflow.execute(query="security audit"))
+
+    assert captured.get("cwd") == os.getcwd()
+
+
+def test_record_feedback_continues_after_individual_failure() -> None:
+    """If one record_template_feedback call raises, the other cited
+    hits must still get written — and the workflow must succeed
+    overall. (Coverage for fix #8 from the 2026-04-19 deep review.)"""
+    workflow = RagCodeGenWorkflow()
+    fake_stream = _make_fake_sdk_stream("result")
+
+    call_count = {"n": 0}
+
+    def flaky_record(path: str, verdict: str) -> None:
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise RuntimeError("storage backend transiently unavailable")
+
+    with (
+        patch("attune.workflows.rag_code_gen.claude_agent_sdk.query", fake_stream),
+        patch("attune.help.feedback.record_template_feedback", side_effect=flaky_record),
+    ):
+        result = asyncio.run(workflow.execute(query="security audit", feedback="good"))
+
+    hit_count = len(result.metadata["citation"]["hits"])
+    # Best-effort contract: every hit must be attempted even if the
+    # first one raised, and the workflow itself must stay successful.
+    assert call_count["n"] == hit_count
+    assert result.success is True
+    assert result.metadata["feedback_recorded"] == "good"

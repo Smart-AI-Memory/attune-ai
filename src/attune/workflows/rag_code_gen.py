@@ -18,6 +18,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime
 from typing import Any
 
@@ -76,6 +77,13 @@ class RagCodeGenWorkflow(BaseWorkflow):
             records feedback on every cited template via
             ``record_template_feedback`` (Phase 4.1).
         model (str): Optional model override for generation.
+        cwd (str): Working directory passed to the Claude Agent
+            SDK for ``Read``/``Glob``/``Grep`` tool calls.
+            Defaults to ``os.getcwd()`` at execute time so the
+            agent cannot escape the caller's invocation
+            directory via a prompt-injected path. Matches the
+            ``cwd=resolved_path`` pattern used in
+            ``security_audit.py``.
     """
 
     name = "rag-code-gen"
@@ -114,6 +122,11 @@ class RagCodeGenWorkflow(BaseWorkflow):
         depth: str = kwargs.get("depth", "standard")
         feedback: str | None = kwargs.get("feedback")
         model: str | None = kwargs.get("model")
+        # Default cwd to the caller's invocation directory so the
+        # SDK's Read/Glob/Grep tools cannot climb outside via a
+        # prompt-injected path; mirror security_audit.py's
+        # resolved-path scoping.
+        cwd: str = kwargs.get("cwd") or os.getcwd()
 
         if not query or not query.strip():
             return self._error_result("query argument is required")
@@ -123,7 +136,11 @@ class RagCodeGenWorkflow(BaseWorkflow):
 
         try:
             pipeline = self._get_pipeline()
-            rag_result = pipeline.run(query, k=k)
+            # Pin prompt_variant explicitly to insulate this workflow
+            # from future default-variant changes in attune-rag.
+            # citation = per-passage sentinel wrapping + forced
+            # cite-per-claim, selected by the 2026-04-19 A/B sweep.
+            rag_result = pipeline.run(query, k=k, prompt_variant="citation")
         except RuntimeError as exc:
             logger.error("RAG pipeline setup failed: %s", exc)
             return self._error_result(f"RAG setup error: {exc}")
@@ -134,6 +151,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 max_turns=max_turns,
                 depth=depth,
                 model=model,
+                cwd=cwd,
             )
         except ImportError as exc:
             logger.error("Agent SDK import failed: %s", exc)
@@ -209,6 +227,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
         max_turns: int,
         depth: str,
         model: str | None,
+        cwd: str,
     ) -> AgentRunResult:
         """Run a single Claude Agent SDK generation call.
 
@@ -225,6 +244,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
             "allowed_tools": ["Read", "Glob", "Grep"],
             "permission_mode": "default",
             "max_turns": max_turns,
+            "cwd": cwd,
         }
         if model:
             options_kwargs["model"] = model
