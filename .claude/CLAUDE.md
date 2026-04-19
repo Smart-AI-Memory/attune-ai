@@ -2172,3 +2172,62 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Formatter strips imports" lesson with the concrete
   workaround: add usage first, import second, never the
   other way around.
+
+- **Forced cite-per-claim prompting is the structural
+  lever for RAG faithfulness; soft grounding
+  instructions cap much lower**: attune-rag v0.1.3 A/B
+  sweep on the 15-query golden set. Baseline (no
+  grounding rule): 46.7% hallucination rate. Strict
+  variant ("answer ONLY from context, refuse
+  otherwise"): 26.7% — a soft halving. Citation variant
+  ([P1]/[P2] markers required per claim, no-cite = no
+  claim): **6.7%** hallucination, 1.00 mean
+  faithfulness. Mechanism: citation is *structurally
+  enforceable* at generation time ("can I locate this
+  claim in numbered passage N?"), whereas refusal
+  instructions rely on the model policing its own
+  drift. Cost: citations add ~5 tokens per claim and a
+  small readability hit — generally worth it. Pattern
+  generalizes beyond attune-rag: any RAG pipeline that
+  needs faithfulness should default to a citation-
+  forced prompt variant, not a "please use the
+  context" one. Decision + data in
+  `docs/rag/faithfulness-decision-2026-04-19.md`.
+
+- **GitHub Actions environment deployment approvals can
+  be self-approved via `gh api` when
+  `current_user_can_approve: true`** — no need to visit
+  the web UI for routine releases on repos you own.
+  Sequence:
+  ```
+  RUN=<run-id>
+  ENV_ID=$(gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
+    --jq '.[0].environment.id')
+  gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
+    -X POST -F "environment_ids[]=$ENV_ID" -F state=approved \
+    -F comment="release notes here"
+  ```
+  Check `current_user_can_approve` first via the same
+  pending_deployments endpoint. Useful for the `pypi`
+  environment gate on attune-rag / attune-help /
+  attune-ai publishes when the CLI user is the repo
+  owner. Supersedes the older "go to the Actions run
+  page and click Review deployments" pattern for the
+  common solo-owner case.
+
+- **PR scope after commits have already landed: expand
+  the existing PR, don't split**: when new commits are
+  made on a branch with an open PR that covers a
+  different-but-related decision, and the new work has
+  already materialized externally (shipped release, new
+  artifact), the correct move is to update the PR
+  title/body to cover both and merge — not to rewind
+  history and split. Splitting requires force-push
+  (destructive per branch protection rules) for zero
+  review benefit if the code is already published.
+  Trigger for splitting: you'll need a narrow PR URL to
+  cite externally (blog post, submission, customer
+  conversation). In that case, cherry-pick into a fresh
+  PR *at citation time*, not preemptively. Applied to
+  attune-ai PR #168 (Phase 2.5c + faithfulness
+  decision).
