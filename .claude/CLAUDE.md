@@ -2395,3 +2395,72 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Relevant for cross-repo release chains where one
   sibling publishes, then another sibling's lockfile
   refresh follows immediately.
+
+- **Research subagents can hallucinate SDK signatures —
+  introspect the real API before coding to it**: the
+  6.2.0 planning research claimed
+  `SystemPromptPreset(exclude_dynamic_sections=["cwd",
+  "git_status"])` would work. The actual
+  `claude_agent_sdk.types.SystemPromptPreset.__annotations__`
+  is `{type: Literal["preset"], preset:
+  Literal["claude_code"], append: NotRequired[str],
+  exclude_dynamic_sections: NotRequired[bool]}` — a
+  **boolean** toggle, not a list of section names, and
+  wraps only Claude Code's built-in `"claude_code"`
+  preset (no vehicle for custom system prompts).
+  Verifying the shape via `import inspect;
+  inspect.signature(obj)` + `.__annotations__` cost
+  ~1 minute and saved an entire task's worth of
+  misdirected code. Research agents can confabulate
+  API shapes from documentation-style priors without
+  importing the code. Pattern: before implementing any
+  task that depends on an SDK symbol the research
+  agent named, run a short introspection check
+  (`hasattr`, `inspect.signature`, `__annotations__`)
+  as the first step of that task — especially for
+  typed-dict / kwarg-only classes where there's no
+  constructor signature to catch mistakes at
+  call-time.
+
+- **`getattr(module, "name", None)` at call site is the
+  clean degradation pattern for optional SDK surface**:
+  in 6.2.0 we wired three features (`list_subagents`,
+  `get_subagent_messages`, `TaskBudget`,
+  `ThinkingConfigAdaptive`) that only exist in newer
+  claude-agent-sdk versions but kept the dep floor at
+  `>=0.1.60` rather than `>=0.1.63` so older installs
+  degrade cleanly. Pattern:
+  ```python
+  list_fn = getattr(claude_agent_sdk, "list_subagents", None)
+  if list_fn is None:
+      return {}  # older SDK — no-op gracefully
+  return list_fn(session_id)
+  ```
+  Superior to both module-level `from X import name`
+  (older SDK → ImportError crashes the whole module)
+  and try/except around every use (repetitive,
+  scatters the fallback logic). Use `getattr` probes
+  when the feature is optional and the SDK may not
+  expose it; reserve try/except for when the feature
+  is definitely available but the call itself may
+  fail at runtime.
+
+- **Claude-agent-sdk `SystemPromptPreset` (as of
+  0.1.63) is Claude-Code-preset-only, not a vehicle
+  for custom system prompts**: the name suggests "a
+  preset for building system prompts" but the real
+  schema is narrower: `type: Literal["preset"]`,
+  `preset: Literal["claude_code"]` (only one
+  acceptable value), `append: NotRequired[str]` to
+  append text, `exclude_dynamic_sections:
+  NotRequired[bool]` as an all-or-nothing toggle for
+  the built-in preset's dynamic sections. For
+  **custom** system prompts, pass a plain string to
+  `ClaudeAgentOptions(system_prompt=...)` — that path
+  is already cache-friendly since the string is
+  static and `cwd=` is a tool-execution config field,
+  not text injected into the prompt stream. No
+  action needed to get cross-run cache hits when
+  using string prompts; `SystemPromptPreset` only
+  applies when building on top of the claude_code
+  preset.
