@@ -2,8 +2,8 @@
 type: note
 feature: plugin
 depth: note
-generated_at: 2026-04-14T15:24:00.977661+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:53:51.789608+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
@@ -11,36 +11,30 @@ status: generated
 
 ## Context
 
-The Claude Code plugin provides a runtime environment for extending the development assistant with hooks, security policies, and automation tools.
+The Claude Code plugin is a collection of automation hooks and security controls that run alongside coding sessions. It provides automatic code formatting, help system maintenance, error assistance, and command validation.
 
-## Plugin architecture
+## Design decisions
 
-The plugin system operates through hook-based automation that responds to development events. When you use tools like file editing or bash commands, the plugin can trigger post-processing actions automatically.
+The plugin architecture uses standalone entry points rather than a class-based design. Each hook runs as an independent process that reads input from stdin or environment variables and performs one specific task:
 
-The plugin includes these core components:
+- **PostToolUse hooks** run after Claude executes tools like Write or Edit files
+- **SessionStart hooks** run when a new coding session begins
+- **Security validation** happens before potentially dangerous commands execute
 
-- **Format hooks** — Automatically format Python files after write operations
-- **Help system integration** — Check template freshness and suggest relevant help when commands fail
-- **Security validation** — Validate bash commands and file paths against security policies
-- **Git automation** — Maintain help documentation after commits
+This process-based approach keeps hooks isolated and prevents one failing hook from affecting others.
 
-## Entry points
+## Core capabilities
 
-Each plugin module exposes a `main()` function as its primary entry point:
+The plugin bundle includes five main automation areas:
 
-- `format_on_save.py` reads tool results from stdin and formats Python files
-- `help_freshness_check.py` validates help template currency on session start
-- `help_on_error.py` analyzes failed commands and suggests relevant documentation
-- `help_post_commit.py` updates stale help content after git commits
+**Code formatting** — The `format_on_save` hook automatically runs Python formatters after file edits, ensuring consistent style without manual intervention.
 
-The security guard module provides validation functions that return boolean success status with error messages:
+**Help freshness** — Two hooks maintain the help system: `help_freshness_check` validates template currency when sessions start, while `help_post_commit` updates help content after git commits.
 
-- `validate_bash_command()` checks commands against security policies
-- `validate_file_path()` validates file access patterns
-- The main security function processes tool calls and returns permission status
+**Error assistance** — The `help_on_error` hook monitors bash command failures and suggests relevant help templates when users hit common problems.
 
-## Security boundaries
+**Security controls** — The `security_guard` module validates file paths and bash commands against policy rules, blocking access to system directories like `/etc` and `/proc`.
 
-The plugin enforces security policies through predefined constraints. It blocks access to system directories including `/etc`, `/sys`, `/proc`, `/dev`, `/boot`, and macOS equivalents in `/private`. Search commands like `grep`, `rg`, and `git` operations receive special handling for safe execution.
+**Welcome messaging** — Session startup includes a brief welcome that appears in Claude Code's stderr panel.
 
-**Tags:** `plugin`, `claude-code`
+All hooks share the same version (`6.2.0`) and operate on the attune-ai core runtime for consistency across different plugin environments.

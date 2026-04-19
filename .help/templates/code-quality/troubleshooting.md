@@ -2,8 +2,8 @@
 type: troubleshooting
 feature: code-quality
 depth: troubleshooting
-generated_at: 2026-04-14T14:41:15.695069+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:46:23.112847+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
@@ -11,43 +11,63 @@ status: generated
 
 ## Before you start
 
-The code quality feature uses `CodeReviewWorkflow` to orchestrate four specialized subagents (security, quality, performance, and architecture reviewers) that analyze your codebase and generate a unified review report.
+The code quality feature runs four specialized subagents (security, quality, performance, and architecture reviewers) to analyze your code. When issues occur, they typically stem from the orchestration workflow or individual subagent failures.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| `CodeReviewWorkflow` raises an exception during execution | Python traceback for the exact line in `execute()` method |
-| Review report is incomplete or missing sections | Subagent names in `_SUBAGENT_NAMES` and their individual outputs |
-| Review never completes or hangs | Subagent execution status and any blocking I/O operations |
-| Report format is malformed | Template structure in `_TASK_PROMPT_TEMPLATE` and markdown generation |
+| `/code-quality` command fails with exception | Check the file path exists and you have read permissions |
+| Review hangs or takes extremely long | Verify the target directory size — large codebases may exceed reasonable scan limits |
+| Empty or incomplete results | Confirm all four subagents (_SUBAGENT_NAMES) are available and responding |
+| Score shows as 0 or missing | Look for subagent communication failures in the workflow logs |
+| Results missing specific categories | Check which of the four reviewers (security, quality, performance, architecture) failed to report |
 
 ## Step-by-step diagnosis
 
-1. **Reproduce with minimal code.**
-   Create a test script that instantiates `CodeReviewWorkflow` and calls `execute()` with the same path argument. Run it in isolation to confirm the failure occurs without your application's broader context.
+1. **Verify the target path.**
+   Confirm the file or directory you're reviewing exists and is readable:
+   ```bash
+   ls -la /path/to/your/code
+   ```
+   The CodeReviewWorkflow needs read access to analyze files.
 
-2. **Check the target codebase.**
-   Verify the path you're passing to `execute()` exists and contains reviewable code files. Empty directories or non-code files can cause subagents to fail silently.
+2. **Test with a minimal example.**
+   Try reviewing a single small file first:
+   ```
+   /code-quality path/to/simple_file.py
+   ```
+   This isolates whether the issue is with the workflow itself or the complexity of your target.
 
-3. **Enable debug logging for subagent coordination.**
-   Set your logging level to `DEBUG` before calling `execute()`. The workflow logs subagent startup, execution, and completion events that reveal which reviewer is failing.
+3. **Check subagent availability.**
+   The workflow depends on four specialized reviewers. If any are unavailable, the unified report will be incomplete. Look for error messages mentioning `security-reviewer`, `quality-reviewer`, `perf-reviewer`, or `architect-reviewer`.
 
-4. **Examine subagent outputs individually.**
-   Check if all four subagents in `_SUBAGENT_NAMES` ('security-reviewer', 'quality-reviewer', 'perf-reviewer', 'architect-reviewer') are producing output. A single failing subagent can block the unified report generation.
+4. **Enable debug logging.**
+   Set your logging level to DEBUG before running the review to see detailed workflow execution and subagent communication.
+
+5. **Inspect the CodeReviewWorkflow execution.**
+   The workflow orchestrates multiple subagents and synthesizes their findings. Check if the failure occurs during:
+   - Initial path validation
+   - Subagent coordination
+   - Result synthesis into the final report
 
 ## Common fixes
 
-- **Invalid codebase path.** Ensure the path passed to `execute()` points to a directory containing source code files. The workflow expects reviewable code, not documentation or configuration files.
+- **Path issues:** Use absolute paths or verify your current working directory. The workflow needs to locate and read your source files.
 
-- **Missing subagent dependencies.** Each specialized reviewer may require specific analysis tools. Check that your environment includes static analysis libraries, security scanners, or performance profiling tools that the subagents depend on.
+- **Permission errors:** Ensure the code quality process has read access to your target files:
+  ```bash
+  chmod +r /path/to/your/code
+  ```
 
-- **Insufficient memory for large codebases.** The four parallel subagents can consume significant memory when analyzing large repositories. Monitor memory usage and consider reviewing smaller code sections if you encounter out-of-memory errors.
+- **Large directory timeouts:** For whole-project scans, start with a subdirectory to confirm the workflow functions, then expand scope gradually.
 
-- **Timeout on slow analysis.** Complex codebases may exceed default timeout limits. If the workflow hangs, check for configurable timeout parameters in the `execute()` method or consider breaking large reviews into smaller chunks.
+- **Missing dependencies:** The four specialized subagents may require specific analysis tools. Check that your environment includes all necessary code analysis dependencies.
+
+- **Stale workflow state:** If reviews worked previously but now fail, restart your Claude Code session to clear any cached workflow state.
 
 ## Source files
 
-- `src/attune/workflows/code_review.py` — Main `CodeReviewWorkflow` class with subagent coordination
+- `src/attune/workflows/code_review.py`
 
 **Tags:** `review`, `quality`, `bugs`

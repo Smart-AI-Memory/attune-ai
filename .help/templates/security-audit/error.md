@@ -2,44 +2,45 @@
 type: error
 feature: security-audit
 depth: error
-generated_at: 2026-04-14T14:38:37.200384+00:00
-source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
+generated_at: 2026-04-19T18:43:37.750214+00:00
+source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
 status: generated
 ---
 
 # Security Audit errors
 
-Security audit failures occur when the SecurityAuditWorkflow cannot complete its four-stage analysis (vulnerability scanning, secret detection, authentication review, and remediation planning) or when the alert monitoring system encounters configuration or telemetry issues.
+Security audit failures occur during vulnerability scanning, secret detection, or alert configuration for LLM telemetry monitoring.
 
 ## Common error signatures
 
-- **`ValueError: Invalid metric type`** - Unknown AlertMetric passed to AlertEngine.add_alert()
-- **`FileNotFoundError: Alert database not found`** - Missing SQLite database file at expected path
-- **`ValidationError: Invalid webhook URL format`** - Malformed webhook URL in alert configuration
-- **`ConnectionError: Failed to connect to OTEL endpoint`** - OTELBackend cannot reach OpenTelemetry collector
-- **`RuntimeError: Subagent execution failed`** - One of the four security subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) crashed during workflow execution
-- **`PermissionError: Cannot read audit target`** - Insufficient permissions to scan the specified codebase path
+- **FileNotFoundError** — Path specified for audit doesn't exist or is inaccessible
+- **ValidationError** — Invalid webhook URL in alert configuration
+- **DatabaseError** — SQLite corruption in alert storage (`.attune/alerts.db`)
+- **TypeError** — Invalid metric or channel type passed to AlertEngine
+- **PermissionError** — Cannot read security audit target files
+- **ConnectionError** — OTEL endpoint unreachable for telemetry export
 
 ## Where errors originate
 
-Security audit errors typically emerge from these components:
+Security audit errors typically stem from these components:
 
-- **SecurityAuditWorkflow.execute()** - Core workflow orchestration failures when coordinating the four specialized subagents
-- **AlertEngine methods** - Database operations, alert configuration validation, and notification delivery in the telemetry monitoring system
-- **TelemetryBackend implementations** - Logging failures in MultiBackend, OTELBackend, or other telemetry storage systems
-- **Alert CLI commands** - User-facing alert management operations like init(), delete(), enable(), disable()
+- **SecurityAuditWorkflow.execute()** — Main workflow execution with four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner)
+- **AlertEngine methods** — Alert configuration errors from `add_alert()`, `check_and_trigger()`, and database operations
+- **TelemetryBackend operations** — Backend failures in `log_call()` and `log_workflow()` when recording audit runs
+- **OTELBackend.flush()** — Export failures when sending telemetry to OpenTelemetry collectors
+- **Path validation utilities** — File access errors during security scanning
 
 ## How to diagnose
 
-1. **Identify the failing subagent.** If SecurityAuditWorkflow.execute() fails, check which of the four subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) encountered the error. The workflow logs show subagent execution order and status.
+1. **Check file paths first.** Most security audit failures are path-related. Verify the target directory exists and you have read permissions: `ls -la /path/to/scan`
 
-2. **Verify file permissions and paths.** Security audits require read access to the target codebase. Check that the audit path exists and is readable. For alert database errors, ensure the `.attune` directory is writable.
+2. **Examine alert database state.** If alert operations fail, check `.attune/alerts.db` exists and isn't corrupted. Run `attune alerts list` to verify basic database connectivity.
 
-3. **Test alert configurations independently.** Use `AlertEngine.get_metrics()` to verify telemetry data availability before configuring alerts. Invalid metric names or unreachable webhook URLs cause alert setup failures.
+3. **Test telemetry backends individually.** For OTEL export failures, verify the endpoint with `curl -X POST $OTEL_ENDPOINT`. Check `MultiBackend.get_failed_backends()` to isolate which backend is failing.
 
-4. **Check telemetry backend connectivity.** For OTELBackend errors, use `OTELBackend.is_available()` to test endpoint connectivity. Review the configured OTEL collector endpoint and network access.
+4. **Validate webhook configurations.** Alert delivery failures often trace to malformed webhook URLs. Test the webhook endpoint directly before configuring alerts.
 
-5. **Validate alert thresholds.** Alert triggers depend on current telemetry values. Use the `metrics` CLI command to see current values and ensure thresholds are achievable.
+5. **Run with workflow debugging.** Enable verbose logging to see which of the four security subagents fails: `attune workflow run security-audit --path "src/" --verbose`
 
 ## Source files
 

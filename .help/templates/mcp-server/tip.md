@@ -2,15 +2,15 @@
 type: tip
 feature: mcp-server
 depth: tip
-generated_at: 2026-04-14T15:01:10.384688+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-19T18:49:46.340603+00:00
+source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
 status: generated
 ---
 
-# Use `EmpathyMCPServer` for tool grouping
+# Tip: Use EmpathyMCPServer for tool registration, not direct schemas
 
-Start with `create_server()` to get a configured server instance, then explore its tool categories through the mixins. Each mixin groups related functionality: `MemoryHandlersMixin` for memory operations, `WorkflowHandlersMixin` for workflow execution.
+Register tools through the `EmpathyMCPServer` class instead of calling schema functions directly. The server handles rate limiting, workspace context, and user identification automatically.
 
-The server automatically rate-limits tool calls (60 per minute by default) and provides progressive help through the `help_lookup` tool. Use the `get_tool_list()` method to see all available tools at runtime rather than hardcoding tool names.
+Tools are rate-limited with a sliding window (60 calls per minute by default) to prevent runaway automation. Direct schema access bypasses this protection and can overwhelm downstream services or APIs.
 
-**Why:** The mixin architecture separates concerns cleanly, making it easier to understand which tools handle what domain without digging through monolithic classes.
+**Tags:** `mcp`, `tools`, `server`

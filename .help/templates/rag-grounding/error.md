@@ -2,38 +2,41 @@
 type: error
 feature: rag-grounding
 depth: error
-generated_at: 2026-04-19T06:51:40.710748+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:50:42.041159+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
 # RAG grounding errors
 
-RAG grounding failures occur when the retrieval-augmented generation workflow cannot properly retrieve context from attune-help, generate code with Claude, or enforce citation requirements.
+RAG grounding failures occur when the RAG-grounded code generation workflow cannot retrieve relevant context, process prompts, or maintain citation requirements during code generation.
 
 ## Common error signatures
 
-- `WorkflowResult` execution errors from malformed `**kwargs` in `RagCodeGenWorkflow.execute()`
-- Context retrieval failures when attune-rag service is unavailable
-- Citation validation errors when Claude generates responses without proper source attribution
-- Prompt construction failures when the system prompt cannot be properly formatted with retrieved context
+- **Import errors** — `ModuleNotFoundError` or `ImportError` when `RagCodeGenWorkflow` cannot load dependencies
+- **Workflow execution errors** — Exceptions from `RagCodeGenWorkflow.execute()` when retrieval or generation steps fail
+- **Configuration errors** — `ValueError` or `TypeError` when workflow initialization receives invalid parameters
+- **Context retrieval errors** — Network or API failures when fetching attune-help context via attune-rag
+- **Prompt processing errors** — Template or formatting failures when constructing citation-forced prompts for Claude
 
 ## Where errors originate
 
-Errors in RAG grounding originate from the `RagCodeGenWorkflow` class in `src/attune/workflows/rag_code_gen.py`. Check these methods based on your error:
+RAG grounding errors originate in the `RagCodeGenWorkflow` class in `src/attune/workflows/rag_code_gen.py`. Check these methods based on your error's context:
 
-- `__init__()` — Configuration and initialization problems
-- `execute()` — Runtime workflow execution failures, context retrieval issues, or LLM response problems
+- `__init__()` — Configuration and initialization failures
+- `execute()` — Runtime failures during retrieval, prompt generation, or Claude interaction
 
 ## How to diagnose
 
-1. **Check the workflow kwargs.** The `execute()` method accepts `**kwargs` that configure retrieval and generation. Verify that required parameters are present and properly typed.
+1. **Check the workflow initialization.** Verify that `RagCodeGenWorkflow.__init__()` receives valid keyword arguments. Missing or malformed configuration often causes early `ValueError` or `TypeError` exceptions.
 
-2. **Verify attune-rag connectivity.** RAG grounding depends on the attune-rag service for context retrieval. Connection failures will prevent the workflow from accessing relevant documentation and code examples.
+2. **Examine the execution context.** If the error occurs in `execute()`, check whether the workflow can access the attune-rag retrieval system and whether your input parameters match the expected format.
 
-3. **Inspect citation enforcement.** The system prompt requires Claude to "cite real APIs, workflow names, and CLI commands" and "never invent attune features." Check if the generated response includes proper source file citations as required.
+3. **Verify context retrieval.** RAG grounding depends on retrieving relevant attune-help documentation. Connection failures, API timeouts, or malformed queries can cause network-related exceptions during the retrieval phase.
 
-4. **Examine context quality.** Poor retrieval results can cause Claude to generate responses that violate the grounding constraints. Review the retrieved context to ensure it contains relevant attune ecosystem information.
+4. **Inspect prompt construction.** The workflow builds citation-forced prompts using the system prompt template (`_SYSTEM_PROMPT`). Template formatting errors or missing context can cause string processing failures.
+
+5. **Check Claude API integration.** Generation failures may stem from API authentication issues, rate limiting, or prompt length restrictions when calling Claude with the grounded prompts.
 
 ## Source files
 

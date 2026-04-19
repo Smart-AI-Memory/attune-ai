@@ -2,93 +2,58 @@
 type: troubleshooting
 feature: mcp-server
 depth: troubleshooting
-generated_at: 2026-04-14T15:00:29.842879+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-19T18:49:08.551770+00:00
+source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
 status: generated
 ---
 
-# Troubleshoot mcp server
+# Troubleshoot MCP server
 
 ## Before you start
 
-The Attune AI MCP Server provides tool handlers for memory operations, workflow execution, authentication, telemetry, and contextual help through the Model Context Protocol.
+The Attune AI MCP (Model Context Protocol) server provides tools, prompts, and resources for AI workflows. When it fails, check connection, configuration, and tool registration first.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Server fails to start | Run `python -m attune.mcp.server` and check for import errors or missing dependencies |
-| Tool calls return errors | Verify the tool name exists in `get_tool_list()` output and arguments match the schema |
-| Rate limiting errors | Check if calls exceed 60 per minute - inspect `RateLimiter.check()` return value |
-| Memory tools fail | Confirm attune-ai memory module is installed: `pip list \| grep attune-ai` |
-| Prompt not found | Verify prompt name exists in the prompts dictionary returned by `get_prompt_list()` |
-| Authentication issues | Check `auth_status` tool output for current configuration and subscription tier |
+| Server fails to start | `.mcp.json` configuration and Python environment path |
+| Tools not available in client | `get_tool_list()` output and rate limiter status |
+| Prompts missing or malformed | Prompt definitions in `get_prompts()` |
+| Memory tools fail | `attune-ai` package installation and user permissions |
+| Rate limit errors | `RateLimiter` window settings (default: 60 calls/60 seconds) |
+| Authentication failures | Workspace root permissions and user ID configuration |
 
 ## Step-by-step diagnosis
 
-1. **Test the server startup.**
-   Run the MCP server directly to isolate startup issues:
-   ```bash
-   python -m attune.mcp.server
-   ```
-   If this fails, the error message will show missing dependencies or configuration problems.
+1. **Test server startup manually.**
+   Run `python -m attune.mcp.server` to check if the server starts without client interaction. Look for import errors, missing dependencies, or configuration issues.
 
-2. **Verify tool availability.**
-   Use `get_tool_list()` to confirm which tools are registered:
-   ```python
-   from attune.mcp.server import create_server
-   server = create_server()
-   tools = server.get_tool_list()
-   print([tool['name'] for tool in tools])
-   ```
+2. **Verify MCP client configuration.**
+   Check that `.mcp.json` points to the correct Python executable. Use `uv run python -m attune.mcp.server` rather than bare `python` to ensure proper environment resolution.
 
-3. **Test individual tool calls.**
-   Call tools directly through the server to bypass MCP protocol issues:
-   ```python
-   result = server.call_tool("auth_status", {})
-   print(result)
-   ```
+3. **Check tool registration.**
+   Call `EmpathyMCPServer.get_tool_list()` directly to verify tools are properly registered. Missing tools indicate initialization problems in the handler mixins.
 
-4. **Check rate limiting.**
-   If tools intermittently fail, test the rate limiter:
-   ```python
-   from attune.mcp.rate_limiter import RateLimiter
-   limiter = RateLimiter(max_calls=60, window_seconds=60.0)
-   print(limiter.check("test_key"))  # Should return True initially
-   ```
+4. **Test rate limiting.**
+   If tools intermittently fail, check the `RateLimiter` with `check("test_key")` calls. The default allows 60 calls per 60-second window.
 
-5. **Validate prompt handling.**
-   Test prompt retrieval and message generation:
-   ```python
-   prompts = server.get_prompt_list()
-   messages = server.get_prompt_messages("security-scan", {"path": "/tmp"})
-   ```
+5. **Examine memory tool dependencies.**
+   Memory tools require the `attune-ai` package. If you see "memory module not installed" errors, run `pip install attune-ai`.
 
 ## Common fixes
 
-- **Missing memory module.** Install the memory dependency:
-  ```bash
-  pip install attune-ai
-  ```
-
-- **Rate limit exceeded.** The default limit is 60 calls per minute. Wait for the window to reset or increase limits if running automated tests.
-
-- **Invalid tool arguments.** Check the tool schema in `get_utility_tools()`, `get_help_tools()`, `get_memory_tools()`, or `get_workflow_tools()` output for required parameters and types.
-
-- **Workspace root not set.** Some tools require a workspace context. Initialize the server with a valid path:
-  ```python
-  server = EmpathyMCPServer(workspace_root="/path/to/project")
-  ```
-
-- **Unknown prompt error.** The prompt name must exactly match one from `get_prompt_list()`. Valid prompts are: `security-scan`, `test-gen`, and `cost-report`.
+- **Fix environment resolution:** Update `.mcp.json` to use `uv run --from attune-ai python -m attune.mcp.server` for guaranteed package resolution.
+- **Reset rate limiter:** Restart the server to clear rate limiting state, or adjust limits in `RateLimiter.__init__()`.
+- **Install missing dependencies:** Run `pip install attune-ai` if memory tools fail with import errors.
+- **Set workspace permissions:** Ensure the user running the server has read/write access to the workspace root directory.
+- **Restart MCP client:** After fixing server configuration, restart your MCP client (like Claude Code) to re-establish the connection.
 
 ## Source files
 
-- `src/attune/mcp/server.py` - Main EmpathyMCPServer class and entry point
+- `src/attune/mcp/server.py` - Main server implementation and entry point
 - `src/attune/mcp/tool_schemas.py` - Tool definitions and schemas
-- `src/attune/mcp/prompts.py` - Prompt handling functions
-- `src/attune/mcp/rate_limiter.py` - Rate limiting implementation
-- `src/attune/mcp/memory_handlers.py` - Memory tool handlers
-- `src/attune/mcp/workflow_handlers.py` - Workflow tool handlers
+- `src/attune/mcp/prompts.py` - Prompt handling
+- `src/attune/mcp/handlers/` - Tool handler mixins
 
 **Tags:** `mcp`, `tools`, `server`

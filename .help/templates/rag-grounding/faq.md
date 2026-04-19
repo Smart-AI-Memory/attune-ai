@@ -2,35 +2,39 @@
 type: faq
 feature: rag-grounding
 depth: faq
-generated_at: 2026-04-19T06:52:16.741871+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:51:22.593931+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
-# RAG Grounding FAQ
+# RAG grounding FAQ
 
 ## What is RAG grounding?
 
-RAG grounding generates code and explanations using retrieval-augmented generation that's anchored to real attune documentation and APIs. It retrieves relevant context from attune-help via attune-rag, then prompts Claude to generate responses that cite actual features rather than inventing them.
+RAG grounding retrieves context from attune-help documentation using attune-rag, then feeds that context to Claude with citation-enforced prompts. The result is code generation that cites real APIs and workflow names instead of inventing features.
 
 ## When should I use RAG grounding?
 
-Use RAG grounding when you need to generate code examples, explanations, or documentation that must reference real attune APIs and workflows. This ensures your generated content includes accurate citations and doesn't hallucinate features that don't exist.
+Use RAG grounding when you need to generate code that references the attune ecosystem accurately. It prevents Claude from hallucinating non-existent APIs or workflow patterns by grounding responses in actual documentation.
 
-## How do I get started?
+## How do I create a RAG-grounded workflow?
 
-Use the `RagCodeGenWorkflow` class. Create an instance and call its `execute()` method with your generation requirements. The workflow handles retrieval and citation automatically.
+Instantiate `RagCodeGenWorkflow` from `src/attune/workflows/rag_code_gen.py` and call its `execute` method. The workflow handles retrieval and prompt construction automatically.
 
-## What does the workflow return?
+## What makes RAG grounding different from regular code generation?
 
-The `execute()` method returns a `WorkflowResult` object containing the generated code or explanation along with source citations showing which attune features were referenced.
+Regular code generation relies on Claude's training data, which may be outdated or inaccurate for attune-specific features. RAG grounding injects current documentation context into each request, ensuring generated code references actual APIs and follows documented patterns.
 
-## How does it prevent hallucinations?
+## Why does my generated code include source file citations?
 
-The workflow uses a system prompt that explicitly instructs the AI to only reference real attune APIs, workflow names, and CLI commands from the retrieved context. It's required to cite source files when referencing patterns.
+The system prompt forces citations to maintain provenance. When the generated code references a pattern or API, you can trace it back to the specific documentation file where that information originated.
 
-## Where are the source files?
+## How do I debug RAG grounding issues?
 
-- `src/attune/workflows/rag_code_gen.py`
+Run `pytest -k "rag-grounding" -v` first. If tests pass but your workflow fails, add `logger.debug` statements at suspected failure points and re-run with logging enabled to trace the retrieval and generation process.
+
+## Where is the RAG grounding code?
+
+The main implementation is in `src/attune/workflows/rag_code_gen.py` with the `RagCodeGenWorkflow` class.
 
 **Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`

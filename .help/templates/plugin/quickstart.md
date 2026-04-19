@@ -2,43 +2,48 @@
 type: quickstart
 feature: plugin
 depth: quickstart
-generated_at: 2026-04-14T15:23:44.852061+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:53:34.996941+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
-# Quickstart: plugin
+# Quickstart: Add Claude Code hooks
 
-Run a Claude Code plugin hook to see the system in action.
+Run Python formatting and help checks automatically in Claude Code.
 
 ```bash
-echo '{"tool": "write", "path": "test.py", "content": "def hello():\nprint(\"world\")"}' | python plugin/hooks/format_on_save.py
+claude plugin marketplace add Smart-AI-Memory/attune-ai && claude plugin install attune-ai@attune-ai
 ```
 
-This triggers the post-tool-use Python formatting hook, which automatically formats any Python file after a Write or Edit operation.
+**Result:** Four hooks activate in Claude Code — Python auto-formatting, help freshness checks, error suggestions, and help maintenance.
 
-## Set up and test a hook
+## Test the hooks
 
-1. **Run the format hook manually** using the command above. You'll see the hook process the JSON input and apply Python formatting rules to the file content.
+**1. Create a Python file to trigger formatting:**
 
-2. **Check the security validator** by running a validation test:
-   ```bash
-   python -c "
-   import sys
-   sys.path.append('plugin')
-   from hooks.security import main
-   result = main({'tool': 'bash', 'command': 'ls -la'})
-   print(result)
-   "
-   ```
-   Expected output: `{'allowed': True}`
+```python
+# test.py
+def hello(  ):
+    print( "badly formatted" )
+```
 
-3. **Test the help system** by triggering the help-on-error hook:
-   ```bash
-   echo '{"tool": "bash", "command": "nonexistent-command", "exit_code": 127}' | python plugin/hooks/help_on_error.py
-   ```
-   The hook analyzes failed commands and suggests relevant help topics.
+**2. Use Claude Code's Write tool to edit the file**
 
-## Next steps
+The `format_on_save` hook automatically reformats your Python code after any Write or Edit operation.
 
-Configure the hooks in your MCP client to run automatically during Claude Code sessions.
+**3. Verify the formatting worked:**
+
+```python
+# test.py
+def hello():
+    print("badly formatted")
+```
+
+## What you activated
+
+- **Auto-formatting**: Python files get formatted after Claude writes or edits them
+- **Help freshness**: Session startup checks if help templates need updates
+- **Error assistance**: Failed bash commands trigger help suggestions
+- **Help maintenance**: Git commits update the `.help/` directory automatically
+
+**Next:** Say **"/attune"** in Claude Code to see all available skills.

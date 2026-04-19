@@ -2,48 +2,55 @@
 type: quickstart
 feature: rag-grounding
 depth: quickstart
-generated_at: 2026-04-19T06:52:24.603295+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:51:32.292487+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
-# Quickstart: RAG-grounded code generation
+# Quickstart: RAG-Grounded Code Generation
 
-Generate code that cites real attune APIs and patterns from your project's documentation using retrieval-augmented generation.
+Create a workflow that generates code and explanations grounded in real attune documentation and APIs.
 
 ```python
 from attune.workflows.rag_code_gen import RagCodeGenWorkflow
 
 workflow = RagCodeGenWorkflow()
-result = workflow.execute(query="How do I create a data pipeline?")
-print(result.content)
+result = workflow.execute(query="How do I create a template?")
+print(result)
 ```
 
-## Run the workflow
+## Step 1: Import and instantiate the workflow
 
-1. **Create and execute the workflow** with your coding question:
-   ```python
-   from attune.workflows.rag_code_gen import RagCodeGenWorkflow
+```python
+from attune.workflows.rag_code_gen import RagCodeGenWorkflow
 
-   workflow = RagCodeGenWorkflow()
-   result = workflow.execute(query="How do I process user input in attune?")
-   ```
+workflow = RagCodeGenWorkflow()
+```
 
-2. **Review the generated code** which includes citations to source files:
-   ```
-   To process user input in attune, use the InputProcessor class from
-   src/core/input.py. Here's an example:
+The workflow connects to attune-rag for context retrieval and uses Claude for generation.
 
-   ```python
-   processor = InputProcessor()
-   validated = processor.validate(user_data)
-   ```
+## Step 2: Execute with your query
 
-   Source: src/core/input.py, line 45
-   ```
+```python
+result = workflow.execute(query="How do I create a template?")
+```
 
-3. **Verify the citations** by checking that referenced files and APIs exist in your project.
+The workflow retrieves relevant context from attune-help and generates a response that cites real APIs and workflow names.
 
-The workflow retrieves relevant documentation context and generates code that references actual attune features rather than hallucinated APIs.
+## Step 3: Examine the grounded output
 
-**Next:** Run the workflow with questions specific to your use case to see how it grounds responses in your project's actual codebase.
+```python
+print(result)
+```
+
+You'll see code examples with citations to actual source files and APIs. The system prompt ensures Claude never invents attune features.
+
+## What you just did
+
+- Set up RAG-grounded code generation that pulls from real attune documentation
+- Generated responses that cite actual APIs and patterns with source provenance
+- Created a workflow that prevents hallucination by grounding answers in retrieved context
+
+## Next:
+
+Say **"how does RAG grounding work?"** to understand the retrieval and citation mechanism in detail.

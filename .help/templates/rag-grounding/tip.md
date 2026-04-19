@@ -2,32 +2,17 @@
 type: tip
 feature: rag-grounding
 depth: tip
-generated_at: 2026-04-19T06:52:33.786530+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:51:40.818605+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
-# Use RagCodeGenWorkflow for citation-backed code generation
+# Tip: Use RagCodeGenWorkflow as-is, don't extend it
 
-## Recommendation
-
-Use `RagCodeGenWorkflow` when you need generated code that references real attune APIs and patterns. This workflow retrieves relevant documentation context and forces the LLM to cite actual source files rather than hallucinating features.
+Use `RagCodeGenWorkflow` through composition rather than subclassing. The workflow is designed to be configured through its constructor, not extended through inheritance.
 
 ## Why
 
-The system prompt explicitly prohibits inventing attune capabilities and requires citing source files, which prevents the common problem of generated code using non-existent APIs.
+Subclassing breaks when the internal implementation changes, and you lose the benefit of the built-in citation system that prevents hallucinated attune features.
 
-## Usage
-
-```python
-workflow = RagCodeGenWorkflow(**config)
-result = workflow.execute(query="How do I implement a custom validator?")
-```
-
-The workflow handles the RAG retrieval and prompt engineering automatically — you focus on crafting good queries.
-
-## Tradeoff
-
-Generation is slower than direct LLM calls because it includes a retrieval step, but the accuracy gain typically justifies the latency cost for production code.
-
-**Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`
+The tradeoff: you'll write a few more lines to compose workflows together, but your code stays stable across attune updates and maintains grounded responses.

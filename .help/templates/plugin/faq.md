@@ -2,40 +2,49 @@
 type: faq
 feature: plugin
 depth: faq
-generated_at: 2026-04-14T15:23:34.645235+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:53:24.485898+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
 # Plugin FAQ
 
-## What is the plugin feature?
+## What is the plugin?
 
-The Claude Code plugin system provides hooks, security validation, and automation that runs during your coding sessions. It includes Python file formatting, help system maintenance, error suggestions, and security checks for tool usage.
+The plugin is a Claude Code extension system that provides skills, hooks, commands, and MCP configuration. It includes a bundled runtime for standalone operation and hooks that automatically format Python files, check help freshness, suggest help when commands fail, and maintain help documentation after git commits.
 
-## When should I use plugins?
+## When should I use the plugin?
 
-You don't directly "use" plugins — they run automatically during your Claude Code sessions. The plugin system activates when you write Python files (auto-formatting), start sessions (help freshness checks), encounter Bash errors (help suggestions), or make git commits (help maintenance).
+Use the plugin when you need to extend Claude Code's functionality with custom skills, set up automated hooks for file formatting or help maintenance, or configure MCP (Model Context Protocol) behavior. If you're working with standalone operations outside the main Claude Code environment, the bundled runtime lets the plugin operate independently.
 
-## What hooks are available?
+## How do I get started with the plugin?
 
-The plugin system includes four main hooks:
+Start with one of these main entry points depending on your goal:
 
-- **PostToolUse format_on_save** — Auto-formats Python files after Write/Edit operations
-- **SessionStart help_freshness_check** — Checks if help templates need updates when you start a session
-- **PostToolUse help_on_error** — Suggests relevant help when Bash commands fail
-- **PostToolUse help_maintenance** — Updates help files after git commits
+- `plugin/hooks/format_on_save.py` — automatically format Python files after Write/Edit operations
+- `plugin/hooks/help_freshness_check.py` — check if help templates are current when sessions start
+- `plugin/hooks/help_on_error.py` — suggest relevant help when Bash commands fail
 
-## How does security validation work?
-
-The plugin includes security policies that validate tool calls before execution. You can check if commands and file paths are allowed using `validate_bash_command()` and `validate_file_path()`. Both return `(True, '')` for allowed operations.
+Each module's `main()` function includes documentation about expected inputs and outputs.
 
 ## How do I debug plugin issues?
 
-Run the plugin tests first: `pytest -k "plugin" -v`. If tests pass but you're still having issues, check the stderr output where plugins log their activity. You can also add debug logging to specific hook entry points in the `plugin/hooks/` directory.
+First, run the plugin-specific tests: `pytest -k "plugin" -v`. If the tests pass but your code still fails, add `logger.debug` statements at suspected failure points and re-run with logging enabled to trace the execution flow.
 
-## Where are the plugin files located?
+For systematic diagnosis of common problems, check the troubleshooting page for this feature.
 
-All plugin code is in the `plugin/` directory, with hooks in `plugin/hooks/` and the main runtime in `plugin/core/`.
+## What security validation does the plugin provide?
+
+The plugin includes security functions to validate operations:
+
+- `validate_bash_command()` — checks Bash commands against security policies
+- `validate_file_path()` — validates file paths against security policies
+- Tool call validation that returns `'allowed': True` for permitted operations
+
+These functions help prevent access to system directories like `/etc`, `/sys`, `/proc`, and other protected paths.
+
+## Where are the plugin source files?
+
+All plugin source files are located in the `plugin/` directory and its subdirectories.
 
 **Tags:** `plugin`, `claude-code`

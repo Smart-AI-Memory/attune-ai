@@ -2,8 +2,8 @@
 type: note
 feature: security-audit
 depth: note
-generated_at: 2026-04-14T14:40:03.366671+00:00
-source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
+generated_at: 2026-04-19T18:44:55.473918+00:00
+source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
 status: generated
 ---
 
@@ -11,27 +11,27 @@ status: generated
 
 ## Context
 
-The security audit feature scans code for vulnerabilities including eval/exec usage, path traversal risks, hardcoded secrets, and injection vulnerabilities.
+The security audit feature provides vulnerability scanning through both a workflow and monitoring system. The workflow scans code for common security issues including eval/exec usage, path traversal vulnerabilities, hardcoded secrets, and injection risks.
 
 ## Architecture
 
-The security audit system combines workflow orchestration with real-time monitoring. The `SecurityAuditWorkflow` coordinates four specialized subagents: vuln-scanner, secret-detector, auth-reviewer, and remediation-planner. Each subagent focuses on its domain and reports findings as structured markdown.
+The security audit spans two main components:
 
-The workflow uses a two-stage approach. First, the subagents analyze the codebase independently. Then, the orchestrator synthesizes their findings into a unified report with an overall security score (0-100), consolidated findings organized by severity, and prioritized remediation steps with effort estimates.
+**SecurityAuditWorkflow** orchestrates four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) to produce unified security reports. This agent-based approach allows each subagent to focus on specific vulnerability classes while maintaining comprehensive coverage.
 
-## Alert monitoring
+**Alert monitoring** tracks LLM telemetry and workflow metrics through the AlertEngine, which stores configurations in SQLite and delivers notifications via multiple channels. The monitoring system supports configurable thresholds for metrics like token usage, error rates, and workflow performance.
 
-The `AlertEngine` provides real-time monitoring of LLM telemetry metrics with SQLite storage and configurable notification delivery. You can set alerts on metrics like token usage, error rates, and response times with customizable thresholds and cooldown periods.
+## Key classes
 
-Alerts support multiple notification channels (webhook, email) and severity levels. The engine tracks alert history and provides CLI commands for management through the `alerts()` function and related commands.
+- `SecurityAuditWorkflow` — The main workflow that coordinates four specialized security subagents
+- `AlertEngine` — Manages alert configurations, checks thresholds, and triggers notifications
+- `AlertConfig` — Dataclass defining alert rules with metrics, thresholds, and notification settings
+- `AlertEvent` — Records when alerts fire, including current values and severity levels
 
-## Telemetry backends
+## Integration points
 
-The monitoring system supports multiple telemetry storage backends through the `TelemetryBackend` protocol. The `MultiBackend` allows simultaneous logging to multiple destinations, while `OTELBackend` exports to OpenTelemetry collectors for integration with observability platforms.
+The workflow and monitoring systems work together through shared telemetry. Security audits generate workflow telemetry that the alert system can monitor, enabling automated notifications when security scans detect critical issues or when the audit workflow itself experiences performance problems.
 
-## Source files
+You can run security audits through the CLI (`attune workflow run security-audit`) or the Claude Code skill (`/security-audit`), with results formatted as severity-grouped findings that include CWE identifiers and clickable file links.
 
-The implementation spans three main areas:
-- `src/attune/workflows/security_audit.py` — Workflow orchestration
-- `src/attune/security/` — Security analysis modules
-- `src/attune/monitoring/` — Alert engine and telemetry
+**Tags:** `security`, `audit`, `owasp`, `scanning`

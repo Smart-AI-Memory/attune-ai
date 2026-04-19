@@ -2,86 +2,86 @@
 type: troubleshooting
 feature: plugin
 depth: troubleshooting
-generated_at: 2026-04-14T15:23:18.648336+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:53:08.555113+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
-# Troubleshoot plugin
+# Troubleshoot Claude Code plugin issues
 
 ## Before you start
 
-Claude Code plugin system provides automated hooks that run during your coding session. These hooks handle Python formatting, help template maintenance, command validation, and error assistance.
+The Claude Code plugin provides skills, hooks, commands, and MCP configuration for attune-ai functionality.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Python files not formatting after edits | Run `python -m black --check <file>` to verify Black is installed and working |
-| Help suggestions not appearing after command failures | Check if the failing command writes to stderr and exits with non-zero status |
-| Security validation blocking valid commands | Test `validate_bash_command("your_command")` directly to see the validation result |
-| Welcome message not displaying | Verify stderr output is visible in your environment |
+| Plugin skills not available (no `/attune` commands) | Run `claude plugin list` to verify installation |
+| Python files not formatting after tool use | Check `format_on_save.py` hook registration and tool result input |
+| Help suggestions missing after command failures | Verify `help_on_error.py` hook receives PostToolUse payload |
+| Security validation blocking valid commands | Test with `validate_bash_command()` and `validate_file_path()` directly |
+| Welcome message not appearing | Confirm stderr output is visible in Claude Code interface |
 
 ## Step-by-step diagnosis
 
-1. **Reproduce the issue with a single hook.**
-   Identify which hook is failing by testing them individually:
-   - For format issues: Edit a Python file and save it
-   - For help suggestions: Run a command that should fail
-   - For security blocks: Try the blocked command in isolation
-   - For missing welcome: Start a fresh session
-
-2. **Check hook execution in the logs.**
-   Plugin hooks run automatically based on tool events. Enable debug logging to see:
-   - When each hook triggers
-   - What input data it receives
-   - Any errors during processing
-
-3. **Test the core functions directly.**
-   Run the hook entry points manually to isolate the problem:
+1. **Verify plugin installation**
+   Check if the plugin is properly installed and activated:
    ```bash
-   # Test Python formatting
-   echo '{"tool":"Write","file":"test.py"}' | python plugin/hooks/format_on_save.py
-
-   # Test command validation
-   python -c "from plugin.hooks.security_guard import validate_bash_command; print(validate_bash_command('ls -la'))"
+   claude plugin list
+   claude plugin marketplace list
    ```
 
-4. **Verify dependencies and permissions.**
-   Check that required tools are available:
+2. **Test hook functionality**
+   Reproduce the issue with minimal input. For formatting issues, try a simple Python tool use. For help suggestions, trigger a command failure.
+
+3. **Enable debug logging**
+   Increase log verbosity to see detailed plugin execution:
    ```bash
-   # For Python formatting
-   black --version
+   export CLAUDE_LOG_LEVEL=DEBUG
+   ```
 
-   # For git operations
-   git --version
+4. **Check specific entry points**
+   Test the relevant main functions based on your symptom:
+   - Format issues: `main()` in `format_on_save.py`
+   - Session problems: `main()` in `help_freshness_check.py`
+   - Missing help: `main()` in `help_on_error.py`
+   - Git workflow: `main()` in `help_post_commit.py`
+   - Security blocks: `validate_bash_command()` or `validate_file_path()` in `security_guard.py`
 
-   # For file access
-   ls -la .help/
+5. **Run plugin tests**
+   Execute the test suite to identify failing components:
+   ```bash
+   pytest -k "plugin" -v
    ```
 
 ## Common fixes
 
-- **Install missing formatters.** Python formatting requires Black:
+- **Reinstall plugin**: Remove and reinstall if skills are missing:
   ```bash
-  pip install black
+  claude plugin uninstall attune-ai
+  claude plugin marketplace add Smart-AI-Memory/attune-ai
+  claude plugin install attune-ai@attune-ai
   ```
 
-- **Fix file permissions.** Help maintenance needs write access to `.help/`:
+- **Remove conflicting plugins**: Only install one attune plugin (attune-lite or attune-ai, not both)
+
+- **Reset environment variables**: Clear stale environment state that may affect plugin behavior
+
+- **Update dependencies**: Version mismatches can break functionality:
   ```bash
-  chmod -R u+w .help/
+  pip show claude-plugin-sdk
   ```
 
-- **Clear stale git state.** If help post-commit hooks fail:
-  ```bash
-  git status --porcelain
-  git clean -fd  # Remove untracked files if safe
-  ```
-
-- **Update security policies.** If legitimate commands are blocked, check that `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` constants reflect your needs. Note that these are security boundaries and should only be modified carefully.
+- **Check file permissions**: Ensure the plugin can read/write necessary files and directories
 
 ## Source files
 
-- `plugin/**`
+- `plugin/hooks/format_on_save.py` — PostToolUse hook for Python formatting
+- `plugin/hooks/help_freshness_check.py` — SessionStart hook for help template checks
+- `plugin/hooks/help_on_error.py` — PostToolUse hook for command failure suggestions
+- `plugin/hooks/help_post_commit.py` — PostToolUse hook for git commit help maintenance
+- `plugin/hooks/security_guard.py` — Tool call validation against security policies
+- `plugin/hooks/welcome_message.py` — Session welcome message display
 
 **Tags:** `plugin`, `claude-code`

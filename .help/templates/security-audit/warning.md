@@ -2,8 +2,8 @@
 type: warning
 feature: security-audit
 depth: warning
-generated_at: 2026-04-14T14:38:53.852392+00:00
-source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
+generated_at: 2026-04-19T18:43:51.854380+00:00
+source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
 status: generated
 ---
 
@@ -11,47 +11,36 @@ status: generated
 
 ## What to watch for
 
-The security audit feature scans code for vulnerabilities like eval/exec usage, path traversal, hardcoded secrets, and injection risks. Several areas require careful attention to avoid false positives and security gaps.
+The security audit feature scans for vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks. While powerful, it has specific behaviors that can lead to unexpected results if you're not careful.
 
 ## Risk areas
 
-### Alert configuration drift
+**Alert configuration persistence issues**
+The `AlertEngine` stores alert configurations in SQLite at `.attune/alerts.db`. If you modify alerts programmatically while the CLI watch process is running, your changes may be overwritten or lost due to concurrent database access.
 
-Misconfigured alert thresholds can flood your system with false positives or miss critical security events. The `AlertEngine.add_alert()` method accepts arbitrary threshold values without validation against realistic metric ranges.
+**Path validation bypasses in large codebases**
+When scanning directories with thousands of files, the path validation utilities may skip files that exceed internal limits or contain unusual Unicode characters. This can create blind spots where vulnerabilities go undetected.
 
-**Mitigation:** Test alert configurations in a staging environment before production deployment. Use the `get_metrics()` method to understand baseline values before setting thresholds.
+**Telemetry backend failures masking audit problems**
+The `MultiBackend` telemetry system continues operating even when individual backends fail. If the security audit relies on telemetry data that isn't being recorded due to backend failures, you may see incomplete or misleading results.
 
-### Backend failure masking
+**Secret detection false negatives with encoded content**
+The `SecretsDetector` checks for plaintext patterns but may miss Base64-encoded API keys, hex-encoded tokens, or secrets split across multiple lines. This is particularly risky in configuration files and test fixtures.
 
-The `MultiBackend` continues operating even when individual backends fail, potentially creating blind spots in your security monitoring. Failed backends are tracked but don't halt the audit process.
-
-**Mitigation:** Monitor `get_failed_backends()` regularly and implement alerting when backends go offline. Use `reset_failures()` judiciously after confirming backend recovery.
-
-### Path traversal in audit targets
-
-The `SecurityAuditWorkflow` processes file paths without built-in validation against directory traversal attacks. Malicious audit targets could potentially access files outside the intended scope.
-
-**Mitigation:** Validate all input paths using the provided `_validate_file_path` utility before passing them to the workflow. Never accept user-provided paths without sanitization.
-
-### Webhook URL vulnerabilities
-
-Alert webhooks configured through `add_alert()` accept arbitrary URLs without validation. This creates a potential for SSRF attacks or credential leakage to untrusted endpoints.
-
-**Mitigation:** Use the `_validate_webhook_url` function to verify webhook destinations. Implement allowlisting for acceptable webhook domains in production environments.
-
-### Secret detection gaps
-
-The four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) operate independently. If one subagent fails, the others continue, potentially missing related security issues.
-
-**Mitigation:** Monitor the `WorkflowResult` from `SecurityAuditWorkflow.execute()` for partial failures. Implement retry logic for failed subagents before accepting audit results.
+**Subagent coordination race conditions**
+The `SecurityAuditWorkflow` runs four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) concurrently. If one subagent fails or times out, the final report may appear complete while missing an entire category of findings.
 
 ## How to avoid problems
 
-1. **Validate alert configurations.** Before deploying alerts to production, use `get_metrics()` to establish baseline values and test threshold sensitivity with `check_and_trigger()`.
+1. **Verify alert persistence before production.** Test alert modifications by running `attune alerts list` before and after changes to confirm they persist correctly. Stop any running watch processes first.
 
-2. **Monitor backend health.** Set up automated checks for `get_failed_backends()` and treat backend failures as critical issues requiring immediate attention.
+2. **Check backend status regularly.** Use `get_failed_backends()` to identify telemetry failures that could affect audit accuracy. Reset failures with `reset_failures()` after addressing the underlying issues.
 
-3. **Sanitize audit targets.** Always validate file paths and audit scopes using the provided validation utilities before initiating security workflows.
+3. **Validate scan completeness.** For critical audits, cross-reference the file count in results with your expected scope. Run targeted scans on suspicious files that may have been skipped.
+
+4. **Test secret detection with realistic samples.** Include encoded, obfuscated, and multi-line secrets in your test cases to verify detection coverage matches your threat model.
+
+5. **Monitor subagent execution.** Check the workflow logs for subagent timeouts or failures. Re-run failed audits with smaller scope to isolate problematic files or directories.
 
 ## Source files
 

@@ -2,55 +2,60 @@
 type: comparison
 feature: code-quality
 depth: comparison
-generated_at: 2026-04-14T14:41:59.529622+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:47:17.035116+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
-# Code Quality vs alternatives
+# Comparison: Code Quality vs alternatives
 
 ## Context
 
-The code-quality feature provides automated code review through `CodeReviewWorkflow`, which orchestrates four specialized subagents (security, quality, performance, and architecture reviewers) to analyze your codebase and generate a unified report with actionable findings.
+Review code for style issues, likely bugs, and structural problems using four specialized subagents that examine security, quality, performance, and architecture in a single coordinated pass.
 
 ## Feature comparison
 
-| Aspect | CodeReviewWorkflow | Manual code review | Static analysis tools |
-|--------|-------------------|-------------------|----------------------|
-| **Coverage** | Multi-domain (security, quality, perf, architecture) | Domain expertise varies by reviewer | Single-domain focus |
-| **Consistency** | Standardized criteria across all reviews | Varies by reviewer mood/experience | Consistent but narrow |
-| **Speed** | Automated, processes entire codebase | Hours to days per review | Seconds to minutes |
-| **Context awareness** | Understands code relationships and patterns | High contextual understanding | Limited to syntax/patterns |
-| **Report format** | Structured markdown with priority rankings | Varies widely | Tool-specific formats |
-| **Actionability** | Specific suggestions with file paths and line numbers | Quality depends on reviewer | Often generic recommendations |
+| Aspect | Code Quality Review | Traditional Linters | Security-only Scans | Manual Code Review |
+|--------|-------------------|-------------------|-------------------|-------------------|
+| **Coverage** | Style, bugs, security, architecture, performance | Style and basic errors only | Security vulnerabilities only | Depends on reviewer expertise |
+| **Integration** | Unified report with single health score | Separate tools, separate reports | Security-focused output | Ad-hoc feedback |
+| **Speed** | ~1-3 minutes depending on depth | Seconds to minutes | Minutes to hours | Hours to days |
+| **Automation** | Fully automated with guided setup | Fully automated | Fully automated | Manual process |
+| **Context awareness** | Four specialized subagents coordinate findings | Rule-based, no context | Security-specific context | High context, but inconsistent |
+| **Actionability** | Prioritized suggestions with file/line citations | Raw violation lists | Vulnerability reports | Variable quality feedback |
 
-## When to use CodeReviewWorkflow
+## When to use code quality
 
-Use `CodeReviewWorkflow` when you need:
+Use the code quality review when you need comprehensive analysis that goes beyond what individual tools provide:
 
-- **Comprehensive analysis** across security, quality, performance, and architecture domains in a single pass
-- **Consistent review standards** that don't vary based on reviewer availability or expertise
-- **Structured reports** with actionable suggestions ranked by priority
-- **Automated integration** into CI/CD pipelines or development workflows
-- **Large codebase reviews** where manual review would be time-prohibitive
+- **Before pull requests** — catch multiple issue types in one pass instead of running separate linters, security scanners, and architectural reviews
+- **Inheriting unfamiliar code** — get a unified health assessment that covers security, quality, performance, and structure
+- **After major refactors** — verify nothing degraded across multiple dimensions of code health
+- **Regular health checks** — establish baseline scores and track improvement over time
 
-The workflow excels at identifying cross-cutting concerns that single-purpose tools might miss, such as security implications of performance optimizations or architectural decisions that impact code quality.
+The `CodeReviewWorkflow` with its four subagents (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) is purpose-built for comprehensive analysis that synthesizes findings into actionable recommendations.
 
 ## When NOT to use it
 
-Avoid `CodeReviewWorkflow` when:
+Don't use code quality review when:
 
-- **Domain-specific expertise** is required that exceeds the subagents' capabilities (e.g., specialized compliance requirements)
-- **Interactive discussion** is needed to resolve complex design decisions
-- **Learning and mentorship** are primary goals — human reviewers provide irreplaceable teaching moments
-- **Legacy system knowledge** is critical — the workflow cannot access institutional knowledge about why certain patterns exist
-- **Real-time collaboration** is required during active development
+- **You need real-time feedback** — traditional linters are faster for immediate style checking during development
+- **You only care about one dimension** — if you specifically need security analysis, use a dedicated security audit tool
+- **You're working with non-standard codebases** — the four subagents are optimized for typical application code patterns
+- **You need custom rule sets** — the review uses predefined criteria rather than configurable rules
 
-## Recommended approach
+## Decision guide
 
-**Use CodeReviewWorkflow as your first pass** to catch common issues and establish a baseline quality assessment, then supplement with targeted human review for complex architectural decisions and team knowledge transfer.
+| Your goal | Best choice | Why |
+|-----------|-------------|-----|
+| Pre-commit style check | Traditional linter | Faster feedback loop |
+| Comprehensive PR review | **Code quality review** | Unified analysis across all dimensions |
+| Security vulnerability scan | Security-specific tool | Deeper security focus |
+| Architecture assessment | **Code quality review** | Architect-reviewer subagent provides structural analysis |
+| Performance bottleneck hunting | Profiling tools | Runtime analysis beats static review |
+| Code health baseline | **Code quality review** | Single score tracks multiple quality factors |
 
-For most development teams, this hybrid approach provides the best balance of speed, consistency, and insight depth.
+**Recommendation:** Use code quality review as your primary comprehensive analysis tool, supplemented by real-time linters during development and specialized tools for deep dives into specific areas.
 
 ## Source files
 

@@ -2,33 +2,41 @@
 type: concept
 feature: security-audit
 depth: concept
-generated_at: 2026-04-14T14:37:46.666142+00:00
-source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
+generated_at: 2026-04-19T18:42:45.226514+00:00
+source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
 status: generated
 ---
 
 # Security Audit
 
-Security audit is a comprehensive vulnerability scanner that uses four specialized AI agents to analyze codebases for security risks including hardcoded secrets, path traversal vulnerabilities, injection attacks, and authentication flaws.
+A security audit scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review, using specialized subagents to detect different categories of security issues.
 
 ## Core components
 
-The security audit system consists of two main parts: the scanning workflow and the monitoring infrastructure.
+The security audit system uses four specialized subagents coordinated by a workflow orchestrator:
 
-**SecurityAuditWorkflow** orchestrates four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner`) that each focus on specific security domains. The workflow synthesizes their findings into a unified report with an overall security score (0-100) and actionable remediation steps ordered by priority.
+- **`SecurityAuditWorkflow`** — Orchestrates four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) to produce unified security reports
+- **Vulnerability detection** — Scans for code injection patterns like `eval()`, `exec()`, and `compile()` on untrusted input
+- **Secret detection** — Identifies hardcoded API keys, tokens, and passwords committed to source control
+- **Path validation** — Catches file operations that don't validate paths, preventing traversal attacks
 
-**AlertEngine** monitors LLM telemetry metrics and triggers notifications when security thresholds are exceeded. It stores alert configurations in SQLite and supports multiple notification channels including webhooks and email. Each alert has configurable cooldown periods and severity levels to prevent notification spam.
+## Alert and monitoring system
 
-## Telemetry and monitoring architecture
+The audit integrates with a telemetry monitoring system that tracks security metrics over time:
 
-The monitoring system captures security-related events through multiple backends:
+- **`AlertEngine`** — Stores alert configurations in SQLite and delivers notifications when security thresholds are breached
+- **`AlertChannel`** — Supports multiple notification channels (webhook, email) for different team workflows
+- **`AlertMetric`** — Monitors specific security metrics like vulnerability counts or secret detection rates
+- **`AlertSeverity`** — Categorizes findings from low-priority warnings to critical security issues
 
-- **MultiBackend** logs to several storage systems simultaneously, with automatic failover handling
-- **OTELBackend** exports telemetry data to OpenTelemetry collectors for integration with existing observability infrastructure
-- **TelemetryStore** provides structured access to historical security audit data
+## Audit depth levels
 
-Alert configurations define specific metrics to watch (like vulnerability counts or secret detection rates), threshold values that trigger notifications, and delivery channels. The system tracks alert history and provides cooldown mechanisms to avoid flooding teams with duplicate notifications.
+You can run audits at different depths depending on your time constraints:
 
-## Command-line interface
+| Depth | Duration | Coverage |
+|-------|----------|----------|
+| **Quick** | ~30 seconds | Surface scan for obvious issues like `eval()` and exposed secrets |
+| **Standard** | ~2 minutes | Full pattern matching with severity ratings and CWE identifiers |
+| **Deep** | ~5 minutes | Multi-pass review with OWASP mapping and specific fix suggestions |
 
-You can manage security monitoring through the `alerts` command group, which supports interactive alert creation, threshold management, and real-time monitoring. The `watch` command continuously monitors telemetry and triggers alerts, while `history` and `metrics` commands provide visibility into past events and current system state.
+The workflow synthesizes findings into structured reports with security scores (0-100), severity-grouped vulnerabilities, and prioritized remediation steps with effort estimates.

@@ -2,8 +2,8 @@
 type: note
 feature: code-quality
 depth: note
-generated_at: 2026-04-14T14:41:52.697669+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:47:09.607556+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
@@ -11,23 +11,24 @@ status: generated
 
 ## Context
 
-The code quality feature provides automated code review through a multi-agent workflow that examines codebases for style issues, potential bugs, and structural problems.
+The code quality feature provides unified code review across style, correctness, bugs, and architecture through a single coordinated workflow.
 
 ## Implementation
 
-The feature centers on `CodeReviewWorkflow`, an SDK-native workflow that coordinates four specialized subagents to analyze different aspects of code quality:
+The feature centers on `CodeReviewWorkflow`, which orchestrates four specialized subagents to analyze different aspects of code health:
 
-- **security-reviewer** — Identifies security vulnerabilities and risks
-- **quality-reviewer** — Checks code style, maintainability, and best practices
-- **perf-reviewer** — Analyzes performance bottlenecks and optimization opportunities
-- **architect-reviewer** — Evaluates structural design and architectural patterns
+- **security-reviewer** — Scans for security vulnerabilities
+- **quality-reviewer** — Checks style, formatting, and code correctness
+- **perf-reviewer** — Identifies performance bottlenecks
+- **architect-reviewer** — Evaluates structural design and coupling
 
-The workflow produces a unified report with an overall health score (0-100) and structured findings across all review domains. Each subagent focuses on its specialized area and reports findings with specific file paths and line numbers when possible.
+The workflow synthesizes findings from all four subagents into a unified report with an overall health score (0-100) and actionable recommendations prioritized by impact.
 
-The orchestration follows a template-driven approach where subagents complete their analysis independently, then their findings are synthesized into sections for Summary, Security, Quality, Performance, Architecture, and prioritized Suggestions.
+This architecture allows the `/code-quality` skill to provide comprehensive analysis in a single pass rather than requiring users to run separate tools for linting, security scanning, performance analysis, and architectural review.
 
 ## Source files
 
 - `src/attune/workflows/code_review.py`
+- `src/attune/workflows/code_review_*.py`
 
 **Tags:** `review`, `quality`, `bugs`

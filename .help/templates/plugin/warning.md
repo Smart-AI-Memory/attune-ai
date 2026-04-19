@@ -2,8 +2,8 @@
 type: warning
 feature: plugin
 depth: warning
-generated_at: 2026-04-14T15:23:04.597228+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:52:56.197470+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
@@ -11,38 +11,46 @@ status: generated
 
 ## What to watch for
 
-Claude Code plugin — skills, hooks, commands, and MCP config.
+Claude Code's plugin system handles automatic formatting, help suggestions, and security validation through hooks and commands. Several common patterns in plugin development can lead to unexpected behavior.
 
 ## Risk areas
 
-### Hook execution order conflicts
+### Hook execution timing conflicts
 
-Multiple hooks can trigger on the same event. The format_on_save and help_post_commit hooks both run after tool use, potentially interfering with each other's file modifications. If you see unexpected file states or missing help updates, check whether multiple hooks are competing for the same resources.
+The `main()` functions in hook modules run at different lifecycle points and can interfere with each other. For example:
 
-### Security validation bypasses
+- `format_on_save.py` processes stdin for Python formatting
+- `help_on_error.py` reads PostToolUse payloads for error suggestions
+- `help_freshness_check.py` runs on session start
 
-The `validate_bash_command()` and `validate_file_path()` functions in security_guard.py return `(True, '')` for allowed operations, but this validation can be circumvented if tools construct commands dynamically or use indirect file access patterns. Commands that build file paths at runtime may bypass the SYSTEM_DIRECTORIES protection.
+If you modify multiple hooks simultaneously, they may compete for the same input streams or environment state.
 
-### Help template staleness
+### Security validation bypass
 
-The help_freshness_check and help_post_commit hooks track template updates, but they rely on file timestamps and git state. If you manually edit help files or use git operations that don't trigger hooks, the freshness tracking becomes unreliable, leading to outdated help content being served.
+`validate_bash_command()` and `validate_file_path()` in `security_guard.py` return tuple results that look like boolean checks but contain validation details. Treating them as simple true/false values misses important security context:
 
-### Stdin dependency in hooks
+```python
+# Risky - ignores validation details
+is_valid, _ = validate_bash_command(cmd)
+if is_valid:
+    run_command(cmd)
 
-Several hooks (format_on_save, help_on_error) read from stdin to get tool results. If stdin is empty, redirected, or contains malformed data, these hooks fail silently or produce incorrect behavior. This is particularly problematic when debugging or running tools outside their normal execution context.
+# Better - handle validation feedback
+is_valid, message = validate_bash_command(cmd)
+if not is_valid:
+    log_security_violation(message)
+```
+
+### Version compatibility assumptions
+
+The plugin system uses `__version__ = '6.2.0'` for compatibility checks. Hard-coding version comparisons in custom plugins breaks when the core system updates.
 
 ## How to avoid problems
 
-1. **Test hook interactions.** Run multiple tools in sequence and verify that each hook's output is preserved. Use `git status` to check for unexpected file modifications after hook execution.
+1. **Test hook interactions separately.** Run `pytest -k "hook"` to verify that individual hooks work in isolation before testing combined scenarios.
 
-2. **Validate security assumptions.** Don't rely solely on the security guard functions. Test edge cases like symbolic links, relative paths with `..`, and commands that modify their arguments at runtime.
+2. **Handle security validation properly.** Always check both the boolean result and the message from validation functions. Log security rejections for debugging.
 
-3. **Monitor help freshness manually.** After significant changes, run the help_freshness_check hook directly to verify that template updates are detected correctly.
-
-4. **Provide fallback input.** When testing hooks that read stdin, ensure you have valid input available or the hook can handle empty input gracefully.
-
-## Source files
-
-- `plugin/**`
+3. **Use the public API boundaries.** Stick to documented functions and avoid importing from `plugin.hooks.*` internals directly. The hook registration system is your stable interface.
 
 **Tags:** `plugin`, `claude-code`

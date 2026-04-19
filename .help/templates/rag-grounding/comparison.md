@@ -2,55 +2,51 @@
 type: comparison
 feature: rag-grounding
 depth: comparison
-generated_at: 2026-04-19T06:52:49.567894+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:51:56.161333+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
-# RAG grounding vs other code generation approaches
+# RAG grounding vs direct LLM code generation
 
-## What is RAG grounding
-
-RAG grounding retrieves relevant context from attune documentation via attune-rag, then feeds citation-forced prompts to Claude. The system enforces that generated code references real APIs, workflow names, and CLI commands from the attune ecosystem rather than inventing features.
-
-The core implementation is `RagCodeGenWorkflow`, which combines retrieval and generation in a single SDK-native workflow.
+RAG-grounded code generation retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, and emits answers with provenance. This comparison helps you decide when grounding is worth the overhead versus calling an LLM directly.
 
 ## Feature comparison
 
-| Aspect | RAG grounding | Standard LLM prompting | Manual documentation lookup |
-|--------|---------------|----------------------|---------------------------|
-| **Accuracy** | High - enforced citations from real docs | Low - prone to hallucination | High - human verification |
-| **Speed** | Medium - retrieval + generation | Fast - direct generation | Slow - manual research |
-| **Provenance** | Built-in source attribution | None | Manual tracking |
-| **Maintenance** | Auto-updates with doc changes | Requires prompt engineering | Constant manual updates |
-| **Scope** | Limited to attune ecosystem | Unlimited but unreliable | Limited by human capacity |
+| Capability | RAG grounding | Direct LLM |
+|---|---|---|
+| **Response accuracy** | High for attune ecosystem questions | Varies; can hallucinate attune-specific APIs |
+| **Citation tracking** | Built-in provenance links to source docs | No citations; user must verify claims |
+| **Setup complexity** | Requires attune-rag retrieval pipeline | Single LLM API call |
+| **Response latency** | ~2-3x slower due to retrieval step | Fast; direct model inference |
+| **Context freshness** | Always uses latest attune-help content | Training data may be months stale |
+| **Cost per query** | Higher (retrieval + generation tokens) | Lower (generation tokens only) |
+| **Offline capability** | Requires network for both retrieval and LLM | Can work with local models |
 
-## Use RAG grounding when
+## When to use RAG grounding
 
-- You need code examples that reference actual attune APIs
-- Provenance and citation accuracy matter for your use case
-- You're building documentation, tutorials, or help systems
-- You want to avoid the hallucination risks of unconstrained LLM generation
-- Your workflow can tolerate the retrieval latency overhead
+Use `RagCodeGenWorkflow` when you need **verifiable answers about the attune ecosystem**:
 
-## Don't use RAG grounding when
+- Generating code that uses attune APIs, workflows, or CLI commands
+- Answering questions about attune features where accuracy matters more than speed
+- Building user-facing tools that must cite their sources
+- Working with developers who are new to attune and need guided examples
 
-- You need general-purpose code generation outside the attune ecosystem
-- Speed matters more than accuracy (RAG retrieval adds ~2-3x latency)
-- You're prototyping and don't need real API references
-- Your use case requires inventing new APIs or patterns not in the documentation
-- You need interactive code completion (this is a batch-oriented workflow)
+The system prompt enforces citation requirements: "Use the provided context to cite real APIs, workflow names, and CLI commands. Never invent attune features."
 
-## Alternative approaches
+## When to use direct LLM calls
 
-**Standard LLM prompting**: Faster but unreliable for attune-specific code. Use for general programming tasks where hallucination risk is acceptable.
+Choose direct LLM generation when you need **speed over verification**:
 
-**Manual documentation lookup**: Most accurate but doesn't scale. Use for one-off questions or when you need to understand complex architectural decisions.
+- Prototyping or exploratory coding where accuracy is less critical
+- General programming questions unrelated to attune specifics
+- Batch processing where retrieval latency would be prohibitive
+- Working offline or in environments where retrieval isn't available
 
-**Hybrid approach**: Start with RAG grounding for the foundation, then iterate with standard prompting for refinement. This gives you accurate scaffolding with flexible iteration.
+## Recommendation
 
-## Source files
+**Start with RAG grounding** for any attune-related code generation. The citation overhead pays for itself by preventing hallucinated APIs that waste debugging time. Switch to direct LLM calls only when you've confirmed the speed difference matters for your use case.
 
-- `src/attune/workflows/rag_code_gen.py`
+For mixed workloads, use RAG grounding for attune-specific queries and direct calls for general programming questions.
 
 **Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`

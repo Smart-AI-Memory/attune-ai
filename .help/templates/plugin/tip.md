@@ -2,32 +2,15 @@
 type: tip
 feature: plugin
 depth: tip
-generated_at: 2026-04-14T15:23:53.328755+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:53:45.040321+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
-# Use hooks for reactive behavior, not proactive tasks
+# Tip: Test hook functions in isolation during development
 
-## Context
+When developing Claude Code plugin hooks, run each hook's `main()` function independently before testing the full plugin integration. Hook functions like `format_on_save.main()` and `help_on_error.main()` are designed to work standalone — they read from stdin, process the data, and exit cleanly.
 
-Claude Code's plugin system includes six hooks that respond to specific events: format-on-save, help freshness checks, error suggestions, git commit maintenance, security validation, and session startup.
+Testing in isolation catches logic errors faster than debugging through the full plugin lifecycle, where you have to trigger the right hook event and parse Claude's output to see what went wrong.
 
-## Recommendation
-
-Design your plugin extensions as event-driven hooks rather than polling or background processes. Each hook has a specific trigger (PostToolUse, SessionStart) and a focused responsibility.
-
-Hooks excel at:
-- Responding to user actions (`format_on_save.py` runs after Write/Edit tools)
-- Maintaining consistency (`help_post_commit.py` updates help after git commits)
-- Just-in-time validation (`security_guard.py` checks commands before execution)
-
-## Why this works
-
-Event-driven architecture keeps the plugin lightweight and responsive while ensuring actions happen at exactly the right moment in the user's workflow.
-
-## Source files
-
-- `plugin/**`
-
-**Tags:** `plugin`, `claude-code`
+The tradeoff: isolated testing won't catch integration issues where your hook interacts incorrectly with Claude's tool execution flow or MCP protocol handling.

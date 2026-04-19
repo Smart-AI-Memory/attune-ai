@@ -2,33 +2,33 @@
 type: reference
 feature: rag-grounding
 depth: reference
-generated_at: 2026-04-19T06:51:35.856464+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:50:36.633522+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
 # RAG grounding reference
 
-Generate code grounded in retrieved context from the attune ecosystem. Prevents AI hallucination by citing real APIs, workflow names, and CLI commands.
+Generate code and explanations that cite real attune APIs, workflows, and CLI commands using retrieval-augmented generation.
 
 ## Classes
 
 | Class | Description |
 |-------|-------------|
-| `RagCodeGenWorkflow` | Executes RAG-grounded code generation with context retrieval |
+| `RagCodeGenWorkflow` | Execute SDK-native RAG-grounded code generation workflow |
 
 ### RagCodeGenWorkflow
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `__init__` | `**kwargs: Any` | `None` | Initialize the workflow |
-| `execute` | `**kwargs: Any` | `WorkflowResult` | Run code generation with retrieved context |
+| `__init__` | `**kwargs: Any` | `None` | Initialize the RAG code generation workflow |
+| `execute` | `**kwargs: Any` | `WorkflowResult` | Execute the workflow and return results |
 
 ## Constants
 
 | Constant | Description |
 |----------|-------------|
-| `_SYSTEM_PROMPT` | System prompt instructing the AI to ground responses in provided context |
+| `_SYSTEM_PROMPT` | System prompt that enforces grounding in real attune features and prevents hallucination |
 
 ## Source files
 
