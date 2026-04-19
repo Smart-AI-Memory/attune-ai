@@ -418,6 +418,18 @@ def setup_test_environment(tmp_path, monkeypatch, request):
         pass
 
 
+@pytest.fixture(autouse=True, scope="function")
+def _disable_help_telemetry(monkeypatch):
+    """Disable help-query telemetry during tests.
+
+    Prevents tests that exercise `_handle_help_lookup` from writing to
+    the user's real `~/.attune/telemetry/help_queries.jsonl`. Tests
+    that explicitly want to verify telemetry behavior should enable it
+    inside the test via `monkeypatch.delenv("ATTUNE_HELP_TELEMETRY")`.
+    """
+    monkeypatch.setenv("ATTUNE_HELP_TELEMETRY", "0")
+
+
 # =============================================================================
 # Additional Shared Fixtures for Testing Improvements
 # =============================================================================
