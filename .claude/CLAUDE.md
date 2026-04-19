@@ -2342,12 +2342,56 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   explicit sentinel tags like
   `<retrieved_context>...</retrieved_context>` plus a
   system-prompt clause stating content inside the
-  sentinel is data, never instructions. Neither
-  attune-rag 0.1.4 nor its consumers (rag_hook.py,
-  rag_code_gen.py) currently do this — citation-variant
-  was the 0.1.4 delivery, sentinel framing is a
-  separate 0.1.5-class feature. Pattern: when
-  evaluating a RAG pipeline's "safety," ask which
-  threat model each mitigation addresses; don't
-  collapse "grounded" and "not-injectable" into one
-  property.
+  sentinel is data, never instructions. attune-rag
+  0.1.5 ships this as per-passage `<passage>...</passage>`
+  wrapping + injection-defense clause across every
+  prompt variant. Pattern: when evaluating a RAG
+  pipeline's "safety," ask which threat model each
+  mitigation addresses; don't collapse "grounded" and
+  "not-injectable" into one property.
+
+- **Changing the citation-anchor format can silently
+  regress LLM citation fidelity even when the
+  instructions are "equivalent"**: initial attune-rag
+  0.1.5 implementation replaced `[P1] source: <path>`
+  headers with an XML `id="P1"` attribute on a
+  `<passage>` sentinel tag, and updated the prompt
+  instruction from "citation marker pointing at the
+  passages" to "pointing at the `id` attribute of the
+  passage(s)". The A/B sweep regressed citation
+  faithfulness from 1.00 to 0.97 and query-bucket
+  hallucination rate from 6.7% to 33.3%. Per-claim
+  hallucination went from ~0.5% to ~3.2% (6x worse).
+  Recovery was to preserve the exact pre-0.1.5
+  `[P1] source: <path>` header AS THE FIRST LINE
+  INSIDE the `<passage>` tag — additive wrapping, not
+  a replacement — which restored faithfulness to 0.99
+  (hallu 13.3%). Lesson: the model's citation behavior
+  is anchored to the specific token pattern in its
+  training data. When adding defensive structure
+  around retrieved passages, preserve the original
+  citation-anchor format and add new structure around
+  it; don't swap the format for an equivalent-looking
+  alternative (XML attribute, different bracket style,
+  etc.) even when the instruction reword seems
+  clearer. Corollary process lesson: when a prompt
+  change bundles two axes (format + instruction
+  reword), isolate them in the recovery A/B rather
+  than reverting everything.
+
+- **`uv lock` may briefly fail to find a just-published
+  PyPI version because the simple index lags the JSON
+  API**: within ~30 seconds of a successful PyPI
+  publish, `curl https://pypi.org/pypi/<pkg>/<ver>/json`
+  returns the new version but `uv lock
+  --upgrade-package <pkg>` fails with "only
+  <previous-version> is available. [...]  requirements
+  are unsatisfiable." Both surfaces eventually
+  converge, but the simple index (used by uv / pip)
+  refreshes a few seconds behind the JSON API. Fix:
+  wait ~30s and rerun with `uv lock
+  --upgrade-package <pkg> --refresh` — the `--refresh`
+  flag bypasses uv's local cache of the simple index.
+  Relevant for cross-repo release chains where one
+  sibling publishes, then another sibling's lockfile
+  refresh follows immediately.
