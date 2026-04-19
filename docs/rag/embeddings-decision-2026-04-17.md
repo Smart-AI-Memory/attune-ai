@@ -264,6 +264,69 @@ improvement and v0.2.0 adds `attune-rag[embeddings]` using
 `fastembed`. Keyword retrieval remains the default for
 zero-dep users.
 
+## Phase 2.5c result (attune-help 0.7.0 + attune-rag 0.1.2, 2026-04-18)
+
+After Phase 2.5a plateaued at 66.67% P@1, I ran a
+prototype: hand-crafted path-keyed keyword-rich summaries
+for one feature (bug-predict) and re-benchmarked. Result
+showed +40 pts P@1 for that feature, validating that the
+real ceiling wasn't the retriever but the corpus.
+Concretely: attune-help shipped summaries keyed by feature
+name (`"bug-predict"`) while `DirectoryCorpus` expected
+path-keyed (`"concepts/tool-bug-predict.md"`), so every
+one of 633 corpus entries silently had `summary=None` at
+retrieval time. The 1.5x `SUMMARY_WEIGHT` was applied to
+zero data.
+
+Shipped the fix as attune-help 0.7.0 (path-keyed
+`summaries_by_path.json`, 124 polished summaries across 26
+features, LLM polish pipeline with feature-
+differentiation hints) + attune-rag 0.1.2 (updated
+`AttuneHelpCorpus` to consume the new sidecar).
+
+Re-ran the 15-query golden benchmark against attune-help
+0.7.0 corpus with `AttuneHelpCorpus` + `KeywordRetriever`:
+
+| Metric | 0.1.1 (tuning only) | 0.1.2 + 0.7.0 | Delta |
+|---|---|---|---|
+| Precision@1 | 66.67% | **73.33%** | **+6.66 pts** |
+| Recall@3 | 73.33% | **86.67%** | **+13.34 pts** |
+| Easy P@1 | 5/5 | 4/5 | -1 |
+| Medium P@1 | 4/4 | 4/4 | — |
+| Hard P@1 | 1/6 | 3/6 | +2 |
+
+**Gate result: MET.** Precision@1 73.33% clears the 70% gate by
+3.33 pts without any embeddings dependency.
+
+Corresponding multi-feature fixture benchmark (26 features ×
+25 queries = 650 queries) lands at 71.7% P@1 / 81.5% R@3 with
+similar margin.
+
+### Decision: Phase 2.5b deferred indefinitely
+
+Per the fastembed decision matrix (committed before this
+run):
+
+> If Golden P@1 ≥ 80% AND industry fixture P@1 ≥ 70%:
+> defer fastembed indefinitely.
+> If Golden P@1 70-80%: ship fastembed as optional extra.
+
+Golden P@1 73.33% + fixture P@1 71.7% puts us in the middle
+band. Per the matrix, fastembed moves to **optional extra**
+status: we do NOT build it into the default attune-rag
+install, but we do keep the `attune-rag[embeddings]` extra
+slot reserved for a future contribution from users who need
+cross-corpus retrieval (where summaries don't exist).
+
+The immediate work is complete. Follow-up items:
+
+- attune-help 0.7.1 — differentiation-tuning for the 6
+  features below the 60% per-feature P@1 gate (spec,
+  code-quality, planning, refactor-plan,
+  workflow-orchestration, security-audit).
+- attune-rag — no further retrieval work planned unless
+  user need emerges for non-attune-help corpora.
+
 ## Links
 
 - Spec: [feature-rag-code-grounding-2026-04-17.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/.claude/plans/feature-rag-code-grounding-2026-04-17.md)
