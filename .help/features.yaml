@@ -142,3 +142,9 @@ features:
     files:
       - src/attune/config/**
     tags: [config, settings]
+
+  rag-grounding:
+    description: RAG-grounded code generation — retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, emits answers with provenance
+    files:
+      - src/attune/workflows/rag_code_gen.py
+    tags: [rag, retrieval, grounding, faithfulness, citation]
