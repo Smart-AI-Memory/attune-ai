@@ -2,55 +2,43 @@
 type: faq
 feature: mcp-server
 depth: faq
-generated_at: 2026-04-14T15:00:49.309863+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:21:43.968634+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Mcp Server FAQ
+# MCP server FAQ
 
 ## What is the MCP server?
 
-The Attune AI MCP server that provides tools for workflows, authentication, memory, and contextual help through the Model Context Protocol.
+The Model Context Protocol server that provides tools, prompts, and resources to Claude Code and other MCP clients. It handles authentication, telemetry, memory operations, help lookup, and workflow execution.
 
-## When should I use the MCP server?
+## When do I need to use it?
 
-Use the MCP server when you need to connect Attune AI workflows to an MCP-compatible client like Claude Desktop. It exposes all Attune tools, prompts, and resources through the standard MCP protocol.
+You use the MCP server whenever you work with Attune AI features through Claude Code. The server runs automatically when you have a `.mcp.json` file in your project root - you don't need to start it manually.
 
-## How do I start the server?
+## What tools does it provide?
 
-Run `python -m attune.mcp.server` or call the `main()` function. You can also create a server instance directly with `create_server()`.
+The server provides several categories of tools:
 
-## What tools does the server provide?
+- **Help tools**: `help_lookup`, `help_maintain`, `help_init` for contextual documentation
+- **Memory tools**: `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` for persistent data
+- **Utility tools**: `auth_status`, `telemetry_stats`, `attune_get_level` for configuration and monitoring
+- **Workflow tools**: Access to all available Attune workflows
 
-The server provides four categories of tools:
+## How do I start the server manually?
 
-- **Workflow tools**: Execute Attune AI workflows
-- **Utility tools**: Authentication status, telemetry stats, and session management
-- **Help tools**: Contextual documentation and progressive help lookup
-- **Memory tools**: Store, retrieve, search, and forget data across sessions
+Run `uv run python -m attune.mcp.server` from your project directory. This is mainly useful for testing - Claude Code normally starts it automatically.
 
-## How does rate limiting work?
+## What if the server isn't responding?
 
-The `RateLimiter` class uses a sliding window approach with a default limit of 60 calls per 60 seconds. You can customize these values when creating a server instance.
+Check that your `.mcp.json` file exists and uses `uv run` instead of bare `python`. See the troubleshooting guide for MCP server issues for the complete diagnosis flow.
 
-## What prompts are available?
+## Where is the server code?
 
-The server exposes three built-in prompts:
-
-- `security-scan`: Comprehensive security analysis for directories
-- `test-gen`: Generate behavioral tests for Python modules
-- `cost-report`: Cost optimization analysis with cache hit rates
-
-## How do I debug server issues?
-
-First check that your MCP client is properly configured to connect to the server. Enable debug logging to see tool calls and responses. The server handles errors gracefully and returns structured error messages through the MCP protocol.
-
-## Where are the source files?
-
-- `src/attune/mcp/server.py` - Main server implementation
-- `src/attune/mcp/memory.py` - Memory tool handlers
-- `src/attune/mcp/prompts.py` - Prompt handling
-- `src/attune/mcp/rate_limit.py` - Rate limiting
+The main implementation is in `src/attune/mcp/server.py`. Tool definitions are spread across several modules:
+- Memory tools: `src/attune/mcp/memory.py`
+- Prompt handling: `src/attune/mcp/prompts.py`
+- Rate limiting: `src/attune/mcp/server.py`
 
 **Tags:** `mcp`, `tools`, `server`

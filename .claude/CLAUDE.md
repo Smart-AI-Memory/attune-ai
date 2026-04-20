@@ -2395,3 +2395,515 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Relevant for cross-repo release chains where one
   sibling publishes, then another sibling's lockfile
   refresh follows immediately.
+
+- **Research subagents can hallucinate SDK signatures —
+  introspect the real API before coding to it**: the
+  6.2.0 planning research claimed
+  `SystemPromptPreset(exclude_dynamic_sections=["cwd",
+  "git_status"])` would work. The actual
+  `claude_agent_sdk.types.SystemPromptPreset.__annotations__`
+  is `{type: Literal["preset"], preset:
+  Literal["claude_code"], append: NotRequired[str],
+  exclude_dynamic_sections: NotRequired[bool]}` — a
+  **boolean** toggle, not a list of section names, and
+  wraps only Claude Code's built-in `"claude_code"`
+  preset (no vehicle for custom system prompts).
+  Verifying the shape via `import inspect;
+  inspect.signature(obj)` + `.__annotations__` cost
+  ~1 minute and saved an entire task's worth of
+  misdirected code. Research agents can confabulate
+  API shapes from documentation-style priors without
+  importing the code. Pattern: before implementing any
+  task that depends on an SDK symbol the research
+  agent named, run a short introspection check
+  (`hasattr`, `inspect.signature`, `__annotations__`)
+  as the first step of that task — especially for
+  typed-dict / kwarg-only classes where there's no
+  constructor signature to catch mistakes at
+  call-time.
+
+- **`getattr(module, "name", None)` at call site is the
+  clean degradation pattern for optional SDK surface**:
+  in 6.2.0 we wired three features (`list_subagents`,
+  `get_subagent_messages`, `TaskBudget`,
+  `ThinkingConfigAdaptive`) that only exist in newer
+  claude-agent-sdk versions but kept the dep floor at
+  `>=0.1.60` rather than `>=0.1.63` so older installs
+  degrade cleanly. Pattern:
+  ```python
+  list_fn = getattr(claude_agent_sdk, "list_subagents", None)
+  if list_fn is None:
+      return {}  # older SDK — no-op gracefully
+  return list_fn(session_id)
+  ```
+  Superior to both module-level `from X import name`
+  (older SDK → ImportError crashes the whole module)
+  and try/except around every use (repetitive,
+  scatters the fallback logic). Use `getattr` probes
+  when the feature is optional and the SDK may not
+  expose it; reserve try/except for when the feature
+  is definitely available but the call itself may
+  fail at runtime.
+
+- **Claude-agent-sdk `SystemPromptPreset` (as of
+  0.1.63) is Claude-Code-preset-only, not a vehicle
+  for custom system prompts**: the name suggests "a
+  preset for building system prompts" but the real
+  schema is narrower: `type: Literal["preset"]`,
+  `preset: Literal["claude_code"]` (only one
+  acceptable value), `append: NotRequired[str]` to
+  append text, `exclude_dynamic_sections:
+  NotRequired[bool]` as an all-or-nothing toggle for
+  the built-in preset's dynamic sections. For
+  **custom** system prompts, pass a plain string to
+  `ClaudeAgentOptions(system_prompt=...)` — that path
+  is already cache-friendly since the string is
+  static and `cwd=` is a tool-execution config field,
+  not text injected into the prompt stream. No
+  action needed to get cross-run cache hits when
+  using string prompts; `SystemPromptPreset` only
+  applies when building on top of the claude_code
+  preset.
+
+- **`mcp__attune-ai__doc_orchestrator` is a no-op
+  stub**: calling the MCP tool on a real project
+  returns `{items_found: 0, docs_generated: [],
+  docs_updated: [], total_cost: 0.0, phase:
+  "complete", success: true}` — looks like a clean
+  pass but did zero actual analysis. Don't trust a
+  cost-zero MCP workflow response as evidence that
+  work was attempted; verify by spot-checking the
+  filesystem or running a direct script that's known
+  to work. For real doc gap analysis today, skip the
+  MCP tools and do a direct `ast` parse + docstring
+  check in Bash — takes seconds and actually returns
+  signal.
+
+- **`release: published` + `workflow_dispatch` both
+  approved for `pypi` env = duplicate publish, the
+  second fails "File already exists"**: on v6.2.0,
+  approving the `pypi` environment deployment on BOTH
+  the tag-triggered (`release: published`) and manual
+  (`workflow_dispatch`) runs caused the first to
+  upload successfully and the second to 400 with
+  `File already exists ('attune_ai-6.2.0-py3-none-any
+  .whl', with blake2_256 hash ...)`. The release is
+  fine — files are live on PyPI — but the failed run
+  looks alarming. Two fixes: (1) only approve ONE of
+  the two runs per release; (2) guard the publish
+  job with `if: ${{ github.event_name ==
+  'workflow_dispatch' }}` so tag-triggered runs
+  short-circuit before twine uploads. Related to the
+  existing `pypi` env branch-policy lesson — that
+  one bites when only tag-triggered runs exist; this
+  one bites when both paths are enabled and both get
+  approved.
+
+- **YAML `run:` block scalars break on blank lines
+  inside multi-line bash strings**: a `run:` block
+  containing `git commit -m "line1\n\nline2"` (with a
+  literal blank line in the heredoc) fails with
+  `Implicit keys need to be on a single line`
+  errors, because YAML's literal block scalar
+  interprets the blank line as terminating the
+  scalar. Fix: build multi-line strings via shell
+  grouping `{ echo 'line1'; echo; echo 'line2'; } >
+  /tmp/msg.txt`, then pass via `-F /tmp/msg.txt`
+  (git commit) or `--body-file /tmp/msg.txt` (gh pr
+  create). Related to the existing "YAML `run:`
+  values with colons cause parse errors" lesson but
+  the trigger is different — blank lines, not colons.
+  Always verify YAML validity before pushing:
+  `python -c "import yaml; yaml.safe_load(open('<
+  workflow>.yml'))"`.
+
+- **Orphan .help/ dirs are deprecated 3-depth output;
+  adding them to features.yaml triggers regen that
+  overwrites the content you wanted to preserve**:
+  the naive instinct when faced with orphan template
+  dirs (`.help/templates/security/`,
+  `.help/templates/workflows/` — both 3-kind leftovers
+  from the in-repo 3-depth generator) is "add to
+  manifest to keep them current." But attune-author's
+  `--all-kinds` regen on the next weekly run
+  overwrites all 3 files with 11 new ones — the
+  "preservation" is imaginary. Also, broad-named
+  orphans (`security`, `workflows`) collide with
+  existing feature names (`security-audit`, individual
+  workflow features) on RAG retrieval per the mutual-
+  competition lesson. Correct path: delete the orphan
+  dirs. Git history is the archive.
+
+- **`attune_author.check_staleness` +
+  `load_manifest` is the Python API for programmatic
+  stale detection**: the `attune-author status` CLI
+  emits only markdown tables. Parsing those with awk
+  is brittle (divider rows sneak through, feature-
+  name-starts-with-lowercase is hacky). The package
+  exposes a clean Python path:
+  `from attune_author import check_staleness,
+  load_manifest; manifest = load_manifest(help_dir);
+  report = check_staleness(manifest, help_dir,
+  project_root); report.stale_features`. Use this
+  anywhere automation would otherwise parse the
+  status table (GitHub Actions, SessionStart hooks,
+  pre-commit scripts). The CLI is for humans; the
+  API is for automation.
+
+- **Local-telemetry trackers need an autouse
+  conftest fixture disabling them, not just a
+  `tmp_path` default**: a new `HelpTracker` class
+  with the default path `~/.attune/telemetry/` got
+  exercised through its real consumer (MCP handler
+  `_handle_help_lookup`) during routine tests and
+  polluted the user's actual JSONL with 11
+  test-fixture events. `tmp_path` only helps when
+  the test constructs the tracker directly; tests
+  that reach the tracker via production code paths
+  bypass the fixture. Fix pattern: module-level
+  opt-out env var (e.g. `ATTUNE_HELP_TELEMETRY=0`)
+  plus an `autouse=True, scope="function"` fixture
+  in the top-level `conftest.py` that sets it.
+  Tracker-specific tests then re-enable via
+  `monkeypatch.delenv` in their own module. Build
+  any new `~/.attune/...` writer this way from
+  commit one.
+
+- **"Delete deprecated module" is rarely a simple
+  delete — grep src/ AND tests/ first**: the
+  in-repo `attune.help.generator` 3-depth generator
+  looked like dead code on first glance but had 3
+  live source consumers (MCP `help_update` handler,
+  `help/maintenance.py`, `help/engine.py`) plus
+  multiple test imports. A straight `rm` would have
+  broken the `help_update` MCP tool. Intermediate
+  step that closes the "orphan recurrence" risk
+  without the migration cost: module-level
+  docstring note + `warnings.warn(..., Deprecation
+  Warning, stacklevel=2)` at the top of the public
+  entry point. Pytest's default
+  `ignore::DeprecationWarning` means zero test
+  impact; future callers surface audibly via
+  `python -W default::DeprecationWarning`. Reserve
+  actual deletion for when all consumers have
+  migrated.
+
+- **Golden-query benchmarks reveal two distinct
+  failure classes that need different fixes**:
+  (1) **corpus gaps** — query doesn't appear in
+  any feature's name/desc/tags. One-line manifest
+  edit (add tag, paraphrase description) closes
+  these. (2) **structural ambiguity** — query
+  legitimately matches multiple features (e.g.
+  "review" applies to both code-quality AND
+  deep-review; "bugs" applies to both code-quality
+  AND bug-predict). No manifest edit or resolver
+  improvement resolves class (2) because the
+  ambiguity lives in the tag/description
+  vocabulary, not in the cascade ordering. The
+  correct responses to class (2) are:
+  (a) accept the XFAIL as "this is genuinely
+  ambiguous, user needs disambiguation UI,"
+  (b) change the resolver contract to return a
+  list of candidates, or
+  (c) strip the shared tag from one feature
+  (changes semantics). Don't mistake (2) for a
+  corpus problem and keep adding tags — you can't
+  fix a shared-tag collision with more tags.
+
+- **Handoff-memory "Option B" proposals are often
+  wrong — re-analyze after Option A**: when
+  writing a project memory that sequences work as
+  "do A first, then B if needed," the B framing is
+  usually speculative and hasn't been validated
+  against the actual problem. After completing A,
+  the problem often looks different: either B is
+  no longer needed, or B as originally framed
+  doesn't address the actual remaining cause. The
+  resolver-upgrade handoff said "Option B =
+  aggregate scoring across cascade steps"; after
+  doing A and re-analyzing, the remaining 2 hard
+  queries were shared-tag collisions that
+  aggregate scoring couldn't touch. Lesson: label
+  speculative proposals clearly in memories
+  ("initial theory, validate before implementing")
+  and always re-evaluate from scratch at pickup
+  time.
+
+- **Exclude `hard` queries from aggregate P@1
+  metrics in benchmark caches**: when a golden-
+  query fixture labels queries `easy/medium/hard`
+  and `hard` documents structural ceilings (shared
+  tags, genuine ambiguity), counting them in
+  aggregate P@1 dilutes triage signal forever. A
+  feature with a 3-query set (easy + medium + 1
+  hard miss) sits at 67% no matter what corpus
+  fixes land, because the hard case is by design
+  unsolvable without resolver changes. Fix: filter
+  hard queries out of the cache writer's P@1
+  aggregation, keep them visible in drill-in views
+  with their difficulty label, and record
+  `p_at_1_excludes_hard: true` in the cache so
+  consumers know the metric semantics. Hard
+  queries still run via pytest xfail for ceiling
+  tracking.
+
+- **`rich.live` is output-only; use `textual` for
+  any interactive row navigation**: both libraries
+  share the same author and styling DSL, which
+  makes it easy to reach for `rich.live` when the
+  spec says "drill into a row." But `rich.live`
+  has no concept of focus, selection, or keyboard
+  input — it's for non-interactive auto-refreshing
+  displays (progress bars, status tables). The
+  moment the UX needs arrow-key navigation or
+  screen push/pop, `textual`'s `DataTable` widget,
+  `Screen` subclass, and key bindings are the
+  right primitives. Check the spec before picking:
+  if `$EDITOR path/from/drill-in.output` closes
+  the loop in shell, you may not need a TUI at all
+  — a `--drill-in FEATURE` flag on a CLI script
+  is often strictly better than either option.
+
+- **Dry-run candidate golden queries through the
+  resolver before assigning difficulty labels**:
+  when expanding a golden-query fixture, every
+  candidate query should pass through
+  `resolve_topic()` (or the equivalent) first.
+  Labels based on guessing — "this medium query
+  probably resolves because the tag exists" —
+  hide real corpus gaps and produce mislabeled
+  fixtures. In the aggregator session, 2 of 12
+  candidates planned as `medium` actually lost
+  to keyword collisions in other features'
+  descriptions ("ai" → fix-test, "commands" →
+  plugin) and had to be relabeled `hard`. The
+  dry-run script is ~20 lines, takes under a
+  second, and prevents every "unexpectedly hard
+  medium query" false label. Pair with the
+  existing lesson on "reclassify up the
+  difficulty ladder instead of silencing" —
+  this one prevents the silencing case by
+  catching mislabels at authoring time.
+
+- **Bare `MANIFEST` in `.gitignore` silently
+  excludes any `manifest/` directory on
+  case-insensitive filesystems**: attune-author's
+  `.gitignore` had a plain `MANIFEST` entry
+  intended for setuptools' `MANIFEST` artifact.
+  Combined with git's default case-insensitive
+  matching on macOS/Windows, it also excluded the
+  `.help/templates/manifest/` directory — 11
+  polished template files that existed locally but
+  were never tracked. Local tests passed; Linux CI
+  failed with "missing template dir for feature
+  'manifest'" across 9 assertions. Fix: scope
+  setuptools patterns to repo root
+  (`/MANIFEST`, `/MANIFEST.in`). When adding a
+  `.gitignore` entry for an artifact file, anchor
+  with a leading `/` unless the pattern genuinely
+  needs to match anywhere in the tree. Also a
+  reminder that CI on Linux catches drift macOS
+  development cannot see.
+
+- **Platform-conditional security-test assertions
+  should accept any rejecting rule, not a specific
+  error substring**: attune-author's
+  `test_author_docs_rejects_output_parent_in_system_dir`
+  hard-coded `"system directory" in result["error"]`.
+  On Unix, the Unix-anchored `_DANGEROUS_PREFIXES`
+  list (`/etc`, `/sys`, `/proc`, …) fires and
+  produces that substring. On Windows, `/etc/…` is
+  neither a system dir nor under the workspace —
+  the containment rule fires instead, returning
+  `"outside allowed directory"`. Both rejections
+  satisfy the same security contract: the write
+  must not land. Fix: widen the assertion to
+  `"system directory" in err or
+  "outside allowed directory" in err` and document
+  in the docstring why either rule is acceptable.
+  Generalization: when a security test's intent is
+  "the operation was refused," assert on refusal
+  (`success is False` + no side effect) and only
+  narrow the error-message check if the specific
+  rule matters.
+
+- **Dead tests from monorepo extraction accumulate
+  in packages with no CI**: attune-help shipped
+  `test_plugin_config.py` (15 tests) and parts of
+  `test_plugin_references.py` from attune-ai's
+  monorepo split. They validated a `plugin/`
+  directory layout that exists in attune-ai but
+  was never created in attune-help. Local test
+  runs passed anyway because `_all_skill_bodies()`
+  globbed an empty directory — the parametrized
+  tests just silently produced zero cases.
+  Enabling CI was the accountability mechanism
+  that surfaced 15 errors + 4 failures at once.
+  Pattern: when extracting a package, grep the
+  new repo's `tests/` for any path reference that
+  doesn't exist in the new layout and either
+  create the expected files or delete the test.
+  And: the first green CI run on a newly-audited
+  package is almost never a one-push event —
+  budget for 2-3 fix commits.
+
+- **TODO counts are inflated by docstrings and
+  prompt strings describing TODO markers**: a
+  grep-based count of `TODO|FIXME` in attune-ai
+  reported 54 items but triage showed only 1 real
+  blocker. The inflation came from docstring text
+  like "Generated Python test code as a string
+  with TODO markers", prompt instructions like
+  "Complete ALL TODOs with:", and example-output
+  strings inside test generators. Classify by
+  reading surrounding context (is the `TODO` in
+  an executable code path, or is it the string
+  content of a docstring / prompt / example
+  output?), not by counting matches. Only code-
+  path TODOs are real debt.
+
+- **Past-due deprecations are deletion targets,
+  not implementation targets — read the
+  DeprecationWarning before "fixing" the TODO**:
+  `ProgressiveTestGenWorkflow.__init__` raised a
+  `DeprecationWarning` since v5.3.0 announcing
+  removal in v6.0.0. The class carried through
+  v6.0.x and v6.2.0 unchanged, with its
+  `_execute_tier_impl` returning simulated (not
+  LLM-generated) test data behind a
+  `TODO(llm-integration)` comment. When the TODO
+  was triaged as a blocker, the instinct was
+  "wire the LLM." The better answer once the
+  deprecation comment was read: "honor the
+  removal promise" — delete the file, its tests,
+  and its demo. Preserve the migration alias
+  (`progressive-test-gen -> test-gen`) so CLI
+  users keep working. Generalization: before
+  spending effort to complete a placeholder, check
+  whether the containing class is already
+  deprecated with a stated removal date — a
+  past-due deprecation makes implementation
+  strictly wrong.
+
+- **Integration tests gated by `HAS_API_KEY` can
+  poison the whole CI matrix when Anthropic's
+  network is transiently unreachable**: PR #169
+  showed 7-15 test failures spread across most
+  matrix jobs with identical signature
+  `AllProvidersFailedError: All fallback options
+  exhausted. Last error: Connection error.` All
+  hits were in `tests/models/test_sonnet_opus_fallback.py`,
+  which guards with `needs_api_key =
+  pytest.mark.skipif(not HAS_API_KEY, ...)` and
+  makes real API calls when the key is set. When
+  the CI runner's network to `api.anthropic.com`
+  flakes, every platform that has the key
+  configured fails identically — making it look
+  like a code regression. Diagnosis signal: the
+  same test IDs fail across all OS/Python
+  combinations with the *same* error string, and
+  no unit tests fail. Proper fix: mock the
+  executor at the HTTP boundary, or add
+  `@pytest.mark.integration` and exclude from the
+  default `-m "not integration"` selector in
+  `tests.yml`. Short-circuit rule: if CI
+  "failures" all share the exact error string
+  and live only in files with a network-gated
+  skip, treat as infrastructure flake, not code
+  regression.
+
+- **`import X` inside a `try` block + `except
+  X.SomeError` in the except clause crashes with
+  `UnboundLocalError` when the import fails**:
+  hit in `.clusterfuzzlite/fuzz_config_parsing.py`
+  where the fuzz target did
+  ```python
+  try:
+      import yaml
+      yaml.safe_load(raw)
+  except (yaml.YAMLError, ValueError, TypeError):
+      pass
+  ```
+  Python evaluates the except expression only
+  when an exception is raised — so if
+  `import yaml` raises `ImportError`, the except
+  clause is evaluated with `yaml` never bound,
+  producing
+  `UnboundLocalError: cannot access local
+  variable 'yaml'` and crashing libFuzzer with
+  "fuzz target exited". This matters any time an
+  optional dep could be missing at runtime (fuzz
+  containers built with `pip install --no-deps`,
+  minimal CI environments, etc.). Fix pattern:
+  move the import to module scope behind an
+  availability guard and bind the exception class
+  to a name that is always defined:
+  ```python
+  try:
+      import yaml
+      _YAML_AVAILABLE = True
+      _YAML_ERROR: type[Exception] = yaml.YAMLError
+  except ImportError:
+      _YAML_AVAILABLE = False
+      _YAML_ERROR = ValueError  # placeholder
+  ```
+  Then the hot path checks `_YAML_AVAILABLE`
+  before calling `yaml.safe_load`, and the except
+  references `_YAML_ERROR` which is bound in
+  both branches. Scope: fuzz targets,
+  optional-dep SDK adapters, any code where the
+  exception type comes from a potentially-missing
+  package.
+
+- **Clusterfuzz Dockerfile copies `.` to
+  `$SRC/<repo>` but also copies individual files
+  to `$SRC/` — new sibling files need one path or
+  the other, not `$(dirname "$0")`**:
+  `.clusterfuzzlite/Dockerfile` does
+  `COPY . $SRC/attune-ai` and then
+  `COPY .clusterfuzzlite/build.sh $SRC/build.sh`
+  plus `COPY .clusterfuzzlite/fuzz_*.py $SRC/`.
+  Result: `build.sh` runs from `/src/` (so
+  `$(dirname "$0")` resolves to `/src/`, not
+  `/src/attune-ai/.clusterfuzzlite/`). Adding a
+  new file like `requirements.txt` and
+  referencing it via `$(dirname "$0")/requirements.txt`
+  fails with "No such file or directory:
+  /src/requirements.txt". Two fixes: (a) add
+  another `COPY` to the Dockerfile, or (b) use
+  the in-repo path via
+  `$SRC/attune-ai/.clusterfuzzlite/requirements.txt`
+  — the whole repo is already staged via the
+  first `COPY .`. Option (b) is less maintenance
+  when adding more companion files over time.
+
+- **GitHub Copilot Autofix pushes commits
+  directly to PR branches when CodeQL finds
+  fixable issues — expect a rebase mid-session**:
+  during PR #169 remediation, a commit
+  `65321257 Potential fix for pull request
+  finding 'Empty except'` appeared on
+  `origin/feat/help-system-maintenance-2026-04-19`
+  with no action from me. Author was my own
+  account but co-authored-by "Copilot Autofix
+  powered by AI
+  <...@github-code-quality[bot]...>". The change
+  was a one-line explanatory comment on an empty
+  `except: pass` block — cosmetic, not logic. My
+  next `git push` rejected with "non-fast-forward";
+  fixed by `git pull --rebase` then
+  `git commit --amend -S --no-edit` (rebase
+  replays commits unsigned, per the existing
+  lesson) then re-push. Behaviors to expect:
+  (a) these commits land silently whenever
+  CodeQL emits a fixable finding the autofix
+  engine has a template for; (b) they're
+  usually comment additions or trivial guards,
+  not logic changes; (c) they can land between
+  your local push and any subsequent work, so
+  always `git fetch` + inspect before assuming
+  a push failure is a race with a human
+  collaborator. Autofix commits are safe to
+  keep — review the diff, confirm it's
+  cosmetic, rebase on top.

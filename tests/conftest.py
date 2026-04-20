@@ -31,7 +31,6 @@ try:
     import attune.workflows.manage_docs
     import attune.workflows.progressive.core
     import attune.workflows.progressive.orchestrator
-    import attune.workflows.progressive.test_gen
     import attune.workflows.security_audit_phase3
 except ImportError:
     pass  # Package might not be available in minimal test environments
@@ -416,6 +415,18 @@ def setup_test_environment(tmp_path, monkeypatch, request):
     except (FileNotFoundError, OSError):
         # If original directory was deleted (e.g., by test cleanup), ignore
         pass
+
+
+@pytest.fixture(autouse=True, scope="function")
+def _disable_help_telemetry(monkeypatch):
+    """Disable help-query telemetry during tests.
+
+    Prevents tests that exercise `_handle_help_lookup` from writing to
+    the user's real `~/.attune/telemetry/help_queries.jsonl`. Tests
+    that explicitly want to verify telemetry behavior should enable it
+    inside the test via `monkeypatch.delenv("ATTUNE_HELP_TELEMETRY")`.
+    """
+    monkeypatch.setenv("ATTUNE_HELP_TELEMETRY", "0")
 
 
 # =============================================================================

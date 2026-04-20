@@ -2,25 +2,25 @@
 type: note
 feature: rag-grounding
 depth: note
-generated_at: 2026-04-19T06:52:43.748144+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:51:46.076914+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
-# Note: rag grounding
+# Note: RAG grounding
 
 ## Context
 
-RAG-grounded code generation retrieves context from the attune help system via attune-rag, then feeds citation-enforced prompts to Claude. The workflow produces answers with clear provenance to prevent hallucinated features.
+RAG (Retrieval-Augmented Generation) grounding addresses the hallucination problem in AI code generation. When you ask an AI assistant to write code using a specific framework or API, it often invents methods, classes, or patterns that don't exist. RAG grounding solves this by first retrieving relevant documentation from the actual codebase, then constraining the AI's response to only use verified information.
 
-## Implementation
+## How it works
 
-The feature centers on `RagCodeGenWorkflow`, which implements the SDK-native workflow pattern. The workflow enforces citation requirements through its system prompt: "You generate code and explanations grounded in the attune ecosystem. Use the provided context to cite real APIs, workflow names, and CLI commands. Never invent attune features. When referencing a pattern, note the source file it came from."
+The attune ecosystem implements RAG grounding through a workflow that retrieves context from attune-help documentation before generating responses. The system uses a citation-forcing prompt template that requires Claude to ground every API reference, workflow name, and CLI command in the provided context.
 
-The workflow follows the standard execute pattern, taking keyword arguments and returning a `WorkflowResult`. This allows it to integrate with other attune workflows while maintaining the retrieval-grounding behavior.
+The core implementation lives in `RagCodeGenWorkflow`, which orchestrates the retrieval and generation phases. When you request code that uses attune features, the workflow first queries the help system for relevant documentation, then feeds both your request and the retrieved context to Claude with explicit instructions not to invent capabilities.
 
-## Source files
+## Why this matters
 
-- `src/attune/workflows/rag_code_gen.py`
+Without grounding, AI assistants confidently suggest non-existent APIs, leading to code that won't compile or run. With RAG grounding, responses include provenance — you can verify every suggested method or pattern by checking the source file it references. This builds trust and reduces debugging time when following AI-generated guidance.
 
 **Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`

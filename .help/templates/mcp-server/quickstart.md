@@ -2,56 +2,61 @@
 type: quickstart
 feature: mcp-server
 depth: quickstart
-generated_at: 2026-04-14T15:01:01.144977+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:21:55.177295+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Quickstart: MCP Server
+# Quickstart: Run the MCP Server
 
-Run the Attune AI Model Context Protocol server to expose workflows, memory, and help tools to MCP-compatible clients.
+Start Attune's Model Context Protocol server and make your first tool call.
 
 ```python
 from attune.mcp.server import create_server
 
+# Create and start the MCP server
 server = create_server()
-print(f"Server created with {len(server.get_tool_list())} tools")
+
+# Get available tools
+tools = server.get_tool_list()
+print(f"Available tools: {[tool['name'] for tool in tools]}")
+
+# Make your first tool call
+result = server.call_tool('auth_status', {})
+print(f"Auth status: {result}")
 ```
 
-**Expected output:**
+Expected output:
 ```
-Server created with 15 tools
+Available tools: ['auth_status', 'help_lookup', 'memory_store', ...]
+Auth status: {'status': 'configured', 'tier': 'free', 'mode': 'hybrid'}
 ```
 
-## Start the server
+## Next steps
 
-1. **Create the server instance** using `create_server()` which configures the workspace root and user context automatically.
-
-2. **Launch the MCP server** by running the main entry point:
-   ```bash
-   python -m attune.mcp.server
+1. **Try a help lookup**
+   ```python
+   help_result = server.call_tool('help_lookup', {'topic': 'security-audit'})
+   print(help_result)
    ```
 
-3. **Verify available tools** by checking the tool list includes workflow execution, memory operations, authentication status, and contextual help tools.
+2. **Run a prompt**
+   ```python
+   prompts = server.get_prompt_list()
+   messages = server.get_prompt_messages('security-scan', {'path': '.'})
+   ```
 
-## Test tool access
+3. **Check available resources**
+   ```python
+   resources = server.get_resource_list()
+   for resource in resources:
+       print(f"{resource['name']}: {resource['description']}")
+   ```
 
-Call a tool through the server to confirm it's working:
+## What you just did
 
-```python
-# Check authentication status
-result = server.call_tool("auth_status", {})
-print(result["status"])  # Shows current auth configuration
+You created an MCP server instance that provides 20+ tools for workflow execution, help lookup, memory management, and authentication. The server handles rate limiting, user context, and progressive help automatically.
 
-# Get available workflows
-workflows = server.call_tool("help_lookup", {"topic": "workflows"})
-print(f"Found {len(workflows)} workflow descriptions")
-```
+## Next
 
-**Expected output:**
-```
-authenticated
-Found 12 workflow descriptions
-```
-
-**Next:** Connect your MCP client (like Claude Desktop) to the running server to access Attune AI tools directly from your AI assistant.
+Say **"show me MCP server tools"** to see the complete tool reference with all parameters and return types.

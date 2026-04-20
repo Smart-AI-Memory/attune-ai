@@ -7,14 +7,14 @@ features:
       - src/attune/workflows/security_audit.py
       - src/attune/security/**
       - src/attune/monitoring/**
-    tags: [security, audit, owasp, scanning]
+    tags: [security, audit, owasp, scanning, cve]
 
   code-quality:
     description: Review code for style issues, likely bugs, and structural problems
     files:
       - src/attune/workflows/code_review.py
       - src/attune/workflows/code_review_*.py
-    tags: [review, quality, bugs]
+    tags: [review, quality, bugs, lint]
 
   smart-test:
     description: Find untested code and generate pytest tests with edge cases
@@ -35,7 +35,7 @@ features:
     files:
       - src/attune/workflows/bug_predict.py
       - src/attune/workflows/bug_predict_*.py
-    tags: [bugs, prediction, scanning]
+    tags: [bugs, prediction, scanning, race-condition]
 
   release-prep:
     description: Pre-release quality gate — health checks, security audit, changelog, version bumps
@@ -55,7 +55,7 @@ features:
     description: Multi-pass deep code review — security, quality, and test gap analysis
     files:
       - src/attune/workflows/deep_review.py
-    tags: [review, security, quality, tests]
+    tags: [review, security, quality, tests, comprehensive-review]
 
   fix-test:
     description: Auto-diagnose and fix failing tests — identifies root causes and applies fixes
@@ -79,7 +79,7 @@ features:
     tags: [help, templates, docs]
 
   memory:
-    description: Memory subsystem — storage, retrieval, and security
+    description: Memory subsystem — storage, lookup, and security
     files:
       - src/attune/memory/**
     tags: [memory, storage]

@@ -2,38 +2,44 @@
 type: error
 feature: code-quality
 depth: error
-generated_at: 2026-04-14T14:40:51.637975+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:45:54.256615+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
 # Code Quality errors
 
-Failures in the CodeReviewWorkflow when analyzing codebases for security, quality, performance, and architectural issues.
+Code quality failures occur when the review workflow can't analyze your code or when the specialized subagents encounter problems during execution.
 
 ## Common error signatures
 
-- `FileNotFoundError`: Path specified in workflow execution doesn't exist
-- `PermissionError`: Insufficient permissions to read target codebase files
-- `ValueError`: Invalid workflow configuration or malformed subagent responses
-- `TimeoutError`: Subagent execution exceeds configured limits
-- `KeyError`: Missing required fields in subagent output structure
+- `FileNotFoundError: [Errno 2] No such file or directory` — The specified path doesn't exist or isn't accessible
+- `PermissionError: [Errno 13] Permission denied` — Can't read the target files or directory
+- `WorkflowExecutionError` — One or more subagents (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) failed to complete
+- `ValueError: Invalid path format` — The path argument is malformed or points to an unsupported file type
+- `TimeoutError` — Review took longer than expected, often on large codebases
 
 ## Where errors originate
 
-Errors typically occur during workflow execution when the CodeReviewWorkflow coordinates its four specialized subagents:
+Errors typically start in the `CodeReviewWorkflow` class when:
 
-- `CodeReviewWorkflow.execute()` in `src/attune/workflows/code_review.py` — Main orchestration method that manages security-reviewer, quality-reviewer, perf-reviewer, and architect-reviewer subagents
+- **Path validation fails** — The `execute()` method can't locate or access your specified files
+- **Subagent coordination breaks** — One of the four specialized reviewers (security, quality, performance, architecture) encounters an error and can't complete its analysis
+- **Result synthesis fails** — The workflow can't merge findings from all subagents into a unified report
+
+Check the `CodeReviewWorkflow.execute()` method first, as it orchestrates the entire review process.
 
 ## How to diagnose
 
-1. **Verify the target path exists and is readable.** The workflow requires access to the codebase directory specified in the `path` parameter. Check file permissions and that the path points to a valid code repository.
+1. **Verify your path exists and is readable.** Run `ls -la <your-path>` to confirm the files exist and you have read permissions. Code quality needs to traverse the directory structure and read source files.
 
-2. **Examine subagent coordination failures.** If one of the four specialized subagents (security, quality, performance, architecture) fails to produce expected output, the workflow cannot synthesize the final report. Look for incomplete or malformed responses from individual reviewers.
+2. **Check for unsupported file types.** If your directory contains binary files, large data files, or non-source code, the subagents may fail. Try reviewing a smaller, source-code-only subset first.
 
-3. **Check the structured output format.** The workflow expects each subagent to return findings as structured markdown. Parsing failures occur when subagent responses don't match the expected format with Summary, Security, Quality, Performance, Architecture, and Suggestions sections.
+3. **Look for subagent-specific failures.** The error message often indicates which reviewer failed — security-reviewer, quality-reviewer, perf-reviewer, or architect-reviewer. This narrows down whether it's a parsing issue, analysis complexity, or resource constraint.
 
-4. **Validate workflow initialization.** Ensure the CodeReviewWorkflow is properly configured with access to all four subagent types defined in `_SUBAGENT_NAMES`.
+4. **Test with a minimal case.** If reviewing a large codebase fails, try a single file first: `/code-quality src/config.py`. If that works, gradually increase scope to isolate where the failure occurs.
+
+5. **Check available memory and disk space.** Deep reviews of large codebases can be resource-intensive. The workflow may fail if system resources are exhausted during analysis.
 
 ## Source files
 

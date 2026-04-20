@@ -2,8 +2,8 @@
 type: faq
 feature: telemetry
 depth: faq
-generated_at: 2026-04-14T15:21:25.145052+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:24:45.532404+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
@@ -11,38 +11,49 @@ status: generated
 
 ## What is telemetry?
 
-Telemetry provides usage tracking, agent coordination, and workflow control for Attune AI systems.
+Telemetry tracks how Attune AI agents perform, coordinate with each other, and use resources. It provides usage metrics, cost analysis, and quality feedback loops.
 
-## What can I do with telemetry?
+## When should I use telemetry?
 
-You can track agent performance, coordinate multiple agents using TTL signals, monitor heartbeats, set up human approval gates, and stream real-time events.
+You need telemetry when you're monitoring agent performance, tracking costs, analyzing model usage patterns, or setting up approval workflows for automated tasks.
 
-## How do I coordinate agents?
+## How do I view telemetry data?
 
-Use `CoordinationSignals` to send TTL-based signals between agents. Call `signal()` to send to a specific agent or `broadcast()` to send to all agents.
+Use the telemetry CLI commands:
+- `python -m attune.telemetry show` — recent telemetry entries
+- `python -m attune.telemetry savings` — cost savings analysis
+- `python -m attune.telemetry cache-stats` — prompt caching performance
+- `python -m attune.telemetry agent-performance` — agent metrics
 
-## How do I track agent health?
+## Can agents coordinate with each other?
 
-Use `HeartbeatCoordinator`. Call `start_heartbeat()` when your agent begins work, `beat()` periodically to update status, and `stop_heartbeat()` when finished.
+Yes. Use `CoordinationSignals` to send TTL-based messages between agents, `HeartbeatCoordinator` to track which agents are active, and `ApprovalGate` to require human approval for specific actions.
 
-## How do I require human approval?
+## How do I track agent status?
 
-Use `ApprovalGate`. Call `request_approval()` with your approval type and context. The method blocks until a human responds via `respond_to_approval()`.
+Start a heartbeat when your agent begins work:
+```python
+coordinator = HeartbeatCoordinator()
+coordinator.start_heartbeat("my-agent", {"task": "processing"})
+coordinator.beat(status="running", progress=0.5)
+```
 
-## How do I stream events in real-time?
+## What's the difference between signals and heartbeats?
 
-Use `EventStreamer`. Call `publish_event()` to send events and `consume_events()` to receive them. Events use Redis Streams for reliable delivery.
+Signals are one-time messages between agents with TTL expiration. Heartbeats are continuous status updates that show an agent is alive and working. Use signals for coordination, heartbeats for monitoring.
 
-## What telemetry reports are available?
+## How do I set up human approval gates?
 
-Run `python -m attune.telemetry` with subcommands like `test-status`, `agent-performance`, `savings`, or `cache-stats` to see different reports.
+Create an approval request that blocks execution until a human responds:
+```python
+gate = ApprovalGate()
+response = gate.request_approval("deploy", {"target": "production"})
+if response.approved:
+    # proceed with action
+```
 
-## How do I debug telemetry issues?
+## Where are the telemetry files?
 
-Run `pytest -k "telemetry" -v` first. If tests pass but your code fails, add `logger.debug` statements and enable logging to trace the issue.
-
-## Where are the source files?
-
-All telemetry code is in `src/attune/telemetry/`.
+All telemetry code is in `src/attune/telemetry/`. The CLI entry point is `__main__.py`, coordination classes are in separate modules by function.
 
 **Tags:** `telemetry`, `metrics`

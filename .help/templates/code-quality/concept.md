@@ -2,39 +2,37 @@
 type: concept
 feature: code-quality
 depth: concept
-generated_at: 2026-04-14T14:40:31.715238+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:45:25.513463+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
 # Code Quality
 
-Code quality is an automated review system that analyzes codebases for security vulnerabilities, code quality issues, performance problems, and architectural concerns using four specialized AI reviewers.
+Code quality is a comprehensive analysis that examines your code from multiple perspectives at once — security, quality, performance, and architecture — through a coordinated team of specialized reviewers.
 
-## How it works
+## How the review process works
 
-The system coordinates four specialized subagents that each focus on a specific review domain:
+The `CodeReviewWorkflow` coordinates four specialized subagents that each focus on their domain expertise:
 
-- **security-reviewer** — Scans for vulnerabilities and security anti-patterns
-- **quality-reviewer** — Identifies style violations, potential bugs, and maintainability issues
-- **perf-reviewer** — Analyzes performance bottlenecks and optimization opportunities
-- **architect-reviewer** — Evaluates structural design and architectural patterns
+- **Security reviewer** — Scans for vulnerabilities, insecure patterns, and potential attack vectors
+- **Quality reviewer** — Catches style violations, likely bugs, and correctness issues
+- **Performance reviewer** — Identifies bottlenecks, inefficient patterns, and scalability concerns
+- **Architecture reviewer** — Evaluates structure, coupling, complexity, and design patterns
 
-Each subagent analyzes the codebase independently, then a senior orchestrator synthesizes their findings into a unified report with an overall health score (0-100) and prioritized recommendations.
+Each subagent analyzes the same codebase independently, then their findings are synthesized into a unified report with an overall health score from 0-100.
 
-## Review output structure
+## Report structure
 
-The automated review produces a structured markdown report with these sections:
+When a review completes, you receive a structured markdown report containing:
 
-- **Summary** — Executive overview with numeric health score
-- **Security** — Vulnerability findings and security recommendations
-- **Quality** — Code style, bug risks, and maintainability issues
-- **Performance** — Optimization opportunities and bottlenecks
-- **Architecture** — Design patterns and structural improvements
-- **Suggestions** — Actionable next steps ranked by priority
+- **Summary** — Executive overview with the health score and key takeaways
+- **Security** — Vulnerabilities and security anti-patterns found
+- **Quality** — Style issues, likely bugs, and correctness problems
+- **Performance** — Bottlenecks and optimization opportunities
+- **Architecture** — Structural issues like high coupling or complexity
+- **Suggestions** — Prioritized action items for improvement
 
-## Implementation interface
+## Integration points
 
-| Class | Purpose | Location |
-|-------|---------|----------|
-| `CodeReviewWorkflow` | Orchestrates the four specialized review subagents | `src/attune/workflows/code_review.py` |
+The workflow integrates with the broader Attune system through the Agent SDK, allowing it to be triggered from skills, tasks, or direct workflow execution. Results are returned as structured `WorkflowResult` objects that other components can process or display.

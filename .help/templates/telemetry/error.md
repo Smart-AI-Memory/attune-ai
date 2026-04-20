@@ -2,8 +2,8 @@
 type: error
 feature: telemetry
 depth: error
-generated_at: 2026-04-14T15:20:26.920471+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:23:53.194937+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
@@ -13,33 +13,34 @@ Failures in agent coordination, heartbeat tracking, approval workflows, and even
 
 ## Common error signatures
 
-- **`ConnectionError`** or **`TimeoutError`** from Redis operations when memory backend is unavailable
-- **`KeyError`** when accessing missing signal or heartbeat data in coordination operations
-- **`ValueError`** from invalid agent IDs, signal types, or approval request parameters
-- **`JSONDecodeError`** when deserializing malformed coordination signals or heartbeat data
-- **`TypeError`** from incorrect payload types in `CoordinationSignal.from_dict()` or `ApprovalRequest.from_dict()`
+- **Redis connection failures**: `redis.exceptions.ConnectionError` when coordination signals, heartbeats, or event streams can't connect to Redis
+- **Signal timeout errors**: `TimeoutError` when `wait_for_signal()` exceeds the specified timeout without receiving a coordination signal
+- **TTL expiration**: Stale agent heartbeats or expired coordination signals causing coordination failures
+- **Serialization errors**: `json.JSONDecodeError` when deserializing coordination signals, heartbeat data, or approval requests from Redis
+- **Approval timeout**: Approval requests timing out before human response in `request_approval()`
+- **Stream consumption errors**: Redis stream read failures in `consume_events()` or missing event types
 
 ## Where errors originate
 
-Most telemetry errors stem from these coordination and tracking operations:
+Telemetry errors typically stem from these coordination and tracking components:
 
-- **`CoordinationSignals.signal()`** and **`broadcast()`** — Signal creation failures due to invalid agent IDs or Redis connection issues
-- **`HeartbeatCoordinator.start_heartbeat()`** and **`beat()`** — Heartbeat registration problems from missing agent metadata or Redis TTL key conflicts
-- **`ApprovalGate.request_approval()`** — Approval workflow errors when timeout values are invalid or context data is malformed
-- **`EventStreamer.publish_event()`** and **`consume_events()`** — Stream publishing failures from Redis Stream capacity limits or invalid event data
-- **CLI command functions** (`cmd_telemetry_show`, `cmd_agent_performance`, etc.) — Data retrieval errors when telemetry backends are misconfigured
+- **CoordinationSignals** — TTL-based signal exchange between agents fails due to Redis connectivity or signal expiration
+- **HeartbeatCoordinator** — Agent heartbeat registration and monitoring fails when Redis keys expire or agents become unreachable
+- **ApprovalGate** — Human approval workflows fail when requests timeout or response serialization breaks
+- **EventStreamer** — Real-time event publishing and consumption fails due to Redis stream errors or malformed events
+- **CLI commands** (`cmd_*` functions) — Telemetry reporting commands fail when underlying data sources are unavailable
 
 ## How to diagnose
 
-1. **Check Redis connectivity first.** Most telemetry components depend on Redis for coordination signals, heartbeats, and event streaming. Verify the memory backend is accessible and responsive.
+1. **Check Redis connectivity first.** Most telemetry failures trace back to Redis connection issues. Verify Redis is running and accessible from your agent environment.
 
-2. **Validate agent identification.** Many errors stem from inconsistent or missing agent IDs. Check that `agent_id` parameters match active heartbeat registrations and that coordination signals reference valid source/target agents.
+2. **Examine TTL timing.** If coordination signals or heartbeats are missing, check if TTL values are too short for your network latency. Default signal TTL is 60 seconds.
 
-3. **Inspect TTL and timeout values.** Coordination signals use 60-second TTLs by default, and heartbeats expire if not refreshed. Look for timing-related failures when agents don't update their status within expected intervals.
+3. **Validate serialization data.** When you see `JSONDecodeError`, inspect the raw Redis data to identify which component is storing malformed JSON.
 
-4. **Examine payload serialization.** Coordination signals and approval requests serialize context data as JSON. Parse errors indicate malformed dictionaries or non-serializable objects in payload fields.
+4. **Monitor approval timeouts.** For approval workflow failures, check if timeout values in `request_approval()` match your expected human response time.
 
-5. **Monitor approval request lifecycle.** Approval gates transition through pending → approved/denied states with timeout enforcement. Check that approval responses match active request IDs and that expired requests are properly cleaned up.
+5. **Trace event stream IDs.** Event streaming errors often involve Redis stream ID conflicts or attempts to read from non-existent streams.
 
 ## Source files
 

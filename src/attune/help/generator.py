@@ -1,9 +1,19 @@
 """Template generation from source files.
 
-Generates concept, task, and reference markdown templates
-for a feature by reading its source files. Uses Jinja2 meta
-templates for structure and an optional LLM polish pass for
-content quality.
+DEPRECATED: this module is the in-repo 3-depth generator
+(concept / task / reference only). New work should use
+``attune-author generate <feature> --all-kinds`` which
+produces the full 11-kind template set and is the canonical
+generator for ``.help/`` content.
+
+The in-repo generator is retained as an internal-only escape
+hatch for the MCP ``help_update`` tool and the help
+maintenance workflow. Calls to ``generate_feature_templates``
+emit a ``DeprecationWarning``.
+
+See the project CLAUDE.md lesson on "Two parallel help-
+template generators in the attune ecosystem drift silently"
+for context.
 
 Meta template resolution order:
 1. Project's .help/meta_templates/ (if exists)
@@ -14,6 +24,7 @@ from __future__ import annotations
 
 import ast
 import logging
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -110,6 +121,12 @@ def generate_feature_templates(
 ) -> GenerationResult:
     """Generate help templates for a feature.
 
+    .. deprecated::
+        This is the 3-depth generator (concept/task/reference only).
+        Prefer ``attune-author generate <feature> --all-kinds`` which
+        produces the full 11-kind template set used by the weekly
+        help-freshness workflow.
+
     Creates concept.md, task.md, and reference.md in the
     feature's template directory. Skips files with
     status: manual unless overwrite=True.
@@ -124,6 +141,14 @@ def generate_feature_templates(
     Returns:
         GenerationResult with paths and metadata.
     """
+    warnings.warn(
+        "attune.help.generator.generate_feature_templates produces only "
+        "3 depths and is deprecated. Use "
+        "`attune-author generate <feature> --all-kinds` for the "
+        "canonical 11-kind help template set.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     help_path = Path(help_dir)
     root = Path(project_root)
     target_depths = depths or list(_DEPTH_NAMES)

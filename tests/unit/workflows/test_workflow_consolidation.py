@@ -78,7 +78,6 @@ class TestRegistryConsolidation:
         preserved_classes = [
             "DocumentManagerWorkflow",
             "OrchestratedReleasePrepWorkflow",
-            "ProgressiveTestGenWorkflow",
         ]
         for cls_name in preserved_classes:
             assert (

@@ -2,15 +2,15 @@
 type: tip
 feature: code-quality
 depth: tip
-generated_at: 2026-04-14T14:41:47.848331+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:47:03.313407+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
-# Use CodeReviewWorkflow for comprehensive code analysis
+# Start with a quick scan before going deep
 
-Use `CodeReviewWorkflow` when you need thorough code review coverage across multiple domains. This workflow coordinates four specialized subagents (security, quality, performance, and architecture reviewers) to produce a unified report with scored findings and prioritized suggestions.
+Run `/code-quality` with quick depth first to catch style issues and obvious problems before investing time in a thorough review.
 
-The workflow eliminates the guesswork of manual review sequencing and ensures consistent coverage across all critical code health dimensions.
+The four-subagent workflow (security, quality, performance, architecture) takes several minutes on large codebases, but a quick scan finishes in seconds and catches 80% of the issues you'll actually fix. Deep reviews are valuable for critical modules, but most day-to-day development benefits more from fast feedback loops.
 
-**Tradeoff:** The comprehensive analysis takes longer than single-domain tools, so use targeted reviewers for quick iterations and `CodeReviewWorkflow` for milestone reviews or merge gates.
+**Tradeoff:** Quick scans miss complex logic errors and architectural problems that only surface during deep analysis.

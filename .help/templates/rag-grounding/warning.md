@@ -2,8 +2,8 @@
 type: warning
 feature: rag-grounding
 depth: warning
-generated_at: 2026-04-19T06:51:50.850852+00:00
-source_hash: 80a69ae7596bd83339fd059323793ff10c80f34f01389bf3e822225eb3c48f33
+generated_at: 2026-04-19T18:50:54.599261+00:00
+source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
 status: generated
 ---
 
@@ -11,25 +11,33 @@ status: generated
 
 ## What to watch for
 
-The RAG-grounded code generation workflow retrieves context from attune-help via attune-rag, then feeds citation-enforced prompts to Claude to generate answers with provenance tracking.
+RAG-grounded code generation retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, and emits answers with provenance. The system's accuracy depends on proper context retrieval and citation enforcement.
 
 ## Risk areas
 
-**Hallucinated API references** — The system prompt explicitly prohibits inventing attune features, but if the retrieval context is incomplete or outdated, Claude may still generate plausible-looking but nonexistent APIs or workflow names.
+### Context retrieval failures produce hallucinated APIs
 
-**Context retrieval failures** — When attune-rag cannot find relevant context for a query, the workflow may proceed with minimal grounding, leading to generic responses that lack proper citations or attune-specific guidance.
+When `RagCodeGenWorkflow` cannot retrieve relevant context, the underlying language model fills gaps with plausible-sounding but nonexistent attune features. You'll see method names, CLI commands, or workflow classes that don't exist in the actual codebase.
 
-**Citation drift** — Generated code may reference source files that have moved or been refactored since the RAG index was last updated, creating broken links in the provenance chain.
+**Mitigation:** Validate all generated code references against the actual attune API documentation before using them.
 
-## How to avoid problems
+### Citation enforcement bypassed by clever prompting
 
-1. **Verify generated API calls** — Before using code from `RagCodeGenWorkflow`, confirm that referenced classes, methods, and workflow names exist in current attune documentation or source code.
+The `_SYSTEM_PROMPT` instructs Claude to "never invent attune features," but sufficiently creative input prompts can override this constraint. User prompts that begin with "ignore previous instructions" or similar jailbreaking patterns can compromise citation discipline.
 
-2. **Monitor retrieval quality** — If responses lack specific attune context or seem generic, check whether the underlying RAG system found relevant documents for your query.
+**Mitigation:** Sanitize user inputs and monitor generated outputs for invented APIs that don't appear in the retrieved context.
 
-3. **Keep RAG indices current** — Stale retrieval contexts lead to outdated citations and missing new features. Update your attune-rag index when the codebase changes significantly.
+### Stale context leads to deprecated API usage
 
-4. **Test with edge cases** — Try queries about rarely-used features or recent additions to verify that the grounding system can handle incomplete context gracefully.
+RAG retrieval pulls from indexed documentation that may lag behind rapid API changes. Generated code might reference methods or parameters that were recently deprecated or removed.
+
+**Mitigation:** Keep your attune-rag index synchronized with the latest codebase, especially after major releases.
+
+### Workflow state pollution between executions
+
+`RagCodeGenWorkflow.execute()` may retain state from previous invocations if not properly reset. This can cause context bleeding where one generation request influences subsequent ones.
+
+**Mitigation:** Create fresh workflow instances for each generation request, or verify that `execute()` properly cleans up internal state.
 
 ## Source files
 

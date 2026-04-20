@@ -2,71 +2,52 @@
 type: comparison
 feature: mcp-server
 depth: comparison
-generated_at: 2026-04-14T15:01:29.597403+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:22:25.202233+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# MCP Server vs Direct Tool Usage
+# MCP Server vs direct API calls
 
-The Attune AI MCP Server provides a standardized Model Context Protocol interface for AI workflows, but you can also call individual tools directly. Here's how to choose between them.
+The Attune AI MCP Server provides a structured interface for Claude Code and other MCP clients to access workflows, help, memory, and authentication tools. You can also call these capabilities directly through Python imports, but each approach has distinct tradeoffs.
 
 ## Feature comparison
 
-| Feature | MCP Server | Direct Tool Usage |
-|---------|------------|-------------------|
-| **Protocol compliance** | Full MCP standard with discovery | Manual tool integration |
-| **Rate limiting** | Built-in sliding window (60 calls/60s) | Manual implementation required |
-| **Memory integration** | Persistent cross-session storage | Session-only or external storage |
-| **Tool discovery** | Automatic via `get_tool_list()` | Manual tool registration |
-| **Authentication** | Unified auth strategy with recommendations | Per-tool auth handling |
-| **Telemetry** | Built-in cost tracking and metrics | Manual instrumentation |
-| **Progressive help** | Context-aware help escalation | Static documentation |
-| **Session context** | Persistent level/context management | Stateless operations |
+| Aspect | MCP Server | Direct API calls |
+|--------|------------|------------------|
+| **Client support** | Any MCP-compatible client (Claude Code, others) | Python code only |
+| **Setup overhead** | Requires `.mcp.json` configuration | Import statements |
+| **Rate limiting** | Built-in sliding window (60 calls/min) | Manual implementation needed |
+| **Tool discovery** | Automatic via `get_tool_list()` | Must know function signatures |
+| **Authentication** | Handled by server instance | Manual credential management |
+| **Error handling** | Standardized MCP error responses | Raw Python exceptions |
+| **Session state** | Persistent across tool calls | Manual state management |
+| **Progress feedback** | Structured status updates | Print statements or logging |
 
 ## Performance characteristics
 
-**MCP Server advantages:**
-- ~3x faster tool discovery through cached schemas
-- Automatic batching for memory operations
-- Built-in caching for prompt templates and workflow definitions
+**MCP Server** adds ~50ms overhead per tool call due to JSON serialization and protocol handling, but provides automatic caching for prompts and tool definitions. The rate limiter prevents runaway API costs.
 
-**Direct usage advantages:**
-- Zero protocol overhead for single operations
-- Immediate access without server startup time
-- Fine-grained control over error handling
+**Direct API calls** have minimal overhead (~5ms) but require you to implement your own caching, rate limiting, and error recovery. For batch operations processing hundreds of files, direct calls can be 10x faster.
 
-## Use MCP Server when
+## Use MCP Server when...
 
-- You need **MCP protocol compliance** for AI agent integration
-- You want **unified tool discovery** across workflows, utilities, help, and memory
-- You're building **persistent sessions** that maintain context and interaction levels
-- You need **cost tracking and telemetry** across multiple tool categories
-- You want **progressive help** that escalates from concept → procedure → reference
-- You're working with **memory patterns** that span multiple sessions
+- Working in Claude Code or other MCP clients
+- You need the help system (`help_lookup`, `help_maintain`)
+- Building interactive workflows that benefit from session state
+- Rate limiting and cost protection are important
+- You want standardized error handling across tools
 
-## Use direct tool calls when
+## Use direct API calls when...
 
-- You need **single-purpose scripts** with minimal dependencies
-- You're **prototyping workflows** before formalizing them in MCP
-- You want **maximum performance** for high-frequency operations
-- You need **custom rate limiting** beyond the 60/60 sliding window
-- You're building **non-MCP integrations** with existing systems
+- Writing Python scripts or applications
+- Performance is critical (batch processing, CLI tools)
+- You need capabilities not exposed through MCP tools
+- Building automation that runs without human interaction
+- You're already managing authentication and state elsewhere
 
-## Migration path
+## Getting started
 
-Start with direct tool usage for exploration, then migrate to MCP Server:
+**MCP Server**: Create `.mcp.json` in your project root with `uv run python -m attune.mcp.server` as the command. Test with `ps aux | grep attune` to verify it's running.
 
-1. Use `get_workflow_tools()` to discover available operations
-2. Test individual tools with `call_tool()`
-3. Add memory persistence with `memory_store/retrieve`
-4. Enable telemetry tracking for cost optimization
-5. Deploy as full MCP server with `create_server()`
-
-**Recommendation:** Use MCP Server for production AI workflows. The protocol overhead is negligible compared to the operational benefits of unified tooling, telemetry, and progressive help.
-
-## Source files
-
-- `src/attune/mcp/**`
-
-**Tags:** `mcp`, `tools`, `server`
+**Direct API**: Import from `attune.workflows`, `attune.auth`, or `attune.help` modules. Check the reference documentation for specific function signatures.

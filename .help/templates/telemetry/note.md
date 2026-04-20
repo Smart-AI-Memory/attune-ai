@@ -2,8 +2,8 @@
 type: note
 feature: telemetry
 depth: note
-generated_at: 2026-04-14T15:21:50.382946+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:25:16.410611+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
@@ -11,26 +11,22 @@ status: generated
 
 ## Context
 
-The telemetry module provides real-time monitoring, coordination, and human oversight capabilities for Attune AI agents. It implements three core subsystems: inter-agent coordination using TTL signals, heartbeat tracking for agent lifecycle monitoring, and approval gates for human workflow control.
+The telemetry feature provides usage tracking and feedback loops for Attune AI. It enables distributed agent coordination through TTL signals, heartbeat monitoring for agent health, human approval gates for workflow control, and real-time event streaming.
 
-## Architecture
+## Content
 
-The telemetry system is built around Redis for persistence and real-time capabilities. Each subsystem operates independently but shares the same Redis memory backend:
+The telemetry system consists of four main components:
 
-**Agent Coordination** uses TTL-based signals for inter-agent communication. The `CoordinationSignals` class manages signal creation, broadcasting, and consumption with automatic expiration. Signals can target specific agents or broadcast to all agents, with configurable time-to-live values.
+**Agent coordination** manages communication between distributed agents using Redis TTL keys. The `CoordinationSignals` class handles signal broadcasting and consumption, while `CoordinationSignal` represents individual messages with automatic expiration.
 
-**Agent Tracking** monitors agent health through periodic heartbeats. The `HeartbeatCoordinator` class tracks agent status, progress, and current tasks. It automatically detects stale agents and provides real-time visibility into the agent population.
+**Agent tracking** monitors the health and status of running agents. `HeartbeatCoordinator` manages periodic status updates, and `AgentHeartbeat` stores agent state including progress, current task, and metadata.
 
-**Approval Gates** implement human-in-the-loop workflow control. The `ApprovalGate` class creates approval requests that require human intervention before agents can proceed. Requests include context data and configurable timeouts.
+**Approval gates** pause workflows for human decisions. `ApprovalGate` creates approval requests that require manual intervention, using `ApprovalRequest` and `ApprovalResponse` to manage the interaction flow.
 
-**Event Streaming** provides real-time event publishing and consumption using Redis Streams. The `EventStreamer` class enables agents and external systems to publish events and subscribe to event streams with configurable filtering.
+**Event streaming** provides real-time telemetry through Redis Streams. `EventStreamer` publishes and consumes events, with `StreamEvent` representing individual telemetry data points.
 
-## CLI Integration
+The CLI interface exposes analysis and automation status through functions like `cmd_sonnet_opus_analysis()` for cost tracking and `cmd_tier1_status()` for automation health monitoring.
 
-The module includes a comprehensive CLI interface accessed through `python -m attune.telemetry`. The CLI provides analytics commands for cost analysis (`cmd_sonnet_opus_analysis`), test status reporting (`cmd_file_test_status`, `cmd_test_status`), automation metrics (`cmd_tier1_status`, `cmd_task_routing_report`), and agent performance monitoring (`cmd_agent_performance`).
+## Source files
 
-## Data Structures
-
-All telemetry data uses structured dataclasses with JSON serialization support. `CoordinationSignal`, `AgentHeartbeat`, `ApprovalRequest`, and `StreamEvent` provide consistent interfaces for data exchange between agents and external monitoring systems.
-
-**Tags:** `telemetry`, `metrics`
+The implementation spans 16 files under `src/attune/telemetry/`, with the main entry point at `__main__.py` and component-specific modules for coordination, tracking, approval gates, and streaming functionality.

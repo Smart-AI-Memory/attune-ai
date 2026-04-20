@@ -247,3 +247,6 @@ src/attune/dashboard/static/react/
 dashboard/node_modules/
 dashboard/dist/
 .claude/scheduled_tasks.lock
+
+# Generated benchmark cache (regenerates on every cache-writer run)
+.help/benchmarks/

@@ -2,55 +2,54 @@
 type: task
 feature: plugin
 depth: task
-generated_at: 2026-04-14T15:22:31.898613+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:52:21.386739+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
 # Work with plugin
 
-Use plugin when you need to customize Claude Code's runtime behavior through hooks, validation, or session management.
+Use the plugin system when you need to extend Claude Code with automated behaviors, security validation, or help system integration.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under plugin/**
+- Understanding of Claude Code's hook-based architecture
+- Familiarity with the `plugin/` directory structure
 
-## Identify the hook or component
+## Configure plugin behavior
 
-1. **Determine which hook handles your use case:**
-   - **Format on save**: `plugin/hooks/format_on_save.py` auto-formats Python files after Write/Edit operations
-   - **Help freshness**: `plugin/hooks/help_freshness_check.py` checks template freshness on session start
-   - **Error assistance**: `plugin/hooks/help_on_error.py` suggests help when Bash commands fail
-   - **Git integration**: `plugin/hooks/help_post_commit.py` maintains .help/ directory after commits
-   - **Security validation**: `plugin/hooks/security_guard.py` validates commands and file paths
-   - **Welcome messages**: `plugin/hooks/welcome.py` displays session startup information
+1. **Identify the hook type you need.**
+   Claude Code supports several hook types:
+   - PostToolUse hooks: Run after tool execution (format, help suggestions)
+   - SessionStart hooks: Run when a session begins (freshness checks)
+   - Security hooks: Validate commands and file paths before execution
 
-2. **Read the hook's main function** to confirm it handles your scenario. Each hook has a single `main()` entry point that processes specific events.
+2. **Locate the relevant hook file.**
+   Each hook lives in `plugin/hooks/` with a descriptive name:
+   - `format_on_save.py` — Auto-formats Python files after Write/Edit tools
+   - `help_freshness_check.py` — Checks help template age on session start
+   - `help_on_error.py` — Suggests help when Bash commands fail
+   - `help_post_commit.py` — Updates help after git commits
+   - `security_guard.py` — Validates commands and file paths
+   - `welcome.py` — Displays session welcome message
 
-## Modify hook behavior
+3. **Modify the hook's main function.**
+   Each hook file contains a `main()` function that implements its behavior. Read the existing code to understand the current logic, then make targeted changes while preserving the established patterns for error handling and logging.
 
-1. **Open the target hook file** and locate its `main()` function.
+4. **Test your changes.**
+   Run the plugin test suite to verify your modifications don't break existing functionality:
+   ```bash
+   pytest -k "plugin"
+   ```
 
-2. **Review the current logic flow** by tracing through the function's parameters and return values:
-   - Format/help hooks read from stdin and process tool results
-   - Security guard validates commands against `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES`
-   - Welcome hook prints to stderr for Claude Code visibility
+5. **Verify the hook activates correctly.**
+   Trigger the hook's activation condition (save a Python file, start a session, run a failing command, etc.) and confirm your changes work as expected.
 
-3. **Edit the hook logic** while preserving the function signature and return format:
-   - Security functions return `(bool, str)` tuples
-   - Main security validator returns `{'allowed': True/False}` dict
-   - Other hooks typically return `None`
+## Success criteria
 
-4. **Test your changes** by running the hook directly or through `pytest -k "plugin"`.
-
-## Verify the modification works
-
-Run a relevant operation to trigger your hook:
-- Save a Python file to test format_on_save
-- Start a new session to test help_freshness_check
-- Run a failing command to test help_on_error
-- Make a git commit to test help_post_commit
-- Execute a restricted command to test security_guard
-
-The hook should execute your modified behavior without errors.
+Your plugin modification is complete when:
+- The hook executes without errors in its target scenario
+- All existing plugin tests pass
+- The hook's behavior matches your intended changes
+- No unintended side effects occur in other parts of the system

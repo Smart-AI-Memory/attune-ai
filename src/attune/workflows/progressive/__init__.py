@@ -18,19 +18,13 @@ Usage:
         FailureAnalysis
     )
 
-    # Configure escalation
-    config = EscalationConfig(
-        enabled=True,
-        max_cost=10.00,
-        auto_approve_under=5.00
-    )
-
-    # Create workflow
-    workflow = ProgressiveTestGenWorkflow(config)
-    result = workflow.execute(target_file="app.py")
-
-    # View report
-    print(result.generate_report())
+    # Subclass ProgressiveWorkflow to build a tier-escalating
+    # workflow. See ParallelTestGenerationWorkflow (invoked via
+    # ``attune workflow run test-gen-parallel``) for the canonical
+    # test-generation path — the previous ``ProgressiveTestGenWorkflow``
+    # was deprecated in v5.3.0 and removed in v6.3.0 along with
+    # the ``execute_test_file`` and ``calculate_coverage`` helpers
+    # that only it used.
 
 Version: 4.1.0
 Author: Attune AI Team
@@ -45,11 +39,6 @@ from attune.workflows.progressive.core import (
 )
 from attune.workflows.progressive.orchestrator import MetaOrchestrator
 from attune.workflows.progressive.telemetry import ProgressiveTelemetry
-from attune.workflows.progressive.test_gen import (
-    ProgressiveTestGenWorkflow,
-    calculate_coverage,
-    execute_test_file,
-)
 from attune.workflows.progressive.workflow import (
     BudgetExceededError,
     ProgressiveWorkflow,
@@ -72,11 +61,6 @@ __all__ = [
     # Exceptions
     "BudgetExceededError",
     "UserCancelledError",
-    # Workflows
-    "ProgressiveTestGenWorkflow",
-    # Utilities
-    "execute_test_file",
-    "calculate_coverage",
 ]
 
 from attune import __version__

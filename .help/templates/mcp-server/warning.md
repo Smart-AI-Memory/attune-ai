@@ -2,53 +2,39 @@
 type: warning
 feature: mcp-server
 depth: warning
-generated_at: 2026-04-14T15:00:11.649517+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:21:12.205897+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
 # MCP Server cautions
 
-## What to watch for
+## Rate limiting can silently drop calls
 
-The Attune AI MCP server coordinates multiple tool handlers and maintains session state that can lead to unexpected behavior.
+The `RateLimiter` class uses a sliding window with a 60-call default limit. When you exceed this limit, `check()` returns `False` but doesn't raise an exception. Tool calls fail silently, which can make debugging difficult.
 
-## Risk areas
+**Avoid this:** Check the rate limiter's return value before making tool calls, especially in loops or batch operations. Consider increasing the limit for heavy workflows using `RateLimiter(max_calls=200)`.
 
-### Rate limiting bypasses in concurrent tool calls
+## Missing prompts cause runtime failures
 
-The `RateLimiter` uses a sliding window with key-based tracking, but concurrent calls with the same key can race through the `check()` method before the window updates. This allows burst calls to exceed the 60-call limit.
+The `get_prompt_messages()` function raises `ValueError` for unknown prompt names, but only at runtime. If you reference a prompt that doesn't exist in the prompt registry, you won't discover the problem until the tool is called.
 
-### Memory tool authentication failures
+**Avoid this:** Validate prompt names against `get_prompt_list()` during initialization. Test all prompt references in your integration tests.
 
-Memory operations (`memory_store`, `memory_retrieve`, `memory_search`, `memory_forget`) fail silently when the attune-ai memory module isn't installed, returning the constant `_MEMORY_NOT_INSTALLED` instead of raising an exception. Your code may continue executing with incomplete data.
+## Tool schema validation is deferred
 
-### Prompt argument validation gaps
+The MCP server defines tool schemas but doesn't validate arguments until `call_tool()` executes. Invalid arguments reach your tool handlers, where they may cause unexpected behavior or crashes.
 
-`get_prompt_messages()` raises `ValueError` for unknown prompts but doesn't validate that required arguments are provided. Missing arguments for prompts like `security-scan` (which requires a `path`) will cause downstream failures in the workflow execution.
+**Avoid this:** Add explicit validation at the start of your tool handlers. Use the input schema patterns from `get_utility_tools()` and `get_help_tools()` as templates for required field checking.
 
-### Tool handler state isolation
+## Memory tools fail without attune-ai package
 
-`EmpathyMCPServer` combines multiple mixins (`MemoryHandlersMixin`, `WorkflowHandlersMixin`) that each maintain internal state. Changes to one handler can affect others through shared instance variables, particularly the `user_id` and `workspace_root` initialization parameters.
+Memory-related tools (`memory_store`, `memory_retrieve`, etc.) import the `attune-ai` package dynamically. If the package isn't installed, these tools fail at runtime with an import error rather than being disabled gracefully.
 
-### Voice tool filtering inconsistencies
+**Avoid this:** Check for the attune-ai dependency during server initialization. Consider making memory tools optional in your MCP client configuration.
 
-The `_VOICE_SKIP_TOOLS` constant excludes specific tools from voice interfaces, but this list is maintained separately from tool registration. Adding new tools requires updating both the tool schema definitions and this exclusion list.
+## Workspace isolation can break file operations
 
-## How to avoid problems
+The `EmpathyMCPServer` accepts a `workspace_root` parameter that scopes file operations. If you pass relative paths to tools that expect absolute paths, operations may target the wrong files or fail silently.
 
-1. **Test rate limiting under load.** When using `RateLimiter`, verify behavior with concurrent requests: `asyncio.gather(*[limiter.check(key) for _ in range(100)])` should respect the limits even under contention.
-
-2. **Check memory module availability early.** Before relying on memory tools, verify installation: `pip show attune-ai` or catch the `_MEMORY_NOT_INSTALLED` response and handle gracefully.
-
-3. **Validate prompt arguments explicitly.** When calling `get_prompt_messages()`, check that all required arguments from the prompt definition are present before passing to the function.
-
-4. **Initialize server instances cleanly.** Pass explicit `workspace_root` and `user_id` values to `EmpathyMCPServer()` rather than relying on defaults, and avoid sharing instances across different user contexts.
-
-5. **Audit tool visibility changes.** When adding new tools, decide whether they should be available in voice interfaces and update `_VOICE_SKIP_TOOLS` accordingly.
-
-## Source files
-
-- `src/attune/mcp/**`
-
-**Tags:** `mcp`, `tools`, `server`
+**Avoid this:** Always resolve relative paths against the workspace root before passing them to file-based tools. Use `os.path.abspath()` to convert relative paths in tool arguments.

@@ -561,6 +561,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
     async def _handle_help_lookup(self, args: dict[str, Any]) -> dict[str, Any]:
         """Look up contextual help with type-driven progression.
 
+        Emits a help-query telemetry event to
+        ``~/.attune/telemetry/help_queries.jsonl`` on every call so
+        usage of the help system can be measured against drift
+        maintenance cost. Disable with ``ATTUNE_HELP_TELEMETRY=0``.
+
         Supports four modes:
         - progressive: escalates across template types
           (concept -> procedural -> reference)
@@ -576,6 +581,32 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             Dict with templates, depth level, and metadata.
 
         """
+        import time
+
+        from attune.telemetry.help_tracker import get_tracker
+
+        topic = args["topic"]
+        mode = args.get("mode", "progressive")
+        started = time.perf_counter()
+        result: dict[str, Any] = {}
+        try:
+            result = await self._handle_help_lookup_impl(args, topic, mode)
+            return result
+        finally:
+            duration_ms = (time.perf_counter() - started) * 1000
+            get_tracker().log(
+                source="help_lookup",
+                mode=mode,
+                topic=topic,
+                success=bool(result.get("success")),
+                found=bool(result.get("success")) and "error" not in result,
+                duration_ms=duration_ms,
+            )
+
+    async def _handle_help_lookup_impl(
+        self, args: dict[str, Any], topic: str, mode: str
+    ) -> dict[str, Any]:
+        """Dispatch help_lookup modes. Separate from the telemetry wrapper."""
         from attune.help.engine import (
             get_precursor_warnings,
             get_workflow_help,
@@ -583,9 +614,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             reset_session,
             search_by_tag,
         )
-
-        topic = args["topic"]
-        mode = args.get("mode", "progressive")
 
         if mode == "preamble":
             from attune.help.engine import get_preamble

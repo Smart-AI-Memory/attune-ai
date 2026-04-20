@@ -1,0 +1,115 @@
+# Golden-query fixtures for .help/ feature resolution.
+#
+# Each query asserts what feature resolve_topic() should return.
+# Queries are labelled easy/medium/hard:
+#
+#   easy   — should always pass (feature-name synonym)
+#   medium — paraphrase of the description, may need corpus/tag
+#            changes to pass reliably
+#   hard   — industry/domain terminology that doesn't appear in
+#            feature name, description, or tags today; expected
+#            to fail, pytest marks as xfail. Tracks the ceiling.
+#
+# When this file changes, tests/unit/help/test_golden_queries.py
+# re-runs the benchmark and reports P@1 in the test output.
+# Growing this file with real queries from
+# scripts/summarize_help_telemetry.py is the intended workflow.
+
+version: 1
+
+queries:
+  # security-audit
+  - {id: sec-001, query: security-audit,              expected: security-audit, difficulty: easy}
+  - {id: sec-002, query: audit,                       expected: security-audit, difficulty: medium}
+  - {id: sec-003, query: CVE,                         expected: security-audit, difficulty: medium} # promoted — cve tag added
+
+  # code-quality
+  - {id: cq-001,  query: code-quality,                expected: code-quality,   difficulty: easy}
+  - {id: cq-002,  query: review,                      expected: code-quality,   difficulty: hard} # collides with deep-review
+  - {id: cq-003,  query: lint,                        expected: code-quality,   difficulty: medium} # promoted — lint tag added
+
+  # smart-test
+  - {id: st-001,  query: smart-test,                  expected: smart-test,     difficulty: easy}
+  - {id: st-002,  query: coverage,                    expected: smart-test,     difficulty: medium}
+  - {id: st-003,  query: pytest,                      expected: smart-test,     difficulty: medium} # promoted — works today
+
+  # doc-gen
+  - {id: dg-001,  query: doc-gen,                     expected: doc-gen,        difficulty: easy}
+  - {id: dg-002,  query: documentation,               expected: doc-gen,        difficulty: medium}
+  - {id: dg-003,  query: docstrings,                  expected: doc-gen,        difficulty: medium} # promoted — works today
+
+  # bug-predict
+  - {id: bp-001,  query: bug-predict,                 expected: bug-predict,    difficulty: easy}
+  - {id: bp-002,  query: bugs,                        expected: bug-predict,    difficulty: hard} # collides with code-quality body
+  - {id: bp-003,  query: race condition,              expected: bug-predict,    difficulty: medium} # promoted — slug-normalized tag match
+
+  # release-prep
+  - {id: rp-001,  query: release-prep,                expected: release-prep,   difficulty: easy}
+  - {id: rp-002,  query: release,                     expected: release-prep,   difficulty: medium}
+  - {id: rp-003,  query: changelog,                   expected: release-prep,   difficulty: medium} # promoted — works today
+
+  # refactor-plan
+  - {id: rf-001,  query: refactor-plan,               expected: refactor-plan,  difficulty: easy}
+  - {id: rf-002,  query: refactor,                    expected: refactor-plan,  difficulty: medium}
+  - {id: rf-003,  query: tech debt,                   expected: refactor-plan,  difficulty: medium} # promoted — slug-normalized tag match
+
+  # deep-review
+  - {id: dr-001,  query: deep-review,                 expected: deep-review,    difficulty: easy}
+  - {id: dr-002,  query: comprehensive review,        expected: deep-review,    difficulty: medium} # promoted — comprehensive-review tag + slug match
+
+  # fix-test
+  - {id: ft-001,  query: fix-test,                    expected: fix-test,       difficulty: easy}
+  - {id: ft-002,  query: failing tests,               expected: fix-test,       difficulty: medium}
+
+  # rag-grounding
+  - {id: rg-001,  query: rag-grounding,               expected: rag-grounding,  difficulty: easy}
+  - {id: rg-002,  query: grounding,                   expected: rag-grounding,  difficulty: medium}
+  - {id: rg-003,  query: retrieval,                   expected: rag-grounding,  difficulty: medium} # promoted — memory desc "retrieval" -> "lookup"
+
+  # agents
+  - {id: ag-001,  query: agents,                      expected: agents,         difficulty: easy}
+  - {id: ag-002,  query: ai,                          expected: agents,         difficulty: hard} # ai tag collides with fix-test body
+
+  # cli
+  - {id: cl-001,  query: cli,                         expected: cli,            difficulty: easy}
+  - {id: cl-002,  query: commands,                    expected: cli,            difficulty: hard} # "commands" in plugin description wins
+
+  # configuration
+  - {id: cf-001,  query: configuration,               expected: configuration,  difficulty: easy}
+  - {id: cf-002,  query: config,                      expected: configuration,  difficulty: medium}
+
+  # help-system
+  - {id: hs-001,  query: help-system,                 expected: help-system,    difficulty: easy}
+  - {id: hs-002,  query: templates,                   expected: help-system,    difficulty: medium}
+
+  # mcp-server
+  - {id: mc-001,  query: mcp-server,                  expected: mcp-server,     difficulty: easy}
+  - {id: mc-002,  query: mcp,                         expected: mcp-server,     difficulty: medium}
+
+  # memory
+  - {id: mem-001, query: memory,                      expected: memory,         difficulty: easy}
+  - {id: mem-002, query: storage,                     expected: memory,         difficulty: medium}
+
+  # models
+  - {id: md-001,  query: models,                      expected: models,         difficulty: easy}
+  - {id: md-002,  query: llm,                         expected: models,         difficulty: medium}
+
+  # orchestration
+  - {id: or-001,  query: orchestration,               expected: orchestration,  difficulty: easy}
+  - {id: or-002,  query: teams,                       expected: orchestration,  difficulty: medium}
+
+  # plugin
+  - {id: pl-001,  query: plugin,                      expected: plugin,         difficulty: easy}
+  - {id: pl-002,  query: claude-code,                 expected: plugin,         difficulty: medium}
+
+  # spec-engine
+  - {id: sp-001,  query: spec-engine,                 expected: spec-engine,    difficulty: easy}
+  - {id: sp-002,  query: spec,                        expected: spec-engine,    difficulty: medium}
+
+  # telemetry
+  - {id: tm-001,  query: telemetry,                   expected: telemetry,      difficulty: easy}
+  - {id: tm-002,  query: metrics,                     expected: telemetry,      difficulty: medium}
+
+  # wizards
+  - {id: wz-001,  query: wizards,                     expected: wizards,        difficulty: easy}
+  - {id: wz-002,  query: interactive,                 expected: wizards,        difficulty: medium}

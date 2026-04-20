@@ -2,44 +2,43 @@
 type: note
 feature: mcp-server
 depth: note
-generated_at: 2026-04-14T15:01:16.966204+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:22:10.978597+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Note: mcp server
+# Note: MCP server
 
 ## Context
 
-The Attune AI MCP (Model Context Protocol) server provides AI assistants with access to workflows, memory storage, authentication management, and contextual help through a standardized protocol interface.
+Attune AI's Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implements the MCP specification to expose Attune's capabilities as callable tools within Claude environments.
 
-## Implementation architecture
+## Architecture
 
-The MCP server centers on the `EmpathyMCPServer` class, which aggregates functionality through mixin classes:
+The MCP server uses a mixin-based design around the core `EmpathyMCPServer` class:
 
-- **MemoryHandlersMixin** — Memory store/retrieve/search/forget operations with security classification
-- **WorkflowHandlersMixin** — Workflow execution and management tools
-- **RateLimiter** — Sliding-window rate limiting for tool calls (default: 60 calls per 60 seconds)
+- **EmpathyMCPServer** — Main server implementation handling MCP protocol, tool routing, and rate limiting
+- **MemoryHandlersMixin** — Provides memory store/retrieve/search/forget tools for cross-session data persistence
+- **WorkflowHandlersMixin** — Exposes workflow execution tools for running Attune AI automation
 
-The server exposes four categories of tools:
+The server exposes five tool categories:
+1. **Workflow tools** — Execute Attune workflows directly from Claude
+2. **Utility tools** — Authentication status, telemetry stats, session context management
+3. **Help tools** — Progressive documentation lookup, template maintenance, project bootstrapping
+4. **Memory tools** — Persistent storage for patterns, preferences, and cross-agent coordination
+5. **Rate limiting** — Sliding-window limiter preventing API abuse
 
-1. **Workflow tools** — Execute Attune AI workflows
-2. **Utility tools** — Authentication status, telemetry stats, interaction level management, session context
-3. **Help tools** — Progressive documentation lookup, template maintenance, project-local help bootstrapping
-4. **Memory tools** — Cross-session data persistence with pattern matching
+## Integration patterns
 
-## Protocol integration
+Claude Code discovers the server through `.mcp.json` configuration files in project roots. The server must run as `uv run python -m attune.mcp.server` to ensure correct package resolution and avoid Python environment conflicts that prevent tool availability.
 
-The server implements standard MCP interfaces for tools, prompts, and resources:
-
-- **Tools** — 15 tools across workflow execution, memory management, authentication, and help
-- **Prompts** — Three built-in prompts: `security-scan`, `test-gen`, and `cost-report`
-- **Resources** — Three endpoints: workflows list, auth config, and telemetry data
-
-The `create_server()` function initializes an `EmpathyMCPServer` instance, while `main()` serves as the CLI entry point. Rate limiting prevents tool abuse, with certain tools (memory, auth, telemetry) excluded from voice interfaces via `_VOICE_SKIP_TOOLS`.
+Rate limiting applies per-tool with a default 60 calls per 60-second window. Voice interfaces skip memory and session tools (defined in `_VOICE_SKIP_TOOLS`) to avoid interrupting conversational flow.
 
 ## Source files
 
-- `src/attune/mcp/**`
-
-**Tags:** `mcp`, `tools`, `server`
+- `src/attune/mcp/server.py` — Core server and entry point
+- `src/attune/mcp/memory_handlers.py` — Memory tool implementations
+- `src/attune/mcp/workflow_handlers.py` — Workflow tool implementations
+- `src/attune/mcp/prompts.py` — MCP prompt definitions
+- `src/attune/mcp/tool_schemas.py` — Tool schema definitions
+- `src/attune/mcp/rate_limiter.py` — Rate limiting implementation

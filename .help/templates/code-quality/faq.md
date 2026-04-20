@@ -2,52 +2,47 @@
 type: faq
 feature: code-quality
 depth: faq
-generated_at: 2026-04-14T14:41:31.768858+00:00
-source_hash: b7e7be04c17fbc5cdc5e0ffa118eb0ba70c9043509d9f75f395c0c87cf29bbe5
+generated_at: 2026-04-19T18:46:40.477789+00:00
+source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
 status: generated
 ---
 
 # Code Quality FAQ
 
-## What does the code quality feature do?
+## What is code quality review?
 
-It performs comprehensive code reviews using four specialized AI subagents that analyze security, quality, performance, and architecture issues in your codebase.
+A unified analysis that checks your code for style violations, correctness issues, likely bugs, and structural problems in a single pass with a scored report.
 
-## When should I use the CodeReviewWorkflow?
+## When should I run a code quality review?
 
-Use it when you need an automated, multi-perspective code review that goes beyond basic linting. It's especially helpful for reviewing pull requests, auditing legacy code, or getting a second opinion on complex changes.
+Before opening pull requests, after large refactors, when inheriting unfamiliar code, or any time you want a health score for your codebase.
 
-## How do I run a code review?
+## How do I start a review?
 
-Create a `CodeReviewWorkflow` instance and call its `execute()` method with the path to your code:
+Use `/code-quality <path>` to review specific files or directories, or just say "review src/" in natural language. You'll get guided through scope and depth questions if needed.
 
-```python
-workflow = CodeReviewWorkflow()
-result = workflow.execute(path="path/to/your/code")
-```
+## What's the difference between quick, standard, and deep reviews?
 
-## What do I get back from the workflow?
+Quick scans only style and formatting (seconds), standard adds logic errors and likely bugs (~1 minute), and deep includes security and architecture analysis (~3 minutes). Standard is the default.
 
-You get a structured report with:
-- Overall code health score (0-100)
-- Executive summary
-- Findings from each specialized reviewer (security, quality, performance, architecture)
-- Prioritized suggestions for improvement
+## What do the health scores mean?
 
-## Which subagents analyze my code?
+90-100 is excellent (ship it), 75-89 is good (fix before merge), 50-74 needs work (prioritize fixes), and 0-49 is poor (stop and address major problems).
 
-Four specialized reviewers examine different aspects:
-- `security-reviewer` - identifies security vulnerabilities
-- `quality-reviewer` - catches bugs and style issues
-- `perf-reviewer` - spots performance bottlenecks
-- `architect-reviewer` - evaluates structural design
+## Can I fix issues automatically?
 
-## How do I debug workflow issues?
+Some style issues like unused imports can be auto-fixed by saying "fix the quality issues" after getting results. Structural and logic problems require manual attention.
 
-First, run the tests: `pytest -k "code-quality" -v`. If tests pass but your code fails, add debug logging at the suspected failure point and check the troubleshooting page for common issues.
+## How do I focus on specific types of issues?
 
-## Where is the source code?
+After getting results, say "just show me the likely bugs" or "focus on security issues" to drill down into specific categories.
 
-The main workflow is in `src/attune/workflows/code_review.py`. Supporting files follow the pattern `src/attune/workflows/code_review_*.py`.
+## What if I want to compare different parts of my code?
+
+Ask "compare quality of src/auth/ vs src/api/" to get a side-by-side analysis showing which area needs more attention.
+
+## Where can I learn more?
+
+Say "tell me more" for complete step-by-step instructions, or check the related quickstart and task guides for this feature.
 
 **Tags:** `review`, `quality`, `bugs`

@@ -2,42 +2,46 @@
 type: error
 feature: plugin
 depth: error
-generated_at: 2026-04-14T15:22:53.260568+00:00
-source_hash: 425438f8a3b30d1fa8fe22fd642b4949e74d5b601ad76231735d0c4c4d94f3e8
+generated_at: 2026-04-19T18:52:40.902622+00:00
+source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
 status: generated
 ---
 
 # Plugin errors
 
-Plugin failures occur when the Claude Code plugin system encounters issues with hooks, validation, or file operations during tool execution.
+Plugin failures occur when Claude Code's runtime hooks, security policies, or MCP configuration encounter unexpected conditions during tool execution or session initialization.
 
 ## Common error signatures
 
-- `FileNotFoundError` from format_on_save when Python files are moved or deleted during execution
-- `PermissionError` from security_guard when validating paths in protected system directories
-- `subprocess.CalledProcessError` from hooks calling external tools like git or formatters
-- `JSONDecodeError` when parsing malformed PostToolUse payloads
-- `ImportError` when plugin dependencies are missing or incompatible
+- **`FileNotFoundError`** — Help template missing during freshness check or post-commit maintenance
+- **`json.JSONDecodeError`** — Malformed PostToolUse payload in help-on-error hook
+- **`subprocess.CalledProcessError`** — Python formatter (black/ruff) fails in format-on-save hook
+- **`PermissionError`** — Security guard blocks access to system directories like `/etc`, `/sys`, `/proc`
+- **`ValueError`** — Invalid file path or bash command rejected by validation policies
+- **`ImportError`** — Missing formatter dependency (black, ruff, isort) when processing Python files
 
 ## Where errors originate
 
-Plugin errors typically emerge from these hook execution points:
+Plugin errors stem from these main execution paths:
 
-- **format_on_save.py**: `main()` reads stdin and formats Python files after Write/Edit operations
-- **help_freshness_check.py**: `main()` validates help template timestamps on session start
-- **help_on_error.py**: `main()` parses PostToolUse data to suggest relevant help content
-- **help_post_commit.py**: `main()` checks for stale help files after git commits
-- **security_guard.py**: `validate_bash_command()` and `validate_file_path()` enforce security policies
+- **`main()` in format_on_save.py** — Reads stdin for tool results and runs Python formatters
+- **`main()` in help_freshness_check.py** — Validates help template currency at session start
+- **`main()` in help_on_error.py** — Parses PostToolUse events and suggests relevant help
+- **`main()` in help_post_commit.py** — Detects stale help files after git commits
+- **`validate_bash_command()` in security_guard.py** — Enforces command security policies
+- **`validate_file_path()` in security_guard.py** — Blocks access to protected filesystem areas
 
 ## How to diagnose
 
-1. **Identify the failing hook.** Check which `plugin/hooks/*.py` file appears in the traceback. Each hook handles a specific trigger (PostToolUse, SessionStart), so the filename indicates what operation failed.
+1. **Check which hook failed.** Plugin hooks run at specific trigger points — format-on-save after Write/Edit tools, help checks at session start, security validation before tool execution. The timing of the error identifies the failing component.
 
-2. **Check validation context.** If `security_guard.py` appears in the trace, examine whether the command or path violates the security policy. System directories like `/etc`, `/proc`, `/sys` are blocked by default.
+2. **Examine the PostToolUse payload.** If help-on-error fails, inspect the JSON structure passed from Claude Code. Malformed payloads cause `JSONDecodeError`; missing required fields trigger `KeyError`.
 
-3. **Verify tool dependencies.** Many hooks call external tools (git, Python formatters). Run the failing command manually to confirm the tool is installed and accessible.
+3. **Verify formatter availability.** Format-on-save requires black, ruff, or isort in the environment. Run `which black` or `pip list | grep black` to confirm the dependency exists.
 
-4. **Examine hook input.** For PostToolUse hooks, check that the stdin payload contains valid JSON with expected fields. Malformed tool results cause parsing failures.
+4. **Test security policies manually.** If commands or file access fail unexpectedly, run `validate_bash_command()` or `validate_file_path()` directly with the problematic input. Security violations return `(False, reason)` tuples instead of raising.
+
+5. **Check help template structure.** Freshness check and post-commit hooks expect specific YAML frontmatter in `.help/` files. Missing `generated_at` fields or malformed metadata cause validation failures.
 
 ## Source files
 

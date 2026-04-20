@@ -2,40 +2,43 @@
 type: concept
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-14T14:58:41.206381+00:00
-source_hash: bcc1c0a657ed14e3ecc0ddf2aa190500d4decf1e455d572148863bce6b9d9c27
+generated_at: 2026-04-20T01:19:41.402959+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Mcp Server
+# MCP Server
 
-## How it works
+## What it is
 
-The MCP server is Attune AI's implementation of the Model Context Protocol, exposing workflow tools, memory storage, authentication utilities, and contextual help through a standardized interface that AI models can interact with directly.
+The MCP Server is Attune AI's implementation of the Model Context Protocol, providing structured access to workflows, memory, help documentation, and authentication through a standardized tool interface.
 
-At its core, `EmpathyMCPServer` orchestrates five distinct tool categories: workflow execution (code review, security scans), memory operations (store/retrieve patterns across sessions), authentication management (status checks, tier recommendations), session utilities (interaction levels, context variables), and progressive help lookup. The server uses mixins to organize these capabilities—`MemoryHandlersMixin` handles memory operations while `WorkflowHandlersMixin` manages workflow tools.
+## Core architecture
 
-A `RateLimiter` with sliding-window tracking prevents abuse by limiting tool calls to 60 per minute by default. The server also exposes MCP resources (workflow lists, auth config, telemetry) and prompts (security-scan, test-gen, cost-report) that clients can discover and invoke.
+The server uses a mixin-based design where `EmpathyMCPServer` combines specialized handler classes:
 
-## Core components
+- **`MemoryHandlersMixin`** — Persistent storage and retrieval across sessions
+- **`WorkflowHandlersMixin`** — Execution of Attune AI workflows
+- **`RateLimiter`** — Sliding-window throttling for tool calls
 
-- **`EmpathyMCPServer`** — Main server class that coordinates tool dispatch, prompt handling, and resource access
-- **`MemoryHandlersMixin`** — Implements memory_store, memory_retrieve, memory_search, and memory_forget tools with classification levels
-- **`WorkflowHandlersMixin`** — Exposes workflow execution tools for code analysis and security scanning
-- **`RateLimiter`** — Sliding-window rate limiter that tracks calls per key over a 60-second window
+The server exposes three MCP primitives:
+- **Tools** — 15 callable functions for workflows, memory, help, and utilities
+- **Prompts** — 3 templates for security scanning, test generation, and cost reporting
+- **Resources** — 3 data endpoints for workflow lists, auth config, and telemetry
 
 ## Tool categories
 
-The server exposes 19 distinct tools across five functional areas:
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Workflow** | Execution tools | Run Attune AI workflows with auth and telemetry |
+| **Memory** | `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` | Cross-session data persistence |
+| **Help** | `help_lookup`, `help_maintain`, `help_init`, `help_status`, `help_update` | Progressive documentation system |
+| **Utility** | `auth_status`, `telemetry_stats`, session context tools | Authentication and metrics |
 
-**Memory tools** enable persistent storage with `memory_store` (supports PUBLIC/INTERNAL/SENSITIVE classifications), `memory_retrieve` for key-based lookup, `memory_search` for pattern matching, and `memory_forget` for cleanup.
+## Rate limiting
 
-**Utility tools** handle authentication (`auth_status`, `auth_recommend`), telemetry (`telemetry_stats`), session management (`attune_get_level`, `attune_set_level`), and context variables (`context_get`, `context_set`).
+Tool calls are throttled using a 60-calls-per-minute sliding window. The `RateLimiter` tracks calls by key and rejects requests that exceed the threshold, preventing API abuse while allowing normal usage patterns.
 
-**Help tools** provide contextual assistance through `help_lookup` (progressive depth escalation), `help_maintain` (stale template detection), `help_init` (project bootstrapping), `help_status` (staleness reports), and `help_update` (template regeneration).
+## Entry points
 
-**Workflow tools** expose the core Attune AI capabilities for code review, security scanning, test generation, and cost analysis.
-
-## Integration points
-
-The server connects to Attune's broader ecosystem through the workspace root for file operations, user ID for personalization, and optional memory module integration. Voice interfaces can skip certain tools (memory, auth, telemetry) using the `_VOICE_SKIP_TOOLS` configuration. The `create_server()` factory function initializes a configured instance, while `main()` serves as the CLI entry point for standalone deployment.
+The server can be created programmatically via `create_server()` or launched as a standalone process via `main()`. Both methods initialize the workspace root and user context from environment variables or defaults.

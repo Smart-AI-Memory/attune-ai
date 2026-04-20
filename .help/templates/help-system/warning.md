@@ -2,8 +2,8 @@
 type: warning
 feature: help-system
 depth: warning
-generated_at: 2026-04-14T15:02:53.439274+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:18:02.573615+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
@@ -11,29 +11,31 @@ status: generated
 
 ## What to watch for
 
-Template engine with automatic content generation and staleness detection.
+Progressive-depth help engine and template management.
 
 ## Risk areas
 
-**Stale template detection failures** — The staleness system relies on source file hashes, but changes in file ordering, whitespace, or imported dependencies can cause false positives. Templates may be marked as current when their underlying code has actually changed.
+The help system's progressive depth tracking and template caching can cause unexpected behavior that looks like bugs but is actually feature interaction.
 
-**Project scanning over-discovery** — `scan_project()` uses heuristic file pattern matching that can misidentify test files, examples, or vendor code as core features. This leads to irrelevant help templates cluttering your documentation.
+- **Progressive depth state persists across lookups** — Calling `lookup_raw()` repeatedly advances depth from 0 to 1 to 2, but this state lives in the engine instance. Different test cases that share an engine will see escalated depth when they expect level 0.
 
-**Template regeneration without backup** — When `generate_feature_templates()` runs with `overwrite=True`, it permanently replaces existing templates. Any manual customizations or refinements you made will be lost without warning.
+- **Template file changes don't trigger automatic regeneration** — The system compares source file hashes to detect staleness, but only when you explicitly call `check_staleness()`. Modified Python files won't update their corresponding help templates until the next maintenance run.
 
-**Feedback data corruption** — Template confidence scores are stored in a shared JSON file. Concurrent access or incomplete writes can corrupt the entire feedback history, causing all templates to revert to default confidence levels.
+- **Precursor warnings depend on filename patterns, not file content** — `get_precursor_warnings("models.py")` triggers database-related help based on the filename alone. Renaming files changes which warnings surface, even if the code is identical.
 
-**Path resolution inconsistencies** — Functions accept both string and Path arguments, but relative paths are resolved differently depending on the current working directory. Templates may reference wrong files when called from different contexts.
+- **Cross-link resolution fails silently** — When `cross_links.json` references a template ID that doesn't exist on disk, `_find_template_file()` returns `None` instead of raising an exception. Broken links appear as missing sections rather than errors.
+
+- **Feedback scoring degrades with sparse data** — `get_template_confidence()` returns lower scores when few users have rated a template. New templates start with poor confidence even if they're well-written.
 
 ## How to avoid problems
 
-1. **Verify staleness reports before bulk regeneration.** Run `check_staleness()` and manually inspect a few "stale" features before triggering `run_maintenance()`. False positives are common when dependencies change.
+1. **Reset engine state between tests.** Create a fresh `HelpEngine()` instance for each test case, or call `reset_session()` to clear progressive depth tracking.
 
-2. **Use explicit paths for template operations.** Always pass absolute paths to `generate_feature_templates()` and related functions. Relative paths can resolve incorrectly if your script changes directories.
+2. **Run staleness checks after file modifications.** Call `check_staleness()` and `run_maintenance()` when you change source files that should update help templates.
 
-3. **Back up manual customizations.** Before running template regeneration, copy any hand-edited templates to a safe location. The system doesn't distinguish between generated and manual content.
+3. **Validate cross-links in CI.** Load `cross_links.json` and verify every referenced template ID resolves to a real file using `_find_template_file()`.
 
-4. **Lock feedback file access.** If multiple processes might call `record_template_feedback()` simultaneously, implement file locking to prevent corruption of the shared feedback store.
+4. **Test with realistic feedback data.** Use `record_template_feedback()` to populate test confidence scores, or mock the feedback file with representative ratings.
 
 ## Source files
 

@@ -1,8 +1,17 @@
 #!/bin/bash -eu
 
-pip3 install 'atheris==3.0.0' --hash=sha256:8a5c8a781467c187da40fd29139784193e2647058831f837f675d0bb8cbd8746 --hash=sha256:510e502c57b6dc615fb174066407af620d4c7f73cf08a782c86e7761bf12c4eb --hash=sha256:a402cdca8a650d1371050b1f9552eb4cdc488d2db64950d603c4560318365eac
-pip3 install 'structlog==25.5.0' --hash=sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f
-pip3 install --no-deps $SRC/attune-ai
+# Hash-pinned fuzz deps via requirements.txt + --require-hashes.
+# The bare `pip install --hash=...` form fails on the clusterfuzz
+# container's pip ("no such option: --hash"); the requirements-file
+# form is universally supported and is what Scorecard's
+# PinnedDependenciesID check recognizes.
+#
+# The Dockerfile copies `.` to `$SRC/attune-ai`, so the
+# requirements file is available at the in-repo path. Using it
+# directly avoids having to also copy the file to `$SRC/` in the
+# Dockerfile.
+pip3 install --require-hashes -r "$SRC/attune-ai/.clusterfuzzlite/requirements.txt"
+pip3 install --no-deps "$SRC/attune-ai"
 
 # Compile fuzz targets using the standard OSS-Fuzz helper.
 # PyInstaller can't auto-detect attune imports, so pass

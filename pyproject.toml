@@ -713,14 +713,18 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-# Editable sibling repos: packages now live in their own dedicated repos.
-# Editable sibling repo for local development.
-# attune-help is now a PyPI dependency (no source override needed).
-[tool.uv.sources]
-attune-author = { path = "../attune-author", editable = true }
-# attune-rag source override intentionally omitted until
-# PyPI publish. uv sync in CI can't resolve a missing
-# sibling path; local devs who want [rag] should run:
-#   pip install -e ../attune-rag/
-# after cloning the sibling repo and before running the
-# rag-tagged tests locally.
+# Sibling repos — all published to PyPI:
+#   attune-help    — core dep (>=0.5.1,<0.8)
+#   attune-author  — [author] optional extra (>=0.4.1,<0.5)
+#   attune-rag     — [rag] optional extra (>=0.1.5,<0.2)
+#
+# No [tool.uv.sources] overrides needed: CI resolves all three
+# from PyPI (https://pypi.org/simple). For local iteration against
+# an in-flight sibling change, use `uv pip install -e
+# ../attune-<name>/` to shadow the PyPI version inside the venv.
+# Do NOT add a `path = "../attune-<name>", editable = true` entry
+# here unless you're ready to either (a) publish that version to
+# PyPI before merging, or (b) ensure CI checks out the sibling
+# repo alongside this one. An unresolvable editable path in
+# uv.lock fails every `uv sync` in CI under the "Failed to
+# generate package metadata for ... editable+../..." error.

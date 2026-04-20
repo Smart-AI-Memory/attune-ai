@@ -2,80 +2,75 @@
 type: comparison
 feature: security-audit
 depth: comparison
-generated_at: 2026-04-14T14:40:15.603378+00:00
-source_hash: 1ad7c6ac653fba529260181790342f2f2a067d4d45c694665a849d4622176019
+generated_at: 2026-04-19T18:45:07.189640+00:00
+source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
 status: generated
 ---
 
-# Security Audit vs Monitoring: choosing the right approach
+# Security audit approaches: workflow vs skill vs CLI
 
-## Context
-
-Attune AI provides two complementary security approaches: the SecurityAuditWorkflow for comprehensive code analysis, and the AlertEngine for runtime monitoring. Both protect your LLM applications but serve different phases of the security lifecycle.
+You have three ways to run security audits in Attune AI. Each serves different use cases and integrates with different parts of your workflow.
 
 ## Feature comparison
 
-| Feature | SecurityAuditWorkflow | AlertEngine |
-|---------|----------------------|-------------|
-| **Timing** | Pre-deployment static analysis | Runtime monitoring |
-| **Scope** | Full codebase scan | Telemetry metrics |
-| **Detection method** | Four specialized subagents | Threshold-based alerts |
-| **Output format** | Structured markdown report with severity scores | Real-time notifications |
-| **Storage** | Report generation only | SQLite database for alert history |
-| **Integration** | SDK workflow execution | CLI commands + webhook/email |
+| Approach | Best for | Speed | Output format | Integration |
+|----------|----------|-------|---------------|-------------|
+| **Workflow** (`attune workflow run security-audit`) | CI/CD pipelines, automated scans | Fast batch processing | Severity-grouped findings with CWE IDs | Terminal, scripts |
+| **Skill** (`/security-audit`) | Interactive code review, ad-hoc scans | Interactive with follow-up | Structured results in conversation | Claude Code chat |
+| **Alert system** (`attune alerts init`) | Continuous monitoring, threshold alerts | Background monitoring | Notifications when metrics exceed limits | Email, webhooks |
 
-## SecurityAuditWorkflow capabilities
+## Key differences
 
-The SecurityAuditWorkflow orchestrates four specialized subagents:
-- **vuln-scanner**: Detects eval/exec and injection risks
-- **secret-detector**: Finds hardcoded credentials and API keys
-- **auth-reviewer**: Analyzes authentication patterns
-- **remediation-planner**: Suggests actionable fixes with effort estimates
+**Scope and depth:**
+- The workflow runs four specialized subagents (vulnerability scanner, secret detector, authentication reviewer, remediation planner) for comprehensive coverage
+- The skill focuses on immediate findings you can act on during development
+- Alerts monitor ongoing telemetry patterns rather than scanning code directly
 
-Each audit produces a unified report with:
-- Overall security score (0-100)
-- Findings organized by severity (CRITICAL, HIGH, MEDIUM, LOW)
-- File paths and line numbers for each issue
-- Prioritized remediation steps
+**Workflow integration:**
+- Workflow fits into automated pipelines and generates machine-readable output
+- Skill integrates with your coding conversation for real-time feedback
+- Alerts run continuously in the background and notify you when problems emerge
 
-## AlertEngine capabilities
+**Output format:**
+- Workflow provides severity scores (0-100), CWE identifiers, and structured markdown
+- Skill gives clickable file links and conversational follow-up options
+- Alerts send notifications with metric values and threshold breaches
 
-The AlertEngine monitors live telemetry and triggers notifications when metrics exceed thresholds:
-- **Real-time detection**: Monitors LLM call patterns and workflow metrics
-- **Multiple channels**: Supports webhook and email notifications
-- **Cooldown periods**: Prevents alert flooding (default 1 hour)
-- **Alert management**: Enable/disable, view history, adjust thresholds
-- **Persistent storage**: SQLite backend for alert configuration and history
+## Use the workflow when...
 
-## Use SecurityAuditWorkflow when...
+- You're setting up CI/CD security checks
+- You need comprehensive coverage with CWE mapping
+- You want automated batch processing of multiple files
+- You're generating reports for compliance or auditing
 
-- You need comprehensive pre-deployment security analysis
-- Your codebase contains potential vulnerabilities (secrets, injections, path traversal)
-- You want structured findings with severity scoring and remediation guidance
-- You're preparing for security reviews or compliance audits
-- You need detailed file-level analysis with line numbers
+```bash
+attune workflow run security-audit --path "src/"
+```
 
-## Use AlertEngine when...
+## Use the skill when...
 
-- You want continuous monitoring of production LLM applications
-- You need immediate notification of anomalous behavior
-- Your focus is runtime telemetry patterns rather than static code
-- You want persistent alert configuration and historical tracking
-- You need integration with external monitoring systems via webhooks
+- You're actively coding and want immediate feedback
+- You need to explore findings interactively
+- You want to ask follow-up questions about vulnerabilities
+- You prefer working within your Claude Code conversation
 
-## Recommended approach
+```
+/security-audit src/auth.py
+```
 
-Use both systems together for comprehensive security coverage:
+## Use alerts when...
 
-1. **Development phase**: Run SecurityAuditWorkflow to catch vulnerabilities before deployment
-2. **Production phase**: Configure AlertEngine to monitor runtime behavior and detect anomalies
+- You want continuous monitoring of security metrics
+- You need notifications when vulnerability counts spike
+- You're tracking trends in code quality over time
+- You want automated alerts for threshold breaches
 
-The SecurityAuditWorkflow catches what you can see in code, while AlertEngine catches what you can only see in production telemetry.
+```bash
+attune alerts init --metric vulnerability_count --threshold 5
+```
 
-## Source files
+## Recommendation
 
-- `src/attune/workflows/security_audit.py`
-- `src/attune/security/**`
-- `src/attune/monitoring/**`
+**Start with the skill** for day-to-day development — it's the fastest way to catch issues as you code. **Add the workflow** to your CI pipeline for comprehensive pre-deployment scanning. **Set up alerts** once you have baseline metrics to monitor ongoing security health.
 
-**Tags:** `security`, `audit`, `owasp`, `scanning`
+Most teams use all three: skills during development, workflows in CI/CD, and alerts for continuous monitoring.

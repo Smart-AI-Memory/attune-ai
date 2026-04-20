@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/patrickroebuck/attune-ai && PYTHONPATH=src python src/attune/hooks/scripts/help_freshness_nudge.py",
+            "timeout": 5,
+            "statusMessage": "Checking .help freshness..."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

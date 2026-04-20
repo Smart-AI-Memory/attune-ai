@@ -431,7 +431,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-author", marker = "extra == 'author'", editable = "../attune-author" },
+    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.4.1,<0.5" },
     { name = "attune-help", specifier = ">=0.5.1,<0.8" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.2" },
     { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.5,<0.2" },
@@ -569,35 +569,17 @@ provides-extras = ["rag", "author", "memory", "redis", "anthropic", "llm", "memd
 [[package]]
 name = "attune-author"
 version = "0.4.2"
-source = { editable = "../attune-author" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attune-help" },
     { name = "jinja2" },
     { name = "python-frontmatter" },
     { name = "pyyaml" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", marker = "extra == 'ai'", specifier = ">=0.40.0" },
-    { name = "anthropic", marker = "extra == 'dev'", specifier = ">=0.40.0" },
-    { name = "anthropic", marker = "extra == 'plugin'", specifier = ">=0.40.0" },
-    { name = "attune-help", specifier = ">=0.5.1,<0.8" },
-    { name = "attune-rag", marker = "extra == 'rag'", specifier = ">=0.1.0,<0.2" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=24.0" },
-    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0" },
-    { name = "jinja2", specifier = ">=3.1.0" },
-    { name = "mcp", marker = "extra == 'dev'", specifier = ">=0.9.0" },
-    { name = "mcp", marker = "extra == 'plugin'", specifier = ">=0.9.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "python-frontmatter", specifier = ">=1.0.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "rich", marker = "extra == 'rich'", specifier = ">=13.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
-    { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/7d/e6/4acb1ac4a726856f6e895b4cba47767a6ce4c885d4c28e2902bf97887dc4/attune_author-0.4.2.tar.gz", hash = "sha256:86399d176bdc5cb427259074bdffa0c23a41fb0eec196d8ce38516703d37fc3d", size = 114491, upload-time = "2026-04-19T16:04:31.257Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/68/e0cdeec76b2ab33e98fa01ad388dd30431517ba96d132615554772ebb44b/attune_author-0.4.2-py3-none-any.whl", hash = "sha256:94128af4c2f53975c634e8b218c72b739e82a23dcc8aed98a6e607ecf6d1112d", size = 83437, upload-time = "2026-04-19T16:04:29.791Z" },
 ]
-provides-extras = ["ai", "rag", "plugin", "rich", "dev"]
 
 [[package]]
 name = "attune-help"

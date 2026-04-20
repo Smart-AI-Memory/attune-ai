@@ -1,8 +1,20 @@
 # Progressive Tier Escalation System
 
 **Version:** 4.1.0
-**Status:** Production Ready
+**Status:** Framework available; `ProgressiveTestGenWorkflow` removed in v6.3.0
 **Test Coverage:** 86.58% (123 tests)
+
+> **Note (v6.3.0):** The concrete `ProgressiveTestGenWorkflow`
+> class referenced in the examples below was deprecated in v5.3.0
+> and removed in v6.3.0. The underlying framework
+> (`ProgressiveWorkflow` base class, `EscalationConfig`, `Tier`,
+> CQS scoring, telemetry, reports) is unchanged and available for
+> new subclasses. For test generation, use
+> `ParallelTestGenerationWorkflow` via
+> `attune workflow run test-gen-parallel` — it is the canonical,
+> production path and is not a progressive workflow. The examples
+> below illustrate the framework API; substitute your own
+> `ProgressiveWorkflow` subclass.
 
 ## Overview
 

@@ -2,56 +2,69 @@
 type: quickstart
 feature: telemetry
 depth: quickstart
-generated_at: 2026-04-14T15:21:34.809749+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:24:58.686164+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
-# Quickstart: telemetry
+# Quickstart: View Telemetry Status
 
-Track agent heartbeats and view telemetry data in under 5 minutes.
-
-```python
-from attune.telemetry import HeartbeatCoordinator
-
-# Start tracking an agent's activity
-coordinator = HeartbeatCoordinator()
-coordinator.start_heartbeat("my-agent", metadata={"task": "data-processing"})
-coordinator.beat(status="running", progress=0.5, current_task="processing files")
-
-# View active agents
-active_agents = coordinator.get_active_agents()
-print(f"Active agents: {[agent.agent_id for agent in active_agents]}")
-```
-
-Expected output:
-```
-Active agents: ['my-agent']
-```
-
-## View telemetry reports
-
-Run the CLI to see comprehensive telemetry data:
+Check your system's telemetry data and cost savings in under 5 minutes.
 
 ```bash
 python -m attune.telemetry show
 ```
 
-This displays recent telemetry entries including agent activity, performance metrics, and cost savings from model fallbacks.
+Expected output:
+```
+Recent Telemetry Entries (last 10):
+2024-04-20 01:15:23 | agent_task | success | model=claude-3-sonnet | cost=$0.0045
+2024-04-20 01:14:18 | test_run   | success | tests_passed=23      | cost=$0.0023
+...
 
-## Track agent coordination
+Total entries: 147
+```
 
-Use coordination signals to enable communication between agents:
+## Step 1: View cost savings
+
+```bash
+python -m attune.telemetry savings
+```
+
+This shows how much you've saved through model tier optimization and prompt caching.
+
+## Step 2: Check agent coordination
+
+```python
+from attune.telemetry import HeartbeatCoordinator
+
+coordinator = HeartbeatCoordinator()
+active_agents = coordinator.get_active_agents()
+print(f"Active agents: {len(active_agents)}")
+```
+
+Expected output shows running agents with their current tasks and progress.
+
+## Step 3: Send a coordination signal
 
 ```python
 from attune.telemetry import CoordinationSignals
 
-signals = CoordinationSignals(agent_id="agent-1")
-signal_id = signals.broadcast("task-complete", payload={"result": "success"})
-
-# Other agents can wait for this signal
-received = signals.wait_for_signal("task-complete", timeout=10.0)
-print(f"Received signal: {received.payload}")
+signals = CoordinationSignals()
+signal_id = signals.broadcast("task_complete", payload={"result": "success"})
+print(f"Signal sent: {signal_id}")
 ```
 
-**Next:** Set up human approval gates with `ApprovalGate` to add workflow control to your agent systems.
+This broadcasts a message to all listening agents.
+
+## What you just did
+
+- Viewed your telemetry history and cost data
+- Checked which agents are currently active
+- Sent a coordination signal between agents
+
+The telemetry system tracks usage, coordinates agents via TTL signals, monitors heartbeats, and manages human approval gates for workflow control.
+
+## Next
+
+Run `python -m attune.telemetry tier1-status` to see comprehensive automation status across all your workflows.

@@ -193,7 +193,8 @@ test_workflow_import "ParallelTestGenerationWorkflow"
 test_workflow_import "TestCoverageBoostCrew"
 test_workflow_import "TestMaintenanceWorkflow"
 test_workflow_import "AutonomousTestGenerator"
-test_workflow_import "ProgressiveTestGenWorkflow"
+# ProgressiveTestGenWorkflow removed in v6.3.0 — deprecated since v5.3.0,
+# users are routed via the "progressive-test-gen" -> "test-gen" migration alias.
 
 # Documentation Classes (5)
 echo ""
