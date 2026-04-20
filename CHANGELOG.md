@@ -25,6 +25,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own editable install from the scan — CVE audits still
   run against the full transitive dependency graph.
 
+### Changed — docs freshness
+
+- `docs/reference/API_REFERENCE.md`: version header
+  bumped `5.3.2 → 6.3.0`; workflow table gains the
+  `rag-code-gen` row (RAG-grounded code generation,
+  requires the `[rag]` extra).
+- `docs/rag/index.md`: "Baseline retrieval quality"
+  section refreshed against attune-help 0.7.0 corpus
+  (P@1 = 73.3%, clearing the 70% gate so the
+  `fastembed` local-ONNX track is deferred). Added a
+  new "Faithfulness & citation grounding" section
+  documenting the attune-rag 0.1.3 A/B sweep
+  (hallucination 46.67% → 6.67% via citation-forced
+  prompting; mean faithfulness 0.996) and the
+  attune-rag 0.1.5 `<passage>` sentinel
+  injection-defense wrap.
+- New `docs/how-to/help-system-maintenance.md` covering
+  the v6.3.0 help-system hardening work: weekly
+  freshness PR automation, SessionStart nudge hook,
+  completeness + coverage checks, local telemetry, and
+  the golden-query benchmark.
+- `mkdocs.yml`: added top-level `RAG Grounding` nav
+  section (surfaces `docs/rag/index.md` which was
+  orphaned from navigation) and `Help System →
+  Maintenance` under `How-to`.
+- `README.md`: dropped the CodeQL badge on line 13 —
+  the linked `codeql.yml` workflow was deleted in the
+  CI-cleanup PR above, so the badge had been rendering
+  as "no runs".
+
 ## [6.3.0] - 2026-04-20
 
 ### Added — Help system hardening

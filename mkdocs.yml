@@ -208,7 +208,15 @@ nav:
       - Patterns:
           - Practical Patterns: how-to/practical-patterns.md
           - Resilience Patterns: how-to/resilience-patterns.md
+      - Help System:
+          - Maintenance: how-to/help-system-maintenance.md
       - Prerequisites: how-to/prerequisites.md
+
+  # RAG grounding - citation-forced generation
+  - RAG Grounding:
+      - Overview: rag/index.md
+      - Embeddings Decision: rag/embeddings-decision-2026-04-17.md
+      - Faithfulness Decision: rag/faithfulness-decision-2026-04-19.md
 
   # Security - Critical cross-cutting concern
   - Security:
