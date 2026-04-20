@@ -17,7 +17,11 @@ def _reenable_telemetry(monkeypatch):
 
 
 def _read_events(path):
-    return [json.loads(line) for line in path.read_text().splitlines() if line]
+    # encoding="utf-8" is load-bearing on Windows — the tracker writes
+    # JSONL with explicit utf-8, and Windows' default cp1252 decode on
+    # Path.read_text() would mangle non-ASCII topics (ñoño → �o�o,
+    # 日本語 → mojibake, etc.) on the round-trip.
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 
 
 def test_log_writes_one_event_per_call(tmp_path):
