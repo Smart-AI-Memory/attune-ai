@@ -207,6 +207,11 @@ def resolve_topic(
     descriptions and tags. Returns None if ambiguous or
     no match.
 
+    Step 4 (tag match) normalizes spaces and underscores to
+    hyphens on BOTH sides so a query like ``"race condition"``
+    can match a slug-style tag ``"race-condition"``. The other
+    steps compare literal substrings.
+
     Args:
         query: User's topic query string.
         manifest: The feature manifest.
@@ -230,8 +235,13 @@ def resolve_topic(
     if len(desc_hits) == 1:
         return desc_hits[0]
 
-    # 4. Match against tags
-    tag_hits = [n for n, f in manifest.features.items() if q in [t.lower() for t in f.tags]]
+    # 4. Match against tags (slug-normalized: space/underscore -> hyphen)
+    q_slug = q.replace(" ", "-").replace("_", "-")
+    tag_hits = [
+        n
+        for n, f in manifest.features.items()
+        if q_slug in [t.lower().replace(" ", "-").replace("_", "-") for t in f.tags]
+    ]
     if len(tag_hits) == 1:
         return tag_hits[0]
 

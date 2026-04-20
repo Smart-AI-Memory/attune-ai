@@ -41,7 +41,7 @@ queries:
   # bug-predict
   - {id: bp-001,  query: bug-predict,                 expected: bug-predict,    difficulty: easy}
   - {id: bp-002,  query: bugs,                        expected: bug-predict,    difficulty: hard} # collides with code-quality body
-  - {id: bp-003,  query: race condition,              expected: bug-predict,    difficulty: hard}
+  - {id: bp-003,  query: race condition,              expected: bug-predict,    difficulty: medium} # promoted — slug-normalized tag match
 
   # release-prep
   - {id: rp-001,  query: release-prep,                expected: release-prep,   difficulty: easy}
@@ -51,11 +51,11 @@ queries:
   # refactor-plan
   - {id: rf-001,  query: refactor-plan,               expected: refactor-plan,  difficulty: easy}
   - {id: rf-002,  query: refactor,                    expected: refactor-plan,  difficulty: medium}
-  - {id: rf-003,  query: tech debt,                   expected: refactor-plan,  difficulty: hard}
+  - {id: rf-003,  query: tech debt,                   expected: refactor-plan,  difficulty: medium} # promoted — slug-normalized tag match
 
   # deep-review
   - {id: dr-001,  query: deep-review,                 expected: deep-review,    difficulty: easy}
-  - {id: dr-002,  query: comprehensive review,        expected: deep-review,    difficulty: hard} # ambiguous vs code-quality
+  - {id: dr-002,  query: comprehensive review,        expected: deep-review,    difficulty: medium} # promoted — comprehensive-review tag + slug match
 
   # fix-test
   - {id: ft-001,  query: fix-test,                    expected: fix-test,       difficulty: easy}

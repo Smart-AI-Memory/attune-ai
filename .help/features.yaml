@@ -35,7 +35,7 @@ features:
     files:
       - src/attune/workflows/bug_predict.py
       - src/attune/workflows/bug_predict_*.py
-    tags: [bugs, prediction, scanning]
+    tags: [bugs, prediction, scanning, race-condition]
 
   release-prep:
     description: Pre-release quality gate — health checks, security audit, changelog, version bumps
@@ -55,7 +55,7 @@ features:
     description: Multi-pass deep code review — security, quality, and test gap analysis
     files:
       - src/attune/workflows/deep_review.py
-    tags: [review, security, quality, tests]
+    tags: [review, security, quality, tests, comprehensive-review]
 
   fix-test:
     description: Auto-diagnose and fix failing tests — identifies root causes and applies fixes
