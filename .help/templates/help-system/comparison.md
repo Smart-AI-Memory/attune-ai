@@ -2,61 +2,58 @@
 type: comparison
 feature: help-system
 depth: comparison
-generated_at: 2026-04-14T15:04:10.499732+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:19:22.932191+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
-# Help System vs static documentation generators
+# Comparison: Help System vs alternatives
 
 ## Context
 
-The help system generates context-aware documentation templates that adapt to your codebase and usage patterns. Unlike static documentation generators that produce fixed output, this system creates progressive-depth help that responds to workflow events and tracks user feedback.
+Progressive-depth help engine and template management.
 
 ## Feature comparison
 
-| Feature | Help System | Static Generators (Sphinx, MkDocs) |
-|---------|------------|-------------------------------------|
-| **Content generation** | Scans source code to auto-generate templates | Requires manual writing of documentation files |
-| **Adaptive depth** | Three levels (concept/task/reference) based on user needs | Fixed structure determined at build time |
-| **Workflow integration** | Contextual help triggered by workflow completion | Documentation separate from development workflow |
-| **Feedback tracking** | Records user ratings and adjusts template confidence | No built-in feedback mechanism |
-| **Staleness detection** | Compares source file hashes to detect outdated content | Manual maintenance or build-time checks |
-| **Usage analytics** | Tracks template access patterns for relevance weighting | Basic page view statistics only |
-| **Template polish** | AI-assisted rewriting following style guides | Raw content or manual editing |
+| Feature | Help System | Static docs | In-code comments |
+|---------|------------|-------------|------------------|
+| **Progressive depth** | Advances from concept → task → reference automatically | Fixed depth per page | No depth progression |
+| **Context awareness** | Surfaces precursor warnings based on file being edited | No file-based context | Limited to current function |
+| **Template testing** | Built-in validation for frontmatter, cross-links, and rendering | Manual validation required | No testing framework |
+| **Audience adaptation** | Multiple renderers (CLI, Claude Code, marketplace) | Single output format | Developer-only |
+| **Feedback tracking** | Confidence scoring and usage telemetry | No built-in feedback | No feedback mechanism |
+| **Maintenance** | Staleness detection and automated regeneration | Manual updates | Drift with code changes |
 
-## Performance characteristics
+## When to use Help System
 
-The help system prioritizes **runtime adaptability** over build speed. Template generation is ~2-3x slower than static builds but enables:
-- Real-time content updates when source files change
-- Contextual help delivery based on current workflow state
-- Progressive disclosure that scales complexity to user needs
+Use Help System when you need:
 
-Static generators excel at **build performance** and are better for:
-- Large documentation sites with stable content
-- SEO-optimized public documentation
-- Integration with existing documentation workflows
+- **Interactive help** that gets more detailed as users ask follow-up questions
+- **Context-sensitive warnings** triggered by the files you're editing (e.g., database help when touching `models.py`)
+- **Multi-audience output** that adapts the same content for different consumers
+- **Quality assurance** through automated template validation and cross-link checking
+- **Usage insights** to understand which help topics are most valuable
+
+The system excels at projects with complex workflows where users need different levels of detail depending on their experience and current task.
+
+## When NOT to use Help System
+
+Avoid Help System if:
+
+- **Your documentation is mostly static** — traditional docs tools like Sphinx or GitBook are simpler
+- **You have a small codebase** — the overhead of template generation and validation isn't worth it for <20 features
+- **Your team prefers inline docs** — if everyone reads code comments, don't force a separate help system
+- **You need real-time collaboration** — Help System templates are file-based, not collaborative editors
+
+## Alternative approaches
+
+| Alternative | Best for | Tradeoff |
+|-------------|----------|----------|
+| **Inline comments** | Small teams, simple APIs | No progressive depth or audience adaptation |
+| **README files** | Quick starts, project overviews | No context awareness or automated testing |
+| **Wiki systems** | Collaborative editing, FAQs | No template validation or staleness detection |
+| **API documentation tools** | Code reference, OpenAPI specs | No workflow guidance or precursor warnings |
 
 ## Use Help System when...
 
-Choose the help system for:
-- **Active codebases** where documentation must stay synchronized with frequent code changes
-- **Developer tooling** that needs contextual help during workflows
-- **Progressive onboarding** where users need different detail levels over time
-- **Feedback-driven improvement** of documentation quality
-
-## Use static generators when...
-
-Choose traditional documentation tools for:
-- **Public-facing documentation** that requires custom styling and SEO
-- **Stable APIs** where content changes infrequently
-- **Large teams** with dedicated technical writers
-- **Integration requirements** with existing documentation infrastructure
-
-## Migration path
-
-If you're currently using static generators, you can adopt the help system incrementally:
-1. Run `scan_project()` to identify features for template generation
-2. Use `generate_feature_templates()` for high-change areas first
-3. Keep existing documentation for stable, public-facing content
-4. Monitor `get_template_confidence()` scores to identify successful templates
+You have a complex codebase where users need different levels of help depending on their experience, and you want that help to be context-aware, automatically validated, and adaptable to different audiences. It's designed for projects where good documentation is a competitive advantage, not an afterthought.

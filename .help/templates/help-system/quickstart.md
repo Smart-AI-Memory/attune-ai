@@ -2,59 +2,76 @@
 type: quickstart
 feature: help-system
 depth: quickstart
-generated_at: 2026-04-14T15:03:40.179831+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:18:51.281969+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
-# Quickstart: help system
+# Quickstart: Help System
 
-Scan your project and generate contextual help templates automatically.
+Scan your project and generate contextual help templates that respond to user queries with progressive depth.
 
 ```python
-from attune.help.bootstrap import scan_project
+from attune_help.bootstrap import scan_project, proposals_to_manifest
+from attune_help.generation import generate_feature_templates
 
 # Scan your project for features
-features = scan_project('.')
-print(f"Found {len(features)} features:")
-for feature in features[:3]:  # Show first 3
-    print(f"  {feature.name}: {feature.description}")
+proposals = scan_project(".")
+manifest = proposals_to_manifest(proposals)
+
+# Generate help templates for the first discovered feature
+feature = list(manifest.features.values())[0]
+result = generate_feature_templates(feature, ".help", ".")
+print(f"Generated {len(result.templates)} templates for {feature.name}")
 ```
 
 Expected output:
 ```
-Found 12 features:
-  authentication: User login and session management
-  database: SQLite connection and query handling
-  api-endpoints: REST API route definitions
+Generated 3 templates for authentication-system
 ```
 
-## Generate your first template
+## Step 1: Scan your project
 
-1. **Create a feature manifest** from your scan results:
-   ```python
-   from attune.help.bootstrap import proposals_to_manifest, save_manifest
+Run `scan_project()` on your project root to discover features automatically:
 
-   manifest = proposals_to_manifest(features)
-   save_manifest(manifest, 'features.yaml')
-   ```
+```python
+proposals = scan_project(".")
+print(f"Found {len(proposals)} potential features")
+```
 
-2. **Generate templates** for a specific feature:
-   ```python
-   from attune.help.generation import generate_feature_templates
+This examines your source files and identifies patterns like authentication, API endpoints, and data processing workflows.
 
-   # Pick any feature from your scan
-   auth_feature = next(f for f in features if 'auth' in f.name.lower())
-   result = generate_feature_templates(auth_feature, '.help', '.')
-   print(f"Generated {len(result.templates)} templates")
-   ```
+## Step 2: Generate templates
 
-3. **Search your generated templates** by topic:
-   ```python
-   from attune.help.feedback import search_by_tag
+Convert proposals to a manifest and create help templates:
 
-   auth_templates = search_by_tag('authentication')
-   print(f"Found {len(auth_templates)} authentication templates")
-   ```
+```python
+manifest = proposals_to_manifest(proposals)
+for feature in manifest.features.values():
+    result = generate_feature_templates(feature, ".help", ".")
+    print(f"Created templates: {[t.path.name for t in result.templates]}")
+```
 
-**Next:** Run `generate_feature_templates()` on each feature in your manifest to build a complete help system.
+You'll get concept, task, and reference templates for each feature.
+
+## Step 3: Test the help lookup
+
+Query the generated templates to see progressive depth in action:
+
+```python
+from attune_help.engine import HelpEngine
+
+engine = HelpEngine()
+response = engine.lookup("authentication")
+print(response[:200])  # Shows concept-level help first
+```
+
+Each subsequent query on the same topic returns deeper, more detailed guidance.
+
+## What you just did
+
+You built a help system that automatically discovers your project's features and generates contextual documentation. The templates adapt their depth based on user interaction patterns and provide cross-linked guidance across concept, task, and reference materials.
+
+## Next steps
+
+Run `engine.lookup("help-system")` to explore the concept documentation and understand how progressive depth works.

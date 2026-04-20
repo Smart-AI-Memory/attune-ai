@@ -2,169 +2,193 @@
 type: task
 feature: telemetry
 depth: task
-generated_at: 2026-04-14T15:19:31.160484+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:22:58.325000+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
 # Work with telemetry
 
-Use telemetry when you need to track agent performance, coordinate multi-agent workflows, or implement human approval gates in your AI system.
+Use telemetry when you need to track system usage, analyze agent performance, or implement workflow control gates in Attune AI.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under `src/attune/telemetry/`
-- Redis connection for coordination signals and heartbeat tracking
+- Familiarity with Redis (used for coordination signals and heartbeats)
+- Understanding of the Attune AI agent architecture
 
-## Set up agent coordination
+## Configure telemetry components
 
-1. **Initialize coordination signals**
-   Create a `CoordinationSignals` instance to enable agent-to-agent communication:
+1. **Choose your telemetry component.**
+   The telemetry system has four main areas:
+   - **Agent coordination** — Use `CoordinationSignals` for inter-agent communication with TTL-based expiration
+   - **Heartbeat monitoring** — Use `HeartbeatCoordinator` to track agent health and progress
+   - **Approval workflows** — Use `ApprovalGate` for human approval gates in automated workflows
+   - **Event streaming** — Use `EventStreamer` for real-time event publishing via Redis Streams
+
+2. **Import the required classes.**
+   Add the imports you need to your module:
    ```python
-   from attune.telemetry import CoordinationSignals
-
-   signals = CoordinationSignals(agent_id="my-agent")
+   from attune.telemetry import CoordinationSignals, HeartbeatCoordinator
+   from attune.telemetry import ApprovalGate, EventStreamer
    ```
 
-2. **Send signals between agents**
-   Use `signal()` for targeted communication or `broadcast()` for all agents:
+3. **Initialize with Redis memory.**
+   All telemetry classes require a Redis connection:
+   ```python
+   # For coordination signals
+   signals = CoordinationSignals(memory=your_redis_memory, agent_id="your_agent")
+
+   # For heartbeat tracking
+   heartbeat = HeartbeatCoordinator(memory=your_redis_memory)
+
+   # For approval gates
+   approval = ApprovalGate(memory=your_redis_memory, agent_id="your_agent")
+   ```
+
+## Implement agent coordination
+
+1. **Send coordination signals.**
+   Use signals for agent-to-agent communication:
    ```python
    # Send to specific agent
    signal_id = signals.signal(
        signal_type="task_complete",
-       target_agent="worker-agent",
-       payload={"result": "success"}
+       target_agent="processor_agent",
+       payload={"result": "success", "data": results}
    )
 
    # Broadcast to all agents
-   signals.broadcast(signal_type="shutdown", payload={"reason": "maintenance"})
+   signals.broadcast(
+       signal_type="shutdown",
+       payload={"reason": "maintenance"}
+   )
    ```
 
-3. **Wait for coordination signals**
-   Use `wait_for_signal()` to block until receiving expected signals:
+2. **Wait for responses.**
+   Block until you receive expected signals:
    ```python
    response = signals.wait_for_signal(
-       signal_type="approval_response",
-       timeout=60.0
+       signal_type="ack",
+       source_agent="processor_agent",
+       timeout=30.0
    )
+
+   if response:
+       print(f"Got acknowledgment: {response.payload}")
    ```
 
-## Track agent health with heartbeats
+## Set up heartbeat monitoring
 
-1. **Start heartbeat monitoring**
-   Initialize and start sending heartbeats for your agent:
+1. **Start agent heartbeats.**
+   Register your agent with the heartbeat system:
    ```python
-   from attune.telemetry import HeartbeatCoordinator
-
-   heartbeat = HeartbeatCoordinator()
    heartbeat.start_heartbeat(
-       agent_id="worker-1",
-       metadata={"version": "1.2.3"},
-       display_name="Data Processor"
+       agent_id="my_agent",
+       metadata={"version": "1.0", "role": "processor"},
+       display_name="File Processor Agent"
    )
    ```
 
-2. **Update agent status regularly**
-   Send periodic updates about your agent's current state:
+2. **Update progress regularly.**
+   Call `beat()` periodically to show the agent is alive:
    ```python
-   heartbeat.beat(
-       status="processing",
-       progress=0.75,
-       current_task="analyzing dataset"
-   )
+   for i, item in enumerate(work_items):
+       heartbeat.beat(
+           status="processing",
+           progress=(i / len(work_items)) * 100,
+           current_task=f"Processing {item}"
+       )
+       process_item(item)
+
+   heartbeat.stop_heartbeat(final_status="completed")
    ```
 
-3. **Monitor other agents**
-   Check which agents are active and their current status:
+3. **Monitor other agents.**
+   Check the health of the agent ecosystem:
    ```python
    active_agents = heartbeat.get_active_agents()
    stale_agents = heartbeat.get_stale_agents(threshold_seconds=120)
+
+   for agent in stale_agents:
+       print(f"Agent {agent.agent_id} may be stuck: {agent.current_task}")
    ```
 
-## Implement approval gates
+## Add approval gates
 
-1. **Request human approval**
-   Pause workflows to wait for human decisions:
+1. **Request human approval.**
+   Pause workflow execution for human decisions:
    ```python
-   from attune.telemetry import ApprovalGate
-
-   gate = ApprovalGate(agent_id="automation-agent")
-   response = gate.request_approval(
-       approval_type="high_cost_operation",
-       context={"estimated_cost": 500, "operation": "bulk_analysis"},
-       timeout=300
+   response = approval.request_approval(
+       approval_type="delete_files",
+       context={
+           "files": file_list,
+           "reason": "Cleanup old cache files",
+           "impact": "Low - regenerable data"
+       },
+       timeout=300.0  # 5 minutes
    )
 
    if response.approved:
-       # Continue with operation
-       pass
+       delete_files(file_list)
+   else:
+       print(f"Deletion denied: {response.reason}")
    ```
 
-2. **Respond to approval requests**
-   Provide approval decisions from supervisors or operators:
+2. **Handle approval responses.**
+   Respond to pending approval requests:
    ```python
-   # Get pending requests
-   pending = gate.get_pending_approvals(approval_type="high_cost_operation")
+   pending = approval.get_pending_approvals("delete_files")
 
-   # Approve or reject
-   gate.respond_to_approval(
-       request_id=pending[0].request_id,
-       approved=True,
-       responder="supervisor@company.com",
-       reason="Budget approved for Q4 analysis"
-   )
+   for request in pending:
+       # Review request details
+       print(f"Request: {request.context}")
+
+       # Respond based on your criteria
+       approval.respond_to_approval(
+           request.request_id,
+           approved=True,
+           responder="admin_user",
+           reason="Files confirmed safe to delete"
+       )
    ```
 
-## Stream real-time events
+## Use CLI analysis commands
 
-1. **Publish system events**
-   Send events to Redis streams for real-time monitoring:
-   ```python
-   from attune.telemetry import EventStreamer
-
-   streamer = EventStreamer()
-   event_id = streamer.publish_event(
-       event_type="agent_started",
-       data={"agent_id": "worker-1", "capabilities": ["analysis", "reporting"]}
-   )
-   ```
-
-2. **Consume events in real-time**
-   Listen for specific event types:
-   ```python
-   for event in streamer.consume_events(
-       event_types=["agent_started", "task_completed"],
-       block_ms=1000
-   ):
-       print(f"Received {event.event_type}: {event.data}")
-   ```
-
-## Run telemetry CLI commands
-
-1. **View telemetry data**
-   Use the CLI to inspect system metrics:
+1. **Run telemetry analysis.**
+   The telemetry CLI provides several analysis commands:
    ```bash
+   # Show recent telemetry data
    python -m attune.telemetry show
+
+   # Display cost savings analysis
    python -m attune.telemetry savings
-   python -m attune.telemetry cache-stats
-   ```
 
-2. **Analyze agent performance**
-   Generate performance and status reports:
-   ```bash
+   # Check Sonnet to Opus fallback metrics
+   python -m attune.telemetry sonnet-opus-analysis
+
+   # View agent performance metrics
    python -m attune.telemetry agent-performance
-   python -m attune.telemetry test-status
-   python -m attune.telemetry tier1-status
    ```
 
-## Verify setup
+2. **Check test and automation status.**
+   Monitor system health through status commands:
+   ```bash
+   # Per-file test status
+   python -m attune.telemetry file-test-status
 
-Check that your telemetry integration works correctly:
+   # Comprehensive Tier 1 automation status
+   python -m attune.telemetry tier1-status
 
-1. **Confirm signal delivery**: Send a test signal and verify it appears in `get_pending_signals()`
-2. **Validate heartbeat tracking**: Start a heartbeat and confirm the agent appears in `get_active_agents()`
-3. **Test approval flow**: Create an approval request and verify it appears in `get_pending_approvals()`
-4. **Check event streaming**: Publish an event and confirm it's received by a consumer
+   # Task routing analysis
+   python -m attune.telemetry task-routing-report
+   ```
 
-Your telemetry system is working when agents can coordinate through signals, heartbeats show active agent status, and approval gates properly pause workflows for human decisions.
+## Verification
+
+Your telemetry integration works correctly when:
+- Coordination signals are received by target agents within their TTL period
+- Agent heartbeats appear in the active agents list with current status
+- Approval requests pause workflow execution until human response
+- Event streams contain your published events with correct timestamps
+- CLI commands display current telemetry data without errors

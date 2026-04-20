@@ -2,59 +2,77 @@
 type: task
 feature: help-system
 depth: task
-generated_at: 2026-04-14T15:01:58.635957+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:16:47.605919+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
 # Work with help system
 
-Use the help system when you need to generate documentation templates, manage project features, or track template effectiveness through feedback scoring.
+Use the help system when you need to modify template discovery, generate feature documentation, or adjust feedback scoring for user queries.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under `src/attune/help/**`
+- Familiarity with the files under `src/attune/help/` and `packages/attune-help/src/attune_help/`
 
-## Steps
+## Identify the component to modify
 
-1. **Identify the component to modify.**
-   The help system has distinct modules:
-   - Template generation in `bootstrap.py`
-   - Feedback tracking in `feedback.py`
-   - Feature manifest management across multiple files
+The help system has distinct responsibilities spread across modules:
 
-   Review the module's docstrings and function signatures to confirm it handles your use case.
+- **Project scanning**: `bootstrap.py` discovers features and generates manifests
+- **Feedback tracking**: `feedback.py` records user ratings and calculates confidence scores
+- **Template population**: Template engine populates content with project-specific data
+- **Template generation**: Creates markdown files from feature definitions
 
-2. **Examine existing implementations.**
-   Look at how similar functions handle parameters, error conditions, and return values. For example:
-   - `scan_project()` returns `ProposedFeature` objects with confidence scores
-   - `record_template_feedback()` updates JSON files and returns confidence scores
-   - `generate_feature_templates()` creates templates at different depth levels
+Review the module docstrings and function signatures to locate the exact component you need to change.
 
-3. **Implement your changes.**
-   Follow the established patterns:
-   - Use dataclasses for structured data (`ProposedFeature`, `GenerationResult`, etc.)
-   - Handle file paths as `Path` objects or strings
-   - Return meaningful error messages through exceptions
-   - Include confidence scoring where applicable
+## Scan project features
 
-4. **Test your modifications.**
-   Run tests to verify functionality:
-   ```bash
-   pytest -k "help-system"
-   ```
+To modify how features are discovered:
 
-## Key files
+1. Open `src/attune/help/bootstrap.py`
+2. Examine `scan_project()` to understand current detection logic
+3. Modify the scanning rules in `_SKIP_DIRS`, `_ENTRY_POINT_NAMES`, or `_CONFIG_PATTERNS` constants
+4. Update `ProposedFeature` creation logic if you need different metadata
 
-- `src/attune/help/bootstrap.py` — Project scanning and feature discovery
-- `src/attune/help/feedback.py` — Template feedback and usage tracking
-- `src/attune/help/manifest.py` — Feature manifest loading and saving
+## Adjust feedback and confidence
 
-## Verify success
+To modify user feedback handling:
+
+1. Open `src/attune/help/feedback.py`
+2. Use `record_template_feedback()` to change how ratings are stored
+3. Modify `get_template_confidence()` to adjust scoring algorithms
+4. Update `get_usage_weights()` to change template ranking based on telemetry
+
+## Generate or regenerate templates
+
+To create new templates or update existing ones:
+
+1. Use `generate_feature_templates()` with a `Feature` object and target directory
+2. Set `overwrite=True` to replace existing files
+3. Specify `depths` parameter to control which template types are generated (concept, task, reference)
+4. Check the returned `GenerationResult` for success status
+
+## Test your changes
+
+Run the help system test suite to verify your modifications:
+
+```bash
+pytest tests/help/ -v
+```
+
+Focus on tests related to your specific component:
+- Template loading and parsing tests
+- Progressive depth advancement tests
+- Cross-link resolution tests
+- Renderer output validation tests
+
+## Verify the integration works
 
 Your changes work correctly when:
+- `scan_project()` discovers all intended features without errors
 - Template generation produces valid markdown files with proper frontmatter
-- Feedback recording updates confidence scores accurately
-- Project scanning identifies features with appropriate confidence levels
-- All existing tests continue to pass
+- Feedback recording updates confidence scores as expected
+- Cross-links resolve to existing templates
+- All renderers produce well-formed output

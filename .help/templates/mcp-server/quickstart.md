@@ -2,71 +2,61 @@
 type: quickstart
 feature: mcp-server
 depth: quickstart
-generated_at: 2026-04-19T18:49:35.787752+00:00
-source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
+generated_at: 2026-04-20T01:21:55.177295+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Quickstart: MCP Server
+# Quickstart: Run the MCP Server
 
-Start an Attune MCP server that provides AI workflows, memory management, and contextual help through the Model Context Protocol.
+Start Attune's Model Context Protocol server and make your first tool call.
 
 ```python
-from attune.mcp import create_server
+from attune.mcp.server import create_server
 
-# Create and start the server
+# Create and start the MCP server
 server = create_server()
-print("MCP server ready with tools:", len(server.get_tool_list()))
+
+# Get available tools
+tools = server.get_tool_list()
+print(f"Available tools: {[tool['name'] for tool in tools]}")
+
+# Make your first tool call
+result = server.call_tool('auth_status', {})
+print(f"Auth status: {result}")
 ```
 
 Expected output:
 ```
-MCP server ready with tools: 15
+Available tools: ['auth_status', 'help_lookup', 'memory_store', ...]
+Auth status: {'status': 'configured', 'tier': 'free', 'mode': 'hybrid'}
 ```
 
-## Step 1: Create the server instance
+## Next steps
 
-The `create_server()` function returns a configured `EmpathyMCPServer` with all tool handlers loaded:
+1. **Try a help lookup**
+   ```python
+   help_result = server.call_tool('help_lookup', {'topic': 'security-audit'})
+   print(help_result)
+   ```
 
-```python
-from attune.mcp import create_server
+2. **Run a prompt**
+   ```python
+   prompts = server.get_prompt_list()
+   messages = server.get_prompt_messages('security-scan', {'path': '.'})
+   ```
 
-server = create_server()
-```
-
-## Step 2: Verify available capabilities
-
-Check what the server provides:
-
-```python
-# List all available tools
-tools = server.get_tool_list()
-print(f"Available tools: {len(tools)}")
-
-# List available prompts
-prompts = server.get_prompt_list()
-print(f"Available prompts: {len(prompts)}")
-```
-
-You should see 15+ tools including `help_lookup`, `memory_store`, `workflow_run`, and authentication utilities.
-
-## Step 3: Test a basic tool call
-
-Try the help lookup tool to verify everything works:
-
-```python
-result = server.call_tool("help_lookup", {"topic": "security"})
-print(result["content"])
-```
-
-This returns contextual help about security workflows and patterns.
+3. **Check available resources**
+   ```python
+   resources = server.get_resource_list()
+   for resource in resources:
+       print(f"{resource['name']}: {resource['description']}")
+   ```
 
 ## What you just did
 
-- Created an MCP server instance with all Attune capabilities
-- Verified the server loaded workflow, memory, and help tools
-- Tested basic functionality with a tool call
+You created an MCP server instance that provides 20+ tools for workflow execution, help lookup, memory management, and authentication. The server handles rate limiting, user context, and progressive help automatically.
 
 ## Next
 
-Run the server as a standalone process with `python -m attune.mcp.server` to connect it to MCP-compatible clients like Claude Desktop.
+Say **"show me MCP server tools"** to see the complete tool reference with all parameters and return types.

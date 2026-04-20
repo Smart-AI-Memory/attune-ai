@@ -2,43 +2,43 @@
 type: faq
 feature: mcp-server
 depth: faq
-generated_at: 2026-04-19T18:49:24.767780+00:00
-source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
+generated_at: 2026-04-20T01:21:43.968634+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# MCP Server FAQ
+# MCP server FAQ
 
 ## What is the MCP server?
 
-The MCP server implements the Model Context Protocol to connect Claude Code with Attune AI workflows, memory, and help tools.
+The Model Context Protocol server that provides tools, prompts, and resources to Claude Code and other MCP clients. It handles authentication, telemetry, memory operations, help lookup, and workflow execution.
 
-## When should I use it?
+## When do I need to use it?
 
-You need the MCP server when using Claude Code with Attune AI features like workflow execution, contextual help, memory storage, or authentication management.
-
-## How do I start the MCP server?
-
-Call `create_server()` from `src/attune/mcp/server.py` to get an `EmpathyMCPServer` instance, then run it according to your MCP client's requirements.
+You use the MCP server whenever you work with Attune AI features through Claude Code. The server runs automatically when you have a `.mcp.json` file in your project root - you don't need to start it manually.
 
 ## What tools does it provide?
 
-The server provides workflow tools, utility tools (auth, telemetry, session management), help tools (progressive documentation), and memory tools (store/retrieve/search/forget).
+The server provides several categories of tools:
 
-## How do I configure it for Claude Code?
+- **Help tools**: `help_lookup`, `help_maintain`, `help_init` for contextual documentation
+- **Memory tools**: `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` for persistent data
+- **Utility tools**: `auth_status`, `telemetry_stats`, `attune_get_level` for configuration and monitoring
+- **Workflow tools**: Access to all available Attune workflows
 
-Create a `.mcp.json` file in your project root pointing to `uv run python -m attune.mcp.server` to ensure proper package resolution.
+## How do I start the server manually?
 
-## Why isn't Claude Code connecting to my MCP server?
+Run `uv run python -m attune.mcp.server` from your project directory. This is mainly useful for testing - Claude Code normally starts it automatically.
 
-Check that `.mcp.json` exists, uses `uv run` (not bare `python`), and that the attune package is installed. Restart Claude Code after fixing configuration issues.
+## What if the server isn't responding?
 
-## How do I debug MCP server issues?
+Check that your `.mcp.json` file exists and uses `uv run` instead of bare `python`. See the troubleshooting guide for MCP server issues for the complete diagnosis flow.
 
-Run `pytest -k "mcp" -v` to test the components, then manually start the server with `uv run python -m attune.mcp.server` to see startup errors.
+## Where is the server code?
 
-## Where are the source files?
-
-- `src/attune/mcp/**`
+The main implementation is in `src/attune/mcp/server.py`. Tool definitions are spread across several modules:
+- Memory tools: `src/attune/mcp/memory.py`
+- Prompt handling: `src/attune/mcp/prompts.py`
+- Rate limiting: `src/attune/mcp/server.py`
 
 **Tags:** `mcp`, `tools`, `server`

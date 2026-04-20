@@ -2,8 +2,8 @@
 type: troubleshooting
 feature: telemetry
 depth: troubleshooting
-generated_at: 2026-04-14T15:21:05.112801+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:24:23.799440+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
@@ -11,88 +11,101 @@ status: generated
 
 ## Before you start
 
-The telemetry feature provides agent coordination, heartbeat tracking, approval workflows, and real-time event streaming for Attune AI. Issues typically manifest as missed signals, stale heartbeats, blocked approvals, or streaming failures.
+The telemetry system tracks usage, coordinates agents, manages heartbeats, and provides approval gates. Issues typically manifest as missing data, agent coordination failures, or blocked approval workflows.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Agents not coordinating or missing signals | Redis connection and TTL expiration in `CoordinationSignals.check_signal()` |
-| Heartbeat shows agents as offline when they're running | TTL key expiration in Redis and `HeartbeatCoordinator.beat()` call frequency |
-| Approval requests hang indefinitely | Request timeout settings and `ApprovalGate.get_pending_approvals()` |
-| Events missing from streams | Redis Stream availability and `EventStreamer.publish_event()` return values |
-| CLI commands return no data | Redis connectivity and data retention policies |
+| Telemetry commands fail with exceptions | Run with `--verbose` and check the Python traceback for the exact failure point |
+| Agent coordination signals not received | Verify Redis connection and check if TTL has expired using `CoordinationSignals.get_pending_signals()` |
+| Heartbeat tracking shows stale agents | Check Redis TTL keys and network connectivity between agents and Redis |
+| Approval requests timeout | Verify the `ApprovalGate` timeout settings and check for pending requests with `get_pending_approvals()` |
+| Event streaming stops working | Check Redis Stream health with `EventStreamer.get_stream_info()` |
+| Cost savings calculations are wrong | Verify prompt caching is enabled and check token counting in telemetry logs |
 
 ## Step-by-step diagnosis
 
-1. **Verify Redis connectivity.**
-   Most telemetry failures stem from Redis issues. Test the connection:
-   ```bash
-   redis-cli ping
-   ```
-   If Redis is unreachable, check your connection configuration and ensure the Redis server is running.
-
-2. **Check TTL behavior for coordination signals.**
-   Coordination signals expire after their TTL period. Verify signal timing:
-   ```python
-   signals = CoordinationSignals()
-   pending = signals.get_pending_signals()
-   print(f"Found {len(pending)} unexpired signals")
-   ```
-
-3. **Inspect heartbeat TTL keys.**
-   Agent heartbeats use Redis TTL keys. Check if heartbeats are being sent frequently enough:
-   ```python
-   coordinator = HeartbeatCoordinator()
-   active = coordinator.get_active_agents()
-   stale = coordinator.get_stale_agents(threshold_seconds=60)
-   ```
-
-4. **Test approval gate timeouts.**
-   Approval requests have configurable timeouts. Check for expired requests:
-   ```python
-   gate = ApprovalGate()
-   expired_count = gate.clear_expired_requests()
-   pending = gate.get_pending_approvals()
-   ```
-
-5. **Examine event stream health.**
-   Event streaming relies on Redis Streams. Check stream info:
-   ```python
-   streamer = EventStreamer()
-   info = streamer.get_stream_info("your_event_type")
-   ```
-
-6. **Run telemetry CLI diagnostics.**
-   Use built-in commands to check system status:
+1. **Test the telemetry CLI directly.**
+   Run `python -m attune.telemetry --help` to confirm the module loads. Then try specific commands:
    ```bash
    python -m attune.telemetry telemetry-show
-   python -m attune.telemetry agent-performance
+   python -m attune.telemetry test-status
+   ```
+
+2. **Check Redis connectivity.**
+   Most telemetry features depend on Redis for coordination, heartbeats, and events. Test the connection:
+   ```python
+   from attune.memory import get_redis_client
+   redis = get_redis_client()
+   redis.ping()  # Should return True
+   ```
+
+3. **Examine coordination signals.**
+   If agent coordination fails, check for pending signals and TTL expiration:
+   ```python
+   from attune.telemetry import CoordinationSignals
+   signals = CoordinationSignals()
+   pending = signals.get_pending_signals()
+   print(f"Pending signals: {len(pending)}")
+   ```
+
+4. **Verify heartbeat timing.**
+   For stale agent issues, check the heartbeat coordinator:
+   ```python
+   from attune.telemetry import HeartbeatCoordinator
+   hb = HeartbeatCoordinator()
+   stale = hb.get_stale_agents(threshold_seconds=60)
+   print(f"Stale agents: {[a.agent_id for a in stale]}")
+   ```
+
+5. **Review event streaming.**
+   If events aren't flowing, check stream status:
+   ```python
+   from attune.telemetry import EventStreamer
+   streamer = EventStreamer()
+   info = streamer.get_stream_info("coordination")
+   print(f"Stream length: {info.get('length', 'unknown')}")
    ```
 
 ## Common fixes
 
-- **Increase heartbeat frequency.** If agents appear offline, reduce the interval between `HeartbeatCoordinator.beat()` calls to less than the TTL threshold (default 60 seconds).
+- **Redis connection timeout.** Increase the Redis timeout in your configuration or check network connectivity between the client and Redis server.
 
-- **Extend signal TTL.** For slow operations, increase `ttl_seconds` when calling `CoordinationSignals.signal()` or `broadcast()`.
-
-- **Clear expired data.** Remove stale signals and approval requests:
+- **Expired TTL signals.** If coordination signals disappear too quickly, increase `ttl_seconds` when calling `CoordinationSignals.signal()`:
   ```python
-  signals.clear_signals()  # Clear all signals
-  gate.clear_expired_requests()  # Remove timed-out approvals
+  signals.signal("task_complete", ttl_seconds=300)  # 5 minutes instead of default 60
   ```
 
-- **Restart Redis connection.** Connection issues may require reinitializing the Redis client. This often requires restarting your application.
-
-- **Trim large streams.** Event streams can grow large. Trim them periodically:
+- **Stale agent cleanup.** Remove dead heartbeat entries:
   ```python
-  streamer.trim_stream("event_type", max_length=1000)
+  hb = HeartbeatCoordinator()
+  hb.clear_expired_requests()
   ```
 
-- **Check Redis memory limits.** Redis may evict data when memory is full. Verify your Redis memory configuration and eviction policies.
+- **Approval timeout.** Increase timeout for long-running approval workflows:
+  ```python
+  gate = ApprovalGate()
+  response = gate.request_approval("deploy", context, timeout=300.0)  # 5 minutes
+  ```
+
+- **Stream memory usage.** Trim old events to prevent Redis memory issues:
+  ```python
+  streamer = EventStreamer()
+  streamer.trim_stream("coordination", max_length=1000)
+  ```
+
+- **Missing telemetry data.** Enable streaming when initializing components:
+  ```python
+  signals = CoordinationSignals(enable_streaming=True)
+  hb = HeartbeatCoordinator(enable_streaming=True)
+  ```
 
 ## Source files
 
-- `src/attune/telemetry/**`
-
-**Tags:** `telemetry`, `metrics`
+- `src/attune/telemetry/__main__.py` — CLI entry point
+- `src/attune/telemetry/coordination.py` — Agent coordination signals
+- `src/attune/telemetry/heartbeat.py` — Agent heartbeat tracking
+- `src/attune/telemetry/approval.py` — Human approval gates
+- `src/attune/telemetry/streaming.py` — Event streaming
+- `src/attune/telemetry/cli_*.py` — CLI command implementations

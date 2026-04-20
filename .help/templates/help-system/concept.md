@@ -2,33 +2,50 @@
 type: concept
 feature: help-system
 depth: concept
-generated_at: 2026-04-14T15:01:48.673774+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:16:32.470715+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
 # Help System
 
-## How it works
+The help system is a progressive-depth engine that generates, maintains, and serves contextual documentation templates based on your project's source code.
 
-The help system automatically generates documentation templates by scanning your project, tracking feature changes, and adapting output for different audiences and contexts.
+## Core architecture
 
-The core workflow follows three phases:
+The help system operates through three layers:
 
-- **Discovery** — `scan_project()` identifies features by analyzing entry points, configuration files, and code patterns, producing `ProposedFeature` objects with confidence scores
-- **Generation** — `generate_feature_templates()` creates concept, task, and reference templates for each feature, tracking source file hashes to detect staleness
-- **Maintenance** — `run_maintenance()` regenerates templates when source files change, skipping manually edited files and collecting feedback scores
+- **Discovery layer** scans your project to identify features and map them to source files using `ProposedFeature` and `FeatureManifest`
+- **Generation layer** creates structured markdown templates at three depth levels (concept, task, reference) with automatic staleness detection
+- **Runtime layer** serves progressive-depth help through audience-aware rendering and session state tracking
 
-The system stores templates with metadata including confidence scores from user feedback (`record_template_feedback()`), usage weights from telemetry (`get_usage_weights()`), and contextual relevance for workflows and file editing scenarios.
+## Template lifecycle
 
-## What connects to it
+Templates move through a complete lifecycle from discovery to delivery:
 
-The help system integrates with your development workflow through several touch points:
+1. **Scanning** — The system examines source files and proposes features based on entry points, configuration patterns, and code structure
+2. **Generation** — Each feature becomes three template files (concept/task/reference) using structured markdown with YAML frontmatter
+3. **Maintenance** — Templates stay current through automatic staleness checking based on source file hashes
+4. **Population** — Templates fill with runtime context (file paths, error messages, workflow names) for specific user situations
+5. **Adaptation** — Output transforms for different audiences (plain text, CLI, Claude Code, marketplace)
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `ProposedFeature` | Feature candidates with confidence scores from project scanning | `src/attune/help/bootstrap.py` |
-| `GeneratedTemplate` | Template files linked to source hashes for staleness detection | `src/attune/help/generator.py` |
-| `GenerationResult` | Batch results from template generation with matched source files | `src/attune/help/generator.py` |
-| `MaintenanceResult` | Summary of regenerated, skipped, and failed templates during updates | `src/attune/help/maintenance.py` |
-| `Feature` | Canonical feature definitions mapping names to source files and tags | `src/attune/help/manifest.py` |
+## Progressive depth experience
+
+Users start with concepts and drill deeper without leaving their conversation:
+
+| Depth | Template type | User gets |
+|-------|---------------|-----------|
+| 0 | Concept | What is this feature and when would I use it? |
+| 1 | Task | Step-by-step instructions to use it right now |
+| 2 | Reference | Complete details, options, and edge cases |
+
+Session state tracks your current topic and depth level. Asking about the same topic advances to the next level. Asking about a different topic resets to concept level.
+
+## Quality assurance
+
+The system maintains help quality through multiple mechanisms:
+
+- **Feedback scoring** records user ratings and calculates confidence scores per template
+- **Usage telemetry** weights template relevance based on actual access patterns
+- **Cross-link integrity** ensures all template references resolve to real files
+- **Render validation** verifies each audience adapter produces well-formed output

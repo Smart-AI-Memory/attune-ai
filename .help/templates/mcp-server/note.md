@@ -1,41 +1,44 @@
 ---
 type: note
-name: mcp-server
-tags: [mcp, tools, server]
-source: developer-guidance
+feature: mcp-server
+depth: note
+generated_at: 2026-04-20T01:22:10.978597+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
+status: generated
 ---
 
-# Note: MCP Server
+# Note: MCP server
 
 ## Context
 
-The Attune AI MCP (Model Context Protocol) server bridges Claude and other AI clients to Attune's workflow system. It exposes tools for authentication, memory management, help system access, and workflow execution through a standardized protocol.
+Attune AI's Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implements the MCP specification to expose Attune's capabilities as callable tools within Claude environments.
 
 ## Architecture
 
-The MCP server uses a mixin-based design where `EmpathyMCPServer` composes functionality from specialized handler classes:
+The MCP server uses a mixin-based design around the core `EmpathyMCPServer` class:
 
-- **MemoryHandlersMixin** provides memory storage, retrieval, search, and deletion tools
-- **WorkflowHandlersMixin** provides workflow execution tools
-- **RateLimiter** implements sliding-window rate limiting for tool calls
+- **EmpathyMCPServer** — Main server implementation handling MCP protocol, tool routing, and rate limiting
+- **MemoryHandlersMixin** — Provides memory store/retrieve/search/forget tools for cross-session data persistence
+- **WorkflowHandlersMixin** — Exposes workflow execution tools for running Attune AI automation
 
-The server exposes three types of MCP resources:
+The server exposes five tool categories:
+1. **Workflow tools** — Execute Attune workflows directly from Claude
+2. **Utility tools** — Authentication status, telemetry stats, session context management
+3. **Help tools** — Progressive documentation lookup, template maintenance, project bootstrapping
+4. **Memory tools** — Persistent storage for patterns, preferences, and cross-agent coordination
+5. **Rate limiting** — Sliding-window limiter preventing API abuse
 
-1. **Tools** — interactive functions like `auth_status`, `help_lookup`, and `memory_store`
-2. **Prompts** — templated workflows like `security-scan` and `test-gen`
-3. **Resources** — read-only data like workflow lists and telemetry
+## Integration patterns
 
-## Tool Categories
+Claude Code discovers the server through `.mcp.json` configuration files in project roots. The server must run as `uv run python -m attune.mcp.server` to ensure correct package resolution and avoid Python environment conflicts that prevent tool availability.
 
-The server organizes its 15+ tools into logical groups:
+Rate limiting applies per-tool with a default 60 calls per 60-second window. Voice interfaces skip memory and session tools (defined in `_VOICE_SKIP_TOOLS`) to avoid interrupting conversational flow.
 
-- **Workflow tools** — execute Attune workflows and manage sessions
-- **Utility tools** — authentication, telemetry, and session context
-- **Help tools** — progressive documentation, template maintenance, and project help initialization
-- **Memory tools** — cross-session data persistence and pattern matching
+## Source files
 
-Each tool includes JSON schema validation and descriptive metadata for client discovery.
-
-## Integration Point
-
-Claude Desktop and Claude Code connect to the server via `.mcp.json` configuration files. The server runs as a subprocess, communicating over stdio using the MCP protocol for tool discovery, invocation, and result handling.
+- `src/attune/mcp/server.py` — Core server and entry point
+- `src/attune/mcp/memory_handlers.py` — Memory tool implementations
+- `src/attune/mcp/workflow_handlers.py` — Workflow tool implementations
+- `src/attune/mcp/prompts.py` — MCP prompt definitions
+- `src/attune/mcp/tool_schemas.py` — Tool schema definitions
+- `src/attune/mcp/rate_limiter.py` — Rate limiting implementation

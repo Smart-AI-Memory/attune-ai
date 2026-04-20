@@ -2,45 +2,39 @@
 type: warning
 feature: mcp-server
 depth: warning
-generated_at: 2026-04-19T18:48:54.500398+00:00
-source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
+generated_at: 2026-04-20T01:21:12.205897+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
 # MCP Server cautions
 
-## Rate limiting can silently drop tool calls
+## Rate limiting can silently drop calls
 
-The `RateLimiter` class enforces a 60-call/60-second window by default. When the limit is exceeded, `check()` returns `False` but doesn't raise an exception. This means your tool calls will appear to succeed but produce no output.
+The `RateLimiter` class uses a sliding window with a 60-call default limit. When you exceed this limit, `check()` returns `False` but doesn't raise an exception. Tool calls fail silently, which can make debugging difficult.
 
-**Mitigation:** Monitor the return value of `RateLimiter.check()` and handle rate limit failures explicitly. Consider adjusting the limits based on your actual usage patterns.
+**Avoid this:** Check the rate limiter's return value before making tool calls, especially in loops or batch operations. Consider increasing the limit for heavy workflows using `RateLimiter(max_calls=200)`.
 
-## Tool registration happens at server creation time
+## Missing prompts cause runtime failures
 
-The `EmpathyMCPServer` builds its tool registry in `__init__()` by calling `get_workflow_tools()`, `get_utility_tools()`, `get_help_tools()`, and `get_memory_tools()`. Tools added after server creation won't be available to clients.
+The `get_prompt_messages()` function raises `ValueError` for unknown prompt names, but only at runtime. If you reference a prompt that doesn't exist in the prompt registry, you won't discover the problem until the tool is called.
 
-**Mitigation:** Register all tools before calling `create_server()`. If you need dynamic tool registration, restart the server instance rather than trying to modify the existing registry.
+**Avoid this:** Validate prompt names against `get_prompt_list()` during initialization. Test all prompt references in your integration tests.
 
-## Prompt arguments are not validated until execution
+## Tool schema validation is deferred
 
-`get_prompt_messages()` accepts any `arguments` dictionary but only validates required parameters when the prompt is actually retrieved. This means invalid arguments will cause runtime failures during tool execution rather than at setup time.
+The MCP server defines tool schemas but doesn't validate arguments until `call_tool()` executes. Invalid arguments reach your tool handlers, where they may cause unexpected behavior or crashes.
 
-**Mitigation:** Test prompt execution with representative arguments during development. The error message will tell you exactly which required argument is missing.
+**Avoid this:** Add explicit validation at the start of your tool handlers. Use the input schema patterns from `get_utility_tools()` and `get_help_tools()` as templates for required field checking.
 
-## Memory tools fail silently when not installed
+## Memory tools fail without attune-ai package
 
-If the `attune-ai` package isn't installed, memory tools (`memory_store`, `memory_retrieve`, etc.) return an error message instead of raising an exception. This can mask dependency issues in production.
+Memory-related tools (`memory_store`, `memory_retrieve`, etc.) import the `attune-ai` package dynamically. If the package isn't installed, these tools fail at runtime with an import error rather than being disabled gracefully.
 
-**Mitigation:** Check the return value of memory operations for the string "attune-ai memory module not installed" and handle it as a configuration error.
+**Avoid this:** Check for the attune-ai dependency during server initialization. Consider making memory tools optional in your MCP client configuration.
 
-## Session context persists across tool calls
+## Workspace isolation can break file operations
 
-The `context_get` and `context_set` utilities maintain state in the server instance. Context set in one tool call remains available to subsequent calls, which can create unexpected dependencies between operations.
+The `EmpathyMCPServer` accepts a `workspace_root` parameter that scopes file operations. If you pass relative paths to tools that expect absolute paths, operations may target the wrong files or fail silently.
 
-**Mitigation:** Treat session context as shared state. Clear context explicitly when starting new workflows, and avoid using context keys that might conflict across different operations.
-
-## Source files
-
-- `src/attune/mcp/**`
-
-**Tags:** `mcp`, `tools`, `server`
+**Avoid this:** Always resolve relative paths against the workspace root before passing them to file-based tools. Use `os.path.abspath()` to convert relative paths in tool arguments.

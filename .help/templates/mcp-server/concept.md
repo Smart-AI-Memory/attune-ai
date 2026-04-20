@@ -2,46 +2,43 @@
 type: concept
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-19T18:47:37.031498+00:00
-source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
+generated_at: 2026-04-20T01:19:41.402959+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
 # MCP Server
 
-An MCP (Model Context Protocol) server that exposes Attune AI's workflow, memory, and help system capabilities as standardized tools, prompts, and resources.
+## What it is
+
+The MCP Server is Attune AI's implementation of the Model Context Protocol, providing structured access to workflows, memory, help documentation, and authentication through a standardized tool interface.
 
 ## Core architecture
 
-The server is built around `EmpathyMCPServer`, which aggregates specialized mixins to provide different categories of functionality:
+The server uses a mixin-based design where `EmpathyMCPServer` combines specialized handler classes:
 
-- **Memory operations** — Store, retrieve, search, and forget data across sessions through `MemoryHandlersMixin`
-- **Workflow execution** — Access to Attune's workflow engine and utility functions via `WorkflowHandlersMixin`
-- **Help system** — Contextual documentation lookup, template maintenance, and progressive depth support
-- **Rate limiting** — In-process sliding-window rate limiter to prevent tool call abuse
+- **`MemoryHandlersMixin`** — Persistent storage and retrieval across sessions
+- **`WorkflowHandlersMixin`** — Execution of Attune AI workflows
+- **`RateLimiter`** — Sliding-window throttling for tool calls
+
+The server exposes three MCP primitives:
+- **Tools** — 15 callable functions for workflows, memory, help, and utilities
+- **Prompts** — 3 templates for security scanning, test generation, and cost reporting
+- **Resources** — 3 data endpoints for workflow lists, auth config, and telemetry
 
 ## Tool categories
 
-The server exposes four distinct tool groups:
-
 | Category | Tools | Purpose |
 |----------|-------|---------|
-| **Workflow** | Execution and management tools | Run Attune workflows and access workflow metadata |
-| **Utility** | `auth_status`, `telemetry_stats`, `attune_get_level`, `context_set` | Authentication management, telemetry, session context |
-| **Help** | `help_lookup`, `help_maintain`, `help_init`, `help_status` | Progressive documentation with auto-advancing depth |
-| **Memory** | `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` | Cross-session data persistence with security classification |
+| **Workflow** | Execution tools | Run Attune AI workflows with auth and telemetry |
+| **Memory** | `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` | Cross-session data persistence |
+| **Help** | `help_lookup`, `help_maintain`, `help_init`, `help_status`, `help_update` | Progressive documentation system |
+| **Utility** | `auth_status`, `telemetry_stats`, session context tools | Authentication and metrics |
 
-## Prompt and resource access
+## Rate limiting
 
-Beyond tools, the server provides:
+Tool calls are throttled using a 60-calls-per-minute sliding window. The `RateLimiter` tracks calls by key and rejects requests that exceed the threshold, preventing API abuse while allowing normal usage patterns.
 
-- **Prompts** — Pre-configured workflows like `security-scan`, `test-gen`, and `cost-report` with structured arguments
-- **Resources** — Live data endpoints for workflows list, auth configuration, and telemetry metrics
+## Entry points
 
-## Rate limiting design
-
-The `RateLimiter` class implements a sliding-window approach with configurable limits (default: 60 calls per 60 seconds). It tracks calls per key, allowing different rate limits for different users or tool types without shared state between server instances.
-
-## Entry point
-
-The `create_server()` function instantiates a configured `EmpathyMCPServer` with workspace detection and user identification. The `main()` function serves as the MCP server entry point for command-line usage.
+The server can be created programmatically via `create_server()` or launched as a standalone process via `main()`. Both methods initialize the workspace root and user context from environment variables or defaults.

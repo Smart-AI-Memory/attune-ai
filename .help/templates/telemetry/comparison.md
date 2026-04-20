@@ -2,61 +2,59 @@
 type: comparison
 feature: telemetry
 depth: comparison
-generated_at: 2026-04-14T15:22:03.502665+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:25:26.620997+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
-# Telemetry vs manual tracking approaches
+# Telemetry vs other coordination options
 
-## Context
-
-The telemetry feature provides structured agent coordination, heartbeat monitoring, and approval gates. You can build these capabilities yourself, but the telemetry module handles TTL-based coordination, Redis streaming, and workflow approval patterns out of the box.
+Attune offers multiple ways to track agent activity and coordinate workflows. Telemetry provides the most comprehensive monitoring but comes with setup overhead that simpler alternatives avoid.
 
 ## Feature comparison
 
-| Capability | Telemetry module | Manual implementation | Custom Redis usage |
-|------------|------------------|----------------------|-------------------|
-| Agent coordination | `CoordinationSignals` with TTL and broadcast | Custom message passing | Raw Redis pub/sub |
-| Heartbeat tracking | `HeartbeatCoordinator` with automatic TTL | Manual status polling | Redis key expiration |
-| Approval workflows | `ApprovalGate` with timeout handling | Custom request/response | Manual state tracking |
-| Event streaming | `EventStreamer` with Redis Streams | Custom event bus | Direct stream commands |
-| Data persistence | Automatic Redis integration | Your storage choice | Redis configuration required |
-| Error handling | Built-in timeouts and cleanup | Manual error cases | Raw Redis exceptions |
+| Capability | Telemetry | Direct Redis | Manual logging | No tracking |
+|---|---|---|---|---|
+| **Agent coordination** | TTL-based signals, heartbeats | Raw key operations | None | None |
+| **Human approval gates** | Built-in workflow control | Custom implementation required | Not supported | Not supported |
+| **Real-time streaming** | Redis Streams with typed events | Manual pub/sub setup | Log file tailing | None |
+| **Performance analytics** | Cost tracking, model tier analysis | Manual metric collection | Basic timing only | None |
+| **Setup complexity** | Moderate (Redis + structured classes) | Low (Redis only) | Low (file writes) | None |
+| **Memory overhead** | ~2MB per active coordinator | Minimal | Minimal | None |
+| **Debugging visibility** | Full workflow traces | Key inspection only | Text search in logs | None |
 
-## When to use telemetry
+## Use telemetry when you need
 
-Use the telemetry module when you need:
+**Multi-agent coordination at scale.** Telemetry's `CoordinationSignals` and `HeartbeatCoordinator` handle complex workflows where agents must wait for each other, track progress, and recover from failures. The TTL-based cleanup prevents orphaned processes that manual coordination often leaves behind.
 
-- **Multi-agent coordination**: TTL-based signals prevent stale coordination state
-- **Health monitoring**: Automatic agent heartbeat tracking with Redis TTL cleanup
-- **Human-in-the-loop workflows**: Approval gates with configurable timeouts
-- **Real-time event tracking**: Redis Streams for performance and cost analysis
+**Human-in-the-loop workflows.** `ApprovalGate` provides structured approval requests with timeouts and context. Unlike ad-hoc prompting, it maintains audit trails and handles concurrent approval requests without race conditions.
 
-The CLI commands show telemetry's reporting strength:
-- `cmd_sonnet_opus_analysis()` — Model fallback cost analysis
-- `cmd_agent_performance()` — Agent performance metrics
-- `cmd_telemetry_cache_stats()` — Prompt caching statistics
+**Production monitoring with cost awareness.** The CLI analysis commands (`cmd_sonnet_opus_analysis`, `cmd_agent_performance`) give you model usage breakdowns and cost optimization insights that simple logging cannot provide.
 
-## When NOT to use it
+## Use direct Redis when you need
 
-Skip telemetry when:
+**Simple coordination without structure.** If you're just setting flags or sharing small data between processes, Redis operations like `SET` with `EX` (expiration) give you the coordination benefits without telemetry's class overhead.
 
-- **Simple scripts**: Single-agent tasks don't need coordination overhead
-- **Custom storage requirements**: Telemetry assumes Redis; file-based or database storage requires manual implementation
-- **High-frequency events**: Redis Streams have throughput limits; consider direct logging for >1000 events/sec
-- **Offline operation**: All telemetry features require Redis connectivity
+**Custom data models.** Telemetry's dataclasses (`CoordinationSignal`, `AgentHeartbeat`) work well for common patterns but may not fit specialized coordination needs.
 
-## Recommended approach
+## Use manual logging when you need
 
-**Use telemetry when** you have multiple agents that need to coordinate, track health status, or require approval workflows. The Redis TTL patterns handle cleanup automatically.
+**Development debugging only.** File-based logs are sufficient for understanding single-agent behavior during development. The `logging` module is already configured and requires no additional dependencies.
 
-**Use manual tracking when** you have simple single-agent workflows, need custom storage backends, or require offline operation.
+**Append-only audit trails.** If you need permanent records that survive Redis restarts, file logging with rotation gives you durability that in-memory coordination cannot.
 
-**Use direct Redis when** telemetry's abstractions don't fit your coordination pattern, but you still want Redis performance.
+## Skip tracking entirely when
 
-## Source files
+**Prototyping or single-use scripts.** The coordination overhead isn't worth it for exploratory work or one-off tasks that won't run in production.
 
-- `src/attune/telemetry/**`
+**Performance is critical.** Even minimal telemetry adds latency to every coordination point. Pure computation without coordination needs avoids this entirely.
 
-**Tags:** `telemetry`, `metrics`
+## Recommendation
+
+**Start with telemetry if you have more than one agent or any human approval steps.** The structured approach scales better than growing from manual coordination. The CLI commands alone justify the setup cost for production systems.
+
+**Use direct Redis for simple producer/consumer patterns** where you're just passing data between processes without complex coordination logic.
+
+**Reserve manual logging for development debugging** and permanent audit requirements that survive system restarts.
+
+The telemetry feature is designed for production multi-agent systems. If you're unsure whether you need it, you probably don't — but when coordination complexity grows, migrating from manual approaches becomes significantly more work than starting with the structured telemetry classes.

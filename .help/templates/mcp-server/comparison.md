@@ -2,54 +2,52 @@
 type: comparison
 feature: mcp-server
 depth: comparison
-generated_at: 2026-04-19T18:50:02.013693+00:00
-source_hash: 4d53983ae8928abce86e5e58e1d186acd20ca65e85b505d31acc051216daed33
+generated_at: 2026-04-20T01:22:25.202233+00:00
+source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
 status: generated
 ---
 
-# Comparison: Direct Python API vs MCP server
+# MCP Server vs direct API calls
+
+The Attune AI MCP Server provides a structured interface for Claude Code and other MCP clients to access workflows, help, memory, and authentication tools. You can also call these capabilities directly through Python imports, but each approach has distinct tradeoffs.
 
 ## Feature comparison
 
-| Feature | Direct Python imports | MCP server |
-|---|---|---|
-| **Setup complexity** | Import attune-ai package | Configure `.mcp.json` + Claude Code |
-| **Tool access** | All internal APIs available | 15 exposed tools via MCP protocol |
-| **Rate limiting** | Manual implementation | Built-in 60 calls/minute sliding window |
-| **Claude integration** | Manual prompt construction | Native tool calling in Claude Code |
-| **Memory persistence** | Requires separate storage | Built-in memory store/retrieve/search |
-| **Help system** | Static documentation | Progressive contextual help with `help_lookup` |
-| **Authentication** | Manual API key handling | Integrated auth status and recommendations |
-| **Telemetry** | Manual tracking | Automated cost tracking and performance metrics |
-| **Workflow execution** | Direct function calls | MCP tool-mediated with session context |
+| Aspect | MCP Server | Direct API calls |
+|--------|------------|------------------|
+| **Client support** | Any MCP-compatible client (Claude Code, others) | Python code only |
+| **Setup overhead** | Requires `.mcp.json` configuration | Import statements |
+| **Rate limiting** | Built-in sliding window (60 calls/min) | Manual implementation needed |
+| **Tool discovery** | Automatic via `get_tool_list()` | Must know function signatures |
+| **Authentication** | Handled by server instance | Manual credential management |
+| **Error handling** | Standardized MCP error responses | Raw Python exceptions |
+| **Session state** | Persistent across tool calls | Manual state management |
+| **Progress feedback** | Structured status updates | Print statements or logging |
 
-## Performance tradeoffs
+## Performance characteristics
 
-**MCP server is ~2x slower per operation** due to JSON serialization overhead, but provides significant workflow advantages:
+**MCP Server** adds ~50ms overhead per tool call due to JSON serialization and protocol handling, but provides automatic caching for prompts and tool definitions. The rate limiter prevents runaway API costs.
 
-- **Interactive sessions**: Claude Code can maintain context across multiple tool calls
-- **Progressive help**: `help_lookup` escalates from concept → task → reference automatically
-- **Memory coordination**: Cross-conversation pattern storage via `memory_store`
-- **Cost optimization**: Built-in telemetry shows savings from cache hits and tier routing
+**Direct API calls** have minimal overhead (~5ms) but require you to implement your own caching, rate limiting, and error recovery. For batch operations processing hundreds of files, direct calls can be 10x faster.
 
-**Direct API is faster for batch operations** but requires manual orchestration of authentication, rate limiting, and error handling.
+## Use MCP Server when...
 
-## Use MCP server when
+- Working in Claude Code or other MCP clients
+- You need the help system (`help_lookup`, `help_maintain`)
+- Building interactive workflows that benefit from session state
+- Rate limiting and cost protection are important
+- You want standardized error handling across tools
 
-- You're working in Claude Code and want native tool integration
-- You need session-aware workflows with context preservation
-- You want progressive help that adapts based on your experience level
-- You're building conversational interfaces that benefit from memory persistence
-- You need built-in telemetry and cost tracking
+## Use direct API calls when...
 
-## Use direct Python API when
+- Writing Python scripts or applications
+- Performance is critical (batch processing, CLI tools)
+- You need capabilities not exposed through MCP tools
+- Building automation that runs without human interaction
+- You're already managing authentication and state elsewhere
 
-- You're writing automated scripts or CI/CD pipelines
-- You need access to internal classes like `RateLimiter` or `WorkflowHandlersMixin`
-- Performance is critical and you can handle orchestration manually
-- You're building custom integrations outside the Claude Code ecosystem
-- You need functionality not exposed through the 15 MCP tools
+## Getting started
 
-## Recommendation
+**MCP Server**: Create `.mcp.json` in your project root with `uv run python -m attune.mcp.server` as the command. Test with `ps aux | grep attune` to verify it's running.
 
-**Start with MCP server** for interactive development work. The productivity gains from integrated help, memory, and Claude Code tool calling typically outweigh the performance overhead. Switch to direct API only when you hit specific limitations or need maximum performance for batch operations.
+**Direct API**: Import from `attune.workflows`, `attune.auth`, or `attune.help` modules. Check the reference documentation for specific function signatures.

@@ -2,25 +2,15 @@
 type: tip
 feature: telemetry
 depth: tip
-generated_at: 2026-04-14T15:21:43.418754+00:00
-source_hash: 295e5e35ecdbf0e851c8b1779b79738f03b705495583edbf2e6416bf4fe17480
+generated_at: 2026-04-20T01:25:10.407489+00:00
+source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
 status: generated
 ---
 
-# Tip: working effectively with telemetry
+# Tip: Use telemetry CLI commands to debug system health
 
-Use the CLI commands for analysis, but build coordination logic with the classes for real-time agent coordination. The telemetry module splits cleanly between reporting (CLI functions) and runtime coordination (signal classes).
+Start with `python -m attune.telemetry` commands when you suspect performance issues or agent coordination problems. The CLI gives you immediate visibility into what's actually happening without writing debug code.
 
-## Why
+The built-in commands show you cost savings (`cmd_telemetry_savings`), agent performance (`cmd_agent_performance`), test execution status (`cmd_test_status`), and model tier routing (`cmd_task_routing_report`). Each command returns structured data you can pipe to other tools or save for later analysis.
 
-The CLI functions like `cmd_sonnet_opus_analysis()` and `cmd_agent_performance()` are designed for post-hoc analysis and cost reporting, while classes like `CoordinationSignals` and `HeartbeatCoordinator` handle live agent-to-agent communication with TTL-based Redis coordination.
-
-## The tradeoff
-
-You'll write more code using the coordination classes directly instead of just running CLI commands, but you get real-time agent coordination with automatic cleanup via Redis TTL expiration — something the analysis commands can't provide.
-
-## Source files
-
-- `src/attune/telemetry/**`
-
-**Tags:** `telemetry`, `metrics`
+Run these commands first before diving into logs or adding print statements — you'll often find the answer faster than writing custom debugging code.

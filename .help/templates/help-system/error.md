@@ -2,44 +2,44 @@
 type: error
 feature: help-system
 depth: error
-generated_at: 2026-04-14T15:02:39.839441+00:00
-source_hash: 8d034f48405f7be88930770e7a3e4d7992e3101bb4d3cee73733ebc13fe5c521
+generated_at: 2026-04-20T01:17:47.552041+00:00
+source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
 status: generated
 ---
 
 # Help System errors
 
-Help system errors occur during template generation, project scanning, or feedback processing operations.
+Template loading, progressive depth tracking, and cross-link resolution failures in the help engine.
 
 ## Common error signatures
 
-- `ValueError: Invalid feature name: {...}` — Feature names contain invalid characters or formatting
-- `FileNotFoundError` — Missing template files, manifest files, or source directories during generation
-- `yaml.YAMLError` — Malformed features.yaml manifest during parsing
-- `json.JSONDecodeError` — Corrupted feedback.json file during confidence scoring
-- `OSError` — Filesystem permission issues when writing generated templates
+- `ValueError: Invalid feature name: {...}` — Feature name contains invalid characters or is empty
+- `FileNotFoundError` — Template file missing during `populate()` or cross-link resolution
+- `KeyError` — Missing required frontmatter field (`type`, `tags`, or `name`)
+- `yaml.scanner.ScannerError` — Malformed YAML in template frontmatter
+- `AttributeError: 'NoneType' object has no attribute 'body'` — Template population returned None
 
 ## Where errors originate
 
-Help system errors typically originate from these key functions:
+Help system errors typically start in these functions:
 
-- `generate_feature_templates()` — Raises `ValueError` for invalid feature names during template generation
-- `scan_project()` — Filesystem errors when scanning project directories for feature discovery
-- `record_template_feedback()` — JSON serialization errors when updating feedback scores
-- `get_template_confidence()` — File access errors when reading feedback data
-- `load_manifest()` — YAML parsing errors when reading features.yaml files
+- `scan_project()` — File access errors when scanning directories or reading source files
+- `generate_feature_templates()` — Template generation failures from invalid feature data or filesystem issues
+- `populate()` and `populate_progressive()` — Template loading errors when files are missing or malformed
+- `record_template_feedback()` and `get_template_confidence()` — JSON file corruption in feedback storage
+- `_parse_template_file()` — YAML parsing errors in template frontmatter
 
 ## How to diagnose
 
-1. **Check feature names for validity.** If you see `ValueError: Invalid feature name`, verify that feature names contain only alphanumeric characters, hyphens, and underscores.
+1. **Check template file integrity.** Run `_parse_template_file()` on individual templates to isolate YAML parsing errors. Missing required fields (`type`, `tags`, `name`) cause immediate `KeyError` exceptions.
 
-2. **Verify file permissions and paths.** Many errors stem from missing directories or insufficient write permissions in the help output directory. Ensure the target directory exists and is writable.
+2. **Verify cross-link targets exist.** Load `cross_links.json` and test each template ID with `_find_template_file()`. Dangling references cause `FileNotFoundError` during template population.
 
-3. **Validate manifest syntax.** For YAML errors, check that your features.yaml file has correct indentation and no duplicate keys. Use a YAML validator if the error message is unclear.
+3. **Test progressive depth state.** If depth advancement fails, check that the storage backend (memory or file-based) correctly persists session state between `lookup()` calls.
 
-4. **Inspect feedback file integrity.** If feedback operations fail, check that feedback.json exists and contains valid JSON. Delete the file if corrupted — it will be recreated with default values.
+4. **Validate feature manifest.** Corrupted `features.yaml` files cause `ValueError` in `generate_feature_templates()`. Check that feature names contain only alphanumeric characters, hyphens, and underscores.
 
-5. **Review staleness detection.** Template generation failures often occur when source files have changed but staleness detection can't compute new hashes. Ensure source files are accessible and unchanged during generation.
+5. **Check filesystem permissions.** Template generation and feedback recording require write access to the help directory. Permission errors surface as `OSError` with specific error codes.
 
 ## Source files
 
