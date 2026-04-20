@@ -65,3 +65,51 @@ queries:
   - {id: rg-001,  query: rag-grounding,               expected: rag-grounding,  difficulty: easy}
   - {id: rg-002,  query: grounding,                   expected: rag-grounding,  difficulty: medium}
   - {id: rg-003,  query: retrieval,                   expected: rag-grounding,  difficulty: medium} # promoted — memory desc "retrieval" -> "lookup"
+
+  # agents
+  - {id: ag-001,  query: agents,                      expected: agents,         difficulty: easy}
+  - {id: ag-002,  query: ai,                          expected: agents,         difficulty: hard} # ai tag collides with fix-test body
+
+  # cli
+  - {id: cl-001,  query: cli,                         expected: cli,            difficulty: easy}
+  - {id: cl-002,  query: commands,                    expected: cli,            difficulty: hard} # "commands" in plugin description wins
+
+  # configuration
+  - {id: cf-001,  query: configuration,               expected: configuration,  difficulty: easy}
+  - {id: cf-002,  query: config,                      expected: configuration,  difficulty: medium}
+
+  # help-system
+  - {id: hs-001,  query: help-system,                 expected: help-system,    difficulty: easy}
+  - {id: hs-002,  query: templates,                   expected: help-system,    difficulty: medium}
+
+  # mcp-server
+  - {id: mc-001,  query: mcp-server,                  expected: mcp-server,     difficulty: easy}
+  - {id: mc-002,  query: mcp,                         expected: mcp-server,     difficulty: medium}
+
+  # memory
+  - {id: mem-001, query: memory,                      expected: memory,         difficulty: easy}
+  - {id: mem-002, query: storage,                     expected: memory,         difficulty: medium}
+
+  # models
+  - {id: md-001,  query: models,                      expected: models,         difficulty: easy}
+  - {id: md-002,  query: llm,                         expected: models,         difficulty: medium}
+
+  # orchestration
+  - {id: or-001,  query: orchestration,               expected: orchestration,  difficulty: easy}
+  - {id: or-002,  query: teams,                       expected: orchestration,  difficulty: medium}
+
+  # plugin
+  - {id: pl-001,  query: plugin,                      expected: plugin,         difficulty: easy}
+  - {id: pl-002,  query: claude-code,                 expected: plugin,         difficulty: medium}
+
+  # spec-engine
+  - {id: sp-001,  query: spec-engine,                 expected: spec-engine,    difficulty: easy}
+  - {id: sp-002,  query: spec,                        expected: spec-engine,    difficulty: medium}
+
+  # telemetry
+  - {id: tm-001,  query: telemetry,                   expected: telemetry,      difficulty: easy}
+  - {id: tm-002,  query: metrics,                     expected: telemetry,      difficulty: medium}
+
+  # wizards
+  - {id: wz-001,  query: wizards,                     expected: wizards,        difficulty: easy}
+  - {id: wz-002,  query: interactive,                 expected: wizards,        difficulty: medium}
