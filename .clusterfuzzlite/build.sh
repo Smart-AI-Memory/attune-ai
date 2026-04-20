@@ -5,7 +5,12 @@
 # container's pip ("no such option: --hash"); the requirements-file
 # form is universally supported and is what Scorecard's
 # PinnedDependenciesID check recognizes.
-pip3 install --require-hashes -r "$(dirname "$0")/requirements.txt"
+#
+# The Dockerfile copies `.` to `$SRC/attune-ai`, so the
+# requirements file is available at the in-repo path. Using it
+# directly avoids having to also copy the file to `$SRC/` in the
+# Dockerfile.
+pip3 install --require-hashes -r "$SRC/attune-ai/.clusterfuzzlite/requirements.txt"
 pip3 install --no-deps "$SRC/attune-ai"
 
 # Compile fuzz targets using the standard OSS-Fuzz helper.
