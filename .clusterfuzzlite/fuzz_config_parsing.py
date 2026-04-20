@@ -42,6 +42,7 @@ def test_one_input(data: bytes) -> None:
         try:
             yaml.safe_load(raw)
         except (_YAML_ERROR, ValueError, TypeError):
+            # Invalid YAML is expected under fuzzing; ignore parse/type errors.
             pass
 
 
