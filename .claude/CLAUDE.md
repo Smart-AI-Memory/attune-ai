@@ -1252,15 +1252,20 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   re-export removal can cascade through 5+ test files. After removing
   any re-export, run `pytest -x` iteratively — each failure reveals
   the next test file to fix.
-- **Version bumps must update 5+ files, not just `pyproject.toml`**:
+- **Version bumps must update 7+ files, not just `pyproject.toml`**:
   The version lives in `pyproject.toml`, `plugin/.claude-plugin/
   plugin.json`, `plugin/.claude-plugin/marketplace.json` (two fields:
   `metadata.version` and `plugins[0].version`), `plugin/core/
-  __init__.py`, `.claude-plugin/marketplace.json` (root-level), and
-  `.claude/CLAUDE.md` (header and footer). The test
+  __init__.py`, `.claude-plugin/marketplace.json` (root-level),
+  `.claude/CLAUDE.md` (header and footer), AND
+  `docs/reference/API_REFERENCE.md` (header). The test
   `test_all_versions_match` in `test_plugin_config_validation.py`
-  catches mismatches but only in CI. Grep for the old version string
-  across the whole repo before committing a bump.
+  catches the plugin-config mismatches but NOT the API_REFERENCE
+  drift — that one has to be caught by hand. As of v6.3.0, API_REFERENCE
+  had silently lagged 2 minor versions (stayed at 5.3.2 through v6.0,
+  v6.1, v6.2, v6.3). Grep for the old version string across the whole
+  repo before committing a bump, and include `docs/reference/API_REFERENCE.md`
+  in every release-prep checklist.
 
 - **`.agents/skills/` must stay synced with `plugin/skills/`**: Adding
   a new skill directory under `plugin/skills/` without also creating
@@ -2984,3 +2989,42 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   haven't yet reconciled the conflict, since the
   diagnostic sequence (SARIF error message,
   surprised-empty rollup) is the same everywhere.
+
+- **`mkdocs build` crashing with
+  `AttributeError: 'NoneType' object has no
+  attribute 'replace'` in
+  `pymdownx/highlight.py:400 → pygments/formatters/html.py:434`
+  is a pygments / pymdown-extensions version mismatch,
+  not a content bug**: hit during PR #175 (docs
+  freshness pass). Reproduces on clean `main` without
+  any of the PR's changes — confirmed via `git stash`
+  then build. Trace ends at
+  `self.filename = html.escape(self._decodeifneeded(options.get('filename', '')))`
+  where `options.get('filename', '')` returns `None`
+  instead of the empty-string default (because some
+  caller explicitly passed `filename=None` for a code
+  fence). Before wasting time investigating local doc
+  changes, check with `git stash && mkdocs build` on
+  the pre-change tree — if it still crashes, you've
+  ruled out the current PR. Fix direction (not done
+  this session): pin compatible `pygments` /
+  `pymdown-extensions` versions in the docs extra, or
+  find the specific markdown file whose fence
+  triggers the None filename.
+
+- **Orphan top-level `docs/` directories stay
+  invisible to readers until wired into `mkdocs.yml`
+  nav**: `docs/rag/index.md` had existed since v6.1.0
+  but was never added to the mkdocs nav, so the
+  rendered site had no path to it. Symptom: file is
+  committed, `mkdocs build` processes it (it still
+  renders HTML), but users browsing the site can't
+  find it. Fix is trivial — add to `nav:` in
+  `mkdocs.yml`. But the detection is hard: build
+  succeeds without warning and the HTML file IS
+  produced at the right URL. Two diagnostic commands:
+  `grep -c "rag/index" mkdocs.yml` (returns 0 if
+  orphan), and cross-check `find docs -name "index.md"
+  -not -path "*archive*"` against nav entries.
+  Whenever adding a new top-level directory under
+  `docs/`, include nav wiring in the same PR.
