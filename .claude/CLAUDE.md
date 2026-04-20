@@ -2629,3 +2629,159 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   ("initial theory, validate before implementing")
   and always re-evaluate from scratch at pickup
   time.
+
+- **Exclude `hard` queries from aggregate P@1
+  metrics in benchmark caches**: when a golden-
+  query fixture labels queries `easy/medium/hard`
+  and `hard` documents structural ceilings (shared
+  tags, genuine ambiguity), counting them in
+  aggregate P@1 dilutes triage signal forever. A
+  feature with a 3-query set (easy + medium + 1
+  hard miss) sits at 67% no matter what corpus
+  fixes land, because the hard case is by design
+  unsolvable without resolver changes. Fix: filter
+  hard queries out of the cache writer's P@1
+  aggregation, keep them visible in drill-in views
+  with their difficulty label, and record
+  `p_at_1_excludes_hard: true` in the cache so
+  consumers know the metric semantics. Hard
+  queries still run via pytest xfail for ceiling
+  tracking.
+
+- **`rich.live` is output-only; use `textual` for
+  any interactive row navigation**: both libraries
+  share the same author and styling DSL, which
+  makes it easy to reach for `rich.live` when the
+  spec says "drill into a row." But `rich.live`
+  has no concept of focus, selection, or keyboard
+  input — it's for non-interactive auto-refreshing
+  displays (progress bars, status tables). The
+  moment the UX needs arrow-key navigation or
+  screen push/pop, `textual`'s `DataTable` widget,
+  `Screen` subclass, and key bindings are the
+  right primitives. Check the spec before picking:
+  if `$EDITOR path/from/drill-in.output` closes
+  the loop in shell, you may not need a TUI at all
+  — a `--drill-in FEATURE` flag on a CLI script
+  is often strictly better than either option.
+
+- **Dry-run candidate golden queries through the
+  resolver before assigning difficulty labels**:
+  when expanding a golden-query fixture, every
+  candidate query should pass through
+  `resolve_topic()` (or the equivalent) first.
+  Labels based on guessing — "this medium query
+  probably resolves because the tag exists" —
+  hide real corpus gaps and produce mislabeled
+  fixtures. In the aggregator session, 2 of 12
+  candidates planned as `medium` actually lost
+  to keyword collisions in other features'
+  descriptions ("ai" → fix-test, "commands" →
+  plugin) and had to be relabeled `hard`. The
+  dry-run script is ~20 lines, takes under a
+  second, and prevents every "unexpectedly hard
+  medium query" false label. Pair with the
+  existing lesson on "reclassify up the
+  difficulty ladder instead of silencing" —
+  this one prevents the silencing case by
+  catching mislabels at authoring time.
+
+- **Bare `MANIFEST` in `.gitignore` silently
+  excludes any `manifest/` directory on
+  case-insensitive filesystems**: attune-author's
+  `.gitignore` had a plain `MANIFEST` entry
+  intended for setuptools' `MANIFEST` artifact.
+  Combined with git's default case-insensitive
+  matching on macOS/Windows, it also excluded the
+  `.help/templates/manifest/` directory — 11
+  polished template files that existed locally but
+  were never tracked. Local tests passed; Linux CI
+  failed with "missing template dir for feature
+  'manifest'" across 9 assertions. Fix: scope
+  setuptools patterns to repo root
+  (`/MANIFEST`, `/MANIFEST.in`). When adding a
+  `.gitignore` entry for an artifact file, anchor
+  with a leading `/` unless the pattern genuinely
+  needs to match anywhere in the tree. Also a
+  reminder that CI on Linux catches drift macOS
+  development cannot see.
+
+- **Platform-conditional security-test assertions
+  should accept any rejecting rule, not a specific
+  error substring**: attune-author's
+  `test_author_docs_rejects_output_parent_in_system_dir`
+  hard-coded `"system directory" in result["error"]`.
+  On Unix, the Unix-anchored `_DANGEROUS_PREFIXES`
+  list (`/etc`, `/sys`, `/proc`, …) fires and
+  produces that substring. On Windows, `/etc/…` is
+  neither a system dir nor under the workspace —
+  the containment rule fires instead, returning
+  `"outside allowed directory"`. Both rejections
+  satisfy the same security contract: the write
+  must not land. Fix: widen the assertion to
+  `"system directory" in err or
+  "outside allowed directory" in err` and document
+  in the docstring why either rule is acceptable.
+  Generalization: when a security test's intent is
+  "the operation was refused," assert on refusal
+  (`success is False` + no side effect) and only
+  narrow the error-message check if the specific
+  rule matters.
+
+- **Dead tests from monorepo extraction accumulate
+  in packages with no CI**: attune-help shipped
+  `test_plugin_config.py` (15 tests) and parts of
+  `test_plugin_references.py` from attune-ai's
+  monorepo split. They validated a `plugin/`
+  directory layout that exists in attune-ai but
+  was never created in attune-help. Local test
+  runs passed anyway because `_all_skill_bodies()`
+  globbed an empty directory — the parametrized
+  tests just silently produced zero cases.
+  Enabling CI was the accountability mechanism
+  that surfaced 15 errors + 4 failures at once.
+  Pattern: when extracting a package, grep the
+  new repo's `tests/` for any path reference that
+  doesn't exist in the new layout and either
+  create the expected files or delete the test.
+  And: the first green CI run on a newly-audited
+  package is almost never a one-push event —
+  budget for 2-3 fix commits.
+
+- **TODO counts are inflated by docstrings and
+  prompt strings describing TODO markers**: a
+  grep-based count of `TODO|FIXME` in attune-ai
+  reported 54 items but triage showed only 1 real
+  blocker. The inflation came from docstring text
+  like "Generated Python test code as a string
+  with TODO markers", prompt instructions like
+  "Complete ALL TODOs with:", and example-output
+  strings inside test generators. Classify by
+  reading surrounding context (is the `TODO` in
+  an executable code path, or is it the string
+  content of a docstring / prompt / example
+  output?), not by counting matches. Only code-
+  path TODOs are real debt.
+
+- **Past-due deprecations are deletion targets,
+  not implementation targets — read the
+  DeprecationWarning before "fixing" the TODO**:
+  `ProgressiveTestGenWorkflow.__init__` raised a
+  `DeprecationWarning` since v5.3.0 announcing
+  removal in v6.0.0. The class carried through
+  v6.0.x and v6.2.0 unchanged, with its
+  `_execute_tier_impl` returning simulated (not
+  LLM-generated) test data behind a
+  `TODO(llm-integration)` comment. When the TODO
+  was triaged as a blocker, the instinct was
+  "wire the LLM." The better answer once the
+  deprecation comment was read: "honor the
+  removal promise" — delete the file, its tests,
+  and its demo. Preserve the migration alias
+  (`progressive-test-gen -> test-gen`) so CLI
+  users keep working. Generalization: before
+  spending effort to complete a placeholder, check
+  whether the containing class is already
+  deprecated with a stated removal date — a
+  past-due deprecation makes implementation
+  strictly wrong.
