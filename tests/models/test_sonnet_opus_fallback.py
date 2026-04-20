@@ -19,6 +19,16 @@ from attune.models.empathy_executor import EmpathyLLMExecutor
 from attune.models.fallback import SONNET_TO_OPUS_FALLBACK, CircuitBreaker, ResilientExecutor
 from attune.models.telemetry import TelemetryAnalytics, get_telemetry_store
 
+# Module-level `network` marker so CI (which invokes
+# `pytest -m "not network"`) skips the whole file. These tests
+# make real calls to api.anthropic.com via ResilientExecutor;
+# when the CI runner's network to Anthropic flakes, the entire
+# suite across every OS/Python combo fails with identical
+# `AllProvidersFailedError: ... Connection error`, masquerading
+# as a code regression. The skipif below keeps local runs fast
+# when no key is set; the pytestmark keeps CI stable regardless.
+pytestmark = pytest.mark.network
+
 HAS_API_KEY = bool(os.getenv("ANTHROPIC_API_KEY"))
 needs_api_key = pytest.mark.skipif(not HAS_API_KEY, reason="ANTHROPIC_API_KEY not set")
 
