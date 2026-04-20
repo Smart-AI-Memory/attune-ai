@@ -31,7 +31,6 @@ try:
     import attune.workflows.manage_docs
     import attune.workflows.progressive.core
     import attune.workflows.progressive.orchestrator
-    import attune.workflows.progressive.test_gen
     import attune.workflows.security_audit_phase3
 except ImportError:
     pass  # Package might not be available in minimal test environments

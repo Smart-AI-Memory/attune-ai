@@ -175,7 +175,9 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # Additional workflows (restored to registry)
     "TestMaintenanceWorkflow": (".test_maintenance", "TestMaintenanceWorkflow"),
     "BatchProcessingWorkflow": (".batch_processing", "BatchProcessingWorkflow"),
-    "ProgressiveTestGenWorkflow": (".progressive.test_gen", "ProgressiveTestGenWorkflow"),
+    # ProgressiveTestGenWorkflow removed in v6.3.0 (deprecated since v5.3.0;
+    # users are routed to ParallelTestGenerationWorkflow via
+    # migration.py's "progressive-test-gen" -> "test-gen" alias).
     # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
     "DeepReviewAgentSDKWorkflow": (".deep_review", "DeepReviewAgentSDKWorkflow"),
     # Agent SDK adapters (v3.9.3)
@@ -670,7 +672,7 @@ __all__ = [
     # Test5Workflow removed - test artifact
     "TestMaintenanceWorkflow",
     "BatchProcessingWorkflow",
-    "ProgressiveTestGenWorkflow",
+    # ProgressiveTestGenWorkflow removed in v6.3.0 — see _LAZY_WORKFLOW_IMPORTS above
     # Multi-pass deep review (Agent SDK)
     "DeepReviewAgentSDKWorkflow",
     # Agent SDK adapters (v3.9.3)

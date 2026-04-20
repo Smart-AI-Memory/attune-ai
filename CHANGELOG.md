@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `ProgressiveTestGenWorkflow` and its module-level helpers
+  `execute_test_file` and `calculate_coverage` (from
+  `attune.workflows.progressive.test_gen`). The class was
+  deprecated in v5.3.0 with a stated removal target of v6.0.0
+  but carried forward through v6.0.x–6.2.0. Its
+  `_execute_tier_impl` returned simulated test data rather
+  than calling an LLM, so the workflow produced no real value
+  for users. The migration alias
+  `progressive-test-gen → test-gen` in
+  `attune/workflows/migration.py` is preserved, so
+  `attune workflow run progressive-test-gen` continues to
+  work — it now routes to `ParallelTestGenerationWorkflow`,
+  which is the canonical test-generation workflow. Callers
+  constructing `ProgressiveTestGenWorkflow` directly must
+  switch to `ParallelTestGenerationWorkflow` via
+  `attune workflow run test-gen-parallel`. The underlying
+  progressive-escalation framework (`ProgressiveWorkflow`
+  base class, `EscalationConfig`, `Tier`, `FailureAnalysis`,
+  CQS scoring, telemetry, reports) is unchanged and remains
+  available for new subclasses.
+
 ## [6.2.0] - 2026-04-19
 
 ### Added — Agent SDK 0.1.63 uplift (quality + UX axis)
