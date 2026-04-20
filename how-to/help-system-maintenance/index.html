@@ -6,19 +6,19 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
+        <meta name="description" content="How the .help/ knowledge base stays fresh — weekly PR automation, session-start drift nudges, completeness and coverage gates, local telemetry, and a golden-query benchmark.">
       
       
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/smart-router/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/help-system-maintenance/">
       
       
-        <link rel="prev" href="../agent-factory/">
+        <link rel="prev" href="../resilience-patterns/">
       
       
-        <link rel="next" href="../auto-chaining/">
+        <link rel="next" href="../prerequisites/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Smart Router - Attune AI</title>
+        <title>Maintenance - Attune AI</title>
       
     
     
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#description-smart-router-the-smart-router-enables-natural-language-wizard-dispatch-instead-of-knowing-wizard-names-developers-describe-what-they-need-and-the-router-fig" class="md-skip">
+        <a href="#help-system-maintenance" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Smart Router
+              Maintenance
             
           </span>
         </div>
@@ -1290,8 +1290,6 @@
                 
   
   
-    
-  
   
   
     
@@ -1307,11 +1305,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
         
           
           <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
@@ -1332,7 +1332,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1375,35 +1375,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Smart Router
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../smart-router/" class="md-nav__link">
         
   
   
@@ -1419,179 +1394,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description-smart-router-the-smart-router-enables-natural-language-wizard-dispatch-instead-of-knowing-wizard-names-developers-describe-what-they-need-and-the-router-fig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        description: Smart Router: The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router fig
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#smart-router" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Smart Router
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Smart Router">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#routing-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Routing Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Routing Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#route_sync-route" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        route_sync() / route()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#suggest_for_file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        suggest_for_file()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#suggest_for_error" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        suggest_for_error()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#routingdecision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RoutingDecision
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#context-preservation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context Preservation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list-available-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List Available Wizards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-with-chain-executor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with Chain Executor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1935,8 +1737,10 @@
                 
   
   
+    
   
   
+  
     
     
     
@@ -1950,13 +1754,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" checked>
         
           
           <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
@@ -1977,7 +1779,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1992,10 +1794,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../help-system-maintenance/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintenance
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2011,6 +1840,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#weekly-freshness-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weekly freshness workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sessionstart-nudge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SessionStart nudge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#completeness-coverage-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completeness + coverage checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local telemetry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#golden-query-benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Golden-query benchmark
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3351,6 +3277,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3359,10 +3287,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description-smart-router-the-smart-router-enables-natural-language-wizard-dispatch-instead-of-knowing-wizard-names-developers-describe-what-they-need-and-the-router-fig" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        description: Smart Router: The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router fig
+        Overview
       
     </span>
   </a>
@@ -3370,146 +3298,68 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#smart-router" class="md-nav__link">
+  <a href="#weekly-freshness-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Smart Router
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Smart Router">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start
+        Weekly freshness workflow
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#sessionstart-nudge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        SessionStart nudge
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#routing-methods" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#completeness-coverage-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Routing Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Routing Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#route_sync-route" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        route_sync() / route()
+        Completeness + coverage checks
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#suggest_for_file" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#local-telemetry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        suggest_for_file()
+        Local telemetry
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#suggest_for_error" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#golden-query-benchmark" class="md-nav__link">
     <span class="md-ellipsis">
       
-        suggest_for_error()
+        Golden-query benchmark
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#routingdecision" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#related-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RoutingDecision
+        Related reference
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#context-preservation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context Preservation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list-available-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List Available Wizards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-with-chain-executor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with Chain Executor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3533,120 +3383,176 @@
   
 
 
+<h1 id="help-system-maintenance">Help System Maintenance<a class="headerlink" href="#help-system-maintenance" title="Permanent link">&para;</a></h1>
+<p><em>Drift-bounded maintenance for the <code>.help/</code> knowledge
+base — Claude Code and CLI users both pull from it, so
+freshness is a first-class concern.</em></p>
 <hr />
-<h2 id="description-smart-router-the-smart-router-enables-natural-language-wizard-dispatch-instead-of-knowing-wizard-names-developers-describe-what-they-need-and-the-router-fig">description: Smart Router: The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router fig<a class="headerlink" href="#description-smart-router-the-smart-router-enables-natural-language-wizard-dispatch-instead-of-knowing-wizard-names-developers-describe-what-they-need-and-the-router-fig" title="Permanent link">&para;</a></h2>
-<h1 id="smart-router">Smart Router<a class="headerlink" href="#smart-router" title="Permanent link">&para;</a></h1>
-<p>The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router figures out which wizard(s) to invoke.</p>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmartRouter</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">router</span> <span class="o">=</span> <span class="n">SmartRouter</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Natural language routing</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Fix the security issue in auth.py&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Primary: </span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>      <span class="c1"># → security-audit</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Secondary: </span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">secondary_wizards</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># → [code-review]</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Confidence: </span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">confidence</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>        <span class="c1"># → 0.85</span>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The <code>.help/</code> directory is authored once as templates and
+rendered at runtime via <code>attune-help</code>. Source code
+changes faster than docs, so attune-ai ships five
+mechanisms that keep the knowledge base bounded against
+drift — none of them require manual babysitting:</p>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>What it does</th>
+<th>When it runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Weekly freshness PR</td>
+<td>Regenerates stale features and opens a PR if the diff is non-empty</td>
+<td>Sunday 12:00 UTC cron + manual dispatch</td>
+</tr>
+<tr>
+<td>SessionStart hook</td>
+<td>One-line drift summary on Claude Code session open</td>
+<td>Every session start</td>
+</tr>
+<tr>
+<td>Completeness check</td>
+<td>Flags features with fewer than 11 template kinds or orphan directories</td>
+<td>Locally, in CI</td>
+</tr>
+<tr>
+<td>Coverage check</td>
+<td>Every registered workflow must have a manifest entry or allowlist</td>
+<td>Locally, in CI</td>
+</tr>
+<tr>
+<td>Golden-query benchmark</td>
+<td>52 queries pin <code>resolve_topic()</code> P@1 against difficulty buckets</td>
+<td><code>pytest</code> run or on-demand</td>
+</tr>
+</tbody>
+</table>
+<p>Local telemetry (<code>help_tracker</code>) writes a JSONL of every
+<code>help_lookup</code> MCP call, giving you usage data to drive
+corpus investment.</p>
+<hr />
+<h2 id="weekly-freshness-workflow">Weekly freshness workflow<a class="headerlink" href="#weekly-freshness-workflow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Manually trigger the cron workflow:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gh<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>help-freshness.yml<span class="w"> </span>--ref<span class="w"> </span>main
 </code></pre></div>
-<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│                      SMART ROUTER                                │
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   Developer: &quot;Fix performance in auth.py&quot;                        │
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   → Routes to: PerformanceWizard + SecurityWizard               │
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└─────────────────────────────────────────────────────────────────┘
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                              │
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>                              ▼
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                     WIZARD REGISTRY                              │
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   17+ wizards with keywords, descriptions, and capabilities     │
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>└─────────────────────────────────────────────────────────────────┘
+<p><code>.github/workflows/help-freshness.yml</code> runs every Sunday
+at 12:00 UTC (and on manual dispatch). It:</p>
+<ol>
+<li>Lists stale features via
+   <code>attune_author.check_staleness</code>.</li>
+<li>Regenerates them with <code>attune-author generate
+   &lt;feature&gt; --help-dir .help --all-kinds</code> (all 11
+   template kinds, not just the 3-depth core).</li>
+<li>Opens a PR if the diff is non-empty.</li>
+</ol>
+<p>Requires <code>ANTHROPIC_API_KEY</code> as a repo secret for the
+LLM-polish pass; without it, the workflow falls back to
+raw Jinja2 drafts.</p>
+<hr />
+<h2 id="sessionstart-nudge">SessionStart nudge<a class="headerlink" href="#sessionstart-nudge" title="Permanent link">&para;</a></h2>
+<p><code>src/attune/hooks/scripts/help_freshness_nudge.py</code> runs
+at Claude Code session start. It's silent when the
+<code>.help/</code> tree is clean and emits a one-line summary on
+drift:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune: 5 help template(s) may be stale
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  types: con, ref, tas, tip
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  run: /coach maintain (or ATTUNE_DOCS_AUTOREGEN=1)
 </code></pre></div>
-<p>The router uses a keyword-based classifier to match requests to wizards. Each wizard is registered with:</p>
-<ul>
-<li><strong>Name</strong>: Unique identifier (e.g., <code>security-audit</code>)</li>
-<li><strong>Description</strong>: What the wizard does</li>
-<li><strong>Keywords</strong>: Terms that trigger this wizard</li>
-</ul>
-<h2 id="routing-methods">Routing Methods<a class="headerlink" href="#routing-methods" title="Permanent link">&para;</a></h2>
-<h3 id="route_sync-route">route_sync() / route()<a class="headerlink" href="#route_sync-route" title="Permanent link">&para;</a></h3>
-<p>Route a natural language request to wizard(s):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Synchronous</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Check for SQL injection vulnerabilities&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Asynchronous</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">decision</span> <span class="o">=</span> <span class="k">await</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;Optimize slow database queries&quot;</span><span class="p">)</span>
+<p>The hook always exits 0 — the session starts normally
+either way. Installed via <code>.claude/settings.json</code> under
+<code>hooks.SessionStart</code>.</p>
+<hr />
+<h2 id="completeness-coverage-checks">Completeness + coverage checks<a class="headerlink" href="#completeness-coverage-checks" title="Permanent link">&para;</a></h2>
+<p>Two scripts that mirror the concurrency of
+<code>attune-author status</code> (which is hash-based) with
+structural checks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Enforce: every manifest feature has all 11 template kinds,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># no orphan directories outside the manifest.</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python<span class="w"> </span>scripts/check_help_completeness.py
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Enforce: every workflow registered by list_workflows() has a</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># manifest entry, alias, or KNOWN_GAPS allowlist.</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>python<span class="w"> </span>scripts/check_help_coverage.py
 </code></pre></div>
-<h3 id="suggest_for_file">suggest_for_file()<a class="headerlink" href="#suggest_for_file" title="Permanent link">&para;</a></h3>
-<p>Get wizard suggestions based on a file path:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Python file → security, code-review</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">suggest_for_file</span><span class="p">(</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">)</span>
+<p>Both exit 0 on clean, 1 on violations. Run them
+locally before committing manifest or workflow-registry
+changes; both are gated by CI pre-commit. Output is
+human-readable by default; <code>--format=json</code> is available
+for CI parsing.</p>
+<hr />
+<h2 id="local-telemetry">Local telemetry<a class="headerlink" href="#local-telemetry" title="Permanent link">&para;</a></h2>
+<p><code>src/attune/telemetry/help_tracker.py</code> records every
+<code>help_lookup</code> MCP call to
+<code>~/.attune/telemetry/help.jsonl</code>. Writes are gated by
+an autouse conftest fixture
+(<code>ATTUNE_HELP_TELEMETRY=0</code> during tests) so test runs
+never pollute the real log.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Summarize recent lookups:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>scripts/summarize_help_telemetry.py
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Package.json → dependency-check</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">suggest_for_file</span><span class="p">(</span><span class="s2">&quot;package.json&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Dockerfile → security-audit</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">suggest_for_file</span><span class="p">(</span><span class="s2">&quot;Dockerfile&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Example output:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Top topics:     security-audit (42), code-review (31), ...</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Miss rate:      6.3%</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Top missed:     &quot;static analysis&quot; (5), &quot;lint rules&quot; (3), ...</span>
 </code></pre></div>
-<h3 id="suggest_for_error">suggest_for_error()<a class="headerlink" href="#suggest_for_error" title="Permanent link">&para;</a></h3>
-<p>Get wizard suggestions based on an error message:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Null reference → bug-predict</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">suggest_for_error</span><span class="p">(</span><span class="s2">&quot;NullPointerException at line 42&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Security error → security-audit</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">suggest_for_error</span><span class="p">(</span><span class="s2">&quot;SecurityException: Access denied&quot;</span><span class="p">)</span>
+<p>Top-missed topics are the corpus-investment signal —
+they're the queries users typed that didn't resolve. Use
+them to seed new golden queries or manifest tag
+additions.</p>
+<hr />
+<h2 id="golden-query-benchmark">Golden-query benchmark<a class="headerlink" href="#golden-query-benchmark" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pytest<span class="w"> </span>tests/unit/help/test_golden_queries.py<span class="w"> </span>-v
 </code></pre></div>
-<h2 id="routingdecision">RoutingDecision<a class="headerlink" href="#routingdecision" title="Permanent link">&para;</a></h2>
-<p>The router returns a <code>RoutingDecision</code> with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">RoutingDecision</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">primary_wizard</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># Best matching wizard</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">secondary_wizards</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="c1"># Related wizards to consider</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>            <span class="c1"># 0.0-1.0 match confidence</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">reasoning</span><span class="p">:</span> <span class="nb">str</span>               <span class="c1"># Why this routing was chosen</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">suggested_chain</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>   <span class="c1"># Recommended execution order</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">context</span><span class="p">:</span> <span class="n">Dict</span>                <span class="c1"># Preserved context from request</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">classification_method</span><span class="p">:</span> <span class="nb">str</span>   <span class="c1"># &quot;keyword&quot; or &quot;llm&quot;</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">request_summary</span><span class="p">:</span> <span class="nb">str</span>         <span class="c1"># Original request</span>
-</code></pre></div>
-<h2 id="context-preservation">Context Preservation<a class="headerlink" href="#context-preservation" title="Permanent link">&para;</a></h2>
-<p>Pass context through to the wizard:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="s2">&quot;Review this code&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;auth.py&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;python&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="s2">&quot;backend&quot;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="p">}</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Context is preserved in decision.context</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">decision</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># {&quot;file&quot;: &quot;auth.py&quot;, ...}</span>
-</code></pre></div>
-<h2 id="list-available-wizards">List Available Wizards<a class="headerlink" href="#list-available-wizards" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">wizards</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">list_wizards</span><span class="p">()</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">for</span> <span class="n">wizard</span> <span class="ow">in</span> <span class="n">wizards</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">wizard</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">wizard</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Keywords: </span><span class="si">{</span><span class="n">wizard</span><span class="o">.</span><span class="n">keywords</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="integration-with-chain-executor">Integration with Chain Executor<a class="headerlink" href="#integration-with-chain-executor" title="Permanent link">&para;</a></h2>
-<p>The Smart Router works seamlessly with auto-chaining:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmartRouter</span><span class="p">,</span> <span class="n">ChainExecutor</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">router</span> <span class="o">=</span> <span class="n">SmartRouter</span><span class="p">()</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">executor</span> <span class="o">=</span> <span class="n">ChainExecutor</span><span class="p">()</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Route the request</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Security review of auth module&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># Execute the suggested chain</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">for</span> <span class="n">wizard_name</span> <span class="ow">in</span> <span class="n">decision</span><span class="o">.</span><span class="n">suggested_chain</span><span class="p">:</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running: </span><span class="si">{</span><span class="n">wizard_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<p>The fixture at
+<code>tests/unit/help/fixtures/golden_queries.yaml</code> contains
+52 hand-crafted queries across three difficulty buckets:</p>
+<table>
+<thead>
+<tr>
+<th>Bucket</th>
+<th>Count</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>easy</td>
+<td>22</td>
+<td>Feature-name synonyms — always expected to pass</td>
+</tr>
+<tr>
+<td>medium</td>
+<td>26</td>
+<td>Paraphrases + industry terminology — may need tag or description edits</td>
+</tr>
+<tr>
+<td>hard</td>
+<td>4</td>
+<td>Shared-tag collisions (e.g. <code>"review"</code> matches both <code>code-quality</code> and <code>deep-review</code>) — documented ceilings, run as <code>pytest.xfail</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>resolve_topic()</code> in <code>attune-help</code> slug-normalizes
+spaces and underscores to hyphens at the tag-matching
+step, so <code>"race condition"</code> matches the
+<code>race-condition</code> tag without requiring a separate
+fixture entry.</p>
+<p>When expanding the fixture, dry-run candidates through
+<code>resolve_topic()</code> first — mislabeled difficulty causes
+"unexpectedly hard" medium queries that hide real gaps.</p>
+<hr />
+<h2 id="related-reference">Related reference<a class="headerlink" href="#related-reference" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../memory-graph/">Memory Graph</a> - Cross-wizard knowledge sharing</li>
-<li><a href="../auto-chaining/">Auto-Chaining</a> - Automatic wizard sequencing</li>
-<li><a href="../../reference/API_REFERENCE/#smartrouter">API Reference</a> - Full API documentation</li>
+<li><a href="../../rag/"><code>rag/index.md</code></a> — RAG-grounded
+  retrieval that runs on top of the <code>.help/</code> corpus.</li>
+<li><a href="https://github.com/Smart-AI-Memory/attune-author"><code>attune-author</code> repository</a>
+  — authoring CLI + staleness detection + LLM polish.</li>
+<li><a href="https://github.com/Smart-AI-Memory/attune-help"><code>attune-help</code> repository</a>
+  — template runtime, <code>resolve_topic()</code>, progressive
+  depth.</li>
 </ul>
 
 
@@ -3654,6 +3560,9 @@
 
 
 
+
+  
+  
 
 
 
