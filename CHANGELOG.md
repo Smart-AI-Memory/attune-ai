@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-04-20
+
+### Added — Help system hardening
+
+- **Weekly freshness automation**
+  (`.github/workflows/help-freshness.yml`): Sunday cron + manual
+  dispatch lists stale features via
+  `attune_author.check_staleness`, regenerates with
+  `--all-kinds`, and opens a PR when the diff is non-empty.
+  `src/attune/hooks/scripts/help_freshness_nudge.py`
+  (SessionStart hook) stays silent when clean and emits a
+  one-line summary on drift.
+- **Completeness + coverage checks**:
+  `scripts/check_help_completeness.py` flags features with
+  fewer than 11 template kinds and orphan template
+  directories; `scripts/check_help_coverage.py` performs the
+  bidirectional check that every registered workflow has a
+  manifest entry, alias, or `KNOWN_GAPS` allowlist.
+- **Local-only telemetry** (`src/attune/telemetry/help_tracker.py`):
+  JSONL recording of every `help_lookup` MCP call with an
+  autouse `conftest.py` fixture gating writes so tests never
+  pollute the real file. `scripts/summarize_help_telemetry.py`
+  renders top topics, miss rate, and top misses — the input
+  signal for future corpus investment.
+- **Golden-query benchmark harness**
+  (`tests/unit/help/fixtures/golden_queries.yaml`, +
+  `test_golden_queries.py`): 29 hand-crafted queries across
+  three difficulty buckets exercising `resolve_topic()`.
+  Aggregate benchmark cache writer excludes `hard` queries
+  from P@1 by design (they document structural ceilings, not
+  resolver gaps).
+
+### Changed — Resolver + manifest
+
+- `resolve_topic()` now slug-normalizes whitespace and
+  underscores to hyphens at the tag-matching step, so
+  `"race condition"` matches the `race-condition` tag. This
+  closes 3 previously-failing medium queries without any
+  fixture edits.
+- Manifest edits: added `cve`, `lint`, `race-condition`, and
+  `comprehensive-review` tags; changed the `memory`
+  feature's description from `"retrieval"` to `"lookup"` to
+  stop stealing retrieval queries from `rag-grounding`.
+- Regenerated 5 stale features to match current source
+  hashes; removed 2 orphan template directories
+  (`security/`, `workflows/`) left behind by the deprecated
+  3-depth generator. `attune.help.generator.generate_feature_templates()`
+  emits a `DeprecationWarning` pointing callers at
+  `attune-author --all-kinds` (not deleted yet — 3 source
+  consumers still use it).
+
 ### Removed
 
 - `ProgressiveTestGenWorkflow` and its module-level helpers
@@ -29,6 +80,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   base class, `EscalationConfig`, `Tier`, `FailureAnalysis`,
   CQS scoring, telemetry, reports) is unchanged and remains
   available for new subclasses.
+
+### Fixed — CI hygiene
+
+- Removed the stale `[tool.uv.sources] attune-author =
+  { path = "../attune-author", editable = true }` entry and
+  re-locked `uv.lock` so `attune-author` resolves from PyPI.
+  CI `uv sync` no longer fails with
+  `Failed to generate package metadata for attune-author
+  @ editable+../attune-author` on runners that don't have
+  the sibling checkout.
+- Migrated `.clusterfuzzlite/build.sh` from the bare
+  `pip install --hash=...` CLI form (rejected with
+  `no such option: --hash` on the clusterfuzz container's
+  pip) to the universally-supported
+  `pip install --require-hashes -r requirements.txt`. Added
+  `.clusterfuzzlite/requirements.txt` with per-package hash
+  pins; script references it via `$SRC/attune-ai/...` since
+  the Dockerfile stages the whole repo via `COPY .`.
+- Guarded `import yaml` at module scope in
+  `.clusterfuzzlite/fuzz_config_parsing.py`. The clusterfuzz
+  container runs `pip install --no-deps`, so pyyaml is
+  absent; the previous try/except referenced `yaml.YAMLError`
+  in the exception clause and crashed libFuzzer with
+  `UnboundLocalError: cannot access local variable 'yaml'`.
+- Added module-level `pytestmark = pytest.mark.network` to
+  `tests/models/test_sonnet_opus_fallback.py` so CI's
+  `-m "not network"` selector skips its real-API calls.
+  Network-flake failures across the whole OS/Python matrix
+  no longer masquerade as code regressions.
+- Added `encoding="utf-8"` to the test helper that reads
+  `help_tracker`'s JSONL. Windows' cp1252 default was
+  mangling non-ASCII round-trips (`ñoño → �o�o`), failing
+  all four Windows matrix jobs on unicode test parameters.
 
 ## [6.2.0] - 2026-04-19
 

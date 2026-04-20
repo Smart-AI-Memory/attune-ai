@@ -8,8 +8,8 @@
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-14%2C929%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-15%2C359%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-88%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![CodeQL](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/codeql.yml)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -17,12 +17,24 @@
 
 ---
 
-> **Heads up:** `attune-help` and `attune-author` have
-> moved to their own marketplace at
-> [Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs).
-> If you installed them via this marketplace previously,
-> see the [migration guide](#migration) below. New users
-> should add the `attune-docs` marketplace directly.
+**Ecosystem overview.** `attune-ai` is the hub: CLI,
+multi-agent workflows, MCP tools, and Claude Code skills.
+It depends on **`attune-help`** (progressive-depth
+template runtime; core PyPI dep), and optionally pulls in
+**`attune-rag`** via the `[rag]` extra (retrieval +
+citation-forced generation — source of the faithfulness
+numbers in [Accuracy & Faithfulness](#accuracy--faithfulness))
+and **`attune-author`** via the `[author]` extra (authoring
+& staleness detection, used by the weekly freshness
+automation). Separate repos, separate release cadences,
+separate PyPI packages.
+
+> The Claude Code plugin marketplace for help content
+> moved to
+> [`Smart-AI-Memory/attune-docs`](https://github.com/Smart-AI-Memory/attune-docs)
+> in early 2026. If you installed `attune-help` or
+> `attune-author` from this marketplace previously, see
+> [Migration](#migration).
 
 ---
 
@@ -115,6 +127,75 @@ proving the approach works at scale.
 | **14 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — each skill integrates contextual help from the template engine |
 | **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
 | **Socratic Discovery** | Workflows ask questions before executing, not the other way around |
+
+---
+
+## Accuracy & Faithfulness
+
+Two separate accuracy axes ship with attune-ai, each
+benchmarked against an in-repo golden-query set. The
+fixtures and raw A/B reports are committed so results
+are reproducible and open to external review.
+
+### RAG grounding — hallucination down 46.7% → 6.7%
+
+When the `rag-code-gen` workflow (via the `attune-rag`
+dependency) answers a question grounded in retrieved
+code, its prompt enforces citation-per-claim against
+numbered passages. Measured on a 15-query golden set
+with retrieval held constant:
+
+| Prompt variant | Hallucination rate | Mean faithfulness |
+|---|---|---|
+| baseline (no grounding rule) | 46.67% | 0.938 |
+| strict ("answer only from context") | 26.67% | 0.968 |
+| **citation (shipped default)** | **6.67%** | **0.996** |
+
+Retrieval quality (P@1 = 73.3%) was identical across
+variants — the gain comes from the prompting contract,
+not from moving the retrieval needle. Full methodology
+and raw JSON:
+
+- [`docs/rag/faithfulness-decision-2026-04-19.md`](docs/rag/faithfulness-decision-2026-04-19.md)
+  — decision writeup with pre-committed gate
+- [`docs/rag/ab-report-2026-04-19.json`](docs/rag/ab-report-2026-04-19.json)
+  — machine-readable results (all four variants,
+  per-query judgments)
+- Faithfulness judge: `FaithfulnessJudge` in attune-rag,
+  LLM-as-judge via Anthropic forced tool-use for
+  guaranteed-schema JSON output; decomposes each answer
+  into atomic claims and marks each
+  supported/unsupported against the retrieved passages.
+
+attune-rag ≥ 0.1.5 (the pin in `[rag]`) additionally
+wraps retrieved passages in
+`<passage id="P1">...</passage>` sentinel tags with a
+system-prompt injection-defense clause — adversarial
+bytes inside a corpus document are treated as data, not
+instructions.
+
+### Help resolver — 48/48 benchmark queries pass at P@1
+
+The help-system resolver (`resolve_topic()` in
+`attune-help`) is benchmarked against 52 hand-crafted
+queries across three difficulty buckets:
+
+| Bucket | Count | P@1 | Notes |
+|---|---|---|---|
+| easy | 22 | 22/22 (100%) | feature-name synonyms |
+| medium | 26 | 26/26 (100%) | paraphrases + industry terminology |
+| hard | 4 | 0/4 (XFAIL by design) | shared-tag collisions — structural ambiguity, not a resolver gap |
+
+The 4 hard queries (e.g. `"review"` matches both
+`code-quality` and `deep-review`) document a known
+semantic ceiling — resolution requires a contract change
+(return a list of candidates for user disambiguation),
+not more tags. They run as `pytest.xfail` so future
+retriever changes that unexpectedly pass show up as
+XPASS regressions. Fixtures and test:
+
+- [`tests/unit/help/fixtures/golden_queries.yaml`](tests/unit/help/fixtures/golden_queries.yaml)
+- Re-run with `pytest tests/unit/help/test_golden_queries.py`
 
 ---
 
