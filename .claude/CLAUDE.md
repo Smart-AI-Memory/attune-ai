@@ -2549,3 +2549,83 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   status table (GitHub Actions, SessionStart hooks,
   pre-commit scripts). The CLI is for humans; the
   API is for automation.
+
+- **Local-telemetry trackers need an autouse
+  conftest fixture disabling them, not just a
+  `tmp_path` default**: a new `HelpTracker` class
+  with the default path `~/.attune/telemetry/` got
+  exercised through its real consumer (MCP handler
+  `_handle_help_lookup`) during routine tests and
+  polluted the user's actual JSONL with 11
+  test-fixture events. `tmp_path` only helps when
+  the test constructs the tracker directly; tests
+  that reach the tracker via production code paths
+  bypass the fixture. Fix pattern: module-level
+  opt-out env var (e.g. `ATTUNE_HELP_TELEMETRY=0`)
+  plus an `autouse=True, scope="function"` fixture
+  in the top-level `conftest.py` that sets it.
+  Tracker-specific tests then re-enable via
+  `monkeypatch.delenv` in their own module. Build
+  any new `~/.attune/...` writer this way from
+  commit one.
+
+- **"Delete deprecated module" is rarely a simple
+  delete — grep src/ AND tests/ first**: the
+  in-repo `attune.help.generator` 3-depth generator
+  looked like dead code on first glance but had 3
+  live source consumers (MCP `help_update` handler,
+  `help/maintenance.py`, `help/engine.py`) plus
+  multiple test imports. A straight `rm` would have
+  broken the `help_update` MCP tool. Intermediate
+  step that closes the "orphan recurrence" risk
+  without the migration cost: module-level
+  docstring note + `warnings.warn(..., Deprecation
+  Warning, stacklevel=2)` at the top of the public
+  entry point. Pytest's default
+  `ignore::DeprecationWarning` means zero test
+  impact; future callers surface audibly via
+  `python -W default::DeprecationWarning`. Reserve
+  actual deletion for when all consumers have
+  migrated.
+
+- **Golden-query benchmarks reveal two distinct
+  failure classes that need different fixes**:
+  (1) **corpus gaps** — query doesn't appear in
+  any feature's name/desc/tags. One-line manifest
+  edit (add tag, paraphrase description) closes
+  these. (2) **structural ambiguity** — query
+  legitimately matches multiple features (e.g.
+  "review" applies to both code-quality AND
+  deep-review; "bugs" applies to both code-quality
+  AND bug-predict). No manifest edit or resolver
+  improvement resolves class (2) because the
+  ambiguity lives in the tag/description
+  vocabulary, not in the cascade ordering. The
+  correct responses to class (2) are:
+  (a) accept the XFAIL as "this is genuinely
+  ambiguous, user needs disambiguation UI,"
+  (b) change the resolver contract to return a
+  list of candidates, or
+  (c) strip the shared tag from one feature
+  (changes semantics). Don't mistake (2) for a
+  corpus problem and keep adding tags — you can't
+  fix a shared-tag collision with more tags.
+
+- **Handoff-memory "Option B" proposals are often
+  wrong — re-analyze after Option A**: when
+  writing a project memory that sequences work as
+  "do A first, then B if needed," the B framing is
+  usually speculative and hasn't been validated
+  against the actual problem. After completing A,
+  the problem often looks different: either B is
+  no longer needed, or B as originally framed
+  doesn't address the actual remaining cause. The
+  resolver-upgrade handoff said "Option B =
+  aggregate scoring across cascade steps"; after
+  doing A and re-analyzing, the remaining 2 hard
+  queries were shared-tag collisions that
+  aggregate scoring couldn't touch. Lesson: label
+  speculative proposals clearly in memories
+  ("initial theory, validate before implementing")
+  and always re-evaluate from scratch at pickup
+  time.
