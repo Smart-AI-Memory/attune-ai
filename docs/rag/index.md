@@ -113,30 +113,57 @@ cited template. These verdicts feed `get_template_confidence`
 so future grounding can bias toward historically-good
 templates. Silent usage does not record anything.
 
-## Baseline retrieval quality
+## Retrieval quality
 
 See the benchmark harness at
 [github.com/Smart-AI-Memory/attune-rag](https://github.com/Smart-AI-Memory/attune-rag/blob/main/tests/golden/queries.yaml)
 and the decision record at
 [embeddings-decision-2026-04-17.md](embeddings-decision-2026-04-17.md).
 
-Baseline (keyword retriever, 15 golden queries against
-attune-help 0.5.1):
+Current (keyword retriever + category-biased weighting,
+15 golden queries against the attune-help 0.7.0 corpus):
 
-| Difficulty | Precision@1 | Recall@3 |
+| Metric | Value |
+|---|---|
+| Precision@1 | **73.3%** |
+| Recall@3 | 86.7% |
+
+The local-ONNX-embeddings (`fastembed`) track is deferred
+— tuning cleared the pre-committed 70% P@1 gate on the
+keyword retriever alone. See
+[embeddings-decision-2026-04-17.md](embeddings-decision-2026-04-17.md)
+for the decision matrix and gate definitions.
+
+## Faithfulness & citation grounding
+
+attune-rag 0.1.3 made **citation-forced prompting** the
+default. Retrieval is identical across variants
+(P@1 = 73.3% in all three rows below) — the gain is pure
+prompting:
+
+| Prompt variant | Hallucination rate | Mean faithfulness |
 |---|---|---|
-| Easy (5) | 80% | 100% |
-| Medium (4) | 100% | 100% |
-| Hard (6) | 0% | 0% |
-| Overall | 53% | 60% |
+| baseline (no grounding rule) | 46.67% | 0.938 |
+| strict ("answer only from context") | 26.67% | 0.968 |
+| **citation** (default) | **6.67%** | **0.996** |
 
-The hard queries all fail with the same pattern —
-lesson/error files with query keywords in their filenames
-outrank the concept files that answer the question.
-Targeted fix is category-biased keyword weighting
-(planned for attune-rag v0.1.x); local ONNX embeddings
-via `fastembed` are queued as a v0.2.0 fallback if
-tuning plateaus below 70% P@1.
+Every claim the model makes must be followed by a
+`[P1]`/`[P2]` marker pointing at the passage that supports
+it. No citation = no claim; the model refuses rather than
+guessing. Full methodology and raw JSON:
+
+- [faithfulness-decision-2026-04-19.md](faithfulness-decision-2026-04-19.md)
+  — decision writeup with pre-committed gate (≥ 0.85 mean
+  faithfulness to ship)
+- [ab-report-2026-04-19.json](ab-report-2026-04-19.json)
+  — machine-readable results, all four variants,
+  per-query judgments
+
+attune-rag 0.1.5 additionally wraps retrieved passages in
+`<passage id="P1">...</passage>` sentinel tags with a
+system-prompt injection-defense clause — adversarial
+bytes inside a corpus document are treated as data, not
+instructions.
 
 ## Using attune-rag standalone
 

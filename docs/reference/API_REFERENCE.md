@@ -1,6 +1,6 @@
 # Attune AI API Reference
 
-**Version:** 5.3.2
+**Version:** 6.3.0
 **License:** Apache License 2.0
 **Copyright:** 2025-2026 Smart AI Memory, LLC
 
@@ -472,6 +472,7 @@ attune workflow run <name> --path <target>
 | `doc-gen` | Generate documentation from source code |
 | `doc-orchestrator` | End-to-end doc-audit + doc-gen pipeline |
 | `perf-audit` | Performance audit with 3 subagents |
+| `rag-code-gen` | RAG-grounded code generation with citation-per-claim (requires `[rag]` extra) |
 | `refactor-plan` | Prioritize tech debt with subagents |
 | `release-prep` | Release readiness assessment |
 | `research-synthesis` | Multi-source research synthesis |
