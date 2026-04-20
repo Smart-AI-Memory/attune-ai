@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — CI cleanup (post-v6.3.0)
+
+- Deleted `.github/workflows/codeql.yml` (permanently
+  disabled; GitHub's default CodeQL setup runs weekly and
+  owns the code-scanning API for this repo — custom
+  workflow's SARIF uploads were being rejected by design
+  when both setups were active). `Analyze (python)` was
+  also removed from `main` branch-protection's required
+  checks in v6.3.0. `tests/unit/ci/test_workflow_yaml.py`
+  updated to drop `codeql.yml` from its
+  concurrency-required set.
+- `pip-audit.yml`: added `--skip-editable` to both
+  `pip-audit` invocations so the audit no longer fails on
+  version-bump PRs with "Dependency not found on PyPI:
+  attune-ai (X.Y.Z)". The flag excludes the root package's
+  own editable install from the scan — CVE audits still
+  run against the full transitive dependency graph.
+
 ## [6.3.0] - 2026-04-20
 
 ### Added — Help system hardening

@@ -59,7 +59,10 @@ ALL_USES = _collect_all_uses()
 WORKFLOWS_REQUIRING_CONCURRENCY = {
     "tests.yml",
     "pre-commit.yml",
-    "codeql.yml",
+    # codeql.yml removed post-v6.3.0 — GitHub's default CodeQL
+    # setup owns code-scanning for this repo; the custom
+    # workflow couldn't upload SARIF while default setup was
+    # enabled. Left the lesson intact for future repos.
     "docs.yml",
     "security.yml",
     "security-scan.yml",

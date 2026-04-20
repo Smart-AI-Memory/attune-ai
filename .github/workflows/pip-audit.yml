@@ -40,10 +40,15 @@ jobs:
         run: pip install -e .
 
       - name: Audit core dependencies
-        run: pip-audit --strict --desc on --ignore-vuln CVE-2026-4539  # pygments 2.19.2, no fix available yet
+        # --skip-editable excludes the root package's own editable install
+        # from the audit scope. Without it, `pip-audit` fails on
+        # version-bump PRs with "Dependency not found on PyPI: attune-ai
+        # (X.Y.Z)" before the release is published. Supported since
+        # pip-audit v2.6.0.
+        run: pip-audit --strict --skip-editable --desc on --ignore-vuln CVE-2026-4539  # pygments 2.19.2, no fix available yet
 
       - name: Audit with optional deps
         continue-on-error: true
         run: |
           pip install -e ".[agents,backend]" 2>/dev/null || true
-          pip-audit --strict --desc on
+          pip-audit --strict --skip-editable --desc on
