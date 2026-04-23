@@ -317,49 +317,6 @@ class TestResilientExecutor:
         assert metadata["attempts"] == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Anthropic-only architecture - no multi-provider fallback available")
-    async def test_fallback_on_primary_failure(self, executor):
-        """Test fallback when primary fails (requires multiple providers)."""
-        call_count = 0
-
-        async def failing_then_success(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if kwargs.get("provider") == "anthropic":
-                raise Exception("Primary failed")
-            return "fallback success"
-
-        result, metadata = await executor.execute_with_fallback(failing_then_success)
-
-        assert result == "fallback success"
-        assert metadata["fallback_used"] is True
-        assert metadata["final_provider"] != "anthropic"
-
-    @pytest.mark.asyncio
-    @pytest.mark.skip(
-        reason="Anthropic-only architecture - circuit breaker skip requires multi-provider fallback",
-    )
-    async def test_circuit_breaker_skip(self, executor):
-        """Test that open circuits are skipped (requires multiple providers)."""
-        # Open the circuit for anthropic:capable (the primary tier)
-        # CircuitBreaker now tracks per provider:tier combination
-        executor.circuit_breaker.record_failure("anthropic", "capable")
-        executor.circuit_breaker.record_failure("anthropic", "capable")
-        executor.circuit_breaker.record_failure("anthropic", "capable")
-        executor.circuit_breaker.record_failure("anthropic", "capable")
-        executor.circuit_breaker.record_failure("anthropic", "capable")
-
-        mock_fn = AsyncMock(return_value="success")
-
-        result, metadata = await executor.execute_with_fallback(mock_fn)
-
-        # Should have skipped anthropic:capable
-        assert any(
-            step.get("skipped") and step.get("reason") == "circuit_breaker_open"
-            for step in metadata.get("fallback_chain", [])
-        )
-
-    @pytest.mark.asyncio
     async def test_all_fallbacks_exhausted(self, executor):
         """Test error when all fallbacks fail."""
 
