@@ -2,146 +2,120 @@
 type: task
 feature: memory
 depth: task
-generated_at: 2026-04-14T15:04:42.142088+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-04-23T03:30:55.346468+00:00
+source_hash: 65cd08d1432d00333db89709ddcd7b9eb6a2277e6649a322b27cb5880d2058a3
 status: generated
 ---
 
 # Work with memory
 
-Use the memory subsystem when you need to store agent state, load Claude Code memory files, or manage distributed memory backends across sessions.
+Use memory when you need to store, retrieve, or secure data across agent sessions or conversations.
 
 ## Prerequisites
 
 - Access to the project source code
 - Familiarity with the files under `src/attune/memory/`
-- Redis server (for distributed backends)
 
-## Configure memory backends
+## Configure memory backend
 
-1. **Check Redis availability** before connecting to distributed backends:
+1. **Check Redis availability.**
+   Use `is_redis_available()` to verify the Redis subsystem is accessible:
    ```python
    from attune.memory import is_redis_available
-
    if is_redis_available():
-       # Use Redis backend
-   else:
-       # Fall back to file-based memory
+       print("Redis backend ready")
    ```
 
-2. **Set up Redis connection** using environment variables:
-   ```bash
-   export REDIS_URL="redis://localhost:6379"
-   ```
-
-3. **Create a memory backend instance**:
+2. **Set up Redis configuration.**
+   Call `get_redis_config()` to load settings from environment variables:
    ```python
-   from attune.memory import get_redis_memory
-
-   memory = get_redis_memory()  # Uses REDIS_URL from environment
+   from attune.memory.config import get_redis_config
+   config = get_redis_config()
+   print(f"Redis host: {config['host']}")
    ```
 
-4. **Verify the connection** is working:
+3. **Create memory instance.**
+   Use `get_redis_memory()` to initialize a Redis backend:
    ```python
-   if memory.is_connected():
-       stats = memory.get_stats()
-       print(f"Connected to Redis: {stats}")
+   from attune.memory.config import get_redis_memory
+   memory = get_redis_memory()
    ```
 
 ## Store and retrieve data
 
-1. **Store short-term data** with automatic expiration:
+1. **Store data with TTL.**
+   Call the `stash()` method with a key, value, and optional TTL:
    ```python
-   memory.stash("user_context", {"session": "abc123"}, ttl=3600)
+   success = memory.stash("user_preference", {"theme": "dark"}, ttl=3600)
    ```
 
-2. **Retrieve stored data** by key:
+2. **Retrieve stored data.**
+   Use the `retrieve()` method with the same key:
    ```python
-   context = memory.retrieve("user_context")
-   if context:
-       print(f"Found context: {context}")
+   data = memory.retrieve("user_preference")
+   if data:
+       print(f"Theme: {data['theme']}")
    ```
 
-3. **Search across stored patterns** (if using searchable backend):
+3. **Clean up data.**
+   Delete specific keys when no longer needed:
    ```python
-   from attune.memory.backends import SearchableMemoryBackend
-
-   if isinstance(memory, SearchableMemoryBackend):
-       results = memory.search("error handling", limit=5)
+   memory.delete("user_preference")
    ```
 
-## Load Claude Code memory files
+## Set up Claude memory integration
 
-1. **Create a memory loader** with your project configuration:
-   ```python
-   from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
-
-   config = ClaudeMemoryConfig(
-       enabled=True,
-       project_root="/path/to/project",
-       max_import_depth=3
-   )
-   loader = ClaudeMemoryLoader(config)
-   ```
-
-2. **Load all CLAUDE.md files** from the project hierarchy:
-   ```python
-   memory_content = loader.load_all_memory()
-   print(f"Loaded {len(loader.get_loaded_files())} memory files")
-   ```
-
-3. **Create default memory structure** for new projects:
+1. **Create project memory file.**
+   Use `create_default_project_memory()` to initialize CLAUDE.md:
    ```python
    from attune.memory.claude_memory import create_default_project_memory
-
    create_default_project_memory("/path/to/project", framework="empathy")
    ```
 
-## Set up the control panel
-
-1. **Configure the control panel** for memory management:
+2. **Configure memory loading.**
+   Create a `ClaudeMemoryConfig` instance with your requirements:
    ```python
-   from attune.memory.control_panel import MemoryControlPanel, ControlPanelConfig
-
-   config = ControlPanelConfig(
-       redis_host="localhost",
-       redis_port=6379,
-       auto_start_redis=True
+   from attune.memory.claude_memory import ClaudeMemoryConfig
+   config = ClaudeMemoryConfig(
+       enabled=True,
+       load_enterprise=True,
+       max_import_depth=3
    )
-   panel = MemoryControlPanel(config)
    ```
 
-2. **Start the API server** for remote management:
+3. **Load memory files.**
+   Use `ClaudeMemoryLoader` to process all CLAUDE.md files:
+   ```python
+   from attune.memory.claude_memory import ClaudeMemoryLoader
+   loader = ClaudeMemoryLoader(config)
+   content = loader.load_all_memory("/path/to/project")
+   ```
+
+## Run management control panel
+
+1. **Start the control panel.**
+   Create a `MemoryControlPanel` instance and check status:
+   ```python
+   from attune.memory.control_panel import MemoryControlPanel
+   panel = MemoryControlPanel()
+   status = panel.status()
+   print(f"Redis status: {status['redis_status']}")
+   ```
+
+2. **Launch API server.**
+   Use `run_api_server()` to enable web-based management:
    ```python
    from attune.memory.control_panel_api import run_api_server
-
-   run_api_server(
-       panel=panel,
-       host="0.0.0.0",
-       port=8765,
-       api_key="your-secure-key"
-   )
+   run_api_server(panel, host="localhost", port=8765)
    ```
 
-3. **Check system health** to verify everything is working:
+3. **View memory statistics.**
+   Check usage metrics and performance data:
    ```python
-   health = panel.health_check()
-   if health["status"] == "healthy":
-       print("Memory system is operational")
+   stats = panel.get_statistics()
+   print(f"Total patterns: {stats.total_patterns}")
    ```
 
-## Verify success
+## Verify setup
 
-Your memory integration is working when:
-- `memory.is_connected()` returns `True`
-- You can store and retrieve data without errors
-- Claude memory files load successfully with `loader.get_loaded_files()` showing expected paths
-- The control panel API responds to health checks with status "healthy"
-
-## Key files
-
-- `src/attune/memory/backends.py` — Memory backend protocols and interfaces
-- `src/attune/memory/claude_memory.py` — Claude Code memory file loading
-- `src/attune/memory/config.py` — Redis configuration and connection management
-- `src/attune/memory/control_panel.py` — Enterprise memory management interface
-- `src/attune/memory/control_panel_api.py` — HTTP API for remote control panel access
+Run `pytest -k "memory"` to confirm all memory components work correctly. The tests should pass without errors, indicating proper Redis connectivity and memory operations.

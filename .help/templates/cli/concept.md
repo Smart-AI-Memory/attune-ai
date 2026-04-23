@@ -2,36 +2,44 @@
 type: concept
 feature: cli
 depth: concept
-generated_at: 2026-04-14T15:10:37.765524+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-04-23T03:31:47.611928+00:00
+source_hash: 95afb1e38daa117bab7e14bf58b614da535d484b24b1dd072c4750e232202196
 status: generated
 ---
 
 # CLI
 
-The Attune CLI is a hybrid command-line interface that routes user input between traditional commands and natural language processing through Claude Code skills.
+Attune's command-line interface provides both traditional command parsing and intelligent routing that learns from your usage patterns.
 
 ## Core architecture
 
-The CLI operates on two levels: structured commands for specific operations and intelligent routing for natural language queries.
+The CLI operates as a hybrid system that handles two types of input:
 
-**Traditional commands** handle concrete tasks like cost tracking (`attune costs today`) and help browsing (`attune help`). These commands follow standard CLI patterns with defined arguments and predictable outputs.
+- **Slash commands** — Traditional CLI commands like `/costs today` or `/help memory`
+- **Natural language** — Plain text that gets routed to appropriate skills based on learned preferences
 
-**Intelligent routing** processes natural language input through the `HybridRouter`, which learns from user patterns and maps queries to appropriate Claude Code skill invocations. When you type something like "analyze my recent costs," the router determines whether to use a built-in command or delegate to a skill.
+At the center is the **HybridRouter**, which maintains a preference database of how you typically want certain keywords handled. When you type "show costs," it remembers that you usually want the cost summary skill rather than a general search.
 
-## Key components
+## Intelligent routing
 
-**`HybridRouter`** serves as the decision engine, maintaining learned preferences about how keywords map to skills. It tracks usage patterns and confidence levels to improve routing accuracy over time.
+The router builds preferences automatically through usage tracking:
 
-**`RoutingPreference`** captures these learned associations, storing the keyword that triggered a skill, the skill name, any arguments used, and confidence metrics based on usage frequency.
+- **RoutingPreference** stores each learned association between a keyword, skill, and arguments
+- **Confidence scoring** increases when you repeatedly choose the same routing for a keyword
+- **Usage counting** tracks how often each preference gets applied
 
-**Command modules** implement specific CLI operations:
-- Cost tracking commands export usage data, show daily summaries, and reset tracking history
-- Help commands browse documentation templates across categories like errors, warnings, and tips
-- Learning commands manage the router's preference system
+For example, after you run "show costs" a few times and select the cost tracking skill, the router learns to suggest that skill first for similar input.
 
-## Routing intelligence
+## Command categories
 
-The router maintains user-specific preferences in a local file, learning which skills you prefer for different types of input. When you use a slash command format (like `/analyze costs`), it bypasses the intelligence layer and directly invokes the specified skill.
+The CLI organizes functionality into focused command groups:
 
-For ambiguous input, the router provides suggestions based on partial matches against learned preferences, helping you discover relevant skills without memorizing exact command syntax.
+| Category | Purpose | Example commands |
+|----------|---------|------------------|
+| **Cost tracking** | Monitor and export API usage costs | `costs today`, `costs export` |
+| **Help browsing** | Navigate documentation templates | `help memory`, `help search` |
+| **Memory management** | Store and recall context | `remember`, `forget topic` |
+
+## Command discovery
+
+Unlike traditional CLIs that require memorizing syntax, Attune's interface adapts to how you naturally express intent. The router provides suggestions based on partial input and learns which commands you actually use, making the most relevant options easier to access over time.
