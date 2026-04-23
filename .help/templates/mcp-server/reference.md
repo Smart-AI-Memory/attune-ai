@@ -1,107 +1,115 @@
 ---
 type: reference
-feature: mcp-server
-depth: reference
-generated_at: 2026-04-20T01:20:13.171508+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
-status: generated
+name: mcp-server
+tags: [mcp, tools, server]
+source: src/attune/mcp/**
 ---
 
-# MCP server API reference
+# MCP server reference
 
-Build MCP-compliant servers and integrate Attune AI workflows with Claude Desktop and other MCP clients.
+Configure Claude to use Attune AI's Model Context Protocol server for workflow automation, contextual help, and memory management.
 
 ## Classes
 
-| Class | Parameters | Returns | Description |
-|-------|------------|---------|-------------|
-| `MemoryHandlersMixin` | | | Mixin providing memory tool handlers for EmpathyMCPServer |
-| `RateLimiter` | `max_calls: int = 60, window_seconds: float = 60.0` | `None` | Simple sliding-window rate limiter |
-| `EmpathyMCPServer` | `workspace_root: str \| None = None, user_id: str \| None = None` | | MCP server for Attune AI workflows |
-| `WorkflowHandlersMixin` | | | Mixin providing workflow tool handlers for EmpathyMCPServer |
+| Class | Description |
+|-------|-------------|
+| `MemoryHandlersMixin` | Mixin providing memory tool handlers for EmpathyMCPServer |
+| `RateLimiter` | Simple sliding-window rate limiter |
+| `EmpathyMCPServer` | MCP server for Attune AI workflows |
+| `WorkflowHandlersMixin` | Mixin providing workflow tool handlers for EmpathyMCPServer |
 
 ### RateLimiter methods
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `check` | `key: str` | `bool` | Check if a key is within rate limits |
+| `__init__` | `max_calls: int = 60, window_seconds: float = 60.0` | `None` | Create rate limiter with sliding window |
+| `check` | `key: str` | `bool` | Check if key can make another call within rate limits |
 
 ### EmpathyMCPServer methods
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
+| `__init__` | `workspace_root: str \| None = None, user_id: str \| None = None` | | Initialize MCP server for Attune AI workflows |
 | `get_prompt_list` | | `list[dict[str, Any]]` | Get list of available prompts |
 | `get_prompt_messages` | `prompt_name: str, arguments: dict[str, str]` | `list[dict[str, Any]]` | Get messages for a specific prompt |
-| `call_tool` | `tool_name: str, arguments: dict[str, Any]` | `dict[str, Any]` | Execute a tool by name with arguments |
+| `call_tool` | `tool_name: str, arguments: dict[str, Any]` | `dict[str, Any]` | Execute an MCP tool with given arguments |
 | `get_tool_list` | | `list[dict[str, Any]]` | Get list of available tools |
 | `get_resource_list` | | `list[dict[str, Any]]` | Get list of available resources |
 
 ## Functions
 
-| Function | Parameters | Returns | Description | Raises |
-|----------|------------|---------|-------------|--------|
-| `get_prompt_list` | `prompts: dict[str, dict[str, Any]]` | `list[dict[str, Any]]` | Get list of available prompts | |
-| `get_prompt_messages` | `prompts: dict[str, dict[str, Any]], prompt_name: str, arguments: dict[str, str]` | `list[dict[str, Any]]` | Get messages for a specific prompt | ValueError — 'Unknown prompt: {...}' |
-| `create_server` | | `EmpathyMCPServer` | Create and return an Empathy MCP server instance | |
-| `main` | | `None` | Entry point for MCP server | |
-| `get_workflow_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for workflow execution tools | |
-| `get_utility_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for auth, telemetry, and session management | |
-| `get_help_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for contextual help and progressive documentation | |
-| `get_memory_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for memory store/retrieve/search/forget | |
-| `get_resources` | | `dict[str, dict[str, Any]]` | MCP resource definitions | |
-| `get_prompts` | | `dict[str, dict[str, Any]]` | MCP prompt definitions | |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `get_prompt_list` | `prompts: dict[str, dict[str, Any]]` | `list[dict[str, Any]]` | Get list of available prompts |
+| `get_prompt_messages` | `prompts: dict[str, dict[str, Any]], prompt_name: str, arguments: dict[str, str]` | `list[dict[str, Any]]` | Get messages for a specific prompt |
+| `create_server` | | `EmpathyMCPServer` | Create and return an Empathy MCP server instance |
+| `main` | | `None` | Entry point for MCP server |
+| `get_workflow_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for workflow execution tools |
+| `get_utility_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for auth, telemetry, and session management |
+| `get_help_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for contextual help and progressive documentation |
+| `get_personal_memory_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for personal cross-session memory |
+| `get_memory_tools` | | `dict[str, dict[str, Any]]` | Tool definitions for memory store/retrieve/search/forget |
+| `get_resources` | | `dict[str, dict[str, Any]]` | MCP resource definitions |
+
+### Raises
+
+| Function | Exception | Message |
+|----------|-----------|---------|
+| `get_prompt_messages` | `ValueError` | `'Unknown prompt: {...}'` |
 
 ## Tool schemas
 
 ### Utility tools
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `auth_status` | Get authentication strategy status. Shows current configuration, subscription tier, and default mode. | None |
-| `auth_recommend` | Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode. | `file_path` (string, required) — Path to file to analyze |
-| `telemetry_stats` | Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance. | `days` (integer, default: 30) — Number of days to analyze |
-| `attune_get_level` | Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems. | None |
-| `attune_set_level` | Set interaction level (1-5) for this session. | `level` (integer, 1-5, required) — Interaction level |
-| `context_get` | Get session context value. | `key` (string, required) — Context key to retrieve |
-| `context_set` | Set session context value. | `key` (string, required) — Context key<br>`value` (string, required) — Context value |
+| Tool | Description | Required parameters | Optional parameters |
+|------|-------------|-------------------|-------------------|
+| `auth_status` | Get authentication strategy status. Shows current configuration, subscription tier, and default mode | | |
+| `auth_recommend` | Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode | `file_path: str` | |
+| `telemetry_stats` | Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance | | `days: int = 30` |
+| `attune_get_level` | Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems | | |
+| `attune_set_level` | Set interaction level (1-5) for this session | `level: int` (1-5) | |
+| `context_get` | Get session context value | `key: str` | |
+| `context_set` | Set session context value | `key: str, value: str` | |
 
 ### Help tools
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `help_lookup` | Look up contextual help for a topic, workflow, or error. Progressive mode escalates across template types. Repeated calls auto-advance. | `topic` (string, required) — Topic slug, template ID, workflow name, or tag<br>`mode` (enum: progressive, preamble, related, workflow_help, precursor, search_tag, default: progressive)<br>`file_path` (string) — File path for precursor mode<br>`last_workflow` (string) — Name of the last workflow<br>`reset` (boolean, default: false) — Reset depth to concept level |
-| `help_maintain` | Check for stale help templates and regenerate them. Detects when source files have changed since last generation. | `dry_run` (boolean, default: false) — Only report stale templates<br>`batch` (boolean, default: false) — Submit to Anthropic Batch API for 50% cost savings |
-| `help_init` | Bootstrap a project-local help system. Scans the project to discover features, returns proposals for review. | `action` (enum: scan, accept, required) — scan: discover features, accept: save manifest<br>`accepted` (array of objects) — List of accepted feature proposals (only used with action=accept) |
-| `help_status` | Show staleness report for the project-local help system. Reports which features have current vs stale templates. | `features` (array of strings) — Optional list of feature names to check |
-| `help_update` | Regenerate help templates for specific features or all stale features in the project-local help system. | `features` (array of strings) — Feature names to regenerate<br>`dry_run` (boolean, default: false) — Only report what would change |
+| Tool | Description | Required parameters | Optional parameters |
+|------|-------------|-------------------|-------------------|
+| `help_lookup` | Look up contextual help for a topic, workflow, or error. Progressive mode escalates across template types | `topic: str` | `mode: str = 'progressive', file_path: str, last_workflow: str, reset: bool = False` |
+| `help_maintain` | Check for stale help templates and regenerate them | | `dry_run: bool = False, batch: bool = False` |
+| `help_init` | Bootstrap a project-local help system | `action: str` ('scan' \| 'accept') | `accepted: array` |
+| `help_status` | Show staleness report for the project-local help system | | `features: array[str]` |
+| `help_update` | Regenerate help templates for specific features or all stale features | | `features: array[str], dry_run: bool = False` |
+
+### Personal memory tools
+
+| Tool | Description | Required parameters | Optional parameters |
+|------|-------------|-------------------|-------------------|
+| `personal_memory_capture` | Save a decision, pattern, troubleshooting finding, or reference to personal cross-session memory | `topic: str, content: str` | `kind: str = 'decision', project_local: bool = False` |
+| `personal_memory_recall` | Search personal cross-session memory with a natural language query | `query: str` | `k: int = 3, kind_filter: str` |
+| `personal_memory_topics` | List all topics stored in personal cross-session memory | | |
+| `personal_memory_forget` | Delete a topic from personal memory | `topic: str` | `kind: str` |
 
 ### Memory tools
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `memory_store` | Store data in attune-ai memory. Use for structured knowledge, patterns, and cross-agent coordination. | `key` (string, required) — Unique identifier<br>`value` (string, required) — Content to store<br>`classification` (enum: PUBLIC, INTERNAL, SENSITIVE, default: PUBLIC)<br>`pattern_type` (string) — Category for pattern matching |
-| `memory_retrieve` | Retrieve data from attune-ai memory by key or pattern ID. | `key` (string, required) — Key or pattern_id to retrieve |
-| `memory_search` | Search attune-ai memory for patterns matching a query. | `query` (string, required) — Search string<br>`pattern_type` (string) — Filter by pattern type |
-| `memory_forget` | Remove data from attune-ai memory. | `key` (string, required) — Key or pattern_id to remove<br>`scope` (enum: session, persistent, all, default: all) — Scope of removal |
+| Tool | Description | Required parameters | Optional parameters |
+|------|-------------|-------------------|-------------------|
+| `memory_store` | Store data in attune-ai memory | `key: str, value: str` | `classification: str = 'PUBLIC', pattern_type: str` |
+| `memory_retrieve` | Retrieve data from attune-ai memory by key or pattern ID | `key: str` | |
+| `memory_search` | Search attune-ai memory for patterns matching a query | `query: str` | `pattern_type: str` |
+| `memory_forget` | Remove data from attune-ai memory | `key: str` | `scope: str = 'all'` |
 
 ## Resources
 
-| Resource | URI | Description | MIME Type |
+| Resource | URI | Description | MIME type |
 |----------|-----|-------------|-----------|
 | `workflows` | `attune://workflows` | List of all available Attune workflows | `application/json` |
 | `auth_config` | `attune://auth/config` | Current authentication strategy configuration | `application/json` |
 | `telemetry` | `attune://telemetry` | Cost tracking and performance metrics | `application/json` |
 
-## Prompts
-
-| Prompt | Description | Arguments |
-|--------|-------------|-----------|
-| `security-scan` | Run a comprehensive security scan on a directory. Checks for eval/exec usage, path traversal, hardcoded secrets, and broad exception handling. | `path` (required) — Directory or file to scan |
-| `test-gen` | Generate behavioral tests for a Python module. Creates pytest test files with Given/When/Then structure. | `module` (required) — Path to Python module<br>`batch` (optional) — Set to 'true' to generate tests for all modules |
-| `cost-report` | Generate a cost optimization report. Shows LLM spend by workflow, cache hit rates, and savings from tier routing. | `days` (optional) — Number of days to analyze (default: 30) |
-
 ## Constants
 
-| Constant | Description |
-|----------|-------------|
-| `_VOICE_SKIP_TOOLS` | Tools excluded from voice interfaces: memory operations, context management, authentication status |
+| Constant | Value |
+|----------|-------|
+| `_MEMORY_NOT_INSTALLED` | `'attune-ai memory module not installed. Run: pip install attune-ai'` |
+| `_VOICE_SKIP_TOOLS` | Tools excluded from voice interface: `{'memory_store', 'memory_retrieve', 'memory_search', 'memory_forget', 'personal_memory_capture', 'personal_memory_recall', 'personal_memory_topics', 'personal_memory_forget', 'attune_get_level', 'attune_set_level', 'context_get', 'context_set', 'auth_status', 'auth_recommend', 'telemetry_stats'}` |

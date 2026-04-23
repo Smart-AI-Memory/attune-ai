@@ -2,163 +2,111 @@
 type: reference
 feature: memory
 depth: reference
-generated_at: 2026-04-14T15:05:02.992534+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-04-23T03:31:10.383354+00:00
+source_hash: 65cd08d1432d00333db89709ddcd7b9eb6a2277e6649a322b27cb5880d2058a3
 status: generated
 ---
 
 # Memory reference
 
-## Core protocols
+Store, retrieve, and search persistent data across Claude sessions with unified short-term and long-term storage.
+
+## Core classes
 
 | Class | Description |
 |-------|-------------|
-| `MemoryBackend` | Protocol for short-term memory backends |
-| `SearchableMemoryBackend` | Extended protocol for backends with semantic search |
+| `UnifiedMemory` | Unified interface for short-term and long-term memory |
+| `RedisShortTermMemory` | Redis-backed short-term memory with cross-session coordination |
+| `FileSessionMemory` | File-based session memory with persistence |
+| `LongTermMemory` | Simplified long-term persistent storage interface |
+| `PersonalMemory` | Store and retrieve personal cross-session memory |
 
-### MemoryBackend methods
+## Configuration classes
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `stash` | `key: str, value: Any, ttl: int \| None = None, agent_id: str \| None = None` | `bool` | Store value with optional TTL and agent scope |
-| `retrieve` | `key: str, agent_id: str \| None = None` | `Any \| None` | Retrieve value by key and optional agent scope |
-| `delete` | `key: str` | `bool` | Delete key from storage |
-| `keys` | `pattern: str = '*'` | `list[str]` | List keys matching pattern |
-| `is_connected` | | `bool` | Check if backend is connected |
-| `get_stats` | | `dict` | Get backend statistics |
-| `close` | | `None` | Close backend connection |
-| `supports_realtime` | | `bool` | Check if backend supports real-time features |
-| `supports_distributed` | | `bool` | Check if backend supports distributed features |
+| Class | Parameters | Description |
+|-------|------------|-------------|
+| `MemoryConfig` | `redis_url: str \| None = None`, `redis_config: RedisConfig \| None = None`, `long_term_storage: str = './memdocs_storage'`, `claude_memory_enabled: bool = True`, `environment: Environment = Environment.DEVELOPMENT`, `encryption_enabled: bool = False` | Configuration for unified memory system |
+| `ClaudeMemoryConfig` | `enabled: bool = False`, `load_enterprise: bool = True`, `load_user: bool = True`, `load_project: bool = True`, `enterprise_memory_path: str \| None = None`, `project_root: str \| None = None`, `max_import_depth: int = 5`, `max_file_size_bytes: int = 1000000`, `validate_files: bool = True` | Configuration for Claude memory integration |
+| `FileSessionConfig` | `storage_dir: str = './session_memory'`, `max_size: int = 1000000`, `enable_compression: bool = True` | Configuration for file-based session memory |
+| `RedisConfig` | `host: str = 'localhost'`, `port: int = 6379`, `db: int = 0`, `password: str \| None = None`, `ssl: bool = False`, `ssl_cert_reqs: str = 'required'`, `ssl_ca_certs: str \| None = None`, `max_connections: int = 100`, `retry_on_timeout: bool = True` | Enhanced Redis configuration with SSL and retry support |
 
-### SearchableMemoryBackend methods
+## Backend protocols
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `search` | `query: str, limit: int = 10, **filters: Any` | `list[dict]` | Perform semantic search with filters |
-| `promote` | `session_id: str \| None = None` | `bool` | Promote session data to long-term storage |
+| Class | Methods | Returns |
+|-------|---------|---------|
+| `MemoryBackend` | `stash(key: str, value: Any, ttl: int \| None = None, agent_id: str \| None = None)` | `bool` |
+|  | `retrieve(key: str, agent_id: str \| None = None)` | `Any \| None` |
+|  | `delete(key: str)` | `bool` |
+|  | `keys(pattern: str = '*')` | `list[str]` |
+|  | `is_connected()` | `bool` |
+|  | `get_stats()` | `dict` |
+|  | `close()` | `None` |
+|  | `supports_realtime()` | `bool` |
+|  | `supports_distributed()` | `bool` |
+| `SearchableMemoryBackend` | `search(query: str, limit: int = 10, **filters: Any)` | `list[dict]` |
+|  | `promote(session_id: str \| None = None)` | `bool` |
 
-## Configuration dataclasses
+## Security and classification
 
-### ClaudeMemoryConfig
+| Class | Fields | Description |
+|-------|--------|-------------|
+| `Classification` | PUBLIC, INTERNAL, SENSITIVE | Three-tier classification system for MemDocs patterns |
+| `ClassificationRules` | `encryption_required: bool`, `audit_required: bool`, `access_tiers: list[AccessTier]` | Security rules for each classification level |
+| `PatternMetadata` | `id: str`, `pattern_type: str`, `content_hash: str`, `classification: Classification`, `created_at: datetime`, `last_accessed: datetime \| None`, `access_count: int`, `tags: list[str]`, `user_id: str` | Metadata for stored MemDocs patterns |
+| `SecurePattern` | `metadata: PatternMetadata`, `content: str`, `is_encrypted: bool` | Represents a securely stored pattern |
+| `PIIScrubber` | Comprehensive PII detection and scrubbing system |  |
+| `SecretsDetector` | Detects secrets in text content using pattern matching and entropy analysis |  |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | `bool` | `False` | Enable Claude memory integration |
-| `load_enterprise` | `bool` | `True` | Load enterprise-level memory files |
-| `load_user` | `bool` | `True` | Load user-level memory files |
-| `load_project` | `bool` | `True` | Load project-level memory files |
-| `enterprise_memory_path` | `str \| None` | `None` | Path to enterprise memory files |
-| `project_root` | `str \| None` | `None` | Project root directory |
-| `max_import_depth` | `int` | `5` | Maximum import depth for memory files |
-| `max_file_size_bytes` | `int` | `1000000` | Maximum file size in bytes |
-| `validate_files` | `bool` | `True` | Validate memory files on load |
+## Cross-session coordination
 
-### MemoryFile
+| Class | Fields | Description |
+|-------|--------|-------------|
+| `CrossSessionCoordinator` | Coordinator for cross-session agent communication |  |
+| `SessionType` | INTERACTIVE, BATCH, SYSTEM | Type of session/agent |
+| `ConflictStrategy` | PRIORITY, FIRST_WRITE, LAST_WRITE, NEGOTIATE | Strategy for resolving conflicts between agents |
+| `SessionInfo` | `session_id: str`, `agent_id: str`, `session_type: SessionType`, `started_at: datetime`, `last_heartbeat: datetime`, `access_tier: AccessTier` | Information about an active session |
+| `ConflictResult` | `resolved: bool`, `winner: str \| None`, `strategy_used: ConflictStrategy`, `resolution_data: dict` | Result of a conflict resolution |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `level` | `str` | | Memory file level (enterprise, project, user) |
-| `path` | `str` | | File path |
-| `content` | `str` | | File content |
-| `imports` | `list[str]` | `[]` | List of imported files |
-| `load_order` | `int` | `0` | Loading order priority |
+## Memory graph
 
-### ControlPanelConfig
+| Class | Description |
+|-------|-------------|
+| `MemoryGraph` | Knowledge graph for cross-workflow intelligence |
+| `NodeType` | Types of nodes in the memory graph |
+| `Node` | A node in the memory graph |
+| `BugNode` | Specialized node for bugs |
+| `VulnerabilityNode` | Specialized node for security vulnerabilities |
+| `PerformanceNode` | Specialized node for performance issues |
+| `PatternNode` | Specialized node for code patterns |
+| `EdgeType` | Types of relationships between nodes |
+| `Edge` | An edge connecting two nodes in the memory graph |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `redis_host` | `str` | `'localhost'` | Redis server hostname |
-| `redis_port` | `int` | `6379` | Redis server port |
-| `storage_dir` | `str` | `'./memdocs_storage'` | Storage directory path |
-| `audit_dir` | `str` | `'./logs'` | Audit logs directory |
-| `auto_start_redis` | `bool` | `True` | Automatically start Redis if needed |
+## Factory functions
 
-## Memory management classes
-
-### ClaudeMemoryLoader
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: ClaudeMemoryConfig \| None = None` | | Initialize loader with configuration |
-| `load_all_memory` | `project_root: str \| None = None` | `str` | Load all memory files and return combined content |
-| `clear_cache` | | `None` | Clear internal cache |
-| `get_loaded_files` | | `list[str]` | Get list of loaded file paths |
-
-### MemoryControlPanel
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: ControlPanelConfig \| None = None` | | Initialize control panel |
-| `status` | | `dict[str, Any]` | Get system status |
-| `start_redis` | `verbose: bool = True` | `RedisStatus` | Start Redis server |
-| `stop_redis` | | `bool` | Stop Redis server |
-| `get_statistics` | | `MemoryStats` | Get memory statistics |
-| `list_patterns` | `classification: str \| None = None, limit: int = 100` | `list[dict[str, Any]]` | List stored patterns |
-| `delete_pattern` | `pattern_id: str, user_id: str = 'admin@system'` | `bool` | Delete specific pattern |
-| `clear_short_term` | `agent_id: str = 'admin'` | `int` | Clear short-term memory for agent |
-| `export_patterns` | `output_path: str, classification: str \| None = None` | `int` | Export patterns to file |
-| `health_check` | | `dict[str, Any]` | Perform health check |
-
-## Security classes
-
-### RateLimiter
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `window_seconds: int = 60, max_requests: int = 100` | | Initialize rate limiter |
-| `is_allowed` | `client_ip: str` | `bool` | Check if request is allowed |
-| `get_remaining` | `client_ip: str` | `int` | Get remaining requests for IP |
-
-### APIKeyAuth
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `api_key: str \| None = None` | | Initialize API key authentication |
-| `is_valid` | `provided_key: str \| None` | `bool` | Validate provided API key |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `get_redis_memory` | `url: str \| None = None`, `use_mock: bool \| None = None` | `RedisShortTermMemory` | Create a RedisShortTermMemory instance with environment-based config |
+| `get_file_session_memory` |  | `FileSessionMemory` | Create a file-based session memory instance |
+| `get_railway_redis` |  | `RedisShortTermMemory` | Get Redis configured for Railway deployment |
 
 ## Utility functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `is_redis_available` | | `bool` | Check if Redis subsystem is available |
-| `create_default_project_memory` | `project_root: str, framework: str = 'empathy'` | `None` | Create default .claude/CLAUDE.md file |
+| `is_redis_available` |  | `bool` | Check if Redis subsystem is available without importing it |
+| `check_redis_connection` |  | `dict` | Check Redis connection and return status |
 | `parse_redis_url` | `url: str` | `dict` | Parse Redis URL into connection parameters |
-| `get_redis_config` | | `dict` | Get Redis configuration from environment |
-| `get_redis_memory` | `url: str \| None = None, use_mock: bool \| None = None` | `RedisShortTermMemory` | Create Redis memory instance |
-| `check_redis_connection` | | `dict` | Check Redis connection status |
-| `get_railway_redis` | | `RedisShortTermMemory` | Get Redis configured for Railway deployment |
-
-### get_railway_redis exceptions
-
-| Exception | Message |
-|-----------|---------|
-| `OSError` | `'REDIS_URL not found. Make sure Redis is added to your Railway project.\nRun: railway add --database redis\nFor external access, use REDIS_PUBLIC_URL'` |
-
-## API server functions
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `run_api_server` | `panel: MemoryControlPanel, host: str = 'localhost', port: int = 8765, api_key: str \| None = None, enable_rate_limit: bool = True, rate_limit_requests: int = 100, rate_limit_window: int = 60, ssl_certfile: str \| None = None, ssl_keyfile: str \| None = None, allowed_origins: list[str] \| None = None` | `None` | Run Memory API server with security features |
-| `print_status` | `panel: MemoryControlPanel` | `None` | Print formatted status output |
-| `print_stats` | `panel: MemoryControlPanel` | `None` | Print formatted statistics output |
+| `create_default_project_memory` | `project_root: str`, `framework: str = 'empathy'` | `None` | Create a default .claude/CLAUDE.md file for a project |
+| `classify_pattern` | Pattern content and metadata | `Classification` | Auto-classify pattern based on content and type |
+| `check_access` | User credentials and pattern classification | `bool` | Check if user has access to pattern based on classification |
+| `detect_secrets` | `text: str` | `list[SecretDetection]` | Convenience function to detect secrets without creating a detector instance |
 
 ## Constants
 
-### Channel and key names
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `CHANNEL_SESSIONS` | `'empathy:sessions'` | Redis channel for session events |
-| `KEY_ACTIVE_AGENTS` | `'empathy:active_agents'` | Redis key for active agents list |
-| `KEY_SERVICE_LOCK` | `'empathy:service_lock'` | Redis key for service coordination lock |
-| `KEY_SERVICE_HEARTBEAT` | `'empathy:service_heartbeat'` | Redis key for service heartbeat |
-
-### Security keyword lists
-
 | Constant | Values | Description |
 |----------|--------|-------------|
-| `HEALTHCARE_KEYWORDS` | `{'patient', 'medical', 'diagnosis', 'treatment', 'healthcare', 'clinical', 'hipaa', 'phi', 'medical record', 'prescription'}` | Keywords for healthcare pattern classification |
-| `FINANCIAL_KEYWORDS` | `{'financial', 'payment', 'credit card', 'banking', 'transaction', 'pci dss', 'payment card'}` | Keywords for financial pattern classification |
-| `PROPRIETARY_KEYWORDS` | `{'proprietary', 'confidential', 'internal', 'trade secret', 'company confidential', 'restricted'}` | Keywords for proprietary pattern classification |
-| `SENSITIVE_PATTERN_TYPES` | `{'clinical_protocol', 'medical_guideline', 'patient_workflow', 'financial_procedure'}` | Sensitive pattern type identifiers |
-| `INTERNAL_PATTERN_TYPES` | `{'architecture', 'business_logic', 'company_process'}` | Internal pattern type identifiers |
+| `HEALTHCARE_KEYWORDS` | `patient`, `medical`, `diagnosis`, `treatment`, `healthcare`, `clinical`, `hipaa`, `phi`, `medical record`, `prescription` | Keywords that trigger healthcare classification |
+| `FINANCIAL_KEYWORDS` | `financial`, `payment`, `credit card`, `banking`, `transaction`, `pci dss`, `payment card` | Keywords that trigger financial classification |
+| `PROPRIETARY_KEYWORDS` | `proprietary`, `confidential`, `internal`, `trade secret`, `company confidential`, `restricted` | Keywords that trigger proprietary classification |
+| `SENSITIVE_PATTERN_TYPES` | `clinical_protocol`, `medical_guideline`, `patient_workflow`, `financial_procedure` | Pattern types that default to SENSITIVE classification |
+| `INTERNAL_PATTERN_TYPES` | `architecture`, `business_logic`, `company_process` | Pattern types that default to INTERNAL classification |

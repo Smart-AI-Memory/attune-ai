@@ -2,39 +2,54 @@
 type: concept
 feature: memory
 depth: concept
-generated_at: 2026-04-14T15:04:29.013517+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-04-23T03:30:41.225048+00:00
+source_hash: 65cd08d1432d00333db89709ddcd7b9eb6a2277e6649a322b27cb5880d2058a3
 status: generated
 ---
 
 # Memory
 
-## How it works
+## What it is
 
-Memory is Attune AI's unified system for storing and retrieving agent knowledge, from temporary session data to persistent project context.
+The memory subsystem provides both short-term storage for active conversations and long-term persistence for Claude memory files, with security controls and enterprise management capabilities.
 
-The system operates through pluggable backends that can store data with TTL-based expiration, semantic search capabilities, and Redis-based distributed access. You can stash key-value pairs for quick retrieval, promote session memories to long-term storage, and load structured project knowledge from CLAUDE.md files.
+## Why it matters
+
+Attune AI agents need to remember context across conversations and access persistent knowledge stored in CLAUDE.md files. The memory subsystem handles this through two distinct pathways: a backend protocol for short-term memory (like Redis) and a loader system for Claude's structured memory files.
 
 ## Core components
 
-- **Short-term backends** — `MemoryBackend` protocol defines basic storage operations like `stash()`, `retrieve()`, and `delete()` with optional TTL expiration
-- **Searchable backends** — `SearchableMemoryBackend` extends basic storage with semantic `search()` queries and session `promote()` capabilities
-- **Claude integration** — `ClaudeMemoryLoader` discovers and loads CLAUDE.md files from project hierarchies, respecting import dependencies and file size limits
-- **Control panel** — `MemoryControlPanel` provides enterprise-grade management with Redis orchestration, pattern export, and health monitoring
-- **Security layer** — Built-in PII scrubbing, secret detection, and classification rules protect sensitive data
+**Short-term memory backends** implement the `MemoryBackend` protocol to store conversation state, with operations like `stash()` for saving data with TTL, `retrieve()` for lookup, and `search()` for semantic queries on backends that support it.
 
-## Memory lifecycle
+**Claude memory integration** loads CLAUDE.md files from project hierarchies through `ClaudeMemoryLoader`, which resolves imports, manages load order, and provides a unified view of enterprise, project, and user-level memory files.
 
-When you stash data, the backend stores it with an optional TTL and agent-specific scoping. For searchable backends, you can later promote valuable session data to permanent storage or query it semantically. The Claude memory loader scans project directories for CLAUDE.md files, following import chains up to a configurable depth while validating file sizes and formats.
+**Control panel** offers enterprise management through `MemoryControlPanel`, including Redis lifecycle management, pattern classification, audit logging, and API endpoints for administrative tasks.
 
-## What connects to it
+## Memory file hierarchy
 
-Other parts of the codebase interact with memory through these interfaces:
+Claude memory files follow a three-tier structure:
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `MemoryBackend` | Basic storage with TTL and agent scoping | `src/attune/memory/backend.py` |
-| `SearchableMemoryBackend` | Semantic search and session promotion | `src/attune/memory/backend.py` |
-| `ClaudeMemoryLoader` | Project knowledge from CLAUDE.md files | `src/attune/memory/claude_memory.py` |
-| `MemoryControlPanel` | Enterprise management and Redis control | `src/attune/memory/control_panel.py` |
-| `SecureMemDocsIntegration` | Security-aware long-term storage | `src/attune/memory/secure.py` |
+- **Enterprise level** — organization-wide patterns and protocols
+- **Project level** — repository-specific context and conventions
+- **User level** — personal preferences and working patterns
+
+The loader resolves imports between levels and presents them as a single consolidated memory string for Claude to use as context.
+
+## Security model
+
+The subsystem includes built-in protection against storing sensitive data:
+
+- **PII scrubbing** automatically detects and masks personal information
+- **Secrets detection** prevents API keys and credentials from being stored
+- **Pattern classification** categorizes memory content by sensitivity level
+- **Access controls** enforce permissions based on data classification
+
+## Backend flexibility
+
+Different backends serve different deployment needs:
+
+- **Redis** for production deployments with persistence and distribution
+- **File-based** for local development and testing
+- **Mock** for unit tests and CI environments
+
+All backends implement the same protocol, so you can switch between them based on environment or performance requirements.
