@@ -52,7 +52,7 @@ class TestPatternAnalysis:
     @pytest.fixture
     def sample_executions(self, tmp_path):
         """Create sample execution results for testing."""
-        registry = TemplateRegistry(storage_dir=".attune/meta_workflows/templates")
+        registry = TemplateRegistry(storage_dir=str(tmp_path / "templates"))
         template = registry.load_template("release-prep")
 
         workflow = MetaWorkflow(template=template, storage_dir=str(tmp_path))
@@ -177,7 +177,7 @@ class TestRecommendations:
     @pytest.fixture
     def sample_executions(self, tmp_path):
         """Create sample execution results for testing."""
-        registry = TemplateRegistry(storage_dir=".attune/meta_workflows/templates")
+        registry = TemplateRegistry(storage_dir=str(tmp_path / "templates"))
         template = registry.load_template("release-prep")
 
         workflow = MetaWorkflow(template=template, storage_dir=str(tmp_path))
@@ -242,7 +242,7 @@ class TestAnalyticsReport:
         """Create sample execution results for testing."""
         import time
 
-        registry = TemplateRegistry(storage_dir=".attune/meta_workflows/templates")
+        registry = TemplateRegistry(storage_dir=str(tmp_path / "templates"))
         template = registry.load_template("release-prep")
 
         workflow = MetaWorkflow(template=template, storage_dir=str(tmp_path))
