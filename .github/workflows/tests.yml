@@ -159,6 +159,17 @@ jobs:
           echo "::warning::Tech debt count ($DEBT_COUNT) exceeds threshold ($THRESHOLD)"
         fi
 
+        # Count permanently-skipped tests (pytest.mark.skip, not skipif)
+        SKIP_COUNT=$(grep -rn "pytest\.mark\.skip\b" tests/ --include="*.py" 2>/dev/null | wc -l || echo 0)
+        echo "skip_count=$SKIP_COUNT" >> $GITHUB_OUTPUT
+        echo "Found $SKIP_COUNT permanent skip markers"
+
+        # Warn if skip count creeps back up (baseline after April 2026 cleanup: 42)
+        SKIP_THRESHOLD=60
+        if [ "$SKIP_COUNT" -gt "$SKIP_THRESHOLD" ]; then
+          echo "::warning::Permanent skip count ($SKIP_COUNT) exceeds threshold ($SKIP_THRESHOLD) — review and delete obsolete skipped tests"
+        fi
+
     - name: Upload debt report
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
