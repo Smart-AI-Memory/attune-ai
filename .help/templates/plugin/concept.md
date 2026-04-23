@@ -2,8 +2,8 @@
 type: concept
 feature: plugin
 depth: concept
-generated_at: 2026-04-19T18:52:10.806945+00:00
-source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
+generated_at: 2026-04-23T03:32:33.631760+00:00
+source_hash: 45eadb2e7f205941c8bfaceec972a8cbf3a780ce8b0ca2ce66b2868c4058b340
 status: generated
 ---
 
@@ -11,28 +11,37 @@ status: generated
 
 ## What it is
 
-The plugin is a Claude Code extension that monitors development activity and responds with automatic formatting, help suggestions, and security validation. It operates through event hooks that trigger when you write files, start sessions, encounter command errors, or make git commits.
+The plugin is a bundled runtime that integrates AI assistance directly into Claude Code through event-driven hooks and security validation.
 
-## Core components
+When you use Claude Code, the plugin automatically responds to specific events—like saving a Python file, starting a session, or running a failed command—to provide contextual help and maintain code quality without interrupting your workflow.
 
-The plugin consists of four main hook types:
+## Architecture
 
-**Post-tool hooks** respond after you use Claude's tools:
-- Auto-format Python files after Write/Edit operations
-- Suggest relevant help when Bash commands fail
-- Maintain .help/ directory freshness after git commits
+The plugin operates through four types of components:
 
-**Session hooks** activate when you start working:
-- Check help template staleness on session start
-- Display welcome messages
+**Event hooks** trigger automatically based on your actions:
+- **PostToolUse hooks** run after Claude performs file operations or command execution
+- **SessionStart hooks** run when you begin a new Claude Code session
 
-**Security validation** protects your system:
-- `validate_bash_command()` screens commands against security policies
-- `validate_file_path()` prevents access to system directories like `/etc` and `/proc`
-- Returns `(True, '')` for allowed operations
+**Security validation** protects against dangerous operations:
+- `validate_bash_command()` checks shell commands against security policies before execution
+- `validate_file_path()` prevents access to system directories like `/etc` and `/sys`
 
-## Runtime architecture
+**Auto-maintenance** keeps your workspace current:
+- Python files get formatted automatically after edits using the Write/Edit tools
+- Help templates refresh when they become stale
+- Documentation updates trigger after git commits
 
-The plugin includes a bundled attune-ai core for standalone operation. This means it can run independently without requiring the full attune framework to be installed. Each hook operates as a separate entry point with its own `main()` function, allowing Claude Code to invoke specific behaviors based on the development event that occurred.
+**Contextual assistance** surfaces relevant help:
+- Failed bash commands generate suggestions for fixes
+- Session startup checks ensure you have current documentation
 
-When you encounter command failures, the plugin reads PostToolUse payloads to determine whether help suggestions are appropriate. When you save Python files, it automatically formats them. When you commit changes, it checks whether your .help/ directory needs updates.
+## Security boundaries
+
+The plugin enforces strict security policies through validation functions that return `(True, '')` for allowed operations. It blocks access to system directories defined in `SYSTEM_DIRECTORIES` and validates all bash commands before execution.
+
+Search operations using `grep`, `rg`, `git grep`, and similar tools receive special handling to prevent unintended system access while preserving normal development workflows.
+
+## Integration points
+
+The plugin connects to Claude Code through standardized entry points—each hook implements a `main()` function that reads operation results from stdin and responds appropriately. This design allows the plugin to observe and react to your development actions without requiring explicit invocation.

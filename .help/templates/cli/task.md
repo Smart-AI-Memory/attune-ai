@@ -2,51 +2,69 @@
 type: task
 feature: cli
 depth: task
-generated_at: 2026-04-14T15:10:50.363319+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-04-23T03:31:59.645342+00:00
+source_hash: 95afb1e38daa117bab7e14bf58b614da535d484b24b1dd072c4750e232202196
 status: generated
 ---
 
 # Work with cli
 
-Use the Attune CLI when you need to interact with the AI system through commands or natural language input that gets intelligently routed to specific skills.
+Use the Attune CLI when you need to route user input between natural language and skill commands, track costs, or access help documentation from the command line.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with the attune package installed
-- Basic familiarity with command-line interfaces
+- Python environment with attune package installed
+- Familiarity with the CLI module structure in `src/attune/`
 
-## Identify your CLI modification target
+## Configure the CLI entry point
 
-1. **Examine the CLI entry point structure.**
-   Review `src/attune/cli_minimal.py` to see how the argument parser is configured and how commands are dispatched through the `main()` function.
+1. **Set up the main parser** by modifying `create_parser()` in `cli_minimal.py`:
+   - Add subcommands for new functionality
+   - Define argument groups and options
+   - Set default values and help text
 
-2. **Check the hybrid routing system.**
-   Open `src/attune/cli_router.py` to understand how the `HybridRouter` class routes user input between natural language and slash commands using the `route_user_input()` function.
+2. **Route commands** through the `main()` function:
+   - Handle argument parsing
+   - Dispatch to appropriate command handlers
+   - Return proper exit codes
 
-3. **Locate command implementations.**
-   Browse `src/attune/cli_commands/` to find existing command modules like cost tracking (`cmd_costs`, `cmd_costs_today`, `cmd_costs_export`) and help commands.
+## Add command functionality
 
-## Add or modify CLI functionality
+1. **Create command handlers** in the appropriate module:
+   - Cost commands: Use `cmd_costs()`, `cmd_costs_today()`, `cmd_costs_export()`, or `cmd_costs_reset()` in `cost_commands.py`
+   - Help commands: Use `cmd_help()` in the help module
+   - Memory commands: Implement handlers for learning and recall
 
-1. **For new commands:** Add your command function to the appropriate module in `src/attune/cli_commands/` following the pattern of existing commands that return an integer exit code.
+2. **Implement hybrid routing** using the `HybridRouter` class:
+   ```python
+   router = HybridRouter(preferences_path="path/to/prefs")
+   result = router.route(user_input, context)
+   ```
 
-2. **For parser changes:** Modify `create_parser()` in `cli_minimal.py` to add new arguments or subcommands.
+3. **Handle slash commands** by checking input with `is_slash_command()` before routing.
 
-3. **For routing changes:** Update the `HybridRouter.route()` method or add new routing preferences using `learn_preference()` to teach the system how to handle specific keywords.
+## Test the implementation
 
-4. **For help system changes:** Modify `cmd_help()` to include new documentation categories from the `_CATEGORIES` tuple (errors, warnings, tips, references).
+1. **Run targeted tests** with:
+   ```bash
+   pytest -k "cli"
+   ```
 
-## Test your changes
+2. **Test command routing** by running:
+   ```bash
+   attune help
+   attune costs today
+   attune "your natural language query"
+   ```
 
-1. **Run CLI-specific tests.**
-   Execute `pytest -k "cli"` to verify your changes don't break existing functionality.
+3. **Verify routing preferences** are learned and applied correctly for repeated commands.
 
-2. **Test command execution.**
-   Run `attune --help` to confirm parser changes appear correctly, and test your specific commands with sample inputs.
+## Verification
 
-3. **Verify routing behavior.**
-   Test both slash commands (like `/help`) and natural language inputs to ensure the hybrid router correctly identifies and routes your commands.
-
-You'll know the task succeeded when your new commands execute without errors, return appropriate exit codes, and appear in the help system as expected.
+Your CLI implementation works when:
+- All subcommands execute without errors
+- Natural language input routes to appropriate skills
+- Cost tracking commands return accurate data
+- Help commands display relevant documentation
+- The router learns and suggests command preferences over time

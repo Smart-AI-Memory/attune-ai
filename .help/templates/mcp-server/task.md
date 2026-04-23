@@ -2,118 +2,80 @@
 type: task
 feature: mcp-server
 depth: task
-generated_at: 2026-04-20T01:19:54.658945+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1b5f3f26ec70fc1f9dc7cd315
+generated_at: 2026-04-23T03:29:54.748094+00:00
+source_hash: b71ff35b50438d054b14e05338981f037a9df8ed86e5607100baa4a370832188
 status: generated
 ---
 
 # Work with MCP server
 
-Use the MCP server when you need to integrate Attune AI workflows with Model Context Protocol (MCP) clients like Claude Desktop or other AI tools that support the MCP standard.
+Use the MCP server when you need to integrate Attune AI capabilities into applications that support the Model Context Protocol.
 
 ## Prerequisites
 
 - Access to the project source code
+- Python environment with MCP dependencies installed
 - Familiarity with the files under `src/attune/mcp/`
-- Basic understanding of the Model Context Protocol specification
 
-## Create a new MCP server instance
+## Configure the server
 
-1. **Import the server factory function.**
+1. **Create a server instance.**
+   Use `create_server()` to initialize an `EmpathyMCPServer` with your workspace root and user ID:
    ```python
    from attune.mcp.server import create_server
-   ```
-
-2. **Create the server with optional configuration.**
-   ```python
    server = create_server()
-   # Or with custom workspace and user ID:
-   server = create_server(workspace_root="/path/to/project", user_id="user123")
    ```
 
-3. **Start the server for MCP communication.**
-   The server provides tools for workflows, authentication, telemetry, help lookup, and memory management.
-
-## Add custom tool definitions
-
-1. **Locate the appropriate tool schema function.**
-   - `get_workflow_tools()` for workflow execution tools
-   - `get_utility_tools()` for auth, telemetry, and session management
-   - `get_help_tools()` for contextual help and documentation
-   - `get_memory_tools()` for memory store/retrieve operations
-
-2. **Add your tool definition to the returned dictionary.**
-   Follow the existing pattern with `description` and `input_schema` fields:
+2. **Set workspace and user context.**
+   Initialize the server with specific workspace and user parameters if needed:
    ```python
-   def get_utility_tools():
-       return {
-           'your_tool_name': {
-               'description': 'Clear description of what the tool does',
-               'input_schema': {
-                   'type': 'object',
-                   'properties': {
-                       'param_name': {
-                           'type': 'string',
-                           'description': 'Parameter description'
-                       }
-                   },
-                   'required': ['param_name']
-               }
-           }
-       }
+   server = EmpathyMCPServer(
+       workspace_root="/path/to/project",
+       user_id="your-user-id"
+   )
    ```
 
-3. **Implement the tool handler in the appropriate mixin class.**
-   Add the handler method to `WorkflowHandlersMixin`, `MemoryHandlersMixin`, or the main `EmpathyMCPServer` class.
+3. **Start the server.**
+   Run `main()` to launch the MCP server entry point, or integrate the server instance into your MCP-compatible application.
 
-## Configure prompts
+## Add custom prompts
 
-1. **Add prompt definitions to the prompts dictionary.**
-   Edit the return value of `get_prompts()` in `src/attune/mcp/tool_schemas.py`:
+1. **Define your prompt structure.**
+   Add entries to the prompts dictionary following the existing format with name, description, and messages template.
+
+2. **Register the prompt.**
+   Ensure your prompt appears in `get_prompt_list()` output and is accessible via `get_prompt_messages()`.
+
+3. **Test prompt retrieval.**
+   Verify your prompt works by calling:
    ```python
-   'your-prompt-name': {
-       'name': 'your-prompt-name',
-       'description': 'What this prompt does',
-       'arguments': [
-           {
-               'name': 'required_param',
-               'description': 'Parameter description',
-               'required': True
-           }
-       ]
-   }
+   messages = server.get_prompt_messages("your-prompt-name", {"arg": "value"})
    ```
 
-2. **Implement prompt message generation.**
-   The `get_prompt_messages()` function should handle your new prompt name and return formatted messages based on the arguments.
+## Extend tool capabilities
 
-## Handle rate limiting
+1. **Choose the appropriate tool category.**
+   Add new tools to the relevant schema function:
+   - `get_workflow_tools()` for workflow execution
+   - `get_utility_tools()` for auth, telemetry, and sessions
+   - `get_help_tools()` for documentation and help
+   - `get_memory_tools()` for data persistence
 
-1. **Check if rate limiting is needed for your tool.**
-   The `RateLimiter` class provides sliding-window rate limiting with configurable limits.
+2. **Define the tool schema.**
+   Follow the existing pattern with description, input_schema (JSON Schema), and required fields.
 
-2. **Create a rate limiter instance.**
-   ```python
-   limiter = RateLimiter(max_calls=60, window_seconds=60.0)
-   ```
+3. **Implement the tool handler.**
+   Add the corresponding method to handle tool calls in the appropriate mixin class or main server.
 
-3. **Check rate limits before tool execution.**
-   ```python
-   if not limiter.check(user_key):
-       raise Exception("Rate limit exceeded")
-   ```
+4. **Test tool integration.**
+   Verify your tool appears in `get_tool_list()` and responds correctly to `call_tool()`.
 
-## Verify the server works
+## Verify your changes
 
-1. **Run the server directly.**
-   ```bash
-   python -m attune.mcp.server
-   ```
+Run the MCP server and confirm:
+- All expected tools appear in the tool list
+- Prompts are accessible and render correctly
+- Tool calls execute without errors
+- Rate limiting works as expected for high-frequency operations
 
-2. **Test tool availability.**
-   The server should respond to MCP tool list requests with all configured tools from workflow, utility, help, and memory categories.
-
-3. **Verify prompt functionality.**
-   Test that prompts return properly formatted messages when called with required arguments.
-
-The server successfully integrates with MCP clients when it responds to tool calls and prompt requests without errors.
+Your MCP server integration is complete when client applications can successfully connect and use all registered tools and prompts.
