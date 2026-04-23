@@ -94,6 +94,7 @@ if TYPE_CHECKING:
         SecurityError,
     )
     from .nodes import BugNode, Node, NodeType, PatternNode, PerformanceNode, VulnerabilityNode
+    from .personal import PersonalMemory
     from .redis_bootstrap import (
         RedisStartMethod,
         RedisStatus,
@@ -221,6 +222,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TimeWindowQuery": (".types", "TimeWindowQuery"),
     "TTLStrategy": (".types", "TTLStrategy"),
     "ShortTermSecurityError": (".types", "SecurityError"),
+    # personal
+    "PersonalMemory": (".personal", "PersonalMemory"),
     # unified
     "Environment": (".unified", "Environment"),
     "MemoryConfig": (".unified", "MemoryConfig"),
@@ -304,6 +307,7 @@ __all__ = [
     "PIIPattern",
     "PIIScrubber",
     "PaginatedResult",
+    "PersonalMemory",
     "PatternMetadata",
     "PatternNode",
     "PerformanceNode",

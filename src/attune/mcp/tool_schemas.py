@@ -534,6 +534,92 @@ def get_help_tools() -> dict[str, dict[str, Any]]:
     }
 
 
+def get_personal_memory_tools() -> dict[str, dict[str, Any]]:
+    """Tool definitions for personal cross-session memory (capture/recall/topics/forget)."""
+    return {
+        "personal_memory_capture": {
+            "description": (
+                "Save a decision, pattern, troubleshooting finding, or reference to personal "
+                "cross-session memory. Content is polished and stored under ~/.attune/memory/ "
+                "(global) or .attune/memory/ (project-local)."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": "Topic slug (letters, digits, hyphens; max 50 chars)",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Raw content to capture and store",
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": ["decision", "pattern", "troubleshooting", "reference"],
+                        "description": "Memory kind (default: decision)",
+                        "default": "decision",
+                    },
+                    "project_local": {
+                        "type": "boolean",
+                        "description": "Store in project .attune/memory/ instead of global (default: false)",
+                        "default": False,
+                    },
+                },
+                "required": ["topic", "content"],
+            },
+        },
+        "personal_memory_recall": {
+            "description": "Search personal cross-session memory with a natural language query.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Natural language search query",
+                    },
+                    "k": {
+                        "type": "integer",
+                        "description": "Number of results to return (default: 3)",
+                        "default": 3,
+                    },
+                    "kind_filter": {
+                        "type": "string",
+                        "enum": ["decision", "pattern", "troubleshooting", "reference"],
+                        "description": "Filter results by kind (optional)",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+        "personal_memory_topics": {
+            "description": "List all topics stored in personal cross-session memory.",
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+            },
+        },
+        "personal_memory_forget": {
+            "description": "Delete a topic (or specific kind within a topic) from personal memory.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": "Topic slug to delete",
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": ["decision", "pattern", "troubleshooting", "reference"],
+                        "description": "Delete only this kind (omit to delete all kinds for the topic)",
+                    },
+                },
+                "required": ["topic"],
+            },
+        },
+    }
+
+
 def get_memory_tools() -> dict[str, dict[str, Any]]:
     """Tool definitions for memory store/retrieve/search/forget."""
     return {

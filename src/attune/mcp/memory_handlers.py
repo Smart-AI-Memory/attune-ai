@@ -278,3 +278,130 @@ class MemoryHandlersMixin:
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_forget failed")
             return {"success": False, "error": str(e)}
+
+    # ------------------------------------------------------------------
+    # Personal cross-session memory
+    # ------------------------------------------------------------------
+
+    def _get_personal_memory(self, project_local: bool = False) -> Any:
+        """Return a PersonalMemory instance rooted at global or project-local path.
+
+        Args:
+            project_local: If True use .attune/memory/ under the workspace root;
+                otherwise use ~/.attune/memory/.
+
+        Returns:
+            PersonalMemory instance.
+
+        Raises:
+            ImportError: If attune.memory.personal is not available.
+
+        """
+        from pathlib import Path
+
+        from attune.memory.personal import PersonalMemory
+
+        if project_local:
+            root = Path(getattr(self, "_workspace_root", ".")) / ".attune" / "memory"
+        else:
+            root = Path.home() / ".attune" / "memory"
+        return PersonalMemory(project_root=root)
+
+    async def _handle_personal_memory_capture(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Capture content to personal cross-session memory.
+
+        Args:
+            args: Must contain topic and content; optional kind and project_local.
+
+        Returns:
+            Dict with success status and destination path.
+
+        """
+        try:
+            pm = self._get_personal_memory(project_local=args.get("project_local", False))
+            dest = pm.capture(
+                args["topic"],
+                args["content"],
+                kind=args.get("kind", "decision"),
+                project_local=args.get("project_local", False),
+            )
+            return {"success": True, "path": str(dest)}
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
+        except ImportError as e:
+            logger.error("personal memory not available: %s", e)
+            return {"success": False, "error": str(e)}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("personal_memory_capture failed")
+            return {"success": False, "error": str(e)}
+
+    async def _handle_personal_memory_recall(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Search personal cross-session memory.
+
+        Args:
+            args: Must contain query; optional k and kind_filter.
+
+        Returns:
+            Dict with success status and list of hits.
+
+        """
+        try:
+            pm = self._get_personal_memory()
+            hits = pm.query(
+                args["query"],
+                k=args.get("k", 3),
+                kind_filter=args.get("kind_filter"),
+            )
+            return {"success": True, "results": hits, "count": len(hits)}
+        except ImportError as e:
+            logger.error("personal memory not available: %s", e)
+            return {"success": False, "error": str(e)}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("personal_memory_recall failed")
+            return {"success": False, "error": str(e)}
+
+    async def _handle_personal_memory_topics(self, args: dict[str, Any]) -> dict[str, Any]:
+        """List all personal memory topics.
+
+        Args:
+            args: Unused.
+
+        Returns:
+            Dict with success status and list of topic slugs.
+
+        """
+        try:
+            pm = self._get_personal_memory()
+            topics = pm.list_topics()
+            return {"success": True, "topics": topics, "count": len(topics)}
+        except ImportError as e:
+            logger.error("personal memory not available: %s", e)
+            return {"success": False, "error": str(e)}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("personal_memory_topics failed")
+            return {"success": False, "error": str(e)}
+
+    async def _handle_personal_memory_forget(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Delete a topic (or specific kind) from personal memory.
+
+        Args:
+            args: Must contain topic; optional kind.
+
+        Returns:
+            Dict with success status and count of deleted files.
+
+        """
+        try:
+            pm = self._get_personal_memory()
+            deleted = pm.forget_topic(args["topic"], kind=args.get("kind"))
+            if deleted == 0:
+                return {"success": False, "error": f"Topic not found: {args['topic']}"}
+            return {"success": True, "topic": args["topic"], "deleted": deleted}
+        except ValueError as e:
+            return {"success": False, "error": str(e)}
+        except ImportError as e:
+            logger.error("personal memory not available: %s", e)
+            return {"success": False, "error": str(e)}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("personal_memory_forget failed")
+            return {"success": False, "error": str(e)}
