@@ -28,8 +28,8 @@ class AnthropicProvider(BaseLLMProvider):
         self,
         api_key: str | None = None,
         model: str = "claude-sonnet-4-6",
-        use_prompt_caching: bool = True,  # Default to True for 20-30% cost savings
-        use_thinking: bool = False,
+        use_prompt_caching: bool = False,  # Deprecated
+        use_thinking: bool = False,  # Deprecated
         thinking_budget: int = 10000,
         use_batch: bool = False,
         **kwargs,
@@ -39,8 +39,8 @@ class AnthropicProvider(BaseLLMProvider):
         Args:
             api_key: Anthropic API key (falls back to env var).
             model: Model identifier to use.
-            use_prompt_caching: Enable prompt caching for cost savings.
-            use_thinking: Enable extended thinking mode.
+            use_prompt_caching: (DEPRECATED) This feature is deprecated and will be removed.
+            use_thinking: (DEPRECATED) This feature is deprecated and will be removed.
             thinking_budget: Max tokens for thinking budget.
             use_batch: Enable batch processing mode.
             **kwargs: Additional provider configuration.
@@ -51,6 +51,18 @@ class AnthropicProvider(BaseLLMProvider):
         self.use_thinking = use_thinking
         self.thinking_budget = thinking_budget
         self.use_batch = use_batch
+
+        if use_prompt_caching:
+            logger.warning(
+                "The 'use_prompt_caching' feature is deprecated and may cause "
+                "API errors. It will be removed in a future version."
+            )
+
+        if use_thinking:
+            logger.warning(
+                "The 'use_thinking' feature is deprecated and may cause "
+                "API errors. It will be removed in a future version."
+            )
 
         # Validate API key is provided
         if not api_key or not api_key.strip():
@@ -113,24 +125,8 @@ class AnthropicProvider(BaseLLMProvider):
             "messages": messages,
         }
 
-        # Enable prompt caching for system prompts (Claude-specific)
-        if system_prompt and self.use_prompt_caching:
-            api_kwargs["system"] = [
-                {
-                    "type": "text",
-                    "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},  # Cache for 5 minutes
-                },
-            ]
-        elif system_prompt:
+        if system_prompt:
             api_kwargs["system"] = system_prompt
-
-        # Enable extended thinking for complex tasks (Claude-specific)
-        if self.use_thinking:
-            api_kwargs["thinking"] = {
-                "type": "enabled",
-                "budget_tokens": self.thinking_budget,
-            }
 
         # Add any additional kwargs
         api_kwargs.update(kwargs)
@@ -153,7 +149,9 @@ class AnthropicProvider(BaseLLMProvider):
             logger.error(f"Anthropic API authentication failed: {e}")
             raise
         except anthropic.APIStatusError as e:
-            logger.error(f"Anthropic API error (status {e.status_code}): {e}")
+            logger.error(
+                f"Anthropic API error (status {e.status_code}): {e.response.text}",
+            )
             raise
 
         # Extract thinking content and text from response blocks

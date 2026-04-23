@@ -65,6 +65,10 @@ from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_commands import (
     cmd_forget,
     cmd_lessons,
+    cmd_memory_capture,
+    cmd_memory_forget_topic,
+    cmd_memory_recall,
+    cmd_memory_topics,
     cmd_remember,
 )
 from attune.cli_commands.provider_commands import (
@@ -368,6 +372,41 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     version_parser = subparsers.add_parser("version", help="Show version")
     version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
 
+    # Personal cross-session memory
+    memory_parser = subparsers.add_parser(
+        "memory",
+        help="Personal cross-session memory (decisions, patterns, troubleshooting)",
+    )
+    memory_sub = memory_parser.add_subparsers(dest="memory_command")
+
+    capture_p = memory_sub.add_parser("capture", help="Save a topic to personal memory")
+    capture_p.add_argument("topic", help="Topic slug (letters, digits, hyphens, max 50 chars)")
+    capture_p.add_argument("content", help="Raw content to capture and polish")
+    capture_p.add_argument(
+        "--kind",
+        choices=["decision", "pattern", "troubleshooting", "reference"],
+        default="decision",
+        help="Memory kind (default: decision)",
+    )
+    capture_p.add_argument(
+        "--project",
+        action="store_true",
+        dest="project_local",
+        help="Save to project-local .attune/memory/ instead of global",
+    )
+
+    recall_p = memory_sub.add_parser("recall", help="Search personal memory")
+    recall_p.add_argument("query", help="Natural language search query")
+    recall_p.add_argument("--k", type=int, default=3, help="Number of results (default: 3)")
+    recall_p.add_argument("--kind", dest="kind_filter", help="Filter results by kind")
+    recall_p.add_argument("--json", action="store_true", help="Output as JSON")
+
+    memory_sub.add_parser("topics", help="List all personal memory topics")
+
+    forget_topic_p = memory_sub.add_parser("forget-topic", help="Delete a topic from memory")
+    forget_topic_p.add_argument("topic", help="Topic slug to delete")
+    forget_topic_p.add_argument("--kind", help="Delete only a specific kind")
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
@@ -441,6 +480,13 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
         "today": cmd_costs_today,
         "export": cmd_costs_export,
         "reset": cmd_costs_reset,
+    },
+    "memory": {
+        "_attr": "memory_command",
+        "capture": cmd_memory_capture,
+        "recall": cmd_memory_recall,
+        "topics": cmd_memory_topics,
+        "forget-topic": cmd_memory_forget_topic,
     },
 }
 

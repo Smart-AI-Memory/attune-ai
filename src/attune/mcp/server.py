@@ -28,6 +28,7 @@ from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.tool_schemas import (
     get_help_tools,
     get_memory_tools,
+    get_personal_memory_tools,
     get_prompts,
     get_resources,
     get_utility_tools,
@@ -51,6 +52,10 @@ _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
         "memory_retrieve",
         "memory_search",
         "memory_forget",
+        "personal_memory_capture",
+        "personal_memory_recall",
+        "personal_memory_topics",
+        "personal_memory_forget",
         "attune_get_level",
         "attune_set_level",
         "context_get",
@@ -164,6 +169,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         tools: dict[str, dict[str, Any]] = {}
         tools.update(get_workflow_tools())
         tools.update(get_memory_tools())
+        tools.update(get_personal_memory_tools())
         tools.update(get_utility_tools())
         tools.update(get_help_tools())
         return tools
@@ -273,6 +279,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "memory_retrieve": self._handle_memory_retrieve,
             "memory_search": self._handle_memory_search,
             "memory_forget": self._handle_memory_forget,
+            "personal_memory_capture": self._handle_personal_memory_capture,
+            "personal_memory_recall": self._handle_personal_memory_recall,
+            "personal_memory_topics": lambda _args: self._handle_personal_memory_topics(_args),
+            "personal_memory_forget": self._handle_personal_memory_forget,
             "attune_get_level": lambda _args: self._handle_attune_get_level(),
             "attune_set_level": self._handle_attune_set_level,
             "context_get": self._handle_context_get,
