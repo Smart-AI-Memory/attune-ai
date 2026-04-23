@@ -9,18 +9,18 @@ class TestContextImports:
         from attune.context import (
             CompactionStateManager,
             ContextManager,
-            SBARHandoff,
+            WorkHandoff,
         )
 
         assert ContextManager is not None
         assert CompactionStateManager is not None
-        assert SBARHandoff is not None
+        assert WorkHandoff is not None
 
     def test_sbar_handoff_dataclass(self):
-        """Test SBARHandoff instantiation and to_dict."""
-        from attune.context.compaction import SBARHandoff
+        """Test WorkHandoff instantiation and to_dict."""
+        from attune.context.compaction import WorkHandoff
 
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Reviewing PR #42",
             background="Auth module changes",
             assessment="Looks good overall",

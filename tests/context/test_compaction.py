@@ -7,7 +7,7 @@ from attune.context.compaction import (
     CompactionStateManager,
     CompactState,
     PatternSummary,
-    SBARHandoff,
+    WorkHandoff,
 )
 
 
@@ -63,12 +63,12 @@ class TestPatternSummary:
         assert summary.confidence == 0.75
 
 
-class TestSBARHandoff:
-    """Tests for SBARHandoff dataclass."""
+class TestWorkHandoff:
+    """Tests for WorkHandoff dataclass."""
 
     def test_create_handoff(self):
-        """Test creating an SBAR handoff."""
-        handoff = SBARHandoff(
+        """Test creating an work handoff."""
+        handoff = WorkHandoff(
             situation="User is implementing new feature",
             background="Started 2 hours ago, 60% complete",
             assessment="Good progress, needs testing",
@@ -80,7 +80,7 @@ class TestSBARHandoff:
 
     def test_handoff_with_priority(self):
         """Test handoff with custom priority."""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Critical bug found",
             background="Production system affected",
             assessment="Needs immediate attention",
@@ -92,7 +92,7 @@ class TestSBARHandoff:
 
     def test_handoff_to_dict(self):
         """Test converting handoff to dict."""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Test situation",
             background="Test background",
             assessment="Test assessment",
@@ -115,14 +115,14 @@ class TestSBARHandoff:
             "priority": "high",
         }
 
-        handoff = SBARHandoff.from_dict(data)
+        handoff = WorkHandoff.from_dict(data)
 
         assert handoff.situation == "Reviewing PR"
         assert handoff.priority == "high"
 
     def test_handoff_format_summary(self):
         """Test formatting handoff as summary."""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Working on feature X",
             background="Feature request from user",
             assessment="50% complete",
@@ -178,7 +178,7 @@ class TestCompactState:
 
     def test_compact_state_to_dict(self):
         """Test converting compact state to dict."""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Test",
             background="Test",
             assessment="Test",
@@ -246,7 +246,7 @@ class TestCompactState:
             ),
         ]
 
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Feature development",
             background="Started yesterday",
             assessment="Making progress",

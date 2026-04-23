@@ -48,7 +48,7 @@ snapshot captures:
 - Current session ID and work phase
 - Completed and pending phases
 - Detected collaboration patterns
-- SBAR handoff for pending work
+- work handoff for pending work
 - Trust metrics and empathy level
 
 ---
@@ -102,18 +102,18 @@ if restored:
 
 ---
 
-## SBAR Handoff
+## Work Handoff
 
-Use an SBAR handoff when you are in the middle of a multi-step task
+Use an work handoff when you are in the middle of a multi-step task
 and want the restored session to continue exactly where you left off —
 not just know the phase, but know what the next concrete action is.
 The Situation-Background-Assessment-Recommendation format gives the
 restored session enough context to act without re-reading the conversation.
 
 ```python
-from attune.context.compaction import SBARHandoff
+from attune.context.compaction import WorkHandoff
 
-handoff = SBARHandoff(
+handoff = WorkHandoff(
     situation="Implementing JWT refresh token rotation",
     background="Auth module uses RS256 keys; current tokens expire in 1h",
     assessment="Rotation logic is written; edge case for concurrent requests unresolved",
@@ -140,7 +140,7 @@ class CompactState:
     current_phase: str
     completed_phases: list[str]
     patterns: list[PatternSummary]   # Detected collaboration patterns
-    pending_handoff: SBARHandoff | None
+    pending_handoff: WorkHandoff | None
     trust_level: float               # 0.0–1.0
     empathy_level: int               # 1–5
     metadata: dict[str, Any]
