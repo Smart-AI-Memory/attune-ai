@@ -125,8 +125,24 @@ class AnthropicProvider(BaseLLMProvider):
             "messages": messages,
         }
 
-        if system_prompt:
+        # Enable prompt caching for system prompts (Claude-specific)
+        if system_prompt and self.use_prompt_caching:
+            api_kwargs["system"] = [
+                {
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                },
+            ]
+        elif system_prompt:
             api_kwargs["system"] = system_prompt
+
+        # Enable extended thinking for complex tasks (Claude-specific)
+        if self.use_thinking:
+            api_kwargs["thinking"] = {
+                "type": "enabled",
+                "budget_tokens": self.thinking_budget,
+            }
 
         # Add any additional kwargs
         api_kwargs.update(kwargs)
