@@ -24,12 +24,26 @@ def server():
 
 
 class TestToolRegistration:
-    """Verify all tools are registered (37 core + 5 redis plugin)."""
+    """Verify all tools are registered (41 core + 5 optional redis plugin)."""
 
-    def test_tools_list_returns_46(self, server: EmpathyMCPServer):
-        """Test that tools/list returns all 46 tools (41 core + 5 redis plugin)."""
+    def test_tools_list_returns_at_least_core_count(self, server: EmpathyMCPServer):
+        """Core tools (41) are always registered; attune-redis adds 5 more."""
         tools = server.get_tool_list()
-        assert len(tools) == 46
+        tool_names = {t["name"] for t in tools}
+
+        # 41 core tools must always be present
+        assert len(tools) >= 41
+
+        # When attune-redis plugin is installed, all 5 redis tools are present
+        redis_tools = {
+            "redis_health_check",
+            "redis_memory_promote",
+            "redis_memory_retrieve",
+            "redis_memory_search",
+            "redis_memory_store",
+        }
+        if redis_tools.issubset(tool_names):
+            assert len(tools) == 46, f"Expected 46 tools with redis plugin, got {len(tools)}"
 
     def test_memory_tools_registered(self, server: EmpathyMCPServer):
         """Test that all memory tools are in the tool list."""
@@ -313,3 +327,188 @@ class TestVersionCheck:
         assert _compare_versions("1.0.0", "1.0.0") is False
         assert _compare_versions("1.0.0", "1.0.1") is True
         assert _compare_versions("1.9.0", "1.10.0") is True
+
+
+class TestPersonalMemoryTools:
+    """Tests for personal_memory_capture/recall/topics/forget MCP tools."""
+
+    @pytest.mark.asyncio
+    async def test_capture_success(self, server: EmpathyMCPServer, tmp_path):
+        """personal_memory_capture returns success with destination path."""
+        mock_pm = MagicMock()
+        mock_pm.capture.return_value = tmp_path / "auth-design" / "decision.md"
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_capture",
+                {"topic": "auth-design", "content": "Use JWT", "kind": "decision"},
+            )
+        assert result["success"] is True
+        assert "auth-design" in result["path"]
+
+    @pytest.mark.asyncio
+    async def test_capture_invalid_topic_returns_error(self, server: EmpathyMCPServer):
+        """personal_memory_capture returns error for an invalid topic slug."""
+        mock_pm = MagicMock()
+        mock_pm.capture.side_effect = ValueError("Invalid topic slug")
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_capture",
+                {"topic": "../etc/passwd", "content": "bad"},
+            )
+        assert result["success"] is False
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_capture_import_error(self, server: EmpathyMCPServer):
+        """personal_memory_capture degrades gracefully when module is absent."""
+        import sys
+
+        saved = sys.modules.pop("attune.memory.personal", None)
+        sys.modules["attune.memory.personal"] = None  # type: ignore[assignment]
+        try:
+            result = await server.call_tool(
+                "personal_memory_capture",
+                {"topic": "auth-design", "content": "Use JWT"},
+            )
+        finally:
+            del sys.modules["attune.memory.personal"]
+            if saved is not None:
+                sys.modules["attune.memory.personal"] = saved
+        assert result["success"] is False
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_recall_success(self, server: EmpathyMCPServer):
+        """personal_memory_recall returns matching hits."""
+        mock_pm = MagicMock()
+        mock_pm.query.return_value = [
+            {"path": "auth-design/decision.md", "score": 0.9, "summary": "JWT"},
+        ]
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_recall",
+                {"query": "authentication", "k": 1},
+            )
+        assert result["success"] is True
+        assert result["count"] == 1
+        assert result["results"][0]["score"] == 0.9
+
+    @pytest.mark.asyncio
+    async def test_recall_empty(self, server: EmpathyMCPServer):
+        """personal_memory_recall returns empty results list when nothing matches."""
+        mock_pm = MagicMock()
+        mock_pm.query.return_value = []
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool("personal_memory_recall", {"query": "nothing"})
+        assert result["success"] is True
+        assert result["count"] == 0
+        assert result["results"] == []
+
+    @pytest.mark.asyncio
+    async def test_recall_import_error(self, server: EmpathyMCPServer):
+        """personal_memory_recall degrades gracefully when module is absent."""
+        import sys
+
+        saved = sys.modules.pop("attune.memory.personal", None)
+        sys.modules["attune.memory.personal"] = None  # type: ignore[assignment]
+        try:
+            result = await server.call_tool("personal_memory_recall", {"query": "auth"})
+        finally:
+            del sys.modules["attune.memory.personal"]
+            if saved is not None:
+                sys.modules["attune.memory.personal"] = saved
+        assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_topics_success(self, server: EmpathyMCPServer):
+        """personal_memory_topics returns list of topic slugs."""
+        mock_pm = MagicMock()
+        mock_pm.list_topics.return_value = ["auth-design", "retry-loop"]
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool("personal_memory_topics", {})
+        assert result["success"] is True
+        assert result["count"] == 2
+        assert "auth-design" in result["topics"]
+
+    @pytest.mark.asyncio
+    async def test_topics_empty(self, server: EmpathyMCPServer):
+        """personal_memory_topics returns empty list when no topics exist."""
+        mock_pm = MagicMock()
+        mock_pm.list_topics.return_value = []
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool("personal_memory_topics", {})
+        assert result["success"] is True
+        assert result["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_topics_import_error(self, server: EmpathyMCPServer):
+        """personal_memory_topics degrades gracefully when module is absent."""
+        import sys
+
+        saved = sys.modules.pop("attune.memory.personal", None)
+        sys.modules["attune.memory.personal"] = None  # type: ignore[assignment]
+        try:
+            result = await server.call_tool("personal_memory_topics", {})
+        finally:
+            del sys.modules["attune.memory.personal"]
+            if saved is not None:
+                sys.modules["attune.memory.personal"] = saved
+        assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_forget_success(self, server: EmpathyMCPServer):
+        """personal_memory_forget returns deleted count on success."""
+        mock_pm = MagicMock()
+        mock_pm.forget_topic.return_value = 1
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_forget",
+                {"topic": "auth-design"},
+            )
+        assert result["success"] is True
+        assert result["deleted"] == 1
+        assert result["topic"] == "auth-design"
+
+    @pytest.mark.asyncio
+    async def test_forget_topic_not_found(self, server: EmpathyMCPServer):
+        """personal_memory_forget returns failure when topic does not exist."""
+        mock_pm = MagicMock()
+        mock_pm.forget_topic.return_value = 0
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_forget",
+                {"topic": "nonexistent"},
+            )
+        assert result["success"] is False
+        assert "not found" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_forget_invalid_topic(self, server: EmpathyMCPServer):
+        """personal_memory_forget returns error for invalid topic slug."""
+        mock_pm = MagicMock()
+        mock_pm.forget_topic.side_effect = ValueError("Invalid topic slug")
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server.call_tool(
+                "personal_memory_forget",
+                {"topic": "../etc"},
+            )
+        assert result["success"] is False
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_forget_import_error(self, server: EmpathyMCPServer):
+        """personal_memory_forget degrades gracefully when module is absent."""
+        import sys
+
+        saved = sys.modules.pop("attune.memory.personal", None)
+        sys.modules["attune.memory.personal"] = None  # type: ignore[assignment]
+        try:
+            result = await server.call_tool(
+                "personal_memory_forget",
+                {"topic": "auth-design"},
+            )
+        finally:
+            del sys.modules["attune.memory.personal"]
+            if saved is not None:
+                sys.modules["attune.memory.personal"] = saved
+        assert result["success"] is False
