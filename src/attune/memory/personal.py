@@ -267,7 +267,17 @@ class PersonalMemory:
 
         Returns:
             Number of files deleted.
+
+        Raises:
+            ValueError: If ``topic`` or ``kind`` is invalid.
         """
+        if not _TOPIC_RE.match(topic):
+            raise ValueError(
+                f"Invalid topic slug {topic!r}. "
+                "Use only [a-zA-Z0-9_-], 1-50 chars, starting with alphanumeric."
+            )
+        if kind is not None and kind not in self.VALID_KINDS:
+            raise ValueError(f"Unknown kind {kind!r}. Valid kinds: {sorted(self.VALID_KINDS)}")
         deleted = 0
         for root in [self._global_root, self._project_root]:
             if root is None or not root.is_dir():
@@ -350,7 +360,7 @@ class PersonalMemory:
             except (json.JSONDecodeError, OSError):
                 summaries = {}
 
-        key = str(path.relative_to(root))
+        key = path.relative_to(root).as_posix()
         summaries[key] = _extract_summary(text)
 
         tmp = sidecar.with_suffix(".tmp")
@@ -366,7 +376,7 @@ class PersonalMemory:
             summaries = json.loads(sidecar.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return
-        key = str(path.relative_to(root))
+        key = path.relative_to(root).as_posix()
         if key in summaries:
             summaries.pop(key)
             tmp = sidecar.with_suffix(".tmp")
