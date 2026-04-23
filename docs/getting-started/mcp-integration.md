@@ -88,7 +88,7 @@ Then restart Claude Desktop.
 
 ---
 
-## Available Tools (18)
+## Available Tools (41 core + 5 with attune-redis)
 
 The Attune MCP server exposes all production workflows as tools:
 
@@ -102,6 +102,41 @@ The Attune MCP server exposes all production workflows as tools:
 | `test_generation` | Generate tests for code (supports batch mode) | `module`, `batch` (optional) |
 | `performance_audit` | Identify bottlenecks, memory leaks, optimization opportunities | `path` |
 | `release_prep` | Run release checks: health, security, changelog | `path` (optional) |
+| `doc_audit` | Audit documentation coverage and freshness | `path` |
+| `doc_gen` | Generate documentation for source code | `source_path` |
+| `test_audit` | Deep test coverage analysis | `path` |
+| `refactor_plan` | Identify refactoring opportunities and generate roadmap | `path` |
+| `dependency_check` | Audit dependencies for vulnerabilities and updates | `path` |
+| `simplify_code` | Find and simplify overly complex code | `path` |
+| `deep_review` | Multi-pass security + quality + test-gap review | `path` |
+| `health_check` | Comprehensive project health score | `project_root` |
+| `research_synthesis` | Synthesize multiple sources into a research answer | `sources`, `question` |
+| `analyze_batch` | Submit tasks to Anthropic Batch API (50% cost savings) | `requests` |
+| `rag_knowledge_query` | Query the RAG corpus for contextual knowledge | `query` |
+
+### Vision Tool
+
+| Tool | Description | Required Args |
+|------|-------------|---------------|
+| `analyze_image` | Analyze an image using Claude's vision capabilities | `image_path` |
+
+**`analyze_image` usage:**
+```json
+{
+  "image_path": "screenshots/error.png",
+  "prompt": "What error is shown and what might cause it?"
+}
+```
+
+Supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`. Maximum file size: 10 MB.
+Requires `ANTHROPIC_API_KEY` in the environment.
+
+**Example — diagnosing a UI bug from a screenshot:**
+```
+User: "Analyze this screenshot and explain what's wrong"
+Claude: [Invokes analyze_image with image_path="screenshots/bug.png"]
+→ Returns analysis: "The modal is rendering behind the overlay (z-index issue)..."
+```
 
 ### Authentication & Monitoring Tools
 
@@ -110,6 +145,39 @@ The Attune MCP server exposes all production workflows as tools:
 | `auth_status` | Get authentication strategy status and configuration | none |
 | `auth_recommend` | Get authentication recommendation for a file | `file_path` |
 | `telemetry_stats` | Get cost savings, cache hit rates, workflow performance | `days` (optional) |
+| `attune_get_level` | Get current Attune interaction level (1–5) | none |
+| `attune_set_level` | Set the Attune interaction level | `level` |
+| `context_get` | Retrieve a value from the session context store | `key` |
+| `context_set` | Store a value in the session context store | `key`, `value` |
+
+### Help System Tools
+
+| Tool | Description | Required Args |
+|------|-------------|---------------|
+| `help_lookup` | Look up guidance for a topic | `topic` |
+| `help_init` | Initialize the help system for a project | none |
+| `help_status` | Check help template freshness | none |
+| `help_update` | Update stale help templates | none |
+| `help_maintain` | Run help system maintenance tasks | none |
+
+### Memory Tools
+
+| Tool | Description | Required Args |
+|------|-------------|---------------|
+| `memory_store` | Store a key-value pair in persistent memory | `key`, `value` |
+| `memory_retrieve` | Retrieve a stored value | `key` |
+| `memory_search` | Search stored memory by query | `query` |
+| `memory_forget` | Delete a stored memory entry | `key` |
+| `personal_memory_capture` | Save a topic to cross-session personal memory | `topic`, `content` |
+| `personal_memory_recall` | Retrieve a personal memory topic | `topic` |
+| `personal_memory_topics` | List all personal memory topics | none |
+| `personal_memory_forget` | Delete a personal memory topic | `topic` |
+
+### Redis Plugin Tools (attune-redis)
+
+Installed with `pip install attune-redis`. Adds 5 additional tools:
+`redis_memory_store`, `redis_memory_retrieve`, `redis_memory_search`,
+`redis_memory_promote`, `redis_health_check`.
 
 ### MCP Resources (3)
 
