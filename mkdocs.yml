@@ -109,7 +109,8 @@ exclude_docs: |
   DASHBOARD_*.md
   DATA_*.md
   DEPENDABOT_*.md
-  DEVELOPER_*.md
+  DEVELOPER_NOTES.md
+  DEVELOPER_SETUP_OLD.md
   DOCUMENTATION_*.md
   FAQ_*.md
   FEATURE_*.md
@@ -248,8 +249,12 @@ nav:
           - Glossary: reference/glossary.md
           - User Guide: reference/USER_GUIDE.md
           - Short-Term Memory: reference/SHORT_TERM_MEMORY.md
+      - Architecture: ARCHITECTURE.md
+      - Features: FEATURES.md
 
-  - Contributing: contributing.md
+  - Contributing:
+      - contributing.md
+      - Developer Guide: DEVELOPER_GUIDE.md
 
   # Book section (separate from main docs)
   - Book:

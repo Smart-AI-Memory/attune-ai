@@ -62,7 +62,7 @@ The Attune AI implements a **defense-in-depth security model** with multiple lay
 ┌─────────────────────────────────────────────────────────────┐
 │              4. LLM Processing                               │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │ • OpenAI, Anthropic, Google, etc.                   │    │
+│  │ • Anthropic Claude                                  │    │
 │  │ • Receives ONLY scrubbed, validated text            │    │
 │  │ • No PII or secrets sent to external APIs           │    │
 │  └─────────────────────────────────────────────────────┘    │
@@ -150,7 +150,7 @@ response = await llm.interact(
 ### Implementation Example
 
 ```python
-from attune_llm.security import SecretsDetector
+from attune.memory import SecretsDetector
 
 detector = SecretsDetector()
 

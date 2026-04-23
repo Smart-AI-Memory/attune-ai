@@ -6,7 +6,6 @@ description: Attune AI User Guide API reference: **Transform your development wo
 
 **Transform your development workflow with Level 4 Anticipatory AI collaboration**
 
-**Version:** 3.1.0
 **License:** Apache License 2.0
 **Copyright:** 2025 Smart AI Memory, LLC
 

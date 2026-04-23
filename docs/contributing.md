@@ -9,7 +9,7 @@ Thank you for your interest in contributing to the Attune AI!
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/empathy.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/attune-ai.git`
 3. Create a branch: `git checkout -b feature/your-feature-name`
 4. Make your changes
 5. Run tests: `pytest`
@@ -21,8 +21,8 @@ Thank you for your interest in contributing to the Attune AI!
 
 ```bash
 # Clone repository
-git clone https://github.com/Smart-AI-Memory/empathy.git
-cd empathy
+git clone https://github.com/Smart-AI-Memory/attune-ai.git
+cd attune-ai
 
 # Install in development mode
 pip install -e .[dev]
