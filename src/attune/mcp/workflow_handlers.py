@@ -540,7 +540,7 @@ class WorkflowHandlersMixin:
 
             return {
                 "success": True,
-                "analysis": response.get("content", str(response)),
+                "analysis": response.content if hasattr(response, "content") else str(response),
                 "image_path": str(validated_path),
                 "media_type": media_type,
                 "file_size_bytes": file_size,
