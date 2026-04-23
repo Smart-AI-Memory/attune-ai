@@ -10,7 +10,6 @@ import json
 import tempfile
 from dataclasses import asdict
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -27,8 +26,6 @@ from attune.workflows.base import (
     WorkflowStage,
     _build_provider_models,
     _load_workflow_history,
-    _save_workflow_run,
-    get_workflow_stats,
 )
 
 
@@ -508,179 +505,6 @@ class TestWorkflowHistory:
 
             assert len(history) == 2
             assert history[0]["workflow"] == "test"
-
-    @pytest.mark.skip(reason="Tests legacy JSON storage; now uses SQLite (see history.py)")
-    def test_save_workflow_run_creates_file(self):
-        """Test saving workflow run creates file."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            history_file = f"{tmpdir}/.attune/workflow_runs.json"
-
-            now = datetime.now()
-            result = WorkflowResult(
-                success=True,
-                stages=[
-                    WorkflowStage(
-                        name="test",
-                        tier=ModelTier.CHEAP,
-                        description="Test",
-                        cost=0.01,
-                        duration_ms=100,
-                    ),
-                ],
-                final_output={"result": "done"},
-                cost_report=CostReport(
-                    total_cost=0.01,
-                    baseline_cost=0.05,
-                    savings=0.04,
-                    savings_percent=80.0,
-                ),
-                started_at=now,
-                completed_at=now,
-                total_duration_ms=100,
-            )
-
-            _save_workflow_run("test-workflow", "anthropic", result, history_file)
-
-            assert Path(history_file).exists()
-
-            with open(history_file) as f:
-                data = json.load(f)
-                assert len(data) == 1
-                assert data[0]["workflow"] == "test-workflow"
-
-    @pytest.mark.skip(reason="Tests legacy JSON storage; now uses SQLite (see history.py)")
-    def test_save_workflow_run_appends(self):
-        """Test saving multiple runs appends to history."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            history_file = f"{tmpdir}/.attune/workflow_runs.json"
-            now = datetime.now()
-
-            for i in range(3):
-                result = WorkflowResult(
-                    success=True,
-                    stages=[],
-                    final_output={},
-                    cost_report=CostReport(
-                        total_cost=0.01 * i,
-                        baseline_cost=0.05,
-                        savings=0.04,
-                        savings_percent=80.0,
-                    ),
-                    started_at=now,
-                    completed_at=now,
-                    total_duration_ms=100,
-                )
-                _save_workflow_run(f"workflow-{i}", "anthropic", result, history_file)
-
-            with open(history_file) as f:
-                data = json.load(f)
-                assert len(data) == 3
-
-    @pytest.mark.skip(reason="Tests legacy JSON storage; now uses SQLite (see history.py)")
-    def test_save_workflow_run_trims_history(self):
-        """Test history is trimmed to max size."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            history_file = f"{tmpdir}/.attune/workflow_runs.json"
-            now = datetime.now()
-
-            # Save more than max_history runs
-            for i in range(5):
-                result = WorkflowResult(
-                    success=True,
-                    stages=[],
-                    final_output={},
-                    cost_report=CostReport(
-                        total_cost=0.01,
-                        baseline_cost=0.05,
-                        savings=0.04,
-                        savings_percent=80.0,
-                    ),
-                    started_at=now,
-                    completed_at=now,
-                    total_duration_ms=100,
-                )
-                _save_workflow_run(
-                    f"workflow-{i}",
-                    "anthropic",
-                    result,
-                    history_file,
-                    max_history=3,
-                )
-
-            with open(history_file) as f:
-                data = json.load(f)
-                assert len(data) == 3
-                # Should keep only the last 3
-                assert data[0]["workflow"] == "workflow-2"
-
-
-class TestGetWorkflowStats:
-    """Tests for get_workflow_stats function."""
-
-    @pytest.mark.skip(reason="Tests legacy JSON storage; now uses SQLite (see history.py)")
-    def test_empty_history(self):
-        """Test stats with empty history."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump([], f)
-            f.flush()
-
-            stats = get_workflow_stats(f.name)
-
-            assert stats["total_runs"] == 0
-            assert stats["by_workflow"] == {}
-            assert stats["total_cost"] == 0.0
-
-    @pytest.mark.skip(reason="Tests legacy JSON storage; now uses SQLite (see history.py)")
-    def test_stats_aggregation(self):
-        """Test stats aggregation from history."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            history = [
-                {
-                    "workflow": "health-check",
-                    "provider": "anthropic",
-                    "success": True,
-                    "cost": 0.05,
-                    "savings": 0.10,
-                    "savings_percent": 66.0,
-                    "stages": [
-                        {"tier": "cheap", "cost": 0.02, "skipped": False},
-                        {"tier": "capable", "cost": 0.03, "skipped": False},
-                    ],
-                },
-                {
-                    "workflow": "health-check",
-                    "provider": "anthropic",
-                    "success": True,
-                    "cost": 0.03,
-                    "savings": 0.07,
-                    "savings_percent": 70.0,
-                    "stages": [{"tier": "cheap", "cost": 0.03, "skipped": False}],
-                },
-                {
-                    "workflow": "code-review",
-                    "provider": "openai",
-                    "success": False,
-                    "cost": 0.10,
-                    "savings": 0.05,
-                    "savings_percent": 33.0,
-                    "stages": [],
-                },
-            ]
-            json.dump(history, f)
-            f.flush()
-
-            stats = get_workflow_stats(f.name)
-
-            assert stats["total_runs"] == 3
-            assert stats["successful_runs"] == 2
-            assert stats["by_workflow"]["health-check"]["runs"] == 2
-            assert stats["by_workflow"]["code-review"]["runs"] == 1
-            assert stats["by_provider"]["anthropic"]["runs"] == 2
-            assert stats["by_provider"]["openai"]["runs"] == 1
-            # Total cost: 0.05 + 0.03 + 0.10 = 0.18
-            assert abs(stats["total_cost"] - 0.18) < 0.001
-            # Total savings: 0.10 + 0.07 + 0.05 = 0.22
-            assert abs(stats["total_savings"] - 0.22) < 0.001
 
 
 class TestConcreteWorkflow(BaseWorkflow):

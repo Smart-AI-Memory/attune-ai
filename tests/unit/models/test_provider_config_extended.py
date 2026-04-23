@@ -7,7 +7,7 @@ These tests cover:
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -58,78 +58,8 @@ class TestProviderConfigSecurity:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="HYBRID/CUSTOM modes removed in v5.0.0 (Anthropic-only)")
-class TestProviderConfigHybridMode:
-    """Test HYBRID mode functionality."""
-
-    def test_hybrid_mode_creation(self):
-        """Test creating config in HYBRID mode."""
-        config = ProviderConfig(
-            mode=ProviderMode.HYBRID,
-            primary_provider="anthropic",
-        )
-
-        assert config.mode == ProviderMode.HYBRID
-
-    def test_get_model_for_tier_hybrid_mode(self):
-        """Test get_model_for_tier in HYBRID mode."""
-        config = ProviderConfig(
-            mode=ProviderMode.HYBRID,
-            primary_provider="anthropic",
-        )
-
-        # HYBRID mode should return model from hybrid registry
-        result = config.get_model_for_tier("cheap")
-
-        # Result should be a ModelInfo object or None
-        assert result is None or hasattr(result, "id")  # ModelInfo has id attribute
-
-    def test_custom_mode_with_tier_providers(self):
-        """Test CUSTOM mode with tier_providers mapping."""
-        config = ProviderConfig(
-            mode=ProviderMode.CUSTOM,
-            primary_provider="anthropic",
-            tier_providers={
-                "cheap": "ollama",
-                "capable": "openai",
-                "premium": "anthropic",
-            },
-        )
-
-        # Should use the tier_providers mapping
-        assert config.tier_providers["cheap"] == "ollama"
-        assert config.tier_providers["capable"] == "openai"
-        assert config.tier_providers["premium"] == "anthropic"
-
-    def test_get_effective_registry_hybrid(self):
-        """Test get_effective_registry in HYBRID mode."""
-        config = ProviderConfig(
-            mode=ProviderMode.HYBRID,
-            primary_provider="anthropic",
-        )
-
-        registry = config.get_effective_registry()
-
-        # Should return a dict with tier keys
-        assert isinstance(registry, dict)
-
-
-@pytest.mark.unit
 class TestProviderConfigEdgeCases:
     """Test edge cases and error handling."""
-
-    @pytest.mark.skip(reason="CUSTOM mode removed in v5.0.0 (Anthropic-only)")
-    def test_empty_tier_providers_fallback(self):
-        """Test CUSTOM mode with empty tier_providers falls back to primary."""
-        config = ProviderConfig(
-            mode=ProviderMode.CUSTOM,
-            primary_provider="anthropic",
-            tier_providers={},
-        )
-
-        # Should fall back to primary_provider
-        config.get_model_for_tier("cheap")
-        # Result depends on registry state
 
     def test_invalid_mode_from_dict(self):
         """Test from_dict handles invalid mode gracefully."""
@@ -227,34 +157,6 @@ class TestGlobalConfigManagement:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Ollama removed in v5.0.0 (Anthropic-only architecture)")
-class TestOllamaDetection:
-    """Test Ollama provider detection."""
-
-    def test_check_ollama_not_running(self):
-        """Test _check_ollama_available when Ollama is not running."""
-        with patch("socket.socket") as mock_socket:
-            mock_instance = MagicMock()
-            mock_instance.connect.side_effect = ConnectionRefusedError()
-            mock_socket.return_value.__enter__.return_value = mock_instance
-
-            result = ProviderConfig._check_ollama_available()
-
-            assert result is False
-
-    def test_check_ollama_timeout(self):
-        """Test _check_ollama_available with timeout."""
-        with patch("socket.socket") as mock_socket:
-            mock_instance = MagicMock()
-            mock_instance.connect.side_effect = TimeoutError()
-            mock_socket.return_value.__enter__.return_value = mock_instance
-
-            result = ProviderConfig._check_ollama_available()
-
-            assert result is False
-
-
-@pytest.mark.unit
 class TestEnvFileLoading:
     """Test .env file loading."""
 
@@ -273,14 +175,6 @@ class TestEnvFileLoading:
             providers = ProviderConfig.detect_available_providers()
 
             assert "anthropic" in providers
-
-    @pytest.mark.skip(reason="OpenAI removed in v5.0.0 (Anthropic-only architecture)")
-    def test_provider_detection_with_openai(self):
-        """Test provider detection with OPENAI_API_KEY."""
-        with patch.dict("os.environ", {"OPENAI_API_KEY": "test_key"}, clear=True):
-            providers = ProviderConfig.detect_available_providers()
-
-            assert "openai" in providers
 
     def test_auto_detect_with_single_provider(self):
         """Test auto_detect with single provider available (Anthropic-only)."""
