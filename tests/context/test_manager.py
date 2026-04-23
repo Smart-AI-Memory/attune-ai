@@ -59,7 +59,7 @@ class TestContextManager:
         assert len(manager._completed_phases) == 2
 
     def test_set_handoff(self):
-        """Test setting SBAR handoff."""
+        """Test setting work handoff."""
         manager = ContextManager()
 
         handoff = manager.set_handoff(

@@ -1,7 +1,7 @@
 """Tests for the Book Production Learning System
 
 Tests cover:
-- SBAR Agent Handoffs
+- Work Handoffs
 - Quality Gap Detection
 - Pattern Extraction
 - Feedback Loop
@@ -18,7 +18,7 @@ from agents.book_production.learning import (
     PatternExtractor,
     QualityGap,
     QualityGapDetector,
-    SBARHandoff,
+    WorkHandoff,
     create_editor_to_reviewer_handoff,
     create_research_to_writer_handoff,
     create_reviewer_to_writer_handoff,
@@ -27,12 +27,12 @@ from agents.book_production.learning import (
 from agents.book_production.state import create_initial_state
 
 
-class TestSBARHandoffs:
-    """Tests for SBAR handoff creation and formatting"""
+class TestWorkHandoffs:
+    """Tests for work handoff creation and formatting"""
 
     def test_handoff_creation(self):
-        """Test basic SBAR handoff creation"""
-        handoff = SBARHandoff(
+        """Test basic work handoff creation"""
+        handoff = WorkHandoff(
             handoff_type=HandoffType.RESEARCH_TO_WRITER,
             from_agent="ResearchAgent",
             to_agent="WriterAgent",
@@ -48,7 +48,7 @@ class TestSBARHandoffs:
 
     def test_handoff_to_prompt_context(self):
         """Test conversion to prompt context format"""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             handoff_type=HandoffType.WRITER_TO_EDITOR,
             from_agent="WriterAgent",
             to_agent="EditorAgent",
@@ -70,7 +70,7 @@ class TestSBARHandoffs:
 
     def test_handoff_to_dict(self):
         """Test serialization to dictionary"""
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             handoff_type=HandoffType.EDITOR_TO_REVIEWER,
             from_agent="EditorAgent",
             to_agent="ReviewerAgent",
@@ -631,7 +631,7 @@ class TestPipelineIntegration:
         pipeline = BookProductionPipeline()
 
         # Manually add a handoff for testing
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             handoff_type=HandoffType.RESEARCH_TO_WRITER,
             from_agent="ResearchAgent",
             to_agent="WriterAgent",
