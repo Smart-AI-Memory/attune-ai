@@ -37,7 +37,7 @@ class HandoffAndExportMixin:
     # =========================================================================
 
     def generate_compact_state(self) -> str:
-        """Generate SBAR-format compact state from current session.
+        """Generate structured compact state from current session.
 
         Creates a human-readable summary of the current session state,
         suitable for Claude Code's .claude/compact-state.md file.
@@ -65,7 +65,7 @@ class HandoffAndExportMixin:
 
         lines.extend(
             [
-                "## SBAR Handoff",
+                "## Work Handoff",
                 "",
                 "### Situation",
             ],
@@ -184,7 +184,7 @@ class HandoffAndExportMixin:
         recommendation: str,
         **extra_context,
     ) -> None:
-        """Set SBAR handoff context for session continuity.
+        """Set work handoff context for session continuity.
 
         This data is used by generate_compact_state() and export_to_claude_md().
 

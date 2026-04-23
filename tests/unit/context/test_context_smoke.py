@@ -21,11 +21,11 @@ class TestImports:
 
     def test_compaction_classes_import(self) -> None:
         """Test that compaction classes import."""
-        from attune.context import CompactionStateManager, CompactState, SBARHandoff
+        from attune.context import CompactionStateManager, CompactState, WorkHandoff
 
         assert CompactionStateManager is not None
         assert CompactState is not None
-        assert SBARHandoff is not None
+        assert WorkHandoff is not None
 
     def test_context_manager_imports(self) -> None:
         """Test that ContextManager imports."""
@@ -54,10 +54,10 @@ class TestInstantiation:
         assert csm is not None
 
     def test_sbar_handoff_creation(self) -> None:
-        """Test SBARHandoff dataclass creation."""
-        from attune.context import SBARHandoff
+        """Test WorkHandoff dataclass creation."""
+        from attune.context import WorkHandoff
 
-        handoff = SBARHandoff(
+        handoff = WorkHandoff(
             situation="Running code review",
             background="PR #42 has 15 files",
             assessment="3 security issues found",

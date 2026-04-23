@@ -56,11 +56,11 @@ class PatternSummary:
 
 
 @dataclass
-class SBARHandoff:
-    """SBAR-format handoff for continuity across compaction.
+class WorkHandoff:
+    """Structured work handoff for continuity across compaction events.
 
-    Situation-Background-Assessment-Recommendation format
-    for clear communication of pending work.
+    Captures what was in progress and what to do next so the restored
+    session can continue without re-reading the conversation history.
     """
 
     situation: str  # What's happening now
@@ -75,7 +75,7 @@ class SBARHandoff:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> SBARHandoff:
+    def from_dict(cls, data: dict[str, Any]) -> WorkHandoff:
         """Create from dictionary."""
         return cls(
             situation=data.get("situation", ""),
@@ -123,7 +123,7 @@ class CompactState:
     completed_phases: list[str] = field(default_factory=list)
 
     # Pending work
-    pending_handoff: SBARHandoff | None = None
+    pending_handoff: WorkHandoff | None = None
 
     # Metrics
     interaction_count: int = 0
@@ -167,7 +167,7 @@ class CompactState:
         patterns = [PatternSummary.from_dict(p) for p in data.get("detected_patterns", [])]
 
         handoff_data = data.get("pending_handoff")
-        handoff = SBARHandoff.from_dict(handoff_data) if handoff_data else None
+        handoff = WorkHandoff.from_dict(handoff_data) if handoff_data else None
 
         return cls(
             user_id=data.get("user_id", ""),

@@ -21,7 +21,7 @@ from attune.context.compaction import (
     CompactionStateManager,
     CompactState,
     PatternSummary,
-    SBARHandoff,
+    WorkHandoff,
 )
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ class ContextManager:
     - Converting CollaborationState to CompactState for preservation
     - Restoring state after context window resets
     - Generating restoration prompts
-    - Handling SBAR handoffs for work continuity
+    - Handling structured work handoffs for continuity
     """
 
     def __init__(
@@ -60,7 +60,7 @@ class ContextManager:
         self._current_session_id: str = ""
         self._current_phase: str = ""
         self._completed_phases: list[str] = []
-        self._pending_handoff: SBARHandoff | None = None
+        self._pending_handoff: WorkHandoff | None = None
 
     @property
     def session_id(self) -> str:
@@ -101,10 +101,10 @@ class ContextManager:
         recommendation: str,
         priority: str = "normal",
         **metadata: Any,
-    ) -> SBARHandoff:
+    ) -> WorkHandoff:
         """Set a pending handoff for work continuity.
 
-        Uses SBAR format for clear communication:
+        Uses structured format for clear communication:
         - Situation: What's happening now
         - Background: Relevant context
         - Assessment: Current understanding
@@ -119,10 +119,10 @@ class ContextManager:
             **metadata: Additional metadata
 
         Returns:
-            The created SBARHandoff
+            The created WorkHandoff
 
         """
-        self._pending_handoff = SBARHandoff(
+        self._pending_handoff = WorkHandoff(
             situation=situation,
             background=background,
             assessment=assessment,

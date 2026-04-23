@@ -76,7 +76,7 @@ def run_pre_compact(context: dict[str, Any]) -> dict[str, Any]:
         if current_phase := context.get("current_phase"):
             context_manager.current_phase = current_phase
 
-        # Create SBAR handoff for pending work if provided
+        # Create structured work handoff for pending work if provided
         pending_work = context.get("pending_work")
         if pending_work:
             context_manager.set_handoff(
@@ -206,4 +206,4 @@ if __name__ == "__main__":
     print("  - context_manager: ContextManager instance (optional)")
     print("  - session_id: Current session ID (optional)")
     print("  - current_phase: Current work phase (optional)")
-    print("  - pending_work: Dict with SBAR fields (optional)")
+    print("  - pending_work: Dict with handoff fields (optional)")

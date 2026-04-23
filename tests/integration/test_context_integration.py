@@ -10,7 +10,7 @@ from attune.context import (
     CompactionStateManager,
     CompactState,
     ContextManager,
-    SBARHandoff,
+    WorkHandoff,
 )
 from attune.context.compaction import PatternSummary
 
@@ -43,7 +43,7 @@ class TestCompactStateIntegration:
             session_id="session_abc123",
             current_phase="implementation",
             completed_phases=["planning", "design"],
-            pending_handoff=SBARHandoff(
+            pending_handoff=WorkHandoff(
                 situation="Implementing user authentication",
                 background="User requested OAuth support",
                 assessment="Core flow complete, need error handling",
@@ -111,7 +111,7 @@ class TestCompactStateIntegration:
             ],
             session_id="prompt_session",
             current_phase="testing",
-            pending_handoff=SBARHandoff(
+            pending_handoff=WorkHandoff(
                 situation="Running test suite",
                 background="Adding unit tests",
                 assessment="80% coverage",
@@ -130,12 +130,12 @@ class TestCompactStateIntegration:
         assert "Running test suite" in prompt
 
 
-class TestSBARHandoffIntegration:
-    """Test SBAR handoff functionality."""
+class TestWorkHandoffIntegration:
+    """Test work handoff functionality."""
 
     def test_sbar_format_summary(self):
-        """Test SBAR summary formatting."""
-        handoff = SBARHandoff(
+        """Test handoff summary formatting."""
+        handoff = WorkHandoff(
             situation="Debugging memory leak",
             background="User reported high memory usage after 2 hours",
             assessment="Found circular references in cache",
@@ -152,8 +152,8 @@ class TestSBARHandoffIntegration:
         assert "**Recommendation**: Implement weak" in summary
 
     def test_sbar_metadata_preserved(self):
-        """Test that SBAR metadata is preserved through serialization."""
-        handoff = SBARHandoff(
+        """Test that handoff metadata is preserved through serialization."""
+        handoff = WorkHandoff(
             situation="Test situation",
             background="Test background",
             assessment="Test assessment",
@@ -166,7 +166,7 @@ class TestSBARHandoffIntegration:
         )
 
         data = handoff.to_dict()
-        restored = SBARHandoff.from_dict(data)
+        restored = WorkHandoff.from_dict(data)
 
         assert restored.metadata["files_modified"] == ["a.py", "b.py"]
         assert restored.metadata["test_coverage"] == 85.5

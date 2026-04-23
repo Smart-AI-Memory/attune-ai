@@ -535,7 +535,7 @@ class TestFileFirstIntegration:
         content = memory.generate_compact_state()
 
         assert "Compact State" in content
-        assert "SBAR" in content
+        assert "Work Handoff" in content
         assert "Testing file-first architecture" in content
         assert "Unit test execution" in content
 
