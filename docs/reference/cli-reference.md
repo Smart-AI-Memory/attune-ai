@@ -214,6 +214,195 @@ attune telemetry export -o telemetry.csv --format csv
 
 ---
 
+### `attune telemetry routing-stats`
+
+Show adaptive routing statistics — how the tier router chose between cheap,
+capable, and premium models across your workflows.
+
+```bash
+attune telemetry routing-stats
+attune telemetry routing-stats --workflow security-audit
+attune telemetry routing-stats --workflow code-review --stage scan --days 14
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--workflow` | `-w` | all | Filter by workflow name |
+| `--stage` | `-s` | all | Filter by stage name within a workflow |
+| `--days` | `-d` | 7 | Number of days to include |
+
+**Output (per workflow):**
+```
+📊 Adaptive Routing Statistics
+
+  Workflow:      security-audit
+  Period:        Last 7 days
+  Total calls:   28
+  Avg cost:      $0.0034
+  Success rate:  96.4%
+
+  Models used:   claude-haiku-4-5, claude-sonnet-4-5
+
+  Per-Model Performance:
+    claude-sonnet-4-5:
+      Calls:         20   Success rate: 100.0%
+      Avg cost:      $0.0045  Avg latency: 1420ms
+    claude-haiku-4-5:
+      Calls:         8    Success rate: 87.5%
+      Avg cost:      $0.0008  Avg latency: 680ms
+```
+
+---
+
+### `attune telemetry routing-check`
+
+Get tier upgrade recommendations based on recent routing performance. Tells
+you if a stage is consistently failing at a lower tier and should be promoted.
+
+```bash
+attune telemetry routing-check
+attune telemetry routing-check --workflow code-review --days 30
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--workflow` | `-w` | all | Limit analysis to one workflow |
+| `--days` | `-d` | 7 | Number of days to analyze |
+
+---
+
+### `attune telemetry models`
+
+Show model performance broken down by provider.
+
+```bash
+attune telemetry models
+attune telemetry models --days 14
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--days` | `-d` | 7 | Number of days |
+| `--min-calls` | - | 5 | Minimum call count to include in report |
+
+---
+
+### `attune telemetry agents`
+
+Show active agents and their current coordination status.
+
+```bash
+attune telemetry agents
+```
+
+Displays agent IDs, session type, access tier, capabilities, and last
+heartbeat time for all agents currently registered in the coordination layer.
+
+---
+
+### `attune telemetry signals`
+
+Show coordination signals for a specific agent — messages sent and received
+across the multi-agent coordination bus.
+
+```bash
+attune telemetry signals --agent <agent-id>
+```
+
+**Options:**
+
+| Option | Short | Required | Description |
+|--------|-------|----------|-------------|
+| `--agent` | `-a` | Yes | Agent ID to inspect |
+
+---
+
+## Costs Commands
+
+Track API spend and savings from intelligent tier routing.
+
+### `attune costs`
+
+Show a cost report for the recent period.
+
+```bash
+attune costs
+attune costs --days 30
+attune costs --workflow security-audit
+attune costs --json
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--days` | `-d` | 7 | Number of days |
+| `--workflow` | `-w` | all | Filter by workflow name |
+| `--json` | - | false | Output raw JSON |
+
+**Output:**
+```
+Cost Report — Last 7 days
+--------------------------------------------------
+  Requests:        142
+  Actual cost:     $0.4821
+  Baseline (Opus): $6.3900
+  Saved:           $5.9079  (92.5%)
+```
+
+---
+
+### `attune costs today`
+
+Show costs incurred today only.
+
+```bash
+attune costs today
+```
+
+---
+
+### `attune costs export`
+
+Export cost data to a file.
+
+```bash
+attune costs export -o costs.json
+attune costs export -o costs.csv --format csv --days 30
+```
+
+**Options:**
+
+| Option | Short | Required | Default | Description |
+|--------|-------|----------|---------|-------------|
+| `--output` | `-o` | Yes | - | Output file path |
+| `--format` | `-f` | No | json | Output format (`json` or `csv`) |
+| `--days` | `-d` | No | 30 | Days of history to include |
+
+---
+
+### `attune costs reset`
+
+Clear all stored cost data. Requires explicit confirmation.
+
+```bash
+attune costs reset --confirm
+```
+
+**Options:**
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--confirm` | Yes | Safety flag — must be passed to proceed |
+
+---
+
 ## Provider Commands
 
 ### `attune provider show`
@@ -343,7 +532,140 @@ Remove with: attune forget <number> or attune forget <keyword>
 
 ---
 
+### `attune memory capture <topic> <content>`
+
+Save a topic to personal cross-session memory. The content is polished by
+Claude before saving so it's clear and retrievable in future sessions.
+
+```bash
+attune memory capture "auth-pattern" "Always use _validate_file_path before writes"
+attune memory capture "deploy-note" "Blue/green deploy requires 10-min warm-up" --project
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `topic` | Yes | Slug identifier — letters, digits, hyphens, max 50 chars |
+| `content` | Yes | Raw content to capture and polish |
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--project` | - | Save to `.attune/memory/` (project-local) instead of global |
+| `--no-polish` | - | Skip LLM polish step; save content verbatim |
+
+---
+
+### `attune memory recall <topic>`
+
+Retrieve a saved memory topic.
+
+```bash
+attune memory recall auth-pattern
+attune memory recall deploy-note --deep
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `topic` | Yes | Topic slug to retrieve |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--deep` | Show full detail including related topics |
+
+---
+
+### `attune memory topics`
+
+List all saved personal memory topics.
+
+```bash
+attune memory topics
+```
+
+---
+
+### `attune memory forget-topic <topic>`
+
+Delete a saved memory topic.
+
+```bash
+attune memory forget-topic old-pattern
+```
+
+---
+
 ## Utility Commands
+
+### `attune doctor`
+
+Run a comprehensive environment health check — verifies Python version, API
+key, Redis connectivity, installed extras, and MCP server reachability.
+
+```bash
+attune doctor
+```
+
+**Output:**
+```
+🩺 Attune AI Environment Check
+
+  ✅ Python 3.11.5 (≥ 3.10 required)
+  ✅ ANTHROPIC_API_KEY set
+  ✅ attune-ai 6.3.0 installed
+  ✅ Redis reachable (localhost:6379)
+  ⚠️  attune-rag not installed (pip install attune-ai[rag])
+  ✅ MCP server importable
+
+2 warnings. Run `attune features` to see optional extras.
+```
+
+---
+
+### `attune features`
+
+Show which optional feature groups are installed and which are available to
+install, with the pip command for each.
+
+```bash
+attune features
+```
+
+**Output:**
+```
+📦 Attune AI Features
+
+  ✅ core          Always available
+  ✅ redis         attune-ai[redis] — Redis short-term memory
+  ✅ developer     attune-ai[developer] — Development tools
+  ❌ rag           attune-ai[rag] — RAG grounding (attune-rag)
+  ❌ author        attune-ai[author] — Template authoring (attune-author)
+
+Install missing extras: pip install attune-ai[rag]
+```
+
+---
+
+### `attune setup`
+
+Install the Attune slash commands to `~/.claude/commands/` so they are
+available in every Claude Code session without a project-level plugin.
+
+```bash
+attune setup
+```
+
+Copies all commands from the installed `attune-ai` package into
+`~/.claude/commands/`. Safe to re-run — existing commands are overwritten
+with the latest version.
+
+---
 
 ### `attune validate`
 
