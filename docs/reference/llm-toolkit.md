@@ -10,37 +10,24 @@ Enterprise-grade LLM integration with security controls and compliance features.
 
 The LLM Toolkit provides:
 
-- **Unified LLM Interface**: Single API for multiple providers (Anthropic, OpenAI, Ollama)
+- **Anthropic Integration**: Claude API via `AnthropicProvider` with level-aware interactions
 - **Security Controls**: PII scrubbing, secrets detection, content filtering
 - **Compliance**: HIPAA, GDPR, SOC2 audit logging
-- **Claude Memory Integration**: CLAUDE.md support with Long-Term Memory pattern storage
-- **Healthcare Wizards**: FHIR, HL7, clinical protocol support
+- **Claude Memory Integration**: CLAUDE.md support for persistent context
 
 ## Key Features
 
-### Multi-Provider Support
+### Anthropic Integration
 
 ```python
-from attune_llm import EmpathyLLM
+from attune.llm import EmpathyLLM
 
-# Anthropic Claude (recommended)
-claude = EmpathyLLM(
+# Anthropic Claude (the only supported provider)
+llm = EmpathyLLM(
     provider="anthropic",
     api_key=os.getenv("ANTHROPIC_API_KEY"),
-    model="claude-sonnet-4"
-)
-
-# OpenAI GPT
-openai = EmpathyLLM(
-    provider="openai",
-    api_key=os.getenv("OPENAI_API_KEY"),
-    model="gpt-4"
-)
-
-# Local Ollama
-local = EmpathyLLM(
-    provider="ollama",
-    model="llama2"
+    model="claude-sonnet-4-5",
+    target_level=4
 )
 ```
 
@@ -64,7 +51,7 @@ Main LLM interface with empathy integration.
 
 **Example:**
 ```python
-from attune_llm import EmpathyLLM
+from attune.llm import EmpathyLLM
 from attune import EmpathyOS
 
 # Initialize with security controls
@@ -106,7 +93,7 @@ Detect and scrub personally identifiable information.
 
 **Example:**
 ```python
-from attune_llm.security import PIIScrubber
+from attune.memory import PIIScrubber
 
 scrubber = PIIScrubber()
 
@@ -144,7 +131,7 @@ Detect API keys, tokens, and credentials.
 
 **Example:**
 ```python
-from attune_llm.security import SecretsDetector
+from attune.memory import SecretsDetector
 
 detector = SecretsDetector()
 
@@ -180,7 +167,7 @@ Compliance audit logging (HIPAA, GDPR, SOC2).
 
 **Example:**
 ```python
-from attune_llm.security import AuditLogger
+from attune.memory import AuditLogger
 
 logger = AuditLogger(
     log_path="logs/audit.jsonl",
@@ -216,7 +203,7 @@ logger.log_access(
 ### PII Scrubbing Patterns
 
 ```python
-from attune_llm.security import PIIScrubber
+from attune.memory import PIIScrubber
 
 # Default patterns
 scrubber = PIIScrubber()
@@ -244,7 +231,7 @@ print(scrubbed)
 ### Secrets Detection Configuration
 
 ```python
-from attune_llm.security import SecretsDetector
+from attune.memory import SecretsDetector
 
 detector = SecretsDetector(
     entropy_threshold=4.5,  # Lower = more sensitive
@@ -311,8 +298,8 @@ with open("config.py") as f:
 ### CLAUDE.md Support
 
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.claude_memory import ClaudeMemoryConfig
+from attune.llm import EmpathyLLM
+from attune.memory import ClaudeMemoryConfig
 
 # Configure Claude Memory
 memory_config = ClaudeMemoryConfig(
@@ -339,115 +326,16 @@ response = llm.interact(
 # Memory instructions from CLAUDE.md are automatically followed
 ```
 
-### Long-Term Memory Pattern Storage
-
-```python
-from attune_llm.secure_pattern-storage import SecureLong-Term MemoryIntegration
-
-# Initialize with classification
-pattern-storage = SecureLong-Term MemoryIntegration(
-    claude_memory_config=memory_config,
-    classification_mode="auto"  # or "PUBLIC", "INTERNAL", "SENSITIVE"
-)
-
-# Store pattern with automatic classification
-pattern_data = """
-# Deployment Best Practice
-
-Always deploy on Monday mornings:
-- Full team available
-- Time to fix issues
-- Avoid weekend emergencies
-"""
-
-result = pattern-storage.store_pattern(
-    pattern_content=pattern_data,
-    pattern_type="best_practice",
-    user_id="user_123",
-    auto_classify=True
-)
-
-print(f"Pattern stored: {result['pattern_id']}")
-print(f"Classification: {result['classification']}")
-# Output: Classification: PUBLIC
-```
-
-## Healthcare Wizards
-
-### Clinical Protocol Monitor
-
-```python
-from attune_llm.wizards import ClinicalProtocolMonitor
-
-# Monitor clinical handoffs
-monitor = ClinicalProtocolMonitor(
-    protocol="SBAR",  # Situation, Background, Assessment, Recommendation
-    enable_hipaa_audit=True
-)
-
-# Process handoff
-handoff_text = """
-Situation: 65yo male, chest pain x2h
-Background: Hx of MI, on aspirin
-Assessment: STEMI suspected, vitals stable
-Recommendation: Activate cath lab
-"""
-
-result = monitor.process_handoff(handoff_text)
-
-if result.complete:
-    print("✓ SBAR protocol complete")
-else:
-    print("⚠️  Missing components:")
-    for component in result.missing:
-        print(f"  - {component}")
-
-if result.safety_flags:
-    print("🚨 Safety flags:")
-    for flag in result.safety_flags:
-        print(f"  - {flag}")
-```
-
-### Healthcare Compliance Wizard
-
-```python
-from attune_llm.wizards import HealthcareComplianceWizard
-
-wizard = HealthcareComplianceWizard(
-    frameworks=["HIPAA", "HITECH", "FDA_21CFR11"]
-)
-
-# Check compliance of a system
-result = wizard.check_compliance(
-    system_description="Patient portal with EHR integration",
-    features=[
-        "patient_authentication",
-        "data_encryption",
-        "audit_logging",
-        "access_controls"
-    ]
-)
-
-print(f"Compliance score: {result.score:.0%}")
-
-if result.violations:
-    print("\n⚠️  Violations:")
-    for violation in result.violations:
-        print(f"  {violation.framework}: {violation.description}")
-        print(f"  Severity: {violation.severity}")
-        print(f"  Remediation: {violation.remediation}")
-```
-
 ## Usage Patterns
 
 ### Complete Security Setup
 
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.security import (
+from attune.llm import EmpathyLLM
+from attune.memory import (
     PIIScrubber,
     SecretsDetector,
-    AuditLogger
+    AuditLogger,
 )
 
 # Initialize security components
@@ -475,34 +363,6 @@ response = llm.interact(
 )
 
 # Security audit trail is automatically created
-```
-
-### Multi-Provider Fallback
-
-```python
-from attune_llm import EmpathyLLM
-
-providers = [
-    {"provider": "anthropic", "api_key": os.getenv("ANTHROPIC_API_KEY")},
-    {"provider": "openai", "api_key": os.getenv("OPENAI_API_KEY")},
-    {"provider": "ollama", "model": "llama2"}  # Local fallback
-]
-
-def interact_with_fallback(prompt, context):
-    """Try providers in order until one succeeds"""
-    for config in providers:
-        try:
-            llm = EmpathyLLM(**config)
-            return llm.interact(
-                user_id="user_123",
-                prompt=prompt,
-                context=context
-            )
-        except Exception as e:
-            print(f"Provider {config['provider']} failed: {e}")
-            continue
-
-    raise Exception("All providers failed")
 ```
 
 ## Best Practices

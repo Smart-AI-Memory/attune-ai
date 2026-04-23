@@ -99,7 +99,6 @@ pip install -r requirements.txt
 ```bash
 pip install langchain==0.1.0
 pip install anthropic==0.8.0
-pip install openai==1.6.0
 pip install attune-ai
 ```
 
@@ -528,25 +527,7 @@ else:
     result = await llm_cheap.interact(user_id, input)
 ```
 
-**3. Use local models for development:**
-```bash
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Download models for each tier
-ollama pull llama3.2:3b    # cheap tier (~2GB)
-ollama pull llama3.1:8b    # capable tier (~5GB)
-ollama pull llama3.1:70b   # premium tier (~40GB, optional)
-
-# Use in framework (free!)
-llm = EmpathyLLM(
-    provider="local",
-    endpoint="http://localhost:11434",
-    model="llama2"
-)
-```
-
-**4. Cache wizard results:**
+**3. Cache wizard results:**
 ```python
 import functools
 from coach_wizards import SecurityWizard
@@ -761,85 +742,6 @@ for item in items:
 # Do:
 batch_input = "\n".join([f"Analyze {item}" for item in items])
 result = await llm.interact(user_id, batch_input)
-```
-
-### Issue: OpenAI context length exceeded
-
-**Error Message:**
-```
-InvalidRequestError: This model's maximum context length is 8192 tokens
-```
-
-**Solutions:**
-
-**1. Use model with larger context:**
-```python
-llm = EmpathyLLM(
-    provider="openai",
-    model="gpt-4-turbo-preview",  # 128K context (vs 8K for gpt-4)
-    target_level=4
-)
-```
-
-**2. Truncate conversation history:**
-```python
-result = await llm.interact(
-    user_id="user",
-    user_input="Question",
-    max_history_turns=5  # Only use last 5 interactions
-)
-```
-
-**3. Switch to Claude (200K context):**
-```python
-llm = EmpathyLLM(
-    provider="anthropic",
-    model="claude-3-5-sonnet-20241022",  # 200K context
-    target_level=4
-)
-```
-
-### Issue: Local model (Ollama) connection refused
-
-**Error Message:**
-```
-ConnectionRefusedError: [Errno 61] Connection refused
-```
-
-**Solutions:**
-
-**1. Start Ollama server:**
-```bash
-# macOS/Linux:
-ollama serve
-
-# Or run in background:
-nohup ollama serve > /dev/null 2>&1 &
-```
-
-**2. Check if Ollama is running:**
-```bash
-curl http://localhost:11434/api/version
-# Should return version info
-```
-
-**3. Check endpoint URL:**
-```python
-llm = EmpathyLLM(
-    provider="local",
-    endpoint="http://localhost:11434",  # Default Ollama port
-    model="llama3.2:3b"  # or llama3.1:8b, llama3.1:70b
-)
-```
-
-**4. Download model if missing:**
-```bash
-# Pull the recommended models
-ollama pull llama3.2:3b    # cheap tier - fast, small
-ollama pull llama3.1:8b    # capable tier - balanced
-ollama pull llama3.1:70b   # premium tier - best quality (requires ~40GB RAM)
-
-ollama list  # Verify downloaded models
 ```
 
 ---

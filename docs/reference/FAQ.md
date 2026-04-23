@@ -4,8 +4,7 @@ description: Frequently Asked Questions
 
 # Frequently Asked Questions
 
-**Last Updated:** February 20, 2026
-**Version:** 3.0.0
+**Last Updated:** April 23, 2026
 
 ---
 

@@ -142,11 +142,7 @@ You **must** sign a Business Associate Agreement with your LLM provider:
 
 | Provider | BAA Available | Notes |
 |----------|---------------|-------|
-| **Anthropic** | ✅ Yes | Enterprise plan required |
-| **OpenAI** | ✅ Yes | Contact sales team |
-| **Google** | ✅ Yes | Vertex AI for Healthcare |
-| **Azure OpenAI** | ✅ Yes | Azure compliance tools |
-| **AWS Bedrock** | ✅ Yes | HIPAA-eligible services |
+| **Anthropic** | ✅ Yes | Enterprise plan required — [contact Anthropic](https://www.anthropic.com/contact-sales) |
 
 !!! danger "Critical Requirement"
     **DO NOT** send PHI to LLM providers without a signed BAA. Doing so violates HIPAA and can result in fines up to **$1.5 million per year** per violation category.
