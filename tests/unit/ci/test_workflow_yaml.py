@@ -1,7 +1,8 @@
-"""Tests validating GitHub Actions workflow YAML files.
+"""Tests validating GitHub Actions workflow YAML files and pytest configuration.
 
 These tests enforce CI/CD guardrails: timeouts, concurrency controls,
-SHA-pinned actions, pip caching, coverage thresholds, and mypy blocking.
+SHA-pinned actions, pip caching, coverage thresholds, mypy blocking,
+and pytest config correctness.
 """
 
 import re
@@ -323,3 +324,59 @@ class TestMyPyBlocking:
         run_cmd = mypy_step.get("run", "")
         assert "|| true" not in run_cmd, "mypy run command must not use '|| true'"
         assert "|| exit 0" not in run_cmd, "mypy run command must not use '|| exit 0'"
+
+
+# ===========================================================================
+# 8. Pytest Config Correctness
+# ===========================================================================
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_PYTEST_INI = _REPO_ROOT / "pytest.ini"
+_TESTS_DIR = _REPO_ROOT / "tests"
+
+
+class TestPytestConfig:
+    """Catch pytest.ini mistakes that silently discard test coverage."""
+
+    # Exclusions that intentionally block real test dirs — document the reason here
+    # so the test stays green and the intent is explicit.
+    _INTENTIONAL_EXCLUSIONS = {
+        # tests/backend/ fails at collection without JWT_SECRET_KEY env var set;
+        # those tests are run separately in a dedicated environment.
+        "backend",
+    }
+
+    def test_norecursedirs_does_not_exclude_real_test_dirs(self):
+        """No *undocumented* norecursedirs pattern should match a non-empty test dir.
+
+        The 'wizards' entry previously matched tests/unit/wizards/ and silently
+        excluded 451 tests from every CI run.  This test catches new accidents.
+        Add to _INTENTIONAL_EXCLUSIONS (with a reason comment) for any dir that
+        genuinely cannot be collected in the standard CI environment.
+        """
+        import configparser
+
+        ini = configparser.ConfigParser()
+        ini.read(_PYTEST_INI)
+        raw = ini.get("pytest", "norecursedirs", fallback="")
+        excluded_names = raw.split()
+
+        real_test_dir_names = {
+            p.name for p in _TESTS_DIR.rglob("*") if p.is_dir() and any(p.iterdir())
+        }
+
+        unexpected = [
+            name
+            for name in excluded_names
+            if name in real_test_dir_names
+            and "*" not in name
+            and name != "__pycache__"
+            and name not in self._INTENTIONAL_EXCLUSIONS
+        ]
+
+        assert not unexpected, (
+            f"norecursedirs entries match non-empty test directories: {unexpected}. "
+            f"This silently excludes tests from collection. Either remove the entry, "
+            f"use an anchored pattern (/name), or add it to "
+            f"TestPytestConfig._INTENTIONAL_EXCLUSIONS with a reason comment."
+        )
