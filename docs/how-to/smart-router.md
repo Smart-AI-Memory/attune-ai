@@ -145,8 +145,166 @@ for wizard_name in decision.suggested_chain:
     print(f"Running: {wizard_name}")
 ```
 
+## Confidence Thresholds
+
+Route only when the router is confident enough:
+
+```python
+decision = router.route_sync("Fix the issue")
+
+if decision.confidence < 0.6:
+    # Too ambiguous — ask for clarification
+    print("Ambiguous request. Did you mean:")
+    print(f"  {decision.primary_wizard}: {decision.reasoning}")
+    for alt in decision.secondary_wizards[:2]:
+        print(f"  {alt}")
+elif decision.confidence < 0.90:
+    # Moderate confidence — confirm before running
+    print(f"Routing to: {decision.primary_wizard} (confidence: {decision.confidence:.0%})")
+    confirm = input("Proceed? [y/n] ")
+    if confirm.lower() != "y":
+        return
+else:
+    # High confidence (0.90+) — run directly without confirmation
+    pass
+```
+
+**Confidence ranges:**
+
+| Range | Interpretation |
+|-------|----------------|
+| 0.90+ | Unambiguous — safe to run without confirmation |
+| 0.60–0.89 | Good match — confirm before running |
+| < 0.60 | Low — request is ambiguous; ask for clarification |
+
+---
+
+## Real-World Integration Patterns
+
+### Pattern 1: CLI Dispatcher
+
+Route a user's natural language command to the right workflow:
+
+```python
+import asyncio
+from attune.routing import SmartRouter
+
+async def run_from_description(description: str, path: str = "."):
+    router = SmartRouter()
+    decision = await router.route(description)
+
+    if decision.confidence < 0.6:
+        print(f"Not sure what to run. Best guess: {decision.primary_wizard}")
+        print(f"Reason: {decision.reasoning}")
+        return
+
+    from attune import EmpathyOS
+    empathy = EmpathyOS(user_id="cli")
+    result = await empathy.run_workflow(
+        decision.primary_wizard,
+        {"path": path},
+    )
+    print(result.final_output)
+
+asyncio.run(run_from_description("Check for security issues in my API code"))
+```
+
+### Pattern 2: Multi-Wizard Fan-Out
+
+Run the primary wizard and all secondaries when the primary is a strong match.
+The secondary list is always narrower in scope than the primary, so a
+high primary confidence is a reasonable proxy for running them all:
+
+```python
+decision = router.route_sync("Full quality pass on authentication module")
+
+# Run secondaries only when the overall routing is high-confidence
+wizards_to_run = [decision.primary_wizard] + (
+    decision.secondary_wizards if decision.confidence > 0.75 else []
+)
+
+for wizard_name in wizards_to_run:
+    print(f"→ Running {wizard_name}...")
+    result = await empathy.run_workflow(wizard_name, {"path": "src/auth/"})
+    print(f"  {result.final_output.get('summary', 'done')}")
+```
+
+### Pattern 3: File-Based Auto-Routing
+
+Automatically route to the right wizard when a file changes:
+
+```python
+def on_file_changed(filepath: str):
+    router = SmartRouter()
+
+    # suggest_for_file uses file extension and path heuristics
+    suggestions = router.suggest_for_file(filepath)
+
+    if suggestions:
+        primary = suggestions[0]
+        print(f"Changed: {filepath} → suggested: {primary}")
+        run_wizard(primary, filepath)
+```
+
+### Pattern 4: Error-Driven Routing
+
+Route to the appropriate wizard based on an error message:
+
+```python
+def on_test_failure(error_output: str):
+    router = SmartRouter()
+    suggestions = router.suggest_for_error(error_output)
+
+    # Most test failures → bug-predict or code-review
+    if suggestions:
+        decision = router.route_sync(f"Fix this error: {error_output[:200]}")
+        return decision.primary_wizard
+    return "bug-predict"  # safe default
+```
+
+---
+
+## CLI Usage
+
+The smart router is accessible from the CLI via natural language workflow
+dispatch:
+
+```bash
+# Run the router's suggestion directly
+attune workflow run "$(attune route 'check security in auth module')"
+
+# Or use the meta-router directly
+attune route "Fix performance in the database layer"
+# → Suggests: perf-audit (0.88 confidence)
+```
+
+---
+
+## Customizing the Registry
+
+Register a custom wizard or workflow to make it routable:
+
+```python
+from attune.routing import SmartRouter
+
+router = SmartRouter()
+router.register_wizard(
+    name="compliance-check",
+    description="Check code for HIPAA and SOC2 compliance requirements",
+    keywords=["hipaa", "compliance", "soc2", "audit", "gdpr", "phi"],
+)
+
+# Now routes naturally
+decision = router.route_sync("Check for HIPAA compliance issues")
+print(decision.primary_wizard)  # → compliance-check
+```
+
+---
+
 ## See Also
 
-- [Memory Graph](memory-graph.md) - Cross-wizard knowledge sharing
-- [Auto-Chaining](auto-chaining.md) - Automatic wizard sequencing
-- [API Reference](../reference/API_REFERENCE.md#smartrouter) - Full API documentation
+- [Memory Graph](memory-graph.md) — Cross-wizard knowledge sharing
+- [Auto-Chaining](auto-chaining.md) — Automatic wizard sequencing
+- [Telemetry and Signals](telemetry-and-signals.md) — Monitor routing
+  decisions over time with `attune telemetry routing-stats`
+- [API Reference](../reference/API_REFERENCE.md#smartrouter) — Full API documentation

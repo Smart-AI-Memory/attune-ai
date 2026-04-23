@@ -204,11 +204,18 @@ nav:
       - Integration:
           - Claude Code: integration/claude-code-integration.md
           - Webhooks: how-to/webhook-integration.md
+          - Hooks: hooks.md
           - Security: how-to/security-architecture.md
           - HIPAA Compliance: how-to/hipaa-compliance.md
       - Patterns:
           - Practical Patterns: how-to/practical-patterns.md
           - Resilience Patterns: how-to/resilience-patterns.md
+      - Codebase Intelligence:
+          - Project Analysis: how-to/project-analysis-and-metrics.md
+          - Context Management: how-to/context-management.md
+          - Learning and Patterns: how-to/learning-and-patterns.md
+      - Observability:
+          - Telemetry and Signals: how-to/telemetry-and-signals.md
       - Help System:
           - Maintenance: how-to/help-system-maintenance.md
       - Prerequisites: how-to/prerequisites.md
