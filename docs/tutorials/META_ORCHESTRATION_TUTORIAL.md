@@ -4,10 +4,9 @@ description: Meta-Orchestration Tutorial: AI Agents That Compose Themselves: Ste
 
 # Meta-Orchestration Tutorial: AI Agents That Compose Themselves
 
-**Version:** 4.0.0
 **Level:** Beginner to Advanced
 **Time:** 30 minutes
-**Last Updated:** January 10, 2026
+**Last Updated:** April 23, 2026
 
 ---
 

@@ -2,11 +2,11 @@
 description: Connect Attune AI to Claude Code via MCP. Enable AI workflows, agent coordination, and pattern learning in your IDE.
 ---
 
-# MCP Integration (v5.1.1+)
+# MCP Integration
 
 Connect Attune AI workflows directly to Claude Code or Claude Desktop using the Model Context Protocol.
 
-**New in v5.1.1:** Attune MCP server exposes all production workflows as native tools - security audits, test generation, performance analysis, and more.
+The Attune MCP server exposes all production workflows as native tools — security audits, test generation, performance analysis, and more.
 
 ---
 
@@ -192,7 +192,7 @@ cat .claude/MCP_TEST_RESULTS.md
 
 ---
 
-## Verification Hooks (v5.1.1+)
+## Verification Hooks
 
 Attune automatically validates outputs via Claude Code hooks:
 
@@ -294,4 +294,4 @@ The MCP server works with any MCP-compatible client:
 
 ## Legacy: Socratic MCP Server
 
-**Note:** The Socratic workflow builder MCP server (`attune.socratic.mcp_server`) is deprecated in v5.1.1+. Use the production Attune MCP server (`attune.mcp.server`) instead, which exposes all workflows directly.
+**Note:** The Socratic workflow builder MCP server (`attune.socratic.mcp_server`) is deprecated in v6.3.0+. Use the production Attune MCP server (`attune.mcp.server`) instead, which exposes all workflows directly.

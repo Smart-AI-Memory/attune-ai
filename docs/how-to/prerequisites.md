@@ -12,10 +12,10 @@ description: Prerequisites: *What you need before building with the Attune AI* -
 
 Before you begin, ensure you have:
 
-- [ ] **Python 3.9+** installed
+- [ ] **Python 3.10+** installed
 - [ ] **Redis** running locally OR a cloud Redis URL
 - [ ] **30 minutes** for initial setup
-- [ ] **API key** for your LLM provider (Anthropic recommended)
+- [ ] **Anthropic API key** ([console.anthropic.com](https://console.anthropic.com/))
 
 ---
 
@@ -23,7 +23,7 @@ Before you begin, ensure you have:
 
 ### 1. Python Environment
 
-**Minimum version**: Python 3.9
+**Minimum version**: Python 3.10
 
 **Recommended**: Python 3.11+ for best async performance
 
@@ -32,10 +32,10 @@ Before you begin, ensure you have:
 python --version
 
 # Create a virtual environment (recommended)
-python -m venv empathy-env
-source empathy-env/bin/activate  # macOS/Linux
+python -m venv attune-env
+source attune-env/bin/activate  # macOS/Linux
 # or
-empathy-env\Scripts\activate     # Windows
+attune-env\Scripts\activate      # Windows
 ```
 
 **Required knowledge**:
@@ -105,30 +105,15 @@ empathy = EmpathyOS(user_id="test")  # Uses in-memory mock
 
 ---
 
-### 3. LLM Provider API Key
+### 3. Anthropic API Key
 
-The framework supports multiple LLM providers. You need at least one:
-
-#### Anthropic (Recommended)
+Attune AI runs on Anthropic's Claude models exclusively.
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 Get your key: [console.anthropic.com](https://console.anthropic.com/)
-
-#### OpenAI
-
-```bash
-export OPENAI_API_KEY="sk-..."
-```
-
-#### Azure OpenAI
-
-```bash
-export AZURE_OPENAI_API_KEY="..."
-export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
-```
 
 ---
 
@@ -185,11 +170,11 @@ import os
 
 def check_python():
     version = sys.version_info
-    if version >= (3, 9):
+    if version >= (3, 10):
         print(f"[OK] Python {version.major}.{version.minor}.{version.micro}")
         return True
     else:
-        print(f"[FAIL] Python {version.major}.{version.minor} (need 3.9+)")
+        print(f"[FAIL] Python {version.major}.{version.minor} (need 3.10+)")
         return False
 
 def check_redis():
@@ -208,19 +193,12 @@ def check_redis():
         return False
 
 def check_api_keys():
-    keys = {
-        "ANTHROPIC_API_KEY": "Anthropic",
-        "OPENAI_API_KEY": "OpenAI",
-    }
-    found = False
-    for key, name in keys.items():
-        if os.getenv(key):
-            print(f"[OK] {name} API key configured")
-            found = True
-    if not found:
-        print("[WARN] No LLM API key found")
-        print("       Set ANTHROPIC_API_KEY or OPENAI_API_KEY")
-    return found
+    if os.getenv("ANTHROPIC_API_KEY"):
+        print("[OK] Anthropic API key configured")
+        return True
+    print("[WARN] ANTHROPIC_API_KEY not set")
+    print("       Get your key at console.anthropic.com")
+    return False
 
 def check_empathy():
     try:

@@ -4,8 +4,8 @@ description: Developer Guide - Attune AI: Step-by-step tutorial with examples, b
 
 # Developer Guide - Attune AI
 
-**Version:** 4.0.0
-**Last Updated:** January 16, 2026
+**Version:** 6.3.0
+**Last Updated:** April 23, 2026
 **Audience:** Contributors, Plugin Developers, Framework Maintainers
 
 ---
