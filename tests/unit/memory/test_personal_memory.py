@@ -415,6 +415,16 @@ class TestForgetTopic:
         pm = PersonalMemory(global_root=tmp_path / "global")
         assert pm.forget_topic("nonexistent") == 0
 
+    def test_invalid_topic_slug_raises(self, tmp_path):
+        pm = PersonalMemory(global_root=tmp_path / "global")
+        with pytest.raises(ValueError, match="Invalid topic slug"):
+            pm.forget_topic("../etc/passwd")
+
+    def test_invalid_kind_raises(self, tmp_path):
+        pm = PersonalMemory(global_root=tmp_path / "global")
+        with pytest.raises(ValueError, match="Unknown kind"):
+            pm.forget_topic("valid-topic", kind="nonexistent")
+
     def test_removes_from_summaries_on_delete(self, tmp_path):
         root = tmp_path / "global"
         topic_dir = root / "x"

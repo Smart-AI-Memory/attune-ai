@@ -249,3 +249,250 @@ class TestCmdLessons:
         assert result == 1
         captured = capsys.readouterr()
         assert "Error reading" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# Personal memory commands (capture / recall / topics / forget_topic)
+# ---------------------------------------------------------------------------
+
+_PERSONAL_MEM = "attune.memory.personal.PersonalMemory"
+
+
+class TestCmdMemoryCapture:
+    """Tests for cmd_memory_capture."""
+
+    @patch(_PERSONAL_MEM)
+    def test_success_global(self, MockPM, capsys, tmp_path) -> None:
+        """cmd_memory_capture writes to global root when project_local=False."""
+        from attune.cli_commands.memory_commands import cmd_memory_capture
+
+        dest = tmp_path / "auth-design" / "decision.md"
+        MockPM.return_value.capture.return_value = dest
+
+        args = MagicMock()
+        args.topic = "auth-design"
+        args.content = "Use JWT"
+        args.kind = "decision"
+        args.project_local = False
+
+        result = cmd_memory_capture(args)
+
+        assert result == 0
+        # PersonalMemory must be constructed with project_root=None for global
+        MockPM.assert_called_once_with(project_root=None)
+        assert "Saved:" in capsys.readouterr().out
+
+    @patch(_PERSONAL_MEM)
+    def test_success_project_local(self, MockPM, capsys, tmp_path) -> None:
+        """cmd_memory_capture passes project_root when project_local=True."""
+        from attune.cli_commands.memory_commands import cmd_memory_capture
+
+        dest = tmp_path / "auth-design" / "decision.md"
+        MockPM.return_value.capture.return_value = dest
+
+        args = MagicMock()
+        args.topic = "auth-design"
+        args.content = "Use JWT"
+        args.kind = "decision"
+        args.project_local = True
+
+        result = cmd_memory_capture(args)
+
+        assert result == 0
+        # project_root must be non-None for project_local=True
+        call_kwargs = MockPM.call_args[1]
+        assert call_kwargs["project_root"] is not None
+
+    @patch(_PERSONAL_MEM)
+    def test_invalid_topic_returns_1(self, MockPM, capsys) -> None:
+        """cmd_memory_capture returns 1 on invalid topic slug."""
+        from attune.cli_commands.memory_commands import cmd_memory_capture
+
+        MockPM.return_value.capture.side_effect = ValueError("Invalid topic slug '../etc'")
+
+        args = MagicMock()
+        args.topic = "../etc"
+        args.content = "bad"
+        args.kind = "decision"
+        args.project_local = False
+
+        result = cmd_memory_capture(args)
+
+        assert result == 1
+        assert "Error:" in capsys.readouterr().out
+
+    @patch(_PERSONAL_MEM)
+    def test_os_error_returns_1(self, MockPM, capsys) -> None:
+        """cmd_memory_capture returns 1 on OSError."""
+        from attune.cli_commands.memory_commands import cmd_memory_capture
+
+        MockPM.return_value.capture.side_effect = OSError("disk full")
+
+        args = MagicMock()
+        args.topic = "auth-design"
+        args.content = "Use JWT"
+        args.kind = "decision"
+        args.project_local = False
+
+        result = cmd_memory_capture(args)
+
+        assert result == 1
+        assert "Error saving" in capsys.readouterr().out
+
+
+class TestCmdMemoryRecall:
+    """Tests for cmd_memory_recall."""
+
+    @patch(_PERSONAL_MEM)
+    def test_success_with_hits(self, MockPM, capsys) -> None:
+        """cmd_memory_recall prints results when hits are found."""
+        from attune.cli_commands.memory_commands import cmd_memory_recall
+
+        MockPM.return_value.query.return_value = [
+            {
+                "path": "auth-design/decision.md",
+                "score": 0.9,
+                "summary": "JWT",
+                "excerpt": "Use JWT",
+            }
+        ]
+
+        args = MagicMock()
+        args.query = "authentication"
+        args.k = 3
+        args.kind_filter = None
+        args.json = False
+
+        result = cmd_memory_recall(args)
+
+        # PersonalMemory must be constructed with project_root=None
+        MockPM.assert_called_once_with(project_root=None)
+        assert result == 0
+        assert "auth-design" in capsys.readouterr().out
+
+    @patch(_PERSONAL_MEM)
+    def test_no_results(self, MockPM, capsys) -> None:
+        """cmd_memory_recall prints no-results message when list is empty."""
+        from attune.cli_commands.memory_commands import cmd_memory_recall
+
+        MockPM.return_value.query.return_value = []
+
+        args = MagicMock()
+        args.query = "nothing"
+        args.k = 3
+        args.kind_filter = None
+        args.json = False
+
+        result = cmd_memory_recall(args)
+
+        assert result == 0
+        assert "No results" in capsys.readouterr().out
+
+    @patch(_PERSONAL_MEM)
+    def test_json_output(self, MockPM, capsys) -> None:
+        """cmd_memory_recall emits JSON when --json flag is set."""
+        import json as json_mod
+
+        from attune.cli_commands.memory_commands import cmd_memory_recall
+
+        hits = [{"path": "auth-design/decision.md", "score": 0.9}]
+        MockPM.return_value.query.return_value = hits
+
+        args = MagicMock()
+        args.query = "auth"
+        args.k = 3
+        args.kind_filter = None
+        args.json = True
+
+        result = cmd_memory_recall(args)
+
+        assert result == 0
+        out = capsys.readouterr().out
+        parsed = json_mod.loads(out)
+        assert parsed[0]["score"] == 0.9
+
+
+class TestCmdMemoryTopics:
+    """Tests for cmd_memory_topics."""
+
+    @patch(_PERSONAL_MEM)
+    def test_lists_topics(self, MockPM, capsys) -> None:
+        """cmd_memory_topics prints all topic slugs."""
+        from attune.cli_commands.memory_commands import cmd_memory_topics
+
+        MockPM.return_value.list_topics.return_value = ["auth-design", "retry-loop"]
+
+        args = MagicMock()
+        result = cmd_memory_topics(args)
+
+        MockPM.assert_called_once_with(project_root=None)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "auth-design" in out
+        assert "retry-loop" in out
+
+    @patch(_PERSONAL_MEM)
+    def test_no_topics(self, MockPM, capsys) -> None:
+        """cmd_memory_topics prints guidance when no topics exist."""
+        from attune.cli_commands.memory_commands import cmd_memory_topics
+
+        MockPM.return_value.list_topics.return_value = []
+
+        args = MagicMock()
+        result = cmd_memory_topics(args)
+
+        assert result == 0
+        assert "No memory topics" in capsys.readouterr().out
+
+
+class TestCmdMemoryForgetTopic:
+    """Tests for cmd_memory_forget_topic."""
+
+    @patch(_PERSONAL_MEM)
+    def test_deletes_topic(self, MockPM, capsys) -> None:
+        """cmd_memory_forget_topic returns 0 and prints count on success."""
+        from attune.cli_commands.memory_commands import cmd_memory_forget_topic
+
+        MockPM.return_value.forget_topic.return_value = 3
+
+        args = MagicMock()
+        args.topic = "auth-design"
+        args.kind = None
+
+        result = cmd_memory_forget_topic(args)
+
+        MockPM.assert_called_once_with(project_root=None)
+        assert result == 0
+        assert "Deleted 3" in capsys.readouterr().out
+
+    @patch(_PERSONAL_MEM)
+    def test_topic_not_found_returns_1(self, MockPM, capsys) -> None:
+        """cmd_memory_forget_topic returns 1 when topic has no files."""
+        from attune.cli_commands.memory_commands import cmd_memory_forget_topic
+
+        MockPM.return_value.forget_topic.return_value = 0
+
+        args = MagicMock()
+        args.topic = "nonexistent"
+        args.kind = None
+
+        result = cmd_memory_forget_topic(args)
+
+        assert result == 1
+        assert "not found" in capsys.readouterr().out.lower()
+
+    @patch(_PERSONAL_MEM)
+    def test_invalid_topic_returns_1(self, MockPM, capsys) -> None:
+        """cmd_memory_forget_topic returns 1 on invalid topic slug."""
+        from attune.cli_commands.memory_commands import cmd_memory_forget_topic
+
+        MockPM.return_value.forget_topic.side_effect = ValueError("Invalid topic slug '../etc'")
+
+        args = MagicMock()
+        args.topic = "../etc"
+        args.kind = None
+
+        result = cmd_memory_forget_topic(args)
+
+        assert result == 1
+        assert "Error:" in capsys.readouterr().out
