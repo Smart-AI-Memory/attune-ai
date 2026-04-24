@@ -7,6 +7,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.4.0] - 2026-04-24
+
+Bundles the post-6.3.0 CI cleanup + docs freshness work plus the
+`feat/help-aggregator-tests` branch: the `SBARHandoff → WorkHandoff`
+rename, an Anthropic multi-block response fix, `attune memory`
+CLI scoping fix, a 16000+ test baseline, and a docs freshness
+sweep. One user-facing breaking change (the class rename).
+
+### Changed — BREAKING: `SBARHandoff` renamed to `WorkHandoff`
+
+The healthcare-origin name (SBAR — Situation / Background /
+Assessment / Recommendation) confused contributors unfamiliar
+with clinical workflows and clashed with a dev-tooling product.
+Class is renamed; field semantics and serialization format are
+unchanged.
+
+- `attune.context.compaction.SBARHandoff` → `WorkHandoff`
+- `attune.context` re-export updated; old name no longer
+  importable.
+- `agents.book_production.SBARHandoff` → `WorkHandoff` (the
+  book-pipeline phase handoff class, same rename for the same
+  reason).
+- Docs (`docs/how-to/context-management.md`), the XML knowledge
+  base, and the `examples/complete-workflow/` example all
+  updated to the new name.
+
+**Migration:** `s/SBARHandoff/WorkHandoff/g` on your call sites.
+The `.from_dict` / `.to_dict` serialization format is unchanged,
+so saved state across the rename boundary is compatible.
+
+Untouched — kept as intentional healthcare context:
+
+- `agents/code_inspection/handoffs.py::SBARHandoff` — different
+  class (pipeline-phase handoffs for code inspection); rename
+  scoped separately if desired.
+- `tests/wizards/test_sbar_wizard.py`, the HIPAA / clinical
+  tutorial, the glossary SBAR definition — legitimate medical
+  SBAR references.
+
+### Fixed — Anthropic provider lost text on multi-block responses
+
+`AnthropicProvider.complete()` in
+`src/attune/llm/providers/anthropic.py` iterated response
+content blocks and **overwrote** `response_content` on each
+`text` block, so multi-block responses (thinking + text, or
+multiple text segments) returned only the last block. Now
+concatenates with `+=` instead.
+
+Likely a silent-truncation latent bug in any workflow that used
+extended-thinking or asked Claude to stream multiple text blocks
+in a single response.
+
+### Fixed — `attune memory` `--project-local` flag was effectively always on
+
+`cmd_memory_capture`, `cmd_memory_recall`, and
+`cmd_memory_topics` unconditionally built
+`project_root = Path.cwd() / ".attune" / "memory"` and passed it
+to `PersonalMemory(...)`. Memory writes therefore went to the
+project-local tree regardless of `--project-local`; the flag was
+effectively ignored and global captures silently became
+project-local.
+
+`project_root` now defaults to `None` (→ global
+`~/.attune/memory`) and is only populated when
+`--project-local` is passed.
+
+**Impact:** If you relied on the (buggy) behavior of
+`attune memory capture` writing to `./.attune/memory` without
+passing the flag, you now need to pass `--project-local`
+explicitly.
+
+### Added — Help-aggregator tests & CI hardening
+
+Big batch of test-infrastructure and coverage work on the
+`feat/help-aggregator-tests` branch:
+
+- `norecursedirs` guard test + permanent skip-count tracking
+  so silent regressions (skip counts creeping up) become
+  visible in CI.
+- Coverage expansion across hooks, wizards, MCP
+  `WorkflowHandlersMixin` (63% → 76%), Redis/MCP dispatch
+  integration, and CLI memory commands (+247 lines).
+- 61 new core-wizard tests; fixes a `norecursedirs` exclusion
+  bug uncovered in the process.
+- Dead-skipped tests removed; CI coverage gate tightened.
+- Windows path-separator fix in memory summary dict keys
+  (`as_posix()`).
+- JWT_SECRET_KEY conftest guards unblock `tests/backend/`.
+- Three collection errors that were blocking all 12 CI matrix
+  jobs resolved.
+
+Test suite now collects **16005 tests** with no import errors.
+
+### Added — Negative tests for personal memory
+
+`tests/unit/memory/test_personal_memory.py` gains two new
+cases asserting `forget_topic` raises on an invalid topic slug
+or unknown kind.
+
+### Added — Working-tree cleanup
+
+- `MagicMock/` stray dir (test leak from mocks stringified
+  into paths) deleted and gitignored; underlying tests should
+  eventually migrate to `tmp_path` fixtures.
+- `scripts/attune_rag_dashboard_refresh.py` deleted — the
+  prototype has been superseded by the first-class
+  `attune-rag dashboard refresh` / `render` CLI that shipped
+  in attune-rag 0.1.6 (see attune-rag v0.2.0 spec M5).
+
+### Added — Knowledge-base lessons
+
+`.claude/CLAUDE.md` gains two patterns discovered during this
+week's attune-rag and attune-author release cycles:
+
+- Dataclass `__post_init__` coalescence for backward-compat
+  schema widening (scalar `doc_path` ↔ list `doc_paths`).
+- `uv pip install -e <sibling> --force-reinstall --no-deps`
+  as the clean venv-local shadow when a sibling dep's
+  in-flight version exceeds the current cap.
+
+`.help/features.yaml` gains a top-level `_docs:` bucket
+listing hand-written narrative docs that are never
+regenerated from source, so orchestrators can distinguish
+feature-owned from human-authored docs.
+
 ### Changed — CI cleanup (post-v6.3.0)
 
 - Deleted `.github/workflows/codeql.yml` (permanently
