@@ -178,7 +178,7 @@ class AnthropicProvider(BaseLLMProvider):
             if block_type == "thinking":
                 thinking_content = block.thinking
             elif block_type == "text" or block_type is None:
-                response_content = block.text
+                response_content += block.text
 
         metadata = {
             "input_tokens": response.usage.input_tokens,

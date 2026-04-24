@@ -123,14 +123,15 @@ def cmd_memory_capture(args: Namespace) -> int:
 
     from attune.memory.personal import PersonalMemory
 
-    project_root = Path.cwd() / ".attune" / "memory"
+    project_local = getattr(args, "project_local", False)
+    project_root = Path.cwd() / ".attune" / "memory" if project_local else None
     try:
         pm = PersonalMemory(project_root=project_root)
         dest = pm.capture(
             args.topic,
             args.content,
             kind=getattr(args, "kind", "decision"),
-            project_local=getattr(args, "project_local", False),
+            project_local=project_local,
         )
         print(f"Saved: {dest}")
         return 0
@@ -154,13 +155,11 @@ def cmd_memory_recall(args: Namespace) -> int:
 
     """
     import json as json_mod
-    from pathlib import Path
 
     from attune.memory.personal import PersonalMemory
 
-    project_root = Path.cwd() / ".attune" / "memory"
     try:
-        pm = PersonalMemory(project_root=project_root)
+        pm = PersonalMemory(project_root=None)
         hits = pm.query(
             args.query,
             k=getattr(args, "k", 3),
@@ -195,13 +194,10 @@ def cmd_memory_topics(args: Namespace) -> int:
         0 on success, 1 on failure.
 
     """
-    from pathlib import Path
-
     from attune.memory.personal import PersonalMemory
 
-    project_root = Path.cwd() / ".attune" / "memory"
     try:
-        pm = PersonalMemory(project_root=project_root)
+        pm = PersonalMemory(project_root=None)
         topics = pm.list_topics()
         if not topics:
             print("No memory topics found.")
@@ -227,13 +223,10 @@ def cmd_memory_forget_topic(args: Namespace) -> int:
         0 on success, 1 on failure.
 
     """
-    from pathlib import Path
-
     from attune.memory.personal import PersonalMemory
 
-    project_root = Path.cwd() / ".attune" / "memory"
     try:
-        pm = PersonalMemory(project_root=project_root)
+        pm = PersonalMemory(project_root=None)
         kind = getattr(args, "kind", None) or None
         deleted = pm.forget_topic(args.topic, kind=kind)
         if deleted == 0:
@@ -242,6 +235,9 @@ def cmd_memory_forget_topic(args: Namespace) -> int:
         what = f"{args.topic}/{kind}.md" if kind else f"{args.topic}/"
         print(f"Deleted {deleted} file(s) from {what}")
         return 0
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
     except OSError as e:
         logger.error("Failed to forget topic: %s", e)
         print(f"Error deleting topic: {e}")
