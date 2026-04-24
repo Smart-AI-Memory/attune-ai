@@ -38,7 +38,7 @@ class HandoffType(Enum):
 
 
 @dataclass
-class SBARHandoff:
+class WorkHandoff:
     """SBAR-format handoff between agents.
 
     Adapted from clinical SBAR (Situation, Background, Assessment, Recommendation)
@@ -121,7 +121,7 @@ class SBARHandoff:
         }
 
 
-def create_research_to_writer_handoff(state: dict[str, Any]) -> SBARHandoff:
+def create_research_to_writer_handoff(state: dict[str, Any]) -> WorkHandoff:
     """Create SBAR handoff from ResearchAgent to WriterAgent."""
     sources = state.get("source_documents", [])
     concepts = state.get("key_concepts_extracted", [])
@@ -145,7 +145,7 @@ def create_research_to_writer_handoff(state: dict[str, Any]) -> SBARHandoff:
             f"{len(low_relevance)} sources have low relevance - verify applicability",
         )
 
-    return SBARHandoff(
+    return WorkHandoff(
         handoff_type=HandoffType.RESEARCH_TO_WRITER,
         from_agent="ResearchAgent",
         to_agent="WriterAgent",
@@ -176,7 +176,7 @@ def create_research_to_writer_handoff(state: dict[str, Any]) -> SBARHandoff:
     )
 
 
-def create_writer_to_editor_handoff(state: dict[str, Any]) -> SBARHandoff:
+def create_writer_to_editor_handoff(state: dict[str, Any]) -> WorkHandoff:
     """Create SBAR handoff from WriterAgent to EditorAgent."""
     draft = state.get("current_draft", "")
     word_count = len(draft.split())
@@ -212,7 +212,7 @@ def create_writer_to_editor_handoff(state: dict[str, Any]) -> SBARHandoff:
     if unlabeled_code > 0:
         known_issues.append(f"{unlabeled_code} unlabeled code blocks - add language identifiers")
 
-    return SBARHandoff(
+    return WorkHandoff(
         handoff_type=HandoffType.WRITER_TO_EDITOR,
         from_agent="WriterAgent",
         to_agent="EditorAgent",
@@ -244,7 +244,7 @@ def create_writer_to_editor_handoff(state: dict[str, Any]) -> SBARHandoff:
     )
 
 
-def create_editor_to_reviewer_handoff(state: dict[str, Any]) -> SBARHandoff:
+def create_editor_to_reviewer_handoff(state: dict[str, Any]) -> WorkHandoff:
     """Create SBAR handoff from EditorAgent to ReviewerAgent."""
     draft = state.get("current_draft", "")
     edit_result = state.get("edit_result", {})
@@ -260,7 +260,7 @@ def create_editor_to_reviewer_handoff(state: dict[str, Any]) -> SBARHandoff:
     if missing_elements:
         focus_areas.append(f"Missing required elements: {', '.join(missing_elements)}")
 
-    return SBARHandoff(
+    return WorkHandoff(
         handoff_type=HandoffType.EDITOR_TO_REVIEWER,
         from_agent="EditorAgent",
         to_agent="ReviewerAgent",
@@ -288,7 +288,7 @@ def create_editor_to_reviewer_handoff(state: dict[str, Any]) -> SBARHandoff:
     )
 
 
-def create_reviewer_to_writer_handoff(state: dict[str, Any]) -> SBARHandoff:
+def create_reviewer_to_writer_handoff(state: dict[str, Any]) -> WorkHandoff:
     """Create SBAR handoff from ReviewerAgent back to WriterAgent for revision."""
     scores = state.get("quality_scores", {})
     feedback = state.get("review_feedback", [])
@@ -317,7 +317,7 @@ def create_reviewer_to_writer_handoff(state: dict[str, Any]) -> SBARHandoff:
 
     focus_areas = [f"Improve {dim}: {score:.0%}" for dim, score in weakest]
 
-    return SBARHandoff(
+    return WorkHandoff(
         handoff_type=HandoffType.REVIEWER_TO_WRITER,
         from_agent="ReviewerAgent",
         to_agent="WriterAgent",

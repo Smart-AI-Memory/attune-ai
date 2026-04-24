@@ -20,12 +20,14 @@ import tempfile
 import time
 from pathlib import Path
 
-import jwt
 import pytest
-from fastapi import HTTPException
 
-from backend.services.auth_service import JWT_ALGORITHM, JWT_SECRET_KEY, AuthService
-from backend.services.database import AuthDatabase
+pytest.importorskip("bcrypt")
+import jwt  # noqa: E402
+from fastapi import HTTPException  # noqa: E402
+
+from backend.services.auth_service import JWT_ALGORITHM, JWT_SECRET_KEY, AuthService  # noqa: E402
+from backend.services.database import AuthDatabase  # noqa: E402
 
 
 @pytest.fixture
