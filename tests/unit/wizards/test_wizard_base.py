@@ -257,7 +257,10 @@ class TestBaseWizard:
 
         assert result.success is False
         assert "boom" in result.error
-        assert result.total_duration_ms > 0
+        # Windows Python < 3.13 has coarse perf_counter resolution; the
+        # exception path can complete under one tick and record 0.0ms.
+        # Mirror the pattern used in test_duration_is_tracked: >= 0.
+        assert result.total_duration_ms >= 0
 
     @pytest.mark.asyncio
     async def test_step_condition_skip(self):
