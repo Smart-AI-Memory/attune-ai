@@ -1,5 +1,36 @@
 version: 1
 
+# Top-level narrative docs not owned by any single feature.
+# These are hand-written and never regenerated from source.
+_docs:
+  # Reference material
+  - docs/reference/FAQ.md
+  - docs/reference/USER_GUIDE.md
+  - docs/reference/TROUBLESHOOTING.md
+  - docs/reference/API_REFERENCE.md
+  - docs/reference/glossary.md
+  - docs/reference/empathy-os.md
+  - docs/reference/core.md
+  - docs/reference/config.md
+  - docs/reference/index.md
+  # Cross-cutting how-to narratives
+  - docs/how-to/practical-patterns.md
+  - docs/how-to/hipaa-compliance.md
+  - docs/how-to/prerequisites.md
+  - docs/how-to/index.md
+  # Tutorials
+  - docs/tutorials/installation.md
+  - docs/tutorials/build-a-workflow.md
+  - docs/tutorials/index.md
+  - docs/tutorials/examples/adaptive-learning-system.md
+  - docs/tutorials/examples/multi-agent-team-coordination.md
+  - docs/tutorials/examples/sbar-clinical-handoff.md
+  - docs/tutorials/examples/simple-chatbot.md
+  - docs/tutorials/examples/webhook-event-integration.md
+  # Architecture without clear feature owner
+  - docs/architecture/ENTERPRISE_PRIVACY_INTEGRATION.md
+  - docs/architecture/extending-composition-patterns.md
+
 features:
   security-audit:
     description: Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks
@@ -8,6 +39,8 @@ features:
       - src/attune/security/**
       - src/attune/monitoring/**
     tags: [security, audit, owasp, scanning, cve]
+    doc_paths:
+      - docs/how-to/security-architecture.md
 
   code-quality:
     description: Review code for style issues, likely bugs, and structural problems
@@ -77,12 +110,23 @@ features:
       - src/attune/help/**
       - packages/attune-help/src/attune_help/**
     tags: [help, templates, docs]
+    doc_paths:
+      - docs/how-to/help-system-maintenance.md
 
   memory:
     description: Memory subsystem — storage, lookup, and security
     files:
       - src/attune/memory/**
     tags: [memory, storage]
+    doc_paths:
+      - docs/how-to/memory-graph.md
+      - docs/how-to/unified-memory-system.md
+      - docs/how-to/short-term-memory-implementation.md
+      - docs/how-to/context-management.md
+      - docs/how-to/learning-and-patterns.md
+      - docs/reference/pattern-library.md
+      - docs/reference/persistence.md
+      - docs/reference/SHORT_TERM_MEMORY.md
 
   agents:
     description: Release agents, state persistence, and recovery
@@ -90,6 +134,11 @@ features:
       - src/attune/agents/**
       - src/attune/agent_factory/**
     tags: [agents, ai, release]
+    doc_paths:
+      - docs/how-to/agent-factory.md
+      - docs/reference/agent-factory-api.md
+      - docs/reference/agent-factory-overview.md
+      - docs/reference/agent-factory-readme.md
 
   cli:
     description: Command-line interface and routing
@@ -98,12 +147,18 @@ features:
       - src/attune/cli_router.py
       - src/attune/cli_commands/**
     tags: [cli, commands]
+    doc_kinds: [cli-reference]
+    doc_paths:
+      - docs/reference/cli-reference.md
 
   models:
     description: LLM authentication, provider routing, and tier management
     files:
       - src/attune/models/**
     tags: [models, auth, llm]
+    doc_paths:
+      - docs/how-to/smart-router.md
+      - docs/reference/llm-toolkit.md
 
   orchestration:
     description: Dynamic teams, workflow composition, and agent models
@@ -111,18 +166,28 @@ features:
       - src/attune/orchestration/**
       - src/attune/coordination/**
     tags: [orchestration, teams]
+    doc_paths:
+      - docs/how-to/multi-agent-coordination.md
+      - docs/how-to/auto-chaining.md
+      - docs/tutorials/META_ORCHESTRATION_TUTORIAL.md
+      - docs/reference/multi-agent.md
+    arch_path: docs/architecture/enhanced_escalation_architecture.md
 
   telemetry:
     description: Usage tracking and feedback loops
     files:
       - src/attune/telemetry/**
     tags: [telemetry, metrics]
+    doc_paths:
+      - docs/how-to/telemetry-and-signals.md
+      - docs/how-to/project-analysis-and-metrics.md
 
   plugin:
     description: Claude Code plugin — skills, hooks, commands, and MCP config
     files:
       - plugin/**
     tags: [plugin, claude-code]
+    arch_path: docs/architecture/PLUGIN_SYSTEM_README.md
 
   spec-engine:
     description: Spec-driven development with approval loops
@@ -136,15 +201,36 @@ features:
     files:
       - src/attune/wizards/**
     tags: [wizards, interactive]
+    doc_paths:
+      - docs/reference/wizards.md
+      - docs/reference/software-wizards.md
 
   configuration:
     description: Project configuration and settings management
     files:
       - src/attune/config/**
     tags: [config, settings]
+    doc_paths:
+      - docs/reference/configuration.md
 
   rag-grounding:
     description: RAG-grounded code generation — retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, emits answers with provenance
     files:
       - src/attune/workflows/rag_code_gen.py
     tags: [rag, retrieval, grounding, faithfulness, citation]
+
+  resilience:
+    description: Fault-tolerance primitives — circuit breakers, retries, timeouts, fallbacks, health checks
+    files:
+      - src/attune/resilience/**
+    tags: [resilience, fault-tolerance, retry, circuit-breaker, reliability]
+    doc_paths:
+      - docs/how-to/resilience-patterns.md
+
+  hooks:
+    description: Hook system — pre/post-tool events, webhooks, and hook executor
+    files:
+      - src/attune/hooks/**
+    tags: [hooks, webhooks, events, automation]
+    doc_paths:
+      - docs/how-to/webhook-integration.md
