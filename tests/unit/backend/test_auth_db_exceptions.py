@@ -12,7 +12,8 @@ import sqlite3
 
 import pytest
 
-from backend.services.database.auth_db import AuthDatabase
+pytest.importorskip("bcrypt")
+from backend.services.database.auth_db import AuthDatabase  # noqa: E402
 
 
 @pytest.fixture
