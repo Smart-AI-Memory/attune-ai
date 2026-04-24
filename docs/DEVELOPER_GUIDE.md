@@ -79,7 +79,7 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-**Configured hooks** (from [`.pre-commit-config.yaml`](../.pre-commit-config.yaml)):
+**Configured hooks** (from `.pre-commit-config.yaml` in the repo root):
 - Black - Code formatter (100-char line length)
 - Ruff - Fast Python linter
 - Bandit - Security vulnerability scanner
@@ -141,7 +141,7 @@ attune-ai/
 
 ## Coding Standards
 
-**Full Reference:** [`.claude/rules/attune/coding-standards-index.md`](../.claude/rules/attune/coding-standards-index.md)
+**Full Reference:** `.claude/rules/attune/coding-standards-index.md` (in the repo root)
 
 ### Critical Rules (MUST FOLLOW)
 
@@ -624,7 +624,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 ## Additional Resources
 
-- **[Coding Standards](../.claude/rules/attune/coding-standards-index.md)** - Complete coding standards reference
+- **Coding Standards** (`.claude/rules/attune/coding-standards-index.md`) - Complete coding standards reference
 - **[Exception Handling Guide](./EXCEPTION_HANDLING_GUIDE.md)** - Pattern examples
 - **Testing Patterns** - See coding standards for test conventions
 - **[Architecture Overview](./ARCHITECTURE.md)** - System design and components
