@@ -13,23 +13,19 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from attune.agents_md import AgentRegistry
-from attune.context import CompactState, ContextManager, SBARHandoff
+from attune.context import CompactState, ContextManager
 from attune.context.compaction import PatternSummary
 from attune.hooks.config import HookEvent
 from attune.hooks.registry import HookRegistry
 from attune.learning import (
-    ExtractedPattern,
     LearnedSkillsStorage,
-    PatternCategory,
     PatternExtractor,
     SessionEvaluator,
-    SessionQuality,
 )
 
 
@@ -295,7 +291,7 @@ def main():
         print(f"Empathy Level: {restored.empathy_level}")
         print(f"Interactions: {restored.interaction_count}")
         if restored.pending_handoff:
-            print(f"\nPending Handoff:")
+            print("\nPending Handoff:")
             print(f"  Situation: {restored.pending_handoff.situation}")
             print(f"  Recommendation: {restored.pending_handoff.recommendation}")
 

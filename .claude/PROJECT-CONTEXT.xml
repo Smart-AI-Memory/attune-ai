@@ -131,7 +131,7 @@ interaction_mode: socratic
       </deliverables>
       <key-classes>
         <class>PatternSummary: compact pattern representation</class>
-        <class>SBARHandoff: Situation-Background-Assessment-Recommendation for continuity</class>
+        <class>WorkHandoff: Situation-Background-Assessment-Recommendation for continuity</class>
         <class>CompactState: user_id, trust_level, empathy_level, patterns, session_id, phase, handoff</class>
         <class>CompactionStateManager: save_state(), load_latest_state(), load_state_by_session()</class>
         <class>ContextManager: extract_compact_state(), save_for_compaction(), restore_state(), generate_restoration_prompt()</class>

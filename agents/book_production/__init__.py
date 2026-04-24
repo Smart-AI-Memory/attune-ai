@@ -21,7 +21,7 @@ Licensed under the Apache License, Version 2.0
 
 from .base import AgentConfig, BaseAgent, MemDocsConfig, OpusAgent, RedisConfig, SonnetAgent
 from .editor_agent import EditorAgent
-from .learning import (  # Pattern Extraction; Feedback Loop; Quality Gap Detection; SBAR Handoffs
+from .learning import (  # Pattern Extraction; Feedback Loop; Quality Gap Detection; Work Handoffs
     ExtractedPattern,
     FeedbackEntry,
     FeedbackLoop,
@@ -30,7 +30,7 @@ from .learning import (  # Pattern Extraction; Feedback Loop; Quality Gap Detect
     PatternExtractor,
     QualityGap,
     QualityGapDetector,
-    SBARHandoff,
+    WorkHandoff,
     create_editor_to_reviewer_handoff,
     create_research_to_writer_handoff,
     create_reviewer_to_writer_handoff,
@@ -79,7 +79,7 @@ __all__ = [
     "FeedbackLoop",
     # Learning System - Quality Gap Detection
     "GapSeverity",
-    # Learning System - SBAR Handoffs
+    # Learning System - Work Handoffs
     "HandoffType",
     "MemDocsConfig",
     "OpusAgent",
@@ -94,8 +94,8 @@ __all__ = [
     "ResearchResult",
     "ReviewResult",
     "ReviewerAgent",
-    "SBARHandoff",
     "SonnetAgent",
+    "WorkHandoff",
     "SourceDocument",
     "WriterAgent",
     "create_editor_to_reviewer_handoff",
