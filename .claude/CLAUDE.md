@@ -3028,3 +3028,54 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   -not -path "*archive*"` against nav entries.
   Whenever adding a new top-level directory under
   `docs/`, include nav wiring in the same PR.
+
+- **Use dataclass `__post_init__` to coalesce between a
+  scalar legacy field and a new list field when widening
+  a schema with backward compat**: attune-help 0.9.0
+  added `Feature.doc_paths: list[str]` alongside the
+  existing `Feature.doc_path: str | None`. Rather than
+  branch at every read site (`feature.doc_paths or
+  [feature.doc_path] if feature.doc_path else []`),
+  `__post_init__` keeps the two attributes in sync: if
+  `doc_paths` is set, populate `doc_path = doc_paths[0]`;
+  if `doc_path` is set alone, populate
+  `doc_paths = [doc_path]`. Loader coerces YAML scalar
+  legacy `doc_path:` into `doc_paths=[...]`; writer
+  always emits the list form. Consumers read whichever
+  attribute is convenient. One `__post_init__`, no
+  branches at call sites. Pattern generalizes to any
+  additive schema widening from scalar → list.
+
+- **`uv pip install -e <sibling-path> --no-deps` is the
+  clean venv-local shadow when a sibling dep's
+  in-flight version exceeds the current cap**:
+  attune-ai caps `attune-help>=0.5.1,<0.8` but we
+  needed 0.9.0 visible in the venv for local testing
+  before the cap bump lands. A plain `uv pip install
+  -e ../attune-help/` might fail on cap resolution;
+  `--force-reinstall --no-deps` bypasses dependency
+  checks entirely and just drops the editable path in
+  site-packages. Any `uv sync` afterwards will
+  overwrite it (per the existing lesson) — that's the
+  intended property: shadow lives until the next sync
+  cycle or a real release. Companion to the
+  "`[tool.uv.sources]` overrides are discouraged"
+  policy comment in attune-ai's pyproject.toml: use
+  venv shadow, not a committed source override, when
+  the cap bump isn't ready yet.
+
+- **Combine two unreleased CHANGELOG drafts into one
+  version when neither has shipped to PyPI**:
+  attune-help had both 0.7.0 and 0.8.0 marked
+  "— Unreleased" in CHANGELOG, but only 0.7.0 was
+  actually on PyPI; 0.8.0 was a draft that had
+  accumulated dev-branch changes. Schema additions
+  that warranted a 0.9.0 bump collided with the 0.8.0
+  draft. Cleanest resolution: rename the 0.8.0 section
+  to 0.9.0 with today's date, append the new
+  additions, note "supersedes 0.8.0 draft" in the
+  changelog header, and skip tagging 0.8.0 entirely.
+  Tags that were never pushed don't need deletion —
+  they never existed. Avoids the "which version got
+  what" confusion that two adjacent unreleased
+  sections create.
