@@ -265,7 +265,7 @@ class TestCommandParserIntegration:
         assert config.category == CommandCategory.CONTEXT
         assert "comp" in config.aliases
         assert config.hooks.get("pre") == "PreCompact"
-        assert "SBAR" in config.body
+        assert "Work Handoff" in config.body
 
     def test_parse_patterns_command(self):
         """Test parsing the patterns command file."""
