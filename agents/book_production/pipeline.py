@@ -26,7 +26,7 @@ from .learning import (
     FeedbackLoop,
     PatternExtractor,
     QualityGapDetector,
-    SBARHandoff,
+    WorkHandoff,
     create_editor_to_reviewer_handoff,
     create_research_to_writer_handoff,
     create_reviewer_to_writer_handoff,
@@ -105,7 +105,7 @@ class BookProductionPipeline:
         }
 
         # Track handoffs for audit trail
-        self.handoff_history: list[SBARHandoff] = []
+        self.handoff_history: list[WorkHandoff] = []
 
     def _init_agents(self):
         """Initialize all agents with configuration"""
