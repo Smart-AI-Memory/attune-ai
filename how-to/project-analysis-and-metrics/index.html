@@ -6,19 +6,19 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Connect Attune AI to Claude Code via MCP. Enable AI workflows, agent coordination, and pattern learning in your IDE.">
+        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
       
       
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/getting-started/mcp-integration/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/project-analysis-and-metrics/">
       
       
-        <link rel="prev" href="../redis-setup/">
+        <link rel="prev" href="../resilience-patterns/">
       
       
-        <link rel="next" href="../../tutorials/">
+        <link rel="next" href="../context-management/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>MCP Integration - Attune AI</title>
+        <title>Project Analysis - Attune AI</title>
       
     
     
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mcp-integration" class="md-skip">
+        <a href="#project-analysis-and-code-metrics" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MCP Integration
+              Project Analysis
             
           </span>
         </div>
@@ -248,13 +248,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
           
   
   
@@ -290,11 +288,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../how-to/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -481,31 +481,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -523,7 +520,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -541,7 +538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -569,7 +566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -597,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../first-steps/" class="md-nav__link">
+      <a href="../../getting-started/first-steps/" class="md-nav__link">
         
   
   
@@ -625,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../choose-your-path/" class="md-nav__link">
+      <a href="../../getting-started/choose-your-path/" class="md-nav__link">
         
   
   
@@ -653,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../redis-setup/" class="md-nav__link">
+      <a href="../../getting-started/redis-setup/" class="md-nav__link">
         
   
   
@@ -678,37 +675,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MCP Integration
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../getting-started/mcp-integration/" class="md-nav__link">
         
   
   
@@ -724,364 +694,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is MCP?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Setup
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#option-1-claude-code-automatic" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option 1: Claude Code (Automatic)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#option-2-claude-desktop-manual" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option 2: Claude Desktop (Manual)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-tools-41-core-5-with-attune-redis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available Tools (41 core + 5 with attune-redis)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Available Tools (41 core + 5 with attune-redis)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#workflow-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#vision-tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vision Tool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentication-monitoring-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication &amp; Monitoring Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#help-system-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Help System Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#redis-plugin-tools-attune-redis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Redis Plugin Tools (attune-redis)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-resources-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Resources (3)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#in-claude-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In Claude Code
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#in-claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-the-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing the MCP Server
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing the MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Test
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification Hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#server-not-starting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Not Starting
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-not-available-in-claude-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools Not Available in Claude Code
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-not-available-in-claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools Not Available in Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tool-execution-fails" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool Execution Fails
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-vs-cli-vs-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP vs CLI vs Python API
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternative-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative Clients
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#legacy-socratic-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Legacy: Socratic MCP Server
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1445,28 +1057,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1484,7 +1099,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1502,7 +1117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1536,10 +1151,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1548,7 +1166,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
         
           
-          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
             
   
   
@@ -1584,7 +1202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/unified-memory-system/" class="md-nav__link">
+      <a href="../unified-memory-system/" class="md-nav__link">
         
   
   
@@ -1612,7 +1230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/short-term-memory-implementation/" class="md-nav__link">
+      <a href="../short-term-memory-implementation/" class="md-nav__link">
         
   
   
@@ -1640,7 +1258,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/memory-graph/" class="md-nav__link">
+      <a href="../memory-graph/" class="md-nav__link">
         
   
   
@@ -1682,10 +1300,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1694,7 +1315,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
         
           
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
             
   
   
@@ -1730,7 +1351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/agent-factory/" class="md-nav__link">
+      <a href="../agent-factory/" class="md-nav__link">
         
   
   
@@ -1758,7 +1379,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/smart-router/" class="md-nav__link">
+      <a href="../smart-router/" class="md-nav__link">
         
   
   
@@ -1786,7 +1407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/auto-chaining/" class="md-nav__link">
+      <a href="../auto-chaining/" class="md-nav__link">
         
   
   
@@ -1828,10 +1449,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1840,7 +1464,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
             
   
   
@@ -1904,7 +1528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/webhook-integration/" class="md-nav__link">
+      <a href="../webhook-integration/" class="md-nav__link">
         
   
   
@@ -1960,7 +1584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/security-architecture/" class="md-nav__link">
+      <a href="../security-architecture/" class="md-nav__link">
         
   
   
@@ -1988,7 +1612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/hipaa-compliance/" class="md-nav__link">
+      <a href="../hipaa-compliance/" class="md-nav__link">
         
   
   
@@ -2030,10 +1654,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2042,7 +1669,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_5" >
         
           
-          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
             
   
   
@@ -2078,7 +1705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/practical-patterns/" class="md-nav__link">
+      <a href="../practical-patterns/" class="md-nav__link">
         
   
   
@@ -2106,7 +1733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/resilience-patterns/" class="md-nav__link">
+      <a href="../resilience-patterns/" class="md-nav__link">
         
   
   
@@ -2139,28 +1766,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
         
           
+          
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
             
   
   
@@ -2178,7 +1808,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2193,10 +1823,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../how-to/project-analysis-and-metrics/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Analysis
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2212,6 +1869,153 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-project-index-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the Project Index Does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-high-complexity-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding High-Complexity Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#index-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index CLI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#incremental-scanning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Incremental Scanning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-with-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration with Workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2224,7 +2028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/context-management/" class="md-nav__link">
+      <a href="../context-management/" class="md-nav__link">
         
   
   
@@ -2252,7 +2056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/learning-and-patterns/" class="md-nav__link">
+      <a href="../learning-and-patterns/" class="md-nav__link">
         
   
   
@@ -2294,10 +2098,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2306,7 +2113,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
             
   
   
@@ -2342,7 +2149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/telemetry-and-signals/" class="md-nav__link">
+      <a href="../telemetry-and-signals/" class="md-nav__link">
         
   
   
@@ -2384,10 +2191,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2396,7 +2206,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
             
   
   
@@ -2432,7 +2242,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/help-system-maintenance/" class="md-nav__link">
+      <a href="../help-system-maintenance/" class="md-nav__link">
         
   
   
@@ -2468,7 +2278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/prerequisites/" class="md-nav__link">
+      <a href="../prerequisites/" class="md-nav__link">
         
   
   
@@ -3944,10 +3754,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-mcp" class="md-nav__link">
+  <a href="#what-the-project-index-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What is MCP?
+        What the Project Index Does
       
     </span>
   </a>
@@ -3955,33 +3765,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-setup" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Setup
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#option-1-claude-code-automatic" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Option 1: Claude Code (Automatic)
+        Quick Start
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#option-2-claude-desktop-manual" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#file-categories" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 2: Claude Desktop (Manual)
+        File Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-high-complexity-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding High-Complexity Files
       
     </span>
   </a>
@@ -3994,182 +3815,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-tools-41-core-5-with-attune-redis" class="md-nav__link">
+  <a href="#dependency-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Tools (41 core + 5 with attune-redis)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Available Tools (41 core + 5 with attune-redis)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#workflow-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#vision-tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vision Tool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentication-monitoring-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication &amp; Monitoring Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#help-system-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Help System Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#redis-plugin-tools-attune-redis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Redis Plugin Tools (attune-redis)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-resources-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Resources (3)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#in-claude-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In Claude Code
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#in-claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-the-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing the MCP Server
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing the MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Test
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification Hooks
+        Dependency Analysis
       
     </span>
   </a>
@@ -4177,71 +3826,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#project-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#server-not-starting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Not Starting
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-not-available-in-claude-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools Not Available in Claude Code
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-not-available-in-claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools Not Available in Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tool-execution-fails" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool Execution Fails
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-vs-cli-vs-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP vs CLI vs Python API
+        Project Summary
       
     </span>
   </a>
@@ -4249,10 +3837,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternative-clients" class="md-nav__link">
+  <a href="#index-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative Clients
+        Index CLI
       
     </span>
   </a>
@@ -4260,10 +3848,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#incremental-scanning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        Incremental Scanning
       
     </span>
   </a>
@@ -4271,10 +3859,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#legacy-socratic-mcp-server" class="md-nav__link">
+  <a href="#integration-with-workflows" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Legacy: Socratic MCP Server
+        Integration with Workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
       
     </span>
   </a>
@@ -4301,519 +3900,253 @@
   
 
 
-<h1 id="mcp-integration">MCP Integration<a class="headerlink" href="#mcp-integration" title="Permanent link">&para;</a></h1>
-<p>Connect Attune AI workflows directly to Claude Code or Claude Desktop using the Model Context Protocol.</p>
-<p>The Attune MCP server exposes all production workflows as native tools — security audits, test generation, performance analysis, and more.</p>
+<h1 id="project-analysis-and-code-metrics">Project Analysis and Code Metrics<a class="headerlink" href="#project-analysis-and-code-metrics" title="Permanent link">&para;</a></h1>
+<p>The Attune AI project index scans your codebase and builds a structured
+model of its files, dependencies, and code quality metrics. This powers
+the <code>health-check</code> and <code>code-review</code> workflows under the hood.</p>
+<p>Use this guide directly when you want to query project metrics
+programmatically — for example, to find the highest-complexity files
+before a refactoring sprint, to compute test-to-source ratios in a
+script, or to integrate project health into a CI dashboard. For
+one-off analysis, <code>attune workflow run health-check</code> is simpler.</p>
 <hr />
-<h2 id="what-is-mcp">What is MCP?<a class="headerlink" href="#what-is-mcp" title="Permanent link">&para;</a></h2>
-<p>The <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> is an open standard for connecting AI applications to external tools and data sources. Attune AI exposes its workflows, authentication system, and telemetry as MCP tools.</p>
+<h2 id="what-the-project-index-does">What the Project Index Does<a class="headerlink" href="#what-the-project-index-does" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>attune workflow run health-check
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>         │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>         ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>┌──────────────────────────────┐
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  ProjectScanner               │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  Walks the file tree          │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  Categorizes every .py file   │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  Computes per-file metrics    │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└──────────────┬───────────────┘
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>               │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>               ▼
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>┌──────────────────────────────┐
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  ProjectIndex                 │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  Builds searchable index      │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  Caches to .attune/           │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>└──────────────┬───────────────┘
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>               │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>               ▼
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>┌──────────────────────────────┐
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│  ReportGenerator              │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│  Health score, risk files,    │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│  dependency graph             │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>└──────────────────────────────┘
+</code></pre></div>
 <hr />
-<h2 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h2>
-<h3 id="option-1-claude-code-automatic">Option 1: Claude Code (Automatic)<a class="headerlink" href="#option-1-claude-code-automatic" title="Permanent link">&para;</a></h3>
-<p><strong>Best for:</strong> Development workflows in VSCode</p>
-<p>Attune AI includes <code>.claude/mcp.json</code> configuration. Claude Code automatically discovers the MCP server when you open the project.</p>
-<ol>
-<li><strong>Install Attune AI:</strong></li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="o">[</span>developer<span class="o">]</span>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.project_index</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectIndex</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Initialize and scan the project</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">index</span> <span class="o">=</span> <span class="n">ProjectIndex</span><span class="p">(</span><span class="n">project_root</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">index</span><span class="o">.</span><span class="n">scan</span><span class="p">()</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total files:   </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">total_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Python files:  </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">python_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test files:    </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">test_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Health score:  </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">health_score</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">/100&quot;</span><span class="p">)</span>
 </code></pre></div>
-<ol>
-<li><strong>Open project in Claude Code</strong></li>
-</ol>
-<p>The MCP server is automatically configured via <code>.claude/mcp.json</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;attune&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;-m&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;attune.mcp.server&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="nt">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;${ANTHROPIC_API_KEY}&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="nt">&quot;PYTHONPATH&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;${workspaceFolder}/src&quot;</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">}</span>
-</code></pre></div>
-<ol>
-<li>
-<p><strong>Restart Claude Code</strong> to load the server</p>
-</li>
-<li>
-<p><strong>Use natural language:</strong></p>
-</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&quot;Run a security audit on src/&quot;
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&quot;Generate tests for config.py&quot;
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>&quot;Check my authentication configuration&quot;
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>&quot;Analyze performance bottlenecks&quot;
-</code></pre></div>
-<h3 id="option-2-claude-desktop-manual">Option 2: Claude Desktop (Manual)<a class="headerlink" href="#option-2-claude-desktop-manual" title="Permanent link">&para;</a></h3>
-<p><strong>Best for:</strong> General-purpose AI workflows</p>
-<p>Add to your Claude Desktop config file:</p>
-<p><strong>macOS:</strong> <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>
-<strong>Windows:</strong> <code>%APPDATA%\Claude\claude_desktop_config.json</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">        </span><span class="nt">&quot;attune&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">            </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">            </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;-m&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;attune.mcp.server&quot;</span><span class="p">],</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">            </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">                </span><span class="nt">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-api-key-here&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">                </span><span class="nt">&quot;PYTHONPATH&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/attune-ai/src&quot;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">            </span><span class="p">}</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="p">}</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">}</span>
-</code></pre></div>
-<p>Then restart Claude Desktop.</p>
 <hr />
-<h2 id="available-tools-41-core-5-with-attune-redis">Available Tools (41 core + 5 with attune-redis)<a class="headerlink" href="#available-tools-41-core-5-with-attune-redis" title="Permanent link">&para;</a></h2>
-<p>The Attune MCP server exposes all production workflows as tools:</p>
-<h3 id="workflow-tools">Workflow Tools<a class="headerlink" href="#workflow-tools" title="Permanent link">&para;</a></h3>
+<h2 id="file-categories">File Categories<a class="headerlink" href="#file-categories" title="Permanent link">&para;</a></h2>
+<p>Every file is classified into one of these categories:</p>
 <table>
 <thead>
 <tr>
-<th>Tool</th>
-<th>Description</th>
-<th>Required Args</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>security_audit</code></td>
-<td>Scan code for vulnerabilities, dangerous patterns, security issues</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>bug_predict</code></td>
-<td>Analyze code patterns and predict potential bugs</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>code_review</code></td>
-<td>Comprehensive code quality analysis with suggestions</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>test_generation</code></td>
-<td>Generate tests for code (supports batch mode)</td>
-<td><code>module</code>, <code>batch</code> (optional)</td>
-</tr>
-<tr>
-<td><code>performance_audit</code></td>
-<td>Identify bottlenecks, memory leaks, optimization opportunities</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>release_prep</code></td>
-<td>Run release checks: health, security, changelog</td>
-<td><code>path</code> (optional)</td>
-</tr>
-<tr>
-<td><code>doc_audit</code></td>
-<td>Audit documentation coverage and freshness</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>doc_gen</code></td>
-<td>Generate documentation for source code</td>
-<td><code>source_path</code></td>
-</tr>
-<tr>
-<td><code>test_audit</code></td>
-<td>Deep test coverage analysis</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>refactor_plan</code></td>
-<td>Identify refactoring opportunities and generate roadmap</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>dependency_check</code></td>
-<td>Audit dependencies for vulnerabilities and updates</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>simplify_code</code></td>
-<td>Find and simplify overly complex code</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>deep_review</code></td>
-<td>Multi-pass security + quality + test-gap review</td>
-<td><code>path</code></td>
-</tr>
-<tr>
-<td><code>health_check</code></td>
-<td>Comprehensive project health score</td>
-<td><code>project_root</code></td>
-</tr>
-<tr>
-<td><code>research_synthesis</code></td>
-<td>Synthesize multiple sources into a research answer</td>
-<td><code>sources</code>, <code>question</code></td>
-</tr>
-<tr>
-<td><code>analyze_batch</code></td>
-<td>Submit tasks to Anthropic Batch API (50% cost savings)</td>
-<td><code>requests</code></td>
-</tr>
-<tr>
-<td><code>rag_knowledge_query</code></td>
-<td>Query the RAG corpus for contextual knowledge</td>
-<td><code>query</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="vision-tool">Vision Tool<a class="headerlink" href="#vision-tool" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-<th>Required Args</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>analyze_image</code></td>
-<td>Analyze an image using Claude's vision capabilities</td>
-<td><code>image_path</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong><code>analyze_image</code> usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;image_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;screenshots/error.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;prompt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;What error is shown and what might cause it?&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
-</code></pre></div></p>
-<p>Supports <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.gif</code>, <code>.webp</code>. Maximum file size: 10 MB.
-Requires <code>ANTHROPIC_API_KEY</code> in the environment.</p>
-<p><strong>Example — diagnosing a UI bug from a screenshot:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>User: &quot;Analyze this screenshot and explain what&#39;s wrong&quot;
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Claude: [Invokes analyze_image with image_path=&quot;screenshots/bug.png&quot;]
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>→ Returns analysis: &quot;The modal is rendering behind the overlay (z-index issue)...&quot;
-</code></pre></div></p>
-<h3 id="authentication-monitoring-tools">Authentication &amp; Monitoring Tools<a class="headerlink" href="#authentication-monitoring-tools" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-<th>Required Args</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>auth_status</code></td>
-<td>Get authentication strategy status and configuration</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>auth_recommend</code></td>
-<td>Get authentication recommendation for a file</td>
-<td><code>file_path</code></td>
-</tr>
-<tr>
-<td><code>telemetry_stats</code></td>
-<td>Get cost savings, cache hit rates, workflow performance</td>
-<td><code>days</code> (optional)</td>
-</tr>
-<tr>
-<td><code>attune_get_level</code></td>
-<td>Get current Attune interaction level (1–5)</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>attune_set_level</code></td>
-<td>Set the Attune interaction level</td>
-<td><code>level</code></td>
-</tr>
-<tr>
-<td><code>context_get</code></td>
-<td>Retrieve a value from the session context store</td>
-<td><code>key</code></td>
-</tr>
-<tr>
-<td><code>context_set</code></td>
-<td>Store a value in the session context store</td>
-<td><code>key</code>, <code>value</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="help-system-tools">Help System Tools<a class="headerlink" href="#help-system-tools" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-<th>Required Args</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>help_lookup</code></td>
-<td>Look up guidance for a topic</td>
-<td><code>topic</code></td>
-</tr>
-<tr>
-<td><code>help_init</code></td>
-<td>Initialize the help system for a project</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>help_status</code></td>
-<td>Check help template freshness</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>help_update</code></td>
-<td>Update stale help templates</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>help_maintain</code></td>
-<td>Run help system maintenance tasks</td>
-<td>none</td>
-</tr>
-</tbody>
-</table>
-<h3 id="memory-tools">Memory Tools<a class="headerlink" href="#memory-tools" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-<th>Required Args</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>memory_store</code></td>
-<td>Store a key-value pair in persistent memory</td>
-<td><code>key</code>, <code>value</code></td>
-</tr>
-<tr>
-<td><code>memory_retrieve</code></td>
-<td>Retrieve a stored value</td>
-<td><code>key</code></td>
-</tr>
-<tr>
-<td><code>memory_search</code></td>
-<td>Search stored memory by query</td>
-<td><code>query</code></td>
-</tr>
-<tr>
-<td><code>memory_forget</code></td>
-<td>Delete a stored memory entry</td>
-<td><code>key</code></td>
-</tr>
-<tr>
-<td><code>personal_memory_capture</code></td>
-<td>Save a topic to cross-session personal memory</td>
-<td><code>topic</code>, <code>content</code></td>
-</tr>
-<tr>
-<td><code>personal_memory_recall</code></td>
-<td>Retrieve a personal memory topic</td>
-<td><code>topic</code></td>
-</tr>
-<tr>
-<td><code>personal_memory_topics</code></td>
-<td>List all personal memory topics</td>
-<td>none</td>
-</tr>
-<tr>
-<td><code>personal_memory_forget</code></td>
-<td>Delete a personal memory topic</td>
-<td><code>topic</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="redis-plugin-tools-attune-redis">Redis Plugin Tools (attune-redis)<a class="headerlink" href="#redis-plugin-tools-attune-redis" title="Permanent link">&para;</a></h3>
-<p>Installed with <code>pip install attune-redis</code>. Adds 5 additional tools:
-<code>redis_memory_store</code>, <code>redis_memory_retrieve</code>, <code>redis_memory_search</code>,
-<code>redis_memory_promote</code>, <code>redis_health_check</code>.</p>
-<h3 id="mcp-resources-3">MCP Resources (3)<a class="headerlink" href="#mcp-resources-3" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Resource URI</th>
+<th>Category</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>attune://workflows</code></td>
-<td>List of all available workflows</td>
+<td><code>SOURCE</code></td>
+<td>Production source code</td>
 </tr>
 <tr>
-<td><code>attune://auth/config</code></td>
-<td>Current authentication strategy configuration</td>
+<td><code>TEST</code></td>
+<td>Test files (<code>test_*.py</code>, <code>*_test.py</code>)</td>
 </tr>
 <tr>
-<td><code>attune://telemetry</code></td>
-<td>Cost tracking and performance metrics</td>
+<td><code>CONFIG</code></td>
+<td>Configuration files</td>
+</tr>
+<tr>
+<td><code>DOCUMENTATION</code></td>
+<td>Markdown and text docs</td>
+</tr>
+<tr>
+<td><code>SCRIPT</code></td>
+<td>Utility scripts</td>
+</tr>
+<tr>
+<td><code>DATA</code></td>
+<td>Data files</td>
+</tr>
+<tr>
+<td><code>UNKNOWN</code></td>
+<td>Unclassified</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="example-usage">Example Usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h2>
-<h3 id="in-claude-code">In Claude Code<a class="headerlink" href="#in-claude-code" title="Permanent link">&para;</a></h3>
-<p>Natural language commands are automatically routed to the appropriate tool:</p>
-<p><strong>Security Analysis:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>User: &quot;Run a security audit on the authentication module&quot;
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Claude: [Invokes security_audit tool with path=&quot;src/auth/&quot;]
-</code></pre></div></p>
-<p><strong>Test Generation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>User: &quot;Generate tests for the config module&quot;
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Claude: [Invokes test_generation tool with module=&quot;src/attune/config.py&quot;]
-</code></pre></div></p>
-<p><strong>Cost Optimization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>User: &quot;What&#39;s my current authentication setup?&quot;
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Claude: [Invokes auth_status tool]
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Response: {
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  &quot;success&quot;: true,
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  &quot;subscription_tier&quot;: &quot;max&quot;,
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  &quot;default_mode&quot;: &quot;api&quot;,
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  &quot;setup_completed&quot;: true
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>}
-</code></pre></div></p>
-<h3 id="in-claude-desktop">In Claude Desktop<a class="headerlink" href="#in-claude-desktop" title="Permanent link">&para;</a></h3>
-<p>Direct tool invocation or natural language:</p>
-<blockquote>
-<p><strong>You:</strong> Check for security vulnerabilities in my API code</p>
-<p><strong>Claude:</strong> I'll run a security audit using the attune security_audit tool.</p>
-<p><em>[Invokes security_audit(path="src/api/")]</em></p>
-<p>Found 3 medium-severity issues:
-1. SQL injection risk in query builder (line 42)
-2. Missing input validation on user endpoint (line 78)
-3. Weak password hashing algorithm (line 156)</p>
-</blockquote>
-<hr />
-<h2 id="testing-the-mcp-server">Testing the MCP Server<a class="headerlink" href="#testing-the-mcp-server" title="Permanent link">&para;</a></h2>
-<h3 id="quick-test">Quick Test<a class="headerlink" href="#quick-test" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Test tool listing</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;method&quot;:&quot;tools/list&quot;,&quot;params&quot;:{}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>./src<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>attune.mcp.server
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Test tool execution</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;method&quot;:&quot;tools/call&quot;,&quot;params&quot;:{&quot;name&quot;:&quot;auth_status&quot;,&quot;arguments&quot;:{}}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>./src<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>attune.mcp.server
-</code></pre></div>
-<h3 id="verify-integration">Verify Integration<a class="headerlink" href="#verify-integration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Check server starts without errors</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.mcp.server<span class="w"> </span>--help
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># View comprehensive test results</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>cat<span class="w"> </span>.claude/MCP_TEST_RESULTS.md
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.project_index.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileCategory</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">source_files</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_files_by_category</span><span class="p">(</span><span class="n">FileCategory</span><span class="o">.</span><span class="n">SOURCE</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">test_files</span>   <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_files_by_category</span><span class="p">(</span><span class="n">FileCategory</span><span class="o">.</span><span class="n">TEST</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source files: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">source_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test files:   </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coverage ratio: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_files</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">source_files</span><span class="p">)</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <hr />
-<h2 id="verification-hooks">Verification Hooks<a class="headerlink" href="#verification-hooks" title="Permanent link">&para;</a></h2>
-<p>Attune automatically validates outputs via Claude Code hooks:</p>
-<p><strong>Python File Validation:</strong>
-- Syntax checking after file writes
-- Imports and dependencies verified</p>
-<p><strong>JSON File Validation:</strong>
-- Format checking after file writes
-- Schema validation where applicable</p>
-<p><strong>Workflow Output Verification:</strong>
-- AI-powered validation of workflow results
-- Ensures required fields are present
-- Catches common errors</p>
-<p>Configuration in <code>.claude/settings.local.json</code> (automatically set up).</p>
-<hr />
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="server-not-starting">Server Not Starting<a class="headerlink" href="#server-not-starting" title="Permanent link">&para;</a></h3>
-<p><strong>Check Python environment:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import attune.mcp.server; print(&#39;OK&#39;)&quot;</span>
-</code></pre></div></p>
-<p><strong>Check PYTHONPATH:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Should include src directory</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$PYTHONPATH</span>
-</code></pre></div></p>
-<h3 id="tools-not-available-in-claude-code">Tools Not Available in Claude Code<a class="headerlink" href="#tools-not-available-in-claude-code" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Verify <code>.claude/mcp.json</code> exists</strong> in project root</li>
-<li><strong>Restart Claude Code</strong> completely</li>
-<li><strong>Check Claude Code status bar</strong> for "attune" server</li>
-<li><strong>Review logs</strong> in Claude Code output panel</li>
-</ol>
-<h3 id="tools-not-available-in-claude-desktop">Tools Not Available in Claude Desktop<a class="headerlink" href="#tools-not-available-in-claude-desktop" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Verify config path</strong> is correct for your OS</li>
-<li><strong>Check JSON syntax</strong> - use a validator</li>
-<li><strong>Set PYTHONPATH</strong> to absolute path of attune-ai/src</li>
-<li><strong>Restart Claude Desktop</strong> fully (quit and reopen)</li>
-</ol>
-<h3 id="tool-execution-fails">Tool Execution Fails<a class="headerlink" href="#tool-execution-fails" title="Permanent link">&para;</a></h3>
-<p><strong>Check API key:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$ANTHROPIC_API_KEY</span>
-</code></pre></div></p>
-<p><strong>Check workflow dependencies:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="o">[</span>developer<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Review error logs:</strong>
-- Claude Code: Output panel → "Claude Code" channel
-- Claude Desktop: Application logs
-- Direct test: Stderr output from python command</p>
-<hr />
-<h2 id="mcp-vs-cli-vs-python-api">MCP vs CLI vs Python API<a class="headerlink" href="#mcp-vs-cli-vs-python-api" title="Permanent link">&para;</a></h2>
+<h2 id="code-metrics">Code Metrics<a class="headerlink" href="#code-metrics" title="Permanent link">&para;</a></h2>
+<p>For each Python file, the scanner computes:</p>
 <table>
 <thead>
 <tr>
-<th>Use Case</th>
-<th>Best Interface</th>
+<th>Metric</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Development in VSCode</td>
-<td><strong>MCP (Claude Code)</strong> - Natural language, automatic discovery</td>
+<td><code>line_count</code></td>
+<td>Total lines</td>
 </tr>
 <tr>
-<td>Interactive exploration</td>
-<td><strong>MCP (Claude Desktop)</strong> - Conversational, guided workflows</td>
+<td><code>function_count</code></td>
+<td>Number of functions and methods</td>
 </tr>
 <tr>
-<td>CI/CD pipelines</td>
-<td><strong>CLI</strong> - <code>attune workflow run security-audit</code></td>
+<td><code>class_count</code></td>
+<td>Number of class definitions</td>
 </tr>
 <tr>
-<td>Custom integrations</td>
-<td><strong>Python API</strong> - Full programmatic control</td>
+<td><code>complexity</code></td>
+<td>Average cyclomatic complexity</td>
+</tr>
+<tr>
+<td><code>import_count</code></td>
+<td>Number of import statements</td>
+</tr>
+<tr>
+<td><code>has_docstrings</code></td>
+<td>Whether public items have docstrings</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Get metrics for a specific file</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">record</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="s2">&quot;src/attune/mcp/server.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">if</span> <span class="n">record</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Lines:       </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">line_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Functions:   </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">function_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Classes:     </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">class_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Complexity:  </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">complexity</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="finding-high-complexity-files">Finding High-Complexity Files<a class="headerlink" href="#finding-high-complexity-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Files sorted by complexity — candidates for refactoring</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">complex_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">index</span><span class="o">.</span><span class="n">get_files_by_category</span><span class="p">(</span><span class="n">FileCategory</span><span class="o">.</span><span class="n">SOURCE</span><span class="p">),</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">complexity</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Top 10 most complex files:&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">complex_files</span><span class="p">[:</span><span class="mi">10</span><span class="p">]:</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">path</span><span class="si">:</span><span class="s2">50s</span><span class="si">}</span><span class="s2">  complexity=</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">complexity</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
 <hr />
-<h2 id="alternative-clients">Alternative Clients<a class="headerlink" href="#alternative-clients" title="Permanent link">&para;</a></h2>
-<p>The MCP server works with any MCP-compatible client:</p>
+<h2 id="dependency-analysis">Dependency Analysis<a class="headerlink" href="#dependency-analysis" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># What does a module import?</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">deps</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_dependencies</span><span class="p">(</span><span class="s2">&quot;src/attune/mcp/server.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Direct imports:&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">dep</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># What imports a given module?</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">dependents</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_dependents</span><span class="p">(</span><span class="s2">&quot;src/attune/security/path_validation.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Used by </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dependents</span><span class="p">)</span><span class="si">}</span><span class="s2"> modules&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="project-summary">Project Summary<a class="headerlink" href="#project-summary" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Health score:        </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">health_score</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">/100&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total files:         </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">total_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Python files:        </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">python_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test coverage ratio: </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">test_coverage_ratio</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Avg complexity:      </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">avg_complexity</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files with docs:     </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">documented_ratio</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High-risk files:     </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">high_risk_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># High-risk files flagged by the scanner</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">summary</span><span class="o">.</span><span class="n">high_risk_files</span><span class="p">:</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ⚠  </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">  (risk: </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">risk_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="index-cli">Index CLI<a class="headerlink" href="#index-cli" title="Permanent link">&para;</a></h2>
+<p>The project index ships its own CLI for one-off analysis:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Scan and save index</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.project_index<span class="w"> </span>refresh
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Show summary table</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.project_index<span class="w"> </span>summary
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Full text report</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.project_index<span class="w"> </span>report
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Query specific files</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.project_index<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;auth&quot;</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Show one file&#39;s record</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>python<span class="w"> </span>-m<span class="w"> </span>attune.project_index<span class="w"> </span>file<span class="w"> </span>src/attune/mcp/server.py
+</code></pre></div>
+<hr />
+<h2 id="incremental-scanning">Incremental Scanning<a class="headerlink" href="#incremental-scanning" title="Permanent link">&para;</a></h2>
+<p>The index caches results to <code>.attune/project_index.json</code>. On subsequent
+calls, only modified files are re-scanned.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Full rescan</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">index</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Incremental (default)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">index</span><span class="o">.</span><span class="n">scan</span><span class="p">()</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Last scanned: </span><span class="si">{</span><span class="n">index</span><span class="o">.</span><span class="n">last_scanned_at</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="integration-with-workflows">Integration with Workflows<a class="headerlink" href="#integration-with-workflows" title="Permanent link">&para;</a></h2>
+<p>The <code>health-check</code> and <code>code-review</code> workflows use the project index
+internally. If you are already running a workflow and want to inspect
+the index it built, access it through the workflow result rather than
+re-scanning:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyOS</span>  <span class="c1"># main entry point for workflow execution</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">empathy</span> <span class="o">=</span> <span class="n">EmpathyOS</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;dev&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">empathy</span><span class="o">.</span><span class="n">run_workflow</span><span class="p">(</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="s2">&quot;health-check&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;.&quot;</span><span class="p">},</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># The workflow populates the index as a side effect — no second scan</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">index</span> <span class="o">=</span> <span class="n">empathy</span><span class="o">.</span><span class="n">project_index</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Claude Code</strong> (VSCode extension) - Automatic project discovery</li>
-<li><strong>Claude Desktop</strong> - General-purpose AI assistant</li>
-<li><strong>Cursor IDE</strong> - Similar configuration to Claude Desktop</li>
-<li><strong>Custom clients</strong> - Use the MCP SDK to connect</li>
-<li><strong>CLI testing</strong> - Pipe JSON-RPC messages directly</li>
+<li><a href="../../reference/API_REFERENCE/#health-check">health-check workflow</a> — The
+  primary consumer of project index data</li>
+<li><a href="../../reference/API_REFERENCE/#code-review">code-review workflow</a> — Uses
+  metrics for prioritizing review focus</li>
+<li><a href="../practical-patterns/">Practical Patterns</a> — Code quality patterns and
+  refactoring guidance</li>
 </ul>
-<hr />
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><a href="../../reference/cli-reference/">CLI Reference</a></strong> - Command-line interface</li>
-<li><strong>Python API</strong> - Programmatic access</li>
-<li><strong><a href="../../how-to/">How-to Guides</a></strong> - Workflow documentation</li>
-</ul>
-<hr />
-<h2 id="legacy-socratic-mcp-server">Legacy: Socratic MCP Server<a class="headerlink" href="#legacy-socratic-mcp-server" title="Permanent link">&para;</a></h2>
-<p><strong>Note:</strong> The Socratic workflow builder MCP server (<code>attune.socratic.mcp_server</code>) is deprecated in v6.3.0+. Use the production Attune MCP server (<code>attune.mcp.server</code>) instead, which exposes all workflows directly.</p>
 
 
 
 
 
 
-
-  
-  
 
 
 
