@@ -55,7 +55,7 @@ class CompactState:
     session_id: str
     current_phase: str
     completed_phases: list[str]
-    pending_handoff: SBARHandoff | None
+    pending_handoff: WorkHandoff | None
     interaction_count: int
     successful_actions: int
     failed_actions: int
@@ -286,7 +286,7 @@ class ContextManager:
     def complete_phase(phase: str) -> None
 
     # Handoff
-    def set_handoff(situation, background, assessment, recommendation, priority="normal") -> SBARHandoff
+    def set_handoff(situation, background, assessment, recommendation, priority="normal") -> WorkHandoff
     def clear_handoff() -> None
 
     # State operations
