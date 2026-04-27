@@ -253,7 +253,7 @@ class TestModelPricingConstant:
 
 class TestCostTrackerHelpers:
     def test_get_tracker_returns_instance(self, tmp_path, monkeypatch):
-        import attune.cost_tracker as ct
+        from attune import cost_tracker as ct
 
         monkeypatch.setattr(ct, "_tracker", None)
         tracker = ct.get_tracker(storage_dir=str(tmp_path / "t"))
@@ -262,7 +262,7 @@ class TestCostTrackerHelpers:
         monkeypatch.setattr(ct, "_tracker", None)
 
     def test_log_request_convenience_function(self, tmp_path, monkeypatch):
-        import attune.cost_tracker as ct
+        from attune import cost_tracker as ct
 
         monkeypatch.setattr(ct, "_tracker", None)
         monkeypatch.setattr(
