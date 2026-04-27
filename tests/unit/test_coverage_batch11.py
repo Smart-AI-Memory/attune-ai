@@ -467,6 +467,6 @@ class TestTelemetryMain:
         mock_dep.assert_called_once()
 
     def test_guard_does_not_run_on_import(self):
-        import attune.telemetry.__main__  # noqa: F401
+        from attune.telemetry import __main__ as telemetry_main  # noqa: F401
 
-        assert True
+        assert telemetry_main is not None
