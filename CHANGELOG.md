@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.4.1] - 2026-04-27
+
+Test-only patch release. No production code changes.
+
+### Added — coverage batches 11-25
+
+Adds approximately 1,170 new unit tests across 30+ modules covering
+LLM, memory, orchestration, patterns, resilience, socratic, telemetry,
+and workflow subsystems. (PR #183)
+
+### Fixed — CI compatibility for new tests
+
+- `test_no_executor_raises_on_run` now uses `asyncio.run()` instead of
+  `asyncio.get_event_loop().run_until_complete()`. The deprecated form
+  raises `RuntimeError("There is no current event loop")` on Python
+  3.11+, which masked the assertion the test was actually checking.
+- `TestAnthropicProviderIntegration.test_provider_estimate_tokens` and
+  `test_provider_calculate_actual_cost` no longer require
+  `ANTHROPIC_API_KEY`. Both methods are local-only (tiktoken /
+  arithmetic), so the tests now pass `api_key="sk-ant-test"` directly.
+  The previous `pytest.mark.skipif` guard didn't fire reliably in CI
+  when the secret was set to a whitespace value.
+
+### Security — `.pypirc` gitignored
+
+`.pypirc` (PyPI credential file) added to `.gitignore` to prevent
+accidental commits.
+
 ## [6.4.0] - 2026-04-24
 
 Bundles the post-6.3.0 CI cleanup + docs freshness work plus the
