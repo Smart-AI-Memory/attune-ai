@@ -128,7 +128,7 @@ class TestLearningInit:
         assert SessionQuality is not None
 
     def test_all_list_complete(self):
-        import attune.learning as m
+        from attune import learning as m
 
         for name in (
             "ExtractedPattern",
