@@ -176,9 +176,9 @@ class TestOptimizationInit:
         assert callable(optimize_xml_prompt)
 
     def test_all_list(self):
-        import attune.optimization as m
+        from attune.optimization import __all__
 
-        assert set(m.__all__) == {"CompressionLevel", "ContextOptimizer", "optimize_xml_prompt"}
+        assert set(__all__) == {"CompressionLevel", "ContextOptimizer", "optimize_xml_prompt"}
 
     def test_compression_level_is_enum(self):
         import enum
