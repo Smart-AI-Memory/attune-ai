@@ -39,7 +39,7 @@ class TestAgentsMdInit:
         assert AgentLoader is Direct
 
     def test_namespace_has_all_symbols(self):
-        from attune.agents_md import AgentLoader, MarkdownAgentParser, AgentRegistry
+        from attune.agents_md import AgentLoader, AgentRegistry, MarkdownAgentParser
 
         for symbol in (AgentLoader, MarkdownAgentParser, AgentRegistry):
             assert symbol is not None
