@@ -72,7 +72,7 @@ dependencies = [
     "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    "attune-help>=0.5.1,<0.8",  # Progressive-depth help runtime + MCP tools. Cap raised from <0.6 to <0.8 to admit attune-help 0.7.0 (path-keyed summaries, CLI, Beta). 0.7.0 is additive; no API breaks per its CHANGELOG.
+    "attune-help>=0.5.1,<0.10",  # Progressive-depth help runtime + MCP tools. Cap raised from <0.6 to <0.8 to admit attune-help 0.7.0 (path-keyed summaries, CLI, Beta). 0.7.0 is additive; no API breaks per its CHANGELOG.
     # NOTE: attune-rag is an OPTIONAL extra, not a core dep.
     #  Install with `pip install 'attune-ai[rag]'` to enable
     #  the rag-code-gen workflow and rag_knowledge_query MCP
