@@ -40,10 +40,10 @@ class TestGetHistoryStore:
         with patch.dict(
             "sys.modules", {"attune.workflows.history": MagicMock(WorkflowHistoryStore=mock_class)}
         ):
-            from attune.workflows import history_utils
+            import attune.workflows.history_utils as hu
 
-            history_utils._history_store = None
-            result = history_utils._get_history_store()
+            hu._history_store = None
+            result = hu._get_history_store()
         assert result == mock_store
 
     def test_returns_none_when_import_fails(self):
