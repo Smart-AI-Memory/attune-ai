@@ -1,0 +1,509 @@
+# Licensed under the Apache License, Version 2.0
+# Copyright 2025 Smart AI Memory, LLC
+"""Tests for pattern reporting, report generator, workflow_fixall,
+monitoring validators, and template engine — Batch 14.
+
+Covers: meta_workflows/pattern_reporting, meta_workflows/report_generator,
+workflow_fixall, monitoring/validators, template_engine.
+"""
+
+from __future__ import annotations
+
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+# === Module: meta_workflows/pattern_reporting.py ===
+
+
+class TestPatternReporting:
+    def _make_report(self, **overrides):
+        report = {
+            "summary": {
+                "total_runs": 10,
+                "successful_runs": 8,
+                "success_rate": 0.8,
+                "total_cost": 1.50,
+                "avg_cost_per_run": 0.15,
+                "total_agents_created": 20,
+                "avg_agents_per_run": 2.0,
+            },
+            "recommendations": ["Use haiku for cheap tasks"],
+            "insights": {},
+        }
+        report.update(overrides)
+        return report
+
+    def test_prints_summary_fields(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        print_analytics_report(self._make_report())
+        out = capsys.readouterr().out
+        assert "10" in out
+        assert "8" in out
+        assert "1.50" in out
+
+    def test_prints_recommendations(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        print_analytics_report(self._make_report())
+        out = capsys.readouterr().out
+        assert "Use haiku for cheap tasks" in out
+
+    def test_prints_tier_performance(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        report = self._make_report(
+            insights={
+                "tier_performance": [
+                    {
+                        "description": "Haiku is cheapest",
+                        "confidence": 0.9,
+                        "sample_size": 5,
+                    }
+                ]
+            }
+        )
+        print_analytics_report(report)
+        out = capsys.readouterr().out
+        assert "Haiku is cheapest" in out
+        assert "90%" in out
+
+    def test_prints_cost_analysis(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        report = self._make_report(
+            insights={
+                "cost_analysis": [{"description": "Total: $1.50"}],
+            }
+        )
+        print_analytics_report(report)
+        out = capsys.readouterr().out
+        assert "Total: $1.50" in out
+
+    def test_prints_failure_analysis(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        report = self._make_report(
+            insights={
+                "failure_analysis": [{"description": "Timeout was common"}],
+            }
+        )
+        print_analytics_report(report)
+        out = capsys.readouterr().out
+        assert "Timeout was common" in out
+
+    def test_no_recommendations_section_hidden(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        report = self._make_report()
+        report["recommendations"] = []
+        print_analytics_report(report)
+        out = capsys.readouterr().out
+        # Should not crash; Recommendations header may still appear or not
+        assert "10" in out
+
+    def test_empty_insights_no_crash(self, capsys):
+        from attune.meta_workflows.pattern_reporting import print_analytics_report
+
+        report = self._make_report(insights={})
+        print_analytics_report(report)
+        capsys.readouterr()  # Should not raise
+
+
+# === Module: meta_workflows/report_generator.py ===
+
+
+class TestReportGenerator:
+    def _make_result_and_template(self):
+        mock_result = MagicMock()
+        mock_result.run_id = "run-001"
+        mock_result.timestamp = "2026-01-01T00:00:00"
+        mock_result.success = True
+        mock_result.error = None
+        mock_result.total_cost = 0.25
+        mock_result.total_duration = 12.5
+        mock_result.agents_created = []
+        mock_result.agent_results = []
+        mock_result.form_responses.responses = {"goal": "test coverage"}
+        mock_result.template_id = "health-check"
+
+        mock_template = MagicMock()
+        mock_template.name = "Health Check"
+
+        return mock_result, mock_template
+
+    def test_generate_report_returns_string(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        report = generate_report(result, template)
+        assert isinstance(report, str)
+
+    def test_generate_report_contains_run_id(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        report = generate_report(result, template)
+        assert "run-001" in report
+
+    def test_generate_report_contains_template_name(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        report = generate_report(result, template)
+        assert "Health Check" in report
+
+    def test_generate_report_success_yes(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        result.success = True
+        report = generate_report(result, template)
+        assert "Yes" in report
+
+    def test_generate_report_failure_no(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        result.success = False
+        report = generate_report(result, template)
+        assert "No" in report
+
+    def test_generate_report_includes_cost(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        report = generate_report(result, template)
+        assert "0.25" in report
+
+    def test_generate_report_with_error(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        result.error = "Something went wrong"
+        report = generate_report(result, template)
+        assert "Something went wrong" in report
+
+    def test_generate_report_includes_form_responses(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+        report = generate_report(result, template)
+        assert "test coverage" in report
+
+    def test_generate_report_with_agents(self):
+        from attune.meta_workflows.report_generator import generate_report
+
+        result, template = self._make_result_and_template()
+
+        mock_agent = MagicMock()
+        mock_agent.role = "security_auditor"
+        mock_agent.agent_id = "agent-1"
+        mock_agent.base_template = "security"
+        mock_agent.tier_strategy.value = "haiku"
+        mock_agent.tools = ["Bash", "Read"]
+        mock_agent.config = {}
+        mock_agent.success_criteria = ["No critical issues"]
+        result.agents_created = [mock_agent]
+
+        mock_ar = MagicMock()
+        mock_ar.role = "security_auditor"
+        mock_ar.success = True
+        mock_ar.tier_used = "haiku"
+        mock_ar.cost = 0.01
+        mock_ar.duration = 3.0
+        mock_ar.error = None
+        result.agent_results = [mock_ar]
+
+        report = generate_report(result, template)
+        assert "security_auditor" in report
+        assert "haiku" in report
+
+
+# === Module: workflow_fixall.py ===
+
+
+class TestWorkflowFixall:
+    def _make_wc(self):
+        mock_wc = MagicMock()
+        mock_wc._run_command.return_value = (True, "Fixed 2 issues\nFixed 1 issues")
+        mock_wc._load_stats.return_value = {"commands": {}}
+        return mock_wc
+
+    def test_fix_all_workflow_returns_zero(self):
+        from attune.workflow_fixall import fix_all_workflow
+
+        mock_wc = self._make_wc()
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            result = fix_all_workflow()
+        assert result == 0
+
+    def test_fix_all_workflow_calls_ruff_fix(self):
+        from attune.workflow_fixall import fix_all_workflow
+
+        mock_wc = self._make_wc()
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            fix_all_workflow()
+        calls = [str(c) for c in mock_wc._run_command.call_args_list]
+        assert any("ruff" in c and "check" in c for c in calls)
+
+    def test_fix_all_workflow_calls_ruff_format(self):
+        from attune.workflow_fixall import fix_all_workflow
+
+        mock_wc = self._make_wc()
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            fix_all_workflow()
+        calls = [str(c) for c in mock_wc._run_command.call_args_list]
+        assert any("ruff" in c and "format" in c for c in calls)
+
+    def test_fix_all_workflow_dry_run(self, capsys):
+        from attune.workflow_fixall import fix_all_workflow
+
+        mock_wc = self._make_wc()
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            fix_all_workflow(dry_run=True)
+        out = capsys.readouterr().out
+        assert "DRY RUN" in out
+
+    def test_fix_all_workflow_updates_stats(self):
+        from attune.workflow_fixall import fix_all_workflow
+
+        mock_wc = self._make_wc()
+        stats = {"commands": {}}
+        mock_wc._load_stats.return_value = stats
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            fix_all_workflow()
+        mock_wc._save_stats.assert_called_once()
+        assert stats["commands"].get("fix-all", 0) == 1
+
+    def test_cmd_fix_all_delegates(self):
+        from attune.workflow_fixall import cmd_fix_all
+
+        mock_wc = MagicMock()
+        mock_wc.fix_all_workflow.return_value = 0
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            args = MagicMock()
+            args.project_root = "."
+            args.dry_run = False
+            args.verbose = False
+            result = cmd_fix_all(args)
+        assert result == 0
+        mock_wc.fix_all_workflow.assert_called_once()
+
+    def test_wc_late_binding(self):
+        from attune.workflow_fixall import _wc
+
+        mock_wc = MagicMock()
+        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
+            result = _wc()
+        assert result is mock_wc
+
+
+# === Module: monitoring/validators.py ===
+
+
+class TestMonitoringValidators:
+    def test_validate_webhook_url_valid(self):
+        import socket
+
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(socket.AF_INET, None, None, None, ("8.8.8.8", 0))]
+            result = _validate_webhook_url("https://example.com/hook")
+        assert result == "https://example.com/hook"
+
+    def test_validate_webhook_url_empty_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="non-empty"):
+            _validate_webhook_url("")
+
+    def test_validate_webhook_url_non_http_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="scheme"):
+            _validate_webhook_url("ftp://example.com/hook")
+
+    def test_validate_webhook_url_file_scheme_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="scheme"):
+            _validate_webhook_url("file:///etc/passwd")
+
+    def test_validate_webhook_url_localhost_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="local or metadata"):
+            _validate_webhook_url("https://localhost/hook")
+
+    def test_validate_webhook_url_loopback_ip_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="local or metadata|loopback"):
+            _validate_webhook_url("https://127.0.0.1/hook")
+
+    def test_validate_webhook_url_metadata_service_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="local or metadata"):
+            _validate_webhook_url("http://169.254.169.254/latest/meta-data")
+
+    def test_validate_webhook_url_private_ip_raises(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with pytest.raises(ValueError, match="private"):
+            _validate_webhook_url("https://192.168.1.100/hook")
+
+    def test_validate_webhook_url_blocked_port_raises(self):
+        import socket
+
+        from attune.monitoring.validators import _validate_webhook_url
+
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(socket.AF_INET, None, None, None, ("8.8.8.8", 0))]
+            with pytest.raises(ValueError, match="internal service port"):
+                _validate_webhook_url("https://example.com:6379/hook")
+
+    def test_validate_webhook_url_redis_port_blocked(self):
+        from attune.monitoring.validators import _validate_webhook_url
+
+        # 8.8.8.8 passes IP checks; port 6379 is blocked before DNS resolve
+        with pytest.raises(ValueError, match="6379"):
+            _validate_webhook_url("https://8.8.8.8:6379/hook")
+
+    def test_resolve_and_check_ip_private_raises(self):
+        import socket
+
+        from attune.monitoring.validators import _resolve_and_check_ip
+
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(socket.AF_INET, None, None, None, ("10.0.0.1", 0))]
+            with pytest.raises(ValueError, match="unsafe IP"):
+                _resolve_and_check_ip("internal.corp.example.com")
+
+    def test_resolve_and_check_ip_dns_error_raises(self):
+        import socket
+
+        from attune.monitoring.validators import _resolve_and_check_ip
+
+        with patch("socket.getaddrinfo", side_effect=socket.gaierror("NXDOMAIN")):
+            with pytest.raises(ValueError, match="Cannot resolve"):
+                _resolve_and_check_ip("nonexistent.invalid")
+
+
+# === Module: template_engine.py ===
+
+
+class TestTemplateEngine:
+    def test_templates_dict_has_four_keys(self):
+        from attune.template_engine import TEMPLATES
+
+        assert set(TEMPLATES.keys()) == {"minimal", "python-cli", "python-fastapi", "python-agent"}
+
+    def test_list_templates_returns_list(self):
+        from attune.template_engine import list_templates
+
+        result = list_templates()
+        assert isinstance(result, list)
+        assert len(result) == 4
+
+    def test_list_templates_has_id_name_description(self):
+        from attune.template_engine import list_templates
+
+        for t in list_templates():
+            assert "id" in t
+            assert "name" in t
+            assert "description" in t
+
+    def test_scaffold_project_unknown_template(self):
+        from attune.template_engine import scaffold_project
+
+        result = scaffold_project("nonexistent", "myproject")
+        assert result["success"] is False
+        assert "available" in result
+
+    def test_scaffold_project_creates_files(self, tmp_path):
+        from attune.template_engine import scaffold_project
+
+        result = scaffold_project("minimal", "test-project", target_dir=str(tmp_path / "proj"))
+        assert result["success"] is True
+        assert len(result["files_created"]) > 0
+
+    def test_scaffold_project_existing_nonempty_fails(self, tmp_path):
+        from attune.template_engine import scaffold_project
+
+        target = tmp_path / "existing"
+        target.mkdir()
+        (target / "something.txt").write_text("x")
+
+        result = scaffold_project("minimal", "test-project", target_dir=str(target))
+        assert result["success"] is False
+        assert "not empty" in result["error"]
+
+    def test_scaffold_project_force_overwrites(self, tmp_path):
+        from attune.template_engine import scaffold_project
+
+        target = tmp_path / "proj"
+        target.mkdir()
+        (target / "old.txt").write_text("old content")
+
+        result = scaffold_project("minimal", "test-project", target_dir=str(target), force=True)
+        assert result["success"] is True
+
+    def test_scaffold_project_replaces_project_name(self, tmp_path):
+        from attune.template_engine import scaffold_project
+
+        result = scaffold_project("minimal", "my-app", target_dir=str(tmp_path / "my-app"))
+        assert result["project_name"] == "my-app"
+        assert result["success"] is True
+
+    def test_scaffold_project_creates_patterns_dir(self, tmp_path):
+        from attune.template_engine import scaffold_project
+
+        target = tmp_path / "proj"
+        scaffold_project("minimal", "test-project", target_dir=str(target))
+        assert (target / "patterns").exists()
+
+    def test_cmd_new_list_flag(self, capsys):
+        from attune.template_engine import cmd_new
+
+        args = MagicMock()
+        args.list = True
+        args.template = None
+        args.name = None
+        args.output = None
+        args.force = False
+
+        result = cmd_new(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "minimal" in out
+
+    def test_cmd_new_missing_template_returns_one(self, capsys):
+        from attune.template_engine import cmd_new
+
+        args = MagicMock()
+        args.list = False
+        args.template = None
+        args.name = None
+        args.output = None
+        args.force = False
+
+        result = cmd_new(args)
+        assert result == 1
+
+    def test_cmd_new_success(self, tmp_path, capsys):
+        from attune.template_engine import cmd_new
+
+        args = MagicMock()
+        args.list = False
+        args.template = "minimal"
+        args.name = "myproj"
+        args.output = str(tmp_path / "myproj")
+        args.force = False
+
+        result = cmd_new(args)
+        assert result == 0

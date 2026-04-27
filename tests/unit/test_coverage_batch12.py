@@ -1,0 +1,554 @@
+# Licensed under the Apache License, Version 2.0
+# Copyright 2025 Smart AI Memory, LLC
+"""Tests for hooks scripts and socratic router models — Batch 12.
+
+Covers: hooks/scripts/lessons_reminder, hooks/scripts/format_on_save,
+hooks/scripts/pre_compact, socratic_router_models,
+socratic_router_discovery, security/path_validation.
+"""
+
+from __future__ import annotations
+
+import time
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+# === Module: hooks/scripts/lessons_reminder.py ===
+
+
+class TestLessonsReminder:
+    def test_already_reminded_false_when_no_sentinel(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import already_reminded
+
+        sentinel = tmp_path / "lessons_reminded"
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            assert already_reminded() is False
+
+    def test_already_reminded_true_when_recent_sentinel(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import already_reminded
+
+        sentinel = tmp_path / "lessons_reminded"
+        sentinel.touch()
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            assert already_reminded() is True
+
+    def test_already_reminded_false_when_old_sentinel(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import already_reminded
+
+        sentinel = tmp_path / "lessons_reminded"
+        sentinel.touch()
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            with patch("attune.hooks.scripts.lessons_reminder.SENTINEL_TTL", 0):
+                # TTL=0 means any age is "too old"
+                # advance time artificially by patching time.time
+                with patch("attune.hooks.scripts.lessons_reminder.time") as mock_time:
+                    mock_time.time.return_value = time.time() + 7200
+                    assert already_reminded() is False
+
+    def test_mark_reminded_creates_sentinel(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import mark_reminded
+
+        sentinel = tmp_path / "subdir" / "lessons_reminded"
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            mark_reminded()
+        assert sentinel.exists()
+
+    def test_has_session_work_true_on_commits(self):
+        from attune.hooks.scripts.lessons_reminder import has_session_work
+
+        mock_result = MagicMock()
+        mock_result.stdout = "abc1234 some commit\n"
+        with patch("subprocess.run", return_value=mock_result):
+            assert has_session_work() is True
+
+    def test_has_session_work_false_on_no_commits(self):
+        from attune.hooks.scripts.lessons_reminder import has_session_work
+
+        mock_result = MagicMock()
+        mock_result.stdout = ""
+        with patch("subprocess.run", return_value=mock_result):
+            assert has_session_work() is False
+
+    def test_has_session_work_true_on_exception(self):
+        from attune.hooks.scripts.lessons_reminder import has_session_work
+
+        with patch("subprocess.run", side_effect=Exception("no git")):
+            assert has_session_work() is True
+
+    def test_main_returns_zero_when_already_reminded(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import main
+
+        with patch("attune.hooks.scripts.lessons_reminder.already_reminded", return_value=True):
+            assert main() == 0
+
+    def test_main_returns_zero_when_no_session_work(self, tmp_path):
+        from attune.hooks.scripts.lessons_reminder import main
+
+        with patch("attune.hooks.scripts.lessons_reminder.already_reminded", return_value=False):
+            with patch(
+                "attune.hooks.scripts.lessons_reminder.has_session_work", return_value=False
+            ):
+                assert main() == 0
+
+    def test_main_returns_two_with_session_work(self, tmp_path, capsys):
+        from attune.hooks.scripts.lessons_reminder import main
+
+        sentinel = tmp_path / "lessons_reminded"
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            with patch(
+                "attune.hooks.scripts.lessons_reminder.already_reminded", return_value=False
+            ):
+                with patch(
+                    "attune.hooks.scripts.lessons_reminder.has_session_work", return_value=True
+                ):
+                    result = main()
+        assert result == 2
+
+
+# === Module: hooks/scripts/format_on_save.py ===
+
+
+class TestFormatOnSave:
+    def test_get_file_path_from_file_path_key(self):
+        from attune.hooks.scripts.format_on_save import _get_file_path
+
+        data = {"tool_input": {"file_path": "/tmp/foo.py"}}
+        assert _get_file_path(data) == "/tmp/foo.py"
+
+    def test_get_file_path_from_path_key(self):
+        from attune.hooks.scripts.format_on_save import _get_file_path
+
+        data = {"tool_input": {"path": "/tmp/bar.py"}}
+        assert _get_file_path(data) == "/tmp/bar.py"
+
+    def test_get_file_path_none_when_missing(self):
+        from attune.hooks.scripts.format_on_save import _get_file_path
+
+        assert _get_file_path({"tool_input": {}}) is None
+        assert _get_file_path({}) is None
+
+    def test_is_python_file_true(self):
+        from attune.hooks.scripts.format_on_save import _is_python_file
+
+        assert _is_python_file("/some/path/foo.py") is True
+
+    def test_is_python_file_false_for_non_py(self):
+        from attune.hooks.scripts.format_on_save import _is_python_file
+
+        assert _is_python_file("/some/path/foo.js") is False
+        assert _is_python_file("/some/path/foo.md") is False
+        assert _is_python_file("/some/path/foo") is False
+
+    def test_run_formatter_calls_subprocess(self):
+        from attune.hooks.scripts.format_on_save import _run_formatter
+
+        with patch("subprocess.run") as mock_run:
+            _run_formatter(["black", "--quiet"], "/tmp/foo.py")
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        assert "black" in args
+        assert "/tmp/foo.py" in args
+
+    def test_run_formatter_ignores_timeout(self):
+        import subprocess
+
+        from attune.hooks.scripts.format_on_save import _run_formatter
+
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("black", 10)):
+            # Should not raise
+            _run_formatter(["black"], "/tmp/foo.py")
+
+    def test_run_formatter_ignores_file_not_found(self):
+        from attune.hooks.scripts.format_on_save import _run_formatter
+
+        with patch("subprocess.run", side_effect=FileNotFoundError("black not found")):
+            _run_formatter(["black"], "/tmp/foo.py")
+
+    def test_main_skips_non_write_edit(self):
+        import io
+
+        from attune.hooks.scripts.format_on_save import main
+
+        payload = '{"tool_name": "Read", "tool_input": {"file_path": "/tmp/foo.py"}}'
+        with patch("sys.stdin", io.StringIO(payload)):
+            with patch("subprocess.run") as mock_run:
+                main()
+        mock_run.assert_not_called()
+
+    def test_main_skips_non_python(self):
+        import io
+
+        from attune.hooks.scripts.format_on_save import main
+
+        payload = '{"tool_name": "Write", "tool_input": {"file_path": "/tmp/foo.js"}}'
+        with patch("sys.stdin", io.StringIO(payload)):
+            with patch("subprocess.run") as mock_run:
+                main()
+        mock_run.assert_not_called()
+
+    def test_main_empty_stdin_no_error(self):
+        import io
+
+        from attune.hooks.scripts.format_on_save import main
+
+        with patch("sys.stdin", io.StringIO("")):
+            main()  # Should not raise
+
+    def test_main_invalid_json_no_error(self):
+        import io
+
+        from attune.hooks.scripts.format_on_save import main
+
+        with patch("sys.stdin", io.StringIO("not-json")):
+            main()  # Should not raise
+
+
+# === Module: hooks/scripts/pre_compact.py ===
+
+
+class TestPreCompact:
+    def test_run_pre_compact_no_state_returns_failure(self):
+        from attune.hooks.scripts.pre_compact import run_pre_compact
+
+        result = run_pre_compact({})
+        assert result["state_saved"] is False
+        assert result["restoration_available"] is False
+
+    def test_run_pre_compact_with_state_saves(self):
+        from attune.hooks.scripts.pre_compact import run_pre_compact
+
+        mock_state = MagicMock()
+        mock_cm = MagicMock()
+        mock_compact = MagicMock()
+        mock_compact.trust_level = 0.8
+        mock_compact.empathy_level = "guided"
+        mock_compact.detected_patterns = []
+        mock_compact.pending_handoff = None
+        mock_cm.save_for_compaction.return_value = "/tmp/state.json"
+        mock_cm.extract_compact_state.return_value = mock_compact
+
+        result = run_pre_compact({"collaboration_state": mock_state, "context_manager": mock_cm})
+        assert result["state_saved"] is True
+        assert result["restoration_available"] is True
+        assert result["trust_level"] == 0.8
+
+    def test_run_pre_compact_exception_returns_failure(self):
+        from attune.hooks.scripts.pre_compact import run_pre_compact
+
+        mock_state = MagicMock()
+        mock_cm = MagicMock()
+        mock_cm.save_for_compaction.side_effect = RuntimeError("disk full")
+
+        result = run_pre_compact({"collaboration_state": mock_state, "context_manager": mock_cm})
+        assert result["state_saved"] is False
+        assert "disk full" in result["error"]
+
+    def test_run_pre_compact_sets_session_id(self):
+        from attune.hooks.scripts.pre_compact import run_pre_compact
+
+        mock_state = MagicMock()
+        mock_cm = MagicMock()
+        mock_compact = MagicMock()
+        mock_compact.trust_level = 0.5
+        mock_compact.empathy_level = "reactive"
+        mock_compact.detected_patterns = []
+        mock_compact.pending_handoff = None
+        mock_cm.save_for_compaction.return_value = "/tmp/state.json"
+        mock_cm.extract_compact_state.return_value = mock_compact
+
+        run_pre_compact(
+            {
+                "collaboration_state": mock_state,
+                "context_manager": mock_cm,
+                "session_id": "sess-123",
+                "current_phase": "testing",
+            }
+        )
+        assert mock_cm.session_id == "sess-123"
+        assert mock_cm.current_phase == "testing"
+
+    def test_generate_compaction_summary_basic(self):
+        from attune.hooks.scripts.pre_compact import generate_compaction_summary
+
+        mock_state = MagicMock()
+        mock_state.user_id = "user1"
+        mock_state.trust_level = 0.75
+        mock_state.current_level = "proactive"
+        mock_state.interactions = ["a", "b", "c"]
+        mock_state.detected_patterns = []
+        mock_state.preferences = {}
+
+        summary = generate_compaction_summary(mock_state)
+        assert "user1" in summary
+        assert "0.75" in summary
+        assert "proactive" in summary
+
+    def test_generate_compaction_summary_with_patterns(self):
+        from attune.hooks.scripts.pre_compact import generate_compaction_summary
+
+        mock_pattern = MagicMock()
+        mock_pattern.trigger = "debug"
+        mock_pattern.action = "add logs"
+        mock_pattern.confidence = 0.9
+
+        mock_state = MagicMock()
+        mock_state.user_id = "user1"
+        mock_state.trust_level = 0.5
+        mock_state.current_level = "reactive"
+        mock_state.interactions = []
+        mock_state.detected_patterns = [mock_pattern]
+        mock_state.preferences = {}
+
+        summary = generate_compaction_summary(mock_state, include_patterns=True)
+        assert "debug" in summary
+        assert "add logs" in summary
+
+
+# === Module: socratic_router_models.py ===
+
+
+class TestSocraticRouterModels:
+    def test_intent_category_values(self):
+        from attune.socratic_router_models import IntentCategory
+
+        assert IntentCategory.FIX.value == "fix"
+        assert IntentCategory.IMPROVE.value == "improve"
+        assert IntentCategory.VALIDATE.value == "validate"
+        assert IntentCategory.SHIP.value == "ship"
+        assert IntentCategory.UNDERSTAND.value == "understand"
+        assert IntentCategory.CREATE.value == "create"
+        assert IntentCategory.UNKNOWN.value == "unknown"
+
+    def test_intent_category_count(self):
+        from attune.socratic_router_models import IntentCategory
+
+        assert len(list(IntentCategory)) == 7
+
+    def test_workflow_option_creation(self):
+        from attune.socratic_router_models import WorkflowOption
+
+        opt = WorkflowOption(
+            label="Fix it",
+            description="Run auto-fix",
+            skill="fix",
+        )
+        assert opt.label == "Fix it"
+        assert opt.description == "Run auto-fix"
+        assert opt.skill == "fix"
+        assert opt.args == ""
+
+    def test_workflow_option_to_ask_user_option(self):
+        from attune.socratic_router_models import WorkflowOption
+
+        opt = WorkflowOption(
+            label="Fix it",
+            description="Run auto-fix",
+            skill="fix",
+            args="--all",
+        )
+        result = opt.to_ask_user_option()
+        assert result == {"label": "Fix it", "description": "Run auto-fix"}
+
+    def test_intent_classification_creation(self):
+        from attune.socratic_router_models import (
+            IntentCategory,
+            IntentClassification,
+            WorkflowOption,
+        )
+
+        opts = [WorkflowOption("Fix", "Fix bugs", "fix")]
+        clf = IntentClassification(
+            category=IntentCategory.FIX,
+            confidence=0.9,
+            keywords_matched=["bug", "error"],
+            suggested_question="What is broken?",
+            options=opts,
+        )
+        assert clf.category is IntentCategory.FIX
+        assert clf.confidence == 0.9
+        assert len(clf.keywords_matched) == 2
+        assert len(clf.options) == 1
+
+
+# === Module: socratic_router_discovery.py ===
+
+
+class TestSocraticRouterDiscovery:
+    def test_should_use_deep_discovery_low_confidence(self):
+        from attune.socratic_router_discovery import should_use_deep_discovery
+        from attune.socratic_router_models import IntentCategory, IntentClassification
+
+        clf = IntentClassification(
+            category=IntentCategory.FIX,
+            confidence=0.4,
+            keywords_matched=[],
+            suggested_question="?",
+            options=[],
+        )
+        assert should_use_deep_discovery("fix my bug", clf) is True
+
+    def test_should_use_deep_discovery_high_confidence(self):
+        from attune.socratic_router_discovery import should_use_deep_discovery
+        from attune.socratic_router_models import IntentCategory, IntentClassification
+
+        clf = IntentClassification(
+            category=IntentCategory.FIX,
+            confidence=0.9,
+            keywords_matched=["bug"],
+            suggested_question="?",
+            options=[],
+        )
+        assert should_use_deep_discovery("fix my bug", clf) is False
+
+    def test_should_use_deep_discovery_create_agent_keyword(self):
+        from attune.socratic_router_discovery import should_use_deep_discovery
+        from attune.socratic_router_models import IntentCategory, IntentClassification
+
+        clf = IntentClassification(
+            category=IntentCategory.CREATE,
+            confidence=0.8,
+            keywords_matched=["create"],
+            suggested_question="?",
+            options=[],
+        )
+        assert should_use_deep_discovery("create agent to review code", clf) is True
+
+    def test_should_use_deep_discovery_automation_keyword(self):
+        from attune.socratic_router_discovery import should_use_deep_discovery
+        from attune.socratic_router_models import IntentCategory, IntentClassification
+
+        clf = IntentClassification(
+            category=IntentCategory.CREATE,
+            confidence=0.8,
+            keywords_matched=[],
+            suggested_question="?",
+            options=[],
+        )
+        assert should_use_deep_discovery("automate my deployment pipeline", clf) is True
+
+    def test_form_to_ask_user_question_with_options(self):
+        from attune.socratic_router_discovery import form_to_ask_user_question
+
+        mock_opt = MagicMock()
+        mock_opt.value = "Option A"
+        mock_opt.description = "First option"
+        mock_opt.label = "A"
+        mock_opt.recommended = False
+
+        mock_field = MagicMock()
+        mock_field.label = "What do you need?"
+        mock_field.category = "workflow"
+        mock_field.options = [mock_opt]
+
+        from attune.socratic.forms import FieldType
+
+        mock_field.field_type = FieldType.SINGLE_SELECT
+
+        mock_form = MagicMock()
+        mock_form.fields = [mock_field]
+
+        result = form_to_ask_user_question(mock_form)
+        assert "questions" in result
+        assert len(result["questions"]) == 1
+        assert result["questions"][0]["question"] == "What do you need?"
+
+    def test_form_to_ask_user_question_text_field(self):
+        from attune.socratic.forms import FieldType
+        from attune.socratic_router_discovery import form_to_ask_user_question
+
+        mock_field = MagicMock()
+        mock_field.label = "Describe the problem"
+        mock_field.category = None
+        mock_field.options = []
+        mock_field.field_type = FieldType.TEXT
+
+        mock_form = MagicMock()
+        mock_form.fields = [mock_field]
+
+        result = form_to_ask_user_question(mock_form)
+        assert len(result["questions"]) == 1
+        # Text field gets generic Continue/Customize options
+        q = result["questions"][0]
+        assert len(q["options"]) == 2
+
+
+# === Module: security/path_validation.py ===
+
+
+class TestPathValidation:
+    def test_validates_normal_path(self, tmp_path):
+        from attune.security.path_validation import _validate_file_path
+
+        target = tmp_path / "file.txt"
+        result = _validate_file_path(str(target))
+        assert result is not None
+
+    def test_raises_for_empty_path(self):
+        from attune.security.path_validation import _validate_file_path
+
+        with pytest.raises(ValueError, match="non-empty"):
+            _validate_file_path("")
+
+    def test_raises_for_none_path(self):
+        from attune.security.path_validation import _validate_file_path
+
+        with pytest.raises((ValueError, TypeError)):
+            _validate_file_path(None)  # type: ignore[arg-type]
+
+    def test_raises_for_null_bytes(self):
+        from attune.security.path_validation import _validate_file_path
+
+        with pytest.raises(ValueError, match="null bytes"):
+            _validate_file_path("/tmp/foo\x00bar")
+
+    def test_raises_for_outside_allowed_dir(self, tmp_path):
+        from attune.security.path_validation import _validate_file_path
+
+        allowed = tmp_path / "workspace"
+        allowed.mkdir()
+        target = tmp_path / "other" / "file.txt"
+
+        with pytest.raises(ValueError, match="outside allowed"):
+            _validate_file_path(str(target), allowed_dir=str(allowed))
+
+    def test_allowed_path_within_dir(self, tmp_path):
+        from attune.security.path_validation import _validate_file_path
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        target = workspace / "file.txt"
+
+        result = _validate_file_path(str(target), allowed_dir=str(workspace))
+        assert result is not None
+
+    def test_raises_for_etc_path(self):
+        import sys
+
+        from attune.security.path_validation import _validate_file_path
+
+        if sys.platform == "win32":
+            pytest.skip("Unix-only test")
+
+        with pytest.raises(ValueError, match="system directory"):
+            _validate_file_path("/etc/passwd")
+
+    def test_raises_for_proc_path(self):
+        import sys
+
+        from attune.security.path_validation import _validate_file_path
+
+        if sys.platform == "win32":
+            pytest.skip("Unix-only test")
+
+        with pytest.raises(ValueError, match="system directory"):
+            _validate_file_path("/proc/cpuinfo")
+
+    def test_returns_path_object(self, tmp_path):
+        from pathlib import Path
+
+        from attune.security.path_validation import _validate_file_path
+
+        target = tmp_path / "test.txt"
+        result = _validate_file_path(str(target))
+        assert isinstance(result, Path)
