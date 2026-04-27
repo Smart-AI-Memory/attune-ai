@@ -394,12 +394,12 @@ class TestMetaWorkflowsCliCommandsInit:
         assert callable(create_team)
 
     def test_all_list_contains_app(self):
-        import attune.meta_workflows.cli_commands as m
+        from attune.meta_workflows import cli_commands as m
 
         assert "meta_workflow_app" in m.__all__
 
     def test_all_list_contains_workflow_commands(self):
-        import attune.meta_workflows.cli_commands as m
+        from attune.meta_workflows import cli_commands as m
 
         for name in ("run_workflow", "natural_language_run", "detect_intent"):
             assert name in m.__all__
