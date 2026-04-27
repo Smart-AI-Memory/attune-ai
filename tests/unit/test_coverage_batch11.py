@@ -70,7 +70,7 @@ class TestContextInit:
         assert WorkHandoff is not None
 
     def test_all_list_complete(self):
-        import attune.context as m
+        from attune import context as m
 
         for name in ("CompactState", "CompactionStateManager", "ContextManager", "WorkHandoff"):
             assert name in m.__all__
