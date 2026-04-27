@@ -263,7 +263,7 @@ class TestValidationInit:
         assert callable(validate_xml_response)
 
     def test_all_list(self):
-        import attune.validation as m
+        from attune import validation as m
 
         for name in ("ValidationResult", "XMLValidator", "validate_xml_response"):
             assert name in m.__all__
