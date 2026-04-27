@@ -621,13 +621,14 @@ class TestResilientExecutorInit:
         assert ex.retry_policy is not None
 
     def test_no_executor_raises_on_run(self):
+        import asyncio
+
         from attune.models.resilient_executor import ResilientExecutor
 
         ex = ResilientExecutor()
-        import asyncio
 
         with pytest.raises(RuntimeError, match="requires an inner executor"):
-            asyncio.get_event_loop().run_until_complete(ex.run("summarize", "test"))
+            asyncio.run(ex.run("summarize", "test"))
 
     def test_get_model_for_task_no_inner(self):
         from attune.models.resilient_executor import ResilientExecutor

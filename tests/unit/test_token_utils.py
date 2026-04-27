@@ -6,7 +6,6 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -257,15 +256,15 @@ class TestTokenCountDataclass:
 class TestAnthropicProviderIntegration:
     """Test integration with AnthropicProvider."""
 
-    @pytest.mark.skipif(
-        not os.getenv("ANTHROPIC_API_KEY"),
-        reason="ANTHROPIC_API_KEY not set",
-    )
     def test_provider_estimate_tokens(self):
-        """Test AnthropicProvider.estimate_tokens() uses accurate counting."""
+        """Test AnthropicProvider.estimate_tokens() uses accurate counting.
+
+        Uses a dummy API key — estimate_tokens() runs entirely locally
+        (tiktoken or heuristic fallback) and does not hit the Anthropic API.
+        """
         from attune.llm.providers.anthropic import AnthropicProvider
 
-        provider = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        provider = AnthropicProvider(api_key="sk-ant-test")
 
         text = "Hello, world! This is a test."
         tokens = provider.estimate_tokens(text)
@@ -274,15 +273,15 @@ class TestAnthropicProviderIntegration:
         assert isinstance(tokens, int)
         assert 5 <= tokens <= 10
 
-    @pytest.mark.skipif(
-        not os.getenv("ANTHROPIC_API_KEY"),
-        reason="ANTHROPIC_API_KEY not set",
-    )
     def test_provider_calculate_actual_cost(self):
-        """Test AnthropicProvider.calculate_actual_cost()."""
+        """Test AnthropicProvider.calculate_actual_cost().
+
+        Uses a dummy API key — calculate_actual_cost() is pure arithmetic
+        on the supplied token counts and does not hit the Anthropic API.
+        """
         from attune.llm.providers.anthropic import AnthropicProvider
 
-        provider = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        provider = AnthropicProvider(api_key="sk-ant-test")
 
         cost = provider.calculate_actual_cost(
             input_tokens=1000,
