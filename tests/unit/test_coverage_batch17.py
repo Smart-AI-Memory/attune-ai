@@ -78,51 +78,51 @@ class TestGetHistoryStore:
 
 class TestLoadWorkflowHistoryDeprecated:
     def test_emits_deprecation_warning(self, tmp_path):
-        from attune.workflows.history_utils import _load_workflow_history
+        import attune.workflows.history_utils as hu
 
         history_file = str(tmp_path / "runs.json")
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            _load_workflow_history(history_file)
+            hu._load_workflow_history(history_file)
         assert any("deprecated" in str(warning.message).lower() for warning in w)
 
     def test_returns_empty_list_when_file_missing(self, tmp_path):
-        from attune.workflows.history_utils import _load_workflow_history
+        import attune.workflows.history_utils as hu
 
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            result = _load_workflow_history(str(tmp_path / "missing.json"))
+            result = hu._load_workflow_history(str(tmp_path / "missing.json"))
         assert result == []
 
     def test_returns_list_from_valid_json(self, tmp_path):
-        from attune.workflows.history_utils import _load_workflow_history
+        import attune.workflows.history_utils as hu
 
         history_file = tmp_path / "runs.json"
         runs = [{"workflow": "morning", "success": True}]
         history_file.write_text(json.dumps(runs))
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            result = _load_workflow_history(str(history_file))
+            result = hu._load_workflow_history(str(history_file))
         assert result == runs
 
     def test_returns_empty_list_for_invalid_json(self, tmp_path):
-        from attune.workflows.history_utils import _load_workflow_history
+        import attune.workflows.history_utils as hu
 
         history_file = tmp_path / "runs.json"
         history_file.write_text("not json {{{{")
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            result = _load_workflow_history(str(history_file))
+            result = hu._load_workflow_history(str(history_file))
         assert result == []
 
     def test_returns_empty_list_for_non_list_json(self, tmp_path):
-        from attune.workflows.history_utils import _load_workflow_history
+        import attune.workflows.history_utils as hu
 
         history_file = tmp_path / "runs.json"
         history_file.write_text(json.dumps({"key": "value"}))
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            result = _load_workflow_history(str(history_file))
+            result = hu._load_workflow_history(str(history_file))
         assert result == []
 
 
