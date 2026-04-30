@@ -72,12 +72,7 @@ dependencies = [
     "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
-    "attune-help>=0.5.1,<0.8",  # Progressive-depth help runtime + MCP tools. Cap raised from <0.6 to <0.8 to admit attune-help 0.7.0 (path-keyed summaries, CLI, Beta). 0.7.0 is additive; no API breaks per its CHANGELOG.
-    # NOTE: attune-rag is an OPTIONAL extra, not a core dep.
-    #  Install with `pip install 'attune-ai[rag]'` to enable
-    #  the rag-code-gen workflow and rag_knowledge_query MCP
-    #  tool. Workflows/handlers lazy-import and return a
-    #  structured error when the extra is absent.
+    "attune-rag>=0.1.5,<0.2",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
@@ -86,20 +81,10 @@ dependencies = [
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
-# RAG-grounded code generation (rag-code-gen workflow +
-# rag_knowledge_query MCP tool). Optional so users who
-# don't want grounding avoid the dep. Once attune-rag is
-# on PyPI, no further work needed — this extra resolves
-# from PyPI.
-rag = [
-    # Floor at 0.1.5 so installs automatically get the
-    # <passage>-sentinel + injection-defense clause that
-    # `RagCodeGenWorkflow` relies on via its pinned
-    # `prompt_variant="citation"`. Older versions resolve but
-    # ship a prompt flow vulnerable to corpus-borne prompt
-    # injection.
-    "attune-rag>=0.1.5,<0.2",
-]
+# attune-rag promoted to core dep in v3.x (required for acceptable accuracy).
+# The [rag] extra is kept as a no-op alias for backward compat with any
+# install scripts that used `pip install attune-ai[rag]`.
+rag = []
 
 # Help authoring (generate / regenerate / polish the
 # project's own `.help/` templates). Optional because
@@ -109,12 +94,9 @@ rag = [
 # the `attune-author` CLI run inside this venv without
 # a sibling checkout. `[tool.uv.sources]` (below) routes
 # to the sibling path for workspace dev; PyPI is the
-# fallback. Floor is `>=0.4.1` because 0.4.0 capped
-# `attune-help<0.6`, which would force-downgrade
-# attune-help back below 0.7.0 and collide with the
-# `>=0.7.0` requirement from attune-rag 0.1.4+.
+# fallback.
 author = [
-    "attune-author>=0.4.1,<0.5",
+    "attune-author>=0.5.1,<0.6",
 ]
 
 # Memory subsystem (requires Redis server 8.4+ recommended)
@@ -714,7 +696,7 @@ exclude_lines = [
 ]
 
 # Sibling repos — all published to PyPI:
-#   attune-help    — core dep (>=0.5.1,<0.8)
+#   attune-rag     — core dep (>=0.1.5,<0.2) — promoted from optional; required for accuracy
 #   attune-author  — [author] optional extra (>=0.4.1,<0.5)
 #   attune-rag     — [rag] optional extra (>=0.1.5,<0.2)
 #

@@ -13,9 +13,31 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from attune_help.preamble import _extract_preamble as _extract_preamble
-
 logger = logging.getLogger(__name__)
+
+
+def _extract_preamble(text: str) -> str | None:
+    """Extract preamble from task template content.
+
+    Skips YAML frontmatter and the h1 heading, returns
+    the first non-empty paragraph.
+    """
+    lines = text.split("\n")
+    in_frontmatter = False
+    content_start = 0
+    for i, line in enumerate(lines):
+        if i == 0 and line.strip() == "---":
+            in_frontmatter = True
+            continue
+        if in_frontmatter and line.strip() == "---":
+            content_start = i + 1
+            break
+    for line in lines[content_start:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        return stripped
+    return None
 
 
 def get_preamble(
