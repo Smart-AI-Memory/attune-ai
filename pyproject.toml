@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "6.5.0"
+version = "6.5.1"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -96,7 +96,7 @@ rag = []
 # to the sibling path for workspace dev; PyPI is the
 # fallback.
 author = [
-    "attune-author>=0.5.1,<0.6",
+    "attune-author>=0.6.2,<0.7",
 ]
 
 # Memory subsystem (requires Redis server 8.4+ recommended)
