@@ -8,7 +8,7 @@
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-15%2C359%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-16%2C900%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-88%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -18,15 +18,15 @@
 
 **Ecosystem overview.** `attune-ai` is the hub: CLI,
 multi-agent workflows, MCP tools, and Claude Code skills.
-It depends on **`attune-help`** (progressive-depth
-template runtime; core PyPI dep), and optionally pulls in
-**`attune-rag`** via the `[rag]` extra (retrieval +
-citation-forced generation — source of the faithfulness
-numbers in [Accuracy & Faithfulness](#accuracy--faithfulness))
-and **`attune-author`** via the `[author]` extra (authoring
-& staleness detection, used by the weekly freshness
-automation). Separate repos, separate release cadences,
-separate PyPI packages.
+It ships with **`attune-rag`** as a core dependency
+(v0.1.11 — retrieval + citation-forced generation, prompt
+caching, LLM-agnostic). The optional **`[author]`** extra
+pulls in **`attune-author`** (v0.6.x — authoring, staleness
+detection, on-disk polish cache). **`attune-help`**
+(v0.10.x — progressive-depth template runtime, template
+aliases for improved retrieval) is consumed via
+attune-rag's corpus layer. Separate repos, separate release
+cadences, separate PyPI packages.
 
 > The Claude Code plugin marketplace for help content
 > moved to
@@ -65,8 +65,9 @@ building and maintaining knowledge bases at scale.
 references, tasks, FAQs, notes, quickstarts, concepts,
 troubleshooting, and comparisons. Each template has
 structured frontmatter (tags, related links, audience
-hints) and a markdown body. Templates are the source of
-truth; rendered output is ephemeral.
+hints, and `aliases` for retrieval gap coverage) and a
+markdown body. Templates are the source of truth;
+rendered output is ephemeral.
 
 ### 2. Rendered at Runtime
 
@@ -138,11 +139,10 @@ are reproducible and open to external review.
 
 ### RAG grounding — hallucination down 46.7% → 6.7%
 
-When the `rag-code-gen` workflow (via the `attune-rag`
-dependency) answers a question grounded in retrieved
-code, its prompt enforces citation-per-claim against
-numbered passages. Measured on a 15-query golden set
-with retrieval held constant:
+`attune-rag` (core dep, v0.1.11+) grounds LLM code
+generation in retrieved corpus passages and enforces
+citation-per-claim against numbered passages. Measured
+on a 15-query golden set with retrieval held constant:
 
 | Prompt variant | Hallucination rate | Mean faithfulness |
 |---|---|---|
@@ -166,12 +166,15 @@ and raw JSON:
   into atomic claims and marks each
   supported/unsupported against the retrieved passages.
 
-attune-rag ≥ 0.1.5 (the pin in `[rag]`) additionally
-wraps retrieved passages in
-`<passage id="P1">...</passage>` sentinel tags with a
+attune-rag v0.1.11 additionally wraps retrieved passages
+in `<passage id="P1">...</passage>` sentinel tags with a
 system-prompt injection-defense clause — adversarial
 bytes inside a corpus document are treated as data, not
-instructions.
+instructions. It also automatically enables
+[Anthropic prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+on the stable RAG context prefix when using the Claude
+provider, eliminating repeated token costs on corpus
+content across calls.
 
 ### Help resolver — 48/48 benchmark queries pass at P@1
 
@@ -345,15 +348,14 @@ a unified result.
 ## Installation Options
 
 ```bash
-# Recommended (agents, memory)
+# Recommended (agents, memory, RAG)
 pip install 'attune-ai[developer]'
 
-# Minimal (CLI + workflows only)
+# Minimal (CLI + workflows + RAG — attune-rag is a core dep)
 pip install attune-ai
 
-# With RAG-grounded code generation (rag-code-gen workflow
-# + rag_knowledge_query MCP tool; see "RAG grounding" below)
-pip install 'attune-ai[rag]'
+# With help authoring (generate / maintain .help/ templates)
+pip install 'attune-ai[author]'
 
 # All features
 pip install 'attune-ai[all]'
@@ -363,30 +365,64 @@ git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```
 
-### RAG grounding (optional)
+### RAG grounding
 
-When installed with the `[rag]` extra, `attune-ai` gains:
+`attune-rag` is a **core dependency** (v0.1.11,
+`>=0.1.5,<0.2`) — it ships with every install of
+`attune-ai`. It provides:
 
-- **`rag-code-gen` workflow** — grounds LLM code generation in
-  the bundled attune-help corpus (633 templates) and emits a
-  `## Sources` block with clickable citations alongside the
-  generated output.
-- **`rag_knowledge_query` MCP tool** — returns retrieval hits
-  and an augmented prompt string ready to feed to any LLM.
-  Does not call an LLM itself.
-- **Optional feedback kwarg** — pass `feedback="good"|"bad"`
-  to the workflow to record verdicts against every cited
-  template for future tuning.
+- **`rag-code-gen` workflow** — grounds LLM code
+  generation in the bundled attune-help corpus (633
+  templates) and emits a `## Sources` block with
+  clickable citations alongside the generated output.
+- **`rag_knowledge_query` MCP tool** — returns
+  retrieval hits and an augmented prompt string ready
+  to feed to any LLM. Does not call an LLM itself.
+- **Prompt caching** — when using the Claude provider,
+  the stable RAG context prefix is automatically cached
+  via `cache_control: ephemeral`, eliminating repeated
+  token costs across calls on the same corpus block.
+- **Optional feedback kwarg** — pass
+  `feedback="good"|"bad"` to record verdicts against
+  cited templates for future tuning.
 
-The retrieval engine is the standalone
+The `[rag]` install extra is kept as a **no-op alias**
+for backward compatibility — existing installs that
+specify `attune-ai[rag]` continue to work.
+
+The underlying retrieval engine is the standalone
 [attune-rag](https://github.com/Smart-AI-Memory/attune-rag)
-package — LLM-agnostic and corpus-pluggable, usable on its
-own outside the attune-ai ecosystem.
+package — LLM-agnostic and corpus-pluggable, usable on
+its own outside the attune-ai ecosystem.
 
 See [docs/rag/index.md](docs/rag/index.md) for the full
 walkthrough and
 [docs/rag/embeddings-decision-2026-04-17.md](docs/rag/embeddings-decision-2026-04-17.md)
 for the engineering decision record.
+
+### Help authoring (`[author]` extra)
+
+```bash
+pip install 'attune-ai[author]'
+```
+
+Pulls in [attune-author](https://github.com/Smart-AI-Memory/attune-author)
+(v0.6.x), which adds:
+
+- **`attune-author generate`** — renders concept/task/reference
+  templates from source AST, then polishes them with an LLM
+- **On-disk polish cache** — LLM polish responses are cached
+  at `~/.attune/polish_cache/` (30-day TTL, mtime-based
+  eviction). Re-runs after the first generate are instant
+  and cost zero tokens.
+- **`attune-author cache clear`** — flush the polish cache
+  (e.g. after a model or prompt change)
+- **Staleness detection** — source-hash drift tracked in
+  template frontmatter; `attune-author status` surfaces stale
+  features without running LLM calls
+- **RAG-grounded polish** — optionally consults existing
+  attune-help templates for style and naming consistency
+  before rewriting (`--no-rag` to opt out per invocation)
 
 ---
 
@@ -508,7 +544,7 @@ Special thanks to:
 
 - **[Anthropic](https://www.anthropic.com/)** — For Claude
   AI, the Model Context Protocol, and the Agent SDK patterns
-  that shaped v5.0.0
+  that shaped attune-ai's multi-agent orchestration layer
 - **[Boris Cherny](https://x.com/bcherny)** — Creator of
   Claude Code, whose workflow posts validated Attune's
   approach to plan-first execution and multi-agent
