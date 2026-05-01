@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
-**The 21st century help system for developer tools.**
+**Multi-agent developer workflows for Claude Code.**
 
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
@@ -16,195 +16,84 @@
 
 ---
 
-**Ecosystem overview.** `attune-ai` is the developer
-workflow hub: CLI, multi-agent analysis workflows, MCP
-tools, and Claude Code skills. For creating and managing
-help content and docs, the dedicated hub is
-**[`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)**
-— a local Living Docs dashboard that wraps
-`attune-rag`, `attune-help`, and `attune-author` in a
-single UI. `attune-ai` ships with **`attune-rag`** as a
-core dependency (v0.1.11 — retrieval + citation-forced
-generation, prompt caching, LLM-agnostic). The optional
-**`[author]`** extra pulls in **`attune-author`** (v0.6.x
-— authoring, staleness detection, on-disk polish cache).
-**`attune-help`** (v0.10.x — progressive-depth template
-runtime) is a standalone package; it is not pulled in by
-a standard `attune-ai` install, and is available as an
-optional corpus for `attune-rag` via
-`pip install 'attune-rag[attune-help]'`. Separate repos,
-separate release cadences, separate PyPI packages.
+18 multi-agent workflows, 14 auto-triggering Claude Code skills, and
+36 MCP tools — specialist teams of 2–6 Claude subagents that review
+your code, surface vulnerabilities, generate tests, and plan refactors.
+The same system doubles as the authoring and assistance toolkit for
+building and maintaining knowledge bases at scale.
 
-> The Claude Code plugin marketplace for help content
-> moved to
-> [`Smart-AI-Memory/attune-docs`](https://github.com/Smart-AI-Memory/attune-docs)
-> in early 2026. If you installed `attune-help` or
-> `attune-author` from this marketplace previously, see
-> [Migration](#migration).
+**Managing and creating help content and docs?**
+That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
+— a dedicated Living Docs dashboard wrapping `attune-rag`,
+`attune-help`, and `attune-author` in a single UI. `attune-ai` is the
+developer workflow hub; `attune-gui` is the docs hub.
 
 ---
 
-Static docs rot. READMEs go stale the moment you merge.
-Help pages don't know if you're a beginner or an expert.
-Nobody maintains them — and it shows.
+## Ecosystem
 
-Attune AI is a different approach. Documentation is
-**authored once as templates**, **rendered at runtime**
-with audience awareness, **maintained automatically** by
-AI agents, and **learned from** based on how people
-actually use it. The result is a living knowledge base
-that stays accurate, adapts to who's reading, and
-improves over time — without anyone manually updating
-markdown files.
+| Package | Role | Install |
+| ------- | ---- | ------- |
+| **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
+| **`attune-gui`** | Living Docs dashboard — create, manage, search help content | standalone app |
+| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.1.11+) | bundled |
+| **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
+| **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
-The same system powers 18 multi-agent workflows, 14
-auto-triggering skills, and 36 MCP tools — all of which
-double as the authoring and assistance toolkit for
-building and maintaining knowledge bases at scale.
+`attune-rag` ships as a **core dependency** of `attune-ai`
+(v0.1.11, `>=0.1.5,<0.2`). `attune-help` is standalone — not pulled
+in by a standard `attune-ai` install, but available as an optional
+corpus for `attune-rag` via `pip install 'attune-rag[attune-help]'`.
 
 ---
 
 ## How It Works
 
-### 1. Authored as Templates
+### 1. Skills trigger automatically
 
-633 templates across 11 types — errors, warnings, tips,
-references, tasks, FAQs, notes, quickstarts, concepts,
-troubleshooting, and comparisons. Each template has
-structured frontmatter (tags, related links, audience
-hints, and `aliases` for retrieval gap coverage) and a
-markdown body. Templates are the source of truth;
-rendered output is ephemeral.
-
-### 2. Rendered at Runtime
-
-Help adapts to the reader. **Progressive depth**
-escalates across template types as you ask again:
+Say what you need in Claude Code and the right skill activates:
 
 ```text
-First ask   → concept   (what is this?)
-Second ask  → task      (how do I use it?)
-Third ask   → reference (show me the details)
+"review my code"        → code-quality skill
+"scan for vulns"        → security-audit skill
+"generate tests"        → smart-test skill
+"plan this feature"     → planning skill
 ```
 
-**Audience adaptation** adjusts verbosity and framing
-for Claude Code users, CLI users, and marketplace
-readers — from the same source template.
+No command to remember. Claude reads your intent and picks the skill.
+Each skill runs a specialist multi-agent team, not a single prompt.
 
-**Precursor warnings** surface relevant errors and
-warnings *before* you hit them, based on the file
-you're editing.
+### 2. Multi-agent teams, not single prompts
 
-### 3. Maintained by AI
-
-A 5-phase maintenance workflow detects stale templates,
-prioritizes by usage feedback, regenerates via batch API,
-rebuilds cross-links, and validates the result — all
-without manual intervention.
+Every workflow dispatches 2–6 subagents in parallel. Each reads your
+code with `Read`, `Glob`, and `Grep`. An orchestrator synthesizes
+their findings into a unified result:
 
 ```text
-detect → map → regenerate → rebuild → validate
+security-audit → vuln-scanner + secret-detector + auth-reviewer + remediation-planner
+code-review    → security + quality + perf + architect
+test-gen       → identifier + designer + writer
 ```
 
-Templates that help people more get maintained first.
-Templates nobody reads get deprioritized. The knowledge
-base optimizes itself.
+Subagents are assigned models by task complexity — Opus for deep
+reasoning, Sonnet for analysis, Haiku for fast scanning — keeping
+cost proportional to value.
 
-### 4. Learned from Usage
+### 3. Socratic before execution
 
-Every template lookup is tracked. Feedback ratings
-adjust template confidence scores. Usage telemetry
-weights priorities so the maintenance workflow focuses
-on what matters. The help system gets better the more
-you use it.
+Workflows ask questions before executing, not after. The `spec`
+workflow brainstorms, then plans, then executes. `planning` clarifies
+scope before writing a line of code. This eliminates the most common
+failure mode: confidently solving the wrong problem.
 
----
+### 4. RAG-grounded generation
 
-## The Toolkit
-
-The help system doesn't just *contain* knowledge — it
-comes with tools to build, maintain, and deliver it.
-These same tools power attune-ai's own 633 templates,
-proving the approach works at scale.
-
-| | |
-| --- | --- |
-| **18 Multi-Agent Workflows** | Code review, security audit, test gen, release prep — specialist teams of 2-6 Claude subagents that also serve as knowledge-authoring pipelines |
-| **36 MCP Tools** | Every workflow exposed as a native Claude Code tool via Model Context Protocol, including `help_lookup` (4 modes) and `help_maintain` (auto-regeneration) |
-| **14 Auto-Triggering Skills** | Say "review my code" and Claude picks the right skill — each skill integrates contextual help from the template engine |
-| **Portable Security Hooks** | PreToolUse guard blocks eval/exec and path traversal; PostToolUse auto-formats Python |
-| **Socratic Discovery** | Workflows ask questions before executing, not the other way around |
-
----
-
-## Accuracy & Faithfulness
-
-Two separate accuracy axes ship with attune-ai, each
-benchmarked against an in-repo golden-query set. The
-fixtures and raw A/B reports are committed so results
-are reproducible and open to external review.
-
-### RAG grounding — hallucination down 46.7% → 6.7%
-
-`attune-rag` (core dep, v0.1.11+) grounds LLM code
-generation in retrieved corpus passages and enforces
-citation-per-claim against numbered passages. Measured
-on a 15-query golden set with retrieval held constant:
-
-| Prompt variant | Hallucination rate | Mean faithfulness |
-|---|---|---|
-| baseline (no grounding rule) | 46.67% | 0.938 |
-| strict ("answer only from context") | 26.67% | 0.968 |
-| **citation (shipped default)** | **6.67%** | **0.996** |
-
-Retrieval quality (P@1 = 73.3%) was identical across
-variants — the gain comes from the prompting contract,
-not from moving the retrieval needle. Full methodology
-and raw JSON:
-
-- [`docs/rag/faithfulness-decision-2026-04-19.md`](docs/rag/faithfulness-decision-2026-04-19.md)
-  — decision writeup with pre-committed gate
-- [`docs/rag/ab-report-2026-04-19.json`](docs/rag/ab-report-2026-04-19.json)
-  — machine-readable results (all four variants,
-  per-query judgments)
-- Faithfulness judge: `FaithfulnessJudge` in attune-rag,
-  LLM-as-judge via Anthropic forced tool-use for
-  guaranteed-schema JSON output; decomposes each answer
-  into atomic claims and marks each
-  supported/unsupported against the retrieved passages.
-
-attune-rag v0.1.11 additionally wraps retrieved passages
-in `<passage id="P1">...</passage>` sentinel tags with a
-system-prompt injection-defense clause — adversarial
-bytes inside a corpus document are treated as data, not
-instructions. It also automatically enables
-[Anthropic prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
-on the stable RAG context prefix when using the Claude
-provider, eliminating repeated token costs on corpus
-content across calls.
-
-### Help resolver — 48/48 benchmark queries pass at P@1
-
-The help-system resolver (`resolve_topic()` in
-`attune-help`) is benchmarked against 52 hand-crafted
-queries across three difficulty buckets:
-
-| Bucket | Count | P@1 | Notes |
-|---|---|---|---|
-| easy | 22 | 22/22 (100%) | feature-name synonyms |
-| medium | 26 | 26/26 (100%) | paraphrases + industry terminology |
-| hard | 4 | 0/4 (XFAIL by design) | shared-tag collisions — structural ambiguity, not a resolver gap |
-
-The 4 hard queries (e.g. `"review"` matches both
-`code-quality` and `deep-review`) document a known
-semantic ceiling — resolution requires a contract change
-(return a list of candidates for user disambiguation),
-not more tags. They run as `pytest.xfail` so future
-retriever changes that unexpectedly pass show up as
-XPASS regressions. Fixtures and test:
-
-- [`tests/unit/help/fixtures/golden_queries.yaml`](tests/unit/help/fixtures/golden_queries.yaml)
-- Re-run with `pytest tests/unit/help/test_golden_queries.py`
+`attune-rag` (core dep) grounds LLM generation in retrieved corpus
+passages and enforces citation-per-claim, cutting hallucination from
+46.7% → 6.7% on the benchmark set. Retrieved passages are wrapped in
+sentinel tags to prevent prompt injection. The Claude provider
+automatically caches the stable RAG context prefix, eliminating
+repeated token costs across calls.
 
 ---
 
@@ -217,7 +106,7 @@ claude plugin marketplace add Smart-AI-Memory/attune-ai
 claude plugin install attune-ai@attune-ai
 ```
 
-Then say "what can attune do?" in Claude Code. That's it.
+Then say "what can attune do?" in Claude Code.
 
 ### Add Python Package (unlocks CLI + MCP)
 
@@ -238,23 +127,13 @@ pip install 'attune-ai[developer]'
 | Help system maintenance | -- | Yes |
 | CI/CD automation | -- | Yes |
 
-The plugin works standalone — skills guide Claude
-through analysis using your existing subscription,
-with no additional costs. Add the Python package
-when you want MCP tool execution, CLI automation,
-help system maintenance, or multi-agent orchestration.
-
-> **Note:** The Python package's CLI and MCP tools
-> use the Anthropic API directly, which requires an
-> API key and incurs usage-based charges. See
-> [API Mode](#api-mode) for details.
+> **Note:** Skills use your Claude subscription at no extra cost.
+> CLI and MCP tools make direct Anthropic API calls — API key
+> required. See [API Mode](#api-mode).
 
 ---
 
 ## Cheat Sheet
-
-All 14 skills trigger automatically from natural
-language — just describe what you need:
 
 | Input | What Happens |
 | ----- | ------------ |
@@ -272,40 +151,18 @@ language — just describe what you need:
 | "tell me more" | Auto-triggers `coach` — progressive depth help |
 | "run all workflows" | Auto-triggers `workflow-orchestration` skill |
 
-Skills run using your **Claude subscription** — no API
-key needed, no additional charges.
-
----
-
-## Why Attune?
-
-| | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
-| --- | --- | --- | --- | --- |
-| **Self-maintaining docs** | AI-maintained, usage-weighted | Manual, rots immediately | None | None |
-| **Progressive depth** | concept → task → reference | One-size-fits-all | None | None |
-| **Audience adaptation** | Adapts per reader | Write multiple versions | None | None |
-| **Ready-to-use workflows** | 18 built-in | None | Build from scratch | None |
-| **Multi-agent teams** | 2-6 agents per workflow | None | Yes | No |
-| **MCP integration** | 36 native tools | None | No | No |
-| **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
-
 ---
 
 ## Workflows
-
-Every workflow runs as a multi-agent team. Each agent
-reads your code with `Read`, `Glob`, and `Grep` tools
-and reports findings to an orchestrator that synthesizes
-a unified result.
 
 | Workflow | Agents | What It Does |
 | --- | --- | --- |
 | **code-review** | security, quality, perf, architect | 4-perspective code review |
 | **security-audit** | vuln-scanner, secret-detector, auth-reviewer, remediation | Finds vulnerabilities and generates fix plans |
 | **deep-review** | security, quality, test-gap | Multi-pass deep analysis |
-| **perf-audit** | complexity, bottleneck, optimization | Identifies bottlenecks and O(n^2) patterns |
+| **perf-audit** | complexity, bottleneck, optimization | Identifies bottlenecks and O(n²) patterns |
 | **bug-predict** | pattern-scanner, risk-correlator, prevention | Predicts likely failure points |
-| **health-check** | dynamic team (2-6) | Project health across tests, deps, lint, CI, docs, security |
+| **health-check** | dynamic team (2–6) | Project health across tests, deps, lint, CI, docs, security |
 | **test-gen** | identifier, designer, writer | Writes pytest code for untested functions |
 | **test-audit** | coverage, gap-analyzer, planner | Audits coverage and prioritizes gaps |
 | **doc-gen** | outline, content, polish | Generates documentation from source |
@@ -352,13 +209,56 @@ a unified result.
 
 ---
 
+## Accuracy & Faithfulness
+
+### RAG grounding — hallucination down 46.7% → 6.7%
+
+Measured on a 15-query golden set with retrieval held constant:
+
+| Prompt variant | Hallucination rate | Mean faithfulness |
+|---|---|---|
+| baseline (no grounding rule) | 46.67% | 0.938 |
+| strict ("answer only from context") | 26.67% | 0.968 |
+| **citation (shipped default)** | **6.67%** | **0.996** |
+
+The gain comes from the prompting contract (citation-per-claim), not
+from retrieval. Full methodology:
+
+- [`docs/rag/faithfulness-decision-2026-04-19.md`](docs/rag/faithfulness-decision-2026-04-19.md)
+- [`docs/rag/ab-report-2026-04-19.json`](docs/rag/ab-report-2026-04-19.json)
+
+### Help resolver — 48/48 benchmark queries pass at P@1
+
+| Bucket | Count | P@1 | Notes |
+|---|---|---|---|
+| easy | 22 | 22/22 (100%) | feature-name synonyms |
+| medium | 26 | 26/26 (100%) | paraphrases + industry terminology |
+| hard | 4 | 0/4 (XFAIL) | shared-tag collisions — structural ambiguity |
+
+- [`tests/unit/help/fixtures/golden_queries.yaml`](tests/unit/help/fixtures/golden_queries.yaml)
+
+---
+
+## Why Attune?
+
+| | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
+| --- | --- | --- | --- | --- |
+| **Ready-to-use workflows** | 18 built-in | None | Build from scratch | None |
+| **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
+| **MCP integration** | 36 native tools | None | No | No |
+| **Auto-triggering skills** | 14 skills, natural language | None | None | None |
+| **Socratic discovery** | Questions before execution | None | None | None |
+| **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
+
+---
+
 ## Installation Options
 
 ```bash
 # Recommended (agents, memory, RAG)
 pip install 'attune-ai[developer]'
 
-# Minimal (CLI + workflows + RAG — attune-rag is a core dep)
+# Minimal (CLI + workflows + RAG)
 pip install attune-ai
 
 # With help authoring (generate / maintain .help/ templates)
@@ -372,75 +272,13 @@ git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```
 
-### RAG grounding
-
-`attune-rag` is a **core dependency** (v0.1.11,
-`>=0.1.5,<0.2`) — it ships with every install of
-`attune-ai`. It provides:
-
-- **`rag-code-gen` workflow** — grounds LLM code
-  generation in the bundled attune-help corpus (633
-  templates) and emits a `## Sources` block with
-  clickable citations alongside the generated output.
-- **`rag_knowledge_query` MCP tool** — returns
-  retrieval hits and an augmented prompt string ready
-  to feed to any LLM. Does not call an LLM itself.
-- **Prompt caching** — when using the Claude provider,
-  the stable RAG context prefix is automatically cached
-  via `cache_control: ephemeral`, eliminating repeated
-  token costs across calls on the same corpus block.
-- **Optional feedback kwarg** — pass
-  `feedback="good"|"bad"` to record verdicts against
-  cited templates for future tuning.
-
-The `[rag]` install extra is kept as a **no-op alias**
-for backward compatibility — existing installs that
-specify `attune-ai[rag]` continue to work.
-
-The underlying retrieval engine is the standalone
-[attune-rag](https://github.com/Smart-AI-Memory/attune-rag)
-package — LLM-agnostic and corpus-pluggable, usable on
-its own outside the attune-ai ecosystem.
-
-See [docs/rag/index.md](docs/rag/index.md) for the full
-walkthrough and
-[docs/rag/embeddings-decision-2026-04-17.md](docs/rag/embeddings-decision-2026-04-17.md)
-for the engineering decision record.
-
-### Help authoring (`[author]` extra)
-
-```bash
-pip install 'attune-ai[author]'
-```
-
-Pulls in [attune-author](https://github.com/Smart-AI-Memory/attune-author)
-(v0.6.x), which adds:
-
-- **`attune-author generate`** — renders concept/task/reference
-  templates from source AST, then polishes them with an LLM
-- **On-disk polish cache** — LLM polish responses are cached
-  at `~/.attune/polish_cache/` (30-day TTL, mtime-based
-  eviction). Re-runs after the first generate are instant
-  and cost zero tokens.
-- **`attune-author cache clear`** — flush the polish cache
-  (e.g. after a model or prompt change)
-- **Staleness detection** — source-hash drift tracked in
-  template frontmatter; `attune-author status` surfaces stale
-  features without running LLM calls
-- **RAG-grounded polish** — optionally consults existing
-  attune-help templates for style and naming consistency
-  before rewriting (`--no-rag` to opt out per invocation)
+The `[rag]` extra is a **no-op alias** kept for backward
+compatibility — `attune-rag` is now a core dependency included in
+every install.
 
 ---
 
 ## API Mode
-
-The plugin's skills use your Claude subscription at no
-extra cost. The Python package's CLI and MCP tools
-work differently — they spawn Agent SDK subagents
-that make
-**direct Anthropic API calls**, which require an API key
-and incur usage-based charges.
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."     # Required
@@ -448,9 +286,6 @@ export REDIS_URL="redis://localhost:6379"  # Optional
 ```
 
 ### Model Routing
-
-Each subagent is assigned a model based on task
-complexity to balance cost and quality:
 
 | Model | Agents | Rationale |
 | --- | --- | --- |
@@ -464,8 +299,6 @@ export ATTUNE_AGENT_MODEL_DEFAULT=opus     # Max quality
 ```
 
 ### Budget Controls
-
-Every CLI/MCP workflow enforces a budget cap:
 
 | Depth | Budget | Use Case |
 | --- | --- | --- |
@@ -481,18 +314,14 @@ export ATTUNE_MAX_BUDGET_USD=10.0  # Override
 
 ## Security
 
-- Path traversal protection on all file operations
-  (CWE-22)
+- Path traversal protection on all file operations (CWE-22)
 - Memory ownership checks (`created_by` validation)
 - MCP rate limiting (60 calls/min per tool)
 - Hook import restriction (`attune.*` modules only)
-- PreToolUse security guard (blocks eval/exec, path
-  traversal)
-- Prompt input sanitization (backticks, control chars,
-  truncation)
+- PreToolUse security guard (blocks eval/exec, path traversal)
+- Prompt input sanitization (backticks, control chars, truncation)
 - PII scrubbing in telemetry
-- Automated security scanning (CodeQL, bandit,
-  detect-secrets)
+- Automated security scanning (CodeQL, bandit, detect-secrets)
 
 See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability
 reporting and full security details.
@@ -504,32 +333,23 @@ reporting and full security details.
 `attune-help` and `attune-author` have moved to their own
 marketplace at
 [Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs).
-If you previously installed either of them via the
-`attune-ai` marketplace, move your installation with the
-three commands below.
+If you previously installed either from the `attune-ai` marketplace:
 
-1. Add the new marketplace:
-
-   ```text
+1. ```text
    /plugin marketplace add Smart-AI-Memory/attune-docs
    ```
 
-2. Uninstall from the old marketplace:
-
-   ```text
+2. ```text
    /plugin uninstall attune-help@attune-ai
    /plugin uninstall attune-author@attune-ai
    ```
 
-3. Install from the new marketplace:
-
-   ```text
+3. ```text
    /plugin install attune-help@attune-docs
    /plugin install attune-author@attune-docs
    ```
 
-New users: add `Smart-AI-Memory/attune-docs` directly —
-no migration steps needed.
+New users: add `Smart-AI-Memory/attune-docs` directly.
 
 ---
 
@@ -537,6 +357,7 @@ no migration steps needed.
 
 - [Full Documentation](https://smartaimemory.com/framework-docs/)
 - [Plugin Setup](https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/README.md)
+- [attune-gui](https://github.com/Smart-AI-Memory/attune-gui) — Living Docs dashboard
 - [GitHub Repository](https://github.com/Smart-AI-Memory/attune-ai)
 
 **Apache License 2.0** — Free and open source.
@@ -547,17 +368,12 @@ it helps others discover the project.
 
 ## Acknowledgments
 
-Special thanks to:
-
-- **[Anthropic](https://www.anthropic.com/)** — For Claude
-  AI, the Model Context Protocol, and the Agent SDK patterns
-  that shaped attune-ai's multi-agent orchestration layer
-- **[Boris Cherny](https://x.com/bcherny)** — Creator of
-  Claude Code, whose workflow posts validated Attune's
-  approach to plan-first execution and multi-agent
-  orchestration
-- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations
-  that inspired our hook system
+- **[Anthropic](https://www.anthropic.com/)** — For Claude AI, the
+  Model Context Protocol, and the Agent SDK patterns behind the
+  multi-agent orchestration layer
+- **[Boris Cherny](https://x.com/bcherny)** — Creator of Claude Code,
+  whose workflow posts validated Attune's plan-first, multi-agent approach
+- **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations that inspired the hook system
 
 [View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
 
