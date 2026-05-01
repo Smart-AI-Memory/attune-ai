@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.5.0] - 2026-04-30
+
+### Changed — decouple attune-ai from attune-help ecosystem
+
+attune-ai and the attune-help/attune-author/attune-rag docs ecosystem
+are now fully independent release trains with no shared runtime
+dependencies.
+
+- **Removed** `attune-help` as a core dependency. The only consumer was
+  a single `_extract_preamble` import in `src/attune/help/preamble.py`;
+  that function is now inlined (17 lines of pure string parsing, no new
+  deps).
+- **Promoted** `attune-rag` from the optional `[rag]` extra to a core
+  dependency (`>=0.1.5,<0.2`). attune-rag is required for acceptable
+  retrieval accuracy in the help system and was already pulled in by
+  most installations.
+- **`[rag]` extra** kept as a no-op alias for backward compatibility —
+  existing installs with `attune-ai[rag]` continue to work.
+- **`[author]` extra** bumped to `attune-author>=0.5.1,<0.6`.
+
 ## [6.4.1] - 2026-04-27
 
 Test-only patch release. No production code changes.
