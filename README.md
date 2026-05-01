@@ -16,17 +16,24 @@
 
 ---
 
-**Ecosystem overview.** `attune-ai` is the hub: CLI,
-multi-agent workflows, MCP tools, and Claude Code skills.
-It ships with **`attune-rag`** as a core dependency
-(v0.1.11 — retrieval + citation-forced generation, prompt
-caching, LLM-agnostic). The optional **`[author]`** extra
-pulls in **`attune-author`** (v0.6.x — authoring, staleness
-detection, on-disk polish cache). **`attune-help`**
-(v0.10.x — progressive-depth template runtime, template
-aliases for improved retrieval) is consumed via
-attune-rag's corpus layer. Separate repos, separate release
-cadences, separate PyPI packages.
+**Ecosystem overview.** `attune-ai` is the developer
+workflow hub: CLI, multi-agent analysis workflows, MCP
+tools, and Claude Code skills. For creating and managing
+help content and docs, the dedicated hub is
+**[`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)**
+— a local Living Docs dashboard that wraps
+`attune-rag`, `attune-help`, and `attune-author` in a
+single UI. `attune-ai` ships with **`attune-rag`** as a
+core dependency (v0.1.11 — retrieval + citation-forced
+generation, prompt caching, LLM-agnostic). The optional
+**`[author]`** extra pulls in **`attune-author`** (v0.6.x
+— authoring, staleness detection, on-disk polish cache).
+**`attune-help`** (v0.10.x — progressive-depth template
+runtime) is a standalone package; it is not pulled in by
+a standard `attune-ai` install, and is available as an
+optional corpus for `attune-rag` via
+`pip install 'attune-rag[attune-help]'`. Separate repos,
+separate release cadences, separate PyPI packages.
 
 > The Claude Code plugin marketplace for help content
 > moved to
