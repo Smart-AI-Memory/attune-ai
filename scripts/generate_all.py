@@ -148,6 +148,58 @@ def _write_manifest(generated_dir: Path) -> int:
     return len(manifest)
 
 
+# -----------------------------------------------------------
+# Summaries: copy summaries.json from attune-help into the
+# generated bundle so the dashboard's Summaries panel works
+# for end users (not just dev workspaces with the source tree).
+# -----------------------------------------------------------
+
+
+SUMMARY_FILES = ("summaries.json", "summaries_by_path.json")
+
+
+def _attune_help_templates_dir() -> Path | None:
+    """Locate attune_help's templates/ directory (where polish writes summaries).
+
+    Returns the path if attune_help is importable, else None.
+    """
+    try:
+        import attune_help  # type: ignore[import-not-found]
+    except ImportError:
+        return None
+    pkg_file = getattr(attune_help, "__file__", None)
+    if pkg_file is None:
+        return None
+    return Path(pkg_file).resolve().parent / "templates"
+
+
+def _copy_summaries(generated_dir: Path) -> tuple[int, list[str]]:
+    """Copy summaries.json (and summaries_by_path.json) from attune-help.
+
+    Args:
+        generated_dir: Path to plugin/help/generated/.
+
+    Returns:
+        (copied_count, skipped_reasons). copied_count is 0 if attune-help
+        is not installed or its templates dir is missing the files.
+    """
+    src_dir = _attune_help_templates_dir()
+    if src_dir is None or not src_dir.is_dir():
+        return 0, ["attune_help not installed or templates/ missing"]
+
+    copied = 0
+    skipped: list[str] = []
+    for fname in SUMMARY_FILES:
+        src = src_dir / fname
+        if not src.is_file():
+            skipped.append(f"{fname} (not in attune-help)")
+            continue
+        dst = generated_dir / fname
+        dst.write_bytes(src.read_bytes())
+        copied += 1
+    return copied, skipped
+
+
 def check_staleness(
     generated_dir: Path,
     json_output: bool = False,
@@ -415,6 +467,18 @@ def main() -> int:
         count = _write_manifest(generated_dir)
         print("--- Source Manifest ---\n")
         print(f"  [  OK] source_manifest.json: {count} entries")
+        print()
+
+        # Copy summaries.json from attune-help so the bundle is complete
+        # for end users (the attune-gui Summaries panel reads from here).
+        copied, skipped = _copy_summaries(generated_dir)
+        print("--- Summaries ---\n")
+        if copied > 0:
+            print(f"  [  OK] copied {copied} file(s) from attune_help")
+        else:
+            print("  [SKIP] no summaries copied")
+        for reason in skipped:
+            print(f"         {reason}")
         print()
 
     # Summary
