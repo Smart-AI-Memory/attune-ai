@@ -21,11 +21,33 @@ SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "generate_all.py"
 def gen_module():
     """Load scripts/generate_all.py as a module.
 
-    The script imports sibling modules (build_cross_links, etc.) by name,
-    so scripts/ must be on sys.path during load.
+    The script transitively imports sibling generator scripts which require
+    `python-frontmatter` (not always installed in test envs). Since the
+    function under test (`_copy_summaries`) doesn't use any of them, we
+    stub sibling modules and `frontmatter` before loading.
     """
-    scripts_dir = str(SCRIPT.parent)
-    sys.path.insert(0, scripts_dir)
+    sibling_names = (
+        "build_cross_links",
+        "generate_error_templates",
+        "generate_reference_templates",
+        "generate_tip_templates",
+        "generate_warning_templates",
+        "generate_comparison_templates",
+        "generate_concept_templates",
+        "generate_faq_templates",
+        "generate_note_templates",
+        "generate_quickstart_templates",
+        "generate_task_templates",
+        "generate_troubleshooting_templates",
+    )
+    saved: dict[str, types.ModuleType | None] = {}
+    for name in sibling_names + ("frontmatter",):
+        saved[name] = sys.modules.get(name)
+        if sys.modules.get(name) is None:
+            stub = types.ModuleType(name)
+            stub.main = lambda *_a, **_k: 0  # type: ignore[attr-defined]
+            sys.modules[name] = stub
+
     try:
         spec = importlib.util.spec_from_file_location("_generate_all", SCRIPT)
         assert spec is not None and spec.loader is not None
@@ -35,8 +57,11 @@ def gen_module():
         yield mod
     finally:
         sys.modules.pop("_generate_all", None)
-        if scripts_dir in sys.path:
-            sys.path.remove(scripts_dir)
+        for name, original in saved.items():
+            if original is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = original
 
 
 def _make_fake_attune_help(
