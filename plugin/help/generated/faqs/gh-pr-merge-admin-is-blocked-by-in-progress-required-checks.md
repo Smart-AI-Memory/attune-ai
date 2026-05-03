@@ -1,20 +1,26 @@
 ---
-type: faq
 name: gh-pr-merge-admin-is-blocked-by-in-progress-required-checks
-tags: [testing, git]
 source: .claude/CLAUDE.md
+summary: This template explains why GitHub CLI's `--admin` flag cannot bypass in-progress
+  required status checks and how to resolve the issue.
+tags:
+- testing
+- git
+type: faq
 ---
 
-# FAQ: Why does gh pr merge --admin is blocked by in-progress required checks?
+# FAQ: Why is `gh pr merge --admin` blocked by in-progress required checks?
 
 ## Answer
 
-The `--admin` flag only bypasses failed or missing checks — it cannot override checks that are still running. GitHub returns `Required status check "X" is in progress`.
+The `--admin` flag bypasses required checks that have **failed** or are **missing**, but it cannot override checks that are still **in progress**. If any required status check is still running, GitHub blocks the merge and returns an error similar to the following:
 
 ```
 Required status check "X" is in progress
 ```
 
+To resolve this, wait for all required status checks to complete before attempting to merge with `--admin`.
+
 ## Related Topics
-- **Error**: Detailed error: `gh pr merge --admin` is blocked by in-progress required
-  checks
+
+- **Error:** `gh pr merge --admin` is blocked by in-progress required checks

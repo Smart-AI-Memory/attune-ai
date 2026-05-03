@@ -1,20 +1,20 @@
 ---
-type: note
 name: term-sdk
-tags: [terminology]
 source: CLAUDE.md
+summary: The Agent SDK subsystem provides developers with the essential tools, libraries,
+  and interfaces needed to build, configure, and integrate agents into the attune-ai
+  platform.
+tags:
+- terminology
+type: note
 ---
 
-# Note: Term: SDK
+# SDK
 
-## Context
+**SDK** (Software Development Kit) refers to the Agent SDK subsystem within the attune-ai codebase.
 
-Project terminology used in the attune-ai codebase.
-
-## Content
-
-**SDK** — Agent SDK subsystem
+The Agent SDK provides the tools, libraries, and interfaces that developers use to build, configure, and integrate agents into the attune-ai platform.
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

@@ -1,22 +1,27 @@
 ---
-type: quickstart
 name: skill-security-audit
-tags: [skill, claude-code]
 source: plugin/skills/security-audit/SKILL.md
+summary: This template explains how to use the `/security-audit` command to scan code
+  for common security vulnerabilities like eval/exec usage, path traversal, hardcoded
+  secrets, and injection risks.
+tags:
+- skill
+- claude-code
+type: quickstart
 ---
 
 # Quickstart: Use /security-audit
 
-Scan code for security vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks.
+Scan your code for common security vulnerabilities, including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks.
 
 ```
-/security-audit <path or directory to scan>
+/security-audit <path or directory>
 ```
 
-**Result:** Structured results in your Claude Code conversation.
+**Result:** A structured vulnerability report delivered directly in your Claude Code conversation.
 
-**Next:** See full reference: `attune help-docs ref-skill-security-audit`
+**Next:** For complete details, run `attune help-docs ref-skill-security-audit`
 
 ## Related Topics
 
-_No related topics yet._
+_None yet. Check back as documentation expands._

@@ -1,45 +1,44 @@
 ---
-type: concept
 name: tool-memory-and-context
-tags: [memory, context, persistence]
 source: plugin/skills/memory-and-context/SKILL.md
+summary: Memory and Context provides persistent, cross-session storage for project
+  patterns, decisions, and conventions through tagged key-value pairs with searchable
+  recall and adjustable attune levels (1–5) that control contextual adaptation.
+tags:
+- memory
+- context
+- persistence
+type: concept
 ---
 
 # Memory and Context
 
-## What
+## Overview
 
-Provides persistent cross-session storage for patterns,
-decisions, and project context. Stores key-value memories
-with tags and timestamps, supports search and recall, and
-manages attune levels (1-5) that control how much
-contextual adaptation the system applies.
+Memory and Context provides persistent, cross-session storage for patterns, decisions, and project context. It stores key-value memories with tags and timestamps, supports search and recall, and manages attune levels (1–5) that control how much contextual adaptation the system applies.
 
-## Why
+## Why It Matters
 
-Every new Claude Code session starts with a blank slate.
-Memory bridges that gap -- storing what worked, what
-failed, and what the project conventions are so the next
-session picks up where the last one left off.
+Every new Claude Code session starts with a blank slate. Memory bridges that gap — storing what worked, what failed, and what your project conventions are, so each new session picks up where the last one left off.
 
-## When to use
+## When to Use
 
-- To save a debugging pattern you want to remember
-- To store project conventions (naming, architecture)
-- To adjust attune level for more or less adaptation
-- To recall context from a previous session
+- Save a debugging pattern you want to reuse later
+- Store project conventions such as naming standards or architectural decisions
+- Adjust the attune level to increase or decrease contextual adaptation
+- Recall context established in a previous session
 
-## What it covers
+## Features
 
 | Feature | Description |
-|---------|-------------|
-| Store | Save key-value pairs with tags |
-| Recall | Retrieve by key or search by tag |
-| Search | Full-text search across all memories |
-| Attune levels | 1 (minimal) to 5 (full adaptation) |
+|---|---|
+| Store | Save key-value pairs with optional tags |
+| Recall | Retrieve memories by key or filter by tag |
+| Search | Full-text search across all stored memories |
+| Attune levels | Scale from 1 (minimal adaptation) to 5 (full adaptation) |
 | Security | Classified pattern storage with access control |
 
 ## Related Topics
 
-- **Task**: Use the memory-and-context skill -- step-by-step
-- **Reference**: Skill: memory-and-context -- full reference
+- **Task** — Memory and Context: step-by-step usage guide
+- **Reference** — Memory and Context: complete skill reference

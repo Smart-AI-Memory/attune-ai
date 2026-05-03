@@ -1,28 +1,50 @@
 ---
-type: concept
 name: sync-paradigm
-tags: [architecture, documentation]
 source: scripts/generate_all.py
+summary: The Sync Paradigm is a six-step pattern (Discover → Parse → Transform → Validate
+  → Output → Verify) that all generators in the documentation stack follow to consistently
+  produce, validate, and verify generated documentation from source code.
+tags:
+- architecture
+- documentation
+type: concept
 ---
 
-# Concept: The sync paradigm
+# The Sync Paradigm
 
-## What
+## Overview
 
-A six-step pattern for generating documentation from code: Discover, Parse, Transform, Validate, Output, Verify. Every generator in the doc stack follows this pattern.
+The sync paradigm is a six-step pattern that every generator in the documentation stack follows to produce documentation from source code. The steps are: **Discover → Parse → Transform → Validate → Output → Verify**.
 
-## Why
+## Why It Exists
 
-Ensures consistency, idempotency, and verifiability. The --check mode can validate that generated content matches its source without regenerating.
+Applying a consistent pattern across all generators provides three key guarantees:
 
-## How
+- **Consistency** — every generator behaves predictably, regardless of its source format.
+- **Idempotency** — running a generator multiple times produces the same output.
+- **Verifiability** — the `--check` mode can confirm that generated content matches its source without triggering a full regeneration.
 
-1. Discover — find source files (SKILL.md, tool_schemas.py). 2. Parse — extract structured data from source. 3. Transform — convert to template dataclass. 4. Validate — check schema compliance. 5. Output — render via Jinja2 to generated/ directory. 6. Verify — --check mode compares output to existing files.
+## How It Works
+
+Each generator executes the following steps in order:
+
+1. **Discover** — Locate the relevant source files (for example, `SKILL.md` or `tool_schemas.py`).
+2. **Parse** — Extract structured data from those source files.
+3. **Transform** — Convert the extracted data into a typed template dataclass.
+4. **Validate** — Check the dataclass against its expected schema.
+5. **Output** — Render the validated data through a Jinja2 template and write the result to the `generated/` directory.
+6. **Verify** — In `--check` mode, compare the rendered output against the files already on disk and report any drift.
 
 ## Example
 
-`python scripts/generate_all.py --check` verifies all 498 templates in sync.
+To verify that all generated files are in sync with their sources, run:
+
+```bash
+python scripts/generate_all.py --check
+```
+
+This command runs the Verify step across all generators and confirms that all 498 templates match their current sources. No files are written; the command exits with a non-zero status if any drift is detected.
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

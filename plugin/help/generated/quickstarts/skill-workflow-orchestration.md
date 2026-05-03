@@ -1,22 +1,56 @@
 ---
-type: quickstart
 name: skill-workflow-orchestration
-tags: [skill, claude-code]
 source: plugin/skills/workflow-orchestration/SKILL.md
+summary: This template documents the `/workflow-orchestration` command, which allows
+  developers to execute seven different structured analysis workflows (security, code
+  review, testing, performance, bug detection, documentation, and release validation)
+  directly within Claude Code conversations.
+tags:
+- skill
+- claude-code
+type: quickstart
 ---
 
-# Quickstart: Use /workflow-orchestration
+# Quickstart: /workflow-orchestration
 
-Run analysis workflows — security, code review, tests, perf, bugs, docs, release.
+Run structured analysis workflows directly in your Claude Code conversation — covering security, code review, testing, performance, bugs, documentation, and releases.
+
+## Usage
 
 ```
-/workflow-orchestration <workflow: security, review, tests, perf, release, bugs, docs>
+/workflow-orchestration <workflow>
 ```
 
-**Result:** Structured results in your Claude Code conversation.
+## Available Workflows
 
-**Next:** See full reference: `attune help-docs ref-skill-workflow-orchestration`
+| Workflow | Description |
+|----------|-------------|
+| `security` | Scan for vulnerabilities and security issues |
+| `review` | Perform a structured code review |
+| `tests` | Analyze test coverage and quality |
+| `perf` | Identify performance bottlenecks |
+| `bugs` | Detect potential bugs and logic errors |
+| `docs` | Audit and improve documentation |
+| `release` | Run pre-release checks and validation |
+
+## Example
+
+```
+/workflow-orchestration security
+```
+
+## Output
+
+Results are returned as structured output within your Claude Code conversation.
+
+## Next Steps
+
+For complete configuration options and advanced usage, see the full reference:
+
+```
+attune help-docs ref-skill-workflow-orchestration
+```
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

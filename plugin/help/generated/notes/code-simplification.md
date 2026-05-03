@@ -1,8 +1,13 @@
 ---
-type: note
 name: code-simplification
-tags: [philosophy, code-quality]
 source: .claude/CLAUDE.md
+summary: This template guides developers to simplify code by eliminating unnecessary
+  abstractions, deep nesting, and over-engineering in favor of clarity and straightforward
+  solutions.
+tags:
+- philosophy
+- code-quality
+type: note
 ---
 
 # Note: Code Simplification
@@ -13,22 +18,18 @@ Engineering philosophy: simpler is better. Three clear lines beat one clever abs
 
 ## Content
 
-After writing or modifying code, review it for unnecessary
-complexity. Claude tends to over-engineer — too many
-abstractions, unnecessary classes, premature optimization,
-over-configurable interfaces. Counteract this by:
+After writing or modifying code, review it for unnecessary complexity. Claude tends to over-engineer — introducing too many abstractions, unnecessary classes, premature optimizations, and overly configurable interfaces. Counteract this tendency by:
 
-- Flattening deeply nested conditionals (use early returns)
-- Inlining trivial helper functions used only once
+- Flattening deeply nested conditionals using early returns
+- Inlining trivial helper functions that are only called once
 - Removing dead code paths and unused parameters
-- Preferring stdlib over custom abstractions
-- Reducing class hierarchies when a function suffices
+- Preferring standard library solutions over custom abstractions
+- Collapsing class hierarchies where a plain function suffices
 
-Simpler is better. Three clear lines beat one clever
-abstraction.
+When in doubt, choose the simpler approach. Three clear lines beat one clever abstraction.
 
 ---
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

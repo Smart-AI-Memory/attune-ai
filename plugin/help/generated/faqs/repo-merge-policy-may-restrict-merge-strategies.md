@@ -1,22 +1,36 @@
 ---
-type: faq
 name: repo-merge-policy-may-restrict-merge-strategies
-tags: [git]
 source: .claude/CLAUDE.md
+summary: This template explains how to resolve GitHub CLI merge command failures caused
+  by repository merge policy restrictions and instructs developers to use the allowed
+  squash merge strategy instead.
+tags:
+- git
+type: faq
 ---
 
-# FAQ: What should I know about repo merge policy may restrict merge strategies?
+# FAQ: Repository Merge Policy Restricts Merge Strategies
 
 ## Answer
 
-`gh pr merge --merge` failed with "Merge method merge commits are not allowed". This repo only allows squash merges.
+When running `gh pr merge --merge`, you may encounter the following error:
 
-**How to fix:**
-- Always use `--squash` for `gh pr merge` in this repo
+> Merge method merge commits are not allowed.
 
+This occurs because the repository is configured to allow only squash merges. Attempting to use a disallowed merge strategy will cause the command to fail.
+
+## How to Fix
+
+Use the `--squash` flag instead of `--merge` when merging pull requests in this repository:
+
+```bash
+gh pr merge --squash
 ```
-gh pr merge --merge
-```
+
+If you are unsure which merge strategies the repository permits, check the repository's **Settings → General → Pull Requests** section to see which merge methods are enabled.
 
 ## Related Topics
-- **Error**: Detailed error: Repo merge policy may restrict merge strategies
+
+- **Error:** `Detailed error: Repo merge policy may restrict merge strategies`
+- [GitHub CLI: `gh pr merge` documentation](https://cli.github.com/manual/gh_pr_merge)
+- Configuring allowed merge strategies in repository settings

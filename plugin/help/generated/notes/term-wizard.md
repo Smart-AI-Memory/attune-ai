@@ -1,20 +1,19 @@
 ---
-type: note
 name: term-wizard
-tags: [terminology]
 source: CLAUDE.md
+summary: This template provides guidance on implementing multi-step guided workflows
+  that simplify complex tasks by breaking them into sequential, interdependent steps.
+tags:
+- terminology
+type: note
 ---
 
-# Note: Term: wizard
+# Wizard
 
-## Context
+A **wizard** is a multi-step guided workflow that leads users through a complex task by breaking it into a sequence of discrete, manageable steps.
 
-Project terminology used in the attune-ai codebase.
-
-## Content
-
-**wizard** — Multi-step guided workflow
+Wizards are typically used when a task requires collecting information or making decisions in a specific order, where each step may depend on input from the previous one.
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

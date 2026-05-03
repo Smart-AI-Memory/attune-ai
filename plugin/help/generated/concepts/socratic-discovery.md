@@ -1,24 +1,34 @@
 ---
-type: concept
 name: socratic-discovery
-tags: [philosophy, ux]
 source: .claude/CLAUDE.md
+summary: This template explains how Attune AI uses the Socratic method to guide users
+  through targeted questioning that clarifies their intent, defines scope, and validates
+  assumptions before executing any action.
+tags:
+- philosophy
+- ux
+type: concept
 ---
 
-# Concept: Socratic discovery
+# Concept: Socratic Discovery
 
-## What
+Socratic discovery is the core UX principle of Attune AI: always guide users through targeted questions before taking any action. By understanding intent first, Attune ensures the right task runs against the right scope—every time.
 
-The core UX principle of Attune AI: always guide users through questions before executing actions. Understand the goal, narrow scope, confirm choices, then execute.
+## How It Works
 
-## Why
+Every skill and workflow begins with a structured discovery flow:
 
-Prevents wasted execution by ensuring the right task runs with the right scope. Users get better results because the system understands their intent first.
+1. **Understand the goal** — Clarify what the user is trying to achieve.
+2. **Narrow the scope** — Identify constraints, targets, and boundaries.
+3. **Confirm choices** — Surface and validate assumptions before proceeding.
+4. **Execute** — Run the action with confidence.
 
-## How
+The `AskUserQuestion` step drives each phase of this flow. The `/attune` command serves as the entry point for Socratic routing across all skills and workflows.
 
-Every skill and workflow starts with scoping questions (AskUserQuestion). The discovery flow is: 1) understand goal, 2) narrow scope, 3) confirm choices, 4) execute. The /attune command is the entry point for Socratic routing.
+## Why This Matters
+
+Executing before understanding wastes time and produces the wrong results. Socratic discovery prevents this by ensuring Attune has a precise picture of intent before acting. Users spend less time correcting mistakes and get better outcomes because the system understands what they actually need—not just what they literally asked.
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*

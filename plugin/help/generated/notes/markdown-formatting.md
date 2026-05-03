@@ -1,26 +1,30 @@
 ---
-type: note
 name: markdown-formatting
-tags: [formatting, standards]
 source: .claude/CLAUDE.md
+summary: This template establishes markdown formatting standards for all `.md` files
+  in the project, covering conventions for headings, code blocks, lists, whitespace,
+  line length, and tables.
+tags:
+- formatting
+- standards
+type: note
 ---
 
-# Note: Markdown Formatting
+# Markdown Formatting
 
 ## Context
 
-Formatting standards for all .md files in the project.
+Formatting standards for all `.md` files in the project.
 
 ## Content
 
 All `.md` files should follow these rules:
 
 - Start every `.md` file with a single `#` (h1) heading
-- Heading levels must increment by one (don't skip from
-  `#` to `###`)
+- Heading levels must increment by one (do not skip from `#` to `###`)
 - Put a single space after `#` in headings
 - Surround headings with blank lines (one above, one below)
-- Surround fenced code blocks (```) with blank lines
+- Surround fenced code blocks (` ``` `) with blank lines
 - Surround lists with blank lines
 - Use `-` (dash) for unordered list markers, not `*` or `+`
 - No trailing whitespace on lines
@@ -28,8 +32,8 @@ All `.md` files should follow these rules:
 - No multiple consecutive blank lines
 - End files with a single trailing newline
 - Keep lines under 80 characters (except tables and URLs)
-- Do not manually pad or align table cells with extra
-  spaces — tables are exempt from trailing space rules
+- Do not manually pad or align table cells with extra spaces — tables
+  are exempt from trailing space rules
 
 ---
 

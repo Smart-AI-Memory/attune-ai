@@ -1,28 +1,35 @@
 ---
-type: comparison
 name: workflow-vs-wizard
-tags: [workflow, architecture]
 source: .claude/CLAUDE.md
+summary: This template explains the key differences between workflows and wizards,
+  helping developers decide which tool to use based on whether their task requires
+  automation or interactive guidance.
+tags:
+- workflow
+- architecture
+type: comparison
 ---
 
-# Comparison: Workflow vs Wizard
+# Comparison: Workflow vs. Wizard
 
-Understanding the difference between non-interactive workflows and guided wizards.
+Understanding the difference between non-interactive workflows and guided wizards helps you choose the right tool for each task.
 
 | Feature | Workflow | Wizard |
-| ------- | ------- | ------- |
-| Interaction | Non-interactive | Guided step-by-step |
-| Input | CLI flags or JSON | Interactive questions |
-| Output | Structured JSON/report | Conversation with follow-ups |
+|---|---|---|
+| Interaction | Non-interactive | Guided, step-by-step |
+| Input | CLI flags or JSON | Interactive prompts |
+| Output | Structured JSON or report | Conversational, with follow-ups |
 | Invocation | `attune workflow run <name>` | `/wizard run <name>` |
-| Count | 17 built-in | 5 built-in |
+| Built-in count | 17 | 5 |
 | Customization | Python subclass | YAML or Python |
-| CI/CD friendly | Yes | No (needs interaction) |
-| Best for | Automated analysis | Complex decision-making |
+| CI/CD compatible | Yes | No — requires user interaction |
+| Best for | Automated analysis | Complex, judgment-driven decisions |
 
-## Recommendation
+## When to Use Each
 
-Use **workflows** for CI/CD pipelines and automated analysis. Use **wizards** when the task needs human judgment at each step (debugging, release prep).
+**Choose workflows** when you need repeatable, automated execution — for example, in CI/CD pipelines, scheduled analysis jobs, or any context where no human interaction is available.
+
+**Choose wizards** when the task requires human judgment at each step, such as debugging a complex issue or preparing a release.
 
 ## Related Topics
 
