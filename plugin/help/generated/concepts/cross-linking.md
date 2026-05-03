@@ -1,27 +1,57 @@
 ---
-type: concept
 name: cross-linking
-tags: [help-system, architecture]
 source: scripts/build_cross_links.py
+summary: This developer help template covers how to automatically establish and use
+  cross-links between related templates across a documentation system to help users
+  navigate from any entry point to relevant content.
+tags:
+- help-system
+- architecture
+type: concept
 ---
 
-# Concept: Template cross-linking
+# Template Cross-Linking
 
-## What
+## Overview
 
-Deterministic relationships between 498 templates across 11 types. Error links to Warning, Skill links to Tool, FAQ links to Error, Task links to Reference.
+Template cross-linking establishes deterministic relationships between 498 templates across 11 template types. These relationships connect related content automatically — for example, Error templates link to Warning templates, Skill templates link to Tool templates, and FAQ templates link to Error templates.
 
-## Why
+## Why Cross-Linking Matters
 
-Users don't navigate documentation in a linear path. Cross-links let the help system surface related content regardless of where the user starts.
+Users rarely navigate documentation linearly. They arrive at any entry point — an error message, a skill description, a FAQ — and need a path to relevant content from there. Cross-linking ensures the help system can surface related templates regardless of where a user starts, reducing dead ends and repeated searches.
 
-## How
+## How It Works
 
-build_cross_links.py derives relationships from source data: slug matching (Error<->Warning), tool name extraction (Skill->Tool), token overlap (Error->Tip). Results stored in cross_links.json with a tag_index for search.
+The `build_cross_links.py` script derives relationships from source data using three strategies:
+
+| Strategy | Template Types | Method |
+|---|---|---|
+| Slug matching | Error ↔ Warning | Matches shared slugs between template types |
+| Tool name extraction | Skill → Tool | Extracts tool names referenced in skill content |
+| Token overlap | Error → Tip | Compares keyword tokens across template bodies |
+
+Results are stored in `cross_links.json`, which also includes a `tag_index` to support tag-based search queries.
+
+## Cross-Link Type Reference
+
+| Source Type | Target Type | Relationship |
+|---|---|---|
+| Error | Warning | Related condition |
+| Skill | Tool | Required tooling |
+| FAQ | Error | Common cause |
+| Task | Reference | Supporting detail |
 
 ## Example
 
-`attune help-docs --tag security` returns 37 templates across all types.
+Running a tag-based query returns matched templates across all linked types:
+
+```bash
+attune help-docs --tag security
+```
+
+```
+37 templates matched across 6 types: Error, Warning, Skill, Tool, FAQ, Task
+```
 
 ## Related Topics
 

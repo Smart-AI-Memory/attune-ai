@@ -1,48 +1,49 @@
 ---
-type: concept
 name: tool-workflow-orchestration
-tags: [workflows, orchestration, routing]
 source: plugin/skills/workflow-orchestration/SKILL.md
+summary: This template covers a workflow orchestration system that routes natural
+  language requests to the appropriate analysis workflow (such as security audits,
+  code reviews, test generation, bug prediction, documentation generation, and release
+  preparation) based on user intent rather than requiring explicit skill names.
+tags:
+- workflows
+- orchestration
+- routing
+type: concept
 ---
 
 # Workflow Orchestration
 
 ## What
 
-Routes natural language requests to the correct analysis
-workflow. Supports security audits, code reviews, test
-generation, performance analysis, bug prediction,
-documentation generation, and release preparation. Accepts
-a workflow name or intent description and dispatches to the
-matching workflow with the right parameters.
+Routes natural language requests to the correct analysis workflow. Supports security audits, code reviews, test generation, performance analysis, bug prediction, documentation generation, and release preparation.
+
+Accepts a workflow name or a plain-language description of intent and dispatches to the matching workflow with the appropriate parameters.
 
 ## Why
 
-Remembering the exact skill name for every task is
-friction. Workflow orchestration lets you describe what you
-want ("check this module for bugs") and routes to the
-right workflow automatically, so you stay in flow.
+Remembering the exact skill name for every task creates unnecessary friction. Workflow orchestration lets you describe what you want — for example, "check this module for bugs" — and automatically routes to the right workflow, so you stay focused and in flow.
 
-## When to use
+## When to Use
 
-- When you know the analysis type but not the skill name
-- To run a workflow by intent rather than exact command
-- When chaining multiple analyses on the same target
-- To discover which workflows are available
+- You know the type of analysis you need but not the exact skill name
+- You want to trigger a workflow by intent rather than by explicit command
+- You are chaining multiple analyses against the same target
+- You want to discover which workflows are available
 
-## Available workflows
+## Available Workflows
 
-| Workflow | What it does |
-|----------|-------------|
-| security-audit | Scans for vulnerabilities and CWEs |
-| code-review | Style, logic, and architecture review |
-| test-generation | Creates tests for uncovered code |
-| bug-predict | Detects likely bug patterns |
-| doc-gen | Generates docs from source code |
-| release-prep | Multi-agent release readiness check |
-| deep-review | Multi-pass security + quality + gaps |
+| Workflow | Description |
+|---|---|
+| `security-audit` | Scans for vulnerabilities and CWEs |
+| `code-review` | Reviews style, logic, and architecture |
+| `test-generation` | Creates tests for uncovered code paths |
+| `bug-predict` | Detects likely bug patterns |
+| `doc-gen` | Generates documentation from source code |
+| `release-prep` | Multi-agent release readiness check |
+| `deep-review` | Multi-pass security, quality, and gap analysis |
 
 ## Related Topics
 
-- **Task**: Use the workflow-orchestration skill -- step-by-step
-- **Reference**: Skill: workflow-orchestration -- full reference
+- **Task** — Use the workflow-orchestration skill: step-by-step walkthrough
+- **Reference** — Skill: workflow-orchestration: full parameter and option reference

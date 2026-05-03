@@ -1,22 +1,33 @@
 ---
-type: quickstart
 name: run-security-audit
-tags: [workflow, security]
 source: src/attune/cli_minimal.py
+summary: This template guides developers through running an automated security audit
+  on their codebase to identify and categorize vulnerabilities by severity using CWE
+  identifiers.
+tags:
+- workflow
+- security
+type: quickstart
 ---
 
-# Quickstart: Run a security audit
+# Quickstart: Run a Security Audit
 
-Scan your codebase for security vulnerabilities.
+Scan your codebase for vulnerabilities and review severity-grouped findings.
 
-```
+```bash
 attune workflow run security-audit --path "src/"
 ```
 
-**Result:** Severity-grouped findings with CWE identifiers.
+**Output:** Findings grouped by severity, each labeled with a [CWE identifier](https://cwe.mitre.org/).
 
-**Next:** Fix critical issues, then run `attune workflow run test-gen`.
+**Next step:** Resolve all critical issues, then generate tests with:
+
+```bash
+attune workflow run test-gen
+```
 
 ## Related Topics
 
-_No related topics yet._
+- [Interpreting Security Findings](#)
+- [Fixing Common Vulnerabilities](#)
+- [Running the Test Generation Workflow](#)

@@ -1,21 +1,25 @@
 ---
-type: quickstart
 name: skill-planning
-tags: [skill, claude-code]
 source: plugin/skills/planning/SKILL.md
+summary: The /planning command helps developers create structured plans for features,
+  test-driven development, and architecture reviews directly within Claude conversations.
+tags:
+- skill
+- claude-code
+type: quickstart
 ---
 
 # Quickstart: Use /planning
 
-High-level development planning — features, TDD, architecture review.
+High-level development planning for features, test-driven development, and architecture review.
 
 ```
 /planning <what to plan: feature, tdd, architecture>
 ```
 
-**Result:** Structured results in your Claude Code conversation.
+**Result:** A structured plan delivered directly in your Claude Code conversation.
 
-**Next:** See full reference: `attune help-docs ref-skill-planning`
+**Next:** Explore the full reference with `attune help-docs ref-skill-planning`
 
 ## Related Topics
 

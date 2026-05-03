@@ -1,22 +1,40 @@
 ---
-type: task
 name: use-coach
-tags: [skill, task]
 source: plugin/skills/coach/SKILL.md
+summary: This developer help template covers a progressive coaching skill that advances
+  users through three levels of depth (concept, procedural, reference) on topics like
+  security audits, code reviews, and testing, triggered by specific keywords and invoked
+  via the `/coach` command with automatic progression on repeat requests.
+tags:
+- skill
+- task
+type: task
 ---
 
-# Task: Use the coach skill
+# Use the Coach Skill
 
-Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, explain, tell me more, how does, what is, help with, deeper.
+Progressive help for any topic. Each time you invoke the coach, it advances one level deeper: **concept → procedural → reference**. Repeat to go deeper.
 
-Invoke with: `/coach <topic: security-audit, code-review, etc.>`
+**Triggers:** `coach`, `explain`, `tell me more`, `how does`, `what is`, `help with`, `deeper`
+
+**Invoke with:** `/coach <topic>`
+
+---
 
 ## Steps
 
-1. **Run the tool**
-   1. If the user provided a topic, call: Use the bare topic slug — the engine resolves the
-right template type at each level: | User says | Topic slug |
-|-----------|-----------|
+### 1. User provides a topic
+
+Call `help_lookup` with the matching topic slug. The engine resolves the correct template type at each level automatically.
+
+```
+help_lookup(topic="<topic>", mode="progressive")
+```
+
+**Topic slug reference:**
+
+| User says | Topic slug |
+|---|---|
 | security audit | `security-audit` |
 | code review | `code-review` |
 | code quality | `code-quality` |
@@ -24,44 +42,58 @@ right template type at each level: | User says | Topic slug |
 | test gen | `test-generation` |
 | release | `release-prep` |
 | refactor | `refactor-plan` |
-| doc gen | `doc-gen` | 2. If the user says "tell me more" or "go deeper"
-   without a new topic, call `help_lookup` with the
-   same topic again — it auto-advances to the next
-   level. 3. If the user says "start from the beginning" or
-   "reset", call: 4. If the user just finished a workflow, use
-   `last_workflow` to skip the concept and start at
-   procedural: 5. For file-based warnings:
+| doc gen | `doc-gen` |
 
-   ```
-   help_lookup(topic="<topic>", mode="progressive")
-   ```
+---
 
-2. **Run tool (option 2)**
+### 2. User says "tell me more" or "go deeper"
 
-   ```
-   help_lookup(topic="<topic>", mode="progressive", reset=true)
-   ```
+No new topic needed. Call `help_lookup` with the **same topic** — it auto-advances to the next level.
 
-3. **Run tool (option 3)**
+```
+help_lookup(topic="<topic>", mode="progressive")
+```
 
-   ```
-   help_lookup(
-    topic="<topic>",
-    mode="progressive",
-    last_workflow="<workflow-name>"
+---
+
+### 3. User says "start from the beginning" or "reset"
+
+Restart the progression from the concept level.
+
+```
+help_lookup(topic="<topic>", mode="progressive", reset=true)
+```
+
+---
+
+### 4. User just finished a workflow
+
+Skip the concept level and start at procedural.
+
+```
+help_lookup(
+  topic="<topic>",
+  mode="progressive",
+  last_workflow="<workflow-name>"
 )
-   ```
+```
 
-4. **Run tool (option 4)**
+---
 
-   ```
-   help_lookup(
-    topic="warnings",
-    mode="precursor",
-    file_path="<path to file>"
+### 5. User has file-based warnings
+
+Look up help scoped to a specific file.
+
+```
+help_lookup(
+  topic="warnings",
+  mode="precursor",
+  file_path="<path-to-file>"
 )
-   ```
+```
 
+---
 
 ## Related Topics
-- **Reference**: Skill: coach — full reference
+
+- **Reference:** Skill: coach — full reference

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — dependency lower-bound bumps (Dependabot PRs 178, 180, 181, 182)
+
+- `pydantic-settings` `>=2.0.0,<3.0.0` → `>=2.14.0,<3.0.0`
+- `email-validator` `>=2.0.0,<3.0.0` → `>=2.3.0,<3.0.0`
+- `aiofiles` `>=23.0.0,<26.0.0` → `>=25.1.0,<26.0.0`
+- `streamlit` (examples) `>=1.37.0,<2.0.0` → `>=1.56.0,<2.0.0`
+
+## [6.5.3] - 2026-05-01
+
+### Changed — README refocused on developer workflows
+
+Major README rewrite that refocuses the project narrative on developer
+workflows and positions `attune-gui` as the documentation hub. No
+production code changes.
+
+## [6.5.2] - 2026-05-01
+
+### Changed — ecosystem overview and attune-gui doc hub
+
+README corrections to the ecosystem overview section; introduces
+`attune-gui` as the central documentation hub for the attune ecosystem.
+No production code changes.
+
+## [6.5.1] - 2026-05-01
+
+### Changed — README rewrite and `[author]` dep pin
+
+- README rewritten for v6.5.0 feature set: documents on-disk polish
+  cache, `cache clear` subcommand, and Anthropic prompt caching.
+- `[author]` extra pin updated from `attune-author>=0.5.1,<0.6` to
+  `>=0.6.2,<0.7`.
+- Test badge updated to 16,900+.
+
 ## [6.5.0] - 2026-04-30
 
 ### Changed — decouple attune-ai from attune-help ecosystem

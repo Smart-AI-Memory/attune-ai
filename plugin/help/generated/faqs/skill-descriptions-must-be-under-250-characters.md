@@ -1,22 +1,28 @@
 ---
-type: faq
 name: skill-descriptions-must-be-under-250-characters
-tags: [claude-code]
 source: .claude/CLAUDE.md
+summary: This template explains why skill descriptions must not exceed 250 characters
+  and provides a simple method to verify and fix descriptions that are too long.
+tags:
+- claude-code
+type: faq
 ---
 
-# FAQ: What do I need to know about skill descriptions must be under 250 characters?
+# FAQ: Why must skill descriptions be under 250 characters?
 
 ## Answer
 
-Anthropic truncates skill descriptions longer than 250 chars, which breaks auto-triggering from natural language. Our initial migration had 7 of 11 skills over the limit.
+Anthropic truncates skill descriptions that exceed 250 characters, which breaks auto-triggering from natural language inputs. During one migration, 7 of 11 skills exceeded this limit — making this a common and easy-to-miss issue.
 
 **How to fix:**
-- Always check with `len(description)` after editing SKILL.md frontmatter
 
-```
+After editing the `SKILL.md` frontmatter, verify your description length using Python:
+
+```python
 len(description)
 ```
 
+If the result exceeds 250, shorten the description before saving.
+
 ## Related Topics
-- **Error**: Detailed error: Skill descriptions must be under 250 characters
+- **Error**: `Skill descriptions must be under 250 characters`

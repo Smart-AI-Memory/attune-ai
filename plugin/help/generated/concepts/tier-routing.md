@@ -1,28 +1,47 @@
 ---
-type: concept
 name: tier-routing
-tags: [architecture, cost-optimization]
 source: src/attune/workflows/base.py
+summary: This template explains how to implement model tier routing to automatically
+  select Claude models (Haiku, Sonnet, or Opus) based on task complexity, reducing
+  API costs by 80–96% while maintaining output quality through a tier map that assigns
+  cost-efficient models to simple tasks and capable models to complex ones.
+tags:
+- architecture
+- cost-optimization
+type: concept
 ---
 
-# Concept: Model tier routing
+# Model Tier Routing
 
-## What
+Model tier routing automatically selects the appropriate Claude model—Haiku, Sonnet, or Opus—based on the complexity of each task in your workflow. Simple tasks are handled by cost-efficient models, while complex tasks escalate to more capable ones.
 
-Tier routing automatically selects the right Claude model (Haiku, Sonnet, or Opus) based on task complexity. Simple tasks use cheap models; complex tasks escalate to premium.
+## Why use tier routing?
 
-## Why
+Running every workflow stage on a premium model is rarely necessary and quickly becomes expensive. Tier routing reduces API costs by 80–96% by matching model capability to actual task requirements, without compromising output quality.
 
-Reduces API costs by 80-96% without sacrificing quality. Most workflow stages don't need the most expensive model.
+## How it works
 
-## How
+Each workflow defines a `tier_map` that assigns a model tier to each stage:
 
-Each workflow defines a `tier_map` mapping stages to tiers (CHEAP, CAPABLE, PREMIUM). The authentication strategy resolves each tier to a specific model ID. Tier fallback escalates automatically if a cheaper tier fails.
+| Tier | Intended use |
+|------|-------------|
+| `CHEAP` | High-volume, straightforward tasks (e.g., classification, formatting) |
+| `CAPABLE` | Moderate reasoning and generation tasks |
+| `PREMIUM` | Complex analysis, nuanced reasoning, or high-stakes outputs |
+
+At runtime, the authentication strategy resolves each tier to a specific model ID. If a cheaper tier fails, the system automatically escalates to the next tier—ensuring reliability without requiring manual intervention.
 
 ## Example
 
-`tier_map = {"initial_scan": ModelTier.CHEAP, "deep_review": ModelTier.PREMIUM}`
+```python
+tier_map = {
+    "initial_scan": ModelTier.CHEAP,
+    "deep_review":  ModelTier.PREMIUM,
+}
+```
 
-## Related Topics
+In this example, the `initial_scan` stage runs on Haiku to minimize cost, while `deep_review` escalates to Opus for thorough analysis.
 
-_No related topics yet._
+## Related topics
+
+No related topics yet.

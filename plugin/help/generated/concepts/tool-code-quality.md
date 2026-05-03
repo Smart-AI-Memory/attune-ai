@@ -1,42 +1,47 @@
 ---
-type: concept
 name: tool-code-quality
-tags: [review, quality, linting]
 source: plugin/skills/code-quality/SKILL.md
+summary: Code Quality is a unified analysis tool that combines code review, bug prediction,
+  and deep security analysis across three depth levels (Quick, Standard, and Deep)
+  to provide a single quality score and report instead of requiring separate linting,
+  bug scanning, and review commands.
+tags:
+- review
+- quality
+- linting
+type: concept
 ---
 
 # Code Quality
 
 ## What
 
-Combines code review, bug prediction, and deep review into
-a single quality analysis. Operates at three depth levels:
-quick (style and linting), standard (logic and patterns),
-and deep (security, architecture, and test gap analysis).
+Code Quality combines code review, bug prediction, and deep review into a single analysis. It operates at three depth levels:
+
+- **Quick** — style and linting
+- **Standard** — logic and patterns
+- **Deep** — security, architecture, and test gap analysis
 
 ## Why
 
-Running separate tools for linting, bug scanning, and
-review means three commands and three reports. Code quality
-merges them into one pass with a unified score, so you see
-the full picture in a single output.
+Running separate tools for linting, bug scanning, and code review means three commands and three reports to reconcile. Code Quality merges all three into a single pass and produces a unified score, giving you the full picture in one output.
 
-## When to use
+## When to Use
 
-- Before opening a pull request for review
-- After a large refactor to verify nothing degraded
-- When you want a single quality score for a module
-- To compare quality across different parts of the codebase
+- Before opening a pull request
+- After a large refactor, to verify nothing degraded
+- When you need a single quality score for a module
+- To compare quality across different parts of a codebase
 
-## What it covers
+## What It Covers
 
-| Depth | What runs | Focus |
-|-------|-----------|-------|
-| Quick | Ruff + Black checks | Style, formatting, imports |
-| Standard | + Bug predict patterns | Logic errors, broad exceptions |
-| Deep | + Security + architecture | CWE mapping, coupling, gaps |
+| Depth | Tools | Focus |
+|-------|-------|-------|
+| Quick | Ruff, Black | Style, formatting, imports |
+| Standard | + Bug prediction patterns | Logic errors, broad exception handling |
+| Deep | + Security, architecture analysis | CWE mapping, coupling, test gap analysis |
 
 ## Related Topics
 
-- **Task**: Use the code-quality skill -- step-by-step
-- **Reference**: Skill: code-quality -- full reference
+- **Task**: Use the code-quality skill — step-by-step walkthrough
+- **Reference**: Skill: code-quality — full reference

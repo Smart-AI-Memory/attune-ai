@@ -1,43 +1,42 @@
 ---
-type: concept
 name: tool-bug-predict
-tags: [security, bugs, scanning]
 source: plugin/skills/bug-predict/SKILL.md
+summary: Bug Prediction identifies and ranks three categories of risky code patterns—dangerous
+  eval usage, broad exception handling, and incomplete code markers—while filtering
+  out false positives to help developers catch bugs before production.
+tags:
+- security
+- bugs
+- scanning
+type: concept
 ---
 
 # Bug Prediction
 
 ## What
 
-Predicts likely bug locations by scanning for three pattern
-categories: dangerous_eval (HIGH), broad_exception (MEDIUM),
-and incomplete_code (LOW). Applies smart false-positive
-filtering to suppress known-safe patterns like test fixtures,
-JavaScript regex.exec(), and documented graceful degradation.
+Bug Prediction scans your code for three categories of risky patterns and ranks them by severity:
+
+| Category | Severity | What it catches |
+|---|---|---|
+| `dangerous_eval` | HIGH | `eval()`, `exec()`, `compile()` called on external input |
+| `broad_exception` | MEDIUM | Bare `except:` clauses, unlogged `except Exception` blocks |
+| `incomplete_code` | LOW | `TODO`, `FIXME`, `HACK`, `XXX` comments marking unfinished logic |
+
+Smart false-positive filtering suppresses known-safe patterns — such as test fixtures, JavaScript `regex.exec()` calls, and documented graceful-degradation handlers — so results stay focused on genuine risks.
 
 ## Why
 
-Finding bugs before users do saves hours of debugging. The
-scanner focuses on the patterns that historically cause the
-most production incidents -- eval injection, swallowed
-exceptions, and unfinished TODO code paths.
+Catching bugs before users encounter them saves hours of debugging and prevents production incidents. These three pattern categories account for a disproportionate share of real-world issues: eval injection opens security vulnerabilities, swallowed exceptions hide failures silently, and unfinished code paths surface unexpectedly under edge-case conditions.
 
-## When to use
+## When to Use
 
-- During code review to catch patterns humans miss
-- Before merging large PRs with new business logic
-- To audit unfamiliar code you inherited or onboarded
-- As a periodic health check on high-churn modules
-
-## What it detects
-
-| Pattern | Severity | What it catches |
-|---------|----------|-----------------|
-| dangerous_eval | HIGH | `eval()`, `exec()`, `compile()` on input |
-| broad_exception | MEDIUM | Bare `except:`, unlogged `except Exception` |
-| incomplete_code | LOW | TODO, FIXME, HACK, XXX comments |
+- **Code review** — catch risky patterns that are easy to overlook during manual inspection
+- **Pre-merge checks** — audit large PRs introducing new business logic before they land
+- **Onboarding unfamiliar code** — quickly assess inherited or recently acquired codebases
+- **Periodic health checks** — monitor high-churn modules on a regular cadence
 
 ## Related Topics
 
-- **Task**: Use the bug-predict skill -- step-by-step
-- **Reference**: Skill: bug-predict -- full reference
+- **Task:** Use the bug-predict skill — step-by-step walkthrough
+- **Reference:** Skill: bug-predict — full option and output reference

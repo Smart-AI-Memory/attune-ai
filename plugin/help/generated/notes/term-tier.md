@@ -1,20 +1,26 @@
 ---
-type: note
 name: term-tier
-tags: [terminology]
 source: CLAUDE.md
+summary: This template explains how Attune-AI's three-tier classification system (CHEAP,
+  CAPABLE, and PREMIUM) helps developers select models that balance cost and performance
+  for their specific use cases.
+tags:
+- terminology
+type: note
 ---
 
-# Note: Term: tier
+# Tier
 
-## Context
+A **tier** classifies a model by its cost and capability level. Attune-AI uses three tiers to help you balance performance against expense:
 
-Project terminology used in the attune-ai codebase.
+| Tier | Description |
+|---|---|
+| `CHEAP` | Low-cost models suited for simple or high-volume tasks |
+| `CAPABLE` | Mid-range models that balance cost and performance |
+| `PREMIUM` | High-cost models optimized for complex or demanding tasks |
 
-## Content
-
-**tier** — Model cost level (CHEAP/CAPABLE/PREMIUM)
+Selecting the appropriate tier lets you control spending while matching model power to your use case.
 
 ## Related Topics
 
-_No related topics yet._
+*No related topics yet.*
