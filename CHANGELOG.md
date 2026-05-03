@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.5.4] - 2026-05-03
+
+### Added — bundle summaries.json into help/generated/ (#190)
+
+`scripts/generate_all.py` now copies `summaries.json` and
+`summaries_by_path.json` from the installed `attune-help` package into
+`plugin/help/generated/` after building the source manifest. End users
+who install `attune-ai` from PyPI will now see populated summaries in
+the attune-gui dashboard's Summaries panel. Skips gracefully when
+`attune-help` isn't installed (e.g. minimal CI environments).
+
+Includes 3 unit tests covering the happy path, missing-package, and
+missing-optional-file cases.
+
 ### Changed — dependency lower-bound bumps (Dependabot PRs 178, 180, 181, 182)
 
 - `pydantic-settings` `>=2.0.0,<3.0.0` → `>=2.14.0,<3.0.0`
