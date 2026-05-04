@@ -2,39 +2,44 @@
 type: concept
 feature: deep-review
 depth: concept
-generated_at: 2026-04-14T14:53:54.865821+00:00
-source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
+generated_at: 2026-05-04T02:28:14.874596+00:00
+source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
 status: generated
 ---
 
 # Deep Review
 
-The deep review feature orchestrates three specialized AI subagents to analyze code from different perspectives: security vulnerabilities, code quality issues, and test coverage gaps.
+Deep review is a multi-pass code analysis workflow that examines your codebase through three specialized lenses: security vulnerabilities, code quality issues, and test coverage gaps.
 
-## Review process structure
+## How it works
 
-The `DeepReviewAgentSDKWorkflow` coordinates three independent subagents that examine your codebase simultaneously:
+The workflow coordinates three subagents that run in parallel, each focusing on a specific domain:
 
-- **security-reviewer** — Identifies potential security vulnerabilities and unsafe patterns
-- **quality-reviewer** — Evaluates code maintainability, performance, and best practices
-- **test-gap-reviewer** — Analyzes test coverage and suggests missing test scenarios
+- **Security reviewer** — Scans for vulnerabilities, insecure patterns, and authentication flaws
+- **Quality reviewer** — Evaluates maintainability, performance, and architectural concerns
+- **Test gap reviewer** — Identifies missing test coverage and edge cases
 
-After all subagents complete their analysis, the workflow synthesizes their findings into a consolidated report with severity rankings and actionable recommendations.
+After all three subagents complete their analysis, the workflow synthesizes their findings into a single consolidated report with an overall health score (0-100) and prioritized recommendations.
 
-## Output format
+## Review orchestration
 
-The deep review generates a structured report containing:
+The `DeepReviewAgentSDKWorkflow` class manages the entire process:
 
-- **Summary** — Overall code health score (0-100) with finding counts by severity
-- **Security** — Security findings ordered by risk level
-- **Quality** — Code quality issues ordered by impact
-- **Test Gaps** — Missing test coverage ordered by priority
+1. Spawns three specialized Claude Agent SDK subagents
+2. Each subagent analyzes the codebase independently
+3. Collects and correlates findings across all domains
+4. Produces a structured report with sections for security, quality, test gaps, and actionable suggestions
+
+The orchestrator ensures thoroughness while maintaining focus — each subagent operates within its expertise domain, then findings are consolidated to avoid duplication and provide clear next steps.
+
+## Report structure
+
+Every deep review generates a standardized report containing:
+
+- **Summary** — Health score and executive overview with finding counts by severity
+- **Security** — Vulnerabilities and security concerns, ordered by risk level
+- **Quality** — Maintainability and performance issues, ordered by impact
+- **Test gaps** — Missing coverage areas, ordered by priority
 - **Suggestions** — Top 5-10 actionable improvements with specific file references
 
-Each finding includes file paths and line numbers to help you locate and address issues efficiently.
-
-## Integration points
-
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `DeepReviewAgentSDKWorkflow` | Coordinates multi-agent code analysis workflow | `src/attune/workflows/deep_review.py` |
+This structure gives you both the high-level assessment you need for planning and the detailed findings required for implementation.

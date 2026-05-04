@@ -2,52 +2,39 @@
 type: reference
 feature: cli
 depth: reference
-generated_at: 2026-04-23T03:32:11.954475+00:00
-source_hash: 95afb1e38daa117bab7e14bf58b614da535d484b24b1dd072c4750e232202196
+generated_at: 2026-05-04T02:34:16.611938+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
 # CLI reference
 
-Access Attune AI's hybrid command-line interface that routes input between skills and natural language processing.
+Execute Attune commands from the terminal, manage costs, store lessons, and configure providers.
 
-## Classes
+## RoutingPreference dataclass
 
-| Class | Description |
-|-------|-------------|
-| `RoutingPreference` | User's learned routing preferences |
-| `HybridRouter` | Routes user input to Claude Code skill invocations |
+User's learned routing preferences.
 
-### RoutingPreference fields
+| Field | Type | Default |
+|-------|------|---------|
+| `keyword` | `str` | |
+| `skill` | `str` | |
+| `args` | `str` | `''` |
+| `usage_count` | `int` | `0` |
+| `confidence` | `float` | `1.0` |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `keyword` | str | | Command keyword |
-| `skill` | str | | Target skill name |
-| `args` | str | `''` | Skill arguments |
-| `usage_count` | int | `0` | Number of times used |
-| `confidence` | float | `1.0` | Routing confidence score |
+## HybridRouter class
 
-### HybridRouter methods
+Routes user input to Claude Code skill invocations.
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `__init__` | `preferences_path: str \| None = None` | | Initialize router with optional preferences file |
-| `route` | `user_input: str, context: dict[str, Any] \| None = None` | `dict[str, Any]` | Route user input to skill invocation |
-| `learn_preference` | `keyword: str, skill: str, args: str = ''` | None | Learn new routing preference |
+| `route` | `user_input: str, context: dict[str, Any] \| None = None` | `dict[str, Any]` | Route input to appropriate skill |
+| `learn_preference` | `keyword: str, skill: str, args: str = ''` | `None` | Store routing preference for future use |
 | `get_suggestions` | `partial: str` | `list[str]` | Get command suggestions for partial input |
 
-## Functions
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `get_version` | | `str` | Get package version |
-| `create_parser` | | `argparse.ArgumentParser` | Create the argument parser |
-| `main` | `argv: list[str] \| None = None` | `int` | Main entry point |
-| `route_user_input` | `user_input: str, context: dict[str, Any] \| None = None` | `dict[str, Any]` | Quick routing helper |
-| `is_slash_command` | `text: str` | `bool` | Check if text is a slash command |
-
-### Cost commands
+## Cost tracking functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
@@ -56,70 +43,39 @@ Access Attune AI's hybrid command-line interface that routes input between skill
 | `cmd_costs_export` | `args: Namespace` | `int` | Export cost data to file |
 | `cmd_costs_reset` | `args: Namespace` | `int` | Clear all cost tracking data |
 
-#### cmd_costs_reset returns
-
-```
-0
-```
-
-### Help commands
+## Help functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `cmd_help` | `args: argparse.Namespace` | `int` | Handle the `attune help` command |
 
-### Memory commands
+## Memory functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `cmd_remember` | | | Add a lesson to the lessons file |
-| `cmd_forget` | | | Remove a lesson by line number or keyword |
-| `cmd_lessons` | | | List current lessons with line numbers |
-| `cmd_memory_capture` | | | Save content to personal cross-session memory |
-| `cmd_memory_recall` | | | Search personal cross-session memory |
-| `cmd_memory_topics` | | | List all personal memory topics |
-| `cmd_memory_forget_topic` | | | Delete a topic from personal memory |
+| `cmd_remember` | `args: Namespace` | `int` | Add a lesson to the lessons file |
+| `cmd_forget` | `args: Namespace` | `int` | Remove a lesson by line number or keyword |
+| `cmd_lessons` | `args: Namespace` | `int` | List current lessons with line numbers |
+| `cmd_memory_capture` | `args: Namespace` | `int` | Save content to personal cross-session memory |
+| `cmd_memory_recall` | `args: Namespace` | `int` | Search personal cross-session memory |
 
-### Provider commands
+## Routing utilities
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `cmd_provider_show` | | | Show current provider configuration |
-| `cmd_provider_set` | | | Set the LLM provider |
+| `route_user_input` | | | Quick routing helper |
+| `is_slash_command` | | | Check if text is a slash command |
 
-### Telemetry commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_telemetry_show` | | | Display usage summary |
-| `cmd_telemetry_savings` | | | Show cost savings from tier routing |
-| `cmd_telemetry_export` | | | Export telemetry data to file |
-| `cmd_telemetry_routing_stats` | | | Show adaptive routing statistics |
-| `cmd_telemetry_routing_check` | | | Check for tier upgrade recommendations |
-| `cmd_telemetry_models` | | | Show model performance by provider |
-| `cmd_telemetry_agents` | | | Show active agents and their status |
-| `cmd_telemetry_signals` | | | Show coordination signals |
-
-### Utility commands
+## Core CLI functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `cmd_setup` | | | Install Attune slash commands for Claude Code |
-| `cmd_validate` | | | Validate configuration |
-| `cmd_version` | | | Show version information |
-| `cmd_features` | | | Show available memory and telemetry features |
-| `cmd_doctor` | | | Run comprehensive environment health check |
-
-### Workflow commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_workflow_list` | | | List available workflows |
-| `cmd_workflow_info` | | | Show workflow details |
-| `cmd_workflow_run` | | | Execute a workflow |
+| `get_version` | | | Get package version |
+| `create_parser` | | | Create the argument parser |
+| `main` | | | Main entry point |
 
 ## Constants
 
 | Constant | Values |
 |----------|--------|
-| `_CATEGORIES` | `errors`, `warnings`, `tips`, `references` |
+| `_CATEGORIES` | `'errors'`, `'warnings'`, `'tips'`, `'references'` |

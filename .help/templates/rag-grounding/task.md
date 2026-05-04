@@ -2,19 +2,20 @@
 type: task
 feature: rag-grounding
 depth: task
-generated_at: 2026-04-19T18:50:29.164063+00:00
-source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
+generated_at: 2026-05-04T02:41:40.818285+00:00
+source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
 status: generated
 ---
 
 # Work with rag grounding
 
-Use rag grounding when you need code generation that cites real attune features and patterns rather than hallucinating APIs or workflows.
+Use the RAG-grounded code generation workflow when you need to generate code and explanations backed by verified attune ecosystem documentation.
 
 ## Prerequisites
 
 - Access to the project source code
 - Familiarity with `src/attune/workflows/rag_code_gen.py`
+- Understanding of RAG (Retrieval-Augmented Generation) concepts
 
 ## Steps
 
@@ -24,25 +25,41 @@ Use rag grounding when you need code generation that cites real attune features 
    ```
 
 2. **Initialize the workflow.**
-   Create an instance with any required configuration:
+   Create a new instance with any required configuration:
    ```python
    workflow = RagCodeGenWorkflow()
    ```
 
-3. **Execute code generation.**
-   Call the workflow with your specific requirements:
+3. **Prepare your query parameters.**
+   Set up the execution parameters for your code generation request:
    ```python
-   result = workflow.execute(**kwargs)
+   params = {
+       "query": "your code generation request",
+       # Add other parameters as needed
+   }
    ```
-   The workflow retrieves relevant context from attune-help via attune-rag, then sends citation-enforced prompts to Claude.
 
-4. **Extract generated code and provenance.**
-   The `WorkflowResult` contains both the generated code and source citations showing which attune features informed the response.
+4. **Execute the workflow.**
+   Run the workflow with your parameters:
+   ```python
+   result = workflow.execute(**params)
+   ```
+
+5. **Extract the results.**
+   Access the generated code and supporting documentation:
+   ```python
+   generated_code = result.code
+   explanations = result.explanations
+   source_citations = result.citations
+   ```
 
 ## Verify success
 
-Check that the generated code includes citations to real attune files and features rather than invented APIs. The system prompt enforces this: "Never invent attune features. When referencing a pattern, note the source file it came from."
+The workflow succeeds when:
+- `result.code` contains valid, executable code
+- `result.citations` includes references to source documentation
+- The generated code follows attune ecosystem patterns and APIs
 
 ## Key files
 
-- `src/attune/workflows/rag_code_gen.py` — Contains `RagCodeGenWorkflow` class
+- `src/attune/workflows/rag_code_gen.py` — Main workflow implementation

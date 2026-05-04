@@ -2,69 +2,61 @@
 type: task
 feature: security-audit
 depth: task
-generated_at: 2026-04-19T18:42:58.129712+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-04T02:23:32.648645+00:00
+source_hash: e5fdcf8a70287f5c6e2e0987e337f663cf89f93c523e4652f0c8a45e6709471e
 status: generated
 ---
 
 # Work with security audit
 
-Use security audit when you need to scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
+Use security audit when you need to scan code for vulnerabilities like eval/exec usage, path traversal, hardcoded secrets, or injection risks before releasing a version or reviewing pull requests.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the `SecurityAuditWorkflow` class and its four specialized subagents
+- Familiarity with the `src/attune/workflows/security_audit.py` workflow file
 
-## Examine the workflow structure
+## Configure the audit workflow
 
-1. Open `src/attune/workflows/security_audit.py` to review the `SecurityAuditWorkflow` class.
+1. **Open the security audit workflow file.**
+   Navigate to `src/attune/workflows/security_audit.py` where the `SecurityAuditWorkflow` class manages the four-subagent orchestration.
 
-2. Check the `_SUBAGENT_NAMES` constant to see the four specialized subagents:
-   - vuln-scanner
-   - secret-detector
-   - auth-reviewer
-   - remediation-planner
+2. **Review the current subagent configuration.**
+   The workflow coordinates four specialized subagents defined in `_SUBAGENT_NAMES`: vuln-scanner, secret-detector, auth-reviewer, and remediation-planner.
 
-3. Review the `execute()` method to see how subagents coordinate to produce the unified security report.
+3. **Modify audit parameters if needed.**
+   Update the `_TASK_PROMPT_TEMPLATE` to adjust what the subagents focus on, or change the `_SYSTEM_PROMPT` to alter how findings are synthesized.
 
-## Modify workflow behavior
+## Set up monitoring alerts
 
-1. **Update subagent coordination**: Edit the `execute()` method in `SecurityAuditWorkflow` to change how the four subagents work together.
+1. **Initialize the alert engine.**
+   Run `attune alerts init` to create alert rules for security violations or use the programmatic `AlertEngine` class.
 
-2. **Adjust the system prompt**: Modify `_SYSTEM_PROMPT` to change the workflow's overall orchestration behavior.
+2. **Configure metric thresholds.**
+   Set up alerts for security-related metrics using `add_alert()` with appropriate `AlertMetric` values and severity levels.
 
-3. **Customize task prompts**: Update `_TASK_PROMPT_TEMPLATE` to change what each subagent focuses on during audits.
+3. **Test alert delivery.**
+   Verify notifications work by running `attune alerts watch --once` to trigger a single check cycle.
 
-## Configure monitoring and alerts
+## Run the security audit
 
-1. **Set up telemetry monitoring**: Use the `AlertEngine` class to monitor security audit metrics and trigger alerts.
+1. **Execute the workflow.**
+   Use `SecurityAuditWorkflow().execute(path="src/")` programmatically or trigger through the CLI interface.
 
-2. **Add alert configurations**: Call `AlertEngine.add_alert()` to create alerts for security thresholds like critical vulnerability counts.
+2. **Review the structured output.**
+   The workflow returns findings organized by severity (CRITICAL, HIGH, MEDIUM, LOW) with file paths and line numbers.
 
-3. **Configure notification channels**: Set up webhook URLs or email addresses in `AlertConfig` for alert delivery.
+3. **Verify results include all vulnerability types.**
+   Confirm the output covers code injection, path traversal, hardcoded secrets, SQL/command injection, SSRF, and weak cryptography as defined in the audit scope.
 
 ## Test your changes
 
-Run targeted tests to verify your modifications work correctly:
+Run `pytest -k "security"` to validate your modifications don't break existing security detection patterns.
 
-```bash
-pytest -k "security-audit"
-```
-
-This catches regressions in the security audit workflow before they affect other developers.
+You know the task worked when the audit produces a structured report with a security score (0-100), severity-grouped findings, and actionable remediation steps with effort estimates.
 
 ## Key files
 
 - `src/attune/workflows/security_audit.py` — Main workflow orchestrator
-- `src/attune/security/` — Security detection modules
-- `src/attune/monitoring/alerts_cli.py` — Alert management commands
-- `src/attune/telemetry/` — Telemetry backend for monitoring
-
-## Verify success
-
-You know your changes work when:
-- The security audit produces structured findings grouped by severity
-- Any new alerts trigger correctly when thresholds are exceeded
-- The workflow coordinates all four subagents without errors
-- Test suite passes with no regressions
+- `src/attune/security/**` — Security detection modules
+- `src/attune/monitoring/**` — Alert engine and telemetry systems

@@ -1,49 +1,60 @@
 ---
 type: concept
-feature: models
-depth: concept
-generated_at: 2026-04-14T15:13:03.992405+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
-status: generated
+name: models
+tags: [models, auth, llm, routing, performance]
+source: developer-guidance
 ---
 
 # Models
 
-The models feature is Attune AI's unified system for routing LLM requests to optimal providers based on performance data, authentication strategy, and cost constraints.
+The models system manages LLM provider routing, authentication strategies, and performance-based model selection across Attune's AI workflows.
 
-## Core architecture
+## What it does
 
-The system centers around intelligent routing that adapts based on real-world performance:
+The models system solves three core problems in multi-provider LLM orchestration:
 
-- **`AdaptiveModelRouter`** learns from telemetry to route tasks like `workflow_step` or `code_generation` to the best-performing models
-- **`ModelPerformance`** tracks success rates, latency, and costs for each model-task combination, calculating quality scores for ranking
-- **`CircuitBreaker`** temporarily disables failing providers when they exceed failure thresholds (default: 5 failures)
-- **`EmpathyLLMExecutor`** wraps the routing logic and provides a unified interface for LLM execution
+1. **Smart routing** — Automatically selects the best model for each task based on historical performance metrics like success rate, latency, and cost
+2. **Authentication strategy** — Determines whether to use Claude subscriptions or API keys based on your usage patterns and module size
+3. **Resilience** — Handles provider failures with circuit breakers and automatic fallbacks to keep workflows running
 
-## Authentication strategy
+## Core components
 
-The `AuthStrategy` class automatically selects between Claude subscriptions and API access based on your usage patterns:
+**Performance tracking and routing**
+- `ModelPerformance` tracks success rates, latency, cost, and failure counts for each model on specific tasks
+- `AdaptiveModelRouter` uses this telemetry to recommend the best model for each workflow stage, with constraints for maximum cost and latency
+- Circuit breakers (`CircuitBreaker`) temporarily disable failing providers and gradually re-enable them
 
-- Estimates tokens using a 4:1 lines-of-code multiplier
-- Recommends subscription mode for small modules (<500 lines), API mode for large modules (>2000 lines)
-- Calculates cost comparisons between subscription tiers (Pro, Team) and pay-per-token API usage
-- Stores preferences like `prefer_subscription` and `cost_optimization` for consistent decisions
+**Authentication strategy management**
+- `AuthStrategy` determines whether to use Claude subscriptions vs API keys based on your code module size and usage patterns
+- Automatically recommends subscription mode for small modules (under 500 lines) and API mode for larger codebases
+- CLI commands handle interactive setup, status checking, and recommendations
 
-## Performance tracking
+**Execution and response handling**
+- `EmpathyLLMExecutor` wraps the core LLM with intelligent routing and telemetry collection
+- `LLMResponse` provides a standardized interface across all providers with cost estimates, token counts, and performance metadata
+- `ExecutionContext` carries workflow information for routing decisions and telemetry tracking
 
-Every LLM call generates an `LLMResponse` with execution metrics:
+## How the pieces work together
 
-```
-content: "Generated code or text"
-model_id: "claude-3-5-sonnet-20241022"
-tokens_input: 1250
-tokens_output: 800
-cost_estimate: 0.0234
-latency_ms: 1800
-```
+When you run an AI workflow:
 
-The router uses this data to build `ModelPerformance` records tracking success rates and average costs per task type, then routes future requests to models with the highest quality scores.
+1. The `EmpathyLLMExecutor` receives your task type (like "code_review" or "documentation")
+2. The `AdaptiveModelRouter` queries performance history and selects the best model within your cost/latency constraints
+3. The `AuthStrategy` determines whether to use subscription or API authentication based on your module size
+4. Circuit breakers check if the selected provider is healthy
+5. The LLM executes your task and returns a standardized `LLMResponse`
+6. Performance metrics are recorded to improve future routing decisions
 
-## Task-based routing
+This creates a feedback loop where the system gets smarter about model selection as you use it more.
 
-The system recognizes task types like `chat`, `code_generation`, and `security_incident`, with special handling for `REALTIME_REQUIRED_TASKS` that need immediate responses. The router can enforce constraints like maximum cost (`max_cost`) or latency (`max_latency_ms`) when selecting models.
+## Authentication strategy logic
+
+The system automatically chooses between Claude subscription and API modes:
+
+| Module size | Recommended mode | Why |
+|-------------|------------------|-----|
+| < 500 lines | Subscription | Interactive features work better for small codebases |
+| 500-2000 lines | Auto-detect | Balances cost and functionality |
+| > 2000 lines | API | Better cost control for large batch operations |
+
+You can override these defaults through the CLI or by modifying your `AuthStrategy` configuration.

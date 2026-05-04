@@ -2,45 +2,50 @@
 type: concept
 feature: configuration
 depth: concept
-generated_at: 2026-04-14T15:29:31.589316+00:00
-source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
+generated_at: 2026-05-04T02:40:39.296563+00:00
+source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
 status: generated
 ---
 
 # Configuration
 
-Configuration provides a unified system for managing settings across all Attune AI agents, with automatic environment variable integration and backward compatibility.
+Configuration is the centralized system that manages settings, credentials, and runtime parameters for Attune AI agents across different environments and deployment contexts.
 
 ## Core components
 
-The configuration system centers around three key pieces:
+The configuration system provides three layers of functionality:
 
-- **`UnifiedAgentConfig`** — The main configuration model that all agents inherit from, providing consistent settings like model selection, timeouts, and retry behavior
-- **`ConfigLoader`** — Handles loading configuration from files (JSON/YAML) with automatic discovery across standard locations like `~/.attune/config.json`
-- **Environment variable layer** — Automatically applies `ATTUNE_*` environment variables as overrides, with fallback support for legacy `EMPATHY_*` prefixes
+**Environment integration** handles the bridge between code and runtime environments. The `get_attune_env()` function checks for `ATTUNE_` prefixed variables first, then falls back to legacy `EMPATHY_` variables for backward compatibility. This dual-prefix approach lets you migrate environments gradually without breaking existing deployments.
+
+**Unified configuration model** centers on `UnifiedAgentConfig`, which consolidates settings for all agent types. This class handles model selection through `get_model_id()`, validates role assignments with `normalize_role()`, and provides specialized configurations like `for_book_production()` that return tailored config objects for specific workflows.
+
+**File and environment loading** happens through `ConfigLoader`, which searches standard paths (`./attune.config.json`, `~/.attune/config.json`, `~/.config/attune/config.json`) and applies environment variable overrides automatically. The loader ensures that environment variables always take precedence over file-based settings.
 
 ## Configuration types
 
-Different agent types use specialized configuration classes that extend the unified model:
+Different parts of the system use specialized config classes:
 
-- **`BookProductionConfig`** — Settings for book production workflows, with backward-compatible properties that map to the unified model
-- **`WorkflowConfig`** — Configuration for multi-step agent workflows
-- **`MemDocsConfig`** — Settings for pattern storage integration
-- **`RedisConfig`** — Redis connection and state management settings
+| Config class | Purpose | Key settings |
+|--------------|---------|--------------|
+| `UnifiedAgentConfig` | Core agent behavior | Model tier, provider, role, timeout |
+| `BookProductionConfig` | Book generation workflows | Model compatibility properties, retry logic |
+| `MemDocsConfig` | Pattern storage integration | Memory document handling |
+| `RedisConfig` | State management | Redis connection parameters |
+| `WorkflowConfig` | Agent orchestration | Workflow modes and execution settings |
 
-## Model and provider settings
+## Environment variable patterns
 
-The system includes enums that standardize key choices:
+The system follows a predictable naming convention for environment variables:
 
-- **`Provider`** — Supported LLM providers (OpenAI, Anthropic, etc.)
-- **`ModelTier`** — Cost optimization tiers that group models by expense
-- **`WorkflowMode`** — Execution modes for complex workflows
+- `ATTUNE_MODEL_TIER` sets the cost optimization level (`ModelTier` enum)
+- `ATTUNE_PROVIDER` selects the LLM provider (`Provider` enum)
+- `ATTUNE_WORKFLOW_MODE` configures execution behavior (`WorkflowMode` enum)
+- `ATTUNE_*_TIMEOUT`, `ATTUNE_*_RETRIES` control resilience settings
 
-## File discovery and environment integration
+You can enumerate all variables with a specific pattern using `iter_attune_env_prefix()`, which yields matching environment variables for bulk configuration scenarios.
 
-When you load configuration, the system searches these locations in order:
-1. `./attune.config.json` (project-specific)
-2. `~/.attune/config.json` (user-specific)
-3. `~/.config/attune/config.json` (XDG standard)
+## Configuration lifecycle
 
-Environment variables automatically override file settings using the pattern `ATTUNE_{SECTION}_{SETTING}`, like `ATTUNE_MODEL_PROVIDER=openai` or `ATTUNE_WORKFLOW_TIMEOUT=300`.
+Configuration loading follows a predictable sequence: the `ConfigLoader` discovers the config file location, loads base settings from JSON, then applies environment variable overrides using `apply_env_overrides()`. The resulting `UnifiedConfig` object gets validated through `validate_config()` before use.
+
+Global access happens through `get_config()` and `set_config()` functions that maintain a singleton instance, while `load_unified_config()` and `save_unified_config()` provide file-based operations for configuration management tools.

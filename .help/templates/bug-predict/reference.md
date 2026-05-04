@@ -2,35 +2,42 @@
 type: reference
 feature: bug-predict
 depth: reference
-generated_at: 2026-04-14T14:47:43.358870+00:00
-source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
+generated_at: 2026-05-04T02:26:43.524453+00:00
+source_hash: 1686df43f96bd1cdf341101bfab34ee6e5f7f50c3733daf08c8827b94e8a7fef
 status: generated
 ---
 
-# Bug Predict reference
+# Bug prediction reference
+
+Scan codebases for patterns that historically cause production incidents and predict where failures are most likely to occur.
 
 ## Classes
 
-| Class | Description | Methods |
-|-------|-------------|---------|
-| `BugPredictionWorkflow` | SDK-native bug prediction with three specialized subagents | `__init__(**kwargs: Any) -> None`<br>`execute(**kwargs: Any) -> WorkflowResult` |
+| Class | Description |
+|-------|-------------|
+| `BugPredictionWorkflow` | Coordinates three specialized subagents to analyze code patterns, risk factors, and prevention strategies |
+
+### BugPredictionWorkflow
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `__init__` | `**kwargs: Any` | `None` | Initialize the workflow with configuration options |
+| `execute` | `**kwargs: Any` | `WorkflowResult` | Run the complete bug prediction analysis |
 
 ## Functions
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `format_bug_predict_report` | `result: dict, input_data: dict` | `str` | Format bug prediction output as a human-readable report |
-| `main` | None | None | CLI entry point for bug prediction workflow |
+| `format_bug_predict_report` | `result: dict, input_data: dict` | `str` | Format prediction results as a human-readable report with severity groupings |
+| `main` | | | CLI entry point for standalone bug prediction workflow |
 
 ## Constants
 
-| Constant | Type | Value |
-|----------|------|-------|
-| `SUBAGENT_NAMES` | list | `{'pattern-scanner', 'risk-correlator', 'prevention-advisor'}` |
-| `SYSTEM_PROMPT` | str | `'You are a bug prediction orchestrator. You coordinate three specialized subagents to produce a unified bug prediction report. Be thorough but concise. Cite file paths and line numbers when possible.'` |
-| `TASK_PROMPT_TEMPLATE` | str | Template for analyzing codebase with structured markdown output sections |
-| `INTENTIONAL_KEYWORDS` | list | `{'fallback', 'ignore', 'optional', 'best effort', 'graceful', 'intentional'}` |
-| `SCANNER_TEST_PATTERNS` | list | `{'test_bug_predict', 'test_scanner', 'test_security_scan'}` |
+| Constant | Values | Description |
+|----------|---------|-------------|
+| `_SUBAGENT_NAMES` | `pattern-scanner`, `risk-correlator`, `prevention-advisor` | Specialized agents that analyze different aspects of bug risk |
+| `_INTENTIONAL_KEYWORDS` | `fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional` | Keywords that suppress false positives for intentionally broad exception handling |
+| `_SCANNER_TEST_PATTERNS` | `test_bug_predict`, `test_scanner`, `test_security_scan` | Test file patterns excluded from bug scanning |
 
 ## Source files
 
@@ -39,4 +46,4 @@ status: generated
 
 ## Tags
 
-`bugs`, `prediction`, `scanning`
+`bugs`, `prediction`, `scanning`, `race-condition`

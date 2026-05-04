@@ -2,20 +2,20 @@
 type: task
 feature: models
 depth: task
-generated_at: 2026-04-14T15:13:19.096243+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-04T02:34:52.181447+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
 # Work with models
 
-Use the models module when you need to configure authentication strategies, route tasks to optimal models based on performance telemetry, or manage provider fallback policies.
+Use the models module when you need to configure LLM authentication, route tasks to optimal models based on performance data, or manage provider fallback strategies.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with Attune AI dependencies installed
-- Valid API credentials for your chosen provider (Anthropic, OpenAI, etc.)
+- Python development environment with pytest installed
+- Familiarity with the `src/attune/models/` directory structure
 
 ## Configure authentication strategy
 
@@ -24,89 +24,82 @@ Use the models module when you need to configure authentication strategies, rout
    python -m attune.models auth setup
    ```
 
-2. **Specify your module size thresholds** when prompted. The system uses these to recommend subscription vs API usage based on token estimates.
+2. **Choose your subscription tier** (Pro, Team, or Enterprise) based on your Claude subscription.
 
-3. **Set your subscription tier** (Free, Pro, Team) to optimize cost calculations.
+3. **Set cost optimization preferences** to balance between subscription usage and API calls.
 
-4. **Verify your configuration** works correctly:
+4. **Verify your configuration** by checking the current status:
    ```bash
    python -m attune.models auth status
    ```
 
-You should see your subscription tier, default mode, and threshold settings displayed.
+## Route tasks to optimal models
 
-## Route tasks with adaptive model selection
-
-1. **Initialize the router** with your telemetry backend:
+1. **Initialize the adaptive router** with your telemetry backend:
    ```python
    from attune.models import AdaptiveModelRouter
 
-   router = AdaptiveModelRouter(telemetry=your_telemetry_store)
+   router = AdaptiveModelRouter(telemetry_backend)
    ```
 
-2. **Get the optimal model** for your specific task:
+2. **Get the best model** for your specific workflow and constraints:
    ```python
-   model_id = router.get_best_model(
-       workflow="code_review",
-       stage="analysis",
-       max_cost=0.10,
-       max_latency_ms=5000,
+   model = router.get_best_model(
+       workflow="code_generation",
+       stage="implementation",
+       max_cost=0.50,
        min_success_rate=0.85
    )
    ```
 
-3. **Check if a tier upgrade is recommended** based on recent performance:
+3. **Check tier upgrade recommendations** if current performance is suboptimal:
    ```python
    should_upgrade, reason = router.recommend_tier_upgrade(
-       workflow="code_review",
-       stage="analysis"
+       workflow="code_generation",
+       stage="implementation"
    )
    ```
 
-The router returns `True` and a reason string if upgrading would improve performance metrics.
+## Set up circuit breaker protection
 
-## Handle provider failures with circuit breakers
-
-1. **Initialize circuit breaker protection** for your providers:
+1. **Initialize the circuit breaker** to handle provider failures:
    ```python
    from attune.models import CircuitBreaker
 
    breaker = CircuitBreaker(
-       failure_threshold=3,
-       recovery_timeout_seconds=120
+       failure_threshold=5,
+       recovery_timeout_seconds=60
    )
    ```
 
-2. **Check provider availability** before making requests:
+2. **Check provider availability** before making calls:
    ```python
-   if breaker.is_available("anthropic", "pro"):
-       # Safe to make request
-       response = make_llm_request()
-       breaker.record_success("anthropic", "pro")
-   else:
-       # Use fallback provider
+   if breaker.is_available("anthropic", "claude-3-sonnet"):
+       # Proceed with LLM call
+       pass
    ```
 
-3. **Record failures** when requests fail:
+3. **Record call results** to update the circuit state:
    ```python
-   try:
-       response = make_llm_request()
-   except Exception:
-       breaker.record_failure("anthropic", "pro")
-       raise
+   # On success
+   breaker.record_success("anthropic", "claude-3-sonnet")
+
+   # On failure
+   breaker.record_failure("anthropic", "claude-3-sonnet")
    ```
 
-The circuit breaker automatically opens after the failure threshold is reached, preventing further requests until the recovery timeout expires.
+## Run tests
+
+Execute the model-specific test suite to verify your changes:
+```bash
+pytest -k "models" -v
+```
 
 ## Verify success
 
-- **Authentication setup**: Run `python -m attune.models auth status` and confirm your settings are correct
-- **Model routing**: Check that `get_best_model()` returns valid model IDs for your workflows
-- **Circuit breaker**: Verify that `get_status()` shows expected provider states after recording successes/failures
+Your configuration is working correctly when:
 
-## Key files
-
-- `src/attune/models/auth_strategy.py` — Authentication configuration and cost estimation
-- `src/attune/models/routing.py` — Adaptive model routing based on telemetry
-- `src/attune/models/circuit_breaker.py` — Provider failure handling
-- `src/attune/models/executor.py` — LLM execution with routing and resilience
+- `auth status` shows your preferred settings without errors
+- Model routing returns appropriate models for your task constraints
+- Circuit breakers properly isolate failing providers
+- All tests pass without regression

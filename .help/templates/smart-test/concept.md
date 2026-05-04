@@ -2,39 +2,41 @@
 type: concept
 feature: smart-test
 depth: concept
-generated_at: 2026-04-14T14:42:15.155857+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-04T02:24:42.064118+00:00
+source_hash: b86ac2f6972679ac24d0b4be339fa687398a6c09ee172583c670574d00d15c9f
 status: generated
 ---
 
 # Smart Test
 
-Smart Test automatically identifies low-coverage Python modules and generates comprehensive pytest test suites using AI-powered code analysis.
+Smart-test analyzes your codebase to identify untested code and automatically generates pytest tests to cover the gaps. It combines coverage analysis with AST-based function inspection to create targeted tests with edge cases, boundary values, and error path validation.
 
-## Architecture overview
+## Architecture components
 
-Smart Test operates through a three-stage pipeline that analyzes your codebase, identifies testing gaps, and generates targeted test files:
+Smart-test orchestrates three specialized workflows that work together:
 
-1. **Code analysis** — `ASTFunctionAnalyzer` parses Python source files to extract function signatures, parameter types, return types, and complexity metrics
-2. **Coverage assessment** — `ModuleCoverage` tracks statement coverage percentages and identifies specific missing lines from pytest-cov output
-3. **Test generation** — Multi-tier workflows use specialized AI agents to create test templates and complete them with realistic test cases
+**Coverage auditing** — The `TestAuditWorkflow` uses three subagents (coverage-auditor, gap-analyzer, test-planner) to parse pytest-cov JSON output, identify modules below your coverage threshold, and prioritize them by risk and complexity.
 
-The system processes modules in parallel batches, prioritizing those with the lowest coverage percentages first.
+**Code analysis** — The `ASTFunctionAnalyzer` inspects Python source files to extract function signatures, parameter types, return types, decorators, and complexity metrics. This feeds into both coverage gap detection and test generation.
 
-## Core components
+**Test generation** — The `TestGenerationWorkflow` creates complete pytest files with parametrized test cases, boundary value tests, and exception handling tests based on the AST analysis.
 
-**`ASTFunctionAnalyzer`** analyzes Python source code to extract detailed signatures for both functions and classes. It captures parameter types, return annotations, decorators, and docstrings to inform test generation.
+## Data flow
 
-**`FunctionSignature` and `ClassSignature`** store structured analysis results including complexity scores, side effect indicators, and exception specifications. These data models guide the AI agents in creating appropriate test scenarios.
+The system processes modules through these stages:
 
-**`TestGenerationWorkflow`** coordinates three specialized subagents: function-identifier extracts testable units, test-designer creates test case specifications, and test-writer produces executable pytest code.
+1. **Coverage parsing** — `ModuleCoverage` objects capture statement counts, missing line numbers, and coverage percentages from pytest-cov output
+2. **Prioritization** — Modules are ranked by coverage gaps, with adjustments for complexity and criticality
+3. **AST analysis** — `FunctionSignature` and `ClassSignature` objects store detailed metadata about each testable unit
+4. **Batch processing** — Related modules are grouped by subsystem for coherent test generation
+5. **Test writing** — Complete pytest files are generated with assertions, fixtures, and parametrized cases
 
-**`ParallelTestGenerationWorkflow`** scales test generation across multiple modules simultaneously, using different LLM tiers for template creation versus completion to optimize cost and speed.
+## When coverage gaps matter
 
-## Test generation strategies
+Smart-test focuses on three high-impact gap types:
 
-The system generates test cases by analyzing parameter types and creating realistic test values. For example, `get_param_test_values()` returns `"test_value"` for string parameters and generates appropriate values for other types.
+- **Untested public functions** — APIs with zero test coverage that could break silently
+- **Missing error paths** — Exception handlers and edge cases that fail unpredictably in production
+- **Boundary conditions** — Empty inputs, None values, and limits that users encounter but tests miss
 
-Coverage-driven prioritization ensures the most impactful modules are tested first. `prioritize_modules()` sorts by coverage percentage and filters out modules above the threshold, while `group_into_batches()` organizes work by subsystem.
-
-Error handling and edge cases receive special attention through the analysis of function signatures that specify raised exceptions and complexity indicators.
+The `prioritize_modules` function filters out modules below 50% coverage by default, since these represent the highest risk for regressions.

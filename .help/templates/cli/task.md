@@ -2,69 +2,56 @@
 type: task
 feature: cli
 depth: task
-generated_at: 2026-04-23T03:31:59.645342+00:00
-source_hash: 95afb1e38daa117bab7e14bf58b614da535d484b24b1dd072c4750e232202196
+generated_at: 2026-05-04T02:34:05.644870+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
 # Work with cli
 
-Use the Attune CLI when you need to route user input between natural language and skill commands, track costs, or access help documentation from the command line.
+Use the attune CLI when you need to access cost tracking, documentation help, or memory management from the command line.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with attune package installed
-- Familiarity with the CLI module structure in `src/attune/`
+- Basic familiarity with Python command-line argument parsing
+- Understanding of the attune project structure
 
-## Configure the CLI entry point
+## Steps
 
-1. **Set up the main parser** by modifying `create_parser()` in `cli_minimal.py`:
-   - Add subcommands for new functionality
-   - Define argument groups and options
-   - Set default values and help text
+1. **Identify the command category you need to modify.**
+   The CLI is organized into three main areas:
+   - Cost commands (`src/attune/cli_commands/cost_commands.py`) for tracking usage costs
+   - Help commands (`src/attune/cli_commands/help_commands.py`) for browsing documentation
+   - Memory commands (`src/attune/cli_commands/memory_commands.py`) for managing lessons and cross-session memory
 
-2. **Route commands** through the `main()` function:
-   - Handle argument parsing
-   - Dispatch to appropriate command handlers
-   - Return proper exit codes
+2. **Locate the specific command function.**
+   Each CLI command maps to a single function with a `cmd_` prefix:
+   - `cmd_costs()` — Show cost report for recent period
+   - `cmd_costs_today()` — Show today's cost summary
+   - `cmd_costs_export()` — Export cost data to file
+   - `cmd_costs_reset()` — Clear all cost tracking data
+   - `cmd_help()` — Handle the `attune help` command
+   - `cmd_remember()` — Add a lesson to the lessons file
+   - `cmd_forget()` — Remove a lesson by line number or keyword
+   - `cmd_lessons()` — List current lessons with line numbers
 
-## Add command functionality
+3. **Review the function signature and existing logic.**
+   Each command function takes an `argparse.Namespace` object and returns an integer exit code. Read the function's docstring and examine how it processes arguments and handles errors.
 
-1. **Create command handlers** in the appropriate module:
-   - Cost commands: Use `cmd_costs()`, `cmd_costs_today()`, `cmd_costs_export()`, or `cmd_costs_reset()` in `cost_commands.py`
-   - Help commands: Use `cmd_help()` in the help module
-   - Memory commands: Implement handlers for learning and recall
+4. **Implement your changes.**
+   Follow the established patterns in each file:
+   - Use the same argument validation approach
+   - Return `0` for success, non-zero for errors
+   - Handle exceptions gracefully with appropriate error messages
 
-2. **Implement hybrid routing** using the `HybridRouter` class:
-   ```python
-   router = HybridRouter(preferences_path="path/to/prefs")
-   result = router.route(user_input, context)
-   ```
+5. **Test your command.**
+   Run the modified command directly: `python -m attune <your-command>` to verify it works as expected.
 
-3. **Handle slash commands** by checking input with `is_slash_command()` before routing.
+## Verify success
 
-## Test the implementation
-
-1. **Run targeted tests** with:
-   ```bash
-   pytest -k "cli"
-   ```
-
-2. **Test command routing** by running:
-   ```bash
-   attune help
-   attune costs today
-   attune "your natural language query"
-   ```
-
-3. **Verify routing preferences** are learned and applied correctly for repeated commands.
-
-## Verification
-
-Your CLI implementation works when:
-- All subcommands execute without errors
-- Natural language input routes to appropriate skills
-- Cost tracking commands return accurate data
-- Help commands display relevant documentation
-- The router learns and suggests command preferences over time
+Your CLI modification works correctly when:
+- The command executes without Python errors
+- The exit code is `0` for successful operations
+- Error messages are clear and actionable
+- The command behaves consistently with other attune CLI commands

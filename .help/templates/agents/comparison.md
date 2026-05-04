@@ -1,10 +1,11 @@
 ---
-type: comparison
-feature: agents
 depth: comparison
-generated_at: 2026-04-14T15:10:21.075549+00:00
+feature: agents
+generated_at: 2026-04-14 15:10:21.075549+00:00
+manual: true
 source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
 status: generated
+type: comparison
 ---
 
 # Agent approaches: Native vs external framework adapters

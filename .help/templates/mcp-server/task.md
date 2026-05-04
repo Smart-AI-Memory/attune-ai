@@ -2,80 +2,68 @@
 type: task
 feature: mcp-server
 depth: task
-generated_at: 2026-04-23T03:29:54.748094+00:00
-source_hash: b71ff35b50438d054b14e05338981f037a9df8ed86e5607100baa4a370832188
+generated_at: 2026-05-04T02:29:51.286450+00:00
+source_hash: f7f2360f6ad84733ba187b2e644d9b01ac30e15d2ae8fe8567af6dfb064ee44b
 status: generated
 ---
 
 # Work with MCP server
 
-Use the MCP server when you need to integrate Attune AI capabilities into applications that support the Model Context Protocol.
+Use the MCP server when you need to implement or modify Model Context Protocol tool handlers for Attune AI workflows.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with MCP dependencies installed
 - Familiarity with the files under `src/attune/mcp/`
+- Understanding of MCP (Model Context Protocol) concepts
 
-## Configure the server
+## Steps
 
-1. **Create a server instance.**
-   Use `create_server()` to initialize an `EmpathyMCPServer` with your workspace root and user ID:
+1. **Identify the server component to modify**
+
+   Determine which part of the MCP server handles your use case:
+   - **Prompts**: Use `src/attune/mcp/prompts.py` for prompt templates
+   - **Tools**: Use `src/attune/mcp/tool_schemas.py` for tool definitions
+   - **Server core**: Use `src/attune/mcp/server.py` for server lifecycle
+   - **Memory handlers**: Use `src/attune/mcp/memory_handlers.py` for memory operations
+   - **Rate limiting**: Use `src/attune/mcp/rate_limiter.py` for call throttling
+
+2. **Review the existing implementation**
+
+   Open the relevant file and examine:
+   - The function signature and docstring
+   - Input parameters and return types
+   - Error handling patterns
+   - Integration with other components
+
+3. **Create your MCP server instance**
+
+   If working with a new server instance:
    ```python
    from attune.mcp.server import create_server
    server = create_server()
    ```
 
-2. **Set workspace and user context.**
-   Initialize the server with specific workspace and user parameters if needed:
-   ```python
-   server = EmpathyMCPServer(
-       workspace_root="/path/to/project",
-       user_id="your-user-id"
-   )
+4. **Modify the appropriate handler**
+
+   Make your changes following the established patterns:
+   - Tool functions return `dict[str, Any]` with structured responses
+   - Use the rate limiter for external API calls
+   - Follow the naming convention for new tools
+   - Include proper error handling with meaningful messages
+
+5. **Test your changes**
+
+   Run the MCP server tests to verify your implementation:
+   ```bash
+   pytest -k "mcp" --verbose
    ```
 
-3. **Start the server.**
-   Run `main()` to launch the MCP server entry point, or integrate the server instance into your MCP-compatible application.
+## Verify success
 
-## Add custom prompts
-
-1. **Define your prompt structure.**
-   Add entries to the prompts dictionary following the existing format with name, description, and messages template.
-
-2. **Register the prompt.**
-   Ensure your prompt appears in `get_prompt_list()` output and is accessible via `get_prompt_messages()`.
-
-3. **Test prompt retrieval.**
-   Verify your prompt works by calling:
-   ```python
-   messages = server.get_prompt_messages("your-prompt-name", {"arg": "value"})
-   ```
-
-## Extend tool capabilities
-
-1. **Choose the appropriate tool category.**
-   Add new tools to the relevant schema function:
-   - `get_workflow_tools()` for workflow execution
-   - `get_utility_tools()` for auth, telemetry, and sessions
-   - `get_help_tools()` for documentation and help
-   - `get_memory_tools()` for data persistence
-
-2. **Define the tool schema.**
-   Follow the existing pattern with description, input_schema (JSON Schema), and required fields.
-
-3. **Implement the tool handler.**
-   Add the corresponding method to handle tool calls in the appropriate mixin class or main server.
-
-4. **Test tool integration.**
-   Verify your tool appears in `get_tool_list()` and responds correctly to `call_tool()`.
-
-## Verify your changes
-
-Run the MCP server and confirm:
-- All expected tools appear in the tool list
-- Prompts are accessible and render correctly
-- Tool calls execute without errors
-- Rate limiting works as expected for high-frequency operations
-
-Your MCP server integration is complete when client applications can successfully connect and use all registered tools and prompts.
+Your implementation is working when:
+- The MCP server starts without errors using `main()`
+- Your tool appears in the tool list from `get_tool_list()`
+- Tool calls return the expected response format
+- Rate limiting prevents excessive API usage
+- All existing tests continue to pass

@@ -1,10 +1,11 @@
 ---
-type: error
-feature: agents
 depth: error
-generated_at: 2026-04-14T15:08:45.078322+00:00
+feature: agents
+generated_at: 2026-04-14 15:08:45.078322+00:00
+manual: true
 source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
 status: generated
+type: error
 ---
 
 # Agents errors
