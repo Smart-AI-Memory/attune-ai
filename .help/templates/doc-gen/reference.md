@@ -2,30 +2,32 @@
 type: reference
 feature: doc-gen
 depth: reference
-generated_at: 2026-04-14T14:45:36.201441+00:00
-source_hash: 67aadd029bbf773d9f478a4d4c750e25344dc6b0bd9e1edadbcf5151d83f3bff
+generated_at: 2026-05-04T02:26:09.249962+00:00
+source_hash: 40c128b66a197e8117c6093f1f637e47e612fceae7fd2f94851a5a1d91120296
 status: generated
 ---
 
-# Doc Gen reference
+# Doc-gen reference
+
+Generate documentation from source code using a multi-stage workflow that orchestrates specialized subagents for outline planning, content writing, and polishing.
 
 ## Classes
 
 | Class | Description |
 |-------|-------------|
-| `DocumentGenerationWorkflow` | Generate new documentation from source code (creation) |
-| `APIReferenceMixin` | Mixin providing API reference extraction and generation for doc generation |
-| `ChunkedGenerationMixin` | Mixin providing chunked generation and display utilities for doc generation |
-| `DocGenCostMixin` | Mixin providing cost management for document generation |
-| `OutlineStageMixin` | Mixin providing the outline generation stage |
-| `PolishStageMixin` | Mixin providing the polish (final review) stage |
-| `WriteStageMixin` | Mixin providing the write (content generation) stage |
+| `DocumentGenerationWorkflow` | Generate new documentation from source code using coordinated subagents |
+| `APIReferenceMixin` | Extract and generate API reference sections from source code |
+| `ChunkedGenerationMixin` | Handle large documentation generation through chunked operations |
+| `DocGenCostMixin` | Track and manage token costs during documentation generation |
+| `OutlineStageMixin` | Generate structured documentation outlines from codebase analysis |
+| `PolishStageMixin` | Review and polish generated documentation for final output |
+| `WriteStageMixin` | Generate documentation content from outlined structure |
 
-### DocumentGenerationWorkflow methods
+### DocumentGenerationWorkflow
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `default_context` | `xml_config: dict \| None = None` | `WorkflowContext` | Create default workflow context |
+| `default_context` | `xml_config: dict \| None = None` | `WorkflowContext` | Create default workflow context for documentation generation |
 | `execute` | `**kwargs: Any` | `WorkflowResult` | Execute the documentation generation workflow |
 
 ## Functions
@@ -36,17 +38,10 @@ status: generated
 
 ## Constants
 
-| Constant | Value |
-|----------|-------|
-| `DOC_GEN_STEPS` | Workflow step definitions |
-| `TOKEN_COSTS` | Cost tracking configuration |
-
-## Subagents
-
-The workflow uses three specialized subagents:
-
-| Subagent | Purpose |
-|----------|---------|
-| `outline-planner` | Structure documentation and plan content organization |
-| `content-writer` | Generate comprehensive documentation content |
-| `polish-reviewer` | Review and refine final documentation output |
+| Constant | Values | Description |
+|----------|--------|-------------|
+| `DOC_GEN_STEPS` | (exported in `__all__`) | Documentation generation workflow steps |
+| `TOKEN_COSTS` | (exported in `__all__`) | Token cost tracking configuration |
+| `_SUBAGENT_NAMES` | `['outline-planner', 'content-writer', 'polish-reviewer']` | Names of specialized documentation subagents |
+| `_SYSTEM_PROMPT` | `'You are a documentation generation orchestrator...'` | System prompt for workflow coordination |
+| `_TASK_PROMPT_TEMPLATE` | Template string | Task prompt template for documentation generation |

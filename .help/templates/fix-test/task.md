@@ -2,104 +2,81 @@
 type: task
 feature: fix-test
 depth: task
-generated_at: 2026-04-14T14:56:04.844517+00:00
-source_hash: add950818a88e621df7bd12cd03ded18fe60e40bac9a1bae6eb24fe1ff69abc8
+generated_at: 2026-05-04T02:28:54.250565+00:00
+source_hash: bff04fe2ad91cb5eb72a0a1c91eccca5bb1b81eba3549bb3ac7e694b3e7a98b8
 status: generated
 ---
 
 # Work with fix test
 
-Use the fix-test feature when you need to automatically diagnose failing tests and apply lifecycle management to maintain test health across your project.
+Use the fix-test system when you need to implement or modify automatic test diagnosis and repair capabilities in your project.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under `src/attune/workflows/test_runner.py`
+- Understanding of test execution workflows
+- Familiarity with the test lifecycle management system
 
-## Steps
+## Understand the test lifecycle architecture
 
-1. **Identify the failing tests.**
-   Use `get_files_needing_tests()` to find files requiring test attention:
-   ```python
-   from attune.workflows.test_runner import get_files_needing_tests
+Start by examining how the test lifecycle system works:
 
-   # Get all files needing tests
-   files_needing_attention = get_files_needing_tests()
+1. Open `src/attune/workflows/test_lifecycle.py` to see the `TestLifecycleManager` class
+2. Review the `TestTask` and `TestAction` dataclasses to understand the task queue structure
+3. Check `src/attune/workflows/test_maintenance.py` for the `TestMaintenanceWorkflow` that handles automatic test management
 
-   # Get only files with stale tests
-   stale_files = get_files_needing_tests(stale_only=True)
+The system uses event-driven test management where file changes trigger test tasks that get queued and processed automatically.
 
-   # Get only files with failed tests
-   failed_files = get_files_needing_tests(failed_only=True)
-   ```
+## Identify the target component
 
-2. **Check individual file test status.**
-   Use `get_file_test_status()` to examine specific files:
-   ```python
-   from attune.workflows.test_runner import get_file_test_status
+Determine which component needs modification based on your goal:
 
-   status = get_file_test_status('src/my_module.py')
-   if status:
-       print(f"Last test result: {status}")
-   ```
+- **Test execution tracking**: Modify functions in `src/attune/workflows/test_runner.py`
+- **Test lifecycle events**: Update `TestLifecycleManager` methods in `test_lifecycle.py`
+- **Maintenance workflows**: Change `TestMaintenanceWorkflow` in `test_maintenance.py`
 
-3. **Run tests with tracking enabled.**
-   Execute tests while capturing detailed execution data:
-   ```python
-   from attune.workflows.test_runner import run_tests_with_tracking
+## Modify test execution functions
 
-   # Run specific test suite
-   result = run_tests_with_tracking(
-       test_suite='unit',
-       test_files=['tests/test_my_module.py'],
-       triggered_by='fix-test-workflow'
-   )
-   ```
+For changes to test running and tracking:
 
-4. **Set up automated test lifecycle management.**
-   Initialize the TestLifecycleManager to handle file changes:
-   ```python
-   from attune.workflows.test_lifecycle import TestLifecycleManager
+1. Locate the specific function in `test_runner.py`:
+   - `run_tests_with_tracking()` for test execution with monitoring
+   - `track_coverage()` for coverage analysis
+   - `track_file_tests()` for file-specific test tracking
+   - `get_file_test_status()` for retrieving test status
+   - `get_files_needing_tests()` for identifying test gaps
 
-   manager = TestLifecycleManager(
-       project_root='/path/to/project',
-       auto_execute=True
-   )
+2. Read the function's docstring and examine its parameters and return type
+3. Study the existing error handling patterns and logging style
+4. Implement your changes following the established conventions
 
-   # Process changed files
-   tasks = manager.on_files_changed(['src/modified_file.py'])
-   ```
+## Update lifecycle management
 
-5. **Process the test maintenance queue.**
-   Execute queued test tasks based on priority:
-   ```python
-   # Process high-priority tasks first
-   result = manager.process_queue(
-       max_tasks=5,
-       priority_filter=TestPriority.HIGH
-   )
-   print(f"Processed {result['completed']} tasks")
-   ```
+For changes to the test lifecycle system:
 
-## Verify success
+1. Modify the appropriate method in `TestLifecycleManager`:
+   - `on_file_created()`, `on_file_modified()`, or `on_file_deleted()` for file event handling
+   - `process_queue()` for task execution
+   - `schedule_maintenance()` or `run_maintenance()` for automated maintenance
 
-Your fix-test implementation works correctly when:
+2. Update the corresponding `TestTask` or `TestPlanItem` properties if needed
+3. Ensure the task priority and action enums are used correctly
 
-- `get_files_needing_tests()` returns an empty list or only expected files
-- Test execution records show passing status in the tracking system
-- The TestLifecycleManager processes file changes without errors
-- Coverage tracking updates successfully after test runs
+## Test your changes
 
-## Key files
+Run the test suite to verify your modifications work correctly:
 
-- `src/attune/workflows/test_runner.py` - Core test execution and tracking
-- `src/attune/workflows/test_maintenance.py` - Test maintenance planning
-- `src/attune/workflows/test_lifecycle.py` - Automated test lifecycle management
+```bash
+pytest -k "test_lifecycle" tests/
+pytest -k "test_runner" tests/
+```
 
-## Primary functions
+Your changes should pass all existing tests without breaking the test lifecycle workflow.
 
-- `run_tests_with_tracking()` - Execute tests with monitoring enabled
-- `track_coverage()` - Record coverage data from coverage.xml
-- `track_file_tests()` - Link source files to their test executions
-- `get_file_test_status()` - Retrieve current test status for a file
-- `get_files_needing_tests()` - Find files requiring test attention
+## Success criteria
+
+Your fix-test modifications are complete when:
+- All targeted tests pass
+- The test lifecycle manager processes tasks correctly
+- Test execution tracking records data as expected
+- No regressions appear in the existing test suite

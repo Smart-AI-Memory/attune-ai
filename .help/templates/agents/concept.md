@@ -2,40 +2,61 @@
 type: concept
 feature: agents
 depth: concept
-generated_at: 2026-04-14T15:07:39.750580+00:00
-source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
+generated_at: 2026-05-04T02:32:50.053871+00:00
+source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
 status: generated
 ---
 
 # Agents
 
-The agents system orchestrates AI-powered release preparation by running specialized agents that assess code quality, test coverage, and documentation completeness before determining if your codebase is ready for release.
+Agents are AI entities that wrap different LLM frameworks into a unified interface for building conversational workflows and automated processes.
 
-## Architecture
+## What agents provide
 
-The system centers around the `ReleasePrepTeam`, which coordinates parallel execution of specialized agents. Each agent inherits from `ReleaseAgent` and implements progressive tier escalation — starting with cheaper AI models and escalating to more capable (and expensive) models when initial attempts fail.
+The agent system solves the framework fragmentation problem in AI development. Instead of learning separate APIs for AutoGen, Haystack, and LangChain, you work with a common agent interface that handles:
 
-**Core agent types:**
-- **`TestCoverageAgent`** — Executes `pytest --cov` and analyzes coverage reports to ensure adequate test coverage
-- **`DocumentationAgent`** — Validates docstring coverage, README currency, and CHANGELOG presence
-- **`CodeQualityAgent`** — Runs `ruff` linting and examines type hints and code complexity metrics
+- **Unified invocation** — Call `agent.invoke()` regardless of whether the underlying implementation uses AutoGen's AssistantAgent, Haystack's Pipeline, or LangChain's chains
+- **Consistent streaming** — Get real-time responses through `agent.stream()` with the same async pattern across all frameworks
+- **Framework adaptation** — Adapters translate between Attune's agent config and each framework's native configuration format
+- **Recovery and persistence** — State management and error recovery that works across framework boundaries
 
-**Tier escalation system:**
-- **`CHEAP`** — Fast, cost-effective models for initial assessment
-- **`CAPABLE`** — Mid-tier models when cheap models struggle
-- **`PREMIUM`** — Advanced models for complex analysis requiring high accuracy
+## Core components
 
-## Release readiness assessment
+**Agent wrappers** encapsulate framework-specific implementations:
+- `AutoGenAgent` wraps AutoGen's AssistantAgent or UserProxyAgent for multi-agent conversations
+- `HaystackAgent` wraps Haystack Pipelines for document processing and RAG workflows
+- `LangChainAgent` wraps LangChain chains for sequential processing pipelines
 
-The `ReleasePrepTeam.assess_readiness()` method runs all agents in parallel and aggregates results into a `ReleaseReadinessReport`. This report includes:
+**Workflow orchestrators** coordinate multiple agents:
+- `AutoGenWorkflow` uses AutoGen's GroupChat for multi-agent discussions
+- `HaystackWorkflow` runs Haystack Pipelines with multiple processing stages
+- `LangChainWorkflow` chains multiple agents through SequentialChain or custom routing
 
-- **Quality gates** — Pass/fail thresholds for coverage percentages, documentation completeness, and code quality scores
-- **Agent results** — Individual findings from each specialized agent, including confidence scores and execution costs
-- **Release approval** — Binary decision on whether the codebase meets release standards
-- **Blockers and warnings** — Specific issues that prevent release or require attention
+**Framework adapters** provide factory methods for creating agents and workflows:
+- `AutoGenAdapter` creates AutoGen-based agents with Microsoft's conversation patterns
+- `HaystackAdapter` creates Haystack-based agents with deepset's pipeline architecture
+- `LangChainAdapter` creates LangChain-based agents with Langchain's ecosystem
 
-## Framework integrations
+## How agent creation works
 
-The system provides adapters for popular AI agent frameworks through lazy-loaded functions like `get_langchain_adapter()`, `get_autogen_adapter()`, and `get_haystack_adapter()`. You can also wrap existing wizards as agents using `wrap_wizard()`.
+You don't instantiate agents directly. Instead, you use adapter factory methods that handle framework-specific setup:
 
-State persistence ensures agent operations can recover from failures, while decorators like `@safe_agent_operation` and `@retry_on_failure` provide robust error handling and automatic retry logic with exponential backoff.
+```python
+# Get the adapter for your preferred framework
+adapter = get_autogen_adapter(provider='anthropic')
+
+# Create an agent with unified configuration
+agent = adapter.create_agent(AgentConfig(
+    name="code_reviewer",
+    role=AgentRole.ASSISTANT,
+    capability=AgentCapability.CODE_ANALYSIS
+))
+```
+
+The adapter translates your `AgentConfig` into whatever the underlying framework expects—AutoGen's agent configuration, Haystack's component setup, or LangChain's chain definition.
+
+## State persistence and recovery
+
+Release agents include specialized state management through `AgentStateStore` and `AgentRecoveryManager`. These components track agent execution across runs and recover from failures without losing conversation context or progress through multi-step workflows.
+
+The `AgentExecutionRecord` captures each agent operation for replay, while `AgentStateRecord` maintains the agent's working memory between invocations.

@@ -2,41 +2,45 @@
 type: concept
 feature: security-audit
 depth: concept
-generated_at: 2026-04-19T18:42:45.226514+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-04T02:23:21.884399+00:00
+source_hash: e5fdcf8a70287f5c6e2e0987e337f663cf89f93c523e4652f0c8a45e6709471e
 status: generated
 ---
 
 # Security Audit
 
-A security audit scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review, using specialized subagents to detect different categories of security issues.
+A security audit scans your codebase for vulnerabilities using four specialized subagents that work together to identify different types of security risks.
 
-## Core components
+## How the audit works
 
-The security audit system uses four specialized subagents coordinated by a workflow orchestrator:
+The `SecurityAuditWorkflow` coordinates four subagents that each focus on a specific domain:
 
-- **`SecurityAuditWorkflow`** — Orchestrates four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) to produce unified security reports
-- **Vulnerability detection** — Scans for code injection patterns like `eval()`, `exec()`, and `compile()` on untrusted input
-- **Secret detection** — Identifies hardcoded API keys, tokens, and passwords committed to source control
-- **Path validation** — Catches file operations that don't validate paths, preventing traversal attacks
+- **vuln-scanner** — Detects code injection, SQL injection, and command injection patterns
+- **secret-detector** — Finds hardcoded API keys, tokens, and passwords in source files
+- **auth-reviewer** — Analyzes authentication and authorization mechanisms
+- **remediation-planner** — Suggests fixes for identified vulnerabilities
 
-## Alert and monitoring system
+Each subagent reports findings as structured markdown, which the orchestrator synthesizes into a unified security report with severity rankings (CRITICAL, HIGH, MEDIUM, LOW) and actionable remediation steps.
 
-The audit integrates with a telemetry monitoring system that tracks security metrics over time:
+## Alert integration
 
-- **`AlertEngine`** — Stores alert configurations in SQLite and delivers notifications when security thresholds are breached
-- **`AlertChannel`** — Supports multiple notification channels (webhook, email) for different team workflows
-- **`AlertMetric`** — Monitors specific security metrics like vulnerability counts or secret detection rates
-- **`AlertSeverity`** — Categorizes findings from low-priority warnings to critical security issues
+Security audits connect to the alert system for continuous monitoring. You can configure alerts to trigger when security metrics exceed thresholds:
 
-## Audit depth levels
+- **AlertEngine** — Stores alert configurations and evaluates telemetry metrics against thresholds
+- **AlertConfig** — Defines what metric to monitor, the threshold value, and notification settings
+- **AlertMetric** — Tracks security-related metrics like vulnerability counts or secret detection rates
+- **AlertChannel** — Routes notifications to webhook URLs or email addresses when alerts fire
 
-You can run audits at different depths depending on your time constraints:
+The alert system uses SQLite storage and includes cooldown periods to prevent notification spam.
 
-| Depth | Duration | Coverage |
-|-------|----------|----------|
-| **Quick** | ~30 seconds | Surface scan for obvious issues like `eval()` and exposed secrets |
-| **Standard** | ~2 minutes | Full pattern matching with severity ratings and CWE identifiers |
-| **Deep** | ~5 minutes | Multi-pass review with OWASP mapping and specific fix suggestions |
+## Output format
 
-The workflow synthesizes findings into structured reports with security scores (0-100), severity-grouped vulnerabilities, and prioritized remediation steps with effort estimates.
+Security audit reports include:
+
+| Section | Contents |
+|---------|----------|
+| **Summary** | Overall security score (0-100) and executive summary |
+| **Security** | Findings grouped by severity with file paths and line numbers |
+| **Suggestions** | Remediation steps ordered by priority with effort estimates |
+
+This structured output makes it easy to prioritize fixes and track security improvements over time.

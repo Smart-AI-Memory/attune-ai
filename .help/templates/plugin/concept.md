@@ -2,46 +2,44 @@
 type: concept
 feature: plugin
 depth: concept
-generated_at: 2026-04-23T03:32:33.631760+00:00
-source_hash: 45eadb2e7f205941c8bfaceec972a8cbf3a780ce8b0ca2ce66b2868c4058b340
+generated_at: 2026-05-04T02:38:26.322979+00:00
+source_hash: b0ee9918b90b55b1b86413bf2ab78f0a590fb78eae098da3ba2886258d9db841
 status: generated
 ---
 
 # Plugin
 
-## What it is
+The plugin system provides automated assistance during your Claude Code sessions through event-driven hooks and security validation.
 
-The plugin is a bundled runtime that integrates AI assistance directly into Claude Code through event-driven hooks and security validation.
+## Core capabilities
 
-When you use Claude Code, the plugin automatically responds to specific events—like saving a Python file, starting a session, or running a failed command—to provide contextual help and maintain code quality without interrupting your workflow.
+The plugin system operates through five specialized hooks that respond to specific events:
 
-## Architecture
+**Code formatting** — Automatically formats Python files after you use Write or Edit tools, keeping your code style consistent without manual intervention.
 
-The plugin operates through four types of components:
+**Help maintenance** — Checks help template freshness when sessions start and suggests relevant help content when Bash commands fail, ensuring you have current guidance.
 
-**Event hooks** trigger automatically based on your actions:
-- **PostToolUse hooks** run after Claude performs file operations or command execution
-- **SessionStart hooks** run when you begin a new Claude Code session
+**Repository awareness** — Detects stale help content after git commits and prompts updates, keeping documentation synchronized with code changes.
 
-**Security validation** protects against dangerous operations:
-- `validate_bash_command()` checks shell commands against security policies before execution
-- `validate_file_path()` prevents access to system directories like `/etc` and `/sys`
+**Security validation** — Validates Bash commands and file paths against security policies before execution, preventing access to system directories like `/etc`, `/sys`, and `/proc`.
 
-**Auto-maintenance** keeps your workspace current:
-- Python files get formatted automatically after edits using the Write/Edit tools
-- Help templates refresh when they become stale
-- Documentation updates trigger after git commits
+## Event-driven architecture
 
-**Contextual assistance** surfaces relevant help:
-- Failed bash commands generate suggestions for fixes
-- Session startup checks ensure you have current documentation
+The plugin system uses hooks that trigger automatically:
+
+| Hook type | When it runs | What it does |
+|-----------|--------------|--------------|
+| **PostToolUse** | After Write/Edit tools | Formats Python files with standard style |
+| **SessionStart** | When Claude Code session begins | Checks help template freshness |
+| **PostToolUse** | After Bash commands fail | Suggests relevant help content |
+| **PostToolUse** | After git commits | Detects and flags stale help |
 
 ## Security boundaries
 
-The plugin enforces strict security policies through validation functions that return `(True, '')` for allowed operations. It blocks access to system directories defined in `SYSTEM_DIRECTORIES` and validates all bash commands before execution.
+The security system maintains a whitelist approach — commands and paths are validated against known-safe patterns. Search commands like `grep`, `rg`, and `git grep` are permitted, while access to system directories is blocked.
 
-Search operations using `grep`, `rg`, `git grep`, and similar tools receive special handling to prevent unintended system access while preserving normal development workflows.
+The validation functions return simple boolean results: either a command is allowed (`True, ''`) or blocked with an explanation. This keeps the security model predictable and transparent.
 
-## Integration points
+## Bundled runtime
 
-The plugin connects to Claude Code through standardized entry points—each hook implements a `main()` function that reads operation results from stdin and responds appropriately. This design allows the plugin to observe and react to your development actions without requiring explicit invocation.
+The plugin includes the attune-ai core as a bundled runtime, enabling standalone operation without external dependencies. This ensures consistent behavior across different development environments and eliminates version conflicts with system-wide installations.

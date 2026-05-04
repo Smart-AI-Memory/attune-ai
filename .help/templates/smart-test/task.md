@@ -2,109 +2,103 @@
 type: task
 feature: smart-test
 depth: task
-generated_at: 2026-04-14T14:42:29.119707+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-04T02:24:55.684375+00:00
+source_hash: b86ac2f6972679ac24d0b4be339fa687398a6c09ee172583c670574d00d15c9f
 status: generated
 ---
 
 # Work with smart test
 
-Use smart test when you need to analyze code coverage gaps and automatically generate pytest tests for untested functions and classes.
+Use smart test when you need to modify how the system analyzes test coverage or generates pytest files.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with pytest and coverage tools installed
-- Understanding of AST analysis and test generation workflows
+- Understanding of pytest and coverage analysis concepts
 
-## Identify your workflow
+## Identify which component to modify
 
-Choose the appropriate workflow based on your testing needs:
+Smart test has three main workflows, each handling different responsibilities:
 
-1. **For basic test generation**: Use `TestGenerationWorkflow` to analyze individual modules and generate tests using AST-based function analysis.
+| Component | Purpose | Key files |
+|-----------|---------|-----------|
+| **Test audit** | Parse coverage reports and prioritize gaps | `src/attune/workflows/test_audit/` |
+| **Test generation** | Generate pytest files from AST analysis | `src/attune/workflows/test_gen/` |
+| **Parallel generation** | Orchestrate large-scale test generation | `src/attune/workflows/test_gen_parallel.py` |
 
-2. **For coverage auditing**: Use `TestAuditWorkflow` to audit existing test coverage and identify priority modules for testing.
+Choose the component that matches your change:
+- Coverage parsing issues → test audit workflow
+- Generated test quality → test generation workflow
+- Performance or batching → parallel generation workflow
 
-3. **For parallel test generation**: Use `ParallelTestGenerationWorkflow` to generate tests for multiple low-coverage modules simultaneously.
+## Modify coverage analysis
 
-## Generate tests for a single module
+1. **Locate the parsing function you need to change:**
+   - `parse_coverage_json()` — Reads pytest-cov JSON output
+   - `prioritize_modules()` — Ranks modules by coverage gaps
+   - `group_into_batches()` — Organizes modules into logical groups
 
-1. Import the test generation workflow:
+2. **Update the ModuleCoverage dataclass** if you need new fields:
    ```python
-   from attune.workflows.test_gen.workflow import TestGenerationWorkflow
+   @dataclass
+   class ModuleCoverage:
+       path: str
+       stmts: int
+       covered: int
+       missing_lines: list[int] = field(default_factory=list)
+       pct: float = 0.0
+       priority: float = 0.0
    ```
 
-2. Initialize the workflow:
-   ```python
-   workflow = TestGenerationWorkflow()
-   ```
-
-3. Execute test generation for your target module:
-   ```python
-   result = workflow.execute(module_path="src/your_module.py")
-   ```
-
-4. Review the generated test report to verify coverage improvements.
-
-## Audit test coverage across modules
-
-1. Generate a coverage report using pytest:
+3. **Test your changes** with a real coverage.json file:
    ```bash
-   pytest --cov=src --cov-report=json:coverage.json
+   pytest tests/ -k "coverage_parser"
    ```
 
-2. Parse the coverage data:
+## Modify test generation
+
+1. **Choose the right generation function:**
+   - `generate_test_for_function()` — Creates tests for individual functions
+   - `generate_test_for_class()` — Creates test classes for class methods
+   - `generate_test_cases_for_params()` — Generates parameter combinations
+
+2. **Update the AST analyzer** if you need new function metadata:
    ```python
-   from attune.workflows.test_audit.coverage_parser import parse_coverage_json
-   modules = parse_coverage_json("coverage.json")
+   # FunctionSignature tracks function details
+   # ClassSignature tracks class details
    ```
 
-3. Prioritize modules by coverage gaps:
-   ```python
-   from attune.workflows.test_audit.coverage_parser import prioritize_modules
-   priority_modules = prioritize_modules(modules, min_threshold=50.0)
+3. **Modify test templates** by editing the string generation logic in each function
+
+4. **Verify generated tests are valid** by running them:
+   ```bash
+   python -m pytest generated_test_file.py -v
    ```
 
-4. Run the audit workflow:
-   ```python
-   from attune.workflows.test_audit.workflow import TestAuditWorkflow
-   audit = TestAuditWorkflow()
-   audit_result = audit.execute(src_path="src/")
-   ```
+## Modify parallel orchestration
 
-## Generate tests in parallel for multiple modules
+1. **Update batch processing** in `ParallelTestGenerationWorkflow`:
+   - `discover_low_coverage_modules()` — Finds modules needing tests
+   - `process_module_batch()` — Handles batches in parallel
+   - `analyze_module_structure()` — Extracts module information
 
-1. Initialize the parallel workflow:
-   ```python
-   from attune.workflows.test_gen_parallel import ParallelTestGenerationWorkflow
-   workflow = ParallelTestGenerationWorkflow()
-   ```
+2. **Adjust batch sizing** by modifying the `batch_size` parameter default
 
-2. Execute parallel test generation:
-   ```python
-   result = workflow.execute(
-       top=50,  # Number of lowest-coverage modules to target
-       batch_size=10,  # Modules to process simultaneously
-       output_dir="tests/behavioral/generated"
-   )
-   ```
+3. **Change AI model selection** in the workflow context
 
-3. Verify the generated test files in your output directory.
+## Test your changes
 
-## Verify test generation success
+Run the smart test skill to verify your modifications work end-to-end:
 
-1. **Check generated test files**: Ensure test files appear in your specified output directory with valid Python syntax.
+```bash
+# Test coverage parsing
+/smart-test src/your_module/ --approach gap-analysis
 
-2. **Run the generated tests**: Execute `pytest tests/behavioral/generated/ -v` to confirm all generated tests pass.
+# Test generation
+/smart-test src/your_module/ --approach generate-tests
 
-3. **Measure coverage improvement**: Run `pytest --cov=src --cov-report=term-missing` to verify coverage has increased for targeted modules.
+# Test full workflow
+/smart-test src/your_module/ --approach both
+```
 
-4. **Review test quality**: Check that generated tests include edge cases, error handling, and appropriate assertions for return types.
-
-## Key files
-
-- `src/attune/workflows/test_gen/workflow.py` - Main test generation workflow
-- `src/attune/workflows/test_gen/ast_analyzer.py` - AST-based code analysis
-- `src/attune/workflows/test_gen/test_templates.py` - Test code generation functions
-- `src/attune/workflows/test_audit/workflow.py` - Coverage audit workflow
-- `src/attune/workflows/test_gen_parallel.py` - Parallel test generation
+Your changes work correctly when the skill produces valid gap analysis reports and runnable pytest files.

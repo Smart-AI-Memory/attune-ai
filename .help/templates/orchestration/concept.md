@@ -2,47 +2,69 @@
 type: concept
 feature: orchestration
 depth: concept
-generated_at: 2026-04-14T15:16:10.557691+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-04T02:35:39.974459+00:00
+source_hash: 15dce809a43de06ae9f042882afecc50f3b625050abdca81b878a832140002f0
 status: generated
 ---
 
 # Orchestration
 
-Orchestration is the system that coordinates how multiple AI agents work together by defining execution strategies and managing their composition patterns.
+Orchestration coordinates multiple AI agents working together on complex tasks, automatically managing task distribution, conflict resolution, and result aggregation through Redis-backed coordination.
 
-## Core execution strategies
+## Core coordination patterns
 
-The orchestration system provides several built-in strategies for coordinating agent interactions:
+The orchestration system supports six composition patterns for different collaboration scenarios:
 
-**Sequential strategies** execute agents one after another:
-- `PromptCachedSequentialStrategy` passes cached context between agents to avoid recomputing shared information
-- `NestedSequentialStrategy` allows workflows to contain other workflows as steps
+- **Sequential** — Agents work one after another, passing results down the chain
+- **Parallel** — Multiple agents work simultaneously on different parts
+- **Debate** — Agents propose competing solutions, then vote on the best approach
+- **Teaching** — Expert agents guide novice agents through complex workflows
+- **Refinement** — Agents iteratively improve each other's work across multiple passes
+- **Adaptive** — Dynamic team composition based on task requirements and agent availability
 
-**Conditional strategies** route work based on runtime conditions:
-- `ConditionalStrategy` implements if-then-else branching logic
-- `MultiConditionalStrategy` handles switch-case patterns with multiple conditions
+## Task distribution and coordination
 
-**Enhanced execution patterns** provide specialized coordination:
-- `ToolEnhancedStrategy` gives a single agent comprehensive access to all available tools
-- `DelegationChainStrategy` creates hierarchical delegation with configurable depth limits to prevent infinite recursion
+**AgentCoordinator** serves as the central Redis-backed hub that:
+- Queues tasks with priority levels (1-10 scale)
+- Routes tasks to agents based on capabilities and availability
+- Tracks agent heartbeats and removes inactive agents after 5 minutes
+- Aggregates results from completed tasks by type
+- Broadcasts messages to all active team members
 
-## Strategy composition model
+**AgentTask** represents individual work units with:
+- Task type and description
+- Assignment status (pending/claimed/completed)
+- Priority level and creation timestamp
+- Context data passed between agents
+- Result storage for completed work
 
-All execution strategies inherit from `ExecutionStrategy` and implement the same interface:
-- Accept a list of `AgentTemplate` instances and a shared context dictionary
-- Return a `StrategyResult` containing the execution outcome
-- Handle agent coordination according to their specific pattern
+## Conflict resolution
 
-You register strategies by name using `register_strategy()` and retrieve them with `get_strategy()`. This allows workflows to reference strategies dynamically without hard-coding dependencies.
+When multiple agents produce competing solutions, **ConflictResolver** automatically chooses the best option using configurable strategies:
 
-## Nested workflow support
+**Weighted scoring** considers:
+- Team priorities (readability 30%, performance 20%, security 30%, maintainability 20%)
+- Pattern types (security patterns score highest at 1.0, style patterns lowest at 0.5)
+- Confidence levels from each contributing agent
 
-The orchestration system supports nested workflows through `WorkflowReference` objects. When a step in one workflow references another workflow, the `NestedStrategy` manages the execution depth and context passing between workflow layers. The `NestingContext` enforces maximum depth limits to prevent stack overflow from circular references.
+**Resolution results** include the winning pattern, rejected alternatives, confidence score, and reasoning for the decision.
 
-## Template and workflow registry
+## Team sessions
 
-The orchestration system maintains registries for reusable components:
-- Agent templates are stored and retrieved by ID, capability, or tier preference
-- Workflows can be registered and referenced by other workflows
-- Custom templates can be added at runtime for dynamic composition
+**TeamSession** enables collaborative work through:
+- Shared data storage accessible to all session members
+- Signal broadcasting for real-time coordination
+- Session-scoped agent registration and management
+- Purpose tracking for focused collaboration
+
+Agents can share intermediate results, coordinate on subtasks, and signal completion or need for help within a session context.
+
+## Dynamic team assembly
+
+The system automatically assembles teams based on:
+- Task complexity (simple/moderate/complex)
+- Domain requirements (security, testing, documentation, etc.)
+- Available agent capabilities and current workload
+- Resource constraints and execution strategies
+
+Teams scale from single enhanced agents for simple tasks to multi-agent debate patterns for complex architectural decisions.

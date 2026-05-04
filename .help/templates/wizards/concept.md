@@ -2,44 +2,50 @@
 type: concept
 feature: wizards
 depth: concept
-generated_at: 2026-04-14T15:26:55.563097+00:00
-source_hash: 655cede9671032e7ccc7f39a9f47afbc96ce8855aa0b1bbe2c6567c1a091bf8b
+generated_at: 2026-05-04T02:39:47.054190+00:00
+source_hash: 76c270cd6e9ba25a7ffd711122874b94ee586d10897f8210e8c4844f8ecd9f81
 status: generated
 ---
 
 # Wizards
 
-Wizards are interactive, multi-step workflows that guide you through complex development tasks by breaking them into structured, AI-assisted steps.
+Interactive, multi-step workflows that guide users through complex development tasks by breaking them into sequential steps with prompts, questions, and validation.
 
-## Architecture
+## Core structure
 
-Each wizard follows a three-layer structure:
+Wizards are built from these components:
 
-**Configuration layer** — `WizardConfig` defines metadata like the wizard's name, domain (development, security, etc.), and estimated cost/duration. This helps you choose the right wizard before starting.
+**`WizardStep`** — A single step in the workflow, containing an ID, name, description, execution type, and optional prompt template. Steps can be questions that collect user input or automated actions that process data.
 
-**Step definition layer** — `WizardStep` objects define individual workflow stages. Each step specifies its execution mode (`StepType`), prompt templates for AI interactions, conditional logic for branching workflows, and form questions for user input.
+**`WizardConfig`** — Metadata describing the wizard's purpose, domain (like "development"), estimated cost and duration, and version information.
 
-**Execution layer** — `BaseWizard` orchestrates the workflow by processing steps sequentially, building context for AI prompts, collecting user responses, and producing a `WizardResult` with collected data, generated outputs, and execution metadata.
+**`BaseWizard`** — The abstract foundation that all wizards inherit from. It handles step execution, context building, and result collection through a standardized `run()` method.
 
-## Built-in wizards
+**`WizardResult`** — The final output containing the wizard ID, completion status, collected data, generated output, and execution metrics like cost and duration.
 
-Attune includes five specialized wizards for common development workflows:
+## Built-in wizard types
 
-- **DebugWizard** — Systematically diagnoses and fixes code issues
-- **RefactorWizard** — Guides code restructuring while preserving functionality
-- **ReleasePrepWizard** — Prepares releases with version bumps, changelogs, and validation
-- **SecurityWizard** — Conducts security audits and identifies vulnerabilities
-- **TestGenWizard** — Generates comprehensive test suites for existing code
+Attune includes five specialized wizards for common development scenarios:
 
-Each wizard customizes `build_prompt_context()` to inject domain-specific information and `process_step_result()` to handle specialized data collection patterns.
+- **`DebugWizard`** — Guides systematic debugging with step-by-step problem identification
+- **`RefactorWizard`** — Walks through code restructuring with safety checks
+- **`ReleasePrepWizard`** — Automates release preparation tasks and validation
+- **`SecurityWizard`** — Conducts guided security audits with risk assessment
+- **`TestGenWizard`** — Generates comprehensive test suites through interactive prompting
 
-## Wizard registry
+Each wizard customizes the base workflow by implementing `build_prompt_context()` to prepare AI prompts and `process_step_result()` to handle user responses.
 
-The registry system lets you register custom wizards alongside built-ins:
+## Step execution flow
 
-- `register_wizard()` adds new wizard classes to the global registry
-- `get_wizard()` retrieves wizard classes by ID for instantiation
-- `save_custom_wizard()` persists custom wizard definitions to YAML files
-- `list_wizards()` enumerates all available wizards with their configurations
+Wizards execute through a consistent pattern:
 
-This registry enables dynamic wizard discovery and supports both code-based and configuration-driven wizard definitions.
+1. Each step defines its execution mode via `StepType` (question vs. automated action)
+2. The wizard builds context using the step's prompt template and current session data
+3. For question steps, the wizard presents forms to collect user input
+4. For action steps, the wizard processes data automatically
+5. Results are validated and stored before moving to the next step
+6. The final `WizardResult` contains all collected data and generated outputs
+
+## Custom wizard creation
+
+You can create custom wizards by extending `BaseWizard` or by saving YAML definitions that define steps, prompts, and validation rules. The `save_custom_wizard()` function stores these definitions for reuse, while `register_wizard()` makes wizard classes available to the system.

@@ -2,65 +2,67 @@
 type: task
 feature: doc-gen
 depth: task
-generated_at: 2026-04-14T14:45:26.816629+00:00
-source_hash: 67aadd029bbf773d9f478a4d4c750e25344dc6b0bd9e1edadbcf5151d83f3bff
+generated_at: 2026-05-04T02:25:57.849088+00:00
+source_hash: 40c128b66a197e8117c6093f1f637e47e612fceae7fd2f94851a5a1d91120296
 status: generated
 ---
 
 # Work with doc gen
 
-Use doc gen when you need to automatically generate documentation from your source code, including API references, module overviews, and structured documentation with examples.
+Use doc gen when you need to generate documentation from source code — docstrings, readme sections, or API references.
 
-## Prerequisites
+## Set up your environment
 
-- Access to the project source code
-- The codebase path you want to document
-
-## Generate documentation
-
-1. **Import the workflow class.**
-   ```python
-   from attune.workflows.document_gen import DocumentGenerationWorkflow
+1. **Navigate to the document generation module**
+   ```bash
+   cd src/attune/workflows/document_gen/
    ```
 
-2. **Create a workflow instance.**
-   ```python
-   workflow = DocumentGenerationWorkflow()
+2. **Review the workflow structure**
+   Examine the main entry point to understand the current generation pipeline:
+   - `DocumentGenerationWorkflow` orchestrates three specialized subagents
+   - Each subagent handles outline planning, content writing, or final polish
+   - The workflow produces structured markdown output
+
+## Modify generation behavior
+
+1. **Choose the right mixin for your change**
+   Each mixin handles a specific stage:
+   - `OutlineStageMixin` — controls documentation structure planning
+   - `WriteStageMixin` — handles content generation
+   - `PolishStageMixin` — manages final review and formatting
+   - `ChunkedGenerationMixin` — breaks large codebases into manageable pieces
+   - `DocGenCostMixin` — tracks token usage and generation costs
+
+2. **Update the workflow configuration**
+   Modify `default_context()` in `DocumentGenerationWorkflow` to change:
+   - Which subagents run in the pipeline
+   - Default parameters for each generation stage
+   - Cost limits or chunking thresholds
+
+3. **Customize the output format**
+   Edit `format_doc_gen_report()` in `report_formatter.py` to change:
+   - Report structure and sections
+   - How generation results are displayed
+   - Progress indicators or completion status
+
+## Test your changes
+
+1. **Run the doc generation tests**
+   ```bash
+   pytest -k "doc_gen" -v
    ```
 
-3. **Execute the generation.**
-   ```python
-   result = workflow.execute(path="/path/to/your/codebase")
+2. **Verify workflow execution**
+   Test the complete pipeline by running:
+   ```bash
+   python -m attune.workflows.document_gen --path ./test_module
    ```
 
-4. **Format the output.**
-   ```python
-   from attune.workflows.document_gen import format_doc_gen_report
+You know the changes work when the workflow executes without errors and produces documentation in the expected format with your modifications applied.
 
-   report = format_doc_gen_report(result.data, {"path": "/path/to/your/codebase"})
-   print(report)
-   ```
+## Key files to modify
 
-## Verify success
-
-The workflow succeeds when:
-- The result contains sections for Summary, Outline, Documentation, and Suggestions
-- API references are extracted and formatted as markdown
-- Code examples are included where applicable
-- File paths are cited when referencing source code
-
-## Configure generation stages
-
-The workflow operates in three specialized stages that you can customize:
-
-- **Outline stage**: Plans the documentation structure
-- **Write stage**: Generates the actual content with examples
-- **Polish stage**: Reviews and refines the final output
-
-Each stage uses dedicated subagents (outline-planner, content-writer, polish-reviewer) to ensure comprehensive coverage.
-
-## Key files
-
-- `src/attune/workflows/document_gen/workflow.py` — Main DocumentGenerationWorkflow class
-- `src/attune/workflows/document_gen/report_formatter.py` — Output formatting utilities
-- `src/attune/workflows/document_gen/mixins/` — Stage-specific generation logic
+- `src/attune/workflows/document_gen/workflow.py` — Main workflow orchestration
+- `src/attune/workflows/document_gen/report_formatter.py` — Output formatting
+- Individual mixin files for stage-specific behavior changes

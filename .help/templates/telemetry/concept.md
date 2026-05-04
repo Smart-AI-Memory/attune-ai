@@ -2,44 +2,46 @@
 type: concept
 feature: telemetry
 depth: concept
-generated_at: 2026-04-20T01:22:40.975305+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-04T02:37:13.475757+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
 # Telemetry
 
-Telemetry tracks how Attune AI agents coordinate, perform, and handle human approval workflows across 16 monitoring modules.
+Telemetry is the monitoring and coordination system that tracks agent behavior, enables inter-agent communication, and provides human oversight controls for Attune AI workflows.
 
-## What telemetry covers
+## What it tracks
 
-Attune's telemetry system monitors three distinct operational layers:
+The telemetry system monitors three layers of agent activity:
 
-**Agent coordination** — Agents send TTL-based signals to coordinate work and avoid conflicts. When one agent claims a task, others receive coordination signals and back off. These signals expire automatically to prevent deadlocks.
+**Agent heartbeats** track whether agents are alive and what they're doing. Each agent sends periodic status updates including current task progress and metadata. The `HeartbeatCoordinator` uses Redis TTL keys to detect when agents stop responding, providing a real-time view of the agent ecosystem's health.
 
-**Performance tracking** — Each active agent sends heartbeat signals that include status, progress percentage, and current task. The system detects stale agents when heartbeats stop arriving and can trigger recovery workflows.
+**Inter-agent coordination** enables agents to signal each other through time-limited messages. The `CoordinationSignals` class manages TTL-based communication where agents can broadcast status updates, request assistance, or coordinate handoffs. These signals automatically expire to prevent stale coordination data.
 
-**Human approval gates** — For sensitive operations like code changes or file deletions, agents pause and request human approval. The approval system queues these requests with context and timeouts, then routes responses back to the waiting agent.
+**Human approval gates** pause workflows when human oversight is required. The `ApprovalGate` system presents context-rich approval requests that humans can approve or reject, with configurable timeouts to prevent workflows from hanging indefinitely.
 
-## Core coordination components
+## Real-time streaming
 
-| Component | Responsibility | Example use |
-|-----------|---------------|-------------|
-| `CoordinationSignals` | TTL-based agent messaging | Agent A signals "claimed file X" so Agent B skips it |
-| `HeartbeatCoordinator` | Track agent health and progress | Monitor 5 agents processing test files, detect if one crashes |
-| `ApprovalGate` | Human decision checkpoints | Request approval before deleting old migration files |
-| `EventStreamer` | Real-time event broadcasting | Publish "test completed" events to Redis streams |
+Events flow through Redis Streams via the `EventStreamer`, which publishes structured events as they occur. This enables real-time monitoring dashboards and allows external systems to react to agent behavior changes immediately.
 
-## Data flow between agents
+## Cost and performance insights
 
-Agents use Redis as a coordination layer with three data patterns:
+The telemetry CLI provides operational visibility through several reporting commands:
+- Model tier fallback analysis shows cost savings from Sonnet 3.5 → Opus 3.5 degradation
+- Test execution status tracks which files have passing automation
+- Task routing reports show how work flows between agents
+- Prompt caching statistics reveal performance optimizations
 
-1. **Signals** — Temporary messages with TTL expiration (`agent-123-claimed-file-x` expires in 60 seconds)
-2. **Heartbeats** — Regular status updates (`agent-123-status` contains current progress and task)
-3. **Approval queues** — Pending human decisions (`approval-delete-files-request-456` waits for response)
+## Data structures
 
-The telemetry CLI provides visibility into these flows with commands like `attn telemetry agent-performance` and `attn telemetry test-status`.
+All telemetry data uses structured dataclasses that serialize to/from dictionaries for Redis storage:
 
-## Operational insights
+| Class | Purpose | Key fields |
+|-------|---------|------------|
+| `CoordinationSignal` | Agent-to-agent messages | `signal_type`, `source_agent`, `target_agent`, `ttl_seconds` |
+| `AgentHeartbeat` | Agent status updates | `agent_id`, `status`, `progress`, `current_task` |
+| `ApprovalRequest` | Human approval requests | `approval_type`, `context`, `timeout_seconds` |
+| `StreamEvent` | Real-time event notifications | `event_type`, `data`, `timestamp` |
 
-The telemetry system tracks cost savings from prompt caching, model tier routing (Sonnet 4.5 to Opus 4.5 fallbacks), and test execution patterns. It identifies which agents handle which file types most efficiently and surfaces performance bottlenecks in the coordination layer.
+This structured approach ensures telemetry data remains queryable and consistent as the agent ecosystem scales.

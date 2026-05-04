@@ -2,41 +2,42 @@
 type: concept
 feature: mcp-server
 depth: concept
-generated_at: 2026-04-23T03:29:41.895753+00:00
-source_hash: b71ff35b50438d054b14e05338981f037a9df8ed86e5607100baa4a370832188
+generated_at: 2026-05-04T02:29:38.826492+00:00
+source_hash: f7f2360f6ad84733ba187b2e644d9b01ac30e15d2ae8fe8567af6dfb064ee44b
 status: generated
 ---
 
 # MCP Server
 
-## What it is
+The Attune AI MCP Server is a Model Context Protocol implementation that exposes AI workflows, help documentation, memory systems, and utility functions as structured tools for AI clients.
 
-The MCP server is Attune's implementation of the Model Context Protocol, enabling AI assistants to access Attune's tools, memory systems, and contextual help through a standardized interface.
+## Server architecture
 
-## Core architecture
+The server uses a modular design where handler mixins provide different categories of functionality to the main `EmpathyMCPServer` class:
 
-The server is built around `EmpathyMCPServer`, which combines several specialized mixins to provide different categories of functionality:
-
-- **Memory operations** — Store and retrieve cross-session patterns, decisions, and troubleshooting findings through personal and project memory systems
-- **Workflow execution** — Run Attune's automated workflows for code review, security audits, and other development tasks
-- **Contextual help** — Access progressive documentation that adapts depth based on user experience and context
-- **Session management** — Track interaction levels, authentication status, and telemetry data
-
-The `RateLimiter` prevents tool abuse by applying sliding-window limits to MCP calls, ensuring stable performance under high usage.
+- **`EmpathyMCPServer`** — Core MCP protocol implementation that coordinates prompts, tools, and resources
+- **`MemoryHandlersMixin`** — Cross-session memory storage and retrieval for decisions, patterns, and troubleshooting findings
+- **`WorkflowHandlersMixin`** — Execution interface for Attune AI automation workflows
+- **`RateLimiter`** — Sliding-window protection against excessive tool calls
 
 ## Tool categories
 
-The server exposes four main tool groups:
+The server exposes five distinct tool groups through MCP:
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
-| **Workflow** | Execution tools | Run automated development workflows |
-| **Utility** | `auth_status`, `telemetry_stats`, `attune_set_level` | Manage authentication, view metrics, configure interaction modes |
-| **Help** | `help_lookup`, `help_maintain`, `help_init` | Access contextual documentation and manage help systems |
-| **Memory** | `memory_store`, `personal_memory_capture`, `memory_search` | Store and retrieve knowledge across sessions |
+| **Workflow execution** | `get_workflow_tools()` | Run code reviews, security audits, refactoring, and other AI-assisted workflows |
+| **Documentation system** | `get_help_tools()` | Progressive help lookup, template maintenance, and project help initialization |
+| **Session utilities** | `get_utility_tools()` | Authentication status, telemetry stats, interaction level control, context management |
+| **Personal memory** | `get_personal_memory_tools()` | Store and recall decisions across sessions in `~/.attune/memory/` |
+| **Structured memory** | `get_memory_tools()` | Pattern storage and cross-agent coordination through the attune-ai memory module |
 
-## How assistants connect
+## Protocol compliance
 
-AI assistants interact with the server through the Model Context Protocol. The server provides prompts, tools, and resources that assistants can discover and use without knowing Attune's internal implementation details.
+The server implements standard MCP resource types:
 
-The protocol handles authentication, rate limiting, and error responses automatically, so assistants can focus on helping users with their development tasks rather than managing connection details.
+- **Workflows resource** (`attune://workflows`) — JSON list of available automation workflows
+- **Authentication config** (`attune://auth/config`) — Current auth strategy and subscription tier
+- **Telemetry data** (`attune://telemetry`) — Cost tracking and performance metrics
+
+Rate limiting protects against tool abuse with configurable call windows, defaulting to 60 calls per 60-second window.

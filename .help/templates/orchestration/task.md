@@ -2,88 +2,134 @@
 type: task
 feature: orchestration
 depth: task
-generated_at: 2026-04-14T15:16:22.135027+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-04T02:35:58.086720+00:00
+source_hash: 15dce809a43de06ae9f042882afecc50f3b625050abdca81b878a832140002f0
 status: generated
 ---
 
 # Work with orchestration
 
-Use orchestration when you need to compose dynamic agent teams, execute complex workflows with conditional logic, or implement hierarchical delegation patterns.
+Use orchestration when you need to coordinate multi-agent teams, compose dynamic workflows, or manage distributed task execution.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under `src/attune/orchestration/`
+- Python development environment set up
+- Understanding of multi-agent patterns and workflow composition
 
-## Identify your orchestration pattern
+## Configure the coordination layer
 
-1. **Determine your execution strategy.**
-   Choose the strategy that matches your workflow pattern:
-   - `ToolEnhancedStrategy` — Single agent with comprehensive tool access
-   - `PromptCachedSequentialStrategy` — Sequential execution with shared cached context
-   - `DelegationChainStrategy` — Hierarchical delegation with depth limits
-   - `ConditionalStrategy` — If-then-else branching logic
-   - `MultiConditionalStrategy` — Switch-case pattern with multiple conditions
-   - `NestedStrategy` — Workflow composition with sub-workflows
-   - `NestedSequentialStrategy` — Sequential steps with nested workflow support
-
-2. **Review strategy requirements.**
-   Check the strategy's initialization parameters and execution context needs.
-   For example, `DelegationChainStrategy` requires a `max_depth` parameter, while
-   `ConditionalStrategy` needs condition and branch definitions.
-
-## Configure execution strategy
-
-1. **Register your strategy (if custom).**
+1. **Set up an AgentCoordinator for your team.**
+   Create a Redis-backed coordinator to manage task distribution:
    ```python
-   from attune.orchestration import register_strategy
-   register_strategy("my_strategy", MyCustomStrategy)
+   from attune.orchestration import AgentCoordinator, AgentTask
+
+   coordinator = AgentCoordinator(short_term_memory, team_id="my_team")
+   coordinator.register_agent("agent_1", capabilities=["analysis", "testing"])
    ```
 
-2. **Retrieve and configure the strategy.**
+2. **Define tasks for agent execution.**
+   Create AgentTask instances with clear descriptions and priorities:
+   ```python
+   task = AgentTask(
+       task_id="analyze_code",
+       task_type="analysis",
+       description="Analyze Python code quality",
+       priority=3,
+       context={"file_path": "src/main.py"}
+   )
+   coordinator.add_task(task)
+   ```
+
+## Set up workflow strategies
+
+1. **Choose an execution strategy.**
+   Select from available strategies based on your coordination needs:
    ```python
    from attune.orchestration import get_strategy
+
+   # For sequential processing
+   strategy = get_strategy("sequential")
+
+   # For parallel execution
+   strategy = get_strategy("parallel")
+
+   # For hierarchical delegation
    strategy = get_strategy("delegation_chain")
    ```
 
-3. **Set up agent templates.**
-   Register templates for your agents using the template registry:
+2. **Register custom workflows if needed.**
+   Create reusable workflow definitions:
    ```python
-   from attune.orchestration import register_custom_template
-   register_custom_template(my_agent_template)
+   from attune.orchestration import register_workflow, WorkflowDefinition
+
+   workflow = WorkflowDefinition(
+       workflow_id="code_review",
+       steps=[...],  # Define your workflow steps
+   )
+   register_workflow(workflow)
    ```
 
-## Execute your workflow
+## Manage agent templates
 
-1. **Prepare execution context.**
-   Create a context dictionary with the data your agents need:
+1. **Retrieve agents by capability.**
+   Find agents suited for specific tasks:
    ```python
-   context = {
-       "task_data": your_data,
-       "user_input": user_request,
-       "session_id": session_identifier
-   }
+   from attune.orchestration import get_templates_by_capability
+
+   testing_agents = get_templates_by_capability("testing")
+   security_agents = get_templates_by_capability("security")
    ```
 
-2. **Execute the strategy.**
+2. **Register custom agent templates.**
+   Add specialized agents to the registry:
    ```python
-   result = strategy.execute(agents, context)
+   from attune.orchestration import register_custom_template, AgentTemplate
+
+   custom_agent = AgentTemplate(
+       template_id="custom_analyzer",
+       capabilities=["custom_analysis"],
+       # ... other template properties
+   )
+   register_custom_template(custom_agent)
    ```
 
-3. **Handle the result.**
-   Check the `StrategyResult` for success status, output data, and any errors.
+## Handle conflicts and priorities
 
-## Verify execution
+1. **Configure conflict resolution.**
+   Set up a ConflictResolver with team priorities:
+   ```python
+   from attune.orchestration import ConflictResolver, TeamPriorities
 
-Your orchestration works correctly when:
-- The strategy executes without raising exceptions
-- The `StrategyResult.success` field returns `True`
-- The output contains expected data from your agents
-- For nested workflows, sub-workflow results appear in the context
+   priorities = TeamPriorities(
+       security_weight=0.4,
+       performance_weight=0.3,
+       readability_weight=0.3
+   )
+   resolver = ConflictResolver(team_priorities=priorities)
+   ```
 
-## Key files
+2. **Resolve pattern conflicts.**
+   When multiple agents propose conflicting solutions:
+   ```python
+   resolution = resolver.resolve_patterns(
+       patterns=[pattern1, pattern2, pattern3],
+       context={"file_type": "python", "complexity": "high"}
+   )
+   print(f"Winning pattern: {resolution.winning_pattern}")
+   ```
 
-- `src/attune/orchestration/_strategies/` — Execution strategy implementations
-- `src/attune/orchestration/agent_templates/registry.py` — Agent template management
-- `src/attune/coordination/` — Team coordination and conflict resolution
+## Test your orchestration
+
+Run orchestration-specific tests to verify your setup:
+```bash
+pytest -k "orchestration" -v
+```
+
+## Verify success
+
+Your orchestration setup works correctly when:
+- Agents can claim and complete tasks through the coordinator
+- Workflows execute using your chosen strategy
+- Conflict resolution produces consistent, reasonable results
+- All orchestration tests pass without errors

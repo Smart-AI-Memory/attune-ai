@@ -2,48 +2,50 @@
 type: task
 feature: deep-review
 depth: task
-generated_at: 2026-04-14T14:54:02.539359+00:00
-source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
+generated_at: 2026-05-04T02:28:25.316934+00:00
+source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
 status: generated
 ---
 
-# Run a deep code review
+# Run deep review
 
-Run a deep code review when you need comprehensive analysis across security, code quality, and test coverage for a codebase.
+Run deep review when you need comprehensive code analysis across security, quality, and test coverage dimensions.
 
 ## Prerequisites
 
-- Access to the codebase you want to review
-- Claude Agent SDK configured and available
-- Python environment with the workflow dependencies installed
+- Access to the target codebase
+- Claude Agent SDK configured in your environment
+- Permission to read the files you want to review
 
-## Execute the review
+## Execute a deep review
 
 1. **Import the workflow class.**
    ```python
-   from src.attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
+   from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
    ```
 
 2. **Initialize the workflow.**
    ```python
-   reviewer = DeepReviewAgentSDKWorkflow()
+   workflow = DeepReviewAgentSDKWorkflow()
    ```
 
-3. **Run the review on your target codebase.**
+3. **Run the review on your target path.**
    ```python
-   result = reviewer.execute(path="/path/to/your/codebase")
+   result = workflow.execute(path="/path/to/your/code")
    ```
 
 4. **Access the consolidated report.**
-   The workflow returns a `WorkflowResult` containing the synthesized findings from all three specialized reviewers (security, quality, and test gaps).
+   The result contains findings from three specialized reviewers:
+   - Security vulnerabilities and risks
+   - Code quality issues and maintainability concerns
+   - Test coverage gaps and missing test scenarios
 
 ## Verify the review completed
 
-Check that the result contains all expected sections:
-- Summary with overall health score (0-100)
-- Security findings ordered by severity
-- Quality findings ordered by severity
-- Test gaps ordered by priority
-- Top 5-10 actionable suggestions with impact rankings
+Check that your `WorkflowResult` contains:
+- Overall health score (0-100)
+- Findings categorized by severity
+- Actionable recommendations ranked by impact
+- Specific file paths and line numbers for each finding
 
-The review leverages three specialized subagents that analyze your code independently, then consolidates their findings into a single comprehensive report with specific file paths and line numbers for each issue.
+The review runs three passes automatically — you don't need to coordinate the security-reviewer, quality-reviewer, and test-gap-reviewer subagents manually.

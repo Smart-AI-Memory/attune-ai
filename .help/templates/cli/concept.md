@@ -2,44 +2,42 @@
 type: concept
 feature: cli
 depth: concept
-generated_at: 2026-04-23T03:31:47.611928+00:00
-source_hash: 95afb1e38daa117bab7e14bf58b614da535d484b24b1dd072c4750e232202196
+generated_at: 2026-05-04T02:33:52.698850+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
 # CLI
 
-Attune's command-line interface provides both traditional command parsing and intelligent routing that learns from your usage patterns.
+## What
 
-## Core architecture
+The CLI is attune's command-line interface for cost tracking, documentation browsing, and memory management. It combines direct command routing with intelligent input routing that learns from your usage patterns to suggest the most relevant Claude Code skills.
 
-The CLI operates as a hybrid system that handles two types of input:
+## Why
 
-- **Slash commands** — Traditional CLI commands like `/costs today` or `/help memory`
-- **Natural language** — Plain text that gets routed to appropriate skills based on learned preferences
+The CLI serves as both a traditional command interface and an adaptive learning system. Instead of forcing you to memorize exact command syntax, it watches how you work and builds routing preferences that improve over time. This matters when you need quick access to cost data, help documentation, or stored lessons without breaking your development flow.
 
-At the center is the **HybridRouter**, which maintains a preference database of how you typically want certain keywords handled. When you type "show costs," it remembers that you usually want the cost summary skill rather than a general search.
+## Core responsibilities
+
+The CLI handles three primary workflows:
+
+**Cost tracking** — Monitor spending with `attune costs`, view daily summaries with `attune costs today`, export data for analysis, and reset tracking when needed.
+
+**Help browsing** — Access structured documentation templates through `attune help`, letting you explore concepts, tasks, references, and troubleshooting guides without leaving the terminal.
+
+**Memory management** — Store and retrieve lessons with `attune remember` and `attune lessons`, plus manage cross-session memory for persistent context between Claude conversations.
 
 ## Intelligent routing
 
-The router builds preferences automatically through usage tracking:
+The `HybridRouter` component learns your preferences as you work. When you type `attune help migration`, it remembers that you often want the task template rather than the concept. The `RoutingPreference` class tracks these patterns:
 
-- **RoutingPreference** stores each learned association between a keyword, skill, and arguments
-- **Confidence scoring** increases when you repeatedly choose the same routing for a keyword
-- **Usage counting** tracks how often each preference gets applied
+- **keyword** — The term you searched for
+- **skill** — Which Claude Code skill you actually chose
+- **usage_count** — How often this preference applies
+- **confidence** — How certain the system is about this routing
 
-For example, after you run "show costs" a few times and select the cost tracking skill, the router learns to suggest that skill first for similar input.
+This creates a personalized command experience that adapts to your specific workflow patterns.
 
-## Command categories
+## Implementation structure
 
-The CLI organizes functionality into focused command groups:
-
-| Category | Purpose | Example commands |
-|----------|---------|------------------|
-| **Cost tracking** | Monitor and export API usage costs | `costs today`, `costs export` |
-| **Help browsing** | Navigate documentation templates | `help memory`, `help search` |
-| **Memory management** | Store and recall context | `remember`, `forget topic` |
-
-## Command discovery
-
-Unlike traditional CLIs that require memorizing syntax, Attune's interface adapts to how you naturally express intent. The router provides suggestions based on partial input and learns which commands you actually use, making the most relevant options easier to access over time.
+The CLI spans 10 source files, organizing functionality into focused command modules. Cost commands handle financial tracking, help commands bridge to the documentation system, and memory commands manage both quick lessons and persistent context storage. The routing layer sits above these modules, learning which commands you reach for most often given specific input patterns.

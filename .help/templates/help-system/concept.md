@@ -2,50 +2,43 @@
 type: concept
 feature: help-system
 depth: concept
-generated_at: 2026-04-20T01:16:32.470715+00:00
-source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
+generated_at: 2026-05-04T02:30:33.548305+00:00
+source_hash: 02f860e914d05f44ecfe133be87b26cad7e3f200e70a1a30901af220c56e2181
 status: generated
 ---
 
 # Help System
 
-The help system is a progressive-depth engine that generates, maintains, and serves contextual documentation templates based on your project's source code.
+## How it works
 
-## Core architecture
+The help system generates contextual documentation by scanning your project, mapping features to source files, and creating progressive-depth templates that adapt to different audiences and usage patterns.
 
-The help system operates through three layers:
+When you scan a project, the system analyzes code structure and proposes features automatically. Each feature gets mapped to specific files, then generates three template depths: concept (mental model), task (step-by-step), and reference (complete lookup). The engine tracks user feedback and usage patterns to surface the most relevant content first.
 
-- **Discovery layer** scans your project to identify features and map them to source files using `ProposedFeature` and `FeatureManifest`
-- **Generation layer** creates structured markdown templates at three depth levels (concept, task, reference) with automatic staleness detection
-- **Runtime layer** serves progressive-depth help through audience-aware rendering and session state tracking
+## Core components
+
+- **`ProposedFeature`** — Discovered features with confidence scores and file mappings from project scanning
+- **`GeneratedTemplate`** — Individual template file with source hash tracking for staleness detection
+- **`GenerationResult`** — Complete template set for one feature, including all depths and matched files
+- **`MaintenanceResult`** — Staleness report and regeneration results from a maintenance run
+- **`Feature`** — Finalized feature definition linking project capabilities to source files
+
+The system maintains a features manifest (`features.yaml`) that maps each project capability to its implementation files. When source files change, the system detects staleness by comparing file hashes and regenerates affected templates.
 
 ## Template lifecycle
 
-Templates move through a complete lifecycle from discovery to delivery:
+Templates follow a three-stage lifecycle: discovery, generation, and maintenance. During discovery, the scanner identifies features by analyzing file patterns, entry points, and configuration files. Generation creates structured markdown templates with YAML frontmatter for each depth level. Maintenance tracks changes to source files and updates stale templates automatically.
 
-1. **Scanning** — The system examines source files and proposes features based on entry points, configuration patterns, and code structure
-2. **Generation** — Each feature becomes three template files (concept/task/reference) using structured markdown with YAML frontmatter
-3. **Maintenance** — Templates stay current through automatic staleness checking based on source file hashes
-4. **Population** — Templates fill with runtime context (file paths, error messages, workflow names) for specific user situations
-5. **Adaptation** — Output transforms for different audiences (plain text, CLI, Claude Code, marketplace)
+The engine supports multiple audience profiles (Claude Code, CLI, marketplace) and transforms the same base template for different contexts. User feedback scores help rank template quality, while usage telemetry weights search results by real-world relevance.
 
-## Progressive depth experience
+## What connects to it
 
-Users start with concepts and drill deeper without leaving their conversation:
+The help system integrates with development workflows through precursor warnings (alerts before editing risky files), post-workflow guidance (relevant templates after completing tasks), and tag-based search across all generated content.
 
-| Depth | Template type | User gets |
-|-------|---------------|-----------|
-| 0 | Concept | What is this feature and when would I use it? |
-| 1 | Task | Step-by-step instructions to use it right now |
-| 2 | Reference | Complete details, options, and edge cases |
-
-Session state tracks your current topic and depth level. Asking about the same topic advances to the next level. Asking about a different topic resets to concept level.
-
-## Quality assurance
-
-The system maintains help quality through multiple mechanisms:
-
-- **Feedback scoring** records user ratings and calculates confidence scores per template
-- **Usage telemetry** weights template relevance based on actual access patterns
-- **Cross-link integrity** ensures all template references resolve to real files
-- **Render validation** verifies each audience adapter produces well-formed output
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `ProposedFeature` | Feature discovery with confidence scoring | `src/attune/help/bootstrap.py` |
+| `GeneratedTemplate` | Template file with staleness tracking | `src/attune/help/generator.py` |
+| `GenerationResult` | Complete feature template set | `src/attune/help/generator.py` |
+| `MaintenanceResult` | Staleness and regeneration report | `src/attune/help/maintenance.py` |
+| `Feature` | Project capability to file mapping | `src/attune/help/manifest.py` |

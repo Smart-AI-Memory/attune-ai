@@ -2,59 +2,65 @@
 type: task
 feature: code-quality
 depth: task
-generated_at: 2026-04-19T18:45:35.381319+00:00
-source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
+generated_at: 2026-05-04T02:24:21.082114+00:00
+source_hash: 0d2aa6913a2dae27ec39d314c14f1f9a65365582fb2ba40d7060f571d73ca77e
 status: generated
 ---
 
 # Extend the code quality workflow
 
-Use this procedure when you need to customize how the code review workflow analyzes code or modify which subagents it uses.
+Use this procedure when you need to customize how code reviews work or add new review capabilities to the four-subagent system.
 
 ## Prerequisites
 
 - Access to the project source code
-- Understanding of the existing `CodeReviewWorkflow` class in `src/attune/workflows/code_review.py`
+- Understanding of the `CodeReviewWorkflow` class in `src/attune/workflows/code_review.py`
 
-## Examine the workflow structure
+## Examine the current workflow structure
 
-1. Open `src/attune/workflows/code_review.py` and locate the `CodeReviewWorkflow` class.
+1. Open `src/attune/workflows/code_review.py` and review the `CodeReviewWorkflow` class.
 
-2. Review the four specialized subagents defined in `_SUBAGENT_NAMES`:
-   - `security-reviewer` — finds security vulnerabilities
-   - `quality-reviewer` — identifies style and correctness issues
-   - `perf-reviewer` — spots performance problems
-   - `architect-reviewer` — analyzes structural concerns
+2. Note the four specialized subagents defined in `_SUBAGENT_NAMES`:
+   - `security-reviewer` — finds vulnerabilities and security issues
+   - `quality-reviewer` — catches style violations and likely bugs
+   - `perf-reviewer` — identifies performance bottlenecks
+   - `architect-reviewer` — evaluates structural design
 
-3. Note how `_TASK_PROMPT_TEMPLATE` coordinates the subagents to produce a unified report with sections for Summary, Security, Quality, Performance, Architecture, and Suggestions.
+3. Study the `_TASK_PROMPT_TEMPLATE` to understand how the subagents coordinate and produce the unified report format.
 
 ## Choose your extension approach
 
-- **To add a new subagent**: Extend the `_SUBAGENT_NAMES` list and update `_TASK_PROMPT_TEMPLATE` to include the new domain
-- **To modify the report structure**: Update `_TASK_PROMPT_TEMPLATE` to change sections or scoring criteria
-- **To create a specialized workflow**: Subclass `CodeReviewWorkflow` and override the `execute` method
+1. **For new review types**: Create a subclass of `CodeReviewWorkflow` that modifies `_SUBAGENT_NAMES` to include your custom reviewer.
 
-## Implement your changes
+2. **For different orchestration**: Override the `execute` method to change how subagents interact or how results are synthesized.
 
-1. Create your modifications in `src/attune/workflows/code_review.py`.
+3. **For custom prompts**: Override `_SYSTEM_PROMPT` or `_TASK_PROMPT_TEMPLATE` to adjust the review focus or output format.
 
-2. If adding subagents, ensure each has a clear domain focus that doesn't overlap with existing reviewers.
+## Implement your extension
 
-3. Follow the existing patterns for system prompts — be specific about expected output format and include file path citations.
+1. Create a new class inheriting from `CodeReviewWorkflow`:
+   ```python
+   class CustomCodeReviewWorkflow(CodeReviewWorkflow):
+       _SUBAGENT_NAMES = ['security-reviewer', 'quality-reviewer', 'perf-reviewer', 'architect-reviewer', 'your-custom-reviewer']
+   ```
 
-4. Test your changes by calling the `execute` method with a sample codebase path.
+2. Override any constants or methods you need to modify while preserving the base workflow's structure.
 
-## Verify the workflow works
+3. Ensure your custom subagents follow the same reporting format expected by the synthesis step.
 
-Run a test review to confirm your changes produce the expected output:
+## Test your changes
 
-```python
-workflow = CodeReviewWorkflow()
-result = workflow.execute(path="src/sample")
-```
+1. Run the code quality tests to verify existing functionality still works:
+   ```bash
+   pytest -k "code-quality"
+   ```
 
-You should see structured markdown output with your new sections or subagent findings integrated into the unified report.
+2. Test your custom workflow with a sample codebase to confirm the new subagent integrates properly with the unified report.
 
-## Key files
+## Verify success
 
-- `src/attune/workflows/code_review.py` — main workflow implementation
+Your extension works correctly when:
+- All existing tests pass
+- Your custom subagent appears in the synthesized report under the appropriate section
+- The overall health score (0-100) and executive summary still generate properly
+- File paths and line numbers are correctly cited in findings

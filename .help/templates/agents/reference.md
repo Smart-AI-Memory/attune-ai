@@ -2,147 +2,98 @@
 type: reference
 feature: agents
 depth: reference
-generated_at: 2026-04-14T15:08:08.249680+00:00
-source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
+generated_at: 2026-05-04T02:33:19.099768+00:00
+source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
 status: generated
 ---
 
 # Agents reference
 
-## Release preparation agents
+Create, configure, and orchestrate AI agents across multiple frameworks. Build single agents or multi-agent workflows with adapters for AutoGen, Haystack, LangChain, LangGraph, and Empathy's native agent system.
 
-| Class | Description | Parameters |
-|-------|-------------|------------|
-| `ReleaseAgent` | Base agent with CHEAP → CAPABLE → PREMIUM escalation | `agent_id: str, role: str, redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` |
-| `TestCoverageAgent` | Runs pytest --cov and parses coverage report | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` |
-| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` |
-| `CodeQualityAgent` | Runs ruff, checks type hints and complexity | `redis_client: Any \| None = None, state_store: AgentStateStore \| None = None` |
-| `ReleasePrepTeam` | Coordinates parallel execution of release preparation agents | `quality_gates: dict[str, Any] \| None = None, redis_url: str \| None = None` |
-| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry | `quality_gates: dict[str, float] \| None = None, **kwargs: Any` |
+## Classes
 
-### ReleaseAgent methods
+| Class | Description | File |
+|-------|-------------|------|
+| `AutoGenAgent` | Agent wrapping an AutoGen AssistantAgent or UserProxyAgent | `src/attune/agent_factory/adapters/autogen_adapter.py` |
+| `AutoGenWorkflow` | Workflow using AutoGen's GroupChat | `src/attune/agent_factory/adapters/autogen_adapter.py` |
+| `AutoGenAdapter` | Adapter for Microsoft AutoGen framework | `src/attune/agent_factory/adapters/autogen_adapter.py` |
+| `HaystackAgent` | Agent wrapping a Haystack Pipeline or Component | `src/attune/agent_factory/adapters/haystack_adapter.py` |
+| `HaystackWorkflow` | Workflow using Haystack Pipeline | `src/attune/agent_factory/adapters/haystack_adapter.py` |
+| `HaystackAdapter` | Adapter for deepset Haystack framework | `src/attune/agent_factory/adapters/haystack_adapter.py` |
+| `LangChainAgent` | Agent wrapping a LangChain chain or agent | `src/attune/agent_factory/adapters/langchain_adapter.py` |
+| `LangChainWorkflow` | Workflow using LangChain's SequentialChain or custom routing | `src/attune/agent_factory/adapters/langchain_adapter.py` |
+| `LangChainAdapter` | Adapter for LangChain framework | `src/attune/agent_factory/adapters/langchain_adapter.py` |
+| `LangGraphAgent` | Agent wrapping a LangGraph node/runnable | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
+| `LangGraphWorkflow` | Workflow using LangGraph's StateGraph | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
+| `LangGraphAdapter` | Adapter for LangGraph framework | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
+| `NativeAgent` | Agent using Empathy's native EmpathyLLM | `src/attune/agent_factory/adapters/native.py` |
+| `NativeWorkflow` | Workflow using sequential/parallel agent execution | `src/attune/agent_factory/adapters/native.py` |
+| `NativeAdapter` | Adapter for Empathy's native agent system | `src/attune/agent_factory/adapters/native.py` |
+| `WizardAgent` | Agent wrapper for existing wizards | `src/attune/agent_factory/adapters/wizard_adapter.py` |
+| `WizardWorkflow` | Workflow for chaining multiple wizards | `src/attune/agent_factory/adapters/wizard_adapter.py` |
+| `WizardAdapter` | Adapter for integrating wizards with Agent Factory | `src/attune/agent_factory/adapters/wizard_adapter.py` |
+| `AgentRole` | Standard agent roles for multi-agent systems | `src/attune/agent_factory/base.py` |
+| `AgentCapability` | Capabilities an agent can have | `src/attune/agent_factory/base.py` |
+| `AgentConfig` | Configuration for creating an agent | `src/attune/agent_factory/base.py` |
+| `WorkflowConfig` | Configuration for creating a workflow/graph | `src/attune/agent_factory/base.py` |
+| `BaseAgent` | Abstract base class for framework-agnostic agents | `src/attune/agent_factory/base.py` |
+| `BaseWorkflow` | Abstract base class for framework-agnostic workflows | `src/attune/agent_factory/base.py` |
+| `BaseAdapter` | Abstract base class for framework adapters | `src/attune/agent_factory/base.py` |
+| `AgentFactory` | Universal factory for creating agents and workflows | `src/attune/agent_factory/factory.py` |
+| `Framework` | Supported agent frameworks | `src/attune/agent_factory/framework.py` |
+| `MemoryAwareAgent` | Agent wrapper that integrates with Memory Graph | `src/attune/agent_factory/memory_integration.py` |
+| `ResilienceConfig` | Configuration for resilience patterns | `src/attune/agent_factory/resilient.py` |
+| `ResilientAgent` | Agent wrapper that applies resilience patterns | `src/attune/agent_factory/resilient.py` |
+| `ReleaseAgent` | Base agent with CHEAP -> CAPABLE -> PREMIUM escalation | `src/attune/agents/release/base_agent.py` |
+| `TestCoverageAgent` | Runs pytest --cov and parses coverage report | `src/attune/agents/release/coverage_agent.py` |
+| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence | `src/attune/agents/release/documentation_agent.py` |
+| `CodeQualityAgent` | Runs ruff, checks type hints and complexity | `src/attune/agents/release/quality_agent.py` |
+| `Tier` | Model tier for progressive escalation | `src/attune/agents/release/release_models.py` |
+| `ReleaseAgentResult` | Result from an individual release agent | `src/attune/agents/release/release_models.py` |
+| `QualityGate` | Quality gate threshold for release readiness | `src/attune/agents/release/release_models.py` |
+| `ReleaseReadinessReport` | Aggregated release readiness assessment | `src/attune/agents/release/release_models.py` |
+| `ReleasePrepTeam` | Coordinates parallel execution of release preparation agents | `src/attune/agents/release/release_prep_team.py` |
+| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry | `src/attune/agents/release/release_prep_team.py` |
+| `SecurityAuditorAgent` | Analyzes bandit output and classifies vulnerabilities by severity | `src/attune/agents/release/security_agent.py` |
+| `AgentExecutionRecord` | Single execution record for an agent | `src/attune/agents/state/models.py` |
+| `AgentStateRecord` | Persistent state for a single agent identity | `src/attune/agents/state/models.py` |
+| `AgentRecoveryManager` | Handles agent restart recovery from persistent state | `src/attune/agents/state/recovery.py` |
+| `AgentStateStore` | Persistent storage for agent state and execution history | `src/attune/agents/state/store.py` |
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `process` | `codebase_path: str = '.'` | `ReleaseAgentResult` | Process codebase analysis |
+## Functions
 
-### ReleasePrepTeam methods
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `get_langchain_adapter` | — | `LangChainAdapter` | Get LangChain adapter (lazy import) |
+| `get_langgraph_adapter` | — | `LangGraphAdapter` | Get LangGraph adapter (lazy import) |
+| `get_autogen_adapter` | — | `AutoGenAdapter` | Get AutoGen adapter (lazy import) |
+| `get_haystack_adapter` | — | `HaystackAdapter` | Get Haystack adapter (lazy import) |
+| `wrap_wizard` | `wizard`, `name: str \| None = None`, `model_tier: str = 'capable'` | `WizardAgent` | Quick helper to wrap a wizard as an agent |
+| `safe_agent_operation` | `operation_name: str` | `Callable[[F], F]` | Decorator for safe agent operations with logging and error handling |
+| `retry_on_failure` | `max_attempts: int = 3`, `delay: float = 1.0`, `backoff: float = 2.0`, `exceptions: tuple = (Exception,)` | `Callable[[F], F]` | Decorator to retry failed operations with exponential backoff |
+| `log_performance` | `threshold_seconds: float = 1.0` | `Callable[[F], F]` | Decorator to log slow operations |
+| `validate_input` | `required_fields: list[str]` | — | Decorator to validate required fields in input data |
+| `with_cost_tracking` | `operation_type: str = 'agent_call'` | — | Decorator to track API costs for operations |
+| `graceful_degradation` | — | — | Decorator for graceful degradation on failure |
+| `detect_installed_frameworks` | — | — | Detect which agent frameworks are installed |
+| `get_recommended_framework` | — | — | Get recommended framework for a use case |
+| `get_framework_info` | — | — | Get information about a framework |
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `get_total_cost` | | `float` | Get total cost of all agent operations |
-| `assess_readiness` | `codebase_path: str = '.'` | `ReleaseReadinessReport` | Assess release readiness across all agents |
+### Raises
 
-### ReleasePrepTeamWorkflow methods
+| Function | Raises | Message |
+|----------|---------|---------|
+| `safe_agent_operation` | `AgentOperationError` | — |
+| `retry_on_failure` | `last_exception` | — |
+| `validate_input` | `ValueError` | 'Input must be a dict, got {...}' |
+| `validate_input` | `ValueError` | 'Missing required fields: {...}' |
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `run_stage` | `stage_name: str, tier: ModelTier, input_data: Any` | `Any` | Run a specific workflow stage |
-| `execute` | `path: str = '.', context: dict[str, Any] \| None = None, **kwargs: Any` | `ReleaseReadinessReport` | Execute the full release preparation workflow |
+## Source files
 
-## Data models
+- `src/attune/agents/**`
+- `src/attune/agent_factory/**`
 
-### ReleaseAgentResult fields
+## Tags
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `agent_id` | `str` | | Agent identifier |
-| `agent_role` | `str` | | Agent role designation |
-| `success` | `bool` | | Whether the agent completed successfully |
-| `tier_used` | `Tier` | | Model tier used for processing |
-| `findings` | `dict[str, Any]` | `field(default_factory=dict)` | Analysis findings and results |
-| `score` | `float` | `0.0` | Quality score assigned by agent |
-| `confidence` | `float` | `0.0` | Confidence level in results |
-| `cost` | `float` | `0.0` | API cost incurred |
-| `execution_time_ms` | `float` | `0.0` | Execution time in milliseconds |
-| `escalated` | `bool` | `False` | Whether tier escalation occurred |
-
-### QualityGate fields
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `name` | `str` | | Quality gate name |
-| `threshold` | `float` | | Required threshold value |
-| `actual` | `float` | `0.0` | Actual measured value |
-| `passed` | `bool` | `False` | Whether the gate passed |
-| `critical` | `bool` | `True` | Whether this is a critical gate |
-| `message` | `str` | `''` | Status or error message |
-
-### ReleaseReadinessReport fields
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `approved` | `bool` | | Whether release is approved |
-| `confidence` | `str` | | Overall confidence level |
-| `quality_gates` | `list[QualityGate]` | `field(default_factory=list)` | All quality gate results |
-| `agent_results` | `list[ReleaseAgentResult]` | `field(default_factory=list)` | Results from all agents |
-| `blockers` | `list[str]` | `field(default_factory=list)` | Critical issues blocking release |
-| `warnings` | `list[str]` | `field(default_factory=list)` | Non-critical warnings |
-| `summary` | `str` | `''` | Executive summary |
-| `timestamp` | `str` | `field(default_factory=lambda: datetime.now().isoformat())` | Report generation timestamp |
-| `total_duration` | `float` | `0.0` | Total execution time |
-| `total_cost` | `float` | `0.0` | Total API costs |
-
-### ReleaseReadinessReport methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `to_dict` | | `dict[str, Any]` | Convert report to dictionary |
-| `format_console_output` | | `str` | Format report for console display |
-
-## Agent state management
-
-| Class | Description | Parameters |
-|-------|-------------|------------|
-| `AgentStateStore` | Persistent storage for agent state and execution history | |
-| `AgentRecoveryManager` | Handles agent restart recovery from persistent state | |
-| `AgentStateRecord` | Persistent state for a single agent identity | |
-| `AgentExecutionRecord` | Single execution record for an agent | |
-
-## Framework adapters
-
-| Class | Description | Parameters |
-|-------|-------------|------------|
-| `NativeAdapter` | Adapter for Empathy's native agent system | |
-| `WizardAdapter` | Adapter for integrating wizards with Agent Factory | |
-| `LangChainAdapter` | Adapter for LangChain framework | |
-| `LangGraphAdapter` | Adapter for LangGraph framework | |
-| `AutoGenAdapter` | Adapter for Microsoft AutoGen framework | |
-| `HaystackAdapter` | Adapter for deepset Haystack framework | |
-
-## Configuration classes
-
-| Class | Description | Purpose |
-|-------|-------------|---------|
-| `AgentConfig` | Configuration for creating an agent | Agent initialization |
-| `WorkflowConfig` | Configuration for creating a workflow/graph | Workflow setup |
-| `Framework` | Supported agent frameworks | Framework selection |
-| `AgentRole` | Standard agent roles for multi-agent systems | Role assignment |
-| `AgentCapability` | Capabilities an agent can have | Capability tracking |
-
-## Utility functions
-
-| Function | Parameters | Returns | Raises | Description |
-|----------|------------|---------|--------|-------------|
-| `get_langchain_adapter` | | | | Get LangChain adapter (lazy import) |
-| `get_langgraph_adapter` | | | | Get LangGraph adapter (lazy import) |
-| `get_autogen_adapter` | | | | Get AutoGen adapter (lazy import) |
-| `get_haystack_adapter` | | | | Get Haystack adapter (lazy import) |
-| `wrap_wizard` | `wizard, name: str \| None = None, model_tier: str = 'capable'` | `WizardAgent` | | Quick helper to wrap a wizard as an agent |
-
-## Decorator functions
-
-| Function | Parameters | Returns | Raises | Description |
-|----------|------------|---------|--------|-------------|
-| `safe_agent_operation` | `operation_name: str` | `Callable[[F], F]` | `AgentOperationError` | Decorator for safe agent operations with logging and error handling |
-| `retry_on_failure` | `max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, exceptions: tuple = (Exception,)` | `Callable[[F], F]` | `last_exception` | Decorator to retry failed operations with exponential backoff |
-| `log_performance` | `threshold_seconds: float = 1.0` | `Callable[[F], F]` | | Decorator to log slow operations |
-| `validate_input` | `required_fields: list[str]` | | `ValueError` | Decorator to validate required fields in input data |
-| `with_cost_tracking` | `operation_type: str = 'agent_call'` | | | Decorator to track API costs for operations |
-
-### validate_input error messages
-
-| Exception | Message |
-|-----------|---------|
-| `ValueError` | `'Input must be a dict, got {...}'` |
-| `ValueError` | `'Missing required fields: {...}'` |
+`agents`, `ai`, `release`

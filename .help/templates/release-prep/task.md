@@ -2,104 +2,79 @@
 type: task
 feature: release-prep
 depth: task
-generated_at: 2026-04-14T14:49:37.889046+00:00
-source_hash: fe9ded2c56c77207b818a4bfa424bc8ad639e250941dae59bba6027c7ec2bb75
+generated_at: 2026-05-04T02:27:06.561642+00:00
+source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
 status: generated
 ---
 
 # Work with release prep
 
-Use the release preparation workflow when you need to validate code quality, security, and documentation before deploying a new version.
+Use release prep when you need to customize the pre-release quality gates, add new check types, or modify the agent escalation behavior.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python environment with pytest and ruff installed
-- Redis connection (optional, for state persistence)
+- Familiarity with the agent system architecture
 
-## Configure quality gates
+## Examine the existing agent structure
 
-1. **Set quality thresholds in your workflow initialization:**
-   ```python
-   quality_gates = {
-       "test_coverage": 80.0,
-       "code_quality": 8.0,
-       "documentation": 70.0
-   }
-   team = ReleasePrepTeam(quality_gates=quality_gates)
-   ```
+Review the release prep components to understand the current implementation:
 
-2. **Define custom quality gates by extending QualityGate:**
-   ```python
-   gate = QualityGate(
-       name="security_score",
-       threshold=95.0,
-       critical=True
-   )
-   ```
+- `ReleaseAgent` — Base agent with tiered escalation (CHEAP → CAPABLE → PREMIUM)
+- `TestCoverageAgent` — Runs pytest with coverage analysis
+- `DocumentationAgent` — Validates docstrings, README, and changelog
+- `CodeQualityAgent` — Executes ruff linting and complexity checks
+- `ReleasePrepTeam` — Orchestrates parallel agent execution
 
-## Run release assessment
+## Choose your modification approach
 
-1. **Execute the full assessment workflow:**
-   ```python
-   from attune.workflows.release_prep import ReleasePreparationWorkflow
+Determine whether to extend or modify the existing components:
 
-   workflow = ReleasePreparationWorkflow()
-   result = workflow.execute(codebase_path="/path/to/project")
-   ```
+1. **Extend with a new agent** if you need additional check types (security scanning, performance benchmarks)
+2. **Modify existing agents** if you need to change thresholds, add new quality gates, or alter escalation logic
+3. **Customize the team orchestration** if you need different parallel execution patterns
 
-2. **Use the team coordinator for parallel execution:**
-   ```python
-   from attune.agents.release.team import ReleasePrepTeam
+## Implement your changes
 
-   team = ReleasePrepTeam()
-   report = team.assess_readiness(codebase_path=".")
-   ```
+### Add a new specialized agent
 
-3. **Review the assessment results:**
-   ```python
-   print(report.format_console_output())
+Create a subclass of `ReleaseAgent` in the appropriate module:
 
-   if not report.approved:
-       print("Blockers:", report.blockers)
-       print("Warnings:", report.warnings)
-   ```
+```python
+class SecurityAgent(ReleaseAgent):
+    def __init__(self, redis_client=None, state_store=None):
+        super().__init__("security-scanner", "security", redis_client, state_store)
+```
 
-## Extend assessment capabilities
+### Modify quality gates
 
-1. **Create a custom release agent by inheriting from ReleaseAgent:**
-   ```python
-   class CustomSecurityAgent(ReleaseAgent):
-       def __init__(self, **kwargs):
-           super().__init__(
-               agent_id="security-custom",
-               role="Custom security validation",
-               **kwargs
-           )
+Update the `QualityGate` thresholds in `ReleasePrepTeam`:
 
-       def process(self, codebase_path: str = ".") -> ReleaseAgentResult:
-           # Your custom security checks here
-           return ReleaseAgentResult(
-               agent_id=self.agent_id,
-               agent_role=self.role,
-               success=True,
-               tier_used=Tier.CHEAP
-           )
-   ```
+```python
+quality_gates = {
+    "test_coverage": 85.0,  # Raise from default
+    "complexity_score": 10.0,  # Lower threshold
+}
+```
 
-2. **Add the custom agent to your team configuration:**
-   ```python
-   team = ReleasePrepTeam()
-   team.agents.append(CustomSecurityAgent())
-   ```
+### Customize escalation behavior
 
-## Verify success
+Override the `process` method in `ReleaseAgent` to change when tier escalation occurs.
 
-Run `pytest -k "release-prep"` to confirm your changes work correctly. The assessment passes when all critical quality gates show `passed: True` and `report.approved` returns `True`.
+## Validate your implementation
 
-## Key files
+Run the release prep test suite to verify your changes:
 
-- `src/attune/workflows/release_prep.py` — Main workflow orchestration
-- `src/attune/agents/release/team.py` — Agent coordination and parallel execution
-- `src/attune/agents/release/base_agent.py` — Base agent with tier escalation
-- `src/attune/agents/release/release_models.py` — Data models and quality gates
+```bash
+pytest -k "release-prep" -v
+```
+
+Check that your modifications produce valid `ReleaseReadinessReport` outputs and maintain the go/no-go decision logic.
+
+## Success criteria
+
+Your release prep modifications work correctly when:
+- All existing tests pass
+- New agents integrate with `ReleasePrepTeam` orchestration
+- The assessment report includes your custom quality gates
+- Escalation behavior follows your specified tier progression

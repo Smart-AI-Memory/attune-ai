@@ -2,193 +2,92 @@
 type: task
 feature: telemetry
 depth: task
-generated_at: 2026-04-20T01:22:58.325000+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-04T02:37:27.827841+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
 # Work with telemetry
 
-Use telemetry when you need to track system usage, analyze agent performance, or implement workflow control gates in Attune AI.
+Use telemetry when you need to track agent coordination, monitor performance metrics, or implement human approval workflows in Attune AI.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with Redis (used for coordination signals and heartbeats)
-- Understanding of the Attune AI agent architecture
+- Familiarity with the telemetry module at `src/attune/telemetry/`
+- Basic understanding of Redis for data persistence
 
 ## Configure telemetry components
 
-1. **Choose your telemetry component.**
-   The telemetry system has four main areas:
-   - **Agent coordination** — Use `CoordinationSignals` for inter-agent communication with TTL-based expiration
-   - **Heartbeat monitoring** — Use `HeartbeatCoordinator` to track agent health and progress
-   - **Approval workflows** — Use `ApprovalGate` for human approval gates in automated workflows
-   - **Event streaming** — Use `EventStreamer` for real-time event publishing via Redis Streams
-
-2. **Import the required classes.**
-   Add the imports you need to your module:
+1. **Set up coordination signals between agents.**
+   Use `CoordinationSignals` to send TTL-based messages between agents:
    ```python
-   from attune.telemetry import CoordinationSignals, HeartbeatCoordinator
-   from attune.telemetry import ApprovalGate, EventStreamer
+   from attune.telemetry import CoordinationSignals
+
+   coordinator = CoordinationSignals(agent_id="my_agent")
+   signal_id = coordinator.signal("task_complete", payload={"result": "success"})
    ```
 
-3. **Initialize with Redis memory.**
-   All telemetry classes require a Redis connection:
+2. **Initialize heartbeat monitoring.**
+   Use `HeartbeatCoordinator` to track agent health and progress:
    ```python
-   # For coordination signals
-   signals = CoordinationSignals(memory=your_redis_memory, agent_id="your_agent")
+   from attune.telemetry import HeartbeatCoordinator
 
-   # For heartbeat tracking
-   heartbeat = HeartbeatCoordinator(memory=your_redis_memory)
-
-   # For approval gates
-   approval = ApprovalGate(memory=your_redis_memory, agent_id="your_agent")
+   heartbeat = HeartbeatCoordinator()
+   heartbeat.start_heartbeat("agent_1", metadata={"task": "data_processing"})
+   heartbeat.beat(status="running", progress=0.5, current_task="processing file 2/4")
    ```
 
-## Implement agent coordination
-
-1. **Send coordination signals.**
-   Use signals for agent-to-agent communication:
+3. **Configure human approval gates.**
+   Use `ApprovalGate` for workflow control requiring human decisions:
    ```python
-   # Send to specific agent
-   signal_id = signals.signal(
-       signal_type="task_complete",
-       target_agent="processor_agent",
-       payload={"result": "success", "data": results}
-   )
+   from attune.telemetry import ApprovalGate
 
-   # Broadcast to all agents
-   signals.broadcast(
-       signal_type="shutdown",
-       payload={"reason": "maintenance"}
-   )
+   gate = ApprovalGate(agent_id="workflow_agent")
+   response = gate.request_approval("deploy", context={"env": "production"})
    ```
 
-2. **Wait for responses.**
-   Block until you receive expected signals:
+4. **Set up event streaming.**
+   Use `EventStreamer` for real-time event monitoring:
    ```python
-   response = signals.wait_for_signal(
-       signal_type="ack",
-       source_agent="processor_agent",
-       timeout=30.0
-   )
+   from attune.telemetry import EventStreamer
 
-   if response:
-       print(f"Got acknowledgment: {response.payload}")
+   streamer = EventStreamer()
+   event_id = streamer.publish_event("task_started", {"agent": "worker_1"})
    ```
 
-## Set up heartbeat monitoring
+## Run telemetry commands
 
-1. **Start agent heartbeats.**
-   Register your agent with the heartbeat system:
-   ```python
-   heartbeat.start_heartbeat(
-       agent_id="my_agent",
-       metadata={"version": "1.0", "role": "processor"},
-       display_name="File Processor Agent"
-   )
-   ```
+1. **Check cost savings from model fallbacks.**
+   Run: `python -m attune.telemetry sonnet-opus-analysis`
 
-2. **Update progress regularly.**
-   Call `beat()` periodically to show the agent is alive:
-   ```python
-   for i, item in enumerate(work_items):
-       heartbeat.beat(
-           status="processing",
-           progress=(i / len(work_items)) * 100,
-           current_task=f"Processing {item}"
-       )
-       process_item(item)
+2. **View agent performance metrics.**
+   Run: `python -m attune.telemetry agent-performance`
 
-   heartbeat.stop_heartbeat(final_status="completed")
-   ```
+3. **Monitor test execution status.**
+   Run: `python -m attune.telemetry test-status`
 
-3. **Monitor other agents.**
-   Check the health of the agent ecosystem:
-   ```python
-   active_agents = heartbeat.get_active_agents()
-   stale_agents = heartbeat.get_stale_agents(threshold_seconds=120)
+4. **Review Tier 1 automation status.**
+   Run: `python -m attune.telemetry tier1-status`
 
-   for agent in stale_agents:
-       print(f"Agent {agent.agent_id} may be stuck: {agent.current_task}")
-   ```
+5. **Generate task routing reports.**
+   Run: `python -m attune.telemetry task-routing-report`
 
-## Add approval gates
+## Verify telemetry is working
 
-1. **Request human approval.**
-   Pause workflow execution for human decisions:
-   ```python
-   response = approval.request_approval(
-       approval_type="delete_files",
-       context={
-           "files": file_list,
-           "reason": "Cleanup old cache files",
-           "impact": "Low - regenerable data"
-       },
-       timeout=300.0  # 5 minutes
-   )
+Check that your telemetry setup is functioning correctly:
 
-   if response.approved:
-       delete_files(file_list)
-   else:
-       print(f"Deletion denied: {response.reason}")
-   ```
+1. **Confirm agents are visible.**
+   Run `python -m attune.telemetry agent-performance` and verify your agent appears in the active list.
 
-2. **Handle approval responses.**
-   Respond to pending approval requests:
-   ```python
-   pending = approval.get_pending_approvals("delete_files")
+2. **Test signal delivery.**
+   Send a test signal and verify it's received within the TTL window.
 
-   for request in pending:
-       # Review request details
-       print(f"Request: {request.context}")
+3. **Validate approval workflow.**
+   Submit a test approval request and confirm it appears in pending approvals.
 
-       # Respond based on your criteria
-       approval.respond_to_approval(
-           request.request_id,
-           approved=True,
-           responder="admin_user",
-           reason="Files confirmed safe to delete"
-       )
-   ```
-
-## Use CLI analysis commands
-
-1. **Run telemetry analysis.**
-   The telemetry CLI provides several analysis commands:
-   ```bash
-   # Show recent telemetry data
-   python -m attune.telemetry show
-
-   # Display cost savings analysis
-   python -m attune.telemetry savings
-
-   # Check Sonnet to Opus fallback metrics
-   python -m attune.telemetry sonnet-opus-analysis
-
-   # View agent performance metrics
-   python -m attune.telemetry agent-performance
-   ```
-
-2. **Check test and automation status.**
-   Monitor system health through status commands:
-   ```bash
-   # Per-file test status
-   python -m attune.telemetry file-test-status
-
-   # Comprehensive Tier 1 automation status
-   python -m attune.telemetry tier1-status
-
-   # Task routing analysis
-   python -m attune.telemetry task-routing-report
-   ```
-
-## Verification
-
-Your telemetry integration works correctly when:
-- Coordination signals are received by target agents within their TTL period
-- Agent heartbeats appear in the active agents list with current status
-- Approval requests pause workflow execution until human response
-- Event streams contain your published events with correct timestamps
-- CLI commands display current telemetry data without errors
+Success indicators:
+- Agents report heartbeats without Redis connection errors
+- Coordination signals are delivered within their TTL period
+- Approval requests persist until responded to or expired
+- Event streams contain expected event types with valid timestamps
