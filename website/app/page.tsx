@@ -5,24 +5,26 @@ import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
 
-// Hero code sample shows the full author → reader loop
-// across all three packages so the homepage doesn't
-// elevate one product over the others. Kept intentionally
-// short — the goal is to tell the story in ~10 lines of
-// Python, not to document every API.
+// Doc-toolchain code sample. attune-ai is the parent
+// framework (headlined in the hero); the four packages
+// below are the standalone documentation toolchain we
+// built with it.
 const codeExample = `# 1. attune-author — generate polished, source-grounded
 #    templates from your codebase (CI or dev time)
 from attune_author.generator import generate_feature_templates
 generate_feature_templates(feature, help_dir=".help", project_root=".")
 
-# 2. attune-help — read them at runtime. 1 dependency,
+# 2. attune-rag — keyword + semantic retrieval keeps
+#    answers grounded. P@1 ≥ 73% on benchmarks.
+
+# 3. attune-help — read them at runtime. 1 dependency,
 #    no API key required. Embed anywhere.
 from attune_help import HelpEngine
 engine = HelpEngine(template_dir=".help/templates")
 print(engine.lookup("security-audit"))
 
-# 3. attune-ai — /coach in Claude Code, plus workflows,
-#    MCP tools, and the full author ⇄ reader pipeline`;
+# 4. attune-gui — local dashboard tying it all together.
+#    pip install attune-gui && attune-gui --open`;
 
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
@@ -44,34 +46,35 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v5.10.1</span>
+                  <span>v6.5.4</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
-                  <span className="opacity-80">User Assistants Platform</span>
+                  <span className="opacity-80">AI Workflow OS for Claude Code</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-                  Living Docs,{' '}
-                  <span className="text-gradient">Rooted in Code</span>
+                  AI Workflows for{' '}
+                  <span className="text-gradient">Claude Code</span>
                 </h1>
                 <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
-                  Help content generated from your codebase. Stays fresh
-                  automatically. Enhance with human expertise when it matters.
+                  15 workflows, 14 auto-triggering skills, MCP server with 41 tools.
+                  Plus the documentation toolchain we built along the way &mdash;
+                  now four standalone packages.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <a
-                    href="https://pypi.org/project/attune-help/"
+                    href="https://pypi.org/project/attune-ai/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
                   >
-                    attune-help on PyPI
+                    attune-ai on PyPI
                   </a>
                   <a
-                    href="https://pypi.org/project/attune-author/"
+                    href="https://github.com/Smart-AI-Memory/attune-ai"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
+                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)] no-underline"
                   >
-                    attune-author on PyPI
+                    Star on GitHub
                   </a>
                   <Link
                     href="/how-it-works"
@@ -148,11 +151,13 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-16 items-start">
               <div className="md:w-2/5">
-                <h2 className="text-3xl font-extrabold mb-6">How the Platform Fits Together</h2>
+                <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-3 block">Sister Family</span>
+                <h2 className="text-3xl font-extrabold mb-6">The Documentation Toolchain</h2>
                 <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                  Three focused Python packages that compose into a
-                  full author &rarr; reader loop. Use the full stack, or
-                  drop in just the piece you need.
+                  We built attune-ai to make our own docs better. The
+                  doc toolchain split off as four standalone packages
+                  &mdash; an end-to-end author &rarr; reader loop. Use
+                  the full stack, or drop in just the piece you need.
                 </p>
                 <ul className="space-y-5">
                   <li className="flex items-start gap-3">
@@ -166,7 +171,17 @@ export default function Home() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--secondary)]/15 text-[var(--secondary)] font-bold text-xs shrink-0 mt-0.5">2</span>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-bold text-xs shrink-0 mt-0.5">2</span>
+                    <div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune-rag</code></div>
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
+                        Keyword + semantic retrieval. P@1 &ge; 73% on
+                        benchmarks &mdash; answers stay grounded in your code.
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--secondary)]/15 text-[var(--secondary)] font-bold text-xs shrink-0 mt-0.5">3</span>
                     <div>
                       <div className="font-semibold text-sm"><code className="font-mono">attune-help</code></div>
                       <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
@@ -176,19 +191,19 @@ export default function Home() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] font-bold text-xs shrink-0 mt-0.5">3</span>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--surface-container-high)] text-[var(--foreground)] font-bold text-xs shrink-0 mt-0.5">4</span>
                     <div>
-                      <div className="font-semibold text-sm"><code className="font-mono">attune-ai</code></div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune-gui</code></div>
                       <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Full framework for Claude Code. 15 workflows, 14
-                        auto-triggering skills, MCP server with 41 tools.
+                        Local dashboard. Browse templates, edit specs,
+                        run commands &mdash; one pane for the whole stack.
                       </p>
                     </div>
                   </li>
                 </ul>
                 <div className="mt-8 pt-6 border-t border-[var(--border)]/40">
                   <p className="text-xs text-[var(--text-muted)]">
-                    All three are open source &mdash; Apache 2.0.
+                    All four are open source &mdash; Apache 2.0.
                   </p>
                 </div>
               </div>
@@ -214,14 +229,14 @@ export default function Home() {
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Four Ways to Use It</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Six Ways to Use It</h2>
             <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              A full framework plus three focused tools. Pick the piece
-              that fits the job &mdash; or combine them for the full
-              author &rarr; reader loop.
+              The attune-ai framework, its Claude Code plugin, and the
+              four-package documentation toolchain we built with it.
+              Pick the piece that fits the job.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* attune-ai */}
             <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
               <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
@@ -252,6 +267,28 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-3">attune-author</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
                 AI authoring companion. Generates 11 kinds of source-grounded templates with per-type polish prompts.
+              </p>
+            </div>
+
+            {/* attune-rag */}
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128269;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">attune-rag</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                Keyword + semantic retrieval over your Markdown corpus. P&#64;1 &ge; 73% on benchmarks &mdash; answers stay grounded.
+              </p>
+            </div>
+
+            {/* attune-gui */}
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128202;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">attune-gui</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                Local dashboard. Browse templates, edit specs, run commands, and watch jobs &mdash; one pane for the whole stack.
               </p>
             </div>
 
