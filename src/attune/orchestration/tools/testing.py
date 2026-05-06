@@ -43,8 +43,10 @@ class RealCoverageAnalyzer:
     def analyze(self, use_existing: bool = True) -> CoverageReport:
         """Run coverage analysis on all project packages.
 
-        Analyzes coverage for: attune, attune_llm_toolkit,
-        attune_software_plugin
+        Coverage targets are detected from the project's ``pyproject.toml``
+        via :func:`attune.utils.coverage.detect_coverage_targets`, so this
+        works against any project layout (src/, flat, or hatch wheel
+        packages), not just attune-ai itself.
 
         Args:
             use_existing: Use existing coverage.json if available (default: True)
