@@ -396,3 +396,28 @@ class TestRunReleasePrep:
             await server._run_release_prep({"path": "/proj"})
 
         mod.ReleasePreparationWorkflow.return_value.execute.assert_awaited_once_with(path="/proj")
+
+    @pytest.mark.asyncio
+    async def test_run_release_prep_handles_string_final_output(self):
+        """Regression: when ``final_output`` degrades to a plain string
+        (workflow short-circuited with an error message), the handler
+        must not AttributeError on ``.get()``. The string is surfaced as
+        ``recommendation`` and the dict-shaped fields are ``None``."""
+        server = _make_server()
+        result = _make_result(
+            success=False,
+            final_output="Workflow short-circuited: missing API key",
+            total_cost=0.0,
+        )
+        mod = _make_workflow_module(
+            "attune.workflows.release_prep", "ReleasePreparationWorkflow", result
+        )
+
+        with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
+            out = await server._run_release_prep({"path": "."})
+
+        assert out["success"] is False
+        assert out["approved"] is None
+        assert out["health_score"] is None
+        assert out["recommendation"] == "Workflow short-circuited: missing API key"
+        assert out["cost"] == 0.0

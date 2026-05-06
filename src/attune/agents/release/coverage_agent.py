@@ -15,6 +15,7 @@ from typing import Any
 from uuid import uuid4
 
 from attune.agents.state.store import AgentStateStore
+from attune.utils.coverage import detect_coverage_target as _detect_coverage_target
 
 from .base_agent import ReleaseAgent, _run_command
 from .release_models import Tier
@@ -68,12 +69,13 @@ class TestCoverageAgent(ReleaseAgent):
                     test_count = int(count_match.group(1))
 
             # Step 2: Try actual coverage (with short timeout)
+            cov_target = _detect_coverage_target(codebase_path)
             cov_returncode, cov_stdout, _cov_stderr = _run_command(
                 [
                     "uv",
                     "run",
                     "pytest",
-                    "--cov=src",
+                    f"--cov={cov_target}",
                     "--cov-report=term-missing",
                     "-x",
                     "-q",

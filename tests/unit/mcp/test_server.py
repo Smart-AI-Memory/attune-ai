@@ -73,6 +73,32 @@ class TestServerInit:
         server = _make_server(tmp_path)
         assert server._workspace_root == str(tmp_path)
 
+    def test_env_var_workspace_root(self, tmp_path: Any, monkeypatch: Any) -> None:
+        """ATTUNE_MCP_WORKSPACE_ROOT broadens the sandbox without code changes.
+
+        Use case: the MCP server launches in a git worktree but needs to
+        operate on a sibling main checkout. Setting the env var lets the
+        user opt into the wider scope explicitly.
+        """
+        from attune.mcp.server import EmpathyMCPServer
+
+        monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(tmp_path))
+        server = EmpathyMCPServer()
+        assert server._workspace_root == str(tmp_path)
+
+    def test_explicit_arg_overrides_env_var(self, tmp_path: Any, monkeypatch: Any) -> None:
+        """Explicit workspace_root argument wins over env var."""
+        from attune.mcp.server import EmpathyMCPServer
+
+        env_path = tmp_path / "from-env"
+        env_path.mkdir()
+        arg_path = tmp_path / "from-arg"
+        arg_path.mkdir()
+
+        monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(env_path))
+        server = EmpathyMCPServer(workspace_root=str(arg_path))
+        assert server._workspace_root == str(arg_path)
+
     def test_custom_user_id(self) -> None:
         server = _make_server(user_id="test-user")
         assert server._user_id == "test-user"

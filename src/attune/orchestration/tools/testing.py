@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from attune.utils.coverage import detect_coverage_targets
+
 from ._shared import _validate_file_path
 
 logger = logging.getLogger(__name__)
@@ -41,8 +43,10 @@ class RealCoverageAnalyzer:
     def analyze(self, use_existing: bool = True) -> CoverageReport:
         """Run coverage analysis on all project packages.
 
-        Analyzes coverage for: attune, attune_llm_toolkit,
-        attune_software_plugin
+        Coverage targets are detected from the project's ``pyproject.toml``
+        via :func:`attune.utils.coverage.detect_coverage_targets`, so this
+        works against any project layout (src/, flat, or hatch wheel
+        packages), not just attune-ai itself.
 
         Args:
             use_existing: Use existing coverage.json if available (default: True)
@@ -75,12 +79,10 @@ class RealCoverageAnalyzer:
                 # Run pytest with coverage on test suite
                 logger.info("Running test suite to generate coverage (may take 2-5 minutes)")
 
-                # Use actual package names (match pyproject.toml configuration)
-                cov_packages = [
-                    "attune",
-                    "attune_llm_toolkit",
-                    "attune_software_plugin",
-                ]
+                # Detect coverage targets from the project's pyproject.toml
+                # so this works on any project, not just attune-ai. Falls back
+                # to ``["src"]`` for the conventional layout.
+                cov_packages = detect_coverage_targets(self.project_root)
 
                 cmd = [
                     "pytest",
@@ -111,7 +113,8 @@ class RealCoverageAnalyzer:
         # Read coverage.json
         if not coverage_file.exists():
             raise RuntimeError(
-                "Coverage report not found. Run 'pytest --cov=src --cov-report=json' first.",
+                "Coverage report not found. Run 'pytest --cov=<your-package> "
+                "--cov-report=json' first.",
             )
 
         try:

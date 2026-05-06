@@ -99,12 +99,19 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         Args:
             workspace_root: Root directory for workspace path
-                containment. Defaults to current working directory.
+                containment. Resolution order: explicit argument >
+                ``ATTUNE_MCP_WORKSPACE_ROOT`` env var > current
+                working directory. Setting the env var lets users
+                broaden the sandbox to a parent directory (e.g. the
+                main checkout when the MCP launches in a worktree)
+                without code changes.
             user_id: Identity for memory operations. Defaults
                 to the OS login name or "mcp-session".
 
         """
-        self._workspace_root = workspace_root or os.getcwd()
+        self._workspace_root = (
+            workspace_root or os.environ.get("ATTUNE_MCP_WORKSPACE_ROOT") or os.getcwd()
+        )
         self._user_id = user_id or _get_default_user_id()
         self.tools = self._register_tools()
         self.resources = self._register_resources()
@@ -446,11 +453,19 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = ReleasePreparationWorkflow()
         result = await workflow.execute(path=validated_path)
 
+        # ``final_output`` is dict-shaped on the happy path but degrades to a
+        # plain string when the workflow short-circuits (e.g. with an error
+        # message). Coerce to a dict view so the response shape stays stable
+        # and ``.get()`` doesn't AttributeError.
+        final_output = result.final_output
+        if not isinstance(final_output, dict):
+            final_output = {"recommendation": str(final_output)}
+
         return {
             "success": result.success,
-            "approved": result.final_output.get("approved"),
-            "health_score": result.final_output.get("health_score"),
-            "recommendation": result.final_output.get("recommendation"),
+            "approved": final_output.get("approved"),
+            "health_score": final_output.get("health_score"),
+            "recommendation": final_output.get("recommendation"),
             "cost": result.cost_report.total_cost,
         }
 
