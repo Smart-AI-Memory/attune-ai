@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.5.5] - 2026-05-06
+
+### Fixed — cross-project release-prep robustness (#196)
+
+Three bugs surfaced when running `/attune-ai:release-prep` against a
+sibling project from a git worktree (most visibly attune-gui):
+
+- **Coverage target detection.** Two MCP code paths hardcoded
+  `--cov=src` (or attune-ai's own package list), reporting 0% on any
+  project with a different layout. New
+  `attune.utils.coverage.detect_coverage_targets()` reads
+  `pyproject.toml` in priority order: `[tool.coverage.run] source` →
+  `[tool.hatch.build.targets.wheel] packages` → `[project] name`
+  resolved as `src/<name>` or `<name>` → fallback `["src"]`. Both
+  `agents/release/coverage_agent.py` and
+  `orchestration/tools/testing.py` route through it.
+- **Workspace root override.** `EmpathyMCPServer._workspace_root` was
+  pinned to `os.getcwd()`, raising "outside allowed directory" when
+  the MCP launches in a worktree but operates on a sibling main
+  checkout. Adds `ATTUNE_MCP_WORKSPACE_ROOT` env var (precedence:
+  explicit arg > env var > cwd).
+- **`final_output` dict-guard.** `_run_release_prep` AttributeError'd
+  when the workflow short-circuited and returned a plain string
+  (e.g. missing API key). Coerces non-dict to
+  `{"recommendation": str(value)}`.
+
+12 new unit tests cover the new coverage helper, env-var precedence,
+explicit-arg-wins, and string `final_output` handling.
+
 ## [6.5.4] - 2026-05-03
 
 ### Added — bundle summaries.json into help/generated/ (#190)
