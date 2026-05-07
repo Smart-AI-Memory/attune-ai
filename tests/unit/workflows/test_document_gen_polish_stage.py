@@ -51,7 +51,14 @@ class _FakeHost(PolishStageMixin):
 
     async def run_step_with_executor(self, step, prompt, system=None):
         """Mock executor."""
-        return "Executor polished content.", 50, 100, 0.01
+        from attune.workflows.executor_mixin import StepResult
+
+        return StepResult(
+            content="Executor polished content.",
+            input_tokens=50,
+            output_tokens=100,
+            cost=0.01,
+        )
 
     async def _polish_chunked(self, input_data, tier):
         """Mock chunked polish."""

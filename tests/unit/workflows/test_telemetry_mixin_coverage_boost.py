@@ -183,6 +183,9 @@ class TestTrackTelemetry:
             cache_hit=True,
             cache_type="semantic",
             duration_ms=500,
+            prompt_cache_hit=False,
+            prompt_cache_creation_tokens=0,
+            prompt_cache_read_tokens=0,
         )
 
     def test_track_telemetry_handles_string_tier(self):

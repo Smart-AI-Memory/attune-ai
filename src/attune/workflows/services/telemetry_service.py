@@ -118,6 +118,8 @@ class TelemetryService:
         cache_hit: bool,
         cache_type: str | None = None,
         duration_ms: int = 0,
+        prompt_cache_creation_tokens: int = 0,
+        prompt_cache_read_tokens: int = 0,
     ) -> None:
         """Track telemetry for an LLM call.
 
@@ -127,10 +129,13 @@ class TelemetryService:
             model: Model ID used
             cost: Cost in USD
             tokens: Dictionary with "input" and "output" token counts
-            cache_hit: Whether this was a cache hit
-            cache_type: Cache type if cache hit
+            cache_hit: Whether this was a workflow-level cache hit
+            cache_type: Cache type if cache_hit is True
             duration_ms: Duration in milliseconds
-
+            prompt_cache_creation_tokens: Tokens written to Anthropic's
+                prompt cache (zero unless reported by the provider).
+            prompt_cache_read_tokens: Tokens read from Anthropic's prompt
+                cache (zero unless reported by the provider).
         """
         if not self._enabled or self._tracker is None:
             return
@@ -147,6 +152,9 @@ class TelemetryService:
                 cache_hit=cache_hit,
                 cache_type=cache_type,
                 duration_ms=duration_ms,
+                prompt_cache_hit=prompt_cache_read_tokens > 0,
+                prompt_cache_creation_tokens=prompt_cache_creation_tokens,
+                prompt_cache_read_tokens=prompt_cache_read_tokens,
             )
         except (AttributeError, TypeError, ValueError) as e:
             logger.debug(f"Failed to track telemetry (config/data): {e}")

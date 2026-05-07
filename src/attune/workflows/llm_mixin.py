@@ -132,11 +132,15 @@ class LLMMixin:
         )
 
         try:
-            content, in_tokens, out_tokens, cost = await self.run_step_with_executor(
+            result = await self.run_step_with_executor(
                 step=step,
                 prompt=user_message,
                 system=system,
             )
+            content = result.content
+            in_tokens = result.input_tokens
+            out_tokens = result.output_tokens
+            cost = result.cost
 
             # Calculate duration
             duration_ms = int((time.time() - start_time) * 1000)
@@ -151,6 +155,8 @@ class LLMMixin:
                 cache_hit=False,
                 cache_type=None,
                 duration_ms=duration_ms,
+                prompt_cache_creation_tokens=result.cache_creation_tokens,
+                prompt_cache_read_tokens=result.cache_read_tokens,
             )
 
             # Store in cache using CachingMixin

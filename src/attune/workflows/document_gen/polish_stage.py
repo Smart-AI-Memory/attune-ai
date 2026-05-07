@@ -253,12 +253,12 @@ Return the complete, polished documentation with all API reference sections pres
             try:
                 step = DOC_GEN_STEPS["polish"]
                 step.max_tokens = max_tokens
-                response, input_tokens, output_tokens, cost = await self.run_step_with_executor(
+                result = await self.run_step_with_executor(
                     step=step,
                     prompt=user_message,
                     system=system,
                 )
-                return response, input_tokens, output_tokens
+                return result.content, result.input_tokens, result.output_tokens
             except Exception:  # noqa: BLE001
                 pass  # Fall through to legacy path
 
