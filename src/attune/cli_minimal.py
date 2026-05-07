@@ -143,7 +143,12 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
     run_parser = workflow_sub.add_parser("run", help="Run a workflow")
     run_parser.add_argument("name", help="Workflow name")
     run_parser.add_argument("--input", "-i", help="JSON input data")
-    run_parser.add_argument("--path", "-p", help="Target path")
+    run_parser.add_argument(
+        "--path",
+        "-p",
+        default=".",
+        help="Target path (defaults to current directory)",
+    )
     run_parser.add_argument("--target", "-t", help="Target value (e.g., coverage target)")
     run_parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
 
