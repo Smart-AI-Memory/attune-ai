@@ -10,6 +10,9 @@ release status, and environment health. It reads attune state from
 
 __all__ = ["create_app", "build_config", "Config"]
 
+# Define export at module scope; actual object is still lazy-resolved in __getattr__.
+Config = None
+
 
 def create_app(*args, **kwargs):
     """Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI."""
