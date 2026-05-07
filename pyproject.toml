@@ -170,6 +170,14 @@ windows = [
     "colorama>=0.4.6,<1.0.0",  # ANSI color support for Windows CMD
 ]
 
+# Operations dashboard (`attune ops`) — local FastAPI UI for workflows,
+# telemetry, memory, releases. No npm, no build step. Read-only by default.
+ops = [
+    "fastapi>=0.110.0,<1.0",
+    "uvicorn[standard]>=0.27.0,<1.0",
+    "jinja2>=3.1.0,<4.0",
+]
+
 # OpenTelemetry backend for enterprise telemetry export
 otel = [
     "opentelemetry-api>=1.20.0,<2.0.0",
@@ -409,6 +417,7 @@ attune = "src/attune"
 "*" = ["*.yml", "*.yaml", "*.json", "*.txt", "*.md", "*.jinja2"]
 "attune.commands" = ["*.md"]
 "attune.commands.agents" = ["*.md"]
+"attune.ops" = ["templates/*.html", "static/css/*.css", "static/js/*.js"]
 
 # Black code formatter configuration
 [tool.black]

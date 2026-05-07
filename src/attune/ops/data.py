@@ -1,0 +1,230 @@
+"""Read-only accessors for data the dashboard surfaces.
+
+All accessors fail soft: if the data file is missing or malformed, they return
+empty results instead of raising. This keeps the UI useful on a fresh install.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import json
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
+from typing import Any
+
+from attune.ops.config import Config
+
+
+@dataclass(frozen=True)
+class TelemetrySummary:
+    total_requests: int
+    total_cost: float
+    total_savings: float
+    by_workflow: list[tuple[str, int, float]]
+    by_day: list[tuple[str, int, float]]
+    last_event_at: str | None
+
+
+@dataclass(frozen=True)
+class WorkflowEntry:
+    name: str
+    description: str
+    stages: int
+    tier_map: dict[str, str]
+
+
+@dataclass(frozen=True)
+class MemoryEntry:
+    topic: str
+    snippet: str
+    path: str
+
+
+@dataclass(frozen=True)
+class FamilyVersion:
+    package: str
+    version: str | None
+    source: str  # "installed" | "missing"
+
+
+def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> TelemetrySummary:
+    """Aggregate ``usage.jsonl`` into a UI-friendly summary."""
+    path = config.telemetry_path
+    if not path.exists():
+        return TelemetrySummary(0, 0.0, 0.0, [], [], None)
+
+    total_requests = 0
+    total_cost = 0.0
+    total_savings = 0.0
+    by_workflow_count: dict[str, int] = defaultdict(int)
+    by_workflow_cost: dict[str, float] = defaultdict(float)
+    by_day_count: dict[str, int] = defaultdict(int)
+    by_day_cost: dict[str, float] = defaultdict(float)
+    last_event_at: str | None = None
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event: dict[str, Any] = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                cost = float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
+                savings = float(event.get("savings", 0.0) or 0.0)
+                workflow = str(event.get("workflow") or event.get("event_type") or "unknown")
+                ts = str(event.get("timestamp") or "")
+
+                total_requests += 1
+                total_cost += cost
+                total_savings += savings
+                by_workflow_count[workflow] += 1
+                by_workflow_cost[workflow] += cost
+
+                day = _to_day(ts)
+                if day:
+                    by_day_count[day] += 1
+                    by_day_cost[day] += cost
+                if ts:
+                    last_event_at = ts
+    except OSError:
+        return TelemetrySummary(0, 0.0, 0.0, [], [], None)
+
+    by_workflow = sorted(
+        ((k, by_workflow_count[k], round(by_workflow_cost[k], 4)) for k in by_workflow_count),
+        key=lambda row: row[2],
+        reverse=True,
+    )[:20]
+
+    today = date.today()
+    cutoff = today.toordinal() - recent_days
+    recent_days_data = sorted(
+        (
+            (day, by_day_count[day], round(by_day_cost[day], 4))
+            for day in by_day_count
+            if _ordinal(day) is not None and _ordinal(day) >= cutoff
+        ),
+        key=lambda row: row[0],
+    )
+
+    return TelemetrySummary(
+        total_requests=total_requests,
+        total_cost=round(total_cost, 4),
+        total_savings=round(total_savings, 4),
+        by_workflow=by_workflow,
+        by_day=recent_days_data,
+        last_event_at=last_event_at,
+    )
+
+
+def list_workflows() -> list[WorkflowEntry]:
+    """Return the registered workflow catalog. Empty if the registry is unavailable."""
+    try:
+        from attune.workflows import list_workflows as registry_list
+    except ImportError:
+        return []
+
+    out: list[WorkflowEntry] = []
+    try:
+        for entry in registry_list():
+            stages = entry.get("stages") or []
+            tier_map = entry.get("tier_map") or {}
+            out.append(
+                WorkflowEntry(
+                    name=str(entry.get("name", "")),
+                    description=str(entry.get("description", "")),
+                    stages=len(stages) if isinstance(stages, list) else 0,
+                    tier_map={str(k): str(v) for k, v in tier_map.items()},
+                )
+            )
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: registry introspection is best-effort; never fail the dashboard.
+        return []
+    return sorted(out, key=lambda w: w.name)
+
+
+def list_memory_topics(config: Config, *, limit: int = 50) -> list[MemoryEntry]:
+    """List recent personal-memory entries, if any."""
+    out: list[MemoryEntry] = []
+    base = config.memory_dir
+    if not base.exists():
+        return out
+
+    for md in sorted(base.rglob("*.md"))[:limit]:
+        try:
+            text = md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        snippet = text.strip().splitlines()[0] if text.strip() else ""
+        topic = md.stem.replace("_", " ")
+        out.append(MemoryEntry(topic=topic, snippet=snippet[:240], path=str(md)))
+    return out
+
+
+def family_versions() -> list[FamilyVersion]:
+    """Resolve installed versions for every related attune package."""
+    packages = ("attune-ai", "attune-author", "attune-rag", "attune-help", "attune-gui")
+    return [_resolve_version(pkg) for pkg in packages]
+
+
+def env_health(config: Config) -> dict[str, Any]:
+    """Lightweight environment snapshot for the Health page."""
+    import platform
+    import sys as _sys
+
+    home = config.attune_home
+    return {
+        "python": _sys.version.split()[0],
+        "platform": platform.platform(),
+        "attune_home": str(home),
+        "attune_home_exists": home.exists(),
+        "telemetry_present": config.telemetry_path.exists(),
+        "memory_dir_present": config.memory_dir.exists(),
+        "sessions_dir_present": config.sessions_dir.exists(),
+        "project_root": str(config.project_root),
+        "anthropic_api_key": bool(_env("ANTHROPIC_API_KEY")),
+    }
+
+
+def _to_day(ts: str) -> str | None:
+    if not ts:
+        return None
+    with contextlib.suppress(ValueError):
+        # Tolerate trailing Z, naive, or aware ISO timestamps.
+        cleaned = ts.rstrip("Z")
+        dt = datetime.fromisoformat(cleaned)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.date().isoformat()
+    return None
+
+
+def _ordinal(day: str) -> int | None:
+    with contextlib.suppress(ValueError):
+        return date.fromisoformat(day).toordinal()
+    return None
+
+
+def _env(name: str) -> str | None:
+    import os
+
+    return os.environ.get(name)
+
+
+def _resolve_version(package: str) -> FamilyVersion:
+    try:
+        from importlib.metadata import PackageNotFoundError
+        from importlib.metadata import version as _version
+    except ImportError:  # pragma: no cover — Python <3.10 not supported
+        return FamilyVersion(package=package, version=None, source="missing")
+    try:
+        return FamilyVersion(package=package, version=_version(package), source="installed")
+    except PackageNotFoundError:
+        return FamilyVersion(package=package, version=None, source="missing")
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: metadata resolution is best-effort.
+        return FamilyVersion(package=package, version=None, source="missing")

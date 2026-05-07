@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>attune ops</h1>
+  <p class="hero-sub">Operations dashboard for the workflow OS — workflows, telemetry, memory, releases.</p>
+</section>
+
+<section class="kpi-grid">
+  <a class="kpi" href="/workflows">
+    <div class="kpi-label">Workflows registered</div>
+    <div class="kpi-value">{{ workflow_count }}</div>
+    <div class="kpi-foot">{% if workflow_count == 0 %}attune package not importable{% else %}runnable from CLI / MCP{% endif %}</div>
+  </a>
+
+  <a class="kpi" href="/telemetry">
+    <div class="kpi-label">Telemetry events</div>
+    <div class="kpi-value">{{ '{:,}'.format(telemetry.total_requests) }}</div>
+    <div class="kpi-foot">spend ${{ '%.2f'|format(telemetry.total_cost) }} · saved ${{ '%.2f'|format(telemetry.total_savings) }}</div>
+  </a>
+
+  <a class="kpi" href="/releases">
+    <div class="kpi-label">Family packages</div>
+    <div class="kpi-value">{{ versions|length }}</div>
+    <div class="kpi-foot">attune-ai · author · rag · help · gui</div>
+  </a>
+</section>
+
+<section class="panel">
+  <h2>Recent activity</h2>
+  {% if telemetry.by_day %}
+    <table class="data-table">
+      <thead><tr><th>Day</th><th class="num">Events</th><th class="num">Cost</th></tr></thead>
+      <tbody>
+        {% for day, count, cost in telemetry.by_day %}
+          <tr><td><code>{{ day }}</code></td><td class="num">{{ count }}</td><td class="num">${{ '%.4f'|format(cost) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No telemetry recorded yet. Run a workflow to start seeing data here.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Family snapshot</h2>
+  <ul class="version-list">
+    {% for v in versions %}
+      <li>
+        <span class="pkg">{{ v.package }}</span>
+        {% if v.version %}
+          <span class="ver">v{{ v.version }}</span>
+        {% else %}
+          <span class="ver missing">not installed</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

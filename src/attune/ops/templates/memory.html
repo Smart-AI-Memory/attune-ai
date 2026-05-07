@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Memory{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Memory</h1>
+  <p class="page-sub">{{ entries|length }} entries from <code>{{ attune_home }}/memory/</code>.</p>
+</section>
+
+{% if entries %}
+  <ul class="memory-list">
+    {% for entry in entries %}
+      <li class="memory-item">
+        <div class="memory-topic">{{ entry.topic }}</div>
+        <div class="memory-snippet">{{ entry.snippet }}</div>
+        <div class="memory-path"><code>{{ entry.path }}</code></div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="empty">No memory entries yet. Run <code>attune memory capture</code> or interact with the MCP memory tools to start building one.</p>
+{% endif %}
+{% endblock %}

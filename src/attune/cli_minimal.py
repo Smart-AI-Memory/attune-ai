@@ -103,6 +103,8 @@ from attune.models.auth_cli import (
     cmd_auth_setup,
     cmd_auth_status,
 )
+from attune.ops.cli import add_subparser as _add_ops_subparser
+from attune.ops.cli import cmd_ops
 
 logger = logging.getLogger(__name__)
 
@@ -441,6 +443,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     _add_telemetry_subparsers(subparsers)
     _add_costs_subparsers(subparsers)
     _add_misc_subparsers(subparsers)
+    _add_ops_subparser(subparsers)
 
     return parser
 
@@ -500,6 +503,7 @@ _SIMPLE_DISPATCH: dict[str, object] = {
     "features": cmd_features,
     "validate": cmd_validate,
     "version": cmd_version,
+    "ops": cmd_ops,
 }
 
 

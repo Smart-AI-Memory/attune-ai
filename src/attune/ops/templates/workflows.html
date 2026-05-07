@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Workflows{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Workflows</h1>
+  <p class="page-sub">{{ workflows|length }} registered. Run with <code>attune workflow run &lt;name&gt;</code>.</p>
+</section>
+
+{% if workflows %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th class="num">Stages</th>
+        <th>Tier map</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in workflows %}
+        <tr>
+          <td><code>{{ w.name }}</code></td>
+          <td class="num">{{ w.stages }}</td>
+          <td>
+            {% for stage, tier in w.tier_map.items() %}
+              <span class="chip chip-{{ tier|lower }}">{{ stage }}: {{ tier }}</span>
+            {% endfor %}
+          </td>
+          <td>{{ w.description }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="empty">No workflows are visible. Make sure <code>attune-ai</code> is installed in the same venv as <code>attune-ops</code>.</p>
+{% endif %}
+{% endblock %}
