@@ -23,7 +23,7 @@ def _ctx(request: Request, page: str, **extra) -> dict:
 
 def _render(request: Request, template: str, page: str, **extra) -> HTMLResponse:
     templates = request.app.state.templates
-    return templates.TemplateResponse(template, _ctx(request, page=page, **extra))
+    return templates.TemplateResponse(request, template, _ctx(request, page=page, **extra))
 
 
 @router.get("/", response_class=HTMLResponse)
