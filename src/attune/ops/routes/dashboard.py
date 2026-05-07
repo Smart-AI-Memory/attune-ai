@@ -45,7 +45,14 @@ async def home(request: Request) -> HTMLResponse:
 @router.get("/workflows", response_class=HTMLResponse)
 async def workflows_page(request: Request) -> HTMLResponse:
     workflows = data.list_workflows()
-    return _render(request, "workflows.html", page="workflows", workflows=workflows)
+    cfg = request.app.state.config
+    return _render(
+        request,
+        "workflows.html",
+        page="workflows",
+        workflows=workflows,
+        allow_run=cfg.allow_run,
+    )
 
 
 @router.get("/telemetry", response_class=HTMLResponse)

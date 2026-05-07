@@ -15,6 +15,7 @@ class Config:
     attune_home: Path
     host: str = "127.0.0.1"
     port: int = 8765
+    allow_run: bool = False
 
     @property
     def telemetry_path(self) -> Path:
@@ -42,6 +43,7 @@ def build_config(
     *,
     host: str = "127.0.0.1",
     port: int = 8765,
+    allow_run: bool = False,
 ) -> Config:
     """Build a Config from inputs and environment defaults."""
     root = (project_root or Path.cwd()).expanduser().resolve()
@@ -50,4 +52,5 @@ def build_config(
         attune_home=attune_home(),
         host=host,
         port=port,
+        allow_run=allow_run,
     )

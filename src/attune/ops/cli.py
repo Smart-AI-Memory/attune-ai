@@ -36,6 +36,11 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="Don't auto-open the browser on startup",
     )
+    parser.add_argument(
+        "--allow-run",
+        action="store_true",
+        help="Enable workflow execution from the dashboard (default: read-only)",
+    )
 
 
 def cmd_ops(args: argparse.Namespace) -> int:
@@ -57,6 +62,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         project_root=args.project_root,
         host=args.host,
         port=args.port,
+        allow_run=args.allow_run,
     )
     app = create_app(config)
 
@@ -64,6 +70,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
     print(f"attune ops → {url}")
     print(f"  project: {config.project_root}")
     print(f"  attune-home: {config.attune_home}")
+    print(f"  allow-run: {'on' if config.allow_run else 'off (read-only)'}")
 
     if not args.no_browser:
         try:

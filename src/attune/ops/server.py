@@ -13,6 +13,8 @@ from fastapi.templating import Jinja2Templates
 from attune import __version__
 from attune.ops.config import Config
 from attune.ops.routes import dashboard
+from attune.ops.routes import runner as runner_routes
+from attune.ops.runner import RunnerService
 
 
 def _package_dir(name: str) -> Path:
@@ -20,7 +22,7 @@ def _package_dir(name: str) -> Path:
     return Path(str(files("attune.ops").joinpath(name)))
 
 
-def create_app(config: Config) -> FastAPI:
+def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAPI:
     """Build the FastAPI app, wiring config + templates into request state."""
     app = FastAPI(
         title="attune ops",
@@ -47,8 +49,10 @@ def create_app(config: Config) -> FastAPI:
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     app.state.config = config
     app.state.templates = templates
+    app.state.runner = runner if runner is not None else RunnerService()
 
     app.include_router(dashboard.router)
+    app.include_router(runner_routes.router)
 
     @app.get("/api/info", response_class=JSONResponse)
     async def info(request: Request):
