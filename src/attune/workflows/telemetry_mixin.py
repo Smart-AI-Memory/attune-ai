@@ -102,6 +102,8 @@ class TelemetryMixin:
         cache_hit: bool,
         cache_type: str | None,
         duration_ms: int,
+        prompt_cache_creation_tokens: int = 0,
+        prompt_cache_read_tokens: int = 0,
     ) -> None:
         """Track telemetry for an LLM call.
 
@@ -111,10 +113,15 @@ class TelemetryMixin:
             model: Model ID used
             cost: Cost in USD
             tokens: Dictionary with "input" and "output" token counts
-            cache_hit: Whether this was a cache hit
-            cache_type: Cache type if cache hit
+            cache_hit: Whether this was a workflow-level cache hit
+                (skipped the LLM call entirely)
+            cache_type: Cache type if cache_hit is True
             duration_ms: Duration in milliseconds
-
+            prompt_cache_creation_tokens: Tokens written to Anthropic's
+                prompt cache during this call (zero unless the provider
+                reported it; non-Anthropic providers always pass zero).
+            prompt_cache_read_tokens: Tokens read from Anthropic's prompt
+                cache during this call (zero unless reported).
         """
         if not self._enable_telemetry or self._telemetry_tracker is None:
             return
@@ -132,6 +139,9 @@ class TelemetryMixin:
                 cache_hit=cache_hit,
                 cache_type=cache_type,
                 duration_ms=duration_ms,
+                prompt_cache_hit=prompt_cache_read_tokens > 0,
+                prompt_cache_creation_tokens=prompt_cache_creation_tokens,
+                prompt_cache_read_tokens=prompt_cache_read_tokens,
             )
         except (AttributeError, TypeError, ValueError) as e:
             # INTENTIONAL: Telemetry tracking failures should never crash workflows

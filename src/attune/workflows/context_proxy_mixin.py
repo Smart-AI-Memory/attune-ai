@@ -103,6 +103,8 @@ class ContextProxyMixin:
         cache_hit: bool,
         cache_type: str | None,
         duration_ms: int,
+        prompt_cache_creation_tokens: int = 0,
+        prompt_cache_read_tokens: int = 0,
     ) -> None:
         """Track telemetry -- delegates to TelemetryService when ctx is provided."""
         if self._ctx and self._ctx.telemetry:
@@ -115,6 +117,8 @@ class ContextProxyMixin:
                 cache_hit=cache_hit,
                 cache_type=cache_type,
                 duration_ms=duration_ms,
+                prompt_cache_creation_tokens=prompt_cache_creation_tokens,
+                prompt_cache_read_tokens=prompt_cache_read_tokens,
             )
             return
         super()._track_telemetry(
@@ -126,6 +130,8 @@ class ContextProxyMixin:
             cache_hit,
             cache_type,
             duration_ms,
+            prompt_cache_creation_tokens=prompt_cache_creation_tokens,
+            prompt_cache_read_tokens=prompt_cache_read_tokens,
         )
 
     def _emit_call_telemetry(

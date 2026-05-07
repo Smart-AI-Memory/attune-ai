@@ -19,6 +19,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +27,29 @@ from attune.models import (
     ExecutionContext,
     LLMExecutor,
 )
+
+
+@dataclass(frozen=True)
+class StepResult:
+    """Result of a single workflow step execution.
+
+    Replaces the old 4-tuple return so cache-token telemetry can flow
+    through to ``UsageTracker.track_llm_call`` without further signature
+    growth. Anthropic prompt-cache fields are zero when the underlying
+    provider didn't report them (non-Anthropic providers, older SDKs).
+    """
+
+    content: str
+    input_tokens: int
+    output_tokens: int
+    cost: float
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
+
+    @property
+    def prompt_cache_hit(self) -> bool:
+        return self.cache_read_tokens > 0
+
 
 if TYPE_CHECKING:
     from .step_config import WorkflowStepConfig
@@ -137,7 +161,7 @@ class ExecutorMixin:
         prompt: str,
         system: str | None = None,
         **kwargs: Any,
-    ) -> tuple[str, int, int, float]:
+    ) -> StepResult:
         """Run a workflow step using the LLMExecutor.
 
         This method provides a unified interface for executing steps with
@@ -151,8 +175,9 @@ class ExecutorMixin:
             **kwargs: Additional arguments passed to executor
 
         Returns:
-            Tuple of (content, input_tokens, output_tokens, cost)
-
+            StepResult with content, token counts, cost, and Anthropic
+            prompt-cache stats. Cache fields are zero when the underlying
+            provider didn't report them.
         """
         executor = self._get_executor()
 
@@ -172,6 +197,15 @@ class ExecutorMixin:
         end_time = datetime.now()
         latency_ms = int((end_time - start_time).total_seconds() * 1000)
 
+        # Pull Anthropic prompt-cache stats out of the response metadata.
+        # AnthropicProvider stamps these onto LLMResponse.metadata when the
+        # SDK response carries cache_creation_input_tokens / cache_read_input_tokens.
+        # Other providers (or older SDKs) leave the keys absent, in which
+        # case we record zeros — JSONL stays clean either way.
+        meta = response.metadata or {}
+        cache_creation = int(meta.get("cache_creation_tokens", 0) or 0)
+        cache_read = int(meta.get("cache_read_tokens", 0) or 0)
+
         # Emit telemetry
         self._emit_call_telemetry(
             step_name=step.name,
@@ -185,9 +219,11 @@ class ExecutorMixin:
             success=True,
         )
 
-        return (
-            response.content,
-            response.tokens_input,
-            response.tokens_output,
-            response.cost_estimate,
+        return StepResult(
+            content=response.content,
+            input_tokens=response.tokens_input,
+            output_tokens=response.tokens_output,
+            cost=response.cost_estimate,
+            cache_creation_tokens=cache_creation,
+            cache_read_tokens=cache_read,
         )
