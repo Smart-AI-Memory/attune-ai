@@ -108,8 +108,16 @@ CommandBuilder = Callable[[str], Sequence[str]]
 
 
 def _default_command(workflow: str) -> Sequence[str]:
-    """Default subprocess command — shells out to the user's `attune` CLI."""
-    return ("attune", "workflow", "run", workflow)
+    """Default subprocess command — runs the same attune that's hosting ops.
+
+    Uses ``sys.executable -m attune.cli_minimal`` instead of bare ``attune``
+    because ``attune`` on PATH may resolve to a different install (e.g. a
+    system pyenv shim) than the one the dashboard is running. That mismatch
+    silently runs old code, which is the kind of bug that wastes 30 minutes
+    of debugging before someone notices ``which attune`` doesn't point where
+    they think it does.
+    """
+    return (sys.executable, "-m", "attune.cli_minimal", "workflow", "run", workflow)
 
 
 class RunnerService:
