@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Telemetry{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Telemetry</h1>
+  <p class="page-sub">From <code>{{ attune_home }}/telemetry/usage.jsonl</code>.</p>
+</section>
+
+<section class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Events</div>
+    <div class="kpi-value">{{ '{:,}'.format(telemetry.total_requests) }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Total spend</div>
+    <div class="kpi-value">${{ '%.2f'|format(telemetry.total_cost) }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Reported savings</div>
+    <div class="kpi-value">${{ '%.2f'|format(telemetry.total_savings) }}</div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>By workflow (top 20)</h2>
+  {% if telemetry.by_workflow %}
+    <table class="data-table">
+      <thead><tr><th>Workflow</th><th class="num">Events</th><th class="num">Cost</th></tr></thead>
+      <tbody>
+        {% for name, count, cost in telemetry.by_workflow %}
+          <tr><td><code>{{ name }}</code></td><td class="num">{{ count }}</td><td class="num">${{ '%.4f'|format(cost) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No telemetry events yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Last 14 days</h2>
+  {% if telemetry.by_day %}
+    <table class="data-table">
+      <thead><tr><th>Day</th><th class="num">Events</th><th class="num">Cost</th></tr></thead>
+      <tbody>
+        {% for day, count, cost in telemetry.by_day %}
+          <tr><td><code>{{ day }}</code></td><td class="num">{{ count }}</td><td class="num">${{ '%.4f'|format(cost) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No daily activity in the last 14 days.</p>
+  {% endif %}
+</section>
+
+{% if telemetry.last_event_at %}
+  <p class="meta">Last event recorded: <code>{{ telemetry.last_event_at }}</code></p>
+{% endif %}
+{% endblock %}

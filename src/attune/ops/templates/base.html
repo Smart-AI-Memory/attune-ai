@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}attune ops{% endblock %} · attune ops</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}" />
+  </head>
+  <body data-page="{{ page }}">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">attune</span>
+        <span class="brand-sub">ops</span>
+        <span class="version">v{{ attune_version }}</span>
+      </div>
+      <nav class="nav">
+        {% for href, label in nav_items %}
+          <a href="{{ href }}" class="nav-link {% if request.url.path == href %}is-active{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </nav>
+      <div class="env">
+        <span class="env-label">project</span>
+        <code class="env-value" title="{{ project_root }}">{{ project_root.split('/')[-1] }}</code>
+      </div>
+    </header>
+    <main class="main">{% block content %}{% endblock %}</main>
+    <footer class="footer">
+      attune ops · reads from <code>{{ attune_home }}</code> · refresh page for live data
+    </footer>
+  </body>
+</html>
