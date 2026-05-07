@@ -7,33 +7,69 @@
 </section>
 
 <section class="kpi-grid">
-  <a class="kpi" href="/workflows">
-    <div class="kpi-label">Workflows registered</div>
-    <div class="kpi-value">{{ workflow_count }}</div>
-    <div class="kpi-foot">{% if workflow_count == 0 %}attune package not importable{% else %}runnable from CLI / MCP{% endif %}</div>
+  <a class="kpi" href="/telemetry">
+    <div class="kpi-label">Today's events</div>
+    <div class="kpi-value">{{ '{:,}'.format(kpis.today_events) }}</div>
+    <div class="kpi-foot">{% if kpis.today_events == 0 %}no activity yet today{% else %}${{ '%.4f'|format(kpis.today_cost) }} spent{% endif %}</div>
   </a>
 
   <a class="kpi" href="/telemetry">
-    <div class="kpi-label">Telemetry events</div>
-    <div class="kpi-value">{{ '{:,}'.format(telemetry.total_requests) }}</div>
-    <div class="kpi-foot">spend ${{ '%.2f'|format(telemetry.total_cost) }} · saved ${{ '%.2f'|format(telemetry.total_savings) }}</div>
+    <div class="kpi-label">7-day spend</div>
+    <div class="kpi-value">${{ '%.2f'|format(kpis.seven_day_cost) }}</div>
+    <div class="kpi-foot">
+      {% if sparkline %}
+        <svg class="sparkline" viewBox="0 0 240 40" preserveAspectRatio="none" aria-hidden="true">
+          <polyline points="{{ sparkline }}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+        </svg>
+      {% else %}
+        <span class="kpi-sub">no spend in last 7 days</span>
+      {% endif %}
+    </div>
+  </a>
+
+  <a class="kpi" href="/workflows">
+    <div class="kpi-label">Workflows</div>
+    <div class="kpi-value">{{ workflow_count }}</div>
+    <div class="kpi-foot">{% if workflow_count == 0 %}attune package not importable{% else %}runnable from CLI / MCP / dashboard{% endif %}</div>
   </a>
 
   <a class="kpi" href="/releases">
-    <div class="kpi-label">Family packages</div>
-    <div class="kpi-value">{{ versions|length }}</div>
-    <div class="kpi-foot">attune-ai · author · rag · help · gui</div>
+    <div class="kpi-label">attune-ai</div>
+    <div class="kpi-value">{% if attune_ai and attune_ai.version %}v{{ attune_ai.version }}{% else %}—{% endif %}</div>
+    <div class="kpi-foot">{{ versions|length }} family packages tracked</div>
   </a>
 </section>
 
 <section class="panel">
-  <h2>Recent activity</h2>
+  <h2>Recent runs</h2>
+  {% if recent_runs %}
+    <table class="data-table">
+      <thead><tr><th>Workflow</th><th>Status</th><th class="num">Duration</th><th>Started</th><th class="num">Lines</th></tr></thead>
+      <tbody>
+        {% for r in recent_runs %}
+          <tr>
+            <td><code>{{ r.workflow }}</code></td>
+            <td><span class="chip chip-{{ r.status }}">{{ r.status }}</span></td>
+            <td class="num">{% if r.duration_seconds is not none %}{{ '%.1fs'|format(r.duration_seconds) }}{% else %}—{% endif %}</td>
+            <td><code class="started">{{ r.started_at[:19] if r.started_at else '—' }}</code></td>
+            <td class="num">{{ r.line_count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No runs yet this session. Trigger one from <a href="/workflows">Workflows</a> with <code>attune ops --allow-run</code>.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Daily activity (7 days)</h2>
   {% if telemetry.by_day %}
     <table class="data-table">
       <thead><tr><th>Day</th><th class="num">Events</th><th class="num">Cost</th></tr></thead>
       <tbody>
-        {% for day, count, cost in telemetry.by_day %}
-          <tr><td><code>{{ day }}</code></td><td class="num">{{ count }}</td><td class="num">${{ '%.4f'|format(cost) }}</td></tr>
+        {% for d in kpis.sparkline %}
+          <tr><td><code>{{ d.day }}</code></td><td class="num">{{ d.events }}</td><td class="num">${{ '%.4f'|format(d.cost) }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -48,6 +48,72 @@ class FamilyVersion:
     source: str  # "installed" | "missing"
 
 
+@dataclass(frozen=True)
+class DailyCost:
+    """One day's cost for the home-page sparkline."""
+
+    day: str  # YYYY-MM-DD
+    events: int
+    cost: float
+
+
+@dataclass(frozen=True)
+class HomeKpis:
+    """Summary numbers shown above the fold on the home page."""
+
+    today_events: int
+    today_cost: float
+    seven_day_cost: float
+    seven_day_savings: float
+    sparkline: list[DailyCost]  # always exactly 7 entries, oldest first
+
+
+def home_kpis(summary: TelemetrySummary, *, today: date | None = None) -> HomeKpis:
+    """Derive home-page KPIs from a telemetry summary.
+
+    Always returns a 7-entry sparkline (zero-fills missing days) so the SVG
+    layout is stable even on a fresh install.
+    """
+    today = today or date.today()
+    by_day_lookup = {row[0]: (row[1], row[2]) for row in summary.by_day}
+
+    sparkline: list[DailyCost] = []
+    seven_day_cost = 0.0
+    for offset in range(6, -1, -1):
+        day = date.fromordinal(today.toordinal() - offset).isoformat()
+        events, cost = by_day_lookup.get(day, (0, 0.0))
+        seven_day_cost += cost
+        sparkline.append(DailyCost(day=day, events=events, cost=cost))
+
+    today_events, today_cost = by_day_lookup.get(today.isoformat(), (0, 0.0))
+    return HomeKpis(
+        today_events=today_events,
+        today_cost=round(today_cost, 4),
+        seven_day_cost=round(seven_day_cost, 4),
+        seven_day_savings=round(summary.total_savings, 4),
+        sparkline=sparkline,
+    )
+
+
+def sparkline_points(values: list[float], *, width: int = 240, height: int = 40) -> str:
+    """Render values as an SVG ``polyline`` ``points`` string.
+
+    Empty/all-zero values return an empty string (template renders fallback).
+    Y-axis is inverted (SVG origin is top-left); the largest value touches
+    the top of the box.
+    """
+    if not values or all(v == 0 for v in values):
+        return ""
+    n = len(values)
+    span = max(values) or 1.0
+    points: list[str] = []
+    for i, v in enumerate(values):
+        x = (i / max(n - 1, 1)) * width
+        y = height - (v / span) * height
+        points.append(f"{x:.1f},{y:.1f}")
+    return " ".join(points)
+
+
 def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> TelemetrySummary:
     """Aggregate ``usage.jsonl`` into a UI-friendly summary."""
     path = config.telemetry_path
