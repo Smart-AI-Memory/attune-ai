@@ -91,6 +91,19 @@ class TestCreateParser:
         assert args.workflow_command == "run"
         assert args.name == "wf-name"
 
+    def test_workflow_run_path_defaults_to_cwd(self, parser: argparse.ArgumentParser) -> None:
+        """``--path`` defaults to ``"."`` so workflows that need a path
+        (dependency-check, code-review, etc.) don't fail when run bare.
+        """
+        args = parser.parse_args(["workflow", "run", "dependency-check"])
+        assert args.path == "."
+
+    def test_workflow_run_path_explicit_overrides_default(
+        self, parser: argparse.ArgumentParser
+    ) -> None:
+        args = parser.parse_args(["workflow", "run", "dependency-check", "--path", "/tmp/proj"])
+        assert args.path == "/tmp/proj"
+
     def test_telemetry_show(self, parser: argparse.ArgumentParser) -> None:
         args = parser.parse_args(["telemetry", "show"])
         assert args.command == "telemetry"
