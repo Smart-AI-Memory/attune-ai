@@ -32,6 +32,11 @@ async def home(request: Request) -> HTMLResponse:
     summary = data.read_telemetry_summary(cfg)
     workflows = data.list_workflows()
     versions = data.family_versions()
+    kpis = data.home_kpis(summary)
+    sparkline = data.sparkline_points([d.cost for d in kpis.sparkline])
+    runner = getattr(request.app.state, "runner", None)
+    recent_runs = [r.to_dict() for r in runner.recent(limit=5)] if runner else []
+    attune_ai = next((v for v in versions if v.package == "attune-ai"), None)
     return _render(
         request,
         "home.html",
@@ -39,6 +44,10 @@ async def home(request: Request) -> HTMLResponse:
         telemetry=summary,
         workflow_count=len(workflows),
         versions=versions,
+        kpis=kpis,
+        sparkline=sparkline,
+        recent_runs=recent_runs,
+        attune_ai=attune_ai,
     )
 
 

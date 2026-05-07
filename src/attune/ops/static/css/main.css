@@ -452,3 +452,32 @@ a.kpi:hover {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Home polish */
+.sparkline {
+  display: block;
+  width: 100%;
+  height: 40px;
+  color: var(--accent);
+}
+.kpi-sub {
+  color: var(--fg-subtle);
+  font-size: 12px;
+}
+.chip-completed {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.chip-failed {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.chip-running,
+.chip-pending {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.started {
+  font-size: 11px;
+  color: var(--fg-subtle);
+}

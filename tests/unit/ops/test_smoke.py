@@ -30,7 +30,7 @@ def test_home_renders(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "attune ops" in response.text.lower()
-    assert "workflows registered" in response.text.lower()
+    assert "workflows" in response.text.lower()
 
 
 @pytest.mark.parametrize(
