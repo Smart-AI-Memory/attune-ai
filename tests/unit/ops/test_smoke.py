@@ -81,8 +81,7 @@ def test_telemetry_aggregates_jsonl(tmp_path, monkeypatch):
     log.write_text(
         "\n".join(
             [
-                '{"workflow": "code-review", "total_cost": 0.12, "savings": 0.05, '
-                '"timestamp": "2026-05-06T10:00:00+00:00"}',
+                '{"workflow": "code-review", "total_cost": 0.12, "savings": 0.05, "timestamp": "2026-05-06T10:00:00+00:00"}',
                 '{"workflow": "code-review", "total_cost": 0.08, '
                 '"timestamp": "2026-05-06T11:00:00+00:00"}',
                 '{"workflow": "security-audit", "total_cost": 0.50, '
