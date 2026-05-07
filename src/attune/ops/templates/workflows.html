@@ -3,22 +3,30 @@
 {% block content %}
 <section class="page-head">
   <h1>Workflows</h1>
-  <p class="page-sub">{{ workflows|length }} registered. Run with <code>attune workflow run &lt;name&gt;</code>.</p>
+  <p class="page-sub">
+    {{ workflows|length }} registered.
+    {% if allow_run %}
+      Click <strong>Run</strong> to execute one. Output streams below.
+    {% else %}
+      Read-only mode — restart with <code>attune ops --allow-run</code> to run from the dashboard.
+    {% endif %}
+  </p>
 </section>
 
 {% if workflows %}
-  <table class="data-table">
+  <table class="data-table runner-table">
     <thead>
       <tr>
         <th>Name</th>
         <th class="num">Stages</th>
         <th>Tier map</th>
         <th>Description</th>
+        {% if allow_run %}<th class="num">Action</th>{% endif %}
       </tr>
     </thead>
     <tbody>
       {% for w in workflows %}
-        <tr>
+        <tr data-workflow="{{ w.name }}">
           <td><code>{{ w.name }}</code></td>
           <td class="num">{{ w.stages }}</td>
           <td>
@@ -26,12 +34,29 @@
               <span class="chip chip-{{ tier|lower }}">{{ stage }}: {{ tier }}</span>
             {% endfor %}
           </td>
-          <td>{{ w.description }}</td>
+          <td>
+            {{ w.description }}
+            <div class="run-status"><span data-status></span></div>
+            <div class="log-pane" data-log-pane hidden>
+              <pre data-log class="log-output"></pre>
+            </div>
+          </td>
+          {% if allow_run %}
+            <td class="num">
+              <button class="btn btn-run" type="button" data-run-button data-workflow="{{ w.name }}">Run</button>
+            </td>
+          {% endif %}
         </tr>
       {% endfor %}
     </tbody>
   </table>
 {% else %}
   <p class="empty">No workflows are visible. Make sure <code>attune-ai</code> is installed in the same venv as <code>attune-ops</code>.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if allow_run %}
+  <script src="{{ url_for('static', path='js/runner.js') }}"></script>
 {% endif %}
 {% endblock %}
