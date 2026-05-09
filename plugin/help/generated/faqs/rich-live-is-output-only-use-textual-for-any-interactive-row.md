@@ -1,0 +1,23 @@
+---
+type: faq
+name: rich-live-is-output-only-use-textual-for-any-interactive-row
+tags: [git]
+source: .claude/CLAUDE.md
+---
+
+# FAQ: What should I know about rich.live is output-only; use textual for any interactive row navigation?
+
+## Answer
+
+both libraries share the same author and styling DSL, which makes it easy to reach for `rich.live` when the spec says "drill into a row." But `rich.live` has no concept of focus, selection, or keyboard input — it's for non-interactive auto-refreshing displays (progress bars, status tables). The moment the UX needs arrow-key navigation or screen push/pop, `textual`'s `DataTable` widget, `Screen` subclass, and key bindings are the right primitives.
+
+**How to fix:**
+- Check the spec before picking: if `$EDITOR path/from/drill-in.output` closes the loop in shell, you may not need a TUI at all — a `--drill-in FEATURE` flag on a CLI script is often strictly better than either option
+
+```
+ when the spec says "drill into a row." But
+```
+
+## Related Topics
+- **Error**: Detailed error: `rich.live` is output-only; use `textual` for
+  any interactive row navigation

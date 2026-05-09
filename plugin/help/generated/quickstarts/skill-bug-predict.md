@@ -1,26 +1,22 @@
 ---
-name: skill-bug-predict
-source: plugin/skills/bug-predict/SKILL.md
-summary: This template explains how to use the /bug-predict command to identify potential
-  bug locations in code by analyzing patterns and complexity metrics.
-tags:
-- skill
-- claude-code
 type: quickstart
+name: skill-bug-predict
+tags: [skill, claude-code]
+source: plugin/skills/bug-predict/SKILL.md
 ---
 
 # Quickstart: Use /bug-predict
 
-Predict likely bug locations based on code patterns and complexity analysis.
+Predict likely bug locations from code patterns and complexity.
 
 ```
 /bug-predict <path or directory to scan>
 ```
 
-**Result:** Structured findings delivered directly in your Claude Code conversation.
+**Result:** Structured results in your Claude Code conversation.
 
-**Next:** For complete details, see the full reference: `attune help-docs ref-skill-bug-predict`
+**Next:** See full reference: `attune help-docs ref-skill-bug-predict`
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

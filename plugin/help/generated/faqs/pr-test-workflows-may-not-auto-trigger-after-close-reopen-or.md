@@ -1,29 +1,20 @@
 ---
-name: pr-test-workflows-may-not-auto-trigger-after-close-reopen-or
-source: .claude/CLAUDE.md
-summary: This template explains why GitHub Actions PR test workflows sometimes fail
-  to auto-trigger after a PR is closed, reopened, or when a branch is reused, and
-  provides a manual workaround using the GitHub CLI.
-tags:
-- testing
-- git
 type: faq
+name: pr-test-workflows-may-not-auto-trigger-after-close-reopen-or
+tags: [testing, git]
+source: .claude/CLAUDE.md
 ---
 
-# FAQ: Why don't PR test workflows auto-trigger after close/reopen or branch reuse?
+# FAQ: What should I know about PR test workflows may not auto-trigger after close/reopen or branch reuse?
 
 ## Answer
 
-When a PR branch is reused after a previous PR was merged, the `pull_request` trigger may not fire on subsequent pushes. This is a known GitHub Actions behavior that can silently skip CI runs without any visible error.
+When a PR branch is reused after a previous PR was merged, the `pull_request` trigger may not fire on new pushes. `gh workflow run tests.yml --ref <branch>` is the reliable manual fallback.
 
-To reliably trigger the workflow manually, use:
-
-```bash
-gh workflow run tests.yml --ref <branch>
+```
+pull_request
 ```
 
-Replace `<branch>` with the name of your PR branch.
-
 ## Related Topics
-
-- **Troubleshooting**: PR test workflows may not auto-trigger after close/reopen or branch reuse
+- **Error**: Detailed error: PR test workflows may not auto-trigger after close/reopen or
+  branch reuse

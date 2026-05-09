@@ -1,28 +1,22 @@
 ---
-name: run-code-review
-source: src/attune/cli_minimal.py
-summary: This template covers how to quickly run an AI-powered code review on source
-  files and access related resources for understanding results and generating tests.
-tags:
-- workflow
-- code-quality
 type: quickstart
+name: run-code-review
+tags: [workflow, code-quality]
+source: src/attune/cli_minimal.py
 ---
 
-# Quickstart: Run a Code Review
+# Quickstart: Run a code review
 
-Get AI-powered code quality analysis on your source files in seconds.
+Get AI-powered code quality analysis.
 
-```bash
+```
 attune workflow run code-review --path "src/"
 ```
 
-**Result:** Quality findings returned and grouped by severity.
+**Result:** Quality findings grouped by severity.
 
-**Next step:** Run `/smart-test` to automatically generate tests for any flagged areas.
+**Next:** Follow up with `/smart-test` to generate tests for flagged areas.
 
 ## Related Topics
 
-- [Quickstart: Generate Tests with Smart Test](#)
-- [Understanding Severity Levels in Code Review](#)
-- [Workflow Command Reference](#)
+_No related topics yet._

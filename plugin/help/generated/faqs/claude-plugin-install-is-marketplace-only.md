@@ -1,27 +1,19 @@
 ---
-name: claude-plugin-install-is-marketplace-only
-source: .claude/CLAUDE.md
-summary: This template explains that the `claude plugin install` command only works
-  with marketplace plugins and directs developers to use the `--plugin-dir` flag as
-  an alternative for loading local plugins during development.
-tags:
-- testing
-- claude-code
 type: faq
+name: claude-plugin-install-is-marketplace-only
+tags: [testing, claude-code]
+source: .claude/CLAUDE.md
 ---
 
-# FAQ: How do I handle "claude plugin install is marketplace-only"?
+# FAQ: How do I handle claude plugin install is marketplace-only?
 
 ## Answer
 
-The `claude plugin install` command only supports installing plugins from the official marketplace and does not accept local file paths.
+The `install` command does not accept local paths. For local testing use `claude --plugin-dir ./plugin`.
 
-To load a plugin from a local directory during development or testing, use the `--plugin-dir` flag instead:
-
-```bash
-claude --plugin-dir ./my-plugin
+```
+ command does not accept local paths. For local testing use
 ```
 
 ## Related Topics
-
-- **Error reference**: `claude plugin install` is marketplace-only
+- **Error**: Detailed error: `claude plugin install` is marketplace-only

@@ -1,26 +1,22 @@
 ---
-name: skill-attune-hub
-source: plugin/skills/attune-hub/SKILL.md
-summary: This template describes how to use the `/attune-hub` command to route developer
-  requests to appropriate skills and receive structured output in Claude Code conversations.
-tags:
-- skill
-- claude-code
 type: quickstart
+name: skill-attune-hub
+tags: [skill, claude-code]
+source: plugin/skills/attune-hub/SKILL.md
 ---
 
 # Quickstart: Use /attune-hub
 
-`/attune-hub` is your central developer workflow hub. Describe what you need, and it automatically routes your request to the appropriate skill.
+Developer workflow hub — routes to the right skill based on what you need.
 
 ```
 /attune-hub <what you need help with>
 ```
 
-**Result:** Structured output delivered directly in your Claude Code conversation.
+**Result:** Structured results in your Claude Code conversation.
 
-**Next:** For complete reference documentation, run `attune help-docs ref-skill-attune-hub`
+**Next:** See full reference: `attune help-docs ref-skill-attune-hub`
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

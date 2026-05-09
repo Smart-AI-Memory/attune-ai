@@ -1,33 +1,23 @@
 ---
-name: decision-d2-search-index-first-unified-later
-source: .claude/plans/documentation-stack-spec.md
-summary: This template documents a phased approach to implementing search functionality
-  that starts with a local index of template content and later expands to unified
-  search across code, documentation, and telemetry data.
-tags:
-- architecture
-- design-decision
 type: note
+name: decision-d2-search-index-first-unified-later
+tags: [architecture, design-decision]
+source: .claude/plans/documentation-stack-spec.md
 ---
 
-# Design Decision: Search Strategy — Index First, Unified Later
+# Note: Design decision: Search: index first, unified later
 
 ## Context
 
-This decision applies to the documentation stack architecture.
+Documentation stack architecture decision.
 
-## Decision
+## Content
 
-Begin with a **local index over generated template content** as a practical, shippable starting point. Evolve toward a **unified knowledge search** that also covers source code, Lessons Learned, and telemetry data.
-
-| Phase | Capability |
-|-------|------------|
-| Phase 2 | Local index over generated template content |
-| Phase 4 | Unified search across code, Lessons Learned, and telemetry |
-
-## Rationale
-
-A local index delivers immediate value with lower implementation complexity. Deferring unified search to a later phase allows the team to ship useful search functionality early while keeping the architecture open to broader integration once the documentation stack matures.
+Start with a local index over generated template
+content (practical, shippable). Evolve toward unified
+knowledge search that also covers code, Lessons
+Learned, and telemetry. The index is Phase 2; unified
+search is Phase 4.
 
 ## Related Topics
 

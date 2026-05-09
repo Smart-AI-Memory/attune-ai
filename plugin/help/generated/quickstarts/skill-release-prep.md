@@ -1,26 +1,21 @@
 ---
-name: skill-release-prep
-source: plugin/skills/release-prep/SKILL.md
-summary: This template automates release preparation by running health checks, security
-  audits, changelog validation, version bumps, and dependency audits to produce a
-  structured release readiness report.
-tags:
-- skill
-- claude-code
 type: quickstart
+name: skill-release-prep
+tags: [skill, claude-code]
+source: plugin/skills/release-prep/SKILL.md
 ---
 
-# Quickstart: /release-prep
+# Quickstart: Use /release-prep
 
-Prepare releases with automated health checks, security audits, changelog validation, version bumps, and dependency audits.
+Pre-release preparation with health checks, security audit, changelog validation, version bumps, and dependency audits.
 
 ```
-/release-prep <version | 'check'>
+/release-prep <version or 'check'>
 ```
 
-**Result:** Structured release readiness report delivered directly in your Claude Code conversation.
+**Result:** Structured results in your Claude Code conversation.
 
-**Next:** View the full reference with `attune help-docs ref-skill-release-prep`
+**Next:** See full reference: `attune help-docs ref-skill-release-prep`
 
 ## Related Topics
 

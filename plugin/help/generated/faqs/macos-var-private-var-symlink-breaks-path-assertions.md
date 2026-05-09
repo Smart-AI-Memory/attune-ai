@@ -1,33 +1,22 @@
 ---
-name: macos-var-private-var-symlink-breaks-path-assertions
-source: .claude/CLAUDE.md
-summary: This developer help template explains why path assertions fail on macOS when
-  comparing temporary file paths, because `Path.resolve()` follows the `/var` to `/private/var`
-  symlink while `tempfile.NamedTemporaryFile` does not, and provides a solution to
-  resolve both paths before comparison.
-tags:
-- testing
-- security
-- windows
-- macos
-- python
 type: faq
+name: macos-var-private-var-symlink-breaks-path-assertions
+tags: [testing, security, windows, macos, python]
+source: .claude/CLAUDE.md
 ---
 
-# FAQ: Why Does the macOS `/var` → `/private/var` Symlink Break Path Assertions?
+# FAQ: Why does macOS /var → /private/var symlink breaks path assertions?
 
 ## Answer
 
-`_validate_file_path()` calls `Path.resolve()`, which follows the macOS symlink from `/var/folders/...` to `/private/var/folders/...`. This creates a mismatch in tests: `tempfile.NamedTemporaryFile` returns the **unresolved** path via `f.name`, while the validation code returns the **resolved** path — causing path assertions to fail.
+`_validate_file_path()` calls `Path.resolve()`, which follows the macOS symlink from `/var/folders/...` to `/private/var/folders/...`. Tests using `tempfile.NamedTemporaryFile` get unresolved paths from `f.name` but resolved paths from validated code.
 
-**Fix:**
+**How to fix:**
+- assert against `str(Path(f.name).resolve())` instead of `f.name`
 
-Compare against the resolved path by wrapping `f.name` with `Path.resolve()`:
-
-```python
-assert result == str(Path(f.name).resolve())
+```
+_validate_file_path()
 ```
 
 ## Related Topics
-
-- **Error:** macOS `/var` → `/private/var` symlink breaks path assertions
+- **Error**: Detailed error: macOS `/var` → `/private/var` symlink breaks path assertions

@@ -20,13 +20,12 @@ Invoke with: `/release-prep <version or 'check'>`
    "Full release prep or a specific check?" - Full: All 4 agents (security, testing, docs, versioning) - Specific: Single check (e.g., just changelog)
 
 3. **Run the tool**
-   Call the `release_prep` MCP tool for a full assessment: For targeted checks, use individual tools: The full `release_prep` orchestrates a 4-agent team: - **Security Agent** — runs security_audit, flags
-  vulnerabilities that block release
-- **Testing Agent** — checks test coverage, runs
-  test_generation for gaps
-- **Docs Agent** — validates changelog, README, and
+   Call the `release_prep` MCP tool for a full assessment: For targeted checks, use individual tools: The full release prep covers four areas: - **Security** — scans for vulnerabilities that block
+  release
+- **Testing** — checks test coverage, identifies gaps
+- **Documentation** — validates changelog, README, and
   documentation freshness
-- **Version Agent** — checks version bumps, dependency
+- **Versioning** — checks version bumps, dependency
   compatibility, semver compliance
 
    ```

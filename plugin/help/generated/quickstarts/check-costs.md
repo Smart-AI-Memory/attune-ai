@@ -1,33 +1,22 @@
 ---
-name: check-costs
-source: src/attune/cli_minimal.py
-summary: This template explains how to view and analyze API costs for workflow runs
-  using the `attune costs` command, including cost savings from tier routing, with
-  an option to export the data for further analysis.
-tags:
-- cli
-- telemetry
 type: quickstart
+name: check-costs
+tags: [cli, telemetry]
+source: src/attune/cli_minimal.py
 ---
 
-# Quickstart: Check API Costs
+# Quickstart: Check API costs
 
-Review the cost breakdown for your workflow runs, including any savings from tier routing.
+See how much your workflow runs have cost.
 
-```bash
+```
 attune costs
 ```
 
-**Result:** A cost breakdown grouped by workflow, showing total spend and savings achieved through tier routing.
+**Result:** Cost breakdown by workflow with savings from tier routing.
 
-**Next step:** Export the data for further analysis with:
-
-```bash
-attune telemetry export -o costs.json
-```
+**Next:** Export with `attune telemetry export -o costs.json`.
 
 ## Related Topics
 
-- [Understanding Tier Routing](#)
-- [Exporting Telemetry Data](#)
-- [Managing Workflow Budgets](#)
+_No related topics yet._

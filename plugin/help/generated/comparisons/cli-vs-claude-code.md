@@ -1,36 +1,29 @@
 ---
-name: cli-vs-claude-code
-source: smartaimemory.com/attune-plugin/
-summary: This template compares the two ways to use attune-ai—as a standalone CLI
-  tool for automated workflows and CI/CD pipelines, or as Claude Code skills for interactive
-  development with codebase context.
-tags:
-- cli
-- claude-code
 type: comparison
+name: cli-vs-claude-code
+tags: [cli, claude-code]
+source: smartaimemory.com/attune-plugin/
 ---
 
-# Comparison: CLI vs Claude Code Usage
+# Comparison: CLI vs Claude Code usage
 
-There are two ways to use attune-ai: as a standalone CLI or within Claude Code conversations.
+Two ways to use attune-ai: the standalone CLI or inside Claude Code conversations.
 
-| Feature | CLI (`attune`) | Claude Code (skills) |
-| --- | --- | --- |
+| Feature | CLI (attune) | Claude Code (skills) |
+| ------- | ------- | ------- |
 | Invocation | `attune workflow run` | `/security-audit` |
 | Scoping | CLI flags | Socratic questions |
 | Output | Terminal (Rich) | Conversation (Markdown) |
-| Context-aware | No | Yes (reads your codebase) |
-| CI/CD integration | Yes | No |
-| Follow-up | Manual re-invocation | Interactive (e.g., "fix this?") |
+| Context-aware | No | Yes (sees your codebase) |
+| CI/CD | Yes | No |
+| Follow-up | Manual | Interactive ("fix this?") |
 | Cost tracking | Yes (attune costs) | Via MCP tools |
-| Setup | `pip install` + API key | Plugin install |
+| Setup | pip install + API key | Plugin install |
 
-## When to Use Each
+## Recommendation
 
-**Choose the CLI** for scripting, CI/CD pipelines, and batch operations where automation and repeatability matter.
-
-**Choose Claude Code skills** for interactive development sessions where codebase context and conversational follow-up improve results.
+Use the **CLI** for scripting, CI/CD, and batch operations. Use **Claude Code skills** for interactive development where context and follow-up matter.
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

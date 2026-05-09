@@ -1,25 +1,21 @@
 ---
-name: generate-tests
-source: src/attune/cli_minimal.py
-summary: This template shows how to automatically generate pytest test cases for uncovered
-  code in a Python module using the Attune workflow command.
-tags:
-- workflow
-- testing
 type: quickstart
+name: generate-tests
+tags: [workflow, testing]
+source: src/attune/cli_minimal.py
 ---
 
-# Quickstart: Generate Tests for a Module
+# Quickstart: Generate tests for a module
 
-Automatically generate pytest tests for uncovered code in a specified module.
+Auto-generate pytest tests for uncovered code.
 
-```bash
+```
 attune workflow run test-gen --path src/attune/help/engine.py
 ```
 
-**Result:** A test file is generated containing edge cases and assertions for the target module.
+**Result:** Generated test file with edge cases and assertions.
 
-**Next:** Run `pytest` to verify that the generated tests pass.
+**Next:** Run `pytest` to verify the generated tests pass.
 
 ## Related Topics
 

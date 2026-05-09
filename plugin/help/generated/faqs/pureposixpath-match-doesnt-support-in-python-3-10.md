@@ -9,7 +9,7 @@ source: .claude/CLAUDE.md
 
 ## Answer
 
-`PurePosixPath("a/b/c.py").match("a/**")` returns `False` because `match()` treats `*` as single-segment only (no recursive globbing). For `**` glob patterns, convert to fnmatch: replace `**` with `*`, then use `fnmatch.fnmatch()`.
+`PurePosixPath("a/b/c.py").match("a/**")` returns `False` because `match()` treats `*` as single-segment only (no recursive globbing). Do NOT replace `**` with `*` in `fnmatch.fnmatch()` — fnmatch's `*` matches `/`, so `src/attune/*` incorrectly matches `src/attune-redis/foo.py`.
 
 ```
 PurePosixPath("a/b/c.py").match("a/**")

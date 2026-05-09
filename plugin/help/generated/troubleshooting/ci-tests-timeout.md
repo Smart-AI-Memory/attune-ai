@@ -1,39 +1,29 @@
 ---
-name: ci-tests-timeout
-source: CLAUDE.md Lessons Learned
-summary: This template guides developers through identifying, diagnosing, and resolving
-  CI test timeouts in GitHub Actions workflows, with particular attention to platform-specific
-  performance differences and preventive strategies.
-tags:
-- ci
-- testing
-- windows
 type: troubleshooting
+name: ci-tests-timeout
+tags: [ci, testing, windows]
+source: CLAUDE.md Lessons Learned
 ---
 
-# Troubleshooting: CI Tests Timing Out
+# Troubleshooting: CI tests timing out
 
 ## Symptom
 
-One or more platforms fail in the GitHub Actions test matrix with a timeout error.
+GitHub Actions test matrix fails with timeout on one or more platforms.
 
 ## Diagnosis
 
-1. Identify which platform timed out — Windows runners are typically ~3× slower than Linux.
-2. Review the `timeout-minutes` value in the workflow YAML.
-3. Check whether recently added tests have significantly increased the total runtime.
+1. Check which platform timed out (Windows is ~3x slower)
+2. Look at `timeout-minutes` in the workflow YAML
+3. Check if new tests were added that significantly increase runtime
 
 ## Fix
 
-Increase `timeout-minutes` in the workflow YAML for the affected platform. The full test suite on Windows generally requires **45–60 minutes**. If you raise the upper bound, also update the `test_timeout_values_are_reasonable` test to reflect the new limit.
+Increase `timeout-minutes` in the workflow YAML. Windows needs ~45-60 min for the full suite. Update `test_timeout_values_are_reasonable` test if the upper bound changed.
 
 ## Prevention
 
-- Set the Windows job timeout to **60 minutes** as a baseline.
-- During development, run targeted coverage instead of the full suite:
-  ```
-  pytest tests/unit/module/
-  ```
+Set Windows timeout to 60 min. Run targeted coverage (`pytest tests/unit/module/`) during development.
 
 ## Related Topics
 

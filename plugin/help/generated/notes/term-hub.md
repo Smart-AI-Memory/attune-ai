@@ -1,17 +1,20 @@
 ---
-name: term-hub
-source: CLAUDE.md
-summary: This template explains that a hub is a command routing namespace in the attune-ai
-  codebase that organizes and groups related commands together.
-tags:
-- terminology
 type: note
+name: term-hub
+tags: [terminology]
+source: CLAUDE.md
 ---
 
-# Hub
+# Note: Term: hub
 
-A **hub** is a command routing namespace used to organize and group related commands within the attune-ai codebase.
+## Context
+
+Project terminology used in the attune-ai codebase.
+
+## Content
+
+**hub** — Command routing namespace
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

@@ -1,43 +1,22 @@
 ---
-name: skill-refactor-plan
-source: plugin/skills/refactor-plan/SKILL.md
-summary: The `/refactor-plan` command analyzes code files or directories to generate
-  a structured refactoring analysis with prioritized recommendations and actionable
-  next steps.
-tags:
-- skill
-- claude-code
 type: quickstart
+name: skill-refactor-plan
+tags: [skill, claude-code]
+source: plugin/skills/refactor-plan/SKILL.md
 ---
 
-# Quickstart: /refactor-plan
+# Quickstart: Use /refactor-plan
 
-Generate a code-level refactoring analysis and actionable roadmap for any file or directory.
-
-## Usage
+Code-level refactoring analysis and roadmap.
 
 ```
-/refactor-plan <path>
+/refactor-plan <path to analyze>
 ```
 
-## What It Does
+**Result:** Structured results in your Claude Code conversation.
 
-Analyzes the target path and returns a structured refactoring plan — including identified issues, prioritized recommendations, and suggested next steps — directly in your Claude Code conversation.
-
-## Example
-
-```
-/refactor-plan src/utils/auth.ts
-```
-
-## Next Steps
-
-For complete options and advanced usage, run:
-
-```
-attune help-docs ref-skill-refactor-plan
-```
+**Next:** See full reference: `attune help-docs ref-skill-refactor-plan`
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

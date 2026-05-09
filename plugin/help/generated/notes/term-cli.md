@@ -1,17 +1,20 @@
 ---
-name: term-cli
-source: CLAUDE.md
-summary: The CLI is a command-line interface that allows developers to interact with
-  attune-ai directly from their terminal using the `attune` command.
-tags:
-- terminology
 type: note
+name: term-cli
+tags: [terminology]
+source: CLAUDE.md
 ---
 
-# CLI
+# Note: Term: CLI
 
-The **CLI** (Command Line Interface) is the `attune` command used to interact with attune-ai from your terminal.
+## Context
+
+Project terminology used in the attune-ai codebase.
+
+## Content
+
+**CLI** — `attune` command
 
 ## Related Topics
 
-*No related topics yet.*
+_No related topics yet._

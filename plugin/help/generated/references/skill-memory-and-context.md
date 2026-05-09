@@ -9,7 +9,7 @@ source: plugin/skills/memory-and-context/SKILL.md
 
 # Reference: Skill: memory-and-context
 
-Store, retrieve, search, and manage persistent memory across sessions. Includes empathy level modulation and security-classified pattern storage. Triggers on: memory, store, remember, retrieve, forget, pattern, empathy, context, classification.
+Store, retrieve, search, and manage persistent memory across sessions. Triggers on: memory, store, remember, retrieve, forget, pattern, context.
 
 **Usage:** `/memory-and-context <operation: store|retrieve|search|forget|empathy>`
 

@@ -1,42 +1,23 @@
 ---
-name: required-status-check-names-must-match-githubs-exact-check-names
-source: .claude/CLAUDE.md
-summary: This template explains how to resolve silent merge blocks caused by required
-  status check names that don't exactly match GitHub's reported check names, and provides
-  instructions for retrieving and correctly configuring the exact check name strings.
-tags:
-- git
 type: faq
+name: required-status-check-names-must-match-githubs-exact-check-names
+tags: [git]
+source: .claude/CLAUDE.md
 ---
 
-# FAQ: Required Status Check Names Must Match GitHub's Exact Check Names
+# FAQ: What do I need to know about required status check names must match GitHub's exact check names?
 
 ## Answer
 
-If a required status check name doesn't exactly match the name GitHub reports, merges will be silently blocked — the expected check never appears as passing, even if the underlying job succeeds.
+We set `Analyze Python` as a required check, but the actual name is `Analyze (python)` (with parentheses). Mismatched names silently block merges because the expected check never appears.
 
-**Example:** A branch protection rule configured with `Analyze Python` will never be satisfied if the actual check name is `Analyze (python)` (note the parentheses). GitHub treats these as two different checks.
+**How to fix:**
+- Always run `gh pr checks <PR>` first to see the exact check names before adding them to branch protection
 
-## How to Fix
-
-Before adding a check to your branch protection rules, retrieve the exact check name as GitHub reports it:
-
-```sh
-gh pr checks <PR>
-```
-
-Copy the check name character-for-character from the output — including parentheses, capitalization, and spacing — and use that exact string in your branch protection configuration.
-
-**Incorrect (will silently block merges):**
 ```
 Analyze Python
 ```
 
-**Correct:**
-```
-Analyze (python)
-```
-
 ## Related Topics
-
-- **Error:** `Required status check names must match GitHub's exact check names`
+- **Error**: Detailed error: Required status check names must match GitHub's exact check
+  names

@@ -1,85 +1,30 @@
 ---
-name: gpg-signing-fails
-source: CLAUDE.md Lessons Learned
-summary: This template provides troubleshooting steps for resolving GPG signing failures
-  in VS Code and Claude Code, including diagnosis of the root cause, installation
-  and configuration fixes for `pinentry-mac`, and preventive measures to cache passphrases
-  before using non-interactive terminals.
-tags:
-- git
-- macos
-- setup
 type: troubleshooting
+name: gpg-signing-fails
+tags: [git, macos, setup]
+source: CLAUDE.md Lessons Learned
 ---
 
-# Troubleshooting: GPG Signing Fails in VS Code / Claude Code
+# Troubleshooting: GPG signing fails in VSCode/Claude Code
 
 ## Symptom
 
-Commits fail with the following error in non-interactive terminals:
-
-```
-error: gpg failed to sign the data
-```
+Commits fail with `error: gpg failed to sign the data` in non-interactive terminals.
 
 ## Diagnosis
 
-Run these checks in order to identify the root cause:
-
-1. **Confirm `pinentry-mac` is installed:**
-   ```bash
-   which pinentry-mac
-   ```
-
-2. **Verify `gpg-agent.conf` specifies the correct pinentry program.** The first matching `pinentry-program` line takes precedence, so order matters:
-   ```bash
-   cat ~/.gnupg/gpg-agent.conf
-   ```
-
-3. **Test whether the GPG agent has a cached passphrase:**
-   ```bash
-   echo test | gpg --clearsign
-   ```
-   If this prompts for a passphrase or fails silently, the agent has no cached credentials.
+1. Check if `pinentry-mac` is installed: `which pinentry-mac`
+2. Verify `gpg-agent.conf` has the right pinentry-program (first line wins)
+3. Check if the GPG agent has a cached passphrase: `echo test | gpg --clearsign`
 
 ## Fix
 
-### 1. Install `pinentry-mac`
-
-```bash
-brew install pinentry-mac
-```
-
-### 2. Configure the GPG agent
-
-Add `pinentry-program` as the **first line** of `~/.gnupg/gpg-agent.conf`:
-
-```
-pinentry-program /opt/homebrew/bin/pinentry-mac
-```
-
-> **Note:** On Intel Macs, the path is `/usr/local/bin/pinentry-mac`. Confirm with `which pinentry-mac`.
-
-### 3. Restart the GPG agent
-
-```bash
-gpgconf --kill gpg-agent
-```
-
-The agent restarts automatically on the next GPG operation.
+Install `pinentry-mac` (`brew install pinentry-mac`). Set `pinentry-program /opt/homebrew/bin/pinentry-mac` as the FIRST line in `~/.gnupg/gpg-agent.conf`. Kill agent: `gpgconf --kill gpg-agent`.
 
 ## Prevention
 
-Before switching to a non-interactive terminal (VS Code, Claude Code, etc.), prime the passphrase cache from a standard terminal session:
-
-```bash
-echo unlock | gpg --clearsign
-```
-
-This caches the passphrase for the duration defined by `default-cache-ttl` in `gpg-agent.conf` (default: 600 seconds).
+Cache the passphrase by running `echo unlock | gpg --clearsign` in a real terminal before using VSCode.
 
 ## Related Topics
 
-- Configuring commit signing in Git (`git config --global gpg.program`)
-- Extending passphrase cache lifetime via `default-cache-ttl` and `max-cache-ttl`
-- Using SSH keys as an alternative to GPG for commit signing
+_No related topics yet._

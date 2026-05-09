@@ -14,7 +14,7 @@ source: .claude/CLAUDE.md
 
 ## Root Cause
 
-`PurePosixPath("a/b/c.py").match("a/**")` returns `False` because `match()` treats `*` as single-segment only (no recursive globbing). For `**` glob patterns, convert to fnmatch: replace `**` with `*`, then use `fnmatch.fnmatch()`. Python 3.13+ adds recursive support but 3.10 does not.
+`PurePosixPath("a/b/c.py").match("a/**")` returns `False` because `match()` treats `*` as single-segment only (no recursive globbing). Do NOT replace `**` with `*` in `fnmatch.fnmatch()` — fnmatch's `*` matches `/`, so `src/attune/*` incorrectly matches `src/attune-redis/foo.py`. Instead, convert globs to regex: map `**` → `.*`, `*` → `[^/]*`, `?` → `[^/]`, then use `re.fullmatch()`. See `_glob_match()` in `help/manifest.py`.
 
 ## Resolution
 
@@ -25,4 +25,5 @@ source: .claude/CLAUDE.md
 **Verified** — Confirmed by prior incident (Lessons Learned)
 
 ## Related Topics
+- Warning: Avoid: `PurePosixPath.match()` doesn't support `**` in Python 3.10
 - Tip: Best practice: `PurePosixPath.match()` doesn't support `**` in Python 3.10

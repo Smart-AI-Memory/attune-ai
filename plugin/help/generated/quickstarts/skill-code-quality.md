@@ -1,26 +1,21 @@
 ---
-name: skill-code-quality
-source: plugin/skills/code-quality/SKILL.md
-summary: The `/code-quality` command analyzes specified code files or paths to identify
-  quality issues, style violations, and potential bugs, delivering structured findings
-  directly in your Claude Code conversation.
-tags:
-- skill
-- claude-code
 type: quickstart
+name: skill-code-quality
+tags: [skill, claude-code]
+source: plugin/skills/code-quality/SKILL.md
 ---
 
 # Quickstart: Use /code-quality
 
-Analyze code for quality issues, style violations, and likely bugs.
+Code review and bug prediction to find quality issues, style violations, and likely bugs.
 
 ```
-/code-quality <path or file>
+/code-quality <path or directory to review>
 ```
 
-**Result:** Structured findings delivered directly in your Claude Code conversation.
+**Result:** Structured results in your Claude Code conversation.
 
-**Next:** See the full reference: `attune help-docs ref-skill-code-quality`
+**Next:** See full reference: `attune help-docs ref-skill-code-quality`
 
 ## Related Topics
 
