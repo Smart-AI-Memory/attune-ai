@@ -235,11 +235,8 @@ Form Responses:
 
         try:
             query = f"Successful workflows for {template_id}"
-            if form_response:
-                key_responses = []
-                for key, value in form_response.responses.items():
-                    key_responses.append(f"{key}={value}")
-                query += f" with {', '.join(key_responses[:3])}"
+            key_responses = [f"{k}={v}" for k, v in form_response.responses.items()]
+            query += f" with {', '.join(key_responses[:3])}"
 
             similar_executions = self.search_executions_by_context(
                 query=query,

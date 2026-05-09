@@ -257,6 +257,15 @@ class FeedbackCollector:
                 )
 
         # Domain insights
+        insights["domain_insights"] = self._compute_domain_insights()
+
+        # Generate recommendations
+        insights["recommendations"] = self._generate_recommendations()
+
+        return insights
+
+    def _compute_domain_insights(self) -> dict[str, dict[str, Any]]:
+        """Aggregate domain stats across all agent performance records."""
         domains: dict[str, dict[str, Any]] = {}
         for perf in self._agent_performance.values():
             for domain, stats in perf.by_domain.items():
@@ -266,18 +275,15 @@ class FeedbackCollector:
                 domains[domain]["total_score"] += stats["total_score"]
                 domains[domain]["agents"].add(perf.template_id)
 
+        result: dict[str, dict[str, Any]] = {}
         for domain, stats in domains.items():
             if stats["total_uses"] > 0:
-                insights["domain_insights"][domain] = {
+                result[domain] = {
                     "average_score": stats["total_score"] / stats["total_uses"],
                     "total_uses": stats["total_uses"],
                     "agents_used": len(stats["agents"]),
                 }
-
-        # Generate recommendations
-        insights["recommendations"] = self._generate_recommendations()
-
-        return insights
+        return result
 
     def _generate_recommendations(self) -> list[str]:
         """Generate improvement recommendations based on feedback."""
@@ -299,7 +305,7 @@ class FeedbackCollector:
             )
 
         # Check for domains needing more data
-        for domain, stats in self.get_insights().get("domain_insights", {}).items():
+        for domain, stats in self._compute_domain_insights().items():
             if stats["total_uses"] < 5:
                 recommendations.append(
                     f"More data needed for '{domain}' domain - only {stats['total_uses']} executions recorded",

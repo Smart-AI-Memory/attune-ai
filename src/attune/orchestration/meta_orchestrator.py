@@ -291,13 +291,15 @@ class MetaOrchestrator(TaskAnalysisMixin, InteractiveModeMixin, EstimationMixin)
 
         plan = self.analyze_and_compose(task, context)
 
-        # Convert ExecutionPlan into the dict format DynamicTeamBuilder expects
+        # Convert ExecutionPlan into the dict format DynamicTeamBuilder expects.
+        # ExecutionPlan has no `phases` field — use [] so DynamicTeamBuilder.get()
+        # picks up the same default.
         plan_dict: dict[str, Any] = {
             "name": f"team-{plan.strategy.value}",
             "strategy": plan.strategy.value,
             "agents": [{"template_id": t.id, "role": t.role} for t in plan.agents],
             "quality_gates": plan.quality_gates,
-            "phases": plan.phases,
+            "phases": [],
         }
 
         builder = DynamicTeamBuilder(

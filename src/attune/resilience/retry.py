@@ -87,15 +87,11 @@ def retry(
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
             """Async wrapper that retries with exponential backoff."""
-            last_exception: Exception | None = None
-
             for attempt in range(1, config.max_attempts + 1):
                 try:
                     result: T = await func(*args, **kwargs)  # type: ignore[misc]
                     return result
                 except config.retryable_exceptions as e:
-                    last_exception = e
-
                     if attempt == config.max_attempts:
                         logger.error(
                             f"All {config.max_attempts} retries failed for {func.__name__}: {e}",
@@ -113,9 +109,7 @@ def retry(
 
                     await asyncio.sleep(delay)
 
-            # Should never reach here, but satisfy type checker
-            if last_exception:
-                raise last_exception
+            # Only reachable when max_attempts < 1 (loop body never executed)
             raise RuntimeError("Unexpected retry loop exit")
 
         @wraps(func)
@@ -123,14 +117,10 @@ def retry(
             """Sync wrapper that retries with exponential backoff."""
             import time
 
-            last_exception: Exception | None = None
-
             for attempt in range(1, config.max_attempts + 1):
                 try:
                     return func(*args, **kwargs)
                 except config.retryable_exceptions as e:
-                    last_exception = e
-
                     if attempt == config.max_attempts:
                         logger.error(
                             f"All {config.max_attempts} retries failed for {func.__name__}: {e}",
@@ -148,8 +138,7 @@ def retry(
 
                     time.sleep(delay)
 
-            if last_exception:
-                raise last_exception
+            # Only reachable when max_attempts < 1 (loop body never executed)
             raise RuntimeError("Unexpected retry loop exit")
 
         # Return appropriate wrapper based on function type
@@ -188,8 +177,6 @@ async def retry_with_backoff(
     if config is None:
         config = RetryConfig()
 
-    last_exception: Exception | None = None
-
     for attempt in range(1, config.max_attempts + 1):
         try:
             if asyncio.iscoroutinefunction(func):
@@ -197,8 +184,6 @@ async def retry_with_backoff(
                 return result
             return func(*args, **kwargs)
         except config.retryable_exceptions as e:
-            last_exception = e
-
             if attempt == config.max_attempts:
                 raise
 
@@ -208,6 +193,5 @@ async def retry_with_backoff(
             )
             await asyncio.sleep(delay)
 
-    if last_exception:
-        raise last_exception
+    # Only reachable when max_attempts < 1 (loop body never executed)
     raise RuntimeError("Unexpected retry loop exit")

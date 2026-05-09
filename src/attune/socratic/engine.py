@@ -463,6 +463,7 @@ class SocraticWorkflowBuilder:
                 SuccessMetric(
                     id="task_completed",
                     name="Task Completed",
+                    description="Whether the task completed successfully",
                     metric_type=MetricType.BOOLEAN,
                     is_primary=True,
                     extraction_path="success",
@@ -470,6 +471,7 @@ class SocraticWorkflowBuilder:
                 SuccessMetric(
                     id="findings_count",
                     name="Findings",
+                    description="Number of findings produced",
                     metric_type=MetricType.COUNT,
                     extraction_path="findings_count",
                 ),

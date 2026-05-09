@@ -110,7 +110,9 @@ class Console:
 
         # Print rows
         for row in rows:
-            row_line = " | ".join(str(cell).ljust(widths[i]) for i, cell in enumerate(row))
+            row_line = " | ".join(
+                str(cell).ljust(widths[i]) for i, cell in enumerate(row) if i < len(widths)
+            )
             print(row_line)
 
 

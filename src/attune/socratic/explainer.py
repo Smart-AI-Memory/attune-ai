@@ -448,8 +448,7 @@ def explain_workflow(
         return explanation.to_markdown()
     if format == OutputFormat.HTML:
         return explanation.to_html()
-    if format == OutputFormat.JSON:
-        import json
+    # OutputFormat enum has exactly four values, all handled above.
+    import json
 
-        return json.dumps(explanation.to_dict(), indent=2)
-    return explanation.to_markdown()
+    return json.dumps(explanation.to_dict(), indent=2)

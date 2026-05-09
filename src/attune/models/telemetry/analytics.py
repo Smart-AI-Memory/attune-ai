@@ -63,8 +63,7 @@ class TelemetryAnalytics:
         # Calculate averages and sort
         result = list(costs.values())
         for item in result:
-            if item["run_count"] > 0:
-                item["avg_cost"] = item["total_cost"] / item["run_count"]
+            item["avg_cost"] = item["total_cost"] / item["run_count"]
 
         result.sort(key=lambda x: x["total_cost"], reverse=True)
         return result[:n]
@@ -107,8 +106,7 @@ class TelemetryAnalytics:
 
         # Calculate averages
         for _provider, stats in summary.items():
-            if stats["call_count"] > 0:
-                stats["avg_cost"] = stats["total_cost"] / stats["call_count"]
+            stats["avg_cost"] = stats["total_cost"] / stats["call_count"]
 
         return summary
 
@@ -545,8 +543,7 @@ class TelemetryAnalytics:
 
         # Calculate averages
         for _agent, stats in by_agent.items():
-            if stats["assignments"] > 0:
-                stats["success_rate"] = stats["successful"] / stats["assignments"]
+            stats["success_rate"] = stats["successful"] / stats["assignments"]
             if stats["completed"] > 0:
                 stats["avg_duration_hours"] = stats["total_duration"] / stats["completed"]
 

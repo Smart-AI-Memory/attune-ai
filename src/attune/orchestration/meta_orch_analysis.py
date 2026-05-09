@@ -233,15 +233,11 @@ class TaskAnalysisMixin:
                 if keyword in task_lower:
                     domain_scores[domain] += 1
 
-        # Return domain with highest score
+        # Return domain with highest score, or GENERAL if no keywords matched.
         max_score = max(domain_scores.values())
-        if max_score > 0:
-            for domain, score in domain_scores.items():
-                if score == max_score:
-                    return domain
-
-        # Default to general if no keywords match
-        return TaskDomain.GENERAL
+        if max_score == 0:
+            return TaskDomain.GENERAL
+        return max(domain_scores, key=domain_scores.get)
 
     def _extract_capabilities(self, domain: TaskDomain, context: dict[str, Any]) -> list[str]:
         """Extract needed capabilities based on domain.

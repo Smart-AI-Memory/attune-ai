@@ -133,14 +133,10 @@ def _execute_single_agent_with_escalation(
         result = tier_result
 
     # All tiers exhausted - return final result (failed)
-    if result:
-        result.cost = total_cost
-        result.duration = time.time() - start_time
-        logger.warning(f"Agent {agent.role} failed at all tiers (cost: ${total_cost:.4f})")
-        return result
-
-    # Should never reach here
-    raise RuntimeError(f"No tiers attempted for agent {agent.role}")
+    result.cost = total_cost
+    result.duration = time.time() - start_time
+    logger.warning(f"Agent {agent.role} failed at all tiers (cost: ${total_cost:.4f})")
+    return result
 
 
 def _execute_at_tier(

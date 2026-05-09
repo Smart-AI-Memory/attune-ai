@@ -280,28 +280,26 @@ class PatternLearner(PatternMemoryMixin):
                     failed_agents[agent_result.role] += 1
 
         for role, failure_count in failed_agents.items():
-            if failure_count > 0:
-                total = total_agents[role]
-                failure_rate = failure_count / total
-                confidence = min(total / 10.0, 1.0)
+            total = total_agents[role]
+            failure_rate = failure_count / total
+            confidence = min(total / 10.0, 1.0)
 
-                insights.append(
-                    PatternInsight(
-                        insight_type="failure_analysis",
-                        description=(
-                            f"{role} fails {failure_rate:.0%} of the time "
-                            f"({failure_count}/{total})"
-                        ),
-                        confidence=confidence,
-                        data={
-                            "role": role,
-                            "failure_count": failure_count,
-                            "total_runs": total,
-                            "failure_rate": failure_rate,
-                        },
-                        sample_size=total,
+            insights.append(
+                PatternInsight(
+                    insight_type="failure_analysis",
+                    description=(
+                        f"{role} fails {failure_rate:.0%} of the time " f"({failure_count}/{total})"
                     ),
-                )
+                    confidence=confidence,
+                    data={
+                        "role": role,
+                        "failure_count": failure_count,
+                        "total_runs": total,
+                        "failure_rate": failure_rate,
+                    },
+                    sample_size=total,
+                ),
+            )
 
         return insights
 

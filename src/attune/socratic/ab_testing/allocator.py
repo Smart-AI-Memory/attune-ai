@@ -47,9 +47,8 @@ class TrafficAllocator:
             return self._epsilon_greedy(epsilon=0.1)
         if strategy == AllocationStrategy.THOMPSON_SAMPLING:
             return self._thompson_sampling()
-        if strategy == AllocationStrategy.UCB:
-            return self._ucb_allocation()
-        return self._fixed_allocation(user_id)
+        # AllocationStrategy enum has exactly four values; UCB is the only one left.
+        return self._ucb_allocation()
 
     def _fixed_allocation(self, user_id: str) -> Variant:
         """Deterministic allocation based on user ID hash."""

@@ -234,8 +234,7 @@ def configure_provider_interactive() -> ProviderConfig:
     print("\nEffective model mapping:")
     effective = config.get_effective_registry()
     for tier, model in effective.items():
-        if model:
-            print(f"  {tier:8} → {model.id}")
+        print(f"  {tier:8} → {model.id}")
 
     # Save configuration
     config.save()
