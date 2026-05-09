@@ -114,10 +114,10 @@ PermissionError: [Errno 13] Permission denied: '/usr/local/lib/python3.11/site-p
 **Don't use sudo! Use virtual environments instead:**
 ```bash
 # Create virtual environment
-python -m venv ~/.empathy_env
+python -m venv ~/.attune_env
 
 # Activate it
-source ~/.empathy_env/bin/activate
+source ~/.attune_env/bin/activate
 
 # Install without sudo
 pip install attune-ai
@@ -872,10 +872,10 @@ OSError: [Errno 28] No space left on device
 **1. Clean up old state files:**
 ```bash
 # Find large state files
-du -sh ~/.empathy_data/*
+du -sh ~/.attune_data/*
 
 # Remove old states (backup first!)
-rm -rf ~/.empathy_data/old_states/
+rm -rf ~/.attune_data/old_states/
 ```
 
 **2. Limit state persistence:**

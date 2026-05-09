@@ -31,7 +31,7 @@ Successfully integrated intelligent authentication strategy into DocumentGenerat
 - Module size calculation and categorization
 - Cost estimation for both auth modes
 - First-time educational setup with pros/cons
-- Persistent configuration (~/.empathy/auth_strategy.json)
+- Persistent configuration (~/.attune/auth_strategy.json)
 
 **Smart Routing Logic:**
 ```python
@@ -202,7 +202,7 @@ strategy = AuthStrategy(
 )
 
 # Save configuration
-strategy.save()  # Saves to ~/.empathy/auth_strategy.json
+strategy.save()  # Saves to ~/.attune/auth_strategy.json
 
 # Future workflow executions will use this strategy
 ```

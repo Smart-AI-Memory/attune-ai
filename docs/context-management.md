@@ -21,7 +21,7 @@ The context management system handles:
 from attune_llm.context import ContextManager
 
 # Initialize
-manager = ContextManager(storage_dir=".empathy/compact_states")
+manager = ContextManager(storage_dir=".attune/compact_states")
 
 # Set session info
 manager.session_id = "session_abc123"
@@ -109,7 +109,7 @@ path = state_manager.save_state(state)
 ### Storage Location
 
 ```
-.empathy/compact_states/
+.attune/compact_states/
   {user_id}/
     state_{session_id}_{timestamp}.json
 ```
@@ -276,7 +276,7 @@ print(f"Cleared {count} states")
 
 ```python
 class ContextManager:
-    def __init__(storage_dir=".empathy/compact_states", token_threshold=50)
+    def __init__(storage_dir=".attune/compact_states", token_threshold=50)
 
     # Properties
     session_id: str
@@ -308,7 +308,7 @@ class ContextManager:
 
 ```python
 class CompactionStateManager:
-    def __init__(storage_dir=".empathy/compact_states")
+    def __init__(storage_dir=".attune/compact_states")
 
     def save_state(state: CompactState) -> Path
     def load_latest_state(user_id: str) -> CompactState | None

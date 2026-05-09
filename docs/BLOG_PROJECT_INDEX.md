@@ -31,7 +31,7 @@ from attune.project_index import ProjectIndex
 # Initialize and scan
 index = ProjectIndex(project_root=".")
 index.scan()
-index.save()  # Persists to .empathy/project_index.json
+index.save()  # Persists to .attune/project_index.json
 
 # Find the trouble spots
 stale_files = index.get_stale_files()

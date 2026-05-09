@@ -910,7 +910,7 @@ class ConfigurationStore:
 ```
 
 **Parameters:**
-- `storage_dir` (str | None): Directory for storing configurations (default: `.empathy/orchestration/compositions/`)
+- `storage_dir` (str | None): Directory for storing configurations (default: `.attune/orchestration/compositions/`)
 - `pattern_library` (PatternLibrary | None): Optional pattern library for integration
 
 **Methods:**

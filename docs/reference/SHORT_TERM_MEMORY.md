@@ -11,7 +11,7 @@ The Attune AI provides a **file-first memory system** that works without Redis, 
 The memory system uses a tiered architecture:
 
 1. **File Session Memory (Primary)** - Always available, no external dependencies
-   - Persists to `.empathy/sessions/` directory
+   - Persists to `.attune/sessions/` directory
    - Works offline and in development
    - Atomic writes for data safety
 
@@ -35,7 +35,7 @@ from attune.memory import UnifiedMemory
 # Works without Redis - uses file-based storage
 memory = UnifiedMemory(user_id="developer")
 
-# Store working data (persists to .empathy/sessions/)
+# Store working data (persists to .attune/sessions/)
 memory.stash("analysis_results", {"files": 10, "issues": 3})
 
 # Retrieve data

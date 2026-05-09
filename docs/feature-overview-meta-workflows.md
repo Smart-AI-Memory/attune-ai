@@ -66,7 +66,7 @@ The **Meta-Workflow System** is a dynamic agent orchestration framework that ena
 │  ┌──────────────────────┐    ┌──────────────────────┐                      │
 │  │    FILE STORAGE      │    │   PATTERN LEARNER    │                      │
 │  │                      │    │                      │                      │
-│  │ ~/.empathy/          │◄──►│ • Analyze history    │                      │
+│  │ ~/.attune/           │◄──►│ • Analyze history    │                      │
 │  │   meta_workflows/    │    │ • Generate insights  │                      │
 │  │     executions/      │    │ • Memory integration │                      │
 │  └──────────────────────┘    └──────────────────────┘                      │
@@ -185,7 +185,7 @@ Stage 5: Persistence        ─► Files + Memory
 
 **Resolution Order:**
 1. Built-in templates (checked first)
-2. User templates (`~/.empathy/meta_workflows/templates/`)
+2. User templates (`~/.attune/meta_workflows/templates/`)
 
 **Built-in Templates:**
 

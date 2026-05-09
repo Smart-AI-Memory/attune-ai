@@ -148,7 +148,7 @@ class ExtractedPattern:
 
 ```python
 storage = LearnedSkillsStorage(
-    storage_dir=".empathy/learned_skills",
+    storage_dir=".attune/learned_skills",
     max_patterns_per_user=100,
 )
 
@@ -162,7 +162,7 @@ ids = storage.save_patterns("user123", patterns)
 ### Storage Location
 
 ```
-.empathy/learned_skills/
+.attune/learned_skills/
   {user_id}/
     patterns.json
     skills.json
@@ -360,7 +360,7 @@ class PatternExtractor:
 
 ```python
 class LearnedSkillsStorage:
-    def __init__(storage_dir=".empathy/learned_skills", max_patterns_per_user=100)
+    def __init__(storage_dir=".attune/learned_skills", max_patterns_per_user=100)
 
     # Patterns
     def save_pattern(user_id, pattern) -> str

@@ -49,7 +49,7 @@ target_level: 4
 confidence_threshold: 0.75
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 ```
 
@@ -186,13 +186,13 @@ config = AttuneConfig(
 )
 ```
 
-#### `persistence_path` (str, default: ".empathy")
+#### `persistence_path` (str, default: ".attune")
 Path for storing persistence data.
 
 **Example:**
 ```python
 # Default location
-config = AttuneConfig(persistence_path=".empathy")
+config = AttuneConfig(persistence_path=".attune")
 
 # Custom location
 config = AttuneConfig(persistence_path="/var/lib/empathy")
@@ -208,7 +208,7 @@ Enable metrics collection for monitoring and analytics.
 config = AttuneConfig(metrics_enabled=True)
 ```
 
-#### `metrics_path` (str, default: ".empathy/metrics.db")
+#### `metrics_path` (str, default: ".attune/metrics.db")
 Path for storing metrics data.
 
 **Example:**
@@ -308,7 +308,7 @@ target_level: 4
 confidence_threshold: 0.70
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 metrics_enabled: true
 ```
 
@@ -359,11 +359,11 @@ export ATTUNE_TRUST_EROSION_RATE=0.10
 # Persistence settings
 export ATTUNE_PERSISTENCE_ENABLED=true
 export ATTUNE_PERSISTENCE_BACKEND=sqlite
-export ATTUNE_PERSISTENCE_PATH=.empathy
+export ATTUNE_PERSISTENCE_PATH=.attune
 
 # Metrics settings
 export ATTUNE_METRICS_ENABLED=true
-export ATTUNE_METRICS_PATH=.empathy/metrics.db
+export ATTUNE_METRICS_PATH=.attune/metrics.db
 
 # Pattern library settings
 export ATTUNE_PATTERN_LIBRARY_ENABLED=true

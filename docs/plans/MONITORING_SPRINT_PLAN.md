@@ -34,8 +34,8 @@ description: Monitoring System - Sprint Plan & Task Tracker: **Project:** Attune
 
 - [ ] **T1.3** Implement JSONL parser (TypeScript)
   - Create `telemetryParser.ts`
-  - Parse `.empathy/llm_calls.jsonl`
-  - Parse `.empathy/workflow_runs.jsonl`
+  - Parse `.attune/llm_calls.jsonl`
+  - Parse `.attune/workflow_runs.jsonl`
   - Convert to TypeScript interfaces
   - **Estimate:** 3 hours
 
@@ -601,7 +601,7 @@ Blockers: None
 
 - [ ] **T3.18** Add "Clear history" action
   - Confirmation dialog
-  - Archive old data (don't delete, move to `.empathy/archive/`)
+  - Archive old data (don't delete, move to `.attune/archive/`)
   - Clear telemetry files
   - **Estimate:** 1 hour
 

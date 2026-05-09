@@ -1073,7 +1073,7 @@ stats = graph.get_statistics()
 Configure wizards to trigger related wizards automatically:
 
 ```yaml
-# .empathy/wizard_chains.yaml
+# .attune/wizard_chains.yaml
 chains:
   security-audit:
     auto_chain: true

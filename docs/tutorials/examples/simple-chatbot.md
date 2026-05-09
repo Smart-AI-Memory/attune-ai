@@ -137,7 +137,7 @@ from attune import EmpathyOS
 from attune.memory import LongTermMemory
 
 # Connect to SQLite for long-term memory
-long_term = LongTermMemory(db_path=".empathy/review_history.db")
+long_term = LongTermMemory(db_path=".attune/review_history.db")
 
 # Create reviewer with long-term memory
 reviewer = EmpathyOS(
@@ -202,7 +202,7 @@ for pattern in history:
     from attune.memory import LongTermMemory
 
     # Persistent memory without Redis - no Docker required!
-    long_term = LongTermMemory(db_path=".empathy/history.db")
+    long_term = LongTermMemory(db_path=".attune/history.db")
 
     reviewer = EmpathyOS(
         user_id="code_reviewer",
@@ -230,7 +230,7 @@ from attune.memory import UnifiedMemory
 # Unified memory combines both
 memory = UnifiedMemory(
     redis_url="redis://localhost:6379",      # Short-term
-    sqlite_path=".empathy/review_history.db"  # Long-term
+    sqlite_path=".attune/review_history.db"  # Long-term
 )
 
 # Create Level 4 (anticipatory) reviewer
@@ -339,7 +339,7 @@ async def multi_agent_review(pr_number: int, files: list[str]):
 
     memory = UnifiedMemory(
         redis_url="redis://localhost:6379",
-        sqlite_path=".empathy/review_history.db"
+        sqlite_path=".attune/review_history.db"
     )
 
     async with TeamSession(
@@ -446,7 +446,7 @@ async def main():
     # Initialize unified memory
     memory = UnifiedMemory(
         redis_url="redis://localhost:6379",
-        sqlite_path=".empathy/reviews.db"
+        sqlite_path=".attune/reviews.db"
     )
 
     # Create Level 4 reviewer
@@ -541,7 +541,7 @@ Files: src/auth/login.py, src/auth/oauth.py
 
 📊 Memory Status:
    🔴 Short-term (Redis): Connected
-   🔵 Long-term (SQLite): .empathy/reviews.db
+   🔵 Long-term (SQLite): .attune/reviews.db
 
 ⚠️  Historical Issues in These Files:
    • src/auth/login.py: SQL injection in query builder (PR #98)
@@ -635,7 +635,7 @@ memory = UnifiedMemory(redis_url=None)
 
 **No historical patterns showing**
 - Run a few review sessions first to build history
-- Check SQLite file exists: `ls .empathy/reviews.db`
+- Check SQLite file exists: `ls .attune/reviews.db`
 
 **Predictions not appearing**
 - Set `target_level=4` for anticipatory features

@@ -31,7 +31,7 @@ target_level: 4
 confidence_threshold: 0.75
 persistence_enabled: true
 persistence_backend: "sqlite"
-persistence_path: ".empathy"
+persistence_path: ".attune"
 ```
 
 Load it:
@@ -68,7 +68,7 @@ export ATTUNE_CONFIDENCE_THRESHOLD=0.75
 
 - `persistence_enabled` (bool): Enable pattern storage (default: True)
 - `persistence_backend` (str): Backend type ("sqlite", "postgresql")
-- `persistence_path` (str): Storage location (default: ".empathy")
+- `persistence_path` (str): Storage location (default: ".attune")
 
 ### Metrics Settings
 

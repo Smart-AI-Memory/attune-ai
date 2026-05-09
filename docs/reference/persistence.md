@@ -88,7 +88,7 @@ from attune import EmpathyOS
 from attune.persistence import StateManager
 
 # Initialize state manager
-state_manager = StateManager(state_dir=".empathy/state")
+state_manager = StateManager(state_dir=".attune/state")
 
 # Create agent and interact
 empathy = EmpathyOS(user_id="user_123", target_level=4)
@@ -130,7 +130,7 @@ from attune.persistence import MetricsCollector
 import time
 
 # Initialize collector
-collector = MetricsCollector(db_path=".empathy/metrics.db")
+collector = MetricsCollector(db_path=".attune/metrics.db")
 
 # Record interactions
 start = time.time()
@@ -178,16 +178,16 @@ config = AttuneConfig(
     user_id="user_123",
     target_level=4,
     persistence_enabled=True,
-    persistence_path=".empathy"
+    persistence_path=".attune"
 )
 
 pattern_library = PatternLibrary()
-state_manager = StateManager(state_dir=".empathy/state")
-metrics = MetricsCollector(db_path=".empathy/metrics.db")
+state_manager = StateManager(state_dir=".attune/state")
+metrics = MetricsCollector(db_path=".attune/metrics.db")
 
 # Load existing patterns if available
 try:
-    pattern_library = PatternPersistence.load_from_sqlite(".empathy/patterns.db")
+    pattern_library = PatternPersistence.load_from_sqlite(".attune/patterns.db")
     print(f"Loaded {len(pattern_library.patterns)} existing patterns")
 except FileNotFoundError:
     print("No existing patterns, starting fresh")
@@ -226,7 +226,7 @@ metrics.record_interaction(
 state_manager.save_state(config.user_id, empathy.collaboration_state)
 
 # Save patterns
-PatternPersistence.save_to_sqlite(pattern_library, ".empathy/patterns.db")
+PatternPersistence.save_to_sqlite(pattern_library, ".attune/patterns.db")
 
 print("All data persisted successfully")
 ```
@@ -291,8 +291,8 @@ print(f"  Overall success rate: {global_stats['success_rate']:.0%}")
 from attune.persistence import StateManager
 
 # Migrate states between systems
-old_manager = StateManager(state_dir="/old/system/.empathy/state")
-new_manager = StateManager(state_dir="/new/system/.empathy/state")
+old_manager = StateManager(state_dir="/old/system/.attune/state")
+new_manager = StateManager(state_dir="/new/system/.attune/state")
 
 users = old_manager.list_users()
 print(f"Migrating {len(users)} user states...")

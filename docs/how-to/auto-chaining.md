@@ -9,7 +9,7 @@ Auto-Chaining enables wizards to automatically trigger related wizards based on 
 ## Quick Start
 
 ```yaml
-# .empathy/wizard_chains.yaml
+# .attune/workflow_chains.yaml
 chains:
   security-audit:
     auto_chain: true
@@ -32,7 +32,7 @@ triggers = executor.get_triggered_chains("security-audit", result)
 
 ## Configuration
 
-Create `.empathy/wizard_chains.yaml` in your project root:
+Create `.attune/workflow_chains.yaml` in your project root:
 
 ```yaml
 chains:

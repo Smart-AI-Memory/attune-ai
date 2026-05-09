@@ -698,7 +698,7 @@ The **Configuration Store** is the learning/memory system for meta-orchestration
 ### Architecture
 
 ```
-.empathy/orchestration/compositions/
+.attune/orchestration/compositions/
 ├── release_prep_001.json
 ├── test_coverage_boost_001.json
 └── security_deep_dive_001.json
@@ -1144,7 +1144,7 @@ store = ConfigurationStore(
 # Or check current directory
 import os
 print(f"Current dir: {os.getcwd()}")
-print(f"Writable: {os.access('.empathy', os.W_OK)}")
+print(f"Writable: {os.access('.attune', os.W_OK)}")
 ```
 
 ---

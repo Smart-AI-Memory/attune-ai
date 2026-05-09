@@ -58,7 +58,7 @@ Examples:
 **Why:** InDesign files, PDFs, and generated book content are for publishing, not framework usage.
 
 ### 3. Memory/Data Files
-**Location:** `.empathy/`, `patterns/`, `memdocs_storage/`
+**Location:** `.attune/`, `patterns/`, `memdocs_storage/`
 **Why:** These are user-generated, environment-specific files. Each user creates their own.
 
 ### 4. Infrastructure Files

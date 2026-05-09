@@ -108,10 +108,10 @@ Persist and restore user collaboration state.
 **Example:**
 ```python
 # Save state after session
-empathy.save_state(user_id="user_123", filepath=".empathy/user_123.json")
+empathy.save_state(user_id="user_123", filepath=".attune/user_123.json")
 
 # Restore state in next session
-empathy.load_state(user_id="user_123", filepath=".empathy/user_123.json")
+empathy.load_state(user_id="user_123", filepath=".attune/user_123.json")
 ```
 
 ## Empathy Levels

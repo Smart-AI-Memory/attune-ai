@@ -215,7 +215,7 @@ The system is ready for release.
     <manual_test>
       <description>Ran code-review workflow with telemetry enabled</description>
       <result>
-        Created 4 telemetry entries in ~/.empathy/telemetry.jsonl
+        Created 4 telemetry entries in ~/.attune/telemetry.jsonl
         Entries contain expected fields (workflow, tier, cost, tokens)
       </result>
     </manual_test>

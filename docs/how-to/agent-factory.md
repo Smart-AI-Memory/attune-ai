@@ -263,7 +263,7 @@ agent = factory.create_agent(
     track_costs=True  # Default
 )
 
-# Costs are tracked in .empathy/costs.json
+# Costs are tracked in .attune/costs.json
 # View with: attune costs
 ```
 

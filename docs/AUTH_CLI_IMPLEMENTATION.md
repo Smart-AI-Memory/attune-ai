@@ -34,7 +34,7 @@ python -m attune.models.auth_cli setup
 - Runs `configure_auth_interactive()` function
 - Guides user through subscription tier selection
 - Shows educational pros/cons comparison
-- Saves configuration to `~/.empathy/auth_strategy.json`
+- Saves configuration to `~/.attune/auth_strategy.json`
 
 #### `status` - View Configuration
 ```bash

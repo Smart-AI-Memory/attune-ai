@@ -31,7 +31,7 @@ The **Project Index** is the codebase intelligence layer that tracks metadata ab
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                             ↓
-         .empathy/project_index.json (persistent)
+         .attune/project_index.json (persistent)
          Redis (real-time sync, optional)
 ```
 
@@ -44,7 +44,7 @@ The **Project Index** is the codebase intelligence layer that tracks metadata ab
 Central coordinator that manages file metadata with JSON persistence and optional Redis sync.
 
 **Key Methods:**
-- `load()` - Load index from `.empathy/project_index.json`
+- `load()` - Load index from `.attune/project_index.json`
 - `save()` - Persist index with path validation
 - `scan()` - Full project scan via ProjectScanner
 - `get_files_by_category()` - Query by file type
@@ -157,7 +157,7 @@ class FileCategory(str, Enum):
         ↓
 5. Build ProjectSummary aggregates
         ↓
-6. save() writes to .empathy/project_index.json
+6. save() writes to .attune/project_index.json
         ↓
 7. Optional: _sync_to_redis() for real-time access
 ```

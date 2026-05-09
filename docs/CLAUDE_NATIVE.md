@@ -142,12 +142,12 @@ export ANTHROPIC_API_KEY="sk-ant-api03-..."
 echo "ANTHROPIC_API_KEY=sk-ant-api03-..." > .env
 ```
 
-**Option C: Empathy Config File**
+**Option C: Attune Config File**
 
 ```bash
-# Create ~/.empathy/.env
-mkdir -p ~/.empathy
-echo "ANTHROPIC_API_KEY=sk-ant-api03-..." > ~/.empathy/.env
+# Create ~/.attune/.env
+mkdir -p ~/.attune
+echo "ANTHROPIC_API_KEY=sk-ant-api03-..." > ~/.attune/.env
 ```
 
 ### Step 3: Update Provider Configuration
