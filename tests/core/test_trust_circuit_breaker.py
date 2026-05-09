@@ -100,6 +100,16 @@ class TestConfirmationRequirements:
         assert breaker.should_require_confirmation("git_commit") is True
         assert breaker.should_require_confirmation("suggest") is False
 
+    def test_unknown_state_raises_value_error(self):
+        """Unknown TrustState raises rather than silently returning True."""
+        import pytest
+
+        breaker = TrustCircuitBreaker(user_id="user_1")
+        # Inject a non-enum state to force the trailing-default path
+        breaker._state = "bogus-state"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="Unknown TrustState"):
+            breaker.should_require_confirmation("anything")
+
 
 # =============================================================================
 # Recovery Tests

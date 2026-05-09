@@ -270,6 +270,11 @@ class TestGetTasksForTier:
         assert "coordinate" in tasks
         assert "complex_reasoning" in tasks
 
+    def test_unknown_tier_raises_value_error(self):
+        """Unknown tier raises rather than silently returning []."""
+        with pytest.raises(ValueError, match="Unknown ModelTier"):
+            get_tasks_for_tier("not-a-tier")  # type: ignore[arg-type]
+
 
 @pytest.mark.unit
 class TestGetAllTasks:

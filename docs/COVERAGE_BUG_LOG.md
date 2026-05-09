@@ -18,6 +18,44 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-09 — session 49d (Opus 4.7)
+
+Targeted sweep using a new AST-based scanner
+(`scripts/find_dead_defensive_code.py`) for the four Class 2 sub-patterns.
+**2 production bugs surfaced**, both Class 2A (the most common shape).
+
+### Tooling added
+
+- `scripts/find_dead_defensive_code.py` — heuristic finder for 2A
+  (exhaustive enum dispatch + dead default), 2B (post-loop fallback),
+  2C (divisor guard hints). Walks the AST and emits candidates worth
+  reading. Self-bootstraps the enum-member map by walking the source
+  tree first.
+
+### Bugs — Class 2A (default after exhaustive enum dispatch)
+
+- `models/tasks.py:get_tasks_for_tier` — `if tier == ModelTier.X` for
+  all three members of `ModelTier`, followed by `return []`. The
+  trailing default was unreachable for known tiers and silently swallowed
+  unknown ones. Replaced with `raise ValueError(f"Unknown ModelTier: ...")`
+  and added a test for the raise path.
+- `trust/circuit_breaker.py:should_require_confirmation` — same shape on
+  `TrustState`. Trailing `return True  # Default to safe` was unreachable
+  AND would have masked an incomplete dispatch if a new state were added.
+  Replaced with `raise ValueError(f"Unknown TrustState: ...")` and a
+  matching test.
+
+This brings sub-pattern 2A's known instances to **6 across 6 unrelated
+modules** (`meta_orch_estimation`, `meta_orch_analysis`, `explainer`,
+`ab_testing/allocator`, `models/tasks`, `trust/circuit_breaker`). The
+shape repeats reliably enough to argue it's a stable category.
+
+The 2C scanner emitted 4 candidates that all need manual review (it
+flags any `if x > 0:` guarding `/x`, regardless of whether the divisor
+is structurally non-zero). Triaging those is left as future work.
+
+---
+
 ## 2026-05-09 — session 49c (Opus 4.7)
 
 13 modules pushed to 100% (or accepted ~98% for partial for-loop branches).
@@ -138,15 +176,17 @@ they predate this log.
 | Class | Description | Count |
 |-------|-------------|-------|
 | 1 | Crash paths nobody triggered | 3 |
-| 2 | Dead defensive code | 11 |
+| 2 | Dead defensive code | 13 |
 | 3 | Tests mocking around bugs | 1 |
 
 **Class 2 sub-patterns observed:**
 
 - **2A — Defensive default after exhaustive enum dispatch.** A function
   switches on an enum, handles every value explicitly, then has a
-  trailing default. Dead. (4+ instances: `meta_orch_estimation`,
-  `meta_orch_analysis`, `explainer`, `ab_testing/allocator`.)
+  trailing default. Dead. (6 instances: `meta_orch_estimation`,
+  `meta_orch_analysis`, `explainer`, `ab_testing/allocator`,
+  `models/tasks`, `trust/circuit_breaker` — last two found by
+  `scripts/find_dead_defensive_code.py`.)
 - **2B — Post-loop fallback after a loop that always returns/raises.**
   `for ... try: return except: raise` patterns where the loop body
   guarantees exit, but a `if last_exception: raise` block sits beneath it
@@ -161,7 +201,7 @@ they predate this log.
 
 **Sessions where 0 bugs surfaced:** 1 (session 49b).
 
-**Bug-find rate:** 15 bugs across 78 modules pushed to 100% = ~19% of
+**Bug-find rate:** 17 bugs across 80 modules pushed to 100% = ~21% of
 modules contain at least one production bug surfaced by the coverage push.
 
-Modules at 100%: 78 (cumulative across all sessions).
+Modules at 100%: 80 (cumulative across all sessions).

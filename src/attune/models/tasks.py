@@ -261,7 +261,10 @@ def get_tasks_for_tier(tier: ModelTier) -> list[str]:
         return list(CAPABLE_TASKS)
     if tier == ModelTier.PREMIUM:
         return list(PREMIUM_TASKS)
-    return []
+    # ModelTier has exactly three members. If a new one is ever added
+    # without updating this dispatch, fail loud rather than silently
+    # returning an empty list.
+    raise ValueError(f"Unknown ModelTier: {tier!r}")
 
 
 def get_all_tasks() -> dict[str, list[str]]:

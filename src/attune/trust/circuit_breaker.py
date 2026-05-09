@@ -264,7 +264,11 @@ class TrustCircuitBreaker:
             # Only high-impact actions need confirmation
             return action in self.config.high_impact_actions
 
-        return True  # Default to safe
+        # TrustState has exactly three members. If a new one is added
+        # without updating this dispatch, fail loud rather than silently
+        # routing to "require confirmation" — the silent default masks
+        # an incomplete implementation.
+        raise ValueError(f"Unknown TrustState: {current_state!r}")
 
     def get_autonomy_level(self) -> dict[str, Any]:
         """Get detailed autonomy level information for UI display.
