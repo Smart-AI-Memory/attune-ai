@@ -123,10 +123,15 @@ def failing_mock_agents(mock_agent_result_factory):
 
 
 @pytest.fixture
-def mock_execute_agent(mock_agent_result_factory):
+def mock_execute_agent(monkeypatch, mock_agent_result_factory):
     """Fixture that provides a mock _execute_agent function.
 
-    Use this to patch strategy._execute_agent to bypass real agent execution.
+    Patches ExecutionStrategy._execute_agent at the class level in addition
+    to returning the standalone callable. The class-level patch is required
+    for composing strategies (DebateStrategy creates an inner ParallelStrategy;
+    the inner instance has no instance-level shadow and would otherwise fall
+    through to the real _execute_agent and call subprocess pytest via
+    RealCoverageAnalyzer).
 
     Usage:
         async def test_something(self, mock_execute_agent):
@@ -146,6 +151,13 @@ def mock_execute_agent(mock_agent_result_factory):
             agent_id=agent.id,
             duration_seconds=0.01,
         )
+
+    async def _mock_execute_method(self, agent, context):
+        return await _mock_execute(agent, context)
+
+    from attune.orchestration._strategies.base import ExecutionStrategy
+
+    monkeypatch.setattr(ExecutionStrategy, "_execute_agent", _mock_execute_method)
 
     return _mock_execute
 

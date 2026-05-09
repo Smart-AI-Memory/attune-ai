@@ -139,3 +139,69 @@ both legacy CLI/workflow surfaces deprecated in favor of
 themselves would be reasonable — not in scope here. If pursued,
 verify nothing on PyPI / in attune-* sibling packages still imports
 `attune.scaffolding`.
+
+---
+
+## `tests/unit/orchestration/test_composition_patterns.py`
+
+**Date:** 2026-05-09
+**Initial classification:** R2 RECONCILE (14/35 fail, 40%)
+**Final classification:** **R2 RECONCILE** (confirmed) — single-fixture fix
+**Action:** Modified `tests/unit/orchestration/conftest.py` `mock_execute_agent`
+fixture. File un-ignored. All 35 tests now pass.
+
+**Disambiguation (a) test-debt vs (b) production regression:** the
+spec required disambiguating these. Method run per design.md:
+`git log --oneline --since=2026-01-24` against
+`src/attune/orchestration/_strategies/`. Found:
+
+- `8b062ef5 refactor(tests): replace xfail tests with mock agents` —
+  the 2026-01-24 "remediation" commit referenced in the test file
+  header.
+- `62508980 refactor: Extract execution_strategies.py into modular
+  _strategies subpackage` (2026-02-02) — produced the current shape.
+
+Pre/post comparison of `DebateStrategy.execute()` across `62508980`:
+**identical**. The refactor moved code between files but did not
+change behavior. So the answer is **(a) test-debt only** — the
+remediation was incomplete from day one.
+
+**Root cause of the 14 failures.** All 14 failures involve
+`DebateStrategy` (5 in `TestDebateComposition`, 5 in
+`TestVotingComposition` which is implemented via DebateStrategy, and 4
+of the 5 `TestCompositionPatternInvariants` tests that loop over
+every strategy). `DebateStrategy.execute()` (lines 211–212 of
+`_strategies/core_strategies.py`) creates an inner
+`parallel_strategy = ParallelStrategy()` to do the parallel-opinion
+phase. The tests patched `strategy._execute_agent = mock_execute_agent`
+on the *outer* DebateStrategy instance, but the *inner* ParallelStrategy
+had no such instance attribute and fell through to the base class
+`_execute_agent`, which in turn calls
+`RealCoverageAnalyzer.analyze()` → spawns `pytest tests/ --cov=...`
+as a subprocess with a 600-second timeout. With per-test timeout, this
+manifested as 14 timeouts. Without timeout (the audit's setup), it
+hung indefinitely.
+
+**Fix.** One fixture, one file (`tests/unit/orchestration/conftest.py`):
+the `mock_execute_agent` fixture now also calls
+`monkeypatch.setattr(ExecutionStrategy, '_execute_agent', _mock_method)`
+to patch at the class level. Class-level patching means *every*
+ExecutionStrategy subclass instance — including those created
+internally by composing strategies — inherits the mock. The test
+file itself was not touched.
+
+**Verification.** Composition file in isolation: 35 passed in 1.44s
+(was 14 failed / 21 passed). Full unit suite under `-n auto`:
+14,110 passed (was 14,075 — recovered the 35 tests).
+
+**Why R2 stayed R2.** Per design.md: "RECONCILE means there's an
+in-flight refactor to finish. Don't try to land your own refactor on
+top — finish what was started." The Jan 24 author's intent was
+correct (mock-driven tests for composition patterns); they just
+missed the inner-strategy case. The fix completes that intent
+without rewriting any test method.
+
+**No production change.** The DebateStrategy → ParallelStrategy
+composition is fine — it's a normal example of strategies composing.
+Making strategies more "testable" via dependency injection would be
+a different and unnecessary spec.
