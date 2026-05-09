@@ -247,7 +247,13 @@ class TestWorkspaceRoots:
     def test_override_takes_precedence(
         self, tmp_path: Path, state_mod, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", f"{tmp_path / 'a'}:{tmp_path / 'b'}")
+        # Use os.pathsep so this test is portable: ":" on POSIX, ";" on
+        # Windows. Hardcoding ":" caused Windows to split on the drive
+        # letter ("C:") and shred the path.
+        monkeypatch.setenv(
+            "ATTUNE_AI_WORKSPACE_ROOTS",
+            os.pathsep.join([str(tmp_path / "a"), str(tmp_path / "b")]),
+        )
         roots = state_mod.workspace_roots(cwd=tmp_path)
         assert roots == [tmp_path / "a", tmp_path / "b"]
 

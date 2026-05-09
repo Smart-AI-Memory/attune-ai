@@ -312,13 +312,14 @@ def workspace_roots(cwd: Path | None = None) -> list[Path]:
     """Best-effort guess at workspace roots to scan for specs.
 
     Order:
-    1. ``ATTUNE_AI_WORKSPACE_ROOTS`` env var (colon-separated).
+    1. ``ATTUNE_AI_WORKSPACE_ROOTS`` env var
+       (``os.pathsep``-separated: ``:`` on POSIX, ``;`` on Windows).
     2. The given ``cwd`` (or the process cwd).
     3. ``~/attune`` if it exists and isn't already in the list.
     """
     override = os.environ.get("ATTUNE_AI_WORKSPACE_ROOTS")
     if override:
-        return [Path(p) for p in override.split(":") if p]
+        return [Path(p) for p in override.split(os.pathsep) if p]
     base = (cwd or Path.cwd()).resolve()
     roots: list[Path] = [base]
     home_workspace = Path.home() / "attune"
