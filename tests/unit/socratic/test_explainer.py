@@ -1,9 +1,23 @@
-# ruff: noqa: E402
 """Tests for the Socratic workflow explainer module.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
+
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+from attune.socratic.blueprint import (
+    AgentBlueprint,
+    AgentRole,
+    AgentSpec,
+    StageSpec,
+    WorkflowBlueprint,
+)
+from attune.socratic.explainer import WorkflowExplainer
+from attune.socratic.explainer import explain_workflow as top_level_explain
+from attune.socratic.explainer_types import AudienceLevel, DetailLevel, OutputFormat
+from attune.socratic.success import SuccessCriteria, SuccessMetric
 
 
 class TestAudienceLevel:
@@ -331,20 +345,6 @@ class TestRoleDescriptions:
 # 298-309, 341-386, 416-455 in src/attune/socratic/explainer.py
 # =============================================================================
 
-from datetime import datetime
-from unittest.mock import MagicMock, patch
-
-from attune.socratic.blueprint import (
-    AgentBlueprint,
-    AgentRole,
-    AgentSpec,
-    StageSpec,
-    WorkflowBlueprint,
-)
-from attune.socratic.explainer import WorkflowExplainer
-from attune.socratic.explainer import explain_workflow as top_level_explain
-from attune.socratic.explainer_types import AudienceLevel, DetailLevel, OutputFormat
-from attune.socratic.success import SuccessCriteria, SuccessMetric
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers

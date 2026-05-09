@@ -1,12 +1,12 @@
-# ruff: noqa: E402
 """Unit tests for Feedback Loop (Pattern 6).
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import time
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from attune.telemetry.feedback_loop import (
     FeedbackEntry,
@@ -14,6 +14,7 @@ from attune.telemetry.feedback_loop import (
     ModelTier,
     QualityStats,
     TierRecommendation,
+    _InMemoryStore,
 )
 
 
@@ -367,11 +368,6 @@ class TestFeedbackLoop:
 # =============================================================================
 # Branch-coverage additions — targets previously-uncovered lines
 # =============================================================================
-
-import time
-from unittest.mock import MagicMock, patch
-
-from attune.telemetry.feedback_loop import _InMemoryStore
 
 
 class TestInMemoryStoreBranches:

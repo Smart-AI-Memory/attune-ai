@@ -1,4 +1,3 @@
-# ruff: noqa: E402
 """Unit tests for Approval Gates (Pattern 5).
 
 Copyright 2025 Smart-AI-Memory
@@ -6,8 +5,8 @@ Licensed under the Apache License, Version 2.0
 """
 
 import time
-from datetime import datetime
-from unittest.mock import Mock, patch
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, Mock, patch
 
 from attune.telemetry.approval_gates import ApprovalGate, ApprovalRequest, ApprovalResponse
 
@@ -524,9 +523,6 @@ class TestApprovalGateIntegration:
 # =============================================================================
 # Branch-coverage additions — targets previously-uncovered lines
 # =============================================================================
-
-from datetime import timezone
-from unittest.mock import MagicMock
 
 
 class TestApprovalRequestFromDictBranches:

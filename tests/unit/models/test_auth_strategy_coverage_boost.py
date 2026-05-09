@@ -1,4 +1,3 @@
-# ruff: noqa: E402
 """Coverage boost tests for models/auth_strategy.py
 
 Targets uncovered authentication strategy logic and edge cases to increase
@@ -596,10 +595,6 @@ class TestAuthStrategyEdgeCases:
 # =============================================================================
 # Branch-coverage additions — targets previously-uncovered lines
 # =============================================================================
-
-from unittest.mock import patch
-
-import pytest
 
 
 class TestAuthStrategySaveBranch:
